@@ -44,6 +44,7 @@ typedef struct PEContext
     PEState_t   state;
     OicUuid_t   subject;
     char        resource[MAX_URI_LENGTH];
+    OicSecSvrType_t resourceType;
     uint16_t    permission;
     bool        matchingAclFound;
     bool        amsProcessing;

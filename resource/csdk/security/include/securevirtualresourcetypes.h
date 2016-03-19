@@ -239,6 +239,21 @@ typedef enum
 
 typedef enum
 {
+    NOT_A_SVR_RESOURCE = 0,
+    OIC_R_ACL_TYPE,
+    OIC_R_AMACL_TYPE,
+    OIC_R_CRED_TYPE,
+    OIC_R_CRL_TYPE,
+    OIC_R_DOXM_TYPE,
+    OIC_R_DPAIRING_TYPE,
+    OIC_R_PCONF_TYPE,
+    OIC_R_PSTAT_TYPE,
+    OIC_R_SACL_TYPE,
+    OIC_R_SVC_TYPE
+}OicSecSvrType_t;
+
+typedef enum
+{
     OIC_JUST_WORKS                          = 0x0,
     OIC_RANDOM_DEVICE_PIN                   = 0x1,
     OIC_MANUFACTURER_CERTIFICATE           = 0x2,

@@ -105,8 +105,16 @@ void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler);
 bool SRMIsSecurityResourceURI(const char* uri);
 
 /**
+ * Get the resource type from the URI.
+ * @param   uri [IN] Pointers to security resource URI.
+ * @return  SVR type (note that "NOT_A_SVR_RESOURCE" is returned if not a SVR)
+ */
+OicSecSvrType_t GetSvrTypeFromUri(const char* uri);
+
+/**
  * Sends Response
- * @param resposeVal Response @ref SRMAccessResponse_t value.
+ * @param   resposeVal       SRMAccessResponse_t value
+ * @return  NONE
  */
 void SRMSendResponse(SRMAccessResponse_t responseVal);
 

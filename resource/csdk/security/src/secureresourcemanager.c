@@ -56,6 +56,20 @@ static SPResponseCallback gSPResponseHandler = NULL;
  */
 PEContext_t g_policyEngineContext;
 
+/**
+ * Function to register provisoning API's response callback.
+ * @param respHandler response handler callback.
+ */
+void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
+{
+    gSPResponseHandler = respHandler;
+}
+
+void SetResourceRequestType(PEContext_t *context, const char *resourceUri)
+{
+    context->resourceType = GetSvrTypeFromUri(resourceUri);
+}
+
 static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
 {
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
@@ -150,6 +164,8 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     SRMAccessResponse_t response = ACCESS_DENIED;
     char newUri[MAX_URI_LENGTH + 1];
     OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
+
+    SetResourceRequestType(&g_policyEngineContext, newUri);
 
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
     if (AWAITING_REQUEST == g_policyEngineContext.state)
@@ -368,4 +384,121 @@ bool SRMIsSecurityResourceURI(const char* uri)
     }
 
     return false;
+}
+
+/**
+ * Get the Secure Virtual Resource (SVR) type from the URI.
+ * @param   uri [IN] Pointer to URI in question.
+ * @return  The OicSecSvrType_t of the URI passed (note: if not a Secure Virtual
+            Resource, e.g. /a/light, will return "NOT_A_SVR_TYPE" enum value)
+ */
+static const char URI_QUERY_CHAR = '?';
+OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
+{
+    if (!uri)
+    {
+        return NOT_A_SVR_RESOURCE;
+    }
+
+    // Remove query from Uri for resource string comparison
+    size_t uriLen = strlen(uri);
+    char *query = strchr (uri, URI_QUERY_CHAR);
+    if (query)
+    {
+        uriLen = query - uri;
+    }
+
+    size_t svrLen = 0;
+
+    svrLen = strlen(OIC_RSRC_ACL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_ACL_URI, svrLen))
+        {
+            return OIC_R_ACL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_AMACL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_AMACL_URI, svrLen))
+        {
+            return OIC_R_AMACL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_CRED_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_CRED_URI, svrLen))
+        {
+            return OIC_R_CRED_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_CRL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_CRL_URI, svrLen))
+        {
+            return OIC_R_CRL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_DOXM_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_DOXM_URI, svrLen))
+        {
+            return OIC_R_DOXM_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_DPAIRING_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_DPAIRING_URI, svrLen))
+        {
+            return OIC_R_DPAIRING_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_PCONF_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_PCONF_URI, svrLen))
+        {
+            return OIC_R_PCONF_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_PSTAT_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_PSTAT_URI, svrLen))
+        {
+            return OIC_R_PSTAT_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_SVC_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_SVC_URI, svrLen))
+        {
+            return OIC_R_SVC_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_SACL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_SACL_URI, svrLen))
+        {
+            return OIC_R_SACL_TYPE;
+        }
+    }
+
+    return NOT_A_SVR_RESOURCE;
 }
