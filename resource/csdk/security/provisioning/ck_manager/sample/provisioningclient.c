@@ -50,7 +50,7 @@
 
 static OicSecAcl_t        *gAcl = NULL;
 static OicSecCrl_t        *gCrl = NULL;
-static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.json";
+static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.dat";
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
 static int gOwnershipState = 0;
 

@@ -52,8 +52,8 @@ extern "C" {
 #endif
 
 /**
- * @brief   Values used to create bit-maskable enums for single-value
- *          response with embedded code.
+ * Values used to create bit-maskable enums for single-value response with
+ * embedded code.
  */
 #define ACCESS_GRANTED_DEF            (1 << 0)
 #define ACCESS_DENIED_DEF             (1 << 1)
@@ -189,8 +189,8 @@ typedef enum OSCTBitmask
 } OSCTBitmask_t;
 
 /**
- * @brief   /oic/sec/credtype (Credential Type) data type.
- *          Derived from OIC Security Spec /oic/sec/cred; see Spec for details.
+ * /oic/sec/credtype (Credential Type) data type.
+ * Derived from OIC Security Spec /oic/sec/cred; see Spec for details.
  *              0:  no security mode
  *              1:  symmetric pair-wise key
  *              2:  symmetric group key
@@ -245,7 +245,7 @@ typedef enum
     OIC_OXM_COUNT
 }OicSecOxm_t;
 
-typedef struct OicSecJwk OicSecJwk_t;
+typedef struct OicSecKey OicSecKey_t;
 
 typedef struct OicSecPstat OicSecPstat_t;
 
@@ -262,10 +262,13 @@ typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
 #ifdef __WITH_X509__
 typedef struct OicSecCrl OicSecCrl_t;
+typedef ByteArray OicSecCert_t;
+#else
+typedef void OicSecCert_t;
 #endif /* __WITH_X509__ */
 
 /**
- * @brief   /oic/uuid (Universal Unique Identifier) data type.
+ * /oic/uuid (Universal Unique Identifier) data type.
  */
 #define UUID_LENGTH 128/8 // 128-bit GUID length
 //TODO: Confirm the length and type of ROLEID.
@@ -281,18 +284,19 @@ struct OicUuid
 };
 
 /**
- * @brief   /oic/sec/jwk (JSON Web Key) data type.
- *          See JSON Web Key (JWK)  draft-ietf-jose-json-web-key-41
+ * /oic/sec/jwk (JSON Web Key) data type.
+ * See JSON Web Key (JWK)  draft-ietf-jose-json-web-key-41
  */
 #define JWK_LENGTH 256/8 // 256 bit key length
-struct OicSecJwk
+struct OicSecKey
 {
-    char                *data;
+    uint8_t                *data;
+    size_t                  len;
 };
 
 /**
- * @brief   /oic/sec/acl (Access Control List) data type.
- *          Derived from OIC Security Spec; see Spec for details.
+ * /oic/sec/acl (Access Control List) data type.
+ * Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecAcl
 {
@@ -316,9 +320,8 @@ struct OicSecAcl
 };
 
 /**
- * @brief   /oic/sec/amacl (Access Manager Service Accesss Control List)
- *          data type.
- *          Derived from OIC Security Spec; see Spec for details.
+ * /oic/sec/amacl (Access Manager Service Accesss Control List) data type.
+ * Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecAmacl
 {
@@ -337,8 +340,8 @@ struct OicSecAmacl
 };
 
 /**
- * @brief   /oic/sec/cred (Credential) data type.
- *          Derived from OIC Security Spec; see Spec for details.
+ * /oic/sec/cred (Credential) data type.
+ * Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecCred
 {
@@ -350,8 +353,10 @@ struct OicSecCred
     //size_t              roleIdsLen;     // the number of elts in RoleIds
     //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
-    OicSecJwk_t         publicData;     // 5:R:S:N:oic.sec.jwk
-    OicSecJwk_t         privateData;    // 6:R:S:N:oic.sec.jwk
+#ifdef __WITH_X509__
+    OicSecCert_t        publicData;     // chain of certificates
+#endif /* __WITH_X509__ */
+    OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
     size_t              ownersLen;      // the number of elts in Owners
     OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid
@@ -363,8 +368,8 @@ struct OicSecCred
 };
 
 /**
- * @brief   /oic/sec/doxm (Device Owner Transfer Methods) data type
- *          Derived from OIC Security Spec; see Spec for details.
+ * /oic/sec/doxm (Device Owner Transfer Methods) data type
+ * Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecDoxm
 {
@@ -379,17 +384,17 @@ struct OicSecDoxm
     //TODO: Need more clarification on deviceIDFormat field type.
     //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
-    bool                   dpc;             // 7:R:S:Y:Boolean
-    OicUuid_t           owner;         // 7:R:S:Y:oic.uuid
+    bool                dpc;             // 7:R:S:Y:Boolean
+    OicUuid_t           owner;         // 8:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
-    //OicSecSvc_t       devOwner;        // 7:R:S:Y:oic.sec.svc
-    //OicSecSvc_t       rOwner;        // 8:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       devOwner;        // 9:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       rOwner;        // 10:R:S:Y:oic.sec.svc
     //TODO change Owner type to oic.sec.svc
 };
 
 /**
- * @brief   /oic/sec/pstat (Provisioning Status) data type.
+ * /oic/sec/pstat (Provisioning Status) data type.
  * NOTE: this struct is ahead of Spec v0.95 in definition to include Sm.
  * TODO: change comment when reconciled to Spec v0.96.
  */
@@ -409,8 +414,8 @@ struct OicSecPstat
 };
 
 /**
- * @brief   /oic/sec/role (Role) data type.
- *          Derived from OIC Security Spec; see Spec for details.
+ * /oic/sec/role (Role) data type.
+ * Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecRole
 {
@@ -420,8 +425,8 @@ struct OicSecRole
 };
 
 /**
- * @brief   /oic/sec/sacl (Signed Access Control List) data type.
- *          Derived from OIC Security Spec; see Spec for details.
+ * /oic/sec/sacl (Signed Access Control List) data type.
+ * Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecSacl
 {
@@ -430,8 +435,8 @@ struct OicSecSacl
 };
 
 /**
- * @brief   /oic/sec/svc (Service requiring a secure connection) data type.
- *          Derived from OIC Security Spec; see Spec for details.
+ * /oic/sec/svc (Service requiring a secure connection) data type.
+ * Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecSvc
 {
@@ -483,7 +488,7 @@ typedef PRMBitmask_t OicSecPrm_t;
 
 struct OicPin
 {
-    uint8_t             val[DP_PIN_LENGTH+1];
+    uint8_t             val[DP_PIN_LENGTH];
 };
 
 /**

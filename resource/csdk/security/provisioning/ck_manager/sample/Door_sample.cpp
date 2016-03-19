@@ -59,7 +59,7 @@ static std::string address;
 
 static int coapSecureResource;
 
-static const char CRED_FILE[] = "oic_svr_db_door.json";
+static const char CRED_FILE[] = "oic_svr_db_door.dat";
 
 CAEndpoint_t endpoint = {CA_DEFAULT_ADAPTER, CA_DEFAULT_FLAGS, 0, {0}, 0};
 

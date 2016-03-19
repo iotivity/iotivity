@@ -18,19 +18,14 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <stdlib.h>
-#include <string.h>
-#include "ocstack.h"
-#include "logger.h"
-#include "oic_malloc.h"
-#include "cJSON.h"
-#include "base64.h"
-#include "resourcemanager.h"
-#include "psinterface.h"
 #include "utlist.h"
+#include "payload_logging.h"
+#include "psinterface.h"
+#include "resourcemanager.h"
 #include "srmresourcestrings.h"
-#include "doxmresource.h"
 #include "srmutility.h"
+#include "doxmresource.h"
+#include "ocpayload.h"
 #ifdef __WITH_X509__
 #include "crlresource.h"
 #include "crl.h"
@@ -40,12 +35,12 @@
 
 #define SEPARATOR                   ":"
 #define SEPARATOR_LEN               (1)
-#define JSON_CRL_NAME               "\"CRL\""
-#define JSON_CRL_NAME_LEN           (5)
-#define OIC_JSON_CRL_NAME           "crl"
-#define OIC_JSON_CRL_ID             "CRLId"
-#define OIC_JSON_CRL_THIS_UPDATE    "ThisUpdate"
-#define OIC_JSON_CRL_DATA           "CRLData"
+#define CBOR_CRL_NAME               "\"CRL\""
+#define CBOR_CRL_NAME_LEN           (5)
+#define OIC_CBOR_CRL_NAME           "crl"
+#define OIC_CBOR_CRL_ID             "CRLId"
+#define OIC_CBOR_CRL_THIS_UPDATE    "ThisUpdate"
+#define OIC_CBOR_CRL_DATA           "CRLData"
 #define CRL_DEFAULT_CRL_ID           1
 #define CRL_DEFAULT_THIS_UPDATE     "150101000000Z"
 #define CRL_DEFAULT_CRL_DATA        "-"
@@ -53,6 +48,15 @@
 static OCResourceHandle     gCrlHandle  = NULL;
 static OicSecCrl_t         *gCrl        = NULL;
 
+/** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
+ * The value of payload size is increased until reaching below max cbor size. */
+static const uint8_t CBOR_SIZE = 255;
+
+// Max cbor size payload.
+static const uint16_t CBOR_MAX_SIZE = 4400;
+
+// PSTAT Map size - Number of mandatory items
+static const uint8_t CRL_MAP_SIZE = 3;
 
 void DeleteCrlBinData(OicSecCrl_t *crl)
 {
@@ -69,215 +73,230 @@ void DeleteCrlBinData(OicSecCrl_t *crl)
     }
 }
 
-char *BinToCrlJSON(const OicSecCrl_t *crl)
+OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t *size)
 {
-    if (NULL == crl)
+    if (NULL == crl || NULL == payload || NULL != *payload || NULL == size)
     {
-        return NULL;
+        return OC_STACK_INVALID_PARAM;
     }
 
-    char *base64Buff = NULL;
-    uint32_t outLen = 0;
-    uint32_t base64CRLLen = 0;
-    B64Result b64Ret = B64_OK;
-    char *jsonStr = NULL;
-    cJSON *jsonRoot = cJSON_CreateObject();
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-    cJSON *jsonCrl = cJSON_CreateObject();
-    VERIFY_NON_NULL(TAG, jsonCrl, ERROR);
+    size_t cborLen = *size;
+    if (0 == cborLen)
+    {
+        cborLen = CBOR_SIZE;
+    }
 
-    cJSON_AddItemToObject(jsonRoot, OIC_JSON_CRL_NAME, jsonCrl);
+    *payload = NULL;
+    *size = 0;
+
+    OCStackResult ret = OC_STACK_ERROR;
+
+    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
+    CborEncoder crlMap = { {.ptr = NULL }, .end = 0 };
+
+    CborError cborEncoderResult = CborNoError;
+
+    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
+    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
+
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &crlMap, CRL_MAP_SIZE);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
 
     //CRLId -- Mandatory
-    cJSON_AddNumberToObject(jsonCrl, OIC_JSON_CRL_ID, (int)crl->CrlId);
+    cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_CBOR_CRL_ID,
+        strlen(OIC_CBOR_CRL_ID));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    cborEncoderResult = cbor_encode_int(&crlMap, crl->CrlId);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
 
     //ThisUpdate -- Mandatory
-    outLen = 0;
-    base64CRLLen = (uint32_t)B64ENCODE_OUT_SAFESIZE(crl->ThisUpdate.len);
-    base64Buff = OICMalloc(base64CRLLen);
-    b64Ret = b64Encode(crl->ThisUpdate.data, crl->ThisUpdate.len, base64Buff,
-             base64CRLLen, &outLen);
-    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-    cJSON_AddStringToObject(jsonCrl, OIC_JSON_CRL_THIS_UPDATE, base64Buff);
-    OICFree(base64Buff);
+    cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_CBOR_CRL_THIS_UPDATE,
+        strlen(OIC_CBOR_CRL_THIS_UPDATE));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    cborEncoderResult = cbor_encode_byte_string(&crlMap, crl->ThisUpdate.data,
+                                                crl->ThisUpdate.len);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
 
     //CRLData -- Mandatory
-    outLen = 0;
-    base64CRLLen = (uint32_t)B64ENCODE_OUT_SAFESIZE(crl->CrlData.len);
-    base64Buff = OICMalloc(base64CRLLen);
-    b64Ret = b64Encode(crl->CrlData.data, crl->CrlData.len, base64Buff,
-             base64CRLLen, &outLen);
-    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-    cJSON_AddStringToObject(jsonCrl, OIC_JSON_CRL_DATA, base64Buff);
+    cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_CBOR_CRL_DATA,
+        strlen(OIC_CBOR_CRL_DATA));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    cborEncoderResult = cbor_encode_byte_string(&crlMap, crl->CrlData.data,
+                                                crl->CrlData.len);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
 
-    jsonStr = cJSON_PrintUnformatted(jsonRoot);
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &crlMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+    *size = encoder.ptr - outPayload;
+    *payload = outPayload;
+    ret = OC_STACK_OK;
 
 exit:
-    OICFree(base64Buff);
-    if (jsonRoot)
+    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
     {
-        cJSON_Delete(jsonRoot);
+        // reallocate and try again!
+        OICFree(outPayload);
+        // Since the allocated initial memory failed, double the memory.
+        cborLen += encoder.ptr - encoder.end;
+        cborEncoderResult = CborNoError;
+        ret = CrlToCBORPayload(crl, payload, &cborLen);
     }
-    return jsonStr;
+
+    if ((CborNoError != cborEncoderResult) || (OC_STACK_OK != ret))
+    {
+        OICFree(outPayload);
+        outPayload = NULL;
+        *payload = NULL;
+        *size = 0;
+        ret = OC_STACK_ERROR;
+    }
+
+    return ret;
 }
 
-OicSecCrl_t *JSONToCrlBin(const char * jsonStr)
+OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
+                               OicSecCrl_t **secCrl)
 {
-    if (NULL == jsonStr)
+    if (NULL == cborPayload || NULL == secCrl || NULL != *secCrl)
     {
-        return NULL;
+        return OC_STACK_INVALID_PARAM;
     }
 
     OCStackResult ret = OC_STACK_ERROR;
-    OicSecCrl_t *crl =  NULL;
-    cJSON *jsonCrl = NULL;
-    cJSON *jsonObj = NULL;
+    *secCrl = NULL;
 
-    unsigned char *base64Buff = NULL;
-    uint32_t base64CRLLen = 0;
-    uint32_t outLen = 0;
-    B64Result b64Ret = B64_OK;
+    CborValue crlCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
+    CborError cborFindResult = CborNoError;
+    int cborLen = size;
+    if (0 == size)
+    {
+        cborLen = CBOR_SIZE;
+    }
+    cbor_parser_init(cborPayload, cborLen, 0, &parser, &crlCbor);
+    CborValue crlMap = { .parser = NULL } ;
+    OicSecCrl_t *crl = NULL;
+    char *name = NULL;
+    size_t outLen = 0;
+    cborFindResult = cbor_value_enter_container(&crlCbor, &crlMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
 
-    cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonCrl = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRL_NAME);
-    VERIFY_NON_NULL(TAG, jsonCrl, ERROR);
     crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
     VERIFY_NON_NULL(TAG, crl, ERROR);
 
-    //CRLId -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonCrl, OIC_JSON_CRL_ID);
-    if(jsonObj)
+    while (cbor_value_is_valid(&crlMap))
     {
-        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-        crl->CrlId = (uint16_t)jsonObj->valueint;
+        size_t len = 0;
+        cborFindResult = cbor_value_dup_text_string(&crlMap, &name, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        cborFindResult = cbor_value_advance(&crlMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+        CborType type = cbor_value_get_type(&crlMap);
+
+        if (0 == strcmp(OIC_CBOR_CRL_ID, name))
+        {
+            cborFindResult = cbor_value_get_int(&crlMap, (int *) &crl->CrlId);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        }
+        if (0 == strcmp(OIC_CBOR_CRL_THIS_UPDATE, name))
+        {
+            uint8_t *crlByte = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&crlMap, &crlByte, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            crl->ThisUpdate.data = (uint8_t*) OICMalloc(len);
+            VERIFY_NON_NULL(TAG, crl->ThisUpdate.data, ERROR);
+            memcpy(crl->ThisUpdate.data, crlByte, len);
+            crl->ThisUpdate.len = len;
+            OICFree(crlByte);
+        }
+        if (0 == strcmp(OIC_CBOR_CRL_DATA, name))
+        {
+            uint8_t *crlByte = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&crlMap, &crlByte, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            crl->CrlData.data = (uint8_t*) OICMalloc(len);
+            VERIFY_NON_NULL(TAG, crl->CrlData.data, ERROR);
+            memcpy(crl->CrlData.data, crlByte, len);
+            crl->CrlData.len = len;
+            OICFree(crlByte);
+        }
+        if (CborMapType != type && cbor_value_is_valid(&crlMap))
+        {
+            cborFindResult = cbor_value_advance(&crlMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        }
+        OICFree(name);
+        name = NULL;
     }
-    else // PUT/POST JSON may not have CRLId so set it to the gCRList->CRLId
+    // PUT/POST CBOR may not have mandatory values set default values.
+    if (!crl->CrlId)
     {
         VERIFY_NON_NULL(TAG, gCrl, ERROR);
         crl->CrlId = gCrl->CrlId;
     }
-
-    //ThisUpdate -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonCrl, OIC_JSON_CRL_THIS_UPDATE);
-    if(jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if(cJSON_String == jsonObj->type)
-        {
-            //Check for empty string, in case ThisUpdate field has not been set yet
-            if (jsonObj->valuestring[0])
-            {
-                base64CRLLen = B64ENCODE_OUT_SAFESIZE(strlen(jsonObj->valuestring));
-                base64Buff = OICMalloc(base64CRLLen);
-                b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                        base64CRLLen, &outLen);
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= base64CRLLen),
-                                ERROR);
-                crl->ThisUpdate.data = OICMalloc(outLen + 1);
-                memcpy(crl->ThisUpdate.data, base64Buff, outLen);
-                crl->ThisUpdate.len = outLen;
-                OICFree(base64Buff);
-                base64Buff = NULL;
-            }
-        }
-    }
-    else // PUT/POST JSON will not have ThisUpdate so set it to the gCRList->ThisUpdate
+    if (!crl->ThisUpdate.data)
     {
         VERIFY_NON_NULL(TAG, gCrl, ERROR);
-        outLen = (uint32_t)gCrl->ThisUpdate.len;
-        crl->ThisUpdate.data = OICMalloc(outLen + 1);
+        outLen = gCrl->ThisUpdate.len;
+        crl->ThisUpdate.data = (uint8_t*) OICMalloc(outLen);
+        VERIFY_NON_NULL(TAG, crl->ThisUpdate.data, ERROR);
         memcpy(crl->ThisUpdate.data, gCrl->ThisUpdate.data, outLen);
         crl->ThisUpdate.len = outLen;
     }
-
-    //CRLData -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonCrl, OIC_JSON_CRL_DATA);
-    if(jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if(cJSON_String == jsonObj->type)
-        {
-            //Check for empty string, in case CRLData field has not been set yet
-            if (jsonObj->valuestring[0])
-            {
-                outLen = 0;
-                base64CRLLen = B64ENCODE_OUT_SAFESIZE(strlen(jsonObj->valuestring));
-                base64Buff = OICMalloc(base64CRLLen);
-                b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                        base64CRLLen, &outLen);
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= base64CRLLen),
-                                ERROR);
-                crl->CrlData.data = OICMalloc(outLen + 1);
-                memcpy(crl->CrlData.data, base64Buff, outLen);
-                crl->CrlData.len = outLen;
-                OICFree(base64Buff);
-                base64Buff = NULL;
-            }
-        }
-    }
-    else // PUT/POST JSON will not have CRLData so set it to the gCRList->CRLData
+    if (!crl->CrlData.data)
     {
         VERIFY_NON_NULL(TAG, gCrl, ERROR);
-        outLen = (uint32_t)gCrl->CrlData.len;
-        crl->CrlData.data = OICMalloc(outLen + 1);
+        outLen = gCrl->CrlData.len;
+        crl->CrlData.data = (uint8_t*) OICMalloc(outLen);
+        VERIFY_NON_NULL(TAG, crl->CrlData.data, ERROR);
         memcpy(crl->CrlData.data, gCrl->CrlData.data, outLen);
         crl->CrlData.len = outLen;
     }
 
+    *secCrl = crl;
     ret = OC_STACK_OK;
 exit:
-    cJSON_Delete(jsonRoot);
-    OICFree(base64Buff);
-    base64Buff = NULL;
-    if (OC_STACK_OK != ret)
+    if (CborNoError != cborFindResult)
     {
+        OIC_LOG (ERROR, TAG, "CBORPayloadToCrl failed");
         DeleteCrlBinData(crl);
         crl = NULL;
+        ret = OC_STACK_ERROR;
     }
-    return crl;
+    if (name)
+    {
+        OICFree(name);
+    }
+    return ret;
 }
 
 OCStackResult UpdateCRLResource(const OicSecCrl_t *crl)
 {
-    char *jsonStr = NULL;
-    OCStackResult res = OC_STACK_ERROR;
+    uint8_t *payload = NULL;
+    size_t size = 0;
 
-    jsonStr = BinToCrlJSON((OicSecCrl_t *) crl);
-    if (!jsonStr)
+    OCStackResult res = CrlToCBORPayload((OicSecCrl_t *) crl, &payload, &size);
+    if (OC_STACK_OK != res)
     {
-        return OC_STACK_ERROR;
+        return res;
     }
 
-    cJSON *jsonObj = cJSON_Parse(jsonStr);
-    OICFree(jsonStr);
-
-    if (jsonObj == NULL)
-    {
-        return OC_STACK_ERROR;
-    }
-
-    res = UpdateSVRDatabase(OIC_JSON_CRL_NAME, jsonObj);
-    cJSON_Delete(jsonObj);
-
-    return res;
+    return UpdateSecureResourceInPS(OIC_CBOR_CRL_NAME, payload, size);
 }
 
 static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    OicSecCrl_t *crl = NULL;
+    uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData1;
 
-    char *jsonCRL = (char *)(((OCSecurityPayload *)ehRequest->payload)->securityData);
-
-    if (jsonCRL)
+    if (payload)
     {
         OIC_LOG(INFO, TAG, "UpdateSVRDB...");
-        OIC_LOG_V(INFO, TAG, "crl: \"%s\"", jsonCRL);
-
-        cJSON *jsonObj = cJSON_Parse(jsonCRL);
-        OicSecCrl_t *crl = NULL;
-        crl = JSONToCrlBin(jsonCRL);
+        CBORPayloadToCrl(payload, CBOR_SIZE, &crl);
         VERIFY_NON_NULL(TAG, crl, ERROR);
 
         gCrl->CrlId = crl->CrlId;
@@ -285,27 +304,27 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
         OICFree(gCrl->ThisUpdate.data);
         gCrl->ThisUpdate.data = NULL;
         gCrl->ThisUpdate.data = OICMalloc(crl->ThisUpdate.len);
+        VERIFY_NON_NULL(TAG, gCrl->ThisUpdate.data, ERROR);
         memcpy(gCrl->ThisUpdate.data, crl->ThisUpdate.data, crl->ThisUpdate.len);
         gCrl->ThisUpdate.len = crl->ThisUpdate.len;
 
         OICFree(gCrl->CrlData.data);
-        gCrl->CrlData.data = NULL;
         gCrl->CrlData.data = OICMalloc(crl->CrlData.len);
+        VERIFY_NON_NULL(TAG, gCrl->CrlData.data, ERROR);
         memcpy(gCrl->CrlData.data, crl->CrlData.data, crl->CrlData.len);
         gCrl->CrlData.len = crl->CrlData.len;
 
-        if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRL_NAME, jsonObj))
+        size_t size = 0;
+        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_CBOR_CRL_NAME, payload, size))
         {
-            OIC_LOG(INFO, TAG, "UpdateSVRDB == OK");
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet = OC_EH_OK;
         }
 
         DeleteCrlBinData(crl);
-
-        exit:
-        cJSON_Delete(jsonObj);
+        OICFree(payload);
     }
 
+exit:
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
@@ -314,13 +333,13 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 }
 
 
-/*
+/**
  * This internal method is the entity handler for CRL resource and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
-OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
-                                       OCEntityHandlerRequest *ehRequest,
-                                       void *callbackParameter)
+static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
+                                              OCEntityHandlerRequest *ehRequest,
+                                              void *callbackParameter)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     (void)callbackParameter;
@@ -356,19 +375,18 @@ OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/crl' resource.
  */
-OCStackResult CreateCRLResource()
+static OCStackResult CreateCRLResource()
 {
-    OCStackResult ret;
-    ret = OCCreateResource(&gCrlHandle,
-                           OIC_RSRC_TYPE_SEC_CRL,
-                           OIC_MI_DEF,
-                           OIC_RSRC_CRL_URI,
-                           CRLEntityHandler,
-                           NULL,
-                           OC_OBSERVABLE);
+    OCStackResult ret = OCCreateResource(&gCrlHandle,
+                                         OIC_RSRC_TYPE_SEC_CRL,
+                                         OIC_MI_DEF,
+                                         OIC_RSRC_CRL_URI,
+                                         CRLEntityHandler,
+                                         NULL,
+                                         OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -379,23 +397,39 @@ OCStackResult CreateCRLResource()
 }
 
 /**
- * Get the default value
- * @retval  NULL for now. Update it when we finalize the default info.
+ * Get the default value.
+ * @return defaultCrl for now.
  */
 static OicSecCrl_t *GetCrlDefault()
 {
-    OicSecCrl_t *defaultCrl = NULL;
-    defaultCrl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
-
+    OicSecCrl_t *defaultCrl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
+    if (NULL == defaultCrl)
+    {
+        return NULL;
+    }
     defaultCrl->CrlId = CRL_DEFAULT_CRL_ID;
 
     defaultCrl->CrlData.len = strlen(CRL_DEFAULT_CRL_DATA);
-    defaultCrl->CrlData.data = OICMalloc(defaultCrl->CrlData.len);
-    memcpy(defaultCrl->CrlData.data, CRL_DEFAULT_CRL_DATA, defaultCrl->CrlData.len);
+    defaultCrl->CrlData.data = (uint8_t*) OICMalloc(defaultCrl->CrlData.len);
+    if (defaultCrl->CrlData.data)
+    {
+        memcpy(defaultCrl->CrlData.data, CRL_DEFAULT_CRL_DATA, defaultCrl->CrlData.len);
+    }
+    else
+    {
+        defaultCrl->CrlData.len = 0;
+    }
 
     defaultCrl->ThisUpdate.len = strlen(CRL_DEFAULT_THIS_UPDATE);
-    defaultCrl->ThisUpdate.data = OICMalloc(defaultCrl->ThisUpdate.len);
-    memcpy(defaultCrl->ThisUpdate.data, CRL_DEFAULT_THIS_UPDATE, defaultCrl->ThisUpdate.len);
+    defaultCrl->ThisUpdate.data = (uint8_t*) OICMalloc(defaultCrl->ThisUpdate.len);
+    if (defaultCrl->ThisUpdate.data)
+    {
+        memcpy(defaultCrl->ThisUpdate.data, CRL_DEFAULT_THIS_UPDATE, defaultCrl->ThisUpdate.len);
+    }
+    else
+    {
+        defaultCrl->ThisUpdate.len = 0;
+    }
 
     return defaultCrl;
 }
@@ -410,28 +444,33 @@ static OicSecCrl_t *GetCrlDefault()
 OCStackResult InitCRLResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
-    char* jsonSVRDatabase;
-
-    //Read CRL resource from PS
-    jsonSVRDatabase = GetSVRDatabase();
-
-    if (jsonSVRDatabase)
+    // Read Crl resource from PS
+    uint8_t *data = NULL;
+    size_t size = 0;
+    ret = GetSecureVirtualDatabaseFromPS(OIC_CBOR_CRL_NAME, &data, &size);
+    // If database read failed
+    if (OC_STACK_OK != ret)
     {
-        //Convert JSON CRL into binary format
-        gCrl = JSONToCrlBin(jsonSVRDatabase);
+        OIC_LOG (DEBUG, TAG, "ReadSVDataFromPS failed");
     }
+    if (data)
+    {
+        // Read ACL resource from PS
+        ret = CBORPayloadToCrl(data, size, &gCrl);
+    }
+
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default CrlResource is created
      * which allows user to initiate CrlResource provisioning again.
      */
-    if (!jsonSVRDatabase || !gCrl)
+    if ((OC_STACK_OK != ret) || !data || !gCrl)
     {
         gCrl = GetCrlDefault();
     }
 
     ret = CreateCRLResource();
-    OICFree(jsonSVRDatabase);
+    OICFree(data);
     return ret;
 }
 
@@ -451,58 +490,39 @@ OicSecCrl_t *GetCRLResource()
     OicSecCrl_t *crl =  NULL;
 
     //Read CRL resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
-
-    if (jsonSVRDatabase)
+    uint8_t *data = NULL;
+    size_t size = 0;
+    OCStackResult ret = GetSecureVirtualDatabaseFromPS(OIC_CBOR_CRL_NAME, &data, &size);
+    if (data)
     {
-        //Convert JSON CRL into binary format
-        crl = JSONToCrlBin(jsonSVRDatabase);
+        //Convert CBOR CRL into binary format
+        ret = CBORPayloadToCrl(data, size, &crl);
     }
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default CrlResource is created
      * which allows user to initiate CrlResource provisioning again.
      */
-    if (!jsonSVRDatabase || !crl)
+    if ((OC_STACK_OK != ret) || !data || !crl)
     {
         crl = GetCrlDefault();
     }
-    OICFree(jsonSVRDatabase);
+    OICFree(data);
 
     return crl;
 }
 
-char *GetBase64CRL()
+uint8_t *GetCrl()
 {
-    cJSON *jsonCrl = NULL;
-    cJSON *jsonObj = NULL;
-    char *jsonSVRDatabase = GetSVRDatabase();
-    char* ret = NULL;
-
-    cJSON *jsonRoot = cJSON_Parse(jsonSVRDatabase);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonCrl = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRL_NAME);
-    VERIFY_NON_NULL(TAG, jsonCrl, ERROR);
-
-    //CRLData -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonCrl, OIC_JSON_CRL_DATA);
-    if(jsonObj)
+    uint8_t *data = NULL;
+    size_t size = 0;
+    OicSecCrl_t *crl = NULL;
+    if (OC_STACK_OK == GetSecureVirtualDatabaseFromPS(OIC_CBOR_CRL_NAME, &data, &size) && data &&
+        OC_STACK_OK == CBORPayloadToCrl(data, size, &crl))
     {
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if(cJSON_String == jsonObj->type)
-        {
-            //Check for empty string, in case CRLData field has not been set yet
-            if (jsonObj->valuestring[0])
-            {
-                ret = jsonObj->valuestring;
-            }
-        }
+        return crl->CrlData.data;
     }
-exit:
-    OICFree(jsonSVRDatabase);
-    cJSON_Delete(jsonRoot);
-    return ret;
+    return NULL;
 }
 
 void  GetDerCrl(ByteArray crlArray)

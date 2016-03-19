@@ -50,6 +50,7 @@
 #define TAG  "provisioningclient"
 
 #define JSON_DB_PATH "./oic_svr_db_client.json"
+#define DAT_DB_PATH "./oic_svr_db_client.dat"
 #define DEV_STATUS_ON "DEV_STATUS_ON"
 #define DEV_STATUS_OFF "DEV_STATUS_OFF"
 
@@ -63,7 +64,7 @@ static int transferDevIdx, ask = 1;
 static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
 {
     (void)UNUSED_PARAM;
-    return fopen(JSON_DB_PATH, mode);
+    return fopen(DAT_DB_PATH, mode);
 }
 
 void printMenu()

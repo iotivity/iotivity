@@ -55,6 +55,7 @@
 
 
 #define TAG ("DP")
+static const uint64_t CBOR_SIZE=255;
 
 /**
  * Structure to carry direct-pairing API data to callback.
@@ -333,7 +334,8 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
         if(OC_STACK_OK == clientResponse->result)
         {
             // result
-            OIC_LOG(INFO, TAG, "DirectPairingFinalizeHandler : success PUT request to /oic/sec/dpairing");
+            OIC_LOG(INFO, TAG, "DirectPairingFinalizeHandler : success PUT"
+                    " request to /oic/sec/dpairing");
 
             CAEndpoint_t endpoint;
             memset(&endpoint, 0x00, sizeof(CAEndpoint_t));
@@ -375,7 +377,8 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             OIC_LOG(INFO, TAG, "Direct-Papring was successfully completed.");
 
             // update paired list
-            OCDirectPairingDev_t *dev = getDev(&g_dp_discover, peer->endpoint.addr, peer->endpoint.port);
+            OCDirectPairingDev_t *dev = getDev(&g_dp_discover, peer->endpoint.addr,
+                    peer->endpoint.port);
             res = addDev2(&g_dp_paired, dev);
             if (OC_STACK_OK != res)
             {
@@ -436,14 +439,17 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToDpairingJSON(&dpair);
-    if(NULL == secPayload->securityData)
+
+    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData1),
+            &(secPayload->payloadSize));
+
+    if(OC_STACK_OK != ret)
     {
         OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToDpairingJSON");
+        OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "DPARING : %s", secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "DPARING : %s", secPayload->securityData1);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(true,
@@ -476,7 +482,7 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
     OCMethod method = OC_REST_PUT;
     OCDoHandle handle = NULL;
     OIC_LOG(DEBUG, TAG, "Sending DPAIRNG setting to resource server");
-    OCStackResult ret = OCDoResource(&handle, method, query,
+    ret = OCDoResource(&handle, method, query,
             &peer->endpoint, (OCPayload*)secPayload,
             peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
@@ -612,7 +618,8 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             VERIFY_NON_NULL(TAG, endpoint, FATAL);
             memcpy(endpoint,&dpairData->peer->endpoint,sizeof(CAEndpoint_t));
             endpoint->port = dpairData->peer->securePort;
-            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr, endpoint->port);
+            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr,
+                    endpoint->port);
 
             caresult = CAInitiateHandshake(endpoint);
             OICFree(endpoint);
@@ -687,14 +694,17 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToDpairingJSON(&dpair);
-    if(NULL == secPayload->securityData)
+
+    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData1),
+            &(secPayload->payloadSize));
+
+    if(OC_STACK_OK != ret)
     {
         OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToDpairingJSON");
+        OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "DPAIRING : %s", secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "DPARING : %s", secPayload->securityData1);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(false,
@@ -729,7 +739,7 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
     OIC_LOG(DEBUG, TAG, "Sending DPAIRNG setting to resource server");
-    OCStackResult ret = OCDoResource(&handle, method, query,
+    ret = OCDoResource(&handle, method, query,
             &peer->endpoint, (OCPayload*)secPayload,
             peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
@@ -755,7 +765,8 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
 static OCStackApplicationResult DirectPairingPortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                  OCClientResponse *clientResponse)
 {
-    OIC_LOG(INFO, TAG, "Callback Context for Direct-Pairing Secure Port DISCOVER query recvd successfully");
+    OIC_LOG(INFO, TAG, "Callback Context for Direct-Pairing Secure Port DISCOVER "
+            "query recvd successfully");
 
     (void)ctx;
     (void)UNUSED;
@@ -844,11 +855,14 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
         }
 
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OicSecPconf_t *pconf = JSONToPconfBin(
-                    ((OCSecurityPayload*)clientResponse->payload)->securityData);
-        if (NULL == pconf)
+        OicSecPconf_t *pconf = NULL;
+
+        OCStackResult res = CBORPayloadToPconf(
+                ((OCSecurityPayload*)clientResponse->payload)->securityData1,
+                CBOR_SIZE,&pconf);
+        if (OC_STACK_OK != res )
         {
-            OIC_LOG(INFO, TAG, "Ignoring malformed JSON");
+            OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
             return OC_STACK_KEEP_TRANSACTION;
         }
         else
@@ -864,6 +878,7 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
                 OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                 return OC_STACK_KEEP_TRANSACTION;
             }
+
 
             char rsrc_uri[MAX_URI_LENGTH+1] = {0};
             int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",

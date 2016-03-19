@@ -44,7 +44,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *a
 static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent, bool isRoot);
 static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *arrayVal);
-static OCStackResult OCParseSecurityPayload(OCPayload **outPayload, CborValue * rrayVal);
+static OCStackResult OCParseSecurityPayload(OCPayload **outPayload, const uint8_t *payload, size_t size);
 
 OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
         const uint8_t *payload, size_t payloadSize)
@@ -81,7 +81,7 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
             result = OCParsePresencePayload(outPayload, &rootValue);
             break;
         case PAYLOAD_TYPE_SECURITY:
-            result = OCParseSecurityPayload(outPayload, &rootValue);
+            result = OCParseSecurityPayload(outPayload, payload, payloadSize);
             break;
         case PAYLOAD_TYPE_RD:
             result = OCRDCborToPayload(&rootValue, outPayload);
@@ -100,41 +100,18 @@ exit:
 
 void OCFreeOCStringLL(OCStringLL* ll);
 
-static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* rootValue)
+static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, const uint8_t *payload,
+        size_t size)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    CborError err;
-    char *securityData = NULL;
-    CborValue strVal;
-
-    VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid parameter outPayload");
-    VERIFY_PARAM_NON_NULL(TAG, rootValue, "Invalid parameter rootValue");
-    *outPayload = NULL;
-
-    err = cbor_value_enter_container(rootValue, &strVal);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed entering container");
-
-    if (cbor_value_is_text_string(&strVal))
+    if (size > 0)
     {
-        size_t len = 0;
-        err = cbor_value_dup_text_string(&strVal, &securityData, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed reading security data");
-        *outPayload = (OCPayload *)OCSecurityPayloadCreate(securityData);
-        VERIFY_PARAM_NON_NULL(TAG, *outPayload, "Invalid cbor");
-        ret = OC_STACK_OK;
-    }
-    else if(cbor_value_is_valid(&strVal))
-    {
-        ret = OC_STACK_OK;
+        *outPayload = (OCPayload *)OCSecurityPayloadCBORCreate(payload, size);
     }
     else
     {
-        ret = OC_STACK_MALFORMED_RESPONSE;
+        *outPayload = NULL;
     }
-
-exit:
-    OICFree(securityData);
-    return ret;
+    return OC_STACK_OK;
 }
 
 static char* InPlaceStringTrim(char* str)

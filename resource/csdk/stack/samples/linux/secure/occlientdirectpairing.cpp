@@ -49,7 +49,7 @@ static char DISCOVERY_QUERY[] = "%s/oic/res";
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-static char CRED_FILE[] = "oic_svr_db_client_directpairing.json";
+static char CRED_FILE[] = "oic_svr_db_client_directpairing.dat";
 
 static const OCDPDev_t *discoveredDevs = NULL;
 static const OCDPDev_t *pairedDevs = NULL;

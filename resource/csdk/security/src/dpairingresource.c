@@ -38,6 +38,9 @@
 #include "aclresource.h"
 #include "srmutility.h"
 #include "ocserverrequest.h"
+#include "ocpayloadcbor.h"
+#include "ocpayload.h"
+#include "payload_logging.h"
 #include <stdlib.h>
 #ifdef WITH_ARDUINO
 #include <string.h>
@@ -51,6 +54,15 @@
 
 #define TAG  "SRM-DPAIRING"
 
+/** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
+ * The value of payload size is increased until reaching belox max cbor size. */
+static const uint8_t CBOR_SIZE = 255;
+
+/** Max cbor size payload. */
+static const uint16_t CBOR_MAX_SIZE = 4400;
+
+/** DOXM Map size - Number of mandatory items. */
+static const uint8_t DPAIR_MAP_SIZE = 3;
 
 static OicSecDpairing_t     *gDpair = NULL;
 static OCResourceHandle   gDpairHandle = NULL;
@@ -124,6 +136,7 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
     }
 
     uint8_t pairingPSK[OWNER_PSK_LENGTH_128] = {0};
+    OicSecKey_t pairingKey = {pairingPSK, OWNER_PSK_LENGTH_128};
 
     //Generating PairingPSK using OwnerPSK scheme
     CAResult_t pskRet = CAGenerateOwnerPSK((const CAEndpoint_t *)endpoint,
@@ -139,16 +152,10 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
         OIC_LOG_BUFFER(INFO, TAG, pairingPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for direct-pairing client
         size_t ownLen = 1;
-        uint32_t outLen = 0;
-
-        char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(pairingPSK)) + 1] = {};
-        B64Result b64Ret = b64Encode(pairingPSK, sizeof(pairingPSK), base64Buff, sizeof(base64Buff),
-                &outLen);
-        VERIFY_SUCCESS(TAG, B64_OK == b64Ret, ERROR);
 
         OicSecCred_t *cred = GenerateCredential(peerDevID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
-                base64Buff, ownLen, owner);
+                &pairingKey, ownLen, owner);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);
@@ -169,163 +176,175 @@ exit:
 }
 #endif // __WITH_DTLS__
 
-/*
- * This internal method converts DPairing data into JSON format.
- * Does not error-check here, but check it in caller
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
- */
-char * BinToDpairingJSON(const OicSecDpairing_t * dpair)
+OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **payload, size_t *size)
 {
-    OIC_LOG(DEBUG, TAG, "BinToDpairingJSON() IN");
-
-    if (NULL == dpair)
+    if (NULL == dpair || NULL == payload || NULL != *payload || NULL == size)
     {
-        return NULL;
+        return OC_STACK_INVALID_PARAM;
     }
 
-    char *jsonStr = NULL;
-    cJSON *jsonDpair = NULL;
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-    uint32_t outLen = 0;
-    B64Result b64Ret = B64_OK;
-
-    cJSON *jsonRoot = cJSON_CreateObject();
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonDpair = cJSON_CreateObject();
-    VERIFY_NON_NULL(TAG, jsonDpair, ERROR);
-    cJSON_AddItemToObject(jsonRoot, OIC_JSON_DPAIRING_NAME, jsonDpair );
-
-    //SPM -- Mandatory
-    if(PRM_RANDOM_PIN >= dpair->spm) // don't need to check "PRM_NOT_ALLOWED <= dpair->spm" because of always true
+    size_t cborLen = *size;
+    if (0 == cborLen)
     {
-        cJSON_AddNumberToObject(jsonDpair, OIC_JSON_SPM_NAME, (int)dpair->spm);
+        cborLen = CBOR_SIZE;
     }
 
-    //PDeviceID -- Mandatory
-    //There may not be paired devices if it did not be received pairing request
-    if ('\0' != (char)dpair->pdeviceID.id[0])
-    {
-        outLen = 0;
-        b64Ret = b64Encode(dpair->pdeviceID.id, sizeof(dpair->pdeviceID.id), base64Buff,
-                    sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-        cJSON_AddStringToObject(jsonDpair, OIC_JSON_PDEVICE_ID_NAME, base64Buff);
-    }
-
-    //ROwner -- Mandatory
-    if ('\0' != (char)dpair->rowner.id[0])
-    {
-        outLen = 0;
-        b64Ret = b64Encode(dpair->rowner.id, sizeof(dpair->rowner.id), base64Buff,
-                    sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-        cJSON_AddStringToObject(jsonDpair, OIC_JSON_ROWNER_NAME, base64Buff);
-    }
-
-
-    jsonStr = cJSON_PrintUnformatted(jsonRoot);
-
-exit:
-    if (jsonRoot)
-    {
-        cJSON_Delete(jsonRoot);
-    }
-    return jsonStr;
-}
-
-/*
- * This internal method converts JSON Dpairing into binary Dpairing.
- * Does not error-check here, but check it in caller
- */
-OicSecDpairing_t* JSONToDpairingBin(const char * jsonStr)
-{
-    OIC_LOG(DEBUG, TAG, "JSONToDpairingBin() IN");
+    *payload = NULL;
+    *size = 0;
 
     OCStackResult ret = OC_STACK_ERROR;
-    OicSecDpairing_t *dpair =  NULL;
-    cJSON *jsonRoot = NULL;
-    cJSON *jsonDpair = NULL;
-    cJSON *jsonObj = NULL;
 
-    unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-    uint32_t outLen = 0;
-    B64Result b64Ret = B64_OK;
+    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
+    CborEncoder dpairMap = { {.ptr = NULL }, .end = 0 };
 
+    int64_t cborEncoderResult = CborNoError;
+    uint8_t mapSize = DPAIR_MAP_SIZE;
 
-    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
+    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
+    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+    cborEncoderResult |= cbor_encoder_create_map(&encoder, &dpairMap, mapSize);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating DPAIRING Map");
 
-    jsonDpair = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DPAIRING_NAME);
-    VERIFY_NON_NULL(TAG, jsonDpair, ERROR);
+    //spm -- Mandatory
+    cborEncoderResult |= cbor_encode_text_string(&dpairMap, OIC_JSON_SPM_NAME,
+        strlen(OIC_JSON_SPM_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SPM name tag");
+    cborEncoderResult |= cbor_encode_int(&dpairMap, dpair->spm);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SPM value");
 
-    dpair = (OicSecDpairing_t*)OICCalloc(1, sizeof(OicSecDpairing_t));
+    //PDEVICEID -- Mandatory
+    cborEncoderResult |= cbor_encode_text_string(&dpairMap, OIC_JSON_PDEVICE_ID_NAME,
+        strlen(OIC_JSON_PDEVICE_ID_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PDeviceID tag");
+    cborEncoderResult |= cbor_encode_byte_string(&dpairMap, dpair->pdeviceID.id,
+        sizeof(dpair->pdeviceID.id));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PDeviceID value");
+
+    //ROWNER -- Mandatory
+    cborEncoderResult |= cbor_encode_text_string(&dpairMap, OIC_JSON_ROWNER_NAME,
+        strlen(OIC_JSON_ROWNER_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROWNER tag");
+    cborEncoderResult |= cbor_encode_byte_string(&dpairMap, dpair->rowner.id,
+        sizeof(dpair->rowner.id));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Rowner ID value");
+
+    cborEncoderResult |= cbor_encoder_close_container(&encoder, &dpairMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close dpairMap");
+
+     if (CborNoError == cborEncoderResult)
+    {
+        *size = encoder.ptr - outPayload;
+        *payload = outPayload;
+        ret = OC_STACK_OK;
+    }
+
+exit:
+    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
+    {
+       // reallocate and try again!
+       OICFree(outPayload);
+       // Since the allocated initial memory failed, double the memory.
+       cborLen += encoder.ptr - encoder.end;
+       cborEncoderResult = CborNoError;
+       ret = DpairingToCBORPayload(dpair, payload, &cborLen);
+       *size = cborLen;
+    }
+
+    if ((CborNoError != cborEncoderResult) || (OC_STACK_OK != ret))
+    {
+       OICFree(outPayload);
+       outPayload = NULL;
+       *payload = NULL;
+       *size = 0;
+       ret = OC_STACK_ERROR;
+    }
+
+    return ret;
+}
+
+OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
+                                OicSecDpairing_t **secDpair)
+{
+    if (NULL == cborPayload || NULL == secDpair || NULL != *secDpair || 0 == size)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCStackResult ret = OC_STACK_ERROR;
+    *secDpair = NULL;
+
+    CborValue dpairCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
+    CborError cborFindResult = CborNoError;
+    int cborLen = size;
+
+    cbor_parser_init(cborPayload, cborLen, 0, &parser, &dpairCbor);
+    CborValue dpairMap = { .parser = NULL };
+    OicSecDpairing_t *dpair = NULL;
+    cborFindResult = cbor_value_enter_container(&dpairCbor, &dpairMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering DPairing Map");
+
+    dpair = (OicSecDpairing_t *)OICCalloc(1, sizeof(*dpair));
     VERIFY_NON_NULL(TAG, dpair, ERROR);
 
-    //SPM -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDpair, OIC_JSON_SPM_NAME);
-    if (jsonObj && cJSON_Number == jsonObj->type)
+    while (cbor_value_is_valid(&dpairMap))
     {
-        dpair->spm = (OicSecPrm_t)jsonObj->valueint;
-        OIC_LOG_V (DEBUG, TAG, "jsonObj->valueint = %d", jsonObj->valueint);
-        OIC_LOG_V (DEBUG, TAG, "dpair->spm = %d", dpair->spm);
+        char *name = NULL;
+        size_t len = 0;
+        cborFindResult = cbor_value_dup_text_string(&dpairMap, &name, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding tag name");
+        cborFindResult = cbor_value_advance(&dpairMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing a value in DPair map");
 
-        // don't need to check "PRM_NOT_ALLOWED <= dpair->spm" because of always true
-        VERIFY_SUCCESS(TAG, (PRM_RANDOM_PIN >= dpair->spm), ERROR);
-    }
-    else
-    {
-        dpair->spm = PRM_NOT_ALLOWED;
-    }
+        CborType type = cbor_value_get_type(&dpairMap);
 
-    //PDeviceId -- Mandatory
-    outLen = 0;
-    jsonObj = cJSON_GetObjectItem(jsonDpair, OIC_JSON_PDEVICE_ID_NAME);
-    if (jsonObj && cJSON_String == jsonObj->type)
-    {
-        b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(dpair->pdeviceID.id)), ERROR);
-        memcpy(dpair->pdeviceID.id, base64Buff, outLen);
-    }
-    else
-    {
-        memset(&dpair->pdeviceID, 0, sizeof(OicUuid_t));
-    }
+        if (0 == strcmp(OIC_JSON_SPM_NAME, name))
+        {
+            cborFindResult = cbor_value_get_int(&dpairMap, (int *) &dpair->spm);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SPM Value");
+        }
 
-    // ROwner -- Mandatory
-    outLen = 0;
-    jsonObj = cJSON_GetObjectItem(jsonDpair, OIC_JSON_ROWNER_NAME);
-    if (jsonObj && cJSON_String == jsonObj->type)
-    {
-        b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(dpair->rowner.id)), ERROR);
-        memcpy(dpair->rowner.id, base64Buff, outLen);
-    }
-    else
-    {
-        memset(&dpair->rowner, 0, sizeof(OicUuid_t));
+        if (0 == strcmp(OIC_JSON_PDEVICE_ID_NAME, name))
+        {
+            uint8_t *id = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&dpairMap, &id, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PDeviceID value");
+            memcpy(dpair->pdeviceID.id, id, len);
+            OICFree(id);
+        }
+
+        if (0 == strcmp(OIC_JSON_ROWNER_NAME, name))
+        {
+            uint8_t *id = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&dpairMap, &id, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RownerID value");
+            memcpy(dpair->rowner.id, id, len);
+            OICFree(id);
+        }
+
+        if (CborMapType != type && cbor_value_is_valid(&dpairMap))
+        {
+            cborFindResult = cbor_value_advance(&dpairMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing the Dpair Map");
+        }
+        OICFree(name);
     }
 
+    *secDpair = dpair;
     ret = OC_STACK_OK;
 
 exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
+    if (CborNoError != cborFindResult)
     {
+        OIC_LOG (ERROR, TAG, "CBORPayloadToDoxm failed");
         DeleteDpairingBinData(dpair);
         dpair = NULL;
+        ret = OC_STACK_ERROR;
     }
-
-    OIC_LOG(DEBUG, TAG, "JSONToDpairingBin() OUT");
-    return dpair;
+    return ret;
 }
-
 /**
  * Function to handle the handshake result in Direct-Pairing.
  * This function will be invoked after DTLS handshake
@@ -368,12 +387,17 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
     OIC_LOG (DEBUG, TAG, "Dpairing EntityHandle  processing POST request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicSecDpairing_t* newDpair = NULL;
+    OCStackResult res = OC_STACK_OK;
 
     const OicSecPconf_t *pconf = GetPconfResourceData();
     if (true == pconf->edp)
     {
-        // Convert JSON DPAIRING data into binary. This will also validate the DPAIRING data received.
-        newDpair = JSONToDpairingBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
+        uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData1;
+        size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
+        if (payload)
+        {
+            res = CBORPayloadToDpair(payload, size, &newDpair);
+        }
     }
     else
     {
@@ -381,7 +405,7 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
         ehRet = OC_EH_ERROR;
     }
 
-    if (newDpair && false == IsPairedDevice(&newDpair->pdeviceID))
+    if (OC_STACK_OK == res && newDpair && false == IsPairedDevice(&newDpair->pdeviceID))
     {
         // Check if valid Post request
         bool prmMached = false;
@@ -393,7 +417,8 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
                 break;
             }
         }
-        OIC_LOG_V(DEBUG, TAG, "Parsed spm is %s", prmMached ? "valid" : "invalid, send error response");
+        OIC_LOG_V(DEBUG, TAG, "Parsed spm is %s", prmMached ? "valid" :
+                "invalid, send error response");
 
         // Update local Dpairing with new Dpairing & prepare dtls session
         if (prmMached && '\0' != (char)newDpair->pdeviceID.id[0])
@@ -431,7 +456,8 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
 
             if(CA_STATUS_OK != CARegisterDTLSHandshakeCallback(DPairingDTLSHandshakeCB))
             {
-                OIC_LOG(WARNING, TAG, "DirectPairingHandler : Failed to register DTLS handshake callback.");
+                OIC_LOG(WARNING, TAG, "DirectPairingHandler : Failed to register"
+                        " DTLS handshake callback.");
                 goto exit;
             }
 #endif // __WITH_DTLS__
@@ -459,9 +485,9 @@ exit:
     }
 
     // Send payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
     {
-        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDpairingPostRequest");
+        OIC_LOG (ERROR, TAG, "SendSRMCBORResponse failed in HandleDpairingPostRequest");
     }
 
     DeleteDpairingBinData(newDpair);
@@ -475,12 +501,18 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicSecDpairing_t* newDpair = NULL;
+    OCStackResult res = OC_STACK_OK;
 
     const OicSecPconf_t *pconf = GetPconfResourceData();
     if (true == pconf->edp)
     {
-        // Convert JSON DPAIRING data into binary. This will also validate the DPAIRING data received.
-        newDpair = JSONToDpairingBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
+        uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData1;
+        size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
+        if (payload)
+        {
+            res = CBORPayloadToDpair(payload, size, &newDpair);
+        }
+
     }
     else
     {
@@ -488,7 +520,8 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         ehRet = OC_EH_ERROR;
     }
 
-    if (gDpair && newDpair)
+
+    if ((OC_STACK_OK == res) && gDpair && newDpair)
     {
         OIC_LOG(DEBUG, TAG, "Received direct-pairing finalization request");
 
@@ -503,9 +536,10 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         VERIFY_SUCCESS(TAG, (request->devAddr.flags | OC_FLAG_SECURE), ERROR);
 
         //Generate new credential
-        OIC_LOG_V(INFO, TAG, "SavePairingPSK for %s(%d)", request->devAddr.addr, request->devAddr.port);
+        OIC_LOG_V(INFO, TAG, "SavePairingPSK for %s(%d)", request->devAddr.addr,
+                request->devAddr.port);
         OCStackResult res = SavePairingPSK(&request->devAddr, &newDpair->pdeviceID,
-                                                                  (OicUuid_t *)&pconf->rowner, true);
+                (OicUuid_t *)&pconf->rowner, true);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 #endif //__WITH_DTLS__
 
@@ -525,11 +559,12 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             acl.recurrences = pdAcl->recurrences;
             acl.prdRecrLen = pdAcl->prdRecrLen;
 
-            char* aclJson = BinToAclJSON(&acl);
-            if (aclJson)
+            size_t size = 0;
+            uint8_t *payload = NULL;
+            if (OC_STACK_OK == AclToCBORPayload(&acl, &payload, &size))
             {
-                InstallNewACL(aclJson);
-                OICFree(aclJson);
+                InstallNewACL(payload, size);
+                OICFree(payload);
             }
         }
 
@@ -539,16 +574,17 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         //Initialize dpairing resource
         gDpair = NULL;
 
-        OIC_LOG (DEBUG, TAG, "/oic/sec/dpairing resource updated, direct-pairing finalization success");
+        OIC_LOG (DEBUG, TAG, "/oic/sec/dpairing resource updated,"
+                "direct-pairing finalization success");
         ehRet = OC_EH_OK;
     }
 
 exit:
 
     //Send payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
     {
-        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDpairingPutRequest");
+        OIC_LOG (ERROR, TAG, "SendSRMCBORResponse failed in HandleDpairingPutRequest");
     }
 
     DeleteDpairingBinData(newDpair);
@@ -593,7 +629,7 @@ OCEntityHandlerResult DpairingEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL);
+                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 
@@ -663,6 +699,3 @@ OCStackResult DeInitDpairingResource()
         return OC_STACK_ERROR;
     }
 }
-
-
-

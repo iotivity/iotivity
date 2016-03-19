@@ -106,7 +106,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
 
     if (err == CborNoError)
     {
-        if (curSize < INIT_SIZE)
+        if (curSize < INIT_SIZE && PAYLOAD_TYPE_SECURITY != payload->type)
         {
             uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
             VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
@@ -173,29 +173,21 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
 static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
         size_t* size)
 {
-    CborEncoder encoder;
-    cbor_encoder_init(&encoder, outPayload, *size, 0);
-
-    CborEncoder map;
-    int64_t err = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Creating security map");
-
-    if (payload->securityData)
+    if (*size < payload->payloadSize)
     {
-        err |= cbor_encode_text_string(&map, payload->securityData,
-                                      (size_t)(strlen(payload->securityData)));
-        VERIFY_CBOR_SUCCESS(TAG, err, "Encoding security data");
-    }
-    else
-    {
-        err |= cbor_encode_null(&map);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Encoding security data");
+        uint8_t *out2 = (uint8_t *)OICRealloc(outPayload, payload->payloadSize);
+        if (!out2)
+        {
+            OICFree(outPayload);
+            return CborErrorOutOfMemory;
+        }
+        outPayload = out2;
     }
 
-    err |= cbor_encoder_close_container(&encoder, &map);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Closing security map");
-exit:
-    return checkError(err, &encoder, outPayload, size);
+    memcpy(outPayload, payload->securityData1, payload->payloadSize);
+    *size = payload->payloadSize;
+
+    return CborNoError;
 }
 
 static char* OCStringLLJoin(OCStringLL* val)
