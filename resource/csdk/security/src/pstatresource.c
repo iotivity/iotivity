@@ -48,7 +48,7 @@ static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
 {
     false,                                    // bool isOwned
-    (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
+    (OicSecDpm_t)(BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
     PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t cm
     (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
     PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t tm
@@ -367,19 +367,15 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
         VERIFY_NON_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
-            if (pstat->tm != NORMAL)
+            if (false == (pstat->cm & TAKE_OWNER))
             {
-                gPstat->tm = pstat->tm;
-                if(0 == pstat->tm && gPstat->commitHash == pstat->commitHash)
-                {
-                    gPstat->isOp = true;
-                    gPstat->cm = NORMAL;
-                    OIC_LOG (INFO, TAG, "CommitHash is valid and isOp is TRUE");
-                }
-                else
-                {
-                    OIC_LOG(DEBUG, TAG, "CommitHash is not valid");
-                }
+                gPstat->isOp = true;
+                gPstat->cm = pstat->cm;
+                OIC_LOG (INFO, TAG, "Taken owner succeed and isOp is TRUE");
+            }
+            else
+            {
+                OIC_LOG(DEBUG, TAG, "Taken owner failed");
             }
             if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN && gPstat)
             {
@@ -545,8 +541,8 @@ void RestorePstatToInitState()
     {
         OIC_LOG(INFO, TAG, "PSTAT resource will revert back to initial status.");
 
-        gPstat->cm = NORMAL;
-        gPstat->tm = NORMAL;
+        gPstat->cm = (OicSecDpm_t)(gPstat->cm | TAKE_OWNER);
+        gPstat->tm = (OicSecDpm_t)(gPstat->tm & (~TAKE_OWNER));
         gPstat->om = SINGLE_SERVICE_CLIENT_DRIVEN;
         if(gPstat->sm && 0 < gPstat->smLen)
         {
@@ -555,7 +551,7 @@ void RestorePstatToInitState()
 
         if (!UpdatePersistentStorage(gPstat))
         {
-            OIC_LOG(ERROR, TAG, "Failed to revert DOXM in persistent storage");
+            OIC_LOG(ERROR, TAG, "Failed to revert PSTAT in persistent storage");
         }
     }
 }

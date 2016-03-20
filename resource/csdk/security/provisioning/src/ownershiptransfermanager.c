@@ -550,6 +550,12 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
             SetResult(otmCtx, OC_STACK_ERROR);
             return OC_STACK_DELETE_TRANSACTION;
         }
+        if(false == (TAKE_OWNER & pstat->cm))
+        {
+            OIC_LOG(ERROR, TAG, "Device pairing mode enabling owner transfer operations is disabled");
+            SetResult(otmCtx, OC_STACK_ERROR);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
         otmCtx->selectedDeviceInfo->pstat = pstat;
 
         //Select operation mode (Currently supported SINGLE_SERVICE_CLIENT_DRIVEN only)
@@ -1506,9 +1512,9 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    otmCtx->selectedDeviceInfo->pstat->tm = NORMAL;
-    otmCtx->selectedDeviceInfo->pstat->cm = PROVISION_ACLS | PROVISION_CREDENTIALS |
-                                            SECURITY_MANAGEMENT_SERVICES | BOOTSTRAP_SERVICE;
+    //Change the TAKE_OWNER bit of CM to 0.
+    otmCtx->selectedDeviceInfo->pstat->cm &= (~TAKE_OWNER);
+
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
     {
