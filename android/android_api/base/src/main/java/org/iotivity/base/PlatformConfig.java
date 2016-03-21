@@ -105,7 +105,7 @@ public class PlatformConfig {
      *                         specify port
      * @param qualityOfService quality of service
      */
-    //Avoid breaking building java samples due to persistent storage SVR DB changes.
+    // Avoid breaking building java samples due to persistent storage SVR DB changes.
     public PlatformConfig(Context context,
                           ServiceType serviceType,
                           ModeType modeType,
@@ -128,9 +128,9 @@ public class PlatformConfig {
      *                         specify port
      * @param qualityOfService quality of service
      */
-    //Avoid breaking building java samples due to persistent storage SVR DB changes.
+    // Avoid breaking building java samples due to persistent storage SVR DB changes.
     public PlatformConfig(Activity activity,
-    			     Context context,
+                          Context context,
                           ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
