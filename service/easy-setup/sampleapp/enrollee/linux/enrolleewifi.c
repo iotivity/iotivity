@@ -23,14 +23,12 @@
 
 #include <unistd.h>
 #include <string.h>
-#include <iostream>
+#include <stdio.h>
 #include <pthread.h>
 
 #define TAG "TS"
 
-using namespace std;
-
-void *listeningFunc(void*);
+void *listeningFunc(void *);
 
 /**
  * @var ssid
@@ -62,41 +60,41 @@ static bool gIsSecured = false;
 
 void PrintMenu()
 {
-    cout<<"============"<<endl;
-    cout<<"S: Enabled Security"<<endl;
-    cout<<"I: Init easy setup"<<endl;
-    cout<<"P: start provisioning resources"<<endl;
-    cout<<"T: terminate"<<endl;
-    cout<<"Q: quit"<<endl;
-    cout<<"============"<<endl;
+    printf("============\n");
+    printf("S: Enabled Security\n");
+    printf("I: Init easy setup\n");
+    printf("P: start provisioning resources\n");
+    printf("T: terminate\n");
+    printf("Q: quit\n");
+    printf("============\n");
 }
 
 void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
 {
-    cout<<"Easy setup event callback"<<endl;
+    printf("Easy setup event callback\n");
 
     if(esResult == ES_OK)
     {
         if(enrolleeState == ES_ON_BOARDED_STATE)
         {
-            cout<<"Device is successfully OnBoared on Adhoc network"<<endl;
+            printf("Device is successfully OnBoared on Adhoc network\n");
         }
         else if (enrolleeState == ES_PROVISIONED_STATE)
         {
-            cout<<"Device is provisioned with target network's credentials"<<endl;
+            printf("Device is provisioned with target network's credentials\n");
         }
         else if (enrolleeState == ES_ON_BOARDED_TARGET_NETWORK_STATE)
         {
-            cout<<"Device is onboarded/connected with target network"<<endl;
+            printf("Device is onboarded/connected with target network\n");
         }
         else
         {
-            cout<<"Wrong state !! Easy setup is failed at Enrollee state = "<<enrolleeState<<endl;
+            printf("Wrong state !! Easy setup is failed at Enrollee state = %d\n",enrolleeState);
         }
     }
     else
     {
-        cout<<"Easy stup is failed at Enrollee state = "<<enrolleeState<<endl;
+        printf("Easy stup is failed at Enrollee state = %d\n",enrolleeState);;
     }
 
     PrintMenu();
@@ -110,125 +108,129 @@ FILE* server_fopen(const char *path, const char *mode)
 
 void EnableSecurity()
 {
-    cout << "Inside EnableSecurity API.." << endl;
+    printf("Inside EnableSecurity API..\n");
 
     gIsSecured = true;
 
     // Initialize Persistent Storage for SVR database
-    ps = { server_fopen, fread, fwrite, fclose, unlink };
+    ps = (OCPersistentStorage){ server_fopen, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 }
 
 void StartEasySetup()
 {
-    cout<<"StartEasySetup and onboarding started.."<<endl;
+    printf("StartEasySetup and onboarding started..\n");
 
     if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
     {
-        cout<<"StartEasySetup and onboarding Fail!!"<<endl;
+        printf("StartEasySetup and onboarding Fail!!\n");
         return;
     }
 }
 
 void StartOICStackAndStartResources()
 {
-    cout<<"Starting Enrollee Provisioning"<<endl;
+    printf("Starting Enrollee Provisioning\n");
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        cout<<"OCStack init error!!"<<endl;
+        printf("OCStack init error!!\n");
         return;
     }
 
     if (InitProvisioning() == ES_ERROR)
     {
-        cout<<"Init Provisioning Failed!!"<<endl;
+        printf("Init Provisioning Failed!!\n");
         return;
     }
 
     pthread_t thread_handle;
     if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
     {
-        cout<<"Thread creation failed"<<endl;
+        printf("Thread creation failed\n");
     }
 
-    cout<<"InitProvisioning Success"<<endl;
+    printf("InitProvisioning Success\n");
 }
 
 void StopEasySetup()
 {
-    cout<<"StopEasySetup IN"<<endl;
+    printf("StopEasySetup IN\n");
 
     if (TerminateEasySetup() == ES_ERROR)
     {
-        cout<<"TerminateEasySetup Failed!!"<<endl;
+        printf("TerminateEasySetup Failed!!\n");
         return;
     }
 
     //stop OC Stack
     if (OCStop() != OC_STACK_OK)
     {
-        cout<<"OCStack stop failed!!"<<endl;
+        printf("OCStack stop failed!!\n");
         return;
     }
 
-    cout<<"StopEasySetup OUT"<<endl;
+    printf("StopEasySetup OUT\n");
 }
 
 int main()
 {
-    cout<<"#########################"<<endl;
-    cout<<"EasySetup Enrollee SAMPLE"<<endl;
-    cout<<"#########################"<<endl;
+    printf("#########################\n");
+    printf("EasySetup Enrollee SAMPLE\n");
+    printf("#########################\n");
     PrintMenu();
-    char option;
+    char option = 'T'; 
 
     while(true)
     {
-        cin>>option;
-        switch (option)
-        {
-            case 'H': // help
-            case 'h':
-                PrintMenu();
-                break;
+        scanf("%c",&option);
 
-            case 'Q': // quit
-            case 'q':
-                cout<<"quit";
-                break;
+       if(option!= '\n')
+      {
+            switch (option)
+            {
+                case 'H': // help
+                case 'h':
+                    PrintMenu();
+                    break;
 
-            case 'S': // Enable Security
-            case 's':
-                EnableSecurity();
-                break;
+                case 'Q': // quit
+                case 'q':
+                    printf("quit");
+                    break;
 
-            case 'I': // Init EasySetup
-            case 'i':
-                StartEasySetup();
-                break;
+                case 'S': // Enable Security
+                case 's':
+                    EnableSecurity();
+                    break;
 
-            case 'P': // start provisioning
-            case 'p':
-                StartOICStackAndStartResources();
-                break;
+                case 'I': // Init EasySetup
+                case 'i':
+                    StartEasySetup();
+                    break;
 
-            case 'T': // stop easy setup
-            case 't':
-                StopEasySetup();
-                break;
+                case 'P': // start provisioning
+                case 'p':
+                    StartOICStackAndStartResources();
+                    break;
 
-            default:
-                cout<<"wrong option"<<endl;
-                break;
+                case 'T': // stop easy setup
+                case 't':
+                    StopEasySetup();
+                    break;
+
+                default:
+                    printf("wrong option\n");
+                    break;
+            }
+            if (option == 'Q' || option == 'q') break;
         }
-        if (option == 'Q' || option == 'q') break;
     }
     return 0;
 }
 
-void *listeningFunc(void*)
+void *listeningFunc(void * a)
 {
     OCStackResult result;
 
@@ -237,7 +239,7 @@ void *listeningFunc(void*)
         result = OCProcess();
         if (result != OC_STACK_OK)
         {
-           cout<<"OCStack stop error";
+           printf("OCStack stop error");
         }
     }
     return NULL;

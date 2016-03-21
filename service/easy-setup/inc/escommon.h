@@ -21,16 +21,8 @@
 #ifndef ES_COMMON_H_
 #define ES_COMMON_H_
 
-#include <iostream>
-#include <string>
-#ifndef WITH_ARDUINO
-#include <memory>
-#endif
-
 #include "ocstack.h"
 #include "octypes.h"
-
-using namespace std;
 
 // Defines
 #define OIC_STRING_MAX_VALUE    100

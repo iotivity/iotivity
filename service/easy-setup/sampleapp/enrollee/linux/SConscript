@@ -59,7 +59,7 @@ enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'ocsrm', 'pth
 if enrollee_env.get('SECURED') == '1':
 	enrollee_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
 
-enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
+enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.c')
 
 i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)
 

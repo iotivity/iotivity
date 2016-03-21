@@ -49,6 +49,7 @@
 #include "onboarding.h"
 #include "resourcehandler.h"
 #include "softap.h"
+#include "easysetupcallbacks.h"
 
 #include "gtesthelper.h"
 
@@ -65,8 +66,6 @@ static const char TAG[] = "TestHarness";
 
 char ssid[] = "EasySetup123";
 char passwd[] = "EasySetup123";
-
-void OnboardingCallback(ESResult esResult);
 
 //-----------------------------------------------------------------------------
 // Callback functions

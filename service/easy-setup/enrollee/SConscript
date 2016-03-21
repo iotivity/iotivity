@@ -59,7 +59,8 @@ enrollee_env.PrependUnique(CPPPATH = [
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/inc',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino'])
 
 if enrollee_env.get('SECURED') == '1':
 	enrollee_env.AppendUnique(CPPPATH = [
@@ -112,12 +113,12 @@ if target_os == 'arduino':
 es_enrollee_src = None
 
 if target_os == 'linux':
-	es_enrollee_common_src =	[enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/softapnative.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/networkhandler.cpp']
+	es_enrollee_common_src =	[enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/softapnative.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/networkhandler.c']
 
 	enrollee_env.AppendUnique(es_enrollee_src = es_enrollee_common_src)
 
@@ -126,21 +127,21 @@ if target_os == 'linux':
 
 if target_os == 'tizen':
 	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', [
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.cpp',
-         	enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/networkhandler.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/softapnative.cpp'])
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
+         	enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/networkhandler.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/softapnative.c'])
 	enrollee_env.InstallTarget(enrollee_sdk_shared, 'libESEnrolleeSDK')
 	enrollee_env.UserInstallTargetLib(enrollee_sdk_shared, 'libESEnrolleeSDK')
 
 if target_os == 'arduino':
 	es_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', [
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.cpp',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/easysetup.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/onboarding.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/softap.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/resourcehandler.cpp',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi/networkhandler.cpp'])
 	enrollee_env.InstallTarget(es_sdk_static, 'libESEnrolleeSDK')
 
