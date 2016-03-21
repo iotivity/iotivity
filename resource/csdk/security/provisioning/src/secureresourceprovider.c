@@ -629,17 +629,19 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback)
 {
-    if (!pDev1 || !pDev2 || !pDev1->doxm || !pDev2->doxm)
+    VERIFY_NON_NULL(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
+    if (SYMMETRIC_PAIR_WISE_KEY == type)
     {
-        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL parameters");
-        return OC_STACK_INVALID_PARAM;
+        VERIFY_NON_NULL(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
     }
+    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
     if (!resultCallback)
     {
         OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
-    if (0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    if (SYMMETRIC_PAIR_WISE_KEY == type && 
+        0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
     {
         OIC_LOG(INFO, TAG, "SRPUnlinkDevices : Same device ID");
         return OC_STACK_INVALID_PARAM;
