@@ -266,24 +266,14 @@ namespace OIC
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "Host address of the resource: %s", hostAddress.c_str());
 
-                    std::size_t foundIP =
-                        hostAddress.find(
-                                std::string(m_wifiOnboardingconn.ipAddress));
-
-                    if(resourceURI == ES_PROV_RES_URI && foundIP!=std::string::npos)
-                    {
-                        m_ocResource = resource;
-                        m_discoveryResponse = true;
-
-                        OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                                "Found the device with the resource");
-
-                        return;
-                    }
-                    else
-                    {
-                        OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG, "NOT the intended resource.");
-                    }
+                    /*
+                     * Easysetup is always performed with a single Enrollee device and
+                     * in a private network (SoftAP or BLE), so the assumption is that
+                     * only the intended device will respond for the discovery.
+                     * With the above assumption the below two statements are written.
+                     */
+                    m_ocResource = resource;
+                    m_discoveryResponse = true;
                 }
                 else
                 {
