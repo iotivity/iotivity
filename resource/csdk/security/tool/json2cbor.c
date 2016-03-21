@@ -41,7 +41,7 @@
 #include "security_internals.h"
 
 #define TAG  "JSON2CBOR"
-#define MAX_RANGE   18446744073709551615
+#define MAX_RANGE   ((size_t)-1)
 //SVR database buffer block size
 static const size_t DB_FILE_SIZE_BLOCK = 1023;
 
@@ -768,7 +768,16 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                     jsonObjLen = strlen(jsonObj->valuestring) + 1;
                     cred->privateData.data = (uint8_t *)OICCalloc(1, jsonObjLen);
                     VERIFY_NON_NULL(TAG, (cred->privateData.data), ERROR);
-                    memcpy(cred->privateData.data, jsonObj->valuestring, jsonObjLen);
+                    outLen = 0;
+                    uint8_t pskKey[OWNER_PSK_LENGTH_256] = {};
+
+                    memset(pskKey, 0, sizeof(pskKey));
+                    b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring),
+                            pskKey, sizeof(pskKey), &outLen);
+                    VERIFY_SUCCESS(TAG, (b64Ret == B64_OK &&
+                                outLen <= OWNER_PSK_LENGTH_256), ERROR);
+                    memcpy(cred->privateData.data, pskKey, outLen);
+                    cred->privateData.len = outLen;
                 }
 #ifdef __WITH_X509__
                 else if (SIGNED_ASYMMETRIC_KEY == cred->credType && cJSON_Object == jsonObj->type)
