@@ -1,26 +1,94 @@
-[
-  {
-    "sub":"Kg",
-    "rsrc":["/oic/res","/oic/d","/oic/p","/oic/res/types/d","/oic/ad","/oic/sec/acl"],
-    "perms":2,
-    "ownrs":["MjIyMjIyMjIyMjIyMjIyMg"]
-  },
-  {
-    "sub":"Kg",
-    "rsrc":["/oic/sec/doxm","/oic/sec/pstat"],
-    "perms":6,
-    "ownrs":["MjIyMjIyMjIyMjIyMjIyMg"]
-  },
-  {
-    "sub":"MTExMTExMTExMTExMTExMQ",
-    "rsrc":["/oic/light","/oic/fan"],
-    "perms":255,
-    "ownrs":["MjIyMjIyMjIyMjIyMjIyMg"]
-  },
-  {
-    "sub":"MzMzMzMzMzMzMzMzMzMzMw",
-    "rsrc":["/oic/light","/oic/garage"],
-    "perms":255,
-    "ownrs":["MjIyMjIyMjIyMjIyMjIyMg","NDQ0NDQ0NDQ0NDQ0NDQ0NA"]
-  }
-]
+{
+	"acl":{
+		"aclist":{
+			"aces":[
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/res",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/p",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/res/types/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/ad",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/acl",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 2
+				},
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/sec/doxm",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/pstat",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 6
+				},
+				{
+					"subject": "31313131-3131-3131-3131-313131313131",
+					"resources": [
+						{
+							"href": "/oic/light",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/fan",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 31		
+				},
+				{
+					"subject": "33333333-3333-3333-3333-333333333333",
+					"resources": [
+						{
+							"href": "/oic/light",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/garage",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 31		
+				}
+			]
+		},
+		"rownerid" : "32323232-3232-3232-3232-323232323232"
+	}
+}
+

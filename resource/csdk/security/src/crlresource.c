@@ -50,7 +50,7 @@ static OicSecCrl_t         *gCrl        = NULL;
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching below max cbor size. */
-static const uint8_t CBOR_SIZE = 255;
+static const uint16_t CBOR_SIZE = 1024;
 
 // Max cbor size payload.
 static const uint16_t CBOR_MAX_SIZE = 4400;
@@ -264,6 +264,7 @@ exit:
         OIC_LOG (ERROR, TAG, "CBORPayloadToCrl failed");
         DeleteCrlBinData(crl);
         crl = NULL;
+        *secCrl = NULL;
         ret = OC_STACK_ERROR;
     }
     if (name)

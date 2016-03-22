@@ -55,7 +55,7 @@
 
 
 #define TAG ("DP")
-static const uint64_t CBOR_SIZE=255;
+static const uint16_t CBOR_SIZE = 1024;
 
 /**
  * Structure to carry direct-pairing API data to callback.

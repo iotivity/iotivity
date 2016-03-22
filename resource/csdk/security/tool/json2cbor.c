@@ -114,7 +114,9 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     }
 
     jsonRoot = cJSON_Parse(jsonStr);
+
     cJSON *value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
+    //printf("ACL json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t aclCborSize = 0;
     if (NULL != value)
     {
@@ -130,6 +132,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         printf("ACL Cbor Size: %zd\n", aclCborSize);
         DeleteACLList(acl);
     }
+
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
     size_t pstatCborSize = 0;
     if (NULL != value)
@@ -195,6 +198,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         DeleteSVCList(svc);
     }
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
+    //printf("CRED json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t credCborSize = 0;
     if (NULL != value)
     {
@@ -214,6 +218,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     cJSON_Delete(value);
     CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
     size_t cborSize = aclCborSize + pstatCborSize + doxmCborSize + svcCborSize + credCborSize + amaclCborSize;
+
     printf("Total Cbor Size : %zd\n", cborSize);
     cborSize += 255; // buffer margin for adding map and byte string
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborSize);
@@ -229,6 +234,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         cborEncoderResult = cbor_encode_byte_string(&map, aclCbor, aclCborSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Value.");
     }
+
     if (pstatCborSize > 0)
     {
         cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_PSTAT_NAME, strlen(OIC_JSON_PSTAT_NAME));
@@ -264,6 +270,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         cborEncoderResult = cbor_encode_byte_string(&map, credCbor, credCborSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CRED Value.");
     }
+
     cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Container.");
 
@@ -279,7 +286,8 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         fp1 = NULL;
     }
 exit:
-    // cJSON_Delete(jsonRoot);
+
+    cJSON_Delete(jsonRoot);
     OICFree(aclCbor);
     OICFree(doxmCbor);
     OICFree(pstatCbor);
@@ -293,21 +301,31 @@ exit:
 OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    OicSecAcl_t * headAcl = NULL;
-    OicSecAcl_t * prevAcl = NULL;
+    OicSecAcl_t * headAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
     cJSON *jsonRoot = NULL;
-    cJSON *jsonAclArray = NULL;
 
     VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
     jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
+    cJSON *jsonAclMap = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
+    VERIFY_NON_NULL(TAG, jsonAclMap, ERROR);
+
+    cJSON *jsonAclObj = NULL;
+
+    // aclist
+    jsonAclObj = cJSON_GetObjectItem(jsonAclMap, OIC_JSON_ACLIST_NAME);
+    VERIFY_NON_NULL(TAG, jsonAclObj, ERROR);
+
+    // aclist-aces
+    cJSON *jsonAclArray = NULL;
+    jsonAclArray = cJSON_GetObjectItem(jsonAclObj, OIC_JSON_ACES_NAME);
     VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
 
     if (cJSON_Array == jsonAclArray->type)
     {
+
         int numAcl = cJSON_GetArraySize(jsonAclArray);
         int idx = 0;
 
@@ -317,36 +335,45 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             cJSON *jsonAcl = cJSON_GetArrayItem(jsonAclArray, idx);
             VERIFY_NON_NULL(TAG, jsonAcl, ERROR);
 
-            OicSecAcl_t *acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
-            VERIFY_NON_NULL(TAG, acl, ERROR);
-
-            headAcl = (headAcl) ? headAcl : acl;
-            if (prevAcl)
+            OicSecAcl_t *acl = NULL;
+            if(idx == 0)
             {
-               prevAcl->next = acl;
+                acl = headAcl;
             }
+            else
+            {
+                acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+                OicSecAcl_t *temp = headAcl;
+                while (temp->next)
+                {
+                    temp = temp->next;
+                }
+                temp->next = acl;
+            }
+
+            VERIFY_NON_NULL(TAG, acl, ERROR);
 
             size_t jsonObjLen = 0;
             cJSON *jsonObj = NULL;
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            outLen = 0;
-            b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                       sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->subject.id)), ERROR);
-            memcpy(acl->subject.id, base64Buff, outLen);
-
+            if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+            {
+                acl->subject.id[0] = '*';
+            }
+            else
+            {
+                ret = ConvertStrToUuid(jsonObj->valuestring, &acl->subject);
+                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+            }
             // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            acl->resourcesLen = cJSON_GetArraySize(jsonObj);
+            acl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
+
             VERIFY_SUCCESS(TAG, acl->resourcesLen > 0, ERROR);
             acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
@@ -357,10 +384,17 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                 cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
                 VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
 
-                jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
-                acl->resources[idxx] = (char*)OICMalloc(jsonObjLen);
+                size_t jsonRsrcObjLen = 0;
+                cJSON *jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_HREF_NAME);
+                VERIFY_NON_NULL(TAG, jsonRsrcObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
+
+                jsonRsrcObjLen = strlen(jsonRsrcObj->valuestring) + 1;
+                acl->resources[idxx] = (char*)OICMalloc(jsonRsrcObjLen);
+
                 VERIFY_NON_NULL(TAG, (acl->resources[idxx]), ERROR);
-                OICStrcpy(acl->resources[idxx], jsonObjLen, jsonRsrc->valuestring);
+                OICStrcpy(acl->resources[idxx], jsonRsrcObjLen, jsonRsrcObj->valuestring);
+
             } while ( ++idxx < acl->resourcesLen);
 
             // Permissions -- Mandatory
@@ -368,9 +402,8 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
             acl->permission = jsonObj->valueint;
-
             //Period -- Not Mandatory
-            cJSON *jsonPeriodObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERIODS_NAME);
+            cJSON *jsonPeriodObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERIOD_NAME);
             if(jsonPeriodObj)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type, ERROR);
@@ -393,11 +426,11 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     }
                 }
             }
-
             //Recurrence -- Not mandatory
             cJSON *jsonRecurObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RECURRENCES_NAME);
             if(jsonRecurObj)
             {
+
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type, ERROR);
 
                 if(acl->prdRecrLen > 0)
@@ -418,33 +451,22 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                 }
             }
 
-            // Owners -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
+            acl->next = NULL;
 
-            acl->ownersLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, acl->ownersLen > 0, ERROR);
-            acl->owners = (OicUuid_t*)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
-
-            idxx = 0;
-            do
-            {
-                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-                outLen = 0;
-                b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-                            sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->owners[idxx].id)),
-                                    ERROR);
-                memcpy(acl->owners[idxx].id, base64Buff, outLen);
-            } while ( ++idxx < acl->ownersLen);
-
-            prevAcl = acl;
         } while( ++idx < numAcl);
     }
+
+
+    // rownerid
+    jsonAclObj = cJSON_GetObjectItem(jsonAclMap, OIC_JSON_ROWNERID_NAME);
+    VERIFY_NON_NULL(TAG, jsonAclObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_String == jsonAclObj->type, ERROR);
+    headAcl->ownersLen = 1;
+    VERIFY_SUCCESS(TAG, headAcl->ownersLen > 0, ERROR);
+    headAcl->owners = (OicUuid_t*)OICCalloc(headAcl->ownersLen, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, (headAcl->owners), ERROR);
+    ret = ConvertStrToUuid(jsonAclObj->valuestring, &headAcl->owners[0]);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
     ret = OC_STACK_OK;
 
@@ -460,6 +482,7 @@ exit:
 
 OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
 {
+    printf("IN JSONToDoxmBin\n");
     if (NULL == jsonStr)
     {
         return NULL;
@@ -507,10 +530,10 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
     }
 
     //Oxm -- not Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_NAME);
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXMS_NAME);
     if (jsonObj && cJSON_Array == jsonObj->type)
     {
-        doxm->oxmLen = cJSON_GetArraySize(jsonObj);
+        doxm->oxmLen = (size_t)cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
 
         doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
@@ -556,6 +579,14 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         doxm->dpc = jsonObj->valueint;
     }
 
+    //DidFormat -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_FORMAT_NAME);
+    if (jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+        //TODO: handle didformat value
+    }
+
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
     if (jsonObj)
@@ -566,29 +597,34 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
             //Check for empty string, in case DeviceId field has not been set yet
             if (jsonObj->valuestring[0])
             {
-                outLen = 0;
-                b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                       sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(doxm->deviceID.id)),
-                               ERROR);
-                memcpy(doxm->deviceID.id, base64Buff, outLen);
+                ret = ConvertStrToUuid(jsonObj->valuestring, &doxm->deviceID);
+                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
             }
         }
     }
 
-    //Owner -- will be empty when device status is unowned.
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNER_NAME);
+    //rowner -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_ROWNERID_NAME);
     if (true == doxm->owned)
     {
         VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     }
     if (jsonObj)
     {
-        outLen = 0;
-        b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-              sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS(TAG, ((b64Ret == B64_OK) && (outLen <= sizeof(doxm->owner.id))), ERROR);
-        memcpy(doxm->owner.id, base64Buff, outLen);
+        ret = ConvertStrToUuid(jsonObj->valuestring, &doxm->rownerID);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+    }
+
+    //Owner -- will be empty when device status is unowned.
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVOWNERID_NAME);
+    if (true == doxm->owned)
+    {
+        VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    }
+    if (jsonObj)
+    {
+        ret = ConvertStrToUuid(jsonObj->valuestring, &doxm->owner);
+                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
     }
 
     ret = OC_STACK_OK;
@@ -600,12 +636,13 @@ exit:
         DeleteDoxmBinData(doxm);
         doxm = NULL;
     }
-
+    printf("OUT JSONToDoxmBin\n");
     return doxm;
 }
 
 OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
 {
+    printf("IN JSONToPstatBin\n");
     if(NULL == jsonStr)
     {
         return NULL;
@@ -636,20 +673,24 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_DEVICE_ID_NAME);
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-    b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                  sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(pstat->deviceID.id)), ERROR);
-    memcpy(pstat->deviceID.id, base64Buff, outLen);
+    ret = ConvertStrToUuid(jsonObj->valuestring, &pstat->deviceID);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
-    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ROWNERID_NAME);
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-    pstat->commitHash  = jsonObj->valueint;
+    VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+    ret = ConvertStrToUuid(jsonObj->valuestring, &pstat->rownerID);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_CM_NAME);
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
     pstat->cm  = (OicSecDpm_t)jsonObj->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_TM_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+    pstat->tm  = (OicSecDpm_t)jsonObj->valueint;
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
@@ -680,6 +721,7 @@ exit:
     {
         OIC_LOG(ERROR, TAG, "JSONToPstatBin failed");
     }
+    printf("OUT JSONToPstatBin\n");
     return pstat;
 }
 
@@ -959,75 +1001,85 @@ exit:
 static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    OicSecAmacl_t * headAmacl = NULL;
-    OicSecAmacl_t * prevAmacl = NULL;
+    OicSecAmacl_t * headAmacl = (OicSecAmacl_t*)OICCalloc(1, sizeof(OicSecAmacl_t));
+
     cJSON *jsonRoot = NULL;
-    cJSON *jsonAmaclArray = NULL;
+    cJSON *jsonAmacl = NULL;
 
     VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
     jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    jsonAmaclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
-    VERIFY_NON_NULL(TAG, jsonAmaclArray, INFO);
+    jsonAmacl = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
+    VERIFY_NON_NULL(TAG, jsonAmacl, INFO);
 
-    if (cJSON_Array == jsonAmaclArray->type)
+    size_t jsonObjLen = 0;
+     cJSON *jsonObj = NULL;
+
+    // Resources -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_RESOURCES_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+
+    // Rlist
+    cJSON *jsonRlistArray = cJSON_GetObjectItem(jsonObj, OIC_JSON_RLIST_NAME);
+    VERIFY_NON_NULL(TAG, jsonRlistArray, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Array == jsonRlistArray->type, ERROR);
+
+    headAmacl->resourcesLen = (size_t)cJSON_GetArraySize(jsonRlistArray);
+    headAmacl->resources = (char**)OICCalloc(headAmacl->resourcesLen, sizeof(char*));
+    size_t idxx = 0;
+    do
     {
-        int numAmacl = cJSON_GetArraySize(jsonAmaclArray);
-        int idx = 0;
+        cJSON *jsonRsrc = cJSON_GetArrayItem(jsonRlistArray, idxx);
+        VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
 
-        VERIFY_SUCCESS(TAG, numAmacl > 0, INFO);
-        do
-        {
-            cJSON *jsonAmacl = cJSON_GetArrayItem(jsonAmaclArray, idx);
-            VERIFY_NON_NULL(TAG, jsonAmacl, ERROR);
+        cJSON *jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_HREF_NAME);
+        VERIFY_NON_NULL(TAG, jsonRsrcObj, ERROR);
+        VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
 
-            OicSecAmacl_t *amacl = (OicSecAmacl_t*)OICCalloc(1, sizeof(OicSecAmacl_t));
-            VERIFY_NON_NULL(TAG, amacl, ERROR);
+        size_t jsonRsrcObjLen = 0;
+        jsonRsrcObjLen = strlen(jsonRsrcObj->valuestring) + 1;
+        headAmacl->resources[idxx] = (char*)OICMalloc(jsonRsrcObjLen);
+        VERIFY_NON_NULL(TAG, (headAmacl->resources[idxx]), ERROR);
+        OICStrcpy(headAmacl->resources[idxx], jsonRsrcObjLen, jsonRsrcObj->valuestring);
 
-            headAmacl = (headAmacl) ? headAmacl : amacl;
-            if (prevAmacl)
-            {
-                prevAmacl->next = amacl;
-            }
+    } while ( ++idxx < headAmacl->resourcesLen);
 
-            size_t jsonObjLen = 0;
-            cJSON *jsonObj = NULL;
+    // Ams -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_AMS_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            // Resources -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_RESOURCES_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
+    headAmacl->amssLen = (size_t)cJSON_GetArraySize(jsonObj);
+    VERIFY_SUCCESS(TAG, headAmacl->amssLen > 0, ERROR);
+    headAmacl->amss = (OicUuid_t*)OICCalloc(headAmacl->amssLen, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, headAmacl->amss, ERROR);
 
-            amacl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, amacl->resourcesLen > 0, ERROR);
-            amacl->resources = (char**)OICCalloc(amacl->resourcesLen, sizeof(char*));
-            VERIFY_NON_NULL(TAG, (amacl->resources), ERROR);
+    idxx = 0;
+    do
+    {
+        cJSON *jsonAms = cJSON_GetArrayItem(jsonObj, idxx);
+        VERIFY_NON_NULL(TAG, jsonAms, ERROR);
+        VERIFY_SUCCESS(TAG, cJSON_String == jsonAms->type, ERROR);
 
-            size_t idxx = 0;
-            do
-            {
-                cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
+        memcpy(headAmacl->amss[idxx].id, (OicUuid_t *)jsonAms->valuestring, strlen(jsonAms->valuestring));
 
-                jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
-                amacl->resources[idxx] = (char*)OICMalloc(jsonObjLen);
-                VERIFY_NON_NULL(TAG, (amacl->resources[idxx]), ERROR);
-                OICStrcpy(amacl->resources[idxx], jsonObjLen, jsonRsrc->valuestring);
-            } while ( ++idxx < amacl->resourcesLen);
+    } while ( ++idxx < headAmacl->amssLen);
 
-            // Amss -- Mandatory
-            VERIFY_SUCCESS( TAG, OC_STACK_OK == AddUuidArray(jsonAmacl, OIC_JSON_AMSS_NAME,
-                               &(amacl->amssLen), &(amacl->amss)), ERROR);
 
-            // Owners -- Mandatory
-            VERIFY_SUCCESS( TAG, OC_STACK_OK == AddUuidArray(jsonAmacl, OIC_JSON_OWNERS_NAME,
-                               &(amacl->ownersLen), &(amacl->owners)), ERROR);
+    // Rowner -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_ROWNERID_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
 
-            prevAmacl = amacl;
-        } while( ++idx < numAmacl);
-    }
+    headAmacl->ownersLen = 1;
+    VERIFY_SUCCESS(TAG, headAmacl->ownersLen > 0, ERROR);
+    headAmacl->owners = (OicUuid_t*)OICCalloc(headAmacl->ownersLen, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, (headAmacl->owners), ERROR);
+
+    ret = ConvertStrToUuid(jsonObj->valuestring, &headAmacl->owners[0]);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
     ret = OC_STACK_OK;
 

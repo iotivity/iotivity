@@ -34,13 +34,15 @@
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
-static const uint8_t CBOR_SIZE = 255;
+static const uint16_t CBOR_SIZE = 1024;
 
 /* Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 /** AMACL Map size - Number of mandatory items. */
 static const uint8_t AMACL_MAP_SIZE = 3;
+static const uint8_t AMACL_RSRC_MAP_SIZE = 1;
+static const uint8_t AMACL_RLIST_MAP_SIZE = 3;
 
 static OicSecAmacl_t *gAmacl = NULL;
 static OCResourceHandle gAmaclHandle = NULL;
@@ -102,85 +104,115 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
     *cborPayload = NULL;
 
     CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder amaclArray = { {.ptr = NULL }, .end = 0 };
+    CborEncoder amaclMap = { {.ptr = NULL }, .end = 0 };
     int64_t cborEncoderResult = CborNoError;
+    CborEncoder rsrcMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder rlistArray = { {.ptr = NULL }, .end = 0 };
+    CborEncoder amss = { {.ptr = NULL }, .end = 0 };
+    char *stRowner = NULL;
 
     const OicSecAmacl_t *amacl = amaclS;
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    // Create AMACL Array
-    cborEncoderResult |= cbor_encoder_create_array(&encoder, &amaclArray, OicSecAmaclCount(amacl));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMACL Array.");
+    // Create AMACL Map
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &amaclMap, AMACL_MAP_SIZE);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMACL Map.");
 
-    while (amacl)
-    {
-        CborEncoder amaclMap = { {.ptr = NULL }, .end = 0 };
-        cborEncoderResult |= cbor_encoder_create_map(&amaclArray, &amaclMap, AMACL_MAP_SIZE);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMACL MAP.");
-
-        // Resources -- Mandatory
-        {
-            CborEncoder resources = { {.ptr = NULL }, .end = 0};
-            cborEncoderResult |= cbor_encode_text_string(&amaclMap, OIC_JSON_RESOURCES_NAME,
+    // resources -- Mandatory
+    cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_RESOURCES_NAME,
                 strlen(OIC_JSON_RESOURCES_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Name Tag.");
-            cborEncoderResult |= cbor_encoder_create_array(&amaclMap, &resources, amacl->resourcesLen);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Name Array.");
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Name Tag.");
 
-            for (size_t i = 0; i < amacl->resourcesLen; i++)
-            {
-                cborEncoderResult |= cbor_encode_text_string(&resources, amacl->resources[i],
-                    strlen(amacl->resources[i]));
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Name Value in Array.");
+    cborEncoderResult = cbor_encoder_create_map(&amaclMap, &rsrcMap, AMACL_RSRC_MAP_SIZE);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Map.");
 
-            }
-            cborEncoderResult |= cbor_encoder_close_container(&amaclMap, &resources);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Resource Name ");
-        }
-        // Amss -- Mandatory
-        {
-            CborEncoder amss = { {.ptr = NULL }, .end = 0 };
-            cborEncoderResult |= cbor_encode_text_string(&amaclMap, OIC_JSON_AMSS_NAME,
-                strlen(OIC_JSON_AMSS_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Tag.");
-            cborEncoderResult |= cbor_encoder_create_array(&amaclMap, &amss, amacl->amssLen);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Array.");
-            for (size_t i = 0; i < amacl->amssLen; i++)
-            {
-                cborEncoderResult |= cbor_encode_byte_string(&amss, amacl->amss[i].id,
-                    sizeof(amacl->amss[i].id));
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Value.");
-            }
-            cborEncoderResult |= cbor_encoder_close_container(&amaclMap, &amss);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing AMSS Array.");
-        }
-        // Owners -- Mandatory
-        {
-            cborEncoderResult |= cbor_encode_text_string(&amaclMap, OIC_JSON_OWNERS_NAME,
-                strlen(OIC_JSON_OWNERS_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Owners Array Tag.");
-            CborEncoder owners = { {.ptr = NULL }, .end = 0};
-            cborEncoderResult |= cbor_encoder_create_array(&amaclMap, &owners, amacl->ownersLen);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Owners Array.");
 
-            for (size_t i = 0; i < amacl->ownersLen; i++)
-            {
-                cborEncoderResult |= cbor_encode_byte_string(&owners, (uint8_t *)amacl->owners[i].id,
-                    sizeof(amacl->owners[i].id));
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Owners Array Value.");
-            }
-            cborEncoderResult |= cbor_encoder_close_container(&amaclMap, &owners);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Owners Array.");
-        }
-        cborEncoderResult |= cbor_encoder_close_container(&amaclArray, &amaclMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing AMACL Map.");
+    cborEncoderResult = cbor_encode_text_string(&rsrcMap, OIC_JSON_RLIST_NAME,
+                strlen(OIC_JSON_RLIST_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RLIST Name Tag.");
 
-        amacl = amacl->next;
+    // TODO : Need to input array length by OicSecAmacl_t->resources->rlistLen based on spec.
+    cborEncoderResult = cbor_encoder_create_array(&rsrcMap, &rlistArray, amacl->resourcesLen);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RLIST Array.");
+
+    // TODO : Need to add OicSecAmacl_t->rlist as array rMap based on RAML spec.
+    for (size_t i = 0; i < amacl->resourcesLen; i++)
+    {
+        // TODO : Need to create rMap structure based on RAML spec.
+        CborEncoder rMap = { {.ptr = NULL }, .end = 0 };
+        cborEncoderResult = cbor_encoder_create_map(&rlistArray, &rMap, AMACL_RLIST_MAP_SIZE);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RLIST Map.");
+
+        cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_HREF_NAME,
+                strlen(OIC_JSON_HREF_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding HREF Name Tag.");
+        cborEncoderResult = cbor_encode_text_string(&rMap, amacl->resources[i],
+                strlen(amacl->resources[i]));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding HREF Value in Map.");
+
+        cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_RT_NAME,
+                strlen(OIC_JSON_RT_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+
+        // TODO : Need to assign real value of RT
+        cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_EMPTY_STRING,
+                strlen(OIC_JSON_EMPTY_STRING));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+
+        cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_IF_NAME,
+                strlen(OIC_JSON_IF_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+
+        // TODO : Need to assign real value of IF
+        cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_EMPTY_STRING,
+                strlen(OIC_JSON_EMPTY_STRING));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+
+        cborEncoderResult = cbor_encoder_close_container(&rlistArray, &rMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RLIST Array.");
     }
-    cborEncoderResult |= cbor_encoder_close_container(&encoder, &amaclArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Amacl Array.");
+
+    cborEncoderResult = cbor_encoder_close_container(&rsrcMap, &rlistArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RLIST Array.");
+
+
+    cborEncoderResult = cbor_encoder_close_container(&amaclMap, &rsrcMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Resource Map.");
+
+    // TODO : Need to modify type of OicSecAmacl_t->amss based on RAML spec.
+    // ams -- Mandatory
+    cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_AMS_NAME,
+                strlen(OIC_JSON_AMS_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Tag.");
+
+    cborEncoderResult = cbor_encoder_create_array(&amaclMap, &amss, amacl->amssLen);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMS Name Array.");
+    for (size_t i = 0; i < amacl->amssLen; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&amss, (const char *)amacl->amss[i].id,
+            sizeof(amacl->amss[i].id));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMS Name Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&amaclMap, &amss);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing AMSS Array.");
+
+    // TODO : Need to check owner property in the RAML spec.
+    // rowner
+    cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_ROWNERID_NAME,
+                strlen(OIC_JSON_ROWNERID_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding ROwnerID Name Tag.");
+
+    // TODO : Need to modify amacl->owners[0] to amacl->rownerid based on RAML spec.
+    ret = ConvertUuidToStr(&amacl->owners[0], &stRowner);
+    VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+    cborEncoderResult = cbor_encode_text_string(&amaclMap, stRowner, strlen(stRowner));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding ROwner Value.");
+    OICFree(stRowner);
+
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &amaclMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Amacl Map.");
 
     if (CborNoError == cborEncoderResult)
     {
@@ -206,7 +238,7 @@ exit:
        }
     }
 
-    if (CborNoError != cborEncoderResult)
+    if (CborNoError != cborEncoderResult || ret != OC_STACK_OK)
     {
        OICFree(outPayload);
        outPayload = NULL;
@@ -240,128 +272,177 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
     }
     cbor_parser_init(cborPayload, cborLen, 0, &parser, &amaclCbor);
 
-    OicSecAmacl_t *headAmacl = NULL;
+    OicSecAmacl_t *headAmacl = (OicSecAmacl_t *)OICCalloc(1, sizeof(OicSecAmacl_t));
 
-    CborValue amaclArray = { .parser = NULL };
-    cborFindResult = cbor_value_enter_container(&amaclCbor, &amaclArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Amacl Array.");
+    CborValue amaclMap = { .parser = NULL };
+    cborFindResult = cbor_value_enter_container(&amaclCbor, &amaclMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Amacl Map.");
 
-    while (cbor_value_is_valid(&amaclArray))
+    while(cbor_value_is_valid(&amaclMap))
     {
-        CborValue amaclMap = { .parser = NULL };
-        cborFindResult = cbor_value_enter_container(&amaclArray, &amaclMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Amacl Map.");
+        char *name = NULL;
+        size_t len = 0;
+        cborFindResult = cbor_value_dup_text_string(&amaclMap, &name, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Amacl Data Name Tag.");
+        cborFindResult = cbor_value_advance(&amaclMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Amacl Data Value.");
 
-        OicSecAmacl_t *amacl = (OicSecAmacl_t *) OICCalloc(1, sizeof(*amacl));
-        VERIFY_NON_NULL(TAG, amacl, ERROR);
+        //CborType type = cbor_value_get_type(&amaclMap);
 
-        while (cbor_value_is_valid(&amaclMap))
+        // Resources -- Mandatory
+        if (0 == strcmp(OIC_JSON_RESOURCES_NAME, name))
         {
-            char *name = NULL;
-            size_t len = 0;
-            cborFindResult = cbor_value_dup_text_string(&amaclMap, &name, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Amacl Name.");
+            // resource map
+            CborValue rsrcMap = { .parser = NULL  };
+            cborFindResult = cbor_value_enter_container(&amaclMap, &rsrcMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Resource Map");
+
+            while(cbor_value_is_valid(&rsrcMap))
+            {
+                // resource name
+                char *rsrcName = NULL;
+                size_t rsrcNameLen = 0;
+                cborFindResult = cbor_value_dup_text_string(&rsrcMap, &rsrcName, &rsrcNameLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Resource Data Name Tag.");
+                cborFindResult = cbor_value_advance(&rsrcMap);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Resource Data Value.");
+
+                // rlist
+                if (0 == strcmp(OIC_JSON_RLIST_NAME, rsrcName))
+                {
+                    int i = 0;
+                    // TODO : Need to assign array length to OicSecAmacl_t->resources->rlistLen based of RAML spec.
+                    cborFindResult = cbor_value_get_array_length(&rsrcMap, &headAmacl->resourcesLen);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rlist Array Len.");
+
+                    CborValue rsrcArray = { .parser = NULL  };
+
+                    // rlist array
+                    cborFindResult = cbor_value_enter_container(&rsrcMap, &rsrcArray);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Rlist Array");
+
+                    // TODO : Need to check data structure of OicSecAmacl_t based on RAML spec.
+                    headAmacl->resources = (char **) OICCalloc(headAmacl->resourcesLen, sizeof(*headAmacl->resources));
+                    VERIFY_NON_NULL(TAG, headAmacl->resources, ERROR);
+
+                    while (cbor_value_is_valid(&rsrcArray))
+                    {
+                        // rMap
+                        CborValue rMap = { .parser = NULL  };
+                        cborFindResult = cbor_value_enter_container(&rsrcArray, &rMap);
+                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Rlist Map");
+
+                        while(cbor_value_is_valid(&rMap))
+                        {
+                            char *rMapName = NULL;
+                            size_t rMapNameLen = 0;
+                            cborFindResult = cbor_value_dup_text_string(&rMap, &rMapName, &rMapNameLen, NULL);
+                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RMap Data Name Tag.");
+                            cborFindResult = cbor_value_advance(&rMap);
+                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RMap Data Value.");
+
+                            // "href"
+                            if (0 == strcmp(OIC_JSON_HREF_NAME, rMapName))
+                            {
+                                // TODO : Need to check data structure of OicSecAmacl_t based on RAML spec.
+                                cborFindResult = cbor_value_dup_text_string(&rMap, &headAmacl->resources[i++], &len, NULL);
+                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Href Value.");
+                            }
+
+                            // "rt"
+                            if (0 == strcmp(OIC_JSON_RT_NAME, rMapName))
+                            {
+                                // TODO : Need to check data structure of OicSecAmacl_t and assign based on RAML spec.
+                                char *rtData = NULL;
+                                cborFindResult = cbor_value_dup_text_string(&rMap, &rtData, &len, NULL);
+                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RT Value.");
+                                OICFree(rtData);
+                            }
+
+                            // "if"
+                            if (0 == strcmp(OIC_JSON_IF_NAME, rMapName))
+                            {
+                                // TODO : Need to check data structure of OicSecAmacl_t and assign based on RAML spec.
+                                char *ifData = NULL;
+                                cborFindResult = cbor_value_dup_text_string(&rMap, &ifData, &len, NULL);
+                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding IF Value.");
+                                OICFree(ifData);
+                            }
+
+                            if (cbor_value_is_valid(&rMap))
+                            {
+                                cborFindResult = cbor_value_advance(&rMap);
+                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Rlist Map.");
+                            }
+                            OICFree(rMapName);
+                        }
+
+                        if (cbor_value_is_valid(&rsrcArray))
+                        {
+                            cborFindResult = cbor_value_advance(&rsrcArray);
+                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Resource Array.");
+                        }
+                    }
+                }
+
+                if (cbor_value_is_valid(&rsrcMap))
+                {
+                    cborFindResult = cbor_value_advance(&rsrcMap);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Resource Map.");
+                }
+                OICFree(rsrcName);
+            }
+
+        }
+
+        // TODO : Need to modify type of OicSecAmacl_t->amss based on RAML spec.
+         // Ams -- Mandatory
+        if (0 == strcmp(OIC_JSON_AMS_NAME, name))
+        {
+            int i = 0;
+            CborValue amsArray = { .parser = NULL };
+            cborFindResult = cbor_value_get_array_length(&amaclMap, &headAmacl->amssLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding AMS Array Len.");
+            cborFindResult = cbor_value_enter_container(&amaclMap, &amsArray);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering AMS Array Container.");
+            headAmacl->amss = (OicUuid_t *)OICCalloc(headAmacl->amssLen, sizeof(*headAmacl->amss));
+            VERIFY_NON_NULL(TAG, headAmacl->amss, ERROR);
+            while (cbor_value_is_valid(&amsArray))
+            {
+                char *amssId = NULL;
+                cborFindResult = cbor_value_dup_text_string(&amsArray, &amssId, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding AMS Id.");
+                cborFindResult = cbor_value_advance(&amsArray);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing AMS.");
+                memcpy(headAmacl->amss[i++].id, (OicUuid_t *)amssId, len);
+                OICFree(amssId);
+            }
+        }
+
+        // TODO : Need to modify headAmacl->owners[0].id to headAmacl->rowner based on RAML spec.
+        // Rowner -- Mandatory
+        if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name))
+        {
+            char *stRowner = NULL;
+            cborFindResult = cbor_value_dup_text_string(&amaclMap, &stRowner, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ROwner Value.");
+            headAmacl->ownersLen = 1;
+            headAmacl->owners = (OicUuid_t *)OICCalloc(headAmacl->ownersLen, sizeof(*headAmacl->owners));
+            VERIFY_NON_NULL(TAG, headAmacl->owners, ERROR);
+            ret = ConvertStrToUuid(stRowner, &headAmacl->owners[0]);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+            OICFree(stRowner);
+        }
+
+        //if (CborMapType != type && cbor_value_is_valid(&amaclMap))
+        if (cbor_value_is_valid(&amaclMap))
+        {
             cborFindResult = cbor_value_advance(&amaclMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Amacl Advance.");
-
-            CborType type = cbor_value_get_type(&amaclMap);
-
-            // Resources -- Mandatory
-            if (0 == strcmp(OIC_JSON_RESOURCES_NAME, name))
-            {
-                CborValue resources = { .parser = NULL  };
-                cborFindResult = cbor_value_get_array_length(&amaclMap, &amacl->resourcesLen);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Resource Name Array Len.");
-
-                cborFindResult = cbor_value_enter_container(&amaclMap, &resources);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Amacl Array.");
-
-                amacl->resources = (char **) OICCalloc(amacl->resourcesLen, sizeof(*amacl->resources));
-                VERIFY_NON_NULL(TAG, amacl->resources, ERROR);
-                int i = 0;
-                while (cbor_value_is_text_string(&resources))
-                {
-                    cborFindResult = cbor_value_dup_text_string(&resources, &amacl->resources[i++],
-                        &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Resource Name Value.");
-                    cborFindResult = cbor_value_advance(&resources);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Resource Name.");
-                }
-            }
-
-            // Amss -- Mandatory
-            if (0 == strcmp(OIC_JSON_AMSS_NAME, name))
-            {
-                CborValue amss = { .parser = NULL };
-                cborFindResult = cbor_value_get_array_length(&amaclMap, &amacl->amssLen);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering AMSS Name Array Len.");
-                cborFindResult = cbor_value_enter_container(&amaclMap, &amss);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering AMSS Name Container.");
-                int i = 0;
-                amacl->amss = (OicUuid_t *)OICCalloc(amacl->amssLen, sizeof(*amacl->amss));
-                VERIFY_NON_NULL(TAG, amacl->amss, ERROR);
-                while (cbor_value_is_valid(&amss))
-                {
-                    uint8_t *amssId = NULL;
-                    cborFindResult = cbor_value_dup_byte_string(&amss, &amssId, &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding AMSS Id.");
-                    cborFindResult = cbor_value_advance(&amss);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing AMSS.");
-                    memcpy(amacl->amss[i++].id, amssId, len);
-                    OICFree(amssId);
-                }
-            }
-
-            // Owners -- Mandatory
-            if (0 == strcmp(OIC_JSON_OWNERS_NAME, name))
-            {
-                CborValue owners = { .parser = NULL };
-                cborFindResult = cbor_value_get_array_length(&amaclMap, &amacl->ownersLen);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding Owner Name Len.");
-                cborFindResult = cbor_value_enter_container(&amaclMap, &owners);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Container Owner Array.");
-                int i = 0;
-                amacl->owners = (OicUuid_t *)OICCalloc(amacl->ownersLen, sizeof(*amacl->owners));
-                VERIFY_NON_NULL(TAG, amacl->owners, ERROR);
-                while (cbor_value_is_valid(&owners))
-                {
-                    uint8_t *owner = NULL;
-                    cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding Owners Array Value.");
-                    cborFindResult = cbor_value_advance(&owners);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Owners Array");
-                    memcpy(amacl->owners[i++].id, owner, len);
-                    OICFree(owner);
-                }
-            }
-            if (CborMapType != type && cbor_value_is_valid(&amaclMap))
-            {
-                cborFindResult = cbor_value_advance(&amaclMap);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Amacl Map.");
-            }
-            OICFree(name);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Amacl Map.");
         }
-
-        amacl->next = NULL;
-        if (NULL == headAmacl)
-        {
-            headAmacl = amacl;
-        }
-        else
-        {
-            OicSecAmacl_t *temp = headAmacl;
-            while (temp->next)
-            {
-                temp = temp->next;
-            }
-            temp->next = amacl;
-        }
-        if (cbor_value_is_valid(&amaclArray))
-        {
-            cborFindResult = cbor_value_advance(&amaclArray);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing AMACL Array.");
-        }
+        OICFree(name);
     }
+
     *secAmacl = headAmacl;
     ret = OC_STACK_OK;
 
@@ -370,6 +451,7 @@ exit:
     {
         DeleteAmaclList(headAmacl);
         headAmacl = NULL;
+        *secAmacl = NULL;
         ret = OC_STACK_ERROR;
     }
     return ret;

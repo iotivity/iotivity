@@ -1,52 +1,70 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/d",
-                "/oic/p",
-                "/oic/res/types/d",
-                "/oic/ad",
-                "/oic/sec/acl",
-                "/oic/sec/amacl"
-			],
-			"perms": 2,
-			"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
-		},
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/doxm",
-                "/oic/sec/pstat"
-             ],
-             "perms": 2,
-             "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
-        }
-	],
-	"pstat":	{
-		"isop":	true,
-		"deviceid":	"ZGV2aWNlaWQAAAAAABhanw==",
-		"ch": 0,
-		"cm":	0,
-		"tm":	0,
-		"om":	3,
-		"sm":	[3]
+	"acl": 
+	{
+		"aclist": 
+		{
+			"aces": 
+			[
+				{
+					"subject": "*", 
+					"resources": 
+					[
+						{"href": "/oic/res", "rt": "", "if": ""}, 
+						{"href": "/oic/d", "rt": "", "if": ""}, 
+						{"href": "/oic/p", "rt": "", "if": ""}, 
+						{"href": "/oic/res/types/d", "rt": "", "if": ""}, 
+						{"href": "/oic/ad", "rt": "", "if": ""}, 
+						{"href": "/oic/sec/acl", "rt": "", "if": ""},
+						{"href": "/oic/sec/amacl", "rt": "", "if": ""}
+					], 
+					"permission": 2
+				}, 
+				{
+					"subject": "*", 
+					"resources": 
+					[
+						{"href": "/oic/sec/doxm", "rt": "", "if": ""}, 
+						{"href": "/oic/sec/pstat", "rt": "", "if": ""}
+					], 
+					"permission": 2
+				}
+			]
+		}, 
+		"rownerid": "32323232-3232-3232-3232-323232323232"
+	}, 
+
+	"pstat": 
+	{
+		"isop": true, 
+		"deviceid": "32323232-3232-3232-3232-323232323232", 
+		"cm": 2, 
+		"tm": 0, 
+		"om": 3, 
+		"sm": [3], 
+		"rownerid": "32323232-3232-3232-3232-323232323232"
+	}, 
+
+	"doxm": 
+	{
+		"oxms": [0], 
+		"oxmsel": 0, 
+		"sct": 1, 
+		"owned": true, 
+		"didformat": 0, 
+		"deviceid": "32323232-3232-3232-3232-323232323232", 
+		"devownerid": "32323232-3232-3232-3232-323232323232", 
+		"rownerid": "32323232-3232-3232-3232-323232323232"
 	},
-	"doxm":	{
-		"oxm":	[0],
-		"oxmsel": 0,
-		"sct": 1,
-		"owned": true,
-		"deviceid":	"MjIyMjIyMjIyMjIyMjIyMg==",
-		"ownr":	"MjIyMjIyMjIyMjIyMjIyMg=="
-	},
-    "cred":	[{
-		"credid": 1,
-		"sub": "MTExMTExMTExMTExMTExMQ==",
-		"credtyp": 1,
-		"prd": "20150630T060000/20990920T220000",
-		"pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
-	}]
+
+	"cred":	
+	[
+		{
+			"credid": 1,
+			"subject": "MTExMTExMTExMTExMTExMQ==",
+			"credtype": 1,
+			"period": "20150630T060000/20990920T220000",
+			"privatedata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+      "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+		}
+	]
 }

@@ -37,7 +37,7 @@
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
-static const uint8_t CBOR_SIZE = 255;
+static const uint16_t CBOR_SIZE = 512;
 
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
@@ -103,53 +103,54 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create SVC Array
-    cborEncoderResult |= cbor_encoder_create_array(&encoder, &svcArray, svcElementsCount(svc));
+    cborEncoderResult = cbor_encoder_create_array(&encoder, &svcArray, svcElementsCount(svc));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Create SVC Array.");
 
     while (svc)
     {
-        CborEncoder svcMap;
-        cborEncoderResult |= cbor_encoder_create_map(&svcArray, &svcMap, SVC_MAP_SIZE);
+        CborEncoder svcMap = {{.ptr = NULL }, .end = 0 };
+        CborEncoder owners = {{.ptr = NULL }, .end = 0 };
+
+        cborEncoderResult = cbor_encoder_create_map(&svcArray, &svcMap, SVC_MAP_SIZE);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Create SVC Map.");
 
         // Service Device Identity
-        cborEncoderResult |= cbor_encode_text_string(&svcMap, OIC_JSON_SERVICE_DEVICE_ID,
+        cborEncoderResult = cbor_encode_text_string(&svcMap, OIC_JSON_SERVICE_DEVICE_ID,
             strlen(OIC_JSON_SERVICE_DEVICE_ID));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Device Id.");
-        cborEncoderResult |= cbor_encode_byte_string(&svcMap, (uint8_t *)svc->svcdid.id,
+        cborEncoderResult = cbor_encode_byte_string(&svcMap, (uint8_t *)svc->svcdid.id,
             sizeof(svc->svcdid.id));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to ");
 
         // Service Type
-        cborEncoderResult |= cbor_encode_text_string(&svcMap, OIC_JSON_SERVICE_TYPE,
+        cborEncoderResult = cbor_encode_text_string(&svcMap, OIC_JSON_SERVICE_TYPE,
             strlen(OIC_JSON_SERVICE_TYPE));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Serv Type Tag.");
-        cborEncoderResult |= cbor_encode_int(&svcMap, svc->svct);
+        cborEncoderResult = cbor_encode_int(&svcMap, svc->svct);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Serv Type Value.");
 
         // Owners
-        cborEncoderResult |= cbor_encode_text_string(&svcMap, OIC_JSON_OWNERS_NAME,
+        cborEncoderResult = cbor_encode_text_string(&svcMap, OIC_JSON_OWNERS_NAME,
             strlen(OIC_JSON_OWNERS_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Owners Tag.");
-        CborEncoder owners;
-        cborEncoderResult |= cbor_encoder_create_array(&svcMap, &owners, svc->ownersLen);
+        cborEncoderResult = cbor_encoder_create_array(&svcMap, &owners, svc->ownersLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Array.");
         for (size_t i = 0; i < svc->ownersLen; i++)
         {
-            cborEncoderResult |= cbor_encode_byte_string(&owners, (uint8_t *)svc->owners[i].id,
+            cborEncoderResult = cbor_encode_byte_string(&owners, (uint8_t *)svc->owners[i].id,
                 sizeof(svc->owners[i].id));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Owners Value.");
         }
-        cborEncoderResult |= cbor_encoder_close_container(&svcMap, &owners);
+        cborEncoderResult = cbor_encoder_close_container(&svcMap, &owners);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Close SVC Array.");
 
-        cborEncoderResult |= cbor_encoder_close_container(&svcArray, &svcMap);
+        cborEncoderResult = cbor_encoder_close_container(&svcArray, &svcMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Close SVC Map.");
 
         svc = svc->next;
     }
 
-    cborEncoderResult |= cbor_encoder_close_container(&encoder, &svcArray);
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &svcArray);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Close SVC Array.");
 
     if (CborNoError == cborEncoderResult)
@@ -196,8 +197,8 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborValue svcCbor;
-    CborParser parser;
+    CborValue svcCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
     int cborLen = size;
     if (0 == size)
@@ -208,30 +209,30 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
 
     OicSecSvc_t *headSvc = NULL;
 
-    CborValue svcArray;
+    CborValue svcArray = { .parser = NULL };
     cborFindResult = cbor_value_enter_container(&svcCbor, &svcArray);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter SVC Array.");
 
     while (cbor_value_is_valid(&svcArray))
     {
-        CborValue svcMap;
-        cborFindResult = cbor_value_enter_container(&svcArray, &svcMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter SVC Map.");
-
+        CborValue svcMap = { .parser = NULL };
         OicSecSvc_t *svc = (OicSecSvc_t *) OICCalloc(1, sizeof(OicSecSvc_t));
         VERIFY_NON_NULL(TAG, svc, ERROR);
+        cborFindResult = cbor_value_enter_container(&svcArray, &svcMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter SVC Map.");
 
         while (cbor_value_is_valid(&svcMap))
         {
             char* name = NULL;
             size_t len = 0;
+            CborType type = CborInvalidType;
+
             cborFindResult = cbor_value_dup_text_string(&svcMap, &name, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find Name.");
             cborFindResult = cbor_value_advance(&svcMap);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Advance.");
 
-            CborType type = cbor_value_get_type(&svcMap);
-
+            type = cbor_value_get_type(&svcMap);
             // Service Device Identity
             if (0 == strcmp(OIC_JSON_SERVICE_DEVICE_ID, name))
             {
@@ -251,14 +252,16 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
             // Owners -- Mandatory
             if (0 == strcmp(OIC_JSON_OWNERS_NAME, name))
             {
+                int i = 0;
                 CborValue owners = { .parser = NULL };
+
                 cborFindResult = cbor_value_get_array_length(&svcMap, &svc->ownersLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find Owner Len.");
                 cborFindResult = cbor_value_enter_container(&svcMap, &owners);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter Owner Array.");
-                int i = 0;
                 svc->owners = (OicUuid_t *)OICCalloc(svc->ownersLen, sizeof(*svc->owners));
                 VERIFY_NON_NULL(TAG, svc->owners, ERROR);
+
                 while (cbor_value_is_valid(&owners))
                 {
                     uint8_t *owner = NULL;
@@ -306,6 +309,7 @@ exit:
     {
         DeleteSVCList(headSvc);
         headSvc = NULL;
+        *secSvc = NULL;
         ret = OC_STACK_ERROR;
     }
     return ret;

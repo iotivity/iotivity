@@ -1,21 +1,55 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/d",
-                "/oic/p",
-                "/oic/res/types/d",
-                "/oic/ad",
-                "/oic/sec/acl",
-                "/oic/sec/doxm",
-                "/oic/sec/pstat"
-			],
-			"perms": 2,
-			"ownrs" : [
-				"MjIyMjIyMjIyMjIyMjIyMg=="
+	"acl":{
+		"aclist":{
+			"aces":[
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/res",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/p",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/res/types/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/ad",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/acl",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/doxm",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/pstat",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 2
+				}
 			]
-		}
-	]
+		},
+		"rownerid" : "32323232-3232-3232-3232-323232323232"
+	}
 }

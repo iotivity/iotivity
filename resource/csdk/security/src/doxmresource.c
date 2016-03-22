@@ -51,13 +51,13 @@
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
-static const uint8_t CBOR_SIZE = 255;
+static const uint16_t CBOR_SIZE = 512;
 
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 /** DOXM Map size - Number of mandatory items. */
-static const uint8_t DOXM_MAP_SIZE = 6;
+static const uint8_t DOXM_MAP_SIZE = 8;
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -75,6 +75,7 @@ static OicSecDoxm_t gDefaultDoxm =
     {.id = {0}},            /* OicUuid_t deviceID */
     false,                  /* bool dpc */
     {.id = {0}},            /* OicUuid_t owner */
+    {.id = {0}},            /* OicUuid_t rownerID */
 };
 
 void DeleteDoxmBinData(OicSecDoxm_t* doxm)
@@ -114,6 +115,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
 
     CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
     CborEncoder doxmMap = { {.ptr = NULL }, .end = 0 };
+    char* strUuid = NULL;
 
     int64_t cborEncoderResult = CborNoError;
     uint8_t mapSize = DOXM_MAP_SIZE;
@@ -130,99 +132,120 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    cborEncoderResult |= cbor_encoder_create_map(&encoder, &doxmMap, mapSize);
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, mapSize);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
 
     //OxmType -- Not Mandatory
     if (doxm->oxmTypeLen > 0)
     {
-        cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_TYPE_NAME,
+        CborEncoder oxmType = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_TYPE_NAME,
             strlen(OIC_JSON_OXM_TYPE_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Tag.");
-        CborEncoder oxmType;
-        cborEncoderResult |= cbor_encoder_create_array(&doxmMap, &oxmType, doxm->oxmTypeLen);
+        cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxmType, doxm->oxmTypeLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Array.");
 
         for (size_t i = 0; i < doxm->oxmTypeLen; i++)
         {
-            cborEncoderResult |= cbor_encode_text_string(&oxmType, doxm->oxmType[i],
+            cborEncoderResult = cbor_encode_text_string(&oxmType, doxm->oxmType[i],
                 strlen(doxm->oxmType[i]));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Value.");
         }
-        cborEncoderResult |= cbor_encoder_close_container(&doxmMap, &oxmType);
+        cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxmType);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmType.");
     }
 
     //Oxm -- Not Mandatory
     if (doxm->oxmLen > 0)
     {
-        cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_NAME,
-            strlen(OIC_JSON_OXM_NAME));
+        CborEncoder oxm = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXMS_NAME,
+            strlen(OIC_JSON_OXMS_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Tag.");
-        CborEncoder oxm;
-        cborEncoderResult |= cbor_encoder_create_array(&doxmMap, &oxm, doxm->oxmLen);
+        cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxm, doxm->oxmLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Array.");
 
         for (size_t i = 0; i < doxm->oxmLen; i++)
         {
-            cborEncoderResult |= cbor_encode_int(&oxm, doxm->oxm[i]);
+            cborEncoderResult = cbor_encode_int(&oxm, doxm->oxm[i]);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Value");
         }
-        cborEncoderResult |= cbor_encoder_close_container(&doxmMap, &oxm);
+        cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxm);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmName.");
     }
 
     //OxmSel -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_SEL_NAME,
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_SEL_NAME,
         strlen(OIC_JSON_OXM_SEL_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Sel Tag.");
-    cborEncoderResult |= cbor_encode_int(&doxmMap, doxm->oxmSel);
+    cborEncoderResult = cbor_encode_int(&doxmMap, doxm->oxmSel);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Sel Value.");
 
     //sct -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_SUPPORTED_CRED_TYPE_NAME,
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_SUPPORTED_CRED_TYPE_NAME,
         strlen(OIC_JSON_SUPPORTED_CRED_TYPE_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Tag");
-    cborEncoderResult |= cbor_encode_int(&doxmMap, doxm->sct);
+    cborEncoderResult = cbor_encode_int(&doxmMap, doxm->sct);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
 
     //Owned -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_OWNED_NAME,
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OWNED_NAME,
         strlen(OIC_JSON_OWNED_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Tag.");
-    cborEncoderResult |= cbor_encode_boolean(&doxmMap, doxm->owned);
+    cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->owned);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Value.");
 
-    //TODO: Need more clarification on deviceIDFormat field type.
-#if 0
-    //DeviceIdFormat -- Mandatory
-    cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_DEVICE_ID_FORMAT_NAME, doxm->deviceIDFormat);
-#endif
+
+    //TODO: Need to modify to use real didformat value
+    //DidFormat
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_FORMAT_NAME,
+        strlen(OIC_JSON_DEVICE_ID_FORMAT_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DidFormat Tag");
+    cborEncoderResult = cbor_encode_int(&doxmMap, 0);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DidFormat Value.");
+
 
     //DeviceId -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_NAME,
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_NAME,
         strlen(OIC_JSON_DEVICE_ID_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
-    cborEncoderResult |= cbor_encode_byte_string(&doxmMap, doxm->deviceID.id,
-                                                sizeof(doxm->deviceID.id));
+    ret = ConvertUuidToStr(&doxm->deviceID, &strUuid);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
+    OICFree(strUuid);
+    strUuid = NULL;
+
+    //devownerid -- Mandatory
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVOWNERID_NAME,
+        strlen(OIC_JSON_DEVOWNERID_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Id Tag.");
+    ret = ConvertUuidToStr(&doxm->owner, &strUuid);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Id Value.");
+    OICFree(strUuid);
+    strUuid = NULL;
+
+    //ROwner -- Mandatory
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_ROWNERID_NAME,
+        strlen(OIC_JSON_ROWNERID_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
+    ret = ConvertUuidToStr(&doxm->rownerID, &strUuid);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
+    OICFree(strUuid);
+    strUuid = NULL;
 
     //DPC -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_DPC_NAME,
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DPC_NAME,
         strlen(OIC_JSON_DPC_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Tag.");
-    cborEncoderResult |= cbor_encode_boolean(&doxmMap, doxm->dpc);
+    cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->dpc);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Value.");
 
-    //Owner -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&doxmMap, OIC_JSON_OWNER_NAME,
-        strlen(OIC_JSON_OWNER_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner tag.");
-    cborEncoderResult |= cbor_encode_byte_string(&doxmMap, doxm->owner.id,
-                                                sizeof(doxm->owner.id));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Value");
-
-    cborEncoderResult |= cbor_encoder_close_container(&encoder, &doxmMap);
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &doxmMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing DoxmMap.");
 
     if (CborNoError == cborEncoderResult)
@@ -271,6 +294,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
     CborParser parser;
     CborError cborFindResult = CborNoError;
     int cborLen = (size == 0) ? CBOR_SIZE : size;
+    char* strUuid = NULL;
     size_t len = 0;
     CborValue doxmCbor;
     cbor_parser_init(cborPayload, cborLen, 0, &parser, &doxmCbor);
@@ -306,7 +330,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         }
     }
 
-    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_NAME, &doxmMap);
+    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXMS_NAME, &doxmMap);
     //Oxm -- not Mandatory
     if (CborNoError == cborFindResult && cbor_value_is_array(&doxmMap))
     {
@@ -380,23 +404,45 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
     }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVICE_ID_NAME, &doxmMap);
-    if (CborNoError == cborFindResult && cbor_value_is_byte_string(&doxmMap))
+    if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
     {
-        uint8_t *id = NULL;
-        cborFindResult = cbor_value_dup_byte_string(&doxmMap, &id, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding DeviceId Value.")
-        memcpy(doxm->deviceID.id, id, len);
-        OICFree(id);
+        cborFindResult = cbor_value_dup_text_string(&doxmMap, &strUuid , &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Device Id Value.");
+        ret = ConvertStrToUuid(strUuid , &doxm->deviceID);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+        OICFree(strUuid );
+        strUuid  = NULL;
     }
-    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OWNER_NAME, &doxmMap);
-    if (CborNoError == cborFindResult && cbor_value_is_byte_string(&doxmMap))
+
+    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVOWNERID_NAME, &doxmMap);
+    if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
     {
-        uint8_t *id = NULL;
-        cborFindResult = cbor_value_dup_byte_string(&doxmMap, &id , &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Name Value.")
-        memcpy(doxm->owner.id, id, len);
-        OICFree(id);
+        cborFindResult = cbor_value_dup_text_string(&doxmMap, &strUuid , &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Value.");
+        ret = ConvertStrToUuid(strUuid , &doxm->owner);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+        OICFree(strUuid );
+        strUuid  = NULL;
     }
+
+    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_ROWNERID_NAME, &doxmMap);
+    if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
+    {
+        cborFindResult = cbor_value_dup_text_string(&doxmMap, &strUuid , &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ROwner Value.");
+        ret = ConvertStrToUuid(strUuid , &doxm->rownerID);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+        OICFree(strUuid );
+        strUuid  = NULL;
+    }
+
+
+    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVICE_ID_FORMAT_NAME, &doxmMap);
+    if (CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
+    {
+        // TODO: handle "didformat"
+    }
+
 
     *secDoxm = doxm;
     ret = OC_STACK_OK;
@@ -407,6 +453,7 @@ exit:
         OIC_LOG (ERROR, TAG, "CBORPayloadToDoxm failed!!!");
         DeleteDoxmBinData(doxm);
         doxm = NULL;
+        *secDoxm = NULL;
         ret = OC_STACK_ERROR;
     }
     return ret;

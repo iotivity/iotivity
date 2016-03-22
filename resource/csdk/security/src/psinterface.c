@@ -222,7 +222,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &credCbor, &credCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CRED Name Value.");
             }
-
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_PCONF_NAME, &curVal);
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
             {
@@ -234,7 +233,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
 
         {
             size_t size = aclCborLen + pstatCborLen + doxmCborLen + amaclCborLen + svcCborLen
-                + credCborLen + pconfCborLen + psSize;
+                + credCborLen + pconfCborLen +psSize;
             // This is arbitrary value that is added to cover the name of the resource, map addition and ending.
             size += 255;
 

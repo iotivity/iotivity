@@ -36,6 +36,8 @@ extern const char * OIC_JSON_AMACL_NAME;
 extern const char * OIC_RSRC_TYPE_SEC_ACL;
 extern const char * OIC_RSRC_ACL_URI;
 extern const char * OIC_JSON_ACL_NAME;
+extern const char * OIC_JSON_ACLIST_NAME;
+extern const char * OIC_JSON_ACES_NAME;
 
 //PSTAT
 extern const char * OIC_RSRC_TYPE_SEC_PSTAT;
@@ -52,6 +54,7 @@ extern const char * OIC_JSON_DOXM_NAME;
 extern const char * OIC_RSRC_TYPE_SEC_CRED;
 extern const char * OIC_RSRC_CRED_URI;
 extern const char * OIC_JSON_CRED_NAME;
+extern const char * OIC_JSON_CREDS_NAME;
 
 //CRL
 extern const char * OIC_RSRC_TYPE_SEC_CRL;
@@ -79,13 +82,17 @@ extern const char * OIC_RSRC_DPAIRING_URI;
 extern const char * OIC_JSON_DPAIRING_NAME;
 
 extern const char * OIC_JSON_SUBJECT_NAME;
+extern const char * OIC_JSON_SUBJECTID_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
 extern const char * OIC_JSON_AMSS_NAME;
+extern const char * OIC_JSON_AMS_NAME;
 extern const char * OIC_JSON_PERMISSION_NAME;
 extern const char * OIC_JSON_OWNERS_NAME;
 extern const char * OIC_JSON_OWNER_NAME;
+extern const char * OIC_JSON_DEVOWNERID_NAME;
 extern const char * OIC_JSON_OWNED_NAME;
 extern const char * OIC_JSON_OXM_NAME;
+extern const char * OIC_JSON_OXMS_NAME;
 extern const char * OIC_JSON_OXM_TYPE_NAME;
 extern const char * OIC_JSON_OXM_SEL_NAME;
 extern const char * OIC_JSON_DEVICE_ID_FORMAT_NAME;
@@ -94,6 +101,10 @@ extern const char * OIC_JSON_ROLEIDS_NAME;
 extern const char * OIC_JSON_CREDTYPE_NAME;
 extern const char * OIC_JSON_PUBLICDATA_NAME;
 extern const char * OIC_JSON_PRIVATEDATA_NAME;
+extern const char * OIC_JSON_PUBDATA_NAME;
+extern const char * OIC_JSON_PRIVDATA_NAME;
+extern const char * OIC_JSON_OPTDATA_NAME;
+extern const char * OIC_JSON_CRMS_NAME;
 extern const char * OIC_JSON_PERIOD_NAME;
 extern const char * OIC_JSON_PERIODS_NAME;
 extern const char * OIC_JSON_RECURRENCES_NAME;
@@ -116,6 +127,14 @@ extern const char * OIC_JSON_ROWNER_NAME;
 extern const char * OIC_JSON_PRM_NAME;
 extern const char * OIC_JSON_SPM_NAME;
 extern const char * OIC_JSON_PDEVICE_ID_NAME;
+extern const char * OIC_JSON_RLIST_NAME;
+extern const char * OIC_JSON_HREF_NAME;
+extern const char * OIC_JSON_RT_NAME;
+extern const char * OIC_JSON_IF_NAME;
+extern const char * OIC_JSON_ROWNERID_NAME;
+extern const char * OIC_JSON_ENCODING_NAME;
+
+extern const char * OIC_JSON_EMPTY_STRING;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern OicUuid_t WILDCARD_SUBJECT_B64_ID;
@@ -126,6 +145,9 @@ extern const char * WILDCARD_RESOURCE_URI;
 extern const char * OXM_JUST_WORKS;
 extern const char * OXM_RANDOM_DEVICE_PIN;
 extern const char * OXM_MANUFACTURER_CERTIFICATE;
+
+extern const char * OIC_SEC_ENCODING_BASE64;
+extern const char * OIC_SEC_ENCODING_BYTESTREAM;
 
 extern const char * OIC_SEC_TRUE;
 extern const char * OIC_SEC_FALSE;

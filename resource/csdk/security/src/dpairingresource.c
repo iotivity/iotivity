@@ -56,7 +56,7 @@
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
-static const uint8_t CBOR_SIZE = 255;
+static const uint16_t CBOR_SIZE = 1024;
 
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
@@ -204,33 +204,43 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    cborEncoderResult |= cbor_encoder_create_map(&encoder, &dpairMap, mapSize);
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &dpairMap, mapSize);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating DPAIRING Map");
 
     //spm -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&dpairMap, OIC_JSON_SPM_NAME,
+    cborEncoderResult = cbor_encode_text_string(&dpairMap, OIC_JSON_SPM_NAME,
         strlen(OIC_JSON_SPM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SPM name tag");
-    cborEncoderResult |= cbor_encode_int(&dpairMap, dpair->spm);
+    cborEncoderResult = cbor_encode_int(&dpairMap, dpair->spm);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SPM value");
 
     //PDEVICEID -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&dpairMap, OIC_JSON_PDEVICE_ID_NAME,
+    cborEncoderResult = cbor_encode_text_string(&dpairMap, OIC_JSON_PDEVICE_ID_NAME,
         strlen(OIC_JSON_PDEVICE_ID_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PDeviceID tag");
-    cborEncoderResult |= cbor_encode_byte_string(&dpairMap, dpair->pdeviceID.id,
-        sizeof(dpair->pdeviceID.id));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PDeviceID value");
+    {
+        char *deviceId = NULL;
+        ret = ConvertUuidToStr(&dpair->pdeviceID, &deviceId);
+        VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+        cborEncoderResult = cbor_encode_text_string(&dpairMap, deviceId, strlen(deviceId));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode PDeviceID value");
+        OICFree(deviceId);
+    }
 
     //ROWNER -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&dpairMap, OIC_JSON_ROWNER_NAME,
-        strlen(OIC_JSON_ROWNER_NAME));
+    cborEncoderResult = cbor_encode_text_string(&dpairMap, OIC_JSON_ROWNERID_NAME,
+        strlen(OIC_JSON_ROWNERID_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROWNER tag");
-    cborEncoderResult |= cbor_encode_byte_string(&dpairMap, dpair->rowner.id,
-        sizeof(dpair->rowner.id));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Rowner ID value");
+    {
+        char *rowner = NULL;
+        ret = ConvertUuidToStr(&dpair->rowner, &rowner);
+        VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+        cborEncoderResult = cbor_encode_text_string(&dpairMap, rowner, strlen(rowner));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Rowner ID value");
+        OICFree(rowner);
+    }
 
-    cborEncoderResult |= cbor_encoder_close_container(&encoder, &dpairMap);
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &dpairMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close dpairMap");
 
      if (CborNoError == cborEncoderResult)
@@ -293,13 +303,13 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
     {
         char *name = NULL;
         size_t len = 0;
+        CborType type = CborInvalidType;
         cborFindResult = cbor_value_dup_text_string(&dpairMap, &name, &len, NULL);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding tag name");
         cborFindResult = cbor_value_advance(&dpairMap);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing a value in DPair map");
 
-        CborType type = cbor_value_get_type(&dpairMap);
-
+        type = cbor_value_get_type(&dpairMap);
         if (0 == strcmp(OIC_JSON_SPM_NAME, name))
         {
             cborFindResult = cbor_value_get_int(&dpairMap, (int *) &dpair->spm);
@@ -308,19 +318,21 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
 
         if (0 == strcmp(OIC_JSON_PDEVICE_ID_NAME, name))
         {
-            uint8_t *id = NULL;
-            cborFindResult = cbor_value_dup_byte_string(&dpairMap, &id, &len, NULL);
+            char *id = NULL;
+            cborFindResult = cbor_value_dup_text_string(&dpairMap, &id, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PDeviceID value");
-            memcpy(dpair->pdeviceID.id, id, len);
+            ret = ConvertStrToUuid(id, &dpair->pdeviceID);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
             OICFree(id);
         }
 
-        if (0 == strcmp(OIC_JSON_ROWNER_NAME, name))
+        if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name))
         {
-            uint8_t *id = NULL;
-            cborFindResult = cbor_value_dup_byte_string(&dpairMap, &id, &len, NULL);
+            char *id = NULL;
+            cborFindResult = cbor_value_dup_text_string(&dpairMap, &id, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RownerID value");
-            memcpy(dpair->rowner.id, id, len);
+            ret = ConvertStrToUuid(id, &dpair->rowner);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
             OICFree(id);
         }
 
@@ -341,6 +353,7 @@ exit:
         OIC_LOG (ERROR, TAG, "CBORPayloadToDoxm failed");
         DeleteDpairingBinData(dpair);
         dpair = NULL;
+        *secDpair = NULL;
         ret = OC_STACK_ERROR;
     }
     return ret;

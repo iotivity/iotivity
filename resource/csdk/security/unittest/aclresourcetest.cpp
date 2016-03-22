@@ -78,26 +78,21 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(defaultAcl, &defaultPsStorage, &defaultAclSize));
+    OCStackResult convRet = AclToCBORPayload(defaultAcl, &defaultPsStorage, &defaultAclSize);
+    EXPECT_EQ(OC_STACK_OK, convRet);
     ASSERT_TRUE(defaultPsStorage != NULL);
     EXPECT_NE(0, defaultAclSize);
 
-    // This creates a default file oic_svr_db.dat, which is then needed by unit test.
-    CborEncoder encoder = { 0, 0, 0, 0};
-    const size_t cborSize = 255;
-    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborSize);
-    ASSERT_TRUE(outPayload != NULL);
-    cbor_encoder_init(&encoder, outPayload, cborSize, 0);
-    CborEncoder map = { 0, 0, 0, 0 };
-    CborError cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
-    EXPECT_EQ(CborNoError, cborEncoderResult);
-    cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_ACL_NAME, strlen(OIC_JSON_ACL_NAME));
-    EXPECT_EQ(CborNoError, cborEncoderResult);
-    cborEncoderResult = cbor_encode_byte_string(&map, defaultPsStorage, defaultAclSize);
-    EXPECT_EQ(CborNoError, cborEncoderResult);
-    cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
-    EXPECT_EQ(CborNoError, cborEncoderResult);
-    OICFree(outPayload);
+    OicSecAcl_t* convertedAcl = CBORPayloadToAcl(defaultPsStorage, defaultAclSize);
+    ASSERT_TRUE(convertedAcl != NULL);
+
+    EXPECT_EQ(defaultAcl->resourcesLen, convertedAcl->resourcesLen);
+    for(int i = 0; i < convertedAcl->resourcesLen; i++)
+    {
+        EXPECT_EQ(0, strcmp(defaultAcl->resources[i], convertedAcl->resources[i]));
+    }
+
+    DeleteACLList(convertedAcl);
     DeleteACLList(defaultAcl);
     OICFree(defaultPsStorage);
 }
@@ -233,7 +228,7 @@ TEST(ACLResourceTest, GetDefaultACLTests)
     // Verify if the SRM generated default ACL matches with unit test default
     if (acl && psAcl)
     {
-        EXPECT_TRUE(memcmp(&(acl->subject), &(psAcl->subject), sizeof(OicUuid_t)) == 0);
+        EXPECT_TRUE(strcmp((char*)acl->subject.id, (char*)psAcl->subject.id) == 0);
         EXPECT_EQ(acl->resourcesLen, psAcl->resourcesLen);
         for (size_t i = 0; i < acl->resourcesLen; i++)
         {
@@ -447,7 +442,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     // Create Entity Handler DELETE request
     ehReq.method = OC_REST_DELETE;
-    char query[] = "sub=2222222222222222;rsrc=/a/led";
+    char query[] = "subject=2222222222222222;resources=/a/led";
     ehReq.query = (char *)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);

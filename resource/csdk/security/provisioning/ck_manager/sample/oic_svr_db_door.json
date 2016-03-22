@@ -1,48 +1,85 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/res/d",
-                "/oic/res/types/d",
-                "/oic/presence"
-			],
-			"perms": 2,
-			"ownrs" : [
-				"ZG9vckRldmljZVVVSUQwMA=="
+    "acl": {
+		"aclist":{
+			"aces":[
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/res",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/res/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/res/types/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/presence",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 2
+				},
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/sec/doxm",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/pstat",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/acl",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/crl",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/cred",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 6
+				}
 			]
 		},
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/doxm",
-                "/oic/sec/pstat",
-                "/oic/sec/acl",
-                "/oic/sec/crl",
-                "/oic/sec/cred"
-             ],
-             "perms": 6,
-             "ownrs" : [
-                 "ZG9vckRldmljZVVVSUQwMA=="
-             ]
-        }
-	],
+		"rownerid" : "646F6F72-4465-7669-6365-555549443030"
+	},
 	"pstat":	{
 		"isop":	false,
-		"deviceid":	"ZG9vckRldmljZVVVSUQwMA==",
-		"ch": 0,
+		"deviceid":	"646F6F72-4465-7669-6365-555549443030",
+		"rownerid":	"646F6F72-4465-7669-6365-555549443030",
 		"cm":	2,
 		"tm":	0,
 		"om":	3,
 		"sm":	[3]
 	},
 	"doxm":	{
-		"oxm":	[0],
+		"oxms":	[0],
 		"oxmsel": 0,
 		"sct": 1,
 		"owned": false,
-		"deviceid":	"ZG9vckRldmljZVVVSUQwMA==",
-		"dpc": true
+		"didformat": 0,
+		"dpc": false,
+		"deviceid":	"646F6F72-4465-7669-6365-555549443030",
+		"rownerid":	"646F6F72-4465-7669-6365-555549443030"
 	}
 }

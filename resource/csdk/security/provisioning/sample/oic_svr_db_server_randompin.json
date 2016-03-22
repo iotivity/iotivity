@@ -1,58 +1,97 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/res/d",
-                "/oic/res/types/d",
-                "/oic/presence"
-			],
-			"perms": 2,
-			"ownrs" : [
-				"cmFuZG9tUGluRGV2VVVJRA=="
+    "acl": {
+		"aclist":{
+			"aces":[
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/res",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/res/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/res/types/d",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/presence",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 2
+				},
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/sec/doxm",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/pstat",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/acl",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/cred",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 6
+				},
+				{
+					"subject": "*",
+					"resources": [
+						{
+							"href": "/oic/sec/pconf",
+							"rt": "",
+							"if": ""
+						},
+						{
+							"href": "/oic/sec/dpairing",
+							"rt": "",
+							"if": ""
+						}
+					],
+					"permission": 6
+				}
 			]
 		},
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/doxm",
-                "/oic/sec/pstat",
-                "/oic/sec/acl",
-                "/oic/sec/cred"
-             ],
-             "perms": 6,
-             "ownrs" : [
-                 "cmFuZG9tUGluRGV2VVVJRA=="
-             ]
-		},
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/pconf",
-                "/oic/sec/dpairing"
-             ],
-             "perms": 6,
-             "ownrs" : [
-                 "cmFuZG9tUGluRGV2VVVJRA=="
-             ]
-        }
-	],
+		"rownerid" : "72616E64-5069-6E44-6576-557569643030"
+	},
 	"pstat":	{
 		"isop":	false,
-		"deviceid":	"cmFuZG9tUGluRGV2VVVJRA==",
-		"ch": 0,
+		"deviceid":	"72616E64-5069-6E44-6576-557569643030",
+		"rownerid":	"72616E64-5069-6E44-6576-557569643030",
 		"cm":	2,
 		"tm":	0,
 		"om":	3,
 		"sm":	[3]
 	},
 	"doxm":	{
-		"oxm":	[0,1],
+		"oxms":	[0,1],
 		"oxmsel": 0,
 		"sct": 1,
 		"owned": false,
-		"deviceid":	"cmFuZG9tUGluRGV2VVVJRA==",
+		"didformat": 0,
+		"deviceid":	"72616E64-5069-6E44-6576-557569643030",
+		"devownerid":	"",
+		"rownerid":	"72616E64-5069-6E44-6576-557569643030",
 		"dpc": true
 	}
 }

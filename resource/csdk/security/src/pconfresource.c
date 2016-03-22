@@ -47,9 +47,10 @@
 
 #define TAG  "SRM-PCONF"
 
-static const uint64_t CBOR_SIZE = 255;
+static const uint16_t CBOR_SIZE = 1024;
 static const uint64_t CBOR_MAX_SIZE = 4400;
 static const uint8_t  PCONF_MAP_SIZE = 4;
+static const uint8_t  PCONF_RESOURCE_MAP_SIZE = 3;
 
 static OicSecPconf_t          *gPconf = NULL;
 static OCResourceHandle   gPconfHandle = NULL;
@@ -194,47 +195,47 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating Pconf Map.");
 
     //edp  -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&pconfMap, OIC_JSON_EDP_NAME,
+    cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_EDP_NAME,
             strlen(OIC_JSON_EDP_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Encode EDP String.");
-    cborEncoderResult |= cbor_encode_boolean(&pconfMap, pconf->edp);
+    cborEncoderResult = cbor_encode_boolean(&pconfMap, pconf->edp);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Convert PconfEDP value");
 
     //PRM type -- Not Mandatory
     if(pconf->prmLen > 0)
     {
-        cborEncoderResult |= cbor_encode_text_string(&pconfMap, OIC_JSON_PRM_NAME,
+        CborEncoder prm = { {.ptr = NULL }, .end = 0 };
+        cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_PRM_NAME,
                 strlen(OIC_JSON_PRM_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Convert Pconf PRM NAME");
-        CborEncoder prm = { {.ptr = NULL }, .end = 0 };
-        cborEncoderResult |= cbor_encoder_create_array(&pconfMap, &prm, pconf->prmLen);
+        cborEncoderResult = cbor_encoder_create_array(&pconfMap, &prm, pconf->prmLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Convert Pconf PRM value");
 
         for (size_t i = 0; i < pconf->prmLen; i++)
         {
-            cborEncoderResult |= cbor_encode_int(&prm, pconf->prm[i]);
+            cborEncoderResult = cbor_encode_int(&prm, pconf->prm[i]);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Convert Pconf PRM Array");
         }
-        cborEncoderResult |= cbor_encoder_close_container(&pconfMap, &prm);
+        cborEncoderResult = cbor_encoder_close_container(&pconfMap, &prm);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close encode array");
     }
 
     //PIN -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&pconfMap, OIC_JSON_PIN_NAME,
+    cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_PIN_NAME,
             strlen(OIC_JSON_PIN_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create OIC_JSON_PIN_NAME");
-    cborEncoderResult |= cbor_encode_byte_string(&pconfMap, pconf->pin.val, sizeof(pconf->pin.val));
+    cborEncoderResult = cbor_encode_byte_string(&pconfMap, pconf->pin.val, sizeof(pconf->pin.val));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to convert pin value");
 
     //PDACL -- Mandatory
     if (pconf->pdacls)
     {
-        cborEncoderResult |= cbor_encode_text_string(&pconfMap, OIC_JSON_PDACL_NAME,
-                strlen(OIC_JSON_PDACL_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create OIC_JSON_PIN_NAME");
         OicSecPdAcl_t *pdacl = pconf->pdacls;
-        CborEncoder pdAclArray;
-        cborEncoderResult |= cbor_encoder_create_array(&pconfMap, &pdAclArray,
+        CborEncoder pdAclArray = {{.ptr = NULL }, .end = 0 };
+        cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_PDACL_NAME,
+                strlen(OIC_JSON_PDACL_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create OIC_JSON_PDACL_NAME");
+        cborEncoderResult = cbor_encoder_create_array(&pconfMap, &pdAclArray,
                 OicPdAclSize(pconf->pdacls));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to creeate _pdacl array");
 
@@ -253,49 +254,79 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
                 ++aclMapSize;
             }
 
-            cborEncoderResult |= cbor_encoder_create_map(&pdAclArray, &pdAclMap, aclMapSize);
+            cborEncoderResult = cbor_encoder_create_map(&pdAclArray, &pdAclMap, aclMapSize);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to creeate _pdacl array");
 
             // Resources -- Mandatory
-            cborEncoderResult |= cbor_encode_text_string(&pdAclMap, OIC_JSON_RESOURCES_NAME,
+            cborEncoderResult = cbor_encode_text_string(&pdAclMap, OIC_JSON_RESOURCES_NAME,
                     strlen(OIC_JSON_RESOURCES_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to encode resource result");
 
             CborEncoder resources = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
-            cborEncoderResult |= cbor_encoder_create_array(&pdAclMap, &resources,
+            cborEncoderResult = cbor_encoder_create_array(&pdAclMap, &resources,
                     pdacl->resourcesLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to create resource array");
 
             for (size_t i = 0; i < pdacl->resourcesLen; i++)
             {
-                cborEncoderResult |= cbor_encode_text_string(&resources, pdacl->resources[i],
+                CborEncoder rMap = { {.ptr = NULL }, .end = 0 };
+                cborEncoderResult = cbor_encoder_create_map(&resources, &rMap,
+                        PCONF_RESOURCE_MAP_SIZE);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Map.");
+
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_HREF_NAME,
+                        strlen(OIC_JSON_HREF_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding HREF Name Tag.");
+                cborEncoderResult = cbor_encode_text_string(&rMap, pdacl->resources[i],
                         strlen(pdacl->resources[i]));
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to convert resource array");
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding HREF Value in Map.");
+
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_RT_NAME,
+                        strlen(OIC_JSON_RT_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+
+                // TODO : Need to assign real value of RT
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_EMPTY_STRING,
+                        strlen(OIC_JSON_EMPTY_STRING));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_IF_NAME,
+                        strlen(OIC_JSON_IF_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+
+                // TODO : Need to assign real value of IF
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_EMPTY_STRING,
+                        strlen(OIC_JSON_EMPTY_STRING));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+
+                cborEncoderResult = cbor_encoder_close_container(&resources, &rMap);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Resource Map.");
             }
+
             cborEncoderResult = cbor_encoder_close_container(&pdAclMap, &resources);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to close resource array");
 
             // Permissions -- Mandatory
-            cborEncoderResult |= cbor_encode_text_string(&pdAclMap, OIC_JSON_PERMISSION_NAME,
+            cborEncoderResult = cbor_encode_text_string(&pdAclMap, OIC_JSON_PERMISSION_NAME,
                     strlen(OIC_JSON_PERMISSION_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to create permition string");
-            cborEncoderResult |= cbor_encode_int(&pdAclMap, pdacl->permission);
+            cborEncoderResult = cbor_encode_int(&pdAclMap, pdacl->permission);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode permition calue");
 
             // Period -- Not Mandatory
             if (pdacl->periods)
             {
                 CborEncoder period = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
-                cborEncoderResult |= cbor_encode_text_string(&pdAclMap, OIC_JSON_PERIODS_NAME,
+                cborEncoderResult = cbor_encode_text_string(&pdAclMap, OIC_JSON_PERIODS_NAME,
                         strlen(OIC_JSON_PERIODS_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode period value");
-                cborEncoderResult |= cbor_encoder_create_array(&pdAclMap, &period,
+                cborEncoderResult = cbor_encoder_create_array(&pdAclMap, &period,
                         pdacl->prdRecrLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create array");
 
                 for (size_t i = 0; i < pdacl->prdRecrLen; i++)
                 {
-                    cborEncoderResult |= cbor_encode_text_string(&period, pdacl->periods[i],
+                    cborEncoderResult = cbor_encode_text_string(&period, pdacl->periods[i],
                             strlen(pdacl->periods[i]));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode period");
                 }
@@ -307,29 +338,29 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
             if(0 != pdacl->prdRecrLen && pdacl->recurrences)
             {
                 CborEncoder recurrences = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
-                cborEncoderResult |= cbor_encode_text_string(&pdAclMap, OIC_JSON_RECURRENCES_NAME,
+                cborEncoderResult = cbor_encode_text_string(&pdAclMap, OIC_JSON_RECURRENCES_NAME,
                         strlen(OIC_JSON_RECURRENCES_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,"Failed to encode recurrences");
-                cborEncoderResult |= cbor_encoder_create_array(&pdAclMap, &recurrences,
+                cborEncoderResult = cbor_encoder_create_array(&pdAclMap, &recurrences,
                         pdacl->prdRecrLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create rec array");
 
                 for (size_t i = 0; i < pdacl->prdRecrLen; i++)
                 {
-                    cborEncoderResult |= cbor_encode_text_string(&recurrences,
+                    cborEncoderResult = cbor_encode_text_string(&recurrences,
                             pdacl->recurrences[i], strlen(pdacl->recurrences[i]));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode recurrences");
                 }
-                cborEncoderResult |= cbor_encoder_close_container(&pdAclMap, &recurrences);
+                cborEncoderResult = cbor_encoder_close_container(&pdAclMap, &recurrences);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close rec array");
             }
-            cborEncoderResult |= cbor_encoder_close_container(&pdAclArray, &pdAclMap);
+            cborEncoderResult = cbor_encoder_close_container(&pdAclArray, &pdAclMap);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close acl map");
 
             pdacl = pdacl->next;
         }
         //clsoe the array
-        cborEncoderResult |= cbor_encoder_close_container(&pconfMap, &pdAclArray);
+        cborEncoderResult = cbor_encoder_close_container(&pconfMap, &pdAclArray);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close acl array");
     }
 
@@ -337,41 +368,54 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     //There may not be paired devices if it did not pairing before
     if (pconf->pddevs && 0 < pconf->pddevLen)
     {
-        cborEncoderResult |= cbor_encode_text_string(&pconfMap, OIC_JSON_PDDEV_LIST_NAME,
+        CborEncoder pddev = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_PDDEV_LIST_NAME,
                 strlen(OIC_JSON_PDDEV_LIST_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode pddev");
-        CborEncoder pddev = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
-        cborEncoderResult |= cbor_encoder_create_array(&pconfMap, &pddev,  pconf->pddevLen);
+        cborEncoderResult = cbor_encoder_create_array(&pconfMap, &pddev,  pconf->pddevLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create array");
 
         for (size_t i = 0; i < pconf->pddevLen; i++)
         {
-            cborEncoderResult |= cbor_encode_byte_string(&pddev, (uint8_t *)pconf->pddevs[i].id,
-                    sizeof(pconf->pddevs[i].id));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode pddev id");
+            char *pddevId = NULL;
+            ret = ConvertUuidToStr(&pconf->pddevs[i], &pddevId);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+            cborEncoderResult = cbor_encode_text_string(&pddev, pddevId, strlen(pddevId));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding pddev Id Value.");
+            OICFree(pddevId);
         }
-        cborEncoderResult |= cbor_encoder_close_container(&pconfMap, &pddev);
+        cborEncoderResult = cbor_encoder_close_container(&pconfMap, &pddev);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close pddev array");
     }
 
     //DeviceId -- Mandatory
     //There may not be devicd id if caller is provisoning tool
-    cborEncoderResult |= cbor_encode_text_string(&pconfMap, OIC_JSON_DEVICE_ID_NAME,
+    cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_DEVICE_ID_NAME,
             strlen(OIC_JSON_DEVICE_ID_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode device id");
-    cborEncoderResult |= cbor_encode_byte_string(&pconfMap, (uint8_t *)pconf->deviceID.id,
-            sizeof(pconf->deviceID.id));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode deviceID value");
+    {
+        char *deviceId = NULL;
+        ret = ConvertUuidToStr(&pconf->deviceID, &deviceId);
+        VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+        cborEncoderResult = cbor_encode_text_string(&pconfMap, deviceId, strlen(deviceId));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode deviceID value");
+        OICFree(deviceId);
+    }
 
     //ROwner -- Mandatory
-    cborEncoderResult |= cbor_encode_text_string(&pconfMap, OIC_JSON_ROWNER_NAME,
-            strlen(OIC_JSON_ROWNER_NAME));
+    cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_ROWNERID_NAME,
+            strlen(OIC_JSON_ROWNERID_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode rowner string");
-    cborEncoderResult |= cbor_encode_byte_string(&pconfMap, (uint8_t *)pconf->rowner.id,
-            sizeof(pconf->rowner.id));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode rwoner value");
+    {
+        char *rowner = NULL;
+        ret = ConvertUuidToStr(&pconf->rowner, &rowner);
+        VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+        cborEncoderResult = cbor_encode_text_string(&pconfMap, rowner, strlen(rowner));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode rwoner value");
+        OICFree(rowner);
+    }
 
-    cborEncoderResult |= cbor_encoder_close_container(&encoder, &pconfMap);
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &pconfMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close pconfMap");
 
     *size = encoder.ptr - outPayload;
@@ -442,6 +486,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
             }
             if (0 == strcmp(OIC_JSON_PRM_NAME, name))
             {
+                int i = 0;
                 CborValue prm = { .parser = NULL };
                 cborFindResult = cbor_value_get_array_length(&pconfMap, &pconf->prmLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get length");
@@ -451,7 +496,6 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 VERIFY_NON_NULL(TAG, pconf->prm, ERROR);
                 cborFindResult = cbor_value_enter_container(&pconfMap, &prm);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to eneter array");
-                int i = 0;
 
                 while (cbor_value_is_valid(&prm))
                 {
@@ -475,17 +519,19 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
             if (0 == strcmp(OIC_JSON_PDACL_NAME, name))
             {
                 CborValue pdAclArray = { .parser = NULL};
+                OicSecPdAcl_t *headPdacl = NULL;
+
                 cborFindResult = cbor_value_enter_container(&pconfMap, &pdAclArray);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
-                OicSecPdAcl_t *headPdacl = NULL;
 
                 while (cbor_value_is_valid(&pdAclArray))
                 {
                     CborValue pdAclMap = { .parser = NULL};
-                    cborFindResult = cbor_value_enter_container(&pdAclArray, &pdAclMap);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
                     OicSecPdAcl_t *pdacl = (OicSecPdAcl_t *) OICCalloc(1, sizeof(OicSecPdAcl_t));
                     VERIFY_NON_NULL(TAG, pdacl, ERROR);
+
+                    cborFindResult = cbor_value_enter_container(&pdAclArray, &pdAclMap);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
 
                     while (cbor_value_is_valid(&pdAclMap))
                     {
@@ -505,6 +551,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                             // Resources -- Mandatory
                             if (strcmp(name, OIC_JSON_RESOURCES_NAME) == 0)
                             {
+                                int i = 0;
                                 CborValue resources = { .parser = NULL };
                                 cborFindResult = cbor_value_get_array_length(&pdAclMap,
                                         &pdacl->resourcesLen);
@@ -514,14 +561,63 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 pdacl->resources = (char **) OICCalloc(pdacl->resourcesLen,
                                         sizeof(char*));
                                 VERIFY_NON_NULL(TAG, pdacl->resources, ERROR);
-                                int i = 0;
-                                while (cbor_value_is_text_string(&resources))
+
+                                while (cbor_value_is_valid(&resources))
                                 {
-                                    cborFindResult = cbor_value_dup_text_string(&resources,
-                                            &pdacl->resources[i++], &len, NULL);
-                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get text");
-                                    cborFindResult = cbor_value_advance(&resources);
-                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance");
+                                    CborValue rMap = { .parser = NULL  };
+                                    cborFindResult = cbor_value_enter_container(&resources, &rMap);
+                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Resource Map");
+
+                                    while(cbor_value_is_valid(&rMap))
+                                    {
+                                        char *rMapName = NULL;
+                                        size_t rMapNameLen = 0;
+                                        cborFindResult = cbor_value_dup_text_string(&rMap, &rMapName, &rMapNameLen, NULL);
+                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RMap Data Name Tag.");
+                                        cborFindResult = cbor_value_advance(&rMap);
+                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RMap Data Value.");
+
+                                        // "href"
+                                        if (0 == strcmp(OIC_JSON_HREF_NAME, rMapName))
+                                        {
+                                            // TODO : Need to check data structure of OicSecPdAcl_t based on RAML spec.
+                                            cborFindResult = cbor_value_dup_text_string(&rMap, &pdacl->resources[i++], &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Href Value.");
+                                        }
+
+                                        // "rt"
+                                        if (0 == strcmp(OIC_JSON_RT_NAME, rMapName))
+                                        {
+                                            // TODO : Need to check data structure of OicSecPdAcl_t and assign based on RAML spec.
+                                            char *rtData = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&rMap, &rtData, &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RT Value.");
+                                            OICFree(rtData);
+                                        }
+
+                                        // "if"
+                                        if (0 == strcmp(OIC_JSON_IF_NAME, rMapName))
+                                        {
+                                            // TODO : Need to check data structure of OicSecPdAcl_t and assign based on RAML spec.
+                                            char *ifData = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&rMap, &ifData, &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding IF Value.");
+                                            OICFree(ifData);
+                                        }
+
+                                        if (cbor_value_is_valid(&rMap))
+                                        {
+                                            cborFindResult = cbor_value_advance(&rMap);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Rlist Map.");
+                                        }
+                                        OICFree(rMapName);
+                                    }
+
+                                    if (cbor_value_is_valid(&resources))
+                                    {
+                                        cborFindResult = cbor_value_advance(&resources);
+                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance");
+                                    }
                                 }
                             }
 
@@ -536,6 +632,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                             // Period -- Not mandatory
                             if (strcmp(name, OIC_JSON_PERIODS_NAME) == 0)
                             {
+                                int i = 0;
                                 CborValue period = { .parser = NULL };
                                 cborFindResult = cbor_value_get_array_length(&pdAclMap,
                                         &pdacl->prdRecrLen);
@@ -544,7 +641,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
                                 pdacl->periods = (char **) OICCalloc(pdacl->prdRecrLen, sizeof(char*));
                                 VERIFY_NON_NULL(TAG, pdacl->periods, ERROR);
-                                int i = 0;
+
                                 while (cbor_value_is_text_string(&period))
                                 {
                                     cborFindResult = cbor_value_dup_text_string(&period,
@@ -559,6 +656,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                             // Recurrence -- Not mandatory
                             if (strcmp(name, OIC_JSON_RECURRENCES_NAME) == 0)
                             {
+                                int i = 0;
                                 CborValue recurrences = { .parser = NULL };
                                 cborFindResult = cbor_value_get_array_length(&pdAclMap, &pdacl->prdRecrLen);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get length");
@@ -566,7 +664,6 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
                                 pdacl->recurrences = (char **) OICCalloc(pdacl->prdRecrLen, sizeof(char*));
                                 VERIFY_NON_NULL(TAG, pdacl->recurrences, ERROR);
-                                int i = 0;
 
                                 while (cbor_value_is_text_string(&recurrences))
                                 {
@@ -612,23 +709,24 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
             //PDDev -- Mandatory
             if (strcmp(name, OIC_JSON_PDDEV_LIST_NAME) == 0)
             {
+                int i = 0;
                 CborValue pddevs = { .parser = NULL };
                 cborFindResult = cbor_value_get_array_length(&pconfMap, &pconf->pddevLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get length");
                 cborFindResult = cbor_value_enter_container(&pconfMap, &pddevs);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
-                int i = 0;
 
                 pconf->pddevs = (OicUuid_t *)OICMalloc(pconf->pddevLen * sizeof(OicUuid_t));
                 VERIFY_NON_NULL(TAG, pconf->pddevs, ERROR);
                 while (cbor_value_is_valid(&pddevs))
                 {
-                    uint8_t *pddev = NULL;
-                    cborFindResult = cbor_value_dup_byte_string(&pddevs, &pddev, &len, NULL);
+                    char *pddev = NULL;
+                    cborFindResult = cbor_value_dup_text_string(&pddevs, &pddev, &len, NULL);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
                     cborFindResult = cbor_value_advance(&pddevs);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance");
-                    memcpy(pconf->pddevs[i++].id, pddev, len);
+                    ret = ConvertStrToUuid(pddev, &pconf->pddevs[i++]);
+                    VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                     OICFree(pddev);
                 }
             }
@@ -636,20 +734,22 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
             //Mandatory - Device Id
             if (0 == strcmp(OIC_JSON_DEVICE_ID_NAME, name))
             {
-                uint8_t *deviceId = NULL;
-                cborFindResult = cbor_value_dup_byte_string(&pconfMap, &deviceId, &len, NULL);
+                char *deviceId = NULL;
+                cborFindResult = cbor_value_dup_text_string(&pconfMap, &deviceId, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get deviceID");
-                memcpy(pconf->deviceID.id, deviceId, len);
+                ret = ConvertStrToUuid(deviceId, &pconf->deviceID);
+                VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(deviceId);
             }
 
             // ROwner -- Mandatory
-            if (0 == strcmp(OIC_JSON_ROWNER_NAME, name))
+            if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name))
             {
-                uint8_t *rowner = NULL;
-                cborFindResult = cbor_value_dup_byte_string(&pconfMap, &rowner, &len, NULL);
+                char *rowner = NULL;
+                cborFindResult = cbor_value_dup_text_string(&pconfMap, &rowner, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get rowner");
-                memcpy(pconf->rowner.id, rowner, len);
+                ret = ConvertStrToUuid(rowner, &pconf->rowner);
+                VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(rowner);
             }
         }
@@ -669,6 +769,7 @@ exit:
         OIC_LOG (ERROR, TAG, "CBORPayloadToPconf failed");
         DeletePconfBinData(pconf);
         pconf = NULL;
+        *secPconf = NULL;
         ret = OC_STACK_ERROR;
     }
     return ret;
@@ -738,7 +839,17 @@ static OCEntityHandlerResult HandlePconfGetRequest (const OCEntityHandlerRequest
     {
         ehRet = OC_EH_ERROR;
     }
-    ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
+
+    if(OC_EH_OK == ehRet)
+    {
+        ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
+    }
+    else
+    {
+        OICFree(payload);
+        payload = NULL;
+        size = 0;
+    }
 
     // Send response payload to request originator
     SendSRMCBORResponse(ehRequest, ehRet, payload, size);

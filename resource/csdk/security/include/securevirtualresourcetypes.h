@@ -399,12 +399,13 @@ struct OicSecDoxm
     //TODO: Need more clarification on deviceIDFormat field type.
     //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
-    bool                dpc;             // 7:R:S:Y:Boolean
-    OicUuid_t           owner;         // 8:R:S:Y:oic.uuid
+    bool                dpc;            // 7:R:S:Y:Boolean
+    OicUuid_t           owner;          // 8:R:S:Y:oic.uuid
+    OicUuid_t           rownerID;       // 9:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
-    //OicSecSvc_t       devOwner;        // 9:R:S:Y:oic.sec.svc
-    //OicSecSvc_t       rOwner;        // 10:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       devOwner;        // 10:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       rOwner;        // 11:R:S:Y:oic.sec.svc
     //TODO change Owner type to oic.sec.svc
 };
 
@@ -424,6 +425,7 @@ struct OicSecPstat
     size_t              smLen;          // the number of elts in Sm
     OicSecDpom_t        *sm;            // 5:R:M:Y:oic.sec.dpom
     uint16_t            commitHash;     // 6:R:S:Y:oic.sec.sha256
+    OicUuid_t           rownerID;       // 7:R:S:Y:oic.uuid
     //TODO: this is supposed to be a 256-bit uint; temporarily use uint16_t
     //TODO: need to decide which 256 bit and 128 bit types to use... boost?
 };

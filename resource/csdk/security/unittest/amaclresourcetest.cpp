@@ -151,14 +151,6 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     EXPECT_EQ(secAmacl->ownersLen, amacl->ownersLen);
     EXPECT_EQ(*secAmacl->owners[0].id, *amacl->owners[0].id);
 
-    EXPECT_EQ(secAmacl->next->amssLen, amacl->next->amssLen);
-    EXPECT_EQ(sizeof(secAmacl->next->amss[0].id), sizeof(amacl->next->amss[0].id));
-    EXPECT_STREQ(secAmacl->next->resources[0], amacl->next->resources[0]);
-    EXPECT_STREQ(secAmacl->next->resources[1], amacl->next->resources[1]);
-    EXPECT_EQ(secAmacl->next->resourcesLen, amacl->next->resourcesLen);
-    EXPECT_EQ(secAmacl->next->ownersLen, amacl->next->ownersLen);
-    EXPECT_EQ(*secAmacl->next->owners[0].id, *amacl->next->owners[0].id);
-
     DeleteAmaclList(secAmacl);
     DeleteAmaclList(amacl);
     OICFree(psStorage);

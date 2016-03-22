@@ -113,6 +113,29 @@ OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
  */
 const char* GetOxmString(OicSecOxm_t oxmType);
 
+/*
+ * This method converts UUID to canonical format string.
+ *
+ * @param uuid Device UUID
+ * @param strUuid converted UUID in canonical format
+ * @return OC_STACK_OK for success.
+ *
+ * @note Caller needs to invoke OICFree after done using the return pointer
+ */
+OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
+
+
+/*
+ * This method converts string UUID to OicUuid_t.
+ *
+ * @param strUuid Device UUID in string format
+ * @param uuid converted UUID in OicUuid_t format
+ * @return OC_STACK_OK for success.
+ *
+ */
+OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
+
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
