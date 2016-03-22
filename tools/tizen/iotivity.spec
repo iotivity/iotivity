@@ -9,6 +9,11 @@ Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
 
+
+%if "%{TARGET_OS}" == "linux"
+%define TARGET_TRANSPORT IP
+%endif
+
 %define JOB "-j4"
 %if 0%{?speedpython}
 %define JOB %{?_smp_mflags}
@@ -53,7 +58,7 @@ Source1002: %{name}-test.manifest
 %{!?SECURED: %define SECURED 0}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_OS: %define TARGET_OS tizen}
-%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP,BT}
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_CLOUD: %define WITH_CLOUD 0}
 %{!?WITH_MQ: %define WITH_MQ OFF}
