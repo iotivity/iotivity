@@ -29,7 +29,7 @@ struct CloseApp{};
 constexpr int RESOURCE_TEMP = 1;
 constexpr int RESOURCE_LIGHT = 2;
 
-constexpr int DEFALUT_SERVER = 1;
+constexpr int DEFAULT_SERVER = 1;
 constexpr int CUSTOM_SERVER = 2;
 
 constexpr int INCREASE = 1;
@@ -210,13 +210,13 @@ void runResourceTypeSelection(int resourceMode)
 void runResourceModeSelection()
 {
     std::cout << "========================================================          \n";
-    std::cout << DEFALUT_SERVER << ". Creation of Simple Resource Without Handlers  \n";
+    std::cout << DEFAULT_SERVER << ". Creation of Simple Resource Without Handlers  \n";
     std::cout << CUSTOM_SERVER << ". Creation of Resource With Set and Get Handlers \n";
     std::cout << CUSTOM_SERVER + 1 << ". Quit                                       \n";
     std::cout << "========================================================          \n";
 
     g_currentRun = std::bind(runResourceTypeSelection,
-            processUserInput(DEFALUT_SERVER, CUSTOM_SERVER));
+            processUserInput(DEFAULT_SERVER, CUSTOM_SERVER));
 }
 
 void runPresenceSelection()
