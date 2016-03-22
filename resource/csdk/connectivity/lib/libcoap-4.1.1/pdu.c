@@ -427,13 +427,13 @@ unsigned int coap_get_tcp_header_length_for_transport(coap_transport_type transp
         case coap_tcp:
             length = COAP_TCP_HEADER_NO_FIELD;
             break;
-        case coap_tcp_8bit:
+        case coap_tcp_8bit:   /* len(4bit) + TKL(4bit) + Len+bytes(1byte) + Code(1byte) */
             length = COAP_TCP_HEADER_8_BIT;
             break;
-        case coap_tcp_16bit:
+        case coap_tcp_16bit:  /* len(4bit) + TKL(4bit) + Len+bytes(2byte) + Code(1byte) */
             length = COAP_TCP_HEADER_16_BIT;
             break;
-        case coap_tcp_32bit:
+        case coap_tcp_32bit:  /* len(4bit) + TKL(4bit) + Len+bytes(4byte) + Code(1byte) */
             length = COAP_TCP_HEADER_32_BIT;
             break;
         default:
