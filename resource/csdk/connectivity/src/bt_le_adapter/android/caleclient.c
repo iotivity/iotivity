@@ -672,6 +672,13 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
                             }
                             ca_mutex_unlock(g_deviceScanRetryDelayMutex);
                             // time out
+
+                            // checking whether a target device is found while waiting for time-out.
+                            if (CALEClientIsDeviceInScanDeviceList(env, address))
+                            {
+                                devicesDiscovered = true;
+                                break;
+                            }
                         }
                     }
                 }
