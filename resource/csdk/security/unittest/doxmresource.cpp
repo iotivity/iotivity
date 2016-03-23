@@ -129,7 +129,7 @@ TEST(DoxmResourceTest, DoxmEntityHandlerValidRequest)
 TEST(DoxmResourceTest, DoxmEntityHandlerDeviceIdQuery)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
-    char query[] = "deviceid=2222222222222222";
+    char query[] = "deviceuuid=2222222222222222";
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_GET;
     req.query = OICStrdup(query);

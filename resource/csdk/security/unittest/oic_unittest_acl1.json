@@ -1,94 +1,106 @@
 {
-	"acl":{
-		"aclist":{
-			"aces":[
-				{
-					"subject": "*",
-					"resources": [
-						{
-							"href": "/oic/res",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/d",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/p",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/res/types/d",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/ad",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/sec/acl",
-							"rt": "",
-							"if": ""
-						}
-					],
-					"permission": 2
-				},
-				{
-					"subject": "*",
-					"resources": [
-						{
-							"href": "/oic/sec/doxm",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/sec/pstat",
-							"rt": "",
-							"if": ""
-						}
-					],
-					"permission": 6
-				},
-				{
-					"subject": "31313131-3131-3131-3131-313131313131",
-					"resources": [
-						{
-							"href": "/oic/light",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/fan",
-							"rt": "",
-							"if": ""
-						}
-					],
-					"permission": 31		
-				},
-				{
-					"subject": "33333333-3333-3333-3333-333333333333",
-					"resources": [
-						{
-							"href": "/oic/light",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/garage",
-							"rt": "",
-							"if": ""
-						}
-					],
-					"permission": 31		
-				}
-			]
-		},
-		"rownerid" : "32323232-3232-3232-3232-323232323232"
-	}
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/types/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/ad",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 6
+                },
+                {
+                    "subjectuuid": "31313131-3131-3131-3131-313131313131",
+                    "resources": [
+                        {
+                            "href": "/oic/light",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/fan",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 31        
+                },
+                {
+                    "subjectuuid": "33333333-3333-3333-3333-333333333333",
+                    "resources": [
+                        {
+                            "href": "/oic/light",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/garage",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 31        
+                }
+            ]
+        },
+        "rowneruuid" : "32323232-3232-3232-3232-323232323232"
+    }
 }
 

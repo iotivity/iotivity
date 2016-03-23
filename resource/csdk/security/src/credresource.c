@@ -228,8 +228,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encoder_create_map(&credMap, &publicMap, publicMapSize);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PublicData Map");
 
-            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_JSON_PUBDATA_NAME,
-                strlen(OIC_JSON_PUBDATA_NAME));
+            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_JSON_DATA_NAME,
+                strlen(OIC_JSON_DATA_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Pub Data Tag.");
             cborEncoderResult = cbor_encode_byte_string(&publicMap, cred->publicData.data,
                 cred->publicData.len);
@@ -260,8 +260,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encoder_create_map(&credMap, &privateMap, privateMapSize);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PrivateData Map");
 
-            cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_PRIVDATA_NAME,
-                strlen(OIC_JSON_PRIVDATA_NAME));
+            cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_DATA_NAME,
+                strlen(OIC_JSON_DATA_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
             cborEncoderResult = cbor_encode_byte_string(&privateMap, cred->privateData.data,
                 cred->privateData.len);
@@ -479,7 +479,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     if (privname)
                                     {
                                         // PrivateData::privdata -- Mandatory
-                                        if (strcmp(privname, OIC_JSON_PRIVDATA_NAME) == 0)
+                                        if (strcmp(privname, OIC_JSON_DATA_NAME) == 0)
                                         {
                                             cborFindResult = cbor_value_dup_byte_string(&privateMap, &cred->privateData.data,
                                                 &cred->privateData.len, NULL);
@@ -521,7 +521,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     if (pubname)
                                     {
                                         // PrivateData::privdata -- Mandatory
-                                        if (strcmp(pubname, OIC_JSON_PUBDATA_NAME) == 0)
+                                        if (strcmp(pubname, OIC_JSON_DATA_NAME) == 0)
                                         {
                                             cborFindResult = cbor_value_dup_byte_string(&pubMap, &cred->publicData.data,
                                                 &cred->publicData.len, NULL);
@@ -1052,36 +1052,30 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-    B64Result b64Ret = B64_OK;
-    uint32_t outLen = 0;
-
     if (NULL == ehRequest->query)
-   {
-       return ehRet;
-   }
+    {
+        return ehRet;
+    }
 
-   OicParseQueryIter_t parseIter = { .attrPos=NULL };
-   OicUuid_t subject = {.id={0}};
+    OicParseQueryIter_t parseIter = { .attrPos=NULL };
+    OicUuid_t subject = {.id={0}};
 
-   //Parsing REST query to get the subject
-   ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
-   while (GetNextQuery(&parseIter))
-   {
-       if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
-               parseIter.attrLen) == 0)
-       {
-            b64Ret = b64Decode((char*)parseIter.valPos,  parseIter.valLen, base64Buff,
-                    sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(subject.id)), ERROR);
-            memcpy(subject.id, base64Buff, outLen);
+    //Parsing REST query to get the subject
+    ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
+    while (GetNextQuery(&parseIter))
+    {
+        if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECTID_NAME,
+                parseIter.attrLen) == 0)
+        {
+            OCStackResult ret = ConvertStrToUuid((const char*)parseIter.valPos, &subject);
+            VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         }
-   }
+    }
 
-   if (OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
-   {
-       ehRet = OC_EH_RESOURCE_DELETED;
-   }
+    if (OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
+    {
+        ehRet = OC_EH_RESOURCE_DELETED;
+    }
 
 exit:
     return ehRet;

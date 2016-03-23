@@ -129,10 +129,12 @@ extern const char * OIC_JSON_SPM_NAME;
 extern const char * OIC_JSON_PDEVICE_ID_NAME;
 extern const char * OIC_JSON_RLIST_NAME;
 extern const char * OIC_JSON_HREF_NAME;
+extern const char * OIC_JSON_REL_NAME;
 extern const char * OIC_JSON_RT_NAME;
 extern const char * OIC_JSON_IF_NAME;
 extern const char * OIC_JSON_ROWNERID_NAME;
 extern const char * OIC_JSON_ENCODING_NAME;
+extern const char * OIC_JSON_DATA_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 

@@ -215,7 +215,7 @@ TEST(ACLResourceTest, GetDefaultACLTests)
     uint8_t *payload = NULL;
     size_t size = 0;
 
-    ASSERT_TRUE(ReadCBORFile(DEFAULT_ACL_FILE_NAME, &payload, &size));
+    ASSERT_TRUE(ReadCBORFile(DEFAULT_ACL_FILE_NAME, OIC_JSON_ACL_NAME, &payload, &size));
     ASSERT_TRUE(payload != NULL);
 
     OicSecAcl_t *psAcl = CBORPayloadToAcl(payload, size);
@@ -252,7 +252,7 @@ TEST(ACLResourceTest, ACLPostTest)
     uint8_t *payload = NULL;
     size_t size = 0;
 
-    ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, &payload, &size));
+    ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, OIC_JSON_ACL_NAME, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload, size);
@@ -294,7 +294,7 @@ TEST(ACLResourceTest, GetACLResourceTests)
     uint8_t *payload = NULL;
     size_t size = 0;
 
-    ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, &payload, &size));
+    ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, OIC_JSON_ACL_NAME, &payload, &size));
     ASSERT_TRUE(payload != NULL);
 
     OicSecAcl_t *defaultPsAcl = CBORPayloadToAcl(payload, size);
@@ -388,7 +388,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
     // Create Entity Handler DELETE request
     ehReq.method = OC_REST_DELETE;
-    char query[] = "sub=2222222222222222;rsrc=/a/led";
+    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
     ehReq.query = (char *)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL !=  ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);
@@ -442,7 +442,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     // Create Entity Handler DELETE request
     ehReq.method = OC_REST_DELETE;
-    char query[] = "subject=2222222222222222;resources=/a/led";
+    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
     ehReq.query = (char *)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);
@@ -492,7 +492,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
 
     //Create Entity Handler GET request wit query
     ehReq.method = OC_REST_GET;
-    char query[] = "sub=2222222222222222;rsrc=/a/led";
+    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
     ehReq.query = (char*)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);

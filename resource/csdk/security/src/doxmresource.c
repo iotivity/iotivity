@@ -57,7 +57,7 @@ static const uint16_t CBOR_SIZE = 512;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 /** DOXM Map size - Number of mandatory items. */
-static const uint8_t DOXM_MAP_SIZE = 8;
+static const uint8_t DOXM_MAP_SIZE = 7;
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -194,16 +194,6 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Tag.");
     cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->owned);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Value.");
-
-
-    //TODO: Need to modify to use real didformat value
-    //DidFormat
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_FORMAT_NAME,
-        strlen(OIC_JSON_DEVICE_ID_FORMAT_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DidFormat Tag");
-    cborEncoderResult = cbor_encode_int(&doxmMap, 0);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DidFormat Value.");
-
 
     //DeviceId -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_NAME,
@@ -410,7 +400,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Device Id Value.");
         ret = ConvertStrToUuid(strUuid , &doxm->deviceID);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        OICFree(strUuid );
+        OICFree(strUuid);
         strUuid  = NULL;
     }
 
@@ -421,7 +411,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Value.");
         ret = ConvertStrToUuid(strUuid , &doxm->owner);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        OICFree(strUuid );
+        OICFree(strUuid);
         strUuid  = NULL;
     }
 
@@ -432,15 +422,8 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ROwner Value.");
         ret = ConvertStrToUuid(strUuid , &doxm->rownerID);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-        OICFree(strUuid );
+        OICFree(strUuid);
         strUuid  = NULL;
-    }
-
-
-    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVICE_ID_FORMAT_NAME, &doxmMap);
-    if (CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
-    {
-        // TODO: handle "didformat"
     }
 
 

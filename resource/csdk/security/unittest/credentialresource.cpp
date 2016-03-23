@@ -40,7 +40,7 @@ OicSecCred_t * getCredList()
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
     VERIFY_NON_NULL(TAG, cred, ERROR);
     cred->credId = 1234;
-    OICStrcpy((char *)cred->subject.id, sizeof(cred->subject.id), "subject1");
+    OICStrcpy((char *)cred->subject.id, sizeof(cred->subject.id)+1, "1111111111111111");
 
 #if 0
     cred->roleIdsLen = 2;
@@ -58,11 +58,11 @@ OicSecCred_t * getCredList()
     cred->ownersLen = 1;
     cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
     VERIFY_NON_NULL(TAG, cred->owners, ERROR);
-    OICStrcpy((char *)cred->owners[0].id, sizeof(cred->owners[0].id), "ownersId11");
+    OICStrcpy((char *)cred->owners[0].id, sizeof(cred->owners[0].id), "aaaaaaaaaaaaaaaa");
     cred->next = (OicSecCred_t*)OICCalloc(1, sizeof(*cred->next));
     VERIFY_NON_NULL(TAG, cred->next, ERROR);
     cred->next->credId = 5678;
-    OICStrcpy((char *)cred->next->subject.id, sizeof(cred->next->subject.id), "subject2");
+    OICStrcpy((char *)cred->next->subject.id, sizeof(cred->next->subject.id)+1, "2222222222222222");
 #if 0
     cred->next->roleIdsLen = 0;
 #endif
@@ -80,8 +80,8 @@ OicSecCred_t * getCredList()
     cred->next->ownersLen = 2;
     cred->next->owners = (OicUuid_t *)OICCalloc(cred->next->ownersLen, sizeof(*cred->next->owners));
     VERIFY_NON_NULL(TAG, cred->next->owners, ERROR);
-    OICStrcpy((char *)cred->next->owners[0].id, sizeof(cred->next->owners[0].id), "ownersId21");
-    OICStrcpy((char *)cred->next->owners[1].id, sizeof(cred->next->owners[1].id), "ownersId22");
+    OICStrcpy((char *)cred->next->owners[0].id, sizeof(cred->next->owners[0].id), "bbbbbbbbbbbbbbbb");
+    OICStrcpy((char *)cred->next->owners[1].id, sizeof(cred->next->owners[1].id), "cccccccccccccccc");
 
     return cred;
 
@@ -169,13 +169,12 @@ TEST(CredResourceTest, CredEntityHandlerDeleteTest)
     const OicSecCred_t* subjectCred1 = NULL;
     const OicSecCred_t* subjectCred2 = NULL;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    char query[] = "sub=c3ViamVjdDE="; //base64 Encoding of subject1
+    char query[] = "subjectuuid=31313131-3131-3131-3131-313131313131"; //canonical uuid of subject1
 
     SetPersistentHandler(&ps, true);
 
     OicSecCred_t *cred = getCredList();
     ASSERT_TRUE(NULL != cred);
-
     uint8_t *payload = NULL;
     size_t size = 0;
     EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred, &payload, &size));
@@ -200,30 +199,30 @@ TEST(CredResourceTest, CredEntityHandlerDeleteTest)
     subjectCred1 = GetCredResourceData(&cred->subject);
     EXPECT_TRUE(NULL != subjectCred1);
 
-   // Create Entity Handler DELETE request
-   ehReq.method = OC_REST_DELETE;
-   ehReq.query = (char *)OICCalloc(1, strlen(query)+1);
-   if (!ehReq.query)
-   {
-       OICFree(payload);
-       DeleteCredList(cred);
-   }
-   ASSERT_TRUE(NULL != ehReq.query);
-   OICStrcpy(ehReq.query, strlen(query)+1, query);
+    // Create Entity Handler DELETE request
+    ehReq.method = OC_REST_DELETE;
+    ehReq.query = (char *)OICCalloc(1, strlen(query)+1);
+    if (!ehReq.query)
+    {
+        OICFree(payload);
+        DeleteCredList(cred);
+    }
+    ASSERT_TRUE(NULL != ehReq.query);
+    OICStrcpy(ehReq.query, strlen(query)+1, query);
 
-   ehRet = CredEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
-   EXPECT_EQ(OC_EH_ERROR, ehRet);
+    ehRet = CredEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
+    EXPECT_EQ(OC_EH_ERROR, ehRet);
 
-   // Verify if SRM has deleted ACE for the subject
-   subjectCred2 = GetCredResourceData(&cred->subject);
-   EXPECT_TRUE(NULL == subjectCred2);
+    // Verify if SRM has deleted ACE for the subject
+    subjectCred2 = GetCredResourceData(&cred->subject);
+    EXPECT_TRUE(NULL == subjectCred2);
 
-   // Perform cleanup
-   OICFree(ehReq.query);
-   OICFree(payload);
-   DeInitCredResource();
-   DeleteCredList(cred);
-   OCPayloadDestroy((OCPayload *)ehReq.payload);
+    // Perform cleanup
+    OICFree(ehReq.query);
+    OICFree(payload);
+    DeInitCredResource();
+    DeleteCredList(cred);
+    OCPayloadDestroy((OCPayload *)ehReq.payload);
 }
 
 TEST(CredResourceTest, CredToCBORPayloadNULL)

@@ -49,7 +49,7 @@
 static const uint8_t ACL_MAP_SIZE = 2;
 static const uint8_t ACL_ACLIST_MAP_SIZE = 1;
 static const uint8_t ACL_ACES_MAP_SIZE = 3;
-static const uint8_t ACL_RESOURCE_MAP_SIZE = 3;
+static const uint8_t ACL_RESOURCE_MAP_SIZE = 4;
 
 
 // CborSize is the default cbor payload size being used.
@@ -203,8 +203,8 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating ACES Map");
 
         // Subject -- Mandatory
-        cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECT_NAME,
-            strlen(OIC_JSON_SUBJECT_NAME));
+        cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECTID_NAME,
+            strlen(OIC_JSON_SUBJECTID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Subject Name Tag.");
         inLen = (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0) ?
             WILDCARD_SUBJECT_ID_LEN : sizeof(OicUuid_t);
@@ -248,6 +248,15 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
                 cborEncoderResult = cbor_encode_text_string(&rMap, acl->resources[i],
                         strlen(acl->resources[i]));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding HREF Value in Map.");
+
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_REL_NAME,
+                        strlen(OIC_JSON_REL_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Name Tag.");
+
+                // TODO : Need to assign real value of REL
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_EMPTY_STRING,
+                        strlen(OIC_JSON_EMPTY_STRING));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Value.");
 
                 cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_RT_NAME,
                         strlen(OIC_JSON_RT_NAME));
@@ -506,7 +515,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                     if (name)
                                     {
                                         // Subject -- Mandatory
-                                        if (strcmp(name, OIC_JSON_SUBJECT_NAME)  == 0)
+                                        if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0)
                                         {
                                             char *subject = NULL;
                                             cborFindResult = cbor_value_dup_text_string(&aclMap, &subject, &len, NULL);
@@ -559,7 +568,15 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                         cborFindResult = cbor_value_dup_text_string(&rMap, &acl->resources[i++], &len, NULL);
                                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Href Value.");
                                                     }
-
+                                                    // "rel"
+                                                    if (0 == strcmp(OIC_JSON_REL_NAME, rMapName))
+                                                    {
+                                                        // TODO : Need to check data structure of OicSecAcl_t based on RAML spec.
+                                                        char *relData = NULL;
+                                                        cborFindResult = cbor_value_dup_text_string(&rMap, &relData, &len, NULL);
+                                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding REL Value.");
+                                                        OICFree(relData);
+                                                    }
                                                     // "rt"
                                                     if (0 == strcmp(OIC_JSON_RT_NAME, rMapName))
                                                     {
@@ -831,7 +848,7 @@ static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
 
     while (GetNextQuery (&parseIter))
     {
-        if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_SUBJECT_NAME, parseIter.attrLen) == 0)
+        if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_SUBJECTID_NAME, parseIter.attrLen) == 0)
         {
             VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
             memcpy(subject->id, parseIter.valPos, parseIter.valLen);

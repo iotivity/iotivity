@@ -69,13 +69,6 @@
 static OTMCallbackData_t g_OTMDatas[OIC_OXM_COUNT];
 
 /**
- * Variable for storing provisioning tool's provisioning capabilities
- * Must be in decreasing order of preference. More prefered method should
- * have lower array index.
- */
-static OicSecDpom_t gProvisioningToolCapability[] = { SINGLE_SERVICE_CLIENT_DRIVEN };
-
-/**
  * Number of supported provisioning methods
  * current version supports only one.
  */
@@ -128,29 +121,8 @@ static void SelectOperationMode(const OCProvisionDev_t *selectedDeviceInfo,
                                 OicSecDpom_t *selectedMode)
 {
     OIC_LOG(DEBUG, TAG, "IN SelectOperationMode");
-
-    size_t i = 0;
-    size_t j = 0;
-
-    while (i < gNumOfProvisioningMethodsPT && j < selectedDeviceInfo->pstat->smLen)
-    {
-        if (gProvisioningToolCapability[i] < selectedDeviceInfo->pstat->sm[j])
-        {
-            i++;
-        }
-        else if (selectedDeviceInfo->pstat->sm[j] < gProvisioningToolCapability[i])
-        {
-            j++;
-        }
-        else /* if gProvisioningToolCapability[i] == deviceSupportedMethods[j] */
-        {
-            *selectedMode = gProvisioningToolCapability[j];
-            break;
-        }
-    }
+    *selectedMode = selectedDeviceInfo->pstat->sm[0];
     OIC_LOG_V(DEBUG, TAG, "Selected Operation Mode = %d", *selectedMode);
-
-    OIC_LOG(DEBUG, TAG, "OUT SelectOperationMode");
 }
 
 /**

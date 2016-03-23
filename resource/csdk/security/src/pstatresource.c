@@ -144,19 +144,8 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_SM_NAME,
         strlen(OIC_JSON_SM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
-    {
-        CborEncoder sm = {{.ptr = NULL }, .end = 0 };
-        cborEncoderResult = cbor_encoder_create_array(&pstatMap, &sm, pstat->smLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Array.");
-
-        for (size_t i = 0; i < pstat->smLen; i++)
-        {
-            cborEncoderResult = cbor_encode_int(&sm, pstat->sm[i]);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Value in Array.");
-        }
-        cborEncoderResult = cbor_encoder_close_container(&pstatMap, &sm);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing SM Array.");
-    }
+    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->sm[0]);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Value.");
 
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
         strlen(OIC_JSON_ROWNERID_NAME));
@@ -275,26 +264,13 @@ OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t size,
     }
 
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_SM_NAME, &pstatMap);
-    if (CborNoError == cborFindResult && cbor_value_is_array(&pstatMap))
+    if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
-        CborValue sm = { .parser = NULL };
-        cborFindResult = cbor_value_get_array_length(&pstatMap, &pstat->smLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Array Len.");
+        pstat->smLen = 1;
+        pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->sm[0]);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM.");
 
-        pstat->sm = (OicSecDpom_t *)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
-        VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
-
-        cborFindResult = cbor_value_enter_container(&pstatMap, &sm);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering SM.");
-
-        int i = 0;
-        while (cbor_value_is_valid(&sm))
-        {
-            cborFindResult = cbor_value_get_int(&sm, (int *)&pstat->sm[i++]);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM.");
-            cborFindResult = cbor_value_advance(&sm);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Closing SM.");
-        }
     }
 
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ROWNERID_NAME, &pstatMap);

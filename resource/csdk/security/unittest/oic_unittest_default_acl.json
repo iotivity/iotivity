@@ -1,55 +1,63 @@
 {
-	"acl":{
-		"aclist":{
-			"aces":[
-				{
-					"subject": "*",
-					"resources": [
-						{
-							"href": "/oic/res",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/d",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/p",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/res/types/d",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/ad",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/sec/acl",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/sec/doxm",
-							"rt": "",
-							"if": ""
-						},
-						{
-							"href": "/oic/sec/pstat",
-							"rt": "",
-							"if": ""
-						}
-					],
-					"permission": 2
-				}
-			]
-		},
-		"rownerid" : "32323232-3232-3232-3232-323232323232"
-	}
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/types/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/ad",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                }
+            ]
+        },
+        "rowneruuid" : "32323232-3232-3232-3232-323232323232"
+    }
 }

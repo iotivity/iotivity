@@ -68,11 +68,10 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
     defaultPstat->cm = (OicSecDpm_t) 63;
     defaultPstat->tm = (OicSecDpm_t) 48;
     defaultPstat->om = (OicSecDpom_t) 0;
-    defaultPstat->smLen = 2;
+    defaultPstat->smLen = 1;
     defaultPstat->sm = (OicSecDpom_t *)OICCalloc(defaultPstat->smLen, sizeof(*defaultPstat->sm));
     ASSERT_TRUE(defaultPstat->sm != NULL);
     defaultPstat->sm[0] = (OicSecDpom_t) 3;
-    defaultPstat->sm[1] = (OicSecDpom_t) 1;
     size_t size = 0;
     uint8_t *cbor = NULL;
     EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(defaultPstat, &cbor, &size));
@@ -127,11 +126,10 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
     pstat.isOp = true;
     pstat.tm = NORMAL;
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;
-    pstat.smLen = 2;
+    pstat.smLen = 1;
     pstat.sm = (OicSecDpom_t*)OICCalloc(pstat.smLen, sizeof(*pstat.sm));
     ASSERT_TRUE(NULL != pstat.sm);
     pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
-    pstat.sm[1] = SINGLE_SERVICE_SERVER_DRIVEN;
 
     size_t size = 0;
     uint8_t *cbor = NULL;
@@ -152,7 +150,6 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
     EXPECT_EQ(pstat.om, pstat1->om);
     EXPECT_EQ(pstat.smLen, pstat1->smLen);
     EXPECT_EQ(pstat.sm[0], pstat1->sm[0]);
-    EXPECT_EQ(pstat.sm[1], pstat1->sm[1]);
 
     DeletePstatBinData(pstat1);
     OICFree(cbor);

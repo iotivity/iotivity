@@ -50,7 +50,7 @@
 static const uint16_t CBOR_SIZE = 1024;
 static const uint64_t CBOR_MAX_SIZE = 4400;
 static const uint8_t  PCONF_MAP_SIZE = 4;
-static const uint8_t  PCONF_RESOURCE_MAP_SIZE = 3;
+static const uint8_t  PCONF_RESOURCE_MAP_SIZE = 4;
 
 static OicSecPconf_t          *gPconf = NULL;
 static OCResourceHandle   gPconfHandle = NULL;
@@ -280,6 +280,15 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
                 cborEncoderResult = cbor_encode_text_string(&rMap, pdacl->resources[i],
                         strlen(pdacl->resources[i]));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding HREF Value in Map.");
+
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_REL_NAME,
+                        strlen(OIC_JSON_REL_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Name Tag.");
+
+                // TODO : Need to assign real value of REL
+                cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_EMPTY_STRING,
+                        strlen(OIC_JSON_EMPTY_STRING));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Value.");
 
                 cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_RT_NAME,
                         strlen(OIC_JSON_RT_NAME));
@@ -583,6 +592,16 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                             // TODO : Need to check data structure of OicSecPdAcl_t based on RAML spec.
                                             cborFindResult = cbor_value_dup_text_string(&rMap, &pdacl->resources[i++], &len, NULL);
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Href Value.");
+                                        }
+
+                                        // "rel"
+                                        if (0 == strcmp(OIC_JSON_REL_NAME, rMapName))
+                                        {
+                                            // TODO : Need to check data structure of OicSecPdAcl_t and assign based on RAML spec.
+                                            char *relData = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&rMap, &relData, &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding REL Value.");
+                                            OICFree(relData);
                                         }
 
                                         // "rt"

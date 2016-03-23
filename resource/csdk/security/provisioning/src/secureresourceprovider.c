@@ -1107,20 +1107,20 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         return OC_STACK_INVALID_PARAM;
     }
 
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(revokedDev->doxm->deviceID.id)) + 1] = {};
-    uint32_t base64Len = 0;
-    if (B64_OK != b64Encode(revokedDev->doxm->deviceID.id, sizeof(revokedDev->doxm->deviceID.id),
-                           base64Buff, sizeof(base64Buff), &base64Len))
+    char *subID = NULL;
+    OCStackResult ret = ConvertUuidToStr(&revokedDev->doxm->deviceID, &subID);
+    if(OC_STACK_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "SendDeleteCredentialRequest : Failed to base64 encoding");
+        OIC_LOG(ERROR, TAG, "SendDeleteCredentialRequest : Failed to canonical UUID encoding");
         return OC_STACK_ERROR;
     }
 
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
-                    //coaps://0.0.0.0:5684/oic/sec/cred?sub=(BASE64 ENCODED UUID)
+                    //coaps://0.0.0.0:5684/oic/sec/cred?subjectid=(Canonical ENCODED UUID)
     snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,
-                     destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECT_NAME, base64Buff);
+                     destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECTID_NAME, subID);
+    OICFree(subID);
     if (snRet < 0)
     {
         OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error (snprintf) %d\n", snRet);
@@ -1141,7 +1141,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
 
     OIC_LOG(DEBUG, TAG, "Sending remove credential request to resource server");
 
-    OCStackResult ret = OCDoResource(NULL, OC_REST_DELETE, reqBuf,
+    ret = OCDoResource(NULL, OC_REST_DELETE, reqBuf,
                                      &destDev->endpoint, NULL,
                                      CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
     if (OC_STACK_OK != ret)
@@ -1446,67 +1446,61 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
     OCStackResult res = OC_STACK_ERROR;
 
     RemoveData_t* removeData = (RemoveData_t*)delDevCtx;
-    if(removeData)
+
+    if (clientResponse)
     {
-        if (clientResponse)
+        OicUuid_t revDevUuid = {.id={0}};
+        if(UUID_LENGTH == clientResponse->identity.id_length)
         {
-            OicUuid_t revDevUuid = {.id={0}};
-            if(UUID_LENGTH == clientResponse->identity.id_length)
+            memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
+            if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
             {
-                memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
-                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+                res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID, &revDevUuid);
+                if (OC_STACK_OK != res)
                 {
-                    res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID, &revDevUuid);
-                    if (OC_STACK_OK != res)
-                    {
-                        OIC_LOG(ERROR, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
-                               registerResultForRemoveDevice(removeData, &revDevUuid,
-                               OC_STACK_INCONSISTENT_DB, true);
+                    OIC_LOG(ERROR, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
+                           registerResultForRemoveDevice(removeData, &revDevUuid,
+                           OC_STACK_INCONSISTENT_DB, true);
 
-                        return OC_STACK_DELETE_TRANSACTION;
-                    }
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
 
-                    registerResultForRemoveDevice(removeData, &revDevUuid,
-                                                  OC_STACK_RESOURCE_DELETED, false);
-                }
-                else
-                {
-                    registerResultForRemoveDevice(removeData, &revDevUuid,
-                                                  clientResponse->result, true);
-                    OIC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
-                }
+                registerResultForRemoveDevice(removeData, &revDevUuid,
+                                              OC_STACK_RESOURCE_DELETED, false);
             }
             else
             {
-                OIC_LOG_V(WARNING, TAG, "Incorrect length of device UUID was sent from %s:%d",
-                         clientResponse->devAddr.addr, clientResponse->devAddr.port);
-
-                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
-                {
-                    /**
-                      * Since server's credential was deleted,
-                      * register result as OC_STACK_INCONSISTENT_DB with NULL UUID.
-                      */
-
-                    OIC_LOG_V(ERROR, TAG, "But server's credential was deleted.");
-                    registerResultForRemoveDevice(removeData, NULL, OC_STACK_INCONSISTENT_DB, true);
-                }
-                else
-                {
-                    registerResultForRemoveDevice(removeData, NULL, clientResponse->result, true);
-                }
+                registerResultForRemoveDevice(removeData, &revDevUuid,
+                                              clientResponse->result, true);
+                OIC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
             }
         }
         else
         {
-            registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
-            OIC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
+            OIC_LOG_V(WARNING, TAG, "Incorrect length of device UUID was sent from %s:%d",
+                     clientResponse->devAddr.addr, clientResponse->devAddr.port);
+
+            if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+            {
+                /**
+                  * Since server's credential was deleted,
+                  * register result as OC_STACK_INCONSISTENT_DB with NULL UUID.
+                  */
+                OIC_LOG_V(ERROR, TAG, "But server's credential was deleted.");
+                registerResultForRemoveDevice(removeData, NULL, OC_STACK_INCONSISTENT_DB, true);
+            }
+            else
+            {
+                registerResultForRemoveDevice(removeData, NULL, clientResponse->result, true);
+            }
         }
     }
     else
     {
-        OIC_LOG(WARNING, TAG, "SRPRemoveDevices received null context");
+        registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
     }
+
 
     return OC_STACK_DELETE_TRANSACTION;
 }

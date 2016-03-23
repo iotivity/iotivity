@@ -355,7 +355,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
 
             size_t jsonObjLen = 0;
             cJSON *jsonObj = NULL;
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
+            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECTID_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
             if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
@@ -579,14 +579,6 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         doxm->dpc = jsonObj->valueint;
     }
 
-    //DidFormat -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_FORMAT_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-        //TODO: handle didformat value
-    }
-
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
     if (jsonObj)
@@ -699,20 +691,11 @@ OicSecPstat_t* JSONToPstatBin(const char * jsonStr)
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_SM_NAME);
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-    if (cJSON_Array == jsonObj->type)
-    {
-        pstat->smLen = (size_t)cJSON_GetArraySize(jsonObj);
-        size_t idxx = 0;
-        VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
-        pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
-        VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
-        do
-        {
-            cJSON *jsonSm = cJSON_GetArrayItem(jsonObj, idxx);
-            VERIFY_NON_NULL(TAG, jsonSm, ERROR);
-            pstat->sm[idxx] = (OicSecDpom_t)jsonSm->valueint;
-        } while ( ++idxx < pstat->smLen);
-    }
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+    pstat->smLen = 1;
+    pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+    pstat->sm[0] = (OicSecDpom_t)jsonObj->valueint;
+
     ret = OC_STACK_OK;
 
 exit:
@@ -770,7 +753,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             }
 
             //subject -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECT_NAME);
+            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECTID_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
             outLen = 0;

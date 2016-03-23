@@ -22,6 +22,7 @@
 #include "oic_malloc.h"
 #include "ocstack.h"
 #include <stdlib.h>
+#include "cbor.h"
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
@@ -59,14 +60,17 @@ char* ReadFile(const char* filename)
     return data;
 }
 
-bool ReadCBORFile(const char* filename, uint8_t **data, size_t *size)
+bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload, size_t *pSize)
 {
     bool status = false;
-    if (!data || !size)
+    if (!payload || !pSize)
     {
         printf("Passed parameter are INVALID \n");
         return status;
     }
+    uint8_t *data = NULL;
+    size_t size = 0;
+
     int len = strlen(STRINGIZE(SECURITY_BUILD_UNITTEST_DIR)) + strlen(filename) + 1;
     char *filepath = (char *)OICCalloc(1, len);
     if (!filepath)
@@ -85,18 +89,43 @@ bool ReadCBORFile(const char* filename, uint8_t **data, size_t *size)
             struct stat st;
             if (stat(filepath, &st) == 0)
             {
-                *data = (uint8_t *)OICMalloc(st.st_size);
-                if (*data)
+                data = (uint8_t *)OICMalloc(st.st_size);
+                if (data)
                 {
-                    if (fread(*data, 1, st.st_size, fp) != (size_t)st.st_size)
+                    if (fread(data, 1, st.st_size, fp) != (size_t)st.st_size)
                     {
                         printf("Error in reading file %s\n", filename);
                     }
                     else
                     {
-                        *size = st.st_size;
-                        status = true;
+                        size = st.st_size;
+
+                        CborValue cbor = {0, };
+                        CborParser parser = {0, };
+                        cbor_parser_init(data, size, 0, &parser, &cbor);
+                        CborError cborFindResult = CborNoError;
+
+                        CborValue curVal = {0, };
+                        cborFindResult = cbor_value_map_find_value(&cbor, rsrcname, &curVal);
+                        if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+                        {
+                            cborFindResult = cbor_value_dup_byte_string(&curVal, payload, pSize, NULL);
+                            if(CborNoError != cborFindResult)
+                            {
+                                printf("Failed to getting %s data\n", rsrcname);
+                            }
+                            else
+                            {
+                                status = true;
+                            }
+                        }
+                        else
+                        {
+                            printf("Failed to finding %s data\n", rsrcname);
+                        }
+
                     }
+                    OICFree(data);
                 }
             }
             fclose(fp);

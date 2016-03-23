@@ -232,17 +232,22 @@ OCStackResult SendAclReq(PEContext_t *context, OCDevAddr *devAddr, OCConnectivit
     OCCallbackData cbData = {.context=NULL};
     OCDevAddr destAddr = {.adapter = OC_ADAPTER_IP};
     B64Result b64Ret;
+    char *subID = NULL;
 
     VERIFY_NON_NULL(TAG, context, ERROR);
     VERIFY_NON_NULL(TAG, devAddr, ERROR);
 
-    b64Ret = b64Encode(context->subject.id, sizeof(context->subject.id),
-                       base64Buff, sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(TAG, B64_OK == b64Ret, ERROR);
+    ret = ConvertUuidToStr(&context->subject, &subID);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "SendAclReq : Failed to canonical UUID encoding");
+        return OC_STACK_ERROR;
+    }
 
     snprintf(uri, sizeof(uri), GET_ACE_QUERY_FMT, OIC_RSRC_ACL_URI,
-                                    OIC_JSON_SUBJECT_NAME, base64Buff,
+                                    OIC_JSON_SUBJECTID_NAME, subID,
                                     OIC_JSON_RESOURCES_NAME, context->resource);
+    OICFree(subID);
 
     cbData.cb = &AmsMgrAclReqCallback;
     cbData.context = context;
