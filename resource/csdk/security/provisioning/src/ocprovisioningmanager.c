@@ -114,7 +114,7 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
 {
     if(NULL == callbackData)
     {
-        return OC_STACK_INVALID_PARAM;
+        return OC_STACK_INVALID_CALLBACK ;
     }
 
     return OTMSetOwnershipTransferCallbackData(oxm, callbackData);
@@ -128,7 +128,11 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
     {
         return OC_STACK_INVALID_PARAM;
     }
-
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "OCDoOwnershipTransfer : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
     return OTMDoOwnershipTransfer(ctx, targetDevices, resultCallback);
 }
 
@@ -215,9 +219,19 @@ OCStackResult OCUnlinkDevices(void* ctx,
     OCUuidList_t* idList = NULL;
     size_t numOfDev = 0;
 
-    if (!pTargetDev1 || !pTargetDev2 || !resultCallback)
+    if (!pTargetDev1 || !pTargetDev2 || !pTargetDev1->doxm || !pTargetDev2->doxm)
     {
         OIC_LOG(ERROR, TAG, "OCUnlinkDevices : NULL parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "OCUnlinkDevices : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+    if (0 == memcmp(&pTargetDev1->doxm->deviceID, &pTargetDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    {
+        OIC_LOG(INFO, TAG, "OCUnlinkDevices : Same device ID");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -277,10 +291,15 @@ OCStackResult OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDis
 {
     OIC_LOG(INFO, TAG, "IN OCRemoveDevice");
     OCStackResult res = OC_STACK_ERROR;
-    if (!pTargetDev || !resultCallback || 0 == waitTimeForOwnedDeviceDiscovery)
+    if (!pTargetDev || 0 == waitTimeForOwnedDeviceDiscovery)
     {
         OIC_LOG(INFO, TAG, "OCRemoveDevice : Invalied parameters");
         return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "OCRemoveDevice : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
     }
 
     // Send DELETE requests to linked devices
@@ -551,14 +570,24 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
                                          OCProvisionResultCB resultCallback)
 {
 
-    if (!pDev1 || !pDev2 || !resultCallback)
+    if (!pDev1 || !pDev2 || !pDev1->doxm || !pDev2->doxm)
     {
         OIC_LOG(ERROR, TAG, "OCProvisionPairwiseDevices : Invalid parameters");
         return OC_STACK_INVALID_PARAM;
     }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "OCProvisionPairwiseDevices : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
     if (!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
     {
         OIC_LOG(INFO, TAG, "OCProvisionPairwiseDevices : Invalid key size");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    {
+        OIC_LOG(INFO, TAG, "OCProvisionPairwiseDevices : Same device ID");
         return OC_STACK_INVALID_PARAM;
     }
 

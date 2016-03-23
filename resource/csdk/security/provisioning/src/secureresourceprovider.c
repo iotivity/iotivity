@@ -629,12 +629,21 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback)
 {
-    VERIFY_NON_NULL(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
-    if (SYMMETRIC_PAIR_WISE_KEY == type)
+    if (!pDev1 || !pDev2 || !pDev1->doxm || !pDev2->doxm)
     {
-        VERIFY_NON_NULL(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL parameters");
+        return OC_STACK_INVALID_PARAM;
     }
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+    if (0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : Same device ID");
+        return OC_STACK_INVALID_PARAM;
+    }
 
     if (SYMMETRIC_PAIR_WISE_KEY == type &&
        !(OWNER_PSK_LENGTH_128 == keySize || OWNER_PSK_LENGTH_256 == keySize))
@@ -1298,11 +1307,22 @@ OCStackResult SRPUnlinkDevices(void* ctx,
 {
     OIC_LOG(INFO, TAG, "IN SRPUnlinkDevices");
 
-    if (!pTargetDev1 || !pTargetDev2 || !resultCallback)
+    if (!pTargetDev1 || !pTargetDev2 || !pTargetDev1->doxm || !pTargetDev2->doxm)
     {
         OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL parameters");
         return OC_STACK_INVALID_PARAM;
     }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+    if (0 == memcmp(&pTargetDev1->doxm->deviceID, &pTargetDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : Same device ID");
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OIC_LOG(INFO, TAG, "Unlinking following devices: ");
     PMPrintOCProvisionDev(pTargetDev1);
     PMPrintOCProvisionDev(pTargetDev2);
@@ -1560,10 +1580,15 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
 {
     OIC_LOG(INFO, TAG, "IN SRPRemoveDevice");
 
-    if (!pTargetDev || !resultCallback || 0 == waitTimeForOwnedDeviceDiscovery)
+    if (!pTargetDev  || 0 == waitTimeForOwnedDeviceDiscovery)
     {
         OIC_LOG(INFO, TAG, "SRPRemoveDevice : NULL parameters");
         return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPRemoveDevice : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
     }
 
     // Declare variables in here to handle error cases with goto statement.
