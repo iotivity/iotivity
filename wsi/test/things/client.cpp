@@ -160,11 +160,13 @@ void foundResource(std::shared_ptr<OCResource> resource)
     {
         std::cerr << "Exception in foundResource: "<< e.what() << std::endl;
     }
+    std::cout << "-----------------------Exit foundResource\n";
 }
 
 static FILE* client_open(const char* /*path*/, const char *mode)
 {
-    return fopen("./oic_svr_db_client.json", mode);
+    //return fopen("./oic_svr_db_client.json", mode);
+	return NULL;
 }
 
 void printMenu()
@@ -187,8 +189,7 @@ int main(int argc, char* argv[]) {
     	printf("\nUsage : Provide Client Type\n");
 		printf("0 : Bulb\n");
 		printf("1 : Thermostat\n");
-		printf("2 : HVAC\n");
-		printf("3 : Vehicle Location\n");
+		printf("2 : RVI\n");
 		return -1;
     }
 

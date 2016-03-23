@@ -87,7 +87,6 @@ module.exports = function(app, passport) {
                 console.log('Response Service Error: ' + err);
                 res.send(err);
             }
-            
             console.log('Response Service Auth : ' + service);
             auth = service[0].auth[0];
 	    var sgy = cap.endpointtype.toLowerCase();

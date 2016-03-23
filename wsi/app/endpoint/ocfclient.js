@@ -346,7 +346,7 @@ module.exports = {
     init: function () {
         var template = {
             "handler": "ocfclient",
-            "sid": "org.openinterconnect",
+            "sid": "org.openinterconnect.ocfclient",
             "capability": [
                 {
                     "cid": "org.openinterconnect.findresource",

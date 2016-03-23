@@ -57,7 +57,7 @@
                  },
                 "payload": {
 					"leftTemperature": 0,
-					"rightTemperature", 0,
+					"rightTemperature" : 0,
 					"leftSeatHeat" : 0,
 					"rightSeatHeat" : 0,
 					"fanSpeed" : 0,
@@ -121,7 +121,7 @@
         
 
         $scope.observeIoTivityCap = function() {
-            var uri = "http://localhost:8080/wsi/cap/org.openinterconnect";
+            var uri = "http://localhost:8080/wsi/cap/org.openinterconnect.ocfserver";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('iotivitycap').value);
             

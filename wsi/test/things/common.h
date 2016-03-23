@@ -16,8 +16,7 @@ using namespace std;
 typedef enum {
     BULB,
     THERMOSTAT,
-    HVAC,
-    CARLOCATION
+    RVI,
 } things_e;
 
 int chosenThing = BULB;
@@ -47,7 +46,7 @@ thingbox things[] = {
 					{"state", 0}
 				}
 		},
-		{HVAC, 			0, "hvac", "Vehicle HVAC", "core.rvihvac", "core.rvihvac", "/rvi/hvac",
+		{RVI, 			0, "rvi", "Vehicle", "core.rvi", "core.rvi", "/a/rvi",
 				{
 					{"leftTemperature", 0},
 					{"rightTemperature", 0},
@@ -62,11 +61,7 @@ thingbox things[] = {
 					{"fanRecirc", 0},
 					{"defrostMax", 0},
 					{"defrostFront", 0},
-					{"defrostRear", 0}
-				}
-		},
-		{CARLOCATION,	0, "carloc", "Vehicle Location", "core.rvilocation", "core.rvilocation", "/rvi/location",
-				{
+					{"defrostRear", 0},
 					{"lat", 0},
 					{"lon", 0},
 					{"bearing", 0}
