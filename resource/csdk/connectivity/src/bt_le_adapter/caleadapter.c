@@ -1660,7 +1660,7 @@ static CAResult_t CALEAdapterGattServerStop()
 
     CAResult_t result = CAStopLEGattServer();
     ca_mutex_lock(g_bleServerSendDataMutex);
-    if (CA_STATUS_OK != result)
+    if (CA_STATUS_OK == result)
     {
         result = CAQueueingThreadStop(g_bleServerSendQueueHandle);
     }
