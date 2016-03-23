@@ -112,7 +112,7 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
 
     if(NULL == context)
     {
-        return OC_STACK_ERROR;
+        return retVal;
     }
 
     if(OC_STACK_OK == GetDoxmDevOwnerId(&owner))
