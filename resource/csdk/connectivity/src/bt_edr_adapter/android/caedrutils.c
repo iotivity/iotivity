@@ -93,7 +93,8 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
         return NULL;
     }
 
-    jstring j_str_address = (*env)->CallObjectMethod(env, jni_obj_remoteBTDevice, j_mid_getAddress);
+    jstring j_str_address = (*env)->CallObjectMethod(env, jni_obj_remoteBTDevice,
+                                                     j_mid_getAddress);
     if (!j_str_address)
     {
         OIC_LOG(ERROR, TAG, "j_str_address is null");
@@ -411,7 +412,7 @@ void CAEDRNativeAddDeviceStateToList(CAConnectedDeviceInfo_t *deviceInfo)
         CAEDRNativeRemoveDevice((const char*) deviceInfo->address);
     }
     u_arraylist_add(g_deviceStateList, deviceInfo); // update new state
-    OIC_LOG_V(DEBUG, TAG, "Set State Info to List : %d", deviceInfo->state);
+    OIC_LOG_V(DEBUG, TAG, "add new device state[%d] to list", deviceInfo->state);
 }
 
 bool CAEDRNativeIsDeviceInList(const char* remoteAddress)
@@ -501,7 +502,7 @@ void CAEDRNativeRemoveDevice(const char *remoteAddress)
 
         if (!strcmp((const char*) deviceInfo->address, remoteAddress))
         {
-            OIC_LOG_V(DEBUG, TAG, "remove state : %s", remoteAddress);
+            OIC_LOG_V(DEBUG, TAG, "remove [%s] info from list", remoteAddress);
             OICFree(deviceInfo);
 
             u_arraylist_remove(g_deviceStateList, index);
@@ -591,7 +592,7 @@ void CAEDRNativeAddDeviceSocketToList(JNIEnv *env, jobject deviceSocket)
     {
         jobject gDeviceSocker = (*env)->NewGlobalRef(env, deviceSocket);
         u_arraylist_add(g_deviceObjectList, gDeviceSocker);
-        OIC_LOG(DEBUG, TAG, "Set Socket Object to Array");
+        OIC_LOG(DEBUG, TAG, "add new device socket object to list");
     }
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     (*env)->DeleteLocalRef(env, jni_remoteAddress);
@@ -645,7 +646,7 @@ bool CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "there are no the Device obejct in list. we can add");
+    OIC_LOG(DEBUG, TAG, "there are no the Device obejct in list");
     return false;
 }
 
@@ -891,9 +892,7 @@ uint32_t CAEDRGetSocketListLength()
         return 0;
     }
 
-    uint32_t length = u_arraylist_length(g_deviceObjectList);
-
-    return length;
+    return u_arraylist_length(g_deviceObjectList);
 }
 
 CAConnectedDeviceInfo_t *CAEDRGetDeviceInfoFromAddress(const char *remoteAddress)
