@@ -124,7 +124,7 @@ void initServer(const std::string& resourceUri, const std::string& resourceType,
     g_resource = RCSResourceObject::Builder(resourceUri, resourceType, ACTUATOR_INTERFACE)
             .addInterface(CUSTOM_INTERFACE)
             .addInterface(SENSOR_INTERFACE)
-            .setDefaultInterface(SENSOR_INTERFACE)
+            .setDefaultInterface(BASELINE_INTERFACE)
             .setDiscoverable(true)
             .setObservable(true)
             .build();
