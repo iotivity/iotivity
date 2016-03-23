@@ -6,13 +6,13 @@ var FSM = {
 	REGHOMECONTROL: 2,
 	REGCALLBACK: 3,
 	GETRVISERVICES: 4,
-	FINDOCFDEVICES: 5,
-	OBSERVEHVAC: 6,
-	GETHVAC : 7,
-	SETHVAC : 8,
-	GETLOCATION : 9,
-	COMINGHOME : 10,
-	SMARTHOMESTATUS : 11,
+	GETHVAC : 5,
+	GETLOCATION : 6,
+	FINDOCFDEVICES: 7,
+	MAKEOCFRVIDEVICE: 8,
+	COMINGHOME : 9,
+	SMARTHOMESTATUS : 10,
+	SETHVAC : 11,
 	UNREGHOMECONTROL: 12,
 	UNREGCALLBACK: 13,
 	READY: 14
@@ -35,7 +35,7 @@ var rvimsg = [
       {
           "cid": "org.genivi.rvi.send",
           "isauthrequired": "false",
-          "description": "Connect to RVI.",
+          "description": "Send to RVI.",
           "endpoint": "ws://localhost:9008/",
           "endpointtype": "rvi",
           "operation": "RVISEND",
@@ -53,7 +53,13 @@ var rvibody = [
 			"service_name": "servicename"
 		}
 	},
-	{//1
+ 	{//1
+		"jsonrpc":"2.0",
+		"id":"1",
+		"method": "get_available_services",
+		"params" : {}
+    },
+	{//2
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
@@ -63,20 +69,6 @@ var rvibody = [
 	        "parameters": {
                 "target" : "GETHVAC"
 	        }
-		}
-	},
-    {//2
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/node/vehicle_id/rvi/vehiclecontrol",
-			"parameters":{
-				"target" : "SETHVAC",
-				"function": "function",
-				"newValue": "value"
-			}
 		}
 	},
 	{//3
@@ -91,12 +83,20 @@ var rvibody = [
 			}
 		}
 	},
- 	{//4
+	{//3
 		"jsonrpc":"2.0",
 		"id":"1",
-		"method": "get_available_services",
-		"params" : {}
-    },
+		"method": "message",
+		"params": {
+			"timeout":1459388884,
+			"service_name": "genivi.org/node/vehicle_id/rvi/vehiclecontrol",
+			"parameters":{
+				"target" : "SETHVAC",
+				"function": "function",
+				"newValue": "value"
+			}
+		}
+	},
 	{//5
 		"jsonrpc":"2.0",
 		"id":"1",
@@ -111,14 +111,29 @@ var rvibody = [
 var ocfbody = [
    	{
    	    "cid": "org.openinterconnect.findresource",                    
-   	    "endpointtype": "OCFCLIENT",
+   	    "endpointtype": "OCF",
    	    "operation": "GET",
    	    "resourceType" : "all"
    	},
+    {
+        "cid": "org.openinterconnect.createresource",
+        "endpointtype": "OCF",
+        "operation": "CREATE",
+        "chain" : "notification URI",
+        "params":
+        {
+            "uri": "/a/rvi",
+            "type" : "core.rvi",
+        },
+        "payload": {},        
+        "tags": [
+            "create an OCF server with RVI resource"
+        ]
+    },
    	{
    	    "cid": "org.openinterconnect.getresource",
    	    "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-   	    "endpointtype": "OCFCLIENT",
+   	    "endpointtype": "OCF",
    	    "operation": "GET",
    	    "resourceID" : "",
    	    "params": 
@@ -131,7 +146,7 @@ var ocfbody = [
    	{
    	    "cid": "org.openinterconnect.putresource",
    	    "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-   	    "endpointtype": "OCFCLIENT",
+   	    "endpointtype": "OCF",
    	    "operation": "POST",
    	    "resourceID" : "",
    	    "params": {
@@ -146,19 +161,15 @@ var ocfbody = [
    	      "put reosurce properties and value"
    	    ]
    	},
-   	{
-   	    "cid": "org.openinterconnect.observeresource",
-   	    "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-   	    "endpointtype": "OCFCLIENT",
-   	    "operation": "GET",
-   	    "chain" : "http://localhost:8081/callback",
-   	    "params": 
-   	    {
-   	        "address": "server ip address",
-   	        "port": "server port",
-   	        "uri": "server's uri"
-   	    }            
-   	}
+    {
+        "cid": "org.openinterconnect.updateresource",
+        "endpointtype": "OCF",
+        "operation": "UPDATE",
+        "payload": {},        
+        "tags": [
+            "Update to a created OCF server resource"
+        ]
+    }    
 ];
 
 var ocfdevices = [];
@@ -169,6 +180,7 @@ var wsiFSM = function(error, response, body) {
         console.log("Failed Response = " + body);
 		return;
 	}
+	var res;
 	console.log("State " + state + " Response = " + JSON.stringify(body));
 	switch(state)
     {
@@ -177,7 +189,7 @@ var wsiFSM = function(error, response, body) {
     		state = FSM.REGHOMECONTROL;
     		rvibody[0].params.service_name = "homecontrol";
     		rvimsg[1].params = rvibody[0];
-    		var res = post(rviuri, rvimsg[1]);
+    		res = post(rviuri, rvimsg[1]);
     		break;
     	}
     	case FSM.REGHOMECONTROL:{
@@ -185,53 +197,51 @@ var wsiFSM = function(error, response, body) {
     		state = FSM.REGCALLBACK;
     		rvibody[0].params.service_name = "callback";
     		rvimsg[1].params = rvibody[0];
-    		var res = post(rviuri, rvimsg[1]);
+    		res = post(rviuri, rvimsg[1]);
     		break;
     	}
     	case FSM.REGCALLBACK:{
     		console.log("RVI Callback Service Registered.");
     		state = FSM.GETRVISERVICES;
-    		rvimsg[1].params = rvibody[4];
-    		var res = post(rviuri, rvimsg[1]);
+    		rvimsg[1].params = rvibody[1];
+    		res = post(rviuri, rvimsg[1]);
     		break;
     	}
     	case FSM.GETRVISERVICES:{
     		console.log("RVI Service List Received.");
-    		state = FSM.FINDOCFDEVICES;
-    		var res = post(ocfuri, ocfbody[0]);
+    		state = FSM.GETHVAC;
+    		rvimsg[1].params = rvibody[2];
+    		res = post(rviuri, rvimsg[1]);
+    		break;
+    	}
+    	case FSM.GETHVAC: {
+    		console.log("Get RVI HVAC.");
+    		break;
+    	}
+    	case FSM.GETLOCATION: {
+    		console.log("Get RVI Location.");
     		break;
     	}
     	case FSM.FINDOCFDEVICES:{
     		console.log("OCF Device List Received.");
-    		ocfdevices = body;
-    		state = FSM.OBSERVEHVAC;
-    		var len = ocfdevices.length;
-    		for (var i = 0; i < len; i++) {
-    		    if(ocfdevices[i].uri.indexOf("/rvi/hvac")==0){
-    		    	ocfbody[3].params = ocfdevices[i];
-    	    		var res = post(ocfuri, ocfbody[3]);
-    	    		console.log("Start Observing Vehicle HVAC Changes");
-    	    		break;
-    		    }
-    		}    		
+            var rcvbody = body.utf8Data;
+            var params = rcvbody.params.parameters;
+            console.log("Processing " + params.target);
+            ocfdevices = params.status;
+            state = FSM.MAKEOCFRVIDEVICE;
+    		var res = post(ocfuri, ocfbody[1]);
+    		break;
     	}
-    	case FSM.OBSERVEHVAC:{
-    		console.log("OCF Device List Received.");
-    		//var res = post(ocfuri, ocfbody[0]);
-    		//state = FSM.OBSERVE;
+    	case FSM.MAKEOCFRVIDEVICE:{
+    		console.log("OCF RVI Device Created....Gateway Ready");
+    		state = FSM.READY;
     		break;
     	}
     }
-    
-//    rvibody[0].register_service.params.service_name = "homecontrol";
-//    rvimsg[1].params = rvibody[0];
-//    var res = $http.post(uri, rvimsg[1]); //register services
-    
 };
 
 var post = function(uri, b){
-	console.log("Connecting to RVI " + rviuri);
-    //console.log("Posting " + b + "to " + rviuri );
+    console.log("Posting " + JSON.stringify(b) + "to " + rviuri + " in state = " + state);
     var options = {
         url: rviuri ,
         json : true,
@@ -239,7 +249,6 @@ var post = function(uri, b){
         body: b
     };
     request(options, wsiFSM);        
-    //console.log("JSON Body Sent = " + JSON.stringify(b));
 };
 
 var start = function(){
@@ -248,52 +257,6 @@ var start = function(){
 	post(rviuri, rvimsg[0]);
 };
 
-/*
-executeRVICap : function(body){
-    var uri = "http://localhost:8080/wsi/cap/org.genivi.rvi";
-    console.log("Making a POST HTTP Request " + uri);
-    var res = $http.post(uri, document.getElementById('rvicap').value);
-    //res.success = wsi_success;
-    //res.error = wsi_error;
-},
-executeIoTivityCap : function(body) {
-    var uri = "http://localhost:8080/wsi/cap/org.openinterconnect";
-    console.log("Making a POST HTTP Request " + uri);
-    reqbody = JSON.parse(body);
-    
-    var res = $http.post(uri, reqbody);
-    res.success(function(data, status, headers, config) {
-        console.log("Success Response = " + JSON.stringify(data));
-
-        var addresses = JSON.parse(JSON.stringify(data));
-        
-        if(addresses instanceof Array){
-            for(var i = 0; i<addresses.length; i++)
-            {
-                var obj = addresses[i];
-                console.log("Checking : " + obj.uri);
-                if(obj.uri == "/a/wsilight")
-                {
-                    getresource.params.address = obj.address;
-                    getresource.params.port = obj.port;
-                    getresource.params.uri = obj.uri;
-
-                    putresource.params.address = obj.address;
-                    putresource.params.port = obj.port;
-                    putresource.params.uri = obj.uri;
-
-                }
-            }
-        }
-        $scope.scene1updates.push({title: 'Success', content: data});
-    });
-    res.error(function(data, status, headers, config) {
-        console.log("Failed Response = " + data );
-        $scope.scene1updates.push({title: 'Failure', content: data});
-    });
-},
-
-*/
 
 module.exports = {
     init: function(app) {
@@ -312,18 +275,14 @@ module.exports = {
                 ],
                 "capability":[
                     {
-                        "cid":"org.wsidemo.observeresult",
+                        "cid":"org.wsi.ocfcallback",
                         "platform" : "linux",
                         "isauthrequired":"false",
                         "description":"Gets the current status of a resource and its properties.",
                         "endpoint":"http://localhost:8081/callback",
                         "endpointtype":"REST",
-                        "operation":"OBSERVERESULT",
-                        "params":{},
-                        "tags":[
-                            "iotivity",
-                            "observe"
-                        ]
+                        "operation":"OCFRVIUPDATE",
+                        "params":{}
                     },
                     {
                         "cid":"org.genivi.rvicallback",
@@ -341,22 +300,40 @@ module.exports = {
     },
     request: function (req, res) {
         console.log("Received RVI Callback : "+ JSON.stringify(req.body));
-        var rvibody = req.body;
         res.sendStatus(200);
 
-        // Send notify to Controller.
-
+        var rcvbody = JSON.parse(req.body.utf8Data);
+        var params = rcvbody.params.parameters;
+        console.log("Processing " + params.target);
         
-        if(rvibody.parameters && rvibody.parameters.target == "LOCATIONSTATUS"){
+        if(params && params.target == "GETHVAC"){
+    		state = FSM.GETLOCATION;
+    		for(var key in params.status){
+    			ocfbody[1].payload[key] = params.status[key];
+    			console.log(key + " = " +  params.status[key]);
+    		}
+    		rvimsg[1].params = rvibody[3];
+    		res = post(rviuri, rvimsg[1]);
         }
-        if(rvibody.parameters && rvibody.parameters.target == "HVACSTATUS"){
+        if(params && params.target == "GETLOCATION"){
+        	for(var key in params){
+    			ocfbody[1].payload[key] = params[key];
+    			console.log(key + " = " +  params[key]);
+    		}
+    		state = FSM.FINDOCFDEVICES;
+        	var res = post(ocfuri, ocfbody[0]);
         }
-        if(rvibody.parameters && rvibody.parameters.target == "SETHVAC"){
+        if(params && params.target == "UPDATEOCFRESOURCE"){
+        	//send to RVI
+        	console.log("To send to RVI..............");
         }
-        if(rvibody.parameters && rvibody.parameters.target == "GETHVAC"){
+        if(params && params.target == "SMARTHOMESCENARIO"){
+        	//series of OCF GET requests - SmartHome Status
+        	//series of OCF POST requests - Coming Home
+
         }
-        if(rvibody.parameters && rvibody.parameters.target == "SMARTHOMESCENARIO"){
-        }
+        
+        
     },
     start: start,
 }

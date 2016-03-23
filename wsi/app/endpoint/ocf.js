@@ -1,13 +1,48 @@
-var request = require('request');
-
 var intervalId,
     handleReceptacle = {},
-    iotivity = require("../../iotivity-node/lowlevel");
+    resUri = "/a/rvi",
+    chain = "http://localhost:8081/callback",
+    iotivity = require("../../iotivity-node/lowlevel"),
+    request = require('request'),
+    map = new Object(),
+    responseflag = 0,
+    rviRep;
 
-iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT);
+var updateresource = {
+        "cid": "org.openinterconnect.updateresource",
+        "endpointtype": "OCF",
+        "operation": "UPDATE",
+		"utf8Data": {
+			"params":{
+				"parameters":{
+					"target" : "UPDATEOCFRESOURCE",
+					"status" : {}
+				}
+			}
+		},
+        "tags": [
+            "Update to a created OCF server resource"
+        ]
+    };
 
-var map = new Object();
-var responseflag = 0;
+var findocfresponse = {
+			"utf8Data": {
+				"params":{
+					"parameters":{
+						"target" : "FINDOCFDEVICES",
+						"status" : {}
+					}
+				}
+			}
+};
+
+
+iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT_SERVER);
+iotivity.OCSetDeviceInfo( { deviceName: "OCF-RVI Gateway" } );
+iotivity.OCSetPlatformInfo( {
+	platformID: "Linux",
+	manufacturerName: "Samsung"
+} );
 
 makeaddress = function(des){
     console.log()
@@ -16,6 +51,85 @@ makeaddress = function(des){
         address = address + String.fromCharCode(des.addr[i]);
     }
     return address;
+}
+
+function handleRequest( flag, req ) {
+	console.log( "Entity handler called with flag = " + flag);
+    if(req.method === iotivity.OCMethod.OC_REST_PUT) {
+    	var rep = req.payload.values;
+    	console.log(req.payload);
+
+    	//choose the first one
+    	var key = Object.keys(rep)[0];
+    	var value = rep[key];
+
+    	console.log("Key = " + key + " Value = " + value);
+    	
+    	//set the value
+    	rviRep[key] = value;
+    	
+        iotivity.OCDoResponse( {
+            requestHandle: req.requestHandle,
+            resourceHandle: req.resource,
+            ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
+            payload: null,
+            resourceUri: resUri,
+            sendVendorSpecificHeaderOptions: []
+        });
+
+        console.log("Posting " + JSON.stringify(rviRep) + " to " + chain);
+        updateresource.utf8Data.params.parameters.status = rviRep;
+        updateresource.utf8Data.params.parameters.status.target = "UPDATEOCFRESOURCE";
+        
+        
+        
+        
+        var options = {
+            url: chain,
+            json : true,
+            method: 'POST',
+            body: JSON.stringify(updateresource)
+        };
+        console.log("JSON Body Sent = " + JSON.stringify(updateresource));
+        request(options, function (error, response, body) {
+            console.log(error + "  - " + body);
+        });
+        
+        return iotivity.OCEntityHandlerResult.OC_EH_OK;
+    }
+    if(req.method === iotivity.OCMethod.OC_REST_GET) {
+        console.log(request.payload);
+    	if(rviRep==null)  //simply echo back
+    		request.payload;
+
+    	iotivity.OCDoResponse( {
+            requestHandle: request.requestHandle,
+            resourceHandle: request.resource,
+            ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
+            payload: rviRep,
+            resourceUri: resUri,
+            sendVendorSpecificHeaderOptions: []
+        } );
+        return iotivity.OCEntityHandlerResult.OC_EH_OK;
+    }
+    return iotivity.OCEntityHandlerResult.OC_EH_ERROR
+	
+}
+
+createresource = function(cap,res)
+{
+	console.log("Uri = " + cap.params.uri + " Type = " + cap.params.type);
+	result = iotivity.OCCreateResource(
+	        handleReceptacle,
+	        cap.params.type,
+	        iotivity.OC_RSRVD_INTERFACE_DEFAULT,
+	        cap.params.uri,
+	        handleRequest,
+	        iotivity.OCResourceProperty.OC_DISCOVERABLE);
+	
+	rviRep = cap.payload;
+	console.log("Created Resource " + JSON.stringify(rviRep));
+    res.status(200).json("Created Resource " + cap.params.uri + " @ " + result);
 }
 
 findresource = function(cap,res){
@@ -55,7 +169,8 @@ findresource = function(cap,res){
 
     responseflag = 0;
     setTimeout(function(){
-        res.status(200).json(JSON.parse("[" + endpointList + "]"));
+    	findocfresponse.utf8Data.params.parameters.status = endpointList;
+        res.status(200).send(findocfresponse);
         return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
     },10000);
 
@@ -345,19 +460,19 @@ observeresource = function(cap,res)
 module.exports = {
     init: function () {
         var template = {
-            "handler": "ocfclient",
-            "sid": "org.openinterconnect.ocfclient",
+            "handler": "ocf",
+            "sid": "org.openinterconnect",
             "capability": [
                 {
                     "cid": "org.openinterconnect.findresource",
-                    "endpointtype": "OCFCLIENT",
+                    "endpointtype": "OCF",
                     "operation": "GET",
                     "resourceType" : "resourceType or all"
                 },
                 {
                     "cid": "org.openinterconnect.getresource",
                     "endpoint": "oic://{{address}}:{{port}}{{uri}}",
-                    "endpointtype": "OCFCLIENT",
+                    "endpointtype": "OCF",
                     "operation": "GET",
                     "params":
                     {
@@ -369,7 +484,7 @@ module.exports = {
                 {
                     "cid": "org.openinterconnect.putresource",
                     "endpoint": "oic://{{address}}:{{port}}{{uri}}",
-                    "endpointtype": "OCFCLIENT",
+                    "endpointtype": "OCF",
                     "operation": "PUT",
                     "params":
                     {
@@ -388,10 +503,25 @@ module.exports = {
                 {
                   "cid": "org.openinterconnect.observeresource",
                   "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-                  "endpointtype": "OCFCLIENT",
+                  "endpointtype": "OCF",
                   "operation": "GET",
                   "resourceID" : "",
                   "chain" : ""
+                },
+                {
+                    "cid": "org.openinterconnect.createresource",
+                    "endpointtype": "OCF",
+                    "operation": "CREATE",
+                    "chain" : "notification URI",
+                    "params":
+                    {
+                        "uri": "server's uri",
+                        "type" : "core.what",
+                    },
+                    "payload" : {},
+                    "tags": [
+                        "create an OCF server with resource"
+                    ]
                 }
             ]
         };
@@ -413,5 +543,9 @@ module.exports = {
         else if(cap.cid == "org.openinterconnect.observeresource"){
             observeresource(cap,res);
         }
+        else if(cap.cid == "org.openinterconnect.createresource"){
+            createresource(cap,res);
+        }
+
     }
 }

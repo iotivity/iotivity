@@ -10,7 +10,7 @@
         
         var findresource = {
             "cid": "org.openinterconnect.findresource",                    
-            "endpointtype": "OCFCLIENT",
+            "endpointtype": "OCF",
             "operation": "GET",
             "resourceType" : "all"
         };
@@ -18,7 +18,7 @@
         var getresource = {
             "cid": "org.openinterconnect.getresource",
             "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-            "endpointtype": "OCFCLIENT",
+            "endpointtype": "OCF",
             "operation": "GET",
             "resourceID" : "",
             "params": 
@@ -32,7 +32,7 @@
         var putresource = {
             "cid": "org.openinterconnect.putresource",
             "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-            "endpointtype": "OCFCLIENT",
+            "endpointtype": "OCF",
             "operation": "POST",
             "resourceID" : "",
             "params": {

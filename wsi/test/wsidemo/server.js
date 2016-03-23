@@ -24,9 +24,9 @@ require('fs').readdirSync(normalizedPath).forEach(function(file) {
     var template = strategy[svc].init(app);
     console.log(svc + " Initialized");
   //kick start the scenario
-    //if(strategy[svc].start){
-   // 	strategy[svc].start();
-   // }
+    if(strategy[svc].start){
+    	strategy[svc].start();
+    }
 });
 
 
