@@ -25,7 +25,13 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
+
+#ifdef WITH_ARDUINO
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "ocresource.h"
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
@@ -141,11 +147,11 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
         {
             return OC_STACK_INVALID_QUERY;
         }
-        else if (strcmp (key, OC_RSRVD_INTERFACE) == 0)
+        else if (strncasecmp(key, OC_RSRVD_INTERFACE, sizeof(OC_RSRVD_INTERFACE) - 1) == 0)
         {
             *filterOne = value;     // if
         }
-        else if (strcmp (key, OC_RSRVD_RESOURCE_TYPE) == 0)
+        else if (strncasecmp(key, OC_RSRVD_RESOURCE_TYPE, sizeof(OC_RSRVD_INTERFACE) - 1) == 0)
         {
             *filterTwo = value;     // rt
         }
@@ -159,7 +165,7 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
         keyValuePair = strtok_r(NULL, OC_QUERY_SEPARATOR, &restOfQuery);
     }
 
-    OIC_LOG_V(INFO, TAG, "Extracted params %s and %s.", *filterOne, *filterTwo);
+    OIC_LOG_V(INFO, TAG, "Extracted params if: %s and rt: %s.", *filterOne, *filterTwo);
     return OC_STACK_OK;
 }
 
