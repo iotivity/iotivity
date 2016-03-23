@@ -626,13 +626,13 @@ static OCStackResult getUUIDforId(int id, OicUuid_t *uid, bool *result)
 OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST, size_t *numOfDevices)
 {
     CHECK_PDM_INIT(TAG);
+    if (NULL == UUID || NULL == numOfDevices || !UUIDLIST)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
     if (NULL != *UUIDLIST)
     {
         OIC_LOG(ERROR, TAG, "Not null list will cause memory leak");
-        return OC_STACK_INVALID_PARAM;
-    }
-    if (NULL == UUID)
-    {
         return OC_STACK_INVALID_PARAM;
     }
     bool result = false;
