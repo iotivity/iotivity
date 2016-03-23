@@ -187,7 +187,7 @@ namespace OIC
             }
 
             m_sceneCollectionResourceObject->setAttribute(
-                    SCENE_KEY_LAST_SCENE, std::move(sceneName));
+                    SCENE_KEY_LAST_SCENE, sceneName);
 
             {
                 std::lock_guard<std::mutex> memberlock(m_sceneMemberLock);
@@ -196,7 +196,7 @@ namespace OIC
                             shared_from_this(), std::move(executeCB));
                 for (auto & it : m_sceneMembers)
                 {
-                    it->execute(sceneName, std::bind(
+                    it->execute(std::move(sceneName), std::bind(
                             &SceneExecuteResponseHandler::onResponse, executeHandler,
                             std::placeholders::_1, std::placeholders::_2));
                 }
