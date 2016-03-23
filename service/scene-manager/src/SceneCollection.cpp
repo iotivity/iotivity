@@ -58,7 +58,7 @@ namespace OIC
         {
             auto sceneValues = m_sceneCollectionResource->getSceneValues();
             auto it = std::find(sceneValues.begin(), sceneValues.end(), sceneName);
-            if(it != sceneValues.end())
+            if(it == sceneValues.end())
             {
                 throw RCSInvalidParameterException("Scene Name is Invalid!");
             }
