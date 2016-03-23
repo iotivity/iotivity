@@ -28,6 +28,74 @@
                 "uri": "server's uri"
             }            
         };
+        var createresource = {
+            "cid": "org.openinterconnect.createresource",
+            "endpointtype": "OCFSERVER",
+            "operation": "CREATE",
+            "chain" : "http://localhost:8081/callback",
+            "params":
+            {
+                "uri": "/a/rvi",
+                "type" : "core.rvi",
+                "payload": {
+                }
+            },
+            "tags": [
+                "create an OCF server with resource"
+            ]
+        };
+        var putresource = {
+                "cid": "org.openinterconnect.putresource",
+                "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
+                "endpointtype": "OCFCLIENT",
+                "operation": "POST",
+                "resourceID" : "",
+                "params": {
+                      "address": "server ip address",
+                      "port": "server port",
+                      "uri": "server's uri"
+                 },
+                "payload": {
+					"leftTemperature": 0,
+					"rightTemperature", 0,
+					"leftSeatHeat" : 0,
+					"rightSeatHeat" : 0,
+					"fanSpeed" : 0,
+					"fanDown" : 0,
+					"fanRight" : 0,
+					"fanUp" : 0,
+					"fanAC" : 0,
+					"fanAuto" : 0,
+					"fanRecirc" : 0,
+					"defrostMax" : 0,
+					"defrostFront" : 0,
+					"defrostRear" : 0,
+					"lat" : 0,
+					"lon" : 0,
+					"bearing" : 0,
+					"vehicle_id" : "JLR"
+				},
+                "tags": [
+                  "put reosurce properties and value"
+                ]
+            };        
+        
+        
+        var putresource = {
+                    "cid": "org.openinterconnect.putresource",
+                    "endpoint": "oic://{{address}}:{{port}}{{uri}}",
+                    "endpointtype": "OCFSERVER",
+                    "operation": "PUT",
+                    "params":
+                    {
+
+                    },
+                    "tags": [
+                        "put reosurce properties and value"
+                    ]
+        }
+        
+        
                 
         document.getElementById('iotivitycap').value = JSON.stringify(findresource);
 
@@ -42,6 +110,15 @@
         $scope.stopObserve = function() {
             document.getElementById('iotivitycap').value = JSON.stringify(observeresource);
         };
+        
+        $scope.createResource = function() {
+        	document.getElementById('iotivitycap').value = JSON.stringify(createresource);
+        }
+        $scope.putResource = function() {
+        	document.getElementById('iotivitycap').value = JSON.stringify(putresource);
+        }        
+        
+        
 
         $scope.observeIoTivityCap = function() {
             var uri = "http://localhost:8080/wsi/cap/org.openinterconnect";
@@ -74,7 +151,7 @@
                 $scope.scene4updates.push({title: 'Failure', content: data});
             });
         };
-        
+
     };
 
     scene4controller.$inject = ['$scope', '$http'];
