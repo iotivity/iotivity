@@ -23,7 +23,7 @@ package org.iotivity.cloud.accountserver.db;
 
 import java.util.ArrayList;
 
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 
 /**
  *
@@ -39,10 +39,10 @@ public class AccountDBManager {
 
         try {
 
-            mongoDB = new MongoDB(Const.DB_NAME);
+            mongoDB = new MongoDB(Constants.DB_NAME);
 
-            mongoDB.createTable(Const.DEVICE_TABLE);
-            mongoDB.createTable(Const.SESSION_TABLE);
+            mongoDB.createTable(Constants.DEVICE_TABLE);
+            mongoDB.createTable(Constants.SESSION_TABLE);
 
             registerAdminAccount();
 

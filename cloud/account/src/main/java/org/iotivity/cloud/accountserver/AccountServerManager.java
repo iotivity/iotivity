@@ -134,7 +134,7 @@ public class AccountServerManager {
 
         String accessToken = null;
 
-        if (authServer.equals(Const.GITHUB)) {
+        if (authServer.equals(Constants.GITHUB)) {
 
             GitHub gitHub = new GitHub();
             accessToken = gitHub.requestAccessToken(authCode);
@@ -151,7 +151,7 @@ public class AccountServerManager {
 
         String userId = null;
 
-        if (authServer.equals(Const.GITHUB)) {
+        if (authServer.equals(Constants.GITHUB)) {
 
             GitHub gitHub = new GitHub();
             userId = gitHub.requestGetUserInfo(accessToken);

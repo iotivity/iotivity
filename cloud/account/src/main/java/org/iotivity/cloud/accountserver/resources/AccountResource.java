@@ -26,14 +26,14 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.AccountServerManager;
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.util.CoapMessageBuilder;
-import org.iotivity.cloud.accountserver.util.JSONUtil;
 import org.iotivity.cloud.base.Resource;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
+import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -47,7 +47,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class AccountResource extends Resource {
 
     public AccountResource() {
-        setUri(Const.ACCOUNT_URI);
+        setUri(Constants.ACCOUNT_URI);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class AccountResource extends Resource {
     private void handleGetRequest(ChannelHandlerContext ctx, CoapRequest request)
             throws Exception {
 
-        String reqType = extractQuery(request, Const.REQ_TYPE);
+        String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
             throw new IllegalArgumentException("request type is null in query!");
@@ -98,7 +98,7 @@ public class AccountResource extends Resource {
 
         switch (reqType) {
 
-            case Const.TYPE_FIND:
+            case Constants.TYPE_FIND:
                 response = handleFindRequest(request);
                 break;
             default:
@@ -112,7 +112,7 @@ public class AccountResource extends Resource {
     private void handlePostRequest(ChannelHandlerContext ctx,
             CoapRequest request) throws Exception {
 
-        String reqType = extractQuery(request, Const.REQ_TYPE);
+        String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
             throw new IllegalArgumentException("request type is null in query!");
@@ -120,7 +120,7 @@ public class AccountResource extends Resource {
         CoapResponse response = null;
 
         switch (reqType) {
-            case Const.TYPE_PUBLISH:
+            case Constants.TYPE_PUBLISH:
                 response = handlePublishRequest(request);
                 break;
             default:
@@ -144,9 +144,8 @@ public class AccountResource extends Resource {
 
         String payload = request.getPayloadString();
 
-        JSONUtil util = new JSONUtil();
-        String userId = util.parseJSON(payload, Const.REQUEST_USER_ID);
-        String deviceId = util.parseJSON(payload, Const.REQUEST_DEVICE_ID);
+        String userId = JSONUtil.parseJSON(payload, Constants.REQUEST_USER_ID);
+        String deviceId = JSONUtil.parseJSON(payload, Constants.REQUEST_DEVICE_ID);
 
         Logger.d("userId: " + userId + ", deviceId: " + deviceId);
 
@@ -185,7 +184,7 @@ public class AccountResource extends Resource {
         // String payload = getPayloadString(request.getPayload());
 
         JSONUtil util = new JSONUtil();
-        String userId = util.parseJSON(payload, Const.REQUEST_USER_ID);
+        String userId = util.parseJSON(payload, Constants.REQUEST_USER_ID);
 
         Logger.d("userId: " + userId);
 
@@ -211,7 +210,7 @@ public class AccountResource extends Resource {
         HashMap<Object, Object> responseMap = new HashMap<Object, Object>();
 
         ArrayList<String> deviceList = response.getDeviceList();
-        responseMap.put(Const.RESPONSE_DEVICES, deviceList);
+        responseMap.put(Constants.RESPONSE_DEVICES, deviceList);
 
         JSONUtil jsonUtil = new JSONUtil();
         String responseJson = jsonUtil.writeJSON(responseMap);

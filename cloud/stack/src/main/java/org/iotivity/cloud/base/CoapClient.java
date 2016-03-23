@@ -28,6 +28,7 @@ import java.util.List;
 import org.iotivity.cloud.base.protocols.coap.CoapDecoder;
 import org.iotivity.cloud.base.protocols.coap.CoapEncoder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
+import org.iotivity.cloud.util.Logger;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -69,7 +70,9 @@ public class CoapClient {
         }
     }
 
-    private ChannelFuture channelFuture;
+    ChannelFuture channelFuture;
+
+    EventLoopGroup connectorGroup = new NioEventLoopGroup();
 
     CoAPClientInitializer initializer = new CoAPClientInitializer();
 
@@ -79,15 +82,10 @@ public class CoapClient {
 
     public void startClient(final InetSocketAddress inetSocketAddress)
             throws InterruptedException {
-        // Create bootstrap
-
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
-        // bossGroup = new
-        // EpollEventLoopGroup(Runtime.getRuntime().availableProcessors() * 2);
-
+                
         try {
             Bootstrap b = new Bootstrap();
-            b.group(bossGroup);
+            b.group(connectorGroup);
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.TCP_NODELAY, true);
             b.option(ChannelOption.SO_KEEPALIVE, true);
@@ -102,7 +100,7 @@ public class CoapClient {
                         @Override
                         public void operationComplete(ChannelFuture future)
                                 throws Exception {
-                            System.out.println(
+                            Logger.d(
                                     "Connection status of TCP CoAP CLIENT  : "
                                             + future.isSuccess());
                         }
@@ -119,26 +117,7 @@ public class CoapClient {
         channelFuture.channel().writeAndFlush(request);
     }
 
-    /**
-     * stop connection
-     */
-    public void stopClient() {
-
-        try {
-            if (channelFuture != null) {
-                channelFuture.channel().disconnect().sync().addListener(
-                        new GenericFutureListener<ChannelFuture>() {
-
-                            public void operationComplete(ChannelFuture future)
-                                    throws Exception {
-                                System.out.println(
-                                        "DisConnection status of TCP CoAP CLIENT : "
-                                                + future.isSuccess());
-                            }
-                        });
-            }
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
+    public void stopClient() throws Exception {
+        connectorGroup.shutdownGracefully().await();
     }
 }

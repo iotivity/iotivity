@@ -73,7 +73,7 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
         }
     }
 
-    private CoapClient rdClient = new CoapClient();
+    private CoapClient rdClient = null;
     ///////////
 
     ////////// Handler for Account Server
@@ -121,33 +121,38 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
         }
     }
 
-    private CoapClient asClient = new CoapClient();
+    private CoapClient asClient = null;
     //////////
 
     private SessionManager sessionManager = null;
 
-    public CoapRelayHandler(SessionManager sessionManager, String rdAddress,
-            int rdPort, String acAddress, int acPort) {
+    public CoapRelayHandler(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
+        
+        rdClient = new CoapClient();
 
         rdClient.addHandler(new RDHandler());
+        
+        asClient = new CoapClient();
 
         asClient.addHandler(new AccountHandler());
-
-        try {
-            rdClient.startClient(new InetSocketAddress(rdAddress, rdPort));
-            asClient.startClient(new InetSocketAddress(acAddress, acPort));
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    }
+    
+    public void startHandler(String rdAddress, int rdPort, String acAddress, int acPort) throws Exception
+    {
+        rdClient.startClient(new InetSocketAddress(rdAddress, rdPort));
+        
+        asClient.startClient(new InetSocketAddress(acAddress, acPort));
 
         asClient.getChannelFuture().channel().attr(keyAccountClient)
                 .set(new ArrayList<CoapRequest>());
     }
-
-    public CoapRelayHandler(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
+    
+    public void stopHandler() throws Exception
+    {
+    	asClient.stopClient();
+    	
+    	rdClient.stopClient();
     }
 
     private static final AttributeKey<ChannelHandlerContext> keyDevice = AttributeKey

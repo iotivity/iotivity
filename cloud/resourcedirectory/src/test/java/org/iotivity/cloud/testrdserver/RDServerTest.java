@@ -33,9 +33,9 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.JSONUtil;
 import org.iotivity.cloud.rdserver.resources.ResourceDirectoryResource;
 import org.iotivity.cloud.util.Cbor;
+import org.iotivity.cloud.util.JSONUtil;
 import org.junit.Test;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -185,9 +185,8 @@ public class RDServerTest {
         ArrayList<String> didList = new ArrayList<String>();
         didList.add("98f7483c-5a31-4161-ba7e-9c13e0d");
         data.put("devices", didList);
-        JSONUtil util = new JSONUtil();
-        byte[] payload = util.writeJSON(data);
-        request.setPayload(payload);
+        String payload = JSONUtil.writeJSON(data);
+        request.setPayload(payload.getBytes());
 
         startServer();
         ChannelHandlerContext ctx = startClient();

@@ -74,7 +74,7 @@ public class TestCloudInterface {
         CoapClientHandler coapHandler = new CoapClientHandler();
         coapClient.addHandler(coapHandler);
 
-        coapClient.addHandler(new CoapAuthHandler("127.0.0.1", 5683));
+        coapClient.addHandler(new CoapAuthHandler());
 
         coapClient.startClient(new InetSocketAddress("127.0.0.1", 5683));
 
@@ -139,7 +139,7 @@ public class TestCloudInterface {
         makeinterval(request);
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 
@@ -158,7 +158,7 @@ public class TestCloudInterface {
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 
@@ -175,7 +175,7 @@ public class TestCloudInterface {
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 
@@ -193,7 +193,7 @@ public class TestCloudInterface {
         makePayload(request);
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 
@@ -211,7 +211,7 @@ public class TestCloudInterface {
         makePayload(request);
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 
@@ -229,7 +229,7 @@ public class TestCloudInterface {
         makePayload(request);
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 
@@ -242,12 +242,12 @@ public class TestCloudInterface {
 
         CoapRequest request = new CoapRequest(CoapMethod.GET);
         request.setUriPath(
-                "/10.113.64.102/98f7483c-5a31-4161-ba7e-9c13e0d/a/light");
+                "/98f7483c-5a31-4161-ba7e-9c13e0d/a/light");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
         makePayload(request);
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 
@@ -260,12 +260,12 @@ public class TestCloudInterface {
 
         CoapRequest request = new CoapRequest(CoapMethod.PUT);
         request.setUriPath(
-                "/10.113.64.98/98f7483c-5a31-4161-ba7e-9c13e0d/a/light");
+                "/98f7483c-5a31-4161-ba7e-9c13e0d/a/light");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
         makePayload(request);
 
         startServer();
-        ChannelHandlerContext ctx = startClient();
+        startClient();
 
         coapClient.sendRequest(request);
 

@@ -22,6 +22,7 @@
 package org.iotivity.cloud.ciserver;
 
 import java.net.InetSocketAddress;
+import java.util.Scanner;
 
 import org.iotivity.cloud.base.CoapServer;
 import org.iotivity.cloud.base.ResourceManager;
@@ -48,27 +49,64 @@ public class CloudInterfaceServer {
         ResourceManager resourceManager = null;
         SessionManager sessionManager = null;
         CoapServer coapServer = null;
+        
+        CoapRelayHandler relayHandler = null;
+        CoapAuthHandler  authHandler = null;
+        
+        KeepAliveResource keepAliveResource = null;
 
         coapServer = new CoapServer();
 
         sessionManager = new SessionManager();
 
         resourceManager = new ResourceManager();
+        
+        relayHandler = new CoapRelayHandler(sessionManager);
+        
+        authHandler = new CoapAuthHandler();
+        
+        keepAliveResource = new KeepAliveResource(sessionManager,
+                new int[] { 1, 2, 4, 8 });
+        
+        
+        coapServer.addHandler(new CoapLogHandler()); 
 
-        coapServer.addHandler(
-                new CoapAuthHandler(args[3], Integer.parseInt(args[4])));
+        coapServer.addHandler(authHandler);
 
-        coapServer.addHandler(new CoapLogHandler());
-
-        coapServer.addHandler(new CoapRelayHandler(sessionManager, args[1],
-                Integer.parseInt(args[2]), args[3], Integer.parseInt(args[4])));
+        coapServer.addHandler(relayHandler);
 
         coapServer.addHandler(resourceManager);
-
-        resourceManager.registerResource(new KeepAliveResource(sessionManager,
-                new int[] { 1, 2, 4, 8 }));
+        
+        resourceManager.registerResource(keepAliveResource);        
+        
+        authHandler.startHandler(args[3], Integer.parseInt(args[4]));
+        
+        relayHandler.startHandler(args[1],
+                Integer.parseInt(args[2]), args[3], Integer.parseInt(args[4]));
 
         coapServer
                 .startServer(new InetSocketAddress(Integer.parseInt(args[0])));
+        
+        keepAliveResource.startSessionChecker();
+        
+        Scanner in = new Scanner(System.in);
+        
+        System.out.println("press 'q' to terminate");
+        
+        while(!in.nextLine().equals("q"));
+        
+        in.close();
+        
+        System.out.println("Terminating...");
+        
+        keepAliveResource.stopSessionChecker();
+
+        coapServer.stopServer();
+        
+        relayHandler.stopHandler();
+        
+        authHandler.stopHandler();
+        
+        System.out.println("Terminated");
     }
 }

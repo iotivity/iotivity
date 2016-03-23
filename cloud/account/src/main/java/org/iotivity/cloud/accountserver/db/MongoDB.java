@@ -24,7 +24,7 @@ package org.iotivity.cloud.accountserver.db;
 import java.util.ArrayList;
 
 import org.bson.Document;
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.util.Logger;
 
 import com.mongodb.MongoClient;
@@ -98,11 +98,11 @@ public class MongoDB {
 
         Document doc = createDocument(userSession);
         MongoCollection<Document> collection = db
-                .getCollection(Const.SESSION_TABLE);
+                .getCollection(Constants.SESSION_TABLE);
 
         if (collection.findOneAndReplace(Filters.and(
-                Filters.eq(Const.USER_ID, doc.get(Const.USER_ID)),
-                Filters.eq(Const.SESSION_CODE, doc.get(Const.SESSION_CODE))),
+                Filters.eq(Constants.USER_ID, doc.get(Constants.USER_ID)),
+                Filters.eq(Constants.SESSION_CODE, doc.get(Constants.SESSION_CODE))),
                 doc) == null) {
 
             collection.insertOne(doc);
@@ -121,11 +121,11 @@ public class MongoDB {
 
         Document doc = createDocument(userDevice);
         MongoCollection<Document> collection = db
-                .getCollection(Const.DEVICE_TABLE);
+                .getCollection(Constants.DEVICE_TABLE);
 
         if (collection.findOneAndReplace(Filters.and(
-                Filters.eq(Const.USER_ID, doc.get(Const.USER_ID)),
-                Filters.eq(Const.DEVICE_ID, doc.get(Const.DEVICE_ID))), doc) == null) {
+                Filters.eq(Constants.USER_ID, doc.get(Constants.USER_ID)),
+                Filters.eq(Constants.DEVICE_ID, doc.get(Constants.DEVICE_ID))), doc) == null) {
 
             collection.insertOne(doc);
         }
@@ -146,10 +146,10 @@ public class MongoDB {
         String userId = null;
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.SESSION_TABLE);
+                .getCollection(Constants.SESSION_TABLE);
 
         MongoCursor<Document> cursor = collection.find(
-                Filters.eq(Const.SESSION_CODE, sessionCode)).iterator();
+                Filters.eq(Constants.SESSION_CODE, sessionCode)).iterator();
 
         try {
 
@@ -181,10 +181,10 @@ public class MongoDB {
         ArrayList<String> deviceList = new ArrayList<String>();
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.DEVICE_TABLE);
+                .getCollection(Constants.DEVICE_TABLE);
 
         MongoCursor<Document> cursor = collection.find(
-                Filters.eq(Const.USER_ID, userId)).iterator();
+                Filters.eq(Constants.USER_ID, userId)).iterator();
 
         try {
 
@@ -209,7 +209,7 @@ public class MongoDB {
         ArrayList<UserDevice> dlist = readDeviceResources();
         int size = dlist.size();
 
-        Logger.i("*Table: " + Const.DEVICE_TABLE);
+        Logger.i("*Table: " + Constants.DEVICE_TABLE);
         for (int i = 0; i < size; i++) {
 
             UserDevice item = dlist.get(i);
@@ -221,7 +221,7 @@ public class MongoDB {
         ArrayList<UserSession> slist = readSessionResources();
         size = slist.size();
 
-        Logger.i("*Table: " + Const.SESSION_TABLE);
+        Logger.i("*Table: " + Constants.SESSION_TABLE);
 
         for (int i = 0; i < size; i++) {
 
@@ -235,16 +235,16 @@ public class MongoDB {
 
     private Document createDocument(UserSession userSession) {
 
-        Document doc = new Document(Const.USER_ID, userSession.getUserId())
-                .append(Const.SESSION_CODE, userSession.getSessionCode());
+        Document doc = new Document(Constants.USER_ID, userSession.getUserId())
+                .append(Constants.SESSION_CODE, userSession.getSessionCode());
 
         return doc;
     }
 
     private Document createDocument(UserDevice userDevice) {
 
-        Document doc = new Document(Const.USER_ID, userDevice.getUserId())
-                .append(Const.DEVICE_ID, userDevice.getDeviceId());
+        Document doc = new Document(Constants.USER_ID, userDevice.getUserId())
+                .append(Constants.DEVICE_ID, userDevice.getDeviceId());
 
         return doc;
     }
@@ -253,8 +253,8 @@ public class MongoDB {
 
         UserSession userSession = new UserSession();
 
-        userSession.setUserId(doc.getString(Const.USER_ID));
-        userSession.setSessionCode(doc.getString(Const.SESSION_CODE));
+        userSession.setUserId(doc.getString(Constants.USER_ID));
+        userSession.setSessionCode(doc.getString(Constants.SESSION_CODE));
 
         return userSession;
     }
@@ -263,8 +263,8 @@ public class MongoDB {
 
         UserDevice userDevice = new UserDevice();
 
-        userDevice.setUserId(doc.getString(Const.USER_ID));
-        userDevice.setDeviceId(doc.getString(Const.DEVICE_ID));
+        userDevice.setUserId(doc.getString(Constants.USER_ID));
+        userDevice.setDeviceId(doc.getString(Constants.DEVICE_ID));
 
         return userDevice;
     }
@@ -274,7 +274,7 @@ public class MongoDB {
         ArrayList<UserSession> userSessionList = new ArrayList<UserSession>();
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.SESSION_TABLE);
+                .getCollection(Constants.SESSION_TABLE);
         MongoCursor<Document> cursor = collection.find().iterator();
 
         while (cursor.hasNext()) {
@@ -293,7 +293,7 @@ public class MongoDB {
         ArrayList<UserDevice> userDeviceList = new ArrayList<UserDevice>();
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.DEVICE_TABLE);
+                .getCollection(Constants.DEVICE_TABLE);
         MongoCursor<Document> cursor = collection.find().iterator();
 
         while (cursor.hasNext()) {

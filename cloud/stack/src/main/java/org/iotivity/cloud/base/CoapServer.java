@@ -30,6 +30,7 @@ import javax.net.ssl.SSLException;
 
 import org.iotivity.cloud.base.protocols.coap.CoapDecoder;
 import org.iotivity.cloud.base.protocols.coap.CoapEncoder;
+import org.iotivity.cloud.util.Logger;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -73,12 +74,12 @@ public class CoapServer {
         }
     }
 
-    EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+    EventLoopGroup acceptorGroup = new NioEventLoopGroup(1);
 
     EventLoopGroup workerGroup = new NioEventLoopGroup();
 
     CoAPServerInitializer initializer = new CoAPServerInitializer();
-
+    
     public void addHandler(ChannelHandler handler) {
         initializer.addHandler(handler);
     }
@@ -88,7 +89,7 @@ public class CoapServer {
 
         try {
             ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup);
+            b.group(acceptorGroup, workerGroup);
             b.channel(NioServerSocketChannel.class);
             b.option(ChannelOption.TCP_NODELAY, true);
             b.option(ChannelOption.SO_KEEPALIVE, true);
@@ -96,47 +97,23 @@ public class CoapServer {
 
             b.childHandler(initializer);
 
-            ChannelFuture ch = b.bind(inetSocketAddress).sync();
-            ch.addListener(new GenericFutureListener<ChannelFuture>() {
+            ChannelFuture channelFuture = b.bind(inetSocketAddress).sync();
 
+            channelFuture.addListener(new GenericFutureListener<ChannelFuture>() {
                 @Override
                 public void operationComplete(ChannelFuture future)
                         throws Exception {
                     // TODO Auto-generated method stub
-                    System.out
-                            .println("Connection status of TCP CoAP SERVER  : "
+                    Logger.d("Connection status of TCP CoAP SERVER  : "
                                     + future.isSuccess());
                 }
-
             });
         } finally {
         }
-
     }
 
-    public void stopServer() {
-        // shut down all event loops
-        if (bossGroup != null) {
-            bossGroup.shutdownGracefully();
-
-            try {
-                bossGroup.terminationFuture().sync();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-        if (workerGroup != null) {
-            workerGroup.shutdownGracefully();
-
-            try {
-                workerGroup.terminationFuture().sync();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
+    public void stopServer() throws Exception {
+    	acceptorGroup.shutdownGracefully().await();
+    	workerGroup.shutdownGracefully().await();
     }
-
 }

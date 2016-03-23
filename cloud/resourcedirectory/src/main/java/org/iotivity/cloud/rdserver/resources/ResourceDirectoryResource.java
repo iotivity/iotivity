@@ -35,9 +35,9 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapOption;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.JSONUtil;
 import org.iotivity.cloud.rdserver.MongoDB;
 import org.iotivity.cloud.util.Cbor;
+import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -263,9 +263,7 @@ public class ResourceDirectoryResource extends Resource {
                         "st is not null, so this is the get msg about private devices");
                 // parse payload
                 byte[] payload = request.getPayload();
-                JSONUtil util = new JSONUtil();
-                ArrayList<String> deviceList = util.parseJSON(payload,
-                        Constants.RS_DEVICE_LIST_KEY);
+                ArrayList<String> deviceList = JSONUtil.parseJSON(payload, Constants.RS_DEVICE_LIST_KEY);
                 if (deviceList == null) {
                     throw new IllegalArgumentException("deviceList is null");
                 }

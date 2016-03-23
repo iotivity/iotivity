@@ -25,14 +25,14 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.AccountServerManager;
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.util.CoapMessageBuilder;
-import org.iotivity.cloud.accountserver.util.JSONUtil;
 import org.iotivity.cloud.base.Resource;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
+import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -46,7 +46,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class AuthResource extends Resource {
 
     public AuthResource() {
-        setUri(Const.AUTH_URI);
+        setUri(Constants.AUTH_URI);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class AuthResource extends Resource {
     private void handlePostRequest(ChannelHandlerContext ctx,
             CoapRequest request) throws Exception {
 
-        String reqType = extractQuery(request, Const.REQ_TYPE);
+        String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
             throw new IllegalArgumentException(
@@ -90,10 +90,10 @@ public class AuthResource extends Resource {
         CoapResponse response = null;
 
         switch (reqType) {
-            case Const.TYPE_REGISTER:
+            case Constants.TYPE_REGISTER:
                 response = handleRegisterRequest(request);
                 break;
-            case Const.TYPE_LOGIN:
+            case Constants.TYPE_LOGIN:
                 response = handleLoginRequest(request);
                 break;
             default:
@@ -116,9 +116,8 @@ public class AuthResource extends Resource {
 
         String payload = request.getPayloadString();
 
-        JSONUtil util = new JSONUtil();
-        String sessionCode = util.parseJSON(payload,
-                Const.REQUEST_SESSION_CODE);
+        String sessionCode = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_SESSION_CODE);
 
         Logger.d("sessionCode: " + sessionCode);
 
@@ -163,8 +162,8 @@ public class AuthResource extends Resource {
         String payload = request.getPayloadString();
 
         JSONUtil util = new JSONUtil();
-        String authCode = util.parseJSON(payload, Const.REQUEST_AUTH_CODE);
-        String authServer = util.parseJSON(payload, Const.REQUEST_AUTH_SERVER);
+        String authCode = util.parseJSON(payload, Constants.REQUEST_AUTH_CODE);
+        String authServer = util.parseJSON(payload, Constants.REQUEST_AUTH_SERVER);
 
         Logger.d("authCode: " + authCode + ", authServer: " + authServer);
 
@@ -208,10 +207,10 @@ public class AuthResource extends Resource {
         String userId = response.getUserId();
 
         if (userId != null)
-            responseMap.put(Const.RESPONSE_USER_ID, userId);
+            responseMap.put(Constants.RESPONSE_USER_ID, userId);
 
         if (sessionCode != null)
-            responseMap.put(Const.RESPONSE_SESSION_CODE, sessionCode);
+            responseMap.put(Constants.RESPONSE_SESSION_CODE, sessionCode);
 
         JSONUtil jsonUtil = new JSONUtil();
         String responseJson = jsonUtil.writeJSON(responseMap);
@@ -226,7 +225,7 @@ public class AuthResource extends Resource {
         String userId = response.getUserId();
 
         if (userId != null)
-            responseMap.put(Const.RESPONSE_USER_ID, userId);
+            responseMap.put(Constants.RESPONSE_USER_ID, userId);
 
         JSONUtil jsonUtil = new JSONUtil();
         String responseJson = jsonUtil.writeJSON(responseMap);

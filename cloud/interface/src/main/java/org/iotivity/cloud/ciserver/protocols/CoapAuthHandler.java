@@ -89,18 +89,23 @@ public class CoapAuthHandler extends ChannelDuplexHandler {
         }
     }
 
-    private CoapClient accountClient = new CoapClient();
+    private CoapClient asClient = new CoapClient();
 
-    public CoapAuthHandler(String accountAddress, int accountPort) {
+    public CoapAuthHandler() {
 
-        accountClient.addHandler(new AccountHandler());
-        try {
-            accountClient.startClient(
-                    new InetSocketAddress(accountAddress, accountPort));
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    	asClient.addHandler(new AccountHandler());
+        
+    }
+    
+    public void startHandler(String acAddress, int acPort) throws Exception
+    {
+    	asClient.startClient(
+                    new InetSocketAddress(acAddress, acPort));
+    }
+    
+    public void stopHandler() throws Exception
+    {
+    	asClient.stopClient();
     }
 
     private Cbor<HashMap<Object, Object>> cbor = new Cbor<HashMap<Object, Object>>();
@@ -119,9 +124,9 @@ public class CoapAuthHandler extends ChannelDuplexHandler {
                                     HashMap.class);
                     request.setPayload(
                             JSONUtil.writeJSON(payloadData).getBytes(StandardCharsets.UTF_8));
-                    accountClient.getChannelFuture().channel()
+                    asClient.getChannelFuture().channel()
                             .attr(keyAuthClient).set(ctx);
-                    accountClient.sendRequest(request);
+                    asClient.sendRequest(request);
                     return;
 
                 case Constants.KEEP_ALIVE_URI:

@@ -775,14 +775,24 @@ int main(int argc, char *argv[])
 
         case 4:
             session = argv[2];
-            if (argv[3][0] == 's')
+            if (strlen(argv[3]) != 1)
+            {
+                std::cout << "OCStack init error" << std::endl;
+                return 0;
+            }
+            if (strcmp(argv[3], "s") == 0)
             {
                 stackMode = OC_CLIENT_SERVER;
                 g_runningMode = 1;
             }
-            else if (argv[3][0] == 'c')
+            else if (strcmp(argv[3], "c") == 0)
             {
                 g_runningMode = 2;
+            }
+            else
+            {
+                std::cout << "Invalid <mode>, 's' or 'c' required" << std::endl;
+                return 0;
             }
             break;
 

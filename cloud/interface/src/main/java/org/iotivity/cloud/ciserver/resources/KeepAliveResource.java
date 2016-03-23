@@ -69,8 +69,17 @@ public class KeepAliveResource extends Resource {
         this.sessionManager = sessionManager;
         connectPool = new HashMap<ChannelHandlerContext, Long>();
         timer = new Timer();
-        timer.schedule(new KeepAliveTask(), 30000, 60000);
         cbor = new Cbor<HashMap<String, Integer>>();
+    }
+    
+    public void startSessionChecker()
+    {
+        timer.schedule(new KeepAliveTask(), 30000, 60000);
+    }
+    
+    public void stopSessionChecker()
+    {
+        timer.cancel();
     }
 
     /**

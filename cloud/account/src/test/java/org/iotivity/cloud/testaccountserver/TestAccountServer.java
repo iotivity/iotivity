@@ -7,16 +7,16 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.resources.AccountResource;
 import org.iotivity.cloud.accountserver.resources.AuthResource;
-import org.iotivity.cloud.accountserver.util.JSONUtil;
 import org.iotivity.cloud.base.CoapClient;
 import org.iotivity.cloud.base.CoapServer;
 import org.iotivity.cloud.base.ResourceManager;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
+import org.iotivity.cloud.util.JSONUtil;
 
 public class TestAccountServer {
 
@@ -44,9 +44,8 @@ public class TestAccountServer {
             if (arg1.getTokenString().equals("1111")) {
 
                 String json = arg1.getPayloadString();
-                JSONUtil util = new JSONUtil();
 
-                sessionCode = util.parseJSON(json, "session");
+                sessionCode = JSONUtil.parseJSON(json, "session");
             }
 
         }
@@ -91,7 +90,7 @@ public class TestAccountServer {
                 + authServer + "\"}";
 
         CoapRequest request = new CoapRequest(CoapMethod.POST);
-        request.setUriPath(Const.AUTH_URI);
+        request.setUriPath(Constants.AUTH_URI);
         request.setUriQuery("reqtype=register");
         request.setToken("1111".getBytes(StandardCharsets.UTF_8));
         request.setPayload(json.getBytes(StandardCharsets.UTF_8));
@@ -110,7 +109,7 @@ public class TestAccountServer {
         String json = "{\"session\":\"" + sessionCode + "\"}";
 
         CoapRequest request = new CoapRequest(CoapMethod.POST);
-        request.setUriPath(Const.AUTH_URI);
+        request.setUriPath(Constants.AUTH_URI);
         request.setUriQuery("reqtype=login");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
         request.setPayload(json.getBytes(StandardCharsets.UTF_8));
@@ -134,7 +133,7 @@ public class TestAccountServer {
                 + deviceId + "\"}";
 
         CoapRequest request = new CoapRequest(CoapMethod.POST);
-        request.setUriPath(Const.ACCOUNT_URI);
+        request.setUriPath(Constants.ACCOUNT_URI);
         request.setUriQuery("reqtype=publish");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
         request.setPayload(json.getBytes(StandardCharsets.UTF_8));
@@ -154,7 +153,7 @@ public class TestAccountServer {
         String json = "{\"userid\":\"" + userId + "\"}";
 
         CoapRequest request = new CoapRequest(CoapMethod.GET);
-        request.setUriPath(Const.ACCOUNT_URI);
+        request.setUriPath(Constants.ACCOUNT_URI);
         request.setUriQuery("reqtype=find");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
         request.setPayload(json.getBytes(StandardCharsets.UTF_8));

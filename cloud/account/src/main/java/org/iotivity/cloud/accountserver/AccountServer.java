@@ -22,6 +22,7 @@
 package org.iotivity.cloud.accountserver;
 
 import java.net.InetSocketAddress;
+import java.util.Scanner;
 
 import org.iotivity.cloud.accountserver.resources.AccountResource;
 import org.iotivity.cloud.accountserver.resources.AuthResource;
@@ -59,6 +60,19 @@ public class AccountServer {
 
         coapServer
                 .startServer(new InetSocketAddress(Integer.parseInt(args[0])));
-    }
+        
+        Scanner in = new Scanner(System.in);
+        
+        System.out.println("press 'q' to terminate");
+        
+        while(!in.nextLine().equals("q"));
+        
+        in.close();
+        
+        System.out.println("Terminating...");
 
+        coapServer.stopServer();
+        
+        System.out.println("Terminated");
+    }
 }

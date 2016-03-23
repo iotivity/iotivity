@@ -21,7 +21,7 @@
  */
 package org.iotivity.cloud.accountserver;
 
-public class Const {
+public class Constants {
 
     // MongoDB
     public static final String DEVICE_TABLE          = "USER_DEVICE";
