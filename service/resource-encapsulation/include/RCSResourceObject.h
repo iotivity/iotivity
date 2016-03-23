@@ -144,17 +144,7 @@ namespace OIC
                  * @param interface Resource interface
                  *
                  */
-                Builder(std::string &&uri, std::string &&type, std::string &&interface);
-
-                 /**
-                 * Constructs a Builder.
-                 *
-                 * @param uri Resource uri
-                 * @param type Resource type
-                 * @param interface Resource interface
-                 *
-                 */
-                Builder(const std::string &uri, const std::string &type, const std::string &interface);
+                Builder(std::string uri, std::string type, std::string interface);
 
                 /**
                  * Add an interface for the resource.
