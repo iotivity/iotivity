@@ -270,10 +270,11 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
         AttributeProperty elementProp = arrProp.getElementProperty();
 
         StringBuilder values = new StringBuilder();
+        String value = "";
         if (elementProp.isInteger()) {
             IntegerProperty intProp = elementProp.asInteger();
             if (intProp.hasRange()) {
-                values.append(intProp.min() + " - " + intProp.max());
+                value = intProp.min() + " - " + intProp.max();
             } else if (intProp.hasValues()) {
                 int[] arr = intProp.getValues();
                 for (int i = 0; i < arr.length; i++) {
@@ -284,13 +285,13 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
                 }
 
                 if (!values.toString().isEmpty()) {
-                    values.append("[" + values + "]");
+                    value = "[" + values + "]";
                 }
             }
         } else if (elementProp.isDouble()) {
             DoubleProperty dblProp = elementProp.asDouble();
             if (dblProp.hasRange()) {
-                values.append(dblProp.min() + " - " + dblProp.max());
+                value = dblProp.min() + " - " + dblProp.max();
             } else if (dblProp.hasValues()) {
                 double[] arr = dblProp.getValues();
                 for (int i = 0; i < arr.length; i++) {
@@ -301,11 +302,11 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
                 }
 
                 if (!values.toString().isEmpty()) {
-                    values.append("[" + values + "]");
+                    value = "[" + values + "]";
                 }
             }
         } else if (elementProp.isBoolean()) {
-            values.append("[true, false]");
+            value = "[true, false]";
         } else if (elementProp.isString()) {
             StringProperty strProp = elementProp.asString();
             if (strProp.hasValues()) {
@@ -318,11 +319,12 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
                 }
 
                 if (!values.toString().isEmpty()) {
-                    values.append("[" + values + "]");
+                    value = "[" + values + "]";
                 }
             }
         }
-        allowedValuesTxt.setText(values.toString());
+
+        allowedValuesTxt.setText(value);
 
         // Set the current value.
         currentValueTxt.setText(new AttributeValueStringConverter(attribute
