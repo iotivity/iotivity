@@ -460,19 +460,23 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetConfig
 {
     (void)obj;
     jobjectArray ret;
-    const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
-
-    ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
-    vector< resourceInfo > resourceConfig;
-    container->getResourceConfiguration(str_bundleId, &resourceConfig);
-    resourceInfo conf = resourceConfig[resourceId];
     ret = (jobjectArray) env->NewObjectArray(4, env->FindClass("java/lang/String"),
-            env->NewStringUTF(""));
+                    env->NewStringUTF(""));
+    if(bundleId != NULL){
+        const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
 
-    env->SetObjectArrayElement(ret, 0, env->NewStringUTF(conf.name.c_str()));
-    env->SetObjectArrayElement(ret, 1, env->NewStringUTF(conf.uri.c_str()));
-    env->SetObjectArrayElement(ret, 2, env->NewStringUTF(conf.resourceType.c_str()));
-    env->SetObjectArrayElement(ret, 3, env->NewStringUTF(conf.address.c_str()));
+        ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+        vector< resourceInfo > resourceConfig;
+        container->getResourceConfiguration(str_bundleId, &resourceConfig);
+
+        if(resourceConfig.size() > resourceId && resourceId >=0){
+            resourceInfo conf = resourceConfig[resourceId];
+            env->SetObjectArrayElement(ret, 0, env->NewStringUTF(conf.name.c_str()));
+            env->SetObjectArrayElement(ret, 1, env->NewStringUTF(conf.uri.c_str()));
+            env->SetObjectArrayElement(ret, 2, env->NewStringUTF(conf.resourceType.c_str()));
+            env->SetObjectArrayElement(ret, 3, env->NewStringUTF(conf.address.c_str()));
+        }
+    }
     return ret;
 }
 

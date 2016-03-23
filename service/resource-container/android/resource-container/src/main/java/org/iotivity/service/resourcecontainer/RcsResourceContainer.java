@@ -269,7 +269,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
         List<RcsBundleInfo> bundles = listBundles();
 
         for(RcsBundleInfo bundleInfo : bundles){
-            if(bundleInfo.getID().equals(bundleId) && bundleInfo.getLibraryPath().endsWith(".apk")){
+            if(bundleInfo.getID().equals(bundleId) && bundleInfo.getPath().endsWith(".apk")){
                 Log.d(TAG, "Have to start android bundle");
                 Log.d(TAG, "bundle-id: " + bundleInfo.getID() + ", " + bundleInfo.getPath());
                 if(bundleInfo.getPath().endsWith(".apk")){
