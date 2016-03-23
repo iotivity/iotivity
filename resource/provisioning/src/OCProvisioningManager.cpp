@@ -279,7 +279,7 @@ namespace OC
         if(!resultCallback)
         {
             oclog() <<"Result callback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
@@ -304,10 +304,15 @@ namespace OC
     OCStackResult OCSecureResource::provisionACL( const OicSecAcl_t* acl,
             ResultCallBack resultCallback)
     {
-        if(!resultCallback || !acl)
+        if(!acl)
         {
-            oclog() <<"Result callback or ACL can't be null";
+            oclog() <<"ACL can't be null";
             return OC_STACK_INVALID_PARAM;
+        }
+        if(!resultCallback)
+        {
+            oclog() <<"result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
@@ -336,7 +341,7 @@ namespace OC
         if(!resultCallback)
         {
             oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
@@ -367,8 +372,8 @@ namespace OC
     {
         if(!resultCallback)
         {
-            oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            oclog() << "Result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
@@ -400,7 +405,7 @@ namespace OC
         if(!resultCallback)
         {
             oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
@@ -429,7 +434,7 @@ namespace OC
         if(!resultCallback)
         {
             oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
