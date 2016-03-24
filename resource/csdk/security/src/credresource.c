@@ -178,7 +178,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             mapSize++;
         }
 #ifdef __WITH_X509__
-        if (cred->publicData.data)
+        if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
             mapSize++;
         }
@@ -216,7 +216,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
 #ifdef __WITH_X509__
         //PublicData -- Not Mandatory
-        if (cred->publicData.data)
+        if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
             CborEncoder publicMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
             const size_t publicMapSize = 2;
@@ -293,7 +293,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
         cborEncoderResult = cbor_encoder_close_container(&credArray, &credMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
-
+        
         cred = cred->next;
     }
     cborEncoderResult = cbor_encoder_close_container(&credRootMap, &credArray);
@@ -1403,11 +1403,13 @@ int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo)
     {
         goto exit;
     }
+    credInfo->chainLen = 2;
     memcpy(credInfo->certificateChain, cred->publicData.data, cred->publicData.len);
     memcpy(credInfo->devicePrivateKey, cred->privateData.data, cred->privateData.len);
-    credInfo->certificateChainLen = parseCertPrefix(cred->publicData.data);
+    credInfo->certificateChainLen = cred->publicData.len;
     GetCAPublicKeyData(credInfo);
     ret = 0;
+
 exit:
 
     return ret;

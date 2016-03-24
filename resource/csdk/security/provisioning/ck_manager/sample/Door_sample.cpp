@@ -437,6 +437,9 @@ void SendGetRequest()
     OCStackResult ret;
     OIC_LOG(INFO, TAG, "Send Get REQ to Light server");
 
+    //select ciphersuite for certificates
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+
     initAddress();
 
     char szQueryUri[64] = { '\0'};

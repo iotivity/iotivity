@@ -41,7 +41,20 @@ extern "C"
  */
 OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
                                         OicSecAcl_t *acl, OCProvisionResultCB resultCallback);
-
+                                        
+#ifdef __WITH_X509__
+/**
+ * API to send CRL information to resource.
+ *
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] crl CRL to provision.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OicSecCrl_t *crl, OCProvisionResultCB resultCallback);
+#endif // __WITH_X509__
 /**
  * API to send Direct-Pairing Configuration to a device.
  *

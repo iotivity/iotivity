@@ -177,18 +177,18 @@ static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, OicSe
 
     numCert ++;
     uint32_t len = 0;
-    for (size_t i = 0; i < numCert; ++i)
+    for (size_t i = 0; i < numCert; i++)
     {
-        certificateChain->data = (uint8_t *) OICRealloc(certificateChain->data, len + cert[i].len + CERT_LEN_PREFIX);
+        certificateChain->data = (uint8_t *) OICRealloc(certificateChain->data,
+                                                        len + cert[i].len + CERT_LEN_PREFIX);
         if (NULL == certificateChain->data)
         {
             OIC_LOG(ERROR, TAG, "Error while memory allocation");
             return OC_STACK_ERROR;
         }
 
-        uint32_t appendedLen = appendCert2Chain(certificateChain->data + len, cert[i].data,
-                                              cert[i].len);
-        //TODO function check len
+        uint32_t appendedLen = appendCert2Chain(certificateChain->data + len,
+                                                cert[i].data, cert[i].len);
         if (0 == appendedLen)
         {
             OIC_LOG(ERROR, TAG, "Error while certifiacate chain creation.");

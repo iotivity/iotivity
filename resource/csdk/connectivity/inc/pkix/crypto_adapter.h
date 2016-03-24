@@ -52,10 +52,10 @@ extern "C" {
  */
 #undef GET_SHA_256
 #define GET_SHA_256(tbs, sha256) do{                     \
-        SHA256_CTX ctx256;                               \
-        SHA256_Init(&ctx256);                            \
-        SHA256_Update(&ctx256, tbs.data, tbs.len);       \
-        SHA256_Final(sha256, &ctx256);                   \
+        DTLS_SHA256_CTX ctx256;                          \
+        DTLS_SHA256_Init(&ctx256);                       \
+        DTLS_SHA256_Update(&ctx256, tbs.data, tbs.len);  \
+        DTLS_SHA256_Final(sha256, &ctx256);              \
     }while(0)
 
 /**@def CHECK_SIGN(structure, caPubKey)

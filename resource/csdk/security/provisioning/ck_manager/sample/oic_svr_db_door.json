@@ -3,7 +3,7 @@
 		"aclist":{
 			"aces":[
 				{
-					"subject": "*",
+					"subjectuuid": "*",
 					"resources": [
 						{
 							"href": "/oic/res",
@@ -29,7 +29,7 @@
 					"permission": 2
 				},
 				{
-					"subject": "*",
+					"subjectuuid": "*",
 					"resources": [
 						{
 							"href": "/oic/sec/doxm",
@@ -61,16 +61,16 @@
 				}
 			]
 		},
-		"rownerid" : "646F6F72-4465-7669-6365-555549443030"
+		"rowneruuid" : "646F6F72-4465-7669-6365-555549443030"
 	},
 	"pstat":	{
 		"isop":	false,
-		"deviceid":	"646F6F72-4465-7669-6365-555549443030",
-		"rownerid":	"646F6F72-4465-7669-6365-555549443030",
+		"deviceuuid":	"646F6F72-4465-7669-6365-555549443030",
+		"rowneruuid":	"646F6F72-4465-7669-6365-555549443030",
 		"cm":	2,
 		"tm":	0,
 		"om":	3,
-		"sm":	[3]
+		"sm":	3
 	},
 	"doxm":	{
 		"oxms":	[0],
@@ -79,7 +79,7 @@
 		"owned": false,
 		"didformat": 0,
 		"dpc": false,
-		"deviceid":	"646F6F72-4465-7669-6365-555549443030",
-		"rownerid":	"646F6F72-4465-7669-6365-555549443030"
+		"deviceuuid":	"646F6F72-4465-7669-6365-555549443030",
+		"rowneruuid":	"646F6F72-4465-7669-6365-555549443030"
 	}
 }
