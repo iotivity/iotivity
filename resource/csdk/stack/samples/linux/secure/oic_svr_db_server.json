@@ -1,105 +1,159 @@
 {
-	"acl": 
-	{
-		"aclist": 
-		{
-			"aces": 
-			[
-				{
-					"subject": "*", 
-					"resources": 
-					[
-						{"href": "/oic/res", "rt": "", "if": ""},
-						{"href": "/oic/res/d", "rt": "", "if": ""}, 
-						{"href": "/oic/res/types/d", "rt": "", "if": ""}, 
-						{"href": "/oic/ad", "rt": "", "if": ""}, 
-						{"href": "/oic/sec/acl", "rt": "", "if": ""}, 
-						{"href": "/oic/sec/amacl", "rt": "", "if": ""}
-					], 
-					"permission": 2
-				}, 
-				{
-					"subject": "*", 
-					"resources": 
-					[
-						{"href": "/oic/sec/doxm", "rt": "", "if": ""}, 
-						{"href": "/oic/sec/pstat", "rt": "", "if": ""}
-					], 
-					"permission": 2
-				},
-				{
-					"subject": "32323232-3232-3232-3232-323232323232", 
-					"resources": 
-					[
-						{"href": "/oic/sec/acl", "rt": "", "if": ""}, 
-						{"href": "/oic/sec/cred", "rt": "", "if": ""}
-					], 
-					"permission": 8
-				},
-				{
-					"subject": "31313131-3232-3232-3333-333334343434", 
-					"resources": 
-					[
-						{"href": "/a/led", "rt": "", "if": ""}
-					], 
-					"permission": 6,
-          "period" : ["20150630T060000/20150630T220000", "20150630T060000/20150630T200000"],
-          "recurrence" : ["FREQ=DAILY; BYDAY=MO, WE, FR", "FREQ=DAILY; BYDAY=TU, TH; UNTIL=20160630"]
-				},
-				{
-					"subject": "37373737-3737-3737-3737-373737373737", 
-					"resources": 
-					[
-						{"href": "/a/led", "rt": "", "if": ""}
-					], 
-					"permission": 6,
-          "period" : ["20150630T060000/20150630T220000"],
-          "recurrence" : ["FREQ=DAILY; UNTIL=20150630"]
-				}
-			]
-		}, 
-		"rownerid": "31313131-3131-3131-3131-313131313131"
-	}, 
-
-	"pstat": 
-	{
-		"isop": true, 
-		"deviceid": "31313131-3131-3131-3131-313131313131", 
-		"cm": 0, 
-		"tm": 0, 
-		"om": 3, 
-		"sm": [3], 
-		"rownerid": "31313131-3131-3131-3131-313131313131"
-	}, 
-	
-	"doxm":
-	{
-		"oxms": [0], 
-		"oxmsel": 0, 
-		"sct": 1, 
-		"owned": true, 
-		"didformat": 0, 
-		"deviceid": "31313131-3131-3131-3131-313131313131", 
-		"devownerid": "32323232-3232-3232-3232-323232323232", 
-		"rownerid": "31313131-3131-3131-3131-313131313131"
-	}, 
-	"cred":	
-	[
-		{
-			"credid": 1,
-			"subject": "MjIyMjIyMjIyMjIyMjIyMg==",
-			"credtype": 1,
-			"period": "20150630T060000/20990920T220000",
-			"privatedata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-      "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
-		},
-		{
-			"credid": 2,
-			"subject": "MTkxOTE5MTkxOTE5MTkxOQ==",
-			"credtype": 1,
-			"period": "20150630T060000/20990920T220000",
-			"privatedata": "QkJCQkJCQkJCQkJCQkJCQg==",
-      "ownrs" : ["MTkxOTE5MTkxOTE5MTkxOQ=="]
-		}
-	]
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/types/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/ad",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/amacl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        } ,
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "32323232-3232-3232-3232-323232323232",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        } ,
+                        {
+                            "href": "/oic/sec/cred",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 8
+                },
+                {
+                    "subjectuuid": "31313131-3232-3232-3333-333334343434",
+                    "resources": [
+                        {
+                            "href": "/a/led",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        } 
+                    ],
+                    "permission": 6,
+                    "period" : ["20150630T060000/20150630T220000", "20150630T060000/20150630T200000"],
+                    "recurrence" : ["FREQ=DAILY; BYDAY=MO, WE, FR", "FREQ=DAILY; BYDAY=TU, TH; UNTIL=20160630"]
+                },
+                {
+                    "subjectuuid": "37373737-3737-3737-3737-373737373737",
+                    "resources": [
+                        {
+                            "href": "/a/led",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        } 
+                    ],
+                    "permission": 6,
+                    "period" : ["20150630T060000/20150630T220000"],
+                    "recurrence" : ["FREQ=DAILY; UNTIL=20150630"]
+                }
+            ]
+        },
+        "rowneruuid" : "31313131-3131-3131-3131-313131313131"
+    },
+    "pstat": {
+        "isop": true,
+        "deviceuuid": "31313131-3131-3131-3131-313131313131",
+        "rowneruuid": "31313131-3131-3131-3131-313131313131",
+        "cm": 0,
+        "tm": 0,
+        "om": 3,
+        "sm": 3
+        },
+    "doxm": {
+        "oxms": [0],
+        "oxmsel": 0,
+        "sct": 1,
+        "owned": true,
+        "deviceuuid": "31313131-3131-3131-3131-313131313131",
+        "devowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rowneruuid": "31313131-3131-3131-3131-313131313131",
+        "dpc": false
+    },
+    "cred": {
+        "creds": [
+            {
+                "credid": 1,
+                "subjectuuid": "32323232-3232-3232-3232-323232323232",
+                "credtype": 1,
+                "period": "20150630T060000/20990920T220000",
+                "privatedata": {
+                    "data": "AAAAAAAAAAAAAAAA",
+                    "encoding": "oic.sec.encoding.bytestream"
+                }
+            },
+            {
+                "credid": 2,
+                "subjectuuid": "31393139-3139-3139-3139-313931393139",
+                "credtype": 1,
+                "period": "20150630T060000/20990920T220000",
+                "privatedata": {
+                    "data": "BBBBBBBBBBBBBBBB",
+                    "encoding": "oic.sec.encoding.bytestream"
+                }
+            }
+        ],
+        "rowneruuid": "32323232-3232-3232-3232-323232323232"
+    }
 }

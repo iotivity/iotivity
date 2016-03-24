@@ -18,13 +18,25 @@
                             "if": ""
                         },
                         {
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
                             "href": "/oic/res/types/d",
                             "rel": "",
                             "rt": "",
                             "if": ""
                         },
                         {
-                            "href": "/oic/presence",
+                            "href": "/oic/ad",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/acl",
                             "rel": "",
                             "rt": "",
                             "if": ""
@@ -40,36 +52,24 @@
                             "rel": "",
                             "rt": "",
                             "if": ""
-                        },
+                        } ,
                         {
                             "href": "/oic/sec/pstat",
                             "rel": "",
                             "rt": "",
                             "if": ""
-                        },
-                        {
-                            "href": "/oic/sec/acl",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/sec/cred",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
                         }
                     ],
-                    "permission": 6
+                    "permission": 2
                 }
             ]
         },
-        "rowneruuid" : "64697265-6374-7061-6972-696e67446576"
+        "rowneruuid" : "61646d69-6e44-6576-6963-655575696430"
     },
     "pstat": {
-        "isop": false,
-        "deviceuuid": "64697265-6374-7061-6972-696e67446576",
-        "rowneruuid": "64697265-6374-7061-6972-696e67446576",
+        "isop": true,
+        "deviceuuid": "61646d69-6e44-6576-6963-655575696430",
+        "rowneruuid": "61646d69-6e44-6576-6963-655575696430",
         "cm": 2,
         "tm": 0,
         "om": 3,
@@ -79,10 +79,10 @@
         "oxms": [0],
         "oxmsel": 0,
         "sct": 1,
-        "owned": false,
-        "deviceuuid": "64697265-6374-7061-6972-696e67446576",
-        "devowneruuid": "",
-        "rowneruuid": "64697265-6374-7061-6972-696e67446576",
+        "owned": true,
+        "deviceuuid": "61646d69-6e44-6576-6963-655575696430",
+        "devowneruuid": "61646d69-6e44-6576-6963-655575696430",
+        "rowneruuid": "61646d69-6e44-6576-6963-655575696430",
         "dpc": false
     }
 }

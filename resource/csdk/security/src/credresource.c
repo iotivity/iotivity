@@ -452,7 +452,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                                 OICFree(subjectid);
                             }
-                            // subjectid
+                            // credtype
                             if (strcmp(name, OIC_JSON_CREDTYPE_NAME)  == 0)
                             {
                                 cborFindResult = cbor_value_get_uint64(&credMap, (uint64_t *) &cred->credType);
