@@ -56,7 +56,7 @@ void change_bg_image(int state) {
     char buf[PATH_MAX];
     things[chosenThing].state = state;
     sprintf(buf, "images/%s/%d.png", things[chosenThing].name.c_str(), state);
-    printf("Changing state to %d\n", state);
+    printf("Changing %s state to %d\n", things[chosenThing].name.c_str(), state);
     elm_photo_file_set(images[0][0], buf);
 }
 
@@ -69,12 +69,13 @@ my_win_del(void *data EINA_UNUSED, Evas_Object *obj EINA_UNUSED, void *event_inf
     char socket_path[100];
     sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
     unlink(socket_path);
-    sprintf(socket_path, "/tmp/.hiddennoti%s", things[chosenThing].name.c_str());
-    unlink(socket_path);
+    //sprintf(socket_path, "/tmp/.hiddennoti%s", things[chosenThing].name.c_str());
+    //unlink(socket_path);
     elm_exit(); /* exit the program's main loop that runs in elm_run() */
 }
 
 void sender(int sock, struct sockaddr_un *sname, int data){
+	printf("Sending to Socket %d\n", sock);
     if (sendto(sock, &data, sizeof(int), 0, (struct sockaddr *)sname, sizeof(struct sockaddr_un)) < 0) {
         perror("sending datagram message");
     }
@@ -122,7 +123,7 @@ class Server {
             }else{
             	std::cout << "\nResource created successfully\n";
             }
-            pthread_create(&noti_thread, NULL, noti_handler, (void *)this);
+            //pthread_create(&noti_thread, NULL, noti_handler, (void *)this);
         }
 
         OCResourceHandle getHandle() {
@@ -135,17 +136,13 @@ class Server {
                 map<string, double>::iterator it;
 
                 for(it = things[chosenThing].props.begin(); it != things[chosenThing].props.end(); it++) {
-					if (rep.getValue(it->first, it->second)) {
-						m_thingRep.setValue(it->first, it->second);
+						m_thingRep.setValue(rep[it->first], it->second);
 						std::cout << "\t\t\t\t" << "Param = "<<it->first << " Value = " <<it->second << std::endl;
-						sender(notisock, &notiname, 1);
+						//sender(notisock, &notiname, 1);
             			int number = 100 * rand() % 6;
             			if(number<0) number*=-1;
 						sender(uisock, &uiname, number);
-					} else {
-						std::cout << "\t\t\t\t" << it->first << "not found in the representation" << std::endl;
-					}
-                }
+				}
             } catch (std::exception & e) {
                 std::cout << e.what() << std::endl;
             }
@@ -433,7 +430,7 @@ void *thing_handler(void *ptr)
         strcpy(uiname.sun_path, socket_path);
         printf("SNAME initialized to %s\n", uiname.sun_path);
 
-
+#if 0
         notisock = socket(AF_UNIX, SOCK_DGRAM, 0);
         if (notisock  < 0) {
             printf("error opening sending datagram socket\n");
@@ -444,7 +441,7 @@ void *thing_handler(void *ptr)
         sprintf(socket_path, "/tmp/.hiddennoti%s", things[chosenThing].name.c_str());
         strcpy(notiname.sun_path, socket_path);
         printf("SNAME initialized to %s\n", notiname.sun_path);
-
+#endif
 
         std::mutex blocker;
         std::condition_variable cv;

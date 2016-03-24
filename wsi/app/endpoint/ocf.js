@@ -331,7 +331,11 @@ putresource = function(cap,res)
     },7000);
 
     var endpoint = "oic://"+ cap.params.address +":"+ cap.params.port + cap.params.uri;
-    var resource = map[endpoint];
+    
+    console.log("Which Endpoint Am I looking for " + endpoint);
+    
+    //var resource = map[endpoint];
+    var resource = map[JSON.stringify(cap.params)];
     if(resource == undefined)
     {
         console.log("resource is not exist");

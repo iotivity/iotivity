@@ -81,7 +81,8 @@ module.exports = function(app, passport) {
     
     app.post('/wsi/cap/:id', function(req, res) {
         var cap = req.body;
-        console.log("WSI POST " + JSON.stringify(cap));
+        console.log("Find Capability = " + JSON.stringify(cap));
+        console.log("Service ID : " + req.params.id);
         servicedb.find({'sid':req.params.id}, function(err, service) {
             if (err){
                 console.log('Response Service Error: ' + err);

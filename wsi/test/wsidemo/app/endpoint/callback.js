@@ -1,4 +1,9 @@
 var request = require('request');
+var ocfdevices = [];
+var rviuri = "http://localhost:8080/wsi/cap/org.genivi.rvi";
+var ocfuri = "http://localhost:8080/wsi/cap/org.openinterconnect";
+var smstatus, chstatus;
+var smcount = 0, chcount = 0;
 
 var FSM = {
 	NOTREADY : 0,
@@ -18,8 +23,6 @@ var FSM = {
 	READY: 14
 };
 var state = FSM.NOTREADY;
-var rviuri = "http://localhost:8080/wsi/cap/org.genivi.rvi";
-var ocfuri = "http://localhost:8080/wsi/cap/org.openinterconnect";
 
 var rvimsg = [
       {
@@ -100,6 +103,21 @@ var rvibody = [
 	{//5
 		"jsonrpc":"2.0",
 		"id":"1",
+		"method": "message",
+		"params": {
+			"timeout":1459388884,
+			"service_name": "genivi.org/node/vehicle_id/rvi/callback",
+			"parameters":{
+				"target" : "SMARTHOMESCENARIO",
+				"text": "scenario name",
+				"result": "Success/Failure",
+				"status" : {}
+			}
+		}
+	},	
+	{//6
+		"jsonrpc":"2.0",
+		"id":"1",
 		"method": "unregister_service",
 		"params": {
 			"timeout":1459388884,
@@ -109,13 +127,13 @@ var rvibody = [
 ];
 
 var ocfbody = [
-   	{
+   	{//0
    	    "cid": "org.openinterconnect.findresource",                    
    	    "endpointtype": "OCF",
    	    "operation": "GET",
    	    "resourceType" : "all"
    	},
-    {
+    {//1
         "cid": "org.openinterconnect.createresource",
         "endpointtype": "OCF",
         "operation": "CREATE",
@@ -130,7 +148,7 @@ var ocfbody = [
             "create an OCF server with RVI resource"
         ]
     },
-   	{
+   	{//2
    	    "cid": "org.openinterconnect.getresource",
    	    "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
    	    "endpointtype": "OCF",
@@ -143,7 +161,7 @@ var ocfbody = [
    	        "uri": "server's uri"
    	    }
    	},
-   	{
+   	{//3
    	    "cid": "org.openinterconnect.putresource",
    	    "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
    	    "endpointtype": "OCF",
@@ -154,14 +172,12 @@ var ocfbody = [
    	          "port": "server port",
    	          "uri": "server's uri"
    	     },
-   	    "payload": {
-   	         "property" : "value"
-   	     },
+   	    "payload": {},
    	    "tags": [
    	      "put reosurce properties and value"
    	    ]
    	},
-    {
+    {//4
         "cid": "org.openinterconnect.updateresource",
         "endpointtype": "OCF",
         "operation": "UPDATE",
@@ -171,9 +187,6 @@ var ocfbody = [
         ]
     }    
 ];
-
-var ocfdevices = [];
-
 
 var wsiFSM = function(error, response, body) {
 	if(!body || response.statusCode > 399){
@@ -215,15 +228,42 @@ var wsiFSM = function(error, response, body) {
     		break;
     	}
     	case FSM.FINDOCFDEVICES:{
-    		console.log("OCF Device List Received.");
             var rcvbody = body.utf8Data;
             var params = rcvbody.params.parameters;
-            console.log("Processing " + params.target);
             ocfdevices = params.status;
+    		console.log("OCF Device List Received." + ocfdevices);
             state = FSM.MAKEOCFRVIDEVICE;
     		var res = post(ocfuri, ocfbody[1]);
     		break;
     	}
+    	case FSM.SMARTHOMESTATUS : {
+    		smstatus += body;
+    		smcount = smcount - 1;
+    		if(smcount==0){
+        		rvibody[5].params.parameters.text = "SmartHome Status";
+        		rvibody[5].params.parameters.result = "Success";
+        		rvibody[5].params.parameters.status = smstatus;
+        		rvimsg[1].params = rvibody[5];
+        		res = post(rviuri, rvimsg[1]);
+        		state = FSM.READY;
+			}
+    		break;
+    	}
+    	case FSM.COMINGHOME : {
+    		chstatus += body;
+    		chcount = chcount - 1;
+    		console.log("CHCOUNT = " + chcount);
+    		if(chcount==0){
+        		rvimsg[1].params = rvibody[5];
+        		rvibody[5].params.parameters.text = "Coming Home";
+        		rvibody[5].params.parameters.result = "Success";
+        		rvimsg[1].params = rvibody[5];
+        		res = post(rviuri, rvimsg[1]);
+        		state = FSM.READY;
+    		}
+    		break;
+    	}
+
     	case FSM.MAKEOCFRVIDEVICE:
     	case FSM.SETHVAC:
     	case FSM.GETHVAC:
@@ -237,9 +277,9 @@ var wsiFSM = function(error, response, body) {
 };
 
 var post = function(uri, b){
-    console.log("Posting " + JSON.stringify(b) + "to " + rviuri + " in state = " + state);
+    console.log("Posting " + JSON.stringify(b) + "to " + uri + " in state = " + state);
     var options = {
-        url: rviuri ,
+        url: uri ,
         json : true,
         method: 'POST',
         body: b
@@ -281,7 +321,7 @@ module.exports = {
                         "params":{}
                     },
                     {
-                        "cid":"org.genivi.rvicallback",
+                        "cid":"/callback",
                         "platform" : "linux",
                         "isauthrequired":"false",
                         "description":"Callback invocations from OCF-RVI.",
@@ -337,9 +377,56 @@ module.exports = {
 
         }
         if(params && params.target == "SMARTHOMESCENARIO"){
-        	//series of OCF GET requests - SmartHome Status
-        	//series of OCF POST requests - Coming Home
-
+        	
+        	
+        	
+        	if(params.text == "SmartHome Status"){
+        		console.log("Scenario Name : " + params.text)
+            	//series of OCF GET requests - SmartHome Status
+        		state = FSM.SMARTHOMESTATUS;
+        		var len = ocfdevices.length;
+        		for (var i = 0; i < len; i++) {
+        			if(ocfdevices[i].uri == "/a/light" ){
+//        				|| ocfdevices[i].uri == "/a/thermostat"
+//    					ocfdevices[i].uri == "/a/washer"
+//        				ocfdevices[i].uri == "/a/fridge"
+//        				ocfdevices[i].uri == "/a/tv"){
+        					ocfbody[2].params.address = ocfdevices[i].address;	
+        					ocfbody[2].params.port = ocfdevices[i].port;
+        					ocfbody[2].params.uri = ocfdevices[i].uri;
+        					smcount++;
+        					var res = post(ocfuri, ocfbody[2]);
+        					break;
+        			}
+        		}
+        	}
+        	if(params.text == "Coming Home"){
+        		console.log("Scenario Name : " + params.text)
+            	//series of OCF POST requests - Coming Home
+        		state = FSM.COMINGHOME;
+        		var len = ocfdevices.length;
+        		for (var i = 0; i < len; i++) {
+        			console.log("Checking " + ocfdevices[i]);
+        			var device = JSON.parse(ocfdevices[i]);
+        			if(device.uri == "/a/light" ||
+    					device.uri == "/a/thermostat" ||
+        				device.uri == "/a/washer" ||
+        				device.uri == "/a/fridge" ||
+        				device.uri == "/a/tv"){
+        					var sample = {
+        							"power" : 35,
+        							"state" : 3
+        					};
+        					ocfbody[3].params.address = device.address;	
+        					ocfbody[3].params.port = device.port;
+        					ocfbody[3].params.uri = device.uri;
+        					ocfbody[3].payload = sample;
+        					chcount = chcount + 1;
+        					var res = post(ocfuri, ocfbody[3]);
+        					break;
+        			}
+        		}        		
+        	}
         }
     },
     start: start,
