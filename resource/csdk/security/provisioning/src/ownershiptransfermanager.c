@@ -190,14 +190,24 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx);
 static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx);
 
 /**
- * Function to update pstat when finalize provisioning.
- * This function would update 'cm' as bx0011,1100 and 'tm' as bx0000,0000.
+ * Function to update pstat as Ready for provisioning.
+ * This function would update 'cm' from bx0000,0010 to bx0000,0000.
  *
  * @param[in] ctx   context value passed to callback from calling function.
  * @param[in] selectedDevice   selected device information to performing provisioning.
  * @return  OC_STACK_OK on success
  */
 static OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx);
+
+/**
+ * Function to update pstat as Ready for Normal Operation.
+ * This function would update 'isop' from false to true.
+ *
+ * @param[in] ctx   context value passed to callback from calling function.
+ * @param[in] selectedDevice   selected device information to performing provisioning.
+ * @return  OC_STACK_OK on success
+ */
+static OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx);
 
 static bool IsComplete(OTMContext_t* otmCtx)
 {
@@ -785,7 +795,7 @@ static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandl
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
             OIC_LOG(INFO, TAG, "Ownership transfer was successfully completed.");
-            OIC_LOG(INFO, TAG, "Start defualt ACL & commit-hash provisioning.");
+            OIC_LOG(INFO, TAG, "Set Ready for provisioning state .");
 
             res = PutProvisioningStatus(otmCtx);
             if(OC_STACK_OK != res)
@@ -827,9 +837,57 @@ static OCStackApplicationResult ProvisioningStatusHandler(void *ctx, OCDoHandle 
 
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
     (void)UNUSED;
+    OCStackResult res = OC_STACK_OK;
+
+    if(OC_STACK_OK == clientResponse->result)
+    {
+        if(otmCtx && otmCtx->selectedDeviceInfo)
+        {
+            OIC_LOG(INFO, TAG, "Device state is in Ready for Provisionig.");
+
+            res = PutNormalOperationStatus(otmCtx);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to update pstat");
+                SetResult(otmCtx, res);
+            }
+        }
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "Error occured in provisionDefaultACLCB :: %d\n",
+                            clientResponse->result);
+        SetResult(otmCtx, clientResponse->result);
+    }
+
+exit:
+    OIC_LOG_V(INFO, TAG, "OUT ProvisioningStatusHandler.");
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+/**
+ * Response handler of update provisioning status to Ready for Normal..
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult ReadyForNomalStatusHandler(void *ctx, OCDoHandle UNUSED,
+                                                       OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(INFO, TAG, "IN ReadyForNomalStatusHandler.");
+
+    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
+    VERIFY_NON_NULL(TAG, ctx, ERROR);
+
+    OTMContext_t* otmCtx = (OTMContext_t*) ctx;
+    (void)UNUSED;
 
     if (OC_STACK_OK == clientResponse->result)
     {
+        OIC_LOG(INFO, TAG, "Device state is in Ready for Normal Operation.");
         OCStackResult res = PDMAddDevice(&otmCtx->selectedDeviceInfo->doxm->deviceID);
          if (OC_STACK_OK == res)
          {
@@ -849,9 +907,8 @@ static OCStackApplicationResult ProvisioningStatusHandler(void *ctx, OCDoHandle 
         SetResult(otmCtx, clientResponse->result);
     }
 
-
 exit:
-    OIC_LOG_V(INFO, TAG, "OUT ProvisioningStatusHandler.");
+    OIC_LOG_V(INFO, TAG, "OUT ReadyForNomalStatusHandler.");
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -1472,15 +1529,9 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN PutProvisioningStatus");
 
-    if(!otmCtx)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         OIC_LOG(ERROR, TAG, "OTMContext is NULL");
-        return OC_STACK_INVALID_PARAM;
-    }
-    if(!otmCtx->selectedDeviceInfo)
-    {
-        OIC_LOG(ERROR, TAG, "Can't find device information in OTMContext");
-        OICFree(otmCtx);
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -1498,10 +1549,9 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
             &secPayload->securityData1, &secPayload->payloadSize))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
-        SetResult(otmCtx, OC_STACK_INVALID_JSON);
         return OC_STACK_INVALID_JSON;
     }
-    OIC_LOG_V(INFO, TAG, "Created payload for commit hash: %s",secPayload->securityData1);
+    OIC_LOG_V(INFO, TAG, "Created payload for chage to Provisiong state : %s",secPayload->securityData1);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -1525,10 +1575,66 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
-        SetResult(otmCtx, ret);
     }
 
     OIC_LOG(INFO, TAG, "OUT PutProvisioningStatus");
+
+    return ret;
+}
+
+OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx)
+{
+    OIC_LOG(INFO, TAG, "IN PutNormalOperationStatus");
+
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    {
+        OIC_LOG(ERROR, TAG, "OTMContext is NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    //Set isop to true.
+    otmCtx->selectedDeviceInfo->pstat->isOp = true;
+
+    OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
+    if (!secPayload)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        return OC_STACK_NO_MEMORY;
+    }
+    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+    if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
+            &secPayload->securityData1, &secPayload->payloadSize))
+    {
+        OCPayloadDestroy((OCPayload *)secPayload);
+        return OC_STACK_INVALID_JSON;
+    }
+    OIC_LOG_V(INFO, TAG, "Created payload for chage to Provisiong state: %s",secPayload->securityData1);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        otmCtx->selectedDeviceInfo->endpoint.addr,
+                        otmCtx->selectedDeviceInfo->securePort,
+                        otmCtx->selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_PSTAT_URI))
+    {
+        OIC_LOG(ERROR, TAG, "PutNormalOperationStatus : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
+    cbData.cb = &ReadyForNomalStatusHandler;
+    cbData.context = (void*)otmCtx;
+    cbData.cd = NULL;
+    OCStackResult ret = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+            otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+
+    OIC_LOG(INFO, TAG, "OUT PutNormalOperationStatus");
 
     return ret;
 }

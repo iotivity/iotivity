@@ -367,15 +367,19 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
         VERIFY_NON_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
-            if (false == (pstat->cm & TAKE_OWNER))
+            if (false == (pstat->cm & TAKE_OWNER) && false == pstat->isOp)
             {
-                gPstat->isOp = true;
                 gPstat->cm = pstat->cm;
-                OIC_LOG (INFO, TAG, "Taken owner succeed and isOp is TRUE");
+                OIC_LOG (INFO, TAG, "State changed to Ready for Provisioning");
+            }
+            else if (false == (pstat->cm & TAKE_OWNER) && true == pstat->isOp)
+            {
+                gPstat->isOp =pstat->isOp;
+                OIC_LOG (INFO, TAG, "State changed to Ready for Normal Operation");
             }
             else
             {
-                OIC_LOG(DEBUG, TAG, "Taken owner failed");
+                OIC_LOG(DEBUG, TAG, "Invalid Device provisionig state");
             }
             if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN && gPstat)
             {
