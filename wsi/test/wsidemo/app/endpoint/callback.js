@@ -16,6 +16,9 @@ var FSM = {
 	FINDOCFDEVICES: 7,
 	MAKEOCFRVIDEVICE: 8,
 	COMINGHOME : 9,
+	TURNONLIGHT : 10,
+	TURNONFAN : 11,
+	
 	SMARTHOMESTATUS : 10,
 	SETHVAC : 11,
 	UNREGHOMECONTROL: 12,
@@ -191,6 +194,7 @@ var ocfbody = [
 var wsiFSM = function(error, response, body) {
 	if(!body || response.statusCode > 399){
         console.log("Failed Response = " + body);
+        state = FSM.READY;
 		return;
 	}
 	var res;
@@ -384,21 +388,6 @@ module.exports = {
         		console.log("Scenario Name : " + params.text)
             	//series of OCF GET requests - SmartHome Status
         		state = FSM.SMARTHOMESTATUS;
-        		var len = ocfdevices.length;
-        		for (var i = 0; i < len; i++) {
-        			if(ocfdevices[i].uri == "/a/light" ){
-//        				|| ocfdevices[i].uri == "/a/thermostat"
-//    					ocfdevices[i].uri == "/a/washer"
-//        				ocfdevices[i].uri == "/a/fridge"
-//        				ocfdevices[i].uri == "/a/tv"){
-        					ocfbody[2].params.address = ocfdevices[i].address;	
-        					ocfbody[2].params.port = ocfdevices[i].port;
-        					ocfbody[2].params.uri = ocfdevices[i].uri;
-        					smcount++;
-        					var res = post(ocfuri, ocfbody[2]);
-        					break;
-        			}
-        		}
         	}
         	if(params.text == "Coming Home"){
         		console.log("Scenario Name : " + params.text)
@@ -408,23 +397,53 @@ module.exports = {
         		for (var i = 0; i < len; i++) {
         			console.log("Checking " + ocfdevices[i]);
         			var device = JSON.parse(ocfdevices[i]);
-        			if(device.uri == "/a/light" ||
-    					device.uri == "/a/thermostat" ||
-        				device.uri == "/a/washer" ||
-        				device.uri == "/a/fridge" ||
-        				device.uri == "/a/tv"){
-        					var sample = {
-        							"power" : 35,
-        							"state" : 3
-        					};
-        					ocfbody[3].params.address = device.address;	
-        					ocfbody[3].params.port = device.port;
-        					ocfbody[3].params.uri = device.uri;
-        					ocfbody[3].payload = sample;
-        					chcount = chcount + 1;
-        					var res = post(ocfuri, ocfbody[3]);
-        					break;
+        			var sample;
+        			if(device.uri == "/a/light"){
+            			sample = {
+        					"state" : 1,
+        					"param" : 0,
+        					"color" : 1
+    					};
         			}
+        			if(device.uri == "/a/thermostat"){
+        				sample = {
+    						"state" : 1,
+    						"param" : 20,
+    						"temp" : 20
+        				};
+        			}
+        			if(device.uri == "/a/washer"){
+        				sample = {
+    						"state" : 1,
+    						"param" : 20,
+    						"time" 	 : 0
+						};
+        			}
+        			if(device.uri == "/a/tv"){
+        				sample = {
+    						"state" : 1,
+    						"source" : 0
+						};
+        			}
+        			if(device.uri == "/a/aircon"){
+        				sample = {
+    						"state"    : 1,
+    						"temp" 	   : 17,
+    						"fanspeed" : 40,
+						};
+        			}
+        			if(device.uri == "/a/door"){
+            			sample = {
+        					"state" : 1,
+        					"doorbell" : 3
+    					};
+        			}
+					ocfbody[3].params.address = device.address;	
+					ocfbody[3].params.port = device.port;
+					ocfbody[3].params.uri = device.uri;
+					ocfbody[3].payload = sample;
+					chcount = chcount + 1;
+					var res = post(ocfuri, ocfbody[3]);
         		}        		
         	}
         }
@@ -432,5 +451,3 @@ module.exports = {
     start: start,
 }
 console.log("App initialized");
-
-

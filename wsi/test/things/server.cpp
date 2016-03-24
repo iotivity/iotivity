@@ -30,13 +30,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
-
-
 #include <Elementary.h>
-
-
 #include "common.h"
-
 
 using namespace OC;
 using namespace std;
@@ -52,11 +47,13 @@ struct sockaddr_un notiname;
 pthread_t noti_thread;
 void * noti_handler(void *param);
 
-void change_bg_image(int state) {
+
+void change_bg_image(sockdata *data) {
     char buf[PATH_MAX];
-    things[chosenThing].state = state;
-    sprintf(buf, "images/%s/%d.png", things[chosenThing].name.c_str(), state);
-    printf("Changing %s state to %d\n", things[chosenThing].name.c_str(), state);
+    things[chosenThing].data.state = data->state;
+    things[chosenThing].data.param = data->param;
+    sprintf(buf, "images/%s/%d_%d.png", things[chosenThing].name.c_str(), data->state, data->param);
+    printf("Changing %s state to %d_%d\n", things[chosenThing].name.c_str(), data->state, data->param);
     elm_photo_file_set(images[0][0], buf);
 }
 
@@ -74,9 +71,9 @@ my_win_del(void *data EINA_UNUSED, Evas_Object *obj EINA_UNUSED, void *event_inf
     elm_exit(); /* exit the program's main loop that runs in elm_run() */
 }
 
-void sender(int sock, struct sockaddr_un *sname, int data){
+void sender(int sock, struct sockaddr_un *sname, sockdata *data){
 	printf("Sending to Socket %d\n", sock);
-    if (sendto(sock, &data, sizeof(int), 0, (struct sockaddr *)sname, sizeof(struct sockaddr_un)) < 0) {
+    if (sendto(sock, data, sizeof(sockdata), 0, (struct sockaddr *)sname, sizeof(struct sockaddr_un)) < 0) {
         perror("sending datagram message");
     }
 }
@@ -84,7 +81,7 @@ void sender(int sock, struct sockaddr_un *sname, int data){
 
 class Server {
     public:
-        /// Access this property from a TB client
+        /// Access this property from a client
         std::string m_name;
         std::string m_thingURI;
         std::string m_id;
@@ -139,9 +136,12 @@ class Server {
 						m_thingRep.setValue(rep[it->first], it->second);
 						std::cout << "\t\t\t\t" << "Param = "<<it->first << " Value = " <<it->second << std::endl;
 						//sender(notisock, &notiname, 1);
-            			int number = 100 * rand() % 6;
-            			if(number<0) number*=-1;
-						sender(uisock, &uiname, number);
+//            			int number = 100 * rand() % 6;
+//            			if(number<0) number*=-1;
+						things[chosenThing].data.state = rep["state"];
+						things[chosenThing].data.param = rep["param"];
+						sockdata *data = &things[chosenThing].data;
+						sender(uisock, &uiname, data);
 				}
             } catch (std::exception & e) {
                 std::cout << e.what() << std::endl;
@@ -237,6 +237,7 @@ class Server {
 
                         if (OC_STACK_OK == OCPlatform::sendResponse(pResponse)) {
                             ehResult = OC_EH_OK;
+                    		std::cout << "\t\t\t"<< things[chosenThing].name << "Responding  :"<<requestType<<" \n";
                         }
                     }   
                 }
@@ -317,14 +318,14 @@ void * noti_handler(void *param)
 
 static Eina_Bool _fd_handler_cb(void *data, Ecore_Fd_Handler *handler)
 {
-    int power = 0;
+    sockdata d;
     int sock = ecore_main_fd_handler_fd_get(handler);
-    if (read(sock, &power, sizeof(int)) < 0){
+    if (read(sock, &d, sizeof(sockdata)) < 0){
         printf("receiving datagram packet\n");
     }
     else{
-        printf("-->%d\n", power);
-        change_bg_image(power);
+        printf("-->%d\n", d.state);
+        change_bg_image(&d);
     }
     return ECORE_CALLBACK_RENEW;
 }
@@ -335,7 +336,7 @@ void thing_ui() {
     char buf[PATH_MAX];
 
     win = elm_win_add(NULL, "bg-image", ELM_WIN_BASIC);
-    elm_win_title_set(win, "WSI Demo Control");
+    elm_win_title_set(win, things[chosenThing].desc.c_str());
     elm_win_autodel_set(win, EINA_TRUE);
     evas_object_smart_callback_add(win, "delete,request", my_win_del, NULL);
 
@@ -358,7 +359,7 @@ void thing_ui() {
     for (int j = 0; j < 1; j++) {
         for (int i = 0; i < 1; i++) {
             ph = elm_photo_add(win);
-            sprintf(buf, "images/%s/%d.png", things[chosenThing].name.c_str(), things[chosenThing].state);
+            sprintf(buf, "images/%s/%d_%d.png", things[chosenThing].name.c_str(), things[chosenThing].data.state, things[chosenThing].data.param);
             n++;
             if (n >= 5) n = 0;
             images[j][i] = ph;

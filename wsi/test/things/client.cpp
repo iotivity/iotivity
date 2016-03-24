@@ -217,11 +217,6 @@ int main(int argc, char* argv[]) {
 		requestURI << OC_RSRVD_WELL_KNOWN_URI;
 		OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
 		std::cout<< "Finding Resource... " <<std::endl;
-		//        std::mutex blocker;
-		//        std::condition_variable cv;
-		//        std::unique_lock<std::mutex> lock(blocker);
-		//        cv.wait(lock);
-
 		int i = 0;
 		do{
 			if(i == 1){
