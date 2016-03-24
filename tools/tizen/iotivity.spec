@@ -163,7 +163,7 @@ cp ./resource/csdk/security/include/pinoxmcommon.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.json %{buildroot}%{_libdir}/oic_svr_db_server.json
+cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{buildroot}%{_libdir}/oic_svr_db_server.dat
 
 %endif
 
@@ -216,7 +216,7 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so
-%{_libdir}/oic_svr_db_server.json
+%{_libdir}/oic_svr_db_server.dat
 %endif
 %if 0%{?tizen_version_major} < 3
 %{_datadir}/license/%{name}-service

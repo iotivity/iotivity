@@ -49,7 +49,7 @@ static char passwd[] = "EasySetup123";
  * It contains Server's Identity and the PSK credentials
  * of other devices which the server trusts
  */
-static char CRED_FILE[] = "oic_svr_db_server.json";
+static char CRED_FILE[] = "oic_svr_db_server.dat";
 
 OCPersistentStorage ps ;
 
