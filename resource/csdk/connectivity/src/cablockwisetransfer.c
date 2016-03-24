@@ -77,7 +77,7 @@ static bool CACheckPayloadLength(const CAData_t *sendData)
 CAResult_t CAInitializeBlockWiseTransfer(CASendThreadFunc sendThreadFunc,
                                          CAReceiveThreadFunc receivedThreadFunc)
 {
-    OIC_LOG(DEBUG, TAG, "initialize");
+    OIC_LOG(DEBUG, TAG, "CAInitializeBlockWiseTransfer");
 
     // set block-wise transfer context
     if (!g_context.sendThreadFunc)
@@ -108,7 +108,7 @@ CAResult_t CAInitializeBlockWiseTransfer(CASendThreadFunc sendThreadFunc,
 
 CAResult_t CATerminateBlockWiseTransfer()
 {
-    OIC_LOG(DEBUG, TAG, "terminate");
+    OIC_LOG(DEBUG, TAG, "CATerminateBlockWiseTransfer");
 
     if (g_context.dataList)
     {
@@ -173,12 +173,27 @@ CAResult_t CASendBlockWiseData(const CAData_t *sendData)
             OIC_LOG(DEBUG, TAG, "reset message can't be sent to the block");
             return CA_NOT_SUPPORTED;
         }
+
+        /*
+         * Other uses of the Block options in conjunction with multicast
+         * messages are for further study.
+         */
+        if (sendData->requestInfo->isMulticast)
+        {
+            OIC_LOG(DEBUG, TAG, "multicast message can't be sent to the block");
+            return CA_NOT_SUPPORTED;
+        }
     }
     else if (sendData->responseInfo)
     {
         if (CA_MSG_RESET == sendData->responseInfo->info.type)
         {
             OIC_LOG(DEBUG, TAG, "reset message can't be sent to the block");
+            return CA_NOT_SUPPORTED;
+        }
+        if (sendData->responseInfo->isMulticast)
+        {
+            OIC_LOG(DEBUG, TAG, "multicast message can't be sent to the block");
             return CA_NOT_SUPPORTED;
         }
     }
@@ -359,23 +374,23 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         }
     }
 
-    // check if there is error code
+    // if there is no block option in pdu, check if there is error code.
     if (!isBlock1 && !isBlock2)
     {
+        CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
+                (CAToken_t)pdu->hdr->coap_hdr_udp_t.token,
+                pdu->hdr->coap_hdr_udp_t.token_length,
+                endpoint->port);
+        if (NULL == blockDataID || blockDataID->idLength < 1)
+        {
+            OIC_LOG(ERROR, TAG, "blockId is null");
+            CADestroyBlockID(blockDataID);
+            return CA_STATUS_FAILED;
+        }
+
         uint32_t code = CA_RESPONSE_CODE(pdu->hdr->coap_hdr_udp_t.code);
         if (CA_REQUEST_ENTITY_INCOMPLETE == code)
         {
-            CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-                    (CAToken_t)pdu->hdr->coap_hdr_udp_t.token,
-                    pdu->hdr->coap_hdr_udp_t.token_length,
-                    endpoint->port);
-            if (NULL == blockDataID || blockDataID->idLength < 1)
-            {
-                OIC_LOG(ERROR, TAG, "blockId is null");
-                CADestroyBlockID(blockDataID);
-                return CA_STATUS_FAILED;
-            }
-
             CABlockData_t *data = CAGetBlockDataFromBlockDataList(blockDataID);
             if (!data)
             {
@@ -384,18 +399,18 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 return CA_STATUS_FAILED;
             }
 
+            coap_block_t *block = CAGetBlockOption(blockDataID, data->type);
+            if (!block)
+            {
+                OIC_LOG(ERROR, TAG, "block is null");
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_FAILED;
+            }
+
+            CAResult_t res = CA_STATUS_OK;
             if (COAP_OPTION_BLOCK2 == data->type)
             {
-                coap_block_t *block2 = CAGetBlockOption(blockDataID, COAP_OPTION_BLOCK2);
-                if (!block2)
-                {
-                    OIC_LOG(ERROR, TAG, "block is null");
-                    CADestroyBlockID(blockDataID);
-                    return CA_STATUS_FAILED;
-                }
-
-                CAResult_t res = CASetNextBlockOption2(pdu, endpoint, receivedData, *block2,
-                                                       dataLen);
+                res = CASetNextBlockOption2(pdu, endpoint, receivedData, *block, dataLen);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "setting has failed");
@@ -405,16 +420,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             }
             else if (COAP_OPTION_BLOCK1 == data->type)
             {
-                coap_block_t *block1 = CAGetBlockOption(blockDataID, COAP_OPTION_BLOCK1);
-                if (!block1)
-                {
-                    OIC_LOG(ERROR, TAG, "block is null");
-                    CADestroyBlockID(blockDataID);
-                    return CA_STATUS_FAILED;
-                }
-
-                CAResult_t res = CASetNextBlockOption1(pdu, endpoint, receivedData, *block1,
-                                                       dataLen);
+                res = CASetNextBlockOption1(pdu, endpoint, receivedData, *block, dataLen);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "setting has failed");
@@ -422,11 +428,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                     return res;
                 }
             }
-            else
-            {
-                CADestroyBlockID(blockDataID);
-                return CA_STATUS_FAILED;
-            }
+            CADestroyBlockID(blockDataID);
         }
         else
         {
@@ -437,24 +439,12 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             // and sent data remain in block data list, remove block data
             if (receivedData->responseInfo)
             {
-                CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-                        (CAToken_t)pdu->hdr->coap_hdr_udp_t.token,
-                        pdu->hdr->coap_hdr_udp_t.token_length,
-                        endpoint->port);
-                if (NULL == blockDataID || blockDataID->idLength < 1)
-                {
-                    OIC_LOG(ERROR, TAG, "blockId is null");
-                    CADestroyBlockID(blockDataID);
-                    return CA_STATUS_FAILED;
-                }
-
                 CARemoveBlockDataFromList(blockDataID);
-                CADestroyBlockID(blockDataID);
             }
+            CADestroyBlockID(blockDataID);
             return CA_NOT_SUPPORTED;
         }
     }
-
     return CA_STATUS_OK;
 }
 
@@ -890,14 +880,15 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         // check the blcok-wise transfer status for next step
         if (CA_BLOCK_UNKNOWN == blockWiseStatus || CA_BLOCK_RECEIVED_ALREADY == blockWiseStatus)
         {
-            if (0 == block.m) // Last block is received
+            OIC_LOG_V(DEBUG, TAG, "M bit is %d", block.m);
+
+            if (0 == block.m)
             {
-                OIC_LOG(DEBUG, TAG, "M bit is 0");
+                // Last block is received
                 blockWiseStatus = CA_OPTION1_REQUEST_LAST_BLOCK;
             }
             else
             {
-                OIC_LOG(DEBUG, TAG, "M bit is 1");
                 blockWiseStatus = CA_OPTION1_REQUEST_BLOCK;
             }
         }
@@ -1394,27 +1385,12 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
         goto exit;
     }
 
-    uint32_t code = (*pdu)->hdr->coap_hdr_udp_t.code;
-    if (CA_GET == code || CA_POST == code || CA_PUT == code || CA_DELETE == code)
+    uint32_t repCode = CA_RESPONSE_CODE((*pdu)->hdr->coap_hdr_udp_t.code);
+    if (CA_REQUEST_ENTITY_INCOMPLETE == repCode)
     {
-        // if received message type is RESET from remote device,
-        // we have to use the updated message id of request message to find token.
-        res = CAUpdateMessageId(*pdu, blockDataID);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "fail to update message id");
-            goto exit;
-        }
-    }
-    else
-    {
-        uint32_t repCode = CA_RESPONSE_CODE((*pdu)->hdr->coap_hdr_udp_t.code);
-        if (CA_REQUEST_ENTITY_INCOMPLETE == repCode)
-        {
-            OIC_LOG(INFO, TAG, "don't use option");
-            res = CA_STATUS_OK;
-            goto exit;
-        }
+        OIC_LOG(INFO, TAG, "don't use option");
+        res = CA_STATUS_OK;
+        goto exit;
     }
 
     uint8_t blockType = CAGetBlockOptionType(blockDataID);
@@ -1469,11 +1445,20 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
         }
     }
 
-exit:
-    if (CA_ADAPTER_IP == endpoint->adapter && 0 == endpoint->port)
+    uint32_t code = (*pdu)->hdr->coap_hdr_udp_t.code;
+    if (CA_GET == code || CA_POST == code || CA_PUT == code || CA_DELETE == code)
     {
-        CARemoveBlockDataFromList(blockDataID);
+        // if received message type is RESET from remote device,
+        // we have to use the updated message id of request message to find token.
+        res = CAUpdateMessageId(*pdu, blockDataID);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "fail to update message id");
+            goto exit;
+        }
     }
+
+exit:
     CADestroyBlockID(blockDataID);
     OIC_LOG(DEBUG, TAG, "OUT-AddBlockOption");
     return res;
@@ -1620,6 +1605,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             }
         }
 
+        // add block option to option list.
         res = CAAddBlockOptionImpl(block1, COAP_OPTION_BLOCK1, options);
         if (CA_STATUS_OK != res)
         {
@@ -1627,6 +1613,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             goto exit;
         }
 
+        // add option list to pdu.
         res = CAAddOptionToPDU(*pdu, options);
         if (CA_STATUS_OK != res)
         {
@@ -1634,6 +1621,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             goto exit;
         }
 
+        // add the payload data as the block size.
         if (!coap_add_block(*pdu, dataLength, (const unsigned char *) info->payload, block1->num,
                             block1->szx))
         {
@@ -1644,6 +1632,8 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
     else
     {
         OIC_LOG(DEBUG, TAG, "received response message with block option1");
+
+        // add block option to option list.
         res = CAAddBlockOptionImpl(block1, COAP_OPTION_BLOCK1, options);
         if (CA_STATUS_OK != res)
         {
@@ -1651,6 +1641,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             goto exit;
         }
 
+        // add option list to pdu.
         res = CAAddOptionToPDU(*pdu, options);
         if (CA_STATUS_OK != res)
         {
@@ -1658,13 +1649,14 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             goto exit;
         }
 
+        // add the payload data as the block size.
         if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
         {
             OIC_LOG(ERROR, TAG, "failed to add payload");
             return CA_STATUS_FAILED;
         }
 
-        // reset block-list after write block
+        // if it is last block message, remove block data from list.
         if (0 == block1->m)
         {
             // remove data from list
@@ -2357,7 +2349,6 @@ CAResult_t CACheckBlockDataValidation(const CAData_t *sendData, CABlockData_t **
     for (size_t i = 0; i < len; i++)
     {
         CABlockData_t *currData = (CABlockData_t *) u_arraylist_get(g_context.dataList, i);
-
         if (!currData)
         {
             continue;
@@ -2455,7 +2446,7 @@ coap_block_t *CAGetBlockOption(const CABlockDataID_t *blockID, uint16_t blockTyp
             {
                 return &currData->block2;
             }
-            else
+            else if (COAP_OPTION_BLOCK1 == blockType)
             {
                 return &currData->block1;
             }
@@ -2591,10 +2582,7 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID)
             }
 
             // destroy memory
-            if (currData->sentData)
-            {
-                CADestroyDataSet(currData->sentData);
-            }
+            CADestroyDataSet(currData->sentData);
             CADestroyBlockID(currData->blockDataId);
             OICFree(currData->payload);
             OICFree(currData);
