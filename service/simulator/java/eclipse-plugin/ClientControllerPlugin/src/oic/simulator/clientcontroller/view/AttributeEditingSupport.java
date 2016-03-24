@@ -21,7 +21,6 @@ import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
@@ -139,7 +138,7 @@ public class AttributeEditingSupport {
                                 Display.getDefault().getActiveShell(),
                                 attribute);
                         if (dialog.open() == Window.OK) {
-                            updateAttributeValue(attribute,
+                            updateAttributeValue(attributeElement, attribute,
                                     dialog.getNewValueObj());
                         }
 
@@ -315,7 +314,8 @@ public class AttributeEditingSupport {
                     dialog.setMessage("Given value is invalid");
                     dialog.open();
                 } else {
-                    updateAttributeValue(att, attValue);
+                    updateAttributeValue((AttributeElement) element, att,
+                            attValue);
                 }
             }
 
@@ -360,48 +360,27 @@ public class AttributeEditingSupport {
             return strArr;
         }
 
-        public void updateAttributeValue(SimulatorResourceAttribute att,
-                AttributeValue value) {
-            IStructuredSelection selection = (IStructuredSelection) viewer
-                    .getSelection();
-            if (null == selection) {
-                return;
+        public void updateAttributeValue(AttributeElement attributeElement,
+                SimulatorResourceAttribute att, AttributeValue value) {
+            // Update the post status.
+            Object parent = attributeElement.getParent();
+            AttributeElement rootElement = attributeElement;
+            while (parent != null && parent instanceof AttributeElement) {
+                rootElement = (AttributeElement) parent;
+                parent = ((AttributeElement) parent).getParent();
             }
+            rootElement.setPostState(true);
 
-            Object obj = selection.getFirstElement();
-            if (null == obj) {
-                return;
-            }
+            // Set the attribute value.
+            attributeElement.getSimulatorResourceAttribute().setValue(value);
 
-            Tree t = viewer.getTree();
-            TreeItem item = t.getSelection()[0];
-            if (null == item) {
-                return;
-            }
-
-            TreeItem parent = item.getParentItem();
-            if (null != parent) {
-                while (parent.getParentItem() != null) {
-                    parent = parent.getParentItem();
-                }
-                Object data = parent.getData();
-                ((AttributeElement) data).setPostState(true);
-            }
-
-            if (item.getData() instanceof AttributeElement) {
-                AttributeElement attributeElement = (AttributeElement) item
-                        .getData();
-                attributeElement.getSimulatorResourceAttribute()
-                        .setValue(value);
-
-                parent = item.getParentItem();
-                if (null != parent) {
-                    Object data = parent.getData();
-                    try {
-                        ((AttributeElement) data).deepSetChildValue(att);
-                    } catch (InvalidArgsException e) {
-                        e.printStackTrace();
-                    }
+            // Update the hierarchy.
+            parent = attributeElement.getParent();
+            if (null != parent && parent instanceof AttributeElement) {
+                try {
+                    ((AttributeElement) parent).deepSetChildValue(att);
+                } catch (InvalidArgsException e) {
+                    e.printStackTrace();
                 }
             }
         }

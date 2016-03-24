@@ -21,7 +21,6 @@ import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
@@ -233,7 +232,7 @@ public class AttributeEditingSupport {
 
                     attElement.setEditLock(true);
                     compareAndUpdateAttribute(oldValue, comboBox.getText(),
-                            element, att, type);
+                            (AttributeElement) element, att, type);
                     attElement.setEditLock(false);
 
                     viewer.refresh();
@@ -305,7 +304,7 @@ public class AttributeEditingSupport {
                                 Display.getDefault().getActiveShell(),
                                 attribute);
                         if (dialog.open() == Window.OK) {
-                            updateAttributeValue(attribute,
+                            updateAttributeValue(attributeElement, attribute,
                                     dialog.getNewValueObj());
 
                             if (callNativeUpdateValue) {
@@ -316,7 +315,7 @@ public class AttributeEditingSupport {
                                 Resource resource = resourceManager
                                         .getCurrentResourceInSelection();
 
-                                SimulatorResourceAttribute result = getResultantAttribute();
+                                SimulatorResourceAttribute result = getResultantAttribute(attributeElement);
                                 if (null == result) {
                                     Activator
                                             .getDefault()
@@ -333,7 +332,8 @@ public class AttributeEditingSupport {
                                                 result.name(), result.value());
                                 if (!updated) {
                                     try {
-                                        updateAttributeValue(attribute,
+                                        updateAttributeValue(attributeElement,
+                                                attribute,
                                                 AttributeValueBuilder.build(
                                                         currentAttValue,
                                                         type.mBaseType));
@@ -399,7 +399,7 @@ public class AttributeEditingSupport {
 
                             attributeElement.setEditLock(true);
                             compareAndUpdateAttribute(oldValue, newValue,
-                                    element, attribute, type);
+                                    (AttributeElement) element, attribute, type);
                             attributeElement.setEditLock(false);
 
                             comboBox.setVisible(false);
@@ -492,8 +492,8 @@ public class AttributeEditingSupport {
                 String newValue = comboBox.getText();
 
                 ((AttributeElement) element).setEditLock(true);
-                compareAndUpdateAttribute(oldValue, newValue, element, att,
-                        type);
+                compareAndUpdateAttribute(oldValue, newValue,
+                        (AttributeElement) element, att, type);
                 ((AttributeElement) element).setEditLock(false);
 
             }
@@ -501,8 +501,9 @@ public class AttributeEditingSupport {
         }
 
         public void compareAndUpdateAttribute(String oldValue, String newValue,
-                Object element, SimulatorResourceAttribute att, TypeInfo type) {
-            if (null == oldValue || null == newValue || null == element
+                AttributeElement attElement, SimulatorResourceAttribute att,
+                TypeInfo type) {
+            if (null == oldValue || null == newValue || null == attElement
                     || null == att || null == type) {
                 return;
             }
@@ -549,8 +550,8 @@ public class AttributeEditingSupport {
                 } else {
 
                     // To show the new value till decision made.
-                    updateAttributeValue(att, attValue);
-                    viewer.update(element, null);
+                    updateAttributeValue(attElement, att, attValue);
+                    viewer.update(attElement, null);
 
                     if (callNativeUpdateValue) {
                         MessageBox dialog = new MessageBox(viewer.getTree()
@@ -563,7 +564,7 @@ public class AttributeEditingSupport {
                             try {
                                 attValue = AttributeValueBuilder.build(
                                         oldValue, type.mBaseType);
-                                updateAttributeValue(att, attValue);
+                                updateAttributeValue(attElement, att, attValue);
                             } catch (Exception e) {
                                 Activator
                                         .getDefault()
@@ -583,7 +584,7 @@ public class AttributeEditingSupport {
                             Resource resource = resourceManager
                                     .getCurrentResourceInSelection();
 
-                            SimulatorResourceAttribute result = getResultantAttribute();
+                            SimulatorResourceAttribute result = getResultantAttribute(attElement);
                             if (null == result) {
                                 Activator
                                         .getDefault()
@@ -601,7 +602,8 @@ public class AttributeEditingSupport {
                                 try {
                                     attValue = AttributeValueBuilder.build(
                                             oldValue, type.mBaseType);
-                                    updateAttributeValue(att, attValue);
+                                    updateAttributeValue(attElement, att,
+                                            attValue);
                                 } catch (Exception e) {
                                     Activator
                                             .getDefault()
@@ -624,92 +626,49 @@ public class AttributeEditingSupport {
                     }
                 }
             }
-            viewer.update(element, null);
+            viewer.update(attElement, null);
         }
 
-        public void updateAttributeValue(SimulatorResourceAttribute att,
-                AttributeValue value) {
-            if (null == att || null == value) {
+        public void updateAttributeValue(AttributeElement attributeElement,
+                SimulatorResourceAttribute att, AttributeValue value) {
+            if (null == attributeElement || null == att || null == value) {
                 return;
             }
 
-            IStructuredSelection selection = (IStructuredSelection) viewer
-                    .getSelection();
-            if (null == selection) {
-                return;
-            }
+            attributeElement.getSimulatorResourceAttribute().setValue(value);
 
-            Object obj = selection.getFirstElement();
-            if (null == obj) {
-                return;
-            }
-
-            Tree t = viewer.getTree();
-            TreeItem item = t.getSelection()[0];
-            if (null == item) {
-                return;
-            }
-
-            if (item.getData() instanceof AttributeElement) {
-                AttributeElement attributeElement = (AttributeElement) item
-                        .getData();
-                attributeElement.getSimulatorResourceAttribute()
-                        .setValue(value);
-
-                TreeItem parent = item.getParentItem();
-                if (null != parent) {
-                    Object data = parent.getData();
-                    try {
-                        ((AttributeElement) data).deepSetChildValue(att);
-                    } catch (InvalidArgsException e) {
-                        Activator
-                                .getDefault()
-                                .getLogManager()
-                                .log(Level.ERROR.ordinal(),
-                                        new Date(),
-                                        "There is an error while updating the attribute value.\n"
-                                                + Utility
-                                                        .getSimulatorErrorString(
-                                                                e, null));
-                    }
+            Object parent = attributeElement.getParent();
+            if (null != parent && parent instanceof AttributeElement) {
+                AttributeElement parentElement = (AttributeElement) parent;
+                try {
+                    parentElement.deepSetChildValue(att);
+                } catch (InvalidArgsException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while updating the attribute value.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
                 }
             }
         }
 
-        public SimulatorResourceAttribute getResultantAttribute() {
-            IStructuredSelection selection = (IStructuredSelection) viewer
-                    .getSelection();
-            if (null == selection) {
-                return null;
-            }
-
-            Object obj = selection.getFirstElement();
-            if (null == obj) {
-                return null;
-            }
-
-            Tree t = viewer.getTree();
-            TreeItem item = t.getSelection()[0];
-            if (null == item) {
+        public SimulatorResourceAttribute getResultantAttribute(
+                AttributeElement attElement) {
+            if (null == attElement) {
                 return null;
             }
 
             SimulatorResourceAttribute result;
-            TreeItem parent = item.getParentItem();
-            if (null == parent) {
-                Object data = item.getData();
-                result = ((AttributeElement) data)
-                        .getSimulatorResourceAttribute();
-            } else {
-                while (parent.getParentItem() != null) {
-                    parent = parent.getParentItem();
-                }
+            Object parent = attElement.getParent();
 
-                // Parent will point to the top-level attribute of type
-                Object data = parent.getData();
-                result = ((AttributeElement) data)
-                        .getSimulatorResourceAttribute();
+            while (parent != null && parent instanceof AttributeElement) {
+                attElement = (AttributeElement) parent;
+                parent = ((AttributeElement) parent).getParent();
             }
+            result = attElement.getSimulatorResourceAttribute();
 
             return result;
         }
