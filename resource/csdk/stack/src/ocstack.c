@@ -4422,7 +4422,7 @@ static const OicUuid_t* OCGetServerInstanceID(void)
         return &sid;
     }
 
-    if (RAND_UUID_OK != OCGenerateUuid(sid.id))
+    if (OC_STACK_OK != GetDoxmDeviceID(&sid))
     {
         OIC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
         return NULL;

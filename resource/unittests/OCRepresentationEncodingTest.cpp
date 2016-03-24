@@ -49,7 +49,7 @@ namespace OC
 // CBOR->OCPayload and OCPayload->OCRepresentation conversions
 namespace OCRepresentationEncodingTest
 {
-    static const char *sid1 = OCGetServerInstanceIDString();
+    static const char sid1[] = "646F6F72-4465-7669-6365-555549443030";
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
     static const char dmver1[] = "data model version";
