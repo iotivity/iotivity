@@ -362,6 +362,7 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_PSTAT_URI,
         OIC_RSRC_PCONF_URI,
         OIC_RSRC_DPAIRING_URI,
+        OIC_RSRC_VER_URI,
     };
 
     // Remove query from Uri for resource string comparison

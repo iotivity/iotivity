@@ -78,6 +78,10 @@ const char * OIC_RSRC_TYPE_SEC_DPAIRING = "oic.sec.dpairing";
 const char * OIC_RSRC_DPAIRING_URI =  "/oic/sec/dpairing";
 const char * OIC_JSON_DPAIRING_NAME = "dpairing";
 
+//version
+const char * OIC_RSRC_TYPE_SEC_VER = "oic.sec.ver";
+const char * OIC_RSRC_VER_URI =  "/oic/sec/ver";
+const char * OIC_JSON_VER_NAME = "ver";
 
 const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_RESOURCES_NAME = "resources";
@@ -133,6 +137,7 @@ const char * OIC_JSON_IF_NAME = "if";
 const char * OIC_JSON_ROWNERID_NAME = "rowneruuid";
 const char * OIC_JSON_ENCODING_NAME = "encoding";
 const char * OIC_JSON_DATA_NAME = "data";
+const char * OIC_JSON_SEC_V_NAME = "secv";
 
 const char * OIC_JSON_EMPTY_STRING = "";
 

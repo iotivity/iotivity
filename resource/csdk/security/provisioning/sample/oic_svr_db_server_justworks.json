@@ -79,6 +79,18 @@
                         }
                     ],
                     "permission": 6
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/ver",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
                 }
             ]
         },

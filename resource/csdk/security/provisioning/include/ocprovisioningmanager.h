@@ -47,7 +47,7 @@ OCStackResult OCInitPM(const char* dbPath);
  * OCMode.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
+ *                    server before returning the list of devices.
  * @param[out] ppList List of candidate devices to be provisioned
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
@@ -79,7 +79,7 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
  * all the device in subnet which are owned by calling provisioning client.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
+ *                    server before returning the list of devices.
  * @param[out] ppList List of device owned by provisioning tool.
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */

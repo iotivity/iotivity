@@ -81,6 +81,11 @@ extern const char * OIC_RSRC_TYPE_SEC_DPAIRING;
 extern const char * OIC_RSRC_DPAIRING_URI;
 extern const char * OIC_JSON_DPAIRING_NAME;
 
+//version
+extern const char * OIC_RSRC_TYPE_SEC_VER;
+extern const char * OIC_RSRC_VER_URI;
+extern const char * OIC_JSON_VER_NAME;
+
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_SUBJECTID_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
@@ -135,6 +140,7 @@ extern const char * OIC_JSON_IF_NAME;
 extern const char * OIC_JSON_ROWNERID_NAME;
 extern const char * OIC_JSON_ENCODING_NAME;
 extern const char * OIC_JSON_DATA_NAME;
+extern const char * OIC_JSON_SEC_V_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 
