@@ -119,7 +119,7 @@ namespace OCProvisioningTest
     TEST(OwnershipTest, OwnershipTransferNullCallback)
     {
         OCSecureResource device;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.doOwnershipTransfer(nullptr));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.doOwnershipTransfer(nullptr));
     }
 
     TEST(DeviceInfoTest, DevInfoFromNetwork)
@@ -144,7 +144,7 @@ namespace OCProvisioningTest
     {
         OCSecureResource device;
         OicSecAcl_t *acl = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionACL(acl, nullptr));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionACL(acl, nullptr));
         OICFree(acl);
     }
 
@@ -158,7 +158,7 @@ namespace OCProvisioningTest
     {
         OCSecureResource device, dev2;
         Credential cred;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionCredentials(cred, dev2, nullptr));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionCredentials(cred, dev2, nullptr));
     }
 
     TEST(ProvisionPairwiseTest, ProvisionPairwiseTestNullCallback)
@@ -167,7 +167,7 @@ namespace OCProvisioningTest
         Credential cred;
         OicSecAcl_t *acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
         OicSecAcl_t *acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionPairwiseDevices(cred, acl1,
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionPairwiseDevices(cred, acl1,
                     dev2, acl2, nullptr));
         OICFree(acl1);
         OICFree(acl2);
