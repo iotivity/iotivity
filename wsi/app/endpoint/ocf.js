@@ -97,17 +97,17 @@ function handleRequest( flag, req ) {
         return iotivity.OCEntityHandlerResult.OC_EH_OK;
     }
     if(req.method === iotivity.OCMethod.OC_REST_GET) {
-        console.log(req);
-    	var getPayload = {
-    			"type" : 4,
-    			"values" :rviRep
-    	};
+    	
+        console.log("Sending " + JSON.stringify(rviRep) + " to " + resUri);
 
     	iotivity.OCDoResponse( {
             requestHandle: req.requestHandle,
             resourceHandle: req.resource,
             ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
-            payload: getPayload,
+            payload: {
+    			type : 4,
+    			values :rviRep
+            },
             resourceUri: resUri,
             sendVendorSpecificHeaderOptions: []
         } );
