@@ -26,7 +26,6 @@
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "ocpayload.h"
-#include "oic_malloc.h"
 #ifdef __WITH_X509__
 #include "crlresource.h"
 #include "crl.h"
@@ -42,7 +41,7 @@
 #define OIC_CBOR_CRL_ID             "CRLId"
 #define OIC_CBOR_CRL_THIS_UPDATE    "ThisUpdate"
 #define OIC_CBOR_CRL_DATA           "CRLData"
-#define CRL_DEFAULT_CRL_ID          (1)
+#define CRL_DEFAULT_CRL_ID           1
 #define CRL_DEFAULT_THIS_UPDATE     "150101000000Z"
 #define CRL_DEFAULT_CRL_DATA        "-"
 
@@ -168,13 +167,18 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     OCStackResult ret = OC_STACK_ERROR;
     *secCrl = NULL;
 
-    CborValue crlCbor = {.parser = NULL};
-    CborParser parser = {.end = NULL};
+    CborValue crlCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
-    int cborLen = (size == 0) ? CBOR_SIZE : size;
+    int cborLen = size;
+    if (0 == size)
+    {
+        cborLen = CBOR_SIZE;
+    }
     cbor_parser_init(cborPayload, cborLen, 0, &parser, &crlCbor);
-    CborValue crlMap = { .parser = NULL};
+    CborValue crlMap = { .parser = NULL } ;
     OicSecCrl_t *crl = NULL;
+    char *name = NULL;
     size_t outLen = 0;
     cborFindResult = cbor_value_enter_container(&crlCbor, &crlMap);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
@@ -182,26 +186,74 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
     VERIFY_NON_NULL(TAG, crl, ERROR);
 
-    cborFindResult = cbor_value_map_find_value(&crlCbor, OIC_CBOR_CRL_ID, &crlMap);
-    if (CborNoError == cborFindResult && cbor_value_is_integer(&crlMap))
+    while (cbor_value_is_valid(&crlMap))
     {
-        cborFindResult = cbor_value_get_int(&crlMap, (int *) &crl->CrlId);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CrlId.");
+        size_t len = 0;
+        cborFindResult = cbor_value_dup_text_string(&crlMap, &name, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        cborFindResult = cbor_value_advance(&crlMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+        CborType type = cbor_value_get_type(&crlMap);
+
+        if (0 == strcmp(OIC_CBOR_CRL_ID, name))
+        {
+            cborFindResult = cbor_value_get_int(&crlMap, (int *) &crl->CrlId);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        }
+        if (0 == strcmp(OIC_CBOR_CRL_THIS_UPDATE, name))
+        {
+            uint8_t *crlByte = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&crlMap, &crlByte, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            crl->ThisUpdate.data = (uint8_t*) OICMalloc(len);
+            VERIFY_NON_NULL(TAG, crl->ThisUpdate.data, ERROR);
+            memcpy(crl->ThisUpdate.data, crlByte, len);
+            crl->ThisUpdate.len = len;
+            OICFree(crlByte);
+        }
+        if (0 == strcmp(OIC_CBOR_CRL_DATA, name))
+        {
+            uint8_t *crlByte = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&crlMap, &crlByte, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            crl->CrlData.data = (uint8_t*) OICMalloc(len);
+            VERIFY_NON_NULL(TAG, crl->CrlData.data, ERROR);
+            memcpy(crl->CrlData.data, crlByte, len);
+            crl->CrlData.len = len;
+            OICFree(crlByte);
+        }
+        if (CborMapType != type && cbor_value_is_valid(&crlMap))
+        {
+            cborFindResult = cbor_value_advance(&crlMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        }
+        OICFree(name);
+        name = NULL;
     }
-    
-    cborFindResult = cbor_value_map_find_value(&crlCbor, OIC_CBOR_CRL_THIS_UPDATE, &crlMap);
-    if (CborNoError == cborFindResult && cbor_value_is_byte_string(&crlMap))
+    // PUT/POST CBOR may not have mandatory values set default values.
+    if (!crl->CrlId)
     {
-        cborFindResult = cbor_value_dup_byte_string(&crlMap,
-            &crl->ThisUpdate.data, &crl->ThisUpdate.len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
+        VERIFY_NON_NULL(TAG, gCrl, ERROR);
+        crl->CrlId = gCrl->CrlId;
     }
-    cborFindResult = cbor_value_map_find_value(&crlCbor, OIC_CBOR_CRL_DATA, &crlMap);
-    if (CborNoError == cborFindResult && cbor_value_is_byte_string(&crlMap))
+    if (!crl->ThisUpdate.data)
     {
-        cborFindResult = cbor_value_dup_byte_string(&crlMap, 
-                         &crl->CrlData.data, &crl->CrlData.len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
+        VERIFY_NON_NULL(TAG, gCrl, ERROR);
+        outLen = gCrl->ThisUpdate.len;
+        crl->ThisUpdate.data = (uint8_t*) OICMalloc(outLen);
+        VERIFY_NON_NULL(TAG, crl->ThisUpdate.data, ERROR);
+        memcpy(crl->ThisUpdate.data, gCrl->ThisUpdate.data, outLen);
+        crl->ThisUpdate.len = outLen;
+    }
+    if (!crl->CrlData.data)
+    {
+        VERIFY_NON_NULL(TAG, gCrl, ERROR);
+        outLen = gCrl->CrlData.len;
+        crl->CrlData.data = (uint8_t*) OICMalloc(outLen);
+        VERIFY_NON_NULL(TAG, crl->CrlData.data, ERROR);
+        memcpy(crl->CrlData.data, gCrl->CrlData.data, outLen);
+        crl->CrlData.len = outLen;
     }
 
     *secCrl = crl;
@@ -209,54 +261,15 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
 exit:
     if (CborNoError != cborFindResult)
     {
-        // PUT/POST CBOR may not have mandatory values set default values.
-        if (gCrl)
-        {
-            OIC_LOG (DEBUG, TAG, "Set default values");
-            crl->CrlId = gCrl->CrlId;
-            if (crl->ThisUpdate.data)
-            {
-                OICFree(crl->ThisUpdate.data);
-            }
-            outLen = gCrl->ThisUpdate.len;
-            crl->ThisUpdate.data = (uint8_t*) OICMalloc(outLen);
-            if (crl->ThisUpdate.data)
-            {
-                memcpy(crl->ThisUpdate.data, gCrl->ThisUpdate.data, outLen);
-                crl->ThisUpdate.len = outLen;
-            }
-            else
-            {
-                crl->ThisUpdate.len = 0;
-                OIC_LOG(ERROR, TAG, "Set default failed");
-            }
-            if (crl->CrlData.data)
-            {
-                OICFree(crl->CrlData.data);
-            }
-            outLen = gCrl->CrlData.len;
-            crl->CrlData.data = (uint8_t*) OICMalloc(outLen);
-            if (crl->CrlData.data && gCrl->CrlData.data)
-            {
-                memcpy(crl->CrlData.data, gCrl->CrlData.data, outLen);
-                crl->CrlData.len = outLen;
-            }
-            else 
-            {
-                crl->CrlData.len = 0;
-                OIC_LOG (ERROR, TAG, "Set default failed");
-            }
-
-            *secCrl = crl;
-            ret = OC_STACK_OK;
-        }
-        else
-        {
-            OIC_LOG (ERROR, TAG, "CBORPayloadToCrl failed");
-            DeleteCrlBinData(crl);
-            crl = NULL;
-            ret = OC_STACK_ERROR;
-        }
+        OIC_LOG (ERROR, TAG, "CBORPayloadToCrl failed");
+        DeleteCrlBinData(crl);
+        crl = NULL;
+        *secCrl = NULL;
+        ret = OC_STACK_ERROR;
+    }
+    if (name)
+    {
+        OICFree(name);
     }
     return ret;
 }
@@ -280,12 +293,11 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicSecCrl_t *crl = NULL;
     uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData1;
-    size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
 
     if (payload)
     {
         OIC_LOG(INFO, TAG, "UpdateSVRDB...");
-        CBORPayloadToCrl(payload, size, &crl);
+        CBORPayloadToCrl(payload, CBOR_SIZE, &crl);
         VERIFY_NON_NULL(TAG, crl, ERROR);
 
         gCrl->CrlId = crl->CrlId;
@@ -303,9 +315,10 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
         memcpy(gCrl->CrlData.data, crl->CrlData.data, crl->CrlData.len);
         gCrl->CrlData.len = crl->CrlData.len;
 
+        size_t size = 0;
         if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_CBOR_CRL_NAME, payload, size))
         {
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet = OC_EH_OK;
         }
 
         DeleteCrlBinData(crl);
@@ -314,7 +327,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
 exit:
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+    SendSRMResponse(ehRequest, ehRet, NULL);
 
     OIC_LOG_V(INFO, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -356,7 +369,7 @@ static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL);
         }
     }
 

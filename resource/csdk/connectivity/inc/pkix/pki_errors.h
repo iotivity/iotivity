@@ -29,6 +29,7 @@ extern "C" {
 #endif //__cplusplus
 
 #ifdef X509_DEBUG
+#warning "DEBUG is enabled"
 #include <stdio.h>  // <printf>
 #endif
 
