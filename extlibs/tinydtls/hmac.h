@@ -35,24 +35,24 @@
  *  see http://www.aarongifford.com/ */
 #include "sha2/sha2.h"
 
-typedef SHA256_CTX dtls_hash_ctx;
+typedef DTLS_SHA256_CTX dtls_hash_ctx;
 typedef dtls_hash_ctx *dtls_hash_t;
-#define DTLS_HASH_CTX_SIZE sizeof(SHA256_CTX)
+#define DTLS_HASH_CTX_SIZE sizeof(DTLS_SHA256_CTX)
 
 static inline void
 dtls_hash_init(dtls_hash_t ctx) {
-  SHA256_Init((SHA256_CTX *)ctx);
+  DTLS_SHA256_Init((DTLS_SHA256_CTX *)ctx);
 }
 
 static inline void 
 dtls_hash_update(dtls_hash_t ctx, const unsigned char *input, size_t len) {
-  SHA256_Update((SHA256_CTX *)ctx, input, len);
+  DTLS_SHA256_Update((DTLS_SHA256_CTX *)ctx, input, len);
 }
 
 static inline size_t
 dtls_hash_finalize(unsigned char *buf, dtls_hash_t ctx) {
-  SHA256_Final(buf, (SHA256_CTX *)ctx);
-  return SHA256_DIGEST_LENGTH;
+  DTLS_SHA256_Final(buf, (DTLS_SHA256_CTX *)ctx);
+  return DTLS_SHA256_DIGEST_LENGTH;
 }
 #endif /* WITH_SHA256 */
 

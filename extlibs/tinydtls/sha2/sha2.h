@@ -55,9 +55,9 @@ extern "C" {
 
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
-#define SHA256_BLOCK_LENGTH		64
-#define SHA256_DIGEST_LENGTH		32
-#define SHA256_DIGEST_STRING_LENGTH	(SHA256_DIGEST_LENGTH * 2 + 1)
+#define DTLS_SHA256_BLOCK_LENGTH		64
+#define DTLS_SHA256_DIGEST_LENGTH		32
+#define DTLS_SHA256_DIGEST_STRING_LENGTH	(DTLS_SHA256_DIGEST_LENGTH * 2 + 1)
 #define SHA384_BLOCK_LENGTH		128
 #define SHA384_DIGEST_LENGTH		48
 #define SHA384_DIGEST_STRING_LENGTH	(SHA384_DIGEST_LENGTH * 2 + 1)
@@ -94,11 +94,11 @@ typedef unsigned long long u_int64_t;	/* 8-bytes (64-bits) */
  */
 #ifdef SHA2_USE_INTTYPES_H
 
-typedef struct _SHA256_CTX {
+typedef struct _DTLS_SHA256_CTX {
 	uint32_t	state[8];
 	uint64_t	bitcount;
-	uint8_t	buffer[SHA256_BLOCK_LENGTH];
-} SHA256_CTX;
+	uint8_t	buffer[DTLS_SHA256_BLOCK_LENGTH];
+} DTLS_SHA256_CTX;
 typedef struct _SHA512_CTX {
 	uint64_t	state[8];
 	uint64_t	bitcount[2];
@@ -107,11 +107,11 @@ typedef struct _SHA512_CTX {
 
 #else /* SHA2_USE_INTTYPES_H */
 
-typedef struct _SHA256_CTX {
+typedef struct _DTLS_SHA256_CTX {
 	u_int32_t	state[8];
 	u_int64_t	bitcount;
-	u_int8_t	buffer[SHA256_BLOCK_LENGTH];
-} SHA256_CTX;
+	u_int8_t	buffer[DTLS_SHA256_BLOCK_LENGTH];
+} DTLS_SHA256_CTX;
 typedef struct _SHA512_CTX {
 	u_int64_t	state[8];
 	u_int64_t	bitcount[2];
@@ -128,11 +128,11 @@ typedef SHA512_CTX SHA384_CTX;
 #ifdef SHA2_USE_INTTYPES_H
 
 #ifdef WITH_SHA256
-void SHA256_Init(SHA256_CTX *);
-void SHA256_Update(SHA256_CTX*, const uint8_t*, size_t);
-void SHA256_Final(uint8_t[SHA256_DIGEST_LENGTH], SHA256_CTX*);
-char* SHA256_End(SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]);
-char* SHA256_Data(const uint8_t*, size_t, char[SHA256_DIGEST_STRING_LENGTH]);
+void DTLS_SHA256_Init(DTLS_SHA256_CTX *);
+void DTLS_SHA256_Update(DTLS_SHA256_CTX*, const uint8_t*, size_t);
+void DTLS_SHA256_Final(uint8_t[DTLS_SHA256_DIGEST_LENGTH], DTLS_SHA256_CTX*);
+char* DTLS_SHA256_End(DTLS_SHA256_CTX*, char[DTLS_SHA256_DIGEST_STRING_LENGTH]);
+char* DTLS_SHA256_Data(const uint8_t*, size_t, char[DTLS_SHA256_DIGEST_STRING_LENGTH]);
 #endif
 
 #ifdef WITH_SHA384
@@ -154,11 +154,11 @@ char* SHA512_Data(const uint8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
 #else /* SHA2_USE_INTTYPES_H */
 
 #ifdef WITH_SHA256
-void SHA256_Init(SHA256_CTX *);
-void SHA256_Update(SHA256_CTX*, const u_int8_t*, size_t);
-void SHA256_Final(u_int8_t[SHA256_DIGEST_LENGTH], SHA256_CTX*);
-char* SHA256_End(SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]);
-char* SHA256_Data(const u_int8_t*, size_t, char[SHA256_DIGEST_STRING_LENGTH]);
+void DTLS_SHA256_Init(DTLS_SHA256_CTX *);
+void DTLS_SHA256_Update(DTLS_SHA256_CTX*, const u_int8_t*, size_t);
+void DTLS_SHA256_Final(u_int8_t[DTLS_SHA256_DIGEST_LENGTH], DTLS_SHA256_CTX*);
+char* DTLS_SHA256_End(DTLS_SHA256_CTX*, char[DTLS_SHA256_DIGEST_STRING_LENGTH]);
+char* DTLS_SHA256_Data(const u_int8_t*, size_t, char[DTLS_SHA256_DIGEST_STRING_LENGTH]);
 #endif
 
 #ifdef WITH_SHA384
@@ -182,11 +182,11 @@ char* SHA512_Data(const u_int8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
 #else /* NOPROTO */
 
 #ifdef WITH_SHA256
-void SHA256_Init();
-void SHA256_Update();
-void SHA256_Final();
-char* SHA256_End();
-char* SHA256_Data();
+void DTLS_SHA256_Init();
+void DTLS_SHA256_Update();
+void DTLS_SHA256_Final();
+char* DTLS_SHA256_End();
+char* DTLS_SHA256_Data();
 #endif
 
 #ifdef WITH_SHA384
