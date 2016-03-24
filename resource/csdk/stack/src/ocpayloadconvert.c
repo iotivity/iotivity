@@ -35,9 +35,6 @@
 // Arbitrarily chosen size that seems to contain the majority of packages
 #define INIT_SIZE (255)
 
-// This is six times of the init_size to handle MAX payload.
-#define MAX_SIZE (1530)
-
 // Discovery Links Map Length.
 #define LINKS_MAP_LEN 4
 
@@ -95,7 +92,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
         VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
         out = out2;
         err = OCConvertPayloadHelper(payload, out, &curSize);
-        while (err == CborErrorOutOfMemory && curSize < MAX_SIZE)
+        while (err == CborErrorOutOfMemory)
         {
             uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
             VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
