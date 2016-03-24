@@ -118,10 +118,6 @@ JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_Resourc
         threadRun = false;
         ocProcessThread.join();
     }
-    else
-    {
-        return (jint)HOSTING_THREAD_ERROR;
-    }
 
     return (jint)OCSTACK_OK;
 }
