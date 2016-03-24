@@ -83,7 +83,7 @@ var rvibody = [
 			}
 		}
 	},
-	{//3
+	{//4
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
@@ -214,14 +214,6 @@ var wsiFSM = function(error, response, body) {
     		res = post(rviuri, rvimsg[1]);
     		break;
     	}
-    	case FSM.GETHVAC: {
-    		console.log("Get RVI HVAC.");
-    		break;
-    	}
-    	case FSM.GETLOCATION: {
-    		console.log("Get RVI Location.");
-    		break;
-    	}
     	case FSM.FINDOCFDEVICES:{
     		console.log("OCF Device List Received.");
             var rcvbody = body.utf8Data;
@@ -232,7 +224,11 @@ var wsiFSM = function(error, response, body) {
     		var res = post(ocfuri, ocfbody[1]);
     		break;
     	}
-    	case FSM.MAKEOCFRVIDEVICE:{
+    	case FSM.MAKEOCFRVIDEVICE:
+    	case FSM.SETHVAC:
+    	case FSM.GETHVAC:
+    	case FSM.GETLOCATION:
+    	case FSM.READY:{
     		console.log("OCF RVI Device Created....Gateway Ready");
     		state = FSM.READY;
     		break;
@@ -301,9 +297,16 @@ module.exports = {
     request: function (req, res) {
         console.log("Received RVI Callback : "+ JSON.stringify(req.body));
         res.sendStatus(200);
-
-        var rcvbody = JSON.parse(req.body.utf8Data);
-        var params = rcvbody.params.parameters;
+        
+        console.log("Content Type = " + JSON.stringify(req.headers));
+        
+        var rcvbody;
+        if(req.body.utf8Data instanceof Object)
+        	rcvbody = req.body.utf8Data;
+        else
+        	rcvbody = JSON.parse(req.body.utf8Data);
+        
+    	var params = rcvbody.params.parameters;
         console.log("Processing " + params.target);
         
         if(params && params.target == "GETHVAC"){
@@ -325,15 +328,19 @@ module.exports = {
         }
         if(params && params.target == "UPDATEOCFRESOURCE"){
         	//send to RVI
-        	console.log("To send to RVI..............");
+        	console.log("Send Update to RVI." + params.status.function);
+    		state = FSM.SETHVAC;
+    		rvibody[4].params.parameters.function = params.status.function;
+    		rvibody[4].params.parameters.newValue = params.status.newValue;
+    		rvimsg[1].params = rvibody[4];
+    		res = post(rviuri, rvimsg[1]);
+
         }
         if(params && params.target == "SMARTHOMESCENARIO"){
         	//series of OCF GET requests - SmartHome Status
         	//series of OCF POST requests - Coming Home
 
         }
-        
-        
     },
     start: start,
 }

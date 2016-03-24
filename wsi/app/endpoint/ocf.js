@@ -78,19 +78,18 @@ function handleRequest( flag, req ) {
         });
 
         console.log("Posting " + JSON.stringify(rviRep) + " to " + chain);
-        updateresource.utf8Data.params.parameters.status = rviRep;
+        //updateresource.utf8Data.params.parameters.status = rviRep;
         updateresource.utf8Data.params.parameters.status.target = "UPDATEOCFRESOURCE";
-        
-        
-        
+        updateresource.utf8Data.params.parameters.status.function = key;
+        updateresource.utf8Data.params.parameters.status.newValue = value;
         
         var options = {
             url: chain,
             json : true,
             method: 'POST',
-            body: JSON.stringify(updateresource)
+            body: updateresource
         };
-        console.log("JSON Body Sent = " + JSON.stringify(updateresource));
+        console.log("JSON Body Sent = " + updateresource);
         request(options, function (error, response, body) {
             console.log(error + "  - " + body);
         });
@@ -98,15 +97,17 @@ function handleRequest( flag, req ) {
         return iotivity.OCEntityHandlerResult.OC_EH_OK;
     }
     if(req.method === iotivity.OCMethod.OC_REST_GET) {
-        console.log(request.payload);
-    	if(rviRep==null)  //simply echo back
-    		request.payload;
+        console.log(req);
+    	var getPayload = {
+    			"type" : 4,
+    			"values" :rviRep
+    	};
 
     	iotivity.OCDoResponse( {
-            requestHandle: request.requestHandle,
-            resourceHandle: request.resource,
+            requestHandle: req.requestHandle,
+            resourceHandle: req.resource,
             ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
-            payload: rviRep,
+            payload: getPayload,
             resourceUri: resUri,
             sendVendorSpecificHeaderOptions: []
         } );
