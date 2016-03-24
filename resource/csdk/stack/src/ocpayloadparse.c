@@ -509,6 +509,7 @@ static OCRepPayloadPropType DecodeCborType(CborType type)
         case CborIntegerType:
             return OCREP_PROP_INT;
         case CborDoubleType:
+        case CborFloatType:
             return OCREP_PROP_DOUBLE;
         case CborBooleanType:
             return OCREP_PROP_BOOL;
@@ -655,7 +656,19 @@ static CborError OCParseArrayFillArray(const CborValue *parent,
                 case OCREP_PROP_DOUBLE:
                     if (dimensions[1] == 0)
                     {
-                        err = cbor_value_get_double(&insideArray, &(((double*)targetArray)[i]));
+                        double *d = &(((double*)targetArray)[i]);
+                        if (cbor_value_get_type(&insideArray) == CborDoubleType)
+                        {
+                            err = cbor_value_get_double(&insideArray, d);
+                        }
+                        else
+                        {
+                            /* must be float */
+                            float f;
+                            err = cbor_value_get_float(&insideArray, &f);
+                            if (!err)
+                                *d = f;
+                        }
                     }
                     else
                     {

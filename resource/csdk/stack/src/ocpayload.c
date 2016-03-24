@@ -536,13 +536,21 @@ bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, do
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if (!val || val->type != OCREP_PROP_DOUBLE)
+    if (val)
     {
-        return false;
+        if (val->type == OCREP_PROP_DOUBLE)
+        {
+            *value = val->d;
+            return true;
+        }
+        else if (val->type == OCREP_PROP_INT)
+        {
+            *value = val->i;
+            return true;
+        }
     }
 
-    *value = val->d;
-    return true;
+    return false;
 }
 
 bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const char* value)
@@ -930,7 +938,8 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_DOUBLE
+    if (!val || val->type != OCREP_PROP_ARRAY ||
+        (val->arr.type != OCREP_PROP_DOUBLE && val->arr.type != OCREP_PROP_INT)
             || !val->arr.dArray)
     {
         return false;
@@ -947,7 +956,19 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
         return false;
     }
 
-    memcpy(*array, val->arr.dArray, dimTotal * sizeof(double));
+    if (val->arr.type != OCREP_PROP_DOUBLE)
+    {
+        memcpy(*array, val->arr.dArray, dimTotal * sizeof(double));
+    }
+    else
+    {
+        /* need to convert from integer */
+        size_t n = 0;
+        for ( ; n < dimTotal; ++n)
+        {
+            (*array)[n] = val->arr.iArray[n];
+        }
+    }
     memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     return true;
 }
