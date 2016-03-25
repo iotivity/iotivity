@@ -142,7 +142,7 @@ OCStackResult addDev(OCDirectPairingDev_t **ppList, OCDevAddr *endpoint,
         pconf->prm = NULL;  // to prevent free
         ptr->prmLen = pconf->prmLen;
         memcpy(&ptr->deviceID, &pconf->deviceID, sizeof(OicUuid_t));
-        memcpy(&ptr->rowner, &pconf->rowner, sizeof(OicUuid_t));
+        memcpy(&ptr->rowner, &pconf->rownerID, sizeof(OicUuid_t));
         ptr->next = NULL;
 
         LL_PREPEND(*ppList, ptr);
@@ -595,7 +595,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             res = AddTmpPskWithPIN(&dpairData->peer->deviceID,
                            SYMMETRIC_PAIR_WISE_KEY,
                            (char*)dpairData->pin, DP_PIN_LENGTH,
-                           1, &dpairData->peer->rowner, &subjectId);
+                           &dpairData->peer->rowner, &subjectId);
             VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 
 

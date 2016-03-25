@@ -76,6 +76,15 @@ void DeletePstatBinData(OicSecPstat_t* pstat);
  */
 void RestorePstatToInitState();
 
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetPstatRownerId(const OicUuid_t* newROwner);
+
 #ifdef __cplusplus
 }
 #endif

@@ -76,15 +76,14 @@ OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
  * @param credType credential type.
  * @param publicData public data such as public key.
  * @param privateData private data such as private key.
- * @param ownersLen length of owners array
- * @param owners array of owners.
+ * @param rownerID Resource owner's UUID.
  *
  * @return pointer to instance of @ref OicSecCred_t if successful. else NULL in case of error.
 
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
                      const OicSecCert_t * publicData, const OicSecKey_t * privateData,
-                     size_t ownersLen, const OicUuid_t * owners);
+                     const OicUuid_t * rownerID);
 
 /**
  * This function adds the new cred to the credential list.
@@ -130,15 +129,14 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
  * @param credType is the type of credential to be added
  * @param pin is the numeric characters
  * @param pinSize is the length of 'pin'
- * @param ownersLen is the number of owners
- * @param owners is the array of owners
+ * @param rownerID Resource owner's UUID
  * @param tmpCredSubject is the generated credential's subject.
  *
  * @return ::OC_STACK_OK for success or else errorcode.
  */
 OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
                             const char * pin, size_t pinSize,
-                            size_t ownersLen, const OicUuid_t * owners,
+                            const OicUuid_t * rownerID,
                             OicUuid_t* tmpCredSubject);
 
 #endif /* __WITH_DTLS__ */
@@ -161,6 +159,15 @@ int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo);
  *
  */
 void DeleteCredList(OicSecCred_t* cred);
+
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetCredRownerId(const OicUuid_t* newROwner);
 
 #ifdef __cplusplus
 }

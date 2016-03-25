@@ -1018,13 +1018,6 @@ static OicSecAcl_t* createAcl(const int dev_num)
         }
         printf("         Entered Wrong Number. Please Enter Again\n");
     }
-    acl->ownersLen = 1;
-    acl->owners = (OicUuid_t*) OICCalloc(1, sizeof(OicUuid_t));
-    if(!acl->owners)
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
-        goto CRACL_ERROR;
-    }
 
     dev = getDevInst((const OCProvisionDev_t*)g_own_list, own_num);
     if(!dev || !dev->doxm)
@@ -1032,7 +1025,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
         goto CRACL_ERROR;
     }
-    memcpy(acl->owners, &dev->doxm->deviceID, UUID_LENGTH);
+    memcpy(&acl->rownerID, &dev->doxm->deviceID, sizeof(OicUuid_t));
     printf("\n");
 
     return acl;

@@ -559,3 +559,42 @@ void RestorePstatToInitState()
         }
     }
 }
+
+OCStackResult SetPstatRownerId(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+    OicUuid_t prevId = {.id={0}};
+
+    if(NULL == newROwner)
+    {
+        ret = OC_STACK_INVALID_PARAM;
+    }
+    if(NULL == gPstat)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+    }
+
+    if(newROwner && gPstat)
+    {
+        memcpy(prevId.id, gPstat->rownerID.id, sizeof(prevId.id));
+        memcpy(gPstat->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = PstatToCBORPayload(gPstat, &cborPayload, &size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    memcpy(gPstat->rownerID.id, prevId.id, sizeof(prevId.id));
+    return ret;
+}
+

@@ -91,6 +91,15 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
 #endif // __WITH_DTLS__
 
 
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetDpairingRownerId(const OicUuid_t* newROwner);
+
 #ifdef __cplusplus
 }
 #endif

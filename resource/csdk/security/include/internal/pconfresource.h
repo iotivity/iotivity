@@ -117,6 +117,14 @@ void DeletePconfBinData(OicSecPconf_t* pconf);
  */
 void FreePdAclList(OicSecPdAcl_t* pdacls);
 
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetPconfRownerId(const OicUuid_t* newROwner);
 
 #ifdef __cplusplus
 }

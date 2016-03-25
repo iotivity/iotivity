@@ -639,7 +639,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
         OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
-    if (SYMMETRIC_PAIR_WISE_KEY == type && 
+    if (SYMMETRIC_PAIR_WISE_KEY == type &&
         0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
     {
         OIC_LOG(INFO, TAG, "SRPUnlinkDevices : Same device ID");
@@ -989,7 +989,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
         OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return OC_STACK_ERROR;
     }
-    memcpy(&pconf->rowner, &provTooldeviceID, sizeof(OicUuid_t));
+    memcpy(&pconf->rownerID, &provTooldeviceID, sizeof(OicUuid_t));
 
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)

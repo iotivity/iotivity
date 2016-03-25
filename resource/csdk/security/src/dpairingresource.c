@@ -101,7 +101,7 @@ void SetDpairingResourceOwner(OicUuid_t *rowner)
     OIC_LOG (DEBUG, TAG, "SetDpairingResourceOwner");
     if (gDpair)
     {
-        memcpy(&gDpair->rowner, rowner, sizeof(OicUuid_t));
+        memcpy(&gDpair->rownerID, rowner, sizeof(OicUuid_t));
     }
 }
 
@@ -151,11 +151,10 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
         OIC_LOG(INFO, TAG, "pairingPSK dump:\n");
         OIC_LOG_BUFFER(INFO, TAG, pairingPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for direct-pairing client
-        size_t ownLen = 1;
 
         OicSecCred_t *cred = GenerateCredential(peerDevID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
-                &pairingKey, ownLen, owner);
+                &pairingKey, owner);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);
@@ -228,12 +227,12 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
     }
 
     //ROWNER -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&dpairMap, OIC_JSON_ROWNERID_NAME,
-        strlen(OIC_JSON_ROWNERID_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROWNER tag");
     {
         char *rowner = NULL;
-        ret = ConvertUuidToStr(&dpair->rowner, &rowner);
+        cborEncoderResult = cbor_encode_text_string(&dpairMap, OIC_JSON_ROWNERID_NAME,
+            strlen(OIC_JSON_ROWNERID_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROWNER tag");
+        ret = ConvertUuidToStr(&dpair->rownerID, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&dpairMap, rowner, strlen(rowner));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Rowner ID value");
@@ -331,7 +330,7 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
             char *id = NULL;
             cborFindResult = cbor_value_dup_text_string(&dpairMap, &id, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding RownerID value");
-            ret = ConvertStrToUuid(id, &dpair->rowner);
+            ret = ConvertStrToUuid(id, &dpair->rownerID);
             VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
             OICFree(id);
         }
@@ -442,7 +441,7 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
             }
             gDpair->spm = newDpair->spm;
             memcpy(&gDpair->pdeviceID, &newDpair->pdeviceID, sizeof(OicUuid_t));
-            memcpy(&gDpair->rowner, &pconf->rowner, sizeof(OicUuid_t));
+            memcpy(&gDpair->rownerID, &pconf->rownerID, sizeof(OicUuid_t));
 
 #ifdef __WITH_DTLS__
             // Add temporary psk
@@ -451,7 +450,7 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
             res = AddTmpPskWithPIN(&gDpair->pdeviceID,
                            SYMMETRIC_PAIR_WISE_KEY,
                            (char*)pconf->pin.val, DP_PIN_LENGTH,
-                           1, &gDpair->rowner, &subjectId);
+                           &gDpair->rownerID, &subjectId);
             if(res != OC_STACK_OK ||
                     memcmp(&gDpair->pdeviceID, &subjectId, sizeof(OicUuid_t)))
             {
@@ -552,7 +551,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         OIC_LOG_V(INFO, TAG, "SavePairingPSK for %s(%d)", request->devAddr.addr,
                 request->devAddr.port);
         OCStackResult res = SavePairingPSK(&request->devAddr, &newDpair->pdeviceID,
-                (OicUuid_t *)&pconf->rowner, true);
+                (OicUuid_t *)&pconf->rownerID, true);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 #endif //__WITH_DTLS__
 
@@ -565,8 +564,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             memcpy(&acl.subject, &gDpair->pdeviceID, sizeof(OicUuid_t));
             acl.resources = pdAcl->resources;
             acl.resourcesLen = pdAcl->resourcesLen;
-            acl.owners = (OicUuid_t*)&pconf->rowner;
-            acl.ownersLen = 1;
+            memcpy(&acl.rownerID, &pconf->rownerID, sizeof(OicUuid_t));
             acl.permission = pdAcl->permission;
             acl.periods = pdAcl->periods;
             acl.recurrences = pdAcl->recurrences;
@@ -711,4 +709,42 @@ OCStackResult DeInitDpairingResource()
     {
         return OC_STACK_ERROR;
     }
+}
+
+OCStackResult SetDpairingRownerId(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+    OicUuid_t prevId = {.id={0}};
+
+    if(NULL == newROwner)
+    {
+        ret = OC_STACK_INVALID_PARAM;
+    }
+    if(NULL == gDpair)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+    }
+
+    if(newROwner && gDpair)
+    {
+        memcpy(prevId.id, gDpair->rownerID.id, sizeof(prevId.id));
+        memcpy(gDpair->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = DpairingToCBORPayload(gDpair, &cborPayload, &size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_DPAIRING_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    memcpy(gDpair->rownerID.id, prevId.id, sizeof(prevId.id));
+    return ret;
 }

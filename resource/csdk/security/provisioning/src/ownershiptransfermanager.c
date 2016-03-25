@@ -420,11 +420,9 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         OIC_LOG(INFO, TAG,"ownerPSK dump:\n");
         OIC_LOG_BUFFER(INFO, TAG,ownerPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for provisioning tool
-        size_t ownLen = 1;
-
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
-                &ownerKey, ownLen, &ptDeviceID);
+                &ownerKey, &ptDeviceID);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);

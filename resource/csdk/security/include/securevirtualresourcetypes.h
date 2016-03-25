@@ -325,8 +325,7 @@ struct OicSecAcl
     size_t              prdRecrLen;     // the number of elts in Periods
     char                **periods;       // 3:R:M*:N:String (<--M*; see Spec)
     char                **recurrences;   // 5:R:M:N:String
-    size_t              ownersLen;      // the number of elts in Owners
-    OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid
+    OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owners instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
     //TODO change Owners type to oic.sec.svc
@@ -345,8 +344,7 @@ struct OicSecAmacl
     char                **resources;    // 0:R:M:Y:String
     size_t              amssLen;        // the number of elts in Amss
     OicUuid_t           *amss;          // 1:R:M:Y:acl
-    size_t              ownersLen;      // the number of elts in Owners
-    OicUuid_t           *owners;        // 2:R:M:Y:oic.uuid
+    OicUuid_t           rownerID;        // 2:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owners instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
     //TODO change Owners type to oic.sec.svc
@@ -373,8 +371,7 @@ struct OicSecCred
 #endif /* __WITH_X509__ */
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
-    size_t              ownersLen;      // the number of elts in Owners
-    OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid
+    OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owners instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
     //OicSecSvc_t         *Owners;        // 8:R:M:Y:oic.sec.svc
@@ -537,7 +534,7 @@ struct OicSecPconf
     OicUuid_t           *pddevs;        // 4:R:M:Y:oic.uuid
     size_t                 pddevLen;     // the number of elts in pddev
     OicUuid_t           deviceID;       // 5:R:S:Y:oic.uuid
-    OicUuid_t           rowner;          // 6:R:S:Y:oic.uuid
+    OicUuid_t           rownerID;          // 6:R:S:Y:oic.uuid
 };
 
 /**
@@ -548,7 +545,7 @@ struct OicSecDpairing
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     OicSecPrm_t      spm;               // 0:R/W:S:Y:UINT16
     OicUuid_t           pdeviceID;     // 1:R:S:Y:oic.uuid
-    OicUuid_t           rowner;          // 2:R:S:Y:oic.uuid
+    OicUuid_t           rownerID;          // 2:R:S:Y:oic.uuid
 };
 
 #define MAX_VERSION_LEN 16 // Security Version length. i.e., 00.00.000 + reserved space

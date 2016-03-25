@@ -272,9 +272,6 @@ static void deleteACL(OicSecAcl_t *acl)
         }
         OICFree((acl)->resources);
 
-        /* Clean Owners */
-        OICFree((acl)->owners);
-
         /* Clean ACL node itself */
         /* Required only if acl was created in heap */
         OICFree((acl));
@@ -431,40 +428,26 @@ static int InputACL(OicSecAcl_t *acl)
     } while (0 != ret );
 
     // Set Rowner
-    printf("Num. of Rowner : ");
-    ret = scanf("%zu", &acl->ownersLen);
-    if ((1 != ret) || (acl->ownersLen <= 0 || acl->ownersLen > 20))
+    printf("-URN identifying the rowner\n");
+    printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
+
+    printf("Rowner : ");
+    ret = scanf("%19ms", &temp_id);
+    if (1 != ret)
     {
         printf("Error while input\n");
         return -1;
     }
-    printf("-URN identifying the rowner\n");
-    printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
-    acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-    if (NULL == acl->owners)
-    {
-        OIC_LOG(ERROR, TAG, "Error while memory allocation");
-        return -1;
-    }
-    for (size_t i = 0; i < acl->ownersLen; i++)
-    {
-        printf("[%zu]Rowner : ", i + 1);
-        ret = scanf("%19ms", &temp_id);
-        if (1 != ret)
-        {
-            printf("Error while input\n");
-            return -1;
-        }
 
-        for (int k = 0, j = 0; temp_id[k] != '\0'; k++)
+    for (int k = 0, j = 0; temp_id[k] != '\0'; k++)
+    {
+        if (DASH != temp_id[k])
         {
-            if (DASH != temp_id[k])
-            {
-                acl->owners[i].id[j++] = temp_id[k];
-            }
+            acl->rownerID.id[j++] = temp_id[k];
         }
-        OICFree(temp_id);
     }
+    OICFree(temp_id);
+
     return 0;
 }
 

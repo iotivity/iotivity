@@ -467,11 +467,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
     jsonAclObj = cJSON_GetObjectItem(jsonAclMap, OIC_JSON_ROWNERID_NAME);
     VERIFY_NON_NULL(TAG, jsonAclObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_String == jsonAclObj->type, ERROR);
-    headAcl->ownersLen = 1;
-    VERIFY_SUCCESS(TAG, headAcl->ownersLen > 0, ERROR);
-    headAcl->owners = (OicUuid_t*)OICCalloc(headAcl->ownersLen, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, (headAcl->owners), ERROR);
-    ret = ConvertStrToUuid(jsonAclObj->valuestring, &headAcl->owners[0]);
+    ret = ConvertStrToUuid(jsonAclObj->valuestring, &headAcl->rownerID);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
     ret = OC_STACK_OK;
@@ -732,6 +728,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
         int numCred = cJSON_GetArraySize(jsonCredArray);
         VERIFY_SUCCESS(TAG, numCred > 0, ERROR);
         int idx = 0;
+        size_t ownersLen = 0;
         do
         {
             cJSON *jsonCred = cJSON_GetArrayItem(jsonCredArray, idx);
@@ -814,9 +811,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 VERIFY_NON_NULL(TAG, cred->period, ERROR);
                 strncpy(cred->period, jsonObj->valuestring, jsonObjLen);
             }
-
             cred->next = NULL;
-
         } while( ++idx < numCred);
     }
 
@@ -824,11 +819,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
     cJSON *jsonCredObj = cJSON_GetObjectItem(jsonCredMap, OIC_JSON_ROWNERID_NAME);
     VERIFY_NON_NULL(TAG, jsonCredObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_String == jsonCredObj->type, ERROR);
-    headCred->ownersLen = 1;
-    VERIFY_SUCCESS(TAG, headCred->ownersLen > 0, ERROR);
-    headCred->owners = (OicUuid_t*)OICCalloc(headCred->ownersLen, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, (headCred->owners), ERROR);
-    ret = ConvertStrToUuid(jsonCredObj->valuestring, &headCred->owners[0]);
+    ret = ConvertStrToUuid(jsonCredObj->valuestring, &headCred->rownerID);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
     ret = OC_STACK_OK;
 
@@ -1014,12 +1005,7 @@ static OicSecAmacl_t* JSONToAmaclBin(const char * jsonStr)
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
 
-    headAmacl->ownersLen = 1;
-    VERIFY_SUCCESS(TAG, headAmacl->ownersLen > 0, ERROR);
-    headAmacl->owners = (OicUuid_t*)OICCalloc(headAmacl->ownersLen, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, (headAmacl->owners), ERROR);
-
-    ret = ConvertStrToUuid(jsonObj->valuestring, &headAmacl->owners[0]);
+    ret = ConvertStrToUuid(jsonObj->valuestring, &headAmacl->rownerID);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
     ret = OC_STACK_OK;

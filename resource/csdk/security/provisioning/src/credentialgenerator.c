@@ -68,11 +68,11 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     OCFillRandomMem(privData, privDataKeySize);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, 1, ptDeviceId);
+    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, ptDeviceId);
     VERIFY_NON_NULL(TAG, tempFirstCred, ERROR);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, 1, ptDeviceId);
+    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, ptDeviceId);
     VERIFY_NON_NULL(TAG, tempSecondCred, ERROR);
 
     *firstCred = tempFirstCred;
@@ -230,7 +230,7 @@ OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
     }
 
     *cred = GenerateCredential(deviceId, SIGNED_ASYMMETRIC_KEY, &certificateChain,
-                              &privKey, 1, ptDeviceId);
+                              &privKey, ptDeviceId);
     return OC_STACK_OK;
 }
 #endif // __WITH_X509__

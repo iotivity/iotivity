@@ -97,9 +97,6 @@ static void FreeACE(OicSecAcl_t *ace)
         OICFree(ace->recurrences);
     }
 
-    // Clean Owners
-    OICFree(ace->owners);
-
     // Clean ACL node itself
     OICFree(ace);
 }
@@ -210,7 +207,6 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             WILDCARD_SUBJECT_ID_LEN : sizeof(OicUuid_t);
         if(inLen == WILDCARD_SUBJECT_ID_LEN)
         {
-            char *subject = NULL;
             cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, WILDCARD_RESOURCE_URI,
                 strlen(WILDCARD_RESOURCE_URI));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id wildcard Value.");
@@ -340,31 +336,21 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
         acl = acl->next;
     }
 
-
-
     // Close ACES Array
     cborEncoderResult = cbor_encoder_close_container(&aclListMap, &acesArray);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing ACES Array.");
-
-
 
     // Close ACLIST Map
     cborEncoderResult = cbor_encoder_close_container(&aclMap, &aclListMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing ACLIST Map.");
 
-
-
-    // TODO : Need to modify acl->owners[0] to acl->rownerid based on RAML spec.
-    acl = (OicSecAcl_t *)secAcl;
     // Rownerid
-    if(acl->owners && acl->ownersLen > 0)
     {
+        char *rowner = NULL;
         cborEncoderResult = cbor_encode_text_string(&aclMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
-
-        char *rowner = NULL;
-        ret = ConvertUuidToStr(&acl->owners[0], &rowner);
+        ret = ConvertUuidToStr(&secAcl->rownerID, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&aclMap, rowner, strlen(rowner));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
@@ -696,10 +682,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 char *stRowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&aclMap, &stRowner, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rownerid Value.");
-                headAcl->ownersLen = 1;
-                headAcl->owners = (OicUuid_t *)OICCalloc(headAcl->ownersLen, sizeof(*headAcl->owners));
-                VERIFY_NON_NULL(TAG, headAcl->owners, ERROR);
-                ret = ConvertStrToUuid(stRowner, &headAcl->owners[0]);
+                ret = ConvertStrToUuid(stRowner, &headAcl->rownerID);
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(stRowner);
             }
@@ -1179,10 +1162,8 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
         OCRandomUuidResult rdm = OCGenerateUuid(ownerId.id);
         VERIFY_SUCCESS(TAG, RAND_UUID_OK == rdm, FATAL);
     }
-    acl->ownersLen = 1;
-    acl->owners = (OicUuid_t*) OICMalloc(sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
-    memcpy(acl->owners, &ownerId, sizeof(OicUuid_t));
+
+    memcpy(&acl->rownerID, &ownerId, sizeof(OicUuid_t));
 
     acl->next = NULL;
 
@@ -1385,10 +1366,7 @@ static OicSecAcl_t* GetSecDefaultACL()
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, FATAL);
 
     // Owners -- Mandatory
-    newDefaultAcl->ownersLen = 1;
-    newDefaultAcl->owners = (OicUuid_t*)OICMalloc(sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, (newDefaultAcl->owners), ERROR);
-    memcpy(newDefaultAcl->owners, &ownerId, sizeof(OicUuid_t));
+    memcpy(&newDefaultAcl->rownerID, &ownerId, sizeof(OicUuid_t));
 
     return newDefaultAcl;
 exit:
@@ -1468,5 +1446,43 @@ OCStackResult UpdateDefaultSecProvACL()
         }
     }
 
+    return ret;
+}
+
+OCStackResult SetAclRownerId(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+    OicUuid_t prevId = {.id={0}};
+
+    if(NULL == newROwner)
+    {
+        ret = OC_STACK_INVALID_PARAM;
+    }
+    if(NULL == gAcl)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+    }
+
+    if(newROwner && gAcl)
+    {
+        memcpy(prevId.id, gAcl->rownerID.id, sizeof(prevId.id));
+        memcpy(gAcl->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = AclToCBORPayload(gAcl, &cborPayload, &size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    memcpy(gAcl->rownerID.id, prevId.id, sizeof(prevId.id));
     return ret;
 }

@@ -412,12 +412,12 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     }
 
     //ROwner -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_ROWNERID_NAME,
-            strlen(OIC_JSON_ROWNERID_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode rowner string");
     {
         char *rowner = NULL;
-        ret = ConvertUuidToStr(&pconf->rowner, &rowner);
+        cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_ROWNERID_NAME,
+                strlen(OIC_JSON_ROWNERID_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode rowner string");
+        ret = ConvertUuidToStr(&pconf->rownerID, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&pconfMap, rowner, strlen(rowner));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode rwoner value");
@@ -767,7 +767,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 char *rowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&pconfMap, &rowner, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get rowner");
-                ret = ConvertStrToUuid(rowner, &pconf->rowner);
+                ret = ConvertStrToUuid(rowner, &pconf->rownerID);
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(rowner);
             }
@@ -826,20 +826,22 @@ static OCEntityHandlerResult HandlePconfGetRequest (const OCEntityHandlerRequest
     if (true == GetDoxmResourceData()->dpc)
     {
         //Making response elements for Get request
-        if( (true == gPconf->edp) && (gPconf->prm && 0 < gPconf->prmLen) &&
-                (0 < strlen((const char*)gPconf->deviceID.id)) && (0 < strlen((const char*)gPconf->rowner.id)))
+        if( (true == gPconf->edp) &&
+            (gPconf->prm && 0 < gPconf->prmLen) &&
+            (0 < strlen((const char*)gPconf->deviceID.id)) &&
+            (0 < strlen((const char*)gPconf->rownerID.id)))
         {
             pconf.edp = true;
             pconf.prm = gPconf->prm;
             pconf.prmLen = gPconf->prmLen;
             memcpy(&pconf.deviceID, &gPconf->deviceID, sizeof(OicUuid_t));
-            memcpy(&pconf.rowner, &gPconf->rowner, sizeof(OicUuid_t));
+            memcpy(&pconf.rownerID, &gPconf->rownerID, sizeof(OicUuid_t));
             OIC_LOG (DEBUG, TAG, "PCONF - direct pairing enabled");
         }
         else if (false == gPconf->edp)
         {
             pconf.edp = false;
-            memcpy(&pconf.rowner, &gPconf->rowner, sizeof(OicUuid_t));
+            memcpy(&pconf.rownerID, &gPconf->rownerID, sizeof(OicUuid_t));
             OIC_LOG (DEBUG, TAG, "PCONF - direct pairing disable");
         }
         else
@@ -914,7 +916,7 @@ static OCEntityHandlerResult HandlePconfPostRequest (const OCEntityHandlerReques
             gPconf->prm = newPconf->prm;
             gPconf->prmLen = newPconf->prmLen;
             gPconf->pdacls = newPconf->pdacls;
-            memcpy(&gPconf->rowner, &newPconf->rowner, sizeof(OicUuid_t));
+            memcpy(&gPconf->rownerID, &newPconf->rownerID, sizeof(OicUuid_t));
 
             // to delete old value(prm, pdacl)
             newPconf->prm = oldPrm;
@@ -1229,3 +1231,42 @@ bool IsPairedDevice(const OicUuid_t* pdeviceId)
     }
     return false;
 }
+
+OCStackResult SetPconfRownerId(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+    OicUuid_t prevId = {.id={0}};
+
+    if(NULL == newROwner)
+    {
+        ret = OC_STACK_INVALID_PARAM;
+    }
+    if(NULL == gPconf)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+    }
+
+    if(newROwner && gPconf)
+    {
+        memcpy(prevId.id, gPconf->rownerID.id, sizeof(prevId.id));
+        memcpy(gPconf->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = PconfToCBORPayload(gPconf, &cborPayload, &size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_PCONF_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    memcpy(gPconf->rownerID.id, prevId.id, sizeof(prevId.id));
+    return ret;
+}
+

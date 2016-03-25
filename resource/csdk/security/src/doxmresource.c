@@ -40,6 +40,9 @@
 #include "doxmresource.h"
 #include "pstatresource.h"
 #include "aclresource.h"
+#include "amaclresource.h"
+#include "pconfresource.h"
+#include "dpairingresource.h"
 #include "psinterface.h"
 #include "srmresourcestrings.h"
 #include "securevirtualresourcetypes.h"
@@ -426,7 +429,6 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         strUuid  = NULL;
     }
 
-
     *secDoxm = doxm;
     ret = OC_STACK_OK;
 
@@ -619,14 +621,6 @@ static OCEntityHandlerResult HandleDoxmPutRequest(const OCEntityHandlerRequest *
                         //Save the owner's UUID to derive owner credential
                         memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
 
-                        // OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
-                        // Generating OwnerPSK
-                        // OIC_LOG (INFO, TAG, "Doxm EntityHandle  generating OwnerPSK");
-                        // Generate new credential for provisioning tool
-                        // ehRet = AddOwnerPSK((CAEndpoint_t *)&request->devAddr, newDoxm,
-                        //       (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS));
-                        // VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
-
                         // Update new state in persistent storage
                         if (true == UpdatePersistentStorage(gDoxm))
                         {
@@ -739,7 +733,47 @@ static OCEntityHandlerResult HandleDoxmPutRequest(const OCEntityHandlerRequest *
             if ((false == gDoxm->owned) && (true == newDoxm->owned) &&
                     (memcmp(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t)) == 0))
             {
+                //Change the SVR's resource owner as owner device.
+                OCStackResult ownerRes = SetAclRownerId(&gDoxm->owner);
+                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                {
+                    ehRet = OC_EH_ERROR;
+                    goto exit;
+                }
+                ownerRes = SetAmaclRownerId(&gDoxm->owner);
+                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                {
+                    ehRet = OC_EH_ERROR;
+                    goto exit;
+                }
+                ownerRes = SetCredRownerId(&gDoxm->owner);
+                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                {
+                    ehRet = OC_EH_ERROR;
+                    goto exit;
+                }
+                ownerRes = SetPstatRownerId(&gDoxm->owner);
+                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                {
+                    ehRet = OC_EH_ERROR;
+                    goto exit;
+                }
+                ownerRes = SetDpairingRownerId(&gDoxm->owner);
+                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                {
+                    ehRet = OC_EH_ERROR;
+                    goto exit;
+                }
+                ownerRes = SetPconfRownerId(&gDoxm->owner);
+                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                {
+                    ehRet = OC_EH_ERROR;
+                    goto exit;
+                }
+
                 gDoxm->owned = true;
+                memcpy(&gDoxm->rownerID, &gDoxm->owner, sizeof(OicUuid_t));
+
                 // Update new state in persistent storage
                 if (UpdatePersistentStorage(gDoxm))
                 {

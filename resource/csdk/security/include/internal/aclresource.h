@@ -87,6 +87,15 @@ OCStackResult InstallNewACL(const uint8_t* payload, const size_t size);
  */
 OCStackResult UpdateDefaultSecProvACL();
 
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetAclRownerId(const OicUuid_t* newROwner);
+
 #ifdef __cplusplus
 }
 #endif

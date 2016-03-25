@@ -188,7 +188,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
         cborFindResult = cbor_value_get_int(&crlMap, (int *) &crl->CrlId);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CrlId.");
     }
-    
+
     cborFindResult = cbor_value_map_find_value(&crlCbor, OIC_CBOR_CRL_THIS_UPDATE, &crlMap);
     if (CborNoError == cborFindResult && cbor_value_is_byte_string(&crlMap))
     {
@@ -199,7 +199,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     cborFindResult = cbor_value_map_find_value(&crlCbor, OIC_CBOR_CRL_DATA, &crlMap);
     if (CborNoError == cborFindResult && cbor_value_is_byte_string(&crlMap))
     {
-        cborFindResult = cbor_value_dup_byte_string(&crlMap, 
+        cborFindResult = cbor_value_dup_byte_string(&crlMap,
                          &crl->CrlData.data, &crl->CrlData.len, NULL);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
     }
@@ -241,7 +241,7 @@ exit:
                 memcpy(crl->CrlData.data, gCrl->CrlData.data, outLen);
                 crl->CrlData.len = outLen;
             }
-            else 
+            else
             {
                 crl->CrlData.len = 0;
                 OIC_LOG (ERROR, TAG, "Set default failed");

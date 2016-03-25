@@ -73,6 +73,16 @@ OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
 OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amacl, uint8_t **cborPayload,
                                  size_t *cborSize);
 
+
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetAmaclRownerId(const OicUuid_t* newROwner);
+
 #ifdef __cplusplus
 }
 #endif

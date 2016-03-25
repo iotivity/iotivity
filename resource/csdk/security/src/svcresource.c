@@ -130,6 +130,7 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Serv Type Value.");
 
         // Owners
+        // TODO: Need to modification to single ROwner, (Currently SINGLE_SERVICE_CLIENT_DRIVEN only)
         cborEncoderResult = cbor_encode_text_string(&svcMap, OIC_JSON_OWNERS_NAME,
             strlen(OIC_JSON_OWNERS_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Owners Tag.");

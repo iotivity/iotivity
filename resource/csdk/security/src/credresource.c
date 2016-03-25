@@ -96,9 +96,6 @@ static void FreeCred(OicSecCred_t *cred)
     //Clean Period
     OICFree(cred->period);
 
-    //Clean Owners
-    OICFree(cred->owners);
-
     //Clean Cred node itself
     OICFree(cred);
 }
@@ -293,22 +290,21 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
         cborEncoderResult = cbor_encoder_close_container(&credArray, &credMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
-        
+
         cred = cred->next;
     }
     cborEncoderResult = cbor_encoder_close_container(&credRootMap, &credArray);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Array.");
 
     cred = credS;
-    // TODO : Need to modify cred->owners[0] to cred->rownerid based on RAML spec.
+
     // Rownerid
-    if(cred->owners && cred->ownersLen > 0)
     {
         char *rowner = NULL;
         cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
-        ret = ConvertUuidToStr(&cred->owners[0], &rowner);
+        ret = ConvertUuidToStr(&cred->rownerID, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&credRootMap, rowner, strlen(rowner));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
@@ -566,16 +562,14 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 }
             }
 
-            // TODO : Need to modify headCred->owners[0].id to headCred->rowner based on RAML spec.
+            //ROwner -- Mandatory
             if (strcmp(tagName, OIC_JSON_ROWNERID_NAME)  == 0)
             {
                 char *stRowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&CredRootMap, &stRowner, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rownerid Value.");
-                headCred->ownersLen = 1;
-                headCred->owners = (OicUuid_t *)OICCalloc(headCred->ownersLen, sizeof(*headCred->owners));
-                VERIFY_NON_NULL(TAG, headCred->owners, ERROR);
-                ret = ConvertStrToUuid(stRowner, &headCred->owners[0]);
+
+                ret = ConvertStrToUuid(stRowner, &headCred->rownerID);
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(stRowner);
             }
@@ -605,7 +599,7 @@ exit:
 
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
                                   const OicSecCert_t * publicData, const OicSecKey_t* privateData,
-                                  size_t ownersLen, const OicUuid_t * owners)
+                                  const OicUuid_t * rownerID)
 {
     (void)publicData;
     OCStackResult ret = OC_STACK_ERROR;
@@ -642,15 +636,8 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         cred->privateData.len = privateData->len;
     }
 
-    VERIFY_SUCCESS(TAG, ownersLen > 0, ERROR);
-    cred->ownersLen = ownersLen;
-
-    cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
-    VERIFY_NON_NULL(TAG, cred->owners, ERROR);
-    for (size_t i = 0; i < cred->ownersLen; i++)
-    {
-        memcpy(cred->owners[i].id, owners[i].id, sizeof(cred->owners[i].id));
-    }
+    VERIFY_NON_NULL(TAG, rownerID, ERROR);
+    memcpy(&cred->rownerID, rownerID, sizeof(OicUuid_t));
 
     ret = OC_STACK_OK;
 exit:
@@ -1292,15 +1279,14 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
  * @param[in] credType Type of credential to be added
  * @param[in] pin numeric characters
  * @param[in] pinSize length of 'pin'
- * @param[in] ownersLen Number of owners
- * @param[in] owners Array of owners
+ * @param[in] rownerID Resource owner's UUID
  * @param[out] tmpCredSubject Generated credential's subject.
  *
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
 OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
                             const char * pin, size_t pinSize,
-                            size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject)
+                            const OicUuid_t * rownerID, OicUuid_t* tmpCredSubject)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OIC_LOG(DEBUG, TAG, "AddTmpPskWithPIN IN");
@@ -1313,13 +1299,13 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
     OicSecKey_t privKey = {privData, OWNER_PSK_LENGTH_128};
     OicSecCred_t* cred = NULL;
-    int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, owners->id,
+    int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, rownerID->id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,
                                               OWNER_PSK_LENGTH_128, privData);
     VERIFY_SUCCESS(TAG, (0 == dtlsRes) , ERROR);
 
     cred = GenerateCredential(tmpSubject, credType, NULL,
-                              &privKey, ownersLen, owners);
+                              &privKey, rownerID);
     if(NULL == cred)
     {
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
@@ -1416,3 +1402,42 @@ exit:
 }
 #undef CERT_LEN_PREFIX
 #endif /* __WITH_X509__ */
+
+OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+    OicUuid_t prevId = {.id={0}};
+
+    if(NULL == newROwner)
+    {
+        ret = OC_STACK_INVALID_PARAM;
+    }
+    if(NULL == gCred)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+    }
+
+    if(newROwner && gCred)
+    {
+        memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
+        memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = CredToCBORPayload(gCred, &cborPayload, &size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    memcpy(gCred->rownerID.id, prevId.id, sizeof(prevId.id));
+    return ret;
+}
+

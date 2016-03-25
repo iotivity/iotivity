@@ -55,10 +55,7 @@ OicSecCred_t * getCredList()
     cred->privateData.data = (uint8_t *)OICCalloc(1, strlen("My private Key11") + 1);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
     OICStrcpy((char *)cred->privateData.data, strlen("My private Key11")+1,"My private Key11");
-    cred->ownersLen = 1;
-    cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
-    VERIFY_NON_NULL(TAG, cred->owners, ERROR);
-    OICStrcpy((char *)cred->owners[0].id, sizeof(cred->owners[0].id), "aaaaaaaaaaaaaaaa");
+    OICStrcpy((char *)cred->rownerID.id, sizeof(cred->rownerID.id), "aaaaaaaaaaaaaaaa");
     cred->next = (OicSecCred_t*)OICCalloc(1, sizeof(*cred->next));
     VERIFY_NON_NULL(TAG, cred->next, ERROR);
     cred->next->credId = 5678;
@@ -77,11 +74,7 @@ OicSecCred_t * getCredList()
     VERIFY_NON_NULL(TAG, cred->next->publicData.data, ERROR);
     OICStrcpy(cred->next->publicData.data, sz,"My Public Key123");
 #endif
-    cred->next->ownersLen = 2;
-    cred->next->owners = (OicUuid_t *)OICCalloc(cred->next->ownersLen, sizeof(*cred->next->owners));
-    VERIFY_NON_NULL(TAG, cred->next->owners, ERROR);
-    OICStrcpy((char *)cred->next->owners[0].id, sizeof(cred->next->owners[0].id), "bbbbbbbbbbbbbbbb");
-    OICStrcpy((char *)cred->next->owners[1].id, sizeof(cred->next->owners[1].id), "cccccccccccccccc");
+    OICStrcpy((char *)cred->next->rownerID.id, sizeof(cred->next->rownerID.id), "bbbbbbbbbbbbbbbb");
 
     return cred;
 
@@ -114,11 +107,7 @@ static void printCred(const OicSecCred_t * cred)
            OIC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
 #endif /* __WITH_X509__ */
-        OIC_LOG_V(INFO, TAG, "cred->ownersLen = %zu", credTmp1->ownersLen);
-        for(size_t i = 0; i < cred->ownersLen; i++)
-        {
-            OIC_LOG_V(INFO, TAG, "cred->owners[%zu].id = %s", i, credTmp1->owners[i].id);
-        }
+	OIC_LOG_V(INFO, TAG, "cred->rownerID = %s", credTmp1->rownerID.id);
     }
 }
 
@@ -301,8 +290,8 @@ TEST(CredResourceTest, GetCredResourceDataNULLSubject)
 
 TEST(CredResourceTest, GenerateCredentialValidInput)
 {
-    OicUuid_t owners[1];
-    OICStrcpy((char *)owners[0].id, strlen("ownersId21"), "ownersId21");
+    OicUuid_t rownerID = {{0}};
+    OICStrcpy((char *)rownerID.id, strlen("ownersId21"), "ownersId21");
 
     OicUuid_t subject = {{0}};
     OICStrcpy((char *)subject.id, strlen("subject11"), "subject11");
@@ -311,9 +300,8 @@ TEST(CredResourceTest, GenerateCredentialValidInput)
     OicSecKey_t key = {privateKey, sizeof(privateKey)};
 
     OicSecCred_t * cred  = NULL;
-
     cred = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                              &key, 1, owners);
+                              &key, &rownerID);
     printCred(cred);
 
     ASSERT_TRUE(NULL != cred);
@@ -322,8 +310,8 @@ TEST(CredResourceTest, GenerateCredentialValidInput)
 
 TEST(CredResourceTest, GenerateAndAddCredentialValidInput)
 {
-    OicUuid_t owners[1];
-    OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId11");
+    OicUuid_t rownerID = {{0}};
+    OICStrcpy((char *)rownerID.id, sizeof(rownerID.id), "ownersId11");
 
     OicUuid_t subject = {{0}};
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
@@ -335,21 +323,21 @@ TEST(CredResourceTest, GenerateAndAddCredentialValidInput)
     OicSecCred_t *headCred = NULL;
 
     cred1 = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                               &key, 1, owners);
+                               &key, &rownerID);
 
     EXPECT_EQ(OC_STACK_OK, AddCredential(cred1));
     headCred = cred1;
 
-    OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId22");
+    OICStrcpy((char *)rownerID.id, sizeof(rownerID.id), "ownersId22");
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject22");
     cred1 = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                               &key, 1, owners);
+                               &key, &rownerID);
     EXPECT_EQ(OC_STACK_OK, AddCredential(cred1));
 
-    OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId33");
+    OICStrcpy((char *)rownerID.id, sizeof(rownerID.id), "ownersId33");
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject33");
     cred1 = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                               &key, 1, owners);
+                               &key, &rownerID);
     EXPECT_EQ(OC_STACK_OK, AddCredential(cred1));
 
     const OicSecCred_t* credList = GetCredResourceData(&headCred->subject);

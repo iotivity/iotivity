@@ -69,12 +69,9 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
         defaultAcl->resources[i] = OICStrdup(defaulAclRsrc[i]);
         ASSERT_TRUE(defaultAcl->resources[i] != NULL);
     }
-    defaultAcl->ownersLen = 1;
     uint8_t defaultAclOwnrs[] = {0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
         0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32};
-    defaultAcl->owners = (OicUuid_t *)OICCalloc(1, sizeof(OicUuid_t));
-    ASSERT_TRUE(defaultAcl->owners != NULL);
-    memcpy(defaultAcl->owners[0].id, defaultAclOwnrs, sizeof(defaultAclOwnrs));
+    memcpy(defaultAcl->rownerID.id, defaultAclOwnrs, sizeof(defaultAclOwnrs));
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
@@ -115,12 +112,10 @@ TEST(ACLResourceTest, CBORACLConversion)
         ASSERT_TRUE(secAcl->resources[i] != NULL);
 
     }
-    secAcl->ownersLen = 1;
+
     uint8_t ownrs[] = {0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
         0x32, 0x32, 0x32, 0x32, 0x32, 0x32};
-    secAcl->owners = (OicUuid_t *)OICCalloc(1, sizeof(OicUuid_t));
-    ASSERT_TRUE(secAcl->owners != NULL);
-    memcpy(secAcl->owners[0].id, ownrs, sizeof(ownrs));
+    memcpy(secAcl->rownerID.id, ownrs, sizeof(ownrs));
 
     OicSecAcl_t *secAcl1 = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
     ASSERT_TRUE(secAcl1 != NULL);
@@ -135,10 +130,7 @@ TEST(ACLResourceTest, CBORACLConversion)
         secAcl1->resources[i] = OICStrdup(rsrc1[i]);
         ASSERT_TRUE(secAcl1->resources[i] != NULL);
     }
-    secAcl1->ownersLen = 1;
-    secAcl1->owners = (OicUuid_t *)OICCalloc(1, sizeof(OicUuid_t));
-    ASSERT_TRUE(secAcl1->owners != NULL);
-    memcpy(secAcl1->owners[0].id, ownrs, sizeof(ownrs));
+    memcpy(secAcl1->rownerID.id, ownrs, sizeof(ownrs));
     secAcl->next = secAcl1;
 
     OicSecAcl_t *secAcl2 = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
@@ -156,10 +148,7 @@ TEST(ACLResourceTest, CBORACLConversion)
         secAcl2->resources[i] = OICStrdup(rsrc2[i]);
         ASSERT_TRUE(secAcl2->resources[i] != NULL);
     }
-    secAcl2->ownersLen = 1;
-    secAcl2->owners = (OicUuid_t *)OICCalloc(1, sizeof(OicUuid_t));
-    ASSERT_TRUE(secAcl2->owners != NULL);
-    memcpy(secAcl2->owners[0].id, ownrs, sizeof(ownrs));
+    memcpy(secAcl2->rownerID.id, ownrs, sizeof(ownrs));
     secAcl1->next = secAcl2;
 
     OicSecAcl_t *secAcl3 = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
@@ -177,13 +166,7 @@ TEST(ACLResourceTest, CBORACLConversion)
         secAcl3->resources[i] = OICStrdup(rsrc3[i]);
         ASSERT_TRUE(secAcl3->resources[i] != NULL);
     }
-    secAcl3->ownersLen = 2;
-    secAcl3->owners = (OicUuid_t *)OICCalloc(2, sizeof(OicUuid_t));
-    ASSERT_TRUE(secAcl3->owners != NULL);
-    memcpy(secAcl3->owners[0].id, ownrs, sizeof(ownrs));
-    uint8_t ownrs1[] = {0x34, 0x34, 0x34, 0x34, 0x34, 0x34, 0x34, 0x34, 0x34, 0x34,
-                        0x34, 0x34, 0x34, 0x34, 0x34, 0x34};
-    memcpy(secAcl3->owners[1].id, ownrs1, sizeof(ownrs1));
+    memcpy(secAcl3->rownerID.id, ownrs, sizeof(ownrs));
     secAcl2->next = secAcl3;
     secAcl3->next = NULL;
 
@@ -196,7 +179,6 @@ TEST(ACLResourceTest, CBORACLConversion)
     EXPECT_EQ(2, acl->permission);
     EXPECT_EQ(6 , acl->resourcesLen);
     EXPECT_STREQ("/oic/res", acl->resources[0]);
-    EXPECT_EQ(1, acl->ownersLen);
     DeleteACLList(acl);
     OICFree(psStorage);
     DeleteACLList(secAcl);
@@ -342,10 +324,7 @@ static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
         OICStrcpy(acl->resources[1], sizeof(acl->resources[1]) - 1, "/a/fan");
     }
     acl->permission = 6;
-    acl->ownersLen = 1;
-    acl->owners = (OicUuid_t*)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, acl->owners, ERROR);
-    memcpy(acl->owners->id, "1111111111111111", sizeof(acl->owners->id));
+    memcpy(acl->rownerID.id, "1111111111111111", sizeof(acl->rownerID.id));
 
     ret = OC_STACK_OK;
 exit:
