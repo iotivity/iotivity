@@ -4,6 +4,7 @@ var rviuri = "http://localhost:8080/wsi/cap/org.genivi.rvi";
 var ocfuri = "http://localhost:8080/wsi/cap/org.openinterconnect";
 var smstatus, chstatus;
 var smcount = 0, chcount = 0;
+var toggle = 0;
 
 var FSM = {
 	NOTREADY : 0,
@@ -205,11 +206,18 @@ var ocfbody = [
 var wsiFSM = function(error, response, body) {
 	if(!body || response.statusCode > 399){
         console.log("Failed Response = " + body);
-        state = FSM.READY;
-		return;
+        if(state==FSM.COMINGHOME || state==FSM.SMARTHOMESTATUS)
+    	{
+        	chcount = -1;
+        	rvibody[5].params.parameters.result = "Failure";
+        	console.log("Coming Home Scenario Failed");
+        }else{
+        	state = FSM.READY;
+    		return;
+        }
 	}
 	var res;
-	console.log("State " + state + " Response = " + JSON.stringify(body));
+	if(body)console.log("State " + state + " Response = " + JSON.stringify(body));
 	switch(state)
     {
     	case FSM.RVICONNECT:{
@@ -254,31 +262,56 @@ var wsiFSM = function(error, response, body) {
     	}
     	case FSM.SMARTHOMESTATUS : {
     		smstatus += body;
-    		smcount = smcount - 1;
-    		if(smcount==0){
-        		rvibody[5].params.parameters.text = "SmartHome Status";
-        		rvibody[5].params.parameters.result = "Success";
-        		rvibody[5].params.parameters.status = smstatus;
+    		console.log("SmartHome Status = " + smstatus);
+    		if(smcount < ocfdevices.length && smcount>=0){
+    			console.log("Checking " + ocfdevices[smcount]);
+    			var device = JSON.parse(ocfdevices[smcount]);
+    			ocfbody[2].params.address = device.address;	
+    			ocfbody[2].params.port = device.port;
+    			ocfbody[2].params.uri = device.uri;
+    			smcount = smcount + 1;
+    			post(ocfuri, ocfbody[2]);
+    		}else{
+    			if(chcount>0) {
+            		rvibody[5].params.parameters.result = "Success";
+    			}
+    			state = FSM.READY;
+    			smcount = 0;
+    			smstatus = "";
         		rvimsg[1].params = rvibody[5];
-        		res = post(rviuri, rvimsg[1]);
-        		state = FSM.READY;
-			}
+        		post(rviuri, rvimsg[1]);
+    		}
     		break;
     	}
     	case FSM.COMINGHOME : {
     		chstatus += body;
-    		chcount = chcount - 1;
-    		console.log("CHCOUNT = " + chcount);
-    		if(chcount==0){
+    		console.log("SmartHome Status = " + chstatus);
+    		if(chcount < ocfdevices.length){
+    			console.log("Checking " + ocfdevices[chcount]);
+    			var device = JSON.parse(ocfdevices[chcount]);
+    			ocfbody[3].params.address = device.address;	
+    			ocfbody[3].params.port = device.port;
+    			ocfbody[3].params.uri = device.uri;
+    			if(toggle)
+    				ocfbody[3].payload = {"state" : 1,"param" : 1};
+    			else
+    				ocfbody[3].payload = {"state" : 0,"param" : 0};
+    			chcount = chcount + 1;
+    			post(ocfuri, ocfbody[3]);
+    		}else{
+    			if(chcount>0) {
+            		rvibody[5].params.parameters.result = "Success";
+    				toggle = (toggle==0)?1:0;
+    			}
+    			state = FSM.READY;
+    			chcount = 0;
+    			chstatus = "";
         		rvimsg[1].params = rvibody[5];
-        		rvibody[5].params.parameters.text = "Coming Home";
-        		rvibody[5].params.parameters.result = "Success";
-        		rvimsg[1].params = rvibody[5];
-        		res = post(rviuri, rvimsg[1]);
-        		state = FSM.READY;
+        		post(rviuri, rvimsg[1]);
     		}
-    		break;
     	}
+    	break;
+
     	case FSM.GET_VEHICLE_HVAC:{
     		console.log("HVAC Response Received.");
     		break;
@@ -359,6 +392,13 @@ module.exports = {
         console.log("Received RVI Callback : "+ JSON.stringify(req.body));
         res.sendStatus(200);
         
+        if(state==FSM.COMINGHOME || state==FSM.SMARTHOMESTATUS)
+    	{
+        	console.log("Performing SmartHome Scenarion : Try Again");
+        	return;
+        }
+        
+        
         console.log("Content Type = " + JSON.stringify(req.headers));
         
         var rcvbody;
@@ -412,65 +452,21 @@ module.exports = {
         		console.log("Scenario Name : " + params.text)
             	//series of OCF GET requests - SmartHome Status
         		state = FSM.SMARTHOMESTATUS;
+        		rvibody[5].params.parameters.text = "Coming Home";
+        		smstatus="";
+        		smcount = 0;
         	}
         	if(params.text == "Coming Home"){
         		console.log("Scenario Name : " + params.text)
             	//series of OCF POST requests - Coming Home
         		state = FSM.COMINGHOME;
-        		var len = ocfdevices.length;
-        		for (var i = 0; i < len; i++) {
-        			console.log("Checking " + ocfdevices[i]);
-        			var device = JSON.parse(ocfdevices[i]);
-        			var sample;
-        			if(device.uri == "/a/light"){
-            			sample = {
-        					"state" : 1,
-        					"param" : 0,
-        					"color" : 1
-    					};
-        			}
-        			if(device.uri == "/a/thermostat"){
-        				sample = {
-    						"state" : 1,
-    						"param" : 20,
-    						"temp" : 20
-        				};
-        			}
-        			if(device.uri == "/a/washer"){
-        				sample = {
-    						"state" : 1,
-    						"param" : 20,
-    						"time" 	 : 0
-						};
-        			}
-        			if(device.uri == "/a/tv"){
-        				sample = {
-    						"state" : 1,
-    						"source" : 0
-						};
-        			}
-        			if(device.uri == "/a/aircon"){
-        				sample = {
-    						"state"    : 1,
-    						"temp" 	   : 17,
-    						"fanspeed" : 40,
-						};
-        			}
-        			if(device.uri == "/a/door"){
-            			sample = {
-        					"state" : 1,
-        					"doorbell" : 3
-    					};
-        			}
-					ocfbody[3].params.address = device.address;	
-					ocfbody[3].params.port = device.port;
-					ocfbody[3].params.uri = device.uri;
-					ocfbody[3].payload = sample;
-					chcount = chcount + 1;
-					var res = post(ocfuri, ocfbody[3]);
-					break;
-        		}        		
+        		rvibody[5].params.parameters.text = "Coming Home";
+        		chstatus="";
+        		chcount = 0;
         	}
+    		var response = {statusCode : 200};
+    		var body = {};
+    		wsiFSM(null, body, response);
         }
     	console.log("-------------------------------------------------------------------");
     },

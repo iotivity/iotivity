@@ -122,7 +122,7 @@ updateresource = function(cap,res)
 	var key = Object.keys(cap.payload)[0];
 	var value = cap.payload[key];
 	console.log("Key = " + key + " Value = " + value);
-	rviRep.status[key] = value;
+	rviRep[key] = value;
 	console.log("Updated Resource " + JSON.stringify(rviRep));
     res.status(200).json("Updated Resource " +  cap.params.type + " @ " + cap.params.uri);
 }
