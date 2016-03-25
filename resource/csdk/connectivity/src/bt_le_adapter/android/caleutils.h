@@ -62,6 +62,19 @@ static const jint BOND_NONE = 10;
 
 static const jint STATE_CONNECTED = 2;
 static const jint STATE_DISCONNECTED = 0;
+
+/**
+ * get method ID for method Name and class
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   className        android class.
+ * @param[in]   methodName       android method name.
+ * @param[in]   methodFormat     method type of methodName.
+ * @return  jmethodID of the method.
+ */
+jmethodID CALEGetJNIMethodID(JNIEnv *env, const char* className,
+                             const char* methodName,
+                             const char* methodFormat);
+
 /**
  * get uuid(jni object) from uuid(character).
  * @param[in]   env              JNI interface pointer.
