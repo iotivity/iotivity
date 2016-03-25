@@ -1146,15 +1146,8 @@ jstring CALEClientGetAddressFromGattObj(JNIEnv *env, jobject gatt)
     VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
 
-    jclass jni_cid_gattdevice_list = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_gattdevice_list)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_gattdevice_list is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getDevice = (*env)->GetMethodID(env, jni_cid_gattdevice_list, "getDevice",
-                                                      "()Landroid/bluetooth/BluetoothDevice;");
+    jmethodID jni_mid_getDevice = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT, "getDevice",
+                                                     "()Landroid/bluetooth/BluetoothDevice;");
     if (!jni_mid_getDevice)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDevice is null");
@@ -1188,16 +1181,9 @@ CAResult_t CALEClientGattClose(JNIEnv *env, jobject bluetoothGatt)
     VERIFY_NON_NULL(bluetoothGatt, TAG, "bluetoothGatt is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
-    // get BluetoothGatt class
-    OIC_LOG(DEBUG, TAG, "get BluetoothGatt class");
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jmethodID jni_mid_closeGatt = (*env)->GetMethodID(env, jni_cid_BluetoothGatt, "close", "()V");
+    // get BluetoothGatt method
+    OIC_LOG(DEBUG, TAG, "get BluetoothGatt method");
+    jmethodID jni_mid_closeGatt = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT, "close", "()V");
     if (!jni_mid_closeGatt)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_closeGatt is null");
@@ -1727,21 +1713,13 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
         return NULL;
     }
 
-    // get BluetoothDevice class
-    OIC_LOG(DEBUG, TAG, "get BluetoothDevice class");
-    jclass jni_cid_BluetoothDevice = (*env)->FindClass(env, "android/bluetooth/BluetoothDevice");
-    if (!jni_cid_BluetoothDevice)
-    {
-        OIC_LOG(ERROR, TAG, "bleConnect: jni_cid_BluetoothDevice is null");
-        return NULL;
-    }
-
-    // get connectGatt method
-    OIC_LOG(DEBUG, TAG, "get connectGatt method");
-    jmethodID jni_mid_connectGatt = (*env)->GetMethodID(env, jni_cid_BluetoothDevice, "connectGatt",
-                                                        "(Landroid/content/Context;ZLandroid/"
-                                                        "bluetooth/BluetoothGattCallback;)"
-                                                        "Landroid/bluetooth/BluetoothGatt;");
+    // get BluetoothDevice method
+    OIC_LOG(DEBUG, TAG, "get BluetoothDevice method");
+    jmethodID jni_mid_connectGatt = CALEGetJNIMethodID(env, "android/bluetooth/BluetoothDevice",
+                                                       "connectGatt",
+                                                       "(Landroid/content/Context;ZLandroid/"
+                                                       "bluetooth/BluetoothGattCallback;)"
+                                                       "Landroid/bluetooth/BluetoothGatt;");
     if (!jni_mid_connectGatt)
     {
         OIC_LOG(ERROR, TAG, "bleConnect: jni_mid_connectGatt is null");
@@ -1850,16 +1828,9 @@ CAResult_t CALEClientDisconnect(JNIEnv *env, jobject bluetoothGatt)
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(bluetoothGatt, TAG, "bluetoothGatt is null");
 
-    // get BluetoothGatt class
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return CA_STATUS_FAILED;
-    }
-
+    // get BluetoothGatt method
     OIC_LOG(DEBUG, TAG, "get gatt disconnect method");
-    jmethodID jni_mid_disconnectGatt = (*env)->GetMethodID(env, jni_cid_BluetoothGatt,
+    jmethodID jni_mid_disconnectGatt  = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
                                                            "disconnect", "()V");
     if (!jni_mid_disconnectGatt)
     {
@@ -1994,23 +1965,16 @@ CAResult_t CALEClientDiscoverServices(JNIEnv *env, jobject bluetoothGatt)
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    // get BluetoothGatt class
-    OIC_LOG(DEBUG, TAG, "get BluetoothGatt class");
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(DEBUG, TAG, "discovery gatt services method");
-    jmethodID jni_mid_discoverServices = (*env)->GetMethodID(env, jni_cid_BluetoothGatt,
-                                                             "discoverServices", "()Z");
+    // get BluetoothGatt.discoverServices method
+    OIC_LOG(DEBUG, TAG, "get BluetoothGatt.discoverServices method");
+    jmethodID jni_mid_discoverServices = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                            "discoverServices", "()Z");
     if (!jni_mid_discoverServices)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_discoverServices is null");
         return CA_STATUS_FAILED;
     }
+
     // call disconnect gatt method
     OIC_LOG(DEBUG, TAG, "CALL API - request discovery gatt services");
     jboolean ret = (*env)->CallBooleanMethod(env, bluetoothGatt, jni_mid_discoverServices);
@@ -2132,20 +2096,12 @@ CAResult_t CALEClientWriteCharacteristicImpl(JNIEnv *env, jobject bluetoothGatt,
         return CA_STATUS_FAILED;
     }
 
-    // get BluetoothGatt class
-    OIC_LOG(DEBUG, TAG, "get BluetoothGatt class");
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return CA_STATUS_FAILED;
-    }
-
+    // get BluetoothGatt.write characteristic method
     OIC_LOG(DEBUG, TAG, "write characteristic method");
-    jmethodID jni_mid_writeCharacteristic = (*env)->GetMethodID(env, jni_cid_BluetoothGatt,
-                                                                "writeCharacteristic",
-                                                                "(Landroid/bluetooth/"
-                                                                "BluetoothGattCharacteristic;)Z");
+    jmethodID jni_mid_writeCharacteristic = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                               "writeCharacteristic",
+                                                               "(Landroid/bluetooth/"
+                                                               "BluetoothGattCharacteristic;)Z");
     if (!jni_mid_writeCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_writeCharacteristic is null");
@@ -2181,13 +2137,6 @@ CAResult_t CALEClientReadCharacteristic(JNIEnv *env, jobject bluetoothGatt)
         return CA_STATUS_FAILED;
     }
 
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return CA_STATUS_FAILED;
-    }
-
     jstring jni_uuid = (*env)->NewStringUTF(env, OIC_GATT_CHARACTERISTIC_RESPONSE_UUID);
     if (!jni_uuid)
     {
@@ -2203,10 +2152,10 @@ CAResult_t CALEClientReadCharacteristic(JNIEnv *env, jobject bluetoothGatt)
     }
 
     OIC_LOG(DEBUG, TAG, "read characteristic method");
-    jmethodID jni_mid_readCharacteristic = (*env)->GetMethodID(env, jni_cid_BluetoothGatt,
-                                                               "readCharacteristic",
-                                                               "(Landroid/bluetooth/"
-                                                               "BluetoothGattCharacteristic;)Z");
+    jmethodID jni_mid_readCharacteristic = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                              "readCharacteristic",
+                                                              "(Landroid/bluetooth/"
+                                                              "BluetoothGattCharacteristic;)Z");
     if (!jni_mid_readCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_readCharacteristic is null");
@@ -2243,20 +2192,12 @@ CAResult_t CALEClientSetCharacteristicNotification(JNIEnv *env, jobject bluetoot
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    // get BluetoothGatt class
+    // get BluetoothGatt.setCharacteristicNotification method
     OIC_LOG(DEBUG, TAG, "CALEClientSetCharacteristicNotification");
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return CA_STATUS_FAILED;
-    }
-
-    // set Characteristic Notification
-    jmethodID jni_mid_setNotification = (*env)->GetMethodID(env, jni_cid_BluetoothGatt,
-                                                            "setCharacteristicNotification",
-                                                            "(Landroid/bluetooth/"
-                                                            "BluetoothGattCharacteristic;Z)Z");
+    jmethodID jni_mid_setNotification = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                              "setCharacteristicNotification",
+                                                              "(Landroid/bluetooth/"
+                                                              "BluetoothGattCharacteristic;Z)Z");
     if (!jni_mid_setNotification)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getService is null");
@@ -2290,18 +2231,12 @@ jobject CALEClientGetGattService(JNIEnv *env, jobject bluetoothGatt, jstring cha
         return NULL;
     }
 
-    // get BluetoothGatt class
-    OIC_LOG(DEBUG, TAG, "CALEClientGetGattService");
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getService = (*env)->GetMethodID(
-            env, jni_cid_BluetoothGatt, "getService",
-            "(Ljava/util/UUID;)Landroid/bluetooth/BluetoothGattService;");
+    // get BluetoothGatt.getService method
+    OIC_LOG(DEBUG, TAG, "BluetoothGatt.getService");
+    jmethodID jni_mid_getService = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                      "getService",
+                                                      "(Ljava/util/UUID;)Landroid/bluetooth/"
+                                                      "BluetoothGattService;");
     if (!jni_mid_getService)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getService is null");
@@ -2325,21 +2260,13 @@ jobject CALEClientGetGattService(JNIEnv *env, jobject bluetoothGatt, jstring cha
         return NULL;
     }
 
-    // get bluetooth gatt service class
-    jclass jni_cid_BluetoothGattService = (*env)->FindClass(
-            env, "android/bluetooth/BluetoothGattService");
-    if (!jni_cid_BluetoothGattService)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGattService is null");
-        return NULL;
-    }
-
-    OIC_LOG(DEBUG, TAG, "get gatt getCharacteristic method");
-    jmethodID jni_mid_getCharacteristic = (*env)->GetMethodID(env, jni_cid_BluetoothGattService,
-                                                              "getCharacteristic",
-                                                              "(Ljava/util/UUID;)"
-                                                              "Landroid/bluetooth/"
-                                                              "BluetoothGattCharacteristic;");
+    // get bluetooth gatt service method
+    jmethodID jni_mid_getCharacteristic = CALEGetJNIMethodID(env, "android/bluetooth/"
+                                                      "BluetoothGattService",
+                                                      "getCharacteristic",
+                                                      "(Ljava/util/UUID;)"
+                                                      "Landroid/bluetooth/"
+                                                      "BluetoothGattCharacteristic;");
     if (!jni_mid_getCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getCharacteristic is null");
@@ -2462,17 +2389,9 @@ jbyteArray CALEClientGetValueFromCharacteristic(JNIEnv *env, jobject characteris
         return NULL;
     }
 
-    jclass jni_cid_BTGattCharacteristic = (*env)->FindClass(env, "android/bluetooth/"
-                                                            "BluetoothGattCharacteristic");
-    if (!jni_cid_BTGattCharacteristic)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BTGattCharacteristic is null");
-        return NULL;
-    }
-
-    OIC_LOG(DEBUG, TAG, "get value in Characteristic");
-    jmethodID jni_mid_getValue = (*env)->GetMethodID(env, jni_cid_BTGattCharacteristic, "getValue",
-                                                     "()[B");
+    jmethodID jni_mid_getValue  = CALEGetJNIMethodID(env, "android/bluetooth/"
+                                                     "BluetoothGattCharacteristic",
+                                                     "getValue", "()[B");
     if (!jni_mid_getValue)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getValue is null");
@@ -2566,16 +2485,8 @@ CAResult_t CALEClientSetUUIDToDescriptor(JNIEnv *env, jobject bluetoothGatt,
     }
 
     OIC_LOG(DEBUG, TAG, "CALEClientSetUUIDToDescriptor");
-    jclass jni_cid_BTGattCharacteristic = (*env)->FindClass(env, "android/bluetooth/"
-                                                            "BluetoothGattCharacteristic");
-    if (!jni_cid_BTGattCharacteristic)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BTGattCharacteristic is null");
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(DEBUG, TAG, "set value in Characteristic");
-    jmethodID jni_mid_getDescriptor = (*env)->GetMethodID(env, jni_cid_BTGattCharacteristic,
+    jmethodID jni_mid_getDescriptor  = CALEGetJNIMethodID(env, "android/bluetooth/"
+                                                          "BluetoothGattCharacteristic",
                                                           "getDescriptor",
                                                           "(Ljava/util/UUID;)Landroid/bluetooth/"
                                                           "BluetoothGattDescriptor;");
@@ -2640,15 +2551,8 @@ CAResult_t CALEClientSetUUIDToDescriptor(JNIEnv *env, jobject bluetoothGatt,
         return CA_STATUS_FAILED;
     }
 
-    jclass jni_cid_gatt = (*env)->FindClass(env, "android/bluetooth/BluetoothGatt");
-    if (!jni_cid_gatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_gatt is null");
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(DEBUG, TAG, "write Descriptor in gatt object");
-    jmethodID jni_mid_writeDescriptor = (*env)->GetMethodID(env, jni_cid_gatt, "writeDescriptor",
+    jmethodID jni_mid_writeDescriptor  = CALEGetJNIMethodID(env, "android/bluetooth/BluetoothGatt",
+                                                            "writeDescriptor",
                                                             "(Landroid/bluetooth/"
                                                             "BluetoothGattDescriptor;)Z");
     if (!jni_mid_writeDescriptor)
@@ -3255,16 +3159,8 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
     }
 
     // get method ID of getDevice()
-    jclass jni_cid_gattdevice_list = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_gattdevice_list)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_gattdevice_list is null");
-        (*env)->ReleaseStringUTFChars(env, jni_btTargetAddress, targetAddress);
-        return NULL;
-    }
-
-    jmethodID jni_mid_getDevice = (*env)->GetMethodID(env, jni_cid_gattdevice_list, "getDevice",
-                                                      METHODID_BT_DEVICE);
+    jmethodID jni_mid_getDevice = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                     "getDevice", METHODID_BT_DEVICE);
     if (!jni_mid_getDevice)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDevice is null");
@@ -4103,15 +3999,8 @@ static jstring CALEClientGetAddressFromGatt(JNIEnv *env, jobject gatt)
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
 
-    jclass jni_cid_gattdevice_list = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_gattdevice_list)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_gattdevice_list is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getDevice = (*env)->GetMethodID(env, jni_cid_gattdevice_list, "getDevice",
-                                                      METHODID_BT_DEVICE);
+    jmethodID jni_mid_getDevice = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                     "getDevice", METHODID_BT_DEVICE);
     if (!jni_mid_getDevice)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDevice is null");
