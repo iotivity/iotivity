@@ -502,6 +502,7 @@ PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList)
     CHECK_COND(g_crlInfo.CrlData.data, ISSUER_CA_STORAGE_CRL_UNDEFINED);
     CHECK_NULL_BYTE_ARRAY_PTR(certificateRevocationList, ISSUER_CA_STORAGE_NULL_PASSED);
     tmpCRL = (OicSecCrl_t *)GetCRLResource();
+    CHECK_NULL(tmpCRL, ISSUER_CA_STORAGE_NULL_PASSED);
     g_crlInfo.CrlId = tmpCRL->CrlId;
     g_crlInfo.CrlData = tmpCRL->CrlData;
     g_crlInfo.ThisUpdate = tmpCRL->ThisUpdate;

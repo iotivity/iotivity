@@ -634,7 +634,6 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
     {
         VERIFY_NON_NULL(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
     }
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
     if (!resultCallback)
     {
         OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
