@@ -57,3 +57,10 @@ app.listen(port);
 
 console.log("App listening on port " + port);
 module.exports = app;
+
+
+//Exit gracefully when interrupted
+process.on( "SIGINT", function() {
+	console.log( "SIGINT: Quitting..." );
+	process.exit( 0 );
+} );

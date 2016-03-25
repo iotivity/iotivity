@@ -1,5 +1,5 @@
 var intervalId,
-    handleReceptacle = {},
+    //handleReceptacle = {},
     resUri = "/a/rvi",
     chain = "http://localhost:8081/callback",
     iotivity = require("../../iotivity-node/lowlevel"),
@@ -8,14 +8,14 @@ var intervalId,
     responseflag = 0,
     rviRep;
 
-var updateresource = {
-        "cid": "org.openinterconnect.updateresource",
+var ocfupdate = {
+        "cid": "org.openinterconnect.ocfupdate",
         "endpointtype": "OCF",
         "operation": "UPDATE",
 		"utf8Data": {
 			"params":{
 				"parameters":{
-					"target" : "UPDATEOCFRESOURCE",
+					"target" : "OCF_HVAC_UPDATE",
 					"status" : {}
 				}
 			}
@@ -78,20 +78,18 @@ function handleRequest( flag, req ) {
         });
 
         console.log("Posting " + JSON.stringify(rviRep) + " to " + chain);
-        //updateresource.utf8Data.params.parameters.status = rviRep;
-        updateresource.utf8Data.params.parameters.status.target = "UPDATEOCFRESOURCE";
-        updateresource.utf8Data.params.parameters.status.function = key;
-        updateresource.utf8Data.params.parameters.status.newValue = value;
+        ocfupdate.utf8Data.params.parameters.status.target = "OCF_HVAC_UPDATE";
+        ocfupdate.utf8Data.params.parameters.status.function = key;
+        ocfupdate.utf8Data.params.parameters.status.newValue = value;
         
         var options = {
             url: chain,
             json : true,
             method: 'POST',
-            body: updateresource
+            body: ocfupdate
         };
-        console.log("JSON Body Sent = " + updateresource);
         request(options, function (error, response, body) {
-            console.log(error + "  - " + body);
+        	console.log("JSON Body Sent = " + JSON.stringify(ocfupdate));
         });
         
         return iotivity.OCEntityHandlerResult.OC_EH_OK;
@@ -117,8 +115,23 @@ function handleRequest( flag, req ) {
 	
 }
 
+
+updateresource = function(cap,res)
+{
+	console.log("Uri = " + cap.params.uri + " Type = " + cap.params.type);
+	var key = Object.keys(cap.payload)[0];
+	var value = cap.payload[key];
+	console.log("Key = " + key + " Value = " + value);
+	rviRep.status[key] = value;
+	console.log("Updated Resource " + JSON.stringify(rviRep));
+    res.status(200).json("Updated Resource " +  cap.params.type + " @ " + cap.params.uri);
+}
+
+
+
 createresource = function(cap,res)
 {
+	var handleReceptacle = {};
 	console.log("Uri = " + cap.params.uri + " Type = " + cap.params.type);
 	result = iotivity.OCCreateResource(
 	        handleReceptacle,
@@ -134,6 +147,8 @@ createresource = function(cap,res)
 }
 
 findresource = function(cap,res){
+	var handleReceptacle = {};
+
     findresourceHandler = function (handle, response) {
         console.log("Received response to DISCOVER request:");
         console.log(JSON.stringify(response, null, 4));
@@ -196,6 +211,8 @@ findresource = function(cap,res){
 
 getresource = function(cap,res)
 {
+	var handleReceptacle = {};
+
     getResponseHandler = function (handle, response) {
         if(responseflag==0){
             responseflag = 1;
@@ -281,6 +298,8 @@ getresource = function(cap,res)
 
 putresource = function(cap,res)
 {
+	var handleReceptacle = {};
+
     putResponseHandler = function( handle, response ) {
         if(responseflag==0){
             responseflag = 1;
@@ -377,6 +396,8 @@ putresource = function(cap,res)
 
 observeresource = function(cap,res)
 {
+	var handleReceptacle = {};
+
     obsResponseHandler = function( handle, response ) {
         console.log("Received response to OBSERVE request:");
         console.log(JSON.stringify(response, null, 4));
@@ -527,7 +548,7 @@ module.exports = {
                     "tags": [
                         "create an OCF server with resource"
                     ]
-                }
+                }               
             ]
         };
         return template;
@@ -551,6 +572,8 @@ module.exports = {
         else if(cap.cid == "org.openinterconnect.createresource"){
             createresource(cap,res);
         }
-
+        else if(cap.cid == "org.openinterconnect.rviupdate"){
+        	updateresource(cap, res);
+        }
     }
 }

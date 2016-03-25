@@ -11,14 +11,11 @@ var FSM = {
 	REGHOMECONTROL: 2,
 	REGCALLBACK: 3,
 	GETRVISERVICES: 4,
-	GETHVAC : 5,
-	GETLOCATION : 6,
+	GET_VEHICLE_HVAC : 5,
+	GET_VEHICLE_LOCATION : 6,
 	FINDOCFDEVICES: 7,
 	MAKEOCFRVIDEVICE: 8,
 	COMINGHOME : 9,
-	TURNONLIGHT : 10,
-	TURNONFAN : 11,
-	
 	SMARTHOMESTATUS : 10,
 	SETHVAC : 11,
 	UNREGHOMECONTROL: 12,
@@ -181,12 +178,26 @@ var ocfbody = [
    	    ]
    	},
     {//4
-        "cid": "org.openinterconnect.updateresource",
+        "cid": "org.openinterconnect.ocfupdate",
         "endpointtype": "OCF",
         "operation": "UPDATE",
         "payload": {},        
         "tags": [
-            "Update to a created OCF server resource"
+            "RVI Resource updated by OCF"
+        ]
+    },    
+    {//5
+        "cid": "org.openinterconnect.rviupdate",
+        "endpointtype": "OCF",
+        "operation": "UPDATE",
+        "params":
+        {
+            "uri": "/a/rvi",
+            "type" : "core.rvi",
+        },
+        "payload": {},        
+        "tags": [
+            "RVI Resource updated by RVI"
         ]
     }    
 ];
@@ -226,8 +237,8 @@ var wsiFSM = function(error, response, body) {
     	}
     	case FSM.GETRVISERVICES:{
     		console.log("RVI Service List Received.");
-    		state = FSM.GETHVAC;
-    		rvimsg[1].params = rvibody[2];
+    		state = FSM.GET_VEHICLE_LOCATION;
+    		rvimsg[1].params = rvibody[3];
     		res = post(rviuri, rvimsg[1]);
     		break;
     	}
@@ -237,6 +248,7 @@ var wsiFSM = function(error, response, body) {
             ocfdevices = params.status;
     		console.log("OCF Device List Received." + ocfdevices);
             state = FSM.MAKEOCFRVIDEVICE;
+            console.log("Making RVI device with " + JSON.stringify(ocfbody[1].payload));
     		var res = post(ocfuri, ocfbody[1]);
     		break;
     	}
@@ -267,13 +279,18 @@ var wsiFSM = function(error, response, body) {
     		}
     		break;
     	}
-
+    	case FSM.GET_VEHICLE_HVAC:{
+    		console.log("HVAC Response Received.");
+    		break;
+    	}
+    	case FSM.GET_VEHICLE_LOCATION:{
+    		console.log("Location Response Received.");
+    		break;
+    	}
     	case FSM.MAKEOCFRVIDEVICE:
     	case FSM.SETHVAC:
-    	case FSM.GETHVAC:
-    	case FSM.GETLOCATION:
     	case FSM.READY:{
-    		console.log("OCF RVI Device Created....Gateway Ready");
+    		console.log(".....................................Gateway Ready");
     		state = FSM.READY;
     		break;
     	}
@@ -351,26 +368,37 @@ module.exports = {
         	rcvbody = JSON.parse(req.body.utf8Data);
         
     	var params = rcvbody.params.parameters;
-        console.log("Processing " + params.target);
+    	console.log("-------------------------------------------------------------------");
+        if(params)
+        	console.log("WSI Request Processing " + params.target);
+        else
+        	console.log("WHY AM I EVEN HERE");
         
-        if(params && params.target == "GETHVAC"){
-    		state = FSM.GETLOCATION;
-    		for(var key in params.status){
-    			ocfbody[1].payload[key] = params.status[key];
-    			console.log(key + " = " +  params.status[key]);
-    		}
-    		rvimsg[1].params = rvibody[3];
-    		res = post(rviuri, rvimsg[1]);
-        }
         if(params && params.target == "GETLOCATION"){
+    		state = FSM.GET_VEHICLE_HVAC;
         	for(var key in params){
     			ocfbody[1].payload[key] = params[key];
     			console.log(key + " = " +  params[key]);
     		}
+    		rvimsg[1].params = rvibody[2];
+    		res = post(rviuri, rvimsg[1]);
+        }
+        if(params && params.target == "GETHVAC"){
+    		for(var key in params.status){
+    			ocfbody[1].payload[key] = params.status[key];
+    			console.log(key + " = " +  params.status[key]);
+    		}
     		state = FSM.FINDOCFDEVICES;
         	var res = post(ocfuri, ocfbody[0]);
         }
-        if(params && params.target == "UPDATEOCFRESOURCE"){
+        if(params && params.target == "HVACSTATUS"){
+        	//Send an update to hosted resource
+    		console.log("RVI OCF Device Update Received." + params.function + " = " + params.value + " by RVI.")
+    		ocfbody[5].payload = {};
+			ocfbody[5].payload[params.function] = params.value;
+        	var res = post(ocfuri, ocfbody[5]);
+        }
+        if(params && params.target == "OCF_HVAC_UPDATE"){
         	//send to RVI
         	console.log("Send Update to RVI." + params.status.function);
     		state = FSM.SETHVAC;
@@ -378,12 +406,8 @@ module.exports = {
     		rvibody[4].params.parameters.newValue = params.status.newValue;
     		rvimsg[1].params = rvibody[4];
     		res = post(rviuri, rvimsg[1]);
-
         }
         if(params && params.target == "SMARTHOMESCENARIO"){
-        	
-        	
-        	
         	if(params.text == "SmartHome Status"){
         		console.log("Scenario Name : " + params.text)
             	//series of OCF GET requests - SmartHome Status
@@ -444,9 +468,11 @@ module.exports = {
 					ocfbody[3].payload = sample;
 					chcount = chcount + 1;
 					var res = post(ocfuri, ocfbody[3]);
+					break;
         		}        		
         	}
         }
+    	console.log("-------------------------------------------------------------------");
     },
     start: start,
 }

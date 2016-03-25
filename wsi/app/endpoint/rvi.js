@@ -19,25 +19,27 @@ rviconnect = function(cap,res){
 	    });
 	    connection.on('message', function(message) {
 	    	var msg = JSON.stringify(message);
-	    	console.log("Received: '" + msg + "'");	    	
-	    	if(resobj){
-	    		console.log("Sending Response");
+    		console.log("****************************************");
+	    	console.log("WEBSOCKET RVI Message : '" + msg + "'");	    	
+    		if(resobj){
+	    		console.log("");
 	    		resobj.send(msg);
 	    		resobj = null;
 	    	}else if(svcchain){
-	            console.log("Posting " + msg + "to " + svcchain );
 	            var options = {
 	                url: svcchain ,
 	                json : true,
 	                method: 'POST',
 	                body: message
 	            };
-	            console.log("JSON Body Sent = " + msg);
 	            request(options, function (error, response, body) {
 	                console.log(error + "  - " + body);
 	            });
+	            console.log("RVI->OCF " + svcchain );
+	            console.log(msg);
 	    	}
-	        return;
+    		console.log("****************************************");
+
 	    });
 	    rvicon = connection;
 	    console.log('WebSocket Client Connected');
@@ -119,6 +121,5 @@ module.exports = {
     }    
 }
 console.log("RVI initialized");
-
 
 

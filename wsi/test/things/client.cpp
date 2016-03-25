@@ -192,9 +192,8 @@ int main(int argc, char* argv[]) {
 	if(argc<2)
 	{
 		printf("\nUsage : Provide Client Type\n");
-		printf("0 : Bulb\n");
-		printf("1 : Thermostat\n");
-		printf("2 : RVI\n");
+		for(int i = 0; i<RVI+1; i++)
+			printf("%d: %s\n", i, things[i].desc.c_str());
 		return -1;
 	}
 

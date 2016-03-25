@@ -81,14 +81,14 @@ module.exports = function(app, passport) {
     
     app.post('/wsi/cap/:id', function(req, res) {
         var cap = req.body;
-        console.log("Find Capability = " + JSON.stringify(cap));
+        //console.log("Find Capability = " + JSON.stringify(cap));
         console.log("Service ID : " + req.params.id);
         servicedb.find({'sid':req.params.id}, function(err, service) {
             if (err){
                 console.log('Response Service Error: ' + err);
                 res.send(err);
             }
-            console.log('Response Service Auth : ' + service);
+            //console.log('Response Service Auth : ' + service);
             auth = (service[0]!=null)?service[0].auth[0] : null;
 	    var sgy = cap.endpointtype.toLowerCase();
 	    if(sgy != null)
