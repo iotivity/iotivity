@@ -143,6 +143,9 @@ extern "C" {
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
+/** To represent resource type with RES.*/
+#define OC_RSRVD_RESOURCE_TYPE_RES    "oic.wk.res"
+
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
 
@@ -1156,10 +1159,23 @@ typedef struct
 {
     OCPayload base;
 
+    /** Device Id */
     char *sid;
 
     /** A special case for handling RD address. */
     char* baseURI;
+
+    /** Name */
+    char *name;
+
+    /** HREF */
+    char *uri;
+
+    /** Resource Type */
+    char *type;
+
+    /** Interface */
+    OCStringLL *interface;
 
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;

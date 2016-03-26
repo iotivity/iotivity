@@ -175,6 +175,28 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         return;
     }
     OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
+    if (payload->baseURI)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
+    }
+    if (payload->name)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
+    }
+    if (payload->uri)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
+    }
+    if (payload->type)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", payload->type);
+    }
+    OIC_LOG(level, PL_TAG, "\tInterface:");
+    for (OCStringLL *itf = payload->interface; itf; itf = itf->next)
+    {
+        OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
+    }
+
     OCResourcePayload* res = payload->resources;
 
     while(res)

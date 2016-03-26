@@ -498,7 +498,9 @@ static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
 
     while (interfacePtr)
     {
-        if (strcmp (interfacePtr->name, interfaceFilter) == 0)
+        if ((strcmp (interfacePtr->name, interfaceFilter) == 0) &&
+            (strcmp (OC_RSRVD_INTERFACE_LL, interfaceFilter) == 0 ||
+             strcmp (OC_RSRVD_INTERFACE_DEFAULT, interfaceFilter) == 0))
         {
             return true;
         }
@@ -515,8 +517,8 @@ static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
  * Function will return true if all non null AND non empty filters passed in find a match.
  */
 static bool includeThisResourceInResponse(OCResource *resource,
-                                                 char *interfaceFilter,
-                                                 char *resourceTypeFilter)
+                                          char *interfaceFilter,
+                                          char *resourceTypeFilter)
 {
     if (!resource)
     {
@@ -524,14 +526,13 @@ static bool includeThisResourceInResponse(OCResource *resource,
         return false;
     }
 
-    if ( resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
+    if (resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
     {
         /*
          * At least one valid filter should be available to
          * include the resource in discovery response
          */
-        if (!((interfaceFilter && *interfaceFilter ) ||
-              (resourceTypeFilter && *resourceTypeFilter)))
+        if (!(resourceTypeFilter && *resourceTypeFilter))
         {
             OIC_LOG_V(INFO, TAG, "%s no query string for EXPLICIT_DISCOVERABLE \
                 resource", resource->uri);
@@ -690,6 +691,12 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
                 &interfaceQuery, &resourceTypeQuery);
+        bool interfaceQueryAllocated = false;
+        if (!interfaceQuery && !resourceTypeQuery)
+        {
+            interfaceQueryAllocated = true;
+            interfaceQuery = OICStrdup(OC_RSRVD_INTERFACE_LL);
+        }
 
         if (discoveryResult == OC_STACK_OK)
         {
@@ -697,20 +704,52 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
             if (payload)
             {
-                ((OCDiscoveryPayload*)payload)->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
-                VERIFY_NON_NULL(((OCDiscoveryPayload*)payload)->sid, ERROR, OC_STACK_NO_MEMORY);
-                memcpy(((OCDiscoveryPayload*)payload)->sid, OCGetServerInstanceIDString(), UUID_STRING_SIZE);
-
-                if (interfaceQuery && 0 == strcmp(OC_RSRVD_INTERFACE_LL, interfaceQuery))
+                OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
+                discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
+                VERIFY_NON_NULL(discPayload->sid, ERROR, OC_STACK_NO_MEMORY);
+                memcpy(discPayload->sid, OCGetServerInstanceIDString(), UUID_STRING_SIZE);
+                if (!resourceTypeQuery && interfaceQuery && (0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
                 {
                     for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
-                        discoveryResult = BuildVirtualResourceResponse(resource,
-                                (OCDiscoveryPayload *)payload, &request->devAddr, false);
+                        bool result = false;
+                        if (resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
+                        {
+                            if (resourceTypeQuery && resourceMatchesRTFilter(resource, resourceTypeQuery))
+                            {
+                                result = true;
+                            }
+                        }
+                        if (resource->resourceProperties & OC_DISCOVERABLE)
+                        {
+                            result = true;
+                        }
+
+                        if (result)
+                        {
+                            discoveryResult = BuildVirtualResourceResponse(resource,
+                            discPayload, &request->devAddr, false);
+                        }
                     }
                 }
                 else
                 {
+                    if ((interfaceQuery && (0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))) ||
+                        !interfaceQuery)
+                    {
+                        discPayload->uri = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
+                        VERIFY_NON_NULL(discPayload->uri, ERROR, OC_STACK_NO_MEMORY);
+                        if (savedDeviceInfo.deviceName)
+                        {
+                            discPayload->name = OICStrdup(savedDeviceInfo.deviceName);
+                            VERIFY_NON_NULL(discPayload->name, ERROR, OC_STACK_NO_MEMORY);
+                        }
+                        discPayload->type = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
+                        VERIFY_NON_NULL(discPayload->type, ERROR, OC_STACK_NO_MEMORY);
+                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_LL);
+                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_DEFAULT);
+                        VERIFY_NON_NULL(discPayload->interface, ERROR, OC_STACK_NO_MEMORY);
+                    }
                     bool foundResourceAtRD = false;
                     for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
@@ -726,10 +765,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                                  break;
                             }
                             discoveryResult = BuildVirtualResourceResponse(resource1,
-                                (OCDiscoveryPayload*)payload, &devAddr, true);
+                                discPayload, &devAddr, true);
                             if (payload)
                             {
-                                ((OCDiscoveryPayload*)payload)->baseURI = OICStrdup(devAddr.addr);
+                                discPayload->baseURI = OICStrdup(devAddr.addr);
                             }
                             OCDiscoveryResourceDestroy(resource1);
                             foundResourceAtRD = true;
@@ -738,11 +777,11 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                         if (!foundResourceAtRD && includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
                         {
                             discoveryResult = BuildVirtualResourceResponse(resource,
-                                (OCDiscoveryPayload*)payload, &request->devAddr, false);
+                                discPayload, &request->devAddr, false);
                         }
                     }
                     // Set discoveryResult appropriately if no 'valid' resources are available
-                    if (((OCDiscoveryPayload*)payload)->resources == NULL && !foundResourceAtRD)
+                    if (discPayload->resources == NULL && !foundResourceAtRD)
                     {
                         discoveryResult = OC_STACK_NO_RESOURCE;
                     }
@@ -756,6 +795,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         else
         {
             OIC_LOG_V(ERROR, TAG, "Error (%d) parsing query.", discoveryResult);
+        }
+        if (interfaceQueryAllocated)
+        {
+            OICFree(interfaceQuery);
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
