@@ -220,6 +220,44 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
         VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
     }
 
+    // HREF - Not a mandatory field
+    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
+    if (cbor_value_is_valid(&curVal))
+    {
+        err = cbor_value_dup_text_string(&curVal, &(out->uri), &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find uri value");
+    }
+
+    // RT - Not a mandatory field
+    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
+    if (cbor_value_is_valid(&curVal))
+    {
+        err = cbor_value_dup_text_string(&curVal, &(out->type), &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
+    }
+
+    // IF - Not a mandatory field
+    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_INTERFACE, &curVal);
+    if (cbor_value_is_valid(&curVal))
+    {
+        err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &out->interface);
+    }
+    if (!out->interface)
+    {
+        if (!OCResourcePayloadAddStringLL(&out->interface, OC_RSRVD_INTERFACE_LL))
+        {
+            err = CborErrorOutOfMemory;
+        }
+    }
+
+    // Name - Not a mandatory field
+    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_DEVICE_NAME, &curVal);
+    if (cbor_value_is_valid(&curVal))
+    {
+        err = cbor_value_dup_text_string(&curVal, &out->name, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find device name");
+    }
+
     // Look for Links which will have an array as the value
     CborValue linkMap;
     err = cbor_value_map_find_value(&rootMap, OC_RSRVD_LINKS, &linkMap);
@@ -293,6 +331,8 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
     VERIFY_CBOR_SUCCESS(TAG, err, "to advance resource map");
 
     *outPayload = (OCPayload *)out;
+    OIC_LOG_PAYLOAD(DEBUG, *outPayload);
+
     return OC_STACK_OK;
 
 exit:

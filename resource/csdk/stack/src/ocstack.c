@@ -3397,7 +3397,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     insertResourceType(resource, pointer);
     result = OC_STACK_OK;
 
-    exit:
+exit:
     if (result != OC_STACK_OK)
     {
         OICFree(pointer);
@@ -4295,8 +4295,27 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
 
     if (!*firstInterface)
     {
-        *firstInterface = newInterface;
+        // If first interface is not oic.if.baseline, by default add it as first interface type.
+        if (0 == strcmp(newInterface->name, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            *firstInterface = newInterface;
+        }
+        else
+        {
+            OCStackResult result = BindResourceInterfaceToResource(resource, OC_RSRVD_INTERFACE_DEFAULT);
+            if (result != OC_STACK_OK)
+            {
+                OICFree(newInterface->name);
+                OICFree(newInterface);
+                return;
+            }
+            if (*firstInterface)
+            {
+                (*firstInterface)->next = newInterface;
+            }
+        }
     }
+    // If once add oic.if.baseline, later too below code take care of freeing memory.
     else if (strcmp(newInterface->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
     {
         if (strcmp((*firstInterface)->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
@@ -4305,6 +4324,7 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
             OICFree(newInterface);
             return;
         }
+        // This code will not hit anymore, keeping
         else
         {
             newInterface->next = *firstInterface;

@@ -731,12 +731,14 @@ TEST(StackResource, ResourceTypeInterface)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName1 = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, resourceInterfaceName1);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     // try getting resource interface names with an invalid index
-    resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
+    resourceInterfaceName = OCGetResourceInterfaceName(handle, 2);
     EXPECT_STREQ(NULL, resourceInterfaceName);
     // try getting resource interface names with an invalid index
     resourceInterfaceName = OCGetResourceInterfaceName(handle, 10);
@@ -832,7 +834,7 @@ TEST(StackResource, ResourceDuplicateNonDefaultInterfaces)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -854,7 +856,7 @@ TEST(StackResource, ResourceTypeInterfaceMethods)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1107,8 +1109,8 @@ TEST(StackBind, BindResourceInterfaceNameBad)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, NULL));
@@ -1133,15 +1135,15 @@ TEST(StackBind, BindResourceInterfaceNameGood)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(2, numResourceInterfaces);
-    resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
+    EXPECT_EQ(3, numResourceInterfaces);
+    resourceInterfaceName = OCGetResourceInterfaceName(handle, 2);
     EXPECT_STREQ("core.r", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1164,7 +1166,7 @@ TEST(StackBind, BindResourceInterfaceMethodsBad)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, 0));
 
@@ -1188,12 +1190,12 @@ TEST(StackBind, BindResourceInterfaceMethodsGood)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(2, numResourceInterfaces);
+    EXPECT_EQ(3, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1659,8 +1661,8 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     // Make sure the resource elements are still correct
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle2, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle2, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle2, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
