@@ -163,5 +163,8 @@ extern const char * OIC_SEC_FALSE;
 extern const char * OIC_SEC_REST_QUERY_SEPARATOR;
 extern char OIC_SEC_REST_QUERY_DELIMETER;
 
+//Security Version
+extern const char * DEFAULT_SEC_VERSION;
+
 #endif //IOTVT_SRM_RSRC_STRINGS_H
 

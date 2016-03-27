@@ -179,7 +179,7 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
         ptr->next = NULL;
         ptr->connType = connType;
         ptr->devStatus = DEV_STATUS_ON; //AddDevice is called when discovery(=alive)
-        OICStrcpy(ptr->secVer, strlen("0.0.0"), "0.0.0"); // version initialization
+        OICStrcpy(ptr->secVer, MAX_VERSION_LEN, DEFAULT_SEC_VERSION); // version initialization
 
         LL_PREPEND(*ppDevicesList, ptr);
     }
@@ -304,7 +304,7 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
 
     if (0 == strlen(src->secVer))
     {
-        OICStrcpy(newDev->secVer, strlen("0.0.0"), "0.0.0");
+        OICStrcpy(newDev->secVer, MAX_VERSION_LEN, DEFAULT_SEC_VERSION);
     }
     else
     {

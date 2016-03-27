@@ -162,3 +162,6 @@ const char * OIC_SEC_FALSE = "false";
 const char * OIC_SEC_REST_QUERY_SEPARATOR = ";";
 char OIC_SEC_REST_QUERY_DELIMETER = '=';
 
+//Security Version
+const char * DEFAULT_SEC_VERSION = "0.0.0";
+
