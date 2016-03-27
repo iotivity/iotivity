@@ -546,8 +546,6 @@ static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoH
                 OIC_LOG(INFO, TAG, "Exiting SecVersionDiscoveryHandler.");
                 DeleteVerBinData(ptrVer);
             }
-
-            return  OC_STACK_KEEP_TRANSACTION;
         }
     }
     else
