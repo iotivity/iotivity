@@ -1169,7 +1169,13 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
     responseData.messageId = (info != NULL) ? info->messageId : 0;
     responseData.resourceUri = (info != NULL) ? info->resourceUri : 0;
 
-    if(CA_MSG_RESET != messageType)
+    if (CA_MSG_RESET == messageType ||
+        (CA_MSG_ACKNOWLEDGE == messageType && CA_EMPTY == responseCode))
+    {
+        printf("RESET or ACK/EMPTY. there will be not payload/option\n");
+
+    }
+    else
     {
         responseData.token = (info != NULL) ? info->token : NULL;
         responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
@@ -1217,8 +1223,8 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
                          (const char *) responseData.resourceUri);
             }
         }
+        responseData.payloadSize = strlen((char *)responseData.payload)+1;
     }
-    responseData.payloadSize = strlen((char *)responseData.payload)+1;
     CAResponseInfo_t responseInfo = { 0 };
     responseInfo.result = responseCode;
     responseInfo.info = responseData;
