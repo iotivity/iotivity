@@ -463,9 +463,8 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
     CborValue pconfCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
-    int cborLen = size;
 
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &pconfCbor);
+    cbor_parser_init(cborPayload, size, 0, &parser, &pconfCbor);
     CborValue pconfMap = { .parser = NULL } ;
     OicSecPconf_t *pconf = NULL;
     cborFindResult = cbor_value_enter_container(&pconfCbor, &pconfMap);
@@ -873,9 +872,14 @@ static OCEntityHandlerResult HandlePconfGetRequest (const OCEntityHandlerRequest
     }
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, payload, size);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePconfGetRequest");
+    }
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
 
+    OICFree(payload);
     return ehRet;
 }
 
@@ -888,7 +892,7 @@ static OCEntityHandlerResult HandlePconfPostRequest (const OCEntityHandlerReques
     if (true == GetDoxmResourceData()->dpc)
     {
         // Convert CBOR PCONF data into binary. This will also validate the PCONF data received.
-        uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
+        uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
 
         if(payload){
@@ -905,7 +909,7 @@ static OCEntityHandlerResult HandlePconfPostRequest (const OCEntityHandlerReques
     {
         // Check if valid Post request
         if ((true == newPconf->edp) && (0 < newPconf->prmLen) &&
-                DP_PIN_LENGTH == sizeof((const char*)newPconf->pin.val))
+                DP_PIN_LENGTH == sizeof(newPconf->pin.val))
         {
             OicSecPrm_t *oldPrm = gPconf->prm;
             OicSecPdAcl_t *oldPdacl = gPconf->pdacls;
@@ -945,7 +949,11 @@ static OCEntityHandlerResult HandlePconfPostRequest (const OCEntityHandlerReques
     }
 
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePconfPostRequest");
+    }
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
@@ -986,7 +994,7 @@ OCEntityHandlerResult PconfEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 

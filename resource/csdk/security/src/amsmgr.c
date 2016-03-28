@@ -108,8 +108,8 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
     OicSecDoxm_t *doxm = NULL;
 
     OIC_LOG_V(INFO, TAG, "Doxm DeviceId Discovery response = %s\n",
-          ((OCSecurityPayload*)clientResponse->payload)->securityData1);
-    uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
+          ((OCSecurityPayload*)clientResponse->payload)->securityData);
+    uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
     size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
 
     //As doxm is NULL amsmgr can't test if response from trusted AMS service
@@ -303,7 +303,7 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
     {
         size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
         OCStackResult ret =
-                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData1, size);
+                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData, size);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         OIC_LOG_V(INFO, TAG, "%s : Calling checkPermission", __func__);

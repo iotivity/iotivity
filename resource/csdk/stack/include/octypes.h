@@ -1218,8 +1218,7 @@ typedef struct
 typedef struct
 {
     OCPayload base;
-    char* securityData;
-    uint8_t *securityData1;
+    uint8_t* securityData;
     size_t payloadSize;
 } OCSecurityPayload;
 

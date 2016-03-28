@@ -175,7 +175,7 @@ TEST(CredResourceTest, CredEntityHandlerDeleteTest)
 
     // Create Entity Handler POST request payload
     ehReq.method = OC_REST_POST;
-    ehReq.payload = (OCPayload *)OCSecurityPayloadCBORCreate(payload, size);
+    ehReq.payload = (OCPayload *)OCSecurityPayloadCreate(payload, size);
     if (!ehReq.payload)
     {
         OICFree(payload);

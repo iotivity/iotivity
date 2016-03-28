@@ -182,7 +182,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
 static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
         size_t* size)
 {
-    memcpy(outPayload, payload->securityData1, payload->payloadSize);
+    memcpy(outPayload, payload->securityData, payload->payloadSize);
     *size = payload->payloadSize;
 
     return CborNoError;
@@ -421,8 +421,8 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
                 sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep resource type tag");
         char *joinedTypes = OCStringLLJoin(payload->types);
-        printf(" JOINED TYPES : %s %zd \n", joinedTypes, strlen(joinedTypes));
         VERIFY_PARAM_NON_NULL(TAG, joinedTypes, "Failed creating joined string");
+        printf(" JOINED TYPES : %s %zd \n", joinedTypes, strlen(joinedTypes));
         err |= cbor_encode_text_string(&repMap, joinedTypes, strlen(joinedTypes));
         OICFree(joinedTypes);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep resource type value");

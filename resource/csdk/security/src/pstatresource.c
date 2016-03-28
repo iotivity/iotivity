@@ -196,7 +196,7 @@ exit:
 OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t size,
                                  OicSecPstat_t **secPstat)
 {
-    if (NULL == cborPayload || NULL == secPstat || NULL != *secPstat)
+    if (NULL == cborPayload || NULL == secPstat || NULL != *secPstat || 0 == size)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -208,13 +208,9 @@ OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t size,
     CborParser parser;
     CborError cborFindResult = CborNoError;
     char *strUuid = NULL;
-    int cborLen = size;
     size_t len = 0;
-    if (0 == size)
-    {
-        cborLen = CBOR_SIZE;
-    }
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &pstatCbor);
+
+    cbor_parser_init(cborPayload, size, 0, &parser, &pstatCbor);
     CborValue pstatMap = { .parser = NULL };
 
     OicSecPstat_t *pstat = NULL;
@@ -339,7 +335,11 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, payload, size);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatGetRequest");
+    }
     OICFree(payload);
     return ehRet;
 }
@@ -356,14 +356,13 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     OIC_LOG(INFO, TAG, "HandlePstatPutRequest  processing PUT request");
     OicSecPstat_t *pstat = NULL;
 
-    if (ehRequest->resource)
+    if (ehRequest->payload)
     {
-        uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
+        uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
         VERIFY_NON_NULL(TAG, payload, ERROR);
 
         OCStackResult ret = CBORPayloadToPstat(payload, size, &pstat);
-        OICFree(payload);
         VERIFY_NON_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
@@ -415,8 +414,9 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     }
 
     //Send payload to request originator
-    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
+    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
     {
+        ehRet = OC_EH_ERROR;
         OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
     DeletePstatBinData(pstat);
@@ -446,7 +446,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
                 break;
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
                 break;
         }
     }

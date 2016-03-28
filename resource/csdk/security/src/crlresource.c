@@ -102,33 +102,33 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &crlMap, CRL_MAP_SIZE);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create CRL Map");
 
     //CRLId -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_CBOR_CRL_ID,
         strlen(OIC_CBOR_CRL_ID));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add CRL ID");
     cborEncoderResult = cbor_encode_int(&crlMap, crl->CrlId);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add CRL Id value");
 
     //ThisUpdate -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_CBOR_CRL_THIS_UPDATE,
         strlen(OIC_CBOR_CRL_THIS_UPDATE));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add Crl update");
     cborEncoderResult = cbor_encode_byte_string(&crlMap, crl->ThisUpdate.data,
                                                 crl->ThisUpdate.len);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add Crl Update value");
 
     //CRLData -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_CBOR_CRL_DATA,
         strlen(OIC_CBOR_CRL_DATA));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add Crl data name");
     cborEncoderResult = cbor_encode_byte_string(&crlMap, crl->CrlData.data,
                                                 crl->CrlData.len);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add Crl data value");
 
     cborEncoderResult = cbor_encoder_close_container(&encoder, &crlMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add close Crl map");
 
     *size = encoder.ptr - outPayload;
     *payload = outPayload;
@@ -160,7 +160,7 @@ exit:
 OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
                                OicSecCrl_t **secCrl)
 {
-    if (NULL == cborPayload || NULL == secCrl || NULL != *secCrl)
+    if (NULL == cborPayload || NULL == secCrl || NULL != *secCrl || 0 == size)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -171,13 +171,13 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     CborValue crlCbor = {.parser = NULL};
     CborParser parser = {.end = NULL};
     CborError cborFindResult = CborNoError;
-    int cborLen = (size == 0) ? CBOR_SIZE : size;
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &crlCbor);
+
+    cbor_parser_init(cborPayload, size, 0, &parser, &crlCbor);
     CborValue crlMap = { .parser = NULL};
     OicSecCrl_t *crl = NULL;
     size_t outLen = 0;
     cborFindResult = cbor_value_enter_container(&crlCbor, &crlMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter Crl map");
 
     crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
     VERIFY_NON_NULL(TAG, crl, ERROR);
@@ -279,7 +279,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicSecCrl_t *crl = NULL;
-    uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData1;
+    uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
 
     if (payload)
@@ -309,12 +309,15 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
         }
 
         DeleteCrlBinData(crl);
-        OICFree(payload);
     }
 
 exit:
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleCRLPostRequest");
+    }
 
     OIC_LOG_V(INFO, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -356,7 +359,7 @@ static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 

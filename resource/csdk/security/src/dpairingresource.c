@@ -287,9 +287,8 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
     CborValue dpairCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
-    int cborLen = size;
 
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &dpairCbor);
+    cbor_parser_init(cborPayload, size, 0, &parser, &dpairCbor);
     CborValue dpairMap = { .parser = NULL };
     OicSecDpairing_t *dpair = NULL;
     cborFindResult = cbor_value_enter_container(&dpairCbor, &dpairMap);
@@ -404,7 +403,7 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
     const OicSecPconf_t *pconf = GetPconfResourceData();
     if (true == pconf->edp)
     {
-        uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData1;
+        uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
         if (payload)
         {
@@ -490,16 +489,17 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
 exit:
 #endif // __WITH_DTLS__
 
+    // Send payload to request originator
+    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDpairingPostRequest");
+    }
+
     if (OC_EH_ERROR == ehRet && gDpair)
     {
         RemoveCredential(&gDpair->pdeviceID);
         gDpair = NULL;
-    }
-
-    // Send payload to request originator
-    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
-    {
-        OIC_LOG (ERROR, TAG, "SendSRMCBORResponse failed in HandleDpairingPostRequest");
     }
 
     DeleteDpairingBinData(newDpair);
@@ -518,7 +518,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
     const OicSecPconf_t *pconf = GetPconfResourceData();
     if (true == pconf->edp)
     {
-        uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData1;
+        uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
         if (payload)
         {
@@ -593,9 +593,10 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 exit:
 
     //Send payload to request originator
-    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
+    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
     {
-        OIC_LOG (ERROR, TAG, "SendSRMCBORResponse failed in HandleDpairingPutRequest");
+        ehRet = OC_EH_ERROR;
+        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDpairingPutRequest");
     }
 
     DeleteDpairingBinData(newDpair);
@@ -640,7 +641,7 @@ OCEntityHandlerResult DpairingEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 

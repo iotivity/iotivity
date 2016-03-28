@@ -304,15 +304,16 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData1, &secPayload->payloadSize);
-    if((OC_STACK_OK != res) && (NULL == secPayload->securityData1))
+    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData, &secPayload->payloadSize);
+    if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
 
-    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData1);
+    OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -456,14 +457,15 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = CrlToCBORPayload(crl, &secPayload->securityData1, &secPayload->payloadSize);
-    if((OC_STACK_OK != res) && (NULL == secPayload->securityData1))
+    OCStackResult res = CrlToCBORPayload(crl, &secPayload->securityData, &secPayload->payloadSize);
+    if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
     {
         OICFree(secPayload);
         OIC_LOG(ERROR, TAG, "Failed to BinToCrlJSON");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "CRL : %s", secPayload->securityData1);
+    OIC_LOG(DEBUG, TAG, "Created payload for CRL:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -539,17 +541,18 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData1,
+    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData,
         &secPayload->payloadSize);
 
-    if ((OC_STACK_OK != res) || (NULL == secPayload->securityData1))
+    if ((OC_STACK_OK != res) || (NULL == secPayload->securityData))
     {
         OICFree(secPayload);
         OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
 
-    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData1);
+    OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -856,7 +859,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    if(OC_STACK_OK != AclToCBORPayload(acl, &secPayload->securityData1, &secPayload->payloadSize))
+    if(OC_STACK_OK != AclToCBORPayload(acl, &secPayload->securityData, &secPayload->payloadSize))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
@@ -999,14 +1002,16 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
-    if (OC_STACK_OK != PconfToCBORPayload(pconf, &(secPayload->securityData1),
+    if (OC_STACK_OK != PconfToCBORPayload(pconf, &(secPayload->securityData),
                 &(secPayload->payloadSize)))
     {
         OCPayloadDestroy((OCPayload*)secPayload);
         OIC_LOG(ERROR, TAG, "Failed to PconfToCborPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "PCONF : %s", secPayload->securityData1);
+    OIC_LOG(DEBUG, TAG, "Created payload for pconf set");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,

@@ -399,7 +399,7 @@ exit:
 // note: This function is used in unit test hence not declared static,
 OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
 {
-    if (NULL == cborPayload)
+    if (NULL == cborPayload || 0 == size)
     {
         return NULL;
     }
@@ -950,7 +950,12 @@ exit:
     ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, payload, size);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed for HandleACLGetRequest");
+    }
+    OICFree(payload);
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -962,7 +967,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert CBOR into ACL data and update to SVR buffers. This will also validate the ACL data received.
-    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
     if (payload)
     {
@@ -994,7 +999,11 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
     }
 
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleACLPostRequest");
+    }
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -1021,7 +1030,11 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
 
 exit:
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleACLDeleteRequest");
+    }
 
     return ehRet;
 }
@@ -1058,7 +1071,7 @@ OCEntityHandlerResult ACLEntityHandler(OCEntityHandlerFlag flag, OCEntityHandler
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 

@@ -276,7 +276,7 @@ exit:
 OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
                                 OicSecDoxm_t **secDoxm)
 {
-    if (NULL == cborPayload || NULL == secDoxm || NULL != *secDoxm)
+    if (NULL == cborPayload || NULL == secDoxm || NULL != *secDoxm || 0 == size)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -286,11 +286,11 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
 
     CborParser parser;
     CborError cborFindResult = CborNoError;
-    int cborLen = (size == 0) ? CBOR_SIZE : size;
     char* strUuid = NULL;
     size_t len = 0;
     CborValue doxmCbor;
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &doxmCbor);
+
+    cbor_parser_init(cborPayload, size, 0, &parser, &doxmCbor);
     CborValue doxmMap;
     OicSecDoxm_t *doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(*doxm));
     VERIFY_NON_NULL(TAG, doxm, ERROR);
@@ -568,9 +568,10 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     }
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, payload, size))
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
     {
-        OIC_LOG(ERROR, TAG, "SendSRMCBORResponse failed in HandleDoxmGetRequest");
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmGetRequest");
     }
 
     OICFree(payload);
@@ -592,7 +593,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest(const OCEntityHandlerRequest *
 
     if (ehRequest->payload)
     {
-        uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData1;
+        uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *)ehRequest->payload)->payloadSize;
         OCStackResult res = CBORPayloadToDoxm(payload, size, &newDoxm);
 
@@ -812,9 +813,10 @@ exit:
     }
 
     //Send payload to request originator
-    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
     {
-        OIC_LOG(ERROR, TAG, "SendSRMCBORResponse failed in HandleDoxmPostRequest");
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmPostRequest");
     }
     DeleteDoxmBinData(newDoxm);
 
@@ -849,7 +851,7 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
                 break;
         }
     }

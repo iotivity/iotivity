@@ -189,7 +189,7 @@ exit:
 OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
                                OicSecSvc_t **secSvc)
 {
-    if (NULL == cborPayload || NULL == secSvc || NULL != *secSvc)
+    if (NULL == cborPayload || NULL == secSvc || NULL != *secSvc || 0 == size)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -201,13 +201,8 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
     CborValue svcCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
-    int cborLen = size;
-    if (0 == size)
-    {
-       cborLen = CBOR_SIZE;
-    }
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &svcCbor);
 
+    cbor_parser_init(cborPayload, size, 0, &parser, &svcCbor);
     OicSecSvc_t *headSvc = NULL;
 
     CborValue svcArray = { .parser = NULL };
@@ -325,10 +320,13 @@ static OCEntityHandlerResult HandleSVCGetRequest(const OCEntityHandlerRequest * 
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, cborSvc, size);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, cborSvc, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleSVCGetRequest");
+    }
 
     OICFree(cborSvc);
-
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
@@ -336,7 +334,7 @@ static OCEntityHandlerResult HandleSVCGetRequest(const OCEntityHandlerRequest * 
 static OCEntityHandlerResult HandleSVCPostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
     if (payload)
     {
@@ -362,7 +360,11 @@ static OCEntityHandlerResult HandleSVCPostRequest(const OCEntityHandlerRequest *
     }
 
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleSVCPostRequest");
+    }
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
@@ -398,7 +400,7 @@ static OCEntityHandlerResult SVCEntityHandler(OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 

@@ -249,7 +249,7 @@ exit:
 OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
                                  OicSecAmacl_t **secAmacl)
 {
-    if (NULL == cborPayload || NULL == secAmacl || NULL != *secAmacl)
+    if (NULL == cborPayload || NULL == secAmacl || NULL != *secAmacl || 0 == size)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -261,13 +261,8 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
     CborValue amaclCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
-    int cborLen = size;
-    if (0 == size)
-    {
-        cborLen = CBOR_SIZE;
-    }
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &amaclCbor);
 
+    cbor_parser_init(cborPayload, size, 0, &parser, &amaclCbor);
     OicSecAmacl_t *headAmacl = (OicSecAmacl_t *)OICCalloc(1, sizeof(OicSecAmacl_t));
 
     CborValue amaclMap = { .parser = NULL };
@@ -460,8 +455,11 @@ static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, cborPayload, size);
-
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, cborPayload, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleAmaclGetRequest");
+    }
     OICFree(cborPayload);
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
@@ -473,7 +471,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert CBOR Amacl data into binary. This will also validate the Amacl data received.
-    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
     if (payload)
     {
@@ -498,7 +496,11 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     }
 
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleAmaclPostRequest");
+    }
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
@@ -535,7 +537,7 @@ static OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 

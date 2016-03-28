@@ -440,7 +440,7 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
-    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData1),
+    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData),
             &(secPayload->payloadSize));
 
     if(OC_STACK_OK != ret)
@@ -449,7 +449,8 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
         OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "DPARING : %s", secPayload->securityData1);
+    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(true,
@@ -695,7 +696,7 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
-    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData1),
+    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData),
             &(secPayload->payloadSize));
 
     if(OC_STACK_OK != ret)
@@ -704,7 +705,8 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
         OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "DPARING : %s", secPayload->securityData1);
+    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(false,
@@ -858,7 +860,7 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
         OicSecPconf_t *pconf = NULL;
 
         OCStackResult res = CBORPayloadToPconf(
-                ((OCSecurityPayload*)clientResponse->payload)->securityData1,
+                ((OCSecurityPayload*)clientResponse->payload)->securityData,
                 CBOR_SIZE,&pconf);
         if (OC_STACK_OK != res )
         {

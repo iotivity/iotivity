@@ -88,9 +88,9 @@ devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicedis
 threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
 
 clientjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
-				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.json')
+				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
-				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.json')
+				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
 Alias("examples", [simpleserver, simpleclient,
 		simpleserverHQ, simpleclientHQ,
 		fridgeserver, fridgeclient,

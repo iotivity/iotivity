@@ -45,28 +45,6 @@
 #endif // __WITH_X509__
 
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, const char *rspPayload)
-{
-    OIC_LOG (DEBUG, TAG, "SRM sending SRM response");
-    OCEntityHandlerResponse response = {.requestHandle = NULL};
-    if (ehRequest)
-    {
-        OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
-
-        response.requestHandle = ehRequest->requestHandle;
-        response.resourceHandle = ehRequest->resource;
-        response.ehResult = ehRet;
-        response.payload = (OCPayload*)(&ocPayload);
-        response.payload->type = PAYLOAD_TYPE_SECURITY;
-        ((OCSecurityPayload*)response.payload)->securityData = (char *)rspPayload;
-        response.persistentBufferFlag = 0;
-
-        return OCDoResponse(&response);
-    }
-    return OC_STACK_ERROR;
-}
-
-OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size)
 {
     OIC_LOG(DEBUG, TAG, "SRM sending SRM response");
@@ -82,7 +60,7 @@ OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
         response.ehResult = ehRet;
         response.payload = (OCPayload *)(&ocPayload);
         response.payload->type = PAYLOAD_TYPE_SECURITY;
-        ((OCSecurityPayload *)response.payload)->securityData1 = cborPayload;
+        ((OCSecurityPayload *)response.payload)->securityData = cborPayload;
         ((OCSecurityPayload *)response.payload)->payloadSize = size;
         response.persistentBufferFlag = 0;
 

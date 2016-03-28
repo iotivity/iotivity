@@ -152,8 +152,8 @@ cp out/tizen/*/%{build_mode}/resource/examples/simpleclientserver %{ex_install_d
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserver %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.json %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.json %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
 %if 0%{?SECURED} == 1
 mkdir -p %{ex_install_dir}/provisioning

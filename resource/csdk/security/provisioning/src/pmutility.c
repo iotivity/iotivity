@@ -515,8 +515,9 @@ static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoH
             }
 
             OicSecVer_t *ptrVer = NULL;
-            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
             size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
             OCStackResult res = CBORPayloadToVer(payload, size, &ptrVer);
             if ((NULL == ptrVer) && (OC_STACK_OK != res))
             {
@@ -653,10 +654,11 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
             }
 
             OicSecDoxm_t *ptrDoxm = NULL;
-            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
             size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
             OCStackResult res = CBORPayloadToDoxm(payload, size, &ptrDoxm);
-            if ((NULL == ptrDoxm) && (OC_STACK_OK != res))
+            if ((NULL == ptrDoxm) || (OC_STACK_OK != res))
             {
                 OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
                 return OC_STACK_KEEP_TRANSACTION;

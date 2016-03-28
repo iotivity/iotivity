@@ -63,7 +63,7 @@ static size_t GetJSONFileSize(const char *jsonFileName)
         do
         {
             bytesRead = fread(buffer, 1, DB_FILE_SIZE_BLOCK, fp);
-            if (size + bytesRead > MAX_RANGE)
+            if (bytesRead >=(MAX_RANGE - size))
             {
                 fclose(fp);
                 return 0;
@@ -95,11 +95,12 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         return;
     }
 
+    jsonStr = (char *)OICMalloc(size + 1);
+    VERIFY_NON_NULL(TAG, jsonStr, FATAL);
+
     fp = fopen(jsonFileName, "r");
     if (fp)
     {
-        jsonStr = (char *)OICMalloc(size + 1);
-        VERIFY_NON_NULL(TAG, jsonStr, FATAL);
         size_t bytesRead = fread(jsonStr, 1, size, fp);
         jsonStr[bytesRead] = '\0';
 
@@ -705,12 +706,16 @@ exit:
 
 OicSecCred_t * JSONToCredBin(const char * jsonStr)
 {
+    if (NULL == jsonStr)
+    {
+        OIC_LOG(ERROR, TAG,"JSONToCredBin jsonStr in NULL");
+        return NULL;
+    }
 
-    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
     OicSecCred_t *headCred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
-
     OCStackResult ret = OC_STACK_ERROR;
     cJSON *jsonRoot = NULL;
+    VERIFY_NON_NULL(TAG, headCred, ERROR);
 
     jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);

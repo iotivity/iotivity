@@ -69,12 +69,6 @@
 static OTMCallbackData_t g_OTMDatas[OIC_OXM_COUNT];
 
 /**
- * Number of supported provisioning methods
- * current version supports only one.
- */
-static size_t gNumOfProvisioningMethodsPT = 1;
-
-/**
  * Variables for pointing the OTMContext to be used in the DTLS handshake result callback.
  */
 static OTMContext_t* g_otmCtx = NULL;
@@ -521,10 +515,10 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
         }
         OicSecPstat_t* pstat = NULL;
         OCStackResult result = CBORPayloadToPstat(
-                ((OCSecurityPayload*)clientResponse->payload)->securityData1,
+                ((OCSecurityPayload*)clientResponse->payload)->securityData,
                 ((OCSecurityPayload*)clientResponse->payload)->payloadSize,
                 &pstat);
-        if(NULL == pstat && result != OC_STACK_OK)
+        if(NULL == pstat || result != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "Error while converting cbor to pstat.");
             SetResult(otmCtx, OC_STACK_ERROR);
@@ -941,7 +935,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
 
     //Generate owner credential for new device
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OicSecCred_t* ownerCredential = GetCredResourceData(&(deviceInfo->doxm->deviceID));
+    const OicSecCred_t* ownerCredential = GetCredResourceData(&(deviceInfo->doxm->deviceID));
     if(!ownerCredential)
     {
         OIC_LOG(ERROR, TAG, "Can not find OwnerPSK.");
@@ -967,13 +961,14 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
 #endif
 
         //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
-        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData1, &secPayload->payloadSize))
+        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData, &secPayload->payloadSize))
         {
             OICFree(secPayload);
             OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");
             return OC_STACK_ERROR;
         }
-        OIC_LOG_V(DEBUG, TAG, "Payload : %s", secPayload->securityData1);
+        OIC_LOG(DEBUG, TAG, "Cred Payload:");
+        OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
         OCCallbackData cbData;
         cbData.cb = &OwnerCredentialHandler;
@@ -1029,8 +1024,8 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCStackResult res = g_OTMDatas[selectedOxm].createSelectOxmPayloadCB(otmCtx,
-            &secPayload->securityData1, &secPayload->payloadSize);
-    if (OC_STACK_OK != res && NULL == secPayload->securityData1)
+            &secPayload->securityData, &secPayload->payloadSize);
+    if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting bin to cbor");
@@ -1123,14 +1118,14 @@ static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCStackResult res =  g_OTMDatas[deviceInfo->doxm->oxmSel].createOwnerTransferPayloadCB(
-            otmCtx, &secPayload->securityData1, &secPayload->payloadSize);
-    if (NULL == secPayload->securityData1)
+            otmCtx, &secPayload->securityData, &secPayload->payloadSize);
+    if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting doxm bin to cbor.");
         return OC_STACK_INVALID_PARAM;
     }
-    OIC_LOG_V(DEBUG, TAG, "Payload : %s", secPayload->securityData1);
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     OCCallbackData cbData;
     cbData.cb = &OwnerUuidUpdateHandler;
@@ -1183,8 +1178,8 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCStackResult res = DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm,
-            &secPayload->securityData1, &secPayload->payloadSize);
-    if (OC_STACK_OK != res && NULL == secPayload->securityData1)
+            &secPayload->securityData, &secPayload->payloadSize);
+    if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting doxm bin to json");
@@ -1236,7 +1231,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData1,
+    OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData,
                                            &secPayload->payloadSize);
    if (OC_STACK_OK != res)
     {
@@ -1407,122 +1402,6 @@ error:
     return res;
 }
 
-/**
- * Callback handler of SRPFinalizeProvisioning.
- *
- * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] UNUSED          handle to an invocation
- * @param[in] clientResponse  Response from queries to remote servers.
- * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
- *          and OC_STACK_KEEP_TRANSACTION to keep it.
- */
-static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNUSED,
-                                                       OCClientResponse *clientResponse)
-{
-    OIC_LOG_V(INFO, TAG, "IN FinalizeProvisioningCB.");
-
-    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
-    VERIFY_NON_NULL(TAG, ctx, ERROR);
-
-    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-    (void)UNUSED;
-    if(OC_STACK_OK == clientResponse->result)
-    {
-        OCStackResult res = PDMAddDevice(&otmCtx->selectedDeviceInfo->doxm->deviceID);
-
-         if (OC_STACK_OK == res)
-         {
-                OIC_LOG_V(INFO, TAG, "Add device's UUID in PDM_DB");
-                SetResult(otmCtx, OC_STACK_OK);
-                return OC_STACK_DELETE_TRANSACTION;
-         }
-         else
-         {
-              OIC_LOG(ERROR, TAG, "Ownership transfer is complete but adding information to DB is failed.");
-         }
-    }
-exit:
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
-/**
- * Callback handler of default ACL provisioning.
- *
- * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] UNUSED          handle to an invocation
- * @param[in] clientResponse  Response from queries to remote servers.
- * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
- *          and OC_STACK_KEEP_TRANSACTION to keep it.
- */
-static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUSED,
-                                                       OCClientResponse *clientResponse)
-{
-    OIC_LOG_V(INFO, TAG, "IN ProvisionDefaultACLCB.");
-
-    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
-    VERIFY_NON_NULL(TAG, ctx, ERROR);
-
-    OTMContext_t* otmCtx = (OTMContext_t*) ctx;
-    (void)UNUSED;
-
-    if (OC_STACK_RESOURCE_CREATED == clientResponse->result)
-    {
-        OIC_LOG_V(INFO, TAG, "Staring commit hash task.");
-        // TODO hash currently have fixed value 0.
-        uint16_t aclHash = 0;
-        otmCtx->selectedDeviceInfo->pstat->commitHash = aclHash;
-        otmCtx->selectedDeviceInfo->pstat->tm = NORMAL;
-        OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-        if(!secPayload)
-        {
-            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-            return OC_STACK_NO_MEMORY;
-        }
-        secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-        OCStackResult res = PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-                &secPayload->securityData1, &secPayload->payloadSize);
-        if (OC_STACK_OK != res || NULL == secPayload->securityData1)
-        {
-            OICFree(secPayload);
-            SetResult(otmCtx, OC_STACK_INVALID_JSON);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-
-        char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-        if(!PMGenerateQuery(true,
-                            otmCtx->selectedDeviceInfo->endpoint.addr,
-                            otmCtx->selectedDeviceInfo->securePort,
-                            otmCtx->selectedDeviceInfo->connType,
-                            query, sizeof(query), OIC_RSRC_PSTAT_URI))
-        {
-            OIC_LOG(ERROR, TAG, "ProvisionDefaultACLCB : Failed to generate query");
-            return OC_STACK_ERROR;
-        }
-        OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
-
-        OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
-        cbData.cb = &FinalizeProvisioningCB;
-        cbData.context = (void*)otmCtx;
-        cbData.cd = NULL;
-        OCStackResult ret = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-        OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
-        if (ret != OC_STACK_OK)
-        {
-            OIC_LOG(ERROR, TAG, "OCStack resource error");
-            SetResult(otmCtx, ret);
-        }
-    }
-    else
-    {
-        OIC_LOG_V(INFO, TAG, "Error occured in provisionDefaultACLCB :: %d\n",
-                            clientResponse->result);
-        SetResult(otmCtx, clientResponse->result);
-    }
-exit:
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
 OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN PutProvisioningStatus");
@@ -1544,12 +1423,13 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData1, &secPayload->payloadSize))
+            &secPayload->securityData, &secPayload->payloadSize))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;
     }
-    OIC_LOG_V(INFO, TAG, "Created payload for chage to Provisiong state : %s",secPayload->securityData1);
+    OIC_LOG(DEBUG, TAG, "Created payload for chage to Provisiong state");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -1601,12 +1481,13 @@ OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData1, &secPayload->payloadSize))
+            &secPayload->securityData, &secPayload->payloadSize))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;
     }
-    OIC_LOG_V(INFO, TAG, "Created payload for chage to Provisiong state: %s",secPayload->securityData1);
+    OIC_LOG(DEBUG, TAG, "Created payload for chage to Provisiong state");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,

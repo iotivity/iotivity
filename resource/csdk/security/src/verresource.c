@@ -161,7 +161,7 @@ exit:
 OCStackResult CBORPayloadToVer(const uint8_t *cborPayload, size_t size,
                                 OicSecVer_t **secVer)
 {
-    if (NULL == cborPayload || NULL == secVer || NULL != *secVer)
+    if (NULL == cborPayload || NULL == secVer || NULL != *secVer || 0 == size)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -172,10 +172,9 @@ OCStackResult CBORPayloadToVer(const uint8_t *cborPayload, size_t size,
 
     CborParser parser = { .end = NULL};
     CborError cborFindResult = CborNoError;
-    int cborLen = (size == 0) ? CBOR_SIZE : size;
     size_t len = 0;
     CborValue verCbor = { .parser = NULL };
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &verCbor);
+    cbor_parser_init(cborPayload, size, 0, &parser, &verCbor);
     CborValue verMap = { .parser = NULL };
     OicSecVer_t *ver = (OicSecVer_t *)OICCalloc(1, sizeof(OicSecVer_t));
     VERIFY_NON_NULL(TAG, ver, ERROR);
@@ -235,9 +234,10 @@ static OCEntityHandlerResult HandleVerGetRequest (const OCEntityHandlerRequest *
     }
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, payload, size))
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
     {
-        OIC_LOG(ERROR, TAG, "SendSRMCBORResponse failed in HandleVerGetRequest");
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleVerGetRequest");
     }
 
     OICFree(payload);
@@ -269,7 +269,7 @@ OCEntityHandlerResult VerEntityHandler(OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
                 break;
         }
     }

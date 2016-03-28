@@ -352,7 +352,7 @@ exit:
 OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 OicSecCred_t **secCred)
 {
-    if (NULL == cborPayload || NULL == secCred || NULL != *secCred)
+    if (NULL == cborPayload || NULL == secCred || NULL != *secCred || 0 == size)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -871,7 +871,7 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
 
     //Get binary representation of cbor
     OicSecCred_t *cred  = NULL;
-    uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData1);
+    uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
     OCStackResult res = CBORPayloadToCred(payload, size, &cred);
     if (res == OC_STACK_OK)
@@ -1018,7 +1018,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 
     //Get binary representation of CBOR
     OicSecCred_t *cred  = NULL;
-    uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData1;
+    uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
     OCStackResult res = CBORPayloadToCred(payload, size, &cred);
     if ((OC_STACK_OK == res) && cred)
@@ -1104,7 +1104,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     }
 
     //Send payload to request originator
-    ret = (SendSRMCBORResponse(ehRequest, ret, NULL, 0) == OC_STACK_OK) ?
+    ret = (SendSRMResponse(ehRequest, ret, NULL, 0) == OC_STACK_OK) ?
                        ret : OC_EH_ERROR;
 
     return ret;

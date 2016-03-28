@@ -49,10 +49,11 @@ OCStackResult DestroySecureResources();
  * @param ehRequest pointer to entity handler request data structure.
  * @param ehRet result code from entity handler.
  * @param cborPayload response payload.
+ * @param size is the cborpayload size
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
+OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size);
 
 #ifdef __cplusplus
