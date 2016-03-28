@@ -1,1 +1,5 @@
-include ':simpleserver', ':simpleclient', ':fridgeserver', ':fridgeclient', ':guiclient', ':provisioningclient', ':presenceserver', ':presenceclient', ':devicediscoveryclient', ':devicediscoveryserver', ':groupclient', ':groupserver', ':fridgegroupclient', ':fridgegroupserver'
+include ':simpleserver', ':simpleclient', ':fridgeserver', ':fridgeclient', ':guiclient', ':presenceserver', ':presenceclient', ':devicediscoveryclient', ':devicediscoveryserver', ':groupclient', ':groupserver', ':fridgegroupclient', ':fridgegroupserver'
+SECURED=System.getProperty('SECURE')
+if(SECURED== "1"){
+        include ':provisioningclient'
+}

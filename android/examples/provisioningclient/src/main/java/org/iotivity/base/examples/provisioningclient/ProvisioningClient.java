@@ -198,17 +198,17 @@ public class ProvisioningClient extends Activity implements
             newSecureResource = ownedDeviceList.get(0);
             OcSecureResource newSecureResource2 = ownedDeviceList.get(1);
             List<String> resources = new ArrayList<String>();
-            List<String> owners = new ArrayList<String>();
             List<String> periods = new ArrayList<String>();
             List<String> recurrences = new ArrayList<String>();
+            String rownerID= "61646d69-6e44-6576-6963-655555494430";
             recurrences.add("Daily");
             resources.add("*");
-            owners.add("adminDeviceUUID0");
+            //owners.add("adminDeviceUUID0");
             periods.add("01-01-15");
             OicSecAcl acl1 = new OicSecAcl(newSecureResource.getDeviceID(), recurrences, periods,
-                    31, resources, owners);
+                    31, resources, rownerID);
             OicSecAcl acl2 = new OicSecAcl(newSecureResource2.getDeviceID(), recurrences, periods,
-                    31, resources, owners);
+                    31, resources, rownerID);
             newSecureResource.provisionPairwiseDevices(EnumSet.of(CredType.SYMMETRIC_PAIR_WISE_KEY),
                     KeySize.OWNER_PSK_LENGTH_128, acl1, newSecureResource2, acl2, this);
         } catch (Exception e) {
@@ -369,15 +369,18 @@ public class ProvisioningClient extends Activity implements
                     OcSecureResource ocSecureResourceDest = ownedDeviceList.get(1);
                     publishProgress(TAG + "ACL Provision for " + ocSecureResource.getDeviceID());
                     List<String> resources = new ArrayList<String>();
-                    List<String> owners = new ArrayList<String>();
+                    
                     List<String> periods = new ArrayList<String>();
                     List<String> recurrences = new ArrayList<String>();
+
+                    String rownerID="61646d69-6e44-6576-6963-655555494430";
+
                     recurrences.add("Daily");
                     resources.add("*");
-                    owners.add("adminDeviceUUID0");
+                    
                     periods.add("01-01-15");
                     OicSecAcl aclObject = new OicSecAcl(ocSecureResourceDest.getDeviceID(),
-                            recurrences, periods, 31, resources, owners);
+                            recurrences, periods, 31, resources, rownerID);
                     ocSecureResource.provisionACL(aclObject, provisionAclListener);
                 } else {
                     publishProgress(TAG + "No Owned devices present");
