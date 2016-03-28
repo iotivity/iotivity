@@ -1441,7 +1441,6 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
         else
         {
             OIC_LOG(INFO, TAG, "not Blockwise Transfer");
-            goto exit;
         }
     }
 
@@ -1450,11 +1449,15 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
     {
         // if received message type is RESET from remote device,
         // we have to use the updated message id of request message to find token.
-        res = CAUpdateMessageId(*pdu, blockDataID);
-        if (CA_STATUS_OK != res)
+        CABlockData_t *blockData = CAGetBlockDataFromBlockDataList(blockDataID);
+        if (blockData)
         {
-            OIC_LOG(ERROR, TAG, "fail to update message id");
-            goto exit;
+            res = CAUpdateMessageId(*pdu, blockDataID);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "fail to update message id");
+                goto exit;
+            }
         }
     }
 
