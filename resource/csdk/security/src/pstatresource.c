@@ -499,9 +499,21 @@ OCStackResult InitPstatResource()
     }
     if (data)
     {
+        OicUuid_t emptyUuid = {.id={0}};
+
         // Read ACL resource from PS
         ret = CBORPayloadToPstat(data, size, &gPstat);
         OICFree(data);
+
+        //In case of PStat's device id is empty, fill the device id as doxm's device id.
+        if(memcmp(&gPstat->deviceID, &emptyUuid, sizeof(OicUuid_t)) == 0)
+        {
+            OicUuid_t doxmUuid = {.id={0}};
+            if(OC_STACK_OK == GetDoxmDeviceID(&doxmUuid))
+            {
+                memcpy(&gPstat->deviceID, &doxmUuid, sizeof(OicUuid_t));
+            }
+        }
     }
     /*
      * If SVR database in persistent storage got corrupted or

@@ -80,8 +80,10 @@ justworksdat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat')
 randompindat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir+ 'oic_svr_db_server_randompin.dat')
+randompin_with_emptyuuid_dat = provisioning_env.Install(sec_provisioning_build_dir,
+                                    sec_provisioning_src_dir+ 'oic_svr_db_randompin_with_empty_deviceid.dat')
 
-Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin, clientdat, justworksdat, randompindat])
+Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin, clientdat, justworksdat, randompindat, randompin_with_emptyuuid_dat])
 
 provisioning_env.AppendTarget('samples')
 
