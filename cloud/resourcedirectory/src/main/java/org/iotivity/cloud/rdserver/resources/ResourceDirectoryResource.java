@@ -378,10 +378,10 @@ public class ResourceDirectoryResource extends Resource {
                 Logger.i("drel : " + pubPayload.getDrel());
             }
 
-            if (tags.get(Constants.RS_TTL) != null) {
-                pubPayload.setTtl((int) tags.get(Constants.RS_TTL));
-                Logger.i("ttl : " + pubPayload.getTtl());
-            }
+            //if (tags.get(Constants.RS_TTL) != null) {
+           //     pubPayload.setTtl((int) tags.get(Constants.RS_TTL));
+           //     Logger.i("ttl : " + pubPayload.getTtl());
+            //}
 
             ArrayList<LinkedHashMap<Object, Object>> publishLinks = (ArrayList<LinkedHashMap<Object, Object>>) payloadData
                     .get(1);
