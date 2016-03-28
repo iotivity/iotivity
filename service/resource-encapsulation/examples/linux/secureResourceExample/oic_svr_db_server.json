@@ -117,7 +117,7 @@
                 "credtype": 1,
                 "privatedata": {
                     "data": "AAAAAAAAAAAAAAAA",
-                    "encoding": "oic.sec.encoding.bytestream"
+                    "encoding": "oic.sec.encoding.raw"
                 }
             }
         ],

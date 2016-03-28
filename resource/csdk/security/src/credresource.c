@@ -236,8 +236,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_JSON_ENCODING_NAME,
                 strlen(OIC_JSON_ENCODING_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Encoding Tag.");
-            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_SEC_ENCODING_BYTESTREAM,
-                strlen(OIC_SEC_ENCODING_BYTESTREAM));
+            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_SEC_ENCODING_RAW,
+                strlen(OIC_SEC_ENCODING_RAW));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Encoding Value.");
 
             cborEncoderResult = cbor_encoder_close_container(&credMap, &publicMap);
@@ -268,8 +268,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_ENCODING_NAME,
                 strlen(OIC_JSON_ENCODING_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Tag.");
-            cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_SEC_ENCODING_BYTESTREAM,
-                strlen(OIC_SEC_ENCODING_BYTESTREAM));
+            cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_SEC_ENCODING_RAW,
+                strlen(OIC_SEC_ENCODING_RAW));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Value.");
 
             cborEncoderResult = cbor_encoder_close_container(&credMap, &privateMap);

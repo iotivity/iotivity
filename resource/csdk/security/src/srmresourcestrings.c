@@ -154,7 +154,7 @@ const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 
 //Credential data encoding methods
 const char * OIC_SEC_ENCODING_BASE64 = "oic.sec.encoding.base64";
-const char * OIC_SEC_ENCODING_BYTESTREAM = "oic.sec.encoding.bytestream";
+const char * OIC_SEC_ENCODING_RAW = "oic.sec.encoding.raw";
 
 const char * OIC_SEC_TRUE = "true";
 const char * OIC_SEC_FALSE = "false";

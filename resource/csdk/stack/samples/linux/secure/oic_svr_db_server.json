@@ -88,7 +88,7 @@
                             "rel": "",
                             "rt": "",
                             "if": ""
-                        } 
+                        }
                     ],
                     "permission": 6,
                     "period" : ["20150630T060000/20150630T220000", "20150630T060000/20150630T200000"],
@@ -102,7 +102,7 @@
                             "rel": "",
                             "rt": "",
                             "if": ""
-                        } 
+                        }
                     ],
                     "permission": 6,
                     "period" : ["20150630T060000/20150630T220000"],
@@ -140,7 +140,7 @@
                 "period": "20150630T060000/20990920T220000",
                 "privatedata": {
                     "data": "AAAAAAAAAAAAAAAA",
-                    "encoding": "oic.sec.encoding.bytestream"
+                    "encoding": "oic.sec.encoding.raw"
                 }
             },
             {
@@ -150,7 +150,7 @@
                 "period": "20150630T060000/20990920T220000",
                 "privatedata": {
                     "data": "BBBBBBBBBBBBBBBB",
-                    "encoding": "oic.sec.encoding.bytestream"
+                    "encoding": "oic.sec.encoding.raw"
                 }
             }
         ],

@@ -155,7 +155,7 @@ extern const char * OXM_RANDOM_DEVICE_PIN;
 extern const char * OXM_MANUFACTURER_CERTIFICATE;
 
 extern const char * OIC_SEC_ENCODING_BASE64;
-extern const char * OIC_SEC_ENCODING_BYTESTREAM;
+extern const char * OIC_SEC_ENCODING_RAW;
 
 extern const char * OIC_SEC_TRUE;
 extern const char * OIC_SEC_FALSE;
