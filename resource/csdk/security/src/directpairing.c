@@ -867,56 +867,58 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
         }
         else
         {
-            OCDevAddr endpoint;
-            memcpy(&endpoint, &clientResponse->devAddr, sizeof(OCDevAddr));
-
-            OCStackResult res = addDev(&g_dp_discover, &endpoint,
-                        clientResponse->connType, pconf);
-            DeletePconfBinData(pconf);
-            if (OC_STACK_OK != res)
+            if(pconf->edp)
             {
-                OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
+                OCDevAddr endpoint;
+                memcpy(&endpoint, &clientResponse->devAddr, sizeof(OCDevAddr));
+
+                OCStackResult res = addDev(&g_dp_discover, &endpoint,
+                            clientResponse->connType, pconf);
+                DeletePconfBinData(pconf);
+                if (OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
 
 
-            char rsrc_uri[MAX_URI_LENGTH+1] = {0};
-            int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
-                      OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DPAIRING);
-            if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
-            {
-                OIC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
+                char rsrc_uri[MAX_URI_LENGTH+1] = {0};
+                int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
+                          OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DPAIRING);
+                if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
+                {
+                    OIC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
 
-            //Try to the unicast discovery to getting secure port
-            char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
-            if(!DPGenerateQuery(false,
-                                clientResponse->devAddr.addr, clientResponse->devAddr.port,
-                                clientResponse->connType,
-                                query, sizeof(query), rsrc_uri))
-            {
-                OIC_LOG(ERROR, TAG, "DirectPairingDiscoveryHandler : Failed to generate query");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
-            OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+                //Try to the unicast discovery to getting secure port
+                char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
+                if(!DPGenerateQuery(false,
+                                    clientResponse->devAddr.addr, clientResponse->devAddr.port,
+                                    clientResponse->connType,
+                                    query, sizeof(query), rsrc_uri))
+                {
+                    OIC_LOG(ERROR, TAG, "DirectPairingDiscoveryHandler : Failed to generate query");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-            OCCallbackData cbData;
-            cbData.cb = &DirectPairingPortDiscoveryHandler;
-            cbData.context = NULL;
-            cbData.cd = NULL;
-            OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
-                    clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
-            if(OC_STACK_OK != ret)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
-                return OC_STACK_KEEP_TRANSACTION;
+                OCCallbackData cbData;
+                cbData.cb = &DirectPairingPortDiscoveryHandler;
+                cbData.context = NULL;
+                cbData.cd = NULL;
+                OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
+                        clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                if(OC_STACK_OK != ret)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                else
+                {
+                    OIC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
+                }
             }
-            else
-            {
-                OIC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
-            }
-
             return  OC_STACK_KEEP_TRANSACTION;
         }
     }
