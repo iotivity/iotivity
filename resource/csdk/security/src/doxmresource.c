@@ -116,8 +116,8 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder doxmMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder doxmMap;
     char* strUuid = NULL;
 
     int64_t cborEncoderResult = CborNoError;
@@ -141,7 +141,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     //OxmType -- Not Mandatory
     if (doxm->oxmTypeLen > 0)
     {
-        CborEncoder oxmType = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        CborEncoder oxmType;
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_TYPE_NAME,
             strlen(OIC_JSON_OXM_TYPE_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Tag.");
@@ -161,7 +161,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     //Oxm -- Not Mandatory
     if (doxm->oxmLen > 0)
     {
-        CborEncoder oxm = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        CborEncoder oxm;
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXMS_NAME,
             strlen(OIC_JSON_OXMS_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Tag.");

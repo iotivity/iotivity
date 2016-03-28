@@ -92,8 +92,8 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder crlMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder crlMap;
 
     CborError cborEncoderResult = CborNoError;
 

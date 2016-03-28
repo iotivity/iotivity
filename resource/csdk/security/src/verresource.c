@@ -89,8 +89,8 @@ OCStackResult VerToCBORPayload(const OicSecVer_t *ver, uint8_t **payload, size_t
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder verMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder verMap;
 
     int64_t cborEncoderResult = CborNoError;
     uint8_t mapSize = VER_MAP_SIZE;

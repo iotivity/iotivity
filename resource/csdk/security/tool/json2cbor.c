@@ -215,7 +215,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
         DeleteCredList(cred);
     }
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
     size_t cborSize = aclCborSize + pstatCborSize + doxmCborSize + svcCborSize + credCborSize + amaclCborSize;
 
     printf("Total Cbor Size : %zd\n", cborSize);
@@ -223,7 +223,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborSize);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborSize, 0);
-    CborEncoder map = { {.ptr = NULL }, .end = 0 };
+    CborEncoder map;
     CborError cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating Main Map.");
     if (aclCborSize > 0)

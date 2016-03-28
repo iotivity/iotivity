@@ -168,8 +168,8 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     *payload = NULL;
 
     OCStackResult ret = OC_STACK_ERROR;
-    CborEncoder encoder = { {.ptr = NULL}, .end = 0};
-    CborEncoder pconfMap = { {.ptr = NULL}, .end = 0};
+    CborEncoder encoder;
+    CborEncoder pconfMap;
 
     int64_t cborEncoderResult = CborNoError;
     uint8_t mapSize = PCONF_MAP_SIZE;
@@ -204,7 +204,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     //PRM type -- Not Mandatory
     if(pconf->prmLen > 0)
     {
-        CborEncoder prm = { {.ptr = NULL }, .end = 0 };
+        CborEncoder prm;
         cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_PRM_NAME,
                 strlen(OIC_JSON_PRM_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Convert Pconf PRM NAME");
@@ -231,7 +231,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     if (pconf->pdacls)
     {
         OicSecPdAcl_t *pdacl = pconf->pdacls;
-        CborEncoder pdAclArray = {{.ptr = NULL }, .end = 0 };
+        CborEncoder pdAclArray;
         cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_PDACL_NAME,
                 strlen(OIC_JSON_PDACL_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create OIC_JSON_PDACL_NAME");
@@ -241,7 +241,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
 
         while(pdacl)
         {
-            CborEncoder pdAclMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            CborEncoder pdAclMap;
             // PDACL Map size - Number of mandatory items
             uint8_t aclMapSize = 2;
 
@@ -262,14 +262,14 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
                     strlen(OIC_JSON_RESOURCES_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to encode resource result");
 
-            CborEncoder resources = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            CborEncoder resources;
             cborEncoderResult = cbor_encoder_create_array(&pdAclMap, &resources,
                     pdacl->resourcesLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,  "Failed to create resource array");
 
             for (size_t i = 0; i < pdacl->resourcesLen; i++)
             {
-                CborEncoder rMap = { {.ptr = NULL }, .end = 0 };
+                CborEncoder rMap;
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap,
                         PCONF_RESOURCE_MAP_SIZE);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Map.");
@@ -325,7 +325,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
             // Period -- Not Mandatory
             if (pdacl->periods)
             {
-                CborEncoder period = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+                CborEncoder period;
                 cborEncoderResult = cbor_encode_text_string(&pdAclMap, OIC_JSON_PERIODS_NAME,
                         strlen(OIC_JSON_PERIODS_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode period value");
@@ -346,7 +346,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
             // Period -- Not Mandatory
             if(0 != pdacl->prdRecrLen && pdacl->recurrences)
             {
-                CborEncoder recurrences = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+                CborEncoder recurrences;
                 cborEncoderResult = cbor_encode_text_string(&pdAclMap, OIC_JSON_RECURRENCES_NAME,
                         strlen(OIC_JSON_RECURRENCES_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult,"Failed to encode recurrences");
@@ -377,7 +377,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     //There may not be paired devices if it did not pairing before
     if (pconf->pddevs && 0 < pconf->pddevLen)
     {
-        CborEncoder pddev = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        CborEncoder pddev;
         cborEncoderResult = cbor_encode_text_string(&pconfMap, OIC_JSON_PDDEV_LIST_NAME,
                 strlen(OIC_JSON_PDDEV_LIST_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to encode pddev");

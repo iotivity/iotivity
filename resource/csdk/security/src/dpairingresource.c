@@ -193,8 +193,8 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder dpairMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder dpairMap;
 
     int64_t cborEncoderResult = CborNoError;
     uint8_t mapSize = DPAIR_MAP_SIZE;

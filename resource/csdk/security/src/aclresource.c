@@ -141,10 +141,10 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     OCStackResult ret = OC_STACK_ERROR;
     CborError cborEncoderResult = CborNoError;
     OicSecAcl_t *acl = (OicSecAcl_t *)secAcl;
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder aclMap = { {.ptr = NULL }, .end = 0 };
-    CborEncoder aclListMap = { {.ptr = NULL }, .end = 0 };
-    CborEncoder acesArray = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder aclMap;
+    CborEncoder aclListMap;
+    CborEncoder acesArray;
     uint8_t *outPayload = NULL;
     size_t cborLen = *size;
     *size = 0;
@@ -181,7 +181,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
 
     while (acl)
     {
-        CborEncoder oicSecAclMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        CborEncoder oicSecAclMap;
         // ACL Map size - Number of mandatory items
         uint8_t aclMapSize = ACL_ACES_MAP_SIZE;
         size_t inLen = 0;
@@ -223,7 +223,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
 
         // Resources
         {
-            CborEncoder resources = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            CborEncoder resources;
             cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RESOURCES_NAME,
                 strlen(OIC_JSON_RESOURCES_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Name Tag.");
@@ -234,7 +234,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             for (size_t i = 0; i < acl->resourcesLen; i++)
             {
 
-                CborEncoder rMap = { {.ptr = NULL }, .end = 0 };
+                CborEncoder rMap;
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, ACL_RESOURCE_MAP_SIZE);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Map.");
 

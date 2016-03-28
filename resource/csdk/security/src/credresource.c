@@ -139,9 +139,9 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     *cborSize = 0;
     *cborPayload = NULL;
     const OicSecCred_t *cred = credS;
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder credArray = { {.ptr = NULL }, .end = 0 };
-    CborEncoder credRootMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder credArray;
+    CborEncoder credRootMap;
 
     if (0 == cborLen)
     {
@@ -167,7 +167,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
     while (cred)
     {
-        CborEncoder credMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        CborEncoder credMap;
         size_t mapSize = CRED_MAP_SIZE;
         char *subject = NULL;
         if (cred->period)
@@ -215,7 +215,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         //PublicData -- Not Mandatory
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
-            CborEncoder publicMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            CborEncoder publicMap;
             const size_t publicMapSize = 2;
 
             cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_PUBLICDATA_NAME,
@@ -247,7 +247,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         //PrivateData -- Not Mandatory
         if(cred->privateData.data)
         {
-            CborEncoder privateMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            CborEncoder privateMap;
             const size_t privateMapSize = 2;
 
             cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_PRIVATEDATA_NAME,

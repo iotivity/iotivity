@@ -94,8 +94,8 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder pstatMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder pstatMap;
     char* strUuid = NULL;
 
     int64_t cborEncoderResult = CborNoError;

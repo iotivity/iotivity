@@ -100,12 +100,12 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
     *cborSize = 0;
     *cborPayload = NULL;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder amaclMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder amaclMap;
     int64_t cborEncoderResult = CborNoError;
-    CborEncoder rsrcMap = { {.ptr = NULL }, .end = 0 };
-    CborEncoder rlistArray = { {.ptr = NULL }, .end = 0 };
-    CborEncoder amss = { {.ptr = NULL }, .end = 0 };
+    CborEncoder rsrcMap;
+    CborEncoder rlistArray;
+    CborEncoder amss;
     char *stRowner = NULL;
 
     const OicSecAmacl_t *amacl = amaclS;
@@ -138,7 +138,7 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
     for (size_t i = 0; i < amacl->resourcesLen; i++)
     {
         // TODO : Need to create rMap structure based on RAML spec.
-        CborEncoder rMap = { {.ptr = NULL }, .end = 0 };
+        CborEncoder rMap;
         cborEncoderResult = cbor_encoder_create_map(&rlistArray, &rMap, AMACL_RLIST_MAP_SIZE);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RLIST Map.");
 

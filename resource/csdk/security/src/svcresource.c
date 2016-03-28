@@ -94,8 +94,8 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
 
     int64_t cborEncoderResult = CborNoError;
     OCStackResult ret = OC_STACK_ERROR;
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder svcArray = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder svcArray;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
@@ -108,8 +108,8 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
 
     while (svc)
     {
-        CborEncoder svcMap = {{.ptr = NULL }, .end = 0 };
-        CborEncoder owners = {{.ptr = NULL }, .end = 0 };
+        CborEncoder svcMap;
+        CborEncoder owners;
 
         cborEncoderResult = cbor_encoder_create_map(&svcArray, &svcMap, SVC_MAP_SIZE);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Create SVC Map.");
