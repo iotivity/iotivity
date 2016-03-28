@@ -1441,3 +1441,13 @@ exit:
     return ret;
 }
 
+OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if (gCred)
+    {
+        *rowneruuid = gCred->rownerID;
+        retVal = OC_STACK_OK;
+    }
+    return retVal;
+}

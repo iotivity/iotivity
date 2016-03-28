@@ -239,8 +239,7 @@ typedef enum
 
 typedef enum
 {
-    NOT_A_SVR_RESOURCE = 0,
-    OIC_R_ACL_TYPE,
+    OIC_R_ACL_TYPE = 0,
     OIC_R_AMACL_TYPE,
     OIC_R_CRED_TYPE,
     OIC_R_CRL_TYPE,
@@ -249,7 +248,9 @@ typedef enum
     OIC_R_PCONF_TYPE,
     OIC_R_PSTAT_TYPE,
     OIC_R_SACL_TYPE,
-    OIC_R_SVC_TYPE
+    OIC_R_SVC_TYPE,
+    OIC_SEC_SVR_TYPE_COUNT, //define the value to number of SVR
+    NOT_A_SVR_RESOURCE = 99
 }OicSecSvrType_t;
 
 typedef enum
@@ -326,10 +327,6 @@ struct OicSecAcl
     char                **periods;       // 3:R:M*:N:String (<--M*; see Spec)
     char                **recurrences;   // 5:R:M:N:String
     OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
-    // NOTE: we are using UUID for Owners instead of Svc type for mid-April
-    // SRM version only; this will change to Svc type for full implementation.
-    //TODO change Owners type to oic.sec.svc
-    //OicSecSvc_t         *Owners;        // 6:R:M:Y:oic.sec.svc
     OicSecAcl_t         *next;
 };
 
@@ -345,10 +342,6 @@ struct OicSecAmacl
     size_t              amssLen;        // the number of elts in Amss
     OicUuid_t           *amss;          // 1:R:M:Y:acl
     OicUuid_t           rownerID;        // 2:R:S:Y:oic.uuid
-    // NOTE: we are using UUID for Owners instead of Svc type for mid-April
-    // SRM version only; this will change to Svc type for full implementation.
-    //TODO change Owners type to oic.sec.svc
-    //OicSecSvc_t         *Owners;        // 2:R:M:Y:oic.sec.svc
     OicSecAmacl_t         *next;
 };
 
@@ -372,10 +365,6 @@ struct OicSecCred
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
     OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
-    // NOTE: we are using UUID for Owners instead of Svc type for mid-April
-    // SRM version only; this will change to Svc type for full implementation.
-    //OicSecSvc_t         *Owners;        // 8:R:M:Y:oic.sec.svc
-    //TODO change Owners type to oic.sec.svc
     OicSecCred_t        *next;
 };
 
@@ -399,11 +388,6 @@ struct OicSecDoxm
     bool                dpc;            // 7:R:S:Y:Boolean
     OicUuid_t           owner;          // 8:R:S:Y:oic.uuid
     OicUuid_t           rownerID;       // 9:R:S:Y:oic.uuid
-    // NOTE: we are using UUID for Owner instead of Svc type for mid-April
-    // SRM version only; this will change to Svc type for full implementation.
-    //OicSecSvc_t       devOwner;        // 10:R:S:Y:oic.sec.svc
-    //OicSecSvc_t       rOwner;        // 11:R:S:Y:oic.sec.svc
-    //TODO change Owner type to oic.sec.svc
 };
 
 /**
@@ -423,8 +407,6 @@ struct OicSecPstat
     OicSecDpom_t        *sm;            // 5:R:M:Y:oic.sec.dpom
     uint16_t            commitHash;     // 6:R:S:Y:oic.sec.sha256
     OicUuid_t           rownerID;       // 7:R:S:Y:oic.uuid
-    //TODO: this is supposed to be a 256-bit uint; temporarily use uint16_t
-    //TODO: need to decide which 256 bit and 128 bit types to use... boost?
 };
 
 /**

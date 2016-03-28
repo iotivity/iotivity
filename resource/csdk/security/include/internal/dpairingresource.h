@@ -90,6 +90,13 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
             OicUuid_t *peerDevID, OicUuid_t *owner, bool isPairingServer);
 #endif // __WITH_DTLS__
 
+/**
+ * Gets the OicUuid_t value for the rownerid of the Dpairing resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetDpairingRownerId(OicUuid_t *rowneruuid);
 
 /**
  * Internal function to update resource owner

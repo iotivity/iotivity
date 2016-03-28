@@ -748,3 +748,14 @@ exit:
     memcpy(gDpair->rownerID.id, prevId.id, sizeof(prevId.id));
     return ret;
 }
+
+OCStackResult GetDpairingRownerId(OicUuid_t *rowneruuid)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if (gDpair)
+    {
+        *rowneruuid = gDpair->rownerID;
+        retVal = OC_STACK_OK;
+    }
+    return retVal;
+}

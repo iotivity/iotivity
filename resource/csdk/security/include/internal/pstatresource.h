@@ -85,6 +85,21 @@ void RestorePstatToInitState();
  */
 OCStackResult SetPstatRownerId(const OicUuid_t* newROwner);
 
+/**
+ * Gets the OicUuid_t value for the rownerid of the pstat resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid);
+
+/**
+ * This function returns the "isop" status of the device.
+ *
+ * @return true iff pstat.isop == 1, else false
+ */
+bool GetPstatIsop();
+
 #ifdef __cplusplus
 }
 #endif

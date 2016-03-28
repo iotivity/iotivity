@@ -1270,3 +1270,13 @@ exit:
     return ret;
 }
 
+OCStackResult GetPconfRownerId(OicUuid_t *rowneruuid)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if (gPconf)
+    {
+        *rowneruuid = gPconf->rownerID;
+        retVal = OC_STACK_OK;
+    }
+    return retVal;
+}

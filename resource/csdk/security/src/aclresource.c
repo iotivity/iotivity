@@ -1486,3 +1486,14 @@ exit:
     memcpy(gAcl->rownerID.id, prevId.id, sizeof(prevId.id));
     return ret;
 }
+
+OCStackResult GetAclRownerId(OicUuid_t *rowneruuid)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if (gAcl)
+    {
+        *rowneruuid = gAcl->rownerID;
+        retVal = OC_STACK_OK;
+    }
+    return retVal;
+}

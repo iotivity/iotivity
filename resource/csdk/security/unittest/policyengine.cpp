@@ -25,6 +25,7 @@
 #include "ocstack.h"
 #include "cainterface.h"
 #include "srmresourcestrings.h"
+#include "securevirtualresourcetypes.h"
 
 using namespace std;
 
@@ -50,22 +51,35 @@ OicUuid_t g_devOwner;
 char g_resource1[] = "Resource1";
 char g_resource2[] = "Resource2";
 
+extern OicSecDoxm_t *gDoxm;
+
 //Policy Engine Core Tests
 TEST(PolicyEngineCore, InitPolicyEngine)
 {
     EXPECT_EQ(OC_STACK_OK, InitPolicyEngine(&g_peContext));
 }
 
+// TODO - in order to unittest this we need InitDoxmResource() to put doxm
+// into Owned state with a known owner.  This will have to be done post v1.1.
 TEST(PolicyEngineCore, CheckPermissionNoAcls)
 {
-    EXPECT_EQ(ACCESS_DENIED_SUBJECT_NOT_FOUND,
-        CheckPermission(&g_peContext,
-                        &g_subjectIdA,
-                        g_resource1,
-                        PERMISSION_READ));
+    if(OC_STACK_OK == InitDoxmResource())
+    {
+        EXPECT_EQ(ACCESS_DENIED_SUBJECT_NOT_FOUND,
+            CheckPermission(&g_peContext,
+                            &g_subjectIdA,
+                            g_resource1,
+                            PERMISSION_READ));
+    }
+    else
+    {
+        printf("%s WARNING: InitDoxmResource() returned ERROR!\n", \
+            PE_UT_TAG);
+    }
 }
 
-//TODO This won't work until we figure out how to OcInit() or equivalent.
+// TODO - in order to unittest this we need InitDoxmResource() to put doxm
+// into Owned state with a known owner.  This will have to be done post v1.1.
 TEST(PolicyEngineCore, CheckDevOwnerRequest)
 {
     if(OC_STACK_OK == InitDoxmResource())
@@ -86,16 +100,15 @@ TEST(PolicyEngineCore, CheckDevOwnerRequest)
         }
         else
         {
-            printf("%s WARNING: InitDoxmResource() returned ERROR!\n", \
+            printf("%s WARNING: GetDoxmDevOwnerId() returned ERROR!\n", \
                 PE_UT_TAG);
         }
     }
     else
     {
-        printf("%s WARNING: GetDoxmDevOwnerId() returned ERROR!\n", PE_UT_TAG);
+        printf("%s WARNING: InitDoxmResource() returned ERROR!\n", \
+                PE_UT_TAG);
     }
-
-
 }
 
 TEST(PolicyEngineCore, DeInitPolicyEngine)

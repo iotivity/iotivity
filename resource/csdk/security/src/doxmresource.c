@@ -1011,16 +1011,31 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
     return OC_STACK_ERROR;
 }
 
-OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner)
+OCStackResult GetDoxmDevOwnerId(OicUuid_t *devownerid)
 {
     OCStackResult retVal = OC_STACK_ERROR;
     if (gDoxm)
     {
-        OIC_LOG_V(DEBUG, TAG, "gDoxm owned =  %d.", gDoxm->owned);
+        OIC_LOG_V(DEBUG, TAG, "GetDoxmDevOwnerId(): gDoxm owned =  %d.", \
+            gDoxm->owned);
         if (gDoxm->owned)
         {
-            *devOwner = gDoxm->owner; // TODO change to devOwner when available
+            *devownerid = gDoxm->owner;
             retVal = OC_STACK_OK;
+        }
+    }
+    return retVal;
+}
+
+OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if (gDoxm)
+    {
+        if( gDoxm->owned )
+        {
+            *rowneruuid = gDoxm->rownerID;
+                    retVal = OC_STACK_OK;
         }
     }
     return retVal;

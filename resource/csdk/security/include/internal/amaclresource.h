@@ -73,7 +73,6 @@ OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
 OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amacl, uint8_t **cborPayload,
                                  size_t *cborSize);
 
-
 /**
  * Internal function to update resource owner
  *
@@ -82,6 +81,14 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amacl, uint8_t **cborPaylo
  * @retval ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult SetAmaclRownerId(const OicUuid_t* newROwner);
+
+/**
+ * Gets the OicUuid_t value for the rownerid of the amacl resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetAmaclRownerId(OicUuid_t *rowneruuid);
 
 #ifdef __cplusplus
 }

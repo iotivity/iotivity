@@ -30,6 +30,11 @@
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "iotvticalendar.h"
+#include "pstatresource.h"
+#include "dpairingresource.h"
+#include "pconfresource.h"
+#include "amaclresource.h"
+#include "credresource.h"
 
 #define TAG "SRM-PE"
 
@@ -108,16 +113,91 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
 static bool IsRequestFromDevOwner(PEContext_t *context)
 {
     bool retVal = false;
-    OicUuid_t owner;
+    OicUuid_t ownerid;
 
     if(NULL == context)
     {
         return retVal;
     }
 
-    if(OC_STACK_OK == GetDoxmDevOwnerId(&owner))
+    if(OC_STACK_OK == GetDoxmDevOwnerId(&ownerid))
     {
-        retVal = UuidCmp(&context->subject, &owner);
+        retVal = UuidCmp(&context->subject, &ownerid);
+    }
+
+    return retVal;
+}
+
+// TODO - remove these function placeholders as they are implemented
+// in the resource entity handler code.
+// Note that because many SVRs do not have a rowner, in those cases we
+// just return "OC_STACK_ERROR" which results in a "false" return by
+// IsRequestFromResourceOwner().
+// As these SVRs are revised to have a rowner, these functions should be
+// replaced (see pstatresource.c for example of GetPstatRownerId).
+
+OCStackResult GetCrlRownerId(OicUuid_t *rowner)
+{
+    rowner = NULL;
+    return OC_STACK_ERROR;
+}
+
+OCStackResult GetSaclRownerId(OicUuid_t *rowner)
+{
+    rowner = NULL;
+    return OC_STACK_ERROR;
+}
+
+OCStackResult GetSvcRownerId(OicUuid_t *rowner)
+{
+    rowner = NULL;
+    return OC_STACK_ERROR;
+}
+
+static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT] = {
+    GetAclRownerId,
+    GetAmaclRownerId,
+    GetCredRownerId,
+    GetCrlRownerId,
+    GetDoxmRownerId,
+    GetDpairingRownerId,
+    GetPconfRownerId,
+    GetPstatRownerId,
+    GetSaclRownerId,
+    GetSvcRownerId
+};
+
+/**
+ * Compare the request's subject to resource.ROwner.
+ *
+ * @return true if context->subjectId equals SVR rowner id, else return false
+ */
+bool IsRequestFromResourceOwner(PEContext_t *context)
+{
+    bool retVal = false;
+    OicUuid_t resourceOwner;
+
+    if(NULL == context)
+    {
+        return false;
+    }
+
+    if((OIC_R_ACL_TYPE <= context->resourceType) && \
+        (OIC_SEC_SVR_TYPE_COUNT > context->resourceType))
+    {
+        if(OC_STACK_OK == GetSvrRownerId[(int)context->resourceType](&resourceOwner))
+        {
+            retVal = UuidCmp(&context->subject, &resourceOwner);
+        }
+    }
+
+    if(true == retVal)
+    {
+        OIC_LOG(INFO, TAG, "PE.IsRequestFromResourceOwner(): returning true");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "PE.IsRequestFromResourceOwner(): returning false");
     }
 
     return retVal;
@@ -377,6 +457,12 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
         {
             context->retVal = ACCESS_GRANTED;
         }
+        // Then check if request is for a SVR and coming from rowner
+        else if (IsRequestFromResourceOwner(context))
+        {
+            context->retVal = ACCESS_GRANTED;
+        }
+        // Else request is a "normal" request that must be tested against ACL
         else
         {
             OicUuid_t saveSubject = {.id={}};

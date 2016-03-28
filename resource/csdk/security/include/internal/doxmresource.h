@@ -88,9 +88,18 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 /**
  * Gets the OicUuid_t value for the owner of this device.
  *
- * @return ::OC_STACK_OK if devOwner is a valid UUID, otherwise ::OC_STACK_ERROR.
+ * @param devownerid a pointer to be assigned to the devownerid property
+ * @return ::OC_STACK_OK if devownerid is assigned correctly, else ::OC_STACK_ERROR.
  */
-OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner);
+OCStackResult GetDoxmDevOwnerId(OicUuid_t *devownerid);
+
+/**
+ * Gets the OicUuid_t value for the rowneruuid of the doxm resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid);
 
 /** This function deallocates the memory for OicSecDoxm_t .
  *

@@ -47,7 +47,7 @@ static const uint8_t PSTAT_MAP_SIZE = 7;
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
 {
-    false,                                    // bool isOwned
+    false,                                    // bool isop
     (OicSecDpm_t)(BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
     PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t cm
     (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
@@ -598,3 +598,23 @@ exit:
     return ret;
 }
 
+/**
+ * This function returns the "isop" status of the device.
+ *
+ * @return true iff pstat.isop == 1, else false
+ */
+bool GetPstatIsop()
+{
+    return gPstat->isOp;
+}
+
+OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if (gPstat)
+    {
+        *rowneruuid = gPstat->rownerID;
+        retVal = OC_STACK_OK;
+    }
+    return retVal;
+}

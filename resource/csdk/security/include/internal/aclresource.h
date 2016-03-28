@@ -96,6 +96,15 @@ OCStackResult UpdateDefaultSecProvACL();
  */
 OCStackResult SetAclRownerId(const OicUuid_t* newROwner);
 
+
+/**
+ * Gets the OicUuid_t value for the rownerid of the acl resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetAclRownerId(OicUuid_t *rowneruuid);
+
 #ifdef __cplusplus
 }
 #endif

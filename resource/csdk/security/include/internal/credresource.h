@@ -169,6 +169,14 @@ void DeleteCredList(OicSecCred_t* cred);
  */
 OCStackResult SetCredRownerId(const OicUuid_t* newROwner);
 
+/**
+ * Gets the OicUuid_t value for the rownerid of the cred resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
+
 #ifdef __cplusplus
 }
 #endif

@@ -104,4 +104,6 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method);
  */
 void SetPolicyEngineState(PEContext_t *context, const PEState_t state);
 
+typedef OCStackResult (*GetSvrRownerId_t)(OicUuid_t *rowner);
+
 #endif //IOTVT_SRM_PE_H

@@ -630,7 +630,6 @@ exit:
     return OC_STACK_ERROR;
 }
 
-
 OCStackResult SetAmaclRownerId(const OicUuid_t* newROwner)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -669,3 +668,13 @@ exit:
     return ret;
 }
 
+OCStackResult GetAmaclRownerId(OicUuid_t *rowneruuid)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if (gAmacl)
+    {
+        *rowneruuid = gAmacl->rownerID;
+        retVal = OC_STACK_OK;
+    }
+    return retVal;
+}
