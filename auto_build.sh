@@ -142,12 +142,6 @@ function build_tizen()
 	echo "*********** Build for Tizen *************"
 	./gbsbuild.sh
 
-	echo "*********** Build for Tizen CA lib and sample *************"
-	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
-
-	echo "*********** Build for Tizen CA lib and sample with Security *************"
-	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$1 $2
-
 	echo "*********** Build for Tizen octbstack lib and sample *************"
 	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
 
