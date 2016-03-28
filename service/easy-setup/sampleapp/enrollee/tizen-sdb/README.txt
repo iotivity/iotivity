@@ -32,7 +32,7 @@ scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/ti
 			ES_ROLE=enrollee ES_TARGET_ENROLLEE=android ES_SOFTAP_MODE=ENROLLEE_SOFTAP
 
 4) If built for security mode:
-        After installing sample RPM on device, copy required json files and other applications to the same path where enrollee_wifi(executable) is available
+        After installing sample RPM on device, copy required .dat files and other applications to the same path where enrollee_wifi(executable) is available
 
 (If needed, modify the parameters accordingly)
 Note :- Upon successful execution of above command(s) RI library and sample console application(for tizen enrollee)
@@ -59,7 +59,7 @@ Procedure to Execute Sample App:
        Execute the sample app by below commands
         i) cd /usr/apps/com.oic.es.sample/bin
         If executing with secure mode enabled then do the below step (no. ii)
-        ii) cp /usr/lib/oic_svr_db_server.json .
+        ii) cp /usr/lib/oic_svr_db_server.dat .
 
         Execute the application
         ./enrollee_wifi

@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
     public static final int FAILED        = 1;
     public static final int STATE_CHANGED = 2;
 
-    public static final String OIC_CLIENT_JSON_DB_FILE =  "oic_svr_db_client.json";
+    public static final String OIC_CLIENT_JSON_DB_FILE =  "oic_svr_db_client.dat";
     public static final String OIC_SQL_DB_FILE =  "PDM.db";
 
     private static final int BUFFER_SIZE = 1024;
