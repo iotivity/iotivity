@@ -181,15 +181,33 @@ OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
 
     size_t urnIdx = 0;
     size_t uuidIdx = 0;
+    size_t strUuidLen = 0;
     char convertedUuid[UUID_LENGTH * 2] = {0};
 
-    for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_LENGTH ; uuidIdx++, urnIdx+=2)
+    strUuidLen = strlen(strUuid);
+    if(0 == strUuidLen)
     {
-        if(*(strUuid + urnIdx) == '-')
+        OIC_LOG(INFO, TAG, "The empty string detected, The UUID will be converted to "\
+                           "\"00000000-0000-0000-0000-000000000000\"");
+    }
+    else if(UUID_LENGTH * 2 + 4 == strUuidLen)
+    {
+        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_LENGTH ; uuidIdx++, urnIdx+=2)
         {
-            urnIdx++;
+            if(*(strUuid + urnIdx) == '-')
+            {
+                urnIdx++;
+            }
+            sscanf(strUuid + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
         }
-        sscanf(strUuid + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Invalid string uuid format, Please set the uuid as correct format");
+        OIC_LOG(ERROR, TAG, "e.g) \"72616E64-5069-6E44-6576-557569643030\" (4-2-2-2-6)");
+        OIC_LOG(ERROR, TAG, "e.g) \"\"");
+
+        return OC_STACK_INVALID_PARAM;
     }
 
     memcpy(uuid->id, convertedUuid, UUID_LENGTH);
