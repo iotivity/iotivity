@@ -88,7 +88,7 @@ namespace
     RESPONSE invokeHandler(RCSResourceAttributes& attrs, const RCSRequest& request,
             std::shared_ptr< HANDLER > handler)
     {
-        if (handler)
+        if (handler && *handler)
         {
             return (*handler)(request, attrs);
         }
