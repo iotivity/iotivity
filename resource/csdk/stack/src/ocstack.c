@@ -1788,10 +1788,13 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     requestResult = HandleStackRequests (&serverRequest);
 
     // Send ACK to client as precursor to slow response
-    if (requestResult == OC_STACK_SLOW_RESOURCE && requestInfo->info.type == CA_MSG_CONFIRM)
+    if (requestResult == OC_STACK_SLOW_RESOURCE)
     {
-        SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
-                                CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
+        if (requestInfo->info.type == CA_MSG_CONFIRM)
+        {
+            SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
+                                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
+        }
     }
     else if(requestResult != OC_STACK_OK)
     {
