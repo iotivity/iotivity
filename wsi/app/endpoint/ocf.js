@@ -118,13 +118,22 @@ function handleRequest( flag, req ) {
 
 updateresource = function(cap,res)
 {
-	console.log("Uri = " + cap.params.uri + " Type = " + cap.params.type);
-	var key = Object.keys(cap.payload)[0];
-	var value = cap.payload[key];
-	console.log("Key = " + key + " Value = " + value);
-	rviRep[key] = value;
+	if(cap.payload.target=="LOCATIONSTATUS"){
+		for(var i = 0 ; i < 3; i++){
+			var key = Object.keys(cap.payload)[i];
+			var value = cap.payload[key];
+			console.log("Key = " + key + " Value = " + value);
+			rviRep[key] = value;
+		}
+	}
+	if(cap.payload.target=="HVACSTATUS"){
+		var key = cap.payload.function;
+		var value = cap.payload.value;
+		console.log("Key = " + key + " Value = " + value);
+		rviRep[key] = value;
+	}
 	console.log("Updated Resource " + JSON.stringify(rviRep));
-    res.status(200).json("Updated Resource " +  cap.params.type + " @ " + cap.params.uri);
+	res.status(200).json("Updated Resource=" + cap.payload);
 }
 
 

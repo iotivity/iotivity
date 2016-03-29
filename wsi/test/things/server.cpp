@@ -364,7 +364,7 @@ void thing_ui() {
             if (n >= 5) n = 0;
             images[j][i] = ph;
             elm_photo_aspect_fixed_set(ph, EINA_FALSE);
-            elm_photo_size_set(ph, 280);
+            elm_photo_size_set(ph, 150);
             elm_photo_file_set(ph, buf);
             elm_photo_editable_set(ph, EINA_TRUE);
             evas_object_size_hint_weight_set(ph, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -377,7 +377,7 @@ void thing_ui() {
     evas_object_show(tb);
     evas_object_size_hint_min_set(bg, 160, 160);
     evas_object_size_hint_max_set(bg, 640, 640);
-    evas_object_resize(win, 320, 320);
+    evas_object_resize(win, 150, 150);
     evas_object_show(win);
 
     int sock;

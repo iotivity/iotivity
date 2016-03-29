@@ -179,24 +179,15 @@ var ocfbody = [
    	    ]
    	},
     {//4
-        "cid": "org.openinterconnect.ocfupdate",
-        "endpointtype": "OCF",
-        "operation": "UPDATE",
-        "payload": {},        
-        "tags": [
-            "RVI Resource updated by OCF"
-        ]
-    },    
-    {//5
         "cid": "org.openinterconnect.rviupdate",
         "endpointtype": "OCF",
         "operation": "UPDATE",
+        "payload": {},        
         "params":
         {
             "uri": "/a/rvi",
             "type" : "core.rvi",
         },
-        "payload": {},        
         "tags": [
             "RVI Resource updated by RVI"
         ]
@@ -411,8 +402,22 @@ module.exports = {
     	console.log("-------------------------------------------------------------------");
         if(params)
         	console.log("WSI Request Processing " + params.target);
-        else
+        else{
         	console.log("WHY AM I EVEN HERE");
+        	return;
+        }
+        
+        if(params && (params.target == "LOCATIONSTATUS" || params && params.target == "HVACSTATUS")){
+        	//Send an update to hosted resource
+        	if(state!=FSM.READY){
+        		console.log("RVI OCF Location Update Ignored. Gateway Not Ready");
+        		return;
+        	}
+        	console.log("RVI OCF Device Update Received for " + params.target );
+    		ocfbody[4].payload = params;
+        	//Send an update to hosted resource
+        	var res = post(ocfuri, ocfbody[4]);
+        }
         
         if(params && params.target == "GETLOCATION"){
     		state = FSM.GET_VEHICLE_HVAC;
@@ -430,13 +435,6 @@ module.exports = {
     		}
     		state = FSM.FINDOCFDEVICES;
         	var res = post(ocfuri, ocfbody[0]);
-        }
-        if(params && params.target == "HVACSTATUS"){
-        	//Send an update to hosted resource
-    		console.log("RVI OCF Device Update Received." + params.function + " = " + params.value + " by RVI.")
-    		ocfbody[5].payload = {};
-			ocfbody[5].payload[params.function] = params.value;
-        	var res = post(ocfuri, ocfbody[5]);
         }
         if(params && params.target == "OCF_HVAC_UPDATE"){
         	//send to RVI
