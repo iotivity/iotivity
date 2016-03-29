@@ -25,6 +25,10 @@
 #include "ocstack.h"
 #include "securevirtualresourcetypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
@@ -50,6 +54,10 @@ OCStackResult DestroySecureResources();
  */
 OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IOTVT_SRM_RM_H
 
