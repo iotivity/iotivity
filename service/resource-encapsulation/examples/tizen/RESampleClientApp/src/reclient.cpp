@@ -539,7 +539,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
     // Remove white spaces(if any) at the beginning
     int beginning = 0;
     int negative = 0;
-    int invalidflag = 0;
+    int invalidFlag = 0;
 
     while (attributeString[beginning] == ' ')
     {
