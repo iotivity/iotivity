@@ -827,7 +827,7 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
     (void)UNUSED;
     if (clientResponse)
     {
-        OIC_LOG_V(INFO, TAG, "StackResult: %s", clientResponse->result);
+        OIC_LOG_V(INFO, TAG, "StackResult: %d", clientResponse->result);
         OIC_LOG_V(INFO, TAG,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
