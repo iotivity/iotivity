@@ -422,7 +422,7 @@ namespace OIC
 
                 }
             }
-            OIC_LOG_V(INFO, CONTAINER_TAG, "Container get request for %s finished, %d attributes",strResourceUri.c_str(), attr.size());
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Container get request for %s finished, %zu attributes",strResourceUri.c_str(), attr.size());
 
             return RCSGetResponse::create(std::move(attr), 200);
         }
@@ -434,7 +434,7 @@ namespace OIC
             std::list<std::string> lstAttributes;
             std::string strResourceUri = request.getResourceUri();
 
-            OIC_LOG_V(INFO, CONTAINER_TAG, "Container set request for %s, %d attributes",strResourceUri.c_str(), attributes.size());
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Container set request for %s, %zu attributes",strResourceUri.c_str(), attributes.size());
 
             if (m_mapServers.find(strResourceUri) != m_mapServers.end()
                 && m_mapResources.find(strResourceUri) != m_mapResources.end())
