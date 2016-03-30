@@ -781,7 +781,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
             CARetransmissionReceivedData(&g_retransmissionContext, cadata->remoteEndpoint, pdu->hdr,
                                          pdu->length, &retransmissionPdu);
 
-#ifndef WITH_BWT
             // get token from saved data in retransmission list
             if (retransmissionPdu && CA_EMPTY == code)
             {
@@ -798,7 +797,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
                     }
                 }
             }
-#endif
             OICFree(retransmissionPdu);
         }
     }
