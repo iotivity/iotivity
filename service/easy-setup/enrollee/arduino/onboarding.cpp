@@ -66,16 +66,12 @@ bool ESOnboard(const char * ssid, const char* passwd, NetworkEventCallback cb)
 
     if (ESSoftapOnboarding())
     {
-        if (ESSoftapAtEnrollee())
-        {
-            OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "Create SoftAp at enrollee");
-            ESCreateSoftap(ssid, passwd, cb);
-        }
-        else
-        {
-            OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting to Mediator SoftAp");
-            ConnectToWiFiNetwork(ssid, passwd, cb);
-        }
+        //Arduino does not need to check ESSoftapAtEnrollee()
+        //As SoftAP for Arduino Enrollee will be created at Mediator side &
+        //Arduino Enrollee always connects to the mediator's softAp.
+
+        OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting to Mediator SoftAp");
+        ConnectToWiFiNetwork(ssid, passwd, cb);
         return true;
     }
     else if (ESBleOnboarding())
