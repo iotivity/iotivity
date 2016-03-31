@@ -514,6 +514,8 @@ typedef struct
     struct tcpsockets
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
+        CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv6;        /**< IPv6 accept socket */
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
@@ -523,6 +525,7 @@ typedef struct
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
+        bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
 #endif
 } CAGlobals_t;

@@ -340,6 +340,16 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find port value");
             }
 
+#ifdef TCP_ADAPTER
+            // TCP Port
+            err = cbor_value_map_find_value(&policyMap, OC_RSRVD_TCP_PORT, &curVal);
+            if (cbor_value_is_valid(&curVal))
+            {
+                err = cbor_value_get_int(&curVal, (int *)&resource->tcpPort);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find tcp port value");
+            }
+#endif
+
             err = cbor_value_advance(&resourceMap);
             VERIFY_CBOR_SUCCESS(TAG, err, "to advance resource map");
 

@@ -83,6 +83,23 @@ namespace OC
                                         StringLLToVector(res->types),
                                         StringLLToVector(res->interfaces)
                                         )));
+
+#ifdef TCP_ADAPTER
+                            if (res->tcpPort != 0)
+                            {
+                                OCDevAddr tcpDevAddr = m_devAddr;
+                                tcpDevAddr.port = res->tcpPort;
+                                tcpDevAddr.adapter = OC_ADAPTER_TCP;
+                                m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                            new OC::OCResource(m_clientWrapper, tcpDevAddr,
+                                                std::string(res->uri),
+                                                std::string(payload->sid),
+                                                (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                                StringLLToVector(res->types),
+                                                StringLLToVector(res->interfaces)
+                                                )));
+                            }
+#endif
                         }
                         res = res->next;
                     }

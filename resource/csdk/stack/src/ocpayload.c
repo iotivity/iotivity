@@ -1386,7 +1386,8 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
     return NULL;
 }
 
-static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
+static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
+                                         uint16_t tcpPort)
 {
     OCResourcePayload* pl = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
     if (!pl)
@@ -1481,15 +1482,17 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
     pl->bitmap = res->resourceProperties & (OC_OBSERVABLE | OC_DISCOVERABLE);
     pl->secure = (res->resourceProperties & OC_SECURE) != 0;
-    pl->port = port;
-
+    pl->port = securePort;
+#ifdef TCP_ADAPTER
+    pl->tcpPort = tcpPort;
+#endif
     return pl;
 }
 
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
-        uint16_t port)
+                                   uint16_t securePort, uint16_t tcpPort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, port));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, tcpPort));
 }
 
 bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, const char *value)

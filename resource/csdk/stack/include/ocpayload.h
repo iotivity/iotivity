@@ -223,7 +223,7 @@ OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t s
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
-        uint16_t port);
+                                   uint16_t securePort, uint16_t tcpPort);
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
 bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 
