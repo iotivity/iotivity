@@ -1683,7 +1683,7 @@ TEST(OCDoDirectPairingTests, Nullpeer)
 
 TEST(OCDoDirectPairingTests, NullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(&peer, pmSel, &pinNumber, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(&peer, pmSel, &pinNumber, NULL));
 }
 
 TEST(OCDoDirectPairingTests, NullpinNumber)

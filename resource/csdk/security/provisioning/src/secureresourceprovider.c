@@ -950,7 +950,7 @@ static OCStackApplicationResult SRPProvisionDirectPairingCB(void *ctx, OCDoHandl
     {
         if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
         {
-            registerResultForDirectPairingProvisioning(pconfData, OC_STACK_RESOURCE_CREATED);
+            registerResultForDirectPairingProvisioning(pconfData, OC_STACK_OK);
             ((OCProvisionResultCB)(resultCallback))(pconfData->ctx, pconfData->numOfResults,
                                                     pconfData->resArr,
                                                     false);
