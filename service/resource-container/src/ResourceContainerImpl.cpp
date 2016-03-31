@@ -1002,7 +1002,7 @@ namespace OIC
             options[0].optionString = optionString;
             char classpath[1000];
             strcpy(classpath, "-Djava.class.path=");
-            strcat(classpath, bundleInfo->getPath().c_str());
+            strncat(classpath, bundleInfo->getPath().c_str(), BUNDLE_PATH_MAXLEN);
 
             OIC_LOG(INFO, CONTAINER_TAG,
                    std::string("Configured classpath: ").append(classpath).c_str());
@@ -1011,7 +1011,7 @@ namespace OIC
 
             char libraryPath[1000];
             strcpy(libraryPath, "-Djava.library.path=");
-            strcat(libraryPath, bundleInfo->getLibraryPath().c_str());
+            strncat(libraryPath, bundleInfo->getLibraryPath().c_str(), BUNDLE_PATH_MAXLEN);
             options[2].optionString = libraryPath;
 
             OIC_LOG(INFO, CONTAINER_TAG,
