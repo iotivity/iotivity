@@ -39,8 +39,8 @@ namespace OIC
         static const char ES_PROV_RES_URI[] = "/oic/prov";
         static const char ES_PROV_RES_TYPE[] = "oic.r.prov";
 
-        RemoteEnrolleeResource::RemoteEnrolleeResource(ProvConfig provConfig,
-                                                  WiFiOnboadingConnection onboardingconn)
+        RemoteEnrolleeResource::RemoteEnrolleeResource(const ProvConfig &provConfig,
+                                                  const WiFiOnboadingConnection &onboardingconn)
         {
             m_ProvConfig = provConfig;
             m_wifiOnboardingconn = onboardingconn;
