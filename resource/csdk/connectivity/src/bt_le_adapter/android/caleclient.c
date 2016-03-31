@@ -4089,27 +4089,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             OIC_LOG(ERROR, TAG, "CALEClientGattClose has failed");
         }
 
-        if (gatt_success == status)
-        {
-            // that state is a general reason to disconnect BLE.
-            // its means manual disconnected message from BT platform.
-            // in this case Scanning has to start again and clean previous data.
-            CAResult_t res = CALEClientStartScan();
-            if (CA_STATUS_OK != res)
-            {
-                if (CA_ADAPTER_NOT_ENABLED == res)
-                {
-                    // scan will be started with start server when adapter is enabled
-                    OIC_LOG(INFO, TAG, "Adapter was disabled");
-                }
-                else
-                {
-                    OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
-                    goto error_exit;
-                }
-            }
-        }
-        else if (GATT_ERROR == status)
+        if (GATT_ERROR == status)
         {
             // when we get GATT ERROR(0x85), gatt connection can be called again.
             OIC_LOG(INFO, TAG, "retry gatt connect");
