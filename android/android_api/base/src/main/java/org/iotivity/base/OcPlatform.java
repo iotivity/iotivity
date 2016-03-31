@@ -41,7 +41,7 @@ public final class OcPlatform {
         System.loadLibrary("octbstack");
         System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
-        if (BuildConfig.SECURED.equals("1"))
+        if (0 != BuildConfig.SECURED)
         {
             System.loadLibrary("ocprovision");
         }
