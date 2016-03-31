@@ -770,7 +770,22 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                             {
                                 discPayload->baseURI = OICStrdup(devAddr.addr);
                             }
-                            OCDiscoveryResourceDestroy(resource1);
+                            OICFree(resource1->uri);
+                            for (OCResourceType *rsrcRt = resource1->rsrcType, *rsrcRtNext = NULL; rsrcRt; )
+                            {
+                                rsrcRtNext = rsrcRt->next;
+                                OICFree(rsrcRt->resourcetypename);
+                                OICFree(rsrcRt);
+                                rsrcRt = rsrcRtNext;
+                            }
+
+                            for (OCResourceInterface *rsrcPtr = resource1->rsrcInterface, *rsrcNext = NULL; rsrcPtr; )
+                            {
+                                rsrcNext = rsrcPtr->next;
+                                OICFree(rsrcPtr->name);
+                                OICFree(rsrcPtr);
+                                rsrcPtr = rsrcNext;
+                            }
                             foundResourceAtRD = true;
                         }
 #endif

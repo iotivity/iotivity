@@ -28,7 +28,6 @@
 extern "C" {
 #endif // __cplusplus
 
-
 /** Callback function for returning RDDiscovery Result. */
 typedef int (* OCRDBiasFactorCB)(char addr[MAX_ADDR_STR_SIZE], uint16_t port);
 
