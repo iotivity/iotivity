@@ -33,11 +33,11 @@ import org.iotivity.cloud.util.Logger;
 
 public class CoapMessage {
 
-    private int    tokenLength = 0;
-    protected int  code        = 0;
-    private byte[] token       = null;
+    private int            tokenLength    = 0;
+    protected int          code           = 0;
+    private byte[]         token          = null;
 
-    private byte[] payload = null;
+    private byte[]         payload        = null;
 
     // Option fields
     protected List<byte[]> if_match       = null;
@@ -302,18 +302,19 @@ public class CoapMessage {
         else {
             decodedPayload = cbor.parsePayloadFromCbor(payload,
                     ArrayList.class);
+            String deviceId = null;
+            if (decodedPayload != null) {
+                HashMap<Object, Object> tags = (HashMap<Object, Object>) decodedPayload
+                        .get(0);
 
-            HashMap<Object, Object> tags = (HashMap<Object, Object>) decodedPayload
-                    .get(0);
+                deviceId = tags.get("di").toString();
 
-            String deviceId = tags.get("di").toString();
+                if (deviceId == null) {
+                    throw new IllegalArgumentException("deviceId is null");
+                }
 
-            if (deviceId == null) {
-                throw new IllegalArgumentException("deviceId is null");
+                Logger.i("deviceId : " + deviceId);
             }
-
-            Logger.i("deviceId : " + deviceId);
-
             return deviceId;
         }
     }

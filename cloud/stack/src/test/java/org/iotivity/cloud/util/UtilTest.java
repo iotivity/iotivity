@@ -13,16 +13,8 @@ public class UtilTest {
 
     @Test
     public void testCbor() {
-        Cbor<HashMap<String, String>> cbor = new Cbor<HashMap<String, String>>();
-
         HashMap<String, String> setpayloadData = new HashMap<String, String>();
         setpayloadData.put("test", "test");
-
-        byte[] cborData = cbor.encodingPayloadToCbor(setpayloadData);
-
-        HashMap<String, String> getpayloadData = null;
-        getpayloadData = cbor.parsePayloadFromCbor(cborData,
-                new HashMap<String, String>().getClass());
     }
 
     @Test

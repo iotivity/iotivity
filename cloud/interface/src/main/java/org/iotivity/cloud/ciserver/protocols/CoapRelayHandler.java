@@ -22,6 +22,7 @@
 package org.iotivity.cloud.ciserver.protocols;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,8 +74,8 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
         }
     }
 
-    private CoapClient rdClient = null;
-    ///////////
+    private CoapClient                                   rdClient         = null;
+                                                                          ///////////
 
     ////////// Handler for Account Server
     private static final AttributeKey<List<CoapRequest>> keyAccountClient = AttributeKey
@@ -121,38 +122,37 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
         }
     }
 
-    private CoapClient asClient = null;
+    private CoapClient     asClient       = null;
     //////////
 
     private SessionManager sessionManager = null;
 
     public CoapRelayHandler(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
-        
+
         rdClient = new CoapClient();
 
         rdClient.addHandler(new RDHandler());
-        
+
         asClient = new CoapClient();
 
         asClient.addHandler(new AccountHandler());
     }
-    
-    public void startHandler(String rdAddress, int rdPort, String acAddress, int acPort) throws Exception
-    {
+
+    public void startHandler(String rdAddress, int rdPort, String acAddress,
+            int acPort) throws Exception {
         rdClient.startClient(new InetSocketAddress(rdAddress, rdPort));
-        
+
         asClient.startClient(new InetSocketAddress(acAddress, acPort));
 
         asClient.getChannelFuture().channel().attr(keyAccountClient)
                 .set(new ArrayList<CoapRequest>());
     }
-    
-    public void stopHandler() throws Exception
-    {
-    	asClient.stopClient();
-    	
-    	rdClient.stopClient();
+
+    public void stopHandler() throws Exception {
+        asClient.stopClient();
+
+        rdClient.stopClient();
     }
 
     private static final AttributeKey<ChannelHandlerContext> keyDevice = AttributeKey
@@ -168,121 +168,138 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
             String uriPath = request.getUriPath();
             CoapRequest accountRequest = null;
             String userId, deviceId, authPayload;
-            CoapResponse response = null;
+            CoapResponse response;
 
             Logger.d("Request received, URI: " + uriPath);
-            switch (uriPath) {
-                case Constants.AUTH_URI:
-                    // This case user wants to logout
-                    if (request.getUriQuery().endsWith("logout")) {
-                        ctx.channel().attr(Constants.Attribute_UserId).remove();
-                        response = new CoapResponse(CoapStatus.DELETED);
-                    } else {
-                        response = new CoapResponse(CoapStatus.BAD_REQUEST);
-                    }
-                    ctx.writeAndFlush(response);
-                    break;
+            if (uriPath != null) {
+                switch (uriPath) {
+                    case Constants.AUTH_URI:
+                        // This case user wants to logout
+                        String uriQuery = request.getUriQuery();
+                        if (uriQuery != null) {
+                            if (uriQuery.endsWith("logout")) {
+                                ctx.channel().attr(Constants.Attribute_UserId)
+                                        .remove();
+                                response = new CoapResponse(CoapStatus.DELETED);
+                            } else {
+                                response = new CoapResponse(
+                                        CoapStatus.BAD_REQUEST);
+                            }
+                            ctx.writeAndFlush(response);
+                        }
+                        break;
 
-                case Constants.RD_URI:
-                    // RD POST means publish device to server
-                    switch (request.getRequestMethod()) {
-                        case POST:
-                            userId = ctx.channel()
-                                    .attr(Constants.Attribute_UserId).get();
-                            deviceId = request.decodeDeviceId();
-                            authPayload = String.format(
-                                    "{\"userid\":\"%s\",\"deviceid\":\"%s\"}",
-                                    userId, deviceId);
-                            accountRequest = new CoapRequest(CoapMethod.POST);
-                            accountRequest.setUriPath(Constants.ACCOUNT_URI);
-                            accountRequest.setUriQuery("reqtype=publish");
-                            accountRequest.setToken(request.getToken());
-                            accountRequest.setPayload(authPayload
-                                    .getBytes(StandardCharsets.UTF_8));
+                    case Constants.RD_URI:
+                        // RD POST means publish device to server
+                        switch (request.getRequestMethod()) {
+                            case POST:
+                                userId = ctx.channel()
+                                        .attr(Constants.Attribute_UserId).get();
+                                deviceId = request.decodeDeviceId();
+                                authPayload = String.format(
+                                        "{\"userid\":\"%s\",\"deviceid\":\"%s\"}",
+                                        userId, deviceId);
+                                accountRequest = new CoapRequest(
+                                        CoapMethod.POST);
+                                accountRequest
+                                        .setUriPath(Constants.ACCOUNT_URI);
+                                accountRequest.setUriQuery("reqtype=publish");
+                                accountRequest.setToken(request.getToken());
+                                accountRequest.setPayload(authPayload
+                                        .getBytes(StandardCharsets.UTF_8));
 
-                            // TODO: deviceId must be registered after session
-                            // granted
-                            Logger.d("Adding deviceId to session: " + deviceId);
-                            sessionManager.addSession(deviceId, ctx);
-                            break;
+                                // TODO: deviceId must be registered after
+                                // session
+                                // granted
+                                Logger.d("Adding deviceId to session: "
+                                        + deviceId);
+                                sessionManager.addSession(deviceId, ctx);
+                                break;
 
-                        default:
-                            Logger.e("Unsupported request type");
-                            break;
-                    }
+                            default:
+                                Logger.e("Unsupported request type");
+                                break;
+                        }
 
-                    rdClient.getChannelFuture().channel().attr(keyRDClient)
-                            .set(ctx);
+                        rdClient.getChannelFuture().channel().attr(keyRDClient)
+                                .set(ctx);
 
-                    // Add original request to list for future use
-                    asClient.getChannelFuture().channel().attr(keyAccountClient)
-                            .get().add(request);
-                    asClient.sendRequest(accountRequest);
-                    return;
+                        // Add original request to list for future use
+                        asClient.getChannelFuture().channel()
+                                .attr(keyAccountClient).get().add(request);
+                        asClient.sendRequest(accountRequest);
+                        return;
 
-                case Constants.WELL_KNOWN_URI:
-                    switch (request.getRequestMethod()) {
-                        case GET:
-                            userId = ctx.channel()
-                                    .attr(Constants.Attribute_UserId).get();
-                            authPayload = String.format("{\"userid\":\"%s\"}",
-                                    userId);
-                            accountRequest = new CoapRequest(CoapMethod.GET);
-                            accountRequest.setUriPath(Constants.ACCOUNT_URI);
-                            accountRequest.setUriQuery("reqtype=find");
-                            accountRequest.setToken(request.getToken());
-                            accountRequest.setPayload(authPayload.getBytes());
-                            break;
+                    case Constants.WELL_KNOWN_URI:
+                        switch (request.getRequestMethod()) {
+                            case GET:
+                                userId = ctx.channel()
+                                        .attr(Constants.Attribute_UserId).get();
+                                authPayload = String
+                                        .format("{\"userid\":\"%s\"}", userId);
+                                accountRequest = new CoapRequest(
+                                        CoapMethod.GET);
+                                accountRequest
+                                        .setUriPath(Constants.ACCOUNT_URI);
+                                accountRequest.setUriQuery("reqtype=find");
+                                accountRequest.setToken(request.getToken());
+                                accountRequest.setPayload(authPayload
+                                        .getBytes(StandardCharsets.UTF_8));
+                                break;
 
-                        default:
-                            Logger.e("Unsupported request type");
-                            break;
-                    }
+                            default:
+                                Logger.e("Unsupported request type");
+                                break;
+                        }
 
-                    rdClient.getChannelFuture().channel().attr(keyRDClient)
-                            .set(ctx);
+                        rdClient.getChannelFuture().channel().attr(keyRDClient)
+                                .set(ctx);
 
-                    // Add original request to list for future use
-                    asClient.getChannelFuture().channel().attr(keyAccountClient)
-                            .get().add(request);
-                    asClient.sendRequest(accountRequest);
-                    return;
+                        // Add original request to list for future use
+                        asClient.getChannelFuture().channel()
+                                .attr(keyAccountClient).get().add(request);
+                        asClient.sendRequest(accountRequest);
+                        return;
 
-                case Constants.KEEP_ALIVE_URI:
-                    break;
+                    case Constants.KEEP_ALIVE_URI:
+                        break;
 
-                default:
-                    List<String> uriPathList = request.getUriPathSegments();
-                    Logger.i("uriPahtList: " + uriPathList.toString());
+                    default:
+                        List<String> uriPathList = request.getUriPathSegments();
+                        if (uriPathList != null) {
+                            Logger.i("uriPahtList: " + uriPathList.toString());
 
-                    String did = uriPathList.get(0);
+                            String did = uriPathList.get(0);
 
-                    Logger.i("did: " + did);
+                            Logger.i("did: " + did);
 
-                    // TODO: Clustering algorithm required
-                    // find ctx about did, and send msg
-                    String resource = new String();
-                    List<String> pathSegments = uriPathList.subList(1,
-                            uriPathList.size());
-                    for (String path : pathSegments) {
-                        resource += "/";
-                        resource += path;
-                    }
-                    Logger.i("resource: " + resource);
-                    request.setUriPath(resource);
+                            // TODO: Clustering algorithm required
+                            // find ctx about did, and send msg
+                            StringBuffer resource = new StringBuffer();
+                            List<String> pathSegments = uriPathList.subList(1,
+                                    uriPathList.size());
+                            for (String path : pathSegments) {
+                                resource.append("/");
+                                resource.append(path);
+                            }
+                            Logger.i("resource: " + resource);
+                            request.setUriPath(resource.toString());
 
-                    ChannelHandlerContext deviceCtx = sessionManager
-                            .querySession(did);
-                    if (deviceCtx != null) {
-                        deviceCtx.attr(keyDevice).set(ctx);
-                        deviceCtx.writeAndFlush(request);
-                    } else {
-                        Logger.e("deviceCtx is null");
-                        response = new CoapResponse(CoapStatus.FORBIDDEN);
-                        response.setToken(request.getToken());
-                        ctx.writeAndFlush(response);
-                    }
-                    return;
+                            ChannelHandlerContext deviceCtx = sessionManager
+                                    .querySession(did);
+                            if (deviceCtx != null) {
+                                deviceCtx.attr(keyDevice).set(ctx);
+                                deviceCtx.writeAndFlush(request);
+                            } else {
+                                Logger.e("deviceCtx is null");
+                                response = new CoapResponse(
+                                        CoapStatus.FORBIDDEN);
+                                response.setToken(request.getToken());
+                                ctx.writeAndFlush(response);
+                            }
+                        }
+                        return;
+                }
             }
 
         } else if (msg instanceof CoapResponse) {
@@ -293,9 +310,10 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
                 CoapResponse response = (CoapResponse) msg;
 
                 // If response contains path, add di
-                if (response.getOption(11) != null) {
+                String did = sessionManager.queryDid(ctx);
+                if (response.getOption(11) != null && did != null) {
                     response.getOption(11).add(0,
-                            sessionManager.queryDid(ctx).getBytes());
+                            did.getBytes(StandardCharsets.UTF_8));
                 }
 
                 Logger.i(

@@ -87,7 +87,7 @@ public class AuthResource extends Resource {
             throw new IllegalArgumentException(
                     "request type is null in query!");
 
-        CoapResponse response = null;
+        CoapResponse response;
 
         switch (reqType) {
             case Constants.TYPE_REGISTER:
@@ -106,7 +106,7 @@ public class AuthResource extends Resource {
 
     /**
      * API for handling request for login by user account
-     * 
+     *
      * @param request
      *            CoAP request message
      * @return CoapResponse - CoAP response message with response result
@@ -126,7 +126,7 @@ public class AuthResource extends Resource {
         Logger.d("userId: " + userId);
 
         CoapMessageBuilder responseMessage = new CoapMessageBuilder();
-        CoapResponse coapResponse = null;
+        CoapResponse coapResponse;
 
         if (userId != null) {
 
@@ -151,7 +151,7 @@ public class AuthResource extends Resource {
 
     /**
      * API for handling request for registering user account
-     * 
+     *
      * @param request
      *            CoAP request message
      * @return CoapResponse - CoAP response message with response result
@@ -161,21 +161,24 @@ public class AuthResource extends Resource {
 
         String payload = request.getPayloadString();
 
-        JSONUtil util = new JSONUtil();
-        String authCode = util.parseJSON(payload, Constants.REQUEST_AUTH_CODE);
-        String authServer = util.parseJSON(payload, Constants.REQUEST_AUTH_SERVER);
+        String authCode = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_AUTH_CODE);
+        String authServer = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_AUTH_SERVER);
 
         Logger.d("authCode: " + authCode + ", authServer: " + authServer);
 
         AccountServerManager oauthServerManager = new AccountServerManager();
-
-        String userId = oauthServerManager.requestUserId(authCode, authServer);
+        String userId = null;
+        if (authCode != null && authServer != null) {
+            userId = oauthServerManager.requestUserId(authCode, authServer);
+        }
         String sessionCode = oauthServerManager.registerUserAccount(userId);
 
         Logger.d("userId: " + userId + ", sessionCode: " + sessionCode);
 
         CoapMessageBuilder responseMessage = new CoapMessageBuilder();
-        CoapResponse coapResponse = null;
+        CoapResponse coapResponse;
 
         if (userId != null && sessionCode != null) {
 
@@ -239,13 +242,15 @@ public class AuthResource extends Resource {
 
         List<String> Segments = request.getUriQuerySegments();
 
-        for (String s : Segments) {
+        if (Segments != null) {
+            for (String s : Segments) {
 
-            String pair[] = s.split("=");
+                String pair[] = s.split("=");
 
-            if (pair[0].equals(key)) {
+                if (pair[0].equals(key)) {
 
-                value = pair[1];
+                    value = pair[1];
+                }
             }
         }
 
@@ -254,9 +259,9 @@ public class AuthResource extends Resource {
 
     /*
      * private static String getPayloadString(byte[] payload) {
-     * 
+     *
      * if (payload == null) return "";
-     * 
+     *
      * return new String(payload, Charset.forName("UTF-8")); }
      */
 

@@ -78,6 +78,9 @@ public class SessionManager {
     }
 
     public List<String> getSessions() {
-        return new ArrayList<String>(sessions.keySet());
+        synchronized (sessions) {
+            List<String> list = new ArrayList<String>(sessions.keySet());
+            return list;
+        }
     }
 }

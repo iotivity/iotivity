@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.List;
+
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.junit.Test;
 
@@ -40,7 +42,10 @@ public class CoapRequestTest {
         CoapRequest request = new CoapRequest(CoapMethod.GET);
         assertNull(request.getUriPathSegments());
         request.setUriPath("parent/child");
-        assertEquals(request.getUriPathSegments().size(), 2);
+        List<String> list = request.getUriPathSegments();
+        if (list != null) {
+            assertEquals(list.size(), 2);
+        }
     }
 
     @Test
@@ -62,7 +67,10 @@ public class CoapRequestTest {
         CoapRequest request = new CoapRequest(CoapMethod.GET);
         assertNull(request.getUriQuerySegments());
         request.setUriQuery("sample=samplle&sample2=sample2");
-        assertEquals(request.getUriQuerySegments().size(), 2);
+        List<String> list = request.getUriQuerySegments();
+        if (list != null) {
+            assertEquals(list.size(), 2);
+        }
     }
 
     @Test
@@ -70,8 +78,14 @@ public class CoapRequestTest {
         CoapRequest request = new CoapRequest(CoapMethod.GET);
         assertNull(request.getUriPathSegments());
         request.setUriPath("sample");
-        assertEquals(request.getUriPathSegments().size(), 1);
+        List<String> list = request.getUriPathSegments();
+        if (list != null) {
+            assertEquals(list.size(), 1);
+        }
         request.clearUriPath();
-        assertEquals(request.getUriPathSegments().size(), 0);
+        list = request.getUriPathSegments();
+        if (list != null) {
+            assertEquals(list.size(), 0);
+        }
     }
 }

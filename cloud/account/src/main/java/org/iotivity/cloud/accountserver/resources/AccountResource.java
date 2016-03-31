@@ -51,7 +51,8 @@ public class AccountResource extends Resource {
     }
 
     @Override
-    public void onRequestReceived(ChannelHandlerContext ctx, CoapRequest request) {
+    public void onRequestReceived(ChannelHandlerContext ctx,
+            CoapRequest request) {
 
         Logger.d("AccountResource IN");
 
@@ -86,26 +87,27 @@ public class AccountResource extends Resource {
         }
     }
 
-    private void handleGetRequest(ChannelHandlerContext ctx, CoapRequest request)
-            throws Exception {
+    private void handleGetRequest(ChannelHandlerContext ctx,
+            CoapRequest request) throws Exception {
 
         String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
-            throw new IllegalArgumentException("request type is null in query!");
+            throw new IllegalArgumentException(
+                    "request type is null in query!");
 
         CoapResponse response = null;
 
         switch (reqType) {
-
             case Constants.TYPE_FIND:
                 response = handleFindRequest(request);
                 break;
             default:
                 Logger.w("reqType[" + reqType + "] is not supported");
         }
-
-        ctx.writeAndFlush(response);
+        if (response != null) {
+            ctx.writeAndFlush(response);
+        }
 
     }
 
@@ -115,9 +117,10 @@ public class AccountResource extends Resource {
         String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
-            throw new IllegalArgumentException("request type is null in query!");
+            throw new IllegalArgumentException(
+                    "request type is null in query!");
 
-        CoapResponse response = null;
+        CoapResponse response;
 
         switch (reqType) {
             case Constants.TYPE_PUBLISH:
@@ -134,7 +137,7 @@ public class AccountResource extends Resource {
     /**
      * API for handling request for publishing resource corresponding with user
      * account
-     * 
+     *
      * @param requeset
      *            CoAP request message
      * @return CoapResponse - CoAP response message with response result
@@ -145,7 +148,8 @@ public class AccountResource extends Resource {
         String payload = request.getPayloadString();
 
         String userId = JSONUtil.parseJSON(payload, Constants.REQUEST_USER_ID);
-        String deviceId = JSONUtil.parseJSON(payload, Constants.REQUEST_DEVICE_ID);
+        String deviceId = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_DEVICE_ID);
 
         Logger.d("userId: " + userId + ", deviceId: " + deviceId);
 
@@ -156,14 +160,14 @@ public class AccountResource extends Resource {
         Logger.d("status : " + status);
 
         CoapMessageBuilder responseMessage = new CoapMessageBuilder();
-        CoapResponse coapResponse = null;
+        CoapResponse coapResponse;
 
         if (status) {
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), CoapStatus.CREATED);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    CoapStatus.CREATED);
         } else {
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), CoapStatus.INTERNAL_SERVER_ERROR);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    CoapStatus.INTERNAL_SERVER_ERROR);
         }
 
         return coapResponse;
@@ -172,7 +176,7 @@ public class AccountResource extends Resource {
     /**
      * API for handling request for finding resource corresponding with user
      * account
-     * 
+     *
      * @param requeset
      *            CoAP request message
      * @return CoapResponse - CoAP response message with response result
@@ -224,13 +228,15 @@ public class AccountResource extends Resource {
 
         List<String> Segments = request.getUriQuerySegments();
 
-        for (String s : Segments) {
+        if (Segments != null) {
+            for (String s : Segments) {
 
-            String pair[] = s.split("=");
+                String pair[] = s.split("=");
 
-            if (pair[0].equals(key)) {
+                if (pair[0].equals(key)) {
 
-                value = pair[1];
+                    value = pair[1];
+                }
             }
         }
 
@@ -239,9 +245,9 @@ public class AccountResource extends Resource {
 
     /*
      * private static String getPayloadString(byte[] payload) {
-     * 
+     *
      * if (payload == null) return "";
-     * 
+     *
      * return new String(payload, Charset.forName("UTF-8")); }
      */
 

@@ -186,7 +186,7 @@ public class RDServerTest {
         didList.add("98f7483c-5a31-4161-ba7e-9c13e0d");
         data.put("devices", didList);
         String payload = JSONUtil.writeJSON(data);
-        request.setPayload(payload.getBytes());
+        request.setPayload(payload.getBytes(StandardCharsets.UTF_8));
 
         startServer();
         ChannelHandlerContext ctx = startClient();

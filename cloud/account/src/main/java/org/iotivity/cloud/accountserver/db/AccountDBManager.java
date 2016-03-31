@@ -60,7 +60,7 @@ public class AccountDBManager {
 
     /**
      * API for storing session information of authorized user
-     * 
+     *
      * @param userId
      *            user identifier
      * @param sessionCode
@@ -82,7 +82,7 @@ public class AccountDBManager {
 
     /**
      * API for storing device information of authorized user
-     * 
+     *
      * @param userId
      *            user identifier
      * @param deviceId
@@ -105,7 +105,7 @@ public class AccountDBManager {
     /**
      * API for getting user identifier information corresponding with session
      * code
-     * 
+     *
      * @param userId
      *            identifier of authorized user
      * @param sessionCode
@@ -123,16 +123,14 @@ public class AccountDBManager {
 
     /**
      * API for getting devices corresponding with user identifier
-     * 
+     *
      * @param userId
      *            user identifier
      * @return ArrayList<String> - list of devices
      */
     public ArrayList<String> getDevices(String userId) {
 
-        ArrayList<String> deviceList = new ArrayList<String>();
-
-        deviceList = mongoDB.getDevices(userId);
+        ArrayList<String> deviceList = mongoDB.getDevices(userId);
 
         return deviceList;
     }

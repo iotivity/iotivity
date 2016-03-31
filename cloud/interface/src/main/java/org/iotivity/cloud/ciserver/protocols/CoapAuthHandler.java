@@ -59,20 +59,22 @@ public class CoapAuthHandler extends ChannelDuplexHandler {
                     .attr(keyAuthClient).get();
 
             if (msg.getResponseCode() == CoapStatus.CREATED) {
-                Map<String, String> response = JSONUtil
-                        .parseJSON(new String(msg.getPayload(), StandardCharsets.UTF_8));
+                Map<String, String> response = JSONUtil.parseJSON(
+                        new String(msg.getPayload(), StandardCharsets.UTF_8));
 
-                String userId = response.get("userid");
-                if (userId != null) {
-                    ctxToDevice.channel().attr(Constants.Attribute_UserId)
-                            .set(userId);
+                if (response != null) {
+                    String userId = response.get("userid");
+                    if (userId != null) {
+                        ctxToDevice.channel().attr(Constants.Attribute_UserId)
+                                .set(userId);
+                    }
+                    msg.setPayload(cbor.encodingPayloadToCbor(response));
+
+                    CoapAuthHandler authHandler = ctxToDevice.channel()
+                            .pipeline().get(CoapAuthHandler.class);
+
+                    ctxToDevice.channel().pipeline().remove(authHandler);
                 }
-                msg.setPayload(cbor.encodingPayloadToCbor(response));
-
-                CoapAuthHandler authHandler = ctxToDevice.channel().pipeline()
-                        .get(CoapAuthHandler.class);
-
-                ctxToDevice.channel().pipeline().remove(authHandler);
             }
 
             ctxToDevice.writeAndFlush(msg);
@@ -93,19 +95,16 @@ public class CoapAuthHandler extends ChannelDuplexHandler {
 
     public CoapAuthHandler() {
 
-    	asClient.addHandler(new AccountHandler());
-        
+        asClient.addHandler(new AccountHandler());
+
     }
-    
-    public void startHandler(String acAddress, int acPort) throws Exception
-    {
-    	asClient.startClient(
-                    new InetSocketAddress(acAddress, acPort));
+
+    public void startHandler(String acAddress, int acPort) throws Exception {
+        asClient.startClient(new InetSocketAddress(acAddress, acPort));
     }
-    
-    public void stopHandler() throws Exception
-    {
-    	asClient.stopClient();
+
+    public void stopHandler() throws Exception {
+        asClient.stopClient();
     }
 
     private Cbor<HashMap<Object, Object>> cbor = new Cbor<HashMap<Object, Object>>();
@@ -116,29 +115,35 @@ public class CoapAuthHandler extends ChannelDuplexHandler {
 
         if (msg instanceof CoapRequest) {
             CoapRequest request = (CoapRequest) msg;
-            switch (request.getUriPath()) {
-                // This handler only used for initial handshake
-                case Constants.AUTH_URI:
-                    HashMap<Object, Object> payloadData = cbor
-                            .parsePayloadFromCbor(request.getPayload(),
-                                    HashMap.class);
-                    request.setPayload(
-                            JSONUtil.writeJSON(payloadData).getBytes(StandardCharsets.UTF_8));
-                    asClient.getChannelFuture().channel()
-                            .attr(keyAuthClient).set(ctx);
-                    asClient.sendRequest(request);
-                    return;
+            String uriPath = request.getUriPath();
+            if (uriPath != null) {
+                switch (uriPath) {
+                    // This handler only used for initial handshake
+                    case Constants.AUTH_URI:
+                        HashMap<Object, Object> payloadData = cbor
+                                .parsePayloadFromCbor(request.getPayload(),
+                                        HashMap.class);
+                        String writejson = JSONUtil.writeJSON(payloadData);
+                        if (writejson != null) {
+                            request.setPayload(
+                                    writejson.getBytes(StandardCharsets.UTF_8));
+                            asClient.getChannelFuture().channel()
+                                    .attr(keyAuthClient).set(ctx);
+                            asClient.sendRequest(request);
+                        }
+                        return;
 
-                case Constants.KEEP_ALIVE_URI:
-                    super.channelRead(ctx, msg);
-                    return;
+                    case Constants.KEEP_ALIVE_URI:
+                        super.channelRead(ctx, msg);
+                        return;
 
-                default:
-                    CoapResponse response = new CoapResponse(
-                            CoapStatus.UNAUTHORIZED);
-                    Logger.e("Sending UNAUTHORIZED to client");
-                    ctx.writeAndFlush(response);
-                    break;
+                    default:
+                        CoapResponse response = new CoapResponse(
+                                CoapStatus.UNAUTHORIZED);
+                        Logger.e("Sending UNAUTHORIZED to client");
+                        ctx.writeAndFlush(response);
+                        break;
+                }
             }
         }
 
