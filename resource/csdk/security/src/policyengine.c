@@ -72,6 +72,11 @@ static bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
     {
         return false;
     }
+    // Check empty uuid string
+    if('\0' == firstId->id[0] || '\0' == secondId->id[0])
+    {
+        return false;
+    }
     for(int i = 0; i < UUID_LENGTH; i++)
     {
         if(firstId->id[i] != secondId->id[i])
