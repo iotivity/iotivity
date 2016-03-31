@@ -209,6 +209,9 @@ public:
             return "DUPLICATE_UUID";
         case OC_STACK_INCONSISTENT_DB:
             return "INCONSISTENT_DB";
+        /** Error code from OTM */
+        case OC_STACK_AUTHENTICATION_FAILURE:
+            return "AUTHENTICATION_FAILURE";
         /** Insert all new error codes here!.*/
 #ifdef WITH_PRESENCE
         case OC_STACK_PRESENCE_STOPPED:

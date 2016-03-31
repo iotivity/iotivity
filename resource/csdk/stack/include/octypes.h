@@ -733,7 +733,7 @@ typedef enum
 
     /**
      * Error code from OTM
-     * This error is plused from DTLS interface when handshake failure happens
+     * This error is pushed from DTLS interface when handshake failure happens
      */
     OC_STACK_AUTHENTICATION_FAILURE,
 
