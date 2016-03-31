@@ -386,7 +386,7 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
                    requestInfo->info.payload, requestInfo->info.payloadSize);
     OCRepPayload *repPayload = (OCRepPayload *)ocPayload;
 
-    uint32_t interval = 0;
+    int64_t interval = 0;
     OCRepPayloadGetPropInt(repPayload, INTERVAL, &interval);
     entry->interval = interval;
     OIC_LOG_V(DEBUG, TAG, "Received interval is [%d]", entry->interval);
@@ -446,9 +446,11 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
             return SendPingMessage(entry);
         }
     }
-
-    // Set sentPingMsg values with false.
-    entry->sentPingMsg = false;
+    else
+    {
+        // Set sentPingMsg values with false.
+        entry->sentPingMsg = false;
+    }
 
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveResponse OUT");
     return OC_STACK_OK;
