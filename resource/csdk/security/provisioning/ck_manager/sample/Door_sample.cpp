@@ -40,6 +40,7 @@
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define STATE "state"
 #define OPEN_DURATION "openDuration"
+#define OPEN_DURATION_TIME "10min"
 #define OPEN_ALARM "openAlarm"
 
 static const char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
@@ -336,8 +337,7 @@ int  createDoorResource (const char *uri, DoorResource *doorResource)
     }
 
     doorResource->state = STATE_CLOSED; //1:closed , 0: open
-    char str[] = "10min";
-    doorResource->openDuration = str;
+    doorResource->openDuration = OPEN_DURATION_TIME;
     doorResource->openAlarm = false;
     OCStackResult res = OCCreateResource(&(doorResource->handle),
                                          "core.door",
