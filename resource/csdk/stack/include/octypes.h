@@ -197,6 +197,9 @@ extern "C" {
 /** Port. */
 #define OC_RSRVD_HOSTING_PORT           "port"
 
+/** TCP Port. */
+#define OC_RSRVD_TCP_PORT               "tcp"
+
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
 
@@ -386,10 +389,10 @@ typedef enum
     OC_FLAG_SECURE     = (1 << 4),
 
     /** IPv4 & IPv6 auto-selection is the default.*/
-    /** IP adapter only.*/
+    /** IP & TCP adapter only.*/
     OC_IP_USE_V6       = (1 << 5),
 
-    /** IP adapter only.*/
+    /** IP & TCP adapter only.*/
     OC_IP_USE_V4       = (1 << 6),
 
     /** internal use only.*/
@@ -1070,6 +1073,9 @@ typedef struct OCResourcePayload
     uint8_t bitmap;
     bool secure;
     uint16_t port;
+#ifdef TCP_ADAPTER
+    uint16_t tcpPort;
+#endif
     struct OCResourcePayload* next;
 } OCResourcePayload;
 

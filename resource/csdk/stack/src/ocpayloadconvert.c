@@ -360,6 +360,14 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
                 VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure port value");
             }
 
+#ifdef TCP_ADAPTER
+            err |= cbor_encode_text_string(&policyMap, OC_RSRVD_TCP_PORT,
+                                           sizeof(OC_RSRVD_TCP_PORT) - 1);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding tcp port tag");
+            err |= cbor_encode_uint(&policyMap, resource->tcpPort);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding tcp port value");
+#endif
+
             err |= cbor_encoder_close_container(&linkMap, &policyMap);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing policy map");
 

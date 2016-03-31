@@ -2296,7 +2296,15 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             {
                 colon = close + 1;
             }
-            adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
+
+            if (istcp)
+            {
+                adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
+            }
+            else
+            {
+                adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
+            }
             flags = (OCTransportFlags)(flags | OC_IP_USE_V6);
         }
         else
@@ -2308,14 +2316,15 @@ static OCStackResult ParseRequestUri(const char *fullUri,
                 end = (colon && colon < slash) ? colon : slash;
 
                 if (istcp)
-                {   // coap over tcp
+                {
+                    // coap over tcp
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
                 }
                 else
                 {
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
-                    flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
                 }
+                flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
             }
             else
             {   // MAC address

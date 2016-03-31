@@ -111,6 +111,29 @@ static OCStackResult GetSecurePortInfo(OCDevAddr *endpoint, uint16_t *port)
     return OC_STACK_OK;
 }
 
+#ifdef TCP_ADAPTER
+/* This method will retrieve the tcp port */
+static OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port)
+{
+    uint16_t p = 0;
+
+    if (endpoint->adapter == OC_ADAPTER_IP)
+    {
+        if (endpoint->flags & OC_IP_USE_V4)
+        {
+            p = caglobals.tcp.ipv4.port;
+        }
+        else if (endpoint->flags & OC_IP_USE_V6)
+        {
+            p = caglobals.tcp.ipv6.port;
+        }
+    }
+
+    *port = p;
+    return OC_STACK_OK;
+}
+#endif
+
 /*
  * Function will extract 0, 1 or 2 filters from query.
  * More than 2 filters or unsupported filters will result in error.
@@ -291,21 +314,29 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     {
         return OC_STACK_INVALID_PARAM;
     }
-    uint16_t port = 0;
+    uint16_t securePort = 0;
     if (resourcePtr->resourceProperties & OC_SECURE)
     {
-       if (GetSecurePortInfo(devAddr, &port) != OC_STACK_OK)
+       if (GetSecurePortInfo(devAddr, &securePort) != OC_STACK_OK)
        {
-           port = 0;
+           securePort = 0;
        }
     }
 
     if (rdResponse)
     {
-        port = devAddr->port;
+        securePort = devAddr->port;
     }
 
-    OCDiscoveryPayloadAddResource(payload, resourcePtr, port);
+    uint16_t tcpPort = 0;
+#ifdef TCP_ADAPTER
+    if (GetTCPPortInfo(devAddr, &tcpPort) != OC_STACK_OK)
+    {
+        tcpPort = 0;
+    }
+#endif
+
+    OCDiscoveryPayloadAddResource(payload, resourcePtr, securePort, tcpPort);
     return OC_STACK_OK;
 }
 
