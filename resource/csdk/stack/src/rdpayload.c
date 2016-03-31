@@ -34,12 +34,12 @@ static CborError OCTagsPayloadToCbor(OCTagsPayload *tags, CborEncoder *setMap);
 static CborError OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap);
 static CborError OCTagsCborToPayload(CborValue *tagsMap, OCTagsPayload **tagsPayload);
 static CborError OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **linksPayload);
-static CborError FindStringInMap(CborValue *map, char *tags, char **value);
-static CborError FindIntInMap(CborValue *map, char *tags, uint64_t *value);
-static CborError FindStringLLInMap(const CborValue *linksMap, char *tag, OCStringLL **links);
-static CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen, const char *value);
-static CborError ConditionalAddIntToMap(CborEncoder *map, const char *tags, const size_t size, const uint64_t *value);
-static CborError AddStringLLToMap(CborEncoder *map, char *tag, const size_t size, OCStringLL *value);
+static CborError FindStringInMap(const CborValue *map, const char *tags, char **value);
+static CborError FindIntInMap(const CborValue *map, const char *tags, uint64_t *value);
+static CborError FindStringLLInMap(const CborValue *linksMap, const char *tag, OCStringLL **links);
+static CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key, const char *value);
+static CborError ConditionalAddIntToMap(CborEncoder *map, const char *tags, const uint64_t *value);
+static CborError AddStringLLToMap(CborEncoder *map, const char *tag, const OCStringLL *value);
 
 CborError OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, size_t *size)
 {
@@ -59,17 +59,18 @@ CborError OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, s
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create discovery map");
 
         cborEncoderResult = ConditionalAddTextStringToMap(&map, OC_RSRVD_DEVICE_NAME,
-                sizeof(OC_RSRVD_DEVICE_NAME) - 1, (char *)rdPayload->rdDiscovery->n.deviceName);
+            rdPayload->rdDiscovery->n.deviceName);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_DEVICE_NAME in map");
 
         cborEncoderResult = ConditionalAddTextStringToMap(&map, OC_RSRVD_DEVICE_ID,
-                sizeof(OC_RSRVD_DEVICE_ID) - 1, (char *)rdPayload->rdDiscovery->di.id);
+            (char *)rdPayload->rdDiscovery->di.id);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_DEVICE_ID in map");
 
-        cborEncoderResult = ConditionalAddIntToMap(&map, OC_RSRVD_RD_DISCOVERY_SEL,
-            sizeof(OC_RSRVD_RD_DISCOVERY_SEL) - 1, (uint64_t *)&rdPayload->rdDiscovery->sel);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add RD_DISCOVERY_SEL in map");
-
+        {
+            uint64_t value = rdPayload->rdDiscovery->sel;
+            cborEncoderResult = ConditionalAddIntToMap(&map, OC_RSRVD_RD_DISCOVERY_SEL, &value);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add RD_DISCOVERY_SEL in map");
+        }
         cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing discovery map");
     }
@@ -114,41 +115,39 @@ static CborError OCTagsPayloadToCbor(OCTagsPayload *tags, CborEncoder *setMap)
     CborError cborEncoderResult = cbor_encoder_create_map(setMap, &tagsMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create tags map");
 
-    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DEVICE_NAME,
-            sizeof(OC_RSRVD_DEVICE_NAME) - 1, (char *)tags->n.deviceName);
+    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DEVICE_NAME, tags->n.deviceName);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_DEVICE_NAME in tags map");
 
     cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DEVICE_ID,
-            sizeof(OC_RSRVD_DEVICE_ID) - 1, (char *)tags->di.id);
+            (char *)tags->di.id);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_DEVICE_ID in tags map");
 
-    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_RTS,
-            sizeof(OC_RSRVD_RTS) - 1, (char *)tags->rts);
+    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_RTS, tags->rts);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_RTS in tags map");
 
-    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DREL,
-            sizeof(OC_RSRVD_DREL) - 1, (char *)tags->drel);
+    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DREL, tags->drel);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_DREL in tags map");
 
-    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_BASE_URI,
-            sizeof(OC_RSRVD_BASE_URI) - 1, (char *)tags->baseURI);
+    cborEncoderResult = ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_BASE_URI, tags->baseURI);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_BASE_URI in tags map");
 
-    cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_BITMAP,
-            sizeof(OC_RSRVD_BITMAP) - 1, (uint64_t *)&tags->bitmap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_BITMAP in tags map");
+    {
+        uint64_t value = tags->bitmap;
+        cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_BITMAP, &value);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_BITMAP in tags map");
 
-    cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_HOSTING_PORT,
-            sizeof(OC_RSRVD_HOSTING_PORT) - 1, (uint64_t *)&tags->port);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_HOSTING_PORT in tags map");
+        value = tags->port;
+        cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_HOSTING_PORT, &value);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_HOSTING_PORT in tags map");
 
-    cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_INS, sizeof(OC_RSRVD_INS) - 1,
-            (uint64_t *)&tags->ins);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_INS in tags map");
+        value = tags->ins;
+        cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_INS, &value);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_INS in tags map");
 
-    cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_TTL, sizeof(OC_RSRVD_TTL) - 1,
-            (uint64_t *)&tags->ttl);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_TTL in tags map");
+        value = tags->ttl;
+        cborEncoderResult = ConditionalAddIntToMap(&tagsMap, OC_RSRVD_TTL, &value);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_TTL in tags map");
+    }
 
     cborEncoderResult = cbor_encoder_close_container(setMap, &tagsMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close container");
@@ -171,37 +170,32 @@ static CborError OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap
         cborEncoderResult = cbor_encoder_create_map(&linksArray, &linksMap, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create Links map");
 
-        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_HREF,
-                sizeof(OC_RSRVD_HREF) - 1, rtPtr->href);
+        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_HREF, rtPtr->href);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_HREF in Links map");
 
-        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_REL,
-                sizeof(OC_RSRVD_REL) - 1,  rtPtr->rel);
+        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_REL, rtPtr->rel);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_REL in Links map");
 
-        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_TITLE,
-                sizeof(OC_RSRVD_TITLE) - 1, rtPtr->title);
+        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_TITLE, rtPtr->title);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_TITLE in Links map");
 
-        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_URI,
-                sizeof(OC_RSRVD_URI) - 1, rtPtr->uri);
+        cborEncoderResult = ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_URI, rtPtr->uri);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_URI in Links map");
 
-        cborEncoderResult = AddStringLLToMap(&linksMap, OC_RSRVD_RESOURCE_TYPE,
-                sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, rtPtr->rt);
+        cborEncoderResult = AddStringLLToMap(&linksMap, OC_RSRVD_RESOURCE_TYPE, rtPtr->rt);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_RT in Links map");
 
-        cborEncoderResult = AddStringLLToMap(&linksMap, OC_RSRVD_INTERFACE,
-                sizeof(OC_RSRVD_INTERFACE) - 1, rtPtr->itf);
+        cborEncoderResult = AddStringLLToMap(&linksMap, OC_RSRVD_INTERFACE, rtPtr->itf);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_ITF in Links map");
 
-        cborEncoderResult = AddStringLLToMap(&linksMap, OC_RSRVD_MEDIA_TYPE,
-                sizeof(OC_RSRVD_MEDIA_TYPE) - 1, rtPtr->mt);
+        cborEncoderResult = AddStringLLToMap(&linksMap, OC_RSRVD_MEDIA_TYPE, rtPtr->mt);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_MT in Links map");
 
-        cborEncoderResult = ConditionalAddIntToMap(&linksMap, OC_RSRVD_INS,
-                sizeof(OC_RSRVD_INS) - 1, (uint64_t *)&rtPtr->ins);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_INS in Links map");
+        {
+            uint64_t value = rtPtr->ins;
+            cborEncoderResult = ConditionalAddIntToMap(&linksMap, OC_RSRVD_INS, &value);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add OC_RSRVD_INS in Links map");
+        }
 
         cborEncoderResult = cbor_encoder_close_container(&linksArray, &linksMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing Links map");
@@ -261,13 +255,21 @@ OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPay
         cborFindResult = FindStringInMap(rdCBORPayload, OC_RSRVD_DEVICE_NAME,
                 &rdPayload->rdDiscovery->n.deviceName);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding OC_RSRVD_DEVICE_NAME.");
-        cborFindResult = FindStringInMap(rdCBORPayload, OC_RSRVD_DEVICE_ID,
-                &rdPayload->rdDiscovery->n.deviceName);
+        char *deviceId = NULL;
+        cborFindResult = FindStringInMap(rdCBORPayload, OC_RSRVD_DEVICE_ID, &deviceId);
+        if (deviceId)
+        {
+            memcpy(rdPayload->rdDiscovery->di.id, deviceId, strlen(deviceId));
+            OICFree(deviceId);
+        }
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding OC_RSRVD_DEVICE_ID.");
 
-        cborFindResult = FindIntInMap(rdCBORPayload, OC_RSRVD_RD_DISCOVERY_SEL,
-                (uint64_t *)&rdPayload->rdDiscovery->sel);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding OC_RSRVD_RD_DISCOVERY_SEL.");
+        {
+            uint64_t value = 0;
+            cborFindResult = FindIntInMap(rdCBORPayload, OC_RSRVD_RD_DISCOVERY_SEL, &value);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding OC_RSRVD_RD_DISCOVERY_SEL.");
+            rdPayload->rdDiscovery->sel = value;
+        }
 
         cborFindResult =  cbor_value_advance(rdCBORPayload);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing rdCBORPayload.");
@@ -281,7 +283,7 @@ exit:
     return ret;
 }
 
-static CborError FindStringInMap(CborValue *map, char *tags, char **value)
+static CborError FindStringInMap(const CborValue *map, const char *tags, char **value)
 {
     CborValue curVal;
     CborError cborFindResult = cbor_value_map_find_value(map, tags, &curVal);
@@ -293,7 +295,7 @@ static CborError FindStringInMap(CborValue *map, char *tags, char **value)
     return cborFindResult;
 }
 
-static CborError FindIntInMap(CborValue *map, char *tags, uint64_t *value)
+static CborError FindIntInMap(const CborValue *map, const char *tags, uint64_t *value)
 {
     CborValue curVal;
     CborError cborFindResult = cbor_value_map_find_value(map, tags, &curVal);
@@ -304,7 +306,7 @@ static CborError FindIntInMap(CborValue *map, char *tags, uint64_t *value)
     return cborFindResult;
 }
 
-static CborError FindStringLLInMap(const CborValue *linksMap, char *tag, OCStringLL **links)
+static CborError FindStringLLInMap(const CborValue *linksMap, const char *tag, OCStringLL **links)
 {
     size_t len;
     CborValue rtArray;
@@ -362,15 +364,31 @@ static CborError OCTagsCborToPayload(CborValue *tagsMap, OCTagsPayload **tagsPay
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding rts");
         cborFindResult = FindStringInMap(tagsMap, OC_RSRVD_BASE_URI, &tags->baseURI);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding baseURI");
-        cborFindResult = FindStringInMap(tagsMap, OC_RSRVD_DEVICE_ID, (char **) &tags->di.id);
+        char *deviceId = NULL;
+        cborFindResult = FindStringInMap(tagsMap, OC_RSRVD_DEVICE_ID, &deviceId);
+        if (deviceId)
+        {
+            memcpy(tags->di.id, deviceId, strlen(deviceId));
+            OICFree(deviceId);
+        }
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding deviceId");
-        cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_HOSTING_PORT, (uint64_t *)&tags->port);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding port");
-        cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_BITMAP, (uint64_t *)&tags->bitmap);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding bitmap");
-        cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_INS, (uint64_t *)&tags->ins);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding ins");
-        cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_TTL, (uint64_t *)&tags->ttl);
+        {
+            uint64_t value = 0;
+            cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_HOSTING_PORT, &value);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding port");
+            tags->port = value;
+            value = 0;
+            cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_BITMAP, &value);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding bitmap");
+            tags->bitmap = value;
+            value = 0;
+            cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_INS, &value);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding ins");
+            tags->ins = value;
+            value = 0;
+            cborFindResult = FindIntInMap(tagsMap, OC_RSRVD_TTL, &value);
+            tags->ttl = value;
+        }
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding ttl");
         cborFindResult = cbor_value_advance(tagsMap);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing bitmap");
@@ -416,8 +434,12 @@ static CborError OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **li
         cborFindResult = FindStringLLInMap(&linksMap, OC_RSRVD_MEDIA_TYPE, &setLinks->mt);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding mt value");
 
-        cborFindResult = FindIntInMap(&linksMap, OC_RSRVD_INS, (uint64_t *) &setLinks->ins);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding ins value");
+        {
+            uint64_t value = 0;
+            cborFindResult = FindIntInMap(&linksMap, OC_RSRVD_INS, &value);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed finding ins value");
+            setLinks->ins = value;
+        }
 
         if (!*linksPayload)
         {
@@ -444,29 +466,26 @@ exit:
     return cborFindResult;
 }
 
-static CborError AddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
-        const char* value)
+static CborError AddTextStringToMap(CborEncoder* map, const char* key, const char* value)
 {
-    CborError err = cbor_encode_text_string(map, key, keylen);
+    CborError err = cbor_encode_text_string(map, key, strlen(key));
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting key value");
     err = cbor_encode_text_string(map, value, strlen(value));
 exit:
     return err;
 }
 
-static CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
-        const char* value)
+static CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key, const char* value)
 {
-    return value ? AddTextStringToMap(map, key, keylen, value) : CborNoError;
+    return value ? AddTextStringToMap(map, key, value) : CborNoError;
 }
 
-static CborError ConditionalAddIntToMap(CborEncoder *map, const char *tags, const size_t size,
-    const uint64_t *value)
+static CborError ConditionalAddIntToMap(CborEncoder *map, const char *tags, const uint64_t *value)
 {
     CborError err = CborNoError;
     if (*value)
     {
-        err = cbor_encode_text_string(map, tags, size);
+        err = cbor_encode_text_string(map, tags, strlen(tags));
         VERIFY_CBOR_SUCCESS(TAG, err, "failed setting value");
         err = cbor_encode_uint(map, *value);
     }
@@ -474,12 +493,11 @@ exit:
     return err;
 }
 
-static CborError AddStringLLToMap(CborEncoder *map, char *tag, const size_t size, OCStringLL *value)
+static CborError AddStringLLToMap(CborEncoder *map, const char *tag, const OCStringLL *strType)
 {
     CborEncoder array;
     CborError cborEncoderResult;
-    OCStringLL *strType = value;
-    cborEncoderResult = cbor_encode_text_string(map, tag, size);
+    cborEncoderResult = cbor_encode_text_string(map, tag, strlen(tag));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed encoding string tag name");
     cborEncoderResult = cbor_encoder_create_array(map, &array, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed creating stringLL array");

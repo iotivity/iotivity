@@ -327,7 +327,7 @@ extern "C" {
 #define OC_RSRVD_MEDIA_TYPE              "mt"
 
 /** To represent resource type with Publish RD.*/
-#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdPub"
+#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdpub"
 
 /**
  * These enums (OCTransportAdapter and OCTransportFlags) must

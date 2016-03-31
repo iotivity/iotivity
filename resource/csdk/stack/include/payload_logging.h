@@ -175,6 +175,10 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         return;
     }
     OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
+    if (payload->baseURI)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
+    }
     OCResourcePayload* res = payload->resources;
 
     while(res)
