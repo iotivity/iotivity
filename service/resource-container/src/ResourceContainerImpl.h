@@ -42,6 +42,7 @@
 
 #define BUNDLE_ACTIVATION_WAIT_SEC 10
 #define BUNDLE_SET_GET_WAIT_SEC 10
+#define BUNDLE_PATH_MAXLEN 300
 
 using namespace OIC::Service;
 

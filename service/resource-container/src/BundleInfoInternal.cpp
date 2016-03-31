@@ -32,6 +32,7 @@ namespace OIC
             m_resourceCreator = nullptr;
             m_resourceDestroyer = nullptr;
             m_bundleHandle = nullptr;
+            m_so_bundle = nullptr;
 
             m_loaded = false;
             m_activated = false;
