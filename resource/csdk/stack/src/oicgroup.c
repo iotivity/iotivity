@@ -787,14 +787,14 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     }
 
     actionTypeStr = (char *)malloc(1024);
-    if(actionTypeStr != NULL)
+    if(actionTypeStr != NULL && remaining >= strlen(actionTypeStr) + strlen(ACTION_DELIMITER) + 1)
     {
         sprintf(actionTypeStr, "%ld %u", actionset->timesteps, actionset->type);
         strncat(temp, actionTypeStr, strlen(actionTypeStr));
         remaining -= strlen(actionTypeStr);
         free(actionTypeStr);
         strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
-        remaining--;
+        remaining -= strlen(ACTION_DELIMITER);
     }
     else
     {
@@ -809,6 +809,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
             res = OC_STACK_ERROR;
             goto exit;
         }
+
         strcat(temp, "uri=");
         remaining -= strlen("uri=");
         strcat(temp, action->resourceUri);
@@ -842,6 +843,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
                     goto exit;
                 }
                 strcat(temp, "|");
+                remaining --;
             }
         }
 
