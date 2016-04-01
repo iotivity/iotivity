@@ -209,7 +209,7 @@ ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info)
     {
         info->type = CT_ADAPTER_IP;
         info->ipaddr = WiFi.localIP();
-        if(strlen(WiFi.SSID())<=MAXSSIDLEN)
+        if((sizeof(info->ssid) >= MAXSSIDLEN) && (strlen(WiFi.SSID()) <= MAXSSIDLEN))
         {
             strcpy(info->ssid, WiFi.SSID());
             return ES_OK;

@@ -77,8 +77,8 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 {
     if (name != NULL && pass != NULL)
     {
-        OICStrcpy(name, sizeof(name), gProvResource.tnn);
-        OICStrcpy(pass, sizeof(pass), gProvResource.cd);
+        OICStrcpy(name, MAXSSIDLEN, gProvResource.tnn);
+        OICStrcpy(pass, MAXNETCREDLEN, gProvResource.cd);
     }
 }
 
