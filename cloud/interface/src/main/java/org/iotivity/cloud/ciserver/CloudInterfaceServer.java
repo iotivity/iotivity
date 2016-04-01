@@ -22,7 +22,6 @@
 package org.iotivity.cloud.ciserver;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 import org.iotivity.cloud.base.CoapServer;
@@ -89,7 +88,7 @@ public class CloudInterfaceServer {
 
         keepAliveResource.startSessionChecker();
 
-        Scanner in = new Scanner(System.in, "UTF8");
+        Scanner in = new Scanner(System.in, "UTF-8");
 
         System.out.println("press 'q' to terminate");
 

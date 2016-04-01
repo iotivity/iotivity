@@ -55,7 +55,7 @@ public class ResourceDirectoryServer {
         coapServer
                 .startServer(new InetSocketAddress(Integer.parseInt(args[0])));
 
-        Scanner in = new Scanner(System.in, "UTF8");
+        Scanner in = new Scanner(System.in, "UTF-8");
 
         System.out.println("press 'q' to terminate");
 

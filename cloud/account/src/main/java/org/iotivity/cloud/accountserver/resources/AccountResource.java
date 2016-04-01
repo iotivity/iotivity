@@ -216,8 +216,7 @@ public class AccountResource extends Resource {
         ArrayList<String> deviceList = response.getDeviceList();
         responseMap.put(Constants.RESPONSE_DEVICES, deviceList);
 
-        JSONUtil jsonUtil = new JSONUtil();
-        String responseJson = jsonUtil.writeJSON(responseMap);
+        String responseJson = JSONUtil.writeJSON(responseMap);
 
         return responseJson;
     }

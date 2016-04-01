@@ -173,30 +173,37 @@ public class AuthResource extends Resource {
         if (authCode != null && authServer != null) {
             userId = oauthServerManager.requestUserId(authCode, authServer);
         }
-        String sessionCode = oauthServerManager.registerUserAccount(userId);
-
-        Logger.d("userId: " + userId + ", sessionCode: " + sessionCode);
-
+        
         CoapMessageBuilder responseMessage = new CoapMessageBuilder();
         CoapResponse coapResponse;
 
-        if (userId != null && sessionCode != null) {
+        if (userId != null) {
+            
+            String sessionCode = oauthServerManager.registerUserAccount(userId);
 
-            ResponseObject response = new ResponseObject();
-            response.setSessionCode(sessionCode);
-            response.setUserId(userId);
+            Logger.d("userId: " + userId + ", sessionCode: " + sessionCode);
 
-            String responseJson = convertRegisterResponseToJson(response);
-            Logger.d("responseJson: " + responseJson);
+            if (sessionCode != null) {
 
-            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
-                    responseJson, CoapStatus.CREATED);
+                ResponseObject response = new ResponseObject();
+                response.setSessionCode(sessionCode);
+                response.setUserId(userId);
+
+                String responseJson = convertRegisterResponseToJson(response);
+                Logger.d("responseJson: " + responseJson);
+
+                coapResponse = responseMessage.buildCoapResponse(
+                        request.getToken(), responseJson, CoapStatus.CREATED);
+            }
+            else  {
+                coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                        CoapStatus.UNAUTHORIZED);                
+            }
 
         } else {
 
             coapResponse = responseMessage.buildCoapResponse(request.getToken(),
                     CoapStatus.UNAUTHORIZED);
-
         }
 
         return coapResponse;
@@ -215,8 +222,7 @@ public class AuthResource extends Resource {
         if (sessionCode != null)
             responseMap.put(Constants.RESPONSE_SESSION_CODE, sessionCode);
 
-        JSONUtil jsonUtil = new JSONUtil();
-        String responseJson = jsonUtil.writeJSON(responseMap);
+        String responseJson = JSONUtil.writeJSON(responseMap);
 
         return responseJson;
     }
@@ -230,8 +236,7 @@ public class AuthResource extends Resource {
         if (userId != null)
             responseMap.put(Constants.RESPONSE_USER_ID, userId);
 
-        JSONUtil jsonUtil = new JSONUtil();
-        String responseJson = jsonUtil.writeJSON(responseMap);
+        String responseJson = JSONUtil.writeJSON(responseMap);
 
         return responseJson;
     }

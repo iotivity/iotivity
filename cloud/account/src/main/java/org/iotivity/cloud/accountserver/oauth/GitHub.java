@@ -76,16 +76,21 @@ public class GitHub extends OAuthServer {
     @Override
     public String requestGetUserInfo(String accessToken) {
 
-        String userInfo = "{}";
+        String userInfo = null;
+
+        if (accessToken == null) {
+            Logger.w("accessToken is null!");
+            return null;
+        }
 
         try {
 
             OAuthClientRequest request = new OAuthBearerClientRequest(
                     resource_url).setAccessToken(accessToken)
-                            .buildQueryMessage();
+                    .buildQueryMessage();
 
-            OAuthClient oAuthClient = new OAuthClient(
-                    new URLConnectionClient());
+            OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+            
             OAuthResourceResponse resourceResponse = oAuthClient.resource(
                     request, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
 
