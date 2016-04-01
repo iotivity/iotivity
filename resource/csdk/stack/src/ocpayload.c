@@ -148,6 +148,13 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
                 dest->arr.strArray[i] = OICStrdup(source->arr.strArray[i]);
             }
             break;
+        case OCREP_PROP_OBJECT:
+            dest->arr.objArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
+            for(size_t i = 0; i < dimTotal; ++i)
+            {
+                dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
+            }
+            break;
         case OCREP_PROP_ARRAY:
             dest->arr.objArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
             for(size_t i = 0; i < dimTotal; ++i)
@@ -230,7 +237,7 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                 }
                 OICFree(val->arr.ocByteStrArray);
                 break;
-            case OCREP_PROP_OBJECT:
+            case OCREP_PROP_OBJECT: // This case is the temporary fix for string input
                 for(size_t i = 0; i< dimTotal; ++i)
                 {
                     OCRepPayloadDestroy(val->arr.objArray[i]);
