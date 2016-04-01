@@ -192,7 +192,7 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", payload->type);
     }
     OIC_LOG(level, PL_TAG, "\tInterface:");
-    for (OCStringLL *itf = payload->interface; itf; itf = itf->next)
+    for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
     {
         OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
     }

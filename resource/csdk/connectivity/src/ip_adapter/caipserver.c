@@ -338,7 +338,7 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
 
     if (flags & CA_IPV6)
     {
-        sep.endpoint.interface = ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id;
+        sep.endpoint.ifindex = ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id;
         ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id = 0;
 
         if ((flags & CA_MULTICAST) && pktinfo)
@@ -703,10 +703,9 @@ static void applyMulticastToInterface4(struct in_addr inaddr)
     }
 }
 
-static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t interface)
+static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
 {
-    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = *addr, .ipv6mr_interface = interface};
-
+    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = *addr, .ipv6mr_interface = ifindex};
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof (mreq)))
     {
         if (EADDRINUSE != errno)
@@ -716,27 +715,27 @@ static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t interface)
     }
 }
 
-static void applyMulticastToInterface6(uint32_t interface)
+static void applyMulticastToInterface6(uint32_t ifindex)
 {
     if (!caglobals.ip.ipv6enabled)
     {
         return;
     }
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressInt, interface);
-    applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressLnk, interface);
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressRlm, interface);
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressAdm, interface);
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressSit, interface);
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressOrg, interface);
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressGlb, interface);
+    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressInt, ifindex);
+    applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressLnk, ifindex);
+    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressRlm, ifindex);
+    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressAdm, ifindex);
+    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressSit, ifindex);
+    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressOrg, ifindex);
+    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressGlb, ifindex);
 
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressInt, interface);
-    applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressLnk, interface);
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressRlm, interface);
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressAdm, interface);
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressSit, interface);
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressOrg, interface);
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressGlb, interface);
+    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressInt, ifindex);
+    applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressLnk, ifindex);
+    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressRlm, ifindex);
+    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressAdm, ifindex);
+    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressSit, ifindex);
+    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressOrg, ifindex);
+    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressGlb, ifindex);
 }
 
 CAResult_t CAIPStartListenServer()
@@ -886,7 +885,7 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
         struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sock;
         if (!sock6->sin6_scope_id)
         {
-            sock6->sin6_scope_id = endpoint->interface;
+            sock6->sin6_scope_id = endpoint->ifindex;
         }
         socklen = sizeof(struct sockaddr_in6);
     }
@@ -1090,7 +1089,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         }
 
         eps[j].adapter = CA_ADAPTER_IP;
-        eps[j].interface = 0;
+        eps[j].ifindex = 0;
 
         if (ifitem->family == AF_INET6)
         {
@@ -1109,7 +1108,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         j++;
 
         eps[j].adapter = CA_ADAPTER_IP;
-        eps[j].interface = 0;
+        eps[j].ifindex = 0;
 
         if (ifitem->family == AF_INET6)
         {

@@ -282,9 +282,9 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting RT");
 
         // Insert interfaces
-        if (payload->interface)
+        if (payload->iface)
         {
-            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->interface);
+            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->iface);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interface types tag/value");
         }
 

@@ -777,9 +777,9 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                         }
                         discPayload->type = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
                         VERIFY_NON_NULL(discPayload->type, ERROR, OC_STACK_NO_MEMORY);
-                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_LL);
-                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_DEFAULT);
-                        VERIFY_NON_NULL(discPayload->interface, ERROR, OC_STACK_NO_MEMORY);
+                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_LL);
+                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_DEFAULT);
+                        VERIFY_NON_NULL(discPayload->iface, ERROR, OC_STACK_NO_MEMORY);
                     }
                     bool foundResourceAtRD = false;
                     for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)

@@ -74,10 +74,10 @@ void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
 bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
 
 bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
-bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* interface);
+bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface);
 
 bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType);
-bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface);
+bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface);
 
 bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name);
 bool OCRepPayloadSetNull(OCRepPayload* payload, const char* name);
