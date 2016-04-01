@@ -416,7 +416,8 @@ public class MetaPropertiesView extends ViewPart {
                 resourceSelectionChangedListener);
     }
 
-    class PropertycontentProvider implements IStructuredContentProvider {
+    private static class PropertycontentProvider implements
+            IStructuredContentProvider {
 
         @Override
         public void dispose() {

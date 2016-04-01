@@ -233,7 +233,7 @@ public class DeleteResourcePage extends WizardPage {
         }
     }
 
-    class TreeLabelProvider extends LabelProvider {
+    private static class TreeLabelProvider extends LabelProvider {
         @Override
         public String getText(Object element) {
             if (element instanceof TreeViewContentHelper) {
@@ -254,7 +254,7 @@ public class DeleteResourcePage extends WizardPage {
         }
     }
 
-    class TreeViewContentHelper {
+    private static class TreeViewContentHelper {
         List<? extends Resource> resources;
 
         public TreeViewContentHelper(List<? extends Resource> resources) {

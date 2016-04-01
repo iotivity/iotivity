@@ -69,7 +69,7 @@ public class AttributeEditingSupport {
     private AttributeValueEditor attValueEditor;
     private AutomationEditor     automationEditor;
 
-    class SyncValueUpdate {
+    private static class SyncValueUpdate {
         private Boolean valueChangeInProgress;
 
         public boolean isValueChangeInProgress() {
@@ -715,7 +715,7 @@ public class AttributeEditingSupport {
         }
     }
 
-    class AutomationEditor extends EditingSupport {
+    private static class AutomationEditor extends EditingSupport {
 
         private final TreeViewer viewer;
 
