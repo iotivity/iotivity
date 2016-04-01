@@ -69,16 +69,16 @@ public class AddAttributeDialog extends TitleAreaDialog {
 
     private Set<AttributeHelper> attributes;
 
-    private final String         defaultMessage   = "Name, Type, and Default Value fields "
+    private static final String  defaultMessage   = "Name, Type, and Default Value fields "
                                                           + "are mandatory.\n\nRange and custom fields allow to set the valid "
                                                           + "values of the attribute.\n\n";
-    private final String         msgForBoolType   = "Possible attribute values of Bool are "
+    private static final String  msgForBoolType   = "Possible attribute values of Bool are "
                                                           + "true and false.\nSo range and custom options are disabled.";
-    private final String         msgForIntType    = "Valid values for Int type can either be "
+    private static final String  msgForIntType    = "Valid values for Int type can either be "
                                                           + "of range type (Ex: 1 - 10) or custom values (Ex: 10, 20, 50, and 100).\n";
-    private final String         msgForDoubleType = "Valid values for Double type can either be "
+    private static final String  msgForDoubleType = "Valid values for Double type can either be "
                                                           + "of range type (Ex: 18.0 - 22.0) or custom values (Ex: 1.5, 2.5, 3.9, 4.8, etc).\n";
-    private final String         msgForStringType = "For String type, range option is not"
+    private static final String  msgForStringType = "For String type, range option is not"
                                                           + "applicable. Hence it is disabled.\n\n"
                                                           + "Custom option is available to provide the valid values.\n\n"
                                                           + "Ex: low, mid, high, etc.";

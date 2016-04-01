@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class SerializedServiceProvider implements Serializable {
 
-    public class SerializedAttribute implements Serializable {
+    public static class SerializedAttribute implements Serializable {
 
         public String getName() {
             return m_name;

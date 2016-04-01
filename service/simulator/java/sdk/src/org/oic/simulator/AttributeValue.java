@@ -33,7 +33,7 @@ public class AttributeValue {
     /**
      * Class which provides the value type information in detail.
      */
-    public class TypeInfo {
+    public static class TypeInfo {
         public ValueType mType;
         public ValueType mBaseType;
         public int       mDepth;

@@ -386,7 +386,7 @@ public class AttributeEditingSupport {
         }
     }
 
-    class PostSelectionEditor extends EditingSupport {
+    private static class PostSelectionEditor extends EditingSupport {
 
         private final TreeViewer viewer;
 
