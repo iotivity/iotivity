@@ -791,6 +791,7 @@ typedef enum
  * Persistent storage handlers. An APP must provide OCPersistentStorage handler pointers
  * when it calls OCRegisterPersistentStorageHandler.
  * Persistent storage open handler points to default file path.
+ * It should check file path and whether the file is symbolic link or no.
  * Application can point to appropriate SVR database path for it's IoTivity Server.
  */
 typedef struct {
