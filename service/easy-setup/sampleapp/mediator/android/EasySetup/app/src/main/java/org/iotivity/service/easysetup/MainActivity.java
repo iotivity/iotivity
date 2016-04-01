@@ -235,7 +235,14 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 filePath = getFilesDir().getPath() + "/";
-                isSecurityEnabled = true;
+                if (isSecurityEnabled) {
+                    isSecurityEnabled = false;
+                    mEnableSecurity.setChecked(false);
+                }
+                else {
+                    isSecurityEnabled = true;
+                    mEnableSecurity.setChecked(true);
+                }
                 //copy json when application runs first time
                 SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences
                         (getApplicationContext());
