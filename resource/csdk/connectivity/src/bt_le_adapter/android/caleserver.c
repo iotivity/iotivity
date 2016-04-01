@@ -579,6 +579,15 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
         return CA_STATUS_FAILED;
     }
 
+    jobject jni_AdvertiseDataBuilderForScanRsp = (*env)->NewObject(env,
+                                                                   jni_cid_AdvertiseDataBuilder,
+                                                                   jni_mid_AdvertiseDataBuilder);
+    if (!jni_AdvertiseDataBuilderForScanRsp)
+    {
+        OIC_LOG(ERROR, TAG, "jni_AdvertiseDataBuilderForScanRsp is null");
+        return CA_STATUS_FAILED;
+    }
+
     jobject jni_obj_serviceUUID = CALEGetUuidFromString(env, OIC_GATT_SERVICE_UUID);
     if (!jni_obj_serviceUUID)
     {
@@ -625,9 +634,10 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
         return CA_STATUS_FAILED;
     }
 
-    jobject jni_obj_setIncludeDeviceName  = (*env)->CallObjectMethod(env, jni_AdvertiseDataBuilder,
-                                                                     jni_mid_setIncludeDeviceName,
-                                                                     JNI_TRUE);
+    jobject jni_obj_setIncludeDeviceName  = (*env)->CallObjectMethod(env,
+                                                               jni_AdvertiseDataBuilderForScanRsp,
+                                                               jni_mid_setIncludeDeviceName,
+                                                               JNI_TRUE);
     if (!jni_obj_setIncludeDeviceName)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_setIncludeDeviceName is null");
@@ -714,6 +724,15 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
         return CA_STATUS_FAILED;
     }
 
+    jobject jni_obj_build_LeAdvertiseDataForScanRsp = (*env)->CallObjectMethod(env,
+                                                                jni_AdvertiseDataBuilderForScanRsp,
+                                                                jni_mid_build_LeAdvertiseData);
+    if (!jni_obj_build_LeAdvertiseDataForScanRsp)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_build_LeAdvertiseDataForScanRsp is null");
+        return CA_STATUS_FAILED;
+    }
+
     jclass jni_cid_leAdvertiser = (*env)->FindClass(env,
                                                     "android/bluetooth/le/BluetoothLeAdvertiser");
     if (!jni_cid_leAdvertiser)
@@ -723,11 +742,12 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
     }
 
     jmethodID jni_mid_startAdvertising = (*env)->GetMethodID(env, jni_cid_leAdvertiser,
-                                                             "startAdvertising",
-                                                             "(Landroid/bluetooth/le/"
-                                                             "AdvertiseSettings;Landroid/bluetooth/"
-                                                             "le/AdvertiseData;Landroid/bluetooth/"
-                                                             "le/AdvertiseCallback;)V");
+                                                                 "startAdvertising",
+                                                                 "(Landroid/bluetooth/le/"
+                                                                 "AdvertiseSettings;Landroid/bluetooth/"
+                                                                 "le/AdvertiseData;Landroid/bluetooth/"
+                                                                 "le/AdvertiseData;Landroid/bluetooth/"
+                                                                 "le/AdvertiseCallback;)V");
     if (!jni_mid_startAdvertising)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_startAdvertising is null");
@@ -736,7 +756,7 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
 
     (*env)->CallVoidMethod(env, jni_obj_getBluetoothLeAdvertiser, jni_mid_startAdvertising,
                            jni_obj_build_LeAdvertiseSettings, jni_obj_build_LeAdvertiseData,
-                           advertiseCallback);
+                           jni_obj_build_LeAdvertiseDataForScanRsp, advertiseCallback);
 
     if ((*env)->ExceptionCheck(env))
     {
