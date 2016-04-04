@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.swing.text.html.parser.Entity;
+
 import org.iotivity.cloud.base.Resource;
 import org.iotivity.cloud.base.SessionManager;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
@@ -40,6 +42,7 @@ import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.collection.IntObjectMap.Entry;
 
 /**
  *
@@ -184,14 +187,16 @@ public class KeepAliveResource extends Resource {
                 // check interval
                 while (iterator.hasNext()) {
                     ChannelHandlerContext key = iterator.next();
-                    if (map.containsKey(key) && map.get(key) != null) {
-                        Long lifeTime = (Long) map.get(key);
-                        if (lifeTime != 0) {
-                            Logger.d("KeepAliveTask Operating : "
-                                    + key.channel().toString() + ", Time : "
-                                    + (lifeTime - currentTime));
-                            if (lifeTime < currentTime) {
-                                deleteList.add(key);
+                    if (map.containsKey(key)) {
+                        if (map.get(key) != null) {
+                            Long lifeTime = (Long) map.get(key);
+                            if (lifeTime != null) {
+                                Logger.d("KeepAliveTask Operating : "
+                                        + key.channel().toString() + ", Time : "
+                                        + (lifeTime - currentTime));
+                                if (lifeTime < currentTime) {
+                                    deleteList.add(key);
+                                }
                             }
                         }
                     }

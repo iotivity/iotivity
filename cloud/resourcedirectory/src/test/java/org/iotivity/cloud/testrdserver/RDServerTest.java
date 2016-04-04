@@ -78,6 +78,9 @@ public class RDServerTest {
         CoapClientHandler coapHandler = new CoapClientHandler();
         coapClient.addHandler(coapHandler);
         coapClient.startClient(new InetSocketAddress("127.0.0.1", 5683));
+        if (coapHandler.connectCtx == null) {
+                throw new IllegalArgumentException("connectCtx is null");
+        }
         return coapHandler.connectCtx;
     }
 
@@ -186,7 +189,12 @@ public class RDServerTest {
         didList.add("98f7483c-5a31-4161-ba7e-9c13e0d");
         data.put("devices", didList);
         String payload = JSONUtil.writeJSON(data);
-        request.setPayload(payload.getBytes(StandardCharsets.UTF_8));
+        if (payload != null) {
+            request.setPayload(payload.getBytes(StandardCharsets.UTF_8));
+        }
+        else {
+                throw new IllegalArgumentException("payload writeJson error");
+        }
 
         startServer();
         ChannelHandlerContext ctx = startClient();
