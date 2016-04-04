@@ -189,7 +189,8 @@ OCStackResult OCRemoveDevice(void* ctx,
  * variables pOwnedDevList and pUnownedDevList.
  *
  * @param[in] waitime Wait time for the API. The wait time will be divided by 2, and half of wait time
- * will be used for unowned discovery and remaining half for owned discovery.
+ * will be used for unowned discovery and remaining half for owned discovery. So the wait time should be
+ * equal to or more than 2.
  * @param[out] pOwnedDevList  list of owned devices.
  * @param[out] pUnownedDevList  list of unowned devices.
  * @return OC_STACK_OK in case of success and other value otherwise.
