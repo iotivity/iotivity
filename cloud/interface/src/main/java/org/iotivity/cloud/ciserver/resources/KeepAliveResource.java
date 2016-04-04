@@ -30,8 +30,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.text.html.parser.Entity;
-
 import org.iotivity.cloud.base.Resource;
 import org.iotivity.cloud.base.SessionManager;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
@@ -42,7 +40,6 @@ import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.collection.IntObjectMap.Entry;
 
 /**
  *

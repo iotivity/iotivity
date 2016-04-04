@@ -22,7 +22,6 @@
 package org.iotivity.cloud.ciserver.protocols;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
