@@ -78,6 +78,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 #elif defined ARDUINO
 #include <stdarg.h>
 #include "Arduino.h"
+#include "oic_string.h"
 
     PROGMEM const char level0[] = "DEBUG";
     PROGMEM const char level1[] = "INFO";
@@ -90,10 +91,10 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
     static void OCLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
 #ifdef ARDUINO_ARCH_AVR
     //Mega2560 and other 8-bit AVR microcontrollers
-    #define GET_PROGMEM_BUFFER(buffer, addr) { strcpy_P(buffer, (char*)pgm_read_word(addr));}
+    #define GET_PROGMEM_BUFFER(buffer, addr) { OICStrcpy(buffer, sizeof(buffer), (char*)pgm_read_word(addr));}
 #elif defined ARDUINO_ARCH_SAM
     //Arduino Due and other 32-bit ARM micro-controllers
-    #define GET_PROGMEM_BUFFER(buffer, addr) { strcpy_P(buffer, (char*)pgm_read_dword(addr));}
+    #define GET_PROGMEM_BUFFER(buffer, addr) { OICStrcpy(buffer, sizeof(buffer), (char*)pgm_read_dword(addr));}
 #else
     #define GET_PROGMEM_BUFFER(buffer, addr) { buffer[0] = '\0';}
 #endif
