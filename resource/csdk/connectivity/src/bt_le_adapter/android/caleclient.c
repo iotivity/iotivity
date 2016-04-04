@@ -4130,8 +4130,9 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             }
             else
             {
-                // other reason is expected to running background connection in BT platform.
-                OIC_LOG(INFO, TAG, "Background connection running.. please wait");
+                // other reason except for gatt_success is expected to running
+                // background connection in BT platform.
+                OIC_LOG(INFO, TAG, "unknown state or manual disconnected state");
                 CALEClientUpdateSendCnt(env);
                 return;
             }
