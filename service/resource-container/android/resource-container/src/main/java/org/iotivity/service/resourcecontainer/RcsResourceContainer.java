@@ -122,6 +122,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      *
      */
     public List<RcsBundleInfo> startContainer(String configFile) {
+        if(configFile == null || configFile.isEmpty()){
+            throw new IllegalArgumentException(
+		"Configuration file is null or empty.");
+	}
         nativeStartContainer(configFile);
         Log.d(TAG, "startContainer in Java");
         List<RcsBundleInfo> bundles = listBundles();
@@ -138,6 +142,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     }
 
     private void startBundleFromStandaloneApp(RcsBundleInfo bundleInfo){
+        if(bundleInfo == null){
+            throw new IllegalArgumentException(
+		"bundleInfo parameter is null or empty.");
+        }
         String packageName = bundleInfo.getPath().replace(".apk", "");
         try{
             PackageManager packageManager = appContext.getPackageManager();
@@ -163,6 +171,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     }
     
     private void startBundleFromJar(RcsBundleInfo bundleInfo){
+        if(bundleInfo == null){
+            throw new IllegalArgumentException(
+		"bundleInfo parameter is null");
+        }
         try{
             Log.e(TAG, "Loading from .jar file.");
             
@@ -184,6 +196,14 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     private void activateBundle(Class activatorClass, RcsBundleInfo bundleInfo) throws
         NoSuchMethodException, InstantiationException, IllegalAccessException, 
         InvocationTargetException{
+        if(activatorClass == null){
+            throw new IllegalArgumentException(
+		"activatorClass is null.");
+        }
+        if(bundleInfo == null){
+            throw new IllegalArgumentException(
+		"bundleInfo is null.");
+        }
         if(activatorClass!= null){
             BundleActivator activator = (BundleActivator) activatorClass.
                     getConstructor(RcsResourceContainerBundleAPI.class, Context.class).
@@ -239,6 +259,22 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      */
     public void addBundle(String bundleId, String bundleUri, String bundlePath,
             String activator, Map<String, String> params) {
+        if(bundleId == null){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null.");
+        }
+	if(bundleUri == null){
+            throw new IllegalArgumentException(
+		"bundleUri is null.");
+        }
+	if(bundlePath == null){
+            throw new IllegalArgumentException(
+		"bundlePath is null.");
+        }
+	if(activator == null){
+            throw new IllegalArgumentException(
+		"activator is null.");
+        }
         nativeAddBundle(bundleId, bundleUri, bundlePath, activator, params);
     }
 
@@ -250,6 +286,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      *
      */
     public void removeBundle(String bundleId) {
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
         if(activators.contains(bundleId)){
             // deactivate android bundle
             activators.get(bundleId).deactivateBundle();
@@ -266,6 +306,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      */
     public void startBundle(String bundleId) {
         Log.d(TAG, "startBundle");
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
         List<RcsBundleInfo> bundles = listBundles();
 
         for(RcsBundleInfo bundleInfo : bundles){
@@ -291,7 +335,11 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      *            Id of the Bundle
      *
      */
-    public void stopBundle(String bundleId) {
+    public void stopBundle(String bundleId){
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
         nativeStopBundle(bundleId);
     }
 
@@ -308,6 +356,14 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      */
     public void addResourceConfig(String bundleId, String resourceUri,
             Map<String, String> params) {
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
+	if(resourceUri == null || resourceUri.isEmpty()){
+            throw new IllegalArgumentException(
+		"resourceUri parameter is null or empty.");
+        }
         nativeAddResourceConfig(bundleId, resourceUri, params);
     }
 
@@ -321,6 +377,14 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      *
      */
     public void removeResourceConfig(String bundleId, String resourceUri) {
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
+	if(resourceUri == null || resourceUri.isEmpty()){
+            throw new IllegalArgumentException(
+		"resourceUri parameter is null or empty.");
+        }
         nativeRemoveResourceConfig(bundleId, resourceUri);
     }
 
@@ -333,6 +397,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @return List<String> All the bundle resources
      */
     public List<String> listBundleResources(String bundleId) {
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
         return nativeListBundleResources(bundleId);
     }
 
@@ -347,6 +415,15 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     public void registerResource(String bundleId, BundleResource resource){
         Log.d(TAG, "register Resource");
         // bundleResources.add(resource);
+        
+        if(bundleId == null || bundleId.isEmpty()){
+		throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
+	if(resource == null){
+		throw new IllegalArgumentException(
+		"resource parameter is null.");
+        }
         nativeRegisterBundleResource(resource, resource.getAttributeKeys(), bundleId,
                         resource.getURI(), resource.getResourceType(),
                         resource.getName());
@@ -362,10 +439,13 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      */
     public List<ResourceConfig> getConfiguredBundleResources(String bundleId) {
         Log.d(TAG, "getConfiguredBundleResource " + bundleId);
+        Vector<ResourceConfig> configs = new Vector<ResourceConfig>();
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
         int configuredResources = getNumberOfConfiguredResources(bundleId);
         Log.d(TAG, "configured resources " + configuredResources);
-
-        Vector<ResourceConfig> configs = new Vector<ResourceConfig>();
 
         for (int i = 0; i < configuredResources; i++) {
                 String[] resourceParams = getConfiguredResourceParams(bundleId, i);
@@ -383,6 +463,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      */
     public void unregisterResource(BundleResource resource){
         Log.d(TAG, "unregister Resource");
+        if(resource == null){
+        	throw new IllegalArgumentException(
+		"resource is null.");
+        }
         nativeUnregisterBundleResource(resource, resource.getURI());
     }
 
@@ -395,6 +479,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      */
     public int getNumberOfConfiguredResources(String bundleId){
         Log.d(TAG, "getNumberOfConfiguredResources");
+        if(bundleId == null || bundleId.isEmpty()){
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
         return nativeGetNumberOfConfiguredResources(bundleId);
     }
 
@@ -409,6 +497,14 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      */
     public String[] getConfiguredResourceParams(String bundleId, int resId){
         Log.d(TAG, "getConfiguredResourceParams");
+        if(bundleId == null || bundleId.isEmpty()){ 
+            throw new IllegalArgumentException(
+		"bundleId parameter is null or empty.");
+        }
+	if(resId < 0){
+	    throw new IllegalArgumentException(
+		"resId paramater has to be non-negative.");
+	}
         return nativeGetConfiguredResourceParams(bundleId, resId);
     }
 }
