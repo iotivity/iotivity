@@ -35,33 +35,34 @@ extern "C" {
 #endif // __cplusplus
 
 /*
- * Callback function for updating the Enrollee OnBoarding and Provisioning status result to the application
+ * Callback function for updating the Enrollee OnBoarding and Provisioning status result
+ * to the application
  *
  * @param esResult ESResult provides the current state of the Enrollee Device
  */
-typedef void (*EventCallback)(ESResult esResult, EnrolleeState enrolleeState);
+typedef void (*ESEnrolleeEventCallback)(ESResult esResult, ESEnrolleeState enrolleeState);
 
 /**
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API
  *
  * @param networkType       NetworkType on which OnBoarding has to be performed.
  * @param ssid              SSID of the target SoftAP network to which the Enrollee is connecting.
- * @param passwd            Password of the target SoftAP network to which the Enrollee is connecting
+ * @param passwd            Password of the target SoftAP network to which the Enrollee is
+ *                          connecting
  * @param isSecured         True if the Enrollee is operating in secured mode.
- * @param eventCallback     EventCallback for for updating the Enrollee OnBoarding status result to
- *                          the application
+ * @param eventCallback     ESEnrolleeEventCallback for for updating the Enrollee OnBoarding status
+ *                          result to the application
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const char *passwd,
-        bool isSecured,
-        EventCallback eventCallback);
+ESResult ESInitEnrollee(OCConnectivityType networkType, const char *ssid, const char *passwd,
+                                bool isSecured, ESEnrolleeEventCallback eventCallback);
 
 /**
  * This function performs initialization of Provisioning and Network resources needed for EasySetup
  * process.
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult InitProvisioning();
+ESResult ESInitProvisioning();
 
 /**
  * This function performs termination of Provisioning and Network resources.
@@ -69,7 +70,7 @@ ESResult InitProvisioning();
  *
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult TerminateEasySetup();
+ESResult ESTerminateEnrollee();
 
 #ifdef __cplusplus
 }

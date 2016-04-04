@@ -58,9 +58,9 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRep
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest);
 
-ResourceEventCallback gNetworkInfoProvEventCb = NULL;
+ESEnrolleeResourceEventCallback gNetworkInfoProvEventCb = NULL;
 
-void RegisterResourceEventCallBack(ResourceEventCallback cb)
+void RegisterResourceEventCallBack(ESEnrolleeResourceEventCallback cb)
 {
     gNetworkInfoProvEventCb = cb;
 }

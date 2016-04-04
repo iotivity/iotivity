@@ -20,7 +20,7 @@
 void ESCreateSoftapCallback(int result, const char *ip, const char* mac_addr,
                                                             const char* device_name );
 
-NetworkEventCallback gCallback;
+ESEnrolleeNetworkEventCallback gCallback;
 
 /**
  * It will return Device which is creating Soft AP.
@@ -76,7 +76,7 @@ void ESCreateSoftapCallback(int result, const char *ip, const char* mac_addr,
 /**
  * This API will create the softap at enrollee
  */
-void ESCreateSoftap(const char * ssid, const char* passwd, NetworkEventCallback cb)
+void ESCreateSoftap(const char * ssid, const char* passwd, ESEnrolleeNetworkEventCallback cb)
 {
     gCallback = cb;
 

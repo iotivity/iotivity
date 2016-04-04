@@ -69,7 +69,7 @@ void PrintMenu()
     printf("============\n");
 }
 
-void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
+void EventCallbackInApp(ESResult esResult, ESEnrolleeState enrolleeState)
 {
     printf("Easy setup event callback\n");
 
@@ -121,14 +121,14 @@ void StartEasySetup()
 {
     printf("StartEasySetup and onboarding started..\n");
 
-    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
+    if(ESInitEnrollee(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
     {
         printf("StartEasySetup and onboarding Fail!!\n");
         return;
     }
 }
 
-void StartOICStackAndStartResources()
+void ESInitResources()
 {
     printf("Starting Enrollee Provisioning\n");
 
@@ -139,7 +139,7 @@ void StartOICStackAndStartResources()
         return;
     }
 
-    if (InitProvisioning() == ES_ERROR)
+    if (ESInitProvisioning() == ES_ERROR)
     {
         printf("Init Provisioning Failed!!\n");
         return;
@@ -151,16 +151,16 @@ void StartOICStackAndStartResources()
         printf("Thread creation failed\n");
     }
 
-    printf("InitProvisioning Success\n");
+    printf("ESInitProvisioning Success\n");
 }
 
 void StopEasySetup()
 {
     printf("StopEasySetup IN\n");
 
-    if (TerminateEasySetup() == ES_ERROR)
+    if (ESTerminateEnrollee() == ES_ERROR)
     {
-        printf("TerminateEasySetup Failed!!\n");
+        printf("ESTerminateEnrollee Failed!!\n");
         return;
     }
 
@@ -212,7 +212,7 @@ int main()
 
                 case 'P': // start provisioning
                 case 'p':
-                    StartOICStackAndStartResources();
+                    ESInitResources();
                     break;
 
                 case 'T': // stop easy setup
