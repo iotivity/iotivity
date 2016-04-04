@@ -448,17 +448,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
     }
     else if (state_disconnected == newState)// le disconnected
     {
-        if (LINK_LOSS == status || REMOTE_DISCONNECT == status)
-        {
-            OIC_LOG(DEBUG, TAG, "LE is disconnected");
+        OIC_LOG(DEBUG, TAG, "LE is disconnected");
 
+        if (CONNECTION_FAILED_TO_BE_EASTABLISHED != status)
+        {
             if (g_connStateCB)
             {
                 OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
                 g_connStateCB(CA_ADAPTER_GATT_BTLE, address, false);
                 OIC_LOG(DEBUG, TAG, "LE Disconnected state callback is called");
             }
+        }
 
+        if (LINK_LOSS == status || REMOTE_DISCONNECT == status)
+        {
             if (!CAManagerIsMatchedACData(env, jni_address))
             {
                 OIC_LOG_V(DEBUG, TAG, "this[%s] is not target address for Auto Connection",
