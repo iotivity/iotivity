@@ -787,14 +787,23 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     }
 
     actionTypeStr = (char *)malloc(1024);
-    if(actionTypeStr != NULL && remaining >= strlen(actionTypeStr) + strlen(ACTION_DELIMITER) + 1)
+    if(actionTypeStr != NULL)
     {
         sprintf(actionTypeStr, "%ld %u", actionset->timesteps, actionset->type);
-        strncat(temp, actionTypeStr, strlen(actionTypeStr));
-        remaining -= strlen(actionTypeStr);
-        free(actionTypeStr);
-        strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
-        remaining -= strlen(ACTION_DELIMITER);
+        if(remaining >= strlen(actionTypeStr) + strlen(ACTION_DELIMITER) + 1)
+        {
+            strncat(temp, actionTypeStr, strlen(actionTypeStr));
+            remaining -= strlen(actionTypeStr);
+            strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
+            remaining -= strlen(ACTION_DELIMITER);
+            free(actionTypeStr);
+        }
+        else
+        {
+            free(actionTypeStr);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
     }
     else
     {
