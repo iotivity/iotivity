@@ -356,6 +356,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_removeDevice
 (JNIEnv *env, jobject thiz, jint timeout, jobject jListener)
 {
     LOGD("OcSecureResource_removeDevice");
+    if (timeout < 0)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+        return;
+    }
+
     if (!jListener)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener cannot be null");
