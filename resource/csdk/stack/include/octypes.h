@@ -960,19 +960,33 @@ typedef struct
 /** Enum to describe the type of object held by the OCPayload object.*/
 typedef enum
 {
+    /** Contents of the payload are invalid */
     PAYLOAD_TYPE_INVALID,
+    /** The payload is an OCDiscoveryPayload */
     PAYLOAD_TYPE_DISCOVERY,
+    /** The payload is an OCDevicePayload */
     PAYLOAD_TYPE_DEVICE,
+    /** The payload is an OCPlatformPayload */
     PAYLOAD_TYPE_PLATFORM,
+    /** The payload is an OCRepPayload */
     PAYLOAD_TYPE_REPRESENTATION,
+    /** The payload is an OCSecurityPayload */
     PAYLOAD_TYPE_SECURITY,
+    /** The payload is an OCPresencePayload */
     PAYLOAD_TYPE_PRESENCE,
+    /** The payload is an OCRDPayload */
     PAYLOAD_TYPE_RD
 } OCPayloadType;
 
+/**
+ * A generic struct representing a payload returned from a resource operation
+ *
+ * A pointer to OCPayLoad can be cast to a more specific struct to access members
+ * for the its type.
+ */
 typedef struct
 {
-    // The type of message that was received
+    /** The type of message that was received */
     OCPayloadType type;
 } OCPayload;
 
