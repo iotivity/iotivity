@@ -32,7 +32,7 @@ namespace OIC
 {
     namespace Service
     {
-        BundleResource::BundleResource() : m_pNotiReceiver(nullptr)
+        BundleResource::BundleResource() : m_pNotiReceiver(nullptr), m_resourceAttributes_mutex()
         {
 
         }
