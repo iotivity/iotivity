@@ -167,6 +167,14 @@ jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
  */
 jobject CALEGetRemoteDevice(JNIEnv *env, jstring address);
 
+/**
+ * get address from gatt profile object.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   gatt                  gatt profile object.
+ * @return  LE address.
+ */
+jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

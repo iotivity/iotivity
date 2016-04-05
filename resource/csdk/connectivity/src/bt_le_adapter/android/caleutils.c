@@ -451,3 +451,36 @@ jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
     OIC_LOG(DEBUG, TAG, "OUT - CALEGetRemoteDevice");
     return jni_obj_device;
 }
+
+jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
+{
+    OIC_LOG(DEBUG, TAG, "IN - CALEGetAddressFromGatt");
+
+    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
+    VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
+
+    jmethodID jni_mid_getDevice = CALEGetJNIMethodID(env, CLASSPATH_BT_GATT, "getDevice",
+                                                     METHODID_BT_DEVICE);
+    if (!jni_mid_getDevice)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getDevice is null");
+        return NULL;
+    }
+
+    jobject jni_obj_device = (*env)->CallObjectMethod(env, gatt, jni_mid_getDevice);
+    if (!jni_obj_device)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_device is null");
+        return NULL;
+    }
+
+    jstring jni_address = CALEGetAddressFromBTDevice(env, jni_obj_device);
+    if (!jni_address)
+    {
+        OIC_LOG(ERROR, TAG, "jni_address is null");
+        return NULL;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT - CALEGetAddressFromGatt");
+    return jni_address;
+}

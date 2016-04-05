@@ -123,46 +123,6 @@ jobject CAManagerGetRemoteDevice(JNIEnv *env, jstring address)
     return jni_obj_device;
 }
 
-jstring CAManagerGetAddressFromGatt(JNIEnv *env, jobject gatt)
-{
-    OIC_LOG(DEBUG, TAG, "IN - CAManagerGetAddressFromGatt");
-
-    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
-    VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
-
-    jclass jni_cid_gattdevice_list = (*env)->FindClass(env, CLASSPATH_BT_GATT);
-    if (!jni_cid_gattdevice_list)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_gattdevice_list is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getDevice = (*env)->GetMethodID(env, jni_cid_gattdevice_list, "getDevice",
-                                                      METHODID_BT_DEVICE);
-    if (!jni_mid_getDevice)
-    {
-        OIC_LOG(ERROR, TAG, "jni_mid_getDevice is null");
-        return NULL;
-    }
-
-    jobject jni_obj_device = (*env)->CallObjectMethod(env, gatt, jni_mid_getDevice);
-    if (!jni_obj_device)
-    {
-        OIC_LOG(ERROR, TAG, "jni_obj_device is null");
-        return NULL;
-    }
-
-    jstring jni_address = CALEGetAddressFromBTDevice(env, jni_obj_device);
-    if (!jni_address)
-    {
-        OIC_LOG(ERROR, TAG, "jni_address is null");
-        return NULL;
-    }
-
-    OIC_LOG(DEBUG, TAG, "OUT - CAManagerGetAddressFromGatt");
-    return jni_address;
-}
-
 bool CAManagerIsDeviceBonded(JNIEnv *env, jobject btDevice)
 {
     OIC_LOG(DEBUG, TAG, "IN - CAManagerIsDeviceBonded");

@@ -41,7 +41,6 @@ static const jint LINK_LOSS = 8;
 static const jint ACCEPT_TIMEOUT_EXCEPTION = 16;
 static const jint REMOTE_DISCONNECT = 19;
 static const jint LOCAL_DISCONNECT = 22;
-static const jint CONNECTION_FAILED_TO_BE_EASTABLISHED = 62;
 static const jint USER_REMOVED_BOND = 68;
 static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;
@@ -418,10 +417,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
     jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
     jint gatt_success = CALEGetConstantsValue(env, CLASSPATH_BT_GATT, "GATT_SUCCESS");
 
-    jstring jni_address = CAManagerGetAddressFromGatt(env, gatt);
+    jstring jni_address = CALEGetAddressFromGatt(env, gatt);
     if (!jni_address)
     {
-        OIC_LOG(ERROR, TAG, "CAManagerGetAddressFromGatt is null");
+        OIC_LOG(ERROR, TAG, "CALEGetAddressFromGatt is null");
         return;
     }
 
@@ -513,10 +512,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
             return;
         }
 
-        jstring jni_address = CAManagerGetAddressFromGatt(env, gatt);
+        jstring jni_address = CALEGetAddressFromGatt(env, gatt);
         if (!jni_address)
         {
-            OIC_LOG(ERROR, TAG, "CAManagerGetAddressFromGatt is null");
+            OIC_LOG(ERROR, TAG, "CALEGetAddressFromGatt is null");
             return;
         }
 

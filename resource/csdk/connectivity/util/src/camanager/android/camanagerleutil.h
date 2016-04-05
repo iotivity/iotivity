@@ -42,14 +42,6 @@ typedef enum {
 jobject CAManagerGetRemoteDevice(JNIEnv *env, jstring address);
 
 /**
- * get address from gatt profile object.
- * @param[in]   env                   JNI interface pointer.
- * @param[in]   gatt                  gatt profile object.
- * @return  LE address.
- */
-jstring CAManagerGetAddressFromGatt(JNIEnv *env, jobject gatt);
-
-/**
  * check whether the devie is bonded or not.
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   btDevice              bluetooth device object.
