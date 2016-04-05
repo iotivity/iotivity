@@ -148,6 +148,24 @@ CAResult_t CANfcCreateJniInterfaceObject()
         isAttached = true;
     }
 
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, "android/content/Context",
+                                                           "getApplicationContext",
+                                                           "()Landroid/content/Context;");
+
+    if (!mid_getApplicationContext)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jApplicationContext = (*env)->CallObjectMethod(env, g_context,
+                                                           mid_getApplicationContext);
+    if (!jApplicationContext)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get application context");
+        return CA_STATUS_FAILED;
+    }
+
     jclass jni_NfcInterface = (*env)->FindClass(env, "org/iotivity/ca/CaNfcInterface");
     if (!jni_NfcInterface)
     {
@@ -164,7 +182,7 @@ CAResult_t CANfcCreateJniInterfaceObject()
     }
 
     jobject jni_nfcInstance = (*env)->NewObject(env, jni_NfcInterface,
-                                                NfcInterfaceConstructorMethod, g_context,
+                                                NfcInterfaceConstructorMethod, jApplicationContext,
                                                 g_activity);
     if (!jni_nfcInstance)
     {

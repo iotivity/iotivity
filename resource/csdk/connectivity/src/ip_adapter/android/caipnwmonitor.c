@@ -321,16 +321,10 @@ CAResult_t CAIPJniInit()
         return CA_STATUS_FAILED;
     }
 
-    jclass cls_Context = (*env)->FindClass(env, "android/content/Context");
-    if (!cls_Context)
-    {
-        OIC_LOG(ERROR, TAG, "Could not get context object class");
-        return CA_STATUS_FAILED;
-    }
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, "android/content/Context",
+                                                           "getApplicationContext",
+                                                           "()Landroid/content/Context;");
 
-    jmethodID mid_getApplicationContext = (*env)->GetMethodID(env, cls_Context,
-                                                                "getApplicationContext",
-                                                                "()Landroid/content/Context;");
     if (!mid_getApplicationContext)
     {
         OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
