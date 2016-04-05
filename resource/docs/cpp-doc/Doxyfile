@@ -660,28 +660,25 @@ WARN_LOGFILE           = ./doxygen.log
 # with spaces.
 
 INPUT                  = . \
-                         ../include/OCApi.h \
-                         ../include/OCPlatform.h \
-                         ../include/OCRepresentation.h \
-                         ../include/OCResourceRequest.h \
-                         ../include/OCResourceResponse.h \
-                         ../include/OCResource.h \
-                         ../include/OCProvisioningManager.h \
-                         ../csdk/stack/include/octypes.h \
-                         ../csdk/stack/include/ocstackconfig.h \
+                         ../../include/OCApi.h \
+                         ../../include/OCPlatform.h \
+                         ../../include/OCRepresentation.h \
+                         ../../include/OCResourceRequest.h \
+                         ../../include/OCResourceResponse.h \
+                         ../../include/OCResource.h \
+                         ../../include/OCProvisioningManager.h \
+                         ../../csdk/stack/include/octypes.h \
+                         ../../csdk/stack/include/ocstackconfig.h \
                          guides \
-                         ../../service/resource-encapsulation/include \
-                         ../../service/resource-hosting/include \
-                         ../../service/resource-container/include \
-                         ../../service/resource-container/bundle-api/include \
-                         ../../service/things-manager/sdk/inc/ThingsConfiguration.h \
-                         ../../service/things-manager/sdk/inc/ThingsMaintenance.h \
-                         ../../service/easy-setup/mediator/richsdk/inc/ \
-                         ../../service/easy-setup/enrollee/inc \
-                         ../../service/easy-setup/enrollee/src/softap.h \
-                         ../../service/easy-setup/inc \
-                         ../../service/resource-directory/include \
-                         ../../service/scene-manager/include \
+                         ../../../service/resource-encapsulation/include \
+                         ../../../service/resource-hosting/include \
+                         ../../../service/resource-container/include \
+                         ../../../service/resource-container/bundle-api/include \
+                         ../../../service/things-manager/sdk/inc/ThingsConfiguration.h \
+                         ../../../service/things-manager/sdk/inc/ThingsMaintenance.h \
+                         ../../../service/easy-setup/mediator/richsdk/inc/ \
+                         ../../../service/easy-setup/inc \
+                         ../../../service/scene-manager/include \
 
 
 # This tag can be used to specify the character encoding of the source files
