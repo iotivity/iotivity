@@ -680,6 +680,12 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     // Step 1: Generate the response to discovery request
     if (virtualUriInRequest == OC_WELL_KNOWN_URI)
     {
+        if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
+        {
+            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d", request->resourceUrl, request->method);
+            return OC_STACK_UNAUTHORIZED_REQ;
+        }
+
         char *interfaceQuery = NULL;
         char *resourceTypeQuery = NULL;
 
@@ -812,6 +818,12 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
+        if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
+        {
+            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d", request->resourceUrl, request->method);
+            return OC_STACK_UNAUTHORIZED_REQ;
+        }
+
         const char* deviceId = OCGetServerInstanceIDString();
         if (!deviceId)
         {
@@ -833,6 +845,12 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
+        if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
+        {
+            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d", request->resourceUrl, request->method);
+            return OC_STACK_UNAUTHORIZED_REQ;
+        }
+
         payload = (OCPayload*)OCPlatformPayloadCreate(&savedPlatformInfo);
         if (!payload)
         {
