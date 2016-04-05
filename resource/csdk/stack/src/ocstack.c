@@ -3038,6 +3038,23 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
         return OC_STACK_INVALID_PARAM;
     }
 
+    if (deviceInfo.types)
+    {
+        OCStringLL *type =  deviceInfo.types;
+        OCResource *resource = findResource((OCResource *) deviceResource);
+        if (!resource)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+        deleteResourceType(resource->rsrcType);
+        resource->rsrcType = NULL;
+
+        while (type)
+        {
+            OCBindResourceTypeToResource(deviceResource, type->value);
+            type = type->next;
+        }
+    }
     return SaveDeviceInfo(deviceInfo);
 }
 
@@ -3389,6 +3406,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
         goto exit;
     }
     pointer->resourcetypename = str;
+    pointer->next = NULL;
 
     insertResourceType(resource, pointer);
     result = OC_STACK_OK;
