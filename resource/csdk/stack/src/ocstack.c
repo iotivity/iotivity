@@ -1193,8 +1193,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                          cbNode->method == OC_REST_DELETE)
                 {
                     char targetUri[MAX_URI_LENGTH];
-                    snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s",
-                            OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+                    snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s", OC_RSRVD_RD_URI,
+                            OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
                     if (strcmp(targetUri, cbNode->requestUri) == 0)
                     {
                         type = PAYLOAD_TYPE_RD;
