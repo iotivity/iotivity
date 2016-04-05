@@ -4395,6 +4395,14 @@ static int dtls_alert_send_from_err(dtls_context_t *ctx, dtls_peer_t *peer,
     }
     if (peer) {
       peer->state = DTLS_STATE_CLOSING;
+#ifndef WITH_CONTIKI
+      HASH_DEL_PEER(ctx->peers, peer);
+#else /* WITH_CONTIKI */
+      list_remove(ctx->peers, peer);
+#endif
+      (void)CALL(ctx, event, &peer->session,
+                 DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
+
       return dtls_send_alert(ctx, peer, DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_INTERNAL_ERROR);
     }
   }
