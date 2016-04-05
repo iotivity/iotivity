@@ -100,6 +100,8 @@ if target_os in ['darwin', 'ios']:
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 if target_os not in ['arduino']:
 	liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+if target_os == 'android':
+    liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,liboctbstack.so'])
 
 if env.get('SECURED') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
