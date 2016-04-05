@@ -1351,11 +1351,16 @@ typedef enum
 } OCEntityHandlerFlag;
 
 /**
- * Possible returned values from client application.
+ * Possible return values from client application callback
+ *
+ * A client application callback returns an OCStackApplicationResult to indicate whether
+ * the stack should continue to keep the callback registered.
  */
 typedef enum
 {
+    /** Make no more calls to the callback and call the OCClientContextDeleter for this callback */
     OC_STACK_DELETE_TRANSACTION = 0,
+    /** Keep this callback registered and call it if an apropriate event occurs */
     OC_STACK_KEEP_TRANSACTION
 } OCStackApplicationResult;
 
