@@ -1439,6 +1439,8 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
         if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
         {
             OIC_LOG(INFO, TAG, "it have to use block");
+            res = CA_STATUS_FAILED;
+            goto exit;
         }
         else
         {
