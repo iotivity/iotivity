@@ -239,7 +239,7 @@ OCStackResult UpdateSecVersionOfDevice(OCProvisionDev_t **ppDevicesList, const c
         return OC_STACK_ERROR;
     }
 
-    OICStrcpy(ptr->secVer, strlen(secVer), secVer);
+    OICStrcpy(ptr->secVer, MAX_VERSION_LEN, secVer);
 
     return OC_STACK_OK;
 }
@@ -308,7 +308,7 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
     }
     else
     {
-        OICStrcpy(newDev->secVer, strlen(src->secVer), src->secVer);
+        OICStrcpy(newDev->secVer, MAX_VERSION_LEN, src->secVer);
     }
 
     newDev->securePort = src->securePort;

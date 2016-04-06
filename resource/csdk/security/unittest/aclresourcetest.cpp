@@ -315,12 +315,12 @@ static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
     VERIFY_NON_NULL(TAG, acl->resources, ERROR);
     acl->resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
     VERIFY_NON_NULL(TAG, acl->resources[0], ERROR);
-    OICStrcpy(acl->resources[0], sizeof(acl->resources[0]) - 1, "/a/led");
+    OICStrcpy(acl->resources[0], strlen("/a/led")+1, "/a/led");
     if(numRsrc == 2)
     {
         acl->resources[1] = (char*)OICMalloc(strlen("/a/fan")+1);
         VERIFY_NON_NULL(TAG, acl->resources[1], ERROR);
-        OICStrcpy(acl->resources[1], sizeof(acl->resources[1]) - 1, "/a/fan");
+        OICStrcpy(acl->resources[1], strlen("/a/fan")+1, "/a/fan");
     }
     acl->permission = 6;
     memcpy(acl->rownerID.id, "1111111111111111", sizeof(acl->rownerID.id));

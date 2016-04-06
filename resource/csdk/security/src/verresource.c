@@ -315,7 +315,7 @@ OCStackResult InitVerResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OICStrcpy(gVer.secv, strlen(SECURITY_VERSION)+1, SECURITY_VERSION);
+    OICStrcpy(gVer.secv, MAX_VERSION_LEN, SECURITY_VERSION);
 
     //Read device id from doxm
     OicUuid_t deviceID = {.id={0}};

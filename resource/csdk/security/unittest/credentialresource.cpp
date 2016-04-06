@@ -40,7 +40,8 @@ OicSecCred_t * getCredList()
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
     VERIFY_NON_NULL(TAG, cred, ERROR);
     cred->credId = 1234;
-    OICStrcpy((char *)cred->subject.id, sizeof(cred->subject.id)+1, "1111111111111111");
+    // use |memcpy| for copying full-lengthed UUID without null termination
+    memcpy(cred->subject.id, "1111111111111111", sizeof(cred->subject.id));
 
 #if 0
     cred->roleIdsLen = 2;
@@ -48,18 +49,19 @@ OicSecCred_t * getCredList()
     VERIFY_NON_NULL(TAG, cred->roleIds, ERROR);
     OICStrcpy((char *)cred->roleIds[0].id, sizeof(cred->roleIds[0].id), "role11");
     OICStrcpy((char *)cred->roleIds[1].id, sizeof(cred->roleIds[1].id), "role12");
-
 #endif
 
     cred->credType = SYMMETRIC_PAIR_WISE_KEY;
     cred->privateData.data = (uint8_t *)OICCalloc(1, strlen("My private Key11") + 1);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
     OICStrcpy((char *)cred->privateData.data, strlen("My private Key11")+1,"My private Key11");
-    OICStrcpy((char *)cred->rownerID.id, sizeof(cred->rownerID.id), "aaaaaaaaaaaaaaaa");
+    // use |memcpy| for copying full-lengthed UUID without null termination
+    memcpy(cred->rownerID.id, "aaaaaaaaaaaaaaaa", sizeof(cred->rownerID.id));
     cred->next = (OicSecCred_t*)OICCalloc(1, sizeof(*cred->next));
     VERIFY_NON_NULL(TAG, cred->next, ERROR);
     cred->next->credId = 5678;
-    OICStrcpy((char *)cred->next->subject.id, sizeof(cred->next->subject.id)+1, "2222222222222222");
+    // use |memcpy| for copying full-lengthed UUID without null termination
+    memcpy(cred->next->subject.id, "2222222222222222", sizeof(cred->next->subject.id));
 #if 0
     cred->next->roleIdsLen = 0;
 #endif
@@ -69,12 +71,13 @@ OicSecCred_t * getCredList()
     VERIFY_NON_NULL(TAG, cred->next->privateData.data, ERROR);
     OICStrcpy((char *)cred->next->privateData.data, sz, "My private Key21");
 #if 0
-    sz = strlen("My Public Key123") + 1
+    sz = strlen("My Public Key123") + 1;
     cred->next->publicData.data = (char *)OICCalloc(1, sz);
     VERIFY_NON_NULL(TAG, cred->next->publicData.data, ERROR);
     OICStrcpy(cred->next->publicData.data, sz,"My Public Key123");
 #endif
-    OICStrcpy((char *)cred->next->rownerID.id, sizeof(cred->next->rownerID.id), "bbbbbbbbbbbbbbbb");
+    // use |memcpy| for copying full-lengthed UUID without null termination
+    memcpy(cred->next->rownerID.id, "bbbbbbbbbbbbbbbb", sizeof(cred->next->rownerID.id));
 
     return cred;
 
@@ -291,10 +294,10 @@ TEST(CredResourceTest, GetCredResourceDataNULLSubject)
 TEST(CredResourceTest, GenerateCredentialValidInput)
 {
     OicUuid_t rownerID = {{0}};
-    OICStrcpy((char *)rownerID.id, strlen("ownersId21"), "ownersId21");
+    OICStrcpy((char *)rownerID.id, sizeof(rownerID.id), "ownersId21");
 
     OicUuid_t subject = {{0}};
-    OICStrcpy((char *)subject.id, strlen("subject11"), "subject11");
+    OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     uint8_t privateKey[] = "My private Key11";
     OicSecKey_t key = {privateKey, sizeof(privateKey)};
