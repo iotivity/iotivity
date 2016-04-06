@@ -27,6 +27,14 @@ import org.oic.simulator.server.SimulatorResource;
  */
 public class SimulatorManager {
 
+    static {
+        System.loadLibrary("oc_logger");
+        System.loadLibrary("octbstack");
+        System.loadLibrary("oc");
+        System.loadLibrary("RamlParser");
+        System.loadLibrary("SimulatorManager");
+    }
+
     /**
      * API for creating a resource from a RAML configuration file.
      *
