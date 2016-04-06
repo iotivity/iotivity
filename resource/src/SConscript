@@ -63,6 +63,9 @@ if target_os == 'android':
 if target_os == 'tizen':
 	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
 
+if target_os in ['linux'] and env.get('SIMULATOR', False):
+    oclib_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
+
 ######################################################################
 # Source files and Targets
 ######################################################################

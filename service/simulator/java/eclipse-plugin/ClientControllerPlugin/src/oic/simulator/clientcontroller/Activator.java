@@ -40,10 +40,6 @@ public class Activator extends AbstractUIPlugin {
 
     private static ImageManager    imageManager;
 
-    static {
-        System.loadLibrary("SimulatorManager");
-    }
-
     public Activator() {
     }
 
