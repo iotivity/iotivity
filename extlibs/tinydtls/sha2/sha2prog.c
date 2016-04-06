@@ -52,14 +52,14 @@ int main(int argc, char **argv) {
 	int		quiet = 0, hash = 0;
 	char		*av, *file = (char*)0;
 	FILE		*IN = (FILE*)0;
-	SHA256_CTX	ctx256;
-	SHA384_CTX	ctx384;
-	SHA512_CTX	ctx512;
+	DTLS_SHA256_CTX	ctx256;
+	DTLS_SHA384_CTX	ctx384;
+	DTLS_SHA512_CTX	ctx512;
 	unsigned char	buf[BUFLEN];
 
-	SHA256_Init(&ctx256);
-	SHA384_Init(&ctx384);
-	SHA512_Init(&ctx512);
+	DTLS_SHA256_Init(&ctx256);
+	DTLS_SHA384_Init(&ctx384);
+	DTLSSHA512_Init(&ctx512);
 
 	/* Read data from STDIN by default */
 	fd = fileno(stdin);
@@ -100,28 +100,28 @@ int main(int argc, char **argv) {
 	kl = 0;
 	while ((l = read(fd,buf,BUFLEN)) > 0) {
 		kl += l;
-		SHA256_Update(&ctx256, (unsigned char*)buf, l);
-		SHA384_Update(&ctx384, (unsigned char*)buf, l);
-		SHA512_Update(&ctx512, (unsigned char*)buf, l);
+		DTLS_SHA256_Update(&ctx256, (unsigned char*)buf, l);
+		DTLS_SHA384_Update(&ctx384, (unsigned char*)buf, l);
+		DTLS_SHA512_Update(&ctx512, (unsigned char*)buf, l);
 	}
 	if (file) {
 		fclose(IN);
 	}
 
 	if (hash & 1) {
-		SHA256_End(&ctx256, buf);
+		DTLS_SHA256_End(&ctx256, buf);
 		if (!quiet)
 			printf("SHA-256 (%s) = ", file);
 		printf("%s\n", buf);
 	}
 	if (hash & 2) {
-		SHA384_End(&ctx384, buf);
+		DTLS_SHA384_End(&ctx384, buf);
 		if (!quiet)
 			printf("SHA-384 (%s) = ", file);
 		printf("%s\n", buf);
 	}
 	if (hash & 4) {
-		SHA512_End(&ctx512, buf);
+		DTLS_SHA512_End(&ctx512, buf);
 		if (!quiet)
 			printf("SHA-512 (%s) = ", file);
 		printf("%s\n", buf);
