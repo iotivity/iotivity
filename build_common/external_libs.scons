@@ -2,7 +2,7 @@
 # This script manages external libraries
 #
 # Some methods are added to manage external packages:
-#    'PrepareLib': Checks the existence of an external library, if it
+#	'PrepareLib': Checks the existence of an external library, if it
 # doesn't exist, calls the script user provided to download(if required)
 # and build the source code of the external library or notify user to
 # install the library.
@@ -13,7 +13,7 @@
 #   'InstallLib': Install library binaries(.so, .a etc)
 #
 # By default, assume the script for an exteranl library is:
-#    <src_dir>/extlibs/<libname>/SConscript
+#	<src_dir>/extlibs/<libname>/SConscript
 #
 # Note: After the external library is built:
 #   Head files should be installed to <src_dir>/deps/<target_os>/include
@@ -33,10 +33,22 @@ target_arch = env.get('TARGET_ARCH')
 if target_os == 'android':
 	if target_arch == 'armeabi-v7a-hard':
 		target_arch = 'armeabi-v7a'
+	env.AppendUnique(CCFLAGS = ['-D__JAVA__'])
 
 if target_os == 'darwin':
 	env.AppendUnique(CPPPATH = ['/usr/local/include'])
 	env.AppendUnique(LIBPATH = ['/usr/local/lib'])
+
+if env.get('BUILD_JAVA') == 'ON' and target_os != 'android':
+	if env.get('JAVA_HOME') != None:
+			env.AppendUnique(CCFLAGS = ['-D__JAVA__'])
+			env.AppendUnique(CPPPATH = [
+			env.get('JAVA_HOME') + '/include',
+			env.get('JAVA_HOME') + '/include/' + target_os
+		])
+	else:
+		raise SCons.Errors.StopError( 'BUILD_JAVA is ON, but JAVA_HOME is not set.')
+
 
 # External library include files are in <src_dir>/deps/<target_os>/include
 # the library binaries are in <src_dir>/deps/<target_os>/lib/<arch>
@@ -47,7 +59,7 @@ env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 
 # download the source code and build it
 # @param libname - the name of the library try to prepare
 # @param lib - the lib(.so, .a etc) to check (a library may include more then
-#      one lib, e.g. boost, includes boost_thread, boost_system ...
+#	  one lib, e.g. boost, includes boost_thread, boost_system ...
 # @param path - the directory of the library building script, if it's not set,
 #			by default, it's <src_dir>/extlibs/<libname>/
 # @param script - the building script, by default, it's 'SConscript'

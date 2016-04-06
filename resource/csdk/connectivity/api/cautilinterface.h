@@ -22,7 +22,7 @@
 #define CA_UTILS_INTERFACE_H_
 
 #include "cacommon.h"
-#ifdef __ANDROID__
+#ifdef __JAVA__
 #include "jni.h"
 #endif
 #ifdef __cplusplus
@@ -70,6 +70,7 @@ CAResult_t CASetAutoConnectionDeviceInfo(const char* address);
  */
 CAResult_t CAUnsetAutoConnectionDeviceInfo(const char* address);
 
+#ifdef __JAVA__
 #ifdef __ANDROID__
 /**
  * initialize util client for android
@@ -80,6 +81,16 @@ CAResult_t CAUnsetAutoConnectionDeviceInfo(const char* address);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context);
+#else
+/**
+ * initialize util client for android
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm);
+#endif
 
 /**
  * terminate util client for android
@@ -108,7 +119,6 @@ CAResult_t CAUtilStopScan(JNIEnv *env);
  * @param[in]  device           bluetooth device object.
  */
 CAResult_t CAUtilCreateBond(JNIEnv *env, jobject device);
-
 
 /**
  * set callback listener of found device.

@@ -112,6 +112,9 @@ help_vars.Add(EnumVariable('ES_ROLE', 'Target build mode', 'mediator', allowed_v
 #ES_SOFT_MODE is for specifying MODE (Mode 1 : Enrollee with  Soft AP or Mode 2  : Mediator with Soft AP)
 help_vars.Add(EnumVariable('ES_SOFTAP_MODE', 'Target build mode', 'ENROLLEE_SOFTAP', allowed_values=('ENROLLEE_SOFTAP', 'MEDIATOR_SOFTAP')))
 
+help_vars.Add(EnumVariable('BUILD_JAVA', 'Build Java bindings', 'OFF', allowed_values=('ON', 'OFF')))
+help_vars.Add(PathVariable('JAVA_HOME', 'JDK directory', os.environ.get('JAVA_HOME'), PathVariable.PathAccept))
+
 AddOption('--prefix',
                   dest='prefix',
                   type='string',

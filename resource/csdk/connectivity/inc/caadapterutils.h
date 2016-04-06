@@ -28,7 +28,7 @@
 #define CA_ADAPTER_UTILS_H_
 
 #include <stdbool.h>
-#ifdef __ANDROID__
+#ifdef __JAVA__
 #include <jni.h>
 #endif
 
@@ -209,15 +209,7 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
 void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
 #endif /* WITH_ARDUINO */
 
-#ifdef __ANDROID__
-/**
- * To set context of JNI Application.
- * This must be called by the Android API before CA Initialization.
- * @param[in]   env         JNI interface pointer.
- * @param[in]   context     context object.
- */
-void CANativeJNISetContext(JNIEnv *env, jobject context);
-
+#ifdef __JAVA__
 /**
  * To set jvm object.
  * This must be called by the Android API before CA Initialization.
@@ -226,33 +218,11 @@ void CANativeJNISetContext(JNIEnv *env, jobject context);
 void CANativeJNISetJavaVM(JavaVM *jvm);
 
 /**
- * To get context.
- * Called by adapters to get Application context.
- * @return  context object.
- */
-jobject CANativeJNIGetContext();
-
-/**
  * To get JVM object.
  * Called from adapters to get JavaVM object.
  * @return  JVM object.
  */
 JavaVM *CANativeJNIGetJavaVM();
-
-/**
- * To set Activity to JNI.
- * This must be called by the Android API before CA Initialization.
- * @param[in]   env         JNI Environment pointer.
- * @param[in]   activity    Activity object.
- */
-void CANativeSetActivity(JNIEnv *env, jobject activity);
-
-/**
- * To get Activity.
- * Called from adapters to get Activity.
- * @return  Activity object.
- */
-jobject *CANativeGetActivity();
 
 /**
  * get method ID for method Name and class
@@ -272,6 +242,37 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
  */
 void CADeleteGlobalReferences();
 
+#ifdef __ANDROID__
+/**
+ * To set context of JNI Application.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI interface pointer.
+ * @param[in]   context     context object.
+ */
+void CANativeJNISetContext(JNIEnv *env, jobject context);
+
+/**
+ * To set Activity to JNI.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI Environment pointer.
+ * @param[in]   activity    Activity object.
+ */
+void CANativeSetActivity(JNIEnv *env, jobject activity);
+
+/**
+ * To get context.
+ * Called by adapters to get Application context.
+ * @return  context object.
+ */
+jobject CANativeJNIGetContext();
+
+/**
+ * To get Activity.
+ * Called from adapters to get Activity.
+ * @return  Activity object.
+ */
+jobject *CANativeGetActivity();
+#endif
 #endif
 
 #ifdef __cplusplus

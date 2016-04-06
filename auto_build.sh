@@ -15,6 +15,8 @@ function build_all()
 		build_linux_unsecured_with_rm $1 $2
 		build_linux_unsecured_with_rd $1 $2
 		build_linux_secured_with_rd $1 $2
+		build_linux_unsecured_with_java $1 $2
+		build_linux_secured_with_java $1 $2
 		build_simulator $1 $2
 	fi
 
@@ -78,6 +80,18 @@ function build_linux_secured_with_rd()
 {
 	echo "*********** Build for linux With Resource Directory & Security ************"
 	scons RELEASE=$1 WITH_RD=1 SECURED=1 $2
+}
+
+function build_linux_unsecured_with_java()
+{
+	echo "*********** Build for linux With Resource Directory & Security ************"
+	scons RELEASE=$1 BUILD_JAVA=ON TARGET_TRANSPORT=IP $2
+}
+
+function build_linux_secured_with_java()
+{
+	echo "*********** Build for linux With Resource Directory & Security ************"
+	scons RELEASE=$1 SECURED=1 BUILD_JAVA=ON TARGET_TRANSPORT=IP $2
 }
 
 function build_android()
@@ -247,6 +261,14 @@ then
 	then
 		build_linux_secured_with_rd true
 		build_linux_secured_with_rd false
+	elif [ $1 = 'linux_unsecured_with_java' ]
+	then
+		build_linux_unsecured_with_java true
+		build_linux_unsecured_with_java false
+	elif [ $1 = 'linux_secured_with_java' ]
+	then
+		build_linux_secured_with_java true
+		build_linux_secured_with_java false
 	elif [ $1 = 'android' ]
 	then
 		build_android true
