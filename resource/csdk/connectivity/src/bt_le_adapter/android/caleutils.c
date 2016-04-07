@@ -373,8 +373,6 @@ jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 
 jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
 {
-    OIC_LOG(DEBUG, TAG, "CALEGetConstantsValue");
-
     VERIFY_NON_NULL_RET(env, TAG, "env", -1);
     VERIFY_NON_NULL_RET(classType, TAG, "classType", -1);
     VERIFY_NON_NULL_RET(name, TAG, "name", -1);

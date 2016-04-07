@@ -36,6 +36,10 @@ extern "C"
 {
 #endif
 
+#define CA_LE_AUTO_CONNECT_FLAG    1
+#define CA_LE_CONNECTION_STATE     2
+#define CA_LE_SEND_STATE           3
+
 /* Service UUID */
 static const char OIC_GATT_SERVICE_UUID[] = CA_GATT_SERVICE_UUID;
 static const char OIC_GATT_CHARACTERISTIC_REQUEST_UUID[] = CA_GATT_REQUEST_CHRC_UUID;
@@ -60,8 +64,9 @@ static const jint BOND_BONDED = 12;
 static const jint BOND_BONDING = 11;
 static const jint BOND_NONE = 10;
 
-static const jint STATE_CONNECTED = 2;
-static const jint STATE_DISCONNECTED = 0;
+static const uint16_t STATE_CONNECTED = 3;
+static const uint16_t STATE_SERVICE_CONNECTED = 2;
+static const uint16_t STATE_DISCONNECTED = 1;
 
 /**
  * get method ID for method Name and class
