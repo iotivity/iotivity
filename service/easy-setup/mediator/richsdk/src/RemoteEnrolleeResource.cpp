@@ -126,6 +126,12 @@ namespace OIC
                         "checkProvInformationCb : Provisioning is success. "
                         "Now trigger network connection ");
 
+                #ifdef REMOTE_ARDUINO_ENROLEE
+                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
+                        ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
+                m_provStatusCb(provStatus);
+                #endif
+
                 triggerNetworkConnection();
                 return;
             }
