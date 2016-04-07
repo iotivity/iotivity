@@ -707,7 +707,12 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                 OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
                 discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
                 VERIFY_NON_NULL(discPayload->sid, ERROR, OC_STACK_NO_MEMORY);
-                memcpy(discPayload->sid, OCGetServerInstanceIDString(), UUID_STRING_SIZE);
+                const char* uid = OCGetServerInstanceIDString();
+                if(uid)
+                {
+                    memcpy(discPayload->sid, uid, UUID_STRING_SIZE);
+                }
+
                 if (!resourceTypeQuery && interfaceQuery && (0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
                 {
                     for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
