@@ -449,14 +449,11 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
     {
         OIC_LOG(DEBUG, TAG, "LE is disconnected");
 
-        if (CONNECTION_FAILED_TO_BE_EASTABLISHED != status)
+        if (g_connStateCB)
         {
-            if (g_connStateCB)
-            {
-                OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
-                g_connStateCB(CA_ADAPTER_GATT_BTLE, address, false);
-                OIC_LOG(DEBUG, TAG, "LE Disconnected state callback is called");
-            }
+            OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
+            g_connStateCB(CA_ADAPTER_GATT_BTLE, address, false);
+            OIC_LOG(DEBUG, TAG, "LE Disconnected state callback is called");
         }
 
         if (LINK_LOSS == status || REMOTE_DISCONNECT == status)
