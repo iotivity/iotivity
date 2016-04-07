@@ -635,7 +635,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
 
                 // next connection will be requested as JNI_TRUE flag
                 // after first connection
-                CALEClientSetAutoConnectFlag(env, jni_str_entry, JNI_TRUE);
+                CALEClientSetFlagToState(env, jni_str_entry, CA_LE_AUTO_CONNECT_FLAG, JNI_TRUE);
             }
             else
             {
