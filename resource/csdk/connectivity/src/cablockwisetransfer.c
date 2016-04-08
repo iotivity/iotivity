@@ -314,12 +314,16 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     {
         OIC_LOG(DEBUG, TAG, "code is CA_EMPTY..");
 
-        // get token from block-wise transfer list when CA_EMPTY(RST/ACK) is received
-        CAResult_t res = CAGetTokenFromBlockDataList(pdu, endpoint, receivedData->responseInfo);
-        if (CA_STATUS_OK != res)
+        if (!receivedData->responseInfo->info.token)
         {
-            OIC_LOG(ERROR, TAG, "fail to get token");
-            return res;
+            // get token from block-wise transfer list when CA_EMPTY(RST/ACK) is received
+            CAResult_t res = CAGetTokenFromBlockDataList(pdu, endpoint,
+                                                         receivedData->responseInfo);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "fail to get token");
+                return res;
+            }
         }
 
         CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
@@ -334,12 +338,10 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 OIC_LOG(INFO, TAG, "retransmission was stopped");
                 return CA_REQUEST_TIMEOUT;
             }
-            else
-            {
-                OIC_LOG(ERROR, TAG, "blockId is null");
-                CADestroyBlockID(blockDataID);
-                return CA_STATUS_FAILED;
-            }
+
+            OIC_LOG(ERROR, TAG, "blockId is null");
+            CADestroyBlockID(blockDataID);
+            return CA_STATUS_FAILED;
         }
 
         CARemoveBlockDataFromList(blockDataID);

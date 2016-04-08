@@ -396,12 +396,22 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         }
 
         OCResourcePayload *resource = (OCResourcePayload*) payload->resources;
-        if (!resource)
+        int found = 0;
+        while (resource)
         {
-            OIC_LOG_V (INFO, TAG, "No resources in payload");
-            return OC_STACK_DELETE_TRANSACTION;
+            if(resource->uri && strcmp(resource->uri, coapServerResource.c_str()) == 0)
+            {
+                found = 1;
+                break;
+            }
+            resource = resource->next;
         }
-        coapServerResource =  resource->uri;
+
+        if(!found)
+        {
+            OIC_LOG_V (INFO, TAG, "No /a/light in payload");
+            return OC_STACK_KEEP_TRANSACTION;
+        }
 
         switch(TestCase)
         {
