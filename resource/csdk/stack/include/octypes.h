@@ -1211,10 +1211,11 @@ typedef struct
 {
     OCPayload base;
     char *sid;
-    OCStringLL *types;
     char* deviceName;
     char* specVersion;
     char* dataModelVersion;
+    OCStringLL *interfaces;
+    OCStringLL *types;
 } OCDevicePayload;
 
 typedef struct

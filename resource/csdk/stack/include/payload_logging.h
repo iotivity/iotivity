@@ -242,6 +242,14 @@ static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
             OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
         }
     }
+    if (payload->interfaces)
+    {
+        OIC_LOG(level, PL_TAG, "\tInterface:");
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
 }
 
 static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)

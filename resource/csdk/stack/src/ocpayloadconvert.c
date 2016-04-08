@@ -407,6 +407,10 @@ exit:
 static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayload,
         size_t *size)
 {
+    if (!payload)
+    {
+        return CborUnknownError;
+    }
     int64_t err = CborNoError;
     CborEncoder encoder;
 
@@ -423,7 +427,19 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
                 sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep resource type tag");
         char *joinedTypes = OCStringLLJoin(payload->types);
-        printf(" JOINED TYPES : %s %zd \n", joinedTypes, strlen(joinedTypes));
+        VERIFY_PARAM_NON_NULL(TAG, joinedTypes, "Failed creating joined string");
+        err |= cbor_encode_text_string(&repMap, joinedTypes, strlen(joinedTypes));
+        OICFree(joinedTypes);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep resource type value");
+    }
+
+    if (payload->interfaces)
+    {
+        OIC_LOG(INFO, TAG, "Payload has interface");
+        err |= cbor_encode_text_string(&repMap, OC_RSRVD_INTERFACE,
+                sizeof(OC_RSRVD_INTERFACE) - 1);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interface type tag");
+        char *joinedTypes = OCStringLLJoin(payload->interfaces);
         VERIFY_PARAM_NON_NULL(TAG, joinedTypes, "Failed creating joined string");
         err |= cbor_encode_text_string(&repMap, joinedTypes, strlen(joinedTypes));
         OICFree(joinedTypes);
