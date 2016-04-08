@@ -409,6 +409,7 @@ void CATerminateIP()
     CAIPSetPacketReceiveCallback(NULL);
 
 #ifndef SINGLE_THREAD
+    CADeInitializeIPGlobals();
     CAIPDeinitializeQueueHandles();
 #endif
 }
