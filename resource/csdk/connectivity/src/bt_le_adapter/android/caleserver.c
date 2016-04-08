@@ -2422,9 +2422,16 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
 
     jint data_too_large = CALEGetConstantsValue(env, CLASSPATH_BT_ADVERTISE_CB,
                                                 "ADVERTISE_FAILED_DATA_TOO_LARGE");
+    jint already_started = CALEGetConstantsValue(env, CLASSPATH_BT_ADVERTISE_CB,
+                                                 "ADVERTISE_FAILED_ALREADY_STARTED");
+
     if (data_too_large == errorCode)
     {
         OIC_LOG_V(ERROR, TAG, "advertise data too large. please check length of device name");
+    }
+    else if (already_started == errorCode)
+    {
+        OIC_LOG_V(INFO, TAG, "advertising is already started");
     }
 }
 
