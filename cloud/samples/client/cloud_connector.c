@@ -206,7 +206,7 @@ OCStackResult OCCloudPublish(const char *host, const char *query,
                 }
             }
 
-            if (OC_STACK_OK == OCGetNumberOfResourceTypes(handle, &numElement))
+            if (OC_STACK_OK == OCGetNumberOfResourceInterfaces(handle, &numElement))
             {
                 OCStackResult res = createStringLL(numElement, handle, OCGetResourceInterfaceName, &itf);
                 if (res != OC_STACK_OK || !itf)
