@@ -94,6 +94,11 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool);
 #endif
 
 /**
+ * Close IP socket.
+ */
+void CADeInitializeIPGlobals();
+
+/**
  * Stop IP server.
  */
 void CAIPStopServer();

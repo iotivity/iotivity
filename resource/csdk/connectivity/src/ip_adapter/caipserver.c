@@ -119,6 +119,57 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags);
         flags = FLAGS; \
     }
 
+void CADeInitializeIPGlobals()
+{
+    if (caglobals.ip.u6.fd != -1)
+    {
+        close(caglobals.ip.u6.fd);
+        caglobals.ip.u6.fd = -1;
+    }
+
+    if (caglobals.ip.u6s.fd != -1)
+    {
+        close(caglobals.ip.u6s.fd);
+        caglobals.ip.u6s.fd = -1;
+    }
+
+    if (caglobals.ip.u4.fd != -1)
+    {
+        close(caglobals.ip.u4.fd);
+        caglobals.ip.u4.fd = -1;
+    }
+
+    if (caglobals.ip.u4s.fd != -1)
+    {
+        close(caglobals.ip.u4s.fd);
+        caglobals.ip.u4s.fd = -1;
+    }
+
+    if (caglobals.ip.m6.fd != -1)
+    {
+        close(caglobals.ip.m6.fd);
+        caglobals.ip.m6.fd = -1;
+    }
+
+    if (caglobals.ip.m6s.fd != -1)
+    {
+        close(caglobals.ip.m6s.fd);
+        caglobals.ip.m6s.fd = -1;
+    }
+
+    if (caglobals.ip.m4.fd != -1)
+    {
+        close(caglobals.ip.m4.fd);
+        caglobals.ip.m4.fd = -1;
+    }
+
+    if (caglobals.ip.m4s.fd != -1)
+    {
+        close(caglobals.ip.m4s.fd);
+        caglobals.ip.m4s.fd = -1;
+    }
+}
+
 static void CAReceiveHandler(void *data)
 {
     (void)data;
