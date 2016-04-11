@@ -125,6 +125,9 @@ namespace OIC
         void DevicePresence::subscribeCB(OCStackResult ret,
                 const unsigned int seq, const std::string & hostAddress)
         {
+            OC_UNUSED(seq);
+            OC_UNUSED(hostAddress);
+
             OIC_LOG_V(DEBUG, BROKER_TAG, "subscribeCB()");
             OIC_LOG_V(DEBUG, BROKER_TAG, "Received presence CB from: %s",hostAddress.c_str());
             OIC_LOG_V(DEBUG, BROKER_TAG, "In subscribeCB: %d",ret);

@@ -333,6 +333,18 @@ extern "C" {
 #define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdPub"
 
 /**
+ * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
+ * Used in three cases:
+ * 1. in callbacks when one of the parameters are unused
+ * 2. when due to code changes a functions parameter is no longer
+ *    used but must be left in place for backward compatibility
+ *    reasons.
+ * 3. a variable is only used in the debug build variant and would
+ *    give a build warning in release mode.
+ */
+#define OC_UNUSED(x) (void)(x)
+
+/**
  * These enums (OCTransportAdapter and OCTransportFlags) must
  * be kept synchronized with OCConnectivityType (below) as well as
  * CATransportAdapter and CATransportFlags (in CACommon.h).

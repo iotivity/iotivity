@@ -51,6 +51,7 @@ namespace OIC
                 const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep,
                 const int eCode)
         {
+            OC_UNUSED(rep);
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
                     rep.getUri().c_str(),
                     eCode);
