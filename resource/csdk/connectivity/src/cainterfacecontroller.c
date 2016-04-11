@@ -289,10 +289,10 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
 
     if (resSize == 0)
     {
+        OICFree(tempInfo);
+        OICFree(tempSize);
         if (res == CA_ADAPTER_NOT_ENABLED || res == CA_NOT_SUPPORTED)
         {
-            OICFree(tempInfo);
-            OICFree(tempSize);
             return res;
         }
         return CA_STATUS_FAILED;

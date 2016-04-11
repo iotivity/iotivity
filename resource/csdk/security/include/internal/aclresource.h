@@ -79,6 +79,13 @@ void DeleteACLList(OicSecAcl_t* acl);
  */
 OCStackResult InstallNewACL(const char* newJsonStr);
 
+/**
+ * This function updates default ACL which is required for ownership transfer.
+ * This function should be invoked after OTM is complete to prevent anonymous user access.
+ *
+ * @retval OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult UpdateDefaultSecProvACL();
 
 #ifdef __cplusplus
 }

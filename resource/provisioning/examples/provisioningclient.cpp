@@ -382,6 +382,11 @@ static int InputACL(OicSecAcl_t *acl)
     //Set Resource.
     printf("Num. of Resource : ");
     ret = scanf("%zu", &acl->resourcesLen);
+    if ((1 != ret) || (acl->resourcesLen <= 0 || acl->resourcesLen > 50))
+    {
+        printf("Error while input\n");
+        return -1;
+    }
     printf("-URI of resource\n");
     printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
@@ -427,6 +432,11 @@ static int InputACL(OicSecAcl_t *acl)
     // Set Rowner
     printf("Num. of Rowner : ");
     ret = scanf("%zu", &acl->ownersLen);
+    if ((1 != ret) || (acl->ownersLen <= 0 || acl->ownersLen > 20))
+    {
+        printf("Error while input\n");
+        return -1;
+    }
     printf("-URN identifying the rowner\n");
     printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
     acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));

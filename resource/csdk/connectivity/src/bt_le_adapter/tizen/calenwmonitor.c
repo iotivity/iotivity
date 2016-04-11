@@ -20,23 +20,24 @@
 
 #include "caleinterface.h"
 
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<glib.h>
-#include<arpa/inet.h>
-#include<sys/types.h>
-#include<sys/socket.h>
-#include<netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <glib.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include <bluetooth.h>
 #include <bluetooth_internal.h>
 #include <bluetooth_type.h>
 
-
 #include "camutex.h"
 #include "caleadapter.h"
 #include "caadapterutils.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 /**
  * Logging tag for module name
@@ -167,13 +168,6 @@ CAResult_t CAStartLEAdapter()
     if (0 != ret)
     {
         OIC_LOG(ERROR, TAG, "bt_initialize failed");
-        return CA_STATUS_FAILED;
-    }
-
-    ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
-    if (0 != ret)
-    {
-        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
         return CA_STATUS_FAILED;
     }
 
@@ -342,22 +336,21 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 void CALENWConnectionStateChangedCb(int result, bool connected,
                                     const char *remoteAddress, void *userData)
 {
-    OIC_LOG(DEBUG, TAG, "IN ");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address is NULL");
 
-    if (!connected)
+    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    char *addr = OICStrdup(remoteAddress);
+    if (NULL == addr)
     {
-        OIC_LOG_V(DEBUG, TAG, "disconnected [%s] ", remoteAddress);
-        ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
-        const char *addr = OICStrdup(remoteAddress);
-        g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, addr, connected);
+        OIC_LOG(ERROR, TAG, "addr is NULL");
         ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+        return;
     }
-    else
-    {
-        OIC_LOG_V(DEBUG, TAG, "connected [%s] ", remoteAddress);
-    }
+    g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, addr, connected);
+    OICFree(addr);
+    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }

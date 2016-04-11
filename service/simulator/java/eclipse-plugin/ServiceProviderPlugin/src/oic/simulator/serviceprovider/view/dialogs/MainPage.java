@@ -16,8 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -29,7 +27,10 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+
 import org.oic.simulator.server.SimulatorResource.Type;
+
+import oic.simulator.serviceprovider.utils.Constants;
 
 public class MainPage extends WizardPage {
 
@@ -88,9 +89,9 @@ public class MainPage extends WizardPage {
             public void widgetSelected(SelectionEvent e) {
                 description
                         .setText("Create a simple resource by manually entering all the details given below.\n"
-                                + "\t1. Basic resource details: URI, Name, Resource Types, etc.\n"
-                                + "\t2. Options such as Observable, allowed request types, start/stop resource etc.\n"
-                                + "\t3. Adding attributes.");
+                                + "\t1. Basic resource details: URI, Name, Resource Type, and Interface types.\n"
+                                + "\t2. Options such as Observable and Discoverable.\n"
+                                + "\t3. Adding simple attributes.");
                 option = Option.SIMPLE;
                 getWizard().getContainer().updateButtons();
             }
@@ -103,8 +104,7 @@ public class MainPage extends WizardPage {
                         .setText("Create a simple resource from RAML configuration file.\n"
                                 + "\t1. Resource details, attributes, and other properties will be read from RAML.\n"
                                 + "\t2. Supports multi-instance creation.\n"
-                                + "\t3. For single instance creation, allows editing the URI and Name of the resource.\n"
-                                + "\t4. Allows to start or stop the resource(s).");
+                                + "\t3. For single instance creation, allows editing the URI and Name of the resource.");
                 option = Option.SIMPLE_FROM_RAML;
                 getWizard().getContainer().updateButtons();
             }

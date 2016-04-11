@@ -226,16 +226,6 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx);
  */
 static OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx);
 
-/*
- * Function to finalize provisioning.
- * This function will send default ACL and commit hash.
- *
- * @param[in] otmCtx   Context value of ownership transfer.
- * @return  OC_STACK_OK on success
- */
-static OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx);
-
-
 static bool IsComplete(OTMContext_t* otmCtx)
 {
     for(size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
@@ -323,64 +313,83 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
  */
 void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    if(g_otmCtx && endpoint && info)
+    if(NULL != g_otmCtx && NULL != g_otmCtx->selectedDeviceInfo &&
+       NULL != endpoint && NULL != info)
     {
         OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
                  endpoint->addr, endpoint->port, info->result);
 
-        //Make sure the address matches.
-        if(strncmp(g_otmCtx->selectedDeviceInfo->endpoint.addr,
-           endpoint->addr,
-           sizeof(endpoint->addr)) == 0 &&
-           g_otmCtx->selectedDeviceInfo->securePort == endpoint->port)
+        OicSecDoxm_t* newDevDoxm = g_otmCtx->selectedDeviceInfo->doxm;
+
+        if(NULL != newDevDoxm)
         {
-            OCStackResult res = OC_STACK_ERROR;
+            OicUuid_t emptyUuid = {.id={0}};
 
-            //In case of success, send next coaps request.
-            if(CA_STATUS_OK == info->result)
+            //Make sure the address matches.
+            if(strncmp(g_otmCtx->selectedDeviceInfo->endpoint.addr,
+               endpoint->addr,
+               sizeof(endpoint->addr)) == 0 &&
+               g_otmCtx->selectedDeviceInfo->securePort == endpoint->port)
             {
-                //Send request : PUT /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
-                res = PutOwnerUuid(g_otmCtx);
-                if(OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
-                    SetResult(g_otmCtx, res);
-                }
-            }
-            //In case of failure, re-start the ownership transfer in case of PIN OxM
-            else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
-            {
-                g_otmCtx->selectedDeviceInfo->doxm->owned = false;
-                g_otmCtx->attemptCnt++;
+                OCStackResult res = OC_STACK_ERROR;
 
-                if(g_otmCtx->selectedDeviceInfo->doxm->oxmSel == OIC_RANDOM_DEVICE_PIN)
+                //If temporal secure sesstion established successfully
+                if(CA_STATUS_OK == info->result &&
+                   false == newDevDoxm->owned &&
+                   memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0)
                 {
-                    /*
-                    res = RemoveCredential(&g_otmCtx->subIdForPinOxm);
-                    if(OC_STACK_RESOURCE_DELETED != res)
+                    //Send request : PUT /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
+                    res = PutOwnerUuid(g_otmCtx);
+                    if(OC_STACK_OK != res)
                     {
-                        OIC_LOG_V(ERROR, TAG, "Failed to remove temporal PSK : %d", res);
+                        OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
                         SetResult(g_otmCtx, res);
-                        return;
-                    }*/
-
-                    if(WRONG_PIN_MAX_ATTEMP > g_otmCtx->attemptCnt)
+                    }
+                }
+                //In case of authentication failure
+                else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
+                {
+                    //in case of error from owner credential
+                    if(memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0 &&
+                        true == newDevDoxm->owned)
                     {
-                        res = StartOwnershipTransfer(g_otmCtx, g_otmCtx->selectedDeviceInfo);
-                        if(OC_STACK_OK != res)
+                        OIC_LOG(ERROR, TAG, "The owner credential may incorrect.");
+
+                        if(OC_STACK_OK != RemoveCredential(&(newDevDoxm->deviceID)))
                         {
-                            SetResult(g_otmCtx, res);
-                            OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
+                            OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
+                        }
+                        SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+                    }
+                    //in case of error from wrong PIN, re-start the ownership transfer
+                    else if(OIC_RANDOM_DEVICE_PIN == newDevDoxm->oxmSel)
+                    {
+                        OIC_LOG(ERROR, TAG, "The PIN number may incorrect.");
+
+                        memcpy(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
+                        newDevDoxm->owned = false;
+                        g_otmCtx->attemptCnt++;
+
+                        if(WRONG_PIN_MAX_ATTEMP > g_otmCtx->attemptCnt)
+                        {
+                            res = StartOwnershipTransfer(g_otmCtx, g_otmCtx->selectedDeviceInfo);
+                            if(OC_STACK_OK != res)
+                            {
+                                SetResult(g_otmCtx, res);
+                                OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
+                            }
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
+                            SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
                         }
                     }
                     else
                     {
+                        OIC_LOG(ERROR, TAG, "Failed to establish secure session.");
                         SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
                     }
-                }
-                else
-                {
-                    SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
                 }
             }
         }
@@ -711,6 +720,46 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     {
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
+            //Close the temporal secure session to verify the owner credential
+            CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
+            endpoint->port = otmCtx->selectedDeviceInfo->securePort;
+            CAResult_t caResult = CACloseDtlsSession(endpoint);
+            if(CA_STATUS_OK != caResult)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to close DTLS session");
+                SetResult(otmCtx, caResult);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+
+            /**
+             * If we select NULL cipher,
+             * client will select appropriate cipher suite according to server's cipher-suite list.
+             */
+            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
+            if(CA_STATUS_OK != caResult)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+                SetResult(otmCtx, caResult);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+
+            /**
+             * in case of random PIN based OxM,
+             * revert get_psk_info callback of tinyDTLS to use owner credential.
+             */
+            if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
+            {
+                OicUuid_t emptyUuid = { .id={0}};
+                SetUuidForRandomPinOxm(&emptyUuid);
+
+                if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
+                    SetResult(otmCtx, OC_STACK_INVALID_CALLBACK);
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+            }
+
             //PUT /oic/sec/doxm [{ ..., "owned":"TRUE" }]
             res = PutOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
@@ -800,45 +849,10 @@ static OCStackApplicationResult ProvisioningStatusHandler(void *ctx, OCDoHandle 
     VERIFY_NON_NULL(TAG, clientResponse, ERROR);
     VERIFY_NON_NULL(TAG, ctx, ERROR);
 
-    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-    (void)UNUSED;
-    if(OC_STACK_OK == clientResponse->result)
-    {
-        OCStackResult res = FinalizeProvisioning(otmCtx);
-         if (OC_STACK_OK != res)
-         {
-                OIC_LOG_V(INFO, TAG, "Failed to finalize provisioning.");
-                SetResult(otmCtx, res);
-                return OC_STACK_DELETE_TRANSACTION;
-         }
-    }
-
-exit:
-    OIC_LOG_V(INFO, TAG, "OUT ProvisioningStatusHandler.");
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
-/**
- * Callback handler of finalize provisioning.
- *
- * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] UNUSED          handle to an invocation
- * @param[in] clientResponse  Response from queries to remote servers.
- * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
- *          and OC_STACK_KEEP_TRANSACTION to keep it.
- */
-static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNUSED,
-                                                       OCClientResponse *clientResponse)
-{
-    OIC_LOG_V(INFO, TAG, "IN ProvisionDefaultACLCB.");
-
-    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
-    VERIFY_NON_NULL(TAG, ctx, ERROR);
-
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
     (void)UNUSED;
 
-    if (OC_STACK_RESOURCE_CREATED == clientResponse->result)
+    if (OC_STACK_OK == clientResponse->result)
     {
         OCStackResult res = PDMAddDevice(&otmCtx->selectedDeviceInfo->doxm->deviceID);
          if (OC_STACK_OK == res)
@@ -858,7 +872,10 @@ static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNU
                             clientResponse->result);
         SetResult(otmCtx, clientResponse->result);
     }
+
+
 exit:
+    OIC_LOG_V(INFO, TAG, "OUT ProvisioningStatusHandler.");
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -907,7 +924,12 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         OicSecCred_t newCredential;
         memcpy(&newCredential, ownerCredential, sizeof(OicSecCred_t));
         newCredential.next = NULL;
+
+        //Set subject ID as PT's ID
         memcpy(&(newCredential.subject), &credSubjectId, sizeof(OicUuid_t));
+
+        //Fill private data as empty string
+        newCredential.privateData.data = NULL;
 
         //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
         secPayload->securityData = BinToCredJSON(&newCredential);
@@ -1411,107 +1433,5 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
     OIC_LOG(INFO, TAG, "OUT PutProvisioningStatus");
 
     return ret;
-}
-
-OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx)
-{
-    OIC_LOG(INFO, TAG, "IN FinalizeProvisioning");
-
-    if(!otmCtx)
-    {
-        OIC_LOG(ERROR, TAG, "OTMContext is NULL");
-        return OC_STACK_INVALID_PARAM;
-    }
-    if(!otmCtx->selectedDeviceInfo)
-    {
-        OIC_LOG(ERROR, TAG, "Can't find device information in OTMContext");
-        OICFree(otmCtx);
-        return OC_STACK_INVALID_PARAM;
-    }
-    // Provision Default ACL to device
-    OicSecAcl_t defaultAcl =
-    { {.id={0}},
-        1,
-        NULL,
-        0x001F,
-        0,
-        NULL,
-        NULL,
-        1,
-        NULL,
-        NULL,
-    };
-
-    OicUuid_t provTooldeviceID = {.id={0}};
-    if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
-    {
-        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        SetResult(otmCtx, OC_STACK_ERROR);
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG(INFO, TAG, "Retieved deviceID");
-    memcpy(defaultAcl.subject.id, provTooldeviceID.id, sizeof(defaultAcl.subject.id));
-    char *wildCardResource = "*";
-    defaultAcl.resources = &wildCardResource;
-
-    defaultAcl.owners = (OicUuid_t *) OICCalloc(1, UUID_LENGTH);
-    if(!defaultAcl.owners)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation for default ACL");
-        SetResult(otmCtx, OC_STACK_NO_MEMORY);
-        return OC_STACK_NO_MEMORY;
-    }
-    memcpy(defaultAcl.owners->id, provTooldeviceID.id, UUID_LENGTH);
-    OIC_LOG(INFO, TAG, "Provisioning default ACL");
-
-    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-        return OC_STACK_NO_MEMORY;
-    }
-    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToAclJSON(&defaultAcl);
-    OICFree(defaultAcl.owners);
-    if(!secPayload->securityData)
-    {
-        OICFree(secPayload);
-        OIC_LOG(INFO, TAG, "FinalizeProvisioning : Failed to BinToAclJSON");
-        SetResult(otmCtx, OC_STACK_ERROR);
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG_V(INFO, TAG, "Provisioning default ACL : %s",secPayload->securityData);
-
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-    if(!PMGenerateQuery(true,
-                        otmCtx->selectedDeviceInfo->endpoint.addr,
-                        otmCtx->selectedDeviceInfo->securePort,
-                        otmCtx->selectedDeviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_ACL_URI))
-    {
-        OIC_LOG(ERROR, TAG, "FinalizeProvisioning : Failed to generate query");
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
-
-    OIC_LOG_V(INFO, TAG, "Request URI for Provisioning default ACL : %s", query);
-
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
-    cbData.cb = &FinalizeProvisioningCB;
-    cbData.context = (void *)otmCtx;
-    cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(NULL, OC_REST_POST, query,
-            &otmCtx->selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-    if (OC_STACK_OK != ret)
-    {
-        SetResult(otmCtx, ret);
-        return ret;
-    }
-
-    OIC_LOG(INFO, TAG, "OUT FinalizeProvisioning");
-
-    return ret;
-
 }
 

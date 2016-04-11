@@ -43,6 +43,4 @@ class JniPlatformInfo
         JNIEnv *m_env;
 };
 
-void onPlatformInfoReceived(jobject listener, const std::string &host, PlatformInfo &platformInfo);
-
 #endif

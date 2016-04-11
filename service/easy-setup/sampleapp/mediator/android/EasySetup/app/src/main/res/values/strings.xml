@@ -4,10 +4,10 @@
     <string name="action_settings">Settings</string>
     <string name="textview2">Device Information</string>
     <string name="textview1"> -- empty -- </string>
-    <string name="scan_qr_code">Scan QR Code</string> 
-	<string name="start_easy_setup">Start Easy Setup</string> 
+    <string name="scan_qr_code">Scan QR Code</string>
+	<string name="start_easy_setup">Start Easy Setup</string>
 	<string name="start_soft_ap">Start Wi-Fi Soft AP</string>
-	<string name="stop_soft_ap">Stop Soft AP</string>  
+	<string name="stop_soft_ap">Stop Soft AP</string>
     <string name="provision_device">Provision Connected Device</string>
 
     <string name="startSetup">Start Setup</string>
@@ -20,6 +20,10 @@
     <string name="test_status">Device configuration</string>
     <string name="running">Running</string>
     <string name="stopped">Stopped</string>
+    <string name="softAP_ssid">EasySetup123</string>
+    <string name="softAP_pwd">EasySetup123</string>
+    <string name="target_default_ssid">DLNA_LISMORE1</string>
+    <string name="target_default_pwd">dlna@010203</string>
     <string name="not_available">Not available</string>
 
 

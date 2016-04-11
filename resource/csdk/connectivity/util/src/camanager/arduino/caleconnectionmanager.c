@@ -39,14 +39,14 @@ void CASetLENetworkMonitorCallbacks(CAAdapterStateChangedCB adapterStateCB,
 CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char * address)
 {
     OIC_LOG(DEBUG, TAG, "CASetClientAutoConnectionDeviceInfo");
-
+    (void)address;
     return CA_NOT_SUPPORTED;
 }
 
 CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char * address)
 {
     OIC_LOG(DEBUG, TAG, "CAUnsetClientAutoConnectionDeviceInfo");
-
+    (void)address;
     return CA_NOT_SUPPORTED;
 }
 

@@ -18,6 +18,10 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+######################################################################
+# Build script for Arduino Enrollee Sample App
+######################################################################
+
 Import('env')
 
 enrollee_env = env.Clone()
@@ -27,22 +31,21 @@ transport = enrollee_env.get('TARGET_TRANSPORT')
 # Build flags
 ######################################################################
 enrollee_env.PrependUnique(CPPPATH = [
-        '../../../../../resource/oc_logger/include',
-        '../../../../../resource/csdk/logger/include',
-        '../../../../../resource/csdk/stack/include',
-	'../../../../../extlibs/cjson',
-	'../../../sdk/common',
-	'../../../sdk/enrollee/arduino/wifi',
-	'../../../sdk/enrollee/api',
-	'../../../sdk/enrollee/inc',
-	'../../../sdk/enrollee/src'
-	])
+        env.get('SRC_DIR') + '/resource/oc_logger/include',
+        env.get('SRC_DIR') + '/resource/csdk/logger/include',
+        env.get('SRC_DIR') + '/resource/csdk/stack/include',
+		env.get('SRC_DIR') + '/extlibs/cjson',
+		env.get('SRC_DIR') + '/service/easy-setup/inc',
+		env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi',
+		env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
+		env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
+
 enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
-	
+
 enrollee_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-enrollee_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary'])
-enrollee = enrollee_env.Program('enrollee', 'enrollee_wifi.cpp')
+enrollee_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESEnrolleeSDK'])
+enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
 env.CreateBin('enrollee')
 
 i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)

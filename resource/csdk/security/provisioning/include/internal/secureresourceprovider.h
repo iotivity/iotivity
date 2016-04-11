@@ -43,6 +43,18 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
                                         OicSecAcl_t *acl, OCProvisionResultCB resultCallback);
 
 /**
+ * API to send Direct-Pairing Configuration to a device.
+ *
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] pconf PCONF pointer.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                        OicSecPconf_t *pconf, OCProvisionResultCB resultCallback);
+
+/**
  * API to provision credential to devices.
  *
  * @param[in] type Type of credentials to be provisioned to the device.

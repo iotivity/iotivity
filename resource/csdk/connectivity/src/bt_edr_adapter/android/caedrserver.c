@@ -56,24 +56,14 @@ static JavaVM *g_jvm;
 static jobject g_serverSocketObject = NULL;
 
 /**
- * Mutex to synchronize unicast server.
+ * Mutex to synchronize receive server.
  */
-static ca_mutex g_mutexUnicastServer = NULL;
+static ca_mutex g_mutexReceiveServer = NULL;
 
 /**
  * Flag to control the Receive Unicast Data Thread.
  */
 static bool g_stopUnicast = false;
-
-/**
- * Mutex to synchronize secure multicast server.
- */
-static ca_mutex g_mutexMulticastServer = NULL;
-
-/**
- * Flag to control the Receive Multicast Data Thread.
- */
-static bool g_stopMulticast = false;
 
 /**
  * Mutex to synchronize accept server.
@@ -90,6 +80,9 @@ static bool g_stopAccept = false;
  */
 static ca_mutex g_mutexServerSocket = NULL;
 
+/**
+ * Flag to control the server socket.
+ */
 static jobject g_serverSocket = NULL;
 
 /**
@@ -180,14 +173,14 @@ static void CAAcceptHandler(void *data)
 {
     OIC_LOG(DEBUG, TAG, "AcceptThread start");
 
-    VERIFY_NON_NULL_VOID(data, TAG, "CAAcceptHandler: data is null");
+    VERIFY_NON_NULL_VOID(data, TAG, "data is null");
 
     bool isAttached = false;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        OIC_LOG(DEBUG, TAG, "CAAcceptHandler - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (JNI_OK != res)
@@ -201,7 +194,7 @@ static void CAAcceptHandler(void *data)
     jobject jni_obj_BTServerSocket = CAEDRNativeListen(env);
     if (!jni_obj_BTServerSocket)
     {
-        OIC_LOG(ERROR, TAG, "AcceptThread: jni_obj_BTServerSocket is null");
+        OIC_LOG(ERROR, TAG, "jni_obj_BTServerSocket is null");
 
         if (isAttached)
         {
@@ -224,8 +217,6 @@ static void CAAcceptHandler(void *data)
 
     while (true != *(ctx->stopFlag))
     {
-        OIC_LOG(DEBUG, TAG, "AcceptThread running");
-
         // when BT state is changed with Off. its thread will be stopped
         if (!CAEDRNativeIsEnableBTAdapter(env))
         {
@@ -265,13 +256,16 @@ CAResult_t CAEDRServerStart()
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    CAEDRServerStartAcceptThread();
-    CAResult_t res = CAEDRStartUnicastServer(false);
-    if (CA_STATUS_OK != res)
+    CAResult_t res = CAEDRServerStartAcceptThread();
+    if (CA_STATUS_OK == res)
     {
-        OIC_LOG(ERROR, TAG, "CAEDRStartUnicastServer failed");
-        CAEDRServerStop();
-        return CA_STATUS_FAILED;
+        res = CAEDRStartReceiveThread(false);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "failed to start receive thread");
+            CAEDRServerStop();
+            return CA_STATUS_FAILED;
+        }
     }
 
     return res;
@@ -279,8 +273,7 @@ CAResult_t CAEDRServerStart()
 
 CAResult_t CAEDRServerStop()
 {
-    CAEDRStopUnicastServer();
-    CAEDRStopMulticastServer();
+    CAEDRStopReceiveThread();
 
     ca_mutex_lock(g_mutexAcceptServer);
     g_stopAccept = true;
@@ -325,16 +318,10 @@ void CAEDRSetPacketReceivedCallback(CAEDRDataReceivedCallback packetReceivedCall
 
 static void CAEDRServerDestroyMutex()
 {
-    if (g_mutexUnicastServer)
+    if (g_mutexReceiveServer)
     {
-        ca_mutex_free(g_mutexUnicastServer);
-        g_mutexUnicastServer = NULL;
-    }
-
-    if (g_mutexMulticastServer)
-    {
-        ca_mutex_free(g_mutexMulticastServer);
-        g_mutexMulticastServer = NULL;
+        ca_mutex_free(g_mutexReceiveServer);
+        g_mutexReceiveServer = NULL;
     }
 
     if (g_mutexAcceptServer)
@@ -364,19 +351,10 @@ static void CAEDRServerDestroyMutex()
 
 static CAResult_t CAEDRServerCreateMutex()
 {
-    g_mutexUnicastServer = ca_mutex_new();
-    if (!g_mutexUnicastServer)
+    g_mutexReceiveServer = ca_mutex_new();
+    if (!g_mutexReceiveServer)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
-        return CA_STATUS_FAILED;
-    }
-
-    g_mutexMulticastServer = ca_mutex_new();
-    if (!g_mutexMulticastServer)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to created mutex!");
-
-        CAEDRServerDestroyMutex();
         return CA_STATUS_FAILED;
     }
 
@@ -429,12 +407,11 @@ CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAEDRServerInitialize");
     VERIFY_NON_NULL(handle, TAG, "handle is NULL");
+
     g_threadPoolHandle = handle;
     CAEDRServerJniInit();
 
-    // init mutex
-    CAResult_t result = CAEDRServerCreateMutex();
-    return result;
+    return CAEDRServerCreateMutex();
 }
 
 CAResult_t CAEDRServerStartAcceptThread()
@@ -533,11 +510,11 @@ void CAEDRServerTerminate()
     CAEDRServerDestroyMutex();
 }
 
-CAResult_t CAEDRStartUnicastServer(bool isSecured)
+CAResult_t CAEDRStartReceiveThread(bool isSecured)
 {
-    OIC_LOG(DEBUG, TAG, "CAEDRStartUnicastServer");
+    OIC_LOG(DEBUG, TAG, "CAEDRStartReceiveThread");
 
-    ca_mutex_lock(g_mutexUnicastServer);
+    ca_mutex_lock(g_mutexReceiveServer);
 
     /**
      * The task to listen for data from unicast is added to the thread pool.
@@ -551,88 +528,33 @@ CAResult_t CAEDRStartUnicastServer(bool isSecured)
     if (!ctx)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
-        ca_mutex_unlock(g_mutexUnicastServer);
+        ca_mutex_unlock(g_mutexReceiveServer);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
+    g_stopUnicast = false;
     ctx->stopFlag = &g_stopUnicast;
     ctx->type = isSecured ? CA_SECURED_UNICAST_SERVER : CA_UNICAST_SERVER;
     if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAReceiveHandler, (void *) ctx))
     {
         OIC_LOG(ERROR, TAG, "Failed to create read thread!");
-        ca_mutex_unlock(g_mutexUnicastServer);
+        ca_mutex_unlock(g_mutexReceiveServer);
         OICFree((void *) ctx);
         return CA_STATUS_FAILED;
     }
-    ca_mutex_unlock(g_mutexUnicastServer);
+    ca_mutex_unlock(g_mutexReceiveServer);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRStartMulticastServer()
+CAResult_t CAEDRStopReceiveThread()
 {
-    OIC_LOG(DEBUG, TAG, "CAEDRStartMulticastServer");
+    OIC_LOG(DEBUG, TAG, "CAEDRStopReceiveThread");
 
-    ca_mutex_lock(g_mutexMulticastServer);
-
-    /**
-     * The task to listen to data from multicast socket is added to the thread pool.
-     * This is a blocking call is made where we try to receive some data.
-     * We will keep waiting until some data is received.
-     * This task will be terminated when thread pool is freed on stopping the adapters.
-     * Thread context will be freed by thread on exit.
-     */
-    CAAdapterReceiveThreadContext_t *ctx = (CAAdapterReceiveThreadContext_t *) OICMalloc(
-            sizeof(CAAdapterReceiveThreadContext_t));
-    if (!ctx)
-    {
-        OIC_LOG(ERROR, TAG, "Out of memory!");
-        ca_mutex_unlock(g_mutexMulticastServer);
-
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-
-    ctx->stopFlag = &g_stopMulticast;
-    ctx->type = CA_MULTICAST_SERVER;
-
-    g_stopMulticast = false;
-    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAReceiveHandler, (void *) ctx))
-    {
-        OIC_LOG(ERROR, TAG, "thread_pool_add_task failed!");
-
-        g_stopMulticast = true;
-        ca_mutex_unlock(g_mutexMulticastServer);
-        OICFree((void *) ctx);
-
-        return CA_STATUS_FAILED;
-    }
-    ca_mutex_unlock(g_mutexMulticastServer);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAEDRStopUnicastServer()
-{
-    OIC_LOG(DEBUG, TAG, "CAEDRStopUnicastServer");
-
-    ca_mutex_lock(g_mutexUnicastServer);
+    ca_mutex_lock(g_mutexReceiveServer);
     g_stopUnicast = true;
-    ca_mutex_unlock(g_mutexUnicastServer);
-
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAEDRStopMulticastServer()
-{
-    OIC_LOG(DEBUG, TAG, "CAEDRStopMulticastServer");
-
-    ca_mutex_lock(g_mutexMulticastServer);
-    g_stopMulticast = true;
-    ca_mutex_unlock(g_mutexMulticastServer);
-
-    OIC_LOG(INFO, TAG, "Multicast server stopped");
+    ca_mutex_unlock(g_mutexReceiveServer);
 
     return CA_STATUS_OK;
 }
@@ -654,34 +576,11 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
         return CA_STATUS_INVALID_PARAM;
     }
 
-    jstring jni_str_address = CAEDRNativeGetAddressFromDeviceSocket(env, jni_obj_socket);
-    if (!jni_str_address)
-    {
-        OIC_LOG(ERROR, TAG, "jni_str_address is null");
-        return CA_STATUS_FAILED;
-    }
-    const char* address = (*env)->GetStringUTFChars(env, jni_str_address, NULL);
-
-    // check it whether is still connected or not through google api
-    jboolean ret = CAEDRIsConnectedForSocket(env, jni_obj_socket);
-    if (!ret)
-    {
-        OIC_LOG(ERROR, TAG, "it is not connected yet.");
-
-        // remove socket to list
-        CAEDRNativeRemoveDeviceSocket(env, jni_obj_socket);
-        (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
-        (*env)->DeleteLocalRef(env, jni_str_address);
-
-        return CA_STATUS_FAILED;
-    }
-
     // start to read through InputStream
     jclass jni_cid_BTsocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");
     if (!jni_cid_BTsocket)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_BTsocket is null");
-        (*env)->DeleteLocalRef(env, jni_str_address);
         return CA_STATUS_FAILED;
     }
     jmethodID jni_mid_getInputStream = (*env)->GetMethodID(env, jni_cid_BTsocket,
@@ -694,7 +593,6 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_inputStream is null");
         (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
-        (*env)->DeleteLocalRef(env, jni_str_address);
         return CA_STATUS_FAILED;
     }
 
@@ -702,7 +600,9 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
     if (!jni_cid_InputStream)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_InputStream is null");
-        goto exit;
+        (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+        (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+        return CA_STATUS_FAILED;
     }
 
     jmethodID jni_mid_available = (*env)->GetMethodID(env, jni_cid_InputStream,
@@ -718,12 +618,29 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
     CAConnectedDeviceInfo_t *deviceInfo = NULL;
     if (0 < available)
     {
+        jstring jni_str_address = CAEDRNativeGetAddressFromDeviceSocket(env, jni_obj_socket);
+        if (!jni_str_address)
+        {
+            OIC_LOG(ERROR, TAG, "jni_str_address is null");
+            goto exit;
+        }
+
+        const char* address = (*env)->GetStringUTFChars(env, jni_str_address, NULL);
+        if (!address)
+        {
+            OIC_LOG(ERROR, TAG, "address is null");
+            (*env)->DeleteLocalRef(env, jni_str_address);
+            goto exit;
+        }
+
         OIC_LOG_V(DEBUG, TAG, "get InputStream..%d, %s", id, address);
         jmethodID jni_mid_read = (*env)->GetMethodID(env, jni_cid_InputStream,
                                                      "read", "([BII)I");
         if (!jni_mid_read)
         {
             OIC_LOG(ERROR, TAG, "jni_mid_read is null");
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             goto exit;
         }
 
@@ -731,6 +648,8 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
         if (!deviceInfo)
         {
             OIC_LOG(ERROR, TAG, "failed to get device info from list");
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             goto exit;
         }
 
@@ -742,24 +661,40 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
             if (!deviceInfo->recvData)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");
+                (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+                (*env)->DeleteLocalRef(env, jni_str_address);
                 goto exit;
             }
         }
 
         jbyteArray jbuf = (*env)->NewByteArray(env, (jint) bufSize - deviceInfo->recvDataLen);
+        if (!jbuf)
+        {
+            OIC_LOG(ERROR, TAG, "jbuf is null");
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+            goto exit;
+        }
+
         jint recvLen = (*env)->CallIntMethod(env, jni_obj_inputStream, jni_mid_read,
                                              jbuf, (jint) 0,
                                              (jint) bufSize - deviceInfo->recvDataLen);
         if (-1 == recvLen)
         {
+            OIC_LOG(ERROR, TAG, "recvLen is -1");
             (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             goto exit;
         }
 
         jbyte* buf = (*env)->GetByteArrayElements(env, jbuf, NULL);
         if (!buf)
         {
+            OIC_LOG(ERROR, TAG, "buf is null");
             (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             goto exit;
         }
         memcpy(deviceInfo->recvData + deviceInfo->recvDataLen, (const char*) buf, recvLen);
@@ -784,6 +719,8 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
                     OIC_LOG(ERROR, TAG, "out of memory");
                     (*env)->ReleaseByteArrayElements(env, jbuf, buf, 0);
                     (*env)->DeleteLocalRef(env, jbuf);
+                    (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+                    (*env)->DeleteLocalRef(env, jni_str_address);
                     goto exit;
                 }
                 deviceInfo->recvData = newBuf;
@@ -806,6 +743,8 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
 
                 (*env)->ReleaseByteArrayElements(env, jbuf, buf, 0);
                 (*env)->DeleteLocalRef(env, jbuf);
+                (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+                (*env)->DeleteLocalRef(env, jni_str_address);
                 goto exit;
             }
 
@@ -826,54 +765,21 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
         }
         (*env)->ReleaseByteArrayElements(env, jbuf, buf, 0);
         (*env)->DeleteLocalRef(env, jbuf);
+        (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+        (*env)->DeleteLocalRef(env, jni_str_address);
     }
-    (*env)->DeleteLocalRef(env, jni_obj_inputStream);
     (*env)->DeleteLocalRef(env, jni_cid_InputStream);
+    (*env)->DeleteLocalRef(env, jni_obj_inputStream);
     (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
-    (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
-    (*env)->DeleteLocalRef(env, jni_str_address);
 
     return CA_STATUS_OK;
 
 exit:
-    (*env)->DeleteLocalRef(env, jni_obj_inputStream);
     (*env)->DeleteLocalRef(env, jni_cid_InputStream);
+    (*env)->DeleteLocalRef(env, jni_obj_inputStream);
     (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
-    (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
-    (*env)->DeleteLocalRef(env, jni_str_address);
 
     return CA_STATUS_FAILED;
-}
-
-jboolean CAEDRIsConnectedForSocket(JNIEnv *env, jobject socket)
-{
-    if (!socket)
-    {
-        OIC_LOG(ERROR, TAG, "socket is null");
-        return JNI_FALSE;
-    }
-
-    jclass jni_cid_BTsocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");
-    if (!jni_cid_BTsocket)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BTsocket is null");
-        return JNI_FALSE;
-    }
-
-    jmethodID jni_mid_isConnected = (*env)->GetMethodID(env, jni_cid_BTsocket, "isConnected",
-                                                        "()Z");
-    if (!jni_mid_isConnected)
-    {
-        OIC_LOG(ERROR, TAG, "jni_mid_isConnected is null.");
-        (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
-        return JNI_FALSE;
-    }
-
-    jboolean jni_isConnected = (*env)->CallBooleanMethod(env, socket, jni_mid_isConnected);
-
-    (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
-
-    return jni_isConnected;
 }
 
 void CANativeStartListenTask(JNIEnv *env)
@@ -1009,7 +915,7 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
             return;
         }
 
-        OIC_LOG(DEBUG, TAG, "initiating accept...");
+        OIC_LOG(DEBUG, TAG, "waiting for the new connection request...");
 
         jobject jni_obj_BTSocket = (*env)->CallObjectMethod(env, serverSocketObject,
                                                             jni_mid_accept);
@@ -1035,15 +941,13 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
         }
 
         const char* address = (*env)->GetStringUTFChars(env, j_str_address, NULL);
-        OIC_LOG_V(DEBUG, TAG, "address is %s", address);
+        OIC_LOG_V(DEBUG, TAG, "received the connection request from [%s]", address);
 
         // set socket to list
         jobject jni_socket = (*env)->NewGlobalRef(env, jni_obj_BTSocket);
         ca_mutex_lock(g_mutexObjectList);
         CAEDRNativeAddDeviceSocketToList(env, jni_socket);
         ca_mutex_unlock(g_mutexObjectList);
-
-        OIC_LOG(DEBUG, TAG, "Accepted!!");
 
         // update state
         ca_mutex_lock(g_mutexStateList);
@@ -1052,6 +956,8 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
 
         (*env)->ReleaseStringUTFChars(env, j_str_address, address);
         (*env)->DeleteLocalRef(env, j_str_address);
+
+        OIC_LOG_V(DEBUG, TAG, "connected with [%s]", address);
     }
     else
     {
@@ -1078,7 +984,8 @@ void CAEDRNatvieCloseServerTask(JNIEnv* env)
             return;
         }
 
-        jmethodID jni_mid_accept = (*env)->GetMethodID(env, jni_cid_BTServerSocket, "close", "()V");
+        jmethodID jni_mid_accept = (*env)->GetMethodID(env, jni_cid_BTServerSocket,
+                                                       "close", "()V");
         if (!jni_mid_accept)
         {
             OIC_LOG(ERROR, TAG, "jni_mid_accept is null");

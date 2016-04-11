@@ -98,15 +98,13 @@ typedef struct
 typedef enum
 {
     CA_BLOCK_UNKNOWN = 0,
-    CA_OPTION1_ACK,
-    CA_OPTION1_NO_ACK_LAST_BLOCK,
-    CA_OPTION1_NO_ACK_BLOCK,
+    CA_OPTION1_RESPONSE,
+    CA_OPTION1_REQUEST_LAST_BLOCK,
+    CA_OPTION1_REQUEST_BLOCK,
     CA_OPTION2_FIRST_BLOCK,
     CA_OPTION2_LAST_BLOCK,
-    CA_OPTION2_ACK,
-    CA_OPTION2_NON,
-    CA_OPTION2_CON,
-    CA_SENT_PREVIOUS_NON_MSG,
+    CA_OPTION2_RESPONSE,
+    CA_OPTION2_REQUEST,
     CA_BLOCK_INCOMPLETE,
     CA_BLOCK_TOO_LARGE,
     CA_BLOCK_RECEIVED_ALREADY
@@ -193,12 +191,11 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
  * send block message to remote device.
  * @param[in]   pdu    received pdu binary data.
  * @param[in]   msgType    the message type of the block.
- * @param[in]   status    block-wise state to move next step.
  * @param[in]   blockID     ID set of CABlockData.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CASendBlockMessage(const coap_pdu_t *pdu, CAMessageType_t msgType,
-                              uint8_t status, const CABlockDataID_t *blockID);
+                              const CABlockDataID_t *blockID);
 
 /**
  * send error message to remote device.
@@ -256,7 +253,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CANegotiateBlockSize(CABlockData_t *currData, coap_block_t *block,
-                                CAMessageType_t msgType, uint16_t blockType);
+                                coap_pdu_t *pdu, uint16_t blockType);
 
 /**
  * Update the block option in block-wise transfer list.
@@ -294,7 +291,7 @@ CAResult_t CAUpdateBlockOptionItems(CABlockData_t *currData, const coap_pdu_t *p
  * @param[out]  block   block option.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
+CAResult_t CASetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
 
 /**
  * check the block option what kind of option have to set.

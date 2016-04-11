@@ -18,10 +18,6 @@
 *
 ******************************************************************/
 
-#include <bluetooth.h>
-#include <bluetooth_type.h>
-#include <bluetooth_internal.h>
-
 #include "caleserver.h"
 #include "cacommon.h"
 #include "cacommonutil.h"
@@ -211,10 +207,19 @@ CAResult_t CALEStartAdvertise(const char *serviceUUID)
         return CA_STATUS_FAILED;
     }
 
-    res = bt_adapter_le_start_advertising(g_hAdvertiser, NULL, NULL, NULL);
+    res = bt_adapter_le_set_advertising_device_name(g_hAdvertiser,
+                                                    BT_ADAPTER_LE_PACKET_SCAN_RESPONSE, true);
     if (BT_ERROR_NONE != res)
     {
-        OIC_LOG_V(ERROR, TAG, "bt_adapter_le_start_advertising failed with ret[%s]",
+        OIC_LOG_V(ERROR, TAG, "bt_adapter_le_set_advertising_device_name failed with ret[%s]",
+                  CALEGetErrorMsg(res));
+        return CA_STATUS_FAILED;
+    }
+
+    res = bt_adapter_le_start_advertising_new(g_hAdvertiser, NULL, NULL);
+    if (BT_ERROR_NONE != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "bt_adapter_le_start_advertising_new failed with ret[%s]",
                   CALEGetErrorMsg(res));
         return CA_STATUS_FAILED;
     }
@@ -696,7 +701,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
     OIC_LOG(DEBUG, TAG, "IN");
 
     int permissions = BT_GATT_PERMISSION_READ | BT_GATT_PERMISSION_WRITE;
-    int properties = BT_GATT_PROPERTY_WRITE | BT_GATT_PROPERTY_NOTIFY;
+    int properties;
     if(read)
     {
         properties = BT_GATT_PROPERTY_NOTIFY | BT_GATT_PROPERTY_READ;
@@ -749,8 +754,9 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
         char desc_value[2] = {1, 0};  // Notification enabled.
         bt_gatt_h descriptor = NULL;
         permissions = BT_GATT_PERMISSION_READ | BT_GATT_PERMISSION_WRITE;
-        ret = bt_gatt_descriptor_create(CA_GATT_CONFIGURATION_DESC_UUID,
-                                        permissions, desc_value, sizeof(desc_value), &descriptor);
+        ret = bt_gatt_descriptor_create(CA_GATT_CONFIGURATION_DESC_UUID, permissions,
+                                        desc_value, sizeof(desc_value),
+                                        &descriptor);
         if (0 != ret)
         {
             OIC_LOG_V(ERROR, TAG,

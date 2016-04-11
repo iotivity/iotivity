@@ -38,6 +38,10 @@
 #include "iotvticalendar.h"
 #include "ocserverrequest.h"
 
+#ifdef __WITH_DTLS__
+#include "global.h"
+#endif //__WITH_DTLS__
+
 #ifdef WITH_ARDUINO
 #include <string.h>
 #else
@@ -306,8 +310,10 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 (cred->credType & SYMMETRIC_GROUP_KEY) ||
                 (cred->credType & PIN_PASSWORD))
             {
-                VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+                if(jsonObj)
+                {
+                    VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+                }
             }
 #ifdef __WITH_X509__
             else if (cred->credType & SIGNED_ASYMMETRIC_KEY)
@@ -332,6 +338,10 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                     VERIFY_NON_NULL(TAG, (cred->privateData.data), ERROR);
                 }
 #endif // __WITH_X509__
+            }
+            else
+            {
+                cred->privateData.data = NULL;
             }
 
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
@@ -662,29 +672,19 @@ OCStackResult RemoveAllCredentials(void)
 
 #ifdef __WITH_DTLS__
 /**
- * Internal function to verify recevied owner PSK.
+ * Internal function to fill private data of owner PSK.
  *
- * @param receviedCred recevied Owner Credential from OBT(PT)
+ * @param receviedCred recevied owner credential from OBT(PT)
  * @param ownerAdd address of OBT(PT)
  * @param doxm current device's doxm resource
  *
  * @retval
- *     true valid ower psk
- *     false Invalid owner psk or failed to owner psk verification
+ *     true successfully done and valid ower psk information
+ *     false Invalid owner psk information or failed to owner psk generation
  */
-static bool isValidOwnerPSK(const OicSecCred_t* receviedCred, const CAEndpoint_t* ownerAddr,
+static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoint_t* ownerAddr,
                            const OicSecDoxm_t* doxm)
 {
-    //Decode received PSK to verify OwnerPSKs match
-    uint32_t privLen = strlen(receviedCred->privateData.data);
-    size_t b64BufSize = B64DECODE_OUT_SAFESIZE((privLen + 1) * sizeof(char));
-    uint8_t* decodeBuff = OICMalloc(b64BufSize);
-    VERIFY_NON_NULL(TAG, decodeBuff, ERROR);
-    uint32_t decodedSize = 0;
-    B64Result b64Ret = b64Decode(receviedCred->privateData.data, privLen,
-                                 decodeBuff, b64BufSize, &decodedSize);
-    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-
     //Derive OwnerPSK locally
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
     VERIFY_NON_NULL(TAG, oxmLabel, ERROR);
@@ -697,20 +697,38 @@ static bool isValidOwnerPSK(const OicSecCred_t* receviedCred, const CAEndpoint_t
         ownerPSK, OWNER_PSK_LENGTH_128);
     VERIFY_SUCCESS(TAG, pskRet == CA_STATUS_OK, ERROR);
 
-    OIC_LOG_V(DEBUG, TAG, "Oxm Label = %s", oxmLabel);
-    OIC_LOG_V(DEBUG, TAG, "PSK size compare : %s",
-              OWNER_PSK_LENGTH_128 == decodedSize ? "TRUE" : "FALSE");
-    OIC_LOG_V(DEBUG, TAG, "SubjectID compare = %s",
-              memcmp(&(receviedCred->subject), &(doxm->owner), sizeof(OicUuid_t)) == 0 ?
-              "TRUE" : "FALSE");
-    OIC_LOG_V(DEBUG, TAG, "Owner PSK compare = %s",
-              memcmp(ownerPSK, decodeBuff, OWNER_PSK_LENGTH_128) == 0 ? "TRUE" : "FALSE");
+    OIC_LOG(DEBUG, TAG, "OwnerPSK dump :");
+    OIC_LOG_BUFFER(DEBUG, TAG, ownerPSK, OWNER_PSK_LENGTH_128);
 
-    //Verify OwnerPSKs match
-    return (OWNER_PSK_LENGTH_128 == decodedSize &&
-            memcmp(ownerPSK, decodeBuff, OWNER_PSK_LENGTH_128) == 0 &&
-            memcmp(&(receviedCred->subject), &(doxm->owner), sizeof(OicUuid_t)) == 0);
+    //Generate owner credential based on recevied credential information
+    size_t b64BufSize = B64ENCODE_OUT_SAFESIZE(OWNER_PSK_LENGTH_128 * sizeof(char));
+    uint8_t* encodeBuff = OICMalloc((b64BufSize + 1) * sizeof(char));
+    VERIFY_NON_NULL(TAG, encodeBuff, ERROR);
+    uint32_t encodedSize = 0;
+    B64Result b64Ret = b64Encode(ownerPSK, OWNER_PSK_LENGTH_128,
+                                 (char*)encodeBuff, b64BufSize + 1, &encodedSize);
+    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
+    encodeBuff[encodedSize] = '\0';
+
+    //memory re-allocation for private data
+    OICFree(receviedCred->privateData.data);
+    receviedCred->privateData.data = (char*)OICMalloc((encodedSize + 1) * sizeof(char));
+    VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
+
+    //fill the base64 encoded private data
+    strncpy(receviedCred->privateData.data, (char*)encodeBuff, b64BufSize + 1);
+
+    OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");
+
+    //deallocate local memory
+    OICFree(encodeBuff);
+
+    //Verify OwnerPSK information
+    return (memcmp(&(receviedCred->subject), &(doxm->owner), sizeof(OicUuid_t)) == 0 &&
+            receviedCred->credType == SYMMETRIC_PAIR_WISE_KEY);
 exit:
+    //receviedCred->privateData.data will be deallocated when deleting credential.
+    OICFree(encodeBuff);
     return false;
 }
 
@@ -736,9 +754,14 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
                 case SYMMETRIC_PAIR_WISE_KEY:
                 {
                     OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
-                    if(isValidOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
+                    if(FillPrivateDataOfOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
                     {
-                        OIC_LOG(ERROR, TAG, "OwnerPKS is matched");
+                        if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
+                        {
+                            OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
+                        }
+
+                        OIC_LOG(ERROR, TAG, "OwnerPSK was generated successfully.");
                         if(OC_STACK_OK == AddCredential(cred))
                         {
                             ret = OC_EH_RESOURCE_CREATED;
@@ -753,6 +776,44 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
                     {
                         OIC_LOG(ERROR, TAG, "Failed to verify receviced OwnerPKS.");
                         ret = OC_EH_ERROR;
+                    }
+
+                    if(OC_EH_RESOURCE_CREATED == ret)
+                    {
+                        /**
+                         * in case of random PIN based OxM,
+                         * revert get_psk_info callback of tinyDTLS to use owner credential.
+                         */
+                        if(OIC_RANDOM_DEVICE_PIN == doxm->oxmSel)
+                        {
+                            OicUuid_t emptyUuid = { .id={0}};
+                            SetUuidForRandomPinOxm(&emptyUuid);
+
+                            if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
+                                ret = OC_EH_ERROR;
+                                break;
+                            }
+                        }
+
+                        //Select cipher suite to use owner PSK
+                        if(CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to disable anonymous cipher suite");
+                            ret = OC_EH_ERROR;
+                        }
+                        else
+                        {
+                            OIC_LOG(INFO, TAG, "Anonymous cipher suite is DISABLED");
+                        }
+
+                        if(CA_STATUS_OK !=
+                           CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to select cipher suite");
+                            ret = OC_EH_ERROR;
+                        }
                     }
 
                     break;
@@ -774,6 +835,16 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
                     break;
                 }
             }
+
+            if(OC_EH_RESOURCE_CREATED != ret)
+            {
+                /*
+                  * If some error is occured while ownership transfer,
+                  * ownership transfer related resource should be revert back to initial status.
+                  */
+                RestoreDoxmToInitState();
+                RestorePstatToInitState();
+            }
         }
         else
         {
@@ -794,6 +865,15 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
          */
         ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
 #endif//__WITH_DTLS__
+    }
+
+    if(OC_EH_RESOURCE_CREATED != ret)
+    {
+        if(OC_STACK_OK != RemoveCredential(&cred->subject))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to remove the invalid credential");
+        }
+        FreeCred(cred);
     }
 
     return ret;
@@ -1109,6 +1189,63 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
             break;
     }
 
+    return ret;
+}
+
+/**
+ * Add temporal PSK to PIN based OxM
+ *
+ * @param[in] tmpSubject UUID of target device
+ * @param[in] credType Type of credential to be added
+ * @param[in] pin numeric characters
+ * @param[in] pinSize length of 'pin'
+ * @param[in] ownersLen Number of owners
+ * @param[in] owners Array of owners
+ * @param[out] tmpCredSubject Generated credential's subject.
+ *
+ * @return OC_STACK_OK for success and errorcode otherwise.
+ */
+OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
+                            const char * pin, size_t pinSize,
+                            size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if(NULL == tmpSubject || NULL == pin || 0 == pinSize || NULL == tmpCredSubject)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
+    int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, owners->id,
+                                              UUID_LENGTH, PBKDF_ITERATIONS,
+                                              OWNER_PSK_LENGTH_128, privData);
+    VERIFY_SUCCESS(TAG, (0 == dtlsRes) , ERROR);
+
+    uint32_t outLen = 0;
+    char base64Buff[B64ENCODE_OUT_SAFESIZE(OWNER_PSK_LENGTH_128) + 1] = {};
+    B64Result b64Ret = b64Encode(privData, OWNER_PSK_LENGTH_128, base64Buff,
+                                sizeof(base64Buff), &outLen);
+    VERIFY_SUCCESS(TAG, (B64_OK == b64Ret), ERROR);
+
+    OicSecCred_t* cred = GenerateCredential(tmpSubject, credType, NULL,
+                                            base64Buff, ownersLen, owners);
+    if(NULL == cred)
+    {
+        OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
+        return OC_STACK_ERROR;
+    }
+
+    memcpy(tmpCredSubject->id, cred->subject.id, UUID_LENGTH);
+
+    ret = AddCredential(cred);
+    if( OC_STACK_OK != ret)
+    {
+        RemoveCredential(tmpSubject);
+        OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
+    }
+
+exit:
     return ret;
 }
 

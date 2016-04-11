@@ -239,6 +239,7 @@ Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
     if (g_listenerObject)
     {
         (*env)->DeleteGlobalRef(env, g_listenerObject);
+        g_listenerObject = NULL;
     }
 }
 
@@ -257,6 +258,8 @@ Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo(JNIEnv *en
     }
 
     CASetAutoConnectionDeviceInfo(address);
+
+    (*env)->ReleaseStringUTFChars(env, jaddress, address);
 }
 
 JNIEXPORT void JNICALL
@@ -274,6 +277,8 @@ Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *
     }
 
     CAUnsetAutoConnectionDeviceInfo(address);
+
+    (*env)->ReleaseStringUTFChars(env, jaddress, address);
 }
 
 JNIEXPORT void JNICALL

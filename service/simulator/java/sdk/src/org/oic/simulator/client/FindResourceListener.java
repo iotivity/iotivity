@@ -16,8 +16,6 @@
 
 package org.oic.simulator.client;
 
-import org.oic.simulator.client.SimulatorRemoteResource;
-
 /**
  * Listener for getting notification when resources are discovered in network.
  */

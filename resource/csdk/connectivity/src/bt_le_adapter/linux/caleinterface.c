@@ -774,6 +774,7 @@ static bool CALEWaitForNonEmptyList(GList * const * list,
 
 CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
 {
+    (void)threadPool;
 #if !GLIB_CHECK_VERSION(2,36,0)
     /*
       Initialize the GLib type system.
@@ -999,8 +1000,8 @@ CAResult_t CASetLEAdapterStateChangedCb(
 
 CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
 {
-    //TODO
-    return CA_STATUS_OK;
+    (void)callback;
+    return CA_NOT_SUPPORTED;
 }
 
 CAResult_t CAGetLEAddress(char **local_address)

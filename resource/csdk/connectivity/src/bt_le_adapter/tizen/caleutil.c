@@ -268,6 +268,15 @@ const char *CALEGetErrorMsg(bt_error_e err)
         case BT_ERROR_NOT_SUPPORTED:
             errStr = "BT_ERROR_NOT_SUPPORTED";
             break;
+        case BT_ERROR_QUOTA_EXCEEDED:
+            errStr = "BT_ERROR_QUOTA_EXCEEDED";
+            break;
+        case BT_ERROR_NO_DATA:
+            errStr = "BT_ERROR_NO_DATA";
+            break;
+        case BT_ERROR_AGAIN:
+            errStr = "BT_ERROR_AGAIN";
+            break;
         default:
             errStr = "NOT Defined";
             break;

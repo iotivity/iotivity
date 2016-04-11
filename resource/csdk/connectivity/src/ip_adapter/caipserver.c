@@ -18,8 +18,12 @@
  *
  ******************************************************************/
 
+#ifndef __APPLE_USE_RFC_3542
 #define __APPLE_USE_RFC_3542 // for PKTINFO
+#endif
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE // for in6_pktinfo
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -114,6 +118,57 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags);
         fd = caglobals.ip.TYPE.fd; \
         flags = FLAGS; \
     }
+
+void CADeInitializeIPGlobals()
+{
+    if (caglobals.ip.u6.fd != -1)
+    {
+        close(caglobals.ip.u6.fd);
+        caglobals.ip.u6.fd = -1;
+    }
+
+    if (caglobals.ip.u6s.fd != -1)
+    {
+        close(caglobals.ip.u6s.fd);
+        caglobals.ip.u6s.fd = -1;
+    }
+
+    if (caglobals.ip.u4.fd != -1)
+    {
+        close(caglobals.ip.u4.fd);
+        caglobals.ip.u4.fd = -1;
+    }
+
+    if (caglobals.ip.u4s.fd != -1)
+    {
+        close(caglobals.ip.u4s.fd);
+        caglobals.ip.u4s.fd = -1;
+    }
+
+    if (caglobals.ip.m6.fd != -1)
+    {
+        close(caglobals.ip.m6.fd);
+        caglobals.ip.m6.fd = -1;
+    }
+
+    if (caglobals.ip.m6s.fd != -1)
+    {
+        close(caglobals.ip.m6s.fd);
+        caglobals.ip.m6s.fd = -1;
+    }
+
+    if (caglobals.ip.m4.fd != -1)
+    {
+        close(caglobals.ip.m4.fd);
+        caglobals.ip.m4.fd = -1;
+    }
+
+    if (caglobals.ip.m4s.fd != -1)
+    {
+        close(caglobals.ip.m4s.fd);
+        caglobals.ip.m4s.fd = -1;
+    }
+}
 
 static void CAReceiveHandler(void *data)
 {
@@ -793,7 +848,7 @@ static void CAHandleNetlink()
 
     for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {
-        if (nh->nlmsg_type != RTM_NEWLINK)
+        if (nh != NULL && nh->nlmsg_type != RTM_NEWLINK)
         {
             continue;
         }

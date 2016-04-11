@@ -338,16 +338,21 @@ OCStackResult SRMInitSecureResources()
     // TODO: temporarily returning OC_STACK_OK every time until default
     // behavior (for when SVR DB is missing) is settled.
     InitSecureResources();
-
+    OCStackResult ret = OC_STACK_OK;
 #if defined(__WITH_DTLS__)
-    CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials);
+    if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
+        ret = OC_STACK_ERROR;
+    }
+
 #endif // (__WITH_DTLS__)
 #if defined(__WITH_X509__)
     CARegisterDTLSX509CredentialsHandler(GetDtlsX509Credentials);
     CARegisterDTLSCrlHandler(GetDerCrl);
 #endif // (__WITH_X509__)
 
-    return OC_STACK_OK;
+    return ret;
 }
 
 /**
@@ -397,6 +402,8 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_ACL_URI,
         OIC_RSRC_DOXM_URI,
         OIC_RSRC_PSTAT_URI,
+        OIC_RSRC_PCONF_URI,
+        OIC_RSRC_DPAIRING_URI,
     };
 
     // Remove query from Uri for resource string comparison

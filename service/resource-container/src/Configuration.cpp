@@ -95,9 +95,10 @@ namespace OIC
             {
                 try
                 {
-                    if (m_xmlDoc.first_node())
+                    bundle = m_xmlDoc.first_node();
+                    if (bundle)
                     {
-                        for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
+                        for (bundle = bundle->first_node(BUNDLE_TAG); bundle; bundle =
                                  bundle->next_sibling())
                         {
                             std::map< std::string, std::string > bundleMap;
@@ -139,9 +140,10 @@ namespace OIC
                     std::map< std::string, std::string > bundleConfigMap;
 
                     // <bundle>
-                    if (m_xmlDoc.first_node())
+                    bundle = m_xmlDoc.first_node();
+                    if (bundle)
                     {
-                        for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
+                        for (bundle = bundle->first_node(BUNDLE_TAG); bundle; bundle =
                                  bundle->next_sibling())
                         {
                             // <id>
@@ -207,10 +209,11 @@ namespace OIC
                 try
                 {
                     // <bundle>
-                    if (m_xmlDoc.first_node())
+                    bundle = m_xmlDoc.first_node();
+                    if (bundle)
                     {
-                        for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
-                                 bundle->next_sibling())
+                        for (bundle = bundle->first_node(BUNDLE_TAG); bundle;
+                            bundle = bundle->next_sibling())
                         {
                             // <id>
                             strBundleId = bundle->first_node(BUNDLE_ID)->value();
@@ -222,9 +225,9 @@ namespace OIC
                             {
                                 OIC_LOG_V(INFO, CONTAINER_TAG, "Inspecting");
                                 // <resourceInfo>
-                                if (bundle->first_node(OUTPUT_RESOURCES_TAG)){
-                                    for (resource = bundle->first_node(OUTPUT_RESOURCES_TAG)->
-                                            first_node(OUTPUT_RESOURCE_INFO);
+                                bundle = bundle->first_node(OUTPUT_RESOURCES_TAG);
+                                if (bundle){
+                                    for (resource = bundle->first_node(OUTPUT_RESOURCE_INFO);
                                          resource; resource = resource->next_sibling())
                                     {
 
@@ -235,7 +238,10 @@ namespace OIC
                                             strValue = item->value();
 
                                             if (!strKey.compare(OUTPUT_RESOURCE_NAME))
+                                            {
+                                                if (trim_both(strValue).compare(resourceName) != 0) break;
                                                 resourceInfoOut->name = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_URI))
                                                 resourceInfoOut->uri = trim_both(strValue);
@@ -315,9 +321,10 @@ namespace OIC
                 try
                 {
                     // <bundle>
-                    if (m_xmlDoc.first_node())
+                    bundle = m_xmlDoc.first_node();
+                    if (bundle)
                     {
-                        for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
+                        for (bundle = bundle->first_node(BUNDLE_TAG); bundle; bundle =
                                  bundle->next_sibling())
                         {
                             // <id>
@@ -330,9 +337,10 @@ namespace OIC
                             {
                                 OIC_LOG_V(INFO, CONTAINER_TAG, "Inspecting");
                                 // <resourceInfo>
-                                if (bundle->first_node(OUTPUT_RESOURCES_TAG))
+                                bundle = bundle->first_node(OUTPUT_RESOURCES_TAG);
+                                if (bundle)
                                 {
-                                    for (resource = bundle->first_node(OUTPUT_RESOURCES_TAG)->
+                                    for (resource = bundle->
                                             first_node(OUTPUT_RESOURCE_INFO);
                                          resource; resource = resource->next_sibling())
                                     {

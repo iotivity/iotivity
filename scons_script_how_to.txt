@@ -227,7 +227,7 @@ need restrictly follow it.
 
 ==== The content of a typical script ====
 
-After run the scripts in build_common (usally it's done at the beginning of
+After run the scripts in build_common (usually it's done at the beginning of
 SConstruct), an global environment 'env' is exported, 'env' has include the
 default configuration of the target OS and arch. 'env' is used in all projects,
 should avoid to change its keys. To avoid change 'env', usually clone 'env' and
@@ -235,13 +235,13 @@ update it accroding to the requirement of current sub project. Then specify the
 target(usually binary) to build.
 
 Below is an example:
-	# import the global enviroment 'env'
+	# import the global environment 'env'
 	Import('env')
 
-	# Clone a new enviroment from 'env'
+	# Clone a new environment from 'env'
 	new_env = env.Clone()
 
-	# Update the new enviroment, usally include add header file paths,
+	# Update the new environment, usually include add header file paths,
 	# library path, libs to link and other compiler flags. This part is
 	# optional.
 	new_env.AppeneUnique(xxx = [ .... ])

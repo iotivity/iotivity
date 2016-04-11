@@ -24,6 +24,8 @@
 #include "cJSON.h"
 #include "resourcemanager.h"
 #include "doxmresource.h"
+#include "pstatresource.h"
+#include "aclresource.h"
 #include "psinterface.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
@@ -63,6 +65,7 @@ static OicSecDoxm_t gDefaultDoxm =
     SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
     {.id = {0}},            /* OicUuid_t deviceID */
+    false,                  /* bool dpc */
     {.id = {0}},            /* OicUuid_t owner */
 };
 
@@ -151,6 +154,9 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
     VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
     cJSON_AddStringToObject(jsonDoxm, OIC_JSON_DEVICE_ID_NAME, base64Buff);
 
+    //DPC -- Mandatory
+    cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_DPC_NAME, doxm->dpc);
+
     //Owner -- Mandatory
     outLen = 0;
     b64Ret = b64Encode(doxm->owner.id, sizeof(doxm->owner.id), base64Buff,
@@ -199,7 +205,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_TYPE_NAME);
     if ((jsonObj) && (cJSON_Array == jsonObj->type))
     {
-        doxm->oxmTypeLen = cJSON_GetArraySize(jsonObj);
+        doxm->oxmTypeLen = (size_t)cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmTypeLen > 0, ERROR);
 
         doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
@@ -221,7 +227,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_NAME);
     if (jsonObj && cJSON_Array == jsonObj->type)
     {
-        doxm->oxmLen = cJSON_GetArraySize(jsonObj);
+        doxm->oxmLen = (size_t)cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
 
         doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
@@ -297,6 +303,25 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     {
         VERIFY_NON_NULL(TAG, gDoxm, ERROR);
         memcpy((char *)doxm->deviceID.id, (char *)gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
+    }
+
+    //DPC -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DPC_NAME);
+    if(jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
+        doxm->dpc = jsonObj->valueint;
+    }
+    else // PUT/POST JSON may not have owned so set it to the gDomx->dpc
+    {
+        if(NULL != gDoxm)
+        {
+            doxm->dpc = gDoxm->dpc;
+        }
+        else
+        {
+            doxm->dpc = false; // default is false
+        }
     }
 
     //Owner -- will be empty when device status is unowned.
@@ -521,7 +546,11 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                      * Disable anonymous ECDH cipher in tinyDTLS since device is now
                      * in owned state.
                      */
-                    CAEnableAnonECDHCipherSuite(false);
+                    CAResult_t caRes = CA_STATUS_OK;
+                    caRes = CAEnableAnonECDHCipherSuite(false);
+                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
 #ifdef __WITH_X509__
 #define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
                     CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
@@ -576,7 +605,6 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                          */
                         caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-
                         ehRet = OC_EH_OK;
                     }
                     else
@@ -591,12 +619,6 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
 #ifdef __WITH_DTLS__
                     //Save the owner's UUID to derive owner credential
                     memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-
-//                    OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
-//                    //Generate new credential for provisioning tool
-//                    ehRet = AddOwnerPSK((CAEndpoint_t*)(&request->devAddr), newDoxm,
-//                                        (uint8_t*)OXM_RANDOM_DEVICE_PIN, strlen(OXM_RANDOM_DEVICE_PIN));
-//                    VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                     //Update new state in persistent storage
                     if((UpdatePersistentStorage(gDoxm) == true))
@@ -623,9 +645,18 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
         {
             gDoxm->owned = true;
             // Update new state in persistent storage
-            if (true == UpdatePersistentStorage(gDoxm))
+            if (UpdatePersistentStorage(gDoxm))
             {
-                ehRet = OC_EH_OK;
+                //Update default ACL of security resource to prevent anonymous user access.
+                if(OC_STACK_OK == UpdateDefaultSecProvACL())
+                {
+                    ehRet = OC_EH_OK;
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to remove default ACL for security provisioning");
+                    ehRet = OC_EH_ERROR;
+                }
             }
             else
             {
@@ -642,17 +673,11 @@ exit:
                             "DOXM will be reverted.");
 
         /*
-         * If persistent storage update failed, revert back the state
-         * for global variable.
+         * If some error is occured while ownership transfer,
+         * ownership transfer related resource should be revert back to initial status.
          */
-        gDoxm->owned = false;
-        gDoxm->oxmSel = OIC_JUST_WORKS;
-        memset(&(gDoxm->owner), 0, sizeof(OicUuid_t));
-
-        if(!UpdatePersistentStorage(gDoxm))
-        {
-            OIC_LOG(ERROR, TAG, "Failed to revert DOXM in persistent storage");
-        }
+        RestoreDoxmToInitState();
+        RestorePstatToInitState();
     }
 
     //Send payload to request originator
@@ -813,6 +838,14 @@ OCStackResult InitDoxmResource()
     {
         gDoxm = GetDoxmDefault();
     }
+
+    //In case of the server is shut down unintentionally, we should initialize the owner
+    if(false == gDoxm->owned)
+    {
+        OicUuid_t emptyUuid = {.id={0}};
+        memcpy(&gDoxm->owner, &emptyUuid, sizeof(OicUuid_t));
+    }
+
     ret = CheckDeviceID();
     if (ret == OC_STACK_OK)
     {
@@ -886,4 +919,26 @@ OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner)
         }
     }
     return retVal;
+}
+
+/**
+ * Function to restore doxm resurce to initial status.
+ * This function will use in case of error while ownership transfer
+ */
+void RestoreDoxmToInitState()
+{
+    if(gDoxm)
+    {
+        OIC_LOG(INFO, TAG, "DOXM resource will revert back to initial status.");
+
+        OicUuid_t emptyUuid = {.id={0}};
+        memcpy(&(gDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
+        gDoxm->owned = false;
+        gDoxm->oxmSel = OIC_JUST_WORKS;
+
+        if(!UpdatePersistentStorage(gDoxm))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to revert DOXM in persistent storage");
+        }
+    }
 }

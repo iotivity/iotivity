@@ -19,22 +19,25 @@ package org.oic.simulator.server;
 import java.util.Vector;
 
 import org.oic.simulator.InvalidArgsException;
+import org.oic.simulator.NoSupportException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceModel;
 
+/**
+ * This class serves as a base class type for all the resources in the
+ * simulator. It provides APIs to get and update the resource details, and
+ * register listeners to get notifications for resource model changes and
+ * observe requests from clients, and APIs to register/ unregister the resource
+ * with the platform.
+ */
 public class SimulatorResource {
 
-    private native void dispose();
-
     protected long mNativeHandle;
-
-    protected SimulatorResource() {
-    }
 
     @Override
     protected void finalize() throws Throwable {
         try {
-            dispose();
+            nativeDispose();
         } catch (Throwable t) {
             throw t;
         } finally {
@@ -42,12 +45,42 @@ public class SimulatorResource {
         }
     }
 
+    /**
+     * Enum to represent the type of resource.
+     */
     public enum Type {
         SINGLE, COLLECTION
     }
 
+    /**
+     * Enum to represent the update type of automation.
+     */
     public enum AutoUpdateType {
         ONE_TIME, REPEAT
+    }
+
+    /**
+     * API which indicates whether the resource is collection or single
+     * resource.
+     *
+     * @return True if the resource is collection, otherwise false.
+     */
+    public boolean isCollection() {
+        return (this instanceof SimulatorCollectionResource);
+    }
+
+    /**
+     * API to get the type which indicates whether resource is single or
+     * collection resource.
+     *
+     * @return Type of resource.
+     */
+    public Type getType() {
+        if (this instanceof SimulatorSingleResource) {
+            return Type.SINGLE;
+        } else {
+            return Type.COLLECTION;
+        }
     }
 
     /**
@@ -59,19 +92,9 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native String getName() throws SimulatorException;
-
-    /**
-     * API to get the type which indicates whether resource is single or
-     * collection resource.
-     *
-     * @return Type of resource.
-     *
-     * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
-     */
-    public native Type getType() throws SimulatorException;
+    public String getName() throws SimulatorException {
+        return nativeGetName();
+    }
 
     /**
      * API to get the resource URI.
@@ -82,7 +105,9 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native String getURI() throws SimulatorException;
+    public String getURI() throws SimulatorException {
+        return nativeGetURI();
+    }
 
     /**
      * API to get the resource type.
@@ -93,18 +118,22 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native String getResourceType() throws SimulatorException;
+    public String getResourceType() throws SimulatorException {
+        return nativeGetResourceType();
+    }
 
     /**
      * API to get the interfaces resource is bound with.
      *
-     * @return Interface type.
+     * @return Interface types.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native Vector<String> getInterface() throws SimulatorException;
+    public Vector<String> getInterface() throws SimulatorException {
+        return nativeGetInterface();
+    }
 
     /**
      * API to get the observable state of resource.
@@ -116,7 +145,23 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native boolean isObservable() throws SimulatorException;
+    public boolean isObservable() throws SimulatorException {
+        return nativeIsObservable();
+    }
+
+    /**
+     * API to get the discoverable state of resource.
+     *
+     * @return Discoverable state - true if resource is discoverable, otherwise
+     *         false.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public boolean isDiscoverable() throws SimulatorException {
+        return nativeIsDiscoverable();
+    }
 
     /**
      * API to get the start state of resource.
@@ -127,25 +172,15 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native boolean isStarted() throws SimulatorException;
-
-    /**
-     * API to get the {@link SimulatorResourceModel} of the simulated resource.
-     *
-     * @return {@link SimulatorResourceModel} object on success, otherwise null.
-     *
-     * @throws SimulatorException
-     *             This exception will be thrown if simulated resource is not
-     *             proper.
-     */
-    public native SimulatorResourceModel getResourceModel()
-            throws SimulatorException;
+    public boolean isStarted() throws SimulatorException {
+        return nativeIsStarted();
+    }
 
     /**
      * API to set the name of the resource.
      *
      * @param name
-     *            - Name to be set.
+     *            Name to be set.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the resource name is
@@ -154,29 +189,34 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void setName(String name) throws InvalidArgsException,
-            SimulatorException;
+    public void setName(String name) throws InvalidArgsException,
+            SimulatorException {
+        nativeSetName(name);
+    }
 
     /**
      * API to set the resource URI.
      *
      * @param uri
-     *            - URI to be set.
+     *            URI to be set.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the resource URI is invalid.
      * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
+     *             A resource needs to be stopped by calling the stop() before
+     *             calling this API. This exception will be thrown if the native
+     *             resource object has not yet been stopped.
      */
-    public native void setURI(String uri) throws InvalidArgsException,
-            SimulatorException;
+    public void setURI(String uri) throws InvalidArgsException,
+            SimulatorException {
+        nativeSetURI(uri);
+    }
 
     /**
      * API to set the resource type.
      *
      * @param resourceType
-     *            - resource type string.
+     *            Resource type string.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the resource type is
@@ -185,43 +225,107 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void setResourceType(String resourceType)
-            throws InvalidArgsException, SimulatorException;
+    public void setResourceType(String resourceType)
+            throws InvalidArgsException, SimulatorException {
+        nativeSetResourceType(resourceType);
+    }
 
     /**
-     * API to add interface type for resource.
+     * API to set interface to resource. Resource should be stopped before
+     * calling this API.
      *
      * @param interfaceType
-     *            - interface to be added for resource.
+     *            Interface to be set.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the interface type is
      *             invalid.
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
+     *             does not exist or resource is still running or for some
+     *             general errors.
      */
-    public native void addInterface(String interfaceType)
-            throws InvalidArgsException, SimulatorException;
+    public void setInterface(String interfaceType) throws InvalidArgsException,
+            SimulatorException {
+        nativeSetInterface(interfaceType);
+    }
 
     /**
-     * API to make the resource observable or not.
+     * API to set a list of interfaces to resource. Resource should be stopped
+     * before calling this API.
+     *
+     * @param interfaceTypes
+     *            Interfaces to be set.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the interface type is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or resource is still running or for some
+     *             general errors.
+     */
+    public void setInterface(Vector<String> interfaceTypes)
+            throws InvalidArgsException, SimulatorException {
+        nativeSetInterfaces(interfaceTypes);
+    }
+
+    /**
+     * API to add interface type for resource.
+     *
+     * @param interfaceType
+     *            Interface to be added for resource.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the interface type is
+     *             invalid.
+     * @throws NoSupportException
+     *             This exception will be thrown if the interface type is not
+     *             supported by the resource.
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public void addInterface(String interfaceType) throws InvalidArgsException,
+            NoSupportException, SimulatorException {
+        nativeAddInterface(interfaceType);
+    }
+
+    /**
+     * API to make the resource observable or not observable.
      *
      * @param state
-     *            - true make the resource observable, otherwise non-observable.
+     *            True makes the resource observable, otherwise non-observable.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void setObservable(boolean state) throws SimulatorException;
+    public void setObservable(boolean state) throws SimulatorException {
+        nativeSetObservable(state);
+    }
+
+    /**
+     * API to make the resource discoverable or not discoverable.
+     *
+     * @param state
+     *            True makes the resource discoverable, otherwise
+     *            non-discoverable.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public void setDiscoverable(boolean state) throws SimulatorException {
+        nativeSetDiscoverable(state);
+    }
 
     /**
      * API to set the listener for receiving the notifications when observer is
      * registered or unregistered with resource.
      *
      * @param listener
-     *            - Callback to be set for receiving the notifications.
+     *            Callback to be set for receiving the notifications.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the listener is invalid.
@@ -229,8 +333,10 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void setObserverListener(ObserverListener listener)
-            throws InvalidArgsException, SimulatorException;
+    public void setObserverListener(ObserverListener listener)
+            throws InvalidArgsException, SimulatorException {
+        nativeSetObserverListener(listener);
+    }
 
     /**
      * API to set listener for receiving notifications when resource's model
@@ -244,27 +350,46 @@ public class SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void setResourceModelChangeListener(
+    public void setResourceModelChangeListener(
             ResourceModelChangeListener listener) throws InvalidArgsException,
-            SimulatorException;
+            SimulatorException {
+        nativeSetResourceModelChangeListener(listener);
+    }
 
     /**
-     * API to start the resource.
+     * API to start(register) the resource.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void start() throws SimulatorException;
+    public void start() throws SimulatorException {
+        nativeStart();
+    }
 
     /**
-     * API to stop the resource.
+     * API to stop(unregister) the resource.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void stop() throws SimulatorException;
+    public void stop() throws SimulatorException {
+        nativeStop();
+    }
+
+    /**
+     * API to get the {@link SimulatorResourceModel} of the simulated resource.
+     *
+     * @return {@link SimulatorResourceModel} object on success, otherwise null.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown if simulated resource is not
+     *             proper.
+     */
+    public SimulatorResourceModel getResourceModel() throws SimulatorException {
+        return nativeGetResourceModel();
+    }
 
     /**
      * API to get observers which are registered with resource.
@@ -275,28 +400,34 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native Vector<Observer> getObservers() throws SimulatorException;
+    public Vector<Observer> getObservers() throws SimulatorException {
+        return nativeGetObservers();
+    }
 
     /**
-     * API to notify current resource model to specific observer.
+     * API to notify current resource model to a specific observer.
      *
      * @param observerId
-     *            - Observer ID to notify.
+     *            Observer ID to notify.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void notifyObserver(int observerId) throws SimulatorException;
+    public void notifyObserver(int observerId) throws SimulatorException {
+        nativeNotify(observerId);
+    }
 
     /**
-     * API to notify all registered observers.
+     * API to notify current resource model to all registered observers.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native void notifyAllObservers() throws SimulatorException;
+    public void notifyAllObservers() throws SimulatorException {
+        nativeNotifyAll();
+    }
 
     /**
      * Listener for receiving notification when observer is registered or
@@ -304,23 +435,24 @@ public class SimulatorResource {
      */
     public interface ObserverListener {
         /**
-         * Method will be invoked when a observer is registered with resource.
+         * Method will be invoked when an observer is registered with resource.
          *
-         * @param uri
+         * @param resourceURI
          *            URI of the resource.
          * @param observer
-         *            {@link ObserverInfo} object containing the details of
+         *            {@link Observer} object containing the details of
          *            observer.
          */
         public void onObserverAdded(String resourceURI, Observer observer);
 
         /**
-         * Method will be invoked when a observer is Unregistered with resource.
+         * Method will be invoked when an observer is unregistered from the
+         * resource.
          *
          * @param resourceURI
          *            URI of the resource.
          * @param observer
-         *            {@link ObserverInfo} object containing the details of
+         *            {@link Observer} object containing the details of
          *            observer.
          */
         public void onObserverRemoved(String resourceURI, Observer observer);
@@ -359,4 +491,56 @@ public class SimulatorResource {
         public void onResourceModelChanged(String uri,
                 SimulatorResourceModel resourceModel);
     }
+
+    protected SimulatorResource() {
+    }
+
+    private native String nativeGetName();
+
+    private native String nativeGetURI();
+
+    private native String nativeGetResourceType();
+
+    private native Vector<String> nativeGetInterface();
+
+    private native boolean nativeIsObservable();
+
+    private native boolean nativeIsDiscoverable();
+
+    private native boolean nativeIsStarted();
+
+    private native void nativeSetName(String name);
+
+    private native void nativeSetURI(String uri);
+
+    private native void nativeSetResourceType(String resourceType);
+
+    private native void nativeSetInterface(String interfaceType);
+
+    private native void nativeSetInterfaces(Vector<String> interfaceTypes);
+
+    private native void nativeAddInterface(String interfaceType);
+
+    private native void nativeSetObservable(boolean state);
+
+    private native void nativeSetDiscoverable(boolean state);
+
+    private native void nativeSetObserverListener(ObserverListener listener);
+
+    private native void nativeSetResourceModelChangeListener(
+            ResourceModelChangeListener listener);
+
+    private native void nativeStart();
+
+    private native void nativeStop();
+
+    private native SimulatorResourceModel nativeGetResourceModel();
+
+    private native Vector<Observer> nativeGetObservers();
+
+    private native void nativeNotify(int observerId);
+
+    private native void nativeNotifyAll();
+
+    private native void nativeDispose();
 }

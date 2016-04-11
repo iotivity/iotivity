@@ -57,11 +57,15 @@ if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
 	oclib_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 if target_os == 'android':
-	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	oclib_env.AppendUnique(LIBS = ['boost_thread', 'gnustl_shared', 'log'])
+    oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    oclib_env.AppendUnique(LIBS = ['boost_thread', 'gnustl_shared', 'log'])
+    oclib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,liboc.so'])
 
 if target_os == 'tizen':
 	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+
+if target_os in ['linux'] and env.get('SIMULATOR', False):
+    oclib_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
 
 ######################################################################
 # Source files and Targets
@@ -112,5 +116,5 @@ oclib_env.UserInstallTargetHeader(header_dir + 'OCResourceResponse.h', 'resource
 oclib_env.UserInstallTargetHeader(header_dir + 'CAManager.h', 'resource', 'CAManager.h')
 
 # Add Provisioning library
-if target_os in ['linux', 'android'] and env.get('SECURED') == '1':
+if target_os in ['linux', 'android', 'tizen'] and env.get('SECURED') == '1':
         SConscript('../provisioning/SConscript')

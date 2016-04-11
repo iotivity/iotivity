@@ -36,6 +36,8 @@
 
 #define TAG PCF("OIC_CA_LE_MONITOR")
 
+static const jint CONNECTION_FAILED_TO_BE_EASTABLISHED = 62;
+
 static JavaVM *g_jvm;
 
 /**
@@ -295,8 +297,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
     }
     else if (state_off == status) // STATE_OFF:10
     {
-        CALEClientStopMulticastServer();
-
         // remove obj for client
         CAResult_t res = CALEClientRemoveAllGattObjs(env);
         if (CA_STATUS_OK != res)
@@ -368,18 +368,18 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWConnectionStateChangeCallback
                                                                                  jobject obj,
                                                                                  jobject gatt,
                                                                                  jint status,
-                                                                                 jint newstate)
+                                                                                 jint newState)
 {
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
     OIC_LOG_V(DEBUG, TAG, "CALeGattNWConnectionStateChangeCallback - status %d, newstate %d",
-              status, newstate);
+              status, newState);
 
     jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE,
                                                     "STATE_DISCONNECTED");
-    if (state_disconnected == newstate)
+    if (state_disconnected == newState)
     {
         jstring jni_address = CALEClientGetAddressFromGattObj(env, gatt);
         if (!jni_address)
@@ -395,9 +395,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWConnectionStateChangeCallback
             return;
         }
 
-        if (g_bleConnectionStateChangedCallback)
+        if (CONNECTION_FAILED_TO_BE_EASTABLISHED != status)
         {
-            g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, false);
+            if (g_bleConnectionStateChangedCallback)
+            {
+                OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
+                g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, false);
+            }
         }
 
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
@@ -413,31 +417,87 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNWConnectionStateChangeCa
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
+    (void)status;
+
+    jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
+    if (!jni_remoteAddress)
+    {
+        OIC_LOG(ERROR, TAG, "jni_remoteAddress is null");
+        return;
+    }
+
+    const char* address = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "address is null");
+        return;
+    }
 
     // STATE_DISCONNECTED
     jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE,
                                                     "STATE_DISCONNECTED");
-    if (state_disconnected == newState)
+
+    // STATE_CONNECTED
+    jint state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE,
+                                                 "STATE_CONNECTED");
+
+    if (CONNECTION_FAILED_TO_BE_EASTABLISHED != status)
     {
-        jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
-        if (!jni_remoteAddress)
+        if (g_bleConnectionStateChangedCallback)
         {
-            OIC_LOG(ERROR, TAG, "jni_remoteAddress is null");
+            if (state_disconnected == newState)
+            {
+                OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
+                g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, false);
+            }
+            else if (state_connected == newState)
+            {
+                OIC_LOG_V(DEBUG, TAG, "LE Connected state is %d, %s", newState, address);
+                g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, true);
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "Unknown state : %d, %s", newState, address);
+            }
+        }
+    }
+    (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, address);
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWServicesDiscoveredCallback(JNIEnv *env,
+                                                                              jobject obj,
+                                                                              jobject gatt,
+                                                                              jint status)
+{
+    OIC_LOG_V(DEBUG, TAG, "caLeGattNWServicesDiscoveredCallback - status %d: ", status);
+    VERIFY_NON_NULL_VOID(env, TAG, "env");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj");
+    VERIFY_NON_NULL_VOID(gatt, TAG, "gatt");
+
+    if (GATT_SUCCESS == status)
+    {
+        jstring jni_address = CALEGetAddressFromGatt(env, gatt);
+        if (!jni_address)
+        {
+            OIC_LOG(ERROR, TAG, "CALEGetAddressFromGatt is null");
             return;
         }
 
-        const char* address = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
+        const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
         if (!address)
         {
             OIC_LOG(ERROR, TAG, "address is null");
+            (*env)->DeleteLocalRef(env, jni_address);
             return;
         }
 
         if (g_bleConnectionStateChangedCallback)
         {
-            g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, false);
+            g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, true);
+            OIC_LOG(DEBUG, TAG, "BLE is connected");
         }
 
-        (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, address);
+        (*env)->ReleaseStringUTFChars(env, jni_address, address);
     }
 }

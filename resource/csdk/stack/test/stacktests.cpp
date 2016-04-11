@@ -61,6 +61,9 @@ char gDeviceUUID[] = "myDeviceUUID";
 char gManufacturerName[] = "myName";
 char gTooLongManufacturerName[] = "extremelylongmanufacturername";
 char gManufacturerUrl[] = "www.foooooooooooooooo.baaaaaaaaaaaaar";
+static OCPrm_t pmSel;
+static char pinNumber;
+static OCDPDev_t peer;
 
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 
@@ -80,6 +83,12 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx,
     OIC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
 
     return OC_STACK_KEEP_TRANSACTION;
+}
+
+static void resultCallback(OCDPDev_t *UNUSED1, OCStackResult UNUSED2)
+{
+    (void) (UNUSED1);
+    (void) (UNUSED2);
 }
 
 //-----------------------------------------------------------------------------
@@ -1631,4 +1640,19 @@ TEST(PODTests, OCHeaderOption)
 TEST(PODTests, OCCallbackData)
 {
     EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
+}
+
+TEST(OCDoDirectPairingTests, Nullpeer)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, pmSel, &pinNumber, &resultCallback));
+}
+
+TEST(OCDoDirectPairingTests, NullCallback)
+{
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(&peer, pmSel, &pinNumber, NULL));
+}
+
+TEST(OCDoDirectPairingTests, NullpinNumber)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(&peer, pmSel, NULL, &resultCallback));
 }

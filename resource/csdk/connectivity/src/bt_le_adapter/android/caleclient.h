@@ -45,9 +45,6 @@ static const uint16_t STATE_SEND_NONE = 0;
 static const uint16_t STATE_SEND_SUCCESS = 1;
 static const uint16_t STATE_SEND_FAILED = 2;
 
-static const jint STATE_CONNECTED = 2;
-static const jint STATE_DISCONNECTED = 0;
-
 typedef struct le_state_info
 {
     char address[CA_MACADDR_SIZE];

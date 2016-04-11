@@ -64,16 +64,6 @@ ca_mutex ca_mutex_new(void);
 void ca_mutex_lock(ca_mutex mutex);
 
 /**
- * Checks if the mutex can be locked.
- *
- * @param  mutex  The mutex to be locked.
- *
- * @return  true if the mutex is not locked currently, otherwise false.
- *
- */
-bool ca_mutex_trylock(ca_mutex mutex);
-
-/**
  * Unlock the mutex.
  *
  * @param  mutex  The mutex to be unlocked.

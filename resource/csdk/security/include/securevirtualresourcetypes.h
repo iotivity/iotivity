@@ -379,6 +379,7 @@ struct OicSecDoxm
     //TODO: Need more clarification on deviceIDFormat field type.
     //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
+    bool                   dpc;             // 7:R:S:Y:Boolean
     OicUuid_t           owner;         // 7:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
@@ -450,6 +451,83 @@ struct OicSecCrl
     ByteArray CrlData;
 };
 #endif /* __WITH_X509__ */
+
+/**
+ * @brief   direct pairing data type
+ */
+typedef struct OicPin OicDpPin_t;
+
+typedef struct OicSecPdAcl OicSecPdAcl_t;
+
+typedef struct OicSecPconf OicSecPconf_t;
+
+typedef struct OicSecDpairing OicSecDpairing_t;
+
+#define DP_PIN_LENGTH 8 // temporary length
+
+/**
+ * @brief   /oic/sec/prmtype (Pairing Method Type) data type.
+ *              0:  not allowed
+ *              1:  pre-configured pin
+ *              2:  random pin
+ */
+typedef enum PRMBitmask
+{
+    PRM_NOT_ALLOWED             = 0x0,
+    PRM_PRE_CONFIGURED        = (0x1 << 0),
+    PRM_RANDOM_PIN               = (0x1 << 1),
+} PRMBitmask_t;
+
+typedef PRMBitmask_t OicSecPrm_t;
+
+
+struct OicPin
+{
+    uint8_t             val[DP_PIN_LENGTH+1];
+};
+
+/**
+ * @brief   oic.sec.dpacltype (Device Pairing Access Control List) data type.
+ */
+struct OicSecPdAcl
+{
+    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    char                  **resources;        // 0:R:M:Y:String
+    size_t                resourcesLen;      // the number of elts in Resources
+    uint16_t             permission;        // 1:R:S:Y:UINT16
+    char                  **periods;            // 2:R:M*:N:String (<--M*; see Spec)
+    char                  **recurrences;    // 3:R:M:N:String
+    size_t                prdRecrLen;         // the number of elts in Periods/Recurrences
+    OicSecPdAcl_t    *next;
+};
+
+/**
+ * @brief   /oic/sec/pconf (Pairing Configuration) data type
+ */
+struct OicSecPconf
+{
+    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    bool                  edp;                // 0:W:S:M:Boolean
+    OicSecPrm_t      *prm;              // 1:R:M:N:UINT16
+    size_t                prmLen;          // the number of elts in Prm
+    OicDpPin_t          pin;               // 2:R:S:Y:String
+    OicSecPdAcl_t    *pdacls;         // 3:R:M:Y:oic.sec.pdacltype
+    OicUuid_t           *pddevs;        // 4:R:M:Y:oic.uuid
+    size_t                 pddevLen;     // the number of elts in pddev
+    OicUuid_t           deviceID;       // 5:R:S:Y:oic.uuid
+    OicUuid_t           rowner;          // 6:R:S:Y:oic.uuid
+};
+
+/**
+ * @brief   /oic/sec/dpairing (Device Pairing) data type
+ */
+struct OicSecDpairing
+{
+    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    OicSecPrm_t      spm;               // 0:R/W:S:Y:UINT16
+    OicUuid_t           pdeviceID;     // 1:R:S:Y:oic.uuid
+    OicUuid_t           rowner;          // 2:R:S:Y:oic.uuid
+};
 
 #ifdef __cplusplus
 }

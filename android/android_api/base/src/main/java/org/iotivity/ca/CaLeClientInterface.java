@@ -91,6 +91,9 @@ public class CaLeClientInterface {
 
     private native static void caLeGattServicesDiscoveredCallback(BluetoothGatt gatt, int status);
 
+    private native static void caLeGattNWServicesDiscoveredCallback(BluetoothGatt gatt,
+                                                                    int status);
+
     private native static void caLeGattCharacteristicWriteCallback(
             BluetoothGatt gatt, byte[] data, int status);
 
@@ -211,6 +214,7 @@ public class CaLeClientInterface {
 
             caLeGattServicesDiscoveredCallback(gatt, status);
             caManagerLeServicesDiscoveredCallback(gatt, status);
+            caLeGattNWServicesDiscoveredCallback(gatt, status);
         }
 
         @Override

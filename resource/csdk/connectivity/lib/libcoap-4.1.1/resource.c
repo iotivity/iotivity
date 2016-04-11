@@ -376,7 +376,7 @@ coap_attr_t *
 coap_add_attr(coap_resource_t *resource, const unsigned char *name, size_t nlen,
         const unsigned char *val, size_t vlen, int flags)
 {
-    coap_attr_t *attr;
+    coap_attr_t *attr = NULL;
 
     if (!resource || !name)
         return NULL;
@@ -487,8 +487,8 @@ void coap_add_resource(coap_context_t *context, coap_resource_t *resource)
 
 int coap_delete_resource(coap_context_t *context, coap_key_t key)
 {
-    coap_resource_t *resource;
-    coap_attr_t *attr, *tmp;
+    coap_resource_t *resource = NULL;
+    coap_attr_t *attr = NULL, *tmp = NULL;
 #ifdef WITH_CONTIKI
     coap_subscription_t *obs;
 #endif

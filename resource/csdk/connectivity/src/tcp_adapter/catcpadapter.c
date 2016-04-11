@@ -240,7 +240,7 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     CATCPSetPacketReceiveCallback(CATCPPacketReceivedCB);
     CATCPSetErrorHandler(CATCPErrorHandler);
 
-    CAConnectivityHandler_t TCPHandler = {
+    CAConnectivityHandler_t tcpHandler = {
         .startAdapter = CAStartTCP,
         .startListenServer = CAStartTCPListeningServer,
         .stopListenServer = CAStopTCPListeningServer,
@@ -253,7 +253,7 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
         .terminate = CATerminateTCP,
         .cType = CA_ADAPTER_TCP};
 
-    registerCallback(TCPHandler);
+    registerCallback(tcpHandler);
 
     OIC_LOG(INFO, TAG, "OUT IntializeTCP is Success");
     return CA_STATUS_OK;
@@ -275,18 +275,23 @@ CAResult_t CAStartTCP()
         return CA_STATUS_FAILED;
     }
 
-    CAResult_t ret = CATCPStartServer((const ca_thread_pool_t)caglobals.tcp.threadpool);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed to start server![%d]", ret);
-        return ret;
-    }
-
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartTCPListeningServer()
 {
+    if (!caglobals.server)
+    {
+        caglobals.server = true;    // only needed to run CA tests
+    }
+
+    CAResult_t ret = CATCPStartServer((const ca_thread_pool_t)caglobals.tcp.threadpool);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to start listening server![%d]", ret);
+        return ret;
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -297,6 +302,18 @@ CAResult_t CAStopTCPListeningServer()
 
 CAResult_t CAStartTCPDiscoveryServer()
 {
+    if (!caglobals.client)
+    {
+        caglobals.client = true;    // only needed to run CA tests
+    }
+
+    CAResult_t ret = CATCPStartServer((const ca_thread_pool_t)caglobals.tcp.threadpool);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to start discovery server![%d]", ret);
+        return ret;
+    }
+
     return CA_STATUS_OK;
 }
 

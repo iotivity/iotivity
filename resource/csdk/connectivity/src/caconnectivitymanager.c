@@ -259,6 +259,49 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
     return CAGetNetworkInformationInternal(info, size);
 }
 
+static CAResult_t CASendMessageMultiAdapter(const CAEndpoint_t *object, const void *sendMsg,
+                                            CADataType_t dataType)
+{
+    OIC_LOG(DEBUG, TAG, "CASendMessageMultipleAdapter");
+
+    CATransportAdapter_t connTypes[] = {
+            CA_ADAPTER_IP
+#ifdef LE_ADAPTER
+            ,CA_ADAPTER_GATT_BTLE
+#endif
+#ifdef EDR_ADAPTER
+            ,CA_ADAPTER_RFCOMM_BTEDR
+#endif
+#ifdef NFC_ADAPTER
+            ,CA_ADAPTER_NFC
+#endif
+#ifdef RA_ADAPTER
+            ,CA_ADAPTER_REMOTE_ACCESS
+#endif
+#ifdef TCP_ADAPTER
+            ,CA_ADAPTER_TCP
+#endif
+        };
+
+    CAEndpoint_t *cloneEp = CACloneEndpoint(object);
+    if (!cloneEp)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to clone CAEndpoint");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    CAResult_t ret = CA_STATUS_OK;
+    size_t numConnTypes = sizeof(connTypes) / sizeof(connTypes[0]);
+
+    for (size_t i = 0; i < numConnTypes && ret == CA_STATUS_OK; i++)
+    {
+        cloneEp->adapter = connTypes[i];
+        ret = CADetachSendMessage(cloneEp, sendMsg, dataType);
+    }
+    CAFreeEndpoint(cloneEp);
+    return ret;
+}
+
 CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
 {
     OIC_LOG(DEBUG, TAG, "CASendRequest");
@@ -268,7 +311,15 @@ CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requ
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachSendMessage(object, requestInfo, CA_REQUEST_DATA);
+    if (requestInfo && requestInfo->isMulticast &&
+            (object->adapter == CA_DEFAULT_ADAPTER || object->adapter == CA_ALL_ADAPTERS))
+    {
+        return CASendMessageMultiAdapter(object, requestInfo, CA_REQUEST_DATA);
+    }
+    else
+    {
+        return CADetachSendMessage(object, requestInfo, CA_REQUEST_DATA);
+    }
 }
 
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
@@ -280,7 +331,15 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachSendMessage(object, responseInfo, CA_RESPONSE_DATA);
+    if (responseInfo && responseInfo->isMulticast &&
+            (object->adapter == CA_DEFAULT_ADAPTER || object->adapter == CA_ALL_ADAPTERS))
+    {
+        return CASendMessageMultiAdapter(object, responseInfo, CA_RESPONSE_DATA);
+    }
+    else
+    {
+        return CADetachSendMessage(object, responseInfo, CA_RESPONSE_DATA);
+    }
 }
 
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)

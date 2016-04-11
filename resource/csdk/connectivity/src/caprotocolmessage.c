@@ -1016,21 +1016,6 @@ void CADestroyTokenInternal(CAToken_t token)
     OICFree(token);
 }
 
-void CADestroyInfo(CAInfo_t *info)
-{
-    if (NULL != info)
-    {
-        OIC_LOG(DEBUG, TAG, "free options");
-        OICFree(info->options);
-
-        OIC_LOG(DEBUG, TAG, "free token");
-        OICFree(info->token);
-
-        OIC_LOG(DEBUG, TAG, "free payload");
-        OICFree(info->payload);
-    }
-}
-
 uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
         uint8_t *option, uint32_t buflen)
 {
@@ -1134,6 +1119,18 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format)
             return CA_FORMAT_UNSUPPORTED;
     }
 }
+
+#ifdef WITH_BWT
+bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter)
+{
+    if (CA_ADAPTER_IP & adapter || CA_ADAPTER_NFC & adapter
+            || CA_DEFAULT_ADAPTER == adapter)
+    {
+        return true;
+    }
+    return false;
+}
+#endif
 
 #ifdef WITH_TCP
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)

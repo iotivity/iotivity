@@ -58,6 +58,8 @@ cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/
 cp -R ./resource/csdk/logger/include/* $sourcedir/tmp/con/common/inc/
+mkdir ./tmp/con/logger/
+cp -R ./resource/csdk/logger/* $sourcedir/tmp/con/logger
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm $sourcedir/tmp

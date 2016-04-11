@@ -29,7 +29,6 @@
 #include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "logger.h"
-#include "cafragmentation.h"
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"
@@ -590,6 +589,12 @@ void CAAdapterDataReceiverHandler(void *context)
                                                           CA_ADAPTER_RFCOMM_BTEDR,
                                                           message->remoteEndpoint->addr,
                                                           0);
+
+    if (!remoteEndpoint)
+    {
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "remoteEndpoint is NULL");
+        return;
+    }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
 

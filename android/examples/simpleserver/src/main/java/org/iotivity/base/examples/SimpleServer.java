@@ -65,6 +65,7 @@ public class SimpleServer extends Activity {
         Context context = this;
 
         PlatformConfig platformConfig = new PlatformConfig(
+                this,
                 context,
                 ServiceType.IN_PROC,
                 ModeType.SERVER,

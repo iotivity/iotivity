@@ -22,20 +22,19 @@
 #include "jni_string.h"
 #include "simulator_utils_jni.h"
 
-JniVector::JniVector(JNIEnv *env) : m_env(env)
-{
-    m_vectorCls = gSimulatorClassRefs.vectorCls;
-}
+JniVector::JniVector(JNIEnv *env) : m_env(env) {}
 
 jobject JniVector::toJava()
 {
-    static jmethodID vectorCtor = m_env->GetMethodID(m_vectorCls, "<init>", "()V");
-    return m_env->NewObject(m_vectorCls, vectorCtor);
+    static jmethodID vectorCtor = m_env->GetMethodID(gSimulatorClassRefs.vectorCls,
+                                  "<init>", "()V");
+    return m_env->NewObject(gSimulatorClassRefs.vectorCls, vectorCtor);
 }
 
 jobject JniVector::toJava(std::vector<std::string> &cppVector)
 {
-    static jmethodID addMethod = m_env->GetMethodID(m_vectorCls, "add", "(Ljava/lang/Object;)Z");
+    static jmethodID addMethod = m_env->GetMethodID(gSimulatorClassRefs.vectorCls,
+                                 "add", "(Ljava/lang/Object;)Z");
 
     jobject vectorObject = toJava();
     if (!vectorObject)
@@ -51,11 +50,19 @@ jobject JniVector::toJava(std::vector<std::string> &cppVector)
     return vectorObject;
 }
 
+int JniVector::getSize(jobject jVector)
+{
+    static jmethodID sizeMethodID = m_env->GetMethodID(gSimulatorClassRefs.vectorCls,
+                                    "size", "()I");
+    return m_env->CallIntMethod(jVector, sizeMethodID);
+}
+
 void JniVector::addElementsCpp(jobject vector, int size, std::vector<int> &result)
 {
-    static jmethodID getMethod = m_env->GetMethodID(m_vectorCls, "get", "(I)Ljava/lang/Object;");
-    static jmethodID intValueMethod = m_env->GetMethodID(gSimulatorClassRefs.integerCls, "intValue",
-                                      "()I");
+    static jmethodID getMethod = m_env->GetMethodID(gSimulatorClassRefs.vectorCls,
+                                 "get", "(I)Ljava/lang/Object;");
+    static jmethodID intValueMethod = m_env->GetMethodID(gSimulatorClassRefs.integerCls,
+                                      "intValue", "()I");
 
     for (int index = 0; index < size; index++)
     {
@@ -67,7 +74,8 @@ void JniVector::addElementsCpp(jobject vector, int size, std::vector<int> &resul
 
 void JniVector::addElementsCpp(jobject vector, int size, std::vector<double> &result)
 {
-    static jmethodID getMethod = m_env->GetMethodID(m_vectorCls, "get", "(I)Ljava/lang/Object;");
+    static jmethodID getMethod = m_env->GetMethodID(gSimulatorClassRefs.vectorCls,
+                                 "get", "(I)Ljava/lang/Object;");
     static jmethodID doubleValueMethod = m_env->GetMethodID(gSimulatorClassRefs.doubleCls,
                                          "doubleValue", "()D");
 
@@ -81,7 +89,8 @@ void JniVector::addElementsCpp(jobject vector, int size, std::vector<double> &re
 
 void JniVector::addElementsCpp(jobject vector, int size, std::vector<std::string> &result)
 {
-    static jmethodID getMethodID = m_env->GetMethodID(m_vectorCls, "get", "(I)Ljava/lang/Object;");
+    static jmethodID getMethodID = m_env->GetMethodID(gSimulatorClassRefs.vectorCls,
+                                   "get", "(I)Ljava/lang/Object;");
 
     for (int index = 0; index < size; index++)
     {

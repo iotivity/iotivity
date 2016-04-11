@@ -17,6 +17,7 @@
 package oic.simulator.clientcontroller.remoteresource;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -42,32 +43,40 @@ public class SerializedClientController implements Serializable {
         this.m_favorites = favorites;
     }
 
-    public void serialize(String filePath) throws Exception {
+    public void serialize(String filePath) throws FileNotFoundException,
+            IOException {
+        FileOutputStream fileOut = null;
+        ObjectOutputStream out = null;
         try {
-            FileOutputStream fileOut = new FileOutputStream(filePath);
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            fileOut = new FileOutputStream(filePath);
+            out = new ObjectOutputStream(fileOut);
             out.writeObject(this);
-            out.close();
-            fileOut.close();
-        } catch (IOException i) {
-            throw new Exception("Failed to Serialize data : IOException");
+        } finally {
+            if (null != fileOut)
+                fileOut.close();
+
+            if (null != out)
+                out.close();
         }
     }
 
     public static SerializedClientController deSerialize(String filePath)
-            throws Exception {
+            throws FileNotFoundException, IOException, ClassNotFoundException {
+        FileInputStream fileIn = null;
+        ObjectInputStream in = null;
         SerializedClientController r = null;
         try {
-            FileInputStream fileIn = new FileInputStream(filePath);
-            ObjectInputStream in = new ObjectInputStream(fileIn);
+            fileIn = new FileInputStream(filePath);
+            in = new ObjectInputStream(fileIn);
             r = (SerializedClientController) in.readObject();
-            in.close();
-            fileIn.close();
-        } catch (IOException i) {
-            throw new Exception("Failed to DeSerialize data : IOException");
-        } catch (ClassNotFoundException c) {
-            throw new Exception("Failed to DeSerialize data : ClassNotFound");
+        } finally {
+            if (null != fileIn)
+                fileIn.close();
+
+            if (null != in)
+                in.close();
         }
+
         return r;
     }
 

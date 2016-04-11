@@ -29,7 +29,6 @@
 #ifndef SINGLE_THREAD
 #include "caqueueingthread.h"
 #endif
-#include "cafragmentation.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
@@ -38,7 +37,12 @@
 /**
  * Logging tag for module name.
  */
-#define CALEADAPTER_TAG "OIC_LE_ADAP"
+#define CALEADAPTER_TAG "OIC_CA_LE_ADAP"
+
+/**
+ * The MTU supported for BLE adapter
+ */
+#define CA_SUPPORTED_BLE_MTU_SIZE  20
 
 /**
  * Stores information of all the senders.
@@ -385,6 +389,28 @@ static void CAFreeLEData(CALEData_t *bleData);
  * Free data.
  */
 static void CALEDataDestroyer(void *data, uint32_t size);
+
+#ifndef SINGLE_THREAD
+/**
+ * remove request or response data of send queue.
+ *
+ * @param[in] queueHandle    queue to process the outgoing packets.
+ * @param[in] mutex          mutex related to sender for client / server.
+ * @param[in] address        target address to remove data in queue.
+ */
+static void CALERemoveSendQueueData(CAQueueingThread_t *queueHandle,
+                                    ca_mutex mutex,
+                                    const char* address);
+
+/**
+ * remove all received data of data list from receive queue.
+ *
+ * @param[in] dataInfoList   received data list to remove for client / server.
+ * @param[in] address        target address to remove data in queue.
+ */
+static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList,
+                                       const char* address);
+#endif
 
 static CAResult_t CAInitLEServerQueues()
 {
@@ -1626,13 +1652,15 @@ static CAResult_t CALEAdapterGattServerStart()
 static CAResult_t CALEAdapterGattServerStop()
 {
 #ifndef SINGLE_THREAD
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattServerStop");
+
+    CAResult_t result = CAStopLEGattServer();
     ca_mutex_lock(g_bleServerSendDataMutex);
-    CAResult_t result = CAQueueingThreadStop(g_bleServerSendQueueHandle);
-    ca_mutex_unlock(g_bleServerSendDataMutex);
     if (CA_STATUS_OK == result)
     {
-        result = CAStopLEGattServer();
+        result = CAQueueingThreadStop(g_bleServerSendQueueHandle);
     }
+    ca_mutex_unlock(g_bleServerSendDataMutex);
 
     return result;
 #else
@@ -1672,13 +1700,12 @@ static CAResult_t CALEAdapterGattClientStart()
 static CAResult_t CALEAdapterGattClientStop()
 {
 #ifndef SINGLE_THREAD
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattClientStop");
+    CAStopLEGattClient();
+
     ca_mutex_lock(g_bleClientSendDataMutex);
     CAResult_t result = CAQueueingThreadStop(g_bleClientSendQueueHandle);
     ca_mutex_unlock(g_bleClientSendDataMutex);
-    if (CA_STATUS_OK == result)
-    {
-        CAStopLEGattClient();
-    }
 
     return result;
 #else
@@ -2167,6 +2194,7 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CALEConnectionStateChangedCb");
 
     VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
+    (void)adapter;
 
 #ifdef __TIZEN__
     ca_mutex_lock(g_bleIsServerMutex);
@@ -2193,44 +2221,27 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
 #ifndef SINGLE_THREAD
         if(g_bleClientSenderInfo)
         {
-            CABLESenderInfo_t *senderInfo = NULL;
-            uint32_t senderIndex = 0;
-
-            if(CA_STATUS_OK == CALEGetSenderInfo(address, g_bleClientSenderInfo, &senderInfo,
-                                                   &senderIndex))
-            {
-                u_arraylist_remove(g_bleClientSenderInfo, senderIndex);
-                OICFree(senderInfo->defragData);
-                OICFree(senderInfo->remoteEndpoint);
-                OICFree(senderInfo);
-
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo is removed for disconnection");
-            }
-            else
-            {
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo doesn't exist");
-            }
+            CALERemoveReceiveQueueData(g_bleClientSenderInfo, address);
         }
 
         if(g_bleServerSenderInfo)
         {
-            CABLESenderInfo_t *senderInfo = NULL;
-            uint32_t senderIndex = 0;
+            CALERemoveReceiveQueueData(g_bleServerSenderInfo, address);
+        }
 
-            if(CA_STATUS_OK == CALEGetSenderInfo(address, g_bleServerSenderInfo, &senderInfo,
-                                                   &senderIndex))
-            {
-                u_arraylist_remove(g_bleServerSenderInfo, senderIndex);
-                OICFree(senderInfo->defragData);
-                OICFree(senderInfo->remoteEndpoint);
-                OICFree(senderInfo);
+        // remove data of send queue.
+        if (g_bleClientSendQueueHandle)
+        {
+            CALERemoveSendQueueData(g_bleClientSendQueueHandle,
+                                    g_bleClientSendDataMutex,
+                                    address);
+        }
 
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo is removed for disconnection");
-            }
-            else
-            {
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo doesn't exist");
-            }
+        if (g_bleServerSendQueueHandle)
+        {
+            CALERemoveSendQueueData(g_bleServerSendQueueHandle,
+                                    g_bleServerSendDataMutex,
+                                    address);
         }
 #endif
     }
@@ -2580,3 +2591,69 @@ static void CALEErrorHandler(const char *remoteAddress,
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEErrorHandler OUT");
 }
+
+#ifndef SINGLE_THREAD
+static void CALERemoveSendQueueData(CAQueueingThread_t *queueHandle, ca_mutex mutex,
+                                    const char* address)
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALERemoveSendQueueData");
+
+    VERIFY_NON_NULL_VOID(queueHandle, CALEADAPTER_TAG, "queueHandle");
+    VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
+
+    ca_mutex_lock(mutex);
+    while (u_queue_get_size(queueHandle->dataQueue) > 0)
+    {
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "get data from queue");
+        u_queue_message_t *message = u_queue_get_element(queueHandle->dataQueue);
+        if (NULL != message)
+        {
+            CALEData_t *bleData = (CALEData_t *) message->msg;
+            if (bleData && bleData->remoteEndpoint)
+            {
+                if (!strcmp(bleData->remoteEndpoint->addr, address))
+                {
+                    OIC_LOG(DEBUG, CALEADAPTER_TAG, "found the message of disconnected device");
+                    if (NULL != queueHandle->destroy)
+                    {
+                        queueHandle->destroy(message->msg, message->size);
+                    }
+                    else
+                    {
+                        OICFree(message->msg);
+                    }
+
+                    OICFree(message);
+                }
+            }
+        }
+    }
+    ca_mutex_unlock(mutex);
+}
+
+static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList, const char* address)
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALERemoveReceiveQueueData");
+
+    VERIFY_NON_NULL_VOID(dataInfoList, CALEADAPTER_TAG, "dataInfoList");
+    VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
+
+    CABLESenderInfo_t *senderInfo = NULL;
+    uint32_t senderIndex = 0;
+
+    if(CA_STATUS_OK == CALEGetSenderInfo(address, dataInfoList, &senderInfo,
+                                         &senderIndex))
+    {
+        u_arraylist_remove(dataInfoList, senderIndex);
+        OICFree(senderInfo->defragData);
+        OICFree(senderInfo->remoteEndpoint);
+        OICFree(senderInfo);
+
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo is removed for disconnection");
+    }
+    else
+    {
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo doesn't exist");
+    }
+}
+#endif

@@ -42,6 +42,8 @@
 #endif
 
 #define TAG  "SRM-ACL"
+#define NUMBER_OF_SEC_PROV_RSCS 4
+#define NUMBER_OF_DEFAULT_SEC_RSCS 2
 
 OicSecAcl_t               *gAcl = NULL;
 static OCResourceHandle    gAclHandle = NULL;
@@ -282,7 +284,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            acl->resourcesLen = cJSON_GetArraySize(jsonObj);
+            acl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, acl->resourcesLen > 0, ERROR);
             acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
@@ -313,7 +315,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type,
                                ERROR);
-                acl->prdRecrLen = cJSON_GetArraySize(jsonPeriodObj);
+                acl->prdRecrLen = (size_t)cJSON_GetArraySize(jsonPeriodObj);
                 if(acl->prdRecrLen > 0)
                 {
                     acl->periods = (char**)OICCalloc(acl->prdRecrLen,
@@ -368,7 +370,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            acl->ownersLen = cJSON_GetArraySize(jsonObj);
+            acl->ownersLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, acl->ownersLen > 0, ERROR);
             acl->owners = (OicUuid_t*)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
             VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
@@ -497,7 +499,7 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
                         OICFree(acl->resources[resPos]);
                         acl->resources[resPos] = NULL;
                         acl->resourcesLen -= 1;
-                        for(i = resPos; i < acl->resourcesLen; i++)
+                        for(i = (size_t)resPos; i < acl->resourcesLen; i++)
                         {
                             acl->resources[i] = acl->resources[i+1];
                         }
@@ -1010,6 +1012,146 @@ OCStackResult InstallNewACL(const char* newJsonStr)
                 ret = UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl);
             }
             cJSON_Delete(jsonAcl);
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * This function generates default ACL for security resource in case of owned status.
+ *
+ * @retval Default ACL for security resource.
+ */
+static OicSecAcl_t* GetSecDefaultACL()
+{
+    const char *sec_rsrcs[] = {
+        OIC_RSRC_DOXM_URI,
+        OIC_RSRC_PSTAT_URI
+    };
+    OicUuid_t ownerId = {.id = {0}};
+    OCStackResult res = OC_STACK_ERROR;
+    OicSecAcl_t* newDefaultAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+    VERIFY_NON_NULL(TAG, newDefaultAcl, ERROR);
+
+    // Subject -- Mandatory
+    memcpy(&(newDefaultAcl->subject), &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
+
+    // Resources -- Mandatory
+    newDefaultAcl->resourcesLen = NUMBER_OF_DEFAULT_SEC_RSCS;
+    newDefaultAcl->resources = (char**)OICCalloc(NUMBER_OF_DEFAULT_SEC_RSCS, sizeof(char*));
+    VERIFY_NON_NULL(TAG, (newDefaultAcl->resources), ERROR);
+
+    for (size_t i = 0; i <  NUMBER_OF_DEFAULT_SEC_RSCS; i++)
+    {
+        size_t len = strlen(sec_rsrcs[i]) + 1;
+        newDefaultAcl->resources[i] = (char*)OICMalloc(len * sizeof(char));
+        VERIFY_NON_NULL(TAG, (newDefaultAcl->resources[i]), ERROR);
+        OICStrcpy(newDefaultAcl->resources[i], len, sec_rsrcs[i]);
+    }
+
+    // Permissions -- Mandatory
+    newDefaultAcl->permission = PERMISSION_READ;
+
+    //Period -- Not Mandatory
+    newDefaultAcl->prdRecrLen = 0;
+    newDefaultAcl->periods = NULL;
+
+    //Recurrence -- Not Mandatory
+    newDefaultAcl->recurrences = NULL;
+
+    // Device ID is the owner of this default ACL
+    res = GetDoxmDeviceID(&ownerId);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == res, FATAL);
+
+    // Owners -- Mandatory
+    newDefaultAcl->ownersLen = 1;
+    newDefaultAcl->owners = (OicUuid_t*)OICMalloc(sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, (newDefaultAcl->owners), ERROR);
+    memcpy(newDefaultAcl->owners, &ownerId, sizeof(OicUuid_t));
+
+    return newDefaultAcl;
+exit:
+    DeleteACLList(newDefaultAcl);
+    return NULL;
+
+}
+
+OCStackResult UpdateDefaultSecProvACL()
+{
+    OCStackResult ret = OC_STACK_OK;
+    OicSecAcl_t *acl = NULL;
+    OicSecAcl_t *tmp = NULL;
+
+    if(gAcl)
+    {
+        int matchedRsrc = 0;
+        bool isRemoved = false;
+
+        LL_FOREACH_SAFE(gAcl, acl, tmp)
+        {
+            //Find default security resource ACL
+            if(memcmp(&acl->subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0 &&
+                ((PERMISSION_READ | PERMISSION_WRITE) == acl->permission))
+            {
+                matchedRsrc = 0;
+
+                for(size_t i = 0; i < acl->resourcesLen; i++)
+                {
+                    if(strncmp(acl->resources[i], OIC_RSRC_DOXM_URI,
+                               strlen(OIC_RSRC_DOXM_URI) + 1) == 0 ||
+                       strncmp(acl->resources[i], OIC_RSRC_CRED_URI,
+                               strlen(OIC_RSRC_CRED_URI) + 1) == 0 ||
+                       strncmp(acl->resources[i], OIC_RSRC_ACL_URI,
+                               strlen(OIC_RSRC_ACL_URI) + 1) == 0 ||
+                       strncmp(acl->resources[i], OIC_RSRC_PSTAT_URI,
+                               strlen(OIC_RSRC_PSTAT_URI) + 1) == 0)
+                    {
+                        matchedRsrc++;
+                    }
+                }
+
+                //If default security resource ACL is detected, delete it.
+                if(NUMBER_OF_SEC_PROV_RSCS == matchedRsrc)
+                {
+                    LL_DELETE(gAcl, acl);
+                    FreeACE(acl);
+                    isRemoved = true;
+                }
+            }
+        }
+
+        if(isRemoved)
+        {
+            /*
+             * Generate new security resource ACL as follows :
+             *      subject : "*"
+             *      resources :  '/oic/sec/doxm', '/oic/sec/pstat'
+             *      permission : READ
+             */
+            OicSecAcl_t* newDefaultAcl = GetSecDefaultACL();
+            if(newDefaultAcl)
+            {
+                LL_APPEND(gAcl, newDefaultAcl);
+
+                char *jsonStr = BinToAclJSON(gAcl);
+                if(jsonStr)
+                {
+                    cJSON *jsonAcl = cJSON_Parse(jsonStr);
+                    OICFree(jsonStr);
+
+                    //Update SVR DB
+                    if (jsonAcl)
+                    {
+                        ret = UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl);
+                        if(OC_STACK_OK != ret)
+                        {
+                            OIC_LOG(WARNING, TAG, "Failed to update SVR DB");
+                        }
+                    }
+                    cJSON_Delete(jsonAcl);
+                }
+            }
         }
     }
 

@@ -28,33 +28,15 @@
 
 #include "simulator_resource.h"
 
-#define VALIDATE_OBJECT(ENV, OBJECT) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return;}
-#define VALIDATE_OBJECT_RET(ENV, OBJECT, RET) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return RET;}
+#define VALIDATE_OBJECT(ENV, OBJECT) if (!OBJECT){ThrowBadObjectException(ENV, "No corresponsing native object!"); return;}
+#define VALIDATE_OBJECT_RET(ENV, OBJECT, RET) if (!OBJECT){ThrowBadObjectException(ENV, "No corresponsing native object!"); return RET;}
 
 SimulatorResourceSP SimulatorResourceToCpp(JNIEnv *env, jobject object)
 {
     JniSharedObjectHolder<SimulatorResource> *jniResource =
-        GetHandle<JniSharedObjectHolder<SimulatorResource>>(env, object);
+        getHandle<JniSharedObjectHolder<SimulatorResource>>(env, object);
     if (jniResource)
         return jniResource->get();
-    return nullptr;
-}
-
-static jobject resourceTypeToJava(JNIEnv *env, SimulatorResource::Type type)
-{
-    static jfieldID single = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResourceTypeCls,
-                             "SINGLE", "Lorg/oic/simulator/server/SimulatorResource$Type;");
-    static jfieldID collection = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResourceTypeCls,
-                                 "COLLECTION", "Lorg/oic/simulator/server/SimulatorResource$Type;");
-
-    switch (type)
-    {
-        case SimulatorResource::Type::SINGLE_RESOURCE:
-            return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResourceTypeCls, single);
-        case SimulatorResource::Type::COLLECTION_RESOURCE:
-            return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResourceTypeCls, collection);
-    }
-
     return nullptr;
 }
 
@@ -90,7 +72,7 @@ static jobject createObserverInfoVector(JNIEnv *env,
 static void onObserverChange(jobject listener, const std::string &uri,
                              ObservationStatus state, const ObserverInfo &observerInfo)
 {
-    JNIEnv *env = getEnv();
+    JNIEnv *env = GetEnv();
     if (!env)
         return;
 
@@ -111,13 +93,13 @@ static void onObserverChange(jobject listener, const std::string &uri,
     jobject jobserver = createObserverInfo(env, observerInfo);
 
     env->CallVoidMethod(listener, listenerMethod, jUri, jobserver);
-    releaseEnv();
+    ReleaseEnv();
 }
 
 static void onResourceModelChange(jobject listener, const std::string &uri,
-                                  SimulatorResourceModel &resModel)
+                                  const SimulatorResourceModel &resModel)
 {
-    JNIEnv *env = getEnv();
+    JNIEnv *env = GetEnv();
     if (!env)
         return;
 
@@ -125,10 +107,10 @@ static void onResourceModelChange(jobject listener, const std::string &uri,
     jmethodID listenerMethod = env->GetMethodID(listenerCls, "onResourceModelChanged",
                                "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
 
-    jobject jResModel = simulatorResourceModelToJava(env, resModel);
+    jobject jResModel = SimulatorResourceModelToJava(env, resModel);
     jstring jUri = env->NewStringUTF(uri.c_str());
     env->CallVoidMethod(listener, listenerMethod, jUri, jResModel);
-    releaseEnv();
+    ReleaseEnv();
 }
 
 #ifdef __cplusplus
@@ -136,7 +118,7 @@ extern "C" {
 #endif
 
 JNIEXPORT jstring JNICALL
-Java_org_oic_simulator_server_SimulatorResource_getName
+Java_org_oic_simulator_server_SimulatorResource_nativeGetName
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -145,18 +127,8 @@ Java_org_oic_simulator_server_SimulatorResource_getName
     return env->NewStringUTF(resource->getName().c_str());
 }
 
-JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorResource_getType
-(JNIEnv *env, jobject object)
-{
-    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
-    VALIDATE_OBJECT_RET(env, resource, nullptr)
-
-    return resourceTypeToJava(env, resource->getType());
-}
-
 JNIEXPORT jstring JNICALL
-Java_org_oic_simulator_server_SimulatorResource_getURI
+Java_org_oic_simulator_server_SimulatorResource_nativeGetURI
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -166,7 +138,7 @@ Java_org_oic_simulator_server_SimulatorResource_getURI
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_oic_simulator_server_SimulatorResource_getResourceType
+Java_org_oic_simulator_server_SimulatorResource_nativeGetResourceType
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -176,7 +148,7 @@ Java_org_oic_simulator_server_SimulatorResource_getResourceType
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorResource_getInterface
+Java_org_oic_simulator_server_SimulatorResource_nativeGetInterface
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -187,7 +159,7 @@ Java_org_oic_simulator_server_SimulatorResource_getInterface
 }
 
 JNIEXPORT jboolean JNICALL
-Java_org_oic_simulator_server_SimulatorResource_isObservable
+Java_org_oic_simulator_server_SimulatorResource_nativeIsObservable
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -197,7 +169,17 @@ Java_org_oic_simulator_server_SimulatorResource_isObservable
 }
 
 JNIEXPORT jboolean JNICALL
-Java_org_oic_simulator_server_SimulatorResource_isStarted
+Java_org_oic_simulator_server_SimulatorResource_nativeIsDiscoverable
+(JNIEnv *env, jobject object)
+{
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT_RET(env, resource, false)
+
+    return resource->isDiscoverable();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_org_oic_simulator_server_SimulatorResource_nativeIsStarted
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -207,138 +189,204 @@ Java_org_oic_simulator_server_SimulatorResource_isStarted
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorResource_getResourceModel
+Java_org_oic_simulator_server_SimulatorResource_nativeGetResourceModel
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT_RET(env, resource, nullptr)
 
     SimulatorResourceModel resModel = resource->getResourceModel();
-    return simulatorResourceModelToJava(env, resModel);
+    return SimulatorResourceModelToJava(env, resModel);
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_setName
-(JNIEnv *env, jobject object, jstring name)
+Java_org_oic_simulator_server_SimulatorResource_nativeSetName
+(JNIEnv *env, jobject object, jstring jName)
 {
-    VALIDATE_INPUT(env, !name, "Name is null!")
+    VALIDATE_INPUT(env, !jName, "Name is null!")
 
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT(env, resource)
 
     try
     {
-        JniString jniName(env, name);
+        JniString jniName(env, jName);
         resource->setName(jniName.get());
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_setURI
-(JNIEnv *env, jobject object, jstring uri)
+Java_org_oic_simulator_server_SimulatorResource_nativeSetURI
+(JNIEnv *env, jobject object, jstring jUri)
 {
-    VALIDATE_INPUT(env, !uri, "Uri is null!")
+    VALIDATE_INPUT(env, !jUri, "Uri is null!")
 
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT(env, resource)
 
     try
     {
-        JniString jniUri(env, uri);
+        JniString jniUri(env, jUri);
         resource->setURI(jniUri.get());
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_setResourceType
-(JNIEnv *env, jobject object, jstring resourceType)
+Java_org_oic_simulator_server_SimulatorResource_nativeSetResourceType
+(JNIEnv *env, jobject object, jstring jResourceType)
 {
-    VALIDATE_INPUT(env, !resourceType, "Resource type is null!")
+    VALIDATE_INPUT(env, !jResourceType, "Resource type is null!")
 
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT(env, resource)
 
     try
     {
-        JniString jniType(env, resourceType);
+        JniString jniType(env, jResourceType);
         resource->setResourceType(jniType.get());
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_addInterface
-(JNIEnv *env, jobject object, jstring interfaceType)
+Java_org_oic_simulator_server_SimulatorResource_nativeSetInterface
+(JNIEnv *env, jobject object, jstring jInterfaceType)
 {
-    VALIDATE_INPUT(env, !interfaceType, "Interface type is null!")
+    VALIDATE_INPUT(env, !jInterfaceType, "Interface type is null!")
 
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT(env, resource)
 
     try
     {
-        JniString jniInterfaceType(env, interfaceType);
+        JniString jniInterfaceType(env, jInterfaceType);
+        resource->setInterface(jniInterfaceType.get());
+    }
+    catch (InvalidArgsException &e)
+    {
+        ThrowInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        ThrowSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_server_SimulatorResource_nativeSetInterfaces
+(JNIEnv *env, jobject object, jobject jInterfaceTypes)
+{
+    VALIDATE_INPUT(env, !jInterfaceTypes, "Interface type is null!")
+
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    std::vector<std::string> interfaceList = JniVector(env).toCpp<std::string>(jInterfaceTypes);
+
+    try
+    {
+        resource->setInterface(interfaceList);
+    }
+    catch (InvalidArgsException &e)
+    {
+        ThrowInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        ThrowSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_server_SimulatorResource_nativeAddInterface
+(JNIEnv *env, jobject object, jstring jInterfaceType)
+{
+    VALIDATE_INPUT(env, !jInterfaceType, "Interface type is null!")
+
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    try
+    {
+        JniString jniInterfaceType(env, jInterfaceType);
         resource->addInterface(jniInterfaceType.get());
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (NoSupportException &e)
     {
-        throwNoSupportException(env, e.what());
+        ThrowNoSupportException(env, e.what());
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_setObservable
-(JNIEnv *env, jobject object, jboolean state)
+Java_org_oic_simulator_server_SimulatorResource_nativeSetObservable
+(JNIEnv *env, jobject object, jboolean jState)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT(env, resource)
 
     try
     {
-        resource->setObservable(static_cast<bool>(state));
+        resource->setObservable(static_cast<bool>(jState));
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_setObserverListener
-(JNIEnv *env, jobject object, jobject listener)
+Java_org_oic_simulator_server_SimulatorResource_nativeSetDiscoverable
+(JNIEnv *env, jobject object, jboolean jState)
 {
-    VALIDATE_CALLBACK(env, listener)
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    try
+    {
+        resource->setDiscoverable(static_cast<bool>(jState));
+    }
+    catch (SimulatorException &e)
+    {
+        ThrowSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_server_SimulatorResource_nativeSetObserverListener
+(JNIEnv *env, jobject object, jobject jListener)
+{
+    VALIDATE_CALLBACK(env, jListener)
 
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT(env, resource)
@@ -349,7 +397,7 @@ Java_org_oic_simulator_server_SimulatorResource_setObserverListener
     {
         onObserverChange(listenerRef->get(), uri, state, observerInfo);
     }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-    JniListenerHolder::create(env, listener));
+    JniListenerHolder::create(env, jListener));
 
     try
     {
@@ -357,25 +405,25 @@ Java_org_oic_simulator_server_SimulatorResource_setObserverListener
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_setResourceModelChangeListener
-(JNIEnv *env, jobject object, jobject listener)
+Java_org_oic_simulator_server_SimulatorResource_nativeSetResourceModelChangeListener
+(JNIEnv *env, jobject object, jobject jListener)
 {
-    VALIDATE_CALLBACK(env, listener)
+    VALIDATE_CALLBACK(env, jListener)
 
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT(env, resource)
 
-    SimulatorResource::ResourceModelChangedCallback callback =  std::bind(
-                [](const std::string & uri, SimulatorResourceModel & resModel,
+    SimulatorResource::ResourceModelUpdateCallback callback =  std::bind(
+                [](const std::string & uri, const SimulatorResourceModel & resModel,
                    const std::shared_ptr<JniListenerHolder> &listenerRef)
     {
         onResourceModelChange(listenerRef->get(), uri, resModel);
-    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, listener));
+    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, jListener));
 
     try
     {
@@ -383,12 +431,12 @@ Java_org_oic_simulator_server_SimulatorResource_setResourceModelChangeListener
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_start
+Java_org_oic_simulator_server_SimulatorResource_nativeStart
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -400,12 +448,12 @@ Java_org_oic_simulator_server_SimulatorResource_start
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_stop
+Java_org_oic_simulator_server_SimulatorResource_nativeStop
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -417,22 +465,22 @@ Java_org_oic_simulator_server_SimulatorResource_stop
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorResource_getObservers
+Java_org_oic_simulator_server_SimulatorResource_nativeGetObservers
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
     VALIDATE_OBJECT_RET(env, resource, nullptr)
 
-    return createObserverInfoVector(env, resource->getObserversList());
+    return createObserverInfoVector(env, resource->getObservers());
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_notifyObserver
+Java_org_oic_simulator_server_SimulatorResource_nativeNotify
 (JNIEnv *env, jobject object, jint id)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -444,12 +492,12 @@ Java_org_oic_simulator_server_SimulatorResource_notifyObserver
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorResource_notifyAllObservers
+Java_org_oic_simulator_server_SimulatorResource_nativeNotifyAll
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
@@ -461,7 +509,7 @@ Java_org_oic_simulator_server_SimulatorResource_notifyAllObservers
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 

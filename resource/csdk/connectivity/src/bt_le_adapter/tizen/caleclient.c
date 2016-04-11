@@ -34,7 +34,6 @@
 #include "uarraylist.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
-#include "cafragmentation.h"
 #include "cagattservice.h"
 #include "oic_string.h"
 #include "oic_malloc.h"

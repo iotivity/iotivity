@@ -48,12 +48,10 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
         OicSecAmacl_t *amaclTmp1 = NULL, *amaclTmp2 = NULL;
         LL_FOREACH_SAFE(amacl, amaclTmp1, amaclTmp2)
         {
-            unsigned int i = 0;
-
             LL_DELETE(amacl, amaclTmp1);
 
             // Clean Resources
-            for (i = 0; i < amaclTmp1->resourcesLen; i++)
+            for (size_t i = 0; i < amaclTmp1->resourcesLen; i++)
             {
                 OICFree(amaclTmp1->resources[i]);
             }
@@ -206,7 +204,7 @@ OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            amacl->resourcesLen = cJSON_GetArraySize(jsonObj);
+            amacl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, amacl->resourcesLen > 0, ERROR);
             amacl->resources = (char**)OICCalloc(amacl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (amacl->resources), ERROR);

@@ -32,6 +32,11 @@
 #include "utlist.h"
 #include <string.h>
 
+//#ifdef DIRECT_PAIRING
+#include "pconfresource.h"
+#include "dpairingresource.h"
+//#endif // DIRECT_PAIRING
+
 #define TAG "SRM-RM"
 
 #ifdef __WITH_X509__
@@ -106,11 +111,21 @@ OCStackResult InitSecureResources( )
     if(OC_STACK_OK == ret)
     {
         ret = InitSVCResource();
-	}
-	if(OC_STACK_OK == ret)
+    }
+    if(OC_STACK_OK == ret)
     {
         ret = InitAmaclResource();
     }
+//#ifdef DIRECT_PAIRING
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitPconfResource();
+    }
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitDpairingResource();
+    }
+//#endif // DIRECT_PAIRING
     if(OC_STACK_OK != ret)
     {
         //TODO: Update the default behavior if one of the SVR fails
@@ -135,6 +150,10 @@ OCStackResult DestroySecureResources( )
 #endif // __WITH_X509__
     DeInitSVCResource();
     DeInitAmaclResource();
+//#ifdef DIRECT_PAIRING
+    DeInitPconfResource();
+    DeInitDpairingResource();
+//#endif // DIRECT_PAIRING
 
     return OC_STACK_OK;
 }

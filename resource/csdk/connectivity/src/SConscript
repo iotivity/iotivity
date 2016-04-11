@@ -60,8 +60,6 @@ if env.get('SECURED') == '1':
 
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/caadapterutils.c')])
-env.AppendUnique(CA_SRC = [os.path.join(ca_path,
-                                        'adapter_util/cafragmentation.c')])
 
 if env.get('SECURED') == '1':
 	env.AppendUnique(CA_SRC = [os.path.join(ca_path,
@@ -154,15 +152,21 @@ if ca_os in ['linux', 'tizen', 'android', 'arduino', 'ios']:
 
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
+		
+lib_env = env.Clone()
+
+if ca_os == 'android':
+    lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
+
 if ca_os in ['android', 'tizen']:
-	env.AppendUnique(LIBS = ['coap'])
-	if env.get('SECURED') == '1':
-		env.AppendUnique(LIBS = ['tinydtls'])
-		env.AppendUnique(LIBS = ['timer'])
+	lib_env.AppendUnique(LIBS = ['coap'])
+	if lib_env.get('SECURED') == '1':
+		lib_env.AppendUnique(LIBS = ['tinydtls'])
+		lib_env.AppendUnique(LIBS = ['timer'])
 	if ca_os != 'android':
-		env.AppendUnique(LIBS = ['rt'])
-	calib = env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
+		lib_env.AppendUnique(LIBS = ['rt'])
+	calib = lib_env.SharedLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
 else:
-	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
-env.InstallTarget(calib, 'libconnectivity_abstraction')
-env.UserInstallTargetLib(calib, 'libconnectivity_abstraction')
+	calib = lib_env.StaticLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
+lib_env.InstallTarget(calib, 'libconnectivity_abstraction')
+lib_env.UserInstallTargetLib(calib, 'libconnectivity_abstraction')

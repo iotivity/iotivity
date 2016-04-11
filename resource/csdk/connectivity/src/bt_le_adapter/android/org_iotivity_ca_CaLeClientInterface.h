@@ -84,6 +84,14 @@ Java_org_iotivity_ca_caLeClientInterface_caLeGattServicesDiscoveredCallback
 
 /*
  * Class:     org_iotivity_ca_caLeClientInterface
+ * Method:    caLeGattNWServicesDiscoveredCallback
+ * Signature: (Landroid/bluetooth/BluetoothGatt;I)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWServicesDiscoveredCallback
+(JNIEnv *, jobject, jobject, jint);
+/*
+ * Class:     org_iotivity_ca_caLeClientInterface
  * Method:    caLeGattCharacteristicWritjclasseCallback
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattCharacteristic;I)V
  */
