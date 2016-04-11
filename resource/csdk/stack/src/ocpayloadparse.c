@@ -1073,6 +1073,11 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
         CborValue curVal;
         ret = OC_STACK_MALFORMED_RESPONSE;
 
+        // temporary fix to check for malformed cbor payload
+        if (!cbor_value_is_map(&rootMap) && !cbor_value_is_array(&rootMap)){
+            goto exit;
+        }
+
         if (cbor_value_is_map(&rootMap))
         {
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
@@ -1084,6 +1089,7 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
                 VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find uri");
             }
         }
+
         // Resource types
         if (cbor_value_is_map(&rootMap))
         {
@@ -1109,6 +1115,7 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
             err = OCParseSingleRepPayload(&temp, &rootMap, true);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed to parse single rep payload");
         }
+
         if(rootPayload == NULL)
         {
             rootPayload = temp;
