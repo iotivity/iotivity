@@ -69,18 +69,6 @@ static const uint16_t STATE_SERVICE_CONNECTED = 2;
 static const uint16_t STATE_DISCONNECTED = 1;
 
 /**
- * get method ID for method Name and class
- * @param[in]   env              JNI interface pointer.
- * @param[in]   className        android class.
- * @param[in]   methodName       android method name.
- * @param[in]   methodFormat     method type of methodName.
- * @return  jmethodID of the method.
- */
-jmethodID CALEGetJNIMethodID(JNIEnv *env, const char* className,
-                             const char* methodName,
-                             const char* methodFormat);
-
-/**
  * get uuid(jni object) from uuid(character).
  * @param[in]   env              JNI interface pointer.
  * @param[in]   uuid             uuid(character).

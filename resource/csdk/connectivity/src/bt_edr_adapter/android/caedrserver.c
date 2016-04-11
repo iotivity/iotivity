@@ -39,6 +39,8 @@
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
 static const char CLASSPATH_BT_ADPATER[] = "android/bluetooth/BluetoothAdapter";
 static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
+static const char CLASSPATH_BT_SERVER_SOCKET[] = "android/bluetooth/BluetoothServerSocket";
+static const char CLASSPATH_BT_SOCKET[] = "android/bluetooth/BluetoothSocket";
 
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
@@ -577,22 +579,16 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
     }
 
     // start to read through InputStream
-    jclass jni_cid_BTsocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");
-    if (!jni_cid_BTsocket)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BTsocket is null");
-        return CA_STATUS_FAILED;
-    }
-    jmethodID jni_mid_getInputStream = (*env)->GetMethodID(env, jni_cid_BTsocket,
-                                                           "getInputStream",
-                                                           "()Ljava/io/InputStream;");
+    jmethodID jni_mid_getInputStream = CAGetJNIMethodID(env,
+                                                        CLASSPATH_BT_SOCKET,
+                                                        "getInputStream",
+                                                        "()Ljava/io/InputStream;");
 
     jobject jni_obj_inputStream = (*env)->CallObjectMethod(env, jni_obj_socket,
                                                            jni_mid_getInputStream);
     if (!jni_obj_inputStream)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_inputStream is null");
-        (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
         return CA_STATUS_FAILED;
     }
 
@@ -601,7 +597,6 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_InputStream is null");
         (*env)->DeleteLocalRef(env, jni_obj_inputStream);
-        (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
         return CA_STATUS_FAILED;
     }
 
@@ -770,14 +765,12 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
     }
     (*env)->DeleteLocalRef(env, jni_cid_InputStream);
     (*env)->DeleteLocalRef(env, jni_obj_inputStream);
-    (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
 
     return CA_STATUS_OK;
 
 exit:
     (*env)->DeleteLocalRef(env, jni_cid_InputStream);
     (*env)->DeleteLocalRef(env, jni_obj_inputStream);
-    (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
 
     return CA_STATUS_FAILED;
 }
@@ -899,16 +892,9 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
 
     if (NULL != serverSocketObject)
     {
-        jclass jni_cid_BTServerSocket = (*env)->FindClass(
-                env, "android/bluetooth/BluetoothServerSocket");
-        if (!jni_cid_BTServerSocket)
-        {
-            OIC_LOG(ERROR, TAG, "jni_cid_BTServerSocket is null");
-            return;
-        }
-
-        jmethodID jni_mid_accept = (*env)->GetMethodID(env, jni_cid_BTServerSocket, "accept",
-                                                       "()Landroid/bluetooth/BluetoothSocket;");
+        jmethodID jni_mid_accept = CAGetJNIMethodID(env, CLASSPATH_BT_SERVER_SOCKET,
+                                                    "accept",
+                                                    "()Landroid/bluetooth/BluetoothSocket;");
         if (!jni_mid_accept)
         {
             OIC_LOG(ERROR, TAG, "jni_mid_accept is null");
@@ -976,22 +962,15 @@ void CAEDRNatvieCloseServerTask(JNIEnv* env)
     {
         OIC_LOG(DEBUG, TAG, "Accept Resource will be close");
 
-        jclass jni_cid_BTServerSocket = (*env)->FindClass(
-                env, "android/bluetooth/BluetoothServerSocket");
-        if (!jni_cid_BTServerSocket)
+        jmethodID jni_mid_close = CAGetJNIMethodID(env, CLASSPATH_BT_SERVER_SOCKET,
+                                                   "close", "()V");
+        if (!jni_mid_close)
         {
-            OIC_LOG(ERROR, TAG, "jni_cid_BTServerSocket is null");
+            OIC_LOG(ERROR, TAG, "jni_mid_close is null");
             return;
         }
 
-        jmethodID jni_mid_accept = (*env)->GetMethodID(env, jni_cid_BTServerSocket,
-                                                       "close", "()V");
-        if (!jni_mid_accept)
-        {
-            OIC_LOG(ERROR, TAG, "jni_mid_accept is null");
-            return;
-        }
-        (*env)->CallVoidMethod(env, g_serverSocket, jni_mid_accept);
+        (*env)->CallVoidMethod(env, g_serverSocket, jni_mid_close);
         (*env)->DeleteGlobalRef(env, g_serverSocket);
         g_serverSocket = NULL;
 

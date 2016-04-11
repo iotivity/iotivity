@@ -27,6 +27,7 @@
 #include "oic_string.h"
 #include "cathreadpool.h"
 #include "uarraylist.h"
+#include "caadapterutils.h"
 
 #define ERROR_CODE (-1)
 #define TAG PCF("OIC_CA_EDR_UTILS")
@@ -49,19 +50,11 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
         return NULL;
     }
 
-    jclass jni_cid_BTSocket = (*env)->FindClass(env, CLASSPATH_BT_SOCKET);
-    if (!jni_cid_BTSocket)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BTSocket is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getRemoteDevice = (*env)->GetMethodID(
-            env, jni_cid_BTSocket, "getRemoteDevice", "()Landroid/bluetooth/BluetoothDevice;");
+    jmethodID jni_mid_getRemoteDevice = CAGetJNIMethodID(
+            env, CLASSPATH_BT_SOCKET, "getRemoteDevice", "()Landroid/bluetooth/BluetoothDevice;");
     if (!jni_mid_getRemoteDevice)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getRemoteDevice is null");
-        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
         return NULL;
     }
 
@@ -70,26 +63,16 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
     if (!jni_obj_remoteBTDevice)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_remoteBTDevice is null");
-        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
         return NULL;
     }
 
-    jclass jni_cid_BTDevice = (*env)->FindClass(env, CLASSPATH_BT_DEVICE);
-    if (!jni_cid_BTDevice)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BTDevice is null");
-        (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
-        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
-        return NULL;
-    }
-    jmethodID j_mid_getAddress = (*env)->GetMethodID(env, jni_cid_BTDevice, "getAddress",
-                                                     METHODID_STRINGNONPARAM);
+    jmethodID j_mid_getAddress = CAGetJNIMethodID(env, CLASSPATH_BT_DEVICE,
+                                                  "getAddress",
+                                                  METHODID_STRINGNONPARAM);
     if (!j_mid_getAddress)
     {
         OIC_LOG(ERROR, TAG, "j_mid_getAddress is null");
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
-        (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
-        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
         return NULL;
     }
 
@@ -99,14 +82,10 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
     {
         OIC_LOG(ERROR, TAG, "j_str_address is null");
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
-        (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
-        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
         return NULL;
     }
 
     (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
-    (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
-    (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
 
     return j_str_address;
 }
@@ -216,15 +195,8 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
 
     // Convert the set to an object array
     // object[] array = Set<BluetoothDevice>.toArray();
-    jclass jni_cid_Set = (*env)->FindClass(env, "java/util/Set");
-    if (!jni_cid_Set)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_Set is null");
-        goto exit;
-    }
-    jmethodID jni_mid_toArray = (*env)->GetMethodID(env, jni_cid_Set, "toArray",
-                                                    "()[Ljava/lang/Object;");
-
+    jmethodID jni_mid_toArray = CAGetJNIMethodID(env, "java/util/Set",
+                                                 "toArray", "()[Ljava/lang/Object;");
     if (!jni_mid_toArray)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_toArray is null");
@@ -331,15 +303,11 @@ jstring CAEDRNativeGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
         OIC_LOG(ERROR, TAG, "bluetoothDevice is null");
         return NULL;
     }
-    jclass jni_cid_device_list = (*env)->FindClass(env, "android/bluetooth/BluetoothDevice");
-    if (!jni_cid_device_list)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_device_list is null");
-        return NULL;
-    }
 
-    jmethodID jni_mid_getAddress = (*env)->GetMethodID(env, jni_cid_device_list, "getAddress",
-                                                       METHODID_STRINGNONPARAM);
+    jmethodID jni_mid_getAddress = CAGetJNIMethodID(env,
+                                                    CLASSPATH_BT_DEVICE,
+                                                    "getAddress",
+                                                    METHODID_STRINGNONPARAM);
     if (!jni_mid_getAddress)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getAddress is null");
@@ -660,14 +628,8 @@ void CAEDRNativeSocketCloseToAll(JNIEnv *env)
         return;
     }
 
-    jclass jni_cid_BTSocket = (*env)->FindClass(env, CLASSPATH_BT_SOCKET);
-    if (!jni_cid_BTSocket)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BTSocket is null");
-        return;
-    }
-
-    jmethodID jni_mid_close = (*env)->GetMethodID(env, jni_cid_BTSocket, "close", "()V");
+    jmethodID jni_mid_close = CAGetJNIMethodID(env, CLASSPATH_BT_SOCKET,
+                                               "close", "()V");
     if (!jni_mid_close)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_close is null");

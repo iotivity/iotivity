@@ -275,9 +275,11 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
     if (!jni_midID)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_midID [%s] is null", methodName);
+        (*env)->DeleteLocalRef(env, jni_cid);
         return NULL;
     }
 
+    (*env)->DeleteLocalRef(env, jni_cid);
     return jni_midID;
 }
 
