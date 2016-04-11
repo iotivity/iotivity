@@ -153,31 +153,40 @@ static CborError OCParseStringLL(CborValue *map, char *type, OCStringLL **resour
     CborError err = cbor_value_map_find_value(map, type, &val);
     VERIFY_CBOR_SUCCESS(TAG, err, "to find StringLL TAG");
 
-    if (cbor_value_is_text_string(&val))
+    if (cbor_value_is_array(&val))
     {
-        char *input = NULL;
-        char *savePtr = NULL;
-        size_t len = 0;
-
-        err = cbor_value_dup_text_string(&val, &input, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find StringLL value");
-
-        if (input)
+        CborValue txtStr;
+        err = cbor_value_enter_container(&val, &txtStr);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to enter container");
+        while (cbor_value_is_text_string(&txtStr))
         {
-            char *curPtr = strtok_r(input, " ", &savePtr);
-            while (curPtr)
+            size_t len = 0;
+            char *input = NULL;
+            err = cbor_value_dup_text_string(&txtStr, &input, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find StringLL value.");
+            if (input)
             {
-                char *trimmed = InPlaceStringTrim(curPtr);
-                if (trimmed[0] !='\0')
+                char *savePtr = NULL;
+                char *curPtr = strtok_r(input, " ", &savePtr);
+                while (curPtr)
                 {
-                    if (!OCResourcePayloadAddStringLL(resource, trimmed))
+                    char *trimmed = InPlaceStringTrim(curPtr);
+                    if (trimmed[0] !='\0')
                     {
-                        return CborErrorOutOfMemory;
+                        if (!OCResourcePayloadAddStringLL(resource, trimmed))
+                        {
+                            return CborErrorOutOfMemory;
+                        }
                     }
+                    curPtr = strtok_r(NULL, " ", &savePtr);
                 }
-                curPtr = strtok_r(NULL, " ", &savePtr);
+                OICFree(input);
             }
-            OICFree(input);
+            if (cbor_value_is_text_string(&txtStr))
+            {
+                err = cbor_value_advance(&txtStr);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to advance string value");
+            }
         }
     }
 exit:
