@@ -253,7 +253,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CANegotiateBlockSize(CABlockData_t *currData, coap_block_t *block,
-                                coap_pdu_t *pdu, uint16_t blockType);
+                                const coap_pdu_t *pdu, uint16_t blockType);
 
 /**
  * Update the block option in block-wise transfer list.

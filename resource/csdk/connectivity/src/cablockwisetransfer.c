@@ -1231,7 +1231,7 @@ CAResult_t CASetMoreBitFromBlock(size_t payloadLen, coap_block_t *block)
 }
 
 CAResult_t CANegotiateBlockSize(CABlockData_t *currData, coap_block_t *block,
-                                coap_pdu_t *pdu, uint16_t blockType)
+                                const coap_pdu_t *pdu, uint16_t blockType)
 {
     OIC_LOG(DEBUG, TAG, "IN-NegotiateBlockSize");
 
