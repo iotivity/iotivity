@@ -36,61 +36,62 @@
  * @brief   This class provides a set of functions for JNI object.
  *
  */
-class JObject {
-public:
-	/**
-	 * @brief constructor
-	 */
-	JObject(JNIEnv *env);
+class JObject
+{
+    public:
+        /**
+         * @brief constructor
+         */
+        JObject(JNIEnv *env);
 
-	/**
-	 * @brief constructor
-	 */
-	JObject(JNIEnv *env, jobject obj);
+        /**
+         * @brief constructor
+         */
+        JObject(JNIEnv *env, jobject obj);
 
-	/**
-	 * @brief constructor
-	 */
-	JObject(JNIEnv *env, const char *classPath);
+        /**
+         * @brief constructor
+         */
+        JObject(JNIEnv *env, const char *classPath);
 
-	/**
-	 * @brief destructor
-	 *
-	 */
-	virtual ~JObject();
+        /**
+         * @brief destructor
+         *
+         */
+        virtual ~JObject();
 
-	/**
-	 * Function to get the jobject.
-	 *
-	 * @return jobject, returns a new JNI object or NULL otherwise.
-	 *
-	 */
-	virtual jobject getObject() const;
+        /**
+         * Function to get the jobject.
+         *
+         * @return jobject, returns a new JNI object or NULL otherwise.
+         *
+         */
+        virtual jobject getObject() const;
 
-	/**
-	 * Function to detach the jobject.
-	 *
-	 * @return void
-	 *
-	 */
-	void detachObject();
+        /**
+         * Function to detach the jobject.
+         *
+         * @return void
+         *
+         */
+        void detachObject();
 
-protected:
-	/**
-	 *  JNI Environment Pointer
-	 */
-	JNIEnv *m_pEnv;
-	/**
-	 *  Java Object
-	 */
-	jobject m_pObject;
-	/**
-	 *  Java Class
-	 */
-	jclass m_pClazz;
-	/**
-	 *  Boolean variable to check if an object is new
-	 */
-	bool m_fIsNewObject;
+    protected:
+        /**
+         *  JNI Environment Pointer
+         */
+        JNIEnv *m_pEnv;
+        /**
+         *  Java Object
+         */
+        jobject m_pObject;
+        /**
+         *  Java Class
+         */
+        jclass m_pClazz;
+        /**
+         *  Boolean variable to check if an object is new
+         */
+        bool m_fIsNewObject;
 };
 #endif //__JNI_OBJECT_H_

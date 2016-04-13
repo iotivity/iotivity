@@ -27,66 +27,253 @@ namespace OIC
 {
     namespace Service
     {
-        NotificationObject::NotificationObject()
+        TextNotification::Builder::Builder() {}
+
+        TextNotification::Ptr TextNotification::Builder::build()
         {
-            time_t now = time(0);
-            char *dt = ctime(&now);
-            m_NotificationTime = dt;
-            srand(time(NULL));
-            m_NotificationId = rand();
+
+
+            TextNotification::Ptr server = std::make_shared<TextNotification>();
+
+            server->m_Priority = m_Priority;
+            server->m_Type = m_Type;
+            server->m_Time = m_Time;
+            server->m_Id = m_Id;
+            server->m_Ttl = m_Ttl;
+            server->m_Sender = m_Sender;
+            server->m_TextMessage = m_TextMessage;
+
+            return server;
         }
 
-        void TextNotification::setTextAttributes(const std::string &notificationMessage,
-                NotificationObjectType &notificationObjectType,
-                NotificationMessageType &notificationMessageType,
-                const std::string &notificationTime,
-                const std::string &notificationSender,
-                unsigned int notificationId,
-                int notificationTtl)
+        TextNotification::Builder &TextNotification::Builder::setMessage(const std::string &textMessage)
         {
-            m_NotificationMessage = notificationMessage;
-            m_NotificationObjectType = notificationObjectType;
-            m_NotificationMessageType = notificationMessageType;
-            m_NotificationTime = notificationTime;
-            m_NotificationSender = notificationSender;
-            m_NotificationId = notificationId;
-            m_NotificationTtl = notificationTtl;
+            m_TextMessage = textMessage;
+            return *this;
         }
 
-        void ImageNotification::setImageAttributes(const std::string &notificationIconUrl,
-                const std::string notificationMessage,
-                NotificationObjectType &notificationObjectType,
-                NotificationMessageType &notificationMessageType,
-                const std::string &notificationTime,
-                const std::string &notificationSender,
-                unsigned int notificationId,
-                int notificationTtl)
+        TextNotification::Builder &TextNotification::Builder::setPriority(const NotificationObjectType
+                &priority)
         {
-            m_NotificationIconUrl = notificationIconUrl;
-            m_NotificationMessage = notificationMessage;
-            m_NotificationObjectType = notificationObjectType;
-            m_NotificationMessageType = notificationMessageType;
-            m_NotificationTime = notificationTime;
-            m_NotificationSender = notificationSender;
-            m_NotificationId = notificationId;
-            m_NotificationTtl = notificationTtl;
+            m_Priority = priority;
+            return *this;
         }
 
-        void VideoNotification::setVideoAttributes(const std::string &notificationVideoUrl,
-                NotificationObjectType &notificationObjectType,
-                NotificationMessageType &notificationMessageType,
-                const std::string &notificationTime,
-                const std::string &notificationSender,
-                unsigned int notificationId,
-                int notificationTtl)
+        TextNotification::Builder &TextNotification::Builder::setType(const NotificationMessageType &type)
         {
-            m_NotificationVideoUrl = notificationVideoUrl;
-            m_NotificationObjectType = notificationObjectType;
-            m_NotificationMessageType = notificationMessageType;
-            m_NotificationTime = notificationTime;
-            m_NotificationSender = notificationSender;
-            m_NotificationId = notificationId;
-            m_NotificationTtl = notificationTtl;
+            m_Type = type;
+            return *this;
         }
+
+        TextNotification::Builder &TextNotification::Builder::setTime(const std::string &time)
+        {
+            m_Time = time;
+            return *this;
+        }
+
+        TextNotification::Builder &TextNotification::Builder::setSender(const std::vector<std::string>
+                &senderDetails)
+        {
+            m_Sender = senderDetails;
+            return *this;
+        }
+
+        TextNotification::Builder &TextNotification::Builder::setId(const unsigned int &id)
+        {
+            m_Id = id;
+            return *this;
+        }
+
+        TextNotification::Builder &TextNotification::Builder::setTtl(const int &ttl)
+        {
+            m_Ttl = ttl;
+            return *this;
+        }
+
+
+        ImageNotification::Builder::Builder() {}
+
+        ImageNotification::Ptr ImageNotification::Builder::build()
+        {
+
+            ImageNotification::Ptr server = std::make_shared<ImageNotification>();
+
+            server->m_Priority = m_Priority;
+            server->m_Type = m_Type;
+            server->m_Time = m_Time;
+            server->m_Id = m_Id;
+            server->m_Ttl = m_Ttl;
+            server->m_Sender = m_Sender;
+            server->m_ImageTitle = m_ImageTitle;
+            server->m_ImageUrl = m_ImageUrl;
+
+            return server;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setTitle(const std::string &imageTitle)
+        {
+            m_ImageTitle = imageTitle;
+            return *this;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setImageUrl(const std::string &imageUrl)
+        {
+            m_ImageUrl = imageUrl;
+            return *this;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setPriority(const NotificationObjectType
+                &priority)
+        {
+            m_Priority = priority;
+            return *this;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setType(const NotificationMessageType &type)
+        {
+            m_Type = type;
+            return *this;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setTime(const std::string &time)
+        {
+            m_Time = time;
+            return *this;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setSender(const std::vector<std::string>
+                &senderDetails)
+        {
+            m_Sender = senderDetails;
+            return *this;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setId(const unsigned int &id)
+        {
+            m_Id = id;
+            return *this;
+        }
+
+        ImageNotification::Builder &ImageNotification::Builder::setTtl(const int &ttl)
+        {
+            m_Ttl = ttl;
+            return *this;
+        }
+
+
+        VideoNotification::Builder::Builder() {}
+
+        VideoNotification::Ptr VideoNotification::Builder::build()
+        {
+
+            VideoNotification::Ptr server  = std::make_shared<VideoNotification>();
+
+            server->m_Priority = m_Priority;
+            server->m_Type = m_Type;
+            server->m_Time = m_Time;
+            server->m_Id = m_Id;
+            server->m_Ttl = m_Ttl;
+            server->m_Sender = m_Sender;
+            server->m_VideoUrl = m_VideoUrl;
+
+            return server;
+        }
+
+        VideoNotification::Builder &VideoNotification::Builder::setVideoUrl(const std::string &videoUrl)
+        {
+            m_VideoUrl = videoUrl;
+            return *this;
+        }
+
+        VideoNotification::Builder &VideoNotification::Builder::setPriority(const NotificationObjectType
+                &priority)
+        {
+            m_Priority = priority;
+            return *this;
+        }
+
+        VideoNotification::Builder &VideoNotification::Builder::setType(const NotificationMessageType &type)
+        {
+            m_Type = type;
+            return *this;
+        }
+
+        VideoNotification::Builder &VideoNotification::Builder::setTime(const std::string &time)
+        {
+            m_Time = time;
+            return *this;
+        }
+
+        VideoNotification::Builder &VideoNotification::Builder::setSender(const std::vector<std::string>
+                &senderDetails)
+        {
+            m_Sender = senderDetails;
+            return *this;
+        }
+
+        VideoNotification::Builder &VideoNotification::Builder::setId(const unsigned int &id)
+        {
+            m_Id = id;
+            return *this;
+        }
+
+        VideoNotification::Builder &VideoNotification::Builder::setTtl(const int &ttl)
+        {
+            m_Ttl = ttl;
+            return *this;
+        }
+
+
+
+        NotificationObjectType NotificationObject::getPriority() const
+        {
+            return m_Priority;
+        }
+
+        NotificationMessageType NotificationObject::getType() const
+        {
+            return m_Type;
+        }
+
+        std::string NotificationObject::getTime() const
+        {
+            return m_Time;
+        }
+
+        std::vector<std::string> NotificationObject::getSender() const
+        {
+            return m_Sender;
+        }
+
+        unsigned int NotificationObject::getId() const
+        {
+            return m_Id;
+        }
+
+        int NotificationObject::getTtl() const
+        {
+            return m_Ttl;
+        }
+
+        std::string TextNotification::getMessage() const
+        {
+            return m_TextMessage;
+        }
+
+        std::string ImageNotification::getTitle() const
+        {
+            return m_ImageTitle;
+        }
+
+        std::string ImageNotification::getImageUrl() const
+        {
+            return m_ImageUrl;
+        }
+
+        std::string VideoNotification::getVideoUrl() const
+        {
+            return m_VideoUrl;
+        }
+
     }
 }

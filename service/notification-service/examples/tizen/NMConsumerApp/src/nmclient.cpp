@@ -99,7 +99,7 @@ void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
     logMessage = logMessage + "Host:" + hostAddress + "<br>";
     logMessage += "----------------------<br>";
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-    ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 
     notificationResourceList.push_back(foundResource);
@@ -202,7 +202,7 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
         logMessage = logMessage +  "==========================================" + "<br>";
 
         dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-        ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                               &logMessage);
 
         notificationList.push_back(textNotificationPtr->mNotificationId);
@@ -256,7 +256,7 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
         logMessage = logMessage +  "==========================================" + "<br>";
 
         dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-        ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                               &logMessage);
 
         notificationList.push_back(imageNotificationPtr->mNotificationId);
@@ -312,7 +312,7 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
         logMessage = logMessage +  "==========================================" + "<br>";
 
         dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-        ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                               &logMessage);
 
         notificationList.push_back(videoNotificationPtr->mNotificationId);
@@ -376,12 +376,12 @@ void cancelDiscoverResource()
 
     logMessage += std::to_string(resourceSize) + " : Resource Discovered <br>";
     if (resourceSize >= 1)
-        ecore_main_loop_thread_safe_call_sync((void *( *)(void *))showClientAPIs, NULL);
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showClientAPIs, NULL);
     else
         logMessage = logMessage + "Zero resources discovered <br>";
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-    ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 }
 
@@ -488,7 +488,7 @@ static void stopSubscribeNotifications(void *data, Evas_Object *obj, void *event
     selectedResource->unSubscribeNotifications();
     dlog_print(DLOG_INFO, LOG_TAG, "#### Subscribing stopped...");
     string logMessage = "Subscribing stopped....";
-    ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 }
 

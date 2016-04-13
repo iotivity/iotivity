@@ -28,29 +28,32 @@
 #define NOTIFICATION_UTILITY_H
 
 
-#define TimeStamp "TIME"
-#define Sender "SENDER"
-#define Ttl "TTL"
-#define Id "ID"
-#define Message "MESSAGE"
-#define IconUrl "ICONURL"
-#define VideoUrl "VIDEOURL"
-#define ObjectType "OBJECTTYPE"
-#define MessageType "MESSAGETYPE"
-#define notification_payload "notification-payload"
-#define DeviceName "DeviceName"
-#define notification_id "notificationId"
-#define notifyAck "notifyAck "
-#define notification_ack "notificationAck"
-#define t_Low "t_Low"
-#define t_Moderate "t_Moderate"
-#define t_Critical "t_Critical"
-#define i_Low "i_Low"
-#define i_Moderate "i_Moderate"
-#define i_Critical "i_Critical"
-#define v_Low "v_Low"
-#define v_Moderate "v_Moderate"
-#define v_Critical "v_Critical"
-#define notify_ttl 20
+#define SAMPLE_MAX_NUM_OBSERVATIONS     10
+#define SAMPLE_MAX_NUM_SENDER_DETAILS     10
+
+#define TYPE "type"
+#define PRIORITY "priority"
+#define TIMESTAMP "time"
+#define TTL "ttl"
+#define TTL_VAlUE 20
+#define SENDER "sender"
+
+#define DEFAULT 0
+#define NOTIFICATION_ID "notificationId"
+#define ACK_ID "ackID"
+#define DETAILS "details"
+#define PAYLOAD "payload"
+
+#define DEVICE_NAME "deviceName"
+#define TITLE "title"
+#define URI "uri"
+#define MESSAGE "message"
+#define IMAGE_URL "imageUrl"
+#define VIDEO_URL "videoUrl"
+
+#define LOW "low"
+#define MODERATE "moderate"
+#define CRITICAL "critical"
+
 
 #endif  // NOTIFICATION_UTILITY_H

@@ -27,81 +27,119 @@
 #ifndef NOTIFICATION_PRODUCER_H
 #define NOTIFICATION_PRODUCER_H
 
-#include "RCSResourceAttributes.h"
-#include "RCSResourceObject.h"
 
+#include <NotificationUtility.h>
+#include <ocstack.h>
+#include <oic_string.h>
+#include <oic_malloc.h>
+
+#include <string.h>
+#include <stdbool.h>
+#include <pthread.h>
+
+#include <logger.h>
 #include <cJSON.h>
 
-#include "NotificationObject.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define TAG "NotificationProducer"
 
 
-namespace OIC
-{
-    namespace Service
+    /* Structure to represent the observers */
+    typedef struct
     {
-        /**
-         * This class is used to initalise the NotificationManager
-         * and send the desired Notification Object.
-         *
-         *@see startNotificationManager()
-         *@see sendNotification()
-         */
-        class NotificationProducer
-        {
-            private:
-                std::string m_uri;
-                std::string m_type;
-                std::string m_interface;
-                cJSON *superJson;
-                RCSResourceObject::Ptr m_NotificationResource;
+        OCObservationId observationId;
+        bool valid;
+        OCResourceHandle resourceHandle;
+    } Observers;
 
-            public:
+    typedef struct
+    {
+        OCResourceHandle handle;
+    } OCNotifyResource;
 
-                typedef std::shared_ptr<NotificationProducer> NotificationProducerPtr;
+    typedef enum
+    {
+        OC_NOTIFY_TEXT = 1,
+        OC_NOTIFY_IMAGE,
+        OC_NOTIFY_VIDEO,
+    } OCNotificationType;
 
-                typedef std::function < void(int, int) > notificationIdListener;
 
-                /**
-                 * @brief Constructor.
-                 *  Sets the resource property values using initializers list.
-                 *
-                 * @param uri Resource URI value to be set.
-                 * @param type Resource type value to be set.
-                 * @param interface Interface value to be set.
-                 */
-                NotificationProducer(const std::string &n_uri, const std::string &n_type,
-                                     const std::string &n_interface);
+    typedef enum
+    {
+        OC_NOTIFY_LOW = 1,
+        OC_NOTIFY_MODERATE,
+        OC_NOTIFY_CRITICAL,
+    } OCNotificationPriority;
 
-                /**
-                 * API to start the Notification Manager.
-                 *
-                 * This API creates a new Notification Resource.
-                 *
-                 *@return Pointer to NotificationProvider instance created.
-                 *@throw PlatformException
-                 *
-                 * It catches exception from registerResource API of OCPlatform and throws it to
-                 * the caller.
-                 */
+    typedef struct
+    {
+        /** Type of the notification. */
+        OCNotificationType type;
+        /** Priority of the notification. */
+        OCNotificationPriority priority;
+        /** Notification generated time stamp  */
+        char *timeStamp;
+        /** Use UUID for universal uniqueness - used to identify different notifictaions. */
+        /** Notification data valid interval.*/
+        uint32_t ttl;
+        /** senderDetails - resource uri data of the notification sender,
+         * resource name etc.. */
+        OCStringLL *senderDetails;
+    } OCNotificationPayload;
 
-                NotificationProducerPtr startNotificationManager(std::string &notifyDeviceName,
-                        NotificationProducer::notificationIdListener cb);
+    typedef struct
+    {
+        /** Message needs to be send in text notification. */
+        char *textMessage;
+        /** This structure holds the basic notification message. */
+        OCNotificationPayload *resources;
+    } OCNSTextPayload;
 
-                /**
-                 * API to stops the Notification Manager.
-                 *
-                 * This API destroys the Notification Resource created.
-                 */
-                void stopNotificationManager();
+    typedef struct
+    {
+        /** Image Title */
+        char *title;
+        /** Image URL. */
+        char *imageURL;
+        /** This structure holds the basic notification message. */
+        OCNotificationPayload *resources;
+    } OCNSImagePayload;
 
-                /**
-                 * API is used to send the Notification Object created.
-                 *
-                 * @param object NotificationObject containing attributes to be notified.
-                 */
-                void sendNotification(NotificationObject *notificationObjectPtr);
-        };
-    }
+    typedef struct
+    {
+        /** Video URL. */
+        char *videoURL;
+
+        /** This structure holds the basic notification message. */
+        OCNotificationPayload *resources;
+    } OCNSVideoPayload;
+
+
+    void StartNotificationProducer();
+    void StopNotificationProducer();
+    void SendTextNotification(const OCNSTextPayload *object);
+    void SendImageNotification(const OCNSImagePayload *object);
+    void SendVideoNotification(const OCNSVideoPayload *object);
+
+
+    OCNSVideoPayload *CreateVideoNotification(OCNotificationPriority priority,
+            OCStringLL *senderDetails, const char *url);
+    OCNSImagePayload *CreateImageNotification(OCNotificationPriority priority,
+            OCStringLL *senderDetails, const char *title, const char *url);
+    OCNSTextPayload *CreateTextNotification(OCNotificationPriority priority, OCStringLL *senderDetails,
+                                            const char *textMessage);
+    OCStringLL *CreateSenderDetails();
+    void AddSenderDetails(OCStringLL *str, const char *val);
+
+
+
+#ifdef __cplusplus
 }
+#endif
 
-#endif  // NOTIFICATION_PROVIDER_H
+
+#endif  // NOTIFICATION_PRODUCER_H

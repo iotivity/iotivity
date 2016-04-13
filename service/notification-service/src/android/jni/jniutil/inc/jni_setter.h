@@ -35,94 +35,95 @@
  * @brief  This class provide utility to set data types in C++ object from Java object
  *
  */
-class JSetter {
-public:
+class JSetter
+{
+    public:
 
-	/**
-	 * This function is called to set Integer field in to C++ object.
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject to which integer field will be set.
-	 * @param fieldName
-	 *           Name of the field to be set in JObject
-	 * @param value
-	 *         integer value mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool setJIntField(JNIEnv *env, jobject &object,
-			const char *fieldName, int value);
+        /**
+         * This function is called to set Integer field in to C++ object.
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject to which integer field will be set.
+         * @param fieldName
+         *           Name of the field to be set in JObject
+         * @param value
+         *         integer value mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool setJIntField(JNIEnv *env, jobject &object,
+                                 const char *fieldName, int value);
 
-	/**
-	 * This function is called to set Long field in to C++ object.
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject to which Long field will be set.
-	 * @param fieldName
-	 *           Name of the field to be set in JObject
-	 * @param value
-	 *         Long value mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool setJLongField(JNIEnv *env, jobject &object,
-			const char *fieldName, jlong value);
+        /**
+         * This function is called to set Long field in to C++ object.
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject to which Long field will be set.
+         * @param fieldName
+         *           Name of the field to be set in JObject
+         * @param value
+         *         Long value mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool setJLongField(JNIEnv *env, jobject &object,
+                                  const char *fieldName, jlong value);
 
-	/**
-	 * This function is called to Set Boolean field to C++ object
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject to which boolean field has to be set
-	 * @param fieldName
-	 *           Name of the field to be set in JObject
-	 * @param value
-	 *         boolean value mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool setJBoolField(JNIEnv *env, jobject &object,
-			const char *fieldName, bool value);
-	/**
-	 * This function is called to Set String field from the C++ object
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject in which string value has to be set
-	 * @param fieldName
-	 *           Name of the field to be set in JObject
-	 * @param value
-	 *         string value mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool setJStringField(JNIEnv *env, jobject &object,
-			const char *fieldName, const char *value);
+        /**
+         * This function is called to Set Boolean field to C++ object
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject to which boolean field has to be set
+         * @param fieldName
+         *           Name of the field to be set in JObject
+         * @param value
+         *         boolean value mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool setJBoolField(JNIEnv *env, jobject &object,
+                                  const char *fieldName, bool value);
+        /**
+         * This function is called to Set String field from the C++ object
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject in which string value has to be set
+         * @param fieldName
+         *           Name of the field to be set in JObject
+         * @param value
+         *         string value mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool setJStringField(JNIEnv *env, jobject &object,
+                                    const char *fieldName, const char *value);
 
-	/**
-	 * This function is called to set Object reference in C++ object.
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject to which Object reference is to be set.
-	 * @param fieldName
-	 *           Name of the field to be set in JObject
-	 * @param fieldType
-	 *           Type of the field to be set in JObject
-	 * @param value
-	 *         value of Object mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool setJObjectField(JNIEnv *env, jobject &object,
-			const char *fieldName, const char *fieldType, const jobject value);
+        /**
+         * This function is called to set Object reference in C++ object.
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject to which Object reference is to be set.
+         * @param fieldName
+         *           Name of the field to be set in JObject
+         * @param fieldType
+         *           Type of the field to be set in JObject
+         * @param value
+         *         value of Object mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool setJObjectField(JNIEnv *env, jobject &object,
+                                    const char *fieldName, const char *fieldType, const jobject value);
 };
 
 #endif //__JNI_SETTER_H_

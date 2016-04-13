@@ -45,7 +45,6 @@ namespace OIC
         class NotificationConsumer
         {
             public:
-                typedef std::function< void(std::string)> onGetDeviceName;
 
                 typedef std::shared_ptr<NotificationConsumer> notificationConsumerPtr;
 
@@ -103,14 +102,6 @@ namespace OIC
                   * @return Returns the address of the resource .
                   */
                 std::string getAddress() const;
-
-                /**
-                  * It is used to get the name of the device
-                  * sending the notification.
-                  *
-                  *@param cb If non-empty function, it will be invoked whenever a resource is discovered.
-                  */
-                void getDeviceName(onGetDeviceName cb);
 
                 /**
                  * It is used send the acknowledment when a

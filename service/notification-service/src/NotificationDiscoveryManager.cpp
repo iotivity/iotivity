@@ -53,17 +53,20 @@ namespace OIC
         NotificationDiscoveryManager *NotificationDiscoveryManager::getInstance()
         {
             static NotificationDiscoveryManager instance;
+
+            PlatformConfig config
+            {
+                OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::HighQos
+            };
+            OCPlatform::Configure(config);
+
             return &instance;
         }
 
         void NotificationDiscoveryManager::discoverNotificationResource(
             const RCSAddress &address, ResourceDiscoveredCallback cb)
         {
-            PlatformConfig config
-            {
-                OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos
-            };
-            OCPlatform::Configure(config);
+
 
             discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
                             relativeUri,

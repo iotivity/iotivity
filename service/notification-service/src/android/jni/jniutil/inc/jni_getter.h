@@ -36,76 +36,77 @@
  * @brief  This class provide utility for get/set basic data types in C++ and Java
  *
  */
-class JGetter {
-public:
-	/**
-	 * This function is called to get String field from the C++ object
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject from which string field is expected
-	 * @param fieldName
-	 *           Name of the field to be extracted from JObject
-	 * @param value
-	 *         reference to string value mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool getJStringField(JNIEnv *env, jobject &object,
-			const char *fieldName, std::string &value);
+class JGetter
+{
+    public:
+        /**
+         * This function is called to get String field from the C++ object
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject from which string field is expected
+         * @param fieldName
+         *           Name of the field to be extracted from JObject
+         * @param value
+         *         reference to string value mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool getJStringField(JNIEnv *env, jobject &object,
+                                    const char *fieldName, std::string &value);
 
-	/**
-	 * This function is called to get Boolean field from the C++ object
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject from which boolean field is expected
-	 * @param fieldName
-	 *           Name of the field to be extracted from JObject
-	 * @param value
-	 *         reference to boolean value mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool getJBoolField(JNIEnv *env, jobject &object,
-			const char *fieldName, bool &value);
+        /**
+         * This function is called to get Boolean field from the C++ object
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject from which boolean field is expected
+         * @param fieldName
+         *           Name of the field to be extracted from JObject
+         * @param value
+         *         reference to boolean value mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool getJBoolField(JNIEnv *env, jobject &object,
+                                  const char *fieldName, bool &value);
 
-	/**
-	 * This function is called to get Integer field from the C++ object
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject from which integer field is expected
-	 * @param fieldName
-	 *           Name of the field to be extracted from JObject
-	 * @param value
-	 *         reference to integer value mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool getJIntField(JNIEnv *env, jobject &object,
-			const char *fieldName, int &value);
+        /**
+         * This function is called to get Integer field from the C++ object
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject from which integer field is expected
+         * @param fieldName
+         *           Name of the field to be extracted from JObject
+         * @param value
+         *         reference to integer value mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool getJIntField(JNIEnv *env, jobject &object,
+                                 const char *fieldName, int &value);
 
-	/**
-	 * This function is called to get Object reference from the C++ object
-	 *
-	 * @param env
-	 *           JNI Environment reference
-	 * @param object
-	 *           JObject from which Object reference is expected
-	 * @param fieldName
-	 *           Name of the field to be extracted from JObject
-	 * @param fieldType
-	 *           Type of the field to be extracted from JObject
-	 * @param value
-	 *         reference to Object reference mentioned in fieldName
-	 *
-	 * @return returns true on success and false on failer.
-	 */
-	static bool getJObjectField(JNIEnv *env, jobject &object,
-			const char *fieldName, const char *fieldType, jobject &value);
+        /**
+         * This function is called to get Object reference from the C++ object
+         *
+         * @param env
+         *           JNI Environment reference
+         * @param object
+         *           JObject from which Object reference is expected
+         * @param fieldName
+         *           Name of the field to be extracted from JObject
+         * @param fieldType
+         *           Type of the field to be extracted from JObject
+         * @param value
+         *         reference to Object reference mentioned in fieldName
+         *
+         * @return returns true on success and false on failer.
+         */
+        static bool getJObjectField(JNIEnv *env, jobject &object,
+                                    const char *fieldName, const char *fieldType, jobject &value);
 };
 #endif //__JNI_GETTER_H_

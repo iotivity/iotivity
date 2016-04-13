@@ -44,11 +44,13 @@ target_os = env.get('TARGET_OS')
 # Build flags
 ######################################################################
 nmService_env.AppendUnique(CPPPATH = [
-		'include',
-		'../resource-encapsulation/include',
-		'../resource-encapsulation/src/common/primitiveResource/include',
-		'../../extlibs/cjson',
-		])
+                'include',
+                '../resource/csdk/stack/include',
+                '../resource/csdk/logger/include',
+                '../resource-encapsulation/include',
+                '../resource-encapsulation/src/common/primitiveResource/include',
+                '../../extlibs/cjson',
+                ])
 
 nmService_env.PrependUnique(LIBS = ['rcs_server', 'rcs_client', 'rcs_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
 
@@ -69,20 +71,20 @@ nmService_env.AppendUnique(LIBS = ['dl'])
 MP_NM_SRC_DIR = 'src/'
 
 nmservice_src = [
-        MP_NM_SRC_DIR + 'NotificationProducer.cpp',
         MP_NM_SRC_DIR + 'NotificationDiscoveryManager.cpp',
         MP_NM_SRC_DIR + 'NotificationObject.cpp',
         MP_NM_SRC_DIR + 'NotificationConsumer.cpp',
+        MP_NM_SRC_DIR + 'NotificationProducer.c',
 ]
 if target_os=="android" :
-	NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
-	nmService_env.InstallTarget([NMServicesdk_static], 'libnm_service')
-	nmService_env.UserInstallTargetLib([NMServicesdk_static], 'libnm_service')
+        NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
+        nmService_env.InstallTarget([NMServicesdk_static], 'libnm_service')
+        nmService_env.UserInstallTargetLib([NMServicesdk_static], 'libnm_service')
 elif target_os in ['tizen', 'linux'] :
-	NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
-	NMServicesdk_shared = nmService_env.SharedLibrary('nmservice', nmservice_src)
-	nmService_env.InstallTarget([NMServicesdk_static, NMServicesdk_shared], 'libnm_service')
-	nmService_env.UserInstallTargetLib([NMServicesdk_static, NMServicesdk_shared], 'libnm_service')
+        NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
+        NMServicesdk_shared = nmService_env.SharedLibrary('nmservice', nmservice_src)
+        nmService_env.InstallTarget([NMServicesdk_static, NMServicesdk_shared], 'libnm_service')
+        nmService_env.UserInstallTargetLib([NMServicesdk_static, NMServicesdk_shared], 'libnm_service')
 
 #nmService_env.UserInstallTargetHeader('include/NotificationProducer.h', 'service/notification-service', 'NotificationProducer.h')
 #nmService_env.UserInstallTargetHeader('include/NotificationConsumer.h', 'service/notification-service', 'NotificationConsumer.h')

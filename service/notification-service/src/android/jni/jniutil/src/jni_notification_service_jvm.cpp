@@ -289,70 +289,70 @@ void NotificationManagerJVM::releaseEnv()
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
-{
-    LOGD("JNI_OnLoad: Enter");
-
-    if (!vm)
+    JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     {
-        LOGE("JNI_OnLoad: vm is invalid");
-        return JNI_ERR;
+        LOGD("JNI_OnLoad: Enter");
+
+        if (!vm)
+        {
+            LOGE("JNI_OnLoad: vm is invalid");
+            return JNI_ERR;
+        }
+
+        JNIEnv *env = NULL;
+        if (JNI_OK != vm->GetEnv((void **) &env, JNI_CURRENT_VERSION))
+        {
+            LOGE("JNI_OnLoad: Version check is failed!");
+            return JNI_ERR;
+        }
+
+        if (0 != InitializeJClassMapArray(env))
+        {
+            LOGE("JNI_OnLoad: Initialize JClass Array failed!");
+            return JNI_ERR;
+        }
+
+        if (0 != InitializeJObjectMapArray(env))
+        {
+            LOGE("JNI_OnLoad: Initialize JObject Array failed!");
+            return JNI_ERR;
+        }
+
+        jclass NotificationManagerClassRef = GetJClass(
+                NM_NATIVE_API_CLASS_PATH);
+        if (NULL == NotificationManagerClassRef)
+        {
+            LOGE("JNI_OnLoad: GetJClass gNotificationManagerClass failed !");
+            return JNI_ERR;
+        }
+        env->RegisterNatives(NotificationManagerClassRef, gNotificationManagerMethodTable,
+                             gNotificationManagerMethodTableSize);
+
+        NotificationManagerJVM::m_jvm = vm;
+
+        LOGI("JNI_OnLoad: Exit");
+        return JNI_CURRENT_VERSION;
     }
 
-    JNIEnv *env = NULL;
-    if (JNI_OK != vm->GetEnv((void **) &env, JNI_CURRENT_VERSION))
+    JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     {
-        LOGE("JNI_OnLoad: Version check is failed!");
-        return JNI_ERR;
+        LOGD("JNI_OnUnload: Enter");
+
+        JNIEnv *env = NULL;
+        if (JNI_OK != vm->GetEnv((void **)&env, JNI_CURRENT_VERSION))
+        {
+            LOGE("JNI_OnLoad: Version check is failed!");
+            return;
+        }
+
+        // delete all class references
+        DeleteClassMapArray(env);
+
+        // delete all jobject
+        DeleteObjectMapArray(env);
+
+        LOGD("JNI_OnUnload: Exit");
     }
-
-    if (0 != InitializeJClassMapArray(env))
-    {
-        LOGE("JNI_OnLoad: Initialize JClass Array failed!");
-        return JNI_ERR;
-    }
-
-    if (0 != InitializeJObjectMapArray(env))
-    {
-        LOGE("JNI_OnLoad: Initialize JObject Array failed!");
-        return JNI_ERR;
-    }
-
-    jclass NotificationManagerClassRef = GetJClass(
-            NM_NATIVE_API_CLASS_PATH);
-    if (NULL == NotificationManagerClassRef)
-    {
-        LOGE("JNI_OnLoad: GetJClass gNotificationManagerClass failed !");
-        return JNI_ERR;
-    }
-    env->RegisterNatives(NotificationManagerClassRef, gNotificationManagerMethodTable,
-                         gNotificationManagerMethodTableSize);
-
-    NotificationManagerJVM::m_jvm = vm;
-
-    LOGI("JNI_OnLoad: Exit");
-    return JNI_CURRENT_VERSION;
-}
-
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
-{
-    LOGD("JNI_OnUnload: Enter");
-
-    JNIEnv *env = NULL;
-    if (JNI_OK != vm->GetEnv((void **)&env, JNI_CURRENT_VERSION))
-    {
-        LOGE("JNI_OnLoad: Version check is failed!");
-        return;
-    }
-
-    // delete all class references
-    DeleteClassMapArray(env);
-
-    // delete all jobject
-    DeleteObjectMapArray(env);
-
-    LOGD("JNI_OnUnload: Exit");
-}
 
 #ifdef __cplusplus
 }

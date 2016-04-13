@@ -37,44 +37,45 @@
  * @brief   This class inherits JObject class and provides a set of functions for JNI String.
  *
  */
-class JString: public JObject {
-public:
-	/**
-	 * @brief constructor
-	 */
-	JString(JNIEnv *env, jstring value);
-	/**
-	 * @brief constructor
-	 */
-	JString(JNIEnv *env, const char *value);
-	/**
-	 * @brief constructor
-	 */
-	JString(JNIEnv *env, const std::string &value);
-	/**
-	 * @brief destructor
-	 */
-	~JString();
+class JString: public JObject
+{
+    public:
+        /**
+         * @brief constructor
+         */
+        JString(JNIEnv *env, jstring value);
+        /**
+         * @brief constructor
+         */
+        JString(JNIEnv *env, const char *value);
+        /**
+         * @brief constructor
+         */
+        JString(JNIEnv *env, const std::string &value);
+        /**
+         * @brief destructor
+         */
+        ~JString();
 
-	/**
-	 * Function to get the string value and set it.
-	 *
-	 * @param value - String value to set to a private member variable.
-	 *
-	 * @return bool - true on success
-	 *
-	 */
-	bool getValue(std::string &value);
+        /**
+         * Function to get the string value and set it.
+         *
+         * @param value - String value to set to a private member variable.
+         *
+         * @return bool - true on success
+         *
+         */
+        bool getValue(std::string &value);
 
-	/**
-	 * Function to get the private string value.
-	 *
-	 * @return  C String value.
-	 *
-	 */
-	const char *c_str();
+        /**
+         * Function to get the private string value.
+         *
+         * @return  C String value.
+         *
+         */
+        const char *c_str();
 
-private:
-	std::string m_cstr;
+    private:
+        std::string m_cstr;
 };
 #endif //__JNI_STRING_H_

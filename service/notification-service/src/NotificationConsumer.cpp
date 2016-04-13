@@ -20,6 +20,9 @@
 
 #include <NotificationConsumer.h>
 
+#include<iostream>
+#include <vector>
+
 #include <string.h>
 #include <list>
 #include<map>
@@ -44,21 +47,6 @@ namespace notificationConsumer
         OC_LOG(WARNING, TAG, "Acknowledgement Sent............");
     }
 
-    void onRemoteAttributesReceived(const RCSResourceAttributes &attributes, int,
-                                    NotificationConsumer::onGetDeviceName cb)
-    {
-        std::string deviceName;
-
-        for (const auto &attr : attributes)
-        {
-            if (attr.key() == DeviceName)
-            {
-                deviceName = attr.value().toString();
-                break;
-            }
-        }
-        cb(deviceName);
-    }
 
     void onCacheUpdated(const RCSResourceAttributes &attributes,
                         NotificationConsumer::SubscribedCallback cb,
@@ -70,288 +58,91 @@ namespace notificationConsumer
 
         std::shared_ptr<NotificationObject> notificationObjectPtr;
 
-        if (!attr.contains(notification_payload))
+        if (!attr.contains(PAYLOAD))
         {
             OC_LOG(WARNING, TAG, "Notification Payload Null......");
             return;
         }
 
-        std::string final_payload = attr[notification_payload].toString();
-        char *nPayload = &final_payload[0];
-        cJSON *putJson = cJSON_Parse(nPayload);
-        NotificationMessageType mMessageType;
+        //parse Notification unique ID
+        unsigned int notifyId = std::atoi(attr[NOTIFICATION_ID].toString().c_str());
 
-        std::string textCritical(cJSON_GetObjectItem(putJson, t_Critical)->valuestring);
-        if (textCritical != "")
+        //parse details of notification
+        std:: string details = attr[DETAILS].toString();
+        char *detailsChar = &details[0];
+        cJSON *detailsJson = cJSON_Parse(detailsChar);
+
+        NotificationMessageType notifyType = (NotificationMessageType) cJSON_GetObjectItem(detailsJson,
+                                             TYPE)->valueint;
+        NotificationObjectType notifyPriority = (NotificationObjectType) cJSON_GetObjectItem(detailsJson,
+                                                PRIORITY)->valueint;
+        std::string notifyTime = cJSON_GetObjectItem(detailsJson, TIMESTAMP)->valuestring;
+        int notifyTtl =  cJSON_GetObjectItem(detailsJson, TTL)->valueint;
+
+        //parse extra details sent by sender with notification
+        int item_size = 0;
+        std::vector<std::string> senderDetails;
+        cJSON *senderJson = cJSON_GetObjectItem(detailsJson, SENDER);
+
+        if (senderJson)
         {
-            char *n_Payload = &textCritical[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
+            item_size = cJSON_GetArraySize(senderJson);
+        }
+        for (int item_no = 0; item_no < item_size; item_no++)
+        {
+            std::string value = cJSON_GetArrayItem(senderJson, item_no)->valuestring;
+            senderDetails.push_back(value);
+        }
 
-            mMessageType = NotificationMessageType::Critical;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
+        //parse payload as a json
+        std:: string payload = attr[PAYLOAD].toString();
+        char *payloadChar = &payload[0];
+        cJSON *payloadJson = cJSON_Parse(payloadChar);
 
+        if (notifyType == NotificationMessageType::Text)
+        {
             std::shared_ptr<TextNotification> textNotificationPtr = std::make_shared<TextNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
 
-            textNotificationPtr->m_NotificationObjectType = NotificationObjectType::Text;
-            textNotificationPtr->m_NotificationMessageType = mMessageType;
-            textNotificationPtr->m_NotificationTime = objectTime;
-            textNotificationPtr->m_NotificationSender = objectSender;
-            textNotificationPtr->m_NotificationTtl = objectTtl;
-            textNotificationPtr->m_NotificationMessage = objectMessage;
-            textNotificationPtr->m_NotificationId = objectId;
+            std::string textMessage = cJSON_GetObjectItem(payloadJson, MESSAGE)->valuestring;
+
+            textNotificationPtr = TextNotification::Builder().setType(notifyType).setPriority(
+                                      notifyPriority).setTime(
+                                      notifyTime).setTtl(notifyTtl).setId(notifyId).setSender(senderDetails).setMessage(
+                                      textMessage).build();
 
             notificationObjectPtr = textNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
         }
-
-        std::string textModerate(cJSON_GetObjectItem(putJson, t_Moderate)->valuestring);
-        if (textModerate != "")
+        else if (notifyType == NotificationMessageType::Image)
         {
-            char *n_Payload = &textModerate[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Moderate;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
-            std::shared_ptr<TextNotification> textNotificationPtr = std::make_shared<TextNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
-
-            textNotificationPtr->m_NotificationObjectType = NotificationObjectType::Text;
-            textNotificationPtr->m_NotificationMessageType = mMessageType;
-            textNotificationPtr->m_NotificationTime = objectTime;
-            textNotificationPtr->m_NotificationSender = objectSender;
-            textNotificationPtr->m_NotificationTtl = objectTtl;
-            textNotificationPtr->m_NotificationMessage = objectMessage;
-            textNotificationPtr->m_NotificationId = objectId;
-
-            notificationObjectPtr = textNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
-        }
-
-        std::string textLow(cJSON_GetObjectItem(putJson, t_Low)->valuestring);
-        if (textLow != "")
-        {
-            OC_LOG(INFO, TAG, "onCacheUpdated enter......");
-
-            char *n_Payload = &textLow[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Low;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
-            std::shared_ptr<TextNotification> textNotificationPtr = std::make_shared<TextNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
-
-            textNotificationPtr->m_NotificationObjectType = NotificationObjectType::Text;
-            textNotificationPtr->m_NotificationMessageType = mMessageType;
-            textNotificationPtr->m_NotificationTime = objectTime;
-            textNotificationPtr->m_NotificationSender = objectSender;
-            textNotificationPtr->m_NotificationTtl = objectTtl;
-            textNotificationPtr->m_NotificationMessage = objectMessage;
-            textNotificationPtr->m_NotificationId = objectId;
-
-            notificationObjectPtr = textNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
-        }
-
-        std::string imageCritical(cJSON_GetObjectItem(putJson, i_Critical)->valuestring);
-        if (imageCritical != "")
-        {
-            char *n_Payload = &imageCritical[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Critical;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
             std::shared_ptr<ImageNotification> imageNotificationPtr = std::make_shared<ImageNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
-            std::string objectImageUrl(cJSON_GetObjectItem(putJson, IconUrl)->valuestring);
 
-            imageNotificationPtr->m_NotificationObjectType = NotificationObjectType::Image;
-            imageNotificationPtr->m_NotificationMessageType = mMessageType;
-            imageNotificationPtr->m_NotificationTime = objectTime;
-            imageNotificationPtr->m_NotificationSender = objectSender;
-            imageNotificationPtr->m_NotificationTtl = objectTtl;
-            imageNotificationPtr->m_NotificationIconUrl = objectImageUrl;
-            imageNotificationPtr->m_NotificationMessage = objectMessage;
-            imageNotificationPtr->m_NotificationId = objectId;
+            std::string imageTitle = cJSON_GetObjectItem(payloadJson, TITLE)->valuestring;
+            std::string imageUrl = cJSON_GetObjectItem(payloadJson, IMAGE_URL)->valuestring;
+
+            imageNotificationPtr = ImageNotification::Builder().setType(notifyType).setPriority(
+                                       notifyPriority).setTime(
+                                       notifyTime).setTtl(notifyTtl).setId(notifyId).setSender(senderDetails).setTitle(
+                                       imageTitle).setImageUrl(imageUrl).build();
+
 
             notificationObjectPtr = imageNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
         }
-
-        std::string imageModerate(cJSON_GetObjectItem(putJson, i_Moderate)->valuestring);
-        if (imageModerate != "")
+        else if (notifyType == NotificationMessageType::Video)
         {
-            char *n_Payload = &imageModerate[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Moderate;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
-            std::shared_ptr<ImageNotification> imageNotificationPtr = std::make_shared<ImageNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
-            std::string objectImageUrl(cJSON_GetObjectItem(putJson, IconUrl)->valuestring);
-
-            imageNotificationPtr->m_NotificationObjectType = NotificationObjectType::Image;
-            imageNotificationPtr->m_NotificationMessageType = mMessageType;
-            imageNotificationPtr->m_NotificationTime = objectTime;
-            imageNotificationPtr->m_NotificationSender = objectSender;
-            imageNotificationPtr->m_NotificationTtl = objectTtl;
-            imageNotificationPtr->m_NotificationIconUrl = objectImageUrl;
-            imageNotificationPtr->m_NotificationMessage = objectMessage;
-            imageNotificationPtr->m_NotificationId = objectId;
-
-            notificationObjectPtr = imageNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
-        }
-
-        std::string imageLow(cJSON_GetObjectItem(putJson, i_Low)->valuestring);
-        if (imageLow != "")
-        {
-            char *n_Payload = &imageLow[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Low;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
-            std::shared_ptr<ImageNotification> imageNotificationPtr = std::make_shared<ImageNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
-            std::string objectImageUrl(cJSON_GetObjectItem(putJson, IconUrl)->valuestring);
-
-            imageNotificationPtr->m_NotificationObjectType = NotificationObjectType::Image;
-            imageNotificationPtr->m_NotificationMessageType = mMessageType;
-            imageNotificationPtr->m_NotificationTime = objectTime;
-            imageNotificationPtr->m_NotificationSender = objectSender;
-            imageNotificationPtr->m_NotificationTtl = objectTtl;
-            imageNotificationPtr->m_NotificationIconUrl = objectImageUrl;
-            imageNotificationPtr->m_NotificationMessage = objectMessage;
-            imageNotificationPtr->m_NotificationId = objectId;
-
-            notificationObjectPtr = imageNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
-        }
-
-        std::string videoCritical(cJSON_GetObjectItem(putJson, v_Critical)->valuestring);
-        if (videoCritical != "")
-        {
-            char *n_Payload = &videoCritical[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Critical;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
-
             std::shared_ptr<VideoNotification> videoNotificationPtr = std::make_shared<VideoNotification>();
-            std::string objectVideoUrl(cJSON_GetObjectItem(putJson, VideoUrl)->valuestring);
 
-            videoNotificationPtr->m_NotificationObjectType = NotificationObjectType::Video;
-            videoNotificationPtr->m_NotificationMessageType = mMessageType;
-            videoNotificationPtr->m_NotificationTime = objectTime;
-            videoNotificationPtr->m_NotificationSender = objectSender;
-            videoNotificationPtr->m_NotificationTtl = objectTtl;
-            videoNotificationPtr->m_NotificationVideoUrl = objectVideoUrl;
-            videoNotificationPtr->m_NotificationId = objectId;
+            std::string videoUrl = cJSON_GetObjectItem(payloadJson, VIDEO_URL)->valuestring;
+
+            videoNotificationPtr = VideoNotification::Builder().setType(notifyType).setPriority(
+                                       notifyPriority).setTime(
+                                       notifyTime).setTtl(notifyTtl).setId(notifyId).setSender(senderDetails).setVideoUrl(
+                                       videoUrl).build();
 
             notificationObjectPtr = videoNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
         }
 
-        std::string videoModerate(cJSON_GetObjectItem(putJson, v_Moderate)->valuestring);
-        if (videoModerate != "")
-        {
-            char *n_Payload = &videoModerate[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Moderate;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
-
-            std::shared_ptr<VideoNotification> videoNotificationPtr = std::make_shared<VideoNotification>();
-            std::string objectVideoUrl(cJSON_GetObjectItem(putJson, VideoUrl)->valuestring);
-
-            videoNotificationPtr->m_NotificationObjectType = NotificationObjectType::Video;
-            videoNotificationPtr->m_NotificationMessageType = mMessageType;
-            videoNotificationPtr->m_NotificationTime = objectTime;
-            videoNotificationPtr->m_NotificationSender = objectSender;
-            videoNotificationPtr->m_NotificationTtl = objectTtl;
-            videoNotificationPtr->m_NotificationVideoUrl = objectVideoUrl;
-            videoNotificationPtr->m_NotificationId = objectId;
-
-            notificationObjectPtr = videoNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
-        }
-
-        std::string videoLow(cJSON_GetObjectItem(putJson, v_Low)->valuestring);
-        if (videoLow != "")
-        {
-            char *n_Payload = &videoLow[0];
-            cJSON *putJson = cJSON_Parse(n_Payload);
-
-            mMessageType = NotificationMessageType::Low;
-            std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
-            std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
-            int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
-            unsigned int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
-
-
-            std::shared_ptr<VideoNotification> videoNotificationPtr = std::make_shared<VideoNotification>();
-            std::string objectVideoUrl(cJSON_GetObjectItem(putJson, VideoUrl)->valuestring);
-
-            videoNotificationPtr->m_NotificationObjectType = NotificationObjectType::Video;
-            videoNotificationPtr->m_NotificationMessageType = mMessageType;
-            videoNotificationPtr->m_NotificationTime = objectTime;
-            videoNotificationPtr->m_NotificationSender = objectSender;
-            videoNotificationPtr->m_NotificationTtl = objectTtl;
-            videoNotificationPtr->m_NotificationVideoUrl = objectVideoUrl;
-            videoNotificationPtr->m_NotificationId = objectId;
-
-            notificationObjectPtr = videoNotificationPtr;
-
-            cb(notificationObjectPtr.get(), notificationResource->getAddress(),
-               std::make_shared<NotificationConsumer>(notificationResource));
-        }
+        cb(notificationObjectPtr.get(), notificationResource->getAddress(),
+           std::make_shared<NotificationConsumer>(notificationResource));
 
         OC_LOG(INFO, TAG, "onCacheUpdated exit......");
     }
@@ -369,18 +160,6 @@ namespace OIC
         NotificationConsumer::~NotificationConsumer()
         {
         }
-
-        void NotificationConsumer::getDeviceName(NotificationConsumer::onGetDeviceName cb)
-        {
-            if (m_NotificationResource == NULL)
-            {
-                return;
-            }
-            m_NotificationResource->RCSRemoteResourceObject::getRemoteAttributes(std::bind(
-                        notificationConsumer::onRemoteAttributesReceived, std::placeholders::_1,
-                        std::placeholders::_2, std::move(cb)));
-        }
-
 
 
         void NotificationConsumer::subscribeNotifications(SubscribedCallback cb)
@@ -448,19 +227,10 @@ namespace OIC
         {
             RCSResourceAttributes setAttribute;
 
-            cJSON *ackJson = cJSON_CreateObject();
-            char *jsonResponse;
-
             srand(time(NULL));
-            unsigned int notifyAckIdValue = rand();
+            int notifyAckIdValue = rand();
 
-
-            cJSON_AddNumberToObject(ackJson, notification_id, notificationId);
-            cJSON_AddNumberToObject(ackJson, notifyAck, notifyAckIdValue);
-
-            jsonResponse = cJSON_Print(ackJson);
-            std::string ack(jsonResponse);
-            setAttribute[notification_ack] =  ack;
+            setAttribute[ACK_ID] = notifyAckIdValue;
 
             if (m_NotificationResource != NULL)
             {

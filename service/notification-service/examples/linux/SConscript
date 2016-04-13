@@ -37,7 +37,8 @@ NMConsumer_env = lib_env.Clone()
 NMProducer_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 NMProducer_env.AppendUnique(LIBS = ['nmservice', 'rcs_server', 'rcs_client', 'rcs_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
 NMProducer_env.AppendUnique(CPPPATH = ['../../include'])
-NMProducer_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/include'])
+NMProducer_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/stack/include'])
+NMProducer_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/logger/include'])
 NMProducer_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
 
 ######################################################################

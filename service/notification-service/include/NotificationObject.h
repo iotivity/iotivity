@@ -28,19 +28,21 @@
 #define NOTIFICATION_OBJECT_H
 
 #include <string>
+#include <vector>
+#include <memory>
 
 namespace OIC
 {
     namespace Service
     {
-        enum class NotificationObjectType
+        enum class NotificationMessageType
         {
             Text = 1,
             Image,
             Video
         };
 
-        enum class NotificationMessageType
+        enum class NotificationObjectType
         {
             Low = 1,
             Moderate,
@@ -59,27 +61,67 @@ namespace OIC
          */
         class NotificationObject
         {
-            public:
+            protected:
 
                 /** It is used to define the type of notification object to be created. */
-                NotificationObjectType m_NotificationObjectType;
+                NotificationObjectType m_Priority;
 
                 /** It is used to define the type of notification message to be created. */
-                NotificationMessageType m_NotificationMessageType;
+                NotificationMessageType m_Type;
 
                 /** It is used to define the timestamp at which the notification was created. */
-                std::string m_NotificationTime;
+                std::string m_Time;
 
                 /** It is used to define the sender of the notification. */
-                std::string m_NotificationSender;
+                std::vector<std::string> m_Sender;
 
                 /** It is used to define a unique Id for the notification. */
-                unsigned int m_NotificationId;
+                unsigned int m_Id;
 
                 /** It is used to define the ttl of the notification after which it will expire. */
-                int m_NotificationTtl;
+                int m_Ttl;
 
-                NotificationObject();
+
+
+            public:
+
+                /**
+                 * Returns the priority of notification.
+                 *
+                 */
+                NotificationObjectType getPriority() const;
+
+                /**
+                 * Returns the message type of notification.
+                 *
+                 */
+                NotificationMessageType getType() const;
+
+                /**
+                 * Returns the generation time of notification.
+                 *
+                 */
+                std::string getTime() const;
+
+                /**
+                 * Returns the sender details attached with notification.
+                 *
+                 */
+                std::vector<std::string> getSender() const;
+
+                /**
+                 * Returns the unique id of notification.
+                 *
+                 */
+                unsigned int getId() const;
+
+                /**
+                 * Returns the time to live of notification.
+                 *
+                 */
+                int getTtl() const;
+
+
 
         };
 
@@ -92,17 +134,57 @@ namespace OIC
         class TextNotification : public NotificationObject
         {
 
+            private:
+
+                std::string m_TextMessage;
+
             public:
 
-                std::string m_NotificationMessage;
 
-                void setTextAttributes(const std::string &notificationMessage,
-                                       NotificationObjectType &notificationObjectType,
-                                       NotificationMessageType &notificationMessageType,
-                                       const std::string &notificationTime,
-                                       const std::string &notificationSender,
-                                       unsigned int notificationId,
-                                       int notificationTtl);
+                typedef std::shared_ptr< TextNotification > Ptr;
+                /**
+                 * This is a builder to create resource with properties and attributes.
+                 *
+                 * The resource will be observable and discoverable by default, to make them disable
+                 * set these properties explicitly with setDiscoverable and setObservable.
+                 */
+                class Builder
+                {
+                    public:
+                        /**
+                         * Constructs a Builder.
+                         */
+                        Builder();
+
+                        Builder &setPriority(const NotificationObjectType &priority);
+                        Builder &setType(const NotificationMessageType &type);
+
+                        Builder &setTime(const std::string &time);
+                        Builder &setSender(const std::vector<std::string> &senderDetails);
+
+
+                        Builder &setId(const unsigned int &id);
+                        Builder &setTtl(const int &ttl);
+
+                        Builder &setMessage(const std::string &textMessage);
+
+                        TextNotification::Ptr build();
+
+                    private:
+                        NotificationObjectType m_Priority;
+                        NotificationMessageType m_Type;
+                        std::string m_Time;
+                        std::vector<std::string> m_Sender;
+                        unsigned int m_Id;
+                        int m_Ttl;
+                        std::string m_TextMessage;
+                };
+
+                /**
+                 * Returns the text message in notification.
+                 *
+                 */
+                std::string getMessage() const;
         };
 
         /**
@@ -113,20 +195,78 @@ namespace OIC
           */
         class ImageNotification : public NotificationObject
         {
+                /**
+                 * NotificationConsumer is made a friend class
+                 *
+                 */
+                friend class NotificationConsumer;
+
+            private:
+
+                std::string m_ImageTitle;
+                std::string m_ImageUrl;
 
             public:
 
-                std::string m_NotificationIconUrl;
-                std::string m_NotificationMessage;
 
-                void setImageAttributes(const std::string &notificationIconUrl,
-                                        const std::string notificationMessage,
-                                        NotificationObjectType &notificationObjectType,
-                                        NotificationMessageType &notificationMessageType,
-                                        const std::string &notificationTime,
-                                        const std::string &notificationSender,
-                                        unsigned int notificationId,
-                                        int notificationTtl);
+                typedef std::shared_ptr< ImageNotification > Ptr;
+
+                /**
+                * This is a builder to create resource with properties and attributes.
+                *
+                * The resource will be observable and discoverable by default, to make them disable
+                * set these properties explicitly with setDiscoverable and setObservable.
+                */
+                class Builder
+                {
+                    public:
+                        /**
+                         * Constructs a Builder.
+                         *
+                         * @param uri Resource uri
+                         * @param type Resource type
+                         * @param interface Resource interface
+                         *
+                         */
+                        Builder();
+
+                        Builder &setPriority(const NotificationObjectType &priority);
+                        Builder &setType(const NotificationMessageType &type);
+
+                        Builder &setTime(const std::string &time);
+                        Builder &setSender(const std::vector<std::string> &senderDetails);
+
+
+                        Builder &setId(const unsigned int &id);
+                        Builder &setTtl(const int &ttl);
+
+                        Builder &setTitle(const std::string &imageTitle);
+                        Builder &setImageUrl(const std::string &imageUrl);
+
+                        ImageNotification::Ptr build();
+
+                    private:
+                        NotificationObjectType m_Priority;
+                        NotificationMessageType m_Type;
+                        std::string m_Time;
+                        std::vector<std::string> m_Sender;
+                        unsigned int m_Id;
+                        int m_Ttl;
+                        std::string m_ImageTitle;
+                        std::string m_ImageUrl;
+                };
+
+                /**
+                 * Returns the text message of image.
+                 *
+                 */
+                std::string getTitle() const;
+
+                /**
+                 * Returns the image icon url of image.
+                 *
+                 */
+                std::string getImageUrl() const;
         };
 
         /**
@@ -137,17 +277,67 @@ namespace OIC
          */
         class VideoNotification : public NotificationObject
         {
+                /**
+                 * NotificationConsumer is made a friend class
+                 *
+                 */
+                friend class NotificationConsumer;
+
+            private:
+
+                std::string m_VideoUrl;
+
             public:
 
-                std::string m_NotificationVideoUrl;
+                typedef std::shared_ptr< VideoNotification > Ptr;
+                /**
+                * This is a builder to create resource with properties and attributes.
+                *
+                * The resource will be observable and discoverable by default, to make them disable
+                * set these properties explicitly with setDiscoverable and setObservable.
+                */
+                class Builder
+                {
+                    public:
+                        /**
+                         * Constructs a Builder.
+                         *
+                         * @param uri Resource uri
+                         * @param type Resource type
+                         * @param interface Resource interface
+                         *
+                         */
+                        Builder();
 
-                void setVideoAttributes(const std::string &notificationVideoUrl,
-                                        NotificationObjectType &notificationObjectType,
-                                        NotificationMessageType &notificationMessageType,
-                                        const std::string &notificationTime,
-                                        const std::string &notificationSender,
-                                        unsigned int notificationId,
-                                        int notificationTtl);
+                        Builder &setPriority(const NotificationObjectType &priority);
+                        Builder &setType(const NotificationMessageType &type);
+
+                        Builder &setTime(const std::string &time);
+                        Builder &setSender(const std::vector<std::string> &senderDetails);
+
+
+                        Builder &setId(const unsigned int &id);
+                        Builder &setTtl(const int &ttl);
+
+                        Builder &setVideoUrl(const std::string &videoUrl);
+
+                        VideoNotification::Ptr build();
+
+                    private:
+                        NotificationObjectType m_Priority;
+                        NotificationMessageType m_Type;
+                        std::string m_Time;
+                        std::vector<std::string> m_Sender;
+                        unsigned int m_Id;
+                        int m_Ttl;
+                        std::string m_VideoUrl;
+                };
+
+                /**
+                 * Returns the video url of notification.
+                 *
+                 */
+                std::string getVideoUrl() const;
         };
     }
 }
