@@ -287,7 +287,6 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
     }
 
     OCResource * collResource = (OCResource *) ehRequest->resource;
-    OCChildResource *tempChildResource = NULL;
 
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -310,8 +309,8 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if (stackRet == OC_STACK_OK)
     {
-        tempChildResource = collResource->rsrcChildResourcesHead;
-
+        OCChildResource *tempChildResource = (collResource) ? collResource->rsrcChildResourcesHead
+                                                              : NULL;
         while(tempChildResource)
         {
             OCResource* tempRsrcResource = tempChildResource->rsrcResource;
@@ -323,8 +322,8 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 // is ehRequest->resource
                 ehRequest->resource = (OCResourceHandle) tempRsrcResource;
 
-                OCEntityHandlerResult ehResult = tempRsrcResource->entityHandler(OC_REQUEST_FLAG, ehRequest,
-                                                        tempRsrcResource->entityHandlerCallbackParam);
+                OCEntityHandlerResult ehResult = tempRsrcResource->entityHandler(OC_REQUEST_FLAG,
+                                           ehRequest, tempRsrcResource->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
                 if (stackRet != OC_STACK_SLOW_RESOURCE)
