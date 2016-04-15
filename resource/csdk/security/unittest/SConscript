@@ -30,22 +30,19 @@ src_dir = srmtest_env.get('SRC_DIR')
 # Build flags
 ######################################################################
 srmtest_env.PrependUnique(CPPPATH = [
-        '../../ocmalloc/include',
+		'../../../c_common/oic_malloc/include',
 		'../../connectivity/inc',
 		'../../connectivity/api',
 		'../../connectivity/external/inc',
 		'../../connectivity/lib/libcoap-4.1.1',
-		'../include',
 		'../include/internal',
 		'../../logger/include',
-		'../../ocmalloc/include',
 		'../../stack/include',
 		'../../stack/include/internal',
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include',
 		'../../../../extlibs/cjson/',
-                '../provisioning/include',
-#		'../../../../extlibs/tinydtls/',
+		'../provisioning/include',
 		'../include'
 		])
 
