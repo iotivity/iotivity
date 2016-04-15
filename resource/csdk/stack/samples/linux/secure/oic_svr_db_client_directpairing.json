@@ -18,6 +18,18 @@
                             "if": ""
                         },
                         {
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
                             "href": "/oic/res/types/d",
                             "rel": "",
                             "rt": "",

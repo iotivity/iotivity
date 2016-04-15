@@ -10,6 +10,16 @@
                             "rel": "",
                             "rt": "",
                             "if": ""
+                        },{
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },{
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
                         },
                         {
                             "href": "/oic/res/d",
