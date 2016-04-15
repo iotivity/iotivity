@@ -73,16 +73,16 @@ public class CaIpInterface {
     private static BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
-                WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_DISABLED) {
-                caIpStateDisabled();
-            } else if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+            if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
                 ConnectivityManager manager = (ConnectivityManager)
                         mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo nwInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                NetworkInfo wifiInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                NetworkInfo mobileInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 
-                if(nwInfo.isConnected()) {
+                if (mobileInfo != null && mobileInfo.isConnected() || wifiInfo.isConnected()) {
                     caIpStateEnabled();
+                } else {
+                    caIpStateDisabled();
                 }
             }
 

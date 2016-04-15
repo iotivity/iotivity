@@ -35,63 +35,53 @@
 #include "pdu.h"
 
 /**
- * @var EDR_ADAPTER_TAG
- * @brief Logging tag for module name.
+ * Logging tag for module name.
  */
 #define EDR_ADAPTER_TAG "OIC_CA_EDR_ADAP"
 
 /**
- * @var g_edrThreadPool
- * @brief Reference to threadpool.
+ * Reference to threadpool.
  */
 static ca_thread_pool_t g_edrThreadPool = NULL;
 
 /**
- * @var g_sendQueueHandle
- * @brief Queue handle for Send Data
+ * Queue handle for Send Data
  */
 static CAQueueingThread_t *g_sendQueueHandle = NULL;
 
 /**
- * @var g_recvQueueHandle
- * @brief Queue handle for Receive Data
+ * Queue handle for Receive Data
  */
 static CAQueueingThread_t *g_recvQueueHandle = NULL;
 
 /**
- * @var g_adapterState
- * @brief Storing Adapter state information
+ * Storing Adapter state information
  */
 static bool g_adapterState = true;
 
 /**
- * @var g_networkPacketReceivedCallback
- * @brief Maintains the callback to be notified on receival of network packets from other
- *          Bluetooth devices.
+ * Maintains the callback to be notified on receival of network packets from other
+ * Bluetooth devices.
  */
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
 /**
- * @var g_networkChangeCallback
- * @brief Maintains the callback to be notified on local bluetooth adapter status change.
+ * Maintains the callback to be notified on local bluetooth adapter status change.
  */
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
+static CAAdapterChangeCallback g_adapterChangeCallback = NULL;
 
 /**
- * @var g_errorCallback
- * @brief error Callback to CA adapter
+ * error Callback to CA adapter
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
 /**
- * @var g_localConnectivity
- * @brief Information of local Bluetooth adapter.
+ * Information of local Bluetooth adapter.
  */
 static CAEndpoint_t *g_localConnectivity = NULL;
 
 /**
- * @var g_serverState
- * @brief Storing Rfcommserver state information
+ * Storing Rfcommserver state information
  */
 static bool g_serverState = false;
 
@@ -139,21 +129,21 @@ static void CAEDRErrorHandler(const char *remoteAddress, const uint8_t *data,
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback packetReceivedCallback,
-                           CANetworkChangeCallback networkStateChangeCallback,
+                           CAAdapterChangeCallback netCallback,
+                           CAConnectionChangeCallback connCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     // Input validation
     VERIFY_NON_NULL(registerCallback, EDR_ADAPTER_TAG, "register callback is NULL");
     VERIFY_NON_NULL(packetReceivedCallback, EDR_ADAPTER_TAG, "data receive callback is NULL");
-    VERIFY_NON_NULL(networkStateChangeCallback, EDR_ADAPTER_TAG,
-                    "network state change callback is NULL");
+    VERIFY_NON_NULL(netCallback, EDR_ADAPTER_TAG, "adapter state change callback is NULL");
+    VERIFY_NON_NULL(connCallback, EDR_ADAPTER_TAG, "connection state change callback is NULL");
     VERIFY_NON_NULL(handle, EDR_ADAPTER_TAG, "Thread pool handle is NULL");
 
     // Register the callbacks
-
     g_edrThreadPool = handle;
     g_networkPacketReceivedCallback = packetReceivedCallback;
-    g_networkChangeCallback = networkStateChangeCallback;
+    g_adapterChangeCallback = netCallback;
     g_errorCallback = errorCallback;
 
     // Initialize EDR Network Monitor
@@ -385,7 +375,7 @@ void CATerminateEDR()
     CAAdapterTerminateQueues();
 
     g_networkPacketReceivedCallback = NULL;
-    g_networkChangeCallback = NULL;
+    g_adapterChangeCallback = NULL;
 
     // Terminate thread pool
     g_edrThreadPool = NULL;
@@ -778,7 +768,7 @@ void CAEDRNotifyNetworkStatus(CANetworkStatus_t status)
     }
 
     // Notify to upper layer
-    if (g_networkChangeCallback && g_localConnectivity && g_edrThreadPool)
+    if (g_adapterChangeCallback && g_localConnectivity && g_edrThreadPool)
     {
         // Add notification task to thread pool
         CAEDRNetworkEvent *event = CAEDRCreateNetworkEvent(g_localConnectivity, status);
@@ -805,9 +795,9 @@ void CAEDROnNetworkStatusChanged(void *context)
     CAEDRNetworkEvent *networkEvent = (CAEDRNetworkEvent *) context;
 
     // Notify to upper layer
-    if (g_networkChangeCallback)
+    if (g_adapterChangeCallback)
     {
-        g_networkChangeCallback(networkEvent->info, networkEvent->status);
+        g_adapterChangeCallback(networkEvent->info->adapter, networkEvent->status);
     }
 
     // Free the created Network event
