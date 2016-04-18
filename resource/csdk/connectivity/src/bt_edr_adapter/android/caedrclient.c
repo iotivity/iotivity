@@ -488,6 +488,7 @@ void CAEDRTerminate()
     if (g_context)
     {
         (*env)->DeleteGlobalRef(env, g_context);
+        g_context = NULL;
     }
 
     CAEDRNativeSocketCloseToAll(env);
