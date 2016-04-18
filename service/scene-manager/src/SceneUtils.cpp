@@ -49,7 +49,7 @@ namespace OIC
         void SceneUtils::getHostUriString(
                 const std::string address, std::string *host, std::string *uri)
         {
-            unsigned int nextStartIndex = 0;
+            size_t nextStartIndex = 0;
             int indexOfStr = 3;
 
             if (address.find(COAP_TAG) == std::string::npos)

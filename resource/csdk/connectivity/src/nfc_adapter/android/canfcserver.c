@@ -166,7 +166,7 @@ CAResult_t CANfcCreateJniInterfaceObject()
         return CA_STATUS_FAILED;
     }
 
-    jclass jni_NfcInterface = (*env)->FindClass(env, "org/iotivity/ca/CaNfcInterface");
+    jclass jni_NfcInterface = (*env)->FindClass(env, CLASS_NFCINTERFACE);
     if (!jni_NfcInterface)
     {
         OIC_LOG(ERROR, TAG, "Could not get CaNfcInterface class");
@@ -258,7 +258,7 @@ CAResult_t CANFCStartServer()
         isAttached = true;
     }
 
-    jclass jni_NfcInterface = (*env)->FindClass(env, "org/iotivity/ca/CaNfcInterface");
+    jclass jni_NfcInterface = (*env)->FindClass(env, CLASS_NFCINTERFACE);
     if (!jni_NfcInterface)
     {
         OIC_LOG(ERROR, TAG, "Could not get CaNFCClientInterface class");
@@ -341,15 +341,8 @@ Java_org_iotivity_ca_CaNfcInterface_caNativeNfcCreateNdefMessage(JNIEnv *env, jo
         return NULL;
     }
 
-    jclass cid_string = (*env)->FindClass(env, "java/lang/String");
-    if (!cid_string)
-    {
-        OIC_LOG(ERROR, TAG, "Could not get NfcAdapter class for cid_string");
-        return NULL;
-    }
-
-    jmethodID mid_getBytes = (*env)->GetMethodID(env, cid_string, "getBytes",
-                                                 "(Ljava/lang/String;)[B");
+    jmethodID mid_getBytes = CAGetJNIMethodID(env, "java/lang/String", "getBytes",
+                                              "(Ljava/lang/String;)[B");
     if (!mid_getBytes)
     {
         OIC_LOG(ERROR, TAG, "Could not get methodId for mid_getBytes");

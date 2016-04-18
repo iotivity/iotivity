@@ -43,43 +43,84 @@ constexpr char VALUE[]{ "off" };
 
 static int lightNum = 0;
 
+RCSRemoteResourceObject::Ptr pListResource;
+RemoteSceneList::Ptr pSceneList;
+RemoteSceneCollection::Ptr pSceneCollection;
+RemoteScene::Ptr pScene;
+RemoteSceneAction::Ptr pSceneAction;
+RCSRemoteResourceObject::Ptr pLightResource;
+std::condition_variable cond;
+std::mutex g_mutex;
+
+void onRemoteSceneListCreated(RemoteSceneList::Ptr remoteSceneList, int)
+{
+    pSceneList = std::move(remoteSceneList);
+    cond.notify_all();
+}
+
+void onRemoteSceneCollectionCreated(RemoteSceneCollection::Ptr remoteSceneCol, int)
+{
+    pSceneCollection = remoteSceneCol;
+    cond.notify_all();
+}
+
+void onRemoteSceneCreated(RemoteScene::Ptr remoteScene, int)
+{
+    pScene = remoteScene;
+    cond.notify_all();
+}
+
+void onRemoteSceneActionCreated(RemoteSceneAction::Ptr remoteSceneAction, int)
+{
+    pSceneAction = remoteSceneAction;
+    cond.notify_all();
+}
+
+void onActionUpdated(int)
+{
+    cond.notify_all();
+}
+void createListServer()
+{
+    std::vector< std::string > vecRT{ SCENE_LIST_RT };
+    std::vector< std::string > vecIF{ OC_RSRVD_INTERFACE_DEFAULT, OC::BATCH_INTERFACE };
+
+    pListResource = SceneUtils::createRCSResourceObject(
+        "coap://" + SceneUtils::getNetAddress() + SCENE_LIST_URI,
+        SCENE_CONNECTIVITY, vecRT, vecIF);
+}
+
+void waitForCallback(int waitingTime = DEFAULT_WAITTIME)
+{
+    std::unique_lock< std::mutex > lock{ g_mutex };
+    cond.wait_for(lock, std::chrono::milliseconds{ waitingTime });
+}
+
+void setup()
+{
+    SceneList::getInstance()->getName();
+    createListServer();
+
+    RemoteSceneList::createInstance(pListResource, onRemoteSceneListCreated);
+
+    waitForCallback();
+
+    pSceneList->addNewSceneCollection(onRemoteSceneCollectionCreated);
+
+    waitForCallback();
+
+    pSceneCollection->addNewScene("Test Scene", onRemoteSceneCreated);
+
+    waitForCallback();
+}
+
+
 class RemoteSceneActionTest : public TestWithMock
 {
 protected:
     void SetUp()
     {
         TestWithMock::SetUp();
-
-        SceneList::getInstance()->getName();
-        createListServer();
-
-        RemoteSceneList::createInstance(pListResource, std::bind(
-            &RemoteSceneActionTest::onRemoteSceneListCreated, this,
-            placeholders::_1, placeholders::_2));
-
-        waitForCallback();
-
-        pSceneList->addNewSceneCollection(std::bind(
-            &RemoteSceneActionTest::onRemoteSceneCollectionCreated, this,
-            placeholders::_1, placeholders::_2));
-
-        waitForCallback();
-
-        pSceneCollection->addNewScene("Test Scene", std::bind(
-            &RemoteSceneActionTest::onRemoteSceneCreated, this,
-            placeholders::_1, placeholders::_2));
-
-        waitForCallback();
-    }
-
-    void createListServer()
-    {
-        std::vector< std::string > vecRT{ SCENE_LIST_RT };
-        std::vector< std::string > vecIF{ OC_RSRVD_INTERFACE_DEFAULT, OC::BATCH_INTERFACE };
-
-        pListResource = SceneUtils::createRCSResourceObject(
-            "coap://" + SceneUtils::getNetAddress() + SCENE_LIST_URI,
-            SCENE_CONNECTIVITY, vecRT, vecIF);
     }
 
     void createLightServer()
@@ -94,60 +135,15 @@ protected:
             + "/" + std::to_string(lightNum++),
             SCENE_CONNECTIVITY, pResource->getTypes(), pResource->getInterfaces());
     }
-
-    void waitForCallback(int waitingTime = DEFAULT_WAITTIME)
-    {
-        std::unique_lock< std::mutex > lock{ mutex };
-        cond.wait_for(lock, std::chrono::milliseconds{ waitingTime });
-    }
-
-public:
-    RCSRemoteResourceObject::Ptr pListResource;
-    RemoteSceneList::Ptr pSceneList;
-    RemoteSceneCollection::Ptr pSceneCollection;
-    RemoteScene::Ptr pScene;
-    RemoteSceneAction::Ptr pSceneAction;
-    RCSRemoteResourceObject::Ptr pLightResource;
-    std::condition_variable cond;
-    std::mutex mutex;
-
-    void onRemoteSceneListCreated(RemoteSceneList::Ptr remoteSceneList, int)
-    {
-        pSceneList = std::move(remoteSceneList);
-        cond.notify_all();
-    }
-
-    void onRemoteSceneCollectionCreated(RemoteSceneCollection::Ptr remoteSceneCol, int)
-    {
-        pSceneCollection = remoteSceneCol;
-        cond.notify_all();
-    }
-
-    void onRemoteSceneCreated(RemoteScene::Ptr remoteScene, int)
-    {
-        pScene = remoteScene;
-        cond.notify_all();
-    }
-
-    void onRemoteSceneActionCreated(RemoteSceneAction::Ptr remoteSceneAction, int)
-    {
-        pSceneAction = remoteSceneAction;
-        cond.notify_all();
-    }
-
-    void onActionUpdated(int)
-    {
-        cond.notify_all();
-    }
 };
 
 TEST_F(RemoteSceneActionTest, createSceneAction)
 {
+    setup();
     createLightServer();
 
     pScene->addNewSceneAction(pLightResource, KEY, RCSResourceAttributes::Value(VALUE),
-        std::bind(&RemoteSceneActionTest::onRemoteSceneActionCreated, this,
-        placeholders::_1, placeholders::_2));
+        onRemoteSceneActionCreated);
 
     waitForCallback();
 
@@ -157,17 +153,16 @@ TEST_F(RemoteSceneActionTest, createSceneAction)
 TEST_F(RemoteSceneActionTest, createSceneActionWithEmptyRCSRemoteResourceObjectPtr)
 {
     ASSERT_THROW(pScene->addNewSceneAction(nullptr, KEY, RCSResourceAttributes::Value(VALUE),
-        std::bind(&RemoteSceneActionTest::onRemoteSceneActionCreated, this,
-        placeholders::_1, placeholders::_2)), RCSInvalidParameterException);
+        onRemoteSceneActionCreated), RCSInvalidParameterException);
 }
 
 TEST_F(RemoteSceneActionTest, getAllRemoteSceneActions)
 {
+    setup();
     createLightServer();
 
     pScene->addNewSceneAction(pLightResource, KEY, RCSResourceAttributes::Value(VALUE),
-        std::bind(&RemoteSceneActionTest::onRemoteSceneActionCreated, this,
-        placeholders::_1, placeholders::_2));
+        onRemoteSceneActionCreated);
 
     waitForCallback();
 
@@ -184,8 +179,7 @@ TEST_F(RemoteSceneActionTest, getRemoteSceneAction)
     createLightServer();
 
     pScene->addNewSceneAction(pLightResource, KEY, RCSResourceAttributes::Value(VALUE),
-        std::bind(&RemoteSceneActionTest::onRemoteSceneActionCreated, this,
-        placeholders::_1, placeholders::_2));
+        onRemoteSceneActionCreated);
 
     waitForCallback();
 
@@ -200,14 +194,12 @@ TEST_F(RemoteSceneActionTest, updateSceneAction)
     createLightServer();
 
     pScene->addNewSceneAction(pLightResource, KEY, RCSResourceAttributes::Value(VALUE),
-        std::bind(&RemoteSceneActionTest::onRemoteSceneActionCreated, this,
-        placeholders::_1, placeholders::_2));
+        onRemoteSceneActionCreated);
 
     waitForCallback();
 
     pSceneAction->resetExecutionParameter(
-        KEY, RCSResourceAttributes::Value("on"), std::bind(
-        &RemoteSceneActionTest::onActionUpdated, this, placeholders::_1));
+        KEY, RCSResourceAttributes::Value("on"), onActionUpdated);
 
     waitForCallback();
 

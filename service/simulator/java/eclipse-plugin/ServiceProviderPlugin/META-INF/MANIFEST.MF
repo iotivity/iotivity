@@ -24,4 +24,4 @@ Bundle-NativeCode: libs/linux-x86/liboc_logger.so;
  processor=x86-64
 Bundle-ClassPath: libs/Simulator.jar,
  .
-Bundle-Vendor: Open Connectivity Foundation
+Bundle-Vendor: IoTivity.org

@@ -27,11 +27,12 @@
 #ifndef INCLUDE_RESOLVER_H
 #define INCLUDE_RESOLVER_H
 
-#include "yaml-cpp/yaml.h"
-#include "cJSON.h"
-#include "RamlUtils.h"
 #include <fstream>
+#include <algorithm>
+#include "cJSON.h"
+#include "yaml-cpp/yaml.h"
 #include "yaml-cpp/exceptions.h"
+#include "RamlUtils.h"
 #include "RamlExceptions.h"
 
 namespace RAML
