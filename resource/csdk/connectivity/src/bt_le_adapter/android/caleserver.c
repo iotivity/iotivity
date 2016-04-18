@@ -38,6 +38,7 @@
 #define TAG PCF("OIC_CA_LE_SERVER")
 
 #define WAIT_TIME_WRITE_CHARACTERISTIC 10000000
+#define INVALID_STATE -1
 
 static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;
@@ -66,6 +67,9 @@ static ca_mutex g_threadSendMutex = NULL;
 static ca_mutex g_threadSendNotifyMutex = NULL;
 static ca_cond g_threadSendNotifyCond = NULL;
 static bool g_isSignalSetFlag = false;
+
+static jint g_state_connected = INVALID_STATE;
+static jint g_state_disconnected = INVALID_STATE;
 
 static const char CLASSPATH_BT_ADVERTISE_CB[] = "android/bluetooth/le/AdvertiseCallback";
 static const char CLASSPATH_BT_GATTSERVER[] = "android/bluetooth/BluetoothGattServer";
@@ -293,7 +297,13 @@ CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject respo
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    if (STATE_CONNECTED != CALEServerGetConnectionState(env, device))
+    if (!g_bluetoothGattServer)
+    {
+        OIC_LOG(ERROR, TAG, "g_bluetoothGattServer is not available");
+        return CA_STATUS_FAILED;
+    }
+
+    if (g_state_connected != CALEServerGetConnectionState(env, device))
     {
         OIC_LOG(ERROR, TAG, "it is not connected state");
         return CA_STATUS_FAILED;
@@ -356,6 +366,12 @@ CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, j
     {
         OIC_LOG(ERROR, TAG, "BT adapter is not enabled");
         return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    if (!g_bluetoothGattServer)
+    {
+        OIC_LOG(ERROR, TAG, "g_bluetoothGattServer is not available");
+        return CA_STATUS_FAILED;
     }
 
     jmethodID jni_mid_sendResponse = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
@@ -1695,6 +1711,10 @@ CAResult_t CALEServerStartMulticastServer()
         OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
     }
 
+    // get Constants Value from Android Platform
+    g_state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
+    g_state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
+
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -2208,13 +2228,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
 
-    // STATE_CONNECTED
-    jint state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
-
-    // STATE_DISCONNECTED
-    jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
-
-    if (newState == state_connected)
+    if (newState == g_state_connected)
     {
 
         OIC_LOG(DEBUG, TAG, "LE CONNECTED");
@@ -2240,7 +2254,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
         }
         (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     }
-    else if (newState == state_disconnected)
+    else if (newState == g_state_disconnected)
     {
         OIC_LOG(DEBUG, TAG, "LE DISCONNECTED");
 
