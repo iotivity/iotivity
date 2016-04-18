@@ -47,7 +47,7 @@
 
 #define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)
-#define CA_PORT_BUFFER_SIZE (4)
+#define CA_ENCODE_BUFFER_SIZE (4)
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
 
@@ -397,7 +397,7 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 
     if (uri.port != COAP_DEFAULT_PORT)
     {
-        unsigned char portbuf[CA_PORT_BUFFER_SIZE] = { 0 };
+        unsigned char portbuf[CA_ENCODE_BUFFER_SIZE] = { 0 };
         int ret = coap_insert(optlist,
                               CACreateNewOptionNode(COAP_OPTION_URI_PORT,
                                                     coap_encode_var_bytes(portbuf, uri.port),
@@ -536,13 +536,13 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     if (CA_FORMAT_UNDEFINED != info->payloadFormat)
     {
         coap_list_t* node = NULL;
-        uint8_t buf[3] = {0};
+        uint8_t buf[CA_ENCODE_BUFFER_SIZE] = {0};
         switch (info->payloadFormat)
         {
             case CA_FORMAT_APPLICATION_CBOR:
                 node = CACreateNewOptionNode(
                         COAP_OPTION_CONTENT_FORMAT,
-                        coap_encode_var_bytes(buf, (uint16_t)COAP_MEDIATYPE_APPLICATION_CBOR),
+                        coap_encode_var_bytes(buf, (unsigned short)COAP_MEDIATYPE_APPLICATION_CBOR),
                         (char *)buf);
                 break;
             default:
@@ -564,13 +564,13 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     if (CA_FORMAT_UNDEFINED != info->acceptFormat)
     {
         coap_list_t* node = NULL;
-        uint8_t buf[3] = {0};
+        uint8_t buf[CA_ENCODE_BUFFER_SIZE] = {0};
         switch (info->acceptFormat)
         {
             case CA_FORMAT_APPLICATION_CBOR:
                 node = CACreateNewOptionNode(
                         COAP_OPTION_ACCEPT,
-                        coap_encode_var_bytes(buf, (uint16_t)COAP_MEDIATYPE_APPLICATION_CBOR),
+                        coap_encode_var_bytes(buf, (unsigned short)COAP_MEDIATYPE_APPLICATION_CBOR),
                         (char *)buf);
                 break;
             default:

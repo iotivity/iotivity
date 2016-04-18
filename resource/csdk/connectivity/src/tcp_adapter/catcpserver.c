@@ -815,14 +815,15 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     }
     u_arraylist_remove(caglobals.tcp.svrlist, index);
     OICFree(svritem->recvData);
-    OICFree(svritem);
-    ca_mutex_unlock(g_mutexObjectList);
 
     // pass the connection information to RI for keepalive.
     if (g_keepaliveCallback)
     {
         g_keepaliveCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, false);
     }
+
+    OICFree(svritem);
+    ca_mutex_unlock(g_mutexObjectList);
 
     return CA_STATUS_OK;
 }
