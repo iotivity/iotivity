@@ -50,7 +50,12 @@ if target_os not in ['windows', 'winrt']:
 
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 examples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+examples_env.PrependUnique(LIBS = ['coap'])
+examples_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+examples_env.AppendUnique(LIBS = ['oc_logger'])
+examples_env.AppendUnique(LIBS = ['octbstack'])
+examples_env.AppendUnique(LIBS = ['oc'])
+
 if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
 

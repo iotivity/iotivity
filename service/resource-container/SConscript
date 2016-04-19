@@ -100,9 +100,18 @@ try:
 except KeyError:
     print ''
 
-
-resource_container_env.PrependUnique(LIBS = ['rcs_client', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'connectivity_abstraction'])
-resource_container_env.AppendUnique(LIBS = ['dl', 'boost_system', 'boost_date_time', 'boost_thread'])
+resource_container_env.PrependUnique(LIBS = ['coap'])
+resource_container_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+resource_container_env.AppendUnique(LIBS = ['oc_logger'])
+resource_container_env.AppendUnique(LIBS = ['octbstack'])
+resource_container_env.AppendUnique(LIBS = ['oc'])
+resource_container_env.AppendUnique(LIBS = ['rcs_client'])
+resource_container_env.AppendUnique(LIBS = ['rcs_server'])
+resource_container_env.AppendUnique(LIBS = ['rcs_common'])
+resource_container_env.AppendUnique(LIBS = ['dl'])
+resource_container_env.AppendUnique(LIBS = ['boost_system'])
+resource_container_env.AppendUnique(LIBS = ['boost_date_time'])
+resource_container_env.AppendUnique(LIBS = ['boost_thread'])
 
 if int(containerJavaSupport):
     try:

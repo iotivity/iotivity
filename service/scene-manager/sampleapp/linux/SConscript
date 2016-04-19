@@ -18,15 +18,15 @@ scenemanager_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/conne
 scenemanager_sample_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 scenemanager_sample_env.AppendUnique(LIBS = [
+    'oc_logger',
+    'coap',
+    'connectivity_abstraction',
     'scene_manager',
     'rcs_client',
     'rcs_server',
     'rcs_common',
-    'oc',
     'octbstack',
-    'oc_logger',
-    'connectivity_abstraction',
-    'coap',
+    'oc',
     'pthread'
     ])
 
