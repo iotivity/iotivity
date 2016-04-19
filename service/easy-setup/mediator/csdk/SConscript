@@ -75,7 +75,12 @@ if target_os == 'linux':
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
-	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+	easy_setup_env.PrependUnique(LIBS = ['coap'])
+	easy_setup_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+	easy_setup_env.AppendUnique(LIBS = ['oc_logger'])
+	easy_setup_env.AppendUnique(LIBS = ['octbstack'])
+	easy_setup_env.AppendUnique(LIBS = ['oc'])
+	easy_setup_env.AppendUnique(LIBS = ['pthread'])
 
 ######################################################################
 # Android Mediator
@@ -84,7 +89,13 @@ if target_os == 'android':
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])
+	easy_setup_env.PrependUnique(LIBS = ['coap'])
+	easy_setup_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+	easy_setup_env.AppendUnique(LIBS = ['oc_logger'])
+	easy_setup_env.AppendUnique(LIBS = ['octbstack'])
+	easy_setup_env.AppendUnique(LIBS = ['oc'])
+	easy_setup_env.AppendUnique(LIBS = ['gnustl_shared'])
+
 	if not env.get('RELEASE'):
 		easy_setup_env.AppendUnique(LIBS = ['log'])
 

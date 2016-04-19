@@ -58,7 +58,14 @@ mediator_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/service/easy-setup/mediator/richsdk/src',
 			env.get('SRC_DIR') + '/service/easy-setup/inc'])
 
-mediator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction', 'coap', 'ESMediatorRich'])
+mediator_env.PrependUnique(LIBS = ['coap'])
+mediator_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+mediator_env.AppendUnique(LIBS = ['oc_logger'])
+mediator_env.AppendUnique(LIBS = ['octbstack'])
+mediator_env.AppendUnique(LIBS = ['oc'])
+mediator_env.AppendUnique(LIBS = ['pthread'])
+mediator_env.AppendUnique(LIBS = ['ESMediatorRich'])
+
 if env.get('SECURED') == '1':
 	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
 
