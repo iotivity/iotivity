@@ -20,7 +20,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "logger.h"
 #include "oic_malloc.h"

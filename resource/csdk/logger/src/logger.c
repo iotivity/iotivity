@@ -30,12 +30,6 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-// Platform check can be extended to check and/or define more, or could be
-// moved into a config.h
-#if !defined(__ARDUINO__) && !defined(ARDUINO)
-#define HAVE_UNISTD_H 1
-#endif
-
 // Pull in _POSIX_TIMERS feature test macro to check for
 // clock_gettime() support.
 #ifdef HAVE_UNISTD_H
@@ -44,6 +38,10 @@
 // if we have unistd.h, we're a Unix system
 #include <time.h>
 #include <sys/time.h>
+#endif
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
 #endif
 
 #include "logger.h"

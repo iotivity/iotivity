@@ -23,10 +23,13 @@
 
 #include <boost/lexical_cast.hpp>
 #include <sstream>
-#if !defined(_WIN32)
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
-#else
+#endif
+#ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
+#endif
+#ifdef HAVE_IN6ADDR_H
 #include <in6addr.h>
 #endif
 

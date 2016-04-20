@@ -3,20 +3,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <signal.h>
-#include <pthread.h>
-#include "ocstack.h"
-#include "common.h"
-
-#if defined(_WIN32)
-#include <windows.h>
-/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
-#ifdef ERROR
-#undef ERROR
 #endif
-#endif // defined(_WIN32)
+#include <signal.h>
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+#include "ocstack.h"
 #include "logger.h"
+#include "common.h"
 
 #define TAG  PCF("SRM-AMSS")
 

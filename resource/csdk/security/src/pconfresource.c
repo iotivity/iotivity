@@ -39,9 +39,7 @@
 #include <stdlib.h>
 #include "psinterface.h"
 #include "security_internals.h"
-#ifdef WITH_ARDUINO
-#include <string.h>
-#else
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 

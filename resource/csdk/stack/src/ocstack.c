@@ -72,21 +72,18 @@
 #include "directpairing.h"
 //#endif
 
-#ifdef WITH_ARDUINO
+#ifdef HAVE_ARDUINO_TIME_H
 #include "Time.h"
-#else
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include "coap_time.h"
 #include "utlist.h"
 #include "pdu.h"
 
-#if !defined(WITH_ARDUINO) && !defined(__msys_nt__)
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
-#endif
-
-#if defined(__msys_nt__)
-#include <winsock2.h>
 #endif
 
 #ifndef UINT32_MAX

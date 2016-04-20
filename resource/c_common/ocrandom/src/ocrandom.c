@@ -30,27 +30,33 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
-#include "fcntl.h"
-#include "unistd.h"
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
 #if defined(__ANDROID__)
 #include <ctype.h>
 #include <linux/time.h>
 #endif
-#endif
 #include "ocrandom.h"
 #include <stdio.h>
 
-#if !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
+#ifdef HAVE_UUID_UUID_H
 #include <uuid/uuid.h>
 #endif
 
-#if !defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__TIZEN__)
 #define NANO_SEC 1000000000
-#endif
 
 #ifdef ARDUINO
 #include "Arduino.h"
@@ -185,14 +191,10 @@ uint32_t OCGetRandom()
 
 uint8_t OCGetRandomByte(void)
 {
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
-    return rand() & 0x00FF;
-#elif defined ARDUINO
 #ifdef HAVE_SRANDOM
     return random() & 0x00FF;
 #else
     return rand() & 0x00FF;
-#endif
 #endif
 }
 
@@ -274,7 +276,7 @@ OCRandomUuidResult OCGenerateUuid(uint8_t uuid[UUID_SIZE])
     uuid[15] = parseUuidPart(&uuidString[34]);
 
     return RAND_UUID_OK;
-#elif (!defined(__ANDROID__) && !defined(__msys_nt__)) && (defined(__linux__) || defined(__APPLE__))
+#elif defined(HAVE_UUID_UUID_H)
     // note: uuid_t is typedefed as unsigned char[16] on linux/apple
     uuid_generate(uuid);
     return RAND_UUID_OK;
@@ -319,7 +321,7 @@ OCRandomUuidResult OCGenerateUuidString(char uuidString[UUID_STRING_SIZE])
         close(fd);
         return RAND_UUID_READ_ERROR;
     }
-#elif !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
+#elif defined(HAVE_UUID_UUID_H)
     uint8_t uuid[UUID_SIZE];
     int8_t ret = OCGenerateUuid(uuid);
 

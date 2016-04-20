@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifdef WITH_ARDUINO
+#ifdef HAVE_STRING_H
 #include <string.h>
-#else
+#elif HAVE_STRINGS_H
 #include <strings.h>
 #endif
 #include <stdlib.h>

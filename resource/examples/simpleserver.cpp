@@ -22,15 +22,23 @@
 /// This sample provides steps to define an interface for a resource
 /// (properties and methods) and host this resource on the server.
 ///
-#include <unistd.h>
 #include <functional>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <mutex>
 #include <condition_variable>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+#include "platform_features.h"
 
 using namespace OC;
 using namespace std;

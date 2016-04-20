@@ -26,14 +26,8 @@
 #include "iotvticalendar.h"
 #include "oic_string.h"
 
-#define HAVE_STRPTIME 1
-
-#if defined(_WIN32)
-#undef HAVE_STRPTIME
-#endif
-
-#if !defined(HAVE_STRPTIME)
-// ### to be fixed later
+#ifndef HAVE_STRPTIME
+//  ### to be fixed later
 #define    strptime(a,b,c)   NULL
 #endif
 

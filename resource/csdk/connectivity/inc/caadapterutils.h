@@ -32,11 +32,11 @@
 #include <jni.h>
 #endif
 
-#if !defined(WITH_ARDUINO) && !defined(__msys_nt__)
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 
-#if defined(_WIN32)
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif

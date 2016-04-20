@@ -38,9 +38,19 @@
 #include <camutex.h>
 #include <cathreadpool.h>
 
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#include "platform_features.h"
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 
 //#define DEBUG_VERBOSE 1
 

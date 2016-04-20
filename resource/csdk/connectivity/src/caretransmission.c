@@ -46,9 +46,18 @@
 #include <string.h>
 
 #ifndef SINGLE_THREAD
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#if HAVE_SYS_TIMEB_H
+#include <sys/timeb.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #endif
 
 #if defined(__ANDROID__)

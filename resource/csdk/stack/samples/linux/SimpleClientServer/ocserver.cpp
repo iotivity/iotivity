@@ -23,9 +23,16 @@
 #include <string.h>
 #include <string>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <array>
 #include "ocstack.h"
 #include "logger.h"
