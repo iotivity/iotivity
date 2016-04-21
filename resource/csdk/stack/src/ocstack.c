@@ -2041,7 +2041,7 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
 #ifdef TCP_ADAPTER
-    CARegisterKeepAliveHandler(HandleKeepAliveConnCB);
+    CARegisterKeepAliveHandler(HandleKeepAliveConnCB, HandleKeepAliveDisconnCB);
 #endif
 
 #ifdef WITH_PRESENCE
