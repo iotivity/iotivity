@@ -590,12 +590,21 @@ public class ResourceManager {
             }
 
             // Set the resource interfaces.
-            jSimulatorSingleResource
-                    .setInterface(Utility.convertSetToVectorString(resource
-                            .getResourceInterfaces()));
+            Set<String> interfaces = resource.getResourceInterfaces();
+            if (null != interfaces && !interfaces.isEmpty()) {
+                jSimulatorSingleResource.setInterface(Utility
+                        .convertSetToVectorString(resource
+                                .getResourceInterfaces()));
+            }
 
             // Register the resource with the platform.
             jSimulatorSingleResource.start();
+
+            // Read the interfaces from the native layer and set it to the
+            // interface list.
+            resource.setResourceInterfaces(Utility
+                    .convertVectorToSet(jSimulatorSingleResource.getInterface()));
+
             resource.setStarted(true);
         } catch (SimulatorException e) {
             Activator
