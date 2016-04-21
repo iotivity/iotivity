@@ -168,6 +168,12 @@ void CADeInitializeIPGlobals()
         close(caglobals.ip.m4s.fd);
         caglobals.ip.m4s.fd = -1;
     }
+
+    if (caglobals.ip.netlinkFd != -1)
+    {
+        close(caglobals.ip.netlinkFd);
+        caglobals.ip.netlinkFd = -1;
+    }
 }
 
 static void CAReceiveHandler(void *data)
