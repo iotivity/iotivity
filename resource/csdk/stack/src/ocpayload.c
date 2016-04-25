@@ -1529,12 +1529,17 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
         return;
     }
     OICFree(payload->sid);
+    OICFree(payload->baseURI);
+    OICFree(payload->uri);
+    OICFree(payload->type);
+    OICFree(payload->name);
+    OCFreeOCStringLL(payload->interface);
     OCDiscoveryResourceDestroy(payload->resources);
     OICFree(payload);
 }
 
-OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
-        const char* specVer, const char* dmVer)
+OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
+        const OCStringLL *types, const char* specVer, const char* dmVer)
 {
 
     OCDevicePayload* payload = (OCDevicePayload*)OICCalloc(1, sizeof(OCDevicePayload));
@@ -1545,15 +1550,10 @@ OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
     }
 
     payload->base.type = PAYLOAD_TYPE_DEVICE;
-
-    if (sid)
+    payload->sid = OICStrdup(sid);
+    if (sid && !payload->sid)
     {
-        payload->sid = (uint8_t*)OICMalloc(UUID_SIZE);
-        if (!payload->sid)
-        {
-            goto exit;
-        }
-        memcpy(payload->sid, sid, UUID_SIZE);
+        goto exit;
     }
 
     payload->deviceName = OICStrdup(dname);
@@ -1570,6 +1570,15 @@ OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
 
     payload->dataModelVersion = OICStrdup(dmVer);
     if (dmVer && !payload->dataModelVersion)
+    {
+        goto exit;
+    }
+
+    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
+    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
+
+    payload->types = CloneOCStringLL((OCStringLL *)types);
+    if (types && !payload->types)
     {
         goto exit;
     }
@@ -1592,6 +1601,8 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
     OICFree(payload->deviceName);
     OICFree(payload->specVersion);
     OICFree(payload->dataModelVersion);
+    OCFreeOCStringLL(payload->types);
+    OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }
 
@@ -1624,6 +1635,14 @@ OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
+
+    payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+    if (!payload->interfaces)
+    {
+        return NULL;
+    }
+    payload->interfaces->value = OICStrdup(OC_RSRVD_INTERFACE_READ);
+    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
     payload->info = *platformInfo;
 
     return payload;
@@ -1639,6 +1658,11 @@ OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
+    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+
+    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
+    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
+
     OCCopyPlatformInfo(platformInfo, payload);
 
     return payload;
@@ -1667,6 +1691,8 @@ void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
     }
     OICFree(payload->uri);
     OCPlatformInfoDestroy(&payload->info);
+    OICFree(payload->rt);
+    OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }
 

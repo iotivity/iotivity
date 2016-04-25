@@ -143,6 +143,9 @@ extern "C" {
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
+/** To represent resource type with RES.*/
+#define OC_RSRVD_RESOURCE_TYPE_RES    "oic.wk.res"
+
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
 
@@ -181,9 +184,6 @@ extern "C" {
 
 /** To represent host name.*/
 #define OC_RSRVD_HOST_NAME              "hn"
-
-/** To represent version.*/
-#define OC_RSRVD_VERSION                "icv"
 
 /** To represent policy.*/
 #define OC_RSRVD_POLICY                 "p"
@@ -248,7 +248,7 @@ extern "C" {
 #define OC_RSRVD_DEVICE_NAME            "n"
 
 /** Device specification version.*/
-#define OC_RSRVD_SPEC_VERSION           "lcv"
+#define OC_RSRVD_SPEC_VERSION           "icv"
 
 /** Device data model.*/
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
@@ -330,7 +330,7 @@ extern "C" {
 #define OC_RSRVD_MEDIA_TYPE              "mt"
 
 /** To represent resource type with Publish RD.*/
-#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdPub"
+#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdpub"
 
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
@@ -427,6 +427,12 @@ typedef enum
 /** Bit mask for Mods.*/
 #define OC_MASK_MODS     (0x0FF0)
 #define OC_MASK_FAMS     (OC_IP_USE_V6|OC_IP_USE_V4)
+
+typedef struct OCStringLL
+{
+    struct OCStringLL *next;
+    char* value;
+} OCStringLL;
 
 /**
  * End point identity.
@@ -934,7 +940,8 @@ typedef struct
 {
     /** Pointer to the device name.*/
     char *deviceName;
-
+    /** Pointer to the types.*/
+    OCStringLL *types;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER
@@ -1042,12 +1049,6 @@ typedef struct OCRepPayloadValue
     struct OCRepPayloadValue* next;
 
 } OCRepPayloadValue;
-
-typedef struct OCStringLL
-{
-    struct OCStringLL *next;
-    char* value;
-} OCStringLL;
 
 // used for get/set/put/observe/etc representations
 typedef struct OCRepPayload
@@ -1158,10 +1159,23 @@ typedef struct
 {
     OCPayload base;
 
-    uint8_t* sid;
+    /** Device Id */
+    char *sid;
 
     /** A special case for handling RD address. */
     char* baseURI;
+
+    /** Name */
+    char *name;
+
+    /** HREF */
+    char *uri;
+
+    /** Resource Type */
+    char *type;
+
+    /** Interface */
+    OCStringLL *interface;
 
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;
@@ -1196,10 +1210,12 @@ typedef struct
 typedef struct
 {
     OCPayload base;
-    uint8_t* sid;
+    char *sid;
     char* deviceName;
     char* specVersion;
     char* dataModelVersion;
+    OCStringLL *interfaces;
+    OCStringLL *types;
 } OCDevicePayload;
 
 typedef struct
@@ -1207,6 +1223,8 @@ typedef struct
     OCPayload base;
     char* uri;
     OCPlatformInfo info;
+    char* rt;
+    OCStringLL* interfaces;
 } OCPlatformPayload;
 
 typedef struct
@@ -1440,7 +1458,7 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  * Callback function definition of direct-pairing
  *
  * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK' 
+ * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
 typedef void (*OCDirectPairingCB)(OCDPDev_t *peer, OCStackResult result);

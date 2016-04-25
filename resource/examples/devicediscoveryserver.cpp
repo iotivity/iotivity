@@ -29,6 +29,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "ocpayload.h"
 
 using namespace OC;
 
@@ -137,6 +138,8 @@ int main()
 
 
     result = SetDeviceInfo(deviceName);
+    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
+    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
 
     result = OCPlatform::registerDeviceInfo(deviceInfo);
 
@@ -164,7 +167,3 @@ int main()
     return 0;
 
 }
-
-
-
-

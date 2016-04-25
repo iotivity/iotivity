@@ -190,33 +190,29 @@ exit:
     return checkError(err, &encoder, outPayload, size);
 }
 
-static char* OCStringLLJoin(OCStringLL* val)
+static int64_t OCStringLLJoin(CborEncoder *map, char *type, OCStringLL *val)
 {
-    OCStringLL* temp = val;
-    size_t size = strlen(temp->value);
+    uint16_t count = 0;
+    int64_t err = CborNoError;
 
-    while (temp->next)
+    for (OCStringLL *temp = val; temp; temp = temp->next)
     {
-        ++size;
-        temp = temp->next;
-        size += strlen(temp->value);
+        ++count;
+    }
+    if (count > 0)
+    {
+        CborEncoder array;
+        err |= cbor_encode_text_string(map, type, strlen(type));
+        err |= cbor_encoder_create_array(map, &array, count);
+        while (val)
+        {
+            err |= cbor_encode_text_string(&array, val->value, strlen(val->value));
+            val = val->next;
+        }
+        err |= cbor_encoder_close_container(map, &array);
     }
 
-    char* joinedStr = (char*)OICCalloc(sizeof(char), size + 1);
-
-    if (!joinedStr)
-    {
-        return NULL;
-    }
-
-    OICStrcat(joinedStr, size + 1, val->value);
-    while (val->next)
-    {
-        val = val->next;
-        OICStrcat(joinedStr, size + 1, " ");
-        OICStrcat(joinedStr, size + 1, val->value);
-    }
-    return joinedStr;
+    return err;
 }
 
 static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *outPayload,
@@ -235,6 +231,11 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         [                                                       // rootArray
             {                                                   // rootMap
                 "di" : UUID,                                    // device ID
+                "href": "/oic/res"
+                "rt": "oic.wk.res"
+                "n":"MyDevice"
+                "if":"oic.if.ll oic.if.baseline"
+                "di": "0685B960-736F-46F7-BEC0-9E6CBD61ADC1",
                 links :[                                        // linksArray contains maps of resources
                             {
                                 href, rt, if, policy            // Resource 1
@@ -260,11 +261,32 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         err |= cbor_encoder_create_map(&rootArray, &rootMap, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery map");
 
+        // Insert Name
+        err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_NAME,
+                sizeof(OC_RSRVD_DEVICE_NAME) - 1, payload->name);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting name");
+
+        // Insert URI
+        err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
+                payload->uri);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting href");
+
         // Insert Device ID into the root map
-        err |= cbor_encode_text_string(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting tag device id");
-        err |= cbor_encode_byte_string(&rootMap, payload->sid, UUID_SIZE);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting value of device id");
+        err |= AddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1,
+                payload->sid);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting device id");
+
+        // Insert Resource Type
+        err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_RESOURCE_TYPE,
+                sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, payload->type);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting RT");
+
+        // Insert interfaces
+        if (payload->interface)
+        {
+            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->interface);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interface types tag/value");
+        }
 
         // Insert baseURI if present
         err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_BASE_URI,
@@ -298,26 +320,14 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
             // Resource Type
             if (resource->types)
             {
-                err |= cbor_encode_text_string(&linkMap, OC_RSRVD_RESOURCE_TYPE,
-                        sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource types tag to links map");
-                char *joinedTypes = OCStringLLJoin(resource->types);
-                VERIFY_PARAM_NON_NULL(TAG, joinedTypes, "Failed creating joined string");
-                err |= cbor_encode_text_string(&linkMap, joinedTypes, strlen(joinedTypes));
-                OICFree(joinedTypes);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource types value to links map");
+                err |= OCStringLLJoin(&linkMap, OC_RSRVD_RESOURCE_TYPE, resource->types);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resourceType tag/value to links map");
             }
             // Interface Types
             if (resource->interfaces)
             {
-                err |= cbor_encode_text_string(&linkMap, OC_RSRVD_INTERFACE,
-                        sizeof(OC_RSRVD_INTERFACE) - 1);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interfaces tag to links map");
-                char* joinedInterfaces = OCStringLLJoin(resource->interfaces);
-                VERIFY_PARAM_NON_NULL(TAG, joinedInterfaces, "Failed creating joined string");
-                err |= cbor_encode_text_string(&linkMap, joinedInterfaces, strlen(joinedInterfaces));
-                OICFree(joinedInterfaces);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interfaces value to links map");
+                err |= OCStringLLJoin(&linkMap, OC_RSRVD_INTERFACE, resource->interfaces);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interfaces tag/value to links map");
             }
 
             // Policy
@@ -375,6 +385,10 @@ exit:
 static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayload,
         size_t *size)
 {
+    if (!payload)
+    {
+        return CborUnknownError;
+    }
     int64_t err = CborNoError;
     CborEncoder encoder;
 
@@ -383,11 +397,24 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
     err |= cbor_encoder_create_map(&encoder, &repMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating device map");
 
+    // Resource Type
+    if (payload->types)
+    {
+        OIC_LOG(INFO, TAG, "Payload has types");
+        err |= OCStringLLJoin(&repMap, OC_RSRVD_RESOURCE_TYPE, payload->types);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type tag/value.");
+    }
+
+    if (payload->interfaces)
+    {
+        OIC_LOG(INFO, TAG, "Payload has interface");
+        err |= OCStringLLJoin(&repMap, OC_RSRVD_INTERFACE, payload->interfaces);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interface type tag/value.");
+    }
+
     // Device ID
-    err |= cbor_encode_text_string(&repMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding device id tag");
-    err |= cbor_encode_byte_string(&repMap, payload->sid, UUID_SIZE);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data device id");
+    err |= AddTextStringToMap(&repMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1 , payload->sid);
+    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding device id");
 
     // Device Name
     err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DEVICE_NAME,
@@ -477,6 +504,21 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload *payload, uint8_t *out
     err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SYSTEM_TIME,
             sizeof(OC_RSRVD_SYSTEM_TIME) - 1, payload->info.systemTime);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding system time");
+
+    // Resource type
+    if (payload->rt)
+    {
+        err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_RESOURCE_TYPE,
+                sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, payload->rt);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type.");
+    }
+
+    // Resource interfaces
+    if (payload->interfaces)
+    {
+        err |= OCStringLLJoin(&repMap, OC_RSRVD_INTERFACE, payload->interfaces);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform interface type.");
+    }
 
     // Close Map
     err |= cbor_encoder_close_container(&encoder, &repMap);
@@ -701,26 +743,14 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
         if (payload->types)
         {
             OIC_LOG(INFO, TAG, "Payload has types");
-            err |= cbor_encode_text_string(&rootMap, OC_RSRVD_RESOURCE_TYPE,
-                    sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep resource type tag");
-            char* joinedTypes = OCStringLLJoin(payload->types);
-            VERIFY_PARAM_NON_NULL(TAG, joinedTypes, "Failed creating joined string");
-            err |= cbor_encode_text_string(&rootMap, joinedTypes, strlen(joinedTypes));
-            OICFree(joinedTypes);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep resource type value");
+            err |= OCStringLLJoin(&rootMap, OC_RSRVD_RESOURCE_TYPE, payload->types);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type.");
         }
         if (payload->interfaces)
         {
             OIC_LOG(INFO, TAG, "Payload has interfaces");
-            err |= cbor_encode_text_string(&rootMap, OC_RSRVD_INTERFACE,
-                    sizeof(OC_RSRVD_INTERFACE) - 1);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep interface tag");
-            char* joinedInterfaces = OCStringLLJoin(payload->interfaces);
-            VERIFY_PARAM_NON_NULL(TAG, joinedInterfaces, "Failed creating joined string");
-            err |= cbor_encode_text_string(&rootMap, joinedInterfaces, strlen(joinedInterfaces));
-            OICFree(joinedInterfaces);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep interface value");
+            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->interfaces);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform interface type.");
         }
 
         err |= OCConvertSingleRepPayload(&rootMap, payload);

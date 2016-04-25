@@ -1193,11 +1193,19 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                          cbNode->method == OC_REST_DELETE)
                 {
                     char targetUri[MAX_URI_LENGTH];
-                    snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s",
-                            OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+                    snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s", OC_RSRVD_RD_URI,
+                            OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
                     if (strcmp(targetUri, cbNode->requestUri) == 0)
                     {
                         type = PAYLOAD_TYPE_RD;
+                    }
+                    else if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
+                    {
+                        type = PAYLOAD_TYPE_PLATFORM;
+                    }
+                    else if (strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DEVICE;
                     }
                     if (type == PAYLOAD_TYPE_INVALID)
                     {
@@ -1668,6 +1676,11 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     {
         serverRequest.reqTotalSize = requestInfo->info.payloadSize;
         serverRequest.payload = (uint8_t *) OICMalloc(requestInfo->info.payloadSize);
+        if (!serverRequest.payload)
+        {
+            OIC_LOG(ERROR, TAG, "Allocation for payload failed.");
+            return;
+        }
         memcpy (serverRequest.payload, requestInfo->info.payload,
                 requestInfo->info.payloadSize);
     }
@@ -3038,6 +3051,23 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
         return OC_STACK_INVALID_PARAM;
     }
 
+    if (deviceInfo.types)
+    {
+        OCStringLL *type =  deviceInfo.types;
+        OCResource *resource = findResource((OCResource *) deviceResource);
+        if (!resource)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+        deleteResourceType(resource->rsrcType);
+        resource->rsrcType = NULL;
+
+        while (type)
+        {
+            OCBindResourceTypeToResource(deviceResource, type->value);
+            type = type->next;
+        }
+    }
     return SaveDeviceInfo(deviceInfo);
 }
 
@@ -3389,11 +3419,12 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
         goto exit;
     }
     pointer->resourcetypename = str;
+    pointer->next = NULL;
 
     insertResourceType(resource, pointer);
     result = OC_STACK_OK;
 
-    exit:
+exit:
     if (result != OC_STACK_OK)
     {
         OICFree(pointer);
@@ -4295,8 +4326,27 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
 
     if (!*firstInterface)
     {
-        *firstInterface = newInterface;
+        // If first interface is not oic.if.baseline, by default add it as first interface type.
+        if (0 == strcmp(newInterface->name, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            *firstInterface = newInterface;
+        }
+        else
+        {
+            OCStackResult result = BindResourceInterfaceToResource(resource, OC_RSRVD_INTERFACE_DEFAULT);
+            if (result != OC_STACK_OK)
+            {
+                OICFree(newInterface->name);
+                OICFree(newInterface);
+                return;
+            }
+            if (*firstInterface)
+            {
+                (*firstInterface)->next = newInterface;
+            }
+        }
     }
+    // If once add oic.if.baseline, later too below code take care of freeing memory.
     else if (strcmp(newInterface->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
     {
         if (strcmp((*firstInterface)->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
@@ -4305,6 +4355,7 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
             OICFree(newInterface);
             return;
         }
+        // This code will not hit anymore, keeping
         else
         {
             newInterface->next = *firstInterface;
@@ -4421,7 +4472,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         return OC_STACK_NO_MEMORY;
 }
 
-const OicUuid_t* OCGetServerInstanceID(void)
+static const OicUuid_t* OCGetServerInstanceID(void)
 {
     static bool generated = false;
     static OicUuid_t sid;
@@ -4430,7 +4481,7 @@ const OicUuid_t* OCGetServerInstanceID(void)
         return &sid;
     }
 
-    if (GetDoxmDeviceID(&sid) != OC_STACK_OK)
+    if (OC_STACK_OK != GetDoxmDeviceID(&sid))
     {
         OIC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
         return NULL;
@@ -4449,8 +4500,7 @@ const char* OCGetServerInstanceIDString(void)
         return sidStr;
     }
 
-    const OicUuid_t* sid = OCGetServerInstanceID();
-
+    const OicUuid_t *sid = OCGetServerInstanceID();
     if(OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
     {
         OIC_LOG(FATAL, TAG, "Generate UUID String for Server Instance failed!");

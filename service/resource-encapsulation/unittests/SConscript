@@ -76,14 +76,14 @@ if target_os not in ['windows', 'winrt']:
                 rcs_test_env.AppendUnique(LIBS = ['pthread'])
 
 rcs_test_env.PrependUnique(LIBS = [
+    'connectivity_abstraction',
+    'oc_logger',
+    'oc_logger_core',
+    'octbstack',
+    'oc',
     'rcs_client',
     'rcs_server',
     'rcs_common',
-    'oc',
-    'octbstack',
-    'oc_logger',
-    'oc_logger_core',
-    'connectivity_abstraction',
     gtest,
     gtest_main])
 
