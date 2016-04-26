@@ -297,6 +297,18 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     cadata->requestInfo = NULL;
     cadata->responseInfo = resInfo;
 
+#ifdef WITH_BWT
+    if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
+    {
+        res = CARemoveBlockDataFromListWithSeed(resInfo->info.token, resInfo->info.tokenLength,
+                                                endpoint->port);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CARemoveBlockDataFromListWithSeed failed");
+        }
+    }
+#endif // WITH_BWT
+
 #ifdef SINGLE_THREAD
     CAProcessReceivedData(cadata);
 #else

@@ -2719,3 +2719,30 @@ void CALogBlockInfo(coap_block_t *block)
 
     OIC_LOG_V(DEBUG, TAG, "block option-szx : %d", block->szx);
 }
+
+CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength,
+                                             uint16_t portNumber)
+{
+    CABlockDataID_t* blockDataID = CACreateBlockDatablockId(token, tokenLength, portNumber);
+    if (NULL == blockDataID || blockDataID->idLength < 1)
+    {
+        OIC_LOG(ERROR, TAG, "blockId is null");
+        CADestroyBlockID(blockDataID);
+        return CA_STATUS_FAILED;
+    }
+
+    CAResult_t res = CA_STATUS_OK;
+
+    if (NULL != CAGetBlockDataFromBlockDataList(blockDataID))
+    {
+        res = CARemoveBlockDataFromList(blockDataID);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CARemoveBlockDataFromList failed");
+        }
+    }
+
+    CADestroyBlockID(blockDataID);
+
+    return res;
+}
