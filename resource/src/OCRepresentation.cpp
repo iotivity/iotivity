@@ -431,6 +431,11 @@ namespace OC
                 case AttributeType::Vector:
                     getPayloadArray(root, val);
                     break;
+                case AttributeType::Binary:
+                    OCRepPayloadSetPropByteString(root, val.attrname().c_str(),
+                            OCByteString{const_cast<uint8_t*>(val.getValue<std::vector<uint8_t>>().data()),
+                            val.getValue<std::vector<uint8_t>>().size()});
+                    break;
                 default:
                     throw std::logic_error(std::string("Getpayload: Not Implemented") +
                             std::to_string((int)val.type()));
@@ -634,6 +639,12 @@ namespace OC
                     break;
                 case OCREP_PROP_ARRAY:
                     setPayloadArray(val);
+                    break;
+                case OCREP_PROP_BYTE_STRING:
+                    setValue(val->name,
+                            std::vector<uint8_t>
+                            (val->ocByteStr.bytes, val->ocByteStr.bytes + val->ocByteStr.len)
+                            );
                     break;
                 default:
                     throw std::logic_error(std::string("Not Implemented!") +
@@ -841,6 +852,8 @@ namespace OC
             case AttributeType::Vector:
                 os << "Vector";
                 break;
+            case AttributeType::Binary:
+                os<< "Binary";
         }
         return os;
     }
@@ -888,7 +901,13 @@ namespace OC
     };
 
     template<typename T>
-    struct type_info<T, typename std::enable_if<is_vector<T>::value>::type>
+    struct type_info<
+        T,
+        typename std::enable_if<
+            is_vector<T>::value &&
+            !std::is_same<uint8_t, typename T::value_type>::value
+        >::type
+    >
     {
         typedef T type;
         typedef typename type_info<typename T::value_type>::base_type base_type;
@@ -898,6 +917,18 @@ namespace OC
         constexpr static size_t depth = 1 +
             type_info<typename T::value_type>::depth;
     };
+
+    // special case for binary data, which is a std::vector<uint8_t>
+    template<>
+    struct type_info<std::vector<uint8_t>, void>
+    {
+        typedef std::vector<uint8_t> type;
+        typedef std::vector<uint8_t> base_type;
+        constexpr static AttributeType enum_type = AttributeType::Binary;
+        constexpr static AttributeType enum_base_type = AttributeType::Binary;
+        constexpr static size_t depth = 0;
+    };
+
 
     struct type_introspection_visitor : boost::static_visitor<>
     {

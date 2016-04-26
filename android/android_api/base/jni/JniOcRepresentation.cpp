@@ -729,6 +729,38 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueByteArray
+* Signature: (Ljava/lang/String;[B)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueByteArray
+(JNIEnv *env, jobject thiz, jstring jKey, jbyteArray jValue)
+{
+    LOGD("OcRepresentation_setValueByteArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+
+    const jsize len = env->GetArrayLength(jValue);
+    jbyte* bytes = env->GetByteArrayElements(jValue, nullptr);
+
+    std::vector<uint8_t> value;
+    for (jsize i = 0; i < len; ++i)
+    {
+        value.push_back(static_cast<uint8_t>(bytes[i]));
+    }
+    env->ReleaseByteArrayElements(jValue, bytes, JNI_ABORT);
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    if (!rep) return;
+
+    std::string key = env->GetStringUTFChars(jKey, nullptr);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
 * Method:    addChild
 * Signature: (Lorg/iotivity/base/OcRepresentation;)V
 */
