@@ -202,6 +202,10 @@ void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectedCallback ConnHandler,
 
 static void CAInitializeTCPGlobals()
 {
+    caglobals.tcp.ipv4.fd = -1;
+    caglobals.tcp.ipv4.port = 0;
+    caglobals.tcp.ipv6.fd = -1;
+    caglobals.tcp.ipv6.port = 0;
     caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
     caglobals.tcp.svrlist = NULL;
@@ -217,6 +221,7 @@ static void CAInitializeTCPGlobals()
     }
 
     caglobals.tcp.ipv4tcpenabled = flags & CA_IPV4;
+    caglobals.tcp.ipv6tcpenabled = flags & CA_IPV6;
 }
 
 CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
