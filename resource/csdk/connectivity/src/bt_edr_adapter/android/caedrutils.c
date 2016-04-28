@@ -556,49 +556,52 @@ void CAEDRNativeAddDeviceSocketToList(JNIEnv *env, jobject deviceSocket)
 
     const char* remoteAddress = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
 
-    if (!CAEDRNativeIsDeviceSocketInList(env, remoteAddress))
+    if (CAEDRNativeIsDeviceSocketInList(env, remoteAddress))
     {
-        CAEDRSocketInfo_t *socketInfo = (CAEDRSocketInfo_t *) OICCalloc(1, sizeof(*socketInfo));
-        if (!socketInfo)
-        {
-            OIC_LOG(ERROR, TAG, "Out of memory");
-            return;
-        }
-
-        jmethodID jni_mid_getInputStream = CAGetJNIMethodID(env,
-                                                            "android/bluetooth/BluetoothSocket",
-                                                            "getInputStream",
-                                                            "()Ljava/io/InputStream;");
-        if (!jni_mid_getInputStream)
-        {
-            OIC_LOG(ERROR, TAG, "jni_mid_getInputStream is null");
-            return;
-        }
-
-        jobject jni_obj_inputStream = (*env)->CallObjectMethod(env, deviceSocket,
-                                                               jni_mid_getInputStream);
-        if (!jni_obj_inputStream)
-        {
-            OIC_LOG(ERROR, TAG, "jni_obj_inputStream is null");
-            return;
-        }
-
-        socketInfo->deviceSocket = (*env)->NewGlobalRef(env, deviceSocket);
-        socketInfo->inputStream = (*env)->NewGlobalRef(env, jni_obj_inputStream);
-        (*env)->DeleteLocalRef(env, jni_obj_inputStream);
-
-        bool result = u_arraylist_add(g_deviceObjectList, (void *) socketInfo);
-        if (!result)
-        {
-            OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-            OICFree(socketInfo);
-            return;
-        }
-
-        OIC_LOG(DEBUG, TAG, "add new device socket object to list");
+        OIC_LOG(DEBUG, TAG, "the address exists in deviceObjectList. remove it to add new");
+        CAEDRNativeRemoveDeviceSocketBaseAddr(env, jni_remoteAddress);
     }
+
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     (*env)->DeleteLocalRef(env, jni_remoteAddress);
+
+    CAEDRSocketInfo_t *socketInfo = (CAEDRSocketInfo_t *) OICCalloc(1, sizeof(*socketInfo));
+    if (!socketInfo)
+    {
+        OIC_LOG(ERROR, TAG, "Out of memory");
+        return;
+    }
+
+    jmethodID jni_mid_getInputStream = CAGetJNIMethodID(env, "android/bluetooth/BluetoothSocket",
+                                                             "getInputStream",
+                                                             "()Ljava/io/InputStream;");
+    if (!jni_mid_getInputStream)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getInputStream is null");
+        return;
+    }
+
+    jobject jni_obj_inputStream = (*env)->CallObjectMethod(env, deviceSocket,
+                                                           jni_mid_getInputStream);
+    if (!jni_obj_inputStream)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_inputStream is null");
+        return;
+    }
+
+    socketInfo->deviceSocket = (*env)->NewGlobalRef(env, deviceSocket);
+    socketInfo->inputStream = (*env)->NewGlobalRef(env, jni_obj_inputStream);
+    (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+
+    bool result = u_arraylist_add(g_deviceObjectList, (void *) socketInfo);
+    if (!result)
+    {
+        OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
+        OICFree(socketInfo);
+        return;
+    }
+
+    OIC_LOG(DEBUG, TAG, "add new device socket object to list");
 }
 
 bool CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)
@@ -611,7 +614,7 @@ bool CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)
         return false;
     }
 
-    jint length = u_arraylist_length(g_deviceStateList);
+    jint length = u_arraylist_length(g_deviceObjectList);
     for (jint index = 0; index < length; index++)
     {
         CAEDRSocketInfo_t *socketInfo = (CAEDRSocketInfo_t *) u_arraylist_get(g_deviceObjectList,
@@ -678,7 +681,7 @@ void CAEDRNativeSocketCloseToAll(JNIEnv *env)
         return;
     }
 
-    jint length = u_arraylist_length(g_deviceStateList);
+    jint length = u_arraylist_length(g_deviceObjectList);
     for (jint index = 0; index < length; index++)
     {
         jobject jni_obj_socket = (jobject) u_arraylist_get(g_deviceObjectList, index);
@@ -710,7 +713,7 @@ void CAEDRNativeRemoveAllDeviceSocket(JNIEnv *env)
         return;
     }
 
-    jint length = u_arraylist_length(g_deviceStateList);
+    jint length = u_arraylist_length(g_deviceObjectList);
     for (jint index = 0; index < length; index++)
     {
 
@@ -750,7 +753,7 @@ void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket)
         return;
     }
 
-    jint length = u_arraylist_length(g_deviceStateList);
+    jint length = u_arraylist_length(g_deviceObjectList);
     for (jint index = 0; index < length; index++)
     {
         CAEDRSocketInfo_t *socketInfo = (CAEDRSocketInfo_t *) u_arraylist_get(g_deviceObjectList,
@@ -818,7 +821,7 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address)
         return;
     }
 
-    jint length = u_arraylist_length(g_deviceStateList);
+    jint length = u_arraylist_length(g_deviceObjectList);
     for (jint index = 0; index < length; index++)
     {
         CAEDRSocketInfo_t *socketInfo = (CAEDRSocketInfo_t *) u_arraylist_get(g_deviceObjectList,
@@ -903,7 +906,7 @@ jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddres
         return NULL;
     }
 
-    jint length = u_arraylist_length(g_deviceStateList);
+    jint length = u_arraylist_length(g_deviceObjectList);
     for (jint index = 0; index < length; index++)
     {
         CAEDRSocketInfo_t *socketInfo = (CAEDRSocketInfo_t *) u_arraylist_get(g_deviceObjectList,
