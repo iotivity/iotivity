@@ -1353,7 +1353,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             {
                 OIC_LOG(INFO, TAG, "Received a message without callbacks. Sending RESET");
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_RESET, 0, NULL, NULL, 0, NULL);
+                                        CA_MSG_RESET, 0, NULL, NULL, 0, NULL);
             }
         }
 
@@ -2742,9 +2742,11 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
 
-            OIC_LOG_V(INFO, TAG, "Canceling observation for resource %s",
-                                        clientCB->requestUri);
-            if (qos != OC_HIGH_QOS)
+            OIC_LOG_V(INFO, TAG, "Canceling observation for resource %s", clientCB->requestUri);
+
+            CopyDevAddrToEndpoint(clientCB->devAddr, &endpoint);
+
+            if ((endpoint.adapter & CA_ADAPTER_IP) && qos != OC_HIGH_QOS)
             {
                 FindAndDeleteClientCB(clientCB);
                 break;
@@ -2764,7 +2766,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             requestInfo.info.numOptions = numOptions + 1;
             requestInfo.info.resourceUri = OICStrdup (clientCB->requestUri);
 
-            CopyDevAddrToEndpoint(clientCB->devAddr, &endpoint);
 
             ret = OCSendRequest(&endpoint, &requestInfo);
 
