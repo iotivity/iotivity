@@ -575,11 +575,11 @@ typedef enum
     /** De-register observation, intended for internal use.*/
     OC_REST_CANCEL_OBSERVE = (1 << 6),
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     /** Subscribe for all presence notifications of a particular resource.*/
     OC_REST_PRESENCE       = (1 << 7),
 
-    #endif
+#endif
     /** Allows OCDoResource caller to do discovery.*/
     OC_REST_DISCOVER       = (1 << 8)
 } OCMethod;
@@ -741,11 +741,11 @@ typedef enum
     OC_STACK_AUTHENTICATION_FAILURE,
 
     /** Insert all new error codes here!.*/
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,
     OC_STACK_PRESENCE_TIMEOUT,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
-    #endif
+#endif
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
     /** Error status code - END HERE.*/
