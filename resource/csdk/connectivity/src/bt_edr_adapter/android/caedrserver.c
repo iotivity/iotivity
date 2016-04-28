@@ -555,7 +555,7 @@ CAResult_t CAEDRStopReceiveThread()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
+CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t idx)
 {
     if ((*env)->ExceptionCheck(env))
     {
@@ -565,7 +565,7 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
         return CA_STATUS_FAILED;
     }
 
-    jobject jni_obj_inputStream = CAEDRNativeGetInputStream(id);
+    jobject jni_obj_inputStream = CAEDRNativeGetInputStream(idx);
     if (!jni_obj_inputStream)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_inputStream is null");
@@ -583,12 +583,13 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
 
     if (0 < available)
     {
-        jobject jni_obj_socket = CAEDRNativeGetDeviceSocket(id);
+        jobject jni_obj_socket = CAEDRNativeGetDeviceSocket(idx);
         if (!jni_obj_socket)
         {
             OIC_LOG(ERROR, TAG, "jni_obj_socket is null");
             return CA_STATUS_FAILED;
         }
+
         jstring jni_str_address = CAEDRNativeGetAddressFromDeviceSocket(env, jni_obj_socket);
         if (!jni_str_address)
         {
@@ -604,35 +605,26 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
             return CA_STATUS_FAILED;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "get InputStream..%d, %s", id, address);
-        jmethodID jni_mid_read = CAGetJNIMethodID(env, "java/io/InputStream", "read", "([BII)I");
-        if (!jni_mid_read)
+        CAConnectedDeviceInfo_t *deviceInfo =
+                (CAConnectedDeviceInfo_t *) CAEDRGetDeviceInfoFromAddress(address);
+        if (!deviceInfo)
         {
-            OIC_LOG(ERROR, TAG, "jni_mid_read is null");
+            OIC_LOG(ERROR, TAG, "failed to get device info from list");
             (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
             (*env)->DeleteLocalRef(env, jni_str_address);
             return CA_STATUS_FAILED;
         }
 
-        CAConnectedDeviceInfo_t *deviceInfo =
-                (CAConnectedDeviceInfo_t *) CAEDRGetDeviceInfoFromAddress(address);
-
-        (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
-        (*env)->DeleteLocalRef(env, jni_str_address);
-        if (!deviceInfo)
-        {
-            OIC_LOG(ERROR, TAG, "failed to get device info from list");
-            return CA_STATUS_FAILED;
-        }
-
-        jint bufSize = (deviceInfo->totalDataLen == 0) ?
-                EDR_MAX_HEADER_LEN : deviceInfo->totalDataLen;
+        jint bufSize = (deviceInfo->totalDataLen == 0) ? EDR_MAX_HEADER_LEN
+                                                       : deviceInfo->totalDataLen;
         if (!deviceInfo->recvData)
         {
             deviceInfo->recvData = OICCalloc(1, bufSize);
             if (!deviceInfo->recvData)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");
+                (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+                (*env)->DeleteLocalRef(env, jni_str_address);
                 return CA_STATUS_FAILED;
             }
         }
@@ -641,29 +633,50 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
         if (0 >= remainSize)
         {
             OIC_LOG(ERROR, TAG, "remainSize value is invalid.");
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             return CA_STATUS_FAILED;
         }
+
         jbyteArray jbuf = (*env)->NewByteArray(env, remainSize);
         if (!jbuf)
         {
             OIC_LOG(ERROR, TAG, "jbuf is null");
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             return CA_STATUS_FAILED;
         }
 
+        jmethodID jni_mid_read = CAGetJNIMethodID(env, "java/io/InputStream", "read", "([BII)I");
+        if (!jni_mid_read)
+        {
+            OIC_LOG(ERROR, TAG, "jni_mid_read is null");
+            (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+            return CA_STATUS_FAILED;
+        }
+
+        OIC_LOG_V(DEBUG, TAG, "read InputStream (idx:%d, addr:%s)", idx, address);
         jint recvLen = (*env)->CallIntMethod(env, jni_obj_inputStream, jni_mid_read,
                                              jbuf, (jint) 0, remainSize);
         if (-1 == recvLen)
         {
             OIC_LOG(ERROR, TAG, "recvLen is -1");
             (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             return CA_STATUS_FAILED;
         }
+        OIC_LOG_V(DEBUG, TAG, "read success (length: %d bytes)", recvLen);
 
         jbyte* buf = (*env)->GetByteArrayElements(env, jbuf, NULL);
         if (!buf)
         {
             OIC_LOG(ERROR, TAG, "buf is null");
             (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+            (*env)->DeleteLocalRef(env, jni_str_address);
             return CA_STATUS_FAILED;
         }
         memcpy(deviceInfo->recvData + deviceInfo->recvDataLen, (const char*) buf, recvLen);
@@ -671,8 +684,6 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
 
         (*env)->ReleaseByteArrayElements(env, jbuf, buf, 0);
         (*env)->DeleteLocalRef(env, jbuf);
-
-        OIC_LOG(DEBUG, TAG, "read something from InputStream");
 
         if (!deviceInfo->totalDataLen)
         {
@@ -689,6 +700,8 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
                 if (!newBuf)
                 {
                     OIC_LOG(ERROR, TAG, "out of memory");
+                    (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+                    (*env)->DeleteLocalRef(env, jni_str_address);
                     return CA_STATUS_FAILED;
                 }
                 deviceInfo->recvData = newBuf;
@@ -709,13 +722,15 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
                 CAEDRUpdateDeviceState(STATE_DISCONNECTED, address);
                 ca_mutex_unlock(g_mutexStateList);
 
+                (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+                (*env)->DeleteLocalRef(env, jni_str_address);
                 return CA_STATUS_FAILED;
             }
 
             if (g_edrPacketReceivedCallback)
             {
-                OIC_LOG_V(DEBUG, TAG,"data will be sent to callback routine: \
-                          %s, %d", deviceInfo->recvData, deviceInfo->recvDataLen);
+                OIC_LOG_V(DEBUG, TAG, "data will be sent to callback routine: %s, %d",
+                          deviceInfo->recvData, deviceInfo->recvDataLen);
 
                 uint32_t sentLength = 0;
                 g_edrPacketReceivedCallback(address, (void*) deviceInfo->recvData,
@@ -727,6 +742,9 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
                 deviceInfo->totalDataLen = 0;
             }
         }
+
+        (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+        (*env)->DeleteLocalRef(env, jni_str_address);
     }
 
     return CA_STATUS_OK;
@@ -882,21 +900,8 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
         }
 
         const char* address = (*env)->GetStringUTFChars(env, j_str_address, NULL);
-        OIC_LOG_V(DEBUG, TAG, "received the connection request from [%s]", address);
 
-        // set socket to list
-        jobject jni_socket = (*env)->NewGlobalRef(env, jni_obj_BTSocket);
-        if (!jni_socket)
-        {
-            OIC_LOG(ERROR, TAG, "jni_socket is null");
-            (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
-            return;
-        }
-        ca_mutex_lock(g_mutexObjectList);
-        CAEDRNativeAddDeviceSocketToList(env, jni_socket);
-        (*env)->DeleteGlobalRef(env, jni_socket);
-        (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
-        ca_mutex_unlock(g_mutexObjectList);
+        OIC_LOG_V(INFO, TAG, "accept a new connection from [%s]", address);
 
         // update state
         ca_mutex_lock(g_mutexStateList);
@@ -906,7 +911,21 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
         (*env)->ReleaseStringUTFChars(env, j_str_address, address);
         (*env)->DeleteLocalRef(env, j_str_address);
 
-        OIC_LOG_V(DEBUG, TAG, "connected with [%s]", address);
+        // set socket to list
+        jobject jni_socket = (*env)->NewGlobalRef(env, jni_obj_BTSocket);
+        if (!jni_socket)
+        {
+            OIC_LOG(ERROR, TAG, "jni_socket is null");
+            (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
+            return;
+        }
+
+        ca_mutex_lock(g_mutexObjectList);
+        CAEDRNativeAddDeviceSocketToList(env, jni_socket);
+        ca_mutex_unlock(g_mutexObjectList);
+
+        (*env)->DeleteGlobalRef(env, jni_socket);
+        (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
     }
     else
     {
