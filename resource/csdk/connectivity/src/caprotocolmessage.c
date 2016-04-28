@@ -669,7 +669,10 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
             && COAP_OPTION_BLOCK1 != opt_iter.type && COAP_OPTION_BLOCK2 != opt_iter.type
             && COAP_OPTION_SIZE1 != opt_iter.type && COAP_OPTION_SIZE2 != opt_iter.type
             && COAP_OPTION_CONTENT_FORMAT != opt_iter.type
-            && COAP_OPTION_ACCEPT != opt_iter.type)
+            && COAP_OPTION_ACCEPT != opt_iter.type
+            && COAP_OPTION_URI_HOST != opt_iter.type && COAP_OPTION_URI_PORT != opt_iter.type
+            && COAP_OPTION_ETAG != opt_iter.type && COAP_OPTION_MAXAGE != opt_iter.type
+            && COAP_OPTION_PROXY_URI != opt_iter.type && COAP_OPTION_PROXY_SCHEME != opt_iter.type)
         {
             count++;
         }
@@ -863,7 +866,17 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                     outInfo->acceptFormat = CA_FORMAT_UNSUPPORTED;
                 }
                 OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
-                        opt_iter.type, (uint8_t)buf[0]);
+                          opt_iter.type, (uint8_t)buf[0]);
+            }
+            else if (COAP_OPTION_URI_PORT == opt_iter.type ||
+                    COAP_OPTION_URI_HOST == opt_iter.type ||
+                    COAP_OPTION_ETAG == opt_iter.type ||
+                    COAP_OPTION_MAXAGE == opt_iter.type ||
+                    COAP_OPTION_PROXY_URI == opt_iter.type ||
+                    COAP_OPTION_PROXY_SCHEME== opt_iter.type)
+            {
+                OIC_LOG_V(INFO, TAG, "option[%d] has an unsupported format [%d]",
+                          opt_iter.type, (uint8_t)buf[0]);
             }
             else
             {
