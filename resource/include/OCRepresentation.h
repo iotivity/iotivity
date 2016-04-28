@@ -160,6 +160,10 @@ namespace OC
                 m_values[str] = std::forward<T>(val);
             }
 
+            const std::map<std::string, AttributeValue>& getValues() const {
+                return m_values;
+            }
+
             /**
              *  Retrieve the attribute value associated with the supplied name
              *
