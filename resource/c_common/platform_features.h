@@ -35,7 +35,7 @@
 #endif
 
 #if (__STDC_VERSION__ >= 201112L)
-    #include <stdassert.h>
+    #include <assert.h>
     #define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
 #else
     #define OC_STATIC_ASSERT(condition, msg) ((void)sizeof(char[2*!!(condition) - 1]))
