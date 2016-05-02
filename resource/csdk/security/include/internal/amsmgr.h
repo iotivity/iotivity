@@ -102,14 +102,6 @@ OCStackResult SendUnicastSecurePortDiscovery(PEContext_t *context,OCDevAddr *dev
 OCStackResult SendAclReq(PEContext_t *context, OCDevAddr *devAddr, OCConnectivityType connType,
         uint16_t securedPort);
 
-
-/*
- * Cleanup CARequestInfo_t object
- * @param requestInfo        pointer to RequestInfo_t object
- */
-void FreeCARequestInfo(CARequestInfo_t *requestInfo);
-
-
 /*
  * This method is used by Policy engine to checks Amacl resource.
  * If Amacl is found then it fills up context->amsMgrContext->amsDeviceId
