@@ -94,6 +94,8 @@ public class CaLeClientInterface {
     private native static void caLeGattNWServicesDiscoveredCallback(BluetoothGatt gatt,
                                                                     int status);
 
+    private native static void caLeGattNWDescriptorWriteCallback(BluetoothGatt gatt, int status);
+
     private native static void caLeGattCharacteristicWriteCallback(
             BluetoothGatt gatt, byte[] data, int status);
 
@@ -251,6 +253,7 @@ public class CaLeClientInterface {
             super.onDescriptorWrite(gatt, descriptor, status);
 
             caLeGattDescriptorWriteCallback(gatt, status);
+            caLeGattNWDescriptorWriteCallback(gatt, status);
         }
 
         @Override
