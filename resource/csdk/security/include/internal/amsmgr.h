@@ -95,17 +95,11 @@ OCStackResult SendUnicastSecurePortDiscovery(PEContext_t *context,
  * ::OC_STACK_ERROR, If unable to successfully send unicast ACL request due to error.
  *
  */
+
 OCStackResult SendAclReq(PEContext_t *context,
                          OCDevAddr *devAddr,
                          OCConnectivityType connType,
                          uint16_t securedPort);
-
-/*
- * Cleanup CARequestInfo_t object.
- *
- * @param requestInfo is the pointer to @ref CARequestInfo_t.
- */
-void FreeCARequestInfo(CARequestInfo_t *requestInfo);
 
 /*
  * This method is used by Policy engine to checks Amacl resource.

@@ -103,9 +103,15 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
     context->amsProcessing = false;
     context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
 
-    FreeCARequestInfo(context->amsMgrContext->requestInfo);
-    OICFree(context->amsMgrContext->endpoint);
-    memset(context->amsMgrContext, 0, sizeof(AmsMgrContext_t));
+    if (context->amsMgrContext)
+    {
+        if (context->amsMgrContext->requestInfo)
+        {
+            FreeCARequestInfo(context->amsMgrContext->requestInfo);
+        }
+        OICFree(context->amsMgrContext->endpoint);
+        memset(context->amsMgrContext, 0, sizeof(AmsMgrContext_t));
+    }
 
     // Set state.
     context->state = state;
