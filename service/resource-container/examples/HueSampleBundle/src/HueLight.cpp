@@ -44,9 +44,9 @@ HueLight::~HueLight()
 
 void HueLight::initAttributes()
 {
-    BundleResource::setAttribute("on-off", false);
-    BundleResource::setAttribute("dim", 0);
-    BundleResource::setAttribute("color", 0);
+    BundleResource::setAttribute("on-off", false, false);
+    BundleResource::setAttribute("dim", 0, false);
+    BundleResource::setAttribute("color", 0, false);
 }
 
 RCSResourceAttributes HueLight::handleGetAttributesRequest()

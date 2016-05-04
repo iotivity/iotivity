@@ -106,7 +106,7 @@ namespace OC
     template<typename T>
     struct is_vector<T,
         typename std::enable_if<
-            std::is_same<T, std::vector<typename T::value_type, typename T::allocator_type>>::value
+            std::is_same<T, std::vector<typename T::value_type, typename T::allocator_type> >::value
         >::type
     >
     {
@@ -130,17 +130,17 @@ namespace OC
 
     // specialization to handle the single-item case
     template<typename ToTest, template <typename...> class Base, typename T>
-    struct is_component<ToTest, Base<T>>
+    struct is_component<ToTest, Base<T> >
     {
         static constexpr bool value = std::is_same<ToTest, T>::value;
     };
 
     // Recursive specialization to handle cases with multiple values
     template<typename ToTest, template <typename...> class Base, typename T, typename ...Rest>
-    struct is_component<ToTest, Base<T, Rest...>>
+    struct is_component<ToTest, Base<T, Rest...> >
     {
         static constexpr bool value = std::is_same<ToTest, T>::value
-            || is_component<ToTest, Base<Rest...>>::value;
+            || is_component<ToTest, Base<Rest...> >::value;
     };
 } // namespace OC
 

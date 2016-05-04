@@ -842,17 +842,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     coap_delete_pdu(pdu);
 }
 
-static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t status)
-{
-    (void)info;
-    (void)status;
-
-    if (g_nwMonitorHandler)
-    {
-        g_nwMonitorHandler(info, status);
-    }
-}
-
 void CAHandleRequestResponseCallbacks()
 {
 #ifdef SINGLE_THREAD
@@ -1045,8 +1034,6 @@ void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler)
 CAResult_t CAInitializeMessageHandler()
 {
     CASetPacketReceivedCallback(CAReceivedPacketCallback);
-
-    CASetNetworkChangeCallback(CANetworkChangedCallback);
     CASetErrorHandleCallback(CAErrorHandler);
 
 #ifndef SINGLE_THREAD
