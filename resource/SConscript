@@ -86,5 +86,8 @@ elif target_os == 'arduino':
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')
 
 elif target_os == 'msys_nt':
+	# Build secure samples. Using linux samples for now.
+	SConscript('csdk/stack/samples/linux/secure/SConscript')
+
 	# Build C/C++ unit tests
 	SConscript('unit_tests.scons')

@@ -26,12 +26,20 @@
 #include <iostream>
 #include <sstream>
 #include "ocstack.h"
-#include "logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "oic_string.h"
 #include "common.h"
+
+#if defined(_WIN32)
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif // defined(_WIN32)
+#include "logger.h"
 
 #define TAG "occlientbasicops"
 static int UnicastDiscovery = 0;
@@ -376,7 +384,11 @@ int main(int argc, char* argv[])
             return 0;
         }
 
+#if defined(_WIN32)
+        Sleep(100);
+#else
         nanosleep(&timeout, NULL);
+#endif //defined(_WIN32)
     }
     OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

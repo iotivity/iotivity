@@ -145,7 +145,7 @@ libocsrm = libocsrm_env.StaticLibrary('libocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'libocsrm')
 
-if target_os in ['linux', 'android', 'tizen'] and env.get('SECURED') == '1':
+if target_os in ['linux', 'android', 'tizen', 'msys_nt'] and env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript')
 
 if target_os in ['linux'] and env.get('SECURED') == '1':

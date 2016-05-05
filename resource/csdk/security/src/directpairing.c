@@ -1008,7 +1008,11 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
         }
         else
         {
+#if defined(_WIN32)
+            Sleep(100);
+#else
             nanosleep(&timeout, NULL);
+#endif // defined (_WIN32)
         }
     }
 

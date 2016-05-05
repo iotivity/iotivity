@@ -26,6 +26,13 @@
 #include <pthread.h>
 #include <iostream>
 #include <sstream>
+#if defined(_WIN32)
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif // defined(_WIN32)
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -625,7 +632,12 @@ int main(void)
             return 0;
         }
 
+#if defined(_WIN32)
+        Sleep(100);
+#else
         nanosleep(&timeout, NULL);
+#endif // defined(_WIN32)
+
     }
     OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

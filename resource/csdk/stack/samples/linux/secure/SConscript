@@ -41,6 +41,8 @@ if target_os not in ['windows', 'winrt']:
 		samples_env.AppendUnique(LIBS = ['-lpthread'])
 
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+if target_os == 'msys_nt':
+	samples_env.PrependUnique(LIBS = ['ocsrm', 'ws2_32', 'iphlpapi'])
 samples_env.PrependUnique(LIBS = ['octbstack', 'm', 'connectivity_abstraction', 'coap'])
 if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])
