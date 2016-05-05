@@ -65,6 +65,10 @@ if env.get('SECURED') == '1':
 if env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if target_os in ['msys_nt']:
+	stacktest_env.AppendUnique(LIBS = ['ws2_32',
+                                        'iphlpapi'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################

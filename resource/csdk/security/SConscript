@@ -77,7 +77,7 @@ if target_os in ['darwin', 'ios']:
 	libocsrm_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	libocsrm_env.AppendUnique(LIBS = ['coap'])
 
-if not env.get('RELEASE'):
+if env.get('LOGGING'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if env.get('DTLS_WITH_X509') == '1':

@@ -69,4 +69,11 @@ elif target_os == 'darwin':
 	SConscript('csdk/stack/test/SConscript')
 	SConscript('csdk/connectivity/test/SConscript')
 
+elif target_os == 'msys_nt':
+	# Verify that 'google unit test' library is installed.  If not,
+	# get it and install it
+	SConscript(src_dir + '/extlibs/gtest/SConscript')
 
+	# Build C stack's unit tests.
+	SConscript('csdk/stack/test/SConscript')
+	SConscript('csdk/connectivity/test/SConscript')

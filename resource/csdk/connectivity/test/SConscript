@@ -55,7 +55,7 @@ catest_env.PrependUnique(LIBS = ['m',
 
 target_os = env.get('TARGET_OS')
 
-if target_os not in ['arduino', 'darwin', 'ios']:
+if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt']:
 	catest_env.AppendUnique(LIBS=['rt'])
 
 if env.get('SECURED') == '1':
@@ -63,6 +63,10 @@ if env.get('SECURED') == '1':
 
 if env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os in ['msys_nt']:
+	catest_env.AppendUnique(LIBS = ['ws2_32',
+                                        'iphlpapi'])
 
 ######################################################################
 # Source files and Targets

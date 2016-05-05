@@ -11,7 +11,7 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
-targets_need_gtest = ['darwin','linux']
+targets_need_gtest = ['darwin','linux', 'msys_nt']
 gtest_dir      = src_dir + '/extlibs/gtest/gtest-1.7.0'
 gtest_zip_file = src_dir + '/extlibs/gtest/gtest-1.7.0.zip'
 gtest_url      = 'https://googletest.googlecode.com/files/gtest-1.7.0.zip'
@@ -79,3 +79,25 @@ elif target_os == 'linux':
 			env.Configure(gtest_dir, 'make')
 
 
+elif target_os == 'msys_nt':
+	if os.path.exists(gtest_dir):
+		gtest_lib_dir = gtest_dir + '/lib'
+		gtest_dotlib_dir = gtest_lib_dir + '/.libs'
+		if not os.path.exists(gtest_lib_dir):
+			# Create lib dir
+			os.mkdir(gtest_lib_dir)
+			os.mkdir(gtest_dotlib_dir)
+
+			# Run configure on gtest
+			print 'Configuring google unit test for compilation'
+			env.Configure(gtest_dir, 'cmake -G "Unix Makefiles" .')
+
+			# Run make on gtest
+			print 'Making google unit test'
+			env.Configure(gtest_dir, 'make')
+
+			print 'Moving libraries to lib folder'
+			env.Configure(gtest_dir, 'cp libgtest.a lib')
+			env.Configure(gtest_dir, 'mv libgtest.a lib/.libs')
+			env.Configure(gtest_dir, 'cp libgtest_main.a lib')
+			env.Configure(gtest_dir, 'mv libgtest_main.a lib/.libs')
