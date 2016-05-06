@@ -153,24 +153,84 @@ CAResult_t CAStartLEGattServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    ca_mutex_lock(g_leServerThreadPoolMutex);
-    if (NULL == g_leServerThreadPool)
+    ca_mutex_lock(g_leServerStateMutex);
+    if (true == g_isLEGattServerStarted)
     {
-        OIC_LOG(ERROR, TAG, "g_leServerThreadPool is NULL");
-        ca_mutex_unlock(g_leServerThreadPoolMutex);
-        return CA_STATUS_FAILED;
+        OIC_LOG(ERROR, TAG, "Gatt Server is already running");
+        ca_mutex_unlock(g_leServerStateMutex);
+        return CA_STATUS_OK;
     }
 
-    CAResult_t ret = ca_thread_pool_add_task(g_leServerThreadPool, CAStartLEGattServerThread,
-                                             NULL);
+    CAResult_t ret = CAInitLEGattServer();
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG_V(ERROR, TAG, "ca_thread_pool_add_task failed with ret [%d]", ret);
-        ca_mutex_unlock(g_leServerThreadPoolMutex);
+        OIC_LOG_V(ERROR, TAG, "CAInitLEGattServer failed[%d]", ret);
+        ca_mutex_unlock(g_leServerStateMutex);
+        CATerminateLEGattServer();
         return CA_STATUS_FAILED;
     }
 
-    ca_mutex_unlock(g_leServerThreadPoolMutex);
+    char *serviceUUID = CA_GATT_SERVICE_UUID;
+
+    ret  = CAAddNewLEServiceInGattServer(serviceUUID);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "CAAddNewLEServiceInGattServer failed[%d]", ret);
+        ca_mutex_unlock(g_leServerStateMutex);
+        CATerminateLEGattServer();
+        return CA_STATUS_FAILED;
+    }
+
+    static const char charReadUUID[] = CA_GATT_RESPONSE_CHRC_UUID;
+    char charReadValue[] = {33, 44, 55, 66}; // These are initial random values
+
+    // For Read Characteristics.
+    ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charReadUUID, charReadValue,
+                                              CA_LE_INITIAL_BUF_SIZE, true);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "CAAddNewCharacteristicsToGattServer failed[%d]", ret);
+        ca_mutex_unlock(g_leServerStateMutex);
+        CATerminateLEGattServer();
+        return CA_STATUS_FAILED;
+    }
+
+    static const char charWriteUUID[] = CA_GATT_REQUEST_CHRC_UUID;
+    char charWriteValue[] = {33, 44, 55, 66}; // These are initial random values
+
+
+    ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charWriteUUID, charWriteValue,
+            CA_LE_INITIAL_BUF_SIZE, false); // For Write Characteristics.
+    if (CA_STATUS_OK != ret )
+    {
+        OIC_LOG_V(ERROR, TAG, "CAAddNewCharacteristicsToGattServer failed[%d]", ret);
+        ca_mutex_unlock(g_leServerStateMutex);
+        CATerminateLEGattServer();
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CARegisterLEServicewithGattServer(g_gattSvcPath);
+    if (CA_STATUS_OK != ret )
+    {
+        OIC_LOG_V(ERROR, TAG, "CARegisterLEServicewithGattServer failed[%d]", ret);
+        ca_mutex_unlock(g_leServerStateMutex);
+        CATerminateLEGattServer();
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CALEStartAdvertise(serviceUUID);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "CALEStartAdvertise failed[%d]", ret);
+        ca_mutex_unlock(g_leServerStateMutex);
+        CATerminateLEGattServer();
+        return CA_STATUS_FAILED;
+    }
+
+    g_isLEGattServerStarted = true;
+
+    ca_mutex_unlock(g_leServerStateMutex);
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -247,103 +307,6 @@ CAResult_t CALEStopAdvertise()
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
-}
-
-void CAStartLEGattServerThread(void *data)
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-    ca_mutex_lock(g_leServerStateMutex);
-    if (true == g_isLEGattServerStarted)
-    {
-        OIC_LOG(ERROR, TAG, "Gatt Server is already running");
-        ca_mutex_unlock(g_leServerStateMutex);
-        CATerminateLEGattServer();
-        return;
-    }
-
-    CAResult_t ret  =  CAInitLEGattServer();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "CAInitLEGattService failed[%d]", ret);
-        ca_mutex_unlock(g_leServerStateMutex);
-        CATerminateLEGattServer();
-        return;
-    }
-
-    char *serviceUUID = CA_GATT_SERVICE_UUID;
-
-    ret  = CAAddNewLEServiceInGattServer(serviceUUID);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "CAAddNewLEServiceInGattServer failed[%d]", ret);
-        ca_mutex_unlock(g_leServerStateMutex);
-        CATerminateLEGattServer();
-        return;
-    }
-
-    static const char charReadUUID[] = CA_GATT_RESPONSE_CHRC_UUID;
-    char charReadValue[] = {33, 44, 55, 66}; // These are initial random values
-
-    // For Read Characteristics.
-    ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charReadUUID, charReadValue,
-                                              CA_LE_INITIAL_BUF_SIZE, true);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "CAAddNewCharacteristicsToGattServer failed[%d]", ret);
-        ca_mutex_unlock(g_leServerStateMutex);
-        CATerminateLEGattServer();
-        return;
-    }
-
-    static const char charWriteUUID[] = CA_GATT_REQUEST_CHRC_UUID;
-    char charWriteValue[] = {33, 44, 55, 66}; // These are initial random values
-
-
-    ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charWriteUUID, charWriteValue,
-            CA_LE_INITIAL_BUF_SIZE, false); // For Write Characteristics.
-    if (CA_STATUS_OK != ret )
-    {
-        OIC_LOG_V(ERROR, TAG, "CAAddNewCharacteristicsToGattServer failed[%d]", ret);
-        ca_mutex_unlock(g_leServerStateMutex);
-        CATerminateLEGattServer();
-        return;
-    }
-
-    ret = CARegisterLEServicewithGattServer(g_gattSvcPath);
-    if (CA_STATUS_OK != ret )
-    {
-        OIC_LOG_V(ERROR, TAG, "CARegisterLEServicewithGattServer failed[%d]", ret);
-        ca_mutex_unlock(g_leServerStateMutex);
-        CATerminateLEGattServer();
-        return;
-    }
-
-    ret = CALEStartAdvertise(serviceUUID);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "CALEStartAdvertise failed[%d]", ret);
-        ca_mutex_unlock(g_leServerStateMutex);
-        CATerminateLEGattServer();
-        return;
-    }
-
-    g_isLEGattServerStarted = true;
-
-    ca_mutex_unlock(g_leServerStateMutex);
-
-    OIC_LOG(DEBUG, TAG, "LE Server initialization complete.");
-
-    GMainContext *thread_context = NULL;
-
-    thread_context = g_main_context_new();
-
-    g_eventLoop = g_main_loop_new(thread_context, FALSE);
-
-    g_main_context_push_thread_default(thread_context);
-
-    g_main_loop_run(g_eventLoop);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAStopLEGattServer()

@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glib.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -43,9 +42,6 @@
  * Logging tag for module name
  */
 #define TAG "OIC_CA_LE_MONITOR"
-
-static GMainLoop *g_mainloop = NULL;
-static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 /**
  * Maintains the callback to be notified on device state changed.
@@ -94,11 +90,6 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 void CALENWConnectionStateChangedCb(int result, bool connected,
                                     const char *remoteAddress, void *userData);
 
-void CALEMainLoopThread(void *param)
-{
-    g_main_loop_run(g_mainloop);
-}
-
 CAResult_t CAInitializeLENetworkMonitor()
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -140,10 +131,9 @@ void CATerminateLENetworkMonitor()
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
+CAResult_t CAInitializeLEAdapter()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    g_threadPoolHandle = threadPool;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -151,31 +141,25 @@ CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
 CAResult_t CAStartLEAdapter()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    g_mainloop = g_main_loop_new(NULL, 0);
-    if(!g_mainloop)
-    {
-        OIC_LOG(ERROR, TAG, "g_main_loop_new failed\n");
-        return CA_STATUS_FAILED;
-    }
-
-    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CALEMainLoopThread, (void *) NULL))
-    {
-        OIC_LOG(ERROR, TAG, "Failed to create thread!");
-        return CA_STATUS_FAILED;
-    }
 
     int ret = bt_initialize();
-    if (0 != ret)
+    if (BT_ERROR_NONE != ret)
     {
         OIC_LOG(ERROR, TAG, "bt_initialize failed");
         return CA_STATUS_FAILED;
     }
+    bt_adapter_state_e adapterState = BT_ADAPTER_DISABLED;
+    //Get Bluetooth adapter state
+    ret = bt_adapter_get_state(&adapterState);
 
-    ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
-    if (0 != ret)
+    if (BT_ERROR_NONE != ret && BT_ADAPTER_ENABLED == adapterState)
     {
-        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
-        return CA_STATUS_FAILED;
+        ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
+        if (BT_ERROR_NONE != ret)
+        {
+            OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
+            return CA_STATUS_FAILED;
+        }
     }
 
     ret = bt_adapter_set_state_changed_cb(CALEAdapterStateChangedCb, NULL);
@@ -208,16 +192,12 @@ CAResult_t CAStopLEAdapter()
     }
 
     ret = bt_deinitialize();
-    if (0 != ret)
+    if (BT_ERROR_NONE != ret)
     {
         OIC_LOG(ERROR, TAG, "bt_deinitialize failed");
         return CA_STATUS_FAILED;
     }
 
-    if (g_mainloop)
-    {
-        g_main_loop_quit(g_mainloop);
-    }
     return CA_STATUS_OK;
 }
 
@@ -334,6 +314,14 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
     }
 
     OIC_LOG(DEBUG, TAG, "Adapter is Enabled");
+
+    int ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
+    if (BT_ERROR_NONE != ret)
+    {
+        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
+        return;
+    }
+
     g_bleDeviceStateChangedCallback(CA_ADAPTER_ENABLED);
     ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 

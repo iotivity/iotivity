@@ -85,15 +85,6 @@ void CALEAdapterScanResultCb(int result, bt_adapter_le_device_scan_result_info_s
                              void *userData);
 
 /**
- * This thread will be used to initialize the Gatt Client and start device discovery.
- * 1. Setting neccessary callbacks for connection, characteristics changed and discovery.
- * 2. Start device discovery
- *
- * @param[in] data Currently it will be NULL(no parameter)
- */
-void CAStartLEGattClientThread(void *data);
-
-/**
  * This thread will be used to Start the timer for scanning.
  *
  * @param[in] data Currently it will be NULL(no parameter)

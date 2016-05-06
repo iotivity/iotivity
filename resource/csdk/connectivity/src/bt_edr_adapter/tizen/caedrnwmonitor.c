@@ -24,7 +24,6 @@
  * This file provides the APIs for EDR Network Monitor.
  */
 
-#include <glib.h>
 #include <string.h>
 #include <bluetooth.h>
 
@@ -34,9 +33,6 @@
 #include "caadapterutils.h"
 #include "caqueueingthread.h"
 #include "caremotehandler.h"
-
-static GMainLoop *g_mainloop = NULL;
-static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 /**
  * @var g_edrNetworkChangeCallback
@@ -51,27 +47,18 @@ static CAEDRNetworkStatusCallback g_edrNetworkChangeCallback = NULL;
 static void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
                                             void *userData);
 
-void CAEDRMainLoopThread(void *param)
-{
-    g_main_loop_run(g_mainloop);
-}
-
 CAResult_t CAEDRInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
-    g_threadPoolHandle = threadPool;
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    (void)threadPool;
     return CA_STATUS_OK;
 }
 
-void CAEDRTerminateNetworkMonitor(void)
+void CAEDRTerminateNetworkMonitor()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     g_edrNetworkChangeCallback = NULL;
 
-    // Terminate Bluetooth service
-    bt_deinitialize();
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
@@ -80,33 +67,20 @@ CAResult_t CAEDRStartNetworkMonitor()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    g_mainloop = g_main_loop_new(NULL, 0);
-    if(!g_mainloop)
-    {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "g_main_loop_new failed\n");
-        return CA_STATUS_FAILED;
-    }
-
-    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAEDRMainLoopThread, (void *) NULL))
-    {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create thread!");
-        return CA_STATUS_FAILED;
-    }
-
     // Initialize Bluetooth service
-    int err = bt_initialize();
-    if (BT_ERROR_NONE != err)
+    int ret = bt_initialize();
+    if (BT_ERROR_NONE != ret)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth initialization failed!, error num [%x]",
-                  err);
-        return CA_STATUS_FAILED;
+                  ret);
+        return;
     }
 
-    int ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
+    ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
     if(BT_ERROR_NONE != ret)
     {
        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
-       return CA_STATUS_FAILED;
+       return;
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -124,10 +98,13 @@ CAResult_t CAEDRStopNetworkMonitor()
         return CA_STATUS_FAILED;
     }
 
-    if (g_mainloop)
+    ret = bt_deinitialize();
+    if (BT_ERROR_NONE != ret)
     {
-        g_main_loop_quit(g_mainloop);
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_deinitialize failed");
+        return CA_STATUS_FAILED;
     }
+
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -178,7 +155,6 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
 
     // Input validation
     VERIFY_NON_NULL(state, EDR_ADAPTER_TAG, "state holder is NULL!");
-
 
     bt_adapter_state_e adapterState;
     int err = bt_adapter_get_state(&adapterState);

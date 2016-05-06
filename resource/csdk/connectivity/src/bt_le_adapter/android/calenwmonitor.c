@@ -83,11 +83,10 @@ void CALESetAdapterStateCallback(CALEDeviceStateChangedCallback callback)
     g_bleDeviceStateChangedCallback = callback;
 }
 
-CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
+CAResult_t CAInitializeLEAdapter()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-    (void)threadPool;
-    OIC_LOG(DEBUG, TAG, "OUT");
+    // Nothing to do.
+
     return CA_STATUS_OK;
 }
 

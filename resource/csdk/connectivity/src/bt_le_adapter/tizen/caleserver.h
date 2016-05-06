@@ -41,15 +41,6 @@
 #include "caleinterface.h"
 
 /**
- * This is thread which will be used for creating ble service and advertise ble service.
- * 1. Create New OIC Service 2. Add read & write characteristics to service.
- * 3. Register Service       4. Advertise service.
- *
- * @param[in] data  Currently it will be NULL.
- */
-void CAStartLEGattServerThread(void *data);
-
-/**
  * Used to initialize gatt server.
  *
  * @return  ::CA_STATUS_OK or Appropriate error code.
