@@ -115,7 +115,7 @@ typedef CAResult_t (*CABLEDataReceivedCallback)(const char *remoteAddress,
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool);
+CAResult_t CAInitializeLEAdapter();
 
 /**
  * Start the LE adapter layer.
