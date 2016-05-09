@@ -1,0 +1,111 @@
+//******************************************************************
+//
+// Copyright 2016 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+#include "NSThread.h"
+
+#include "NSConsumerCommon.h"
+
+#include <memory.h>
+#include "oic_malloc.h"
+
+void NSDestroyThreadHandle(NSThreadHandle *);
+
+NSThreadHandle * NSThreadInit(NSThreadFunc func, void * data)
+{
+    if (!func)
+    {
+        NS_CONSUMER_LOG(ERROR, "thread function is null");
+        return NULL;
+    }
+
+    NSThreadHandle * handle = (NSThreadHandle *)OICMalloc(sizeof(NSThreadHandle));
+    if (!handle)
+    {
+        NS_CONSUMER_LOG(ERROR, "thread allocation fail");
+        return NULL;
+    }
+
+    memset(handle, 0, sizeof(NSThreadHandle));
+
+    pthread_mutexattr_init(&(handle->mutex_attr));
+    if (pthread_mutexattr_settype(&(handle->mutex_attr), PTHREAD_MUTEX_RECURSIVE))
+    {
+        NS_CONSUMER_LOG(ERROR, "thread mutex_attr init fail");
+        NSDestroyThreadHandle(handle);
+        return NULL;
+    }
+
+    if (pthread_mutex_init(&(handle->mutex), &(handle->mutex_attr)))
+    {
+        NS_CONSUMER_LOG(ERROR, "thread mutex init fail");
+        NSDestroyThreadHandle(handle);
+        return NULL;
+    }
+
+    if (pthread_mutex_lock(&(handle->mutex)))
+    {
+        NS_CONSUMER_LOG(ERROR, "thread mutex lock fail");
+        NSDestroyThreadHandle(handle);
+        return NULL;
+    }
+
+    handle->isStarted = true;
+
+    if (pthread_create(&(handle->thread_id), NULL, func,
+            (data == NULL) ? (void *) handle : (void *)data))
+    {
+        NS_CONSUMER_LOG(ERROR, "thread create fail");
+        NSDestroyThreadHandle(handle);
+        return NULL;
+    }
+
+    pthread_mutex_unlock(&(handle->mutex));
+
+    return handle;
+}
+
+void NSThreadLock(NSThreadHandle * handle)
+{
+    pthread_mutex_lock(&(handle->mutex));
+}
+
+void NSThreadUnlock(NSThreadHandle * handle)
+{
+    pthread_mutex_unlock(&(handle->mutex));
+}
+
+void NSThreadStop(NSThreadHandle * handle)
+{
+    NSDestroyThreadHandle(handle);
+}
+
+void NSDestroyThreadHandle(NSThreadHandle * handle)
+{
+    handle->isStarted = false;
+
+    if (handle->thread_id)
+    {
+        pthread_join(handle->thread_id, NULL);
+    }
+
+    pthread_mutex_destroy(&(handle->mutex));
+    pthread_mutexattr_destroy(&(handle->mutex_attr));
+}
+
