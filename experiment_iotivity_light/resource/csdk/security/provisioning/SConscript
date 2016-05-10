@@ -1,0 +1,91 @@
+# //******************************************************************
+# //
+# // Copyright 2015 Samsung Electronics All Rights Reserved.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# //
+# // Licensed under the Apache License, Version 2.0 (the "License");
+# // you may not use this file except in compliance with the License.
+# // You may obtain a copy of the License at
+# //
+# //      http://www.apache.org/licenses/LICENSE-2.0
+# //
+# // Unless required by applicable law or agreed to in writing, software
+# // distributed under the License is distributed on an "AS IS" BASIS,
+# // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# // See the License for the specific language governing permissions and
+# // limitations under the License.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+
+Import('env')
+
+provisioning_env = env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+provisioning_env.AppendUnique(CPPPATH = [
+		'../../stack/include',
+		'../../stack/include/internal',
+		'../../ocrandom/include',
+		'../../logger/include',
+		'../../../oc_logger/include',
+		'../../ocmalloc/include',
+		'include',
+		'include/internal',
+		'../../resource/csdk/security/include',
+		'../../../../extlibs/cjson/',
+		'../../../../../extlibs/tinydtlsra/',
+		'../../connectivity/inc',
+		'../../connectivity/external/inc',
+		'../../connectivity/common/inc',
+		'../../connectivity/api',
+		'../include',
+		'../include/internal'
+		])
+target_os = env.get('TARGET_OS')
+provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__'])
+provisioning_env.AppendUnique(CFLAGS = ['-std=c99'])
+if target_os not in ['windows', 'winrt']:
+	provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-D__WITH_DTLS__'])
+
+	# Note: 'pthread' is in libc for android. On other platform, if use
+	# new gcc(>4.9?) it isn't required, otherwise, it's required
+	if target_os != 'android':
+		provisioning_env.AppendUnique(LIBS = ['-lpthread'])
+
+
+provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+
+provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+
+provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
+
+if target_os == 'android':
+	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	provisioning_env.AppendUnique(LIBS = ['gnustl_static'])
+
+	if not env.get('RELEASE'):
+		provisioning_env.AppendUnique(LIBS = ['log'])
+
+if target_os in ['darwin', 'ios']:
+	provisioning_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+provisioning_src = [
+	'src/provisioningmanager.c',
+    'src/credentialgenerator.c'
+	]
+provisioningserver = provisioning_env.StaticLibrary('ocspapi', provisioning_src)
+
+provisioning_env.InstallTarget(provisioningserver, 'libocspapi')
+provisioning_env.UserInstallTargetLib(provisioningserver, 'libocspapi')
+
+if target_os in ['linux']:
+	SConscript('sample/SConscript')
+

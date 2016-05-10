@@ -1,0 +1,37 @@
+{
+    "acl": [
+        {
+            "sub": "MTExMTExMTExMTExMTExMQ==",
+            "rsrc": [
+				"/oic/light",
+				"/oic/fan"
+			],
+			"perms": 255,
+			"ownrs" : [
+				"MjIyMjIyMjIyMjIyMjIyMg=="
+			]
+		},
+		{
+            "sub": "MzMzMzMzMzMzMzMzMzMzMw==",
+            "rsrc": [
+				"/oic/light",
+				"/oic/garage"
+			],
+			"perms": 255,
+			"ownrs" : [
+				"MjIyMjIyMjIyMjIyMjIyMg==",
+                "NDQ0NDQ0NDQ0NDQ0NDQ0NA=="
+			]
+		}
+	],
+
+	"pstat":	{
+		"isop":	false,
+		"deviceid":	"ZGV2aWNlaWQAAAAAABhanw==",
+		"ch":	1234,
+		"cm":	63,
+		"tm":	48,
+		"om":	0,
+		"sm":	[3, 1]
+	}
+}
