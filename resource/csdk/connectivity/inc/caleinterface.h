@@ -443,6 +443,25 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback);
  *                     adapter.
  */
 void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback);
+
+/**
+ * This is the callback which will be called whenever there is change in gatt connection
+ * with Client(Connected/Disconnected).
+ *
+ * @param[in]  connected      State of connection.
+ * @param[in]  remoteAddress  Mac address of the remote device in which we made connection.
+ */
+void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddress);
+
+/**
+ * This is the callback which will be called whenever there is change in gatt connection
+ * with server(Connected/Disconnected)
+ *
+ * @param[in]  connected     State of connection
+ * @param[in]  remoteAddress Mac address of the remote device in which we made connection.
+ */
+void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress);
+
 #ifdef __cplusplus
 }
 #endif

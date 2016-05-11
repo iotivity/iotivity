@@ -247,6 +247,9 @@ void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress)
     if (!connected)
     {
         OIC_LOG_V(DEBUG, TAG, "DisConnected from [%s] ", remoteAddress);
+        ca_mutex_lock(g_LEServerListMutex);
+        CARemoveLEServerInfoFromList(&g_LEServerList, remoteAddress);
+        ca_mutex_unlock(g_LEServerListMutex);
     }
     else
     {
@@ -984,7 +987,7 @@ CAResult_t CALEGattDiscoverServices(const char *remoteAddress)
     CAResult_t result = CAAddLEServerInfoToList(&g_LEServerList, serverInfo);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG(ERROR, TAG, "CAAddBLEClientInfoToList failed");
+        OIC_LOG(ERROR, TAG, "CAAddLEServerInfoToList failed");
         bt_gatt_client_destroy(clientHandle);
         CALEGattDisConnect(remoteAddress);
         return CA_STATUS_FAILED;
