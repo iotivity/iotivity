@@ -81,6 +81,6 @@ if target_os in ['android', 'tizen']:
 	calib = env.SharedLibrary('plugin_interface', env.get('PI_SRC'))
 else:
 	calib = env.StaticLibrary('plugin_interface', env.get('PI_SRC'))
-env.InstallTarget(calib, 'libplugin_interface')
-env.UserInstallTargetLib(calib, 'libplugin_interface')
+env.InstallTarget(calib, 'plugin_interface')
+env.UserInstallTargetLib(calib, 'plugin_interface')
 

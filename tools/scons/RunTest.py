@@ -43,7 +43,11 @@ def run_test(env, xml_file, test):
 
     test_cmd = os.path.join(build_dir, test)
 
-    if xml_file:
+    have_valgrind = False
+    if env.get('TARGET_OS') not in ['windows']:
+        have_valgrind = True
+
+    if xml_file and have_valgrind:
         # Environment variables to be made available during the
         # Valgrind run.
         valgrind_environment = ''

@@ -33,7 +33,12 @@ examples_env = lib_env.Clone()
 ######################################################################
 examples_env.PrependUnique(CPPPATH = ['../include'])
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-examples_env.AppendUnique(LIBS = ['oc_logger', 'stdc++'])
+examples_env.AppendUnique(LIBS = ['oc_logger'])
+examples_env.Append(LIBS = ['c_common'])
+
+compiler = env.get('CC')
+if compiler != 'cl':
+	examples_env.AppendUnique(LIBS = ['stdc++'])
 
 target_os = env.get('TARGET_OS')
 if target_os == 'android':

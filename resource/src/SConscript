@@ -70,8 +70,7 @@ if target_os == 'tizen':
 if target_os in ['linux'] and env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
 
-
-if target_os in ['msys_nt']:
+if target_os in ['msys_nt', 'windows']:
 	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
 	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
 	oclib_env.AppendUnique(LIBS=['octbstack', 'logger', 'oc_logger','connectivity_abstraction', 'ocsrm', 'c_common', 'routingmanager'])
@@ -95,10 +94,14 @@ oclib_src = [
 		'CAManager.cpp'
 	]
 
-oclib = oclib_env.SharedLibrary('oc', oclib_src)
-oclib_env.InstallTarget(oclib, 'liboc')
-oclib_env.UserInstallTargetLib(oclib, 'liboc')
-
+if target_os in ['windows']:
+	oclib_src = oclib_src + ['OCApi.cpp']
+	# TODO: Add OC_EXPORT prefixes to enable DLL generation
+	oclib = oclib_env.StaticLibrary('oc', oclib_src)
+else:
+	oclib = oclib_env.SharedLibrary('oc', oclib_src)
+oclib_env.InstallTarget(oclib, 'oc')
+oclib_env.UserInstallTargetLib(oclib, 'oc')
 header_dir = env.get('SRC_DIR') + '/resource/include/'
 
 oclib_env.UserInstallTargetHeader(header_dir + 'OCApi.h', 'resource', 'OCApi.h')

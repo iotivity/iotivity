@@ -237,6 +237,9 @@ def __installlib(ienv, targets, name):
 		else:
 			i_n = ienv.Install(user_prefix + '/lib', targets)
 		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
+	ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
@@ -248,7 +251,9 @@ def __installheader(ienv, targets, dir, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
 		i_n = ienv.Install(user_prefix + '/include/' + dir ,targets)
-		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(os.path.join(env.get('BUILD_DIR'), 'include', dir), targets)
+	ienv.Alias("install", i_n)
 
 def __installpcfile(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
@@ -258,7 +263,9 @@ def __installpcfile(ienv, targets, name):
 			i_n = ienv.Install(user_lib + '/pkgconfig', targets)
 		else:
 			i_n = ienv.Install(user_prefix + '/lib/pkgconfig', targets)
-		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR') + 'lib/pkgconfig', targets)
+	ienv.Alias("install", i_n)
 
 def __append_target(ienv, name, targets = None):
 	if targets:
@@ -315,8 +322,8 @@ if user_prefix:
 				'\@ROUTING_DEFINE\@': routing_define
 				}
 else:
-	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR'),
-				'\@EXEC_PREFIX\@': env.get('BUILD_DIR'),
+	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
+				'\@EXEC_PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
 				'\@VERSION\@': '1.0.1',
 				'\@LIB_INSTALL_DIR\@': user_lib,
 				'\@ROUTING_DEFINE\@': routing_define

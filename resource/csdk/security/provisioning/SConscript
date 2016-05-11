@@ -67,6 +67,15 @@ if target_os not in ['windows', 'msys_nt']:
 	if target_os != 'android':
 		provisioning_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
 
+provisioning_conf = Configure(provisioning_env)
+if provisioning_conf.CheckFunc('clock_gettime'):
+	provisioning_conf.env.AppendUnique(CPPDEFINES = ['HAVE_CLOCK_GETTIME'])
+if provisioning_conf.CheckFunc('GetSystemTimeAsFileTime') or target_os == 'windows':
+	# TODO: Remove target_os check.
+	# We currently check for 'windows' as well, because the environment can
+	# sometimes get so polluted that CheckFunc ceases to work!
+	provisioning_conf.env.AppendUnique(CPPDEFINES = ['HAVE_GETSYSTEMTIMEASFILETIME'])
+provisioning_env = provisioning_conf.Finish()
 
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
@@ -111,14 +120,18 @@ provisioning_src = [
 if target_os != 'tizen':
 	provisioning_src = provisioning_src + [root_dir+'/extlibs/sqlite3/sqlite3.c' ]
 
-provisioningserver = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)
+if target_os == 'windows':
+	# TODO: Add OC_EXPORT annotations and enable generation of Windows DLL
+	provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
+else:
+	provisioningserver = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)
 
-provisioning_env.InstallTarget(provisioningserver, 'libocpmapi')
-provisioning_env.UserInstallTargetLib(provisioningserver, 'libocpmapi')
+provisioning_env.InstallTarget(provisioningserver, 'ocpmapi')
+provisioning_env.UserInstallTargetLib(provisioningserver, 'ocpmapi')
 
 if env.get('DTLS_WITH_X509') == '1':
 	SConscript('ck_manager/SConscript')
 
-if target_os in ['linux', 'msys_nt']:
+if target_os in ['linux', 'msys_nt', 'windows']:
 	SConscript('sample/SConscript')
 

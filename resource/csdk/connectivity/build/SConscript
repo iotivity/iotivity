@@ -152,9 +152,9 @@ def __set_dir(env, dir):
 		Exit(1)
 
 	if env.get('RELEASE'):
-		build_dir = dir + '/out/' + target_os + '/' + target_arch + '/release/'
+		build_dir = os.path.join(dir, 'out', target_os, target_arch, 'release') + os.sep
 	else:
-		build_dir = dir + '/out/' + target_os + '/' + target_arch + '/debug/'
+		build_dir = os.path.join(dir, 'out', target_os, target_arch, 'debug') + os.sep
 	env.VariantDir(build_dir, dir, duplicate=0)
 
 	env.Replace(BUILD_DIR = build_dir)
@@ -176,6 +176,9 @@ def __installlib(ienv, targets, name):
 	if user_prefix:
 		i_n = ienv.Install(user_prefix + '/lib', targets)
 		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR') + '/lib', targets)
+	ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')

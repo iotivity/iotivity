@@ -31,7 +31,7 @@ src_dir = env.get('SRC_DIR')
 # Build liblogger
 SConscript('csdk/logger/SConscript')
 
-if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt']:
+if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows']:
 	env.AppendUnique(LIBS=['rt'])
 
 # Build libcoap
@@ -64,7 +64,7 @@ if target_os not in ['arduino','darwin','ios','android']:
 	# Build examples
 	SConscript('examples/SConscript')
 
-if target_os == 'linux':
+if target_os in ['linux', 'windows']:
 	# Build C Samples
 	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
 

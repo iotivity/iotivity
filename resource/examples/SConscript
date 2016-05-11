@@ -62,6 +62,8 @@ if target_os in ['msys_nt', 'windows']:
 if env.get('SECURED') == '1':
 	examples_env.AppendUnique(LIBS = ['tinydtls'])
 	examples_env.AppendUnique(CPPDEFINES = ['_WITH_DTLS_'])
+	if target_os in ['msys_nt', 'windows']:
+		examples_env.AppendUnique(LIBS = ['advapi32'])
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -79,53 +81,51 @@ if env.get('LOGGING'):
 if target_os in ['msys_nt', 'windows']:
 	examples_env.AppendUnique(LIBS = ['Comctl32', 'Gdi32', 'User32'])
 
+if env.get('LOGGING'):
+	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+def make_single_file_cpp_program(program_name):
+	return examples_env.Program(program_name, program_name + ".cpp")
+
 ######################################################################
 # Source files and Targets
 ######################################################################
-simpleserver = examples_env.Program('simpleserver', 'simpleserver.cpp')
-simpleclient = examples_env.Program('simpleclient', 'simpleclient.cpp')
-simpleserverHQ = examples_env.Program('simpleserverHQ', 'simpleserverHQ.cpp')
-simpleclientHQ = examples_env.Program('simpleclientHQ', 'simpleclientHQ.cpp')
-fridgeserver = examples_env.Program('fridgeserver', 'fridgeserver.cpp')
-fridgeclient = examples_env.Program('fridgeclient', 'fridgeclient.cpp')
-presenceserver = examples_env.Program('presenceserver', 'presenceserver.cpp')
-presenceclient = examples_env.Program('presenceclient', 'presenceclient.cpp')
-simpleclientserver = examples_env.Program('simpleclientserver', 'simpleclientserver.cpp')
-roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
-roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
-garageserver = examples_env.Program('garageserver', 'garageserver.cpp')
-garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
-groupserver = examples_env.Program('groupserver', 'groupserver.cpp')
-groupclient = examples_env.Program('groupclient', 'groupclient.cpp')
-lightserver = examples_env.Program('lightserver', 'lightserver.cpp')
-devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicediscoveryserver.cpp')
-devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
-threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
+example_names = [
+	'simpleserver', 'simpleclient',
+	'simpleclientserver',
+	'devicediscoveryserver', 'devicediscoveryclient'
+	]
 
+if target_os not in ['windows', 'msys_nt']:
+	example_names += [
+		'simpleserverHQ', 'simpleclientHQ',
+		'fridgeserver', 'fridgeclient',
+		'presenceserver', 'presenceclient',
+		'roomserver', 'roomclient',
+		'garageserver',
+		'garageclient',
+		'groupserver',
+		'groupclient',
+		'lightserver',
+		'threadingsample',
+		]
+
+examples = map(make_single_file_cpp_program, example_names)
+
+######################################################################
+# Other examples
+######################################################################
 clientjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
 
-examples_array = [simpleserver, simpleclient,
-		simpleserverHQ, simpleclientHQ,
-		fridgeserver, fridgeclient,
-		presenceserver, presenceclient,
-		simpleclientserver, roomserver, roomclient, garageserver,
-		garageclient,
-		groupserver, groupclient,
-		lightserver,
-		devicediscoveryserver, devicediscoveryclient,
-		threadingsample,
-		serverjson, clientjson
-     ]
-
-# Add platform-specific examples
+examples += [clientjson, serverjson]
 
 if target_os in ['msys_nt', 'windows']:
 	winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])
 	mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
-	examples_array += [winUIClient, mediaserver]
+	examples += [winUIClient, mediaserver]
 
-Alias("examples", examples_array)
+Alias("examples", examples)
 env.AppendTarget('examples')

@@ -11,9 +11,9 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
-targets_need_gtest = ['darwin','linux', 'msys_nt']
-gtest_dir      = src_dir + '/extlibs/gtest/gtest-1.7.0'
-gtest_zip_file = src_dir + '/extlibs/gtest/gtest-1.7.0.zip'
+targets_need_gtest = ['darwin','linux', 'msys_nt', 'windows']
+gtest_dir      = os.path.join(src_dir, 'extlibs', 'gtest', 'gtest-1.7.0')
+gtest_zip_file = os.path.join(src_dir, 'extlibs', 'gtest', 'gtest-1.7.0.zip')
 gtest_url      = 'https://googletest.googlecode.com/files/gtest-1.7.0.zip'
 
 if target_os in targets_need_gtest:
@@ -27,8 +27,9 @@ if target_os in targets_need_gtest:
 			gtest_zip = gtest_zip_file
 
 		# Unzip gtest
-		print 'Unzipping google unit test'
-		env.UnpackAll(gtest_dir, gtest_zip)
+		if not os.path.exists(os.path.join(gtest_dir, 'configure')):
+			print 'Unzipping google unit test'
+			env.UnpackAll(gtest_dir, gtest_zip)
 
 
 if target_os == 'darwin':
@@ -101,3 +102,61 @@ elif target_os == 'msys_nt':
 			env.Configure(gtest_dir, 'mv libgtest.a lib/.libs')
 			env.Configure(gtest_dir, 'cp libgtest_main.a lib')
 			env.Configure(gtest_dir, 'mv libgtest_main.a lib/.libs')
+
+elif target_os == 'windows':
+	if os.path.exists(gtest_dir):
+		gtest_lib_dir = os.path.join(gtest_dir, 'lib')
+		gtest_dotlib_dir = os.path.join(gtest_lib_dir, '.libs')
+		if env.get('RELEASE'):
+			output_dir = os.path.join(gtest_dir, 'Release') + os.sep
+		else:
+			output_dir = os.path.join(gtest_dir, 'Debug') + os.sep
+
+		# Three parts to the gtest config string...
+		# 1. "Visual Studio" toolchain name.
+		# 2. VS Version + Year ("14 2015", "12 2013").
+		# 3. Target Architecture ("Win64", "Win32").
+		vs_version_year = ""
+		vs_target_arch  = ""
+		vs_num = env['MSVC_VERSION']
+		if "12.0" in vs_num:
+			vs_version_year = "Visual Studio 12 2013"
+		elif "14.0" in vs_num:
+			vs_version_year = "Visual Studio 14 2015"
+		else:
+			print "Error: unknown Visual Studio version %s" % vs_num
+
+		vs_arch = env['TARGET_ARCH']
+		if "amd64" in vs_arch:
+			vs_target_arch = "Win64"
+		elif "x86" in vs_arch:
+			vs_target_arch = ""
+		else:
+			print "Error: unknown Visual Studio target arch %s" % vs_arch
+
+		vs_target_string = vs_version_year + " " + vs_target_arch
+
+		# Exit if we didn't get a match for one of the above.
+		if not vs_version_year or not vs_target_arch:
+			Exit(1)
+
+		if not os.path.exists(gtest_lib_dir):
+			# Create lib dir
+			os.mkdir(gtest_lib_dir)
+			os.mkdir(gtest_dotlib_dir)
+
+			# Run configure on gtest
+			print 'Configuring google unit test for compilation'
+			env.Configure(gtest_dir, 'cmake . -G"'+vs_target_string+'" -Dgtest_force_shared_crt=ON')
+
+			# Run make on gtest
+			print 'Making google unit test'
+			env.Configure(gtest_dir, 'msbuild gtest.vcxproj')
+			env.Configure(gtest_dir, 'msbuild gtest_main.vcxproj')
+
+			print 'Moving libraries to lib folder'
+			env.Configure(gtest_dir, 'copy '+output_dir+'gtest.lib %s' % gtest_lib_dir)
+			env.Configure(gtest_dir, 'move '+output_dir+'gtest.lib %s' % gtest_dotlib_dir )
+			env.Configure(gtest_dir, 'copy '+output_dir+'gtest_main.lib %s' % gtest_lib_dir)
+			env.Configure(gtest_dir, 'move '+output_dir+'gtest_main.lib %s' % gtest_dotlib_dir)
+
