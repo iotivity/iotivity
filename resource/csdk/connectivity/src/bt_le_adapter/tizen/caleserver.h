@@ -150,15 +150,6 @@ void CALEGattRemoteCharacteristicWriteCb(char *remoteAddress, bt_gatt_server_h s
                                          int charValueLen, void *userData);
 
 /**
- * This is the callback which will be called whenever there is change in gatt connection
- * with Client(Connected/Disconnected).
- *
- * @param[in]  connected      State of connection.
- * @param[in]  remoteAddress  Mac address of the remote device in which we made connection.
- */
-void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddress);
-
-/**
  * Setting the connection state changed callback.
  * @param[in] connStateCb      callback for receiving the changed network info.
  */

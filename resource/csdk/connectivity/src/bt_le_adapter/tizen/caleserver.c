@@ -24,6 +24,7 @@
 #include "camutex.h"
 #include "caqueueingthread.h"
 #include "cagattservice.h"
+#include "oic_string.h"
 #include "oic_malloc.h"
 #include "caleutil.h"
 
@@ -114,12 +115,15 @@ static ca_thread_pool_t g_leServerThreadPool = NULL;
  */
 static GMainLoop *g_eventLoop = NULL;
 
-static CALEConnectionStateChangedCallback g_connStateCb = NULL;
+/**
+ * This contains the list of OIC clients connected to the server.
+ */
+static LEClientInfoList *g_LEClientList = NULL;
 
-void CASetLEConnectionStateChangedCallback(CALEConnectionStateChangedCallback connStateCb)
-{
-    g_connStateCb = connStateCb;
-}
+/**
+ * Mutex to synchronize access to LE ClientList.
+ */
+static ca_mutex g_LEClientListMutex = NULL;
 
 void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddress)
 {
@@ -128,6 +132,17 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
     if (connected)
     {
         OIC_LOG_V(DEBUG, TAG, "Connected to [%s]", remoteAddress);
+        char *addr = OICStrdup(remoteAddress);
+        ca_mutex_lock(g_LEClientListMutex);
+        CAResult_t result  = CAAddLEClientInfoToList(&g_LEClientList, addr);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "CAAddLEClientInfoToList failed");
+            ca_mutex_unlock(g_LEClientListMutex);
+            OICFree(addr);
+            return;
+        }
+        ca_mutex_unlock(g_LEClientListMutex);
         if (g_connStateCb)
         {
             g_connStateCb(CA_ADAPTER_GATT_BTLE, remoteAddress, true);
@@ -136,6 +151,9 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
     else
     {
         OIC_LOG_V(DEBUG, TAG, "Disconnected from [%s]", remoteAddress);
+        ca_mutex_lock(g_LEClientListMutex);
+        CARemoveLEClientInfoFromList(&g_LEClientList, remoteAddress);
+        ca_mutex_unlock(g_LEClientListMutex);
         if (g_connStateCb)
         {
             g_connStateCb(CA_ADAPTER_GATT_BTLE, remoteAddress, false);
@@ -324,6 +342,11 @@ CAResult_t CAStopLEGattServer()
 
     g_isLEGattServerStarted = false;
 
+    ca_mutex_lock(g_LEClientListMutex);
+    CADisconnectAllClient(g_LEClientList);
+    g_LEClientList = NULL;
+    ca_mutex_unlock(g_LEClientListMutex);
+
     CAResult_t res = CALEStopAdvertise();
     {
         OIC_LOG_V(ERROR, TAG, "CALEStopAdvertise failed with ret[%d]", res);
@@ -441,6 +464,16 @@ CAResult_t CAInitGattServerMutexVariables()
             return CA_STATUS_FAILED;
         }
     }
+    if (NULL == g_LEClientListMutex)
+    {
+        g_LEClientListMutex = ca_mutex_new();
+        if (NULL == g_LEClientListMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -459,6 +492,12 @@ void CATerminateGattServerMutexVariables()
 
     ca_mutex_free(g_leReqRespCbMutex);
     g_leReqRespCbMutex = NULL;
+
+    ca_mutex_free(g_leServerThreadPoolMutex);
+    g_leServerThreadPoolMutex = NULL;
+
+    ca_mutex_free(g_LEClientListMutex);
+    g_LEClientListMutex = NULL;
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }
