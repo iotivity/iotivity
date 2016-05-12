@@ -123,11 +123,19 @@ void CALEMainLoopThread(void *param)
         OIC_LOG(ERROR, TAG, "bt_initialize failed");
         return;
     }
-    ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
-    if (BT_ERROR_NONE != ret)
+
+    bt_adapter_state_e adapterState = BT_ADAPTER_DISABLED;
+    //Get Bluetooth adapter state
+    ret = bt_adapter_get_state(&adapterState);
+
+    if (BT_ERROR_NONE != ret && BT_ADAPTER_ENABLED == adapterState)
     {
-        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
-        return;
+        ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
+        if (BT_ERROR_NONE != ret)
+        {
+            OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
+            return;
+        }
     }
 
     ret = bt_adapter_set_state_changed_cb(CALEAdapterStateChangedCb, NULL);
@@ -403,6 +411,14 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
     }
 
     OIC_LOG(DEBUG, TAG, "Adapter is Enabled");
+
+    int ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
+    if (BT_ERROR_NONE != ret)
+    {
+        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
+        return;
+    }
+
     g_bleDeviceStateChangedCallback(CA_ADAPTER_ENABLED);
     ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
