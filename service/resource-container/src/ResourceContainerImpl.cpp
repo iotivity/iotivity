@@ -405,6 +405,8 @@ namespace OIC
         {
             RCSResourceAttributes attr;
             std::string strResourceUri = request.getResourceUri();
+            const std::map< std::string, std::string > &queryParams  = request.getQueryParams();
+
             OIC_LOG_V(INFO, CONTAINER_TAG, "Container get request for %s",strResourceUri.c_str());
 
             if (m_mapServers.find(strResourceUri) != m_mapServers.end()
@@ -412,9 +414,9 @@ namespace OIC
             {
                 if (m_mapResources[strResourceUri])
                 {
-                    auto getFunction = [this, &attr, &strResourceUri]()
+                    auto getFunction = [this, &attr, &strResourceUri, queryParams]()
                     {
-                        attr = m_mapResources[strResourceUri]->handleGetAttributesRequest();
+                        attr = m_mapResources[strResourceUri]->handleGetAttributesRequest(queryParams);
                     };
                     boost::thread getThread(getFunction);
                     getThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
@@ -432,6 +434,7 @@ namespace OIC
             RCSResourceAttributes attr;
             std::list<std::string> lstAttributes;
             std::string strResourceUri = request.getResourceUri();
+            const std::map< std::string, std::string > &queryParams  = request.getQueryParams();
 
             OIC_LOG_V(INFO, CONTAINER_TAG, "Container set request for %s, %zu attributes",strResourceUri.c_str(), attributes.size());
 
@@ -440,7 +443,7 @@ namespace OIC
             {
                 if (m_mapResources[strResourceUri])
                 {
-                    auto setFunction = [this, &lstAttributes, &strResourceUri, &attributes, &attr]()
+                    auto setFunction = [this, &lstAttributes, &strResourceUri, &attributes, &attr, queryParams]()
                     {
                         lstAttributes = m_mapResources[strResourceUri]->getAttributeNames();
 
@@ -455,7 +458,7 @@ namespace OIC
                         }
 
                         OIC_LOG_V(INFO, CONTAINER_TAG, "Calling handleSetAttributeRequest");
-                        m_mapResources[strResourceUri]->handleSetAttributesRequest(attr);
+                        m_mapResources[strResourceUri]->handleSetAttributesRequest(attr, queryParams);
                     };
                     boost::thread setThread(setFunction);
                     setThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));

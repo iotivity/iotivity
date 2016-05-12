@@ -32,12 +32,14 @@ BMISensorResource::~BMISensorResource()
 }
 
 void BMISensorResource::handleSetAttributesRequest(
-    const RCSResourceAttributes &value)
+    const RCSResourceAttributes &value,
+    const std::map< std::string, std::string > &queryParams)
 {
     BundleResource::setAttributes(value);
 }
 
-RCSResourceAttributes BMISensorResource::handleGetAttributesRequest()
+RCSResourceAttributes BMISensorResource::handleGetAttributesRequest(const
+        std::map< std::string, std::string > &queryParams)
 {
     return BundleResource::getAttributes();
 }
