@@ -741,6 +741,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
             if (!strcmp(setAddress, address))
             {
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
+                (*env)->DeleteLocalRef(env, jni_setAddress);
 
                 // connect to gatt server
                 ret = CALEClientStopScan();
@@ -773,6 +774,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 break;
             }
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
+            (*env)->DeleteLocalRef(env, jni_setAddress);
         }
     }
 
@@ -910,22 +912,6 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         {
             OIC_LOG(ERROR, TAG, "BT device - send has failed");
         }
-
-        jstring jni_address = CALEGetAddressFromBTDevice(env, jarrayObj);
-        if (!jni_address)
-        {
-            OIC_LOG(ERROR, TAG, "CALEGetAddressFromBTDevice has failed");
-            continue;
-        }
-
-        const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
-        if (!address)
-        {
-            OIC_LOG(ERROR, TAG, "address is not available");
-            continue;
-        }
-
-        (*env)->ReleaseStringUTFChars(env, jni_address, address);
     }
 
     OIC_LOG(DEBUG, TAG, "connection routine is finished for multicast");
@@ -2633,6 +2619,7 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
     if (!remoteAddress)
     {
         OIC_LOG(ERROR, TAG, "remoteAddress is null");
+        (*env)->DeleteLocalRef(env, jni_remoteAddress);
         ca_mutex_unlock(g_deviceListMutex);
         return CA_STATUS_FAILED;
     }
@@ -2645,6 +2632,7 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
         OIC_LOG_V(DEBUG, TAG, "Added a new BT Device in deviceList [%s]", remoteAddress);
     }
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
+    (*env)->DeleteLocalRef(env, jni_remoteAddress);
 
     ca_mutex_unlock(g_deviceListMutex);
 
@@ -2683,16 +2671,19 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
         if (!setAddress)
         {
             OIC_LOG(ERROR, TAG, "setAddress is null");
+            (*env)->DeleteLocalRef(env, jni_setAddress);
             return true;
         }
 
         if (!strcmp(remoteAddress, setAddress))
         {
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
+            (*env)->DeleteLocalRef(env, jni_setAddress);
             return true;
         }
 
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
+        (*env)->DeleteLocalRef(env, jni_setAddress);
     }
 
     OIC_LOG_V(DEBUG, TAG, "[%s] doesn't exist in scanned device list", remoteAddress);
