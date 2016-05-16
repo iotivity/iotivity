@@ -26,7 +26,7 @@ DOXYFILE_ENCODING      = UTF-8
 # identify the project. Note that if you do not use Doxywizard you need
 # to put quotes around the project name if it contains spaces.
 
-PROJECT_NAME           = "IoTivity C++ SDK"
+PROJECT_NAME           = "IoTivity C SDK"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number.
 # This could be handy for archiving the generated documentation or
@@ -660,28 +660,30 @@ WARN_LOGFILE           = ./doxygen.log
 # with spaces.
 
 INPUT                  = . \
-                         ../include/OCApi.h \
-                         ../include/OCPlatform.h \
-                         ../include/OCRepresentation.h \
-                         ../include/OCResourceRequest.h \
-                         ../include/OCResourceResponse.h \
-                         ../include/OCResource.h \
-                         ../include/OCProvisioningManager.h \
-                         ../csdk/stack/include/octypes.h \
-                         ../csdk/stack/include/ocstackconfig.h \
+			 ../../csdk/security/provisioning/include/ocprovisioningmanager.h \
+			 ../../csdk/security/provisioning/include/pmtypes.h \
+			 ../../csdk/security/provisioning/include/pmutility.h \
+			 ../../csdk/stack/include/ocstack.h \
+			 ../../csdk/stack/include/octypes.h \
+			 ../../csdk/stack/include/ocpayload.h \
+			 ../../csdk/stack/include/ocpresence.h \
+			 ../../csdk/stack/include/rdpayload.h \
+			 ../../csdk/stack/include/payload_logging.h \
+                         ../../csdk/stack/include/ocstackconfig.h \
+                         ../../csdk/stack/include/internal/occlientcb.h \
+                         ../../csdk/stack/include/internal/occollection.h \
+                         ../../csdk/stack/include/internal/ocobserve.h \
+                         ../../csdk/stack/include/internal/ocpayloadcbor.h \
+                         ../../csdk/stack/include/internal/ocresource.h \
+                         ../../csdk/stack/include/internal/ocresourcehandler.h \
+                         ../../csdk/stack/include/internal/ocserverrequest.h \
+                         ../../csdk/stack/include/internal/ocstackinternal.h \
+                         ../../csdk/stack/include/internal/oicgroup.h \
+                         ../../csdk/stack/include/internal/oickeepalive.h \
                          guides \
-                         ../../service/resource-encapsulation/include \
-                         ../../service/resource-hosting/include \
-                         ../../service/resource-container/include \
-                         ../../service/resource-container/bundle-api/include \
-                         ../../service/things-manager/sdk/inc/ThingsConfiguration.h \
-                         ../../service/things-manager/sdk/inc/ThingsMaintenance.h \
-                         ../../service/easy-setup/mediator/richsdk/inc/ \
-                         ../../service/easy-setup/enrollee/inc \
-                         ../../service/easy-setup/enrollee/src/softap.h \
-                         ../../service/easy-setup/inc \
-                         ../../service/resource-directory/include \
-                         ../../service/scene-manager/include \
+                         ../../../service/easy-setup/enrollee/inc \
+                         ../../../service/easy-setup/enrollee/src/softap.h \
+                         ../../../service/resource-directory/include \
 
 
 # This tag can be used to specify the character encoding of the source files
@@ -1708,7 +1710,7 @@ UML_LOOK               = NO
 # the class node. If there are many fields or methods and many nodes the
 # graph may become too big to be useful. The UML_LIMIT_NUM_FIELDS
 # threshold limits the number of items for each type to make the size more
-# manageable. Set this to 0 for no limit. Note that the threshold may be
+# managable. Set this to 0 for no limit. Note that the threshold may be
 # exceeded by 50% before the limit is enforced.
 
 UML_LIMIT_NUM_FIELDS   = 10

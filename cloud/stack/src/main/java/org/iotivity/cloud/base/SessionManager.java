@@ -23,10 +23,9 @@ package org.iotivity.cloud.base;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-
-import org.iotivity.cloud.util.Logger;
+import java.util.Map.Entry;
+import java.util.Objects;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -48,22 +47,10 @@ public class SessionManager {
     }
 
     public void removeSessionByChannel(ChannelHandlerContext ctx) {
-        synchronized (sessions) {
-            if (!isThereCtxChannel(ctx)) {
-                Logger.d("Already Session Removed : "
-                        + ctx.channel().toString());
-                return;
-            }
-            Iterator<String> iterator = sessions.keySet().iterator();
-            while (iterator.hasNext()) {
-                String key = (String) iterator.next();
-                if (ctx.channel().toString()
-                        .equals(querySession(key).channel().toString())) {
-                    Logger.d("Session Remove : " + ctx.channel().toString());
-                    removeSession(key);
-                    break;
-                }
-            }
+
+        String did = queryDid(ctx);
+        if (did != null) {
+            removeSession(did);
         }
     }
 
@@ -77,29 +64,23 @@ public class SessionManager {
         return ctx;
     }
 
-    public boolean isThereCtx(ChannelHandlerContext ctx) {
-
+    public String queryDid(ChannelHandlerContext ctx) {
         synchronized (sessions) {
-            return sessions.containsValue(ctx);
-        }
-    }
-
-    public boolean isThereCtxChannel(ChannelHandlerContext ctx) {
-
-        synchronized (sessions) {
-            Iterator<String> iterator = sessions.keySet().iterator();
-            while (iterator.hasNext()) {
-                String key = (String) iterator.next();
-                if (ctx.channel().toString()
-                        .equals(querySession(key).channel().toString())) {
-                    return true;
+            for (Entry<String, ChannelHandlerContext> entry : sessions
+                    .entrySet()) {
+                if (Objects.equals(ctx, entry.getValue())) {
+                    return entry.getKey();
                 }
             }
-            return false;
         }
+
+        return null;
     }
 
     public List<String> getSessions() {
-        return new ArrayList<String>(sessions.keySet());
+        synchronized (sessions) {
+            List<String> list = new ArrayList<String>(sessions.keySet());
+            return list;
+        }
     }
 }

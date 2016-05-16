@@ -22,6 +22,7 @@
 package org.iotivity.cloud.util;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,6 +51,25 @@ public class JSONUtil {
         try {
             @SuppressWarnings("unchecked")
             Map<String, String> jsonMap = mapper.readValue(jsonString,
+                    Map.class);
+            value = jsonMap.get(key);
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+
+        return value;
+    }
+    
+    public static ArrayList<String> parseJSON(byte[] payload, String key) {
+
+        if (payload == null)
+            return null;
+
+        ArrayList<String> value = null;
+
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, ArrayList<String>> jsonMap = mapper.readValue(payload,
                     Map.class);
             value = jsonMap.get(key);
         } catch (IOException ioe) {

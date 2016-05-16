@@ -1074,6 +1074,7 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
             jobject gatt = CALEClientConnect(env, device,
                                              CALEClientGetFlagFromState(env, jni_address,
                                                                         CA_LE_AUTO_CONNECT_FLAG));
+
             if (NULL == gatt)
             {
                 OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
@@ -3337,7 +3338,6 @@ CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
                   newstate->autoConnectFlag);
         u_arraylist_add(g_deviceStateList, newstate); // update new state
     }
-
     ca_mutex_unlock(g_deviceStateListMutex);
 
     return CA_STATUS_OK;

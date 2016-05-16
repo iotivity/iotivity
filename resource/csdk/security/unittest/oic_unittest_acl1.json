@@ -1,53 +1,106 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/d",
-                "/oic/p",
-                "/oic/res/types/d",
-                "/oic/ad",
-                "/oic/sec/acl"
-			],
-			"perms": 2,
-			"ownrs" : [
-				"MjIyMjIyMjIyMjIyMjIyMg=="
-			]
-		},
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/doxm",
-                "/oic/sec/pstat"
-			],
-			"perms": 6,
-			"ownrs" : [
-				"MjIyMjIyMjIyMjIyMjIyMg=="
-			]
-		},
-        {
-            "sub": "MTExMTExMTExMTExMTExMQ==",
-            "rsrc": [
-				"/oic/light",
-				"/oic/fan"
-			],
-			"perms": 255,
-			"ownrs" : [
-				"MjIyMjIyMjIyMjIyMjIyMg=="
-			]
-		},
-		{
-            "sub": "MzMzMzMzMzMzMzMzMzMzMw==",
-            "rsrc": [
-				"/oic/light",
-				"/oic/garage"
-			],
-			"perms": 255,
-			"ownrs" : [
-				"MjIyMjIyMjIyMjIyMjIyMg==",
-                "NDQ0NDQ0NDQ0NDQ0NDQ0NA=="
-			]
-		}
-	]
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/types/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/ad",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 6
+                },
+                {
+                    "subjectuuid": "31313131-3131-3131-3131-313131313131",
+                    "resources": [
+                        {
+                            "href": "/oic/light",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/fan",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 31        
+                },
+                {
+                    "subjectuuid": "33333333-3333-3333-3333-333333333333",
+                    "resources": [
+                        {
+                            "href": "/oic/light",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/garage",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 31        
+                }
+            ]
+        },
+        "rowneruuid" : "32323232-3232-3232-3232-323232323232"
+    }
 }
+

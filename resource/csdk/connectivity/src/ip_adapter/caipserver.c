@@ -844,9 +844,6 @@ static void CAProcessNewInterface(CAInterface_t *ifitem)
         applyMulticastToInterface4(inaddr);
     }
 }
-static void CAHandleNetlink()
-{
-}
 
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 {

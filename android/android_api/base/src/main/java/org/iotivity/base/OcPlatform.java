@@ -23,6 +23,7 @@
 package org.iotivity.base;
 
 import org.iotivity.ca.CaInterface;
+import org.iotivity.base.BuildConfig;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -40,6 +41,10 @@ public final class OcPlatform {
         System.loadLibrary("octbstack");
         System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
+        if (0 != BuildConfig.SECURED)
+        {
+            System.loadLibrary("ocprovision");
+        }
         System.loadLibrary("ocstack-jni");
     }
 

@@ -124,29 +124,101 @@ public class MongoDB {
         LinksPayloadFormat linksPayloadFormat = new LinksPayloadFormat();
         ArrayList<LinksPayloadFormat> list = new ArrayList<LinksPayloadFormat>();
 
-        publishPayloadFormat
-                .setDeviceName(doc.getString(Constants.RS_DEVICE_NAME));
-        publishPayloadFormat.setDi(doc.getString(Constants.RS_DEVICE_ID));
-        publishPayloadFormat.setBaseUri(doc.getString(Constants.RS_BASE_URI));
-        publishPayloadFormat.setBitmap(doc.getInteger(Constants.RS_BITMAP));
-        publishPayloadFormat.setPort(doc.getInteger(Constants.RS_HOSTING_PORT));
-        publishPayloadFormat.setIns(doc.getInteger(Constants.RS_INS));
-        publishPayloadFormat.setRts(doc.getString(Constants.RS_RTS));
-        publishPayloadFormat.setDrel(doc.getString(Constants.RS_DREL));
-        publishPayloadFormat.setTtl(doc.getInteger(Constants.RS_TTL));
+        Object tmp = null;
+        
+        tmp = doc.get(Constants.RS_DEVICE_NAME);
+        if(tmp != null) {
+            publishPayloadFormat
+            .setDeviceName(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_DEVICE_ID);
+        if(tmp != null) {
+            publishPayloadFormat.setDi(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_BASE_URI);
+        if(tmp != null) {
+            publishPayloadFormat.setBaseUri(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_BITMAP);
+        if(tmp != null) {
+            publishPayloadFormat.setBitmap((int)tmp);
+        }
+        
+        tmp = doc.get(Constants.RS_HOSTING_PORT);
+        if(tmp != null) {
+            publishPayloadFormat.setPort((int)tmp);
+        }
+       
+        tmp = doc.get(Constants.RS_INS);
+        if(tmp != null) {
+            publishPayloadFormat.setIns((int)tmp);
+        }
+        
+        tmp = doc.get(Constants.RS_RTS);
+        if(tmp != null) {
+            publishPayloadFormat.setRts(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_DREL);
+        if(tmp != null) {
+            publishPayloadFormat.setDrel(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_TTL);
+        if(tmp != null) {
+            publishPayloadFormat.setTtl((int)tmp);
+        }
+        
+        tmp = doc.get(Constants.RS_HREF);
+        if(tmp != null) {
+            linksPayloadFormat.setHref(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_RESOURCE_TYPE);
+        if(tmp != null) {
+            linksPayloadFormat
+            .setRt((ArrayList<String>) tmp);
+        }
 
-        linksPayloadFormat.setHref(doc.getString(Constants.RS_HREF));
-        linksPayloadFormat
-                .setRt((ArrayList<String>) doc.get(Constants.RS_RESOURCE_TYPE));
-        linksPayloadFormat
-                .setItf((ArrayList<String>) doc.get(Constants.RS_INTERFACE));
-        linksPayloadFormat.setRel(doc.getString(Constants.RS_REL));
-        linksPayloadFormat.setObs(doc.getBoolean(Constants.RS_OBS));
-        linksPayloadFormat.setTitle(doc.getString(Constants.RS_TITLE));
-        linksPayloadFormat.setUri(doc.getString(Constants.RS_URI));
-        linksPayloadFormat.setIns(doc.getInteger(Constants.RS_INS));
-        linksPayloadFormat
-                .setMt((ArrayList<String>) doc.get(Constants.RS_MEDIA_TYPE));
+        tmp = doc.get(Constants.RS_INTERFACE);
+        if(tmp != null) {
+            linksPayloadFormat
+            .setItf((ArrayList<String>) tmp);
+        }
+        
+        tmp = doc.get(Constants.RS_REL);
+        if(tmp != null) {
+            linksPayloadFormat.setRel(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_OBS);
+        if(tmp != null) {
+            linksPayloadFormat.setObs((boolean)tmp);
+        }
+        
+        tmp = doc.get(Constants.RS_TITLE);
+        if(tmp != null) {
+            linksPayloadFormat.setTitle(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_URI);
+        if(tmp != null) {
+            linksPayloadFormat.setUri(tmp.toString());
+        }
+        
+        tmp = doc.get(Constants.RS_INS);
+        if(tmp != null) {
+            linksPayloadFormat.setIns((int)tmp);
+        }
+        
+        tmp = doc.get(Constants.RS_MEDIA_TYPE);
+        if(tmp != null) {
+            linksPayloadFormat
+            .setMt((ArrayList<String>) tmp);
+        }
 
         list.add(linksPayloadFormat);
         publishPayloadFormat.setLinks(list);

@@ -816,11 +816,10 @@ namespace OIC
         {
             OIC_LOG_V(DEBUG, CONTAINER_TAG, "Discover input resource %s", outputResourceUri.c_str());
             auto foundOutputResource = m_mapResources.find(outputResourceUri);
-           // auto resourceProperty = foundOutputResource->second->m_mapResourceProperty;
 
             resourceInfo info;
             m_config->getResourceConfiguration(foundOutputResource->second->m_bundleId,
-                    foundOutputResource->second->m_name, &info);
+                outputResourceUri, &info);
             map< string, vector< map< string, string > > > resourceProperty = info.resourceProperty;
 
             try

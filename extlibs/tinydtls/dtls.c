@@ -4275,7 +4275,6 @@ handle_ccs(dtls_context_t *ctx, dtls_peer_t *peer,
 	   uint8 *record_header, uint8 *data, size_t data_length)
 {
   int err;
-  dtls_handshake_parameters_t *handshake = peer->handshake_params;
 
   /* A CCS message is handled after a KeyExchange message was
    * received from the client. When security parameters have been
@@ -4291,6 +4290,7 @@ handle_ccs(dtls_context_t *ctx, dtls_peer_t *peer,
   if (data_length < 1 || data[0] != 1)
     return dtls_alert_fatal_create(DTLS_ALERT_DECODE_ERROR);
 
+  dtls_handshake_parameters_t *handshake = peer->handshake_params;
   /* Just change the cipher when we are on the same epoch */
   if (peer->role == DTLS_SERVER) {
     err = calculate_key_block(ctx, handshake, peer,
@@ -4443,6 +4443,10 @@ dtls_handle_message(dtls_context_t *ctx,
           dtls_info("decrypt_verify() failed\n");
 	  if (peer->state < DTLS_STATE_CONNECTED) {
 	    dtls_alert_send_from_err(ctx, peer, &peer->session, err);
+
+	  (void)CALL(ctx, event, &peer->session,
+	    DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
+
 	    peer->state = DTLS_STATE_CLOSED;
 	    /* dtls_stop_retransmission(ctx, peer); */
 	    dtls_destroy_peer(ctx, peer, 1);
@@ -4479,11 +4483,14 @@ dtls_handle_message(dtls_context_t *ctx,
       if (err < 0) {
 	dtls_warn("error while handling ChangeCipherSpec message\n");
 	dtls_alert_send_from_err(ctx, peer, session, err);
+        if (peer) {
+	  (void)CALL(ctx, event, &peer->session,
+                DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
 
-	/* invalidate peer */
-	dtls_destroy_peer(ctx, peer, 1);
-	peer = NULL;
-
+	  /* invalidate peer */
+	  dtls_destroy_peer(ctx, peer, 1);
+	  peer = NULL;
+        }
 	return err;
       }
       break;
@@ -4535,6 +4542,13 @@ dtls_handle_message(dtls_context_t *ctx,
       if (err < 0) {
 	dtls_warn("error while handling handshake packet\n");
 	dtls_alert_send_from_err(ctx, peer, session, err);
+
+      if (peer) {
+        (void)CALL(ctx, event, &peer->session,
+              DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
+        dtls_destroy_peer(ctx, peer, 1);
+      }
+
 	return err;
       }
       if (peer && peer->state == DTLS_STATE_CONNECTED) {

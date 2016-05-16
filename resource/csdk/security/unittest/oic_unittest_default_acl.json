@@ -1,21 +1,63 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/d",
-                "/oic/p",
-                "/oic/res/types/d",
-                "/oic/ad",
-                "/oic/sec/acl",
-                "/oic/sec/doxm",
-                "/oic/sec/pstat"
-			],
-			"perms": 2,
-			"ownrs" : [
-				"MjIyMjIyMjIyMjIyMjIyMg=="
-			]
-		}
-	]
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/types/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/ad",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                }
+            ]
+        },
+        "rowneruuid" : "32323232-3232-3232-3232-323232323232"
+    }
 }

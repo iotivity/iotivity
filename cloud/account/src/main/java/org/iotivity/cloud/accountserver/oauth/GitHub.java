@@ -32,7 +32,7 @@ import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
-import org.iotivity.cloud.accountserver.util.JSONUtil;
+import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Logger;
 
 /**
@@ -76,16 +76,21 @@ public class GitHub extends OAuthServer {
     @Override
     public String requestGetUserInfo(String accessToken) {
 
-        String userInfo = "{}";
+        String userInfo = null;
+
+        if (accessToken == null) {
+            Logger.w("accessToken is null!");
+            return null;
+        }
 
         try {
 
             OAuthClientRequest request = new OAuthBearerClientRequest(
                     resource_url).setAccessToken(accessToken)
-                            .buildQueryMessage();
+                    .buildQueryMessage();
 
-            OAuthClient oAuthClient = new OAuthClient(
-                    new URLConnectionClient());
+            OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+            
             OAuthResourceResponse resourceResponse = oAuthClient.resource(
                     request, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
 
@@ -96,9 +101,8 @@ public class GitHub extends OAuthServer {
             e.printStackTrace();
         }
 
-        JSONUtil util = new JSONUtil();
         String userIdKey = "login";
-        String userId = util.parseJSON(userInfo, userIdKey);
+        String userId = JSONUtil.parseJSON(userInfo, userIdKey);
 
         return userId;
     }

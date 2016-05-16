@@ -83,54 +83,11 @@ static OCStackResult createStringLL(uint8_t numElements, OCResourceHandle handle
     return OC_STACK_OK;
 }
 
-OCStackResult parseHost(const char *host, int *port, char *addr)
-{
-    //Parse addr, port from host
-    if (strstr(host, DEFAULT_COAP_TCP_HOST) != NULL)
-    {
-        *port = DEFAULT_COAP_TCP_PORT;
-        strncpy(addr, host + strlen(DEFAULT_COAP_TCP_HOST),
-                strlen(host) - strlen(DEFAULT_COAP_TCP_HOST));
-    }
-    else if (strstr(host, DEFAULT_COAP_TCP_SECURE_HOST) != NULL)
-    {
-        *port = DEFAULT_COAP_TCP_SECURE_PORT;
-        strncpy(addr, host + strlen(DEFAULT_COAP_TCP_SECURE_HOST),
-                strlen(host) - strlen(DEFAULT_COAP_TCP_SECURE_HOST));
-    }
-    else
-    {
-        return OC_STACK_INVALID_URI;
-    }
-
-    if (strchr(addr, ':') != NULL)
-    {
-        char *strPort = strchr(addr, ':');
-        *port = atoi(strPort + 1);
-        addr[strlen(addr) - strlen(strPort)] = '\0';
-    }
-
-    return OC_STACK_OK;
-}
-
 OCStackResult OCCloudRegisterLogin(const char *host, const char *auth_provider,
                                    const char *auth_code, OCClientResponseHandler response)
 {
     char    targetUri[MAX_URI_LENGTH * 2] = { 0, };
     snprintf(targetUri, MAX_URI_LENGTH * 2, "%s%s", host, DEFAULT_AUTH_REGISTER_LOGIN);
-
-    int     port = 0;
-    char    addr[MAX_ADDR_STR_SIZE] = { 0, };
-
-    if (parseHost(host, &port, (char *)&addr) != OC_STACK_OK)
-    {
-        return OC_STACK_INVALID_URI;
-    }
-
-    OCDevAddr authAddr;
-    memset(&authAddr, 0, sizeof(OCDevAddr));
-    OICStrcpy(authAddr.addr, MAX_ADDR_STR_SIZE, addr);
-    authAddr.port = port;
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
@@ -147,7 +104,7 @@ OCStackResult OCCloudRegisterLogin(const char *host, const char *auth_provider,
     OCRepPayloadSetPropString(registerPayload, "authprovider", auth_provider);
     OCRepPayloadSetPropString(registerPayload, "authcode", auth_code);
 
-    return OCDoResource(NULL, OC_REST_POST, targetUri, &authAddr, (OCPayload *)registerPayload,
+    return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)registerPayload,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
 no_memory:
@@ -160,19 +117,6 @@ OCStackResult OCCloudLoginout(const char *host, const char *query, const char *a
 {
     char    targetUri[MAX_URI_LENGTH * 2] = { 0, };
     snprintf(targetUri, MAX_URI_LENGTH * 2, "%s%s", host, query);
-
-    int     port = 0;
-    char    addr[MAX_ADDR_STR_SIZE] = { 0, };
-
-    if (parseHost(host, &port, (char *)&addr) != OC_STACK_OK)
-    {
-        return OC_STACK_INVALID_URI;
-    }
-
-    OCDevAddr authAddr;
-    memset(&authAddr, 0, sizeof(OCDevAddr));
-    OICStrcpy(authAddr.addr, MAX_ADDR_STR_SIZE, addr);
-    authAddr.port = port;
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
@@ -188,7 +132,7 @@ OCStackResult OCCloudLoginout(const char *host, const char *query, const char *a
 
     OCRepPayloadSetPropString(loginoutPayload, "session", auth_session);
 
-    return OCDoResource(NULL, OC_REST_POST, targetUri, &authAddr, (OCPayload *)loginoutPayload,
+    return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)loginoutPayload,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
 no_memory:
@@ -214,19 +158,6 @@ OCStackResult OCCloudPublish(const char *host, const char *query,
 {
     char    targetUri[MAX_URI_LENGTH * 2] = { 0, };
     snprintf(targetUri, MAX_URI_LENGTH * 2, "%s%s", host, query);
-
-    int     port = 0;
-    char    addr[MAX_ADDR_STR_SIZE] = { 0, };
-
-    if (parseHost(host, &port, (char *)&addr) != OC_STACK_OK)
-    {
-        return OC_STACK_INVALID_URI;
-    }
-
-    OCDevAddr rdAddr;
-    memset(&rdAddr, 0, sizeof(OCDevAddr));
-    OICStrcpy(rdAddr.addr, MAX_ADDR_STR_SIZE, addr);
-    rdAddr.port = port;
 
     // Gather all resources locally and do publish
     OCCallbackData cbData;
@@ -275,7 +206,7 @@ OCStackResult OCCloudPublish(const char *host, const char *query,
                 }
             }
 
-            if (OC_STACK_OK == OCGetNumberOfResourceTypes(handle, &numElement))
+            if (OC_STACK_OK == OCGetNumberOfResourceInterfaces(handle, &numElement))
             {
                 OCStackResult res = createStringLL(numElement, handle, OCGetResourceInterfaceName, &itf);
                 if (res != OC_STACK_OK || !itf)
@@ -331,7 +262,7 @@ OCStackResult OCCloudPublish(const char *host, const char *query,
         goto no_memory;
     }
 
-    return OCDoResource(NULL, OC_REST_POST, targetUri, &rdAddr, (OCPayload *)rdPayload,
+    return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
 no_memory:

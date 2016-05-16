@@ -482,7 +482,7 @@ static CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key
 
 static CborError ConditionalAddIntToMap(CborEncoder *map, const char *tags, const uint64_t *value)
 {
-    CborError err = CborUnknownError;
+    CborError err = CborNoError;
     if (*value)
     {
         err = cbor_encode_text_string(map, tags, strlen(tags));

@@ -79,9 +79,20 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
     VERIFY_PARAM_NON_NULL(TAG, size, "size parameter is NULL");
 
     OIC_LOG_V(INFO, TAG, "Converting payload of type %d", payload->type);
-
-    out = (uint8_t *)OICCalloc(1, curSize);
-    VERIFY_PARAM_NON_NULL(TAG, out, "Failed to allocate payload");
+    if (PAYLOAD_TYPE_SECURITY == payload->type)
+    {
+        size_t securityPayloadSize = ((OCSecurityPayload *)payload)->payloadSize;
+        if (securityPayloadSize > 0)
+        {
+            out = (uint8_t *)OICCalloc(1, ((OCSecurityPayload *)payload)->payloadSize);
+            VERIFY_PARAM_NON_NULL(TAG, out, "Failed to allocate security payload");
+        }
+    }
+    if (out == NULL)
+    {
+        out = (uint8_t *)OICCalloc(1, curSize);
+        VERIFY_PARAM_NON_NULL(TAG, out, "Failed to allocate payload");
+    }
     err = OCConvertPayloadHelper(payload, out, &curSize);
     ret = OC_STACK_NO_MEMORY;
 
@@ -103,7 +114,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
 
     if (err == CborNoError)
     {
-        if (curSize < INIT_SIZE)
+        if (curSize < INIT_SIZE && PAYLOAD_TYPE_SECURITY != payload->type)
         {
             uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
             VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
@@ -112,7 +123,8 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
 
         *size = curSize;
         *outPayload = out;
-        OIC_LOG_V(DEBUG, TAG, "Payload Size: %zd Payload : %s \n", *size, *outPayload);
+        OIC_LOG_V(DEBUG, TAG, "Payload Size: %zd Payload : ", *size);
+        OIC_LOG_BUFFER(DEBUG, TAG, *outPayload, *size);
         return OC_STACK_OK;
     }
 
@@ -170,24 +182,10 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
 static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
         size_t* size)
 {
-    CborEncoder encoder;
-    cbor_encoder_init(&encoder, outPayload, *size, 0);
+    memcpy(outPayload, payload->securityData, payload->payloadSize);
+    *size = payload->payloadSize;
 
-    CborEncoder map;
-    int64_t err = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Creating security map");
-
-    if (payload->securityData)
-    {
-        err |= cbor_encode_text_string(&map, payload->securityData,
-                                      strlen(payload->securityData));
-        VERIFY_CBOR_SUCCESS(TAG, err, "Retrieving security data");
-    }
-
-    err |= cbor_encoder_close_container(&encoder, &map);
-    VERIFY_CBOR_SUCCESS(TAG, err, "closing security map");
-exit:
-    return checkError(err, &encoder, outPayload, size);
+    return CborNoError;
 }
 
 static int64_t OCStringLLJoin(CborEncoder *map, char *type, OCStringLL *val)

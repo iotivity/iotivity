@@ -124,7 +124,7 @@ namespace OC
              * all the device in subnet which are not yet owned.
              *
              * @param timeout Timeout in seconds, time until which function will listen to
-             *                    responses from client before returning the list of devices.
+             *                    responses from server before returning the list of devices.
              * @param list List of candidate devices to be provisioned.
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
@@ -136,7 +136,7 @@ namespace OC
              * all the device in subnet which are already owned by calling provisioning client.
              *
              * @param timeout Timeout in seconds, time until which function will listen to
-             *                    responses from client before returning the list of devices.
+             *                    responses from server before returning the list of devices.
              * @param list List of owned devices.
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */

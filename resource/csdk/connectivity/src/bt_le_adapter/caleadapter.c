@@ -29,6 +29,10 @@
 #ifndef SINGLE_THREAD
 #include "caqueueingthread.h"
 #endif
+#if defined(__TIZEN__) || defined(__ANDROID__)
+#include "caleserver.h"
+#include "caleclient.h"
+#endif
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"

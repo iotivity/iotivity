@@ -14,20 +14,22 @@ import android.util.Log;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import org.iotivity.base.CredType;
+import org.iotivity.base.DeviceStatus;
+import org.iotivity.base.KeySize;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcPlatform;
-import org.iotivity.base.PlatformConfig;
-import org.iotivity.base.QualityOfService;
-import org.iotivity.base.ServiceType;
 import org.iotivity.base.OcProvisioning;
 import org.iotivity.base.OcSecureResource;
-import org.iotivity.base.ProvisionResult;
-import org.iotivity.base.OxmType;
 import org.iotivity.base.OicSecAcl;
-import org.iotivity.base.CredType;
-import org.iotivity.base.KeySize;
-import org.iotivity.base.DeviceStatus;
+import org.iotivity.base.OxmType;
+import org.iotivity.base.PlatformConfig;
+import org.iotivity.base.ProvisionResult;
+import org.iotivity.base.QualityOfService;
+import org.iotivity.base.ServiceType;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -39,41 +41,11 @@ import java.util.EnumSet;
 import java.util.List;
 
 public class ProvisioningClient extends Activity implements
-    OcSecureResource.DoOwnershipTransferListener,OcSecureResource.ProvisionPairwiseDevicesListener {
+        OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwiseDevicesListener {
 
     private static final String TAG = "Provisioning Client: ";
     private static final int BUFFER_SIZE = 1024;
     int unownedDevCount = StringConstants.NUMBER_ZERO;
-    private String filePath = "";
-    private OcSecureResource newSecureResource;
-    private List<OcSecureResource> deviceList;
-    private List<OcSecureResource> ownedDeviceList;
-    private TextView mEventsTextView;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_secure_provision_client);
-        mEventsTextView = new TextView(this);
-        mEventsTextView.setGravity(Gravity.BOTTOM);
-        mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
-        LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
-        layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
-        );
-        filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
-        //copy json when application runs first time
-        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
-        if (isFirstRun) {
-            copyJsonFromAsset();
-            SharedPreferences.Editor editor = wmbPreference.edit();
-            editor.putBoolean("FIRSTRUN", false);
-            editor.commit();
-        }
-        initOICStack();
-    }
-
     OcProvisioning.PinCallbackListener pinCallbackListener =
             new OcProvisioning.PinCallbackListener() {
                 @Override
@@ -82,7 +54,11 @@ public class ProvisioningClient extends Activity implements
                     return "";
                 }
             };
-
+    private String filePath = "";
+    private OcSecureResource newSecureResource;
+    private List<OcSecureResource> deviceList;
+    private List<OcSecureResource> ownedDeviceList;
+    private TextView mEventsTextView;
     OcSecureResource.ProvisionAclListener provisionAclListener =
             new OcSecureResource.ProvisionAclListener() {
                 @Override
@@ -97,7 +73,6 @@ public class ProvisioningClient extends Activity implements
                     }
                 }
             };
-
     OcSecureResource.ProvisionCredentialsListener provisionCredentialsListener =
             new OcSecureResource.ProvisionCredentialsListener() {
                 @Override
@@ -112,7 +87,6 @@ public class ProvisioningClient extends Activity implements
                     }
                 }
             };
-
     OcSecureResource.UnlinkDevicesListener unlinkDevicesListener =
             new OcSecureResource.UnlinkDevicesListener() {
                 @Override
@@ -127,7 +101,6 @@ public class ProvisioningClient extends Activity implements
                     }
                 }
             };
-
     OcSecureResource.RemoveDeviceListener removeDeviceListener =
             new OcSecureResource.RemoveDeviceListener() {
                 @Override
@@ -141,6 +114,30 @@ public class ProvisioningClient extends Activity implements
                 }
             };
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_secure_provision_client);
+        mEventsTextView = new TextView(this);
+        mEventsTextView.setGravity(Gravity.BOTTOM);
+        mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
+        LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
+        layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+        );
+        filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
+        //copy CBOR file when application runs first time
+        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
+        if (isFirstRun) {
+            copyCborFromAsset();
+            SharedPreferences.Editor editor = wmbPreference.edit();
+            editor.putBoolean("FIRSTRUN", false);
+            editor.commit();
+        }
+        initOICStack();
+    }
+
     /**
      * configure OIC platform and call findResource
      */
@@ -152,7 +149,7 @@ public class ProvisioningClient extends Activity implements
                 ModeType.CLIENT_SERVER,
                 "0.0.0.0", // bind to all available interfaces
                 0,
-                QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_JSON_DB_FILE);
+                QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_CBOR_DB_FILE);
         OcPlatform.Configure(cfg);
         try {
             /*
@@ -198,17 +195,15 @@ public class ProvisioningClient extends Activity implements
             newSecureResource = ownedDeviceList.get(0);
             OcSecureResource newSecureResource2 = ownedDeviceList.get(1);
             List<String> resources = new ArrayList<String>();
-            List<String> owners = new ArrayList<String>();
             List<String> periods = new ArrayList<String>();
             List<String> recurrences = new ArrayList<String>();
-            recurrences.add("Daily");
-            resources.add("*");
-            owners.add("adminDeviceUUID0");
-            periods.add("01-01-15");
+            recurrences.add(StringConstants.DEFAULT_RECURRENCES);
+            resources.add(StringConstants.DEFAULT_RESOURCES);
+            periods.add(StringConstants.DEFAULT_PERIOD);
             OicSecAcl acl1 = new OicSecAcl(newSecureResource.getDeviceID(), recurrences, periods,
-                    31, resources, owners);
+                    StringConstants.DEFAULT_PERMISSION, resources, StringConstants.DEFAULT_ROWNER_ID);
             OicSecAcl acl2 = new OicSecAcl(newSecureResource2.getDeviceID(), recurrences, periods,
-                    31, resources, owners);
+                    StringConstants.DEFAULT_PERMISSION, resources, StringConstants.DEFAULT_ROWNER_ID);
             newSecureResource.provisionPairwiseDevices(EnumSet.of(CredType.SYMMETRIC_PAIR_WISE_KEY),
                     KeySize.OWNER_PSK_LENGTH_128, acl1, newSecureResource2, acl2, this);
         } catch (Exception e) {
@@ -233,21 +228,21 @@ public class ProvisioningClient extends Activity implements
     }
 
     /**
-     * Copy svr db json file from assets folder to app data files dir
+     * Copy svr db CBOR dat file from assets folder to app data files dir
      */
-    private void copyJsonFromAsset() {
+    private void copyCborFromAsset() {
         InputStream inputStream = null;
         OutputStream outputStream = null;
         int length;
         byte[] buffer = new byte[BUFFER_SIZE];
         try {
-            inputStream = getAssets().open(StringConstants.OIC_CLIENT_JSON_DB_FILE);
+            inputStream = getAssets().open(StringConstants.OIC_CLIENT_CBOR_DB_FILE);
             File file = new File(filePath);
             //check files directory exists
             if (!(file.exists() && file.isDirectory())) {
                 file.mkdirs();
             }
-            outputStream = new FileOutputStream(filePath + StringConstants.OIC_CLIENT_JSON_DB_FILE);
+            outputStream = new FileOutputStream(filePath + StringConstants.OIC_CLIENT_CBOR_DB_FILE);
             while ((length = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, length);
             }
@@ -255,10 +250,10 @@ public class ProvisioningClient extends Activity implements
             logMessage(TAG + "Null pointer exception " + e.getMessage());
             Log.e(TAG, e.getMessage());
         } catch (FileNotFoundException e) {
-            logMessage(TAG + "Json svr db file not found " + e.getMessage());
+            logMessage(TAG + "CBOR svr db file not found " + e.getMessage());
             Log.e(TAG, e.getMessage());
         } catch (IOException e) {
-            logMessage(TAG + StringConstants.OIC_CLIENT_JSON_DB_FILE + " file copy failed");
+            logMessage(TAG + StringConstants.OIC_CLIENT_CBOR_DB_FILE + " file copy failed");
             Log.e(TAG, e.getMessage());
         } finally {
             if (inputStream != null) {
@@ -369,15 +364,14 @@ public class ProvisioningClient extends Activity implements
                     OcSecureResource ocSecureResourceDest = ownedDeviceList.get(1);
                     publishProgress(TAG + "ACL Provision for " + ocSecureResource.getDeviceID());
                     List<String> resources = new ArrayList<String>();
-                    List<String> owners = new ArrayList<String>();
                     List<String> periods = new ArrayList<String>();
                     List<String> recurrences = new ArrayList<String>();
-                    recurrences.add("Daily");
-                    resources.add("*");
-                    owners.add("adminDeviceUUID0");
-                    periods.add("01-01-15");
+                    recurrences.add(StringConstants.DEFAULT_RECURRENCES);
+                    resources.add(StringConstants.DEFAULT_RESOURCES);
+                    periods.add(StringConstants.DEFAULT_PERIOD);
                     OicSecAcl aclObject = new OicSecAcl(ocSecureResourceDest.getDeviceID(),
-                            recurrences, periods, 31, resources, owners);
+                            recurrences, periods, StringConstants.DEFAULT_PERMISSION, resources,
+                            StringConstants.DEFAULT_ROWNER_ID);
                     ocSecureResource.provisionACL(aclObject, provisionAclListener);
                 } else {
                     publishProgress(TAG + "No Owned devices present");
@@ -444,7 +438,7 @@ public class ProvisioningClient extends Activity implements
                     List<String> linkedDevices = ocSecureResource.getLinkedDevices();
                     if (linkedDevices.size() > 0) {
                         for (int i = 0; i < linkedDevices.size(); i++) {
-                            publishProgress(TAG + "Linked Devices "+
+                            publishProgress(TAG + "Linked Devices " +
                                     (i + 1) + "= " + linkedDevices.get(i));
                         }
                     } else {
@@ -546,7 +540,7 @@ public class ProvisioningClient extends Activity implements
             try {
                 publishProgress(TAG + "Initiate Owned device Discovery");
                 ownedDeviceList = OcProvisioning.discoverOwnedDevices
-                    (StringConstants.DISCOVERY_TIMEOUT_10);
+                        (StringConstants.DISCOVERY_TIMEOUT_10);
                 if (ownedDeviceList.size() > 0) {
                     for (int i = 0; i < ownedDeviceList.size(); i++) {
                         publishProgress(TAG + "Owned Discovered Device " + (i + 1) + "= " +
