@@ -1537,6 +1537,9 @@ CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address, jint state
             case CA_LE_AUTO_CONNECT_FLAG:
                 curState->autoConnectFlag = flag;
                 break;
+            case CA_LE_DESCRIPTOR_FOUND:
+                curState->isDescriptorFound = flag;
+                break;
             default:
                 break;
         }
@@ -1578,6 +1581,9 @@ jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state
     {
         case CA_LE_AUTO_CONNECT_FLAG:
             ret = curState->autoConnectFlag;
+            break;
+        case CA_LE_DESCRIPTOR_FOUND:
+            ret = curState->isDescriptorFound;
             break;
         default:
             break;
@@ -4183,12 +4189,12 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
                                                                             jobject gatt,
                                                                             jint status)
 {
-    OIC_LOG_V(INFO, TAG, "CALeGattServicesDiscoveredCallback - status %d: ", status);
+    OIC_LOG_V(INFO, TAG, "CALeGattServicesDiscoveredCallback - status %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
-    if (0 != status) // discovery error
+    if (GATT_SUCCESS != status) // discovery error
     {
         CALEClientSendFinish(env, gatt);
         return;
@@ -4235,6 +4241,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
     {
         OIC_LOG_V(INFO, TAG, "Descriptor is not found : %d", res);
 
+        res = CALEClientSetFlagToState(env, jni_address, CA_LE_DESCRIPTOR_FOUND, JNI_FALSE);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientSetFlagToState has failed");
+            goto error_exit;
+        }
+
         res = CALEClientUpdateDeviceState(address, CA_LE_CONNECTION_STATE,
                                           STATE_SERVICE_CONNECTED);
         if (CA_STATUS_OK != res)
@@ -4251,6 +4264,15 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
                 OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
                 goto error_exit;
             }
+        }
+    }
+    else
+    {
+        res = CALEClientSetFlagToState(env, jni_address, CA_LE_DESCRIPTOR_FOUND, JNI_TRUE);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientSetFlagToState has failed");
+            goto error_exit;
         }
     }
 
@@ -4320,7 +4342,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
                 g_clientErrorCallback(address, data, length, CA_SEND_FAILED);
             }
 
-            CALEClientSendFinish(env, gatt);
+            (*env)->ReleaseStringUTFChars(env, jni_address, address);
             goto error_exit;
         }
     }
@@ -4424,7 +4446,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattDescriptorWriteCallback(JNIEnv 
                                                                          jobject gatt,
                                                                          jint status)
 {
-    OIC_LOG_V(INFO, TAG, "CALeGattDescriptorWriteCallback - status %d: ", status);
+    OIC_LOG_V(INFO, TAG, "CALeGattDescriptorWriteCallback - status %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
@@ -4441,18 +4463,19 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattDescriptorWriteCallback(JNIEnv 
     }
 
     const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
-    if (address)
+    if (!address)
     {
-        CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_CONNECTION_STATE,
-                                                     STATE_SERVICE_CONNECTED);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            goto error_exit;
-        }
+        goto error_exit;
     }
+
+    CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_CONNECTION_STATE,
+                                                 STATE_SERVICE_CONNECTED);
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+        goto error_exit;
+    }
 
     if (g_sendBuffer)
     {

@@ -223,6 +223,8 @@ public class MetaPropertiesView extends ViewPart {
                         // interface set.
                         Set<String> curIfSet = resourceInSelection
                                 .getResourceInterfaces();
+                        // Adding default interface to local set if removed.
+                        updatedIfSet.add(Constants.BASELINE_INTERFACE);
                         if (null != curIfSet && null != updatedIfSet) {
                             if (curIfSet.size() != updatedIfSet.size()) {
                                 update = true;
@@ -506,7 +508,13 @@ public class MetaPropertiesView extends ViewPart {
                             }
                             // Update the model
                             MetaProperty prop = (MetaProperty) element;
-                            prop.setPropValue(newPropValue.toString());
+                            StringBuilder value = new StringBuilder();
+                            value.append(Constants.BASELINE_INTERFACE);
+                            if (newPropValue.length() > 0) {
+                                value.append(", " + newPropValue.toString());
+                            }
+                            prop.setPropValue(value.toString());
+
                             // Update the viewer in a separate UI thread.
                             Display.getDefault().asyncExec(new Runnable() {
                                 @Override

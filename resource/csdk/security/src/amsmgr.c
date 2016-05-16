@@ -331,6 +331,11 @@ OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endp
 {
     OCStackResult ret = OC_STACK_ERROR;
 
+    if (!context->amsMgrContext)
+    {
+        goto exit;
+    }
+
     //The AmsMgr context endpoint and requestInfo will be free from ,
     //AmsMgrAclReqCallback function
     if(context->amsMgrContext->endpoint)
@@ -356,9 +361,9 @@ exit:
 
 void FreeCARequestInfo(CARequestInfo_t *requestInfo)
 {
-    if(NULL == requestInfo)
+    if (NULL == requestInfo)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Can't free memory. Received NULL requestInfo", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: Can't free memory. Received NULL requestInfo", __func__);
         return;
     }
     OICFree(requestInfo->info.token);

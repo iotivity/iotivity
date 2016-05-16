@@ -459,13 +459,8 @@ TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 // check return value
 TEST_F(CATests, RegisterNetworkMonitorHandler)
 {
-#ifdef LE_ADAPTER
     EXPECT_EQ(CA_STATUS_OK, CARegisterNetworkMonitorHandler(adapter_handler,
                                                             connection_handler));
-#else
-    EXPECT_EQ(CA_NOT_SUPPORTED, CARegisterNetworkMonitorHandler(adapter_handler,
-                                                                connection_handler));
-#endif
 }
 
 // CASetAutoConnectionDeviceInfo TC

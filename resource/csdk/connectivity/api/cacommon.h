@@ -26,8 +26,10 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#ifndef WITH_ARDUINO
 #ifdef TCP_ADAPTER
 #define HAVE_SYS_POLL_H
+#endif
 #endif
 
 #include <stdint.h>

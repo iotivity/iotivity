@@ -429,7 +429,7 @@ public class ResourceManagerView extends ViewPart {
                                         .getDefault()
                                         .getLogManager()
                                         .log(Level.ERROR.ordinal(), new Date(),
-                                                "There is an error while creating the wizard.\n");
+                                                "There is an error while reading information from the UI wizard.\n");
                                 return;
                             }
 

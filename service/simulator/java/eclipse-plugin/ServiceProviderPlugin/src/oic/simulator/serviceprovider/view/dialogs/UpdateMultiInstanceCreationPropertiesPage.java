@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,15 @@ import org.eclipse.swt.widgets.Text;
 
 import oic.simulator.serviceprovider.utils.Constants;
 
-public class UpdatePropertiesPage extends WizardPage {
+public class UpdateMultiInstanceCreationPropertiesPage extends WizardPage {
 
     private Text   resNameTxt;
-    private Text   resUriTxt;
     private Text   resTypeTxt;
 
     private String resName;
-    private String resURI;
     private String resType;
 
-    protected UpdatePropertiesPage() {
+    protected UpdateMultiInstanceCreationPropertiesPage() {
         super("Update Properties");
     }
 
@@ -75,18 +73,6 @@ public class UpdatePropertiesPage extends WizardPage {
         gd.verticalIndent = 20;
         resNameTxt.setLayoutData(gd);
 
-        Label resUriLbl = new Label(grp, SWT.NULL);
-        resUriLbl.setText("Resource URI");
-        gd = new GridData();
-        gd.verticalIndent = 10;
-        resUriLbl.setLayoutData(gd);
-
-        resUriTxt = new Text(grp, SWT.BORDER);
-        gd = new GridData();
-        gd.widthHint = 300;
-        gd.verticalIndent = 10;
-        resUriTxt.setLayoutData(gd);
-
         Label resTypeLbl = new Label(grp, SWT.NULL);
         resTypeLbl.setText("Resource Type");
         gd = new GridData();
@@ -106,16 +92,14 @@ public class UpdatePropertiesPage extends WizardPage {
 
         final Text text = new Text(comp, SWT.MULTI | SWT.READ_ONLY | SWT.BORDER
                 | SWT.WRAP | SWT.V_SCROLL);
-        text.setText("These properties can be changed later from properties view.");
+        text.setText("All resource instances will be configured with the same resource name and type.\n"
+                + "These properties can be changed later from properties view.");
         gd = new GridData(SWT.FILL, SWT.FILL, true, true);
         text.setLayoutData(gd);
 
         addUIListeners();
 
         // Initialize data
-        if (resUriTxt.getText().length() < 1 && null != resURI) {
-            resUriTxt.setText(resURI);
-        }
         if (resNameTxt.getText().length() < 1 && null != resName) {
             resNameTxt.setText(resName);
         }
@@ -131,18 +115,6 @@ public class UpdatePropertiesPage extends WizardPage {
             @Override
             public void modifyText(ModifyEvent e) {
                 resName = resNameTxt.getText();
-                setPageComplete(isSelectionDone());
-            }
-        });
-
-        resUriTxt.addModifyListener(new ModifyListener() {
-            @Override
-            public void modifyText(ModifyEvent e) {
-                resURI = resUriTxt.getText();
-                if (null == resURI) {
-                    return;
-                }
-
                 setPageComplete(isSelectionDone());
             }
         });
@@ -167,8 +139,7 @@ public class UpdatePropertiesPage extends WizardPage {
 
     public boolean isSelectionDone() {
         boolean done = false;
-        if (null != resName && resName.trim().length() > 0 && null != resURI
-                && resURI.trim().length() > 0 && null != resType
+        if (null != resName && resName.trim().length() > 0 && null != resType
                 && resType.trim().length() > 0) {
             done = true;
         }
@@ -190,16 +161,6 @@ public class UpdatePropertiesPage extends WizardPage {
             resNameTxt.setText(resName);
     }
 
-    public void setResURI(String resURI) {
-        if (null == resURI) {
-            resURI = "";
-        }
-
-        this.resURI = resURI;
-        if (null != resUriTxt && !resUriTxt.isDisposed())
-            resUriTxt.setText(resURI);
-    }
-
     public void setResType(String resType) {
         if (null == resType) {
             resType = "";
@@ -212,10 +173,6 @@ public class UpdatePropertiesPage extends WizardPage {
 
     public String getResName() {
         return resName;
-    }
-
-    public String getResURI() {
-        return resURI;
     }
 
     public String getResType() {

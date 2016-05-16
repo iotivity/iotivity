@@ -46,6 +46,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
+import java.util.Set;
 
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
@@ -74,8 +75,11 @@ public class LoadRamlPage extends WizardPage {
     private int                    resourceCount;
 
     private Resource               resource;
+    private Set<SingleResource>    multiInstanceResourceSet;
 
     private SimulatorResource.Type typeOfResource;
+
+    private IProgressMonitor       progressMonitor;
 
     protected LoadRamlPage() {
         super("Create Resource");
@@ -217,7 +221,7 @@ public class LoadRamlPage extends WizardPage {
             resourceCount = -1;
         }
         if (null != configFilePath && configFilePath.trim().length() > 0) {
-            if (resourceCount == 1) {
+            if (resourceCount >= 1) {
                 done = true;
             }
         }
@@ -282,57 +286,165 @@ public class LoadRamlPage extends WizardPage {
             return null;
         }
 
+        IWizardPage nextPage;
+        String resName;
+        String resURI;
+        String resType;
         final CreateResourceWizard wizard = ((CreateResourceWizard) getWizard());
+        if (isMultiResourceCreation()) {
+            final int[] resCreatedCount = new int[1];
+            try {
+                getContainer().run(true, true, new IRunnableWithProgress() {
 
-        try {
-            getContainer().run(true, false, new IRunnableWithProgress() {
-                @Override
-                public void run(IProgressMonitor monitor)
-                        throws InvocationTargetException, InterruptedException {
-                    try {
-                        monitor.beginTask("Resource Creation With RAML", 2);
-                        monitor.worked(1);
-                        resource = Activator.getDefault().getResourceManager()
-                                .createResourceByRAML(configFilePath);
-                        monitor.worked(1);
-                    } catch (SimulatorException e) {
-                        wizard.setStatus("Failed to create resource.\n"
-                                + Utility.getSimulatorErrorString(e, null));
-                    } finally {
-                        monitor.done();
+                    @Override
+                    public void run(final IProgressMonitor monitor)
+                            throws InvocationTargetException,
+                            InterruptedException {
+                        progressMonitor = monitor;
+                        try {
+                            monitor.beginTask(
+                                    "Single Resource Creation(multi-instance) With RAML",
+                                    wizard.getLoadRamlPage().getResourceCount());
+                            resCreatedCount[0] = createMultiInstanceSingleResourceWithRAML();
+
+                        } finally {
+                            monitor.done();
+                        }
                     }
-                }
-            });
-        } catch (InvocationTargetException e) {
-            Activator.getDefault().getLogManager()
-                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            Activator.getDefault().getLogManager()
-                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
-            e.printStackTrace();
-        }
-        if (null == resource) {
-            wizard.setStatus("Failed to create Resource.");
-            wizard.getWizardDialog().close();
-            return null;
-        } else {
-            // Checking whether the resource is of type single.
-            Option intendedResource = wizard.getMainPage().getOption();
-            if ((intendedResource == Option.SIMPLE_FROM_RAML && !(resource instanceof SingleResource))) {
-                MessageDialog
-                        .openError(
-                                getShell(),
-                                "Invalid RAML",
-                                "Uploaded RAML is not of simple type. "
-                                        + "Please upload the proper RAML of simple type.");
+                });
+            } catch (InvocationTargetException e) {
+                Activator.getDefault().getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                Activator.getDefault().getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                e.printStackTrace();
+            }
+
+            if (0 == resCreatedCount[0]) {
+                wizard.setStatus("Failed to create Resources.");
+                wizard.getWizardDialog().close();
                 return null;
             }
+
+            boolean canceled = false;
+            if (null != progressMonitor && progressMonitor.isCanceled()) {
+                canceled = true;
+            }
+            progressMonitor = null;
+            if (canceled) {
+                return null;
+            }
+
+            // It is guaranteed that will be at least one resource at this
+            // point.
+            SingleResource resourceInstance = (SingleResource) multiInstanceResourceSet
+                    .toArray()[0];
+            resName = resourceInstance.getResourceName();
+            resType = resourceInstance.getResourceType();
+            resURI = resourceInstance.getResourceURI();
+            UpdateMultiInstanceCreationPropertiesPage updatePageRef = wizard
+                    .getUpdateMultiInstanceCreationPropPage();
+            updatePageRef.setResName(resName);
+            updatePageRef.setResType(resType);
+            nextPage = updatePageRef;
+        } else {
+            try {
+                getContainer().run(true, false, new IRunnableWithProgress() {
+                    @Override
+                    public void run(IProgressMonitor monitor)
+                            throws InvocationTargetException,
+                            InterruptedException {
+                        try {
+                            monitor.beginTask("Resource Creation With RAML", 2);
+                            monitor.worked(1);
+                            resource = Activator.getDefault()
+                                    .getResourceManager()
+                                    .createResourceByRAML(configFilePath);
+                            monitor.worked(1);
+                        } catch (SimulatorException e) {
+                            wizard.setStatus("Failed to create resource.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
+                        } finally {
+                            monitor.done();
+                        }
+                    }
+                });
+            } catch (InvocationTargetException e) {
+                Activator.getDefault().getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                Activator.getDefault().getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                e.printStackTrace();
+            }
+            if (null == resource) {
+                wizard.setStatus("Failed to create Resource.");
+                wizard.getWizardDialog().close();
+                return null;
+            } else {
+                // Checking whether the resource is of type single.
+                Option intendedResource = wizard.getMainPage().getOption();
+                if ((intendedResource == Option.SIMPLE_FROM_RAML && !(resource instanceof SingleResource))) {
+                    MessageDialog
+                            .openError(
+                                    getShell(),
+                                    "Invalid RAML",
+                                    "Uploaded RAML is not of simple type. "
+                                            + "Please upload the proper RAML of simple type.");
+                    return null;
+                }
+            }
+            resName = resource.getResourceName();
+            resURI = resource.getResourceURI();
+            resType = resource.getResourceType();
+            UpdatePropertiesPage updatePageRef = wizard.getUpdatePropPage();
+            updatePageRef.setResName(resName);
+            updatePageRef.setResURI(resURI);
+            updatePageRef.setResType(resType);
+            nextPage = updatePageRef;
         }
-        UpdatePropertiesPage updatePageRef = wizard.getUpdatePropPage();
-        updatePageRef.setResName(resource.getResourceName());
-        updatePageRef.setResURI(resource.getResourceURI());
-        return updatePageRef;
+        return nextPage;
+    }
+
+    public int createMultiInstanceSingleResourceWithRAML() {
+        int resCreatedCount = 0;
+        try {
+            multiInstanceResourceSet = Activator
+                    .getDefault()
+                    .getResourceManager()
+                    .createSingleResourceMultiInstances(configFilePath,
+                            resourceCount, progressMonitor);
+            if (null != progressMonitor && progressMonitor.isCanceled()) {
+                try {
+                    Activator.getDefault().getResourceManager()
+                            .removeSingleResources(multiInstanceResourceSet);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while handling the cancellation request.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
+                }
+                return 0;
+            }
+            if (null != multiInstanceResourceSet)
+                resCreatedCount = multiInstanceResourceSet.size();
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "Failed to create resource(s).\n"
+                                    + Utility.getSimulatorErrorString(e, null));
+        }
+        return resCreatedCount;
     }
 
     public String getConfigFilePath() {
@@ -349,5 +461,13 @@ public class LoadRamlPage extends WizardPage {
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    public Set<SingleResource> getMultiInstanceResourceSet() {
+        return multiInstanceResourceSet;
+    }
+
+    public void setMultiInstanceResourceSet(Set<SingleResource> resource) {
+        multiInstanceResourceSet = resource;
     }
 }

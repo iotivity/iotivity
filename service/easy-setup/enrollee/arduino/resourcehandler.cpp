@@ -166,6 +166,24 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         return ehResult;
     }
 
+    char* tnn;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn))
+    {
+        OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn), tnn);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.tnn %s", gProvResource.tnn);
+
+        gProvResource.ps = ES_PS_PROVISIONING_COMPLETED;
+    }
+
+    char* cd;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
+    {
+        OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), cd);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.cd %s", gProvResource.cd);
+    }
+
+    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.ps %lld", gProvResource.ps);
+
     int64_t tr;
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_TR, &tr))
     {
@@ -187,6 +205,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         }
         else
         {
+            gProvResource.tr = ES_PS_TRIGGER_INIT_VALUE;
             OIC_LOG(ERROR, ES_RH_TAG, "gNetworkInfoProvEventCb is NULL."
                     "Network handler not registered. Failed to connect to the network");
             ehResult = OC_EH_ERROR;
@@ -203,29 +222,6 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Provisioning the network information to the Enrollee.");
     }
-
-    OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn), "");
-    OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), "");
-
-    char* tnn;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn))
-    {
-        OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn), tnn);
-        OIC_LOG(INFO, ES_RH_TAG, "got ssid");
-    }
-
-    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.tnn %s", gProvResource.tnn);
-
-    char* cd;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
-    {
-        OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), cd);
-        OIC_LOG(INFO, ES_RH_TAG, "got password");
-    }OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.cd %s", gProvResource.cd);
-
-    gProvResource.ps = ES_PS_PROVISIONING_COMPLETED;
-
-    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.ps %lld", gProvResource.ps);
 
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)

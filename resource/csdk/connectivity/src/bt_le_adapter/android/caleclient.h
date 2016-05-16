@@ -48,6 +48,7 @@ typedef struct le_state_info
     uint16_t connectedState;
     uint16_t sendState;
     jboolean autoConnectFlag;
+    jboolean isDescriptorFound;
 } CALEState_t;
 
 /**
