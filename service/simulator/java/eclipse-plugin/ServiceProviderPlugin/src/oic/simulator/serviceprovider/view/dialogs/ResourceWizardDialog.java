@@ -58,6 +58,8 @@ public class ResourceWizardDialog extends WizardDialog {
             LoadRamlPage loadRamlPage = createWizard.getLoadRamlPage();
             UpdatePropertiesPage updatePropPage = createWizard
                     .getUpdatePropPage();
+            UpdateMultiInstanceCreationPropertiesPage updateMultiInstanceCreationPropPage = createWizard
+                    .getUpdateMultiInstanceCreationPropPage();
 
             IWizardPage curPage = wizard.getContainer().getCurrentPage();
             IWizardPage prevPage = null;
@@ -65,8 +67,10 @@ public class ResourceWizardDialog extends WizardDialog {
             if (curPage == loadRamlPage
                     || curPage == simpleResourceBasicDetailsPage) {
                 prevPage = mainPage;
-            } else if (curPage == updatePropPage) {
+            } else if (curPage == updatePropPage
+                    || curPage == updateMultiInstanceCreationPropPage) {
                 loadRamlPage.setResource(null);
+                loadRamlPage.setMultiInstanceResourceSet(null);
                 prevPage = loadRamlPage;
             } else if (curPage == simpleResourceAddAttributesPage) {
                 prevPage = simpleResourceBasicDetailsPage;

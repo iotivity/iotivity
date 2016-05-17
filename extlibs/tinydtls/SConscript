@@ -60,20 +60,18 @@ tinydtls_src = [
                 'sha2/sha2.c',
         ]
 
-dtls_env.AppendUnique(TINYDTLS_SRC = tinydtls_src)
-
 if not dtls_env.get('RELEASE'):
 	if(target_os) not in ['arduino']:
-		dtls_env.AppendUnique(TINYDTLS_SRC = ['debug.c'])
+		tinydtls_src += ['debug.c']
 	else:
 		dtls_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
 	dtls_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 
 dtls_env.AppendUnique(CPPDEFINES = ['DTLSV12',  'WITH_SHA256', 'DTLS_CHECK_CONTENTTYPE', 'SHA2_USE_INTTYPES_H'])
+env.AppendUnique(CPPDEFINES = ['SHA2_USE_INTTYPES_H'])
 
-
-libtinydtls = dtls_env.StaticLibrary('libtinydtls', dtls_env.get('TINYDTLS_SRC'), OBJPREFIX='libtinydtls_')
+libtinydtls = dtls_env.StaticLibrary('tinydtls', tinydtls_src, OBJPREFIX='libtinydtls_')
 
 ######################################################################
 # Generate tinydtls samples
@@ -99,5 +97,5 @@ if not env.get('RELEASE'):
 
 	samples_env.AppendTarget('samples')
 
-dtls_env.InstallTarget(libtinydtls, 'libtinydtls');
+dtls_env.InstallTarget(libtinydtls, 'tinydtls');
 

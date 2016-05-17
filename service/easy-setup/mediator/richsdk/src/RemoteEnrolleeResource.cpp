@@ -51,6 +51,7 @@ namespace OIC
                 const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep,
                 const int eCode)
         {
+            OC_UNUSED(rep);
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
                     rep.getUri().c_str(),
                     eCode);
@@ -124,6 +125,12 @@ namespace OIC
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "checkProvInformationCb : Provisioning is success. "
                         "Now trigger network connection ");
+
+                #ifdef REMOTE_ARDUINO_ENROLEE
+                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
+                        ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
+                m_provStatusCb(provStatus);
+                #endif
 
                 triggerNetworkConnection();
                 return;

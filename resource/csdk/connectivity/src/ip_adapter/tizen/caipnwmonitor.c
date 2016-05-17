@@ -39,6 +39,8 @@
 #define TAG "IP_MONITOR"
 #define MAX_INTERFACE_INFO_LENGTH (1024)
 
+static CAIPConnectionStateChangeCallback g_networkChangeCallback;
+
 static CAInterface_t *CANewInterfaceItem(int index, char *name, int family,
                                          uint32_t addr, int flags);
 
@@ -54,6 +56,11 @@ static void CAWIFIDeviceStateChangedCb(wifi_device_state_e state, void *userData
 int CAGetPollingInterval(int interval)
 {
     return interval;
+}
+
+void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+{
+    g_networkChangeCallback = callback;
 }
 
 CAInterface_t *CAFindInterfaceChange()
@@ -357,17 +364,11 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
 
     if (WIFI_CONNECTION_STATE_CONNECTED == state)
     {
-        CAWakeUpForChange();
+        g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_UP);
     }
     else
     {
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
-        if (!iflist)
-        {
-            OIC_LOG_V(ERROR, TAG, "get interface info failed");
-            return;
-        }
-        u_arraylist_destroy(iflist);
+        g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_DOWN);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");

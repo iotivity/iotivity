@@ -49,7 +49,7 @@ extern "C"
  */
 CAResult_t CAInitializeNFC(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback networkPacketCallback,
-                          CANetworkChangeCallback netCallback,
+                          CAAdapterChangeCallback netCallback,
                           CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**

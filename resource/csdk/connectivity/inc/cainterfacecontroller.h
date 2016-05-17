@@ -67,11 +67,12 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
 void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
 
 /**
- * Set the network status changed callback for message handler.
- * @param[in]   callback         message handler network status callback
- *                               to receive network changes.
+ * Set the network status changed callback for CAUtil.
+ * @param[in]   adapterCB       CAUtil callback to receive adapter status changes.
+ * @param[in]   connCB          CAUtil callback to receive connection status changes.
  */
-void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
+void CASetNetworkMonitorCallbacks(CAAdapterChangeCallback adapterCB,
+                                  CAConnectionChangeCallback connCB);
 
 /**
  * Starting different connectivity adapters based on the network selection.

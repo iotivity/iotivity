@@ -49,7 +49,7 @@ Java_org_iotivity_ca_caLeClientInterface_caLeRegisterGattCallback
 /*
  * Class:     org_iotivity_ca_caLeClientInterface
  * Method:    caLeScanCallback
- * Signature: (Landroid/bluetooth/BluetoothDevice;I[B)V
+ * Signature: (Landroid/bluetooth/BluetoothDevice;)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_caLeClientInterface_caLeScanCallback
@@ -93,7 +93,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWServicesDiscoveredCallback
 /*
  * Class:     org_iotivity_ca_caLeClientInterface
  * Method:    caLeGattCharacteristicWritjclasseCallback
- * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattCharacteristic;I)V
+ * Signature: (Landroid/bluetooth/BluetoothGatt;[BI)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_caLeClientInterface_caLeGattCharacteristicWriteCallback
@@ -111,7 +111,7 @@ Java_org_iotivity_ca_caLeClientInterface_caLeGattCharacteristicChangedCallback
 /*
  * Class:     org_iotivity_ca_caLeClientInterface
  * Method:    caLeGattDescriptorWriteCallback
- * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattDescriptor;I)V
+ * Signature: (Landroid/bluetooth/BluetoothGatt;I)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_caLeClientInterface_caLeGattDescriptorWriteCallback
@@ -174,7 +174,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback
 /*
  * Class:     org_iotivity_ca_jar_caleinterface
  * Method:    caManagerLeRemoteRssiCallback
- * Signature: (Landroid/bluetooth/BluetoothGatt;I)V
+ * Signature: (Landroid/bluetooth/BluetoothGatt;II)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerLeRemoteRssiCallback

@@ -636,7 +636,7 @@ jobject CAManagerGetConnectedDeviceAddress(JNIEnv *env, jobject context)
 bool CAManagerRemoveConnectedDeviceAddress(JNIEnv *env, jobject context,
                                            jstring address, jobject set)
 {
-    OIC_LOG(DEBUG, TAG, "IN-CAManagerRemoveConnectedDeviceAddress");
+    OIC_LOG(DEBUG, TAG, "CAManagerRemoveConnectedDeviceAddress");
 
     VERIFY_NON_NULL_RET(env, TAG, "env", false);
     VERIFY_NON_NULL_RET(context, TAG, "context", false);

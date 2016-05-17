@@ -174,8 +174,29 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         OIC_LOG(level, PL_TAG, "\tNO Resources");
         return;
     }
-    OIC_LOG(level, PL_TAG, "\tSID:");
-    OIC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
+    OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
+    if (payload->baseURI)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
+    }
+    if (payload->name)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
+    }
+    if (payload->uri)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
+    }
+    if (payload->type)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", payload->type);
+    }
+    OIC_LOG(level, PL_TAG, "\tInterface:");
+    for (OCStringLL *itf = payload->interface; itf; itf = itf->next)
+    {
+        OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
+    }
+
     OCResourcePayload* res = payload->resources;
 
     while(res)
@@ -209,11 +230,26 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
 static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Device");
-    OIC_LOG(level, PL_TAG, "\tSID:");
-    OIC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
+    OIC_LOG_V(level, PL_TAG, "\tSID:%s", payload->sid);
     OIC_LOG_V(level, PL_TAG, "\tDevice Name:%s", payload->deviceName);
     OIC_LOG_V(level, PL_TAG, "\tSpec Version%s", payload->specVersion);
     OIC_LOG_V(level, PL_TAG, "\tData Model Version:%s", payload->dataModelVersion);
+    if (payload->types)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Type:");
+        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
+    if (payload->interfaces)
+    {
+        OIC_LOG(level, PL_TAG, "\tInterface:");
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
 }
 
 static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)
@@ -231,6 +267,20 @@ static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* paylo
     OIC_LOG_V(level, PL_TAG, "\tFirmware Version:%s", payload->info.firmwareVersion);
     OIC_LOG_V(level, PL_TAG, "\tSupport URL:%s", payload->info.supportUrl);
     OIC_LOG_V(level, PL_TAG, "\tSystem Time:%s", payload->info.systemTime);
+
+    if (payload->rt)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Types:");
+        OIC_LOG_V(level, PL_TAG, "\t\t%s", payload->rt);
+    }
+    if (payload->interfaces)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Interfaces:");
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
 }
 
 static inline void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)

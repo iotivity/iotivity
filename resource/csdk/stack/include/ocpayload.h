@@ -223,7 +223,7 @@ OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData);
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
-        uint16_t port);
+                                   uint16_t securePort, uint16_t tcpPort);
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
 bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 
@@ -234,8 +234,8 @@ void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 
 // Device Payload
-OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
-        const char* specVer, const char* dmVer);
+OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
+        const OCStringLL *types, const char* specVer, const char* dmVer);
 void OCDevicePayloadDestroy(OCDevicePayload* payload);
 
 // Platform Payload

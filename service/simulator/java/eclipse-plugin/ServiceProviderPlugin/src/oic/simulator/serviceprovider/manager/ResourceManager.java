@@ -590,12 +590,21 @@ public class ResourceManager {
             }
 
             // Set the resource interfaces.
-            jSimulatorSingleResource
-                    .setInterface(Utility.convertSetToVectorString(resource
-                            .getResourceInterfaces()));
+            Set<String> interfaces = resource.getResourceInterfaces();
+            if (null != interfaces && !interfaces.isEmpty()) {
+                jSimulatorSingleResource.setInterface(Utility
+                        .convertSetToVectorString(resource
+                                .getResourceInterfaces()));
+            }
 
             // Register the resource with the platform.
             jSimulatorSingleResource.start();
+
+            // Read the interfaces from the native layer and set it to the
+            // interface list.
+            resource.setResourceInterfaces(Utility
+                    .convertVectorToSet(jSimulatorSingleResource.getInterface()));
+
             resource.setStarted(true);
         } catch (SimulatorException e) {
             Activator
@@ -648,19 +657,26 @@ public class ResourceManager {
         Resource resource = new SingleResource();
         resource.setSimulatorResource(jSimulatorResource);
 
-        // Fetch and locally store the resource name and uri.
+        // Fetch and locally store the resource name, type and uri.
         String uri = jSimulatorResource.getURI();
         if (null == uri || uri.trim().isEmpty()) {
+            // URI is mandatory to be present in RAML. If it is not there, then
+            // resource can't be created.
             return null;
         }
         resource.setResourceURI(uri.trim());
 
-        String name = jSimulatorResource.getName();
-        if (null == name || name.trim().isEmpty()) {
-            return null;
+        String type = jSimulatorResource.getResourceType();
+        if (null != type) {
+            type = type.trim();
         }
+        resource.setResourceType(type);
 
-        resource.setResourceName(name.trim());
+        String name = jSimulatorResource.getName();
+        if (null != name) {
+            name = name.trim();
+        }
+        resource.setResourceName(name);
 
         return resource;
     }
@@ -673,7 +689,7 @@ public class ResourceManager {
      * notifies the UI listeners.
      */
     public boolean completeSingleResourceCreationByRAML(Resource resource,
-            String uri, String name, boolean multiInstance)
+            String uri, String name, String type, boolean multiInstance)
             throws SimulatorException {
         if (null == resource || !(resource instanceof SingleResource)) {
             return false;
@@ -688,21 +704,30 @@ public class ResourceManager {
             }
 
             // Update resource URI and Name if they are changed.
-            String newUri = uri.trim();
-            String newName = name.trim();
+            String newUri = "";
+            String newName = "";
+            String newType = "";
 
-            if (multiInstance) {
+            if (null != uri)
+                newUri = uri.trim();
+            if (null != name)
+                newName = name.trim();
+            if (null != type)
+                newType = type.trim();
+
+            if (!multiInstance && !singleRes.getResourceURI().equals(newUri)) {
+                jSimulatorSingleResource.setURI(newUri);
                 singleRes.setResourceURI(newUri);
+            }
+            String currentName = singleRes.getResourceName();
+            if (null == currentName || !currentName.equals(newName)) {
+                jSimulatorSingleResource.setName(newName);
                 singleRes.setResourceName(newName);
-            } else {
-                if (!singleRes.getResourceURI().equals(newUri)) {
-                    jSimulatorSingleResource.setURI(newUri);
-                    singleRes.setResourceURI(newUri);
-                }
-                if (!singleRes.getResourceName().equals(newName)) {
-                    jSimulatorSingleResource.setName(newName);
-                    singleRes.setResourceName(newName);
-                }
+            }
+            String currentType = singleRes.getResourceType();
+            if (null == currentType || !currentType.equals(newType)) {
+                jSimulatorSingleResource.setResourceType(newType);
+                singleRes.setResourceType(newType);
             }
 
             // Set the model change listener.
@@ -724,8 +749,6 @@ public class ResourceManager {
             singleRes.setResourceModel(jResModel);
 
             // Fetch the basic details of the resource.
-            singleRes.setResourceType(jSimulatorSingleResource
-                    .getResourceType());
             singleRes
                     .setResourceInterfaces(Utility
                             .convertVectorToSet(jSimulatorSingleResource
@@ -776,7 +799,6 @@ public class ResourceManager {
             }
             SimulatorSingleResource jResource;
             SingleResource resource;
-            boolean result;
             for (SimulatorResource jSimulatorResource : jSimulatorResources) {
                 // If the resource creation progress is canceled, then stop the
                 // creation and stop/delete
@@ -789,11 +811,27 @@ public class ResourceManager {
                 resource = new SingleResource();
                 resource.setSimulatorResource(jResource);
                 try {
-                    result = completeSingleResourceCreationByRAML(resource,
-                            jResource.getURI(), jResource.getName(), true);
-                    if (result) {
-                        resultSet.add(resource);
+                    String uri = jSimulatorResource.getURI();
+                    if (null == uri || uri.trim().isEmpty()) {
+                        // URI is mandatory to be present in RAML. If it is not
+                        // there, then resource will be ignored.
+                        continue;
                     }
+                    resource.setResourceURI(uri.trim());
+
+                    String type = jSimulatorResource.getResourceType();
+                    if (null != type) {
+                        type = type.trim();
+                    }
+                    resource.setResourceType(type);
+
+                    String name = jSimulatorResource.getName();
+                    if (null != name) {
+                        name = name.trim();
+                    }
+                    resource.setResourceName(name);
+
+                    resultSet.add(resource);
                 } catch (SimulatorException eInner) {
                     Activator
                             .getDefault()

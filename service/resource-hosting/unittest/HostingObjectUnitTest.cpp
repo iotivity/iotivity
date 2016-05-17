@@ -134,7 +134,7 @@ TEST_F(HostingObjectTest, createMirroredServer)
 
     waitForCondition(waitForResponse);
     mocks.OnCallFunc(onDiscoveryResource).Do(
-            [this, &uri, &discoveryTask, &testObject, &discoveredResource]
+            [this, &uri, &discoveryTask]
              (RCSRemoteResourceObject::Ptr ptr)
             {
                 if(ptr->getUri() == testObject.getHostedServerUri())
@@ -203,7 +203,7 @@ TEST_F(HostingObjectTest, ExpectCallOnDestroyWhenStopHostingObject)
     int waitForResponse = 1000;
 
     mocks.ExpectCallFunc(onDestroy).Do(
-            [& responseCon]()
+            []()
             {
                 responseCon.notify_all();
             });

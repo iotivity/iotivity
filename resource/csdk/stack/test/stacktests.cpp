@@ -91,6 +91,40 @@ static void resultCallback(OCDPDev_t *UNUSED1, OCStackResult UNUSED2)
     (void) (UNUSED2);
 }
 
+extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
+        OCDoHandle /*handle*/, OCClientResponse * clientResponse)
+{
+    OIC_LOG(INFO, TAG, "Entering asyncDoResourcesCallback");
+
+    EXPECT_EQ(OC_STACK_OK, clientResponse->result);
+
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OIC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
+    }
+
+    OIC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
+
+    OCDiscoveryPayload *discoveryPayload = ((OCDiscoveryPayload *) clientResponse->payload);
+    EXPECT_TRUE(discoveryPayload != NULL);
+    OCResourcePayload *res = discoveryPayload->resources;
+    size_t count = 0;
+    for (OCResourcePayload *res1 = discoveryPayload->resources; res1; res1 = res1->next)
+    {
+        count++;
+    }
+    EXPECT_EQ(3, count);
+    EXPECT_EQ("/a/led1", res->uri);
+    res = res->next;
+    EXPECT_EQ("/a/led2", res->uri);
+    res = res->next;
+    EXPECT_EQ("/a/led3", res->uri);
+    res = res->next;
+    EXPECT_TRUE(res == NULL);
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
 //-----------------------------------------------------------------------------
 // Entity handler
 //-----------------------------------------------------------------------------
@@ -419,7 +453,7 @@ TEST(StackResource, CreateResourceBadUri)
     OIC_LOG(INFO, TAG, "Starting CreateResourceBadUri test");
     InitStack(OC_SERVER);
 
-    const char *uri65 = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL";
+    const char *uri257 = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVW";
 
     OCResourceHandle handle;
 
@@ -442,7 +476,7 @@ TEST(StackResource, CreateResourceBadUri)
     EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
                                             "core.led",
                                             "core.rw",
-                                            uri65, //"/a/led",
+                                            uri257, //"/a/led",
                                             0,
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -697,12 +731,14 @@ TEST(StackResource, ResourceTypeInterface)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName1 = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, resourceInterfaceName1);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     // try getting resource interface names with an invalid index
-    resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
+    resourceInterfaceName = OCGetResourceInterfaceName(handle, 2);
     EXPECT_STREQ(NULL, resourceInterfaceName);
     // try getting resource interface names with an invalid index
     resourceInterfaceName = OCGetResourceInterfaceName(handle, 10);
@@ -798,7 +834,7 @@ TEST(StackResource, ResourceDuplicateNonDefaultInterfaces)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -820,7 +856,7 @@ TEST(StackResource, ResourceTypeInterfaceMethods)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1073,8 +1109,8 @@ TEST(StackBind, BindResourceInterfaceNameBad)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, NULL));
@@ -1099,15 +1135,15 @@ TEST(StackBind, BindResourceInterfaceNameGood)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(2, numResourceInterfaces);
-    resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
+    EXPECT_EQ(3, numResourceInterfaces);
+    resourceInterfaceName = OCGetResourceInterfaceName(handle, 2);
     EXPECT_STREQ("core.r", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1130,7 +1166,7 @@ TEST(StackBind, BindResourceInterfaceMethodsBad)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, 0));
 
@@ -1154,12 +1190,12 @@ TEST(StackBind, BindResourceInterfaceMethodsGood)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(2, numResourceInterfaces);
+    EXPECT_EQ(3, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1625,8 +1661,8 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     // Make sure the resource elements are still correct
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle2, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle2, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle2, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1655,4 +1691,57 @@ TEST(OCDoDirectPairingTests, NullCallback)
 TEST(OCDoDirectPairingTests, NullpinNumber)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(&peer, pmSel, NULL, &resultCallback));
+}
+
+TEST(StackResource, MultipleResourcesDiscovery)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting MultipleResourcesDiscovery test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle1;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led1",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    OCResourceHandle handle2;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led2",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+    OCResourceHandle handle3;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led3",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+    /* Start a discovery query*/
+    char szQueryUri[256] = "/oic/res?if=oic.if.ll";
+    OCCallbackData cbData;
+    cbData.cb = discoveryCallback;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    OCDoHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle,
+                                        OC_REST_DISCOVER,
+                                        szQueryUri,
+                                        0,
+                                        0,
+                                        CT_ADAPTER_IP,
+                                        OC_LOW_QOS,
+                                        &cbData,
+                                        NULL,
+                                        0));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }

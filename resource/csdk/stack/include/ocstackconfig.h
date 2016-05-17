@@ -33,7 +33,7 @@
  * Maximum length of the URI supported by client/server while processing
  * REST requests/responses.
  */
-#define MAX_URI_LENGTH (64)
+#define MAX_URI_LENGTH (256)
 
 /**
  * Maximum length of the query supported by client/server while processing

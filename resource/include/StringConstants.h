@@ -60,7 +60,9 @@ namespace OC
         static const char GENERAL_JSON_PARSE_FAILED[]  = "JSON Parser Error";
         static const char RESOURCE_UNREG_FAILED[]      = "Unregistering resource failed";
         static const char OPTION_ID_RANGE_INVALID[]    =
-                            "Error: OptionID valid only from 2048 to 3000 inclusive.";
+                            "Error: OptionID valid only If-Match(1), If-None-Match(5),"
+                            "Location-Path(8), Location-Query(20),"
+                            "and from 2048 to 3000 inclusive.";
         static const char NO_ERROR[]                   = "No Error";
         static const char RESOURCE_CREATED[]           = "Resource Created";
         static const char RESOURCE_DELETED[]           = "Resource Deleted";

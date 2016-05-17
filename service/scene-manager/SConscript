@@ -50,14 +50,14 @@ scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/e
 
 
 scenemanager_env.PrependUnique(LIBS = [
+    'coap',
+    'connectivity_abstraction',
+    'oc_logger',
+    'octbstack',
+    'oc',
     'rcs_client',
     'rcs_server',
-    'rcs_common',
-    'oc',
-    'octbstack',
-    'oc_logger',
-    'connectivity_abstraction',
-    'libcoap'
+    'rcs_common'
     ])
 
 if target_os not in ['windows', 'winrt']:

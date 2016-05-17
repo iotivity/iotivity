@@ -69,7 +69,12 @@ typedef enum
 /**
  * Callback to provide the status of the network change to CA layer.
  */
-static CANetworkChangeCallback g_networkCallback = NULL;
+static CAAdapterChangeCallback g_networkCallback = NULL;
+
+/**
+ * Callback to provide the status of the connection change to CA layer.
+ */
+static CAConnectionChangeCallback g_connectionCallback = NULL;
 
 /**
  * bleAddress of the local adapter. Value will be initialized to zero,
@@ -145,8 +150,10 @@ static CAErrorHandleCallback g_errorHandler = NULL;
 /**
  * Register network change notification callback.
  *
- * @param[in]  netCallback CANetworkChangeCallback callback which will
- *                         be set for the change in network.
+ * @param[in]  netCallback  CAAdapterChangeCallback callback which will
+ *                          be set for the change in adapter.
+ * @param[in]  connCallback CAConnectionChangeCallback callback which will
+ *                          be set for the change in connection.
  *
  * @return  0 on success otherwise a positive error value.
  * @retval  ::CA_STATUS_OK  Successful.
@@ -154,7 +161,8 @@ static CAErrorHandleCallback g_errorHandler = NULL;
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
+static CAResult_t CALERegisterNetworkNotifications(CAAdapterChangeCallback netCallback,
+                                                   CAConnectionChangeCallback connCallback);
 
 /**
  * Set the thread pool handle which is required for spawning new
@@ -1717,7 +1725,8 @@ static CAResult_t CALEAdapterGattClientStop()
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
-                          CANetworkChangeCallback netCallback,
+                          CAAdapterChangeCallback netCallback,
+                          CAConnectionChangeCallback connCallback,
                           CAErrorHandleCallback errorCallback,
                           ca_thread_pool_t handle)
 {
@@ -1727,6 +1736,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(registerCallback, CALEADAPTER_TAG, "RegisterConnectivity callback is null");
     VERIFY_NON_NULL(reqRespCallback, CALEADAPTER_TAG, "PacketReceived Callback is null");
     VERIFY_NON_NULL(netCallback, CALEADAPTER_TAG, "NetworkChange Callback is null");
+    VERIFY_NON_NULL(connCallback, CALEADAPTER_TAG, "ConnectionChange Callback is null");
 
     CAResult_t result = CA_STATUS_OK;
     result = CAInitLEAdapterMutex();
@@ -1768,7 +1778,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     CASetBLEClientErrorHandleCallback(CALEErrorHandler);
     CASetBLEServerErrorHandleCallback(CALEErrorHandler);
-    CALERegisterNetworkNotifications(netCallback);
+    CALERegisterNetworkNotifications(netCallback, connCallback);
 
     g_errorHandler = errorCallback;
 
@@ -1837,7 +1847,7 @@ static void CATerminateLE()
 
     CASetLEReqRespServerCallback(NULL);
     CASetLEReqRespClientCallback(NULL);
-    CALERegisterNetworkNotifications(NULL);
+    CALERegisterNetworkNotifications(NULL, NULL);
     CASetLEReqRespAdapterCallback(NULL);
     CATerminateLENetworkMonitor();
 
@@ -2153,12 +2163,14 @@ static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *siz
     return CA_STATUS_OK;
 }
 
-static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
+static CAResult_t CALERegisterNetworkNotifications(CAAdapterChangeCallback netCallback,
+                                                   CAConnectionChangeCallback connCallback)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     ca_mutex_lock(g_bleNetworkCbMutex);
     g_networkCallback = netCallback;
+    g_connectionCallback = connCallback;
     ca_mutex_unlock(g_bleNetworkCbMutex);
     CAResult_t res = CA_STATUS_OK;
     if (netCallback)
@@ -2168,12 +2180,6 @@ static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCa
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLEAdapterStateChangedCb failed!");
         }
-
-        res = CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCb);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "CALEConnectionStateChangedCb failed!");
-        }
     }
     else
     {
@@ -2181,6 +2187,15 @@ static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCa
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLEAdapterStateChangedCb failed!");
+        }
+    }
+
+    if (g_connectionCallback)
+    {
+        res = CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCb);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLENWConnectionStateChangedCb failed!");
         }
     }
 
@@ -2246,21 +2261,22 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
 #endif
     }
 
+    CAEndpoint_t localEndpoint = { .adapter = CA_ADAPTER_GATT_BTLE };
+    OICStrcpy(localEndpoint.addr, sizeof(localEndpoint.addr), address);
+
+    ca_mutex_lock(g_bleNetworkCbMutex);
+    if (g_connectionCallback)
+    {
+        g_connectionCallback(&localEndpoint, isConnected);
+    }
+    ca_mutex_unlock(g_bleNetworkCbMutex);
+
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 static void CALEDeviceStateChangedCb(CAAdapterState_t adapter_state)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CALEDeviceStateChangedCb");
-
-    VERIFY_NON_NULL_VOID(g_localBLEAddress, CALEADAPTER_TAG, "g_localBLEAddress is null");
-    CAEndpoint_t localEndpoint = { .adapter = CA_ADAPTER_GATT_BTLE };
-
-    ca_mutex_lock(g_bleLocalAddressMutex);
-    OICStrcpy(localEndpoint.addr,
-              sizeof(localEndpoint.addr),
-              g_localBLEAddress);
-    ca_mutex_unlock(g_bleLocalAddressMutex);
 
     if (CA_ADAPTER_ENABLED == adapter_state)
     {
@@ -2306,7 +2322,7 @@ static void CALEDeviceStateChangedCb(CAAdapterState_t adapter_state)
     ca_mutex_lock(g_bleNetworkCbMutex);
     if (NULL != g_networkCallback)
     {
-        g_networkCallback(&localEndpoint, adapter_state);
+        g_networkCallback(CA_ADAPTER_GATT_BTLE, adapter_state);
     }
     else
     {

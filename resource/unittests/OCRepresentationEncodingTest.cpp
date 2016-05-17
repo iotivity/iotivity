@@ -22,6 +22,7 @@
 #include <OCApi.h>
 #include <OCRepresentation.h>
 #include <octypes.h>
+#include <ocstack.h>
 #include <ocpayload.h>
 #include <ocpayloadcbor.h>
 #include <oic_malloc.h>
@@ -48,28 +49,30 @@ namespace OC
 // CBOR->OCPayload and OCPayload->OCRepresentation conversions
 namespace OCRepresentationEncodingTest
 {
-    static const uint8_t sid1[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    static const char sid1[] = "646F6F72-4465-7669-6365-555549443030";
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
     static const char dmver1[] = "data model version";
+    static OCStringLL *types = NULL;
     // Device Payloads
     TEST(DeviceDiscoveryEncoding, Normal)
     {
+        OCResourcePayloadAddStringLL(&types, "oic.wk.d");
+        OCResourcePayloadAddStringLL(&types, "oic.d.tv");
+
         OCDevicePayload* device = OCDevicePayloadCreate(
                 sid1,
                 devicename1,
+                types,
                 specver1,
                 dmver1);
-
+        EXPECT_STREQ(sid1, device->sid);
         EXPECT_STREQ(devicename1, device->deviceName);
         EXPECT_STREQ(specver1, device->specVersion);
         EXPECT_STREQ(dmver1, device->dataModelVersion);
         EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload*)device)->type);
-
-        for (uint8_t i = 1; i <= sizeof(sid1); ++i)
-        {
-            EXPECT_EQ(i, sid1[i - 1]);
-        }
+        EXPECT_STREQ("oic.wk.d", device->types->value);
+        EXPECT_STREQ("oic.d.tv", device->types->next->value);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -79,9 +82,12 @@ namespace OCRepresentationEncodingTest
                     cborData, cborSize));
         OICFree(cborData);
 
+        EXPECT_STREQ(device->sid, ((OCDevicePayload*)parsedDevice)->sid);
         EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
         EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
         EXPECT_STREQ(device->dataModelVersion, ((OCDevicePayload*)parsedDevice)->dataModelVersion);
+        EXPECT_STREQ("oic.wk.d", ((OCDevicePayload*)parsedDevice)->types->value);
+        EXPECT_STREQ("oic.d.tv", ((OCDevicePayload*)parsedDevice)->types->next->value);
         EXPECT_EQ(device->base.type, ((OCDevicePayload*)parsedDevice)->base.type);
 
         OCPayloadDestroy((OCPayload*)device);
@@ -90,6 +96,7 @@ namespace OCRepresentationEncodingTest
         mc.setPayload(parsedDevice);
         EXPECT_EQ(1u, mc.representations().size());
         const OC::OCRepresentation& r = mc.representations()[0];
+        EXPECT_STREQ(sid1, r.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
         EXPECT_STREQ(devicename1, r.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
         EXPECT_STREQ(specver1, r.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
         EXPECT_STREQ(dmver1, r.getValue<std::string>(OC_RSRVD_DATA_MODEL_VERSION).c_str());
@@ -128,6 +135,9 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(fwver1, platform->info.firmwareVersion);
         EXPECT_STREQ(url1, platform->info.supportUrl);
         EXPECT_STREQ(time1, platform->info.systemTime);
+        EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, platform->interfaces->value);
+        EXPECT_STREQ(OC_RSRVD_INTERFACE_READ, platform->interfaces->next->value);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_PLATFORM, platform->rt);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -150,6 +160,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(platform->info.firmwareVersion, platform->info.firmwareVersion);
         EXPECT_STREQ(platform->info.supportUrl, platform->info.supportUrl);
         EXPECT_STREQ(platform->info.systemTime, platform2->info.systemTime);
+        EXPECT_STREQ(platform->interfaces->value, platform2->interfaces->value);
+        EXPECT_STREQ(platform->rt, platform2->rt);
 
         OCPayloadDestroy((OCPayload*)platform);
 
@@ -680,7 +692,7 @@ namespace OCRepresentationEncodingTest
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         payload->resources = resource;
 
         EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->types, "rt.singleitem"));
@@ -699,6 +711,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->next);
         EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
         EXPECT_EQ(NULL, parsedResource->types->next);
@@ -713,7 +726,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemFrontTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -733,7 +746,7 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->types->next);
         EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
         EXPECT_EQ(NULL, parsedResource->interfaces->next);
@@ -747,7 +760,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemBackTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -767,7 +780,7 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->types->next);
         EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
         EXPECT_EQ(NULL, parsedResource->interfaces->next);
@@ -780,7 +793,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemBothTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -800,7 +813,7 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->types->next);
         EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
         EXPECT_EQ(NULL, parsedResource->interfaces->next);
@@ -813,7 +826,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemsNormal)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -835,7 +848,7 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->types->next->next);
         EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
         EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
@@ -850,7 +863,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemExtraLeadSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -872,7 +885,7 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->types->next->next);
         EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
         EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
@@ -887,7 +900,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemExtraTrailSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -909,7 +922,7 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->types->next->next);
         EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
         EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
@@ -924,7 +937,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemBothSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-        payload->sid = (uint8_t*)OICMalloc(16);
+        payload->sid = OICStrdup(sid1);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -946,7 +959,7 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
+        EXPECT_STREQ(sid1, ((OCDiscoveryPayload*)cparsed)->sid);
         EXPECT_EQ(NULL, parsedResource->types->next->next);
         EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
         EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
