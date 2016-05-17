@@ -314,8 +314,8 @@ class ConformanceKeyword(object):
         self.dut_information = self.dut_information_manager.getDUTInformation(self.dut_id)
         href_list = self.get_dut_info_value(IotivityKey.HREF.toString(), self.dut_id, IotivityKey.DIS.toString()+'=1')
         for href in href_list:
-            resource_type = self.get_space_seperated_string_from_list(self.dut_information.getResourceTypes(href) )
-            resource_interface = self.get_space_seperated_string_from_list(self.dut_information.getInterfaceList(href) )
+            resource_type = self.dut_information.getResourceTypes(href)
+            resource_interface = self.dut_information.getInterfaceList(href)
 
             self.resource_map[href] = OICCoapResource(href, resource_type, resource_interface, is_confirmable)
             rep_list = self.get_dut_resource_value(self.dut_id, HREF + '=' + href, REP, "R")
@@ -372,7 +372,6 @@ class ConformanceKeyword(object):
     # @return reset flag
     def get_reset_state(self, href):
         "Return True if a RST have arrived, otherwise false"
-        #self.oic_resource_light.updateLocalResourceResetFlag()
         return self.resource_map[href].hasReset()
 
     # Documentation for a function
@@ -399,7 +398,6 @@ class ConformanceKeyword(object):
     def stop_server(self):
         "Stop server"
         self.oic_server.removeResource("/device/test-tool")
-#        self.oic_server.destroy()
 
     # Documentation for a function
     # @brief load DUTDescriptor.json and make dut instance
@@ -411,6 +409,24 @@ class ConformanceKeyword(object):
         self.dut_information_manager.createDUTInformation(OIC_ID, OIC_ID_PATH)
         return self.dut_information_manager.createDUTInformation(
             dut_id, dut_info_path)
+
+    # Documentation for a function
+    # @brief update dut href
+    # @param dut_id, target_href, update_href_value
+    # @return void
+    def update_dut_href(self, dut_id, target_href, update_href_value):
+        "udpate href"
+        self.dut_information = self.dut_information_manager.getDUTInformation(
+            dut_id)
+        query = HREF+'='+target_href
+        print query
+        dut_resource = self.dut_information.getResourceWithQuery(HREF+'=/'+target_href)
+        print update_href_value
+        update_href = ArrayList()
+        update_href.add(update_href_value)
+        print update_href.toString()
+        dut_resource.get(0).setDUTResourceValue(HREF,update_href)
+        print dut_resource.get(0).getDUTResourceValue(HREF)
 
     # Documentation for a function
     # @brief remove dut instance
@@ -488,14 +504,6 @@ class ConformanceKeyword(object):
             request_list = self.oic_server.getDiscoveryRequests()
             if request_list.size() > 0:
                 self.request = request_list.get(0)
-#                what = REQUEST_CODE + \
-#                    self.get_request_value(self.request, OICHelper.MessageParameters.requestCode) + '\n   '
-#                what += SOURCE_ADDRESS + \
-#                    self.get_request_value(self.request, OICHelper.MessageParameters.srcAddress) + '\n   '
-#                what += SOURCE_PORT + \
-#                    self.get_request_value(self.request, OICHelper.MessageParameters.srcPort) + '\n   '
-#                what += SOURCE_HEADER + \
-#                    self.get_request_header(self.request)
                 result = self.get_request_result(self.request)
                 self.print_testcase_get(DUT, TE, 'Discovery Message from DUT')
                 return result
@@ -516,31 +524,30 @@ class ConformanceKeyword(object):
         resultList = ArrayList()
         client = OICClient()
         responseList = ArrayList()
-        self.print_testcase_do(TE, DUT, 'Multicast Discover')
+        self.print_testcase_do(TE, DUT, 'Multicast Discover') 
+        print self.dut_id
         dut_list = self.get_dut_info_value(
             IotivityKey.HREF.toString(), self.dut_id, IotivityKey.DIS.toString()+'=1')  # temp code
-#        self.log_to_console(dut_list)
-#        self.log_to_console("Line 252")
         responseList = client.discoverResource(
             self.get_protocol(protocol_type), default_uri)
         target_request = client.getLastRequest(self.get_protocol(protocol_type))
         target_response = None
-#        self.log_to_console("Line 255")
 
         if responseList is None:
-#            self.log_to_console("Line 258")
             self.print_testcase_get(DUT, TE, 'No Response')
-#            self.log_to_console("Line 259")
             result = ""
         elif responseList.size() > 0:
-#            self.log_to_console("Line 263")
             for response in responseList:
                 result_temp = self.get_response_result(response)
-                self.log_to_console("After get_response_result Call")
                 result_json = self.get_response_json(result_temp)
+                src_ip = self.get_response_ip(result_temp)
+                self.log_to_console(src_ip)
                 check = True
+
                 for dut in dut_list:
-                     if str(dut) not in str(result_json):
+                    print dut_list
+                    print dut
+                    if str(dut) not in str(result_json):
                          check = False
                 self.print_testcase_get(
                 DUT,
@@ -550,44 +557,11 @@ class ConformanceKeyword(object):
                 if check is True:
                     result = result_temp
                     target_response = response
-#                    break
 
         self.add_into_response_map(target_request, target_response)
         return result
-#                self.log_to_console("After get_response_json Call")
-#                json_analyzer = JsonAnalyzer(result_json)
-#                href = json_analyzer.getAllValueFromJson(IotivityKey.HREF.toString())
-#                href = self.get_json_value(IotivityKey.HREF.toString(), result_json)
-#                self.log_to_console(href.size())
-#                di = self.get_json_value(IotivityKey.DI.toString(), result_json)
-#                self.log_to_console("After get_json_value Call")
-#                if (href.size() > 0 and href[0] in dut_list) or (di.size() > 0 ):
-#                    self.log_to_console("After href[0]")
-#                    result = result_temp
-#                    self.print_testcase_get(
-#                        DUT,
-#                        TE,
-#                        'Response for Discover',
-#                        self.get_response_description(response))
-#                    if "oic/res" in default_uri:
-#                        self.log_to_console("inside /oic/res")
-#                        self.log_to_console(dut_list)
-#                        self.log_to_console(href)
-#                        total_href_found = 0
-#                        for dut_href in dut_list:
-#                            is_exist = False
-#                            for each_href in href:
-#                                if dut_href is each_href:
-#                                    is_exist = True
-#                                    break
-#                            if is_exist is True:
-#                                total_href_found = total_href_found + 1
-#                        if total_href_found is dut_list.size():
-#                            desired_result = result
-#                        self.log_to_console(href.size())
-#                        if href[0] in dut_list:
-#                            desired_result = result
-#        self.log_to_console("Line 274")
+
+
 
     # Documentation for a function
     # @brief send multicast discovery message with query
@@ -599,7 +573,8 @@ class ConformanceKeyword(object):
             protocol_type,
             default_uri,
             query,
-            is_confirmable, ip):
+            is_confirmable, ip
+            ):
         "Send multicast discovery request with query and return response about discovery request"
         result = ""
         client = OICClient()
@@ -623,17 +598,13 @@ class ConformanceKeyword(object):
             return ""
         elif responseList.size() > 0:
             for response in responseList:
-                self.log_to_console(str(response))
                 result_temp = self.get_response_result(response)
                 if(result_temp is ''):
                     continue
+
                 result_json = self.get_response_json(result_temp)
                 href = self.get_json_value(IotivityKey.HREF.toString(), result_json)
                 di = self.get_json_value(IotivityKey.DI.toString(), result_json)
-#                if(href.size() < 1):
-#                    continue
-                
-#                if (href.size() > 0 and href[0] in dut_list) or (di.size() > 0 ) or responseList.size() == 1:
                 _ip = self.get_response_ip(result_temp)
                 if ip == _ip:
                     result = result_temp
@@ -643,9 +614,6 @@ class ConformanceKeyword(object):
                         TE,
                         'Response for Discover',
                         self.get_response_description(response))
-#        response = responseList.get(0)
-#        result = self.get_response_result(response)
-#        self.print_testcase_get(DUT,TE,'Response for Discover',self.get_response_description(response))
 
         self.add_into_response_map(target_request, target_response)
         return result
@@ -664,16 +632,13 @@ class ConformanceKeyword(object):
             port,
             default_uri,
             is_confirmable,
-            query=""):
+            query=""
+            ):
         "Send unicast discovery request and return response"
         result = ""
         client = OICClient()
-        #self.print_testcase_do(TE, DUT, 'Hello TEST 1', query)
         messageType = OICRequestData.Method.GET
-        #self.print_testcase_do(TE, DUT, 'Hello TEST 2', query)
         protocol = self.get_protocol(protocol_type)
-        #self.print_testcase_do(TE, DUT, 'Hello TEST 3', query)
-        #self.print_testcase_do(TE, DUT, 'Unicast Discover', query)
         what = PROTOCOL_TYPE + protocol_type + '\n   '
         what += DEFAULT_URI + default_uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
@@ -818,7 +783,6 @@ class ConformanceKeyword(object):
         self.add_into_response_map(target_request, target_response)
 
         if response is None:
-            # self.print_testcastuet@135e_get(DUT,TE,'No Response')
             return ""
         else:
             result = self.get_response_result(response)
@@ -1178,7 +1142,6 @@ class ConformanceKeyword(object):
     # @return type of response as result
     def get_response_content_format(self, input_response):
         self.result = input_response.split("\n", 9)
-        #self.log_to_console("Content format" + self.result[8])
         return self.result[8]
 
     # Documentation for a function
@@ -1382,36 +1345,28 @@ class ConformanceKeyword(object):
         self.dut_information = self.dut_information_manager.getDUTInformation(
             dut_id)
         dut_resource = self.dut_information.getResourceWithQuery(href_query)
-#        print "Tuhin"
-#        print href_query
         if key == "rep" or key == REP:
             rep_list = dut_resource.get(0).getDUTResourceValue("rep")
-	    dict_list =[]
-	    for rep in rep_list:
-	        #print rep
-	        rep = str(rep)
+            dict_list =[]
+            for rep in rep_list:
+                rep = str(rep)
                 json_analyzer = JsonAnalyzer(rep)
 
                 tmp_list = re.findall(r"[\w'.]+",rep)
-	        key_value=[]
-#                if accessmode == 'W':
-#                    accessmode = 'RW'
+                key_value=[]
+
                 if accessmode == json_analyzer.getValue("accessmode").get(0):
                     key_value.append(json_analyzer.getValue("key").get(0))
-	            key_value.append(json_analyzer.getValue("type").get(0))
+                    key_value.append(json_analyzer.getValue("type").get(0))
                     if json_analyzer.getValue("testdata").size() >1 :
                         key_value.append(json_analyzer.getValue("testdata").toString())
                     else:
                         key_value.append(json_analyzer.getValue("testdata").get(0))
 
-#	        print "Key value pair"
-#                print key_value
-	            dict_list.append(key_value)
-	    	#print "dict_list"
-	#print dict_list
-	    return dict_list
+                    dict_list.append(key_value)
+            return dict_list
         else:
-	    return dut_resource.get(0).getDUTResourceValue(key)
+            return dut_resource.get(0).getDUTResourceValue(key)
 
 
     # Documentation for a function
@@ -1422,39 +1377,29 @@ class ConformanceKeyword(object):
         self.dut_information = self.dut_information_manager.getDUTInformation(
             dut_id)
         dut_resource = self.dut_information.getResourceWithQuery(href_query)
-#        print "Tuhin"
-#        print href_query
         if key == "rep" or key == REP:
             rep_list = dut_resource.get(0).getDUTResourceValue("rep")
             dict_list =[]
             for rep in rep_list:
-                #print rep
                 rep = str(rep)
                 json_analyzer = JsonAnalyzer(rep)
 
                 tmp_list = re.findall(r"[\w'.]+",rep)
                 key_value=[]
-#                if accessmode == 'W':
-#                    accessmode = 'RW'
                 if accessmode == json_analyzer.getValue("accessmode").get(0):
                     key_value.append(json_analyzer.getValue("key").get(0))
                     key_value.append(json_analyzer.getValue("type").get(0))
-                    if json_analyzer.getValue("testdata").size() >1 :
+                    if json_analyzer.getValue("testdata").size() > 1 :
                         key_value.append(json_analyzer.getValue("testdata").toString())
                     else:
                         key_value.append(json_analyzer.getValue("testdata").get(0))
 
-                    if json_analyzer.getValue("testdata2").size() >1 :
+                    if json_analyzer.getValue("testdata2").size() > 1 :
                         key_value.append(json_analyzer.getValue("testdata2").toString())
                     else:
                         key_value.append(json_analyzer.getValue("testdata2").get(0))
 
-
-#               print "Key value pair"
-#                print key_value
                     dict_list.append(key_value)
-                #print "dict_list"
-        #print dict_list
             return dict_list
         else:
             return dut_resource.get(0).getDUTResourceValue(key)
@@ -1472,11 +1417,9 @@ class ConformanceKeyword(object):
         dut_resource = self.dut_information.getResourceWithQuery(href_query)
 
         rep_list = dut_resource.get(0).getDUTResourceValue("rep")
-        self.log_to_console("rep_list: " + str(rep_list))
         dict_list = {}
         if rep_list is not None:
             for rep in rep_list:
-                #print rep
                 rep = str(rep)
                 json_analyzer = JsonAnalyzer(rep)
 
@@ -1501,12 +1444,9 @@ class ConformanceKeyword(object):
             false=True):
         self.dut_information = self.dut_information_manager.getDUTInformation(
             dut_id)
-            
-#        self.log_to_console(" key= " + str(key)+ " dui_id="+str(dut_id)+" response_string="+str(response_string)+" response_format="+str(response_format))
         dut_resources = self.dut_information.getResourceWithQuery(query)
         resourceList = ArrayList()
         for dut_resource in dut_resources:
-#            self.log_to_console(" resource found = " + str(dut_resource.getDUTResourceValue(key)))
             resourceList.add(dut_resource)
 
         for dut_resource in dut_resources:
@@ -1537,12 +1477,9 @@ class ConformanceKeyword(object):
             query="",
             false=True):
         self.oic_information = self.dut_information_manager.getDUTInformation(OIC_ID)
-            
-#        self.log_to_console(" key= " + str(key)+ " dui_id="+str(dut_id)+" response_string="+str(response_string)+" response_format="+str(response_format))
         oic_resources = self.oic_information.getResourceWithQuery(query)
         resourceList = ArrayList()
         for oic_resource in oic_resources:
-#            self.log_to_console(" resource found = " + str(dut_resource.getDUTResourceValue(key)))
             resourceList.add(oic_resource)
 
         for oic_resource in oic_resources:
@@ -1570,10 +1507,6 @@ class ConformanceKeyword(object):
     # @return json_value as string
     def get_json_value(self, key, json_string, href=None, is_value_string=None):
         json_analyzer = JsonAnalyzer(json_string)
- #       print "json_string"
- #       print json_string
- #       print "key"
- #       print key
         if is_value_string is not None:
             return json_analyzer.getValue(key).get(0)
         if href is None:
@@ -1687,7 +1620,7 @@ class ConformanceKeyword(object):
                 self.get_response_value(response, OICHelper.MessageParameters.secPort)
             content_format = self.get_response_value(response, OICHelper.MessageParameters.contentFormat)
             if content_format is None:
-				content_format = "UNSPECIFIED"
+                content_format = "UNSPECIFIED"
             response_result = response_result + "\n" + \
                 content_format
         return response_result
@@ -1737,7 +1670,6 @@ class ConformanceKeyword(object):
             request_result = request_result + "\n" + request_msg_type
         else:
             request_result = request_result + "\n" + ""
-#        self.log_to_console(" request_result = " + request_result)
         request_href = self.get_request_value(request, OICHelper.MessageParameters.uri)
         if request_href is not None:
             request_result = request_result + "\n" + request_href
@@ -1779,9 +1711,7 @@ class ConformanceKeyword(object):
         self.rep_map.put(key , value_to_insert )
 
     def get_json_string(self):
-#        key = IotivityKey.REP.toString()
         intermediate_representation = HashMap()
-#        intermediate_representation.put(key, self.json_representation)
         key = IotivityKey.ROOT.toString()
         final_representation = JsonData()
         final_representation.put(key, intermediate_representation)
@@ -1820,29 +1750,8 @@ class ConformanceKeyword(object):
                 return listofvalues[i]
 
     def get_json_representation(self):
-#        if self.rep_map.isEmpty():
-#            self.prop_map.put("rt", self.resource_type)
-#            self.prop_map.put("dis", self.resource_dis)
-#            self.rep_map.put("sample_key", "sample_value")
-#        if self.resource_interface_array.size() != 0:
-#            self.prop_map.put("if", self.resource_interface_array)
-
-#        final_representation = JsonData()
-
-#        if self.resource_href != None:
-#            final_representation.put("href", self.resource_href)
-#        if not self.prop_map.isEmpty():
-#            self.prop_map.put("rep", self.rep_map)
-#            final_representation.put("prop", self.prop_map)
-#        else:    
-#            final_representation.put("rep", self.rep_map)
-#        temp = ArrayList()
-#        temp.add(final_representation)
-#        json_string = final_representation.toString()
-#        json_string = temp.toString()
         json_string = self.rep_map.toString()
         what = CREATED_PAYLOAD + json_string + '\n'
-               
         return json_string
 
     def get_false(self):
@@ -1852,8 +1761,8 @@ class ConformanceKeyword(object):
         return True
         
     def get_multicast_discovery_request_list(self, protocol, uri, query=None):
-    	if query == None:
-    		query = ''
+        if query == None:
+            query = ''
         return self.provision_manager.getMulticastDiscoveryResponse(self.get_protocol(protocol), uri, query)
 
     def get_multicast_discovery_response_code(self, response):
@@ -1873,25 +1782,25 @@ class ConformanceKeyword(object):
         return self.result[1]
            
     def get_rep_value_from_response(self, key, response):
-    	json_analyzer = JsonAnalyzer(response)
-    	rep = json_analyzer.getValue("rep")
-    	if not rep.isEmpty():
-    		json_analyzer_1 = JsonAnalyzer(rep.get(0))
-    		device_id = json_analyzer_1.getValue(key)
-    		if not device_id.isEmpty():
-    			return device_id.get(0)
-    		else:
-    			return ''
-    	else:
-    		return ''
+        json_analyzer = JsonAnalyzer(response)
+        rep = json_analyzer.getValue("rep")
+        if not rep.isEmpty():
+            json_analyzer_1 = JsonAnalyzer(rep.get(0))
+            device_id = json_analyzer_1.getValue(key)
+            if not device_id.isEmpty():
+                return device_id.get(0)
+            else:
+                return ''
+        else:
+            return ''
 
     def get_device_id_from_response(self, response):
-    	id = self.get_rep_value_from_response("deviceid", response)
-    	return id
-    		
+        id = self.get_rep_value_from_response("deviceid", response)
+        return id
+            
     def get_oxm_list_from_response(self, response):
-    	oxm_list = self.get_rep_value_from_response("oxm", response)
-    	return oxm_list
+        oxm_list = self.get_rep_value_from_response("oxm", response)
+        return oxm_list
 
     def check_oxm_list_contains_atleast_justworks_or_randompin_method(self, response):
         oxm_list = self.get_rep_value_from_response("oxm", response)
@@ -1935,7 +1844,7 @@ class ConformanceKeyword(object):
         if self.is_cli_enabled():
             self.log_to_console("".join(sentence))
             return raw_input()
-        else:	
+        else:    
             return self.ui.showInputDialog(msg, option_list)
 
     def print_message(self, msg):
@@ -1964,8 +1873,11 @@ class ConformanceKeyword(object):
         file_name = file_name + time_stamp + ".pcapng"
         return file_name
 
-    def is_crudn_operation_supported(self, href, key):
-        self.dut_information = self.dut_information_manager.getDUTInformation(self.dut_id)
+    def is_crudn_operation_supported(self, href, key, description_id=None):
+        if description_id == None:
+            self.dut_information = self.dut_information_manager.getDUTInformation(self.dut_id)
+        else:
+            self.dut_information = self.dut_information_manager.getDUTInformation(description_id)
         self.dut_information.generateCRUDNState(href)
         is_supported = False
         if key == "COMPLETE_CREATE":
@@ -2199,6 +2111,8 @@ class ConformanceKeyword(object):
             _hrefs = self.get_dut_info_value(HREF, dut_id)
         else:
             _hrefs.append(href)
+        if RESOURCE_DISCOVERY_URI in _hrefs:
+            _hrefs.remove(RESOURCE_DISCOVERY_URI)
         for _href in _hrefs:
             msgid = self.generate_message_id()
             token = self.generate_token()
@@ -2210,14 +2124,11 @@ class ConformanceKeyword(object):
         list_of_href = self.get_dut_info_value(HREF, dut_id)  
         list_of_query = []          
         for href in list_of_href:
-            self.log_to_console('Href: ' + href)
             msgid = self.generate_message_id()
             token = self.generate_token()
             response = self.send_get_request(UNICAST, COAP, msgid, token, server_ip, server_port, href, True)
-            self.log_to_console('Response: ' + response)
             response_json = self.get_response_json(response)
             payload = str(response_json)
-            self.log_to_console('payload: ' + payload)
             payload_json = JsonAnalyzer(payload)
             self.dut_information = self.dut_information_manager.getDUTInformation(dut_id)
             dut_resource = self.dut_information.getResourceWithQuery(str('href=' + href))
@@ -2226,14 +2137,11 @@ class ConformanceKeyword(object):
                 list_of_rep = dut_resource.get(0).getDUTResourceValue("rep")
                 for rep in list_of_rep:
                     rep = str(rep)
-                    self.log_to_console('Rep: ' + rep)
                     rep_json = JsonAnalyzer(rep)
                     list_of_key.append(rep_json.getValue("key").get(0))      
             for key in list_of_key:
-                self.log_to_console('key: ' + key)
                 list_of_value = payload_json.getValue(key)
                 if list_of_value.size() > 0:
-                    self.log_to_console('value: ' + list_of_value.get(0))
                     query = href + '?' + key + '=' + list_of_value.get(0)
                     list_of_query.append(query)
                     
@@ -2242,7 +2150,9 @@ class ConformanceKeyword(object):
     def make_partial_update_payload(self, dut_id, access, interface=None):
         self.hrefs=[]
         self.options=[]
-        _hrefs = self.get_dut_info_value(HREF, dut_id) 
+        _hrefs = self.get_dut_info_value(HREF, dut_id)
+        if RESOURCE_DISCOVERY_URI in _hrefs:
+            _hrefs.remove(RESOURCE_DISCOVERY_URI)
         for _href in _hrefs:
             query = str('href=' + _href)
             _options = self.get_dut_resource_value2(dut_id, query, 'rep', access)
@@ -2332,7 +2242,7 @@ class ConformanceKeyword(object):
 
     def get_partial_update_hrefs(self):
         return self.hrefs
-			
+            
     def get_partial_update_payloads(self):
         return self.options
 
@@ -2358,9 +2268,7 @@ class ConformanceKeyword(object):
         return queries
 
     def get_list_of_oic_core_resource(self, rt=None):
-#        oic_resources = {RESOURCE_DISCOVERY_RT:RESOURCE_DISCOVERY_URI,DEVICE_DISCOVERY_RT:DEVICE_DISCOVERY_URI,PLATFORM_DISCOVERY_RT:PLATFORM_DISCOVERY_URI}
         oic_resources = {DEVICE_DISCOVERY_RT:DEVICE_DISCOVERY_URI,PLATFORM_DISCOVERY_RT:PLATFORM_DISCOVERY_URI}
-#        oic_resources = {'oic.wk.d':'/oic/d','oic.wk.p':'/oic/p','oic.wk.res':'/oic/res'}
         if rt is None :
             return oic_resources.values()
         resources = []
@@ -2369,52 +2277,55 @@ class ConformanceKeyword(object):
         return resources
         
     def get_list_of_resource(self, response_payload, key):
-        self.log_to_console(sys._getframe().f_code.co_name + " with key: " + key)
-        self.log_to_console(response_payload)
         payload_json = JsonAnalyzer(response_payload)
-        self.log_to_console(payload_json)
         links = payload_json.getValue("links")
-        self.log_to_console("total link: " + str(links.size()))
-        for link in links:
-    		self.log_to_console(link)
         links_json = JsonAnalyzer(str(links))
         list_of_resource = links_json.getAllValueFromJson(key)
-        self.log_to_console(list_of_resource)
         return list_of_resource
+        
+    def is_start_with_correct_interface(self, response_payload, correct_interface, resource_uri):
+        payload_json = JsonAnalyzer(response_payload)
+        links = payload_json.getValue("links")
+        links_json = JsonAnalyzer(str(links))
+        list_of_href = links_json.getAllValueFromJson('href')
+        count_href = list_of_href.size()
+        list_of_interface = links_json.getAllValueFromJson('if')
+        i = 0
+        for _href in list_of_href:
+            if _href == resource_uri:
+                _interface = list_of_interface.get(i)
+                interface_list = []
+
+                if correct_interface in _interface:
+                    return True
+            i = i + 1
+        
+        return False
 
     def get_resource_values(self, response_payload, search_property_key, search_property_value, find_property_key):
-        # Unimplemented
-        self.log_to_console(sys._getframe().f_code.co_name + " in")
-        self.log_to_console(response_payload)
         payload_json = JsonAnalyzer(response_payload)
-        self.log_to_console(payload_json)
         links = payload_json.getValue("links")
-        self.log_to_console("total link: " + str(links.size()))
         for link in links:
-    		self.log_to_console(link)
-    		link_json = JsonAnalyzer(link)
-    		if links_json.getValue(search_property_key).get(0) == search_property_value:
-    			return link_json.getValue(key)
-        self.log_to_console(list_of_resource)
+            link_json = JsonAnalyzer(link)
+            if links_json.getValue(search_property_key).get(0) == search_property_value:
+                return link_json.getValue(key)
         return ''
-        		
+                
     def get_resource_uri_for_a_resource_type(self, response_payload, resource_type):        
-        # Unimplemented
         if resource_type == 'oic.wk.p':
-    		return '/oic/p'
+            return '/oic/p'
         elif resource_type == 'oic.wk.d':
-    		return ['/oic/d']	
+            return ['/oic/d']    
         return ''
-		
+        
     def get_list_of_resource_uri_for_all_resource_type(self, response_payload, *list_of_resource_type):        
-        # Unimplemented
         uris = ['/oic/p', '/oic/d']
         return uris
 
     def has_length_exceed(self, msg, maxLen):
         if len(msg) > maxLen:
-    		return True
-        return False		
+            return True
+        return False        
            
     def are_uri_type_interface_defined(self, response, oic_resource):
         # Unimplemented
@@ -2422,29 +2333,26 @@ class ConformanceKeyword(object):
         return True
         
     def check_oic_prefix(self, prefix, response_type, response_uris):
-        # Unimplemented
         if response_type.startswith(prefix) == False:
-    		for response_uri in response_uris:
-    			if response_uri.startswith("/" + prefix):
-    				return False
-    				
+            for response_uri in response_uris:
+                if response_uri.startswith("/" + prefix):
+                    return False
         return True  
 
     def get_all_value_for_a_key(self, json, key):
-        # Unimplemented
         json_analyzer = JsonAnalyzer(json)
         values = json_analyzer.getAllValueFromJson(key)
         return values 
         
     def check_vendor_defined_oic_resource_type_format(self, resource_type):
         if resource_type.startswith('x.'):
-    		cnt = 0
-    		for ch in resource_type:
-    			print(ch + "\n")
-    			if ch == '.':
-    				cnt = cnt + 1
-    		if cnt < 2:
-    			return False
+            cnt = 0
+            for ch in resource_type:
+                print(ch + "\n")
+                if ch == '.':
+                    cnt = cnt + 1
+            if cnt < 2:
+                return False
         return True
 
     def verify_prefix_oic(self, response_payload):
@@ -2493,27 +2401,26 @@ class ConformanceKeyword(object):
 
     def are_list_elements_unique(self, *listOfItem):
         if len(listOfItem) != len(set(listOfItem)):
-    		return False
+            return False
         return True
         
     def is_item_exist(self, item, *listOfItem):
         if item in listOfItem:
-    		return True
+            return True
         return False
         
     def get_item_count(self, item, *listOfItem):
         cnt = 0
         for element in listOfItem:
-    		if element == item:
-    			cnt = cnt + 1
+            if element == item:
+                cnt = cnt + 1
         return cnt
         
     def get_contain_count(self, item, *listOfItem):
         cnt = 0
         for element in listOfItem:
-    		self.log_to_console("element: " + element)
-    		if element.find(item) >= 0:
-    			cnt = cnt + 1
+            if element.find(item) >= 0:
+                cnt = cnt + 1
         return cnt
 
     def get_list_length(self, *listOfItem):
@@ -2522,64 +2429,116 @@ class ConformanceKeyword(object):
     def get_prefix(self, msg, end_marker):
         index =  msg.find(end_marker)
         if index >= 0:
-    		return msg[0:index]
+            return msg[0:index]
         return msg
         
     def get_suffix(self, msg, start_marker):
         index =  msg.find(start_marker)
         if index >= 0:
-    		return msg[index+1:]
+            return msg[index+1:]
         return msg
         
     def is_key_exist(self, key, payload):
         jsonAnalyzer = JsonAnalyzer(payload)
         values = jsonAnalyzer.getValue(key)
         if values.size() >= 1:
-    		return True
+            return True
         return False
         
     def get_list_of_value(self, msg, key):
-        self.log_to_console(sys._getframe().f_code.co_name + " with key: " + key)
-        self.log_to_console(msg)
         msg_json = JsonAnalyzer(msg)
-        self.log_to_console(msg_json)
         value = msg_json.getValue(key)
-        self.log_to_console(value)
         return value
     
     def verify_payload(self, payload, prev_payload):
-        self.log_to_console(sys._getframe().f_code.co_name + " in")
-        self.log_to_console("prev_payload: " + prev_payload)
         prev_payload = prev_payload[1:len(prev_payload)-1]
-        self.log_to_console("prev_payload: " + prev_payload)
         parts = prev_payload.split(':')
         key = str(parts[0])
         length = len(key)-1
-        self.log_to_console("length: " + str(length))
         key = key[1:length]
         prev_value = parts[1]
-        self.log_to_console("key: " + key)
-        self.log_to_console("value: " + prev_value)
         if prev_value[0] == '\"':
-    		prev_value=prev_value[1:len(str(prev_value))-1]
-        self.log_to_console(payload)
+            prev_value=prev_value[1:len(str(prev_value))-1]
         payload_json = JsonAnalyzer(payload)
-        self.log_to_console(payload_json)
         value = payload_json.getValue(key).get(0)
-        self.log_to_console(value)
         if value == prev_value:
-    		return True
-        return False	                    
+            return True
+        return False                        
                       
 ###end new keywork by m.parves ###
 
 
     def compare_json(self, payload1, payload2):
-		l1 = len(payload1)
-		l2 = len(payload2)
-		if l1 == 0 and l2 == 0:
-			return True
-		if l1 == 0 or l2 == 0:
-			return False
-		return OICHelper.compareJsonPayload(payload1, payload2)
+        l1 = len(payload1)
+        l2 = len(payload2)
+        if l1 == 0 and l2 == 0:
+            return True
+        if l1 == 0 or l2 == 0:
+            return False
+        return OICHelper.compareJsonPayload(payload1, payload2)
+
+    def compare_discovery_json(self, payload1, payload2):
+        json_A = JsonAnalyzer(payload1)
+        json_B = JsonAnalyzer(payload2)
         
+        di_A = json_A.getValue("di").get(0)
+        di_B = json_B.getValue("di").get(0)
+        if di_A != di_B:
+            return False
+        
+        resources_A = json_A.getValue("links")
+        resources_B = json_B.getValue("links")
+        if resources_A.size() != resources_B.size():
+            return False
+        
+        resourcejson_A = JsonAnalyzer(str(resources_A))
+        resourcejson_B = JsonAnalyzer(str(resources_B))
+        hrefs_A = resourcejson_A.getAllValueFromJson("href")
+        hrefs_B = resourcejson_B.getAllValueFromJson("href")
+        for href_A in hrefs_A:
+            if hrefs_B.contains(href_A) == False:
+                return False
+        
+        return True
+
+    def validate_non_empty_strings(self, stringList):
+		if stringList.size() != 0:
+			for stringItem in stringList:
+				if stringItem == '':
+					return False
+		return True
+
+    def validate_discovery_json(self, payload):
+        payload_json = JsonAnalyzer(payload)
+        deviceId = payload_json.getValue("di").get(0)
+        
+        if deviceId == '':
+            return False
+        
+        resourceList = payload_json.getValue("links")
+        if resourceList.size() != 0:
+            for single_resource in resourceList:
+                resource_json = JsonAnalyzer(single_resource)
+                if self.validate_non_empty_strings(resource_json.getValue("href")) == False:
+                    return False
+                if self.validate_non_empty_strings(resource_json.getValue("rt")) == False:
+                    return False
+                if self.validate_non_empty_strings(resource_json.getValue("if")) == False:
+                    return False
+        return True
+
+    def get_res_href(self, payload, target):
+
+        payload_json = JsonAnalyzer(payload)
+
+        targets = payload_json.getValue(target)
+
+        return targets[0]
+
+    def get_response_di(self, payload):
+
+        json = self.get_response_json(payload)
+        payload_json = JsonAnalyzer(json)
+        targets = payload_json.getValue('di')
+
+        return targets[0]

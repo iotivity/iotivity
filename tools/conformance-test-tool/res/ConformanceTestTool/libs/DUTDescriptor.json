@@ -1,69 +1,76 @@
 {
-    "di": "0685B960-736F-46F7-BEC0-9E6CBD61ADC2",
-    "oc": [
-        {
-            "href": "/device/light-1",
-            "rt": "core.light",
-            "if": ["oic.if.baseline oic.if.a"],
-            "dis": "1",
-            "obs": "1",
-            "CcCsRUcUpD": [true, true,true,true, true,true],
-            "rep": [
-                {"key":"power","type":"bool","testdata":true,"testdata2":false,"accessmode":"W"},
-                {"key":"intensity","type":"int","testdata":1,"testdata2":5,"accessmode":"W"},
-                {"key":"manufacturer","type":"string","testdata":"samsung","testdata2":"intel","accessmode":"W"},
-                {"key":"region","type":"string","testdata":"Bangladesh","testdata2":"Korea","accessmode":"W"}
-            ],
-            "dutType": "SERVER",
-            "payloadType": "object"
-        },
-        {
-            "href": "/device/fan-1",
-            "rt": "core.fan",
-            "if": ["oic.if.baseline oic.if.a"],
-            "dis": "1",
-            "obs": "0",
-            "CcCsRUcUpD": [true, true,true,true, true,true],
-            "rep": [
-                {"key":"power","type":"boolean","testdata":true,"testdata2":false,"accessmode":"W"},
-                {"key":"intensity","type":"integer","testdata":1,"testdata2":5,"accessmode":"W"},
-                {"key":"manufacturer","type":"string","testdata":"samsung","testdata2":"intel","accessmode":"W"},
-                {"key":"region","type":"string","testdata":"Bangladesh","testdata2":"Korea","accessmode":"W"}
-            ],
-            "dutType": "SERVER",
-            "payloadType": "object"
-        },
-        {
-            "href": "/device/fan-invisible",
-            "rt": "core.fan",
-            "if": ["oic.if.baseline oic.if.a"],
-            "dis": "0",
-            "obs": "0",
-            "CcCsRUcUpD": [false, false, false, false, false, false],
-            "rep": [
-                {"key":"power","type":"bool","testdata":true,"testdata2":false,"accessmode":"R"},
-                {"key":"intensity","type":"integer","testdata":1,"testdata2":5,"accessmode":"R"},
-                {"key":"manufacturer","type":"string","testdata":"samsung","testdata2":"intel","accessmode":"R"},
-                {"key":"region","type":"string","testdata":"Bangladesh","testdata2":"Korea","accessmode":"R"}
-            ],
-            "dutType": "SERVER",
-            "payloadType": "object"
-        },
-        {
-            "href": "/device/light-invisible",
-            "rt": "core.light",
-            "if": ["oic.if.baseline oic.if.a"],
-            "dis": "0",
-            "obs": "0",
-            "CcCsRUcUpD": [false, false, false, false, false, false],
-            "rep": [
-                {"key":"power","type":"boolean","testdata":true,"testdata2":false,"accessmode":"R"},
-                {"key":"intensity","type":"int","testdata":1,"testdata2":5,"accessmode":"R"},
-                {"key":"manufacturer","type":"string","testdata":"samsung","testdata2":"intel","accessmode":"R"},
-                {"key":"region","type":"string","testdata":"Bangladesh","testdata2":"Korea","accessmode":"R"}
-            ],
-            "dutType": "SERVER",
-            "payloadType": "object"
-        }
-    ]
+  "di" : "6a134b4a-e2bd-4fb1-8729-41703b5a0050",
+  "oc" : [ {
+    "href" : "/AirFlowResURI",
+    "rt" : "oic.r.airflow",
+    "dis" : 1,
+    "obs" : 1,
+    "if" :  "oic.if.a oic.if.baseline" ,
+    "CcCsRUcUpD" : [ false, true, true, false, true, false ],
+    "rep" : [ {
+      "key" : "direction",
+      "type" : "string",
+      "testdata" : "left",
+      "testdata2" : "right",
+      "accessmode" : "W"
+    }, {
+      "key" : "speed",
+      "type" : "integer",
+      "testdata" : 5,
+      "testdata2" : 1,
+      "accessmode" : "W"
+    }, {
+      "key" : "range",
+      "type" : "string",
+      "testdata" : "1,7",
+      "testdata2" : "1,7",
+      "accessmode" : "R"
+    } ],
+    "payloadType" : "object",
+    "dutType" : "SERVER"
+  }, {
+    "href" : "/TemperatureResURI",
+    "rt" : "oic.r.temperature",
+    "dis" : 1,
+    "obs" : 1,
+    "if" : "oic.if.a oic.if.baseline",
+    "CcCsRUcUpD" : [ false, true, true, false, true, false ],
+    "rep" : [ {
+      "key" : "temperature",
+      "type" : "number",
+      "testdata" : 20,
+      "testdata2" : 50,
+      "accessmode" : "W"
+    }, {
+      "key" : "units",
+      "type" : "enum",
+      "testdata" : "C",
+      "testdata2" : "C",
+      "accessmode" : "R"
+    }, {
+      "key" : "range",
+      "type" : "string",
+      "testdata" : "0,100",
+      "testdata2" : "0,100",
+      "accessmode" : "R"
+    } ],
+    "payloadType" : "object",
+    "dutType" : "SERVER"
+  }, {
+    "href" : "/BinarySwitchResURI",
+    "rt" : "oic.r.switch.binary",
+    "dis" : 1,
+    "obs" : 1,
+    "if" : "oic.if.a oic.if.baseline",
+    "CcCsRUcUpD" : [ false, true, true, false, true, false ],
+    "rep" : [ {
+      "key" : "value",
+      "type" : "boolean",
+      "testdata" : false,
+      "testdata2" : true,
+      "accessmode" : "W"
+    } ],
+    "payloadType" : "object",
+    "dutType" : "SERVER"
+  } ]
 }

@@ -21,7 +21,11 @@
 #include <vector>
 #include <iostream>
 #include <stdlib.h>
-
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "SampleResource.h"
 #include "CommonUtil.h"
 #include "ConformanceHelper.h"
@@ -45,7 +49,6 @@
 #define MEDIA_SOURCE_LIST_RESOURCE_TYPE "oic.r.mediasourcelist"
 #define TEMPERATURE_RESOURCE_TYPE "oic.r.temperature"
 #define AIR_FLOW_RESOURCE_TYPE "oic.r.airflow"
-//#define VOLUME_RESOURCE_TYPE
 
 #define TV_Device_INTERFACE "oic.if.a"
 #define AC_Device_INTERFACE "oic.if.a"
@@ -67,9 +70,9 @@
 #define ROOM_2_URI "/store/room-2"
 #define LIGHT_INVISIBLE_URI "/device/light-invisible"
 #define FAN_INVISIBLE_URI "/device/fan-invisible"
-#define RESOURCE_TYPE_LIGHT "core.light"
-#define RESOURCE_TYPE_FAN "core.fan"
-#define GROUP_TYPE_ROOM "oic.wk.col"
+#define RESOURCE_TYPE_LIGHT "core.light core.brightlight"
+#define RESOURCE_TYPE_FAN "core.fan core.table-fan"
+#define GROUP_TYPE_ROOM "core.room"
 #define SERVER_IP_V4 "0.0.0.0"
 #define SERVER_IP_V6 ":::::"
 #define SERVER_PORT 0
@@ -115,10 +118,8 @@ QualityOfService qos = QualityOfService::LowQos;
 ConformanceHelper *conformanceHelper;
 
 static std::mutex s_mutex;
-//static char CRED_FILE_SERVER[] = "oic_svr_db_server_justworks.json";
-static char CRED_FILE_SERVER[] = "oic_svr_db_server.json";
-static char CRED_FILE_CLIENT[] = "oic_svr_db_client.json";
-//static char CRED_FILE_CLIENT[] = "oic_svr_db_client_prov.json";
+static char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
+static char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
 
 void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber);
@@ -143,10 +144,11 @@ void createManyLightResources(void);
 void deleteResource(void);
 void findCollection(string);
 void findResource(string resourceType, string host = "");
-void findAllResources(string host = "");
+void findAllResources(string host = "", string query = "");
 void discoverDevice(bool);
-void discoverPlatform(void);
+void discoverPlatform(bool isMulticast = true);
 void sendGetRequest();
+void sendGetRequestWithQuery(string, string);
 void sendPutRequestUpdate(void);
 void sendPostRequestUpdate(void);
 void sendPostRequestUpdateUserInput(void);
@@ -160,17 +162,32 @@ void cancelObservePassively(void);
 void createGroup(string);
 void joinToGroup(shared_ptr< OCResource >, shared_ptr< OCResource >);
 void joinResourceToLocalGroup(shared_ptr< OCResource >);
-void joinGroup(void);
+bool joinGroup(OCResourceHandle collectionHandle, OCResourceHandle childHandle);
 void deleteGroup(void);
 int selectResource(void);
+void updateGroup(void);
+void sendSpecialPost(void);
 vector< OCRepresentation > createLinkRepresentation();
 string getHost();
 FILE* server_fopen(const char*, const char*);
 FILE* client_fopen(const char*, const char*);
 
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 int main(int argc, char* argv[])
 {
-
+    signal(SIGSEGV, handler);
     createdResourceList.clear();
     foundResourceList.clear();
     handleList.clear();
@@ -330,9 +347,12 @@ void onResourceFound(shared_ptr< OCResource > resource)
         cout << "uri of the found resource is " << resource->uri() << endl;
         hasCallbackArrived = true;
 
-        cout << "Host of found resource: " << resource->host() << endl;
-        cout << "sid of found resource is = " << resource->sid() << endl;
-        cout << "unique identifier of found resource is = " << resource->uniqueIdentifier() << endl;
+        cout << "Host of found resource: ";
+        cout << resource->host() << endl;
+        cout << "di( OCResource.sid() ) of found resource is = ";
+        cout << resource->sid() << endl;
+        cout << "unique identifier of found resource is = ";
+        cout << resource->uniqueIdentifier() << endl;
     }
     else
     {
@@ -412,8 +432,6 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
     {
         cout << "Response: GET request was successful" << endl;
 
-//        conformanceHelper->printIncomingRepresentation(rep);
-
         vector< string > interfacelist = rep.getResourceInterfaces();
 
         bool isCollection = false;
@@ -429,7 +447,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 
         if (isCollection)
         {
-            std::vector< OCRepresentation > children = rep.getChildren();
+            vector< OCRepresentation > children = rep.getChildren();
 
             cout << "\nCHILD RESOURCE OF GROUP" << endl;
             for (auto iter = children.begin(); iter != children.end(); ++iter)
@@ -482,6 +500,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
         cout << "onPOST Response error: " << eCode << endl;
     }
     hasCallbackArrived = true;
+
 }
 
 // callback handler on DELETE request
@@ -609,7 +628,6 @@ void createResource()
         if (result == OC_STACK_OK)
         {
             cout << "Resource created successfully" << endl;
-//            createdResourceList.push_back(createdFanResource);
         }
         else
         {
@@ -668,7 +686,6 @@ void createTvDevice()
         tvMediaSourceListResource->setResourceProperties(TV_MEDIA_SOURCE_LIST_URI,
         MEDIA_SOURCE_LIST_RESOURCE_TYPE,
         MEDIA_SOURCE_LIST_RESOURCE_INTERFACE);
-//        uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
         OCRepresentation mainRep;
         OCRepresentation rep1;
         OCRepresentation rep2;
@@ -690,7 +707,6 @@ void createTvDevice()
         mainRep.setValue("sources", list);
         tvMediaSourceListResource->setResourceRepresentation(mainRep);
         result = tvMediaSourceListResource->startServer();
-//        result = tvMediaSourceListResource->startServer(resourceProperty);
         tvMediaSourceListResource->setAsSlowResource();
 
         if (result == OC_STACK_OK)
@@ -733,23 +749,10 @@ void createTvDevice()
 void createAirConDevice()
 {
 
+    OCStackResult result = OC_STACK_ERROR;
     cout << "Creating AirCon Device Resources!!" << endl;
     if (createdSmartHomeResourceList.size() == 0)
     {
-        acDevice = new SampleResource();
-        acDevice->setResourceProperties(AC_Device_URI, AC_Device_TYPE,
-        AC_Device_INTERFACE);
-        OCStackResult result = acDevice->startServer();
-
-        if (result == OC_STACK_OK)
-        {
-            cout << "AirCon Device created successfully" << endl;
-            createdSmartHomeResourceList.push_back(acDevice);
-        }
-        else
-        {
-            cout << "Unable to create AirCon Device resource" << endl;
-        }
 
         acSwitchResource = new SampleResource();
         acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
@@ -786,7 +789,6 @@ void createAirConDevice()
         temperatureRep.setValue("temperature", temperature);
         acTemperatureResource->setResourceRepresentation(temperatureRep);
         result = acTemperatureResource->startServer();
-//        tvMediaSourceListResource->setAsSlowResource();
 
         if (result == OC_STACK_OK)
         {
@@ -933,7 +935,7 @@ void createInvisibleResource()
         invisibleLightResource = new SampleResource();
         invisibleLightResource->setResourceProperties(LIGHT_INVISIBLE_URI, RESOURCE_TYPE_LIGHT,
         ACTUATOR_INTERFACE);
-        resourceProperty = OC_ACTIVE;
+        resourceProperty = OC_ACTIVE | OC_OBSERVABLE;
         result = invisibleLightResource->startServer(resourceProperty);
 
         if (result == OC_STACK_OK)
@@ -952,6 +954,72 @@ void createInvisibleResource()
     }
 }
 
+void handleResponse(std::shared_ptr< OCResourceRequest > request)
+{
+    auto pResponse = std::make_shared< OC::OCResourceResponse >();
+    pResponse->setRequestHandle(request->getRequestHandle());
+    pResponse->setResourceHandle(request->getResourceHandle());
+
+    // Get the request type and request flag
+    std::string requestType = request->getRequestType();
+    RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
+
+    if (requestFlag == RequestHandlerFlag::RequestFlag)
+    {
+        cout << "\t\trequestFlag : Request\n";
+
+        // If the request type is GET
+        if (requestType == "GET")
+        {
+            cout << "\t\t\trequestType : GET\n";
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+        }
+        else if (requestType == "PUT")
+        {
+            cout << "\t\t\trequestType : PUT\n";
+
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+        }
+        else if (requestType == "POST")
+        {
+            // POST request operations
+            cout << "\t\t\trequestType : POST\n";
+
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+        }
+        else if (requestType == "DELETE")
+        {
+            // DELETE request operations
+            cout << "\t\t\trequestType : Delete\n";
+
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+        }
+    }
+    else if (requestFlag & RequestHandlerFlag::ObserverFlag)
+    {
+        // OBSERVE flag operations
+        cout << "\t\t\trequestType : Observe\n";
+
+        // Check for query params (if any)
+        QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+    }
+}
+
 void createGroup(string groupType)
 {
     if (isGroupCreated)
@@ -966,23 +1034,25 @@ void createGroup(string groupType)
             string resourceInterface = BATCH_INTERFACE;
 
             OCPlatform::registerResource(collectionHandle, resourceURI, groupType,
-                    resourceInterface,
-                    NULL,
+                    resourceInterface, NULL,
                     //&entityHandler, // entityHandler
                     OC_DISCOVERABLE | OC_OBSERVABLE);
 
             cout << "Create Group is called." << endl;
-
-//	        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
-//
-//	        OCPlatform::findResource("", requestURI.str(),
-//	                                 connectivityType, &foundResource);
 
             OCPlatform::bindInterfaceToResource(collectionHandle, GROUP_INTERFACE);
             OCPlatform::bindInterfaceToResource(collectionHandle, DEFAULT_INTERFACE);
 
             isGroupCreated = true;
             cout << "Successfully Created Group!!" << endl;
+            if (createdResourceList.size() > 0)
+            {
+                for (SampleResource* resource : createdResourceList)
+                {
+                    joinGroup(collectionHandle, resource->getResourceHandle());
+                }
+
+            }
         }
         catch (OCException& e)
         {
@@ -1050,17 +1120,30 @@ void joinResourceToLocalGroup(shared_ptr< OCResource > child)
     }
 }
 
-void joinGroup()
+bool joinGroup(OCResourceHandle collectionHandle, OCResourceHandle childHandle)
 {
-    if (foundResourceList.size() > 0)
+    bool isJoined = false;
+
+    try
     {
-        joinResourceToLocalGroup(foundResourceList.at(0));
+        OCStackResult expectedResult = OCPlatform::bindResource(collectionHandle, childHandle);
+        if (expectedResult == OC_STACK_OK)
+        {
+            cout << "Joining to the group completed!!" << endl;
+            isJoined = true;
+        }
+        else
+        {
+            cout << "Unable to join to group" << endl;
+        }
     }
-    else
+    catch (exception& e)
     {
-        cout << "No resource found to join to group!!" << endl;
+        cout << "Exception occurred while trying to join to grop, exception is: " << e.what()
+                << endl;
     }
 
+    return isJoined;
 }
 
 void deleteGroup()
@@ -1202,8 +1285,6 @@ void deleteResource()
             }
 
         }
-//        delete manyResources;
-//        manyResources = NULL;
     }
 
     if (createdSmartHomeResourceList.size() > 0)
@@ -1267,7 +1348,7 @@ void findCollection(string collectionType)
     waitForCallback();
 }
 
-void findAllResources(string host)
+void findAllResources(string host, string query)
 {
     foundResourceList.clear();
     std::ostringstream requestURI;
@@ -1277,7 +1358,14 @@ void findAllResources(string host)
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
-        requestURI << OC_RSRVD_WELL_KNOWN_URI;
+        if (query.compare("") == 0)
+        {
+            requestURI << OC_RSRVD_WELL_KNOWN_URI;
+        }
+        else
+        {
+            requestURI << OC_RSRVD_WELL_KNOWN_URI << "?" << query;
+        }
 
         OCPlatform::findResource(host, requestURI.str(), OCConnectivityType::CT_DEFAULT,
                 &onResourceFound, qos);
@@ -1351,30 +1439,38 @@ void discoverDevice(bool isMulticast)
     }
 
 }
-void discoverPlatform()
+void discoverPlatform(bool isMulticast)
 {
-    if (foundResourceList.size() == 0)
+    string host = "";
+    ostringstream platformDiscoveryRequest;
+    string platformDiscoveryURI = "/oic/p";
+
+    if (isMulticast)
     {
-        findAllResources();
-        hasCallbackArrived = false;
+        platformDiscoveryRequest << OC_MULTICAST_PREFIX << platformDiscoveryURI;
+        cout << "Discovering Platform using Multicast... " << endl;
+
+    }
+    else
+    {
+        if (foundResourceList.size() == 0)
+        {
+            findAllResources();
+            hasCallbackArrived = false;
+        }
+
+        host = foundResourceList.at(0)->host();
+        platformDiscoveryRequest << platformDiscoveryURI;
+        cout << "Discovering Platform using Unicast... " << endl;
     }
 
-    string host = foundResourceList.at(0)->host();
-    ostringstream platformDiscoveryRequest;
-
-    std::string platformDiscoveryURI = "/oic/p";
     try
     {
-//            platformDiscoveryRequest << OC_MULTICAST_PREFIX << platformDiscoveryURI;
-        platformDiscoveryRequest << platformDiscoveryURI;
-
-        OCStackResult ret;
-
-        cout << "Querying for platform information... ";
-
+        OCStackResult ret = OC_STACK_ERROR;
         ret = OCPlatform::getPlatformInfo(host, platformDiscoveryRequest.str(),
                 OCConnectivityType::CT_DEFAULT, &onPlatformInfoReceived);
 
+        cout << "Platform discovery ";
         if (ret == OC_STACK_OK)
         {
             cout << "done." << endl;
@@ -1397,7 +1493,27 @@ void sendGetRequest()
     int selection = selectResource();
     if (selection != -1)
     {
-        foundResourceList.at(selection)->get(QueryParamsMap(), onGet, qos);
+        QueryParamsMap qpMap;
+        qpMap["if"] = "oic.if.baseline";
+        foundResourceList.at(selection)->get(qpMap, onGet, qos);
+        cout << "GET request sent!!" << endl;
+        waitForCallback();
+
+    }
+    else
+    {
+        cout << "No resource to send GET!!" << endl;
+    }
+}
+
+void sendGetRequestWithQuery(string key, string value)
+{
+    int selection = selectResource();
+    if (selection != -1)
+    {
+        QueryParamsMap qpMap;
+        qpMap[key] = value;
+        foundResourceList.at(selection)->get(qpMap, onGet, qos);
         cout << "GET request sent!!" << endl;
         waitForCallback();
 
@@ -1415,7 +1531,7 @@ void sendPutRequestUpdate()
     {
         OCRepresentation rep;
 
-        cout << "Sending Create Resource Message(PUT)..." << endl;
+        cout << "Sending Complete Update Message(PUT)..." << endl;
 
         string key = "region";
         string value = "Rajshahi, Bangladesh";
@@ -1449,7 +1565,7 @@ void sendPutRequestCreate()
     {
         OCRepresentation rep;
 
-        cout << "Sending Complete Update Message(PUT)..." << endl;
+        cout << "Sending Create Resource Message(PUT)..." << endl;
 
         vector< string > resourceTypes;
         string key = "href";
@@ -1506,6 +1622,49 @@ void sendPostRequestUpdate()
     }
 }
 
+void updateGroup()
+{
+    cout << "Please select only Collection resource" << endl;
+    int selection = selectResource();
+    if (selection != -1)
+    {
+        OCRepresentation rep;
+        OCRepresentation childRep;
+        vector< OCRepresentation > childrenRep;
+
+        cout << "Sending Partial Update Message(POST) to Collection..." << endl;
+
+        string key = REGION_KEY;
+        string value = "allbulba";
+
+        key = INTENSITY_KEY;
+        int intensityValue = 100;
+        childRep.setValue(key, intensityValue);
+        value = "core.light";
+        childRep.setValue("rt", value);
+        value = ACTUATOR_INTERFACE;
+        childRep.setValue("if", value);
+        value = "/device/light-1";
+        childRep.setValue("href", value);
+
+        childrenRep.push_back(childRep);
+        value = RESOURCE_TYPE_ROOM;
+        rep.setValue("rt", value);
+        value = "oic.if.baseline oic.if.b oic.mi.grp";
+        rep.setValue("if", value);
+        value = "/core/a/collection";
+        rep.setValue("href", value);
+        rep.setChildren(childrenRep);
+
+        // Invoke resource's put API with rep, query map and the callback parameter
+        foundResourceList.at(selection)->post(RESOURCE_TYPE_ROOM, GROUP_INTERFACE, rep,
+                QueryParamsMap(), &onPost, qos);
+        cout << "POST request sent!!" << endl;
+        waitForCallback();
+
+    }
+}
+
 void sendPostRequestUpdateUserInput()
 {
     int selection = selectResource();
@@ -1516,6 +1675,7 @@ void sendPostRequestUpdateUserInput()
         string valueString = "";
         bool valueBool = false;
         int valueInt = 0;
+        float valueFloat = 0.0;
         double valueDouble = 0.0;
         string valueArray = "";
         string userInput = "";
@@ -1530,10 +1690,11 @@ void sendPostRequestUpdateUserInput()
         {
             cout << "Please select attribute data type and press Enter: " << endl;
             cout << "\t\t 1. Integer" << endl;
-            cout << "\t\t 2. Floating Point" << endl;
-            cout << "\t\t 3. Boolean" << endl;
-            cout << "\t\t 4. String" << endl;
-            cout << "\t\t 5. Array" << endl;
+            cout << "\t\t 2. Floating Point - Single Precision" << endl;
+            cout << "\t\t 3. Floating Point - Double Precision" << endl;
+            cout << "\t\t 4. Boolean" << endl;
+            cout << "\t\t 5. String" << endl;
+            cout << "\t\t 6. Array" << endl;
 
             cin >> userInput;
 
@@ -1559,19 +1720,24 @@ void sendPostRequestUpdateUserInput()
                 rep.setValue(key, valueInt);
                 break;
             case 2:
+                cin >> valueFloat;
+                rep.setValue(key, valueFloat);
+                break;
+            case 3:
                 cin >> valueDouble;
                 rep.setValue(key, valueDouble);
                 break;
-            case 3:
+            case 4:
+                cout << "Please provide boolean value(O for False, 1 for True) : ";
                 cin >> valueBool;
                 rep.setValue(key, valueBool);
                 break;
-            case 4:
+            case 5:
                 cin.getline(value, sizeof(value));
                 getline(cin, valueString);
                 rep.setValue(key, valueString);
                 break;
-            case 5:
+            case 6:
                 cin.getline(value, sizeof(value));
                 getline(cin, valueArray);
                 rep.setValue(key, valueArray);
@@ -1598,7 +1764,7 @@ void sendPostRequestCreate()
     {
         OCRepresentation rep;
 
-        cout << "Sending Subordinate Create Message(POST)..." << endl;
+        cout << "Sending Subordinate Resource Create Message(POST)..." << endl;
 
         vector< string > resourceTypes;
         string key = "href";
@@ -1633,7 +1799,7 @@ void sendDeleteRequest()
     {
         OCRepresentation rep;
 
-        cout << "Putting region representation..." << endl;
+        cout << "Sending Delete Request..." << endl;
 
         // Invoke resource's delete API with the callback parameter
         shared_ptr< OCResource > resource = foundResourceList.at(selection);
@@ -1689,7 +1855,6 @@ void cancelObserveResource()
             resource->cancelObserve(qos);
             cout << "Cancel Observe request sent!!" << endl;
             isObservingResource = false;
-//            waitForCallback();
         }
         else
         {
@@ -1743,9 +1908,6 @@ void cancelObservePassively()
 
             // Currently, there is no api to cancel observe passively
             shared_ptr< OCResource > resource = foundResourceList.at(selection);
-//            resource->cancelObserve(qos);
-//            cout << "Cancel Observe request sent!!" << endl;
-//            isObservingResource = false;
             cout << "Cancel Observe request not sent!! Currently there is no API!!" << endl;
         }
         else
@@ -1774,7 +1936,7 @@ string getHost()
     {
         cout << "Please enter the IP of the Resource host, then press Enter: ";
         cin >> ip;
-        cout << "Please enter the IP of the Resource host, then press Enter: ";
+        cout << "Please enter the port of the Resource host, then press Enter: ";
         cin >> port;
 
         host = ip + ":" + port;
@@ -1825,7 +1987,7 @@ void showMenu()
     cout << "\t\t 7. Delete All Resources" << endl;
     cout << "\t\t 8. Delete Created Group" << endl;
     cout << "\t Client Operations:" << endl;
-    cout << "\t\t 10. Find core.light Type Resource" << endl;
+    cout << "\t\t 10. Find Resource using Interface Query" << endl;
     cout << "\t\t 11. Find Specific Type Of Resource" << endl;
     cout << "\t\t 12. Find All Resources" << endl;
     cout << "\t\t 13. Find core.light Type Resource - Unicast" << endl;
@@ -1833,6 +1995,7 @@ void showMenu()
     cout << "\t\t 15. Find All Resources - Unicast" << endl;
     cout << "\t\t 16. Join Found Resource To The Group" << endl;
     cout << "\t\t 17. Send GET Request" << endl;
+    cout << "\t\t 33. Send GET Request with query" << endl;
     cout << "\t\t 18. Send PUT Request - Create Resource" << endl;
     cout << "\t\t 19. Send PUT Request - Complete Update" << endl;
     cout << "\t\t 20. Send POST Request - Partial Update - Default" << endl;
@@ -1844,9 +2007,10 @@ void showMenu()
     cout << "\t\t 26. Cancel Observing Resource Passively" << endl;
     cout << "\t\t 27. Discover Device - Unicast" << endl;
     cout << "\t\t 28. Discover Device - Multicast" << endl;
-    cout << "\t\t 29. Discover Platform - Unicast" << endl;
+    cout << "\t\t 29. Discover Platform - Multicast" << endl;
     cout << "\t\t 30. Find Group" << endl;
     cout << "\t\t 31. Join Found Resource To Found Group" << endl;
+    cout << "\t\t 32. Update Collection" << endl;
     cout << "\t Smart Home Vertical Resource Creation:" << endl;
     cout << "\t\t 101. Create Smart TV Device" << endl;
     cout << "\t\t 102. Create Air Conditioner Device" << endl;
@@ -1859,15 +2023,18 @@ void handleMenu()
 {
     string userInput;
     string userResourceType;
+    string userInterfaceType;
     string resourceHost = "";
     string collectionType = "";
+    string queryKey = "";
+    string queryValue = "";
     AttributeValue attrVal;
     OCRepresentation linkRep;
     bool isMulticast = false;
     cin >> userInput;
 
     long int choice = strtol(userInput.c_str(), NULL, 10);
-    if ((choice > 31 && choice < 101) || choice < 0 || (choice > 8 && choice < 10) || choice > 102)
+    if ((choice > 33 && choice < 101) || choice < 0 || (choice > 8 && choice < 10) || choice > 102)
     {
         cout << "Invalid Input. Please input your choice again" << endl;
     }
@@ -1908,7 +2075,10 @@ void handleMenu()
                 break;
 
             case 10:
-                findResource(RESOURCE_TYPE_LIGHT);
+                cout << "Please type query(key=value), then press Enter: ";
+                cin >> userInterfaceType;
+                resourceHost = "";
+                findAllResources(resourceHost, userInterfaceType);
                 if (foundResourceList.size() == 0)
                 {
                     cout << "No resource found!!" << endl;
@@ -1963,11 +2133,18 @@ void handleMenu()
                 break;
 
             case 16:
-                joinGroup();
                 break;
 
             case 17:
                 sendGetRequest();
+                break;
+
+            case 33:
+                cout << "Please type query key, then press Enter: ";
+                cin >> queryKey;
+                cout << "Please type query value, then press Enter: ";
+                cin >> queryValue;
+                sendGetRequestWithQuery(queryKey, queryValue);
                 break;
 
             case 18:
@@ -2065,6 +2242,10 @@ void handleMenu()
                 foundResourceList.at(0)->post(collectionType, LINK_INTERFACE, linkRep,
                         QueryParamsMap(), onPost, qos);
 
+                break;
+
+            case 32:
+                updateGroup();
                 break;
 
             case 101:

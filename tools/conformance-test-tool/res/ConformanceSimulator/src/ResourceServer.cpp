@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ResourceServer.h"
+#include "ocstack.h"
+#include "ocpayload.h"
 
 namespace PH = std::placeholders;
 
@@ -60,6 +62,10 @@ OCStackResult ResourceServer::constructServer(PlatformConfig &cfg)
         setPlatformInfo(PLATFORM_ID, MANUFACTURER_NAME, MANUFACTURER_URL, MODEL_NUMBER,
         DATE_OF_MANUFACTURE, PLATFORM_VERSION, OPERATING_SYSTEM_VERSION,
         HARDWARE_VERSION, FIRMWARE_VERSION, SUPPORT_URL, SYSTEM_TIME);
+
+        OCResourcePayloadAddStringLL(&m_deviceInfo.types, "oic.wk.d");
+        OCResourcePayloadAddStringLL(&m_deviceInfo.types, "oic.d.airconditioner");
+        OCSetDeviceInfo(m_deviceInfo);
 
         setDeviceInfo(DEVICE_NAME);
 
@@ -208,8 +214,6 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
         }
     }
 
-    OCPlatform::bindInterfaceToResource(m_resourceHandle, OC_RSRVD_INTERFACE_DEFAULT);
-
     if (result != OC_STACK_OK)
     {
         cerr << "Device Resource failed to start, result code =  " << result << endl;
@@ -234,13 +238,10 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
 
         std::vector< std::string > interfaces = resourceInterfaces;
         interfaces.push_back(m_resourceInterface);
-        m_representation.setResourceInterfaces(interfaces);
 
         std::vector< std::string > types = resourceTypeNames;
         types.push_back(m_resourceTypeName);
-        m_representation.setResourceTypes(types);
 
-        m_representation.addResourceInterface(OC_RSRVD_INTERFACE_DEFAULT);
         m_representation.setUri(m_resourceURI);
     }
 
@@ -336,12 +337,11 @@ void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request
     if (requestFlag == RequestHandlerFlag::RequestFlag)
     {
         cout << "\t\trequestFlag : Request\n";
+        cout << "\t\t\trequestType : " << requestType << endl;
 
         // If the request type is GET
         if (requestType == "GET")
         {
-            cout << "\t\t\trequestType : GET\n";
-
             // Check for query params (if any)
             QueryParamsMap queryParamsMap = request->getQueryParameters();
 
@@ -350,8 +350,6 @@ void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request
         }
         else if (requestType == "PUT")
         {
-            cout << "\t\t\trequestType : PUT\n";
-
             OCRepresentation incomingRepresentation = request->getResourceRepresentation();
 
             // Check for query params (if any)
@@ -362,8 +360,6 @@ void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request
         else if (requestType == "POST")
         {
             // POST request operations
-            cout << "\t\t\trequestType : POST\n";
-
             OCRepresentation incomingRepresentation = request->getResourceRepresentation();
 
             // Check for query params (if any)
@@ -374,8 +370,6 @@ void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request
         else if (requestType == "DELETE")
         {
             // DELETE request operations
-            cout << "\t\t\trequestType : Delete\n";
-
             OCRepresentation incomingRepresentation = request->getResourceRepresentation();
             // Check for query params (if any)
             QueryParamsMap queryParamsMap = request->getQueryParameters();
@@ -385,9 +379,6 @@ void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request
     }
     else if (requestFlag & RequestHandlerFlag::ObserverFlag)
     {
-        // OBSERVE flag operations
-        cout << "\t\t\trequestType : Observe\n";
-
         // Check for query params (if any)
         QueryParamsMap queryParamsMap = request->getQueryParameters();
 

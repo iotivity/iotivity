@@ -214,6 +214,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
         coapRequest.setUriPath(uriPath);
         coapRequest.setUriQuery(query);
         coapRequest.setToken(token);
+        
         clientChannel.sendMessage(coapRequest);
 
         storeLastRequest(coapRequest, ip, Integer.toString(port));
@@ -343,11 +344,6 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
             mlogger.error("IP address empty/null");
             return null;
         }
-        // validates IPv4 only
-        // if (!OICHelper.validateIpAddress(ip)) {
-        // mlogger.error("Invalid IP address");
-        // return null;
-        // }
 
         if (port == 0) {
             mlogger.error("Invalid port");
@@ -624,7 +620,6 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
                             + OICHelper.bytesToHex(response.getToken()));
                     mlogger.info(
                             "Ack message selected to Acknowledge CON message");
-
                 }
 
                 if (response.getPacketType().equals(CoapPacketType.CON)
@@ -637,14 +632,8 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
                 }
 
                 mlogger.info("Notification received");
-                // if (mObserveToken != null
-                // && Arrays.equals(mObserveToken, response.getToken())) {
-                // if (mObserveToken != null) {
                 mNotifications.add(oicResponse);
                 mlogger.info("Notification validated & added");
-                // } else {
-                // mlogger.warn("Unexpected notifications!");
-                // }
             } else {
                 if (response.getPacketType().equals(CoapPacketType.CON))
                     channel.sendMessage(new CoapEmptyMessage(CoapPacketType.ACK,

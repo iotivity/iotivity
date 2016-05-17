@@ -256,7 +256,7 @@ public class OICCoapServer {
         for (Map.Entry<String, OICCoapResource> entry : mOicResourceMap
                 .entrySet()) {
             OICCoapResource resource = entry.getValue();
-            if (!rt.isEmpty() && !rt.equals(resource.getResourceType())) {
+            if (!rt.isEmpty() && !resource.getResourceTypes().contains(rt)) {
                 mlogger.info("rt not match");
                 continue;
             }
@@ -338,7 +338,7 @@ public class OICCoapServer {
         }
 
         // Checking resource type and interface match
-        if (!rt.isEmpty() && (!matchingResource.getResourceType().equals(rt)
+        if (!rt.isEmpty() && (!matchingResource.getResourceTypes().equals(rt)
                 || !hasResourseInterfaceMatched(resIf, matchingResource))) {
             mlogger.info("Resource type and interface NOT match!");
             CoapResponse response = channel.createSeparateResponse(request,
@@ -623,7 +623,7 @@ public class OICCoapServer {
 
         for (OICCoapResource res : mOicResource) {
             mlogger.info("Res Uri: " + res.getResourceUri());
-            mlogger.info("Res Uri: " + res.getResourceType());
+            mlogger.info("Res Uri: " + res.getResourceTypes());
             CTLogger.getInstance()
                     .info("Cumulative Array : " + linksArray.toJSONString());
             linksArray.add(jSONFromResource(res));
@@ -641,18 +641,28 @@ public class OICCoapServer {
     private JSONObject jSONFromResource(OICCoapResource resource) {
         JSONObject jsonObjectProp = new JSONObject();
         JSONObject jsonObjectOC = new JSONObject();
-        // JSONArray jsonObjectLINK = new JSONArray();
+        JSONArray rtArray = new JSONArray();
+        JSONArray ifArray = new JSONArray();
+
+        ArrayList<String> resTypes = resource.getResourceTypes();
+        for (String resType : resTypes) {
+            rtArray.add(resType);
+        }
+
+        ArrayList<String> resIfs = resource.getResourceInterfaces();
+        for (String resIf : resIfs) {
+            ifArray.add(resIf);
+        }
+
         JSONObject jsonObjectRES = new JSONObject();
         JSONObject jsonObjectBM = new JSONObject();
-        // bm is added
-        jsonObjectBM.put("bm", 3);
-        jsonObjectRES.put("rt", resource.getResourceType());
-        jsonObjectRES.put("p", jsonObjectBM);
-        jsonObjectRES.put("if", resource.getResourceInterfaces());
-        jsonObjectRES.put("href", resource.getResourceUri());
 
-        // jsonObjectOC.put("di", "059952a1-7f2f-4ef8-b47b-0b3dc834732b");
-        // jsonObjectOC.put("links", jsonObjectLINK);
+        jsonObjectRES.put("href", resource.getResourceUri());
+        jsonObjectRES.put("rt", rtArray);
+        jsonObjectRES.put("if", ifArray);
+        jsonObjectBM.put("bm", 3);
+        jsonObjectRES.put("p", jsonObjectBM);
+
         return jsonObjectRES;
     }
 

@@ -95,66 +95,6 @@ public:
     static void killApp(std::string app);
 
     /**
-     * API for make directory
-     *
-     *
-     * @param app - App binary path.
-     *
-     * @return none
-     *
-     * NOTE: This API will be support other platforms
-     */
-    static void mkDir(std::string dir);
-
-    /**
-     * API for Launch App
-     *
-     *
-     * @param app - App binary path.
-     *
-     * @return none
-     *
-     * NOTE: This API will be support other platforms
-     */
-    static void rmDir(std::string dir);
-
-    /**
-     * API for copyfile
-     *
-     *
-     * @param app - App binary path.
-     *
-     * @return none
-     *
-     * NOTE: This API will be support other platforms
-     */
-    static void copyFile(std::string source, std::string destination);
-
-    /**
-     * API for remve file
-     *
-     *
-     * @param app - App binary path.
-     *
-     * @return none
-     *
-     * NOTE: This API will be support other platforms
-     */
-    static void rmFile(std::string file);
-
-    /**
-     * API for check existing
-     *
-     *
-     * @param app - App binary path.
-     *
-     * @return bool
-     *
-     * NOTE: This API will be support other platforms
-     */
-    static bool isExists(std::string file);
-
-    /**
      * API for get current allocated memory
      *
      * @return allocated memory size (byte)
@@ -173,19 +113,6 @@ public:
      * NOTE: This API will be support other platforms
      */
     static void waitInSecond(unsigned int seconds);
-
-    /**
-     * API for creating file in the specified path with specified file content
-     *
-     * @param filePath - File path
-     *
-     * @param fileContent - The Content that will be written in the file
-     *
-     * @return bool - if Successfully writes the file, returns true, otherwise false
-     *
-     * NOTE: This API will be supported in other platforms
-     */
-    static bool writeFile(std::string filePath, std::string fileName, std::string fileContent);
 
     /**
      * API for Getting Local IP

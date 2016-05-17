@@ -87,6 +87,7 @@ help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, o
 help_vars.Add(EnumVariable('TARGET_SERVICE', 'Target Service', 'all', allowed_values=('all', 'ca', 'rm', 'tm', 'ssm', 'ppm', 'nm')))
 help_vars.Add(EnumVariable('TARGET_TC', 'Target TC Type', 'all', allowed_values=('all', 'itc', 'utc')))
 help_vars.Add(EnumVariable('TARGET_SOURCE', 'Target SOURCE Type', 'target', allowed_values=('target', 'last', 'target_rm', 'target_ca')))
+help_vars.Add('IOTIVITY_DIR', 'Iotivity Directory Name', 'iotivity')
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))

@@ -20,32 +20,53 @@
 
 package oic.ctt.network;
 
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Vector;
+import java.util.Iterator;
 
 import org.slf4j.Logger;
 
+import oic.ctt.formatter.JsonAnalyzer;
 import oic.ctt.formatter.OCPayloadType;
 import oic.ctt.logger.CTLogger;
 import oic.ctt.network.CttClient.Protocol;
 import oic.ctt.network.OICHelper.MessageParameters;
-import oic.ctt.network.coap.OICCoapClient;
-import oic.ctt.network.http.OICHttpClient;
+import oic.ctt.network.coap.IotivityCoapClient;
+import oic.ctt.network.http.IotivityHttpClient;
+import oic.ctt.network.OICRequestData.Method;
+
+import org.oic.simulator.AttributeValue;
+import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.InvalidArgsException;
+import org.oic.simulator.SimulatorException;
+import org.oic.simulator.SimulatorManager;
+import org.oic.simulator.SimulatorResourceModel;
+import org.oic.simulator.SimulatorResult;
+import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.client.FindResourceListener;
+import org.oic.simulator.client.SimulatorRemoteResource;
+import org.oic.simulator.client.SimulatorRemoteResource.GetResponseListener;
+import org.oic.simulator.client.SimulatorRemoteResource.PutResponseListener;
+import org.oic.simulator.client.SimulatorRemoteResource.PostResponseListener;
+import org.oic.simulator.client.SimulatorRemoteResource.ObserveNotificationListener;
 
 /**
  * The OIC Client class. Provides methods to communicate with a OIC service.
  * Also provides abstraction over HTTP & CoAP.
  */
-public class OICClient implements CttClient {
+public class IotivityClient implements CttClient {
 
-    private OICCoapClient                        mCoapClient       = new OICCoapClient();
-    private OICHttpClient                        mHttpClient       = new OICHttpClient();
-    private HashMap<Protocol, OICProtocolClient> mClientMap        = new HashMap<Protocol, OICProtocolClient>();
+    private static IotivityCoapClient                        mCoapClient       = new IotivityCoapClient();
+    private static IotivityHttpClient                        mHttpClient       = new IotivityHttpClient();
+    private HashMap<Protocol, IotivityProtocolClient> mClientMap        = new HashMap<Protocol, IotivityProtocolClient>();
     private HashMap<String, String>              mObserverTokenMap = new HashMap<String, String>();
     private Logger                               mlogger           = CTLogger
             .getInstance();
 
-    public OICClient() {
+    public IotivityClient() {
         mClientMap.put(Protocol.COAP, mCoapClient);
         mClientMap.put(Protocol.HTTP, mHttpClient);
     }
@@ -56,7 +77,6 @@ public class OICClient implements CttClient {
      * @param waitTime
      *            Waiting time in seconds
      */
-    @Override
     public void setWaitTime(int waitTime) {
         mCoapClient.setWaitTime(waitTime);
     }
@@ -69,11 +89,9 @@ public class OICClient implements CttClient {
      *            The protocol which will be used here (HTTP or CoAP)
      * @return A list of responses received from available the resource servers
      */
-    @Override
     public ArrayList<OICResponseData> discoverResource(
             CttClient.Protocol protocol) {
-        
-    	return discoverResource(protocol, OICHelper.getDefaultUri());
+        return discoverResource(protocol, OICHelper.getDefaultUri());
     }
 
     /**
@@ -87,11 +105,9 @@ public class OICClient implements CttClient {
      *            oic/res
      * @return A list of responses received from available the resource servers
      */
-    @Override
     public ArrayList<OICResponseData> discoverResource(
             CttClient.Protocol protocol, String uriPath) {
-        
-    	return discoverResource(protocol, uriPath, OICHelper.DEFAULT_QUERY);
+        return discoverResource(protocol, uriPath, OICHelper.DEFAULT_QUERY);
     }
 
     /**
@@ -107,12 +123,12 @@ public class OICClient implements CttClient {
      *            Query string to mention different filters
      * @return A list of responses received from available the resource servers
      */
-    @Override
     public ArrayList<OICResponseData> discoverResource(
             CttClient.Protocol protocol, String uriPath, String query) {
-        
-    	return discoverResource(protocol, uriPath, query,
-                OICHelper.DEFAULT_MULTICAST_IPv6, OICHelper.DEFAULT_COAP_PORT); 
+        return discoverResource(protocol, uriPath, query,
+                OICHelper.DEFAULT_MULTICAST_IPv6, OICHelper.DEFAULT_COAP_PORT); // IPv6
+                                                                                // as
+                                                                                // Default
     }
 
     /**
@@ -132,12 +148,10 @@ public class OICClient implements CttClient {
      *            Port of the recipient
      * @return A list of response received from the resource server
      */
-    @Override
     public ArrayList<OICResponseData> discoverResource(
             CttClient.Protocol protocol, String uriPath, String query,
             String ip, int port) {
-        
-    	return discoverResource(protocol, uriPath, query, ip, port,
+        return discoverResource(protocol, uriPath, query, ip, port,
                 OICHelper.createToken(OICHelper.DEFAULT_TOKEN_LENGTH * 2));
     }
 
@@ -160,7 +174,6 @@ public class OICClient implements CttClient {
      *            Token used to match the discovery request/response
      * @return A list of response received from the resource server
      */
-    @Override
     public ArrayList<OICResponseData> discoverResource(
             CttClient.Protocol protocol, String uriPath, String query,
             String ip, int port, byte[] token) {
@@ -169,11 +182,40 @@ public class OICClient implements CttClient {
             protocol = OICClient.Protocol.COAP;
 
         mClientMap.get(protocol).clearResponses();
+        
+        System.out.println("discoverResource in");
+    	System.out.println("query: " + query);
+    	
+        if (uriPath == null || uriPath.equals(""))
+        {
+            uriPath = OICHelper.getDefaultUri();
+        }
+        
+        String resourceType = "";
+        
+    	if(!query.isEmpty())
+    	{
+    		int index = query.indexOf("rt=");
+    		
+    		if(index >= 0)
+    		{
+    			resourceType = query.substring(index + "rt=".length());
+    			System.out.println("resourceType: " + resourceType);
+    		}
+    	}
+       
+    	try
+    	{
+    		ArrayList<OICResponseData> responseList = mClientMap.get(protocol).discoverResource(resourceType);
+    		
+    		return responseList;
+    	}
+    	catch(Exception ex)
+    	{
+    		
+    	}
 
-        ArrayList<OICResponseData> responseList = mClientMap.get(protocol)
-                .discoverResource(uriPath, query, ip, port, token);
-
-        return responseList;
+        return null;
     }
 
     /**
@@ -191,12 +233,10 @@ public class OICClient implements CttClient {
      *            Port of the recipient
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
     public OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
+        return sendRequest(protocol, type, method, messageId, token, ip, port,
                 OICHelper.getDefaultUri());
     }
 
@@ -217,13 +257,11 @@ public class OICClient implements CttClient {
      *            Resource URI of the target resource
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
     public OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port,
             String uriPath) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
+        return sendRequest(protocol, type, method, messageId, token, ip, port,
                 uriPath, OICHelper.DEFAULT_QUERY);
     }
 
@@ -246,13 +284,11 @@ public class OICClient implements CttClient {
      *            Query string to mention different filters
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
     public OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port, String uriPath,
             String query) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
+        return sendRequest(protocol, type, method, messageId, token, ip, port,
                 uriPath, query, OICHelper.DEFAULT_PAYLOAD);
     }
 
@@ -278,13 +314,11 @@ public class OICClient implements CttClient {
      *            resource
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
     public OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port, String uriPath,
             String query, String payload) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
+        return sendRequest(protocol, type, method, messageId, token, ip, port,
                 uriPath, query, payload,
                 OCPayloadType.PAYLOAD_TYPE_REPRESENTATION);
     }
@@ -313,25 +347,85 @@ public class OICClient implements CttClient {
      *            One of the OCPayloadType values to specify payload type
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
     public OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port, String uriPath,
             String query, String payload, OCPayloadType payloadType) {
-        
-    	OICResponseData response = null;
+    	
+        OICResponseData response = null;
 
         if (protocol == null)
+        {
             protocol = OICClient.Protocol.COAP;
+        }
+        
+        if (ip == null || ip.equals("")) 
+        {
+            mlogger.error("IP address empty/null");
+            return null;
+        }
 
-        response = mClientMap.get(protocol).sendRequest(type, method,
-                Integer.parseInt(messageId),
-                OICHelper.hexStringToByteArray(token), ip, port, uriPath, query,
-                payload, payloadType);
-        // OICHelper.createToken(OICHelper.DEFAULT_TOKEN_LENGTH * 2)
+        if (port == 0) 
+        {
+            mlogger.error("Invalid port");
+            return null;
+        }
 
+        if (uriPath == null || uriPath.equals("")) 
+        {
+            mlogger.error("Invalid uri");
+            return null;
+        }
+        
+        if (method == null) 
+        {
+            mlogger.error("Invalid Method");
+            return null;
+        }        
+        
+        SimulatorRemoteResource remoteResource = mClientMap.get(protocol).getRemoteResource(ip, port, uriPath);    		
+		
+		if(remoteResource == null)
+		{
+			System.out.println("Resource not found. Unable to send request");
+			return null;
+		}
+    	
+    	Map<String, String> queryParams = getQueryParams(query);
+    	
+    	String interfaceName = getInterfaceName(query);
+    	
+    	System.out.println("clearing Unicast Response Data");
+    	
+    	try
+    	{
+	        if(method == Method.GET)
+	        {
+                response = mClientMap.get(protocol).sendGetRequest(remoteResource, interfaceName, queryParams);
+	        }
+	        else if(method == Method.PUT)
+	        {
+            	SimulatorResourceModel resourceModel = getResourceModel(payload);
+                response = mClientMap.get(protocol).sendPutRequest(remoteResource, interfaceName, queryParams, resourceModel);
+	        }
+	        else if(method == Method.POST)
+	        {
+            	SimulatorResourceModel resourceModel = getResourceModel(payload);
+                response = mClientMap.get(protocol).sendPostRequest(remoteResource, interfaceName, queryParams, resourceModel);
+	        }
+	        else
+	        {
+            	mlogger.error("Unsupported Method");
+                return null;
+	        }
+    	}
+    	catch(Exception ex)
+    	{
+    		mlogger.error("Exception occured in simulator library");
+    		return null;
+    	}
+        
         return response;
-
     }
 
     /**
@@ -346,7 +440,6 @@ public class OICClient implements CttClient {
      * @param port
      *            Port of the recipient
      */
-    @Override
     public OICResponseData observeResource(CttClient.Protocol protocol,
             OICHelper.MessageType type, String messageId, String token,
             String ip, int port) {
@@ -369,7 +462,6 @@ public class OICClient implements CttClient {
      * @param uriPath
      *            Resource URI of the target resource
      */
-    @Override
     public OICResponseData observeResource(CttClient.Protocol protocol,
             OICHelper.MessageType type, String messageId, String token,
             String ip, int port, String uriPath) {
@@ -394,22 +486,54 @@ public class OICClient implements CttClient {
      * @param query
      *            Query string to mention different filters
      */
-    @Override
     public OICResponseData observeResource(CttClient.Protocol protocol,
             OICHelper.MessageType type, String messageId, String token,
             String ip, int port, String uriPath, String query) {
 
         if (protocol == null)
+        {
             protocol = OICClient.Protocol.COAP;
+        }
+
+      if (ip == null || ip.equals("")) 
+      {
+          mlogger.error("IP address empty/null");
+          return null;
+      }
+
+      if (port == 0) 
+      {
+          mlogger.error("Invalid port");
+          return null;
+      }
+
+      if (uriPath == null || uriPath.equals("")) 
+      {
+          mlogger.error("Invalid uri");
+          return null;
+      }
+      
+      SimulatorRemoteResource remoteResource = mClientMap.get(protocol).getRemoteResource(ip, port, uriPath);    		
+		
+		if(remoteResource == null)
+		{
+			System.out.println("Resource not found. Unable to send request");
+			return null;
+		}
+      
+		Map<String, String> queryParams = getQueryParams(query);
+  	        
+        mClientMap.get(protocol).clearNotifications(remoteResource);
         
-        mObserverTokenMap.put(uriPath, token);
-        mlogger.info("Token for observing  uri: " + uriPath + " is = " + token);
-        mClientMap.get(protocol).clearNotifications();
-        
-        return mClientMap.get(protocol).observeResource(type,
-                Integer.parseInt(messageId),
-                OICHelper.hexStringToByteArray(token), ip, port, uriPath,
-                query);
+        try
+        {
+        	return mClientMap.get(protocol).startObserve(remoteResource, queryParams);
+        }
+        catch(Exception ex)
+    	{
+    		mlogger.error("Exception occured in simulator library");
+    		return null;
+    	}
     }
 
     /**
@@ -419,13 +543,10 @@ public class OICClient implements CttClient {
      *            The protocol being used (HTTP or CoAP)
      * @return An ArrayList of OICResponse type objects
      */
-    @Override
     public ArrayList<OICResponseData> getNotifications(
             CttClient.Protocol protocol) {
 
-        String token = "";
-
-        return getNotifications(protocol, token);
+        return null;
     }
 
     /**
@@ -435,31 +556,25 @@ public class OICClient implements CttClient {
      *            The protocol being used (HTTP or CoAP)
      * @return An ArrayList of OICResponse type objects
      */
-    @Override
     public ArrayList<OICResponseData> getNotifications(
-            CttClient.Protocol protocol, String href) {
-
-        ArrayList<OICResponseData> desiredNotifications = new ArrayList<OICResponseData>();
-        ArrayList<OICResponseData> allNotifications = new ArrayList<OICResponseData>();
-        String token = getObserveTokenFromHref(href);
-        
+            CttClient.Protocol protocol, String href) 
+    {
         if (protocol == null)
+        {
             protocol = OICClient.Protocol.COAP;
+        }
         
-        allNotifications = mClientMap.get(protocol).getNotifications();
+        System.out.println("Ic getNotifications in");
 
-        if ((token.equals("")) || (allNotifications.size() == 0)) {
-            return allNotifications;
-        }
-
-        for (OICResponseData notification : allNotifications) {
-            if (notification.getResponseValue(MessageParameters.token)
-                    .equals(token)) {
-                desiredNotifications.add(notification);
-            }
-        }
-
-        return desiredNotifications;
+        SimulatorRemoteResource remoteResource = mClientMap.get(protocol).getRemoteResource("", 0, href);    		
+		
+		if(remoteResource == null)
+		{
+			System.out.println("Resource not found. Unable to send request");
+			return null;
+		}
+		
+        return mClientMap.get(protocol).getNotifications(remoteResource);
     }
 
     /**
@@ -468,13 +583,9 @@ public class OICClient implements CttClient {
      * @param protocol
      *            The protocol being used (HTTP or CoAP)
      */
-    @Override
-    public void clearNotifications(CttClient.Protocol protocol) {
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-
-        mClientMap.get(protocol).clearNotifications();
+    public void clearNotifications(CttClient.Protocol protocol) 
+    {
+    	
     }
 
     /**
@@ -484,18 +595,9 @@ public class OICClient implements CttClient {
      * @param protocol
      *            The protocol being used (HTTP or CoAP)
      */
-    @Override
     public void cancelObservePassively(CttClient.Protocol protocol,
-            String href) {
-
-        String tokenString = mObserverTokenMap.get(href);
-        byte[] token = OICHelper.hexStringToByteArray(tokenString);
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-        
-        mObserverTokenMap.remove(href);
-        mClientMap.get(protocol).cancelObservePassively(token);
+            String href) 
+    {
     }
 
     /**
@@ -505,18 +607,10 @@ public class OICClient implements CttClient {
      * @param protocol
      *            The protocol being used (HTTP or CoAP)
      */
-    @Override
     public void cancelObserveWithReset(CttClient.Protocol protocol,
-            String href) {
+            String href) 
+    {
 
-        String tokenString = mObserverTokenMap.get(href);
-        byte[] token = OICHelper.hexStringToByteArray(tokenString);
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-        
-        mObserverTokenMap.remove(href);
-        mClientMap.get(protocol).cancelObserveWithReset(token);
     }
 
     /**
@@ -532,12 +626,11 @@ public class OICClient implements CttClient {
      *            Resource URI of the target resource
      * @return The response received from the server
      */
-    @Override
     public OICResponseData cancelObserveWithGetMessage(
             CttClient.Protocol protocol, OICHelper.MessageType type,
-            String messageId, String ip, int port, String uriPath) {
-        
-    	return cancelObserveWithGetMessage(protocol, type, messageId, ip, port,
+            String messageId, String ip, int port, String uriPath) 
+    {
+        return cancelObserveWithGetMessage(protocol, type, messageId, ip, port,
                 uriPath, OICHelper.DEFAULT_QUERY);
     }
 
@@ -556,48 +649,166 @@ public class OICClient implements CttClient {
      *            Query string to mention different filters
      * @return The response received from the server
      */
-    @Override
     public OICResponseData cancelObserveWithGetMessage(
             CttClient.Protocol protocol, OICHelper.MessageType type,
             String messageId, String ip, int port, String uriPath,
             String query) {
 
-        String token = "";
-        
         if (protocol == null)
+        {
             protocol = OICClient.Protocol.COAP;
-        
-        mClientMap.get(protocol).clearNotifications();
-        
-        if (mObserverTokenMap.containsKey(uriPath)) {
-            mlogger.info(
-                    "uri already found as observed. Getting token for observe request.");
-            token = mObserverTokenMap.get(uriPath);
-            mObserverTokenMap.remove(uriPath);
-            mlogger.info("Token to cancel observe = " + token);
-            return mClientMap.get(protocol).cancelObserveWithGetMessage(type,
-                    Integer.parseInt(messageId),
-                    OICHelper.hexStringToByteArray(token), ip, port, uriPath,
-                    query);
-        } else {
-            return null;
         }
+        
+        System.out.println("uriPath: " + uriPath);
+        
+        SimulatorRemoteResource remoteResource = mClientMap.get(protocol).getRemoteResource("", 0, uriPath);    		
+		
+		if(remoteResource == null)
+		{
+			System.out.println("Resource not found. Unable to send request");
+			return null;
+		}
+        
+        OICResponseData responseData = null;
+        
+        try
+        {
+        	responseData =  mClientMap.get(protocol).stopObserve(remoteResource);
+        }
+        catch(Exception ex)
+    	{
+    		mlogger.error("Exception occured in simulator library");
+    		return null;
+    	}
+        
+        return responseData;
     }
 
-    @Override
     public OICRequestData getLastRequest(CttClient.Protocol protocol) {
-        
-    	return mClientMap.get(protocol).getLastRequest();
+        return mClientMap.get(protocol).getLastRequest();
+    }
+       	
+    private SimulatorResourceModel getResourceModel(String payload)
+    {
+		SimulatorResourceModel simulatorResourceModel = new SimulatorResourceModel();
+
+		JsonAnalyzer jsonAnalyzer = new JsonAnalyzer(payload); 
+		
+		ArrayList<String> listKey = jsonAnalyzer.getKeys();
+		
+		for(String key : listKey)
+		{
+			System.out.println("key: " + key);
+		
+			if(key.equals("if") || key.equals("rt"))
+			{
+				continue;
+			}
+			
+			ArrayList<String> listValue = jsonAnalyzer.getValue(key);
+			
+			if(listValue == null || listValue.isEmpty())
+			{
+				System.out.println("no value found");
+				continue;
+			}
+			
+			String attributeKey = key;// key.substring(1, key.length()-1);
+			String value = listValue.get(0);
+			
+			if(value.startsWith("\""))
+	    	{
+				value = value.substring(1);
+	    	}
+	    	
+			if(value.endsWith("\""))
+	    	{
+	    		value = value.substring(0, value.length()-1);
+	    	}
+	    
+			System.out.println("attributeKey: " + attributeKey + " ; value: " + value);
+			AttributeValue attributeValue = new AttributeValue(value);
+			
+			try
+			{
+				simulatorResourceModel.set(attributeKey, attributeValue);
+			}
+			catch(Exception ex)
+			{
+				return null;
+			}
+		}
+		
+		return simulatorResourceModel;
     }
     
-    private String getObserveTokenFromHref(String href) {
-        
-    	String token = "";
-        
-    	if (mObserverTokenMap.containsKey(href)) {
-            token = mObserverTokenMap.get(href);
-        }
-
-        return token;
+    private Map<String, String> getQueryParams(String query)
+    {
+    	Map<String, String> queryParams = new HashMap<String, String>();
+    	    	
+    	System.out.println("query: " + query);
+    	
+    	String[] queries = query.split("&");
+    	
+    	System.out.println("total query: " + queries.length);
+    	
+    	for(String singleQuery : queries)
+    	{
+    		System.out.println("singleQuery: " + singleQuery);
+    		
+    		int index = singleQuery.indexOf("=");
+    		
+    		if(index >= 0)
+    		{
+	    		String key = singleQuery.substring(0, index);
+	    		String value = singleQuery.substring(index+1);
+	    		
+	    		System.out.println("key: " + key);
+	    		System.out.println("value: " + value);
+	    		
+	    		if(key.equals("if") || key.equals("rt"))
+	    		{
+	    			continue;
+	    		}
+	    		
+	    		queryParams.put(key, value);
+    		}
+    	}
+    	
+    	System.out.println("total parameter: " + queryParams.size());
+    	
+    	return queryParams;
+    }
+    
+    private String getInterfaceName(String query)
+    {    	
+    	System.out.println("query: " + query);
+    	
+    	String[] queries = query.split("&");
+    	
+    	System.out.println("total query: " + queries.length);
+    	
+    	for(String singleQuery : queries)
+    	{
+    		System.out.println("singleQuery: " + singleQuery);
+    		
+    		int index = singleQuery.indexOf("=");
+    		
+    		if(index >= 0)
+    		{
+	    		String key = singleQuery.substring(0, index);
+	    		String value = singleQuery.substring(index+1);
+	    		
+	    		System.out.println("key: " + key);
+	    		System.out.println("value: " + value);
+	    		
+	    		if(key.equals("if"))
+	    		{
+	    			return value;
+	    		}
+    		}
+    	}
+    	
+    	return null;
     }
 }

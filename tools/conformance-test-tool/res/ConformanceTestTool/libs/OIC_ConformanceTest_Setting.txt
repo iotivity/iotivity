@@ -91,7 +91,6 @@ Check Modified Partial Representation Value
 Set Modified Representation Value Payload
 	[Arguments]	${DUT_ID}	${DUT_HREF_QUERY}
 	Create Json Representation
-        Add Into Json Representation    ${HREF}    ${EMPTY}
         Log    ${DUT_HREF_QUERY}
 	@{Representation_List}	Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
 	: FOR	${Representation_Values}	IN	@{Representation_List}
@@ -161,6 +160,7 @@ Get IP And Ports
 	${secured_port}        Get Response Secured Port       ${dut1_response}
 	Should Not Be Empty     ${secured_port}
 	[Return]    ${resource_ip}    ${resource_port}    ${secured_port}
+
 
 Get Response Code IP Port And Payload From Response
 	[Arguments]		${dut_response}

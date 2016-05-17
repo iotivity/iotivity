@@ -40,6 +40,8 @@ SampleResource::SampleResource(void)
     m_representation.setValue(REBOOT_KEY, value);
     value = "";
     m_representation.setValue(ACTIONSET_KEY, value);
+    float accuracy = DEFAULT_ACCURACY;
+    m_representation.setValue(ACCURACY_KEY, accuracy);
     double version = DEFAULT_VERSION;
     m_representation.setValue(VERSION_KEY, version);
     bool isCrudnSupported = DEFAULT_CRUDN_SUPPORT;
@@ -146,21 +148,51 @@ void SampleResource::handleDeleteRequest(QueryParamsMap &queryParamsMap,
     cout << "Inside handleDeleteRequest... " << endl;
     // handle delete request
     OCRepresentation rep = getRepresentation();
+    bool shouldDelete = true;
 
     cout << "THe DELETE request comprises of the following representation:" << endl;
     p_conformanceHelper->printRepresentation(incomingRepresentation);
 
     // handle DELETE
+    if (queryParamsMap.size() > 0)
+    {
+        for (const auto &eachQuery : queryParamsMap)
+        {
+            string key = eachQuery.first;
+            if (key.compare("if") == 0)
+            {
+                string value = eachQuery.second;
+                if (value.compare("oic.if.r") == 0)
+                {
+                    cout
+                            << "Update request received via read-only interface. Read-only interface is not authorized to update resource!!"
+                            << endl;
+                    response->setErrorCode(COAP_RESPONSE_CODE_RESOURCE_UNAUTHORIZED);
+                    response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
+                    shouldDelete = false;
+                    break;
+                }
+            }
 
-    response->setErrorCode(COAP_RESPONSE_CODE_DELETED);
-    response->setResponseResult(OCEntityHandlerResult::OC_EH_RESOURCE_DELETED);
+        }
+    }
+
+    if (shouldDelete)
+    {
+        response->setErrorCode(COAP_RESPONSE_CODE_DELETED);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_RESOURCE_DELETED);
+    }
 
     OCStackResult result = OCPlatform::sendResponse(response);
     if (result != OC_STACK_OK)
     {
         cerr << "Unable to send response for Delete Request" << endl;
     }
-    this->stopServer();
+    if (shouldDelete)
+    {
+        this->stopServer();
+    }
+
 }
 
 void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
@@ -169,6 +201,7 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
 {
     OCStackResult result = OC_STACK_ERROR;
     bool isRepUpdated = false;
+    bool shouldChange = true;
     cout << "Inside handlePostRequest... " << endl;
     cout << "THe POST request comprises of the following representation:" << endl;
     p_conformanceHelper->printRepresentation(incomingRepresentation);
@@ -181,156 +214,200 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
     OCRepresentation rep = getRepresentation();
     m_pResponse = response;
 
-    if (incomingRepresentation.hasAttribute(EXECUTE_ACTIONSET_KEY))
+    if (queryParamsMap.size() > 0)
     {
-        string actionSet = "";
-        rep.getValue(ACTIONSET_KEY, actionSet);
-        if (actionSet.compare("") != 0)
+        for (const auto &eachQuery : queryParamsMap)
         {
-            cout << "Executing ActionSet..." << endl;
-            string targetValue = "on";
-            string targetKey = "power";
-
-            int startPos = actionSet.find_first_of("*") + 1;
-            int endPos = actionSet.find_first_of("*", startPos);
-            string actionSetInfo = actionSet.substr(startPos, endPos - startPos);
-            cout << actionSetInfo << endl;
-            int delay = stoi(actionSetInfo.substr(0, actionSetInfo.find_first_of(" ")));
-            int actionSetType = stoi(actionSetInfo.substr(actionSetInfo.find_first_of(" ") + 1));
-
-            if (actionSetType == 2)
+            string key = eachQuery.first;
+            if (key.compare("if") == 0)
             {
-                m_recursiveDelay = delay;
-                m_isCancelCalled = false;
+                string value = eachQuery.second;
+                if (value.compare("oic.if.r") == 0)
+                {
+                    cout << "Update request received via interface: " << value
+                            << " . Read-only interface is not authorized to update resource!!"
+                            << endl;
+                    response->setErrorCode(COAP_RESPONSE_CODE_RESOURCE_UNAUTHORIZED);
+                    response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
+                    shouldChange = false;
+                    break;
+                }
+            }
 
-                std::thread recursive(&SampleResource::handleRecursiveActionSet, this);
-                recursive.detach();
+        }
+    }
+
+    if (shouldChange)
+    {
+        if (incomingRepresentation.hasAttribute(EXECUTE_ACTIONSET_KEY))
+        {
+            string actionSet = "";
+            rep.getValue(ACTIONSET_KEY, actionSet);
+            if (actionSet.compare("") != 0)
+            {
+                cout << "Executing ActionSet..." << endl;
+                string targetValue = "on";
+                string targetKey = "power";
+
+                int startPos = actionSet.find_first_of("*") + 1;
+                int endPos = actionSet.find_first_of("*", startPos);
+                string actionSetInfo = actionSet.substr(startPos, endPos - startPos);
+                cout << actionSetInfo << endl;
+                int delay = stoi(actionSetInfo.substr(0, actionSetInfo.find_first_of(" ")));
+                int actionSetType = stoi(
+                        actionSetInfo.substr(actionSetInfo.find_first_of(" ") + 1));
+
+                if (actionSetType == 2)
+                {
+                    m_recursiveDelay = delay;
+                    m_isCancelCalled = false;
+
+                    std::thread recursive(&SampleResource::handleRecursiveActionSet, this);
+                    recursive.detach();
+
+                }
+                else if (actionSetType == 1)
+                {
+                    m_scheduledDelay = delay;
+                    m_isCancelCalled = false;
+
+                    std::thread sceduled(&SampleResource::handleScheduledActionSet, this);
+                    sceduled.detach();
+
+                }
+                else
+                {
+                    rep.setValue(targetKey, targetValue);
+                    m_representation = rep;
+                    response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+                    response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+
+                    rep.getValue(targetKey, targetValue);
+                    if (targetValue.compare("on") == 0)
+                    {
+                        cout << "Successfully executed ActionSet" << endl;
+                    }
+                    else
+                    {
+                        cerr << "Failed to execute ActionSet" << endl;
+                    }
+
+                    string updatedConfiguration = targetKey + " = " + targetValue;
+                    cout << "Updated Configuration: " << updatedConfiguration << endl;
+                }
 
             }
-            else if (actionSetType == 1)
-            {
-                m_scheduledDelay = delay;
-                m_isCancelCalled = false;
 
-                std::thread sceduled(&SampleResource::handleScheduledActionSet, this);
-                sceduled.detach();
-
-            }
-            else
+        }
+        else if (incomingRepresentation.hasAttribute(EXECUTE_SCHEDULED_ACTIONSET_KEY))
+        {
+            string actionSet = "";
+            rep.getValue(ACTIONSET_KEY, actionSet);
+            if (actionSet.compare("") != 0)
             {
+                cout << "Executing Scheduled ActionSet..." << endl;
+                string scheduleWithDelay = "";
+                incomingRepresentation.getValue(EXECUTE_SCHEDULED_ACTIONSET_KEY, scheduleWithDelay);
+                cout << scheduleWithDelay << endl;
+                int delaySec = stoi(
+                        scheduleWithDelay.substr(scheduleWithDelay.find_last_of("*") + 1));
+                cout << "Delay time in second is: " << delaySec << endl;
+                CommonUtil::waitInSecond(delaySec);
+
+                string targetValue = "on";
+                string targetKey = "power";
                 rep.setValue(targetKey, targetValue);
+
                 m_representation = rep;
-                response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-                response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
 
                 rep.getValue(targetKey, targetValue);
                 if (targetValue.compare("on") == 0)
                 {
-                    cout << "Successfully executed ActionSet" << endl;
+                    cout << "Successfully executed Scheduled ActionSet" << endl;
                 }
                 else
                 {
-                    cerr << "Failed to execute ActionSet" << endl;
+                    cerr << "Failed to execute Scheduled ActionSet" << endl;
                 }
 
                 string updatedConfiguration = targetKey + " = " + targetValue;
                 cout << "Updated Configuration: " << updatedConfiguration << endl;
             }
-
-        }
-
-    }
-    else if (incomingRepresentation.hasAttribute(EXECUTE_SCHEDULED_ACTIONSET_KEY))
-    {
-        string actionSet = "";
-        rep.getValue(ACTIONSET_KEY, actionSet);
-        if (actionSet.compare("") != 0)
-        {
-            cout << "Executing Scheduled ActionSet..." << endl;
-            string scheduleWithDelay = "";
-            incomingRepresentation.getValue(EXECUTE_SCHEDULED_ACTIONSET_KEY, scheduleWithDelay);
-            cout << scheduleWithDelay << endl;
-            int delaySec = stoi(scheduleWithDelay.substr(scheduleWithDelay.find_last_of("*") + 1));
-            cout << "Delay time in second is: " << delaySec << endl;
-            CommonUtil::waitInSecond(delaySec);
-
-            string targetValue = "on";
-            string targetKey = "power";
-            rep.setValue(targetKey, targetValue);
-
-            m_representation = rep;
-
-            rep.getValue(targetKey, targetValue);
-            if (targetValue.compare("on") == 0)
-            {
-                cout << "Successfully executed Scheduled ActionSet" << endl;
-            }
-            else
-            {
-                cerr << "Failed to execute Scheduled ActionSet" << endl;
-            }
-
-            string updatedConfiguration = targetKey + " = " + targetValue;
-            cout << "Updated Configuration: " << updatedConfiguration << endl;
-        }
-        response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
-        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-    }
-    else if (incomingRepresentation.hasAttribute(CANCEL_ACTIONSET_KEY))
-    {
-        m_isCancelCalled = true;
-        response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
-        response->setResourceRepresentation(m_representation, DEFAULT_INTERFACE);
-
-    }
-    else if (incomingRepresentation.hasAttribute(GET_ACTIONSET_KEY))
-    {
-        response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
-        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-    }
-    else if (incomingRepresentation.getUri().compare("") != 0)
-    {
-        incomingRepresentation.getValue(URI_KEY, uriValue);
-
-        if (uriValue.compare(m_resourceURI) != 0)
-        {
-            string initialUri = this->getUri();
-            this->createResource(initialUri, incomingRepresentation, response);
-        }
-
-    }
-    else
-    {
-
-        for (OCRepresentation::iterator repIter = incomingRepresentation.begin();
-                repIter != incomingRepresentation.end(); repIter++)
-        {
-            string key = repIter->attrname();
-            if (m_representation.hasAttribute(key) && isReadonly(key) == false)
-            {
-                updateRepresentation(key, incomingRepresentation, response);
-                isRepUpdated = true;
-            }
-        }
-
-        if (isRepUpdated == true)
-        {
-            cout << "Resource representation is updated!! Sending Notification to observers"
-                    << endl;
-            notifyObservers(this);
             response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
             response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+            response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+        }
+        else if (incomingRepresentation.hasAttribute(CANCEL_ACTIONSET_KEY))
+        {
+            m_isCancelCalled = true;
+            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+            response->setResourceRepresentation(m_representation, DEFAULT_INTERFACE);
+
+        }
+        else if (incomingRepresentation.hasAttribute(GET_ACTIONSET_KEY))
+        {
+            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+            response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+        }
+        else if (incomingRepresentation.getUri().compare("") != 0)
+        {
+            incomingRepresentation.getValue(URI_KEY, uriValue);
+
+            if (uriValue.compare(m_resourceURI) != 0)
+            {
+                string initialUri = this->getUri();
+                this->createResource(initialUri, incomingRepresentation, response);
+            }
+
         }
         else
         {
-            cout << "Incoming Representation not supported by this resource!!" << endl;
-            response->setErrorCode(COAP_RESPONSE_CODE_ERROR);
-            response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-        }
 
+            for (OCRepresentation::iterator repIter = incomingRepresentation.begin();
+                    repIter != incomingRepresentation.end(); repIter++)
+            {
+                string key = repIter->attrname();
+                cout << "Key is: " << key << " ; "
+                        << incomingRepresentation.getResourceTypes().size() << endl;
+
+                int resourceTypeSize = incomingRepresentation.getResourceTypes().size();
+                int interfaceListSize = incomingRepresentation.getResourceInterfaces().size();
+
+                if (key.compare("rt") == 0 || key.compare("if") == 0 || resourceTypeSize > 0 || interfaceListSize > 0)
+                {
+                    isRepUpdated = false;
+                    break;
+                }
+                if (m_representation.hasAttribute(key) && isReadonly(key) == false)
+                {
+                    updateRepresentation(key, incomingRepresentation, response);
+                    isRepUpdated = true;
+                }
+                else if (m_representation.hasAttribute(key) && isReadonly(key) == true)
+                {
+                    isRepUpdated = true;
+                    break;
+                }
+            }
+
+            if (isRepUpdated == true)
+            {
+                cout << "Resource representation is updated!! Sending Notification to observers"
+                        << endl;
+                notifyObservers(this);
+                response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+                response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+            }
+            else
+            {
+                cout << "Incoming Representation not supported by this resource!!" << endl;
+                response->setErrorCode(COAP_RESPONSE_CODE_ERROR);
+                response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+            }
+
+        }
     }
 
     try
@@ -373,9 +450,10 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
             if (rep.hasAttribute(key))
             {
                 string attributeValue = rep.getValueToString(key);
-                if (attributeValue.compare(eachQuery.second) != 0)
+                if (eachQuery.second.find(attributeValue) == string::npos)
                 {
                     shouldReturnError = true;
+                    response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
                     break;
                 }
             }
@@ -433,164 +511,50 @@ void SampleResource::handlePutRequest(QueryParamsMap &queryParamsMap,
     string targetValue = "";
     string updateKey = "power";
     string uriValue = "";
+    bool shouldChange = true;
     OCStackResult result = OC_STACK_OK;
 
-    if (incomingRepresentation.getUri().compare("") != 0)
+    if (queryParamsMap.size() > 0)
     {
-        incomingRepresentation.getValue(URI_KEY, uriValue);
-
-        if (uriValue.compare(m_resourceURI) != 0)
+        for (const auto &eachQuery : queryParamsMap)
         {
-
-            createResource("", incomingRepresentation, response);
-        }
-        else
-        {
-            rep = incomingRepresentation;
-            cout << "Sending notification from complete create - PUT" << endl;
-            notifyObservers(this);
-            rep.setUri("");
-            response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
-            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-
-        }
-
-        result = OCPlatform::sendResponse(response);
-        if (result != OC_STACK_OK)
-        {
-            cerr << "Unable to send response for PUT Request" << endl;
-        }
-
-    }
-    else if (incomingRepresentation.hasAttribute(ACTIONSET_KEY))
-    {
-        updateRepresentation(ACTIONSET_KEY, incomingRepresentation, response);
-        cout << "Sending notification from add actionset - PUT" << endl;
-        notifyObservers(this);
-    }
-    else if (incomingRepresentation.hasAttribute(DELETE_ACTIONSET_KEY))
-    {
-        incomingRepresentation.getValue(DELETE_ACTIONSET_KEY, targetValue);
-        cout << "Deleting ActionSet, with target = " << targetValue << endl;
-
-        if (targetValue.compare("") != 0)
-        {
-            cout << "Deleting ActionSet from representation... " << endl;
-            string configurationKey = ACTIONSET_KEY;
-            string configurationValue = "";
-
-            cout << "System JSON Representation: " << rep.getPayload()->values->str << endl;
-            rep.setValue(configurationKey, configurationValue);
-            response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-            setResourceRepresentation(rep);
-            cout << "Updated System JSON Representation: " << rep.getPayload()->values->str << endl;
-            ;
-            rep.getValue(configurationKey, configurationValue);
-            string updatedConfiguration = configurationKey + " = " + configurationValue;
-            cout << "Updated Configuration: " << updatedConfiguration << endl;
-            ;
-
-        }
-
-        result = OCPlatform::sendResponse(response);
-        if (result != OC_STACK_OK)
-        {
-            cerr << "Unable to send response for PUT Request" << endl;
-        }
-    }
-    else if (incomingRepresentation.hasAttribute(FACTORY_RESET_KEY))
-    {
-        incomingRepresentation.getValue(FACTORY_RESET_KEY, targetValue);
-        cout << "Inside Factory Reset, target value = " << targetValue << endl;
-
-        if (targetValue.compare("true") == 0)
-        {
-            cout << "Factory Reset Going on...." << endl;
-
-            string configurationKey = FACTORY_RESET_KEY;
-            string configurationValue = targetValue;
-            rep.setValue(configurationKey, configurationValue);
-
-            configurationKey = "power";
-            configurationValue = DEFAULT_POWER_STATE;
-            rep.setValue(configurationKey, configurationValue);
-
-            configurationKey = "intensity";
-            configurationValue = DEFAULT_INTENSITY;
-            rep.setValue(configurationKey, configurationValue);
-
-            configurationKey = "manufacturer";
-            configurationValue = DEFAULT_MANUFACTURER;
-            rep.setValue(configurationKey, configurationValue);
-
-            configurationKey = REGION_KEY;
-            configurationValue = DEFAULT_REGION;
-            rep.setValue(configurationKey, configurationValue);
-
-            configurationKey = "reboot";
-            configurationValue = DEFAULT_REBOOT_STATE;
-            rep.setValue(configurationKey, configurationValue);
-
-            response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-            setResourceRepresentation(rep);
-
-            rep.getValue(configurationKey, configurationValue);
-            string updatedConfiguration = configurationKey + " = " + configurationValue;
-            cout << "Configuration after Factory reset: " << updatedConfiguration << endl;
-
-        }
-
-        result = OCPlatform::sendResponse(response);
-        if (result != OC_STACK_OK)
-        {
-            cerr << "Unable to send response for PUT Request" << endl;
-        }
-
-        targetValue = DEFAULT_FACTORY_RESET_STATE;
-        rep.setValue("value", targetValue);
-    }
-    else if (incomingRepresentation.hasAttribute(REBOOT_KEY))
-    {
-        incomingRepresentation.getValue(REBOOT_KEY, targetValue);
-        cout << "Inside Reboot, target value = " << targetValue << endl;
-
-        if (targetValue.compare("true") == 0)
-        {
-            cout << "Rebooting Resource " << endl;
-            rep.setValue(REBOOT_KEY, targetValue);
-            response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-
-            rep.getValue(REBOOT_KEY, targetValue);
-            string updatedConfiguration = REBOOT_KEY;
-            updatedConfiguration = updatedConfiguration + " = " + targetValue;
-
-            OCStackResult result = OCPlatform::sendResponse(response);
-            if (result != OC_STACK_OK)
+            string key = eachQuery.first;
+            if (key.compare("if") == 0)
             {
-                cerr << "Unable to send response for PUT Request" << endl;
+                string value = eachQuery.second;
+                if (value.compare("oic.if.r") == 0)
+                {
+                    cout
+                            << "Update request received via read-only interface. Read-only interface is not authorized to update resource!!"
+                            << endl;
+                    response->setErrorCode(COAP_RESPONSE_CODE_RESOURCE_UNAUTHORIZED);
+                    response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
+                    shouldChange = false;
+                    break;
+                }
             }
-            int restartResult = system("sudo reboot -f");
-            cout << "Roboot result = " << restartResult << endl;
-        }
-    }
-    else
-    {
-        cout << "Inside default put handle" << endl;
-        rep = incomingRepresentation;
-        cout << "Sending notification from complete update - PUT" << endl;
-        notifyObservers(this);
-        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-        response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
-        result = OCPlatform::sendResponse(response);
-        if (result != OC_STACK_OK)
-        {
-            cerr << "Unable to send response for PUT Request" << endl;
+
         }
     }
 
-    m_representation = rep;
+    if (shouldChange)
+    {
+        response->setErrorCode(COAP_RESPONSE_CODE_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+    }
+
+    try
+    {
+        result = OCPlatform::sendResponse(response);
+    }
+    catch (exception& e)
+    {
+        cout << "Exception occurred while sending response. Exception is: " << e.what() << endl;
+    }
+    if (result != OC_STACK_OK)
+    {
+        cerr << "Unable to send response for POST Request" << endl;
+    }
 }
 
 void SampleResource::onResourceServerStarted(bool &isRegisteredForPresence, int &presenceInterval)
@@ -676,7 +640,7 @@ void SampleResource::notifyObservers(void *param)
         {
             cout << "Sending Notification to Observers...." << endl;
             std::shared_ptr< OCResourceResponse > resourceResponse =
-            {   std::make_shared< OCResourceResponse >()};
+            { std::make_shared< OCResourceResponse >() };
 
             resourceResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
             resourceResponse->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
@@ -794,10 +758,9 @@ void SampleResource::createResource(string initialUri, OCRepresentation incoming
             {
                 newResource = new SampleResource();
                 cout << "constructor called!!" << endl;
-                result = (OCStackResult)(
-                        (int) result
-                                + (int) newResource->setResourceProperties(resourceUri,
-                                        resourceType, DEFAULT_INTERFACE));
+                result = (OCStackResult) ((int) result
+                        + (int) newResource->setResourceProperties(resourceUri, resourceType,
+                                DEFAULT_INTERFACE));
                 cout << "resource property set!!" << endl;
 
                 uint8_t resourceProperty;
@@ -874,4 +837,168 @@ bool SampleResource::isReadonly(string key)
         readOnly = true;
     }
     return readOnly;
+}
+
+void SampleResource::supportCreateAndOthersForPUT(QueryParamsMap &queryParamsMap,
+        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
+        std::shared_ptr< OCResourceResponse > response){
+    string uriValue = "";
+    string targetValue = "";
+    bool shouldChange = true;
+    OCStackResult result = OC_STACK_OK;
+    OCRepresentation rep = getRepresentation();
+        if (incomingRepresentation.getUri().compare("") != 0)
+        {
+            incomingRepresentation.getValue(URI_KEY, uriValue);
+
+            if (uriValue.compare(m_resourceURI) != 0)
+            {
+
+                createResource("", incomingRepresentation, response);
+            }
+            else
+            {
+                rep = incomingRepresentation;
+                cout << "Sending notification from complete create - PUT" << endl;
+                notifyObservers(this);
+                rep.setUri("");
+                response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+                response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+
+            }
+
+            result = OCPlatform::sendResponse(response);
+            if (result != OC_STACK_OK)
+            {
+                cerr << "Unable to send response for PUT Request" << endl;
+            }
+
+        }
+        else if (incomingRepresentation.hasAttribute(ACTIONSET_KEY))
+        {
+            updateRepresentation(ACTIONSET_KEY, incomingRepresentation, response);
+            cout << "Sending notification from add actionset - PUT" << endl;
+            notifyObservers(this);
+        }
+        else if (incomingRepresentation.hasAttribute(DELETE_ACTIONSET_KEY))
+        {
+            incomingRepresentation.getValue(DELETE_ACTIONSET_KEY, targetValue);
+            cout << "Deleting ActionSet, with target = " << targetValue << endl;
+
+            if (targetValue.compare("") != 0)
+            {
+                cout << "Deleting ActionSet from representation... " << endl;
+                string configurationKey = ACTIONSET_KEY;
+                string configurationValue = "";
+
+                cout << "System JSON Representation: " << rep.getPayload()->values->str << endl;
+                rep.setValue(configurationKey, configurationValue);
+                response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                setResourceRepresentation(rep);
+                cout << "Updated System JSON Representation: " << rep.getPayload()->values->str << endl;
+                ;
+                rep.getValue(configurationKey, configurationValue);
+                string updatedConfiguration = configurationKey + " = " + configurationValue;
+                cout << "Updated Configuration: " << updatedConfiguration << endl;
+                ;
+
+            }
+
+            result = OCPlatform::sendResponse(response);
+            if (result != OC_STACK_OK)
+            {
+                cerr << "Unable to send response for PUT Request" << endl;
+            }
+        }
+        else if (incomingRepresentation.hasAttribute(FACTORY_RESET_KEY))
+        {
+            incomingRepresentation.getValue(FACTORY_RESET_KEY, targetValue);
+            cout << "Inside Factory Reset, target value = " << targetValue << endl;
+
+            if (targetValue.compare("true") == 0)
+            {
+                cout << "Factory Reset Going on...." << endl;
+
+                string configurationKey = FACTORY_RESET_KEY;
+                string configurationValue = targetValue;
+                rep.setValue(configurationKey, configurationValue);
+
+                configurationKey = "power";
+                configurationValue = DEFAULT_POWER_STATE;
+                rep.setValue(configurationKey, configurationValue);
+
+                configurationKey = "intensity";
+                configurationValue = DEFAULT_INTENSITY;
+                rep.setValue(configurationKey, configurationValue);
+
+                configurationKey = "manufacturer";
+                configurationValue = DEFAULT_MANUFACTURER;
+                rep.setValue(configurationKey, configurationValue);
+
+                configurationKey = REGION_KEY;
+                configurationValue = DEFAULT_REGION;
+                rep.setValue(configurationKey, configurationValue);
+
+                configurationKey = "reboot";
+                configurationValue = DEFAULT_REBOOT_STATE;
+                rep.setValue(configurationKey, configurationValue);
+
+                response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                setResourceRepresentation(rep);
+
+                rep.getValue(configurationKey, configurationValue);
+                string updatedConfiguration = configurationKey + " = " + configurationValue;
+                cout << "Configuration after Factory reset: " << updatedConfiguration << endl;
+
+            }
+
+            result = OCPlatform::sendResponse(response);
+            if (result != OC_STACK_OK)
+            {
+                cerr << "Unable to send response for PUT Request" << endl;
+            }
+
+            targetValue = DEFAULT_FACTORY_RESET_STATE;
+            rep.setValue("value", targetValue);
+        }
+        else if (incomingRepresentation.hasAttribute(REBOOT_KEY))
+        {
+            incomingRepresentation.getValue(REBOOT_KEY, targetValue);
+            cout << "Inside Reboot, target value = " << targetValue << endl;
+
+            if (targetValue.compare("true") == 0)
+            {
+                cout << "Rebooting Resource " << endl;
+                rep.setValue(REBOOT_KEY, targetValue);
+                response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+
+                rep.getValue(REBOOT_KEY, targetValue);
+                string updatedConfiguration = REBOOT_KEY;
+                updatedConfiguration = updatedConfiguration + " = " + targetValue;
+
+                OCStackResult result = OCPlatform::sendResponse(response);
+                if (result != OC_STACK_OK)
+                {
+                    cerr << "Unable to send response for PUT Request" << endl;
+                }
+                int restartResult = system("sudo reboot -f");
+                cout << "Roboot result = " << restartResult << endl;
+            }
+        }
+        else
+        {
+            cout << "Inside default put handle" << endl;
+            rep = incomingRepresentation;
+            cout << "Sending notification from complete update - PUT" << endl;
+            notifyObservers(this);
+            response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+            result = OCPlatform::sendResponse(response);
+            if (result != OC_STACK_OK)
+            {
+                cerr << "Unable to send response for PUT Request" << endl;
+            }
+        }
 }

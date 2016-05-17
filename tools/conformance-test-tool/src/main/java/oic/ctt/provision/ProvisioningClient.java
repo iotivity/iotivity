@@ -40,7 +40,7 @@ import oic.ctt.logger.CTLogger;
 import oic.ctt.network.OICClient;
 import oic.ctt.network.OICHelper;
 import oic.ctt.network.OICResponseData;
-import oic.ctt.network.OICClient.Protocol;
+import oic.ctt.network.CttClient.Protocol;
 import oic.ctt.network.OICHelper.MessageParameters;
 import oic.ctt.network.OICHelper.MessageType;
 import oic.ctt.network.OICRequestData.Method;

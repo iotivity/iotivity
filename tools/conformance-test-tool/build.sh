@@ -157,7 +157,16 @@ BuildJCOAP()
 {
 	# Buiding JCOAP
 	cd extlibs/ws4d-jcoap
-	RunCommand "gradle install" "JCOAP Build" 
+	RunCommand "gradle install" "JCOAP Build"
+	cd ../../ 
+}
+
+BuildIotivityStack()
+{
+	# Buiding Iotivity Stack
+	cd extlibs/iotivity-stack
+	RunCommand "gradle install" "Iotivity Stack Build" 
+	cd ../../
 }
 
 
@@ -166,7 +175,6 @@ BuildConformanceLib()
 {
 	#echo $(pwd)
 	# Buiding Conformance Lib
-	cd ../../
 	RunCommand "gradle install" "Conformance Lib Build"
 }
 
@@ -251,10 +259,11 @@ RunCommand "cp -r res/ConformanceTestTool/libs/* bin/linux/ConformanceTestTool/p
 
 if [ "$build" = "all" ] || [ "$build" = "lib" ]
 then
-	BuildJCOAP
+	BuildJCOAP	
+	BuildIotivityStack
 	BuildConformanceLib
 	RunCommand "cp extlibs/ws4d-jcoap/build/libs/*.jar libs/" "JCOAP Installation"
-
+	RunCommand "cp extlibs/iotivity-stack/build/libs/*.jar libs/" "Iotivity Stack Installation"
 fi
 
 

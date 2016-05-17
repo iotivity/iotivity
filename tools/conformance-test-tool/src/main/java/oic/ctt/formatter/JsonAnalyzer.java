@@ -122,6 +122,25 @@ public class JsonAnalyzer {
     public ArrayList<String> getValue(String key) {
         return getValue(key, mJsonString);
     }
+    
+    /**
+     * Return all keys
+     */
+    public ArrayList<String> getKeys() {
+    	ArrayList<String> listKey = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+//            JsonNode jsonNode = mapper.readTree(mJsonString);
+        org.json.JSONObject jsonObject = new org.json.JSONObject(mJsonString);
+        java.util.Iterator<String> fieldNames = jsonObject.keys();
+        
+        while(fieldNames.hasNext())
+        {
+            String fieldName = fieldNames.next();
+            listKey.add(fieldName);
+        }
+        
+        return listKey;
+    }
 
     /**
      * Return value of specific key This method have recursive logic

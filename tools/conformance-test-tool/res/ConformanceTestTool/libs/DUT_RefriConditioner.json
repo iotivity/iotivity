@@ -1,0 +1,145 @@
+{
+    "di": "0685B960-736F-46F7-BEC0-9E6CBD61ADC2",
+    "oc": [
+        {
+            "href": "/sec/fridge/power",
+            "rt": "oic.r.switch.binary",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "1",
+            "CcCsRUcUpD": [false, false,true,false, true,false],
+            "rep": [
+                {"key":"value","type":"bool","testdata":true,"testdata2":false,"accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/icemaker",
+            "rt": "oic.r.icemaker",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "0",
+            "CcCsRUcUpD": [false, false,true,false, true,false],
+            "rep": [
+                {"key":"status","type":"string","testdata":"On","testdata2":"Off","accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/cooler/door",
+            "rt": "oic.r.door",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "1",
+            "CcCsRUcUpD": [false, false,true,false, false,false],
+            "rep": [
+                {"key":"openState","type":"string","testdata":"Open","testdata2":"Closed","accessmode":"W"},
+{"key":"openAlarm","type":"bool","testdata":false,"testdata2":true,"accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/freezer/door",
+            "rt": "oic.r.door",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "1",
+            "CcCsRUcUpD": [false, false,true,false, false,false],
+            "rep": [
+                {"key":"openState","type":"string","testdata":"Open","testdata2":"Closed","accessmode":"W"},
+{"key":"openAlarm","type":"bool","testdata":false,"testdata2":true,"accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/cvroom/door",
+            "rt": "oic.r.door",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "1",
+            "CcCsRUcUpD": [false, false,true,false, false,false],
+            "rep": [
+                {"key":"openState","type":"string","testdata":"Open","testdata2":"Closed","accessmode":"W"},
+{"key":"openAlarm","type":"bool","testdata":false,"testdata2":true,"accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/cooler/temp/set",
+            "rt": "oic.r.temperature",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "0",
+            "CcCsRUcUpD": [false, false,true,false, true,false],
+            "rep": [
+                {"key":"temperature","type":"float","testdata":7.0,"testdata2":10.0,"accessmode":"W"},
+                {"key":"range","type":"string","testdata":"0,10","testdata2":"0,10","accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/cooler/temp/cur",
+            "rt": "oic.r.temperature",
+            "if": ["oic.if.baseline oic.if.s"],
+            "dis": "1",
+            "obs": "1",
+            "CcCsRUcUpD": [false, false,true,false, true,false],
+            "rep": [
+                {"key":"temperature","type":"float","testdata":7.0,"testdata2":10.0,"accessmode":"R"},
+                {"key":"range","type":"string","testdata":"0,10","testdata2":"0,10","accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+{
+            "href": "/sec/fridge/freezer/temp/set",
+            "rt": "oic.r.temperature",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "0",
+            "CcCsRUcUpD": [false, false,true,false, true,false],
+            "rep": [
+                {"key":"temperature","type":"float","testdata":7.0,"testdata2":10.0,"accessmode":"W"},
+                {"key":"range","type":"string","testdata":"0,10","testdata2":"0,10","accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/freezer/temp/cur",
+            "rt": "oic.r.temperature",
+            "if": ["oic.if.baseline oic.if.s"],
+            "dis": "1",
+            "obs": "1",
+            "CcCsRUcUpD": [false, false,true,false, true,false],
+            "rep": [
+                {"key":"temperature","type":"float","testdata":7.0,"testdata2":10.0,"accessmode":"R"},
+                {"key":"range","type":"string","testdata":"0,10","testdata2":"0,10","accessmode":"R"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        },
+         {
+            "href": "/sec/fridge/refrigeration",
+            "rt": "oic.r.refrigeration",
+            "if": ["oic.if.baseline oic.if.a"],
+            "dis": "1",
+            "obs": "0",
+            "CcCsRUcUpD": [false, false,true,false, true,false],
+            "rep": [
+                {"key":"defrost","type":"bool","testdata":true,"testdata2":false,"accessmode":"R"},
+                {"key":"rapidFreeze","type":"bool","testdata":true,"testdata2":false,"accessmode":"W"},
+                {"key":"rapidCool","type":"bool","testdata":true,"testdata2":false,"accessmode":"W"},
+                {"key":"filter","type":"int","testdata":0,"testdata2":1,"accessmode":"W"}
+            ],
+            "dutType": "SERVER",
+            "payloadType": "object"
+        }
+    ]
+}

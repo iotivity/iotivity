@@ -38,7 +38,7 @@ private:
     shared_ptr< OCResourceResponse > m_pResponse;
     vector< string > m_resourceList;
     ConformanceHelper *p_conformanceHelper;
-    map<string, string> m_accessmodifier;
+    map< string, string > m_accessmodifier;
 public:
     SampleResource(void);
 
@@ -87,8 +87,13 @@ private:
 
     bool updateRepresentation(string key, OCRepresentation incomingRep,
             shared_ptr< OCResourceResponse > response);
+
     void createResource(string initialUri, OCRepresentation incomingRepresentation,
             shared_ptr< OCResourceResponse > response);
+
+    void supportCreateAndOthersForPUT(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
+            std::shared_ptr< OCResourceResponse > response);
 };
 
 #endif /* COMMON_TESTCASE_SAMPLERESOURCE_H_ */

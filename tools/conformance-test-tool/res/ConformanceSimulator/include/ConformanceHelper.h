@@ -29,15 +29,11 @@
 #include <algorithm>
 #include "time.h"
 #include "ocstack.h"
-#include "GroupManager.h"
-#include "ThingsConfiguration.h"
-#include "ThingsMaintenance.h"
-#include "ActionSet.h"
 #include "OCPlatform.h"
 #include "CommonUtil.h"
 
 using namespace OC;
-using namespace OIC;
+//using namespace OIC;
 using namespace std;
 namespace PH = std::placeholders;
 
@@ -100,6 +96,7 @@ const int SUCCESS_RESPONSE = 0;
 #define DEFAULT_FACTORY_RESET_STATE "false"
 #define DEFAULT_REBOOT_STATE "false"
 #define DEFAULT_VERSION 1.0
+#define DEFAULT_ACCURACY 0.85
 #define DEFAULT_CRUDN_SUPPORT true
 
 #define URI_KEY "href"
@@ -111,14 +108,15 @@ const int SUCCESS_RESPONSE = 0;
 #define REBOOT_KEY "rb"
 #define ACTIONSET_KEY "ActionSet"
 #define CANCEL_ACTIONSET_KEY "CancelAction"
-#define GET_ACTIONSET_KEY "GetAction"
+#define GET_ACTIONSET_KEY "GetActionSet"
 #define EXECUTE_ACTIONSET_KEY "DoAction"
 #define EXECUTE_SCHEDULED_ACTIONSET_KEY "DoScheduledAction"
 #define DELETE_ACTIONSET_KEY "DelActionSet"
 #define VERSION_KEY "ver"
+#define ACCURACY_KEY "accuracy"
 #define CRUDN_SUPPORT_KEY "isCRUDN"
 
-#define PLATFORM_ID "ConformanceTool"
+#define PLATFORM_ID "436f6e66-6f72-6d61-6e63-6553696d756c"
 #define MANUFACTURER_NAME DEFAULT_MANUFACTURER
 #define MANUFACTURER_URL "www.samsung.com"
 #define MODEL_NUMBER "ABCDE00004"
@@ -184,10 +182,6 @@ private:
 public:
 
     map< OCStackResult, string > m_resultMap;
-    GroupManager m_groupManager;
-//        GroupSynchronization* m_pGroupSynchronization;
-    ThingsConfiguration* m_pThingsConfiguration;
-    ThingsMaintenance* m_pThingsMaintenance;
     int m_actionSetCallbackCount;
 
     /**
@@ -207,50 +201,6 @@ public:
     bool findCandidateResourcesAndVerify(vector< string > resourceTypeList,
             OCStackResult expectedResult, int expectedResourceCount, string &errorMsg);
 
-    /**
-     * @brief   Function to Find Group and Verify
-     * @param   groupTypeList - A vector of groupType
-     * @param   expectedResult - Result that is expected from the findGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool findGroupAndVerify(vector< string > groupTypeList, OCStackResult expectedResult,
-//                                string &errorMsg);
-    /**
-     * @brief   Function to Create Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   expectedResult - Result that is expected from the createGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool createGroupAndVerify(string groupType, OCStackResult expectedResult, string &errorMsg);
-    /**
-     * @brief   Function to Delete Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool deleteGroupAndVerify(string groupType, string &errorMsg);
-    /**
-     * @brief   Function to Join Group and Verify
-     * @param   resource - Resource Pointer
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResult - Result that is expected from the joinGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool joinGroupAndVerify(const std::shared_ptr< OCResource > resource,
-//                                OCResourceHandle &resourceHandle, OCStackResult expectedResult, string &errorMsg);
-    /**
-     * @brief   Function to Join Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResult - Result that is expected from the joinGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool joinGroupAndVerify(string groupType, OCResourceHandle &resourceHandle,
-//                                OCStackResult expectedResult, string &errorMsg);
     /**
      * @brief   Function to Join Group and Verify
      * @param[in]   groupType - Type of the Group
@@ -273,16 +223,6 @@ public:
     bool doBootstrapAndVerify(OCStackResult expectedResult, int expectedErrorCode,
             string &errorMsg);
 
-    /**
-     * @brief   Function to Leave Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResult - Result that is expected from the leaveGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool leaveGroupAndVerify(string groupType, OCResourceHandle &resourceHandle,
-//                                 OCStackResult expectedResult, string &errorMsg);
     /**
      * @brief   Function to getConfiguration and Verify
      * @param   resource - Resource Pointer
@@ -374,41 +314,6 @@ public:
     vector< shared_ptr< OCResource > > getGroupList(void);
 
     /**
-     * @brief   Function to Initialize Group by Creating then Registering then Joining and Verify
-     * @param   resourceType - Type of the Resource
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResourceCount - Expected found Group count
-     * @param   isCreateRequested - true if new Group Creation is requested otherwise false
-     * @param   isJoinRequested - true if Joining to Group is requested otherwise false
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool initialzeGroupUsingGroupType(string groupType, string resourceType,
-//                                          OCResourceHandle &resourceHandle, int expectedResourceCount, bool isCreateRequested,
-//                                          bool isJoinRequested, string &errorMsg);
-    /**
-     * @brief   Function to Initialize Group by Creating then Registering then Joining and Verify
-     * @param   resourceType - Type of the Resource
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResourceCount - Expected found Group count
-     * @param   isCreateRequested - true if new Group Creation is requested otherwise false
-     * @param   isJoinRequested - true if Joining to Group is requested otherwise false
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool initialzeGroupUsingGroupPointer(string groupType, string resourceType,
-//                                             OCResourceHandle &resourceHandle, int expectedResourceCount, bool isCreateRequested,
-//                                             bool isJoinRequested, string &errorMsg);
-    /**
-     * @brief   Function to Create Action
-     * @param   resource - Type of the Resource
-     * @param   capability - Capabilities of the Action
-     * @param   status - Status of the Action
-     * @return  Action - A pointer of the newly creatd Action Instance
-     */
-    Action *createAction(shared_ptr< OCResource > resource, string capability, string status);
-
-    /**
      * @brief   Function to Wait until resource Found
      * @param   foundCollectionResourceList - Resource Pointer List
      * @param   timeOut - Time limit for waiting
@@ -425,25 +330,6 @@ public:
      * @return  bool - Returns true if the Callback is not called within timeOut otherwise false
      */
     bool IsCallbackTimeoutOccured(int &callbackMonitor, int timeOut);
-
-    /**
-     * @brief   Function to Initialize Group by Finding and Then Adding ActionSet and Verify
-     * @param   groupManager - Pointer to GroupManager Instance
-     * @param   actionSet - Pointer to ActionSet Instance
-     * @param   errorMessage - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool initializeAndAddActionSet(GroupManager *groupManager, ActionSet *actionSet,
-//                                       string &errorMessage);
-    /**
-     * @brief   Function to Initialize Group by Finding and Then Adding ActionSet and Verify
-     * @param   actionSet - Pointer to ActionSet Instance
-     * @param   errorMessage - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-    bool initializeAndAddActionSet(ActionSet *actionSet, string &errorMessage,
-            OCStackResult expectedResult = OC_STACK_OK, ACTIONSET_TYPE actionSetType =
-                    ACTIONSET_TYPE::NONE, bool isPrevious = false);
 
     /**
      * @brief   Call back to manage and check system response after getActionSet() API call.
@@ -501,84 +387,6 @@ public:
      */
     bool containsResource(vector< shared_ptr< OCResource > > resourceList,
             vector< string > resourceTypeList, string &errorMessage);
-
-    /**
-     * @brief Helper function to get String form ActionSet and Verify
-     * @param[in]   actionSet - Pointer to the ActionSet
-     * @param[in]   resourceList - list containing the resources found
-     * @param[in]   actionCapability -  Action Capability like "power", "intensity" etc.
-     * @param[in]   capabilityStatus -  Capability Status like "on", "off" etc.
-     * @param[out]   errorMessage   String to return error message if there are any
-     * @return   bool - If String form ActionSet is valid, returns true otherwise false
-     */
-    bool getStringFromActionSetAndVerify(ActionSet *actionSet,
-            vector< shared_ptr< OCResource > > resourceList, string actionCapability,
-            string capabilityStatus, string &errorMessage);
-
-    /**
-     * @brief Helper function to get ActionSet from string and Verify
-     * @param[in]   actionsetName - Action Set Name
-     * @param[in]   resourceUriList - List of Resource URIs
-     * @param[in]   capability - Action Capability
-     * @param[in]   capabilityStatus - Action Capability Status
-     * @param[in]   isNullTest - true if the getActionSetfromString returns NULL otherwise
-     *              false
-     * @param[out]   errorMessage   String to return error message if there are any
-     * @return   bool - If ActionSet form String is valid, returns true otherwise false
-     */
-    bool getActionSetfromStringAndVerify(string actionSetName, vector< string > resourceUriList,
-            string capability, string capabilityStatus, bool isNullTest, string &errorMessage);
-
-    /**
-     * @brief Helper function to add ActionSet to resource and verify
-     * @param[in]   resource - Resource Pointer to add ActionSet
-     * @param[in]   actionSet - Pointer to the ActionSet
-     * @param[out]   errorMessage   String to return error message if there are any
-     * @return   bool - If successfully adds ActionSet, returns true otherwise false
-     */
-    bool addActionSetAndVerify(shared_ptr< OCResource > resource, ActionSet *actionSet,
-            string &errorMessage, OCStackResult expectedResult = OC_STACK_OK);
-
-    /**
-     * @brief Helper function to add ActionSet to resource and verify
-     * @param[in]   resource - Resource Pointer to add ActionSet
-     * @param[in]   actionSetToCompare - Pointer to the ActionSet which was originally
-     *              added to the resource
-     * @param[out]   errorMessage   String to return error message if there are any
-     * @return   bool - If successfully adds ActionSet, returns true otherwise false
-     */
-    bool getActionSetAndVerify(shared_ptr< OCResource > resource, ActionSet *actionSetToCompare,
-            string &errorMessage);
-
-    /**
-     * @brief Helper function to Delete ActionSet to resource and verify
-     * @param[in]   actionSet - Pointer to the ActionSet
-     * @param[out]   errorMessage   String to return error message if there are any
-     * @return   bool - If successfully Deletes ActionSet, returns true otherwise false
-     */
-    bool deleteActionSetAndVerify(ActionSet *actionSet, string &errorMessage);
-
-    /**
-     * @brief Helper function to Execute ActionSet and verify
-     * @param[in]   actionSet - Pointer to the ActionSet
-     * @param[out]   errorMessage   String to return error message if there are any
-     * @param[in]   isDelayed - if execute will be called with delay, true, default is false
-     * @param[in]   delaySec - time in seconds to delay, default is 0 second
-     * @return   bool - If successfully Executes ActionSet, returns true otherwise false
-     */
-    bool executeActionSetAndVerify(ActionSet *actionSet, string &errorMessage,
-            OCStackResult expectedResult = OC_STACK_OK, bool isDelayed = false, int delaySec = 0,
-            bool isCancelDue = false);
-
-    /**
-     * @brief Helper function to Cancel ActionSet and verify
-     * @param[in]   actionSet - Pointer to the ActionSet
-     * @param[out]   errorMessage   String to return error message if there are any
-     * @param[in]   actionSetType
-     * @return   bool - If successfully Executes ActionSet, returns true otherwise false
-     */
-    bool cancelActionSetAndVerify(ActionSet *actionSet, string &errorMessage,
-            ACTIONSET_TYPE actionSetType);
 
     /**
      * @brief Helper function to print representaion

@@ -47,6 +47,7 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    ${notification}    Get Observe Response    ${COAP}    ${RESOURCE_URI}
     \    Run Keyword And Continue On Failure    Check2 Verify Response Code On Content    ${observe_response}
     \    Run Keyword And Continue On Failure    Check5 Verify Cancel Observe    ${notification}
+    # 1, 3, 6, 7, 8
 
 2_NON_RETRIEVE_Message_with_Observe_Indication_Observable_Resource
     [Documentation]    | since |2016-02-15 |
@@ -90,6 +91,7 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    ${notification}    Get Observe Response    ${COAP}    ${RESOURCE_URI}
     \    Run Keyword And Continue On Failure    Check2 Verify Response Code On Content    ${observe_response}
     \    Run Keyword And Continue On Failure    Check5 Verify Cancel Observe    ${notification}
+    # 1, 3, 6, 7, 8
 
 3_CON_RETRIEVE_Message_With_Observe_Indication_Non_Observable_Resource
     [Documentation]    | since |2016-02-15 |

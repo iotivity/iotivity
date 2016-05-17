@@ -7,14 +7,7 @@ Resource          OIC_ConformanceTest_Setting.txt
 *** Test Cases ***
 1_Multicast_Discovery_Without_Query
     [Documentation]    |author | |
-    ...    |reviewer| |
     ...    |since |2016-02-04|
-    ...    |see | |
-    ...    |objective| |
-    ...    |objective| |
-    ...    |target | |
-    ...    |test_data| |
-    ...    |pre_condition | |
     ...    |procedure |1. CTT sends a multicast discovery request message (i.e. CoAP GET) to “/oic/res” with no query parameters. |
     ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
     ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses |
@@ -26,7 +19,6 @@ Resource          OIC_ConformanceTest_Setting.txt
     ...    |expected| Check 5. The URI of the link for every Resource shall be unique (6.1 Identification and addressing. Introduction [CORE], 6.2 Identification [CORE], 6.2.1 Resource identification and addressing [CORE], 5.1 URI [RT]). |
     ...    |expected| Check 6. All URI values shall not exceed a max length of 256 octets (bytes) (3.4 Data Types [CORE]). |
     ...    |expected| Check 8. Any vendor-defined Resource Types shall follow the syntax x.<ICANNName.<Resource identification> (6.4 Vendor specified OIC Resource Types [SH]). |
-    ...    |expected| Check 9. Reserved |
     ...    |expected| Check 17. The Policy Property, if present for an OIC Resource, shall be designated as "p=<policy value>" and the <policy value> shall be a bitmap of one octet with a value from 0 to 3 (7.2.1.3 Policy property definition [CORE]). |
     ...    |expected| Check 18. Only Resources defined as discoverable shall be returned (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy property definition [CORE]). |
     ...    |expected| Check 19. The IUT shall support discovery based on multicast CoAP (i.e. CoAP GET on "/oic/res") (10.1 Endpoint discovery introduction [CORE], 11.3.4 Resource based discovery. finding information [CORE], 6.3 Profile of OIC Core [SH]). |
@@ -46,8 +38,10 @@ Resource          OIC_ConformanceTest_Setting.txt
     Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check7 Verify Resource Type Syntax    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check14 Verify Use of Default Interface    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
@@ -56,7 +50,9 @@ Resource          OIC_ConformanceTest_Setting.txt
     Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check31 Validate JSON Schema    ${dut1_response}    ${DUT1_ID}
     Release DUT information    ${DUT1_ID}
+    #2, 7, 10, (11), 12, 13, 14, (16), (21), 24, 26, 27, 31, 32, 33, 34, 100, 101
 
 2_Multicast_Discovery_With_IF_Query
     [Documentation]    |author | |
@@ -108,6 +104,7 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check7 Verify Resource Type Syntax    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check12 Support Baseline Interface    ${dut1_response}    ${DUT1_ID}
@@ -119,7 +116,9 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check31 Validate JSON Schema    ${dut1_response}    ${DUT1_ID}
     Release DUT information    ${DUT1_ID}
+    # 2, 7, 11, 12, 13, 14, 16, 21, 25, 27, 31, 32, 33, 34, 100, 101
 
 3_Multicast_Discovery_With_RT_Query
     [Documentation]    |author | |
@@ -172,8 +171,10 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check7 Verify Resource Type Syntax    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check14 Verify Use of Default Interface    ${dut1_response}    ${DUT1_ID}    &${RESOURCE_TYPE}=${dut1_resource_type}
     \    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
@@ -182,7 +183,9 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check28 Verify Response With RT Query    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check31 Validate JSON Schema    ${dut1_response}    ${DUT1_ID}
     Release DUT information    ${DUT1_ID}
+    # 2, 7, 11, 13, 14, 16, 21, 24, 27, 31, 32, 33, 34, 100, 101
 
 4_Unicast_Discovery_Without_Query
     [Documentation]    |author | |
@@ -230,6 +233,7 @@ Resource          OIC_ConformanceTest_Setting.txt
     Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check14 Verify Use of Default Interface    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
@@ -238,7 +242,9 @@ Resource          OIC_ConformanceTest_Setting.txt
     Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
     Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check31 Validate JSON Schema    ${dut1_response}    ${DUT1_ID}
     Release DUT information    ${DUT1_ID}
+    # 2, 7, 11, 13, 14, 16, 21, 24, 27, 31, 32, 33, 34, 100, 101
 
 5_Unicast_Discovery_With_IF_Query
     [Documentation]    |author | |
@@ -302,7 +308,9 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check31 Validate JSON Schema    ${dut1_response}    ${DUT1_ID}
     Release DUT information    ${DUT1_ID}
+    #2, 13, 14, 15, 16, 21, 24, 27, 31, 32, 33, 34, 100, 101
 
 6_Unicast_Discovery_With_RT_Query
     [Documentation]    |author | |
@@ -356,8 +364,10 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check7 Verify Resource Type Syntax    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check14 Verify Use of Default Interface    ${dut1_response}    ${DUT1_ID}    &${RESOURCE_TYPE}=${dut1_resource_type}
     \    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
@@ -366,7 +376,9 @@ Resource          OIC_ConformanceTest_Setting.txt
     \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
     \    Run Keyword And Continue On Failure    Check28 Verify Response With RT Query    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check31 Validate JSON Schema    ${dut1_response}    ${DUT1_ID}
     Release DUT information    ${DUT1_ID}
+    # 2, 11, 12, 13, 14, 15, 16, 21, 24, 27, 31, 32, 33, 34, 100, 101
 
 7_Multicast_Discovery_With_Invalid_RT_Query
     [Documentation]    |author | |
@@ -524,13 +536,6 @@ Check10 Verify Resource Interface Syntax
     Is Key Exist    ${Interface}    ${response_payload}
     [Return]    ${True}
 
-Check11
-    [Arguments]    ${response}    ${dut_id}
-    [Documentation]    The correct OIC Resource Interface shall be listed first
-    [Tags]    High    TBD
-    BuiltIn.Log    TBD
-    [Return]    ${True}
-
 Check12 Support Baseline Interface
     [Arguments]    ${response}    ${dut_id}
     [Documentation]    Each OIC Resource shall support the Baseline interface
@@ -554,11 +559,24 @@ Check13
     BuiltIn.Log    TBD
     [Return]    ${True}
 
-Check14
-    [Arguments]    ${response}    ${dut_id}
+Check14 Verify Use of Default Interface
+    [Arguments]    ${response_unknown_if}    ${dut_id}    ${query}=${None}
     [Documentation]    In the absence of an “if” query in Step 1, the Default interface shall be used
-    [Tags]    TBD
-    BuiltIn.Log    TBD
+    [Tags]    HIGH
+    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${OIC_ID}    ${HREF}=${OIC_CORE_RESOURCE_DEFAULT_URI}
+    ${default_interface}    Set Variable    @{list_interface}[0]
+    ${final_query}    Run Keyword Unless    '${query}'=='${None}'    Set Variable    ${INTERFACE}=${default_interface}${query}
+    ${response_default_if}    Run Keyword Unless    '${query}'=='${None}'    Discover Resource With Query    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${final_query}    ${NON_CONFIRMABLE}    ${SERVER_IP}
+    ${payload_unknown_if}    Run Keyword Unless    '${query}'=='${None}'    Get Response Json    ${response_unknown_if}
+    ${payload_default_if}    Run Keyword Unless    '${query}'=='${None}'    Get Response Json    ${response_default_if}
+    ${compare_result}    Run Keyword Unless    '${query}'=='${None}'    Compare Discovery Json    ${payload_unknown_if}    ${payload_default_if}
+    Run Keyword Unless    '${query}'=='${None}'    Should Be Equal    ${compare_result}    ${True}
+    ${final_query}    Run Keyword If    '${query}'=='${None}'    Set Variable    ${INTERFACE}=${default_interface}
+    ${response_default_if}    Run Keyword If    '${query}'=='${None}'    Discover Resource With Query    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${final_query}    ${NON_CONFIRMABLE}    ${SERVER_IP}
+    ${payload_unknown_if}    Run Keyword If    '${query}'=='${None}'    Get Response Json    ${response_unknown_if}
+    ${payload_default_if}    Run Keyword If    '${query}'=='${None}'    Get Response Json    ${response_default_if}
+    ${compare_result}    Run Keyword If    '${query}'=='${None}'    Compare Discovery Json    ${payload_unknown_if}    ${payload_default_if}
+    Run Keyword If    '${query}'=='${None}'    Should Be Equal    ${compare_result}    ${True}
     [Return]    ${True}
 
 Check15
@@ -706,11 +724,13 @@ Check30 Verify Error Message For Unsupported Resource Type
     Should Start With    ${response_code}    4.    Unexpected Response Code
     [Return]    ${True}
 
-Check31 Compare Response With RAML And JSON Schemas
+Check31 Validate JSON Schema
     [Arguments]    ${response}    ${dut_id}
     [Documentation]    Verify that the response messages follow the RAML and JSON schemas for “/oic/res”
     [Tags]    High
-    BuiltIn.Log    already checked in Check3,4
+    ${response_payload}    Get Response Payload    ${response}
+    ${validation_result}    Validate Discovery Json    ${response_payload}
+    Should Be Equal    ${validation_result}    ${True}
     [Return]    ${True}
 
 Check32

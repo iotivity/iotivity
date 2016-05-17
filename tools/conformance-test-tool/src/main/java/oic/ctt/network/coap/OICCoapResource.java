@@ -57,8 +57,8 @@ public class OICCoapResource {
     public static byte[]                 sRemoveObserverToken   = null;
 
     private String                       mResourceUri;
-    private String                       mResourceType;
-    private String                       mResourceInterface;
+    private ArrayList<String>            mResourceTypes;
+    private ArrayList<String>            mResourceInterfaces;
     private boolean                      mObservable;
     private HashMap<String, OICObserver> mOicObserverMap        = new HashMap<String, OICObserver>();
     private HashMap<Object, Object>      mOicResourceAttributes = new HashMap<Object, Object>();
@@ -73,7 +73,7 @@ public class OICCoapResource {
      *            URI of the resource
      */
     public OICCoapResource(String uri) {
-        this(uri, "", "", true);
+        this(uri, new ArrayList<String>(), new ArrayList<String>(), true);
     }
 
     /**
@@ -86,14 +86,21 @@ public class OICCoapResource {
      * @param observable
      *            Boolean value indicating whether it is observable or not
      */
+    public OICCoapResource(String uri, ArrayList<String> resourceTypes,
+            ArrayList<String> resourceInterfaces, boolean observable) {
+        this.mResourceUri = uri;
+        this.mResourceTypes = resourceTypes;
+        this.mResourceInterfaces = resourceInterfaces;
+        this.mObservable = observable;
+    }
+
     public OICCoapResource(String uri, String resourceType,
             String resourceInterface, boolean observable) {
         this.mResourceUri = uri;
-        this.mResourceType = resourceType;
-
-        if (resourceInterface.length() > 0)
-            this.addResourceInterface(resourceInterface);
-
+        this.mResourceTypes = new ArrayList<String>();
+        this.mResourceTypes.add(resourceType);
+        this.mResourceInterfaces = new ArrayList<String>();
+        this.mResourceInterfaces.add(resourceInterface);
         this.mObservable = observable;
     }
 
@@ -225,8 +232,8 @@ public class OICCoapResource {
      *
      * @return String containing the resource type
      */
-    public String getResourceType() {
-        return mResourceType;
+    public ArrayList<String> getResourceTypes() {
+        return mResourceTypes;
     }
 
     /**
@@ -236,7 +243,7 @@ public class OICCoapResource {
      *            A OIC resource interface (String)
      */
     public void addResourceInterface(String resourceInterface) {
-        mResourceInterface = resourceInterface;
+        mResourceInterfaces.add(resourceInterface);
     }
 
     /**
@@ -272,8 +279,8 @@ public class OICCoapResource {
      *
      * @return Strings containing a resource interface value
      */
-    public String getResourceInterfaces() {
-        return mResourceInterface;
+    public ArrayList<String> getResourceInterfaces() {
+        return mResourceInterfaces;
     }
 
     /**

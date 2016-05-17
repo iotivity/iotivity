@@ -82,10 +82,9 @@ COMMON_LIB_LOCATION = [RESOURCE_LIB_DIR]
 CONFORMANCE_LIB_LOCATION = [COMMON_LIB_LOCATION, CONFORMANCE_RESOURCE_LIB, CONFORMANCE_RESOURCE_CSDK_LIB, CONFORMANCE_RESOURCE_OC_LOGGER_LIB, CONFORMANCE_LIB]
 
 COMMON_STATIC_LIBS = []
-COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
 
 
-CONFORMANCE_STATIC_LIBS = [CONFORMANCE_LIB + '/libTGMSDKLibrary.a']
 #CONFORMANCE_STATIC_RESOURCE_LIBS = [CONFORMANCE_RESOURCE_LIB + '/liboc.a', CONFORMANCE_RESOURCE_CSDK_LIB + '/liboctbstack.a', CONFORMANCE_RESOURCE_OC_LOGGER_LIB + '/liboc_logger.a', CONFORMANCE_RESOURCE_OC_LOGGER_LIB + '/libcoap.a']
 CONFORMANCE_STATIC_RESOURCE_LIBS = []
 CONFORMANCE_LIBS = COMMON_SHARED_LIBS
@@ -102,7 +101,7 @@ TC_BINS = [ DUT_APP_BIN]
 ######################################################################
 
 SOURCE_CPP = Glob(SOURCE_DIR + '/*.cpp')
-DUT_APP_SRC = [SOURCE_CPP, COMMON_STATIC_LIBS, CONFORMANCE_STATIC_LIBS, CONFORMANCE_STATIC_RESOURCE_LIBS]
+DUT_APP_SRC = [SOURCE_CPP, COMMON_STATIC_LIBS, CONFORMANCE_STATIC_RESOURCE_LIBS]
 
 ######################################################################
 # Initializing Build

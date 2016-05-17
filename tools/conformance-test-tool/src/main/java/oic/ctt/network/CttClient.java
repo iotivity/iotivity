@@ -21,33 +21,21 @@
 package oic.ctt.network;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-
-import org.slf4j.Logger;
 
 import oic.ctt.formatter.OCPayloadType;
-import oic.ctt.logger.CTLogger;
-import oic.ctt.network.CttClient.Protocol;
-import oic.ctt.network.OICHelper.MessageParameters;
-import oic.ctt.network.coap.OICCoapClient;
-import oic.ctt.network.http.OICHttpClient;
 
 /**
- * The OIC Client class. Provides methods to communicate with a OIC service.
+ * The CTT Client class. Provides methods to communicate with a OIC service.
  * Also provides abstraction over HTTP & CoAP.
  */
-public class OICClient implements CttClient {
+public interface CttClient {
 
-    private OICCoapClient                        mCoapClient       = new OICCoapClient();
-    private OICHttpClient                        mHttpClient       = new OICHttpClient();
-    private HashMap<Protocol, OICProtocolClient> mClientMap        = new HashMap<Protocol, OICProtocolClient>();
-    private HashMap<String, String>              mObserverTokenMap = new HashMap<String, String>();
-    private Logger                               mlogger           = CTLogger
-            .getInstance();
-
-    public OICClient() {
-        mClientMap.put(Protocol.COAP, mCoapClient);
-        mClientMap.put(Protocol.HTTP, mHttpClient);
+    /**
+     * Defines the communication protocol. The protocol can be either CoAP or
+     * HTTP
+     */
+    public static enum Protocol {
+        HTTP, COAP;
     }
 
     /**
@@ -56,10 +44,7 @@ public class OICClient implements CttClient {
      * @param waitTime
      *            Waiting time in seconds
      */
-    @Override
-    public void setWaitTime(int waitTime) {
-        mCoapClient.setWaitTime(waitTime);
-    }
+    void setWaitTime(int waitTime);
 
     /**
      * Sends out a multicast discovery message to discover resources in the
@@ -69,12 +54,7 @@ public class OICClient implements CttClient {
      *            The protocol which will be used here (HTTP or CoAP)
      * @return A list of responses received from available the resource servers
      */
-    @Override
-    public ArrayList<OICResponseData> discoverResource(
-            CttClient.Protocol protocol) {
-        
-    	return discoverResource(protocol, OICHelper.getDefaultUri());
-    }
+    ArrayList<OICResponseData> discoverResource(CttClient.Protocol protocol);
 
     /**
      * Sends out a multicast discovery message to discover resources in the
@@ -87,12 +67,8 @@ public class OICClient implements CttClient {
      *            oic/res
      * @return A list of responses received from available the resource servers
      */
-    @Override
-    public ArrayList<OICResponseData> discoverResource(
-            CttClient.Protocol protocol, String uriPath) {
-        
-    	return discoverResource(protocol, uriPath, OICHelper.DEFAULT_QUERY);
-    }
+    ArrayList<OICResponseData> discoverResource(
+            CttClient.Protocol protocol, String uriPath);
 
     /**
      * Sends out a multicast discovery message to discover resources in the
@@ -107,13 +83,8 @@ public class OICClient implements CttClient {
      *            Query string to mention different filters
      * @return A list of responses received from available the resource servers
      */
-    @Override
-    public ArrayList<OICResponseData> discoverResource(
-            CttClient.Protocol protocol, String uriPath, String query) {
-        
-    	return discoverResource(protocol, uriPath, query,
-                OICHelper.DEFAULT_MULTICAST_IPv6, OICHelper.DEFAULT_COAP_PORT); 
-    }
+    ArrayList<OICResponseData> discoverResource(
+            CttClient.Protocol protocol, String uriPath, String query);
 
     /**
      * Sends out a discovery message to the specified IP & port to discover
@@ -132,14 +103,9 @@ public class OICClient implements CttClient {
      *            Port of the recipient
      * @return A list of response received from the resource server
      */
-    @Override
-    public ArrayList<OICResponseData> discoverResource(
+    ArrayList<OICResponseData> discoverResource(
             CttClient.Protocol protocol, String uriPath, String query,
-            String ip, int port) {
-        
-    	return discoverResource(protocol, uriPath, query, ip, port,
-                OICHelper.createToken(OICHelper.DEFAULT_TOKEN_LENGTH * 2));
-    }
+            String ip, int port);
 
     /**
      * Sends out a discovery message to the specified IP & port to discover
@@ -160,22 +126,9 @@ public class OICClient implements CttClient {
      *            Token used to match the discovery request/response
      * @return A list of response received from the resource server
      */
-    @Override
-    public ArrayList<OICResponseData> discoverResource(
+    ArrayList<OICResponseData> discoverResource(
             CttClient.Protocol protocol, String uriPath, String query,
-            String ip, int port, byte[] token) {
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-
-        mClientMap.get(protocol).clearResponses();
-
-        ArrayList<OICResponseData> responseList = mClientMap.get(protocol)
-                .discoverResource(uriPath, query, ip, port, token);
-
-        return responseList;
-    }
-
+            String ip, int port, byte[] token);
     /**
      * Sends out a unicast request message and returns the received response
      *
@@ -191,15 +144,9 @@ public class OICClient implements CttClient {
      *            Port of the recipient
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
-    public OICResponseData sendRequest(CttClient.Protocol protocol,
+    OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
-            String messageId, String token, String ip, int port) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
-                OICHelper.getDefaultUri());
-    }
-
+            String messageId, String token, String ip, int port);
     /**
      * Sends out a unicast request message and returns the received response
      *
@@ -217,16 +164,10 @@ public class OICClient implements CttClient {
      *            Resource URI of the target resource
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
-    public OICResponseData sendRequest(CttClient.Protocol protocol,
+    OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port,
-            String uriPath) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
-                uriPath, OICHelper.DEFAULT_QUERY);
-    }
-
+            String uriPath);
     /**
      * Sends out a unicast request message and returns the received response
      *
@@ -246,15 +187,10 @@ public class OICClient implements CttClient {
      *            Query string to mention different filters
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
-    public OICResponseData sendRequest(CttClient.Protocol protocol,
+    OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port, String uriPath,
-            String query) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
-                uriPath, query, OICHelper.DEFAULT_PAYLOAD);
-    }
+            String query);
 
     /**
      * Sends out a unicast request message and returns the received response
@@ -278,16 +214,10 @@ public class OICClient implements CttClient {
      *            resource
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
-    public OICResponseData sendRequest(CttClient.Protocol protocol,
+    OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port, String uriPath,
-            String query, String payload) {
-        
-    	return sendRequest(protocol, type, method, messageId, token, ip, port,
-                uriPath, query, payload,
-                OCPayloadType.PAYLOAD_TYPE_REPRESENTATION);
-    }
+            String query, String payload);
 
     /**
      * Sends out a unicast request message and returns the received response
@@ -313,27 +243,10 @@ public class OICClient implements CttClient {
      *            One of the OCPayloadType values to specify payload type
      * @return The response from the server if any. Returns null otherwise.
      */
-    @Override
-    public OICResponseData sendRequest(CttClient.Protocol protocol,
+    OICResponseData sendRequest(CttClient.Protocol protocol,
             OICHelper.MessageType type, OICRequestData.Method method,
             String messageId, String token, String ip, int port, String uriPath,
-            String query, String payload, OCPayloadType payloadType) {
-        
-    	OICResponseData response = null;
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-
-        response = mClientMap.get(protocol).sendRequest(type, method,
-                Integer.parseInt(messageId),
-                OICHelper.hexStringToByteArray(token), ip, port, uriPath, query,
-                payload, payloadType);
-        // OICHelper.createToken(OICHelper.DEFAULT_TOKEN_LENGTH * 2)
-
-        return response;
-
-    }
-
+            String query, String payload, OCPayloadType payloadType);
     /**
      * Sends a message to a resource server to subscribe/register as an observer
      *
@@ -346,15 +259,9 @@ public class OICClient implements CttClient {
      * @param port
      *            Port of the recipient
      */
-    @Override
-    public OICResponseData observeResource(CttClient.Protocol protocol,
+    OICResponseData observeResource(CttClient.Protocol protocol,
             OICHelper.MessageType type, String messageId, String token,
-            String ip, int port) {
-        
-    	return observeResource(protocol, type, messageId, token, ip, port,
-                OICHelper.getDefaultUri());
-    }
-
+            String ip, int port);
     /**
      * Sends a message to a resource server to subscribe/register as an observer
      *
@@ -369,14 +276,9 @@ public class OICClient implements CttClient {
      * @param uriPath
      *            Resource URI of the target resource
      */
-    @Override
-    public OICResponseData observeResource(CttClient.Protocol protocol,
+    OICResponseData observeResource(CttClient.Protocol protocol,
             OICHelper.MessageType type, String messageId, String token,
-            String ip, int port, String uriPath) {
-        
-    	return observeResource(protocol, type, messageId, token, ip, port,
-                uriPath, OICHelper.DEFAULT_QUERY);
-    }
+            String ip, int port, String uriPath);
 
     /**
      * Sends a message to a resource server to subscribe/register as an observer
@@ -394,24 +296,9 @@ public class OICClient implements CttClient {
      * @param query
      *            Query string to mention different filters
      */
-    @Override
-    public OICResponseData observeResource(CttClient.Protocol protocol,
+    OICResponseData observeResource(CttClient.Protocol protocol,
             OICHelper.MessageType type, String messageId, String token,
-            String ip, int port, String uriPath, String query) {
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-        
-        mObserverTokenMap.put(uriPath, token);
-        mlogger.info("Token for observing  uri: " + uriPath + " is = " + token);
-        mClientMap.get(protocol).clearNotifications();
-        
-        return mClientMap.get(protocol).observeResource(type,
-                Integer.parseInt(messageId),
-                OICHelper.hexStringToByteArray(token), ip, port, uriPath,
-                query);
-    }
-
+            String ip, int port, String uriPath, String query);
     /**
      * Returns all the received notifications currently in the local buffer
      *
@@ -419,15 +306,8 @@ public class OICClient implements CttClient {
      *            The protocol being used (HTTP or CoAP)
      * @return An ArrayList of OICResponse type objects
      */
-    @Override
-    public ArrayList<OICResponseData> getNotifications(
-            CttClient.Protocol protocol) {
-
-        String token = "";
-
-        return getNotifications(protocol, token);
-    }
-
+    ArrayList<OICResponseData> getNotifications(
+            CttClient.Protocol protocol);
     /**
      * Returns all the received notifications currently in the local buffer
      *
@@ -435,48 +315,15 @@ public class OICClient implements CttClient {
      *            The protocol being used (HTTP or CoAP)
      * @return An ArrayList of OICResponse type objects
      */
-    @Override
-    public ArrayList<OICResponseData> getNotifications(
-            CttClient.Protocol protocol, String href) {
-
-        ArrayList<OICResponseData> desiredNotifications = new ArrayList<OICResponseData>();
-        ArrayList<OICResponseData> allNotifications = new ArrayList<OICResponseData>();
-        String token = getObserveTokenFromHref(href);
-        
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-        
-        allNotifications = mClientMap.get(protocol).getNotifications();
-
-        if ((token.equals("")) || (allNotifications.size() == 0)) {
-            return allNotifications;
-        }
-
-        for (OICResponseData notification : allNotifications) {
-            if (notification.getResponseValue(MessageParameters.token)
-                    .equals(token)) {
-                desiredNotifications.add(notification);
-            }
-        }
-
-        return desiredNotifications;
-    }
-
+    ArrayList<OICResponseData> getNotifications(
+            CttClient.Protocol protocol, String href);
     /**
      * Discards the notifications in the local buffer
      *
      * @param protocol
      *            The protocol being used (HTTP or CoAP)
      */
-    @Override
-    public void clearNotifications(CttClient.Protocol protocol) {
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-
-        mClientMap.get(protocol).clearNotifications();
-    }
-
+    void clearNotifications(CttClient.Protocol protocol);
     /**
      * Cancels observe in a passive manner (by not sending any ACK for
      * Confirmable type Notifications)
@@ -484,20 +331,8 @@ public class OICClient implements CttClient {
      * @param protocol
      *            The protocol being used (HTTP or CoAP)
      */
-    @Override
-    public void cancelObservePassively(CttClient.Protocol protocol,
-            String href) {
-
-        String tokenString = mObserverTokenMap.get(href);
-        byte[] token = OICHelper.hexStringToByteArray(tokenString);
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-        
-        mObserverTokenMap.remove(href);
-        mClientMap.get(protocol).cancelObservePassively(token);
-    }
-
+    void cancelObservePassively(CttClient.Protocol protocol,
+            String href);
     /**
      * Cancels observe in an active manner (by sending RST message in response
      * to Notifications)
@@ -505,20 +340,8 @@ public class OICClient implements CttClient {
      * @param protocol
      *            The protocol being used (HTTP or CoAP)
      */
-    @Override
-    public void cancelObserveWithReset(CttClient.Protocol protocol,
-            String href) {
-
-        String tokenString = mObserverTokenMap.get(href);
-        byte[] token = OICHelper.hexStringToByteArray(tokenString);
-
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-        
-        mObserverTokenMap.remove(href);
-        mClientMap.get(protocol).cancelObserveWithReset(token);
-    }
-
+    void cancelObserveWithReset(CttClient.Protocol protocol,
+            String href);
     /**
      * Cancels observe using a GET message
      *
@@ -532,14 +355,9 @@ public class OICClient implements CttClient {
      *            Resource URI of the target resource
      * @return The response received from the server
      */
-    @Override
-    public OICResponseData cancelObserveWithGetMessage(
+    OICResponseData cancelObserveWithGetMessage(
             CttClient.Protocol protocol, OICHelper.MessageType type,
-            String messageId, String ip, int port, String uriPath) {
-        
-    	return cancelObserveWithGetMessage(protocol, type, messageId, ip, port,
-                uriPath, OICHelper.DEFAULT_QUERY);
-    }
+            String messageId, String ip, int port, String uriPath);
 
     /**
      * Cancels observe using a GET message
@@ -556,48 +374,17 @@ public class OICClient implements CttClient {
      *            Query string to mention different filters
      * @return The response received from the server
      */
-    @Override
-    public OICResponseData cancelObserveWithGetMessage(
+    OICResponseData cancelObserveWithGetMessage(
             CttClient.Protocol protocol, OICHelper.MessageType type,
             String messageId, String ip, int port, String uriPath,
-            String query) {
-
-        String token = "";
-        
-        if (protocol == null)
-            protocol = OICClient.Protocol.COAP;
-        
-        mClientMap.get(protocol).clearNotifications();
-        
-        if (mObserverTokenMap.containsKey(uriPath)) {
-            mlogger.info(
-                    "uri already found as observed. Getting token for observe request.");
-            token = mObserverTokenMap.get(uriPath);
-            mObserverTokenMap.remove(uriPath);
-            mlogger.info("Token to cancel observe = " + token);
-            return mClientMap.get(protocol).cancelObserveWithGetMessage(type,
-                    Integer.parseInt(messageId),
-                    OICHelper.hexStringToByteArray(token), ip, port, uriPath,
-                    query);
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public OICRequestData getLastRequest(CttClient.Protocol protocol) {
-        
-    	return mClientMap.get(protocol).getLastRequest();
-    }
+            String query);
     
-    private String getObserveTokenFromHref(String href) {
-        
-    	String token = "";
-        
-    	if (mObserverTokenMap.containsKey(href)) {
-            token = mObserverTokenMap.get(href);
-        }
+    /**
+     * Returns the data about last request 
+     *
+     * @param protocol
+     *            The protocol being used (HTTP or CoAP)
+     */
+    OICRequestData getLastRequest(CttClient.Protocol protocol);
 
-        return token;
-    }
 }

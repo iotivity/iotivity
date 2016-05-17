@@ -5,26 +5,34 @@
     "rt" : "oic.wk.res",
     "dis" : 1,
     "obs" : 1,
-    "if" : [ "oic.if.ll oic.if.baseline" ],
+    "if" :  "oic.if.ll oic.if.baseline" ,
     "CcCsRUcUpD" : [ false, false, true, false, false, false ],
     "rep" : [ {
       "key" : "n",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "di",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : true
     }, {
       "key" : "mpro",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "links",
       "type" : "array",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : true
     } ],
@@ -35,26 +43,34 @@
     "rt" : "oic.wk.d",
     "dis" : 1,
     "obs" : 1,
-    "if" : [ "oic.if.r oic.if.baseline" ],
+    "if" :  "oic.if.r oic.if.baseline" ,
     "CcCsRUcUpD" : [ false, false, true, false, false, false ],
     "rep" : [ {
       "key" : "n",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : true
     }, {
       "key" : "di",
       "type" : "string",
+      "testdata" : "99999999-ee61-4f37-b044-18a08d0e1ef5",
+      "testdata2" : "99999999-ee61-4f37-b044-18a08d0e1ef5",
       "accessmode" : "R",
       "required" : true
     }, {
       "key" : "icv",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : true
     }, {
       "key" : "dmv",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     } ],
@@ -65,61 +81,83 @@
     "rt" : "oic.wk.p",
     "dis" : 1,
     "obs" : 1,
-    "if" : [ "oic.if.r oic.if.baseline" ],
+    "if" :  "oic.if.r oic.if.baseline" ,
     "CcCsRUcUpD" : [ false, false, true, false, false, false ],
     "rep" : [ {
       "key" : "pi",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : true
     }, {
       "key" : "mnmn",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : true
     }, {
       "key" : "mnml",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "mnmo",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "mndt",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "mnpv",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "mnos",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "mnhw",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "mnfv",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "mnsl",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     }, {
       "key" : "st",
       "type" : "string",
+      "testdata" : "test",
+      "testdata2" : "test2",
       "accessmode" : "R",
       "required" : false
     } ],
