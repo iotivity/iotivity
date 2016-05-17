@@ -19,13 +19,17 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderInterface.h"
-#include "NSQueueScheduler.h"
+#include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
+#include "NSCacheAdapter.h"
 #include "cautilinterface.h"
+#include "NSProviderSubscription.h"
+#include "NSProviderNotification.h"
 
-bool initSchedule = false;
+bool initProvider = false;
 static NSSubscribeRequestCallback g_subscribeRequestCb = NULL;
 static NSSyncCallback g_syncCb = NULL;
+pthread_mutex_t NSCacheMutex;
 
 void NSRegisterSubscribeRequestCb(NSSubscribeRequestCallback subscribeRequestCb)
 {
@@ -42,9 +46,9 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
     g_subscribeRequestCb(consumer);
 }
 
-void NSSyncCb(NSProvider *provider, NSSync *sync)
+void NSSyncCb(NSSync *sync)
 {
-    g_syncCb(provider, sync);
+    g_syncCb(sync);
 }
 
 NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
@@ -54,9 +58,11 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
 
     NSSetSubscriptionAcceptPolicy(policy);
 
-    if (!initSchedule)
+    if (!initProvider)
     {
-        initSchedule = true;
+        initProvider = true;
+
+        NSSetList();
         NSInitScheduler();
         NSStartScheduler();
     }
@@ -73,11 +79,18 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
     return NS_OK;
 }
 
+void NSSetList()
+{
+    pthread_mutex_init(&NSCacheMutex, NULL);
+    NSInitSubscriptionList();
+    NSInitMessageList();
+}
+
 NSResult NSStopProvider()
 {
-    NSRegisterSubscribeRequestCb(NULL);
-    NSRegisterSyncCb(NULL);
-    initSchedule = false;
+    NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
+    NSRegisterSyncCb((NSSyncCallback)NULL);
+    initProvider = false;
     return NS_OK;
 }
 
@@ -90,22 +103,11 @@ NSResult NSSendNotification(NSMessage *msg)
     return NS_OK;
 }
 
-NSResult NSReadCheck(NSMessage *msg)
+NSResult NSProviderReadCheck(NSMessage *msg)
 {
     OIC_LOG(INFO, INTERFACE_TAG, "Read Sync");
 
-    NSTask * task = (NSTask*) OICMalloc(sizeof(NSTask));
-    if (!task)
-    {
-        OIC_LOG(ERROR, LISTENER_TAG, PCF("Fail to allocate memory"));
-        return NS_ERROR;
-    }
-
-    task->nextTask = NULL;
-    task->taskData = msg;
-    task->taskType = TASK_SEND_READ;
-
-    NSPushQueue(NOTIFICATION_SCHEDULER, task->taskType, task);
+    NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ, msg);
 
     return NS_OK;
 }
@@ -114,11 +116,19 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted)
 {
     OIC_LOG(INFO, INTERFACE_TAG, "Response Acceptance");
 
-    NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, consumer);
+    if(accepted)
+    {
+        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, consumer);
+    }
+    else
+    {
+        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_DENY, consumer);
+    }
 
     return NS_OK;
 }
 
+/*
 NSResult NSGetConsumerList(uint8_t *list, uint32_t size)
 {
     OIC_LOG(INFO, INTERFACE_TAG, "Get consumer list");
@@ -127,13 +137,13 @@ NSResult NSGetConsumerList(uint8_t *list, uint32_t size)
     size = NSGetNumberOfObsList();
 
     return NS_OK;
-}
+}*/
 
 void * NSResponseSchedule(void * ptr)
 {
     if (ptr == NULL)
     {
-        OIC_LOG(ERROR, INTERFACE_TAG, "Fail to response to User");
+        OIC_LOG(INFO, INTERFACE_TAG, "Init NSResponseSchedule");
     }
 
     while (NSIsRunning[RESPONSE_SCHEDULER])
@@ -153,8 +163,9 @@ void * NSResponseSchedule(void * ptr)
                     printf("before - TASK_CB_SUBSCRIPTION :\n");
                     OCEntityHandlerRequest * request = (OCEntityHandlerRequest*)node->taskData;
                     NSConsumer consumer;
+
                     consumer.mId = strdup(request->devAddr.addr);
-                    int * obId = (int *) malloc (sizeof(int));
+                    int * obId = (int *) OICMalloc(sizeof(int));
                     *obId = request->obsInfo.obsId;
                     consumer.mUserData = obId;
 
@@ -165,7 +176,7 @@ void * NSResponseSchedule(void * ptr)
                 case TASK_CB_SYNC:
                 {
                     NSSync * sync = (NSSync*)node->taskData;
-                    NSSyncCb(NULL, sync);
+                    NSSyncCb(sync);
                     break;
                 }
                 default:

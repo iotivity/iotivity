@@ -65,7 +65,7 @@ void * NSDiscoverySchedule(void * ptr)
             NSTask *node = NSHeadMsg[DISCOVERY_SCHEDULER];
             NSHeadMsg[DISCOVERY_SCHEDULER] = node->nextTask;
 
-            switch (node->taskType)
+            switch ((int)node->taskType)
             {
                 case TASK_START_PRESENCE:
                     NSStartPresence();
@@ -77,6 +77,7 @@ void * NSDiscoverySchedule(void * ptr)
                     NSRegisterResource();
                     break;
             }
+
             OICFree(node);
         }
 

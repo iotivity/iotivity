@@ -28,6 +28,7 @@
 #include "NSStructs.h"
 #include "NSConstants.h"
 #include "NSProviderSystem.h"
+#include "NSProviderScheduler.h"
 #include "cautilinterface.h"
 
 OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,

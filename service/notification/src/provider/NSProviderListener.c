@@ -31,6 +31,8 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
     { },
     { 0 }, false };
 
+    (void)callback;
+
     // Validate pointer
     if (!entityHandlerRequest)
     {
@@ -53,7 +55,7 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
 
-            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY, entityHandlerRequest);
+            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY, (void *)entityHandlerRequest);
             ehResult = OC_EH_OK;
 
         }
@@ -149,6 +151,8 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
     { 0, 0, OC_EH_ERROR, 0, 0,
     { },
     { 0 }, false };
+
+    (void)callback;
 
     // Validate pointer
     if (!entityHandlerRequest)
@@ -271,6 +275,8 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
     { 0, 0, OC_EH_ERROR, 0, 0,
     { },
     { 0 }, false };
+
+    (void)callback;
 
     // Validate pointer
     if (!entityHandlerRequest)

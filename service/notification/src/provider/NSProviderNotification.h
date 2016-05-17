@@ -22,20 +22,22 @@
 #define _NS_PROVIDER_NOTIFICATION_H_
 
 #include <ocstack.h>
+#include "../common/NSCacheAdapter.h"
 #include "logger.h"
-#include "NSQueueScheduler.h"
+#include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
 #include "NSProviderResource.h"
-#include "NSProviderCacheAdapter.h"
+#include "NSProviderSubscription.h"
+
+NSCacheList * messageList;
 
 NSResult NSRegisterResource();
 
-NSResult NSGetObsIdList(OCObservationId *list);
+NSResult NSInitMessageList();
 
-uint32_t NSGetNumberOfObsList();
+NSResult NSPutNotificationMessage(NSMessage *, OCResourceHandle *);
 
-NSResult NSPutNotificationMessage(NSMessage *msg, OCResourceHandle *rHandle);
+NSResult NSSendNotificationMessage(NSMessage *);
 
-NSResult NSSendNotificationMessage(NSMessage *msg);
 
 #endif /* _NS_PROVIDER_NOTIFICATION_H_ */

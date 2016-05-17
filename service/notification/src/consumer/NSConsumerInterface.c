@@ -25,6 +25,7 @@
 
 #include "NSCommon.h"
 #include "NSConsumerCommon.h"
+#include "NSConstants.h"
 #include "NSConsumerMessageHandler.h"
 #include "oic_malloc.h"
 
@@ -36,8 +37,26 @@ NSResult NSStartConsumer(
 {
     if (NSIsStartedConsumer())
     {
-        printf("is already started consumer service?\n");
+        NS_LOG(DEBUG, "is already started consumer service?");
         return NS_OK;
+    }
+
+    if (!discoverCb)
+    {
+        NS_LOG(ERROR, "discoverCb is NULL");
+        return NS_ERROR;
+    }
+
+    if (!postCb)
+    {
+        NS_LOG(ERROR, "postCb is NULL");
+        return NS_ERROR;
+    }
+
+    if (!syncCb)
+    {
+        NS_LOG(ERROR, "syncCb is NULL");
+        return NS_ERROR;
     }
 
     NSSetDiscoverProviderCb(discoverCb);
@@ -47,6 +66,7 @@ NSResult NSStartConsumer(
 
     if (NS_OK != NSConsumerMessageHandlerInit())
     {
+        NSStopConsumer();
         return NS_ERROR;
     }
 
@@ -60,27 +80,29 @@ NSResult NSStopConsumer()
     NSSetNotificationSyncCb(NULL);
     NSSetIsStartedConsumer(false);
 
+    NSConsumerMessageHandlerExit();
+
     return NS_OK;
 }
 
-NSResult NSSubscribeProvider(NSProvider * provider)
+NSResult NSSubscribe(NSProvider * provider)
 {
     NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
     if (!subscribeTask)
     {
-        NS_CONSUMER_LOG(ERROR, "NSTask allocation fail");
+        NS_LOG(ERROR, "NSTask allocation fail");
         return NS_ERROR;
     }
 
     return NSConsumerPushEvent(subscribeTask);
 }
 
-NSResult NSUnsubscribeProvider(NSProvider * provider)
+NSResult NSUnsubscribe(NSProvider * provider)
 {
     NSTask * unsubscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) provider);
     if (!unsubscribeTask)
     {
-        NS_CONSUMER_LOG(ERROR, "NSTask allocation fail");
+        NS_LOG(ERROR, "NSTask allocation fail");
         return NS_ERROR;
     }
 
@@ -92,31 +114,31 @@ NSResult NSRescanProvider()
     NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, NULL);
     if (!discoverTask)
     {
-        NS_CONSUMER_LOG(ERROR, "NSTask allocation fail");
+        NS_LOG(ERROR, "NSTask allocation fail");
         return NS_ERROR;
     }
 
     return NSConsumerPushEvent(discoverTask);
 }
 
-NSResult NSRead(NSMessage * obj)
+NSResult NSConsumerReadCheck(NSMessage * obj)
 {
     NSTask * readTask = NSMakeTask(TASK_SEND_READ, (void *) obj);
     if (!readTask)
     {
-        NS_CONSUMER_LOG(ERROR, "NSTask allocation fail");
+        NS_LOG(ERROR, "NSTask allocation fail");
         return NS_ERROR;
     }
 
     return NSConsumerPushEvent(readTask);
 }
 
-NSResult NSDismiss(NSMessage * obj)
+NSResult NSConsumerDismissCheck(NSMessage * obj)
 {
     NSTask * dismissTask = NSMakeTask(TASK_SEND_DISMISS, (void *) obj);
     if (!dismissTask)
     {
-        NS_CONSUMER_LOG(ERROR, "NSTask allocation fail");
+        NS_LOG(ERROR, "NSTask allocation fail");
         return NS_ERROR;
     }
 

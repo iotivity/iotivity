@@ -21,6 +21,29 @@
 #ifndef _NS_CONSTANTS_H_
 #define _NS_CONSTANTS_H_
 
+#define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
+
+#ifdef TB_LOG
+#include "logger.h"
+#define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
+#define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
+#else
+#include "logger.h"
+#define NS_CONVERT_LEVEL(level) ( \
+        ((level) == 0) ? "DEBUG" : \
+        ((level) == 1) ? "INFO" : \
+        ((level) == 2) ? "WARNING" : \
+	((level) == 3) ? "ERROR" : "FATAL")
+#define NS_LOG_V(level, format, ...) { \
+        printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
+        printf((format), __VA_ARGS__); \
+        printf("\n"); }
+#define NS_LOG(level, msg) { \
+        printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
+        printf((msg)); \
+        printf("\n"); }
+#endif
+
 #define NS_TAG "IOT_NOTI"
 
 // SCHEDULE //
@@ -96,5 +119,17 @@ typedef enum eCache
     NS_CONSUMER_WHITELIST = 1,
 
 } NSCache;
+
+typedef enum eCacheType
+{
+    NS_PROVIDER_CACHE_SUBSCRIBER = 1000,
+    NS_PROVIDER_CACHE_MESSAGE = 1001,
+} NSCacheType;
+
+typedef enum eResourceType
+{
+    NS_RESOURCE_MESSAGE = 1000,
+    NS_RESOURCE_SYNC = 1001,
+} NSResourceType;
 
 #endif /* _NS_CONSTANTS_H_ */

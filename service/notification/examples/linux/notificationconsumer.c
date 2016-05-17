@@ -13,13 +13,13 @@ void onNotificationPosted(NSProvider * provider, NSMessage * notification)
     printf("title : %s\n", notification->mTitle);
     printf("content : %s\n", notification->mContentText);
 //    NSDropNSObject(notification);
-    NSRead(notification);
+    NSConsumerReadCheck(notification);
 }
 
 void onDiscoverNotification(NSProvider * provider)
 {
     printf("notification resource discovered\n");
-    printf("subscribe result %d\n", NSSubscribeProvider(provider));
+    printf("subscribe result %d\n", NSSubscribe(provider));
     printf("startSubscribing\n");
 }
 

@@ -20,6 +20,13 @@
 
 #include "NSProviderSubscription.h"
 
+NSResult NSInitSubscriptionList()
+{
+    consumerSubList = NSCacheCreate();
+    consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
+    return NS_OK;
+}
+
 NSResult NSSetSubscriptionAcceptPolicy(NSAccessPolicy policy)
 {
     if (policy == NS_ACCEPTER_PROVIDER)
@@ -47,7 +54,8 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     // put notification resource
     OCResourceHandle notificationResourceHandle;
-    if(NSPutNotificationResource(NSGetSubscriptionAccepter(), &notificationResourceHandle) != NS_OK)
+    if (NSPutNotificationResource(NSGetSubscriptionAccepter(), &notificationResourceHandle)
+            != NS_OK)
     {
         OIC_LOG(ERROR, SUBSCRIPTION_TAG, PCF("Failed to put notification resource"));
         return NS_ERROR;
@@ -77,8 +85,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
     response.ehResult = OC_EH_OK;
-    response.payload = (OCPayload *)payload;
-
+    response.payload = (OCPayload *) payload;
 
     // Send Response
     if (OCDoResponse(&response) != OC_STACK_OK)
@@ -91,7 +98,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     return NS_OK;
 }
 
-void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, int state)
+void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResourceType resourceType)
 {
 
     OIC_LOG(INFO, SUBSCRIPTION_TAG, "Start to subscription process");
@@ -99,17 +106,29 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, int stat
     printf("state = 0 \n");
 
     // write consumer info to cache
-    if(state == 0)
+
+    if (resourceType == NS_RESOURCE_MESSAGE)
     {
+        int obId = entityHandlerRequest->obsInfo.obsId;
 
-        printf("state = 0 - 1\n");
+        NSCacheElement * element = (NSCacheElement *) malloc(sizeof(NSCacheElement));
 
-        if (NSProviderWriteToCache(NS_CONSUMER_BLACKLIST, entityHandlerRequest->obsInfo.obsId, state) != NS_OK)
+        NSCacheSubData * subData = (NSCacheSubData *) malloc(sizeof(NSCacheSubData));
+        subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+        subData->isWhite = false;
+        subData->messageObId = entityHandlerRequest->obsInfo.obsId;
+        subData->syncObId = 0;
+
+        element->data = (void*) subData;
+        element->next = NULL;
+
+        printf("NS_ message ob Id = %d\n", subData->messageObId);
+
+        if (NSCacheWrite(consumerSubList, element) != NS_OK)
         {
-            OIC_LOG(ERROR, SUBSCRIPTION_TAG, PCF("fail to write consumer black list"));
+            printf("Cache Write Error\n");
         }
-        printf("state = 0 - 2\n");
-        // check access policy
+
         if (NSGetSubscriptionAccepter() == NS_ACCEPTER_PROVIDER)
         {
             // OCDevAddr --> NSConsumer
@@ -123,14 +142,28 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, int stat
             NSSendSubscriptionResponse(entityHandlerRequest, NS_ACCEPTER_CONSUMER, true);
         }
     }
-    else if(state == 1)
+    else if (resourceType == NS_RESOURCE_SYNC)
     {
-        printf("state = 1 - 0\n");
-        if (NSProviderWriteToCache(NS_CONSUMER_WHITELIST, entityHandlerRequest->obsInfo.obsId, state) != NS_OK)
+        int obId = entityHandlerRequest->obsInfo.obsId;
+
+        NSCacheElement * element = (NSCacheElement *) malloc(sizeof(NSCacheElement));
+
+        NSCacheSubData * subData = (NSCacheSubData *) malloc(sizeof(NSCacheSubData));
+        printf("NS_ entityHandlerRequest->devAddr.addr = %s\n", entityHandlerRequest->devAddr.addr);
+        subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+        subData->isWhite = false;
+        subData->syncObId = entityHandlerRequest->obsInfo.obsId;
+        subData->messageObId = 0;
+
+        element->data = (void*) subData;
+        element->next = NULL;
+
+        printf("NS_ sync ob Id = %d\n", subData->syncObId);
+
+        if (NSCacheWrite(consumerSubList, element) != NS_OK)
         {
-            OIC_LOG(ERROR, SUBSCRIPTION_TAG, PCF("fail to write consumer white list"));
+            printf("Cache Write Error\n");
         }
-        printf("state = 1 - 1\n");
     }
 }
 
@@ -141,9 +174,20 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
     // ProcessObserveUnregister (entityHandlerRequest);
 
     // write consumer info to cache
-    if (NSProviderWriteToCache(NS_CONSUMER_BLACKLIST, entityHandlerRequest->devAddr) != NS_OK)
+    int obId = entityHandlerRequest->obsInfo.obsId;
+
+    NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+    NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+    subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+    subData->isWhite = false;
+    subData->messageObId = entityHandlerRequest->obsInfo.obsId;
+
+    element->data = (void*) subData;
+    element->next = NULL;
+
+    if (NSCacheWrite(consumerSubList, element) != NS_OK)
     {
-        OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to write consumer black list");
+        OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to write consumer white list");
     }
 }
 
@@ -155,7 +199,7 @@ void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest)
     // one queue is required for response callback to ask subscription allowance
 }
 
-NSResult NSSendResponse(int observeId, bool accepted)
+NSResult NSSendResponse(const char * id, bool accepted)
 {
 
     OCRepPayload* payload = OCRepPayloadCreate();
@@ -176,7 +220,11 @@ NSResult NSSendResponse(int observeId, bool accepted)
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_ID, "0000-0000-0000-0000");
     OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
 
-    if (OCNotifyListOfObservers(rHandle, &observeId, 1, payload, OC_HIGH_QOS) != OC_STACK_OK)
+    NSCacheElement * element = NSCacheRead(consumerSubList, id);
+    NSCacheSubData * subData = element->data;
+
+    if (OCNotifyListOfObservers(rHandle, &subData->messageObId, 1, payload, OC_HIGH_QOS)
+            != OC_STACK_OK)
     {
         OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to send Acceptance");
         OCRepPayloadDestroy(payload);
@@ -204,7 +252,19 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
     printf("accepted 1 \n");
     if (accepted)
     {
-        if (NSProviderWriteToCache(NS_CONSUMER_WHITELIST, entityHandlerRequest->obsInfo.obsId) != NS_OK)
+        int obId = entityHandlerRequest->obsInfo.obsId;
+
+        NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+
+        NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+        subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+        subData->isWhite = true;
+        subData->messageObId = entityHandlerRequest->obsInfo.obsId;
+
+        element->data = (void*) subData;
+        element->next = NULL;
+
+        if (NSCacheWrite(consumerSubList, element) != NS_OK)
         {
             OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to write consumer white list");
         }
@@ -244,7 +304,8 @@ void * NSSubScriptionSchedule(void *ptr)
 
                 case TASK_RECV_SUBSCRIPTION:
                     printf("before TASK_RECV_SUBSCRIPTION:\n");
-                    NSHandleSubscription((OCEntityHandlerRequest*) node->taskData, 0);
+                    NSHandleSubscription((OCEntityHandlerRequest*) node->taskData,
+                            NS_RESOURCE_MESSAGE);
                     printf("after TASK_RECV_SUBSCRIPTION:\n");
                     break;
 
@@ -255,27 +316,42 @@ void * NSSubScriptionSchedule(void *ptr)
 
                 case TASK_SEND_ALLOW:
                 {
-                    NSConsumer * consumer = (NSConsumer *)node->taskData;
-                    int * pObId = (int *)consumer->mUserData;
+                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    int * pObId = (int *) consumer->mUserData;
+
+                    NSCacheSubData * subData = (NSCacheMsgData *) OICMalloc(sizeof(NSCacheSubData));
+                    subData->id = OICStrdup(consumer->mId);
+                    subData->isWhite = true;
+                    subData->messageObId = 0;
+                    subData->syncObId = 0;
+
+                    NSCacheUpdateSubScriptionState(consumerSubList, subData);
 
                     printf("observer ID = %d\n", *pObId);
 
-                    if (NSProviderWriteToCache(NS_CONSUMER_WHITELIST, *pObId, 0) != NS_OK)
-                    {
-                        OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to write consumer white list");
-                    }
-                    NSSendResponse(*pObId, true);
+                    NSSendResponse(consumer->mId, true);
 
                     break;
                 }
                 case TASK_SEND_DENY:
+                {
+                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    int * pObId = (int *) consumer->mUserData;
 
-//                    NSSendSubscriptionResponse((OCEntityHandlerRequest*) node->taskData,
-//                            NS_ACCEPTER_PROVIDER, false);
+                    NSCacheSubData * subData = (NSCacheMsgData *) OICMalloc(sizeof(NSCacheSubData));
+                    subData->id = OICStrdup(consumer->mId);
+                    subData->isWhite = false;
+                    subData->messageObId = 0;
+                    subData->syncObId = 0;
+
+                    NSCacheUpdateSubScriptionState(consumerSubList, subData);
+                    printf("observer ID = %d\n", *pObId);
+                    NSSendResponse(consumer->mId, false);
                     break;
-
+                }
                 case TASK_SYNC_SUBSCRIPTION:
-                    NSHandleSubscription((OCEntityHandlerRequest*) node->taskData, 1);
+                    NSHandleSubscription((OCEntityHandlerRequest*) node->taskData,
+                            NS_RESOURCE_SYNC);
                     break;
 
             }

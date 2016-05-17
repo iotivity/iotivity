@@ -26,6 +26,7 @@
 #include "oic_malloc.h"
 
 #include "NSStructs.h"
+#include "NSConstants.h"
 #include "NSConsumerCommon.h"
 
 #include "NSThread.h"
@@ -72,20 +73,20 @@ NSResult NSConsumerMessageHandlerInit()
 
     if (NS_OK != NSConsumerListenerInit())
     {
-        NS_CONSUMER_LOG(ERROR, "listener init fail");
+        NS_LOG(ERROR, "listener init fail");
         return NS_ERROR;
     }
 
     if (NS_OK != NSConsumerSystemInit())
     {
-        NS_CONSUMER_LOG(ERROR, "system init fail");
+        NS_LOG(ERROR, "system init fail");
         return NS_ERROR;
     }
 
     handle = NSThreadInit(NSConsumerMsgHandleThreadFunc, NULL);
     if (!handle)
     {
-        NS_CONSUMER_LOG(ERROR, "msg handle thread init fail");
+        NS_LOG(ERROR, "msg handle thread init fail");
         return NS_ERROR;
     }
     NSSetMsgHandleThreadHandle(handle);
@@ -93,7 +94,7 @@ NSResult NSConsumerMessageHandlerInit()
     queue = NSCreateQueue();
     if (!queue)
     {
-        NS_CONSUMER_LOG(ERROR, "msg handle queue create fail");
+        NS_LOG(ERROR, "msg handle queue create fail");
         return NS_ERROR;
     }
     NSSetMsgHandleQueue(queue);
@@ -105,7 +106,7 @@ NSResult NSConsumerPushEvent(NSTask * task)
 {
     if (!NSThreadInit(NSConsumerMsgPushThreadFunc, (void *) task))
     {
-        NS_CONSUMER_LOG(ERROR, "insert to queue thread init fail");
+        NS_LOG(ERROR, "insert to queue thread init fail");
         return NS_ERROR;
     }
 
@@ -122,10 +123,10 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
     NSConsumerQueue * queue = NULL;
     NSConsumerQueueObject * obj = NULL;
     NSThreadHandle * handle = (NSThreadHandle *) threadHandle;
-    NS_CONSUMER_LOG(DEBUG, "created thread for consumer message handle");
+    NS_LOG(DEBUG, "created thread for consumer message handle");
     if (!handle)
     {
-        NS_CONSUMER_LOG(ERROR, "thread handle is null");
+        NS_LOG(ERROR, "thread handle is null");
         return NULL;
     }
 
@@ -133,7 +134,7 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
     {
         if (!handle->isStarted)
         {
-            NS_CONSUMER_LOG(ERROR, "msg handler thread will be terminated");
+            NS_LOG(ERROR, "msg handler thread will be terminated");
             break;
         }
 
@@ -149,11 +150,13 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
         }
 
         NSThreadLock(handle);
-        NS_CONSUMER_LOG(DEBUG, "msg handler working");
+        NS_LOG(DEBUG, "msg handler working");
         obj = NSPopQueue(queue);
-        // TODO processing obj
 
-        NSConsumerHandleMsg((NSTask *)(obj->data));
+        if (obj)
+        {
+            NSConsumerHandleMsg((NSTask *)(obj->data));
+        }
 
         NSThreadUnlock(handle);
 
@@ -169,14 +172,14 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     NSThreadHandle * handle = *(NSGetMsgHandleThreadHandle());
     if (!handle)
     {
-        NS_CONSUMER_LOG(ERROR, "NSThreadHandle is null. can not insert to queue");
+        NS_LOG(ERROR, "NSThreadHandle is null. can not insert to queue");
         return NULL;
     }
 
     obj = (NSConsumerQueueObject *)OICMalloc(sizeof(NSConsumerQueueObject));
     if (!obj)
     {
-        NS_CONSUMER_LOG(ERROR, "NSConsumerQueueObject allocation fail");
+        NS_LOG(ERROR, "NSConsumerQueueObject allocation fail");
         return NULL;
     }
 
@@ -188,7 +191,7 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     queue = *(NSGetMsgHandleQueue());
     if (!queue)
     {
-        NS_CONSUMER_LOG(ERROR, "NSQueue is null. can not insert to queue");
+        NS_LOG(ERROR, "NSQueue is null. can not insert to queue");
         OICFree(data);
         OICFree(obj);
     }
@@ -213,6 +216,7 @@ void NSConsumerHandleMsg(NSTask * task)
         break;
     }
     case TASK_CONSUMER_REQ_SUBSCRIBE:
+    case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
     case TASK_SEND_READ:
     case TASK_SEND_DISMISS:
     {
@@ -227,7 +231,7 @@ void NSConsumerHandleMsg(NSTask * task)
         break;
     }
     default:
-        NS_CONSUMER_LOG(ERROR, "Unknown type of task");
+        NS_LOG(ERROR, "Unknown type of task");
         break;
     }
 }

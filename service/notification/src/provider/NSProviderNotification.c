@@ -20,20 +20,11 @@
 
 #include "NSProviderNotification.h"
 
-NSResult NSGetObsIdList(OCObservationId *list)
+NSResult NSInitMessageList()
 {
-    // // TODO: return white list
-
-    list = NULL;
-
+    messageList = NSCacheCreate();
+    messageList->cacheType = NS_PROVIDER_CACHE_MESSAGE;
     return NS_OK;
-}
-
-uint32_t NSGetNumberOfObsList()
-{
-    // TODO: return # of list
-
-    return 0;
 }
 
 NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
@@ -79,6 +70,9 @@ NSResult NSSendMessage(NSMessage *msg)
     int i;
     // Set Resource and get resource handle
     OCResourceHandle rHandle;
+    OCObservationId obArray[255] =
+    { 0, };
+    int obCount = 0;
     if (NSPutMessageResource(msg, &rHandle) != NS_OK)
     {
         OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Fail to put notification resource"));
@@ -87,11 +81,9 @@ NSResult NSSendMessage(NSMessage *msg)
 
     // Send Notification to subscribers
 
-    NSWhiteList * whiteList = NSProviderReadCache(NS_CONSUMER_WHITELIST, 0);
-
-    if(whiteList->size == 0)
+    if (consumerSubList->head == NULL)
     {
-        printf("printf - no observers\n");
+        printf("printf - no observers (consumerSubList->head == NULL)\n");
         OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("no observers"));
         return NS_ERROR;
     }
@@ -105,28 +97,51 @@ NSResult NSSendMessage(NSMessage *msg)
         return NS_ERROR;
     }
 
-    for(i = 0; i < whiteList->size; ++i)
+    printf("printf - no observers - 3\n");
+    NSCacheElement * it = consumerSubList->head;
+    printf("printf - no observers - 4\n");
+    while (it)
+    {
+        printf("printf - no observers - 5\n");
+        NSCacheSubData * subData = (NSCacheSubData *) it->data;
+        printf("NS_ subData->id = %s\n", subData->id);
+        printf("NS_ subData->messageId = %d\n", subData->messageObId);
+        printf("NS_ subData->obID = %d\n", subData->syncObId);
+        printf("NS_ subData->isWhite = %d\n", subData->isWhite);
+
+        printf("printf - no observers - 6\n");
+        if (subData->isWhite)
+        {
+            printf("printf - no observers - 7\n");
+            obArray[obCount++] = subData->messageObId;
+            printf("printf - no observers - 8\n");
+        }
+
+        it = it->next;
+    }
+    printf("printf - no observers - 9\n");
+    for (i = 0; i < obCount; ++i)
     {
         printf("NS_ -------------------------------------------------------message\n");
-        printf("NS_ whiteList->idList[%d] = %d\n", i, whiteList->idList[i]);
+        printf("NS_ whiteList->idList[%d] = %d\n", i, obArray[i]);
         printf("NS_ -------------------------------------------------------message\n");
     }
-
+    printf("printf - no observers - 10\n");
     // Notify message to subscribers
 
-    OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, whiteList->idList, whiteList->size, payload, OC_LOW_QOS);
+    OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray, obCount, payload,
+            OC_LOW_QOS);
     printf("NS_ message ocstackResult = %d\n", ocstackResult);
-
 
     if (ocstackResult != OC_STACK_OK)
     {
-        printf("printf - no observers - 3\n");
+        printf("printf - no observers - 11\n");
         OIC_LOG(ERROR, NOTIFICATION_TAG, "fail to send message");
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
 
     }
-    printf("printf - no observers - 4\n");
+    printf("printf - no observers - 12\n");
     OCRepPayloadDestroy(payload);
 
     return NS_OK;
@@ -135,8 +150,10 @@ NSResult NSSendMessage(NSMessage *msg)
 NSResult NSSendSync(NSSync *sync)
 {
     OIC_LOG(DEBUG, NOTIFICATION_TAG, "Send Notification Sync to consumer");
+
+    OCObservationId obArray[255] = { 0, };
+    int obCount = 0;
     int i;
-    // Set Resource and get resource handle
 
     OCResourceHandle rHandle;
     if (NSPutSyncResource(sync, &rHandle) != NS_OK)
@@ -145,12 +162,18 @@ NSResult NSSendSync(NSSync *sync)
         return NS_ERROR;
     }
 
-    NSWhiteList * whiteList = NSProviderReadCache(NS_CONSUMER_WHITELIST, 1);
+    NSCacheElement * it = consumerSubList->head;
 
-    if(whiteList->size == 0)
+    while (it)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("no observers"));
-        return NS_ERROR;
+        NSCacheSubData * subData = (NSCacheSubData *) it->data;
+        if (subData->isWhite)
+        {
+            obArray[obCount++] = subData->syncObId;
+        }
+
+        it = it->next;
+
     }
 
     // Send sync to subscribers
@@ -164,14 +187,15 @@ NSResult NSSendSync(NSSync *sync)
 
     // Notify sync to subscribers
 
-    for(i = 0; i < whiteList->size; ++i)
+    for (i = 0; i < obCount; ++i)
     {
-        printf("NS_ -------------------------------------------------------sync\n");
-        printf("NS_ whiteList->idList[%d] = %d\n", i, whiteList->idList[i]);
-        printf("NS_ -------------------------------------------------------sync\n");
+        printf("NS_ -------------------------------------------------------message\n");
+        printf("NS_ whiteList->idList[%d] = %d\n", i, obArray[i]);
+        printf("NS_ -------------------------------------------------------message\n");
     }
 
-    OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, whiteList->idList, whiteList->size, payload, OC_LOW_QOS);
+    OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray,
+            obCount, payload, OC_LOW_QOS);
 
     printf("NS_ sync ocstackResult = %d\n", ocstackResult);
     if (ocstackResult != OC_STACK_OK)

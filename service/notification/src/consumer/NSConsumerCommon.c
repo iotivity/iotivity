@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSConsumerCommon.h"
+#include "NSConstants.h"
 #include "NSThread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -68,7 +69,7 @@ void NSDiscoveredProvider(NSProvider * provider)
 {
     if (!NSThreadInit(NSDiscoverdProviderFunc, (void *) provider))
     {
-        NS_CONSUMER_LOG(ERROR, "execute discovered provider callback fail");
+        NS_LOG(ERROR, "execute discovered provider callback fail");
         return;
     }
 }
@@ -107,7 +108,7 @@ void NSNotificationSync(NSProvider * provider, NSSync * sync)
 
     if (!NSThreadInit(NSNotificationSyncFunc, (void *) obj))
     {
-        NS_CONSUMER_LOG(ERROR, "execute noti post callback fail");
+        NS_LOG(ERROR, "execute noti post callback fail");
         return;
     }
 }
@@ -149,7 +150,7 @@ void NSNotificationPost(NSProvider * provider, NSMessage * msg)
     NSMessageData * obj = (NSMessageData *)OICMalloc(sizeof(NSMessageData));
     if (!obj)
     {
-        NS_CONSUMER_LOG(ERROR, "NSMessageData allocation is failed");
+        NS_LOG(ERROR, "NSMessageData allocation is failed");
         return;
     }
     obj->provider = provider;
@@ -157,7 +158,7 @@ void NSNotificationPost(NSProvider * provider, NSMessage * msg)
 
     if (!NSThreadInit(NSNotificationPostFunc, (void *) obj))
     {
-        NS_CONSUMER_LOG(ERROR, "execute noti post callback fail");
+        NS_LOG(ERROR, "execute noti post callback fail");
         return;
     }
 }
@@ -213,7 +214,7 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
     newMsg->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     if (!newMsg->addr)
     {
-        NS_CONSUMER_LOG(ERROR, "OCDevAddr allocation is failed");
+        NS_LOG(ERROR, "OCDevAddr allocation is failed");
     }
     memcpy(newMsg->addr, msg->addr, sizeof(OCDevAddr));
 
@@ -260,10 +261,3 @@ OCStackResult NSRequestToResourceIntrospection(OCDoHandle * handle,
             payload, CT_DEFAULT, NS_QOS, &cbdata, NULL, 0);
 }
 
-const char * NS_CONVERT_LEVEL(int level)
-{
-    return ((level) == 0) ? "DEBUG" :
-           ((level) == 1) ? "INFO" :
-           ((level) == 2) ? "WARNING" :
-           ((level) == 3) ? "ERROR" : "FATAL";
-}

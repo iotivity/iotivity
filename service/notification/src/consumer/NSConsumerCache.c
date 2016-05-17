@@ -20,6 +20,7 @@
 
 #include "NSConsumerCache.h"
 #include "NSConsumerCommon.h"
+#include "NSConstants.h"
 
 #include "stdlib.h"
 #include "oic_malloc.h"
@@ -34,7 +35,7 @@ NSCacheList * NSConsumerCacheInit()
     }
 
     retNSCacheList->head = NULL;
-    retNSCacheList->last = NULL;
+    retNSCacheList->tail = NULL;
 
     return retNSCacheList;
 }
@@ -64,16 +65,16 @@ NSResult NSConsumerCacheInsert(NSCacheList * list, NSCacheObject * newObj)
     NSCacheObject * obj = (NSCacheObject *)OICMalloc(sizeof(NSCacheObject));
     if (!obj)
     {
-        NS_CONSUMER_LOG(ERROR, "Fail to Create New Object");
+        NS_LOG(ERROR, "Fail to Create New Object");
         return NS_ERROR;
     }
 
     NSMessage_consumer * msgObj = (NSMessage_consumer *) OICMalloc(sizeof(NSMessage_consumer));
     NSMessage_consumer * newMsgObj = (NSMessage_consumer *) newObj->data;
 
-    NS_CONSUMER_LOG_V(DEBUG, "Title: %s", newMsgObj->mTitle);
-    NS_CONSUMER_LOG_V(DEBUG, "ID: %s", newMsgObj->mId);
-    NS_CONSUMER_LOG_V(DEBUG, "TEXT: %s", newMsgObj->mContentText);
+    NS_LOG_V(DEBUG, "Title: %s", newMsgObj->mTitle);
+    NS_LOG_V(DEBUG, "ID: %s", newMsgObj->mId);
+    NS_LOG_V(DEBUG, "TEXT: %s", newMsgObj->mContentText);
 
     msgObj->mTitle = OICStrdup(newMsgObj->mTitle);
     msgObj->mId = OICStrdup(newMsgObj->mId);
@@ -81,13 +82,13 @@ NSResult NSConsumerCacheInsert(NSCacheList * list, NSCacheObject * newObj)
 
     if (!msgObj->mId)
     {
-        NS_CONSUMER_LOG(ERROR, "Notification Attributes copy fail");
+        NS_LOG(ERROR, "Notification Attributes copy fail");
     }
 
     msgObj->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     if (!msgObj->addr)
     {
-        NS_CONSUMER_LOG(ERROR, "OCDevAddr allocation is failed.");
+        NS_LOG(ERROR, "OCDevAddr allocation is failed.");
     }
 
     memcpy(msgObj->addr, newMsgObj->addr, sizeof(OCDevAddr));
@@ -117,12 +118,12 @@ NSResult NSConsumerCacheInsert(NSCacheList * list, NSCacheObject * newObj)
         iter = (NSCacheObject *) iter->next;
     }
 
-    if (list->last)
+    if (list->tail)
     {
-        (list->last)->next = obj;
+        (list->tail)->next = obj;
     }
 
-    list->last = obj;
+    list->tail = obj;
 
     return NS_OK;
 }
@@ -143,10 +144,10 @@ NSResult NSConsumerCacheDelete(NSCacheList * list, NSCacheObject * delObj) // Fr
     {
         if (beDelete == delObj)
         {
-            if (beDelete == list->last)
+            if (beDelete == list->tail)
             {
                 pre->next = NULL;
-                list->last = pre;
+                list->tail = pre;
             }
             else
             {
@@ -165,21 +166,21 @@ NSResult NSConsumerCacheDelete(NSCacheList * list, NSCacheObject * delObj) // Fr
 NSCacheObject * NSConsumerCacheFind(NSCacheList * list, char * findId)
 {
 
-    NS_CONSUMER_LOG_V(DEBUG, "findID: %s", findId);
+    NS_LOG_V(DEBUG, "findID: %s", findId);
     NSCacheObject * retObj = list->head;
     if (!retObj)
     {
-        NS_CONSUMER_LOG(DEBUG, "findcache is null");
+        NS_LOG(DEBUG, "findcache is null");
         return retObj;
     }
 
     NSMessage_consumer * obj = (NSMessage_consumer *) retObj->data;
-    NS_CONSUMER_LOG_V(DEBUG, "objmID: %s", obj->mId);
+    NS_LOG_V(DEBUG, "objmID: %s", obj->mId);
 
     while (retObj)
     {
         NSMessage_consumer * obj = (NSMessage_consumer *) retObj->data;
-        NS_CONSUMER_LOG_V(DEBUG, "objmID: %s", obj->mId);
+        NS_LOG_V(DEBUG, "objmID: %s", obj->mId);
         if (!strcmp(obj->mId, findId))
         {
             return retObj;

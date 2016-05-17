@@ -18,33 +18,83 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file provides APIs of Notification Service for Provider.
+ */
+
 #ifndef _NS_PROVIDER_INTERFACE_H_
 #define _NS_PROVIDER_INTERFACE_H_
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif // __cplusplus
 
 #include "NSCommon.h"
 #include <stdbool.h>
 #include <stdint.h>
 
+/**
+ * Provider uses this callback function to receive subscription request of consumer
+ * @param[in] consumer        Consumer who subscribes the resource
+ */
+typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
+
+/**
+ * Provider use this callback function to receive the status of the message
+ * synchronization
+ * @param[in] sync        Synchronization information of the notification message
+ */
+typedef void (*NSSyncCallback)(NSSync *);
+
+/**
+ * Initialize notification service for provider
+ * @param[in]  policy   Accepter
+ * @param[in]  subscribeRequestCallback   Callback function to register for receiving
+ * subscription request from consumer
+ * @param[in]  syncCallback   Callback function to register for receiving  sync data
+ * @return ::NS_OK or result code of NSResult
+ */
 NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
         NSSyncCallback syncCb);
 
+/**
+ * Terminate notification service for provider
+ * @return ::NS_OK or result code of NSResult
+ */
 NSResult NSStopProvider();
 
+/**
+ * Send notification message to all subscribers
+ * @param[in]  message  Notification message including id, title, contentText
+ * @return ::NS_OK or result code of NSResult
+ */
 NSResult NSSendNotification(NSMessage *msg);
 
-NSResult NSReadCheck(NSMessage *msg);
-
+/**
+ * Send acceptance to consumer who subscribes the resource of notification message
+ * @param[in]  consumer  Consumer who subscribes the resource
+ * @param[in]  accepted  the result of acceptance; Allow or Deny
+ * @return ::NS_OK or result code of NSResult
+ */
 NSResult NSAccept(NSConsumer *consumer, bool accepted);
 
-NSResult NSGetConsumerList(uint8_t *list, uint32_t size);
+/**
+ * Get consumer list that is stored in the cache of notification service
+ * @param[in]  list  Consumer list
+ * @param[in]  size  the number of consumers stored in the cache
+ * @return ::NS_OK or result code of NSResult
+ */
+// NSResult NSGetConsumerList(uint8_t *list, uint32_t size);
 
-NSResult NSTestStartPresence();
-
-NSResult NSTestStopPresence();
+/**
+ * Send read-check to provider in order to synchronize notification status with other consumers
+ * @param[in]  message  Notification message to synchronize the status
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderReadCheck(NSMessage *);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@ int id;
 
 void OCProcessThread(void * ptr)
 {
-    (void*) ptr;
+    (void) ptr;
     while (!isExit)
     {
         if (OCProcess() != OC_STACK_OK)
@@ -36,17 +36,16 @@ void subscribeRequestCallback(NSConsumer *consumer)
     OIC_LOG(INFO, TAG, "consumer requested to subscribe");
     char *cid = consumer->mId;
 
-    printf("Consumer ID: %s\n", cid);
+    printf("NS_ Consumer ID: %s\n", cid);
 
     NSAccept(consumer, true);
 }
 
-void syncCallback(NSProvider *provider, NSSync *sync)
+void syncCallback(NSSync *sync)
 {
     OIC_LOG(INFO, TAG, "sync requested");
 
-    printf("Sync State: %d\n", sync->mState);
-
+    printf("NS_ Sync State: %d\n", sync->mState);
 }
 
 int main()
@@ -80,8 +79,8 @@ int main()
         printf("4. NSRead \n");
         //printf("5. NSAccept \n");
         printf("6. NSGetConsumerList \n");
-        printf("7. startPresence \n");
-        printf("8. stopPresence \n");
+        //printf("7. startPresence \n");
+        //printf("8. stopPresence \n");
         printf("0. Exit() \n");
 
         printf("input : ");
@@ -119,6 +118,7 @@ int main()
                 printf("app - mId : %s \n", charID);
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
+
 
                 NSMessage * msg = (NSMessage *)malloc(sizeof(NSMessage));
 
@@ -175,12 +175,12 @@ int main()
                     */
                 break;
             case 7:
-                OIC_LOG(INFO, TAG, "NSStartPresence");
-                NSTestStartPresence();
+                OIC_LOG(INFO, TAG, "NSStartPresence - not working");
+                //NSTestStartPresence();
                 break;
             case 8:
-                OIC_LOG(INFO, TAG, "NSStopPresence");
-                NSTestStopPresence();
+                OIC_LOG(INFO, TAG, "NSStopPresence- not working");
+                //NSTestStopPresence();
                 break;
             default:
                 OIC_LOG(INFO, TAG, "Under Construction");

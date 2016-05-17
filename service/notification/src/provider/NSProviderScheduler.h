@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _QUEUE_SCHEDULER_H_
-#define _QUEUE_SCHEDULER_H_
+#ifndef _PROVIDER_SCHEDULER_H_
+#define _PROVIDER_SCHEDULER_H_
 
 #include <stdio.h>
 #include <pthread.h>
@@ -45,9 +45,10 @@ extern void * NSDiscoverySchedule(void *ptr);
 extern void * NSSubScriptionSchedule(void *ptr);
 extern void * NSNotificationSchedule(void *ptr);
 
+void NSSetList();
 bool NSInitScheduler();
 bool NSStartScheduler();
 bool NSStopScheduler();
 void NSPushQueue(NSSchedulerType, NSTaskType, void*);
 
-#endif /* _QUEUE_SCHEDULER_H_ */
+#endif /* _PROVIDER_SCHEDULER_H_ */

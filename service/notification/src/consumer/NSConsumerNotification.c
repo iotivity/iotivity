@@ -20,6 +20,7 @@
 
 #include "NSConsumerNotification.h"
 
+#include "NSConstants.h"
 #include "NSConsumerCommon.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -33,15 +34,15 @@ NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type);
 
 NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 {
-    if (OC_STACK_OK != NSRequestToResourceIntrospection(NULL, OC_REST_OBSERVE,
-            (OCDevAddr *) provider->mUserData,
+    if (OC_STACK_OK != NSRequestToResourceIntrospection(&(provider->messageHandle),
+            OC_REST_OBSERVE, (OCDevAddr *) provider->mUserData,
             provider->messageUri, NULL, NSConsumerNotificationListener))
     {
         return NS_ERROR;
     }
 
-    if (OC_STACK_OK != NSRequestToResourceIntrospection(NULL, OC_REST_OBSERVE,
-            (OCDevAddr *) provider->mUserData,
+    if (OC_STACK_OK != NSRequestToResourceIntrospection(&(provider->syncHandle),
+            OC_REST_OBSERVE, (OCDevAddr *) provider->mUserData,
             provider->syncUri, NULL, NSConsumerSyncListener))
     {
         return NS_ERROR;
@@ -71,7 +72,7 @@ OCStackApplicationResult NSConsumerSyncListener(
     NSProvider * provider = NSGetProvider(clientResponse);
     if (!provider)
     {
-        NS_CONSUMER_LOG(ERROR, "getting provider is failed");
+        NS_LOG(ERROR, "getting provider is failed");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -85,12 +86,12 @@ OCStackApplicationResult NSConsumerSyncListener(
 
     if (newNoti->mState != Notification_Read)
     {
-        NS_CONSUMER_LOG(DEBUG, "newNoti->type : Dismiss");
+        NS_LOG(DEBUG, "newNoti->type : Dismiss");
         taskType = TASK_RECV_DISMISS;
     }
     else
     {
-        NS_CONSUMER_LOG(DEBUG, "newNoti->type : Read");
+        NS_LOG(DEBUG, "newNoti->type : Read");
     }
 
     NSNotificationSync(provider, newNoti);
@@ -111,7 +112,7 @@ OCStackApplicationResult NSConsumerNotificationListener(
     NSProvider * provider = NSGetProvider(clientResponse);
     if (!provider)
     {
-        NS_CONSUMER_LOG(ERROR, "getting provider is failed");
+        NS_LOG(ERROR, "getting provider is failed");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -123,7 +124,7 @@ OCStackApplicationResult NSConsumerNotificationListener(
 
     NSTaskType taskType = TASK_CONSUMER_RECV_NOTIFICATION;
 
-    NS_CONSUMER_LOG(DEBUG, "newNoti->type == Notification");
+    NS_LOG(DEBUG, "newNoti->type == Notification");
     NSNotificationPost(provider, (NSMessage *) newNoti);
 
     if (NS_OK != NSPushToCache(clientResponse, taskType))
@@ -145,7 +146,7 @@ NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type)
     NSTask * task = NSMakeTask(type, (void *) cachedNoti);
     if (!task)
     {
-        NS_CONSUMER_LOG(ERROR, "NSTask allocation fail");
+        NS_LOG(ERROR, "NSTask allocation fail");
         NSRemoveMessage(cachedNoti);
         return NS_ERROR;
     }
@@ -174,7 +175,7 @@ NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse)
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
     if (!OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ID, &retNoti->mId))
     {
-        NS_CONSUMER_LOG(ERROR, "id of received notification is null");
+        NS_LOG(ERROR, "id of received notification is null");
         OICFree(retNoti);
         return NULL;
     }
@@ -182,9 +183,10 @@ NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse)
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retNoti->mTitle);
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TEXT, &retNoti->mContentText);
 
-    NS_CONSUMER_LOG_V(DEBUG, "Msg ID : %s", retNoti->mId);
-    NS_CONSUMER_LOG_V(DEBUG, "Msg Title : %s", retNoti->mTitle);
-    NS_CONSUMER_LOG_V(DEBUG, "Msg Content : %s", retNoti->mContentText);
+    NS_LOG_V(DEBUG, "Msg Address : %s", clientResponse->addr->addr);
+    NS_LOG_V(DEBUG, "Msg ID : %s", retNoti->mId);
+    NS_LOG_V(DEBUG, "Msg Title : %s", retNoti->mTitle);
+    NS_LOG_V(DEBUG, "Msg Content : %s", retNoti->mContentText);
 
     retNoti->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     memcpy(retNoti->addr, clientResponse->addr, sizeof(OCDevAddr));
@@ -212,14 +214,14 @@ NSSync * NSBuildOICNotificationSync(OCClientResponse * clientResponse)
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
     if (!OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ID, &retSync->mMessageId))
     {
-        NS_CONSUMER_LOG(ERROR, "id of received sync is null");
+        NS_LOG(ERROR, "id of received sync is null");
         OICFree(retSync);
         return NULL;
     }
     int64_t state;
     if (!OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_STATE, & state))
     {
-        NS_CONSUMER_LOG(ERROR, "state of received sync is null");
+        NS_LOG(ERROR, "state of received sync is null");
         OICFree(retSync->mMessageId);
         OICFree(retSync);
         return NULL;
@@ -227,8 +229,8 @@ NSSync * NSBuildOICNotificationSync(OCClientResponse * clientResponse)
 
     retSync->mState = (NSSyncTypes) state;
 
-    NS_CONSUMER_LOG_V(DEBUG, "Sync ID : %s", retSync->mMessageId);
-    NS_CONSUMER_LOG_V(DEBUG, "Sync State : %d", (int) retSync->mState);
+    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->mMessageId);
+    NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->mState);
 
     return retSync;
 }
@@ -238,7 +240,7 @@ NSProvider * NSGetProvider(OCClientResponse * clientResponse)
     NSProvider * newProvider = (NSProvider *)OICMalloc(sizeof(NSProvider));
     if (!newProvider)
     {
-        NS_CONSUMER_LOG(DEBUG, "NSProvider allocation fail");
+        NS_LOG(DEBUG, "NSProvider allocation fail");
         return NULL;
     }
 
@@ -247,7 +249,7 @@ NSProvider * NSGetProvider(OCClientResponse * clientResponse)
     newProvider->mUserData = (void *)OICMalloc(sizeof(OCDevAddr));
     if (!newProvider->mUserData)
     {
-        NS_CONSUMER_LOG(DEBUG, "OCDevAddr allocation fail");
+        NS_LOG(DEBUG, "OCDevAddr allocation fail");
         OICFree(newProvider);
         return NULL;
     }
@@ -260,16 +262,16 @@ void NSConsumerNotificationHandleMsg(NSTask * task)
 {
     if (!task)
     {
-        NS_CONSUMER_LOG(ERROR, "task is null");
+        NS_LOG(ERROR, "task is null");
         return;
     }
 
-    NS_CONSUMER_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
+    NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE)
     {
         if (NS_OK != NSConsumerSubscribeProvider((NSProvider *)task->taskData))
         {
-            NS_CONSUMER_LOG(ERROR, "Subscribe fail");
+            NS_LOG(ERROR, "Subscribe fail");
             return;
         }
     }
@@ -278,29 +280,38 @@ void NSConsumerNotificationHandleMsg(NSTask * task)
         NSMessage_consumer * nsConsumer = (NSMessage_consumer *) task->taskData;
         if (!nsConsumer)
         {
-            NS_CONSUMER_LOG(ERROR, "taskData is NULL");
+            NS_LOG(ERROR, "taskData is NULL");
             return;
         }
 
         OCRepPayload * payload = OCRepPayloadCreate ();
         if (!payload)
         {
-            NS_CONSUMER_LOG(ERROR, "Failed to create POST payload object");
+            NS_LOG(ERROR, "Failed to create POST payload object");
             return;
         }
+
+        int type = (task->taskType == TASK_SEND_READ) ? 0 : 1;
         OCRepPayloadSetPropString(payload, "ID", (char *) nsConsumer->mId);
-        OCRepPayloadSetPropInt(payload, "STATE", (int) nsConsumer->type);
+        OCRepPayloadSetPropInt(payload, "STATE", type);
 
         // TODO fix param for uri
         if (NS_OK != NSConsumerPostProvider(
                 (OCDevAddr *) nsConsumer->addr, (OCPayload *) payload, "/notification/sync"))
         {
-            NS_CONSUMER_LOG(ERROR, "Subscribe fail");
+            NS_LOG(ERROR, "Subscribe fail");
             return;
         }
     }
+    else if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL)
+    {
+        NSProvider * provider = (NSProvider *)task->taskData;
+
+        OCCancel(provider->messageHandle, NS_QOS, NULL, 0);
+        OCCancel(provider->syncHandle, NS_QOS, NULL, 0);
+    }
     else
     {
-        NS_CONSUMER_LOG(ERROR, "Unknown type message");
+        NS_LOG(ERROR, "Unknown type message");
     }
 }

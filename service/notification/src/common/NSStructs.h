@@ -23,6 +23,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include "NSCommon.h"
 #include "NSConstants.h"
 
@@ -32,5 +34,35 @@ typedef struct _nsTask
     void* taskData;
     struct _nsTask* nextTask;
 } NSTask;
+
+typedef void * NSCacheData;
+
+typedef struct _NSCacheElement
+{
+    NSCacheData * data;
+    struct _NSCacheElement * next;
+} NSCacheElement;
+
+typedef struct
+{
+    NSCacheType cacheType;
+    NSCacheElement * head;
+    NSCacheElement * tail;
+} NSCacheList;
+
+typedef struct
+{
+    char * id; // ip
+    int syncObId;
+    int messageObId;
+    bool isWhite;
+}NSCacheSubData;
+
+typedef struct
+{
+    char * id; // ip ? ? ?
+    int messageType; // noti = 1, read = 2, dismiss = 3
+    NSMessage * nsMessage;
+}NSCacheMsgData;
 
 #endif /* _NS_STRUCTS_H_ */

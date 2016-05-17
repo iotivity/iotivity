@@ -20,6 +20,7 @@
 
 #include "NSConsumerSubsription.h"
 
+#include "NSConstants.h"
 #include "NSConsumerCommon.h"
 #include "NSConsumerCache.h"
 #include "NSStructs.h"
@@ -45,17 +46,17 @@ NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageType
     NSCacheObject * obj = (NSCacheObject *)OICMalloc(sizeof(NSCacheObject));
     if (!obj)
     {
-        NS_CONSUMER_LOG(ERROR, "Cache allocation is failed");
+        NS_LOG(ERROR, "Cache allocation is failed");
     }
     obj->data = (NSCacheData *) noti;
     obj->next = NULL;
 
     if (NS_OK != NSConsumerCacheWrite(cache, obj))
     {
-        NS_CONSUMER_LOG(DEBUG, "CacheUpdate - NSConsumerCacheInsert");
+        NS_LOG(DEBUG, "CacheUpdate - NSConsumerCacheInsert");
         if (NS_OK != NSConsumerCacheInsert(cache, (NSCacheObject *) obj))
         {
-            NS_CONSUMER_LOG(ERROR, "Cache insert fail");
+            NS_LOG(ERROR, "Cache insert fail");
             return NS_ERROR;
         }
     }
@@ -70,18 +71,18 @@ void NSConsumerSubscriptionHandleMsg(NSTask * task)
 {
     if (!task)
     {
-        NS_CONSUMER_LOG(ERROR, "task is null");
+        NS_LOG(ERROR, "task is null");
         return;
     }
 
     NSCacheList * cache;
     if (!*(NSGetCacheList()))
     {
-        NS_CONSUMER_LOG(DEBUG, "Cache Init");
+        NS_LOG(DEBUG, "Cache Init");
         cache = NSConsumerCacheInit();
         if (!cache)
         {
-            NS_CONSUMER_LOG(ERROR, "Cache create fail");
+            NS_LOG(ERROR, "Cache create fail");
             return;
         }
         NSSetCacheList(cache);
@@ -89,52 +90,52 @@ void NSConsumerSubscriptionHandleMsg(NSTask * task)
     cache = *(NSGetCacheList());
     if (!cache->head)
     {
-        NS_CONSUMER_LOG(DEBUG, "Cache Head is null 2");
+        NS_LOG(DEBUG, "Cache Head is null 2");
     }
     else{
-        NS_CONSUMER_LOG(DEBUG, "Cache Head is not null 2");
+        NS_LOG(DEBUG, "Cache Head is not null 2");
     }
 
 
-    NS_CONSUMER_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
+    NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
 
     switch (task->taskType)
     {
         case TASK_CONSUMER_RECV_NOTIFICATION:
         {
-            NS_CONSUMER_LOG(DEBUG, "Receive New Notification");
+            NS_LOG(DEBUG, "Receive New Notification");
 
             if (NS_OK != NSCacheUpdate(cache, task, Notification))
             {
-                NS_CONSUMER_LOG(ERROR, "Cache Update fail");
+                NS_LOG(ERROR, "Cache Update fail");
                 return;
             }
             break;
         }
         case TASK_RECV_READ:
         {
-            NS_CONSUMER_LOG(DEBUG, "Receive Read Notification");
+            NS_LOG(DEBUG, "Receive Read Notification");
             // TODO update Cache.
             if (NS_OK != NSCacheUpdate(cache, task, Read))
             {
-                NS_CONSUMER_LOG(ERROR, "Cache Update fail");
+                NS_LOG(ERROR, "Cache Update fail");
                 return;
             }
             break;
         }
         case TASK_RECV_DISMISS:
         {
-            NS_CONSUMER_LOG(DEBUG, "Receive Dismiss Notification");
+            NS_LOG(DEBUG, "Receive Dismiss Notification");
             if (NS_OK != NSCacheUpdate(cache, task, Dismiss))
             {
-                NS_CONSUMER_LOG(ERROR, "Cache Update fail");
+                NS_LOG(ERROR, "Cache Update fail");
                 return;
             }
             break;
         }
         default :
         {
-            NS_CONSUMER_LOG(ERROR, "Unknown TASK Type");
+            NS_LOG(ERROR, "Unknown TASK Type");
             return ;
         }
     }

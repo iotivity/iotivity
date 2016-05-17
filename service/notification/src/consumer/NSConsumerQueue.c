@@ -20,6 +20,7 @@
 
 #include "NSConsumerQueue.h"
 
+#include "NSConstants.h"
 #include "oic_malloc.h"
 #include "NSConsumerCommon.h"
 
@@ -60,7 +61,7 @@ bool NSPushQueue(NSConsumerQueue * queue, NSConsumerQueueObject * object)
 
     if (!object)
     {
-        NS_CONSUMER_LOG(ERROR, "object is null. can not insert to queue");
+        NS_LOG(ERROR, "object is null. can not insert to queue");
     }
 
     if (!(queue->head))

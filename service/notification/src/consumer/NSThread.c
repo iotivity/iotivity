@@ -20,6 +20,7 @@
 
 #include "NSThread.h"
 
+#include "NSConstants.h"
 #include "NSConsumerCommon.h"
 
 #include <memory.h>
@@ -31,14 +32,14 @@ NSThreadHandle * NSThreadInit(NSThreadFunc func, void * data)
 {
     if (!func)
     {
-        NS_CONSUMER_LOG(ERROR, "thread function is null");
+        NS_LOG(ERROR, "thread function is null");
         return NULL;
     }
 
     NSThreadHandle * handle = (NSThreadHandle *)OICMalloc(sizeof(NSThreadHandle));
     if (!handle)
     {
-        NS_CONSUMER_LOG(ERROR, "thread allocation fail");
+        NS_LOG(ERROR, "thread allocation fail");
         return NULL;
     }
 
@@ -47,21 +48,21 @@ NSThreadHandle * NSThreadInit(NSThreadFunc func, void * data)
     pthread_mutexattr_init(&(handle->mutex_attr));
     if (pthread_mutexattr_settype(&(handle->mutex_attr), PTHREAD_MUTEX_RECURSIVE))
     {
-        NS_CONSUMER_LOG(ERROR, "thread mutex_attr init fail");
+        NS_LOG(ERROR, "thread mutex_attr init fail");
         NSDestroyThreadHandle(handle);
         return NULL;
     }
 
     if (pthread_mutex_init(&(handle->mutex), &(handle->mutex_attr)))
     {
-        NS_CONSUMER_LOG(ERROR, "thread mutex init fail");
+        NS_LOG(ERROR, "thread mutex init fail");
         NSDestroyThreadHandle(handle);
         return NULL;
     }
 
     if (pthread_mutex_lock(&(handle->mutex)))
     {
-        NS_CONSUMER_LOG(ERROR, "thread mutex lock fail");
+        NS_LOG(ERROR, "thread mutex lock fail");
         NSDestroyThreadHandle(handle);
         return NULL;
     }
@@ -71,7 +72,7 @@ NSThreadHandle * NSThreadInit(NSThreadFunc func, void * data)
     if (pthread_create(&(handle->thread_id), NULL, func,
             (data == NULL) ? (void *) handle : (void *)data))
     {
-        NS_CONSUMER_LOG(ERROR, "thread create fail");
+        NS_LOG(ERROR, "thread create fail");
         NSDestroyThreadHandle(handle);
         return NULL;
     }

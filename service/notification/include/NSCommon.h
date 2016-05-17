@@ -18,8 +18,16 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file provides APIs of Notification Service for common functions.
+ */
+
 #ifndef _NS_COMMON_H_
 #define _NS_COMMON_H_
+
+#include <ocstack.h>
 
 #define NS_ATTRIBUTE_POLICY "ACCEPTER"
 #define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
@@ -31,6 +39,9 @@
 #define NS_ATTRIBUTE_STATE "STATE"
 #define NS_ATTRIBUTE_DEVICE "DEVICE"
 
+/**
+ * Result code of notification service
+ */
 typedef enum eResult
 {
     NS_OK = 100,
@@ -42,6 +53,9 @@ typedef enum eResult
 
 } NSResult;
 
+/**
+ * Access policy exchanged between provider and consumer during subscription process
+ */
 typedef enum eAccessPolicy
 {
     NS_ACCEPTER_PROVIDER = 0,
@@ -49,39 +63,55 @@ typedef enum eAccessPolicy
 
 } NSAccessPolicy;
 
-typedef struct
-{
-    char * mId;
-    void * mUserData;
-} NSDevice;
-
-typedef NSDevice NSConsumer;
-
-typedef struct
-{
-    char * mId;
-    char * mUserData;
-    char * messageUri;
-    char * syncUri;
-} NSProvider;
-
-typedef struct
-{
-    // Mandatory
-    char * mId;
-    char * mTitle;
-
-    //Optional
-    char * mContentText;
-
-} NSMessage;
-
+/**
+ * Notification message status to synchronize
+ */
 typedef enum
 {
     Notification_Read,
     Notification_Dismiss,
 } NSSyncTypes;
 
+/**
+ *  Device information
+ */
+typedef struct
+{
+    char * mId;
+    void * mUserData;
+} NSDevice;
+
+/**
+ *  Consumer information is same to device information
+ */
+typedef NSDevice NSConsumer;
+
+/**
+ *  Provider information
+ */
+typedef struct
+{
+    char * mId;
+    char * mUserData;
+    char * messageUri;
+    char * syncUri;
+    OCDoHandle messageHandle;
+    OCDoHandle syncHandle;
+} NSProvider;
+
+/**
+ *  Notification Message
+ */
+typedef struct
+{
+    char * mId;
+    char * mTitle;
+    char * mContentText;
+} NSMessage;
+
+/**
+ *  Synchronization information of the notification message
+ */
 typedef struct
 {
     // Mandatory
@@ -90,15 +120,7 @@ typedef struct
 
     //Optional
     NSDevice * mDevice;
-
 } NSSync;
-
-typedef void (* NSSubscribeRequestCallback)(NSConsumer *);
-typedef void (* NSSyncCallback)(NSProvider *, NSSync *);
-
-typedef void (* NSProviderDiscoveredCallback)(NSProvider *);
-// NSMessage should deleted as user.
-typedef void (* NSNotificationReceivedCallback)(NSProvider *, NSMessage *);
 
 #endif /* _NS_COMMON_H_ */
 

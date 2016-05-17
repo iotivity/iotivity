@@ -23,6 +23,7 @@
 #include <memory.h>
 #include <string.h>
 
+#include "NSConstants.h"
 #include "NSConsumerCommon.h"
 #include "payload_logging.h"
 #include "cautilinterface.h"
@@ -56,14 +57,14 @@ NSResult NSConsumerListenerInit()
     if (OC_STACK_OK != NSRequestToResourceIntrospection(NULL, OC_REST_PRESENCE, NULL,
             NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener))
     {
-        NS_CONSUMER_LOG(ERROR, "Presence request fail");
+        NS_LOG(ERROR, "Presence request fail");
         return NS_ERROR;
     }
 
     if (OC_STACK_OK != NSRequestToResourceIntrospection(NULL, OC_REST_DISCOVER, NULL,
             NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener))
     {
-        NS_CONSUMER_LOG(ERROR, "Discover request fail");
+        NS_LOG(ERROR, "Discover request fail");
         return NS_ERROR;
     }
 
@@ -75,7 +76,7 @@ OCStackApplicationResult NSRIResponseListener(
 {
     if (ctx == NULL)
     {
-        NS_CONSUMER_LOG(ERROR, "Callback is null");
+        NS_LOG(ERROR, "Callback is null");
         return OC_STACK_DELETE_TRANSACTION;
     }
 
@@ -84,6 +85,10 @@ OCStackApplicationResult NSRIResponseListener(
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
         ((onRIResponse)ctx)(handle, clientResponse);
     }
+    else
+    {
+        NS_LOG_V(ERROR, "result is not ok : %d", clientResponse->result);
+    }
 
     return OC_STACK_KEEP_TRANSACTION;
 }
@@ -91,21 +96,21 @@ OCStackApplicationResult NSRIResponseListener(
 void NSConnectionStateListener(CATransportAdapter_t adapter,
         const char *remote_address, bool connected)
 {
-    NS_CONSUMER_LOG_V(DEBUG, "adapter : %d", adapter);
-    NS_CONSUMER_LOG_V(DEBUG, "remote_address : %s", remote_address);
-    NS_CONSUMER_LOG_V(DEBUG, "isConnect : %d", connected);
+    NS_LOG_V(DEBUG, "adapter : %d", adapter);
+    NS_LOG_V(DEBUG, "remote_address : %s", remote_address);
+    NS_LOG_V(DEBUG, "isConnect : %d", connected);
 
     (void) adapter;
     (void) remote_address;
 
     if (connected)
     {
-        NS_CONSUMER_LOG(DEBUG, "try to discover notification provider.");
+        NS_LOG(DEBUG, "try to discover notification provider.");
 
         NSTask * task = NSMakeTask(TASK_EVENT_CONNECTED, NULL);
         if (!task)
         {
-            NS_CONSUMER_LOG(ERROR, "NSTask allocation fail.");
+            NS_LOG(ERROR, "NSTask allocation fail.");
             return;
         }
         NSConsumerPushEvent(task);
@@ -114,19 +119,19 @@ void NSConnectionStateListener(CATransportAdapter_t adapter,
 
 void NSAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
 {
-    NS_CONSUMER_LOG_V(DEBUG, "adapter : %d", adapter);
-    NS_CONSUMER_LOG_V(DEBUG, "isEnabled : %d", enabled);
+    NS_LOG_V(DEBUG, "adapter : %d", adapter);
+    NS_LOG_V(DEBUG, "isEnabled : %d", enabled);
 
     (void) adapter;
 
     if (enabled)
     {
-        NS_CONSUMER_LOG(DEBUG, "try to discover notification provider.");
+        NS_LOG(DEBUG, "try to discover notification provider.");
 
         NSTask * task = NSMakeTask(TASK_EVENT_CONNECTED, NULL);
         if (!task)
         {
-            NS_CONSUMER_LOG(ERROR, "NSTask allocation fail.");
+            NS_LOG(ERROR, "NSTask allocation fail.");
             return;
         }
         NSConsumerPushEvent(task);

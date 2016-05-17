@@ -23,6 +23,7 @@
 #include <string.h>
 #include "NSCommon.h"
 #include "NSConsumerCommon.h"
+#include "NSConstants.h"
 #include "ocpayload.h"
 #include "oic_malloc.h"
 
@@ -42,11 +43,11 @@ OCStackApplicationResult NSConsumerPresenceListener(
         OCDoHandle handle, OCClientResponse * clientResponse)
 {
     (void) handle;
-    NS_CONSUMER_LOG_V(DEBUG, "Presence income : %s:%d",
+    NS_LOG_V(DEBUG, "Presence income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
-    NS_CONSUMER_LOG_V(DEBUG, "Presence result : %d",
+    NS_LOG_V(DEBUG, "Presence result : %d",
             clientResponse->result);
-    NS_CONSUMER_LOG_V(DEBUG, "Presence sequenceNum : %d",
+    NS_LOG_V(DEBUG, "Presence sequenceNum : %d",
             clientResponse->sequenceNumber);
 
     if (!NSIsStartedConsumer())
@@ -59,7 +60,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
             clientResponse->result == OC_STACK_PRESENCE_STOPPED)
     {
         // TODO find request and cancel
-        NS_CONSUMER_LOG(DEBUG, "stopped presence or resource is deleted.");
+        NS_LOG(DEBUG, "stopped presence or resource is deleted.");
         //OCCancel(handle, NS_QOS, NULL, 0);
     }
 
@@ -76,11 +77,11 @@ OCStackApplicationResult NSProviderDiscoverListener(
         OCDoHandle handle, OCClientResponse * clientResponse)
 {
     (void) handle;
-    NS_CONSUMER_LOG_V(DEBUG, "Discover income : %s:%d",
+    NS_LOG_V(DEBUG, "Discover income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
-    NS_CONSUMER_LOG_V(DEBUG, "Discover result : %d",
+    NS_LOG_V(DEBUG, "Discover result : %d",
             clientResponse->result);
-    NS_CONSUMER_LOG_V(DEBUG, "Discover sequenceNum : %d",
+    NS_LOG_V(DEBUG, "Discover sequenceNum : %d",
             clientResponse->sequenceNumber);
 
     if (!NSIsStartedConsumer())
@@ -114,13 +115,13 @@ OCStackApplicationResult NSGetProviderInformation(
     (void) handle;
     int64_t accepter = 0;
 
-    NS_CONSUMER_LOG_V(DEBUG, "GET response income : %s:%d",
+    NS_LOG_V(DEBUG, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
-    NS_CONSUMER_LOG_V(DEBUG, "GET response result : %d",
+    NS_LOG_V(DEBUG, "GET response result : %d",
             clientResponse->result);
-    NS_CONSUMER_LOG_V(DEBUG, "GET response sequenceNum : %d",
+    NS_LOG_V(DEBUG, "GET response sequenceNum : %d",
             clientResponse->sequenceNumber);
-    NS_CONSUMER_LOG_V(DEBUG, "GET response resource uri : %s",
+    NS_LOG_V(DEBUG, "GET response resource uri : %s",
             clientResponse->resourceUri);
 
     if (!NSIsStartedConsumer())
@@ -130,21 +131,21 @@ OCStackApplicationResult NSGetProviderInformation(
 
     if (!clientResponse->payload)
     {
-        NS_CONSUMER_LOG(ERROR, "payload is null");
+        NS_LOG(ERROR, "payload is null");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
     if (!OCRepPayloadGetPropInt((OCRepPayload *)clientResponse->payload,
             NS_PAYLOAD_KEY_ACCEPTER, & accepter))
     {
-        NS_CONSUMER_LOG(ERROR, "can not seach for accepter");
+        NS_LOG(ERROR, "can not seach for accepter");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
     NSProvider * newProvider = (NSProvider *)OICMalloc(sizeof(NSProvider));
     if (!newProvider)
     {
-        NS_CONSUMER_LOG(DEBUG, "NSProvider allocation fail");
+        NS_LOG(DEBUG, "NSProvider allocation fail");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -153,7 +154,7 @@ OCStackApplicationResult NSGetProviderInformation(
     newProvider->mUserData = (void *)OICMalloc(sizeof(OCDevAddr));
     if (!newProvider)
     {
-        NS_CONSUMER_LOG(DEBUG, "OCDevAddr allocation fail");
+        NS_LOG(DEBUG, "OCDevAddr allocation fail");
         OICFree(newProvider);
         return OC_STACK_KEEP_TRANSACTION;
     }
@@ -163,7 +164,7 @@ OCStackApplicationResult NSGetProviderInformation(
         OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
         while (payload)
         {
-            NS_CONSUMER_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
+            NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
             payload = payload->next;
         }
     }
@@ -173,7 +174,7 @@ OCStackApplicationResult NSGetProviderInformation(
     {
         OICFree(newProvider->mUserData);
         OICFree(newProvider);
-        NS_CONSUMER_LOG(ERROR, "can not seach for message uri");
+        NS_LOG(ERROR, "can not seach for message uri");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -183,24 +184,24 @@ OCStackApplicationResult NSGetProviderInformation(
         OICFree(newProvider->messageUri);
         OICFree(newProvider->mUserData);
         OICFree(newProvider);
-        NS_CONSUMER_LOG(ERROR, "can not seach for sync uri");
+        NS_LOG(ERROR, "can not seach for sync uri");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
     if (accepter == NS_ACCEPTER_CONSUMER)
     {
-        NS_CONSUMER_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
+        NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
 
         NSDiscoveredProvider(newProvider);
     }
     else
     {
-        NS_CONSUMER_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
+        NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
 
         NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) newProvider);
         if (!task)
         {
-            NS_CONSUMER_LOG(DEBUG, "NSTask allocation fail");
+            NS_LOG(DEBUG, "NSTask allocation fail");
             return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -214,11 +215,11 @@ void NSConsumerDiscoveryHandleMsg(NSTask * task)
 {
     if (!task)
     {
-        NS_CONSUMER_LOG(ERROR, "task is null");
+        NS_LOG(ERROR, "task is null");
         return;
     }
 
-    NS_CONSUMER_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
+    NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     if (task->taskType == TASK_EVENT_CONNECTED || task->taskType == TASK_CONSUMER_REQ_DISCOVER)
     {
         NSRequestToResourceIntrospection(NULL, OC_REST_DISCOVER, NULL, NS_DISCOVER_QUERY,
@@ -226,7 +227,7 @@ void NSConsumerDiscoveryHandleMsg(NSTask * task)
     }
     else
     {
-        NS_CONSUMER_LOG(ERROR, "Unknown type message");
+        NS_LOG(ERROR, "Unknown type message");
     }
 }
 

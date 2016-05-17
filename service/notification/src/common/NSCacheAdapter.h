@@ -18,29 +18,21 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _NS_PROVIDER_SUBSCRIPTION_H_
-#define _NS_PROVIDER_SUBSCRIPTION_H_
+#ifndef _NS_CACHEADAPTER__H_
+#define _NS_CACHEADAPTER__H_
 
 #include "logger.h"
+#include <octypes.h>
+#include <stdbool.h>
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "NSCommon.h"
+#include "NSStructs.h"
 #include "NSConstants.h"
-#include "NSProviderScheduler.h"
-#include "NSProviderResource.h"
-#include "NSCacheAdapter.h"
 
-NSAccessPolicy NSSubscriptionAccepter;
-NSCacheList * consumerSubList;
+NSCacheList * NSCacheCreate();
+NSCacheElement * NSCacheRead(NSCacheList * list, char * findId);
+NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj);
+NSResult NSCacheDelete(NSCacheList * list, char * delId);
+NSResult NSCacheDestroy(NSCacheList * list);
 
-NSResult NSInitSubscriptionList();
-NSResult NSSetSubscriptionAcceptPolicy(NSAccessPolicy policy);
-int NSGetSubscriptionAccepter();
-NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest);
-void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResourceType resourceType);
-void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest);
-void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest);
-NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest,
-        NSAccessPolicy accepter, bool accepted);
-
-#endif /* _NS_PROVIDER_SUBSCRIPTION_H_ */
+#endif /* _NS_CACHEADAPTER__H_ */

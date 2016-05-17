@@ -21,29 +21,24 @@
 #ifndef _NS_PROVIDER_CACHEADAPTER__H_
 #define _NS_PROVIDER_CACHEADAPTER__H_
 
-#include "logger.h"
+#include <stdbool.h>
 #include <octypes.h>
+#include <pthread.h>
+#include "logger.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "NSStructs.h"
 #include "NSConstants.h"
+#include "NSCacheAdapter.h"
 
-typedef struct _messageData
-{
-    NSMessage * msg;
-    uint8_t state;
-    uint8_t size;
-}NSMessageData;
+NSResult NSProviderDeleteCacheData(NSCacheType, void *);
 
-typedef struct _observerList
-{
-    OCObservationId idList[100];
-    uint8_t size;
-}NSWhiteList, NSBlackList;
+bool NSProviderCompareIdCacheData(NSCacheType, void *, char *);
 
-typedef NSWhiteList NSCommonList;
+bool NSProviderIsFoundCacheData(NSCacheType, void *, void*);
 
-NSResult NSProviderWriteToCache(NSCache target, OCObservationId observeId, int state);
-NSCommonList * NSProviderReadCache(NSCache target, int state);
+NSResult NSCacheUpdateSubScriptionState(NSCacheList *, NSCacheSubData *);
 
-#endif /* _NS_PROVIDER_CACHE__H_ */
+pthread_mutex_t NSCacheMutex;
+
+#endif /* _NS_PROVIDER_CACHEADAPTER__H_ */

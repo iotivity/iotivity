@@ -40,12 +40,6 @@ typedef struct _NSCacheObject
     struct _NSCacheObject * next;
 } NSCacheObject;
 
-typedef struct
-{
-    NSCacheObject * head;
-    NSCacheObject * last;
-} NSCacheList;
-
 NSCacheList * NSConsumerCacheInit();
 NSResult NSConsumerCacheDestroy(NSCacheList * list);
 

@@ -23,7 +23,7 @@
 
 #include "NSCommon.h"
 #include "NSStructs.h"
-#include "NSQueueScheduler.h"
+#include "NSProviderScheduler.h"
 #include "NSProviderResource.h"
 
 NSResult NSStartPresence();

@@ -31,30 +31,7 @@ extern "C" {
 #include "NSCommon.h"
 #include "NSStructs.h"
 #include "ocstack.h"
-
-#define NS_LOG_PRINTF 0
-
-#define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
-
-const char * NS_CONVERT_LEVEL(int level);
-
-// TODO fix ns log using oic log.
-#ifdef TB_LOG
-#include "logger.h"
-#define NS_CONSUMER_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
-#define NS_CONSUMER_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
-#else
-#include "logger.h"
-#define NS_CONSUMER_LOG_V(level, format, ...) { \
-        printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
-        printf((format), __VA_ARGS__); \
-        printf("\n"); }
-#define NS_CONSUMER_LOG(level, msg) { \
-        printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
-        printf((msg)); \
-        printf("\n"); }
-
-#endif
+#include "NSConsumerInterface.h"
 
 #define NS_QOS OC_LOW_QOS
 #define NS_RESOURCE_TYPE "oic.r.notification"

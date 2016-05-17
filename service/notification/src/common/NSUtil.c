@@ -18,12 +18,36 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSConsumerSystem.h"
+#include "NSUtil.h"
 
-#include "NSConstants.h"
-#include "NSConsumerCommon.h"
-
-NSResult NSConsumerSystemInit()
+NSResult NSFreeMessage(NSMessage * obj)
 {
+    if (!obj)
+    {
+        return NS_ERROR;
+    }
+
+    if (obj->mId)
+    {
+        OICFree(obj->mId);
+        obj->mId = NULL;
+    }
+
+    if (obj->mTitle)
+    {
+        OICFree(obj->mTitle);
+        obj->mTitle = NULL;
+    }
+
+    if (obj->mContentText)
+    {
+        OICFree(obj->mContentText);
+        obj->mContentText = NULL;
+    }
+
+    OICFree(obj);
+
     return NS_OK;
 }
+
+

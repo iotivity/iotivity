@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSQueueScheduler.h"
+#include "NSProviderScheduler.h"
 
 pthread_t NSThread[THREAD_COUNT];
 pthread_mutex_t NSMutex[THREAD_COUNT];

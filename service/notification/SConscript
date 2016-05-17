@@ -48,6 +48,12 @@ notification_env.AppendUnique(CPPPATH = ['src/provider'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
 
+if target_os == 'linux':
+    notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
+
+if target_os == 'android':
+    notification_env.AppendUnique(CPPPATH = ['src/provider/cache/android'])
+
 notification_env.PrependUnique(LIBS = [
 	'octbstack',
 	'oc_logger',
@@ -56,7 +62,7 @@ notification_env.PrependUnique(LIBS = [
 	])
 
 if target_os not in ['windows', 'winrt']:
-	notification_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+	notification_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
 	notification_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
@@ -76,11 +82,18 @@ if target_os == 'android':
 ######################################################################
 # Source files and Targets
 ######################################################################
+
+if target_os == 'linux':
+    PROVIDER_CACHE = File('src/provider/cache/linux/NSProviderMemoryCache.c')
+
+if target_os == 'android':
+    PROVIDER_CACHE = File('src/provider/cache/linux/NSProviderMemoryCache.c')
+
 notification_provider_src = [
 	env.Glob('src/provider/*.c'),
-	env.Glob('src/common/*.c')]
+	env.Glob('src/common/*.c'), PROVIDER_CACHE]
 notification_consumer_src = [
-	#env.Glob('src/common/*.c'),
+	env.Glob('src/common/*.c'),
 	env.Glob('src/consumer/*.c')]
 
 providersdk = notification_env.SharedLibrary('notification_provider', notification_provider_src)
