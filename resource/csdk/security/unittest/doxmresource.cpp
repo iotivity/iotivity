@@ -71,7 +71,7 @@ OicSecDoxm_t * getBinDoxm()
         return NULL;
     }
 
-    strcpy(doxm->oxmType[0], OXM_JUST_WORKS);
+    OICStrcpy(doxm->oxmType[0], strlen(OXM_JUST_WORKS) + 1, OXM_JUST_WORKS);
     doxm->oxmLen     = 1;
     doxm->oxm        = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
     if(!doxm->oxm)
@@ -88,8 +88,8 @@ OicSecDoxm_t * getBinDoxm()
     doxm->owned      = true;
     //TODO: Need more clarification on deviceIDFormat field type.
     //doxm.deviceIDFormat = URN;
-    strcpy((char *) doxm->deviceID.id, "deviceId");
-    strcpy((char *)doxm->owner.id, "ownersId");
+    OICStrcpy((char *) doxm->deviceID.id, strlen("deviceId") + 1, "deviceId");
+    OICStrcpy((char *) doxm->owner.id, strlen("ownersId") + 1, "ownersId");
     return doxm;
 }
 

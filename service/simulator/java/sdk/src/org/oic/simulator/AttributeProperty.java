@@ -17,153 +17,71 @@
 package org.oic.simulator;
 
 /**
- * This class represents the resource attribute's vaule property.
+ * This class represents the resource attribute's value property.
  */
-public class AttributeProperty {
+public abstract class AttributeProperty {
 
-    private Type              mType          = Type.UNKNOWN;
-    private double            mMin           = -1;
-    private double            mMax           = -1;
-    private AttributeValue[]  mValueSet      = null;
-    private AttributeProperty mChildProperty = null;
-
-    /**
-     * Enum to represent propety type.
-     */
     public enum Type {
-        UNKNOWN, RANGE, VALUESET
+        INTEGER, DOUBLE, BOOLEAN, STRING, MODEL, ARRAY
     }
 
-    /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.Range} with min
-     * and max values.
-     *
-     * @param min
-     *            Minimun value the attribute can have.
-     * @param max
-     *            Maximum value the attribute can have.
-     */
-    public AttributeProperty(double min, double max) {
-        mType = Type.RANGE;
-        mMin = min;
-        mMax = max;
+    private Type mType;
+
+    protected AttributeProperty(Type type) {
+        mType = type;
     }
 
-    /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of integer.
-     *
-     * @param values
-     *            Array of int type values.
-     */
-    public AttributeProperty(int[] values) {
-        mType = Type.VALUESET;
-        mValueSet = new AttributeValue[values.length];
-        for (int i = 0; i < values.length; i++)
-            mValueSet[i] = new AttributeValue(values[i]);
-    }
-
-    /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of double.
-     *
-     * @param values
-     *            Array of double type values.
-     */
-    public AttributeProperty(double[] values) {
-        mType = Type.VALUESET;
-        mValueSet = new AttributeValue[values.length];
-        for (int i = 0; i < values.length; i++)
-            mValueSet[i] = new AttributeValue(values[i]);
-    }
-
-    /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of boolean.
-     *
-     * @param values
-     *            Array of boolean type values.
-     */
-    public AttributeProperty(boolean[] values) {
-        mType = Type.VALUESET;
-        mValueSet = new AttributeValue[values.length];
-        for (int i = 0; i < values.length; i++)
-            mValueSet[i] = new AttributeValue(values[i]);
-    }
-
-    /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of Strings.
-     *
-     * @param values
-     *            Array of strings.
-     */
-    public AttributeProperty(String[] values) {
-        mType = Type.VALUESET;
-        mValueSet = new AttributeValue[values.length];
-        for (int i = 0; i < values.length; i++)
-            mValueSet[i] = new AttributeValue(values[i]);
-    }
-
-    /**
-     * API to get type of property.
-     *
-     * @return {@AttributeProperty.Type}.
-     */
-    public Type type() {
+    public Type getType() {
         return mType;
     }
 
-    /**
-     * API to get minimum value which was set as property.
-     */
-    public double min() {
-        return mMin;
+    public boolean isInteger() {
+        return false;
     }
 
-    /**
-     * API to get maximum value which was set as property.
-     */
-    public double max() {
-        return mMax;
+    public boolean isDouble() {
+        return false;
     }
 
-    /**
-     * API to get array of values which was set as property.
-     *
-     * @return array of {@AttributeValue}.
-     */
-    public AttributeValue[] valueSet() {
-        return mValueSet;
+    public boolean isBoolean() {
+        return false;
     }
 
-    /**
-     * API to set child attribute propety.
-     *
-     * @param childProperty
-     *            Child element property this property used if the Attribute
-     *            value is of array type.
-     */
-    public void setChildProperty(AttributeProperty childProperty) {
-        mChildProperty = childProperty;
+    public boolean isString() {
+        return false;
     }
 
-    /**
-     * API to get child attribute propety.
-     *
-     * @return Child element property.
-     */
-    public AttributeProperty getChildProperty() {
-        return mChildProperty;
+    public boolean isArray() {
+        return false;
     }
 
-    private AttributeProperty(AttributeValue[] values) {
-        mType = Type.VALUESET;
-        mValueSet = values;
+    public boolean isModel() {
+        return false;
     }
+
+    public IntegerProperty asInteger() {
+        return null;
+    }
+
+    public DoubleProperty asDouble() {
+        return null;
+    }
+
+    public BooleanProperty asBoolean() {
+        return null;
+    }
+
+    public StringProperty asString() {
+        return null;
+    }
+
+    public ArrayProperty asArray() {
+        return null;
+    }
+
+    public ModelProperty asModel() {
+        return null;
+    }
+
+    public abstract boolean validate(AttributeValue value);
 }

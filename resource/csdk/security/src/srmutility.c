@@ -98,7 +98,7 @@ OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-    *numUuids = cJSON_GetArraySize(jsonObj);
+    *numUuids = (size_t)cJSON_GetArraySize(jsonObj);
     VERIFY_SUCCESS(TAG, *numUuids > 0, ERROR);
     *uuids = (OicUuid_t*)OICCalloc(*numUuids, sizeof(OicUuid_t));
     VERIFY_NON_NULL(TAG, *uuids, ERROR);
@@ -128,3 +128,26 @@ exit:
     return OC_STACK_ERROR;
 
 }
+
+/**
+ * Function to getting string of ownership transfer method
+ *
+ * @prarm oxmType ownership transfer method
+ *
+ * @return string value of ownership transfer method
+ */
+const char* GetOxmString(OicSecOxm_t oxmType)
+{
+    switch(oxmType)
+    {
+        case OIC_JUST_WORKS:
+            return OXM_JUST_WORKS;
+        case OIC_RANDOM_DEVICE_PIN:
+            return OXM_RANDOM_DEVICE_PIN;
+        case OIC_MANUFACTURER_CERTIFICATE:
+            return OXM_MANUFACTURER_CERTIFICATE;
+        default:
+            return NULL;
+    }
+}
+

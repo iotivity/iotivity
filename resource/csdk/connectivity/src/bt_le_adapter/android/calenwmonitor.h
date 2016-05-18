@@ -51,7 +51,7 @@ void CALENetworkMonitorJniInit();
  * @param[in]  callback    Callback to be notified on reception of BT state information.
 
  */
-void CALESetNetStateCallback(CALEDeviceStateChangedCallback callback);
+void CALESetAdapterStateCallback(CALEDeviceStateChangedCallback callback);
 
 #ifdef __cplusplus
 } /* extern "C" */

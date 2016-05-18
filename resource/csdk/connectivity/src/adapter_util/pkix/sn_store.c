@@ -58,8 +58,8 @@ void FreeSNStore(void)
 PKIError StoreSerialNumber(const ByteArray sn)
 {
     FUNCTION_INIT(
-        CHECK_NULL(sn.data, PKI_NULL_PASSED);
         uint8_t *temp = NULL;
+        CHECK_NULL(sn.data, PKI_NULL_PASSED);
     );
     if (Store.array.len == 0 || Store.array.len + sn.len + 1 > CRL_BLOCK_LEN * Store.blockNumber)
     {
@@ -82,7 +82,8 @@ PKIError StoreSerialNumber(const ByteArray sn)
 PKIError CheckSerialNumber(const ByteArray sn)
 {
     FUNCTION_INIT(
-        int i, res;
+        unsigned long int i;
+        int res;
         CHECK_NULL(sn.data, PKI_NULL_PASSED);
     );
     CHECK_NULL(Store.array.data, PKI_SUCCESS);

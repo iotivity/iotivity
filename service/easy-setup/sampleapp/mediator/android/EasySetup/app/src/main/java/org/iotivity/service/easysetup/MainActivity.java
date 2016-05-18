@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
     public static final int FAILED        = 1;
     public static final int STATE_CHANGED = 2;
 
-    public static final String OIC_CLIENT_JSON_DB_FILE =  "oic_svr_db_client.json";
+    public static final String OIC_CLIENT_JSON_DB_FILE =  "oic_svr_db_client.dat";
     public static final String OIC_SQL_DB_FILE =  "PDM.db";
 
     private static final int BUFFER_SIZE = 1024;
@@ -235,7 +235,16 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 filePath = getFilesDir().getPath() + "/";
-                isSecurityEnabled = true;
+
+                if (isSecurityEnabled) {
+                    isSecurityEnabled = false;
+                    mEnableSecurity.setChecked(false);
+                }
+                else {
+                    isSecurityEnabled = true;
+                    mEnableSecurity.setChecked(true);
+                }
+
                 //copy json when application runs first time
                 SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences
                         (getApplicationContext());
@@ -284,11 +293,13 @@ public class MainActivity extends Activity {
                 "0.0.0.0", // bind to all available interfaces
                 0,
                 QualityOfService.LOW, filePath + OIC_CLIENT_JSON_DB_FILE);
-        OcPlatform.Configure(cfg);
         try {
             /*
              * Initialize DataBase
              */
+
+            OcPlatform.Configure(cfg);
+
             String sqlDbPath = getFilesDir().getAbsolutePath().replace("files", "databases") +
                     File.separator;
             File file = new File(sqlDbPath);
@@ -304,6 +315,15 @@ public class MainActivity extends Activity {
         } catch (OcException e) {
             logMessage(TAG + "provisionInit error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
+        } catch (UnsatisfiedLinkError e) {
+
+           // Note : Easy setup is built with SECURED = 0, but user still selects Security feature
+           // while running the Mediator App it couldn't find "libocprovision.so".
+           // As per the programmer guide, security feature should be invoked only if build is done with SECURED = 1.
+            Log.e(TAG, " Easy setup is built with secured  = 0, but executed with security feature");
+            Toast.makeText(this,"Security is not enabled [Easy setup is built with SECURED = 0]",
+                                                                   Toast.LENGTH_LONG).show();
+            mEnableSecurity.setChecked(false);
         }
     }
     /**

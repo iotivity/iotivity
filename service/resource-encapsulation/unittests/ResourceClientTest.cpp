@@ -95,12 +95,12 @@ private:
     {
         for (int i=0; i<10 && !object; ++i)
         {
-            const std::string uri  = "/oic/res";
             auto discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                    RCSAddress::multicast(), uri, RESOURCETYPE,
+                    RCSAddress::multicast(), RESOURCETYPE,
                     std::bind(&RemoteResourceObjectTest::resourceDiscovered, this,
                             std::placeholders::_1));
             Wait(1000);
+            discoveryTask->cancel();
         }
     }
 
@@ -176,7 +176,7 @@ TEST_F(RemoteResourceObjectTest, QueryParamsForGetWillBePassedToBase)
     constexpr char PARAM_KEY[] { "aKey" };
     constexpr char VALUE[] { "value" };
 
-    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResuorceType(RESOURCETYPE).
+    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResourceType(RESOURCETYPE).
             put(PARAM_KEY, VALUE),
             [](const HeaderOpts&, const RCSRepresentation&, int){});
 

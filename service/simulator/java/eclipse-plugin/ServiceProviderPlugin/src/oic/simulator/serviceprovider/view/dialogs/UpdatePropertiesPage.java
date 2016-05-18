@@ -16,8 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -30,13 +28,17 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import oic.simulator.serviceprovider.utils.Constants;
+
 public class UpdatePropertiesPage extends WizardPage {
 
     private Text   resNameTxt;
     private Text   resUriTxt;
+    private Text   resTypeTxt;
 
     private String resName;
     private String resURI;
+    private String resType;
 
     protected UpdatePropertiesPage() {
         super("Update Properties");
@@ -85,6 +87,18 @@ public class UpdatePropertiesPage extends WizardPage {
         gd.verticalIndent = 10;
         resUriTxt.setLayoutData(gd);
 
+        Label resTypeLbl = new Label(grp, SWT.NULL);
+        resTypeLbl.setText("Resource Type");
+        gd = new GridData();
+        gd.verticalIndent = 10;
+        resTypeLbl.setLayoutData(gd);
+
+        resTypeTxt = new Text(grp, SWT.BORDER);
+        gd = new GridData();
+        gd.widthHint = 300;
+        gd.verticalIndent = 10;
+        resTypeTxt.setLayoutData(gd);
+
         Label descLbl = new Label(comp, SWT.NONE);
         descLbl.setText("Description:");
         gd = new GridData();
@@ -104,6 +118,9 @@ public class UpdatePropertiesPage extends WizardPage {
         }
         if (resNameTxt.getText().length() < 1 && null != resName) {
             resNameTxt.setText(resName);
+        }
+        if (resTypeTxt.getText().length() < 1 && null != resType) {
+            resTypeTxt.setText(resType);
         }
 
         setControl(comp);
@@ -129,6 +146,18 @@ public class UpdatePropertiesPage extends WizardPage {
                 setPageComplete(isSelectionDone());
             }
         });
+
+        resTypeTxt.addModifyListener(new ModifyListener() {
+            @Override
+            public void modifyText(ModifyEvent e) {
+                resType = resTypeTxt.getText();
+                if (null == resType) {
+                    return;
+                }
+
+                setPageComplete(isSelectionDone());
+            }
+        });
     }
 
     @Override
@@ -139,7 +168,8 @@ public class UpdatePropertiesPage extends WizardPage {
     public boolean isSelectionDone() {
         boolean done = false;
         if (null != resName && resName.trim().length() > 0 && null != resURI
-                && resURI.trim().length() > 0) {
+                && resURI.trim().length() > 0 && null != resType
+                && resType.trim().length() > 0) {
             done = true;
         }
         return done;
@@ -151,15 +181,33 @@ public class UpdatePropertiesPage extends WizardPage {
     }
 
     public void setResName(String resName) {
+        if (null == resName) {
+            resName = "";
+        }
+
         this.resName = resName;
-        if (!resNameTxt.isDisposed())
+        if (null != resName && !resNameTxt.isDisposed())
             resNameTxt.setText(resName);
     }
 
     public void setResURI(String resURI) {
+        if (null == resURI) {
+            resURI = "";
+        }
+
         this.resURI = resURI;
-        if (!resUriTxt.isDisposed())
+        if (null != resUriTxt && !resUriTxt.isDisposed())
             resUriTxt.setText(resURI);
+    }
+
+    public void setResType(String resType) {
+        if (null == resType) {
+            resType = "";
+        }
+
+        this.resType = resType;
+        if (null != resType && !resTypeTxt.isDisposed())
+            resTypeTxt.setText(resType);
     }
 
     public String getResName() {
@@ -168,5 +216,9 @@ public class UpdatePropertiesPage extends WizardPage {
 
     public String getResURI() {
         return resURI;
+    }
+
+    public String getResType() {
+        return resType;
     }
 }

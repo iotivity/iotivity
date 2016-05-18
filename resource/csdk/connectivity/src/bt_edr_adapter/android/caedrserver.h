@@ -44,51 +44,31 @@ typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
 void CAEDRServerJniInit();
 
 /**
- * Initialize server for EDR.
- * @param[in]   handle           thread pool handle object.
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle);
-
-/**
  * Start Accept Thread.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAEDRServerStartAcceptThread();
 
 /**
- * Start unicast server.
+ * Start receive thread.
  * @param[in]   isSecured       unicast server type.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStartUnicastServer(bool isSecured);
+CAResult_t CAEDRStartReceiveThread(bool isSecured);
 
 /**
- * Start multicast server.
+ * Stop receive thread.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStartMulticastServer();
-
-/**
- * Stop unicast server.
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAEDRStopUnicastServer();
-
-/**
- * Stop multicast server.
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAEDRStopMulticastServer();
+CAResult_t CAEDRStopReceiveThread();
 
 /**
  * This function will read the data from remote device.
  * @param[in]  env              JNI interface pointer.
  * @param[in]  id               index of remote address.
- * @param[in]  type             EDR server type.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t type);
+CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id);
 
 /**
  * Start Listen Task.

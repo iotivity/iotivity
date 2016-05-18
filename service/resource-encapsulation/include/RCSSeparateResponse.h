@@ -27,14 +27,34 @@ namespace OIC
 {
     namespace Service
     {
-        class RCSResourceAttributes;
-        class RCSRequest;
-
+        /**
+         * This class is to send a delayed response for request handlers of the RCSResourceObject.
+         *
+         * @see RCSResourceObject
+         * @see RCSResourceObject::SetRequestHandler
+         * @see RCSResourceObject::GetRequestHandler
+         * @see RCSGetResponse::separate()
+         * @see RCSSetResponse::separate()
+         */
         class RCSSeparateResponse
         {
         public:
-            explicit RCSSeparateResponse(const RCSRequest&);
-            explicit RCSSeparateResponse(RCSRequest&&);
+            /**
+             * Constructs with a request.
+             *
+             * @note The request must be from a request handler which returns separate().
+             *
+             * @see RCSResourceObject::SetRequestHandler
+             * @see RCSResourceObject::GetRequestHandler
+             * @see RCSGetResponse::separate()
+             * @see RCSSetResponse::separate()
+             */
+            explicit RCSSeparateResponse(const RCSRequest& request);
+
+            /**
+             * @overload
+             */
+            explicit RCSSeparateResponse(RCSRequest&& request);
 
             RCSSeparateResponse(const RCSSeparateResponse&) = delete;
             RCSSeparateResponse& operator=(const RCSSeparateResponse&) = delete;
@@ -42,6 +62,15 @@ namespace OIC
             RCSSeparateResponse(RCSSeparateResponse&&) = default;
             RCSSeparateResponse& operator=(RCSSeparateResponse&&) =default;
 
+            /**
+             * Sends the response to the client.
+             * The payload will be composed of properties(including attributes) of
+             *      the resource object of the request.
+             *
+             * @throws RCSBadRequestException If the RCSResourceObject which receives the request
+             *      is gone or it is already set.
+             * @throws RCSPlatformException If the operation failed.
+             */
             void set();
 
         private:

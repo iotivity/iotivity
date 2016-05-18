@@ -19,24 +19,18 @@
  ******************************************************************/
 
 #include "resource_update_automation_mngr.h"
+#include "simulator_single_resource_impl.h"
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
 #include "logger.h"
 
 #define TAG "UPDATE_AUTOMATION_MNGR"
 
-UpdateAutomationMngr::UpdateAutomationMngr()
-    :   m_id(0) {}
-
-int UpdateAutomationMngr::startResourceAutomation(SimulatorSingleResource *resource,
-        AutomationType type, int interval, updateCompleteCallback callback)
+int UpdateAutomationMngr::startResourceAutomation(
+    std::shared_ptr<SimulatorSingleResourceImpl> resource,
+    AutoUpdateType type, int interval,
+    const SimulatorSingleResource::AutoUpdateCompleteCallback &callback)
 {
-    if (!callback)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
-
     ResourceUpdateAutomationSP resourceAutomation(new ResourceUpdateAutomation(
                 m_id, resource, type, interval, callback,
                 std::bind(&UpdateAutomationMngr::automationCompleted, this, std::placeholders::_1)));
@@ -44,43 +38,27 @@ int UpdateAutomationMngr::startResourceAutomation(SimulatorSingleResource *resou
     std::lock_guard<std::mutex> lock(m_lock);
     resourceAutomation->start();
 
-    OIC_LOG_V(DEBUG, TAG, "Resource automation successfully started [id: %d]", m_id);
-    SIM_LOG(ILogger::INFO, "Resource automation successfully started [ id: " << m_id << " ]");
+    SIM_LOG(ILogger::INFO, "Resource automation started [URI: \"" << resource->getURI()
+            << "\", id: " << m_id << "].");
 
     m_resourceUpdationList[m_id] = resourceAutomation;
     return m_id++;
 }
 
-int UpdateAutomationMngr::startAttributeAutomation(SimulatorSingleResource *resource,
-        const std::string &attrName, AutomationType type, int interval,
-        updateCompleteCallback callback)
+int UpdateAutomationMngr::startAttributeAutomation(
+    std::shared_ptr<SimulatorSingleResourceImpl> resource,
+    const std::string &attrName, AutoUpdateType type, int interval,
+    const SimulatorSingleResource::AutoUpdateCompleteCallback &callback)
 {
-    if (!callback)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
-
-    // Check the validity of attribute
-    SimulatorResourceModel::Attribute attribute;
-    if (false == resource->getAttribute(attrName, attribute))
-    {
-        OIC_LOG_V(ERROR, TAG, "Attribute:%s not present in resource!", attrName.c_str());
-        throw SimulatorException(SIMULATOR_ERROR, "Attribute is not present in resource!");
-    }
-
     AttributeUpdateAutomationSP attributeAutomation(new AttributeUpdateAutomation(
-                m_id, resource, attribute, type, interval, callback,
+                m_id, resource, attrName, type, interval, callback,
                 std::bind(&UpdateAutomationMngr::automationCompleted, this, std::placeholders::_1)));
 
     std::lock_guard<std::mutex> lock(m_lock);
     attributeAutomation->start();
 
-    OIC_LOG_V(DEBUG, TAG, "Attribute automation successfully started [name: %s, id: %d]",
-             attrName.c_str(), m_id);
-    SIM_LOG(ILogger::INFO, "Automation for " << attrName << " attribute has successfully started [ id: "
-            <<
-            m_id << " ]");
+    SIM_LOG(ILogger::INFO, "Attribute automation started [Name: \"" << attrName << "\", id: "
+            << m_id << "].");
 
     m_attrUpdationList[m_id] = attributeAutomation;
     return m_id++;
@@ -154,3 +132,4 @@ void UpdateAutomationMngr::automationCompleted(int id)
         m_attrUpdationList.erase(m_attrUpdationList.find(id));
     }
 }
+

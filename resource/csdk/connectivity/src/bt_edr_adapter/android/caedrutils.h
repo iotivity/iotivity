@@ -27,7 +27,6 @@
 
 #include "cacommon.h"
 #include "cathreadpool.h"
-#include "uarraylist.h"
 #include "caedrinterface.h"
 #include "jni.h"
 
@@ -35,6 +34,15 @@
 extern "C"
 {
 #endif
+
+/**
+ * EDR Socket Information for EDR transport
+ */
+typedef struct
+{
+    jobject deviceSocket;   /**< Bluetooth device socket info */
+    jobject inputStream;    /**< InputStream for read data */
+} CAEDRSocketInfo_t;
 
 /**
  * Get address from device socket.
@@ -171,10 +179,10 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address);
 
 /**
  * Get device socket object from the list.
- * @param[in]  idx              index of device list.
+ * @param[in]  index            index of device list.
  * @return Device socket object or NULL.
  */
-jobject CAEDRNativeGetDeviceSocket(uint32_t idx);
+jobject CAEDRNativeGetDeviceSocket(uint32_t index);
 
 /**
  * Get device socket address.
@@ -183,6 +191,13 @@ jobject CAEDRNativeGetDeviceSocket(uint32_t idx);
  * @return  Device socket object or NULL.
  */
 jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddress);
+
+/**
+ * Get input stream object from the list.
+ * @param[in]   index           index of device list.
+ * @return Input stream object or NULL.
+ */
+jobject CAEDRNativeGetInputStream(uint32_t index);
 
 /**
  * Get length of device socket list.

@@ -100,9 +100,18 @@ try:
 except KeyError:
     print ''
 
-
-resource_container_env.PrependUnique(LIBS = ['rcs_client', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'connectivity_abstraction'])
-resource_container_env.AppendUnique(LIBS = ['dl', 'boost_system', 'boost_date_time', 'boost_thread'])
+resource_container_env.PrependUnique(LIBS = ['coap'])
+resource_container_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+resource_container_env.AppendUnique(LIBS = ['oc_logger'])
+resource_container_env.AppendUnique(LIBS = ['octbstack'])
+resource_container_env.AppendUnique(LIBS = ['oc'])
+resource_container_env.AppendUnique(LIBS = ['rcs_client'])
+resource_container_env.AppendUnique(LIBS = ['rcs_server'])
+resource_container_env.AppendUnique(LIBS = ['rcs_common'])
+resource_container_env.AppendUnique(LIBS = ['dl'])
+resource_container_env.AppendUnique(LIBS = ['boost_system'])
+resource_container_env.AppendUnique(LIBS = ['boost_date_time'])
+resource_container_env.AppendUnique(LIBS = ['boost_thread'])
 
 if int(containerJavaSupport):
     try:
@@ -120,6 +129,7 @@ res_container_static = resource_container_env.StaticLibrary('rcs_container', res
 res_container_shared = resource_container_env.SharedLibrary('rcs_container', res_container_src)
 
 resource_container_env.InstallTarget([res_container_static,res_container_shared], 'libResContainer')
+resource_container_env.UserInstallTargetLib([res_container_static,res_container_shared], 'libResContainer')
 
 resource_container_env.UserInstallTargetHeader('include/RCSBundleInfo.h', 'service/resource-container', 'RCSBundleInfo.h')
 resource_container_env.UserInstallTargetHeader('include/RCSResourceContainer.h', 'service/resource-container', 'RCSResourceContainer.h')
@@ -140,6 +150,7 @@ if target_os in ['linux', 'tizen', 'android']:
 
     DISensorBundle = DI_sensor_bundle_env.SharedLibrary('DISensorBundle', DI_sensor_bundle_src)
     DI_sensor_bundle_env.InstallTarget(DISensorBundle, 'libDISensorBundle')
+    DI_sensor_bundle_env.UserInstallTargetLib(DISensorBundle, 'libDISensorBundle')
 
     if target_os == 'linux' :
         SConscript(DI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
@@ -162,6 +173,7 @@ if target_os in ['linux', 'tizen', 'android']:
 
     BMISensorBundle = BMI_sensor_bundle_env.SharedLibrary('BMISensorBundle', BMI_sensor_bundle_src)
     BMI_sensor_bundle_env.InstallTarget(BMISensorBundle, 'libBMISensorBundle')
+    BMI_sensor_bundle_env.UserInstallTargetLib(BMISensorBundle, 'libBMISensorBundle')
 
     if target_os == 'linux' :
         SConscript(BMI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
@@ -200,6 +212,7 @@ else:
 
     HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
     hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
+    hue_resource_bundle_env.UserInstallTargetLib(HueBundle, 'libHueBundle')
 lib_env = conf2.Finish()
 
 ######################################################################

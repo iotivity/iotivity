@@ -448,6 +448,11 @@ namespace OC
     {
         MessageContainer ocInfo;
         ocInfo.addRepresentation(rep);
+        for(const OCRepresentation& r : rep.getChildren())
+        {
+            ocInfo.addRepresentation(r);
+        }
+
         return reinterpret_cast<OCPayload*>(ocInfo.getPayload());
     }
 

@@ -29,7 +29,8 @@ namespace RAML
 {
     class RamlResource;
     class Properties;
-    class Items;
+    class JsonSchema;
+    class RamlParser;
 }
 
 class SimulatorResourceFactory
@@ -87,16 +88,11 @@ class SimulatorResourceFactory
             const std::string &name, const std::string &uri, const std::string &resourceType);
 
     private:
-        SimulatorResourceModel::Attribute buildAttribute(
-            std::shared_ptr<RAML::Properties> propertyElement);
-        SimulatorResourceModel buildResourceModel(std::shared_ptr<RAML::Items> item);
-        SimulatorResourceModel buildModelFromResponseBody(
-            RAML::RequestResponseBodyPtr responseBody, std::string &resourceType,
-            std::vector<std::string> &interfaceType);
-        RAML::RequestResponseBodyPtr getRAMLResponseBody(
-            std::shared_ptr<RAML::RamlResource> ramlResource, RAML::ActionType type, std::string responseCode);
         std::shared_ptr<SimulatorResource> buildResource(
-            std::shared_ptr<RAML::RamlResource> ramlResource);
+            const std::shared_ptr<RAML::RamlResource> &ramlResource);
+
+        void addInterfaceFromQueryParameter(
+            std::vector<std::string> queryParamValue, std::vector<std::string> &interfaceTypes);
 
         SimulatorResourceFactory() = default;
         SimulatorResourceFactory(const SimulatorResourceFactory &) = delete;
@@ -123,7 +119,7 @@ class ResourceURIFactory
          *
          * @return Unique uri.
          */
-        std::string constructURI(const std::string &uri);
+        std::string makeUniqueURI(const std::string &uri);
 
     private:
         ResourceURIFactory();

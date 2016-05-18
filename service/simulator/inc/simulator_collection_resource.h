@@ -18,11 +18,21 @@
  *
  ******************************************************************/
 
+/**
+ * @file   simulator_collection_resource.h
+ *
+ * @brief   This file provides a class and API to access simulated collection resource.
+ */
+
 #ifndef SIMULATOR_COLLECTION_RESOURCE_H_
 #define SIMULATOR_COLLECTION_RESOURCE_H_
 
 #include "simulator_resource.h"
 
+/**
+ * @class   SimulatorCollectionResource
+ * @brief   This class provides a set of APIs for handling simulated collection resource.
+ */
 class SimulatorCollectionResource : public SimulatorResource
 {
     public:
@@ -39,14 +49,14 @@ class SimulatorCollectionResource : public SimulatorResource
          *
          * @param resource - SimulatorResource shared object.
          */
-        virtual void addChildResource(SimulatorResourceSP &resource) = 0;
+        virtual void addChildResource(const std::shared_ptr<SimulatorResource> &resource) = 0;
 
         /**
          * API to remove a child resource from collection.
          *
          * @param resource - SimulatorResource shared object.
          */
-        virtual void removeChildResource(SimulatorResourceSP &resource) = 0;
+        virtual void removeChildResource(const std::shared_ptr<SimulatorResource> &resource) = 0;
 
         /**
          * API to remove a child resource from collection.

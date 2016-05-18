@@ -37,8 +37,11 @@ if target_os not in ['arduino','darwin', 'ios']:
     SConscript('resource-encapsulation/SConscript')
 
     # Build resource-container project
-    if target_os not in ['android']:
-        SConscript('resource-container/SConscript')
+    SConscript('resource-container/SConscript')
+
+    # Build scene-manager project
+    if target_os in ['linux']:
+        SConscript('scene-manager/SConscript')
 
     # Build simulator module
     if target_os in ['linux'] and env.get('SIMULATOR', False):

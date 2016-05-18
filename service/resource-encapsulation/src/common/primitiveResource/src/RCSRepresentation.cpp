@@ -69,12 +69,7 @@ namespace OIC
             return m_uri;
         }
 
-        void RCSRepresentation::setUri(const std::string& uri)
-        {
-            m_uri = uri;
-        }
-
-        void RCSRepresentation::setUri(std::string&& uri)
+        void RCSRepresentation::setUri(std::string uri)
         {
             m_uri = std::move(uri);
         }
@@ -84,12 +79,7 @@ namespace OIC
             return m_interfaces;
         }
 
-        void RCSRepresentation::addInterface(const std::string& interface)
-        {
-            m_interfaces.push_back(interface);
-        }
-
-        void RCSRepresentation::addInterface(std::string&& interface)
+        void RCSRepresentation::addInterface(std::string interface)
         {
             m_interfaces.push_back(std::move(interface));
         }
@@ -104,12 +94,7 @@ namespace OIC
             return m_resourceTypes;
         }
 
-        void RCSRepresentation::addResourceType(const std::string& resourceType)
-        {
-            m_resourceTypes.push_back(resourceType);
-        }
-
-        void RCSRepresentation::addResourceType(std::string&& resourceType)
+        void RCSRepresentation::addResourceType(std::string resourceType)
         {
             m_resourceTypes.push_back(std::move(resourceType));
         }
@@ -139,22 +124,12 @@ namespace OIC
             m_attributes = std::move(attrs);
         }
 
-        void RCSRepresentation::addChild(const RCSRepresentation& child)
-        {
-            m_children.push_back(child);
-        }
-
-        void RCSRepresentation::addChild(RCSRepresentation&& child)
+        void RCSRepresentation::addChild(RCSRepresentation child)
         {
             m_children.push_back(std::move(child));
         }
 
-        void RCSRepresentation::setChildren(const std::vector< RCSRepresentation >& children)
-        {
-            m_children = children;
-        }
-
-        void RCSRepresentation::setChildren(std::vector< RCSRepresentation >&& children)
+        void RCSRepresentation::setChildren(std::vector< RCSRepresentation > children)
         {
             m_children = std::move(children);
         }

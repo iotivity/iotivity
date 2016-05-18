@@ -19,18 +19,27 @@
  ******************************************************************/
 
 #include "response_model.h"
+#include "simulator_resource_model_schema.h"
 
 ResponseModel::ResponseModel(int code) : m_code(code) {}
 
-void ResponseModel::setRepSchema(SimulatorResourceModelSP &repSchema)
+std::shared_ptr<SimulatorResourceModelSchema> ResponseModel::getSchema()
 {
-    m_repSchema = repSchema;
+    return m_repSchema;
 }
 
-SimulatorResult ResponseModel::verifyResponse(const OC::OCRepresentation &ocRep)
+SimulatorResult ResponseModel::verifyResponse(const SimulatorResourceModel &resModel)
 {
-    SimulatorResourceModel resModel = SimulatorResourceModel::build(ocRep);
-    if (m_repSchema->match(resModel))
+    if (m_repSchema->validate(resModel))
+    {
         return SIMULATOR_OK;
+    }
+
     return SIMULATOR_ERROR;
+}
+
+void ResponseModel::setResponseBodyModel(const std::shared_ptr<SimulatorResourceModelSchema>
+        &repSchema)
+{
+    m_repSchema = repSchema;
 }

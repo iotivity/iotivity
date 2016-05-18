@@ -58,7 +58,8 @@ namespace OIC
              *
              * @throw ESBadRequestException is thrown if the parameters are invalid
              */
-            RemoteEnrolleeResource(ProvConfig enrolleeNWProvInfo, WiFiOnboadingConnection onboardingconn);
+            RemoteEnrolleeResource(const ProvConfig &enrolleeNWProvInfo,
+                                               const WiFiOnboadingConnection &onboardingconn);
 
             ~RemoteEnrolleeResource() = default;
 

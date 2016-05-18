@@ -58,6 +58,8 @@ cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/
 cp -R ./resource/csdk/logger/include/* $sourcedir/tmp/con/common/inc/
+mkdir ./tmp/con/logger/
+cp -R ./resource/csdk/logger/* $sourcedir/tmp/con/logger
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm $sourcedir/tmp
@@ -94,7 +96,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'WITH_TCP $6'"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'WITH_TCP $6'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
@@ -117,7 +119,7 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A armv7l --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
+   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"

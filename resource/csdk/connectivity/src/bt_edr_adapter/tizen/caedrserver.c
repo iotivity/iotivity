@@ -42,7 +42,7 @@ static int32_t g_maxPendingConnections = 10;
  */
 static int g_serverFD = -1;
 
-CAResult_t CAEDRServerStart(ca_thread_pool_t handle)
+CAResult_t CAEDRServerStart()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -103,6 +103,12 @@ CAResult_t CAEDRServerStop()
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle)
+{
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "CAEDRServerInitialize");
     return CA_STATUS_OK;
 }
 

@@ -18,8 +18,12 @@
  *
  ******************************************************************/
 
+#ifndef __APPLE_USE_RFC_3542
 #define __APPLE_USE_RFC_3542 // for PKTINFO
+#endif
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE // for in6_pktinfo
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -115,6 +119,31 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags);
         flags = FLAGS; \
     }
 
+#define CLOSE_SOCKET(TYPE) \
+    if (caglobals.ip.TYPE.fd != -1) \
+    { \
+        close(caglobals.ip.TYPE.fd); \
+        caglobals.ip.TYPE.fd = -1; \
+    }
+
+void CADeInitializeIPGlobals()
+{
+    CLOSE_SOCKET(u6);
+    CLOSE_SOCKET(u6s);
+    CLOSE_SOCKET(u4);
+    CLOSE_SOCKET(u4s);
+    CLOSE_SOCKET(m6);
+    CLOSE_SOCKET(m6s);
+    CLOSE_SOCKET(m4);
+    CLOSE_SOCKET(m4s);
+
+    if (caglobals.ip.netlinkFd != -1)
+    {
+        close(caglobals.ip.netlinkFd);
+        caglobals.ip.netlinkFd = -1;
+    }
+}
+
 static void CAReceiveHandler(void *data)
 {
     (void)data;
@@ -189,7 +218,12 @@ static void CASelectReturned(fd_set *readFds, int ret)
         else ISSET(m4s, readFds, CA_MULTICAST | CA_IPV4 | CA_SECURE)
         else if (FD_ISSET(caglobals.ip.netlinkFd, readFds))
         {
-            CAHandleNetlink();
+            CAInterface_t *ifchanged = CAFindInterfaceChange();
+            if (ifchanged)
+            {
+                CAProcessNewInterface(ifchanged);
+                OICFree(ifchanged);
+            }
             break;
         }
         else if (FD_ISSET(caglobals.ip.shutdownFds[0], readFds))
@@ -199,13 +233,6 @@ static void CASelectReturned(fd_set *readFds, int ret)
             if (-1 == len)
             {
                 continue;
-            }
-
-            CAInterface_t *ifchanged = CAFindInterfaceChange();
-            if (ifchanged)
-            {
-                CAProcessNewInterface(ifchanged);
-                OICFree(ifchanged);
             }
             break;
         }
@@ -775,64 +802,18 @@ static void CAProcessNewInterface(CAInterface_t *ifitem)
         OIC_LOG(DEBUG, TAG, "ifitem is null");
         return;
     }
-
-    applyMulticastToInterface6(ifitem->index);
-    struct in_addr inaddr = { .s_addr = ifitem->ipv4addr };
-    applyMulticastToInterface4(inaddr);
+    if (ifitem->family == AF_INET6)
+    {
+        applyMulticastToInterface6(ifitem->index);
+    }
+    if (ifitem->family == AF_INET)
+    {
+        struct in_addr inaddr = { .s_addr = ifitem->ipv4addr };
+        applyMulticastToInterface4(inaddr);
+    }
 }
 static void CAHandleNetlink()
 {
-#ifdef __linux__
-    char buf[4096];
-    struct nlmsghdr *nh;
-    struct sockaddr_nl sa;
-    struct iovec iov = { buf, sizeof (buf) };
-    struct msghdr msg = { (void *)&sa, sizeof (sa), &iov, 1, NULL, 0, 0 };
-
-    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
-
-    for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
-    {
-        if (nh->nlmsg_type != RTM_NEWLINK)
-        {
-            continue;
-        }
-
-        struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
-        if (!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING))
-        {
-            continue;
-        }
-
-        int newIndex = ifi->ifi_index;
-
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(newIndex);
-        if (!iflist)
-        {
-            OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
-            return;
-        }
-
-        uint32_t listLength = u_arraylist_length(iflist);
-        for (uint32_t i = 0; i < listLength; i++)
-        {
-            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-            if (!ifitem)
-            {
-                continue;
-            }
-
-            if ((int)ifitem->index != newIndex)
-            {
-                continue;
-            }
-
-            CAProcessNewInterface(ifitem);
-            break; // we found the one we were looking for
-        }
-        u_arraylist_destroy(iflist);
-    }
-#endif // __linux__
 }
 
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
@@ -843,6 +824,11 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
 {
     g_exceptionCallback = callback;
+}
+
+void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback)
+{
+    CAIPSetNetworkMonitorCallback(callback);
 }
 
 static void sendData(int fd, const CAEndpoint_t *endpoint,

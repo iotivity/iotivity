@@ -37,23 +37,18 @@ extern "C"
 
 static const uint16_t GATT_ERROR = 133;
 
-static const uint16_t STATE_CHARACTER_SET = 2;
-static const uint16_t STATE_CHARACTER_UNSET = 1;
-static const uint16_t STATE_CHARACTER_NO_CHANGE = 0;
-
-static const uint16_t STATE_SEND_NONE = 0;
-static const uint16_t STATE_SEND_SUCCESS = 1;
-static const uint16_t STATE_SEND_FAILED = 2;
-
-static const jint STATE_CONNECTED = 2;
-static const jint STATE_DISCONNECTED = 0;
+static const uint16_t STATE_SEND_NONE = 1;
+static const uint16_t STATE_SEND_SUCCESS = 2;
+static const uint16_t STATE_SEND_FAIL = 3;
+static const uint16_t STATE_SENDING = 4;
 
 typedef struct le_state_info
 {
     char address[CA_MACADDR_SIZE];
-    jint connectedState;
-    uint16_t notificationState;
+    uint16_t connectedState;
     uint16_t sendState;
+    jboolean autoConnectFlag;
+    jboolean isDescriptorFound;
 } CALEState_t;
 
 /**
@@ -155,9 +150,11 @@ void CALEClientSetCallback(CAPacketReceiveCallback callback);
 /**
  * waiting to get scanned device from BT Platform.
  * if there is no scanned device in the list.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   address               LE address.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientIsThereScannedDevices();
+CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address);
 
 /**
  * send data for unicast (implement).
@@ -178,13 +175,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char *address, const uint8_t *
  */
 CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data,
                                               const uint32_t dataLen);
-
-/**
- * check whether it is connected or not with remote address.
- * @param[in]   address               remote address.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALECheckSendState(const char* address);
 
 /**
  * send data to remote device.
@@ -270,6 +260,25 @@ void CALEClientSetScanFlag(bool flag);
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback);
+
+/**
+ * set flag into State List.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
+ * @param[in]   state_idx             state index.
+ * @param[in]   flag                  auto connect flag.
+ */
+CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address,
+                                    jint state_idx, jboolean flag);
+
+/**
+ * get flag from State List.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
+ * @param[in]   state_idx             state index.
+ * @return  current flag;
+ */
+jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx);
 
 /**
  * connect to gatt server hosted.
@@ -489,20 +498,12 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 /**
  * update new state information.
  * @param[in]   address               remote address.
- * @param[in]   connectedState        connection state.
- * @param[in]   notificationState     whether characteristic notification already set or not.
- * @param[in]   sendState             whether sending was success or not.
+ * @param[in]   state_type            state type.
+ * @param[in]   target_state          state index to update.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientUpdateDeviceState(const char* address, uint32_t connectedState,
-                                       uint16_t notificationState, uint16_t sendState);
-
-/**
- * add new state to state list.
- * @param[in]   state                 new state.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEClientAddDeviceStateToList(CALEState_t* state);
+CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
+                                       uint16_t target_state);
 
 /**
  * check whether the remote address is existed or not.
@@ -516,6 +517,13 @@ bool CALEClientIsDeviceInList(const char *remoteAddress);
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientRemoveAllDeviceState();
+
+/**
+ * Reset values of device state for all of devices.
+ * this method has to be invoked when BT adapter is disabled.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientResetDeviceStateForAll();
 
 /**
  * remove the device state for a remote device.
@@ -532,18 +540,14 @@ CAResult_t CALEClientRemoveDeviceState(const char* remoteAddress);
 CALEState_t* CALEClientGetStateInfo(const char* remoteAddress);
 
 /**
- * check whether the remote address is connected or not.
+ * check whether the remote address has same state with target state.
  * @param[in]   remoteAddress         remote address.
+ * @param[in]   state_type            state_type.
+ * @param[in]   target_state          state index to check.
  * @return  true or false.
  */
-bool CALEClientIsConnectedDevice(const char* remoteAddress);
-
-/**
- * check whether the remote address set CharacteristicNotification or not.
- * @param[in]   remoteAddress         remote address.
- * @return  true or false.
- */
-bool CALEClientIsSetCharacteristic(const char* remoteAddress);
+bool CALEClientIsValidState(const char* remoteAddress, uint16_t state_type,
+                            uint16_t target_state);
 
 /**
  * create scan device list.

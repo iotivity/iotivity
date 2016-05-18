@@ -202,7 +202,7 @@ Tizen:
     $ scons TARGET_OS=tizen TARGET_TRANSPORT=ALL -c (for clean)
 
 (we provide the spec file required by gbs tool at toools/tizen directory.
-gbs is default build tool for Tizen platfrom, we can refer the following
+gbs is default build tool for Tizen platform, we can refer the following
 wiki to setup Tizen development environment:
 https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 

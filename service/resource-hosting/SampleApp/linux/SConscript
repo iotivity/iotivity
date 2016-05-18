@@ -17,23 +17,23 @@ resourcehosting_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectiv
 resourcehosting_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 resourcehosting_sample_env = resourcehosting_env.Clone()
 resourcehosting_env.AppendUnique(LIBS = [
+    'coap',
+    'connectivity_abstraction',
+    'oc_logger',
+    'octbstack',
+    'oc',
     'resource_hosting',
     'rcs_client',
     'rcs_server',
     'rcs_common',
-    'oc',
-    'octbstack',
-    'oc_logger',
-    'connectivity_abstraction',
-    'coap',
     'pthread'
     ])
 resourcehosting_sample_env.AppendUnique(LIBS = [
-    'oc',
-    'octbstack',
-    'oc_logger',
     'connectivity_abstraction',
     'coap',
+    'oc_logger',
+    'octbstack',
+    'oc',
     'pthread'
     ])
 

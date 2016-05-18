@@ -114,6 +114,15 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
 OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
                            size_t *numUuids, OicUuid_t** uuids );
 
+/**
+ * Function to getting string of ownership transfer method
+ *
+ * @prarm oxmType ownership transfer method
+ *
+ * @return string value of ownership transfer method
+ */
+const char* GetOxmString(OicSecOxm_t oxmType);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

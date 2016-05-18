@@ -331,6 +331,11 @@ OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endp
 {
     OCStackResult ret = OC_STACK_ERROR;
 
+    if (!context->amsMgrContext)
+    {
+        goto exit;
+    }
+
     //The AmsMgr context endpoint and requestInfo will be free from ,
     //AmsMgrAclReqCallback function
     if(context->amsMgrContext->endpoint)
@@ -356,9 +361,9 @@ exit:
 
 void FreeCARequestInfo(CARequestInfo_t *requestInfo)
 {
-    if(NULL == requestInfo)
+    if (NULL == requestInfo)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Can't free memory. Received NULL requestInfo", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: Can't free memory. Received NULL requestInfo", __func__);
         return;
     }
     OICFree(requestInfo->info.token);
@@ -414,6 +419,7 @@ void ProcessAMSRequest(PEContext_t *context)
                 if(OC_STACK_OK == DiscoverAmsService(context))
                 {
                     context->retVal = ACCESS_WAITING_FOR_AMS;
+                    OIC_LOG_V(INFO, TAG, "Leaving %s(WAITING_FOR_AMS)", __func__);
                     context->state = AWAITING_AMS_RESPONSE;
                 }
                 else
@@ -426,10 +432,5 @@ void ProcessAMSRequest(PEContext_t *context)
     else
     {
         OIC_LOG_V(INFO, TAG, "Leaving %s(context is NULL)", __func__);
-    }
-
-    if(ACCESS_WAITING_FOR_AMS == context->retVal )
-    {
-        OIC_LOG_V(INFO, TAG, "Leaving %s(WAITING_FOR_AMS)", __func__);
     }
 }

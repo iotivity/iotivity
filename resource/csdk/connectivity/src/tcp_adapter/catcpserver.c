@@ -1,4 +1,4 @@
-/* ****************************************************************j
+/* ****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -20,17 +20,16 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <fcntl.h>
-#include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <errno.h>
-#include <sys/poll.h>
 
 #ifndef WITH_ARDUINO
 #include <sys/socket.h>
@@ -62,11 +61,6 @@
 #define TCP_MAX_HEADER_LEN  6
 
 /**
- * Accept server file descriptor.
- */
-static int g_acceptServerFD = -1;
-
-/**
  * Mutex to synchronize device object list.
  */
 static ca_mutex g_mutexObjectList = NULL;
@@ -89,14 +83,14 @@ static CATCPErrorHandleCallback g_TCPErrorHandler = NULL;
 /**
  * Connected Callback to pass the connection information to RI.
  */
-static CATCPKeepAliveHandleCallback g_keepaliveCallback = NULL;
+static CATCPConnectionHandleCallback g_connectionCallback = NULL;
 
 static CAResult_t CATCPCreateMutex();
 static void CATCPDestroyMutex();
 static CAResult_t CATCPCreateCond();
 static void CATCPDestroyCond();
-static CAResult_t CACreateAcceptSocket();
-static void CAAcceptConnection();
+static int CACreateAcceptSocket(int family, CASocket_t *sock);
+static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
 static void CAFindReadyMessage();
 static void CASelectReturned(fd_set *readFds, int ret);
 static void CAReceiveMessage(int fd);
@@ -178,13 +172,21 @@ static void CAFindReadyMessage()
 
     FD_ZERO(&readFds);
 
-    if (-1 != g_acceptServerFD)
+    if (-1 != caglobals.tcp.ipv4.fd)
     {
-        FD_SET(g_acceptServerFD, &readFds);
+        FD_SET(caglobals.tcp.ipv4.fd, &readFds);
+    }
+    if (-1 != caglobals.tcp.ipv6.fd)
+    {
+        FD_SET(caglobals.tcp.ipv6.fd, &readFds);
     }
     if (-1 != caglobals.tcp.shutdownFds[0])
     {
         FD_SET(caglobals.tcp.shutdownFds[0], &readFds);
+    }
+    if (-1 != caglobals.tcp.connectionFds[0])
+    {
+        FD_SET(caglobals.tcp.connectionFds[0], &readFds);
     }
 
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
@@ -219,11 +221,31 @@ static void CAFindReadyMessage()
 
 static void CASelectReturned(fd_set *readFds, int ret)
 {
-    (void)ret;
+    VERIFY_NON_NULL_VOID(readFds, TAG, "readFds is NULL");
 
-    if (g_acceptServerFD != -1 && FD_ISSET(g_acceptServerFD, readFds))
+    if (caglobals.tcp.ipv4.fd != -1 && FD_ISSET(caglobals.tcp.ipv4.fd, readFds))
     {
-        CAAcceptConnection();
+        CAAcceptConnection(CA_IPV4, &caglobals.tcp.ipv4);
+        return;
+    }
+    else if (caglobals.tcp.ipv6.fd != -1 && FD_ISSET(caglobals.tcp.ipv6.fd, readFds))
+    {
+        CAAcceptConnection(CA_IPV6, &caglobals.tcp.ipv6);
+        return;
+    }
+    else if (-1 != caglobals.tcp.connectionFds[0] &&
+            FD_ISSET(caglobals.tcp.connectionFds[0], readFds))
+    {
+        // new connection was created from remote device.
+        // exit the function to update read file descriptor.
+        char buf[MAX_ADDR_STR_SIZE_CA] = {0};
+        ssize_t len = read(caglobals.tcp.connectionFds[0], buf, sizeof (buf));
+        if (-1 == len)
+        {
+            return;
+        }
+        OIC_LOG_V(DEBUG, TAG, "Received new connection event with [%s]", buf);
+        FD_CLR(caglobals.tcp.connectionFds[0], readFds);
         return;
     }
     else
@@ -245,13 +267,14 @@ static void CASelectReturned(fd_set *readFds, int ret)
     }
 }
 
-static void CAAcceptConnection()
+static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 {
+    VERIFY_NON_NULL_VOID(sock, TAG, "sock is NULL");
+
     struct sockaddr_storage clientaddr;
     socklen_t clientlen = sizeof (struct sockaddr_in);
 
-    int sockfd = accept(g_acceptServerFD, (struct sockaddr *)&clientaddr,
-                        &clientlen);
+    int sockfd = accept(sock->fd, (struct sockaddr *)&clientaddr, &clientlen);
     if (-1 != sockfd)
     {
         CATCPSessionInfo_t *svritem =
@@ -264,6 +287,7 @@ static void CAAcceptConnection()
         }
 
         svritem->fd = sockfd;
+        svritem->sep.endpoint.flags = flag;
         CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
                             (char *) &svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
@@ -361,53 +385,178 @@ static void CAReceiveMessage(int fd)
     return;
 }
 
+static void CAWakeUpForReadFdsUpdate(const char *host)
+{
+    if (caglobals.tcp.connectionFds[1] != -1)
+    {
+        ssize_t len = 0;
+        do
+        {
+            len = write(caglobals.tcp.connectionFds[1], host, strlen(host));
+        } while ((len == -1) && (errno == EINTR));
+
+        if ((len == -1) && (errno != EINTR) && (errno != EPIPE))
+        {
+            OIC_LOG_V(DEBUG, TAG, "write failed: %s", strerror(errno));
+        }
+    }
+}
+
+static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t port,
+                                         struct sockaddr_storage *sockaddr)
+{
+    struct addrinfo *addrs = NULL;
+    struct addrinfo hints = { .ai_family = family,
+                              .ai_protocol   = IPPROTO_TCP,
+                              .ai_socktype = SOCK_STREAM,
+                              .ai_flags = AI_NUMERICHOST };
+
+    int r = getaddrinfo(host, NULL, &hints, &addrs);
+    if (r)
+    {
+        if (EAI_SYSTEM == r)
+        {
+            OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: errno %s", strerror(errno));
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: %s", gai_strerror(r));
+        }
+        freeaddrinfo(addrs);
+        return CA_STATUS_FAILED;
+    }
+    // assumption: in this case, getaddrinfo will only return one addrinfo
+    // or first is the one we want.
+    if (addrs[0].ai_family == AF_INET6)
+    {
+        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in6));
+        ((struct sockaddr_in6 *)sockaddr)->sin6_port = htons(port);
+    }
+    else
+    {
+        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in));
+        ((struct sockaddr_in *)sockaddr)->sin_port = htons(port);
+    }
+    freeaddrinfo(addrs);
+    return CA_STATUS_OK;
+}
+
 static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
-    // create tcp socket
+    // #1. create tcp socket.
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (-1 == fd)
     {
         OIC_LOG_V(ERROR, TAG, "create socket failed: %s", strerror(errno));
-        goto exit;
+        return -1;
     }
 
+    // #2. convert address from string to binary.
     struct sockaddr_storage sa = { .ss_family = family };
-    CAConvertNameToAddr(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, &sa);
-    socklen_t socklen = sizeof (struct sockaddr_in);
-
-    // connect to TCP server
-    int ret = connect(fd, (struct sockaddr *)&sa, socklen);
-    if (0 == ret)
+    CAResult_t res = CATCPConvertNameToAddr(family, svritem->sep.endpoint.addr,
+                                            svritem->sep.endpoint.port, &sa);
+    if (CA_STATUS_OK != res)
     {
-        OIC_LOG(DEBUG, TAG, "connect socket success");
+        close(fd);
+        return -1;
     }
-    else if (EINPROGRESS == errno)
-    {
-        OIC_LOG(DEBUG, TAG, "EINPROGRESS");
-        int error = 0;
-        socklen_t len = sizeof(error);
-        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
-        {
-            OIC_LOG(ERROR, TAG, "getsockopt() error");
-            goto exit;
-        }
 
-        if (error)
+    // #3. set socket length.
+    socklen_t socklen;
+    if (sa.ss_family == AF_INET6)
+    {
+        struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sa;
+        if (!sock6->sin6_scope_id)
         {
-            if (ECONNREFUSED == error)
-            {
-                OIC_LOG(ERROR, TAG, "connection refused");
-                goto exit;
-            }
-            OIC_LOG(ERROR, TAG, "failed to connect socket");
-            goto exit;
+            sock6->sin6_scope_id = svritem->sep.endpoint.interface;
         }
-        OIC_LOG(DEBUG, TAG, "connect socket success");
+        socklen = sizeof(struct sockaddr_in6);
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "failed to connect socket");
+        socklen = sizeof(struct sockaddr_in);
+    }
+
+    // #4. connect to remote server device.
+    if (connect(fd, (struct sockaddr *)&sa, socklen) < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "failed to connect socket, %s", strerror(errno));
+        close(fd);
+        return -1;
+    }
+
+    OIC_LOG(DEBUG, TAG, "connect socket success");
+    CAWakeUpForReadFdsUpdate(svritem->sep.endpoint.addr);
+    return fd;
+}
+
+static int CACreateAcceptSocket(int family, CASocket_t *sock)
+{
+    VERIFY_NON_NULL_RET(sock, TAG, "sock", -1);
+
+    if (sock->fd != -1)
+    {
+        OIC_LOG(DEBUG, TAG, "accept socket created already");
+        return sock->fd;
+    }
+
+    socklen_t socklen;
+    struct sockaddr_storage server = { .ss_family = family };
+
+    int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
+    if (fd < 0)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to create socket");
         goto exit;
+    }
+
+    if (family == AF_INET6)
+    {
+        // the socket is re‐stricted to sending and receiving IPv6 packets only.
+        int on = 1;
+        if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof (on)))
+        {
+            OIC_LOG_V(ERROR, TAG, "IPV6_V6ONLY failed: %s", strerror(errno));
+            goto exit;
+        }
+        ((struct sockaddr_in6 *)&server)->sin6_port = htons(sock->port);
+        socklen = sizeof (struct sockaddr_in6);
+    }
+    else
+    {
+        ((struct sockaddr_in *)&server)->sin_port = htons(sock->port);
+        socklen = sizeof (struct sockaddr_in);
+    }
+
+    int reuse = 1;
+    if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
+    {
+        OIC_LOG(ERROR, TAG, "setsockopt SO_REUSEADDR");
+        goto exit;
+    }
+
+    if (-1 == bind(fd, (struct sockaddr *)&server, socklen))
+    {
+        OIC_LOG_V(ERROR, TAG, "bind socket failed: %s", strerror(errno));
+        goto exit;
+    }
+
+    if (listen(fd, caglobals.tcp.listenBacklog) != 0)
+    {
+        OIC_LOG(ERROR, TAG, "listen() error");
+        goto exit;
+    }
+
+    if (!sock->port)  // return the assigned port
+    {
+        if (-1 == getsockname(fd, (struct sockaddr *)&server, &socklen))
+        {
+            OIC_LOG_V(ERROR, TAG, "getsockname failed: %s", strerror(errno));
+            goto exit;
+        }
+        sock->port = ntohs(family == AF_INET6 ?
+                      ((struct sockaddr_in6 *)&server)->sin6_port :
+                      ((struct sockaddr_in *)&server)->sin_port);
     }
 
     return fd;
@@ -420,78 +569,31 @@ exit:
     return -1;
 }
 
-static CAResult_t CACreateAcceptSocket()
+static void CAInitializePipe(int *fds)
 {
-    int reuse = 1;
-    struct sockaddr_in server = { .sin_addr.s_addr = INADDR_ANY,
-                                  .sin_family = AF_INET,
-                                  .sin_port = htons(SERVER_PORT),
-                                  .sin_zero = { 0 } };
-
-    g_acceptServerFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (g_acceptServerFD < 0)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to create socket");
-        goto exit;
-    }
-
-    if (-1 == setsockopt(g_acceptServerFD, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
-    {
-        OIC_LOG(ERROR, TAG, "setsockopt SO_REUSEADDR");
-        goto exit;
-    }
-
-    int serverlen = sizeof(server);
-    if (-1 == bind(g_acceptServerFD, (struct sockaddr *)&server, serverlen))
-    {
-        OIC_LOG(ERROR, TAG, "bind() error");
-        goto exit;
-    }
-
-    if (listen(g_acceptServerFD, caglobals.tcp.listenBacklog) != 0)
-    {
-        OIC_LOG(ERROR, TAG, "listen() error");
-        goto exit;
-    }
-
-    CHECKFD(g_acceptServerFD);
-
-    return CA_STATUS_OK;
-
-exit:
-    if (g_acceptServerFD >= 0)
-    {
-        close(g_acceptServerFD);
-        g_acceptServerFD = -1;
-    }
-    return CA_STATUS_FAILED;
-}
-
-static void CAInitializePipe()
-{
-    int ret = pipe(caglobals.tcp.shutdownFds);
+    int ret = pipe(fds);
     if (-1 != ret)
     {
-        ret = fcntl(caglobals.tcp.shutdownFds[0], F_GETFD);
+        ret = fcntl(fds[0], F_GETFD);
         if (-1 != ret)
         {
-            ret = fcntl(caglobals.tcp.shutdownFds[0], F_SETFD, ret|FD_CLOEXEC);
+            ret = fcntl(fds[0], F_SETFD, ret|FD_CLOEXEC);
         }
         if (-1 != ret)
         {
-            ret = fcntl(caglobals.tcp.shutdownFds[1], F_GETFD);
+            ret = fcntl(fds[1], F_GETFD);
         }
         if (-1 != ret)
         {
-            ret = fcntl(caglobals.tcp.shutdownFds[1], F_SETFD, ret|FD_CLOEXEC);
+            ret = fcntl(fds[1], F_SETFD, ret|FD_CLOEXEC);
         }
         if (-1 == ret)
         {
-            close(caglobals.tcp.shutdownFds[1]);
-            close(caglobals.tcp.shutdownFds[0]);
+            close(fds[1]);
+            close(fds[0]);
 
-            caglobals.tcp.shutdownFds[0] = -1;
-            caglobals.tcp.shutdownFds[1] = -1;
+            fds[0] = -1;
+            fds[1] = -1;
 
             OIC_LOG_V(ERROR, TAG, "pipe failed: %s", strerror(errno));
         }
@@ -508,6 +610,10 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
     if (!caglobals.tcp.ipv4tcpenabled)
     {
         caglobals.tcp.ipv4tcpenabled = true;    // only needed to run CA tests
+    }
+    if (!caglobals.tcp.ipv6tcpenabled)
+    {
+        caglobals.tcp.ipv6tcpenabled = true;    // only needed to run CA tests
     }
 
     CAResult_t res = CATCPCreateMutex();
@@ -528,17 +634,28 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
     }
     ca_mutex_unlock(g_mutexObjectList);
 
-    res = CACreateAcceptSocket();
-    if (CA_STATUS_OK != res)
+    if (caglobals.server)
     {
-        OIC_LOG(ERROR, TAG, "failed to create accept socket");
-        return res;
+        caglobals.tcp.ipv4.fd = CACreateAcceptSocket(AF_INET, &caglobals.tcp.ipv4);
+        CHECKFD(caglobals.tcp.ipv4.fd);
+        caglobals.tcp.ipv6.fd = CACreateAcceptSocket(AF_INET6, &caglobals.tcp.ipv6);
+        CHECKFD(caglobals.tcp.ipv6.fd);
+
+        OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
+                  caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
+        OIC_LOG_V(DEBUG, TAG, "IPv6 socket fd=%d, port=%d",
+                  caglobals.tcp.ipv6.fd, caglobals.tcp.ipv6.port);
     }
 
     // create pipe for fast shutdown
-    CAInitializePipe();
+    CAInitializePipe(caglobals.tcp.shutdownFds);
     CHECKFD(caglobals.tcp.shutdownFds[0]);
     CHECKFD(caglobals.tcp.shutdownFds[1]);
+
+    // create pipe for connection event
+    CAInitializePipe(caglobals.tcp.connectionFds);
+    CHECKFD(caglobals.tcp.connectionFds[0]);
+    CHECKFD(caglobals.tcp.connectionFds[1]);
 
     caglobals.tcp.terminate = false;
     res = ca_thread_pool_add_task(threadPool, CAReceiveHandler, NULL);
@@ -567,6 +684,11 @@ void CATCPStopServer()
         // receive thread will stop immediately
     }
 
+    if (caglobals.tcp.connectionFds[1] != -1)
+    {
+        close(caglobals.tcp.connectionFds[1]);
+    }
+
     if (caglobals.tcp.started)
     {
         ca_cond_wait(g_condObjectList, g_mutexObjectList);
@@ -576,10 +698,16 @@ void CATCPStopServer()
     // mutex unlock
     ca_mutex_unlock(g_mutexObjectList);
 
-    if (-1 != g_acceptServerFD)
+    if (-1 != caglobals.tcp.ipv4.fd)
     {
-        close(g_acceptServerFD);
-        g_acceptServerFD = -1;
+        close(caglobals.tcp.ipv4.fd);
+        caglobals.tcp.ipv4.fd = -1;
+    }
+
+    if (-1 != caglobals.tcp.ipv6.fd)
+    {
+        close(caglobals.tcp.ipv6.fd);
+        caglobals.tcp.ipv6.fd = -1;
     }
 
     CATCPDisconnectAll();
@@ -592,9 +720,9 @@ void CATCPSetPacketReceiveCallback(CATCPPacketReceivedCallback callback)
     g_packetReceivedCallback = callback;
 }
 
-void CATCPSetKeepAliveCallback(CATCPKeepAliveHandleCallback keepaliveHandler)
+void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler)
 {
-    g_keepaliveCallback = keepaliveHandler;
+    g_connectionCallback = connHandler;
 }
 
 static size_t CACheckPayloadLength(const void *data, size_t dlen)
@@ -633,8 +761,8 @@ static size_t CACheckPayloadLength(const void *data, size_t dlen)
     return payloadLen;
 }
 
-static void sendData(const CAEndpoint_t *endpoint,
-                     const void *data, size_t dlen)
+static void sendData(const CAEndpoint_t *endpoint, const void *data,
+                     size_t dlen, const char *fam)
 {
     // #1. get TCP Server object from list
     size_t index = 0;
@@ -690,7 +818,7 @@ static void sendData(const CAEndpoint_t *endpoint,
         remainLen -= len;
     } while (remainLen > 0);
 
-    OIC_LOG_V(INFO, TAG, "unicast ipv4tcp sendTo is successful: %zu bytes", dlen);
+    OIC_LOG_V(INFO, TAG, "unicast %stcp sendTo is successful: %zu bytes", fam, dlen);
 }
 
 void CATCPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
@@ -701,9 +829,13 @@ void CATCPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
 
     if (!isMulticast)
     {
-        if (caglobals.tcp.ipv4tcpenabled && (endpoint->adapter & CA_ADAPTER_TCP))
+        if (caglobals.tcp.ipv6tcpenabled && (endpoint->flags & CA_IPV6))
         {
-            sendData(endpoint, data, datalen);
+            sendData(endpoint, data, datalen, "ipv6");
+        }
+        if (caglobals.tcp.ipv4tcpenabled && (endpoint->flags & CA_IPV4))
+        {
+            sendData(endpoint, data, datalen, "ipv4");
         }
     }
 }
@@ -729,41 +861,41 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
     }
     memcpy(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr));
     svritem->sep.endpoint.port = endpoint->port;
+    svritem->sep.endpoint.flags = endpoint->flags;
+    svritem->sep.endpoint.interface = endpoint->interface;
 
     // #2. create the socket and connect to TCP server
-    if (caglobals.tcp.ipv4tcpenabled)
+    int family = (svritem->sep.endpoint.flags & CA_IPV6) ? AF_INET6 : AF_INET;
+    int fd = CATCPCreateSocket(family, svritem);
+    if (-1 == fd)
     {
-        int fd = CATCPCreateSocket(AF_INET, svritem);
-        if (-1 == fd)
+        OICFree(svritem);
+        return NULL;
+    }
+
+    // #3. add TCP connection info to list
+    svritem->fd = fd;
+    ca_mutex_lock(g_mutexObjectList);
+    if (caglobals.tcp.svrlist)
+    {
+        bool res = u_arraylist_add(caglobals.tcp.svrlist, svritem);
+        if (!res)
         {
+            OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
+            close(svritem->fd);
             OICFree(svritem);
+            ca_mutex_unlock(g_mutexObjectList);
             return NULL;
         }
+    }
+    ca_mutex_unlock(g_mutexObjectList);
 
-        // #3. add TCP connection info to list
-        svritem->fd = fd;
-        ca_mutex_lock(g_mutexObjectList);
-        if (caglobals.tcp.svrlist)
-        {
-            bool res = u_arraylist_add(caglobals.tcp.svrlist, svritem);
-            if (!res)
-            {
-                OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-                close(svritem->fd);
-                OICFree(svritem);
-                ca_mutex_unlock(g_mutexObjectList);
-                return NULL;
-            }
-        }
-        ca_mutex_unlock(g_mutexObjectList);
+    CHECKFD(fd);
 
-        CHECKFD(fd);
-
-        // pass the connection information to RI for keepalive.
-        if (g_keepaliveCallback)
-        {
-            g_keepaliveCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, true);
-        }
+    // pass the connection information to CA Common Layer.
+    if (g_connectionCallback)
+    {
+        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, true);
     }
 
     return svritem;
@@ -782,14 +914,15 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     }
     u_arraylist_remove(caglobals.tcp.svrlist, index);
     OICFree(svritem->recvData);
+
+    // pass the connection information to CA Common Layer.
+    if (g_connectionCallback)
+    {
+        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, false);
+    }
+
     OICFree(svritem);
     ca_mutex_unlock(g_mutexObjectList);
-
-    // pass the connection information to RI for keepalive.
-    if (g_keepaliveCallback)
-    {
-        g_keepaliveCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, false);
-    }
 
     return CA_STATUS_OK;
 }
@@ -814,8 +947,7 @@ void CATCPDisconnectAll()
     ca_mutex_unlock(g_mutexObjectList);
 }
 
-CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint,
-                                                    size_t *index)
+CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint, size_t *index)
 {
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", NULL);
     VERIFY_NON_NULL_RET(index, TAG, "index is NULL", NULL);
@@ -833,7 +965,8 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
 
         if (!strncmp(svritem->sep.endpoint.addr, endpoint->addr,
                      sizeof(svritem->sep.endpoint.addr))
-                && (svritem->sep.endpoint.port == endpoint->port))
+                && (svritem->sep.endpoint.port == endpoint->port)
+                && (svritem->sep.endpoint.flags & endpoint->flags))
         {
             *index = i;
             return svritem;

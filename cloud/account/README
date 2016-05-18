@@ -1,0 +1,29 @@
+This project contains the Account Server code.
+
+
+Build and Run
+
+1) Install Apache Maven if you don't have it
+
+	http://maven.apache.org
+
+2) Build a CloudStack. If you are building first time, then build the stack.
+
+	go to "stack" folder in root directory
+	$ mvn install
+
+3) Build a .jar file
+
+	$ mvn install
+
+	- The CloudAccount-0.0.1-SNAPSHOT.jar file will be placed in the "target" folder
+
+4) Run .jar file
+
+	go to "target" folder
+	$ java -jar CloudAccount-0.0.1-SNAPSHOT.jar arg1(AccountServer CoAP Server Port)
+	e.g. java -jar CloudAccount-0.0.1-SNAPSHOT.jar 5685
+
+	- Before you run a Accout server, You need to set up following steps.
+          1) Install MongoDB
+          2) Install Github certificates for github.com and *.github.com.

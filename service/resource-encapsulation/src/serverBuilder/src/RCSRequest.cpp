@@ -51,7 +51,7 @@ namespace OIC
             return m_ocRequest->getResourceUri();
         }
 
-        const std::shared_ptr< OC::OCResourceRequest >& RCSRequest::getOCRequest() const noexcept
+        std::shared_ptr< OC::OCResourceRequest > RCSRequest::getOCRequest() const noexcept
         {
             return m_ocRequest;
         }

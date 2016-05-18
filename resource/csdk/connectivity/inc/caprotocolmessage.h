@@ -217,12 +217,6 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength);
 void CADestroyTokenInternal(CAToken_t token);
 
 /**
- * destroy the ca info structure.
- * @param[in]   info            info structure  created from received  packet.
- */
-void CADestroyInfo(CAInfo_t *info);
-
-/**
  * gets message type from PDU binary data.
  * @param[in]   pdu                 pdu data.
  * @param[in]   size                size of pdu data.
@@ -260,6 +254,15 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format);
  * @return true or false.
  */
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter);
+#endif
+
+#ifdef WITH_BWT
+/**
+ * check whether blockwise transfer is supported or not.
+ * @param[in]   adapter             transport adapter type.
+ * @return true or false.
+ */
+bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter);
 #endif
 
 #ifdef __cplusplus

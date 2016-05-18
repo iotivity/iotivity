@@ -992,6 +992,8 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
+    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
+
     registrationResult = OCSetDeviceInfo(deviceInfo);
 
     if (registrationResult != OC_STACK_OK)

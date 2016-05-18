@@ -60,12 +60,10 @@ import java.util.List;
  * for updating UI.
  */
 public class ResourceContainerActivity extends Activity {
-    // private static final String LOG_TAG =
-    // ResourceContainerActivity.class.getSimpleName();
 
-    private final String                     LOG_TAG = "[ContainerSampleApp] "
-                                                             + this.getClass()
-                                                                     .getSimpleName();
+    private final String                     LOG_TAG = "[RCSampleServerApp] "
+            + this.getClass()
+            .getSimpleName();
     private static ResourceContainerActivity resourceContainerActivityInstance;
     private ResourceContainer                resourceContainerInstance;
     private static String                    logMessage;
@@ -73,9 +71,12 @@ public class ResourceContainerActivity extends Activity {
     private Context                          context;
     public ExpandableListAdapter             listAdapter;
     public ExpandableListView                expListView;
+    private int lastExpandedPosition = -1;
+
     public List<String>                      sensors;
     public List<String>                      diApiList;
     public List<String>                      bmiApiList;
+    public List<String>                      diAndroidApiList;
     HashMap<String, List<String>>            listChild;
 
     private static Handler                   mHandler;
@@ -98,10 +99,10 @@ public class ResourceContainerActivity extends Activity {
         super.onCreate(savedInstanceState);
         context = this;
 
-        if (!isWifiConnected()) {
+        /*if (!isWifiConnected()) {
             showWifiUnavailableDialog();
             return;
-        }
+        }*/
 
         configurePlatform();
         CopyAssetsToSDCard();
@@ -118,30 +119,40 @@ public class ResourceContainerActivity extends Activity {
         logs = (EditText) findViewById(R.id.log);
 
         sensors = new ArrayList<String>();
-        diApiList = new ArrayList<String>();
         bmiApiList = new ArrayList<String>();
+        diApiList = new ArrayList<String>();
+        diAndroidApiList = new ArrayList<String>();
         listChild = new HashMap<String, List<String>>();
 
         // Adding list items (header)
-        sensors.add("Discomfort Index Sensor");
         sensors.add("BMI Sensor");
-
-        // Adding child data [discomfort Index sensor]
-        diApiList.add("1. List bundle resources");
-        diApiList.add("2. Add Resource");
-        diApiList.add("3. Remove Resource");
+        sensors.add("Discomfort Index Sensor");
+        sensors.add("Android Discomfort Index Sensor");
 
         // Adding child data [BMI sensor]
-        bmiApiList.add("1. Add Bundle");
-        bmiApiList.add("2. Start Bundle");
+        bmiApiList.add("1. Add BMI sensor bundle");
+        bmiApiList.add("2. Start BMI sensor bundle");
         bmiApiList.add("3. List bundle resources");
-        bmiApiList.add("4. Add Resource ");
-        bmiApiList.add("5. Remove Resource");
-        bmiApiList.add("6. Stop Bundle");
-        bmiApiList.add("7. Remove Bundle");
+        bmiApiList.add("4. Stop BMI sensor bundle");
+        bmiApiList.add("5. Remove BMI sensor bundle");
 
-        listChild.put(sensors.get(0), diApiList);
-        listChild.put(sensors.get(1), bmiApiList);
+        // Adding child data [discomfort Index sensor]
+        diApiList.add("1. Add DI sensor bundle");
+        diApiList.add("2. Start DI sensor bundle");
+        diApiList.add("3. List bundle resources");
+        diApiList.add("4. Stop DI sensor bundle");
+        diApiList.add("5. Remove DI sensor bundle");
+
+        // Adding child data [discomfort Index sensor - android]
+        diAndroidApiList.add("1. Add Android DI sensor bundle");
+        diAndroidApiList.add("2. Start Android DI sensor bundle");
+        diAndroidApiList.add("3. List bundle resources");
+        diAndroidApiList.add("4. Stop Android DI sensor bundle");
+        diAndroidApiList.add("5. Remove Android DI sensor bundle");
+
+        listChild.put(sensors.get(0), bmiApiList);
+        listChild.put(sensors.get(1), diApiList);
+        listChild.put(sensors.get(2), diAndroidApiList);
         listAdapter = new ExpandableList(this, sensors, listChild);
 
         // getting the sd card path
@@ -204,46 +215,70 @@ public class ResourceContainerActivity extends Activity {
             }
         });
 
-        // Listener for the expandable list
+
+        expListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int groupPosition) {
+                if (lastExpandedPosition != -1
+                        && groupPosition != lastExpandedPosition) {
+                    expListView.collapseGroup(lastExpandedPosition);
+                }
+                lastExpandedPosition = groupPosition;
+            }
+        });
+
         expListView
                 .setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
 
                     @Override
                     public boolean onChildClick(ExpandableListView parent,
-                            View v, int groupPosition, int childPosition,
-                            long id) {
+                                                View v, int groupPosition, int childPosition,
+                                                long id) {
+                        BundleInformation bundleToTest;
 
-                        if (0 == groupPosition) {
-                            if (childPosition == 0) {
-                                resourceContainerInstance
-                                        .listDIBundleResources();
-                            } else if (childPosition == 1) {
-                                resourceContainerInstance.addDIResourceConfig();
-                            } else if (childPosition == 2) {
-                                resourceContainerInstance
-                                        .removeDIResourceConfig();
-                            }
-                        } else {
-                            if (childPosition == 0) {
-                                resourceContainerInstance.addBMIBundle();
-                            } else if (childPosition == 1) {
-                                resourceContainerInstance.startBMIBundle();
-                            } else if (childPosition == 2) {
-                                resourceContainerInstance
-                                        .listBMIBundleResources();
-                            } else if (childPosition == 3) {
-                                resourceContainerInstance
-                                        .addBMIResourceConfig();
-                            } else if (childPosition == 4) {
-                                resourceContainerInstance
-                                        .removeBMIResourceConfig();
-                            } else if (childPosition == 5) {
-                                resourceContainerInstance.stopBMIBundle();
-                            } else if (childPosition == 6) {
-                                resourceContainerInstance.removeBMIBundle();
-                            }
+                        switch (groupPosition) {
+                            case 0:
+                                bundleToTest = ExampleBundleDescription.BMIBundle;
+                                break;
+
+                            case 1:
+                                bundleToTest = ExampleBundleDescription.DIBundle;
+                                break;
+
+                            case 2:
+                                bundleToTest = ExampleBundleDescription.DIAndroidBundle;
+                                break;
+
+                            default:
+                                return false;
                         }
-                        return false;
+
+                        switch (childPosition) {
+                            case 0:
+                                resourceContainerInstance.addBundle(bundleToTest);
+                                break;
+
+                            case 1:
+                                resourceContainerInstance.startBundle(bundleToTest);
+                                break;
+
+                            case 2:
+                                resourceContainerInstance
+                                        .listBundleResources(bundleToTest.mBundleId);
+                                break;
+
+                            case 3:
+                                resourceContainerInstance.stopBundle(bundleToTest);
+                                break;
+
+                            case 4:
+                                resourceContainerInstance.removeBundle(bundleToTest);
+                                break;
+
+                            default:
+                                return false;
+                        }
+                        return true;
                     }
                 });
     }
@@ -305,7 +340,7 @@ public class ResourceContainerActivity extends Activity {
 
         // constructor
         public ExpandableList(Context context, List<String> dataHeader,
-                HashMap<String, List<String>> childData) {
+                              HashMap<String, List<String>> childData) {
             this.mContext = context;
             this.mListDataHeader = dataHeader;
             this.mListDataChild = childData;
@@ -327,7 +362,7 @@ public class ResourceContainerActivity extends Activity {
         // get Group View
         @Override
         public View getGroupView(int grpPosition, boolean isExpandable,
-                View changeView, ViewGroup head) {
+                                 View changeView, ViewGroup head) {
             String mainHeading = (String) getGroup(grpPosition);
             if (changeView == null) {
                 LayoutInflater flater;
@@ -373,7 +408,7 @@ public class ResourceContainerActivity extends Activity {
         // get Group View
         @Override
         public View getChildView(int grpPosition, final int childPosition,
-                boolean isLastItem, View changeView, ViewGroup head) {
+                                 boolean isLastItem, View changeView, ViewGroup head) {
 
             final String innerText = (String) getChild(grpPosition,
                     childPosition);

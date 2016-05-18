@@ -29,6 +29,11 @@ using namespace OIC::Service;
 
 namespace
 {
+    bool isStarted = false;
+    bool isFinished = false;
+
+    ResourceEncapsulationTestSimulator testObject;
+
     void onDiscoveryResource(RCSRemoteResourceObject::Ptr) { }
 }
 
@@ -44,17 +49,23 @@ protected:
     void SetUp()
     {
         TestWithMock::SetUp();
+        if(!isStarted)
+        {
+            testObject.createResource("1");
+
+            isStarted = true;
+        }
     }
 
     void TearDown()
     {
         TestWithMock::TearDown();
 
-        if (ResourceHosting::getInstance())
+        if(isFinished)
         {
-            ResourceHosting::getInstance()->stopHosting();
+            testObject.destroy();
+            isStarted = false;
         }
-
     }
 
 public:
@@ -76,20 +87,28 @@ TEST(ResourceHostingSTATICMethodTest, getInstanceAllwaysSameReturnInstance)
     EXPECT_EQ(ResourceHosting::getInstance(), ResourceHosting::getInstance());
 }
 
+TEST_F(ResourceHostingTest, startHosting)
+{
+    try
+    {
+        ResourceHosting::getInstance()->startHosting();
+    } catch (...)
+    {
+        FAIL() << "Non-Expected Exception";
+    }
+}
+
 TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
 {
-    ResourceEncapsulationTestSimulator::Ptr testObject
-        = std::make_shared<ResourceEncapsulationTestSimulator>();
-    testObject->createResource();
-
-    ResourceHosting::getInstance()->startHosting();
-    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
-
     std::string uri = "";
+    testObject.getResourceServer()->setAttribute(
+            "Temperature", RCSResourceAttributes::Value((int)0));
+    waitForCondition();
+
     mocks.OnCallFunc(onDiscoveryResource).Do(
-            [this, &uri, &testObject](RCSRemoteResourceObject::Ptr ptr)
+            [this, &uri](RCSRemoteResourceObject::Ptr ptr)
             {
-                if(ptr->getUri() == testObject->getHostedServerUri())
+                if(ptr->getUri() == testObject.getHostedServerUri())
                 {
                     uri = ptr->getUri();
                     discoveryTask->cancel();
@@ -99,37 +118,16 @@ TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
 
     discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
             RCSAddress::multicast(), "oic.r.resourcehosting", onDiscoveryResource);
-    waitForCondition(2000);
+    waitForCondition();
 
-    std::string mirroredUri = { testObject->getHostedServerUri() };
-
-    testObject->destroy();
+    std::string mirroredUri = { testObject.getHostedServerUri() };
 
     ASSERT_EQ(mirroredUri, uri);
 }
 
-TEST_F(ResourceHostingTest, startHosting)
-{
-    ResourceEncapsulationTestSimulator::Ptr testObject
-        = std::make_shared<ResourceEncapsulationTestSimulator>();
-    testObject->createResource();
-
-    ResourceHosting::getInstance()->startHosting();
-    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
-
-    testObject->destroy();
-}
 
 TEST_F(ResourceHostingTest, stopHosting)
 {
-    ResourceEncapsulationTestSimulator::Ptr testObject
-        = std::make_shared<ResourceEncapsulationTestSimulator>();
-    testObject->createResource();
-
-    ResourceHosting::getInstance()->startHosting();
-    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
-
-    testObject->destroy();
-
     ResourceHosting::getInstance()->stopHosting();
+    isFinished = true;
 }

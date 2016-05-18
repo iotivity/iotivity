@@ -255,6 +255,18 @@ void CANativeSetActivity(JNIEnv *env, jobject activity);
 jobject *CANativeGetActivity();
 
 /**
+ * get method ID for method Name and class
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   className        android class.
+ * @param[in]   methodName       android method name.
+ * @param[in]   methodFormat     method type of methodName.
+ * @return      jmethodID        iD of the method.
+ */
+jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
+                           const char* methodName,
+                           const char* methodFormat);
+
+/**
  * To Delete other Global References
  * Called during CATerminate to remove global references
  */

@@ -52,7 +52,8 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../connectivity/inc',
 		'../connectivity/api',
 		'../security/include',
-		'../security/include/internal'
+		'../security/include/internal',
+		'../security/provisioning/include'
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
@@ -97,6 +98,8 @@ if env.get('SECURED') == '1':
 		OCSRM_SRC + 'doxmresource.c',
 		OCSRM_SRC + 'credresource.c',
 		OCSRM_SRC + 'svcresource.c',
+		OCSRM_SRC + 'pconfresource.c',
+		OCSRM_SRC + 'dpairingresource.c',
 		OCSRM_SRC + 'policyengine.c',
 		OCSRM_SRC + 'psinterface.c',
 		OCSRM_SRC + 'srmresourcestrings.c',
@@ -106,7 +109,8 @@ if env.get('SECURED') == '1':
 		OCSRM_SRC + 'base64.c',
 		#pbkdf2.c is required to PIN based OxM only.
 		#But we did not use a separate build options to prevent the build command becomes complicated.
-		OCSRM_SRC + 'pbkdf2.c'
+		OCSRM_SRC + 'pbkdf2.c',
+		OCSRM_SRC + 'directpairing.c'
 		]
 else:
 	libocsrm_src = [
@@ -119,12 +123,15 @@ else:
 		OCSRM_SRC + 'doxmresource.c',
 		OCSRM_SRC + 'credresource.c',
 		OCSRM_SRC + 'svcresource.c',
+		OCSRM_SRC + 'pconfresource.c',
+		OCSRM_SRC + 'dpairingresource.c',
 		OCSRM_SRC + 'policyengine.c',
 		OCSRM_SRC + 'psinterface.c',
 		OCSRM_SRC + 'srmresourcestrings.c',
 		OCSRM_SRC + 'srmutility.c',
 		OCSRM_SRC + 'iotvticalendar.c',
-		OCSRM_SRC + 'base64.c'
+		OCSRM_SRC + 'base64.c',
+		OCSRM_SRC + 'directpairing.c'
 		]
 
 if env.get('DTLS_WITH_X509') == '1' and env.get('SECURED') == '1':

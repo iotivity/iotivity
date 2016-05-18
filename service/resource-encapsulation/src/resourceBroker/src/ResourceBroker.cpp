@@ -38,13 +38,11 @@ namespace OIC
             {
                 OIC_LOG_V(DEBUG, BROKER_TAG, "clear the ResourcePresenceList.");
                 s_presenceList->erase(s_presenceList->begin(), s_presenceList->end());
-                s_presenceList->clear();
             }
             if(s_brokerIDMap != nullptr)
             {
                 OIC_LOG_V(DEBUG, BROKER_TAG, "clear the brokerIDMap.");
                 s_brokerIDMap->erase(s_brokerIDMap->begin(), s_brokerIDMap->end());
-                s_brokerIDMap->clear();
             }
         }
 

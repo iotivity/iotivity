@@ -24,6 +24,7 @@
 #include "cJSON.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
+#include "doxmresource.h"
 #include "psinterface.h"
 #include "utlist.h"
 #include "base64.h"
@@ -48,7 +49,9 @@ static OicSecPstat_t gDefaultPstat =
     &gSm,                                     // OicSecDpom_t *sm
     0,                                        // uint16_t commitHash
 };
+
 static OicSecPstat_t    *gPstat = NULL;
+
 static OCResourceHandle gPstatHandle = NULL;
 
 void DeletePstatBinData(OicSecPstat_t* pstat)
@@ -165,7 +168,7 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     if (cJSON_Array == jsonObj->type)
     {
-        pstat->smLen = cJSON_GetArraySize(jsonObj);
+        pstat->smLen = (size_t)cJSON_GetArraySize(jsonObj);
         size_t idxx = 0;
         VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
@@ -189,6 +192,35 @@ exit:
     }
     return pstat;
 }
+
+/**
+ * Function to update persistent storage
+ */
+static bool UpdatePersistentStorage(OicSecPstat_t * pstat)
+{
+    bool bRet = false;
+
+    if (pstat)
+    {
+        // Convert pstat data into JSON for update to persistent storage
+        char *jsonStr = BinToPstatJSON(pstat);
+        if (jsonStr)
+        {
+            cJSON *jsonPstat = cJSON_Parse(jsonStr);
+            OICFree(jsonStr);
+
+            if (jsonPstat &&
+                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_PSTAT_NAME, jsonPstat)))
+            {
+                bRet = true;
+            }
+            cJSON_Delete(jsonPstat);
+        }
+    }
+
+    return bRet;
+}
+
 
 /**
  * The entity handler determines how to process a GET request.
@@ -264,18 +296,22 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
             }
         }
         // Convert pstat data into JSON for update to persistent storage
-        char *jsonStr = BinToPstatJSON(gPstat);
-        if (jsonStr)
+        if(UpdatePersistentStorage(gPstat))
         {
-            cJSON *jsonPstat = cJSON_Parse(jsonStr);
-            OICFree(jsonStr);
-            if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_PSTAT_NAME, jsonPstat))
-            {
-                ehRet = OC_EH_OK;
-            }
+            ehRet = OC_EH_OK;
         }
     }
  exit:
+    if(OC_EH_OK != ehRet)
+    {
+        /*
+          * If some error is occured while ownership transfer,
+          * ownership transfer related resource should be revert back to initial status.
+          */
+        RestoreDoxmToInitState();
+        RestorePstatToInitState();
+    }
+
     //Send payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
@@ -380,6 +416,7 @@ OCStackResult InitPstatResource()
     {
         gPstat = GetPstatDefault();
     }
+
     // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
 
@@ -402,3 +439,28 @@ OCStackResult DeInitPstatResource()
     return OCDeleteResource(gPstatHandle);
 }
 
+
+/**
+ * Function to restore pstat resurce to initial status.
+ * This function will use in case of error while ownership transfer
+ */
+void RestorePstatToInitState()
+{
+    if(gPstat)
+    {
+        OIC_LOG(INFO, TAG, "PSTAT resource will revert back to initial status.");
+
+        gPstat->cm = NORMAL;
+        gPstat->tm = NORMAL;
+        gPstat->om = SINGLE_SERVICE_CLIENT_DRIVEN;
+        if(gPstat->sm && 0 < gPstat->smLen)
+        {
+            gPstat->sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
+        }
+
+        if(!UpdatePersistentStorage(gPstat))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to revert DOXM in persistent storage");
+        }
+    }
+}

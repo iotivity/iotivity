@@ -22,7 +22,6 @@
 #include "bluez.h"
 #include "utils.h"
 
-#include "cafragmentation.h"
 #include "cagattservice.h"
 #include "logger.h"
 #include "oic_malloc.h"

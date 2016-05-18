@@ -56,7 +56,9 @@ class MediatorRichTest: public TestWithMock
 };
 
 //callbacks
-void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > easySetupStatus) {}
+void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > /*easySetupStatus*/)
+{
+}
 
 /* Test cases for easysetyup class*/
 
@@ -93,9 +95,17 @@ TEST_F(MediatorRichTest, testCreateEnrolleeDevice)
 TEST_F(MediatorRichTest, testCreateEnrolleeDeviceNegative)
 {
     RemoteEnrollee::shared_ptr remoteEnrollee = NULL;
-    ProvConfig netInfo ;
+    ProvConfig netInfo;
     WiFiOnboadingConnection onboardingConn;
     EasySetup *easysetupInstance = EasySetup::getInstance();
+
+    netInfo.connType = CT_ADAPTER_IP;
+
+    OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
+    OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
+
+    onboardingConn.isSecured = false;
+    OICStrcpy(onboardingConn.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
 
     //calling the createEnrolleeDevice
     remoteEnrollee = easysetupInstance->createEnrolleeDevice(netInfo, onboardingConn);
@@ -225,8 +235,15 @@ TEST_F(MediatorRichTest, testStartProvisioning)
     remoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo, onboardingConn);
     remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
 
-    //calling the APIs
+#ifdef REMOTE_ARDUINO_ENROLEE
     EXPECT_NO_THROW(remoteEnrollee->startProvisioning());
+
+#else
+    /* It will throw the exception
+     * as it will not able to discover the provisioning resource in the network
+     */
+    EXPECT_ANY_THROW(remoteEnrollee->startProvisioning());
+#endif
 }
 
 //startProvisioning [Negative]
@@ -247,9 +264,9 @@ TEST_F(MediatorRichTest, testStartProvisioningNegative)
 
     remoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo, onboardingConn);
 
-    /*We are not registering the EasySetupStatusHandler that is why startProvisioning
-       will throw the Exception &  we are checking the same
-    */
+    /* We are not registering the EasySetupStatusHandler, so startProvisioning
+     * will throw the Exception &  we are checking the same
+     */
     EXPECT_ANY_THROW(remoteEnrollee->startProvisioning());
 }
 
@@ -272,9 +289,21 @@ TEST_F(MediatorRichTest, testStopProvisioning)
     remoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo, onboardingConn);
     remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
 
-    remoteEnrollee->startProvisioning();
+#ifdef REMOTE_ARDUINO_ENROLEE
+        EXPECT_NO_THROW(remoteEnrollee->startProvisioning());
+        EXPECT_NO_THROW(remoteEnrollee->stopProvisioning());
 
-    EXPECT_NO_THROW(remoteEnrollee->stopProvisioning());
+#else
+    /* It will throw the exception as
+     * it will not able to discover the provisioning resource in the network
+     */
+     EXPECT_ANY_THROW(remoteEnrollee->startProvisioning());
+
+    /* It will throw an exception
+     * as internally resource will be empty [startProvisioning is not succeed]
+     */
+    EXPECT_ANY_THROW(remoteEnrollee->stopProvisioning());
+#endif
 }
 
 //stopProvisioning [Negative]
@@ -297,8 +326,8 @@ TEST_F(MediatorRichTest, testStopProvisioningNegative)
     remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
 
     /* we didn't call the start provisioning API and directly calling stopProvisioning API.
-         In this case API will throw the exception & we are checking the same.
-    */
+     * In this case API will throw the exception & we are checking the same.
+     */
     EXPECT_ANY_THROW(remoteEnrollee->stopProvisioning());
 }
 

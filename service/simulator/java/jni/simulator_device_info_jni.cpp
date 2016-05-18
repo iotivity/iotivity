@@ -47,33 +47,3 @@ void JniDeviceInfo::setFieldValue(jobject jDeviceInfo, const std::string &fieldN
     jstring valueStr = m_env->NewStringUTF(value.c_str());
     m_env->SetObjectField(jDeviceInfo, fieldID, valueStr);
 }
-
-void onDeviceInfoReceived(jobject listener, const std::string &hostUri, DeviceInfo &deviceInfo)
-{
-    JNIEnv *env = getEnv();
-    if (!env)
-        return;
-
-    jclass listenerCls = env->GetObjectClass(listener);
-    jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onDeviceFound",
-                                 "(Ljava/lang/String;Lorg/oic/simulator/DeviceInfo;)V");
-
-
-    jstring jHostUri = env->NewStringUTF(hostUri.c_str());
-    jobject jDeviceInfo = JniDeviceInfo(env).toJava(deviceInfo);
-    if (!jDeviceInfo)
-    {
-        releaseEnv();
-        return;
-    }
-
-    env->CallVoidMethod(listener, listenerMethodId, jHostUri, jDeviceInfo);
-    if (env->ExceptionCheck())
-    {
-        releaseEnv();
-        return;
-    }
-
-    releaseEnv();
-}
-

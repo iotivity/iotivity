@@ -104,6 +104,10 @@ public class EasySetupService {
 
     public synchronized void startSetup(final EnrolleeDevice enrolledevice) throws IOException,ESException {
 
+        if (null == enrolledevice) {
+            throw new ESException("enrolledevice is NULL");
+        }
+
         mEnrolleeDeviceList.add(enrolledevice);
 
         // Starts the provisioning directly if the device is already on boarded on the network.
@@ -172,6 +176,11 @@ public class EasySetupService {
      * @param enrolleedevice Device to be enrolled in network
      */
     public synchronized void stopSetup(EnrolleeDevice enrolleedevice) throws ESException {
+
+        if (null == enrolleedevice) {
+            throw new ESException("enrolledevice is NULL");
+        }
+
         if (mEnrolleeDeviceList.contains(enrolleedevice)) {
             if (enrolleedevice.mState == EnrolleeState.DEVICE_ON_BOARDING_STATE) {
                 Log.i(TAG, "stopOnBoardingProcess for enrolleedevice");

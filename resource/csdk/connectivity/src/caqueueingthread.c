@@ -92,28 +92,6 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         OICFree(message);
     }
 
-    // remove all remained list data.
-    while (u_queue_get_size(thread->dataQueue) > 0)
-    {
-        // get data
-        u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
-
-        // free
-        if(NULL != message)
-        {
-            if (NULL != thread->destroy)
-            {
-                thread->destroy(message->msg, message->size);
-            }
-            else
-            {
-                OICFree(message->msg);
-            }
-
-            OICFree(message);
-        }
-    }
-
     ca_mutex_lock(thread->threadMutex);
     ca_cond_signal(thread->threadCond);
     ca_mutex_unlock(thread->threadMutex);
@@ -261,6 +239,29 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
     ca_mutex_free(thread->threadMutex);
     thread->threadMutex = NULL;
     ca_cond_free(thread->threadCond);
+
+    // remove all remained list data.
+    while (u_queue_get_size(thread->dataQueue) > 0)
+    {
+        // get data
+        u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
+
+        // free
+        if(NULL != message)
+        {
+            if (NULL != thread->destroy)
+            {
+                thread->destroy(message->msg, message->size);
+            }
+            else
+            {
+                OICFree(message->msg);
+            }
+
+            OICFree(message);
+        }
+    }
+
     u_queue_delete(thread->dataQueue);
 
     return CA_STATUS_OK;

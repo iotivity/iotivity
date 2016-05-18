@@ -58,9 +58,9 @@ static CAQueueingThread_t *g_sendQueueHandle = NULL;
 static CANetworkPacketReceivedCallback g_packetReceivedCallback = NULL;
 
 /**
- *  Network Changed Callback to CA
+ *  Adapter Changed Callback to CA
  */
-static CANetworkChangeCallback g_connectionStateCallback = NULL;
+static CAAdapterChangeCallback g_adapterStateCallback = NULL;
 
 /**
  * error Callback to CA adapter
@@ -132,6 +132,9 @@ void CANFCDeinitializeQueueHandles()
 void CANFCConnectionStateCB(const char *nfcAddress, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "Currently Not Supported");
+
+    (void)nfcAddress;
+    (void)status;
 }
 
 void CANFCPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data, uint32_t dataLength)
@@ -174,16 +177,16 @@ void CANFCErrorHandler(const CAEndpoint_t *endpoint, const void *data, uint32_t 
 
 CAResult_t CAInitializeNFC(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback packetReceivedCallback,
-                           CANetworkChangeCallback connectionStateCallback,
+                           CAAdapterChangeCallback netCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(registerCallback, TAG, "registerCallback");
     VERIFY_NON_NULL(packetReceivedCallback, TAG, "packetReceivedCallback");
-    VERIFY_NON_NULL(connectionStateCallback, TAG, "connectionStateCallback");
+    VERIFY_NON_NULL(netCallback, TAG, "netCallback");
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
 
-    g_connectionStateCallback = connectionStateCallback;
+    g_adapterStateCallback = netCallback;
     g_packetReceivedCallback = packetReceivedCallback;
     g_errorCallback = errorCallback;
 
@@ -402,6 +405,7 @@ void CANFCDataDestroyer(void *data, uint32_t size)
     CANFCData *nfcData = (CANFCData *) data;
 
     CAFreeNFCData(nfcData);
+    (void)size;
 }
 
 CAResult_t CAGetNFCInterfaceInformation(CAEndpoint_t **info, uint32_t *size)

@@ -30,6 +30,7 @@
 #include "credresource.h"
 #include "utlist.h"
 #include "aclresource.h" //Note: SRM internal header
+#include "pconfresource.h"
 
 #define TAG "OCPMAPI"
 
@@ -75,7 +76,7 @@ OCStackResult OCInitPM(const char* dbPath)
  */
 OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
-    if( ppList == NULL || *ppList != NULL)
+    if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -94,7 +95,7 @@ OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t 
  */
 OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
-    if( ppList == NULL || *ppList != NULL)
+    if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -176,6 +177,22 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
     return SRPProvisionCredentials(ctx, type, keySize,
                                       pDev1, pDev2, resultCallback);
 
+}
+
+/**
+ * this function sends Direct-Pairing Configuration to a device.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] pconf PCONF pointer.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf,
+                             OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
 }
 
 /*
@@ -604,7 +621,7 @@ OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
 {
     //TODO will be replaced by more efficient logic
     if (pOwnedDevList == NULL || *pOwnedDevList != NULL || pUnownedDevList == NULL
-         || *pUnownedDevList != NULL)
+         || *pUnownedDevList != NULL || 0 == waittime)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -713,6 +730,16 @@ void OCDeleteUuidList(OCUuidList_t* pList)
 void OCDeleteACLList(OicSecAcl_t* pAcl)
 {
     DeleteACLList(pAcl);
+}
+
+/**
+ * This function deletes PDACL data.
+ *
+ * @param pPdAcl Pointer to OicSecPdAcl_t structure.
+ */
+void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
+{
+    FreePdAclList(pPdAcl);
 }
 
 

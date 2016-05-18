@@ -69,13 +69,10 @@ void CALEGattCharacteristicWriteCb(int result, bt_gatt_h reqHandle, void *userDa
  * This is the callback which will be called whenever there is change in gatt connection
  * with server(Connected/Disconnected)
  *
- * @param[in]  result        The result of connection state change.
  * @param[in]  connected     State of connection
  * @param[in]  remoteAddress Mac address of the remote device in which we made connection.
- * @param[in]  userData      The user data passed from the request function
  */
-void CALEGattConnectionStateChangedCb(int result, bool connected,
-                                      const char *remoteAddress,void *userData);
+void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress);
 
 /**
  * This is the callback which will be called when LE advertisement is found.

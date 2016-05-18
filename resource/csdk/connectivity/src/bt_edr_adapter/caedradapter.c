@@ -29,70 +29,59 @@
 #include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "logger.h"
-#include "cafragmentation.h"
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"
 #include "pdu.h"
 
 /**
- * @var EDR_ADAPTER_TAG
- * @brief Logging tag for module name.
+ * Logging tag for module name.
  */
-#define EDR_ADAPTER_TAG "OIC_CA_EDR_ADAP"
+#define TAG "OIC_CA_EDR_ADAP"
 
 /**
- * @var g_edrThreadPool
- * @brief Reference to threadpool.
+ * Reference to threadpool.
  */
 static ca_thread_pool_t g_edrThreadPool = NULL;
 
 /**
- * @var g_sendQueueHandle
- * @brief Queue handle for Send Data
+ * Queue handle for Send Data
  */
 static CAQueueingThread_t *g_sendQueueHandle = NULL;
 
 /**
- * @var g_recvQueueHandle
- * @brief Queue handle for Receive Data
+ * Queue handle for Receive Data
  */
 static CAQueueingThread_t *g_recvQueueHandle = NULL;
 
 /**
- * @var g_adapterState
- * @brief Storing Adapter state information
+ * Storing Adapter state information
  */
 static bool g_adapterState = true;
 
 /**
- * @var g_networkPacketReceivedCallback
- * @brief Maintains the callback to be notified on receival of network packets from other
- *          Bluetooth devices.
+ * Maintains the callback to be notified on receival of network packets from other
+ * Bluetooth devices.
  */
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
 /**
- * @var g_networkChangeCallback
- * @brief Maintains the callback to be notified on local bluetooth adapter status change.
+ * Maintains the callback to be notified on local bluetooth adapter status change.
  */
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
+static CAAdapterChangeCallback g_adapterChangeCallback = NULL;
 
 /**
- * @var g_errorCallback
- * @brief error Callback to CA adapter
+ * error Callback to CA adapter
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
 /**
- * @var g_localConnectivity
- * @brief Information of local Bluetooth adapter.
+ * Information of local Bluetooth adapter.
  */
 static CAEndpoint_t *g_localConnectivity = NULL;
 
 /**
- * @var g_serverState
- * @brief Storing Rfcommserver state information
+ * Storing Rfcommserver state information
  */
 static bool g_serverState = false;
 
@@ -140,36 +129,47 @@ static void CAEDRErrorHandler(const char *remoteAddress, const uint8_t *data,
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback packetReceivedCallback,
-                           CANetworkChangeCallback networkStateChangeCallback,
+                           CAAdapterChangeCallback netCallback,
+                           CAConnectionChangeCallback connCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     // Input validation
-    VERIFY_NON_NULL(registerCallback, EDR_ADAPTER_TAG, "register callback is NULL");
-    VERIFY_NON_NULL(packetReceivedCallback, EDR_ADAPTER_TAG, "data receive callback is NULL");
-    VERIFY_NON_NULL(networkStateChangeCallback, EDR_ADAPTER_TAG,
-                    "network state change callback is NULL");
-    VERIFY_NON_NULL(handle, EDR_ADAPTER_TAG, "Thread pool handle is NULL");
+    VERIFY_NON_NULL(registerCallback, TAG, "register callback is NULL");
+    VERIFY_NON_NULL(packetReceivedCallback, TAG, "data receive callback is NULL");
+    VERIFY_NON_NULL(netCallback, TAG, "adapter state change callback is NULL");
+    VERIFY_NON_NULL(connCallback, TAG, "connection state change callback is NULL");
+    VERIFY_NON_NULL(handle, TAG, "Thread pool handle is NULL");
 
     // Register the callbacks
-
     g_edrThreadPool = handle;
     g_networkPacketReceivedCallback = packetReceivedCallback;
-    g_networkChangeCallback = networkStateChangeCallback;
+    g_adapterChangeCallback = netCallback;
     g_errorCallback = errorCallback;
 
     // Initialize EDR Network Monitor
-    CAResult_t err = CAEDRInitializeNetworkMonitor(handle);
-    if (CA_STATUS_OK != err)
+    CAResult_t res = CAEDRInitializeNetworkMonitor(handle);
+    if (CA_STATUS_OK != res)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDR N/w Monitor Initialize failed!, error number [%d]",
-                  err);
-        return err;
+        OIC_LOG_V(ERROR, TAG, "EDR N/w Monitor Initialize failed!, error number [%d]", res);
+        return res;
     }
 
     CAEDRSetNetworkChangeCallback(CAEDRNotifyNetworkStatus);
     CAEDRSetPacketReceivedCallback(CAAdapterRecvData);
     CAEDRSetErrorHandler(CAEDRErrorHandler);
-    CAEDRInitializeClient(handle);
+    res = CAEDRClientInitialize();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "EDR Client Initialize failed, error number [%d]", res);
+        return res;
+    }
+
+    res = CAEDRServerInitialize(handle);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "EDR Server Initialize failed, error number [%d]", res);
+        return res;
+    }
 
     static const CAConnectivityHandler_t handler =
         {
@@ -187,7 +187,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
         };
     registerCallback(handler);
 
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -197,34 +197,34 @@ CAResult_t CAStartEDR()
     CAResult_t ret = CAEDRStartNetworkMonitor();
     if (CA_STATUS_OK != ret)
     {
-       OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Start n/w monitor");
+       OIC_LOG(ERROR, TAG, "Failed to Start n/w monitor");
     }
 
     // Get Bluetooth adapter state
     bool adapterState = false;
     if (CA_STATUS_OK != CAEDRGetAdapterEnableState(&adapterState))
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to get adapter enable state");
+        OIC_LOG(ERROR, TAG, "Failed to get adapter enable state");
         return CA_STATUS_FAILED;
     }
 
     if (false == adapterState)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Bluetooth adapter is disabled!");
+        OIC_LOG(ERROR, TAG, "Bluetooth adapter is disabled!");
         g_adapterState = false;
         return CA_ADAPTER_NOT_ENABLED;
     }
 
     if (CA_STATUS_OK != (ret = CAEDRClientSetCallbacks()))
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Start Network Monitor failed!, error number [%d] ",
+        OIC_LOG_V(ERROR, TAG, "Start Network Monitor failed!, error number [%d] ",
                   ret);
     }
 
     // Initialize Send/Receive data message queues
     if (CA_STATUS_OK != (ret = CAEDRInitializeQueueHandlers()))
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
+        OIC_LOG_V(ERROR, TAG,
                   "CAAdapterInitializeQueues failed!, error number [%d] ", ret);
         CATerminateEDR();
         return CA_STATUS_FAILED;
@@ -233,7 +233,7 @@ CAResult_t CAStartEDR()
     // Start Send/Receive data message queues
     if (CA_STATUS_OK != (ret = CAAdapterStartQueue()))
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "CAAdapterStartQueue failed!, error number [%d] ", ret);
+        OIC_LOG_V(ERROR, TAG, "CAAdapterStartQueue failed!, error number [%d] ", ret);
     }
 
     return ret;
@@ -251,6 +251,15 @@ CAResult_t CAStopEDRListeningServer()
 
 CAResult_t CAStartEDRDiscoveryServer()
 {
+#ifdef __TIZEN__
+    // Start device discovery
+    CAResult_t result = CAEDRStartDeviceDiscovery();
+    if(CA_STATUS_OK != result)
+    {
+        OIC_LOG(DEBUG, TAG, "Failed to Start Device discovery");
+    }
+#endif
+
     return CAStartServer();
 }
 
@@ -258,18 +267,18 @@ int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *dat
                              uint32_t dataLength)
 {
     // Input validation
-    VERIFY_NON_NULL_RET(remoteEndpoint, EDR_ADAPTER_TAG, "Remote endpoint is null", -1);
-    VERIFY_NON_NULL_RET(data, EDR_ADAPTER_TAG, "Data is null", -1);
+    VERIFY_NON_NULL_RET(remoteEndpoint, TAG, "Remote endpoint is null", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "Data is null", -1);
 
     if (0 == dataLength)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: data length is zero!");
+        OIC_LOG(ERROR, TAG, "Invalid input: data length is zero!");
         return -1;
     }
 
     if (0 == strlen(remoteEndpoint->addr))
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: EDR Address is empty!");
+        OIC_LOG(ERROR, TAG, "Invalid input: EDR Address is empty!");
         return -1;
     }
 
@@ -279,7 +288,7 @@ int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *dat
     CAResult_t err = CAAdapterSendData(address, serviceUUID, data, dataLength, &sentLength);
     if (CA_STATUS_OK != err)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Send unicast data failed!, error num [%d]", err);
+        OIC_LOG_V(ERROR, TAG, "Send unicast data failed!, error num [%d]", err);
         g_errorCallback(remoteEndpoint, data, dataLength, err);
         return -1;
     }
@@ -289,14 +298,14 @@ int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *dat
 
 int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN - CASendEDRMulticastData");
+    OIC_LOG(DEBUG, TAG, "IN - CASendEDRMulticastData");
 
     // Input validation
-    VERIFY_NON_NULL_RET(data, EDR_ADAPTER_TAG, "Data is null", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "Data is null", -1);
 
     if (0 == dataLength)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: data length is zero!");
+        OIC_LOG(ERROR, TAG, "Invalid input: data length is zero!");
         return -1;
     }
 
@@ -305,25 +314,24 @@ int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, u
     CAResult_t err = CAAdapterSendData(NULL, serviceUUID, data, dataLength, &sentLen);
     if (CA_STATUS_OK != err)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Send multicast data failed!, error num [%d]", err);
+        OIC_LOG_V(ERROR, TAG, "Send multicast data failed!, error num [%d]", err);
         g_errorCallback(endpoint, data, dataLength, err);
         return -1;
     }
 
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT - CASendEDRMulticastData");
+    OIC_LOG(DEBUG, TAG, "OUT - CASendEDRMulticastData");
     return sentLen;
 }
 
 CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
-    VERIFY_NON_NULL(info, EDR_ADAPTER_TAG, "LocalConnectivity info is null");
+    VERIFY_NON_NULL(info, TAG, "LocalConnectivity info is null");
 
     CAResult_t err = CA_STATUS_OK;
     *size = 0;
     if (CA_STATUS_OK != (err = CAEDRGetInterfaceInformation(info)))
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
-                  "Failed to get local interface information!, error num [%d]", err);
+        OIC_LOG_V(ERROR, TAG, "Failed to get local interface information!, error num [%d]", err);
         return err;
     }
 
@@ -365,7 +373,7 @@ void CATerminateEDR()
     CAAdapterTerminateQueues();
 
     g_networkPacketReceivedCallback = NULL;
-    g_networkChangeCallback = NULL;
+    g_adapterChangeCallback = NULL;
 
     // Terminate thread pool
     g_edrThreadPool = NULL;
@@ -385,16 +393,16 @@ CAResult_t CAStartServer()
 {
     if (false == g_adapterState)
     {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Bluetooth adapter is disabled!");
+        OIC_LOG(DEBUG, TAG, "Bluetooth adapter is disabled!");
         // Setting g_serverState for starting Rfcommserver when adapter starts
         g_serverState = true;
         return CA_STATUS_OK;
     }
 
     CAResult_t err = CA_STATUS_OK;
-    if (CA_STATUS_OK != (err = CAEDRServerStart(g_edrThreadPool)))
+    if (CA_STATUS_OK != (err = CAEDRServerStart()))
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to start RFCOMM server!, error num [%d]",
+        OIC_LOG_V(ERROR, TAG, "Failed to start RFCOMM server!, error num [%d]",
                   err);
         return err;
     }
@@ -407,7 +415,7 @@ CAResult_t CAEDRInitializeQueueHandlers()
     if (CA_STATUS_OK == CAEDRInitializeSendHandler()
         && CA_STATUS_OK == CAEDRInitializeReceiveHandler())
     {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Queue is initialized!");
+        OIC_LOG(DEBUG, TAG, "Queue is initialized!");
         return CA_STATUS_OK;
     }
 
@@ -419,21 +427,21 @@ CAResult_t CAEDRInitializeSendHandler()
     // Check if the message queue is already initialized
     if (g_sendQueueHandle)
     {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Already queue is initialized!");
+        OIC_LOG(DEBUG, TAG, "Already queue is initialized!");
         return CA_STATUS_OK;
     }
 
     g_sendQueueHandle = (CAQueueingThread_t *) OICMalloc(sizeof(CAQueueingThread_t));
     if (!g_sendQueueHandle)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Memory allocation failed!");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
     if (CA_STATUS_OK != CAQueueingThreadInitialize(g_sendQueueHandle, g_edrThreadPool,
                                                    CAAdapterDataSendHandler, CAEDRDataDestroyer))
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Initialize send queue thread");
+        OIC_LOG(ERROR, TAG, "Failed to Initialize send queue thread");
         return CA_STATUS_FAILED;
     }
     return CA_STATUS_OK;
@@ -444,14 +452,14 @@ CAResult_t CAEDRInitializeReceiveHandler()
     // Check if the message queue is already initialized
     if (g_recvQueueHandle)
     {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Already queue is initialized!");
+        OIC_LOG(DEBUG, TAG, "Already queue is initialized!");
         return CA_STATUS_OK;
     }
 
     g_recvQueueHandle = (CAQueueingThread_t *) OICMalloc(sizeof(CAQueueingThread_t));
     if (!g_recvQueueHandle)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Memory allocation failed!");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -460,7 +468,7 @@ CAResult_t CAEDRInitializeReceiveHandler()
                                                    CAAdapterDataReceiverHandler,
                                                    CAEDRDataDestroyer))
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Initialize send queue thread");
+        OIC_LOG(ERROR, TAG, "Failed to Initialize send queue thread");
         OICFree(g_recvQueueHandle);
         g_recvQueueHandle = NULL;
         return CA_STATUS_FAILED;
@@ -485,25 +493,25 @@ void CAAdapterTerminateQueues()
 
 void CAAdapterDataSendHandler(void *context)
 {
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN - CAAdapterDataSendHandler");
+    OIC_LOG(DEBUG, TAG, "IN - CAAdapterDataSendHandler");
 
     CAEDRData *message = (CAEDRData *) context;
     if (!message)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to get message!");
+        OIC_LOG(ERROR, TAG, "Failed to get message!");
         return;
     }
 
     if (!message->remoteEndpoint)
     {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "remoteEndpoint is not available");
+        OIC_LOG(DEBUG, TAG, "remoteEndpoint is not available");
         return;
     }
 
     const char *remoteAddress = message->remoteEndpoint->addr;
     if(!remoteAddress)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDR Send Message error");
+        OIC_LOG(ERROR, TAG, "EDR Send Message error");
         //Error cannot be sent if remote address is NULL
         return;
     }
@@ -511,12 +519,12 @@ void CAAdapterDataSendHandler(void *context)
     CAResult_t result = CAEDRClientSendData(remoteAddress, message->data, message->dataLen);
     if(CA_STATUS_OK != result)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "CAEDRClientSendData API failed");
+        OIC_LOG(ERROR, TAG, "CAEDRClientSendData API failed");
         CAEDRErrorHandler(remoteAddress, message->data, message->dataLen, result);
         return;
     }
 
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAEDRClientSendData(const char *remoteAddress, const uint8_t *data,
@@ -530,18 +538,18 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress, const uint8_t *data,
         result = CAEDRClientSendUnicastData(remoteAddress, data, dataLength);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to send unicast data !");
+            OIC_LOG(ERROR, TAG, "Failed to send unicast data !");
             return result;
         }
     }
     else
     {
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "sending multicast data : %s", data);
+        OIC_LOG_V(DEBUG, TAG, "sending multicast data : %s", data);
         result = CAEDRClientSendMulticastData(data, dataLength);
 
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to send multicast data !");
+            OIC_LOG(ERROR, TAG, "Failed to send multicast data !");
             return result;
         }
     }
@@ -550,18 +558,18 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress, const uint8_t *data,
 
 void CAAdapterDataReceiverHandler(void *context)
 {
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN_CAAdapterDataReceiverHandler");
+    OIC_LOG(DEBUG, TAG, "IN_CAAdapterDataReceiverHandler");
 
     if (NULL == g_networkPacketReceivedCallback)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "g_networkPacketReceivedCallback is NULL");
+        OIC_LOG(ERROR, TAG, "g_networkPacketReceivedCallback is NULL");
         return;
     }
 
     CAEDRData *message = (CAEDRData *) context;
     if (NULL == message || NULL == message->remoteEndpoint)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to get message!");
+        OIC_LOG(ERROR, TAG, "Failed to get message!");
         return;
     }
 
@@ -570,12 +578,21 @@ void CAAdapterDataReceiverHandler(void *context)
                                                           message->remoteEndpoint->addr,
                                                           0);
 
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
-    g_networkPacketReceivedCallback(remoteEndpoint, message->data, message->dataLen);
+    if (!remoteEndpoint)
+    {
+        OIC_LOG(ERROR, TAG, "remoteEndpoint is NULL");
+        return;
+    }
+
+    OIC_LOG(DEBUG, TAG, "Sending data up !");
+
+    const CASecureEndpoint_t sep = { .endpoint = *remoteEndpoint };
+
+    g_networkPacketReceivedCallback(&sep, message->data, message->dataLen);
 
     CAFreeEndpoint(remoteEndpoint);
 
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT_CAAdapterDataReceiverHandler");
+    OIC_LOG(DEBUG, TAG, "OUT_CAAdapterDataReceiverHandler");
 }
 
 CAResult_t CAAdapterStartQueue()
@@ -583,7 +600,7 @@ CAResult_t CAAdapterStartQueue()
     // Start send queue thread
     if (CA_STATUS_OK != CAQueueingThreadStart(g_sendQueueHandle))
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Start Send Data Thread");
+        OIC_LOG(ERROR, TAG, "Failed to Start Send Data Thread");
         CAEDRClientUnsetCallbacks();
         //Disconnect all the client connections
         CAEDRClientDisconnectAll();
@@ -593,7 +610,7 @@ CAResult_t CAAdapterStartQueue()
     // Start receive queue thread
     if (CA_STATUS_OK != CAQueueingThreadStart(g_recvQueueHandle))
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Start Receive Data Thread");
+        OIC_LOG(ERROR, TAG, "Failed to Start Receive Data Thread");
         CAEDRClientUnsetCallbacks();
         //Disconnect all the client connections
         CAEDRClientDisconnectAll();
@@ -619,14 +636,14 @@ void CAAdapterRecvData(const char *remoteAddress, const uint8_t *data, uint32_t 
 {
     if (false == g_adapterState)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth adapter is disabled!");
+        OIC_LOG_V(ERROR, TAG, "Bluetooth adapter is disabled!");
         *sentLength = 0;
         return;
     }
 
     // Input validation
-    VERIFY_NON_NULL_VOID(data, EDR_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL_VOID(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
+    VERIFY_NON_NULL_VOID(data, TAG, "Data is null");
+    VERIFY_NON_NULL_VOID(sentLength, TAG, "Sent data length holder is null");
 
     // Create remote endpoint
     CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
@@ -634,7 +651,7 @@ void CAAdapterRecvData(const char *remoteAddress, const uint8_t *data, uint32_t 
                                                           remoteAddress, 0);
     if (NULL == remoteEndpoint)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create remote endpoint !");
+        OIC_LOG(ERROR, TAG, "Failed to create remote endpoint !");
         return;
     }
 
@@ -651,14 +668,14 @@ void CAEDRErrorHandler(const char *remoteAddress, const uint8_t *data,
                        uint32_t dataLength, CAResult_t result)
 {
     // Input validation
-    VERIFY_NON_NULL_VOID(data, EDR_ADAPTER_TAG, "Data is null");
+    VERIFY_NON_NULL_VOID(data, TAG, "Data is null");
 
     // Create remote endpoint
     CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(0, CA_ADAPTER_RFCOMM_BTEDR,
                                                            remoteAddress, 0);
     if (!remoteEndpoint)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create remote endpoint !");
+        OIC_LOG(ERROR, TAG, "Failed to create remote endpoint !");
         return;
     }
 
@@ -671,18 +688,18 @@ void CAEDRErrorHandler(const char *remoteAddress, const uint8_t *data,
 CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID, const uint8_t *data,
                              uint32_t dataLength, uint32_t *sentLength)
 {
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN - CAAdapterSendData");
+    OIC_LOG(DEBUG, TAG, "IN - CAAdapterSendData");
 
     if (false == g_adapterState)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Bluetooth adapter is disabled!");
+        OIC_LOG(ERROR, TAG, "Bluetooth adapter is disabled!");
         *sentLength = 0;
         return CA_ADAPTER_NOT_ENABLED;
     }
     // Input validation
-    VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
-    VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
+    VERIFY_NON_NULL(serviceUUID, TAG, "service UUID is null");
+    VERIFY_NON_NULL(data, TAG, "Data is null");
+    VERIFY_NON_NULL(sentLength, TAG, "Sent data length holder is null");
 
     // Create remote endpoint
     CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
@@ -690,7 +707,7 @@ CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID,
                                                           remoteAddress, 0);
     if (NULL == remoteEndpoint)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create remote endpoint !");
+        OIC_LOG(ERROR, TAG, "Failed to create remote endpoint !");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -702,7 +719,7 @@ CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID,
     // Free remote endpoint
     CAFreeEndpoint(remoteEndpoint);
 
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT - CAAdapterSendData");
+    OIC_LOG(DEBUG, TAG, "OUT - CAAdapterSendData");
     return CA_STATUS_OK;
 }
 
@@ -722,13 +739,13 @@ void CAEDRNotifyNetworkStatus(CANetworkStatus_t status)
             bool adapterState = false;
             if (CA_STATUS_OK != CAEDRGetAdapterEnableState(&adapterState))
             {
-                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to get adapter enable state");
+                OIC_LOG(ERROR, TAG, "Failed to get adapter enable state");
                 return;
             }
 
             if (false == adapterState)
             {
-                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Bluetooth adapter is disabled!");
+                OIC_LOG(ERROR, TAG, "Bluetooth adapter is disabled!");
                 g_adapterState = false;
                 return;
             }
@@ -749,7 +766,7 @@ void CAEDRNotifyNetworkStatus(CANetworkStatus_t status)
     }
 
     // Notify to upper layer
-    if (g_networkChangeCallback && g_localConnectivity && g_edrThreadPool)
+    if (g_adapterChangeCallback && g_localConnectivity && g_edrThreadPool)
     {
         // Add notification task to thread pool
         CAEDRNetworkEvent *event = CAEDRCreateNetworkEvent(g_localConnectivity, status);
@@ -758,7 +775,7 @@ void CAEDRNotifyNetworkStatus(CANetworkStatus_t status)
             if (CA_STATUS_OK != ca_thread_pool_add_task(g_edrThreadPool,
                                                         CAEDROnNetworkStatusChanged,event))
             {
-                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create threadpool!");
+                OIC_LOG(ERROR, TAG, "Failed to create threadpool!");
                 return;
             }
         }
@@ -769,16 +786,16 @@ void CAEDROnNetworkStatusChanged(void *context)
 {
     if (NULL == context)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "context is NULL!");
+        OIC_LOG(ERROR, TAG, "context is NULL!");
         return;
     }
 
     CAEDRNetworkEvent *networkEvent = (CAEDRNetworkEvent *) context;
 
     // Notify to upper layer
-    if (g_networkChangeCallback)
+    if (g_adapterChangeCallback)
     {
-        g_networkChangeCallback(networkEvent->info, networkEvent->status);
+        g_adapterChangeCallback(networkEvent->info->adapter, networkEvent->status);
     }
 
     // Free the created Network event
@@ -788,13 +805,13 @@ void CAEDROnNetworkStatusChanged(void *context)
 CAEDRNetworkEvent *CAEDRCreateNetworkEvent(CAEndpoint_t *connectivity,
                                            CANetworkStatus_t status)
 {
-    VERIFY_NON_NULL_RET(connectivity, EDR_ADAPTER_TAG, "connectivity is NULL", NULL);
+    VERIFY_NON_NULL_RET(connectivity, TAG, "connectivity is NULL", NULL);
 
     // Create CAEDRNetworkEvent
     CAEDRNetworkEvent *event = (CAEDRNetworkEvent *) OICMalloc(sizeof(CAEDRNetworkEvent));
     if (NULL == event)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to allocate memory to network event!");
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory to network event!");
         return NULL;
     }
 
@@ -819,7 +836,7 @@ CAEDRData *CACreateEDRData(const CAEndpoint_t *remoteEndpoint,
     CAEDRData *edrData = (CAEDRData *) OICCalloc(1, sizeof(*edrData));
     if (!edrData)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Memory allocation failed!");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
         return NULL;
     }
 
@@ -828,7 +845,7 @@ CAEDRData *CACreateEDRData(const CAEndpoint_t *remoteEndpoint,
     edrData->data = OICMalloc(dataLength);
     if (NULL == edrData->data)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Memory allocation failed!");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
         CAFreeEDRData(edrData);
         return NULL;
     }
@@ -840,7 +857,7 @@ CAEDRData *CACreateEDRData(const CAEndpoint_t *remoteEndpoint,
 
 void CAFreeEDRData(CAEDRData *edrData)
 {
-    VERIFY_NON_NULL_VOID(edrData, EDR_ADAPTER_TAG, "edrData is NULL");
+    VERIFY_NON_NULL_VOID(edrData, TAG, "edrData is NULL");
 
     CAFreeEndpoint(edrData->remoteEndpoint);
     OICFree(edrData->data);
@@ -851,7 +868,7 @@ void CAEDRDataDestroyer(void *data, uint32_t size)
 {
     if ((size_t)size < sizeof(CAEDRData))
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Destroy data too small %p %d", data, size);
+        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
     }
     CAEDRData *edrdata = (CAEDRData *) data;
 

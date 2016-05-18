@@ -67,8 +67,11 @@ samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ocserverbasicops = samples_env.Program('ocserverbasicops', ['common.cpp', 'ocserverbasicops.cpp'])
 occlientbasicops = samples_env.Program('occlientbasicops', ['common.cpp', 'occlientbasicops.cpp'])
 ocamsservice = samples_env.Program('ocamsservice', ['common.cpp', 'ocamsservice.cpp'])
-
-Alias("samples", [ocserverbasicops, occlientbasicops, ocamsservice])
+if env.get('SECURED') == '1':
+	occlientdirectpairing = samples_env.Program('occlientdirectpairing', 'occlientdirectpairing.cpp')
+	Alias("samples", [ocserverbasicops, occlientbasicops, ocamsservice, occlientdirectpairing])
+else:
+	Alias("samples", [ocserverbasicops, occlientbasicops, ocamsservice])
 
 env.AppendTarget('samples')
 
@@ -82,4 +85,7 @@ samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_svr_db_client.json'))
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_amss_db.json'))
+if env.get('SECURED') == '1':
+	samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
+		sec_samples_src_dir + 'oic_svr_db_client_directpairing.json'))
 

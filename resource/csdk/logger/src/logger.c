@@ -52,11 +52,15 @@
 
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
-
-static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO, OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
-
 #endif
-static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#ifdef __ANDROID__
+#elif defined __linux__ || defined __APPLE__
+static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
+                                      OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
+#endif
+
+// Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
@@ -95,8 +99,48 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 #endif
 #endif // __ANDROID__
 
-
 #ifndef ARDUINO
+
+/**
+ * Output the contents of the specified buffer (in hex) with the specified priority level.
+ *
+ * @param level      - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param tag        - Module name
+ * @param buffer     - pointer to buffer of bytes
+ * @param bufferSize - max number of byte in buffer
+ */
+void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize)
+{
+    if (!buffer || !tag || (bufferSize == 0))
+    {
+        return;
+    }
+
+    // No idea why the static initialization won't work here, it seems the compiler is convinced
+    // that this is a variable-sized object.
+    char lineBuffer[LINE_BUFFER_SIZE];
+    memset(lineBuffer, 0, sizeof lineBuffer);
+    int lineIndex = 0;
+    int i;
+    for (i = 0; i < bufferSize; i++)
+    {
+        // Format the buffer data into a line
+        snprintf(&lineBuffer[lineIndex*3], sizeof(lineBuffer)-lineIndex*3, "%02X ", buffer[i]);
+        lineIndex++;
+        // Output 16 values per line
+        if (((i+1)%16) == 0)
+        {
+            OCLogv(level, tag, "%s", lineBuffer);
+            memset(lineBuffer, 0, sizeof lineBuffer);
+            lineIndex = 0;
+        }
+    }
+    // Output last values in the line, if any
+    if (bufferSize % 16)
+    {
+        OCLogv(level, tag, "%s", lineBuffer);
+    }
+}
 #ifndef __TIZEN__
 void OCLogConfig(oc_log_ctx_t *ctx)
 {
@@ -198,47 +242,6 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
        }
    #endif
    }
-
-/**
- * Output the contents of the specified buffer (in hex) with the specified priority level.
- *
- * @param level      - DEBUG, INFO, WARNING, ERROR, FATAL
- * @param tag        - Module name
- * @param buffer     - pointer to buffer of bytes
- * @param bufferSize - max number of byte in buffer
- */
-void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize)
-{
-    if (!buffer || !tag || (bufferSize == 0))
-    {
-        return;
-    }
-
-    // No idea why the static initialization won't work here, it seems the compiler is convinced
-    // that this is a variable-sized object.
-    char lineBuffer[LINE_BUFFER_SIZE];
-    memset(lineBuffer, 0, sizeof lineBuffer);
-    int lineIndex = 0;
-    int i;
-    for (i = 0; i < bufferSize; i++)
-    {
-        // Format the buffer data into a line
-        snprintf(&lineBuffer[lineIndex*3], sizeof(lineBuffer)-lineIndex*3, "%02X ", buffer[i]);
-        lineIndex++;
-        // Output 16 values per line
-        if (((i+1)%16) == 0)
-        {
-            OCLog(level, tag, lineBuffer);
-            memset(lineBuffer, 0, sizeof lineBuffer);
-            lineIndex = 0;
-        }
-    }
-    // Output last values in the line, if any
-    if (bufferSize % 16)
-    {
-        OCLog(level, tag, lineBuffer);
-    }
-}
 #endif //__TIZEN__
 #endif //ARDUINO
 #ifdef ARDUINO

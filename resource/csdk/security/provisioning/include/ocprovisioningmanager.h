@@ -117,6 +117,19 @@ OCStackResult OCProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceIn
                              OCProvisionResultCB resultCallback);
 
 /**
+ * this function sends Direct-Pairing Configuration to a device.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] pconf PCONF pointer.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf,
+                             OCProvisionResultCB resultCallback);
+
+/**
  * API to provision credential to devices.
  *
  * @param[in] ctx Application context would be returned in result callback.
@@ -216,6 +229,13 @@ void OCDeleteUuidList(OCUuidList_t* pList);
  * @param pAcl Pointer to OicSecAcl_t structure.
  */
 void OCDeleteACLList(OicSecAcl_t* pAcl);
+
+/**
+ * This function deletes PDACL data.
+ *
+ * @param pPdAcl Pointer to OicSecPdAcl_t structure.
+ */
+void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
 
 #ifdef __WITH_X509__
 /**

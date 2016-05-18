@@ -31,13 +31,10 @@ class JniVector
         JniVector(JNIEnv *env);
 
         template <typename TYPE>
-        std::vector<TYPE> toCpp(jobject vector)
+        std::vector<TYPE> toCpp(jobject jVector)
         {
             std::vector<TYPE> result;
-            jmethodID sizeMethodID = m_env->GetMethodID(m_vectorCls, "size", "()I");
-
-            int size = m_env->CallIntMethod(vector, sizeMethodID);
-            addElementsCpp(vector, size, result);
+            addElementsCpp(jVector, getSize(jVector), result);
             return result;
         }
 
@@ -45,12 +42,12 @@ class JniVector
         jobject toJava();
 
     private:
+        int getSize(jobject jVector);
         void addElementsCpp(jobject vector, int size, std::vector<int> &result);
         void addElementsCpp(jobject vector, int size, std::vector<double> &result);
         void addElementsCpp(jobject vector, int size, std::vector<std::string> &result);
 
         JNIEnv *m_env;
-        jclass m_vectorCls;
 };
 
 #endif

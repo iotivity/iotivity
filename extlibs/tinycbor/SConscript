@@ -37,7 +37,8 @@ if not os.path.exists(cborDir):
 
 cbor_src = [
     os.path.join(cborDir,'src/cborparser.c'),
-    os.path.join(cborDir,'src/cborencoder.c')
+    os.path.join(cborDir,'src/cborencoder.c'),
+    os.path.join(cborDir,'src/cborerrorstrings.c'),
     ]
 
 env['cbor_files'] = cbor_src

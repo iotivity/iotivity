@@ -55,31 +55,31 @@ static void printRecur(IotvtICalRecur_t *recur)
     OIC_LOG_V(INFO, TAG, "recur->until.tm_mon = %d", recur->until.tm_mon);
     OIC_LOG_V(INFO, TAG, "recur->until.tm_mday = %d", recur->until.tm_mday);
 
-    if(recur->byDay & SUNDAY)
+    if(0 != (recur->byDay & SUNDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Sunday");
     }
-    if(recur->byDay & MONDAY)
+    if(0 != (recur->byDay & MONDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Monday");
     }
-    if(recur->byDay & TUESDAY)
+    if(0 != (recur->byDay & TUESDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Tuesday");
     }
-    if(recur->byDay & WEDNESDAY)
+    if(0 != (recur->byDay & WEDNESDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Wednesday");
     }
-    if(recur->byDay & THURSDAY)
+    if(0 != (recur->byDay & THURSDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Thursday");
     }
-    if(recur->byDay & FRIDAY)
+    if(0 != (recur->byDay & FRIDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Friday");
     }
-    if(recur->byDay & SATURDAY)
+    if(0 != (recur->byDay & SATURDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Saturday");
     }

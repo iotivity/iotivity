@@ -72,6 +72,8 @@
         </resources>
     </bundle>
 
+    <!-- Will be loaded dynamically with sample application -->
+    <!--
     <bundle>
         <id>oic.bundle.hueSample</id>
         <path>libHueBundle.so</path>
@@ -85,7 +87,9 @@
             </resourceInfo>       
         </resources>
     </bundle>
-    
+    -->
+
+    <!-- Example Configuration For Java Bundle -->
     <!--
     <bundle>
         <id>oic.bundle.hueJavaSample</id>       
@@ -104,5 +108,5 @@
         </resources>
     </bundle>
     -->
-    
+
 </container>

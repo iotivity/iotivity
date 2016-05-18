@@ -77,13 +77,16 @@ namespace OIC
                 void setResourceDestroyer(resourceDestroyer_t *);
                 resourceDestroyer_t *getResourceDestroyer();
 
-                void setBundleInfo(RCSBundleInfo *bundleInfo);
+                void setBundleInfo(shared_ptr<RCSBundleInfo> bundleInfo);
 
                 void setBundleHandle(void *);
                 void *getBundleHandle();
 
                 void setJavaBundle(bool javaBundle);
                 bool getJavaBundle();
+
+                void setSoBundle(bool javaBundle);
+                bool getSoBundle();
 
 #if (JAVA_SUPPORT)
                 void setJavaBundleActivatorMethod(jmethodID activator);
@@ -96,7 +99,7 @@ namespace OIC
 #endif
 
             private:
-                bool m_loaded, m_activated, m_java_bundle;
+                bool m_loaded, m_activated, m_java_bundle, m_so_bundle;
                 int m_id;
                 activator_t *m_activator;
                 deactivator_t *m_deactivator;

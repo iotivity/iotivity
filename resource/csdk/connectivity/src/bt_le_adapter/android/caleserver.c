@@ -38,12 +38,14 @@
 #define TAG PCF("OIC_CA_LE_SERVER")
 
 #define WAIT_TIME_WRITE_CHARACTERISTIC 10000000
+#define INVALID_STATE -1
 
 static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;
 static jobject g_bluetoothGattServer = NULL;
 static jobject g_bluetoothGattServerCallback = NULL;
 static jobject g_leAdvertiseCallback = NULL;
+static jobject g_bluetoothManager = NULL;
 
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static CABLEErrorHandleCallback g_serverErrorCallback;
@@ -54,6 +56,7 @@ static bool g_isStartServer = false;
 static bool g_isInitializedServer = false;
 
 static jbyteArray g_sendBuffer = NULL;
+static jobject g_obj_bluetoothDevice = NULL;
 
 static CABLEDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
 static ca_mutex g_bleReqRespCbMutex = NULL;
@@ -64,6 +67,12 @@ static ca_mutex g_threadSendMutex = NULL;
 static ca_mutex g_threadSendNotifyMutex = NULL;
 static ca_cond g_threadSendNotifyCond = NULL;
 static bool g_isSignalSetFlag = false;
+
+static jint g_state_connected = INVALID_STATE;
+static jint g_state_disconnected = INVALID_STATE;
+
+static const char CLASSPATH_BT_ADVERTISE_CB[] = "android/bluetooth/le/AdvertiseCallback";
+static const char CLASSPATH_BT_GATTSERVER[] = "android/bluetooth/BluetoothGattServer";
 
 void CALEServerJNISetContext()
 {
@@ -144,6 +153,43 @@ CAResult_t CALEServerCreateJniInterfaceObject()
     return CA_STATUS_FAILED;
 }
 
+/**
+ * get the current connection state of the gatt profile to the remote device.
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   device           bluetooth device object
+ * @return  state of the profile connection.
+ */
+static jint CALEServerGetConnectionState(JNIEnv *env, jobject device)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerGetConnectionState");
+
+    VERIFY_NON_NULL_RET(env, TAG, "env", -1);
+    VERIFY_NON_NULL_RET(device, TAG, "device", -1);
+
+    jmethodID jni_mid_getConnectionState = CAGetJNIMethodID(env, "android/bluetooth"
+                                                            "/BluetoothManager",
+                                                            "getConnectionState",
+                                                            "(Landroid/bluetooth/BluetoothDevice"
+                                                            ";I)I");
+    if (!jni_mid_getConnectionState)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getConnectionState is null");
+        return -1;
+    }
+
+    if (!g_bluetoothManager)
+    {
+        OIC_LOG(ERROR, TAG, "g_bluetoothManager is null");
+        return -1;
+    }
+
+    jint jni_state = (jint)(*env)->CallIntMethod(env, g_bluetoothManager,
+                                                 jni_mid_getConnectionState,
+                                                 device, GATT_PROFILE);
+    OIC_LOG_V(INFO, TAG, "connection state is %d", jni_state);
+    return jni_state;
+}
+
 jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerSetResponseData");
@@ -163,35 +209,10 @@ jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
     }
 
     OIC_LOG(DEBUG, TAG, "CALEServerSetResponseData");
-
-    jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
-                                                           "android/bluetooth/BluetoothGattServer");
-    if (!jni_cid_bluetoothGattServer)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattServer is null");
-        return NULL;
-    }
-
-    jclass jni_cid_bluetoothGattService = (*env)->FindClass(env, "android/bluetooth/"
-                                                            "BluetoothGattService");
-    if (!jni_cid_bluetoothGattService)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattService is null");
-        return NULL;
-    }
-
-    jclass jni_cid_bluetoothGattCharacteristic = (*env)->FindClass(env, "android/bluetooth/"
-                                                                   "BluetoothGattCharacteristic");
-    if (!jni_cid_bluetoothGattCharacteristic)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattCharacteristic is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getService = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-                                                       "getService",
-                                                       "(Ljava/util/UUID;)Landroid/bluetooth/"
-                                                       "BluetoothGattService;");
+    jmethodID jni_mid_getService = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
+                                                    "getService",
+                                                    "(Ljava/util/UUID;)Landroid/bluetooth/"
+                                                    "BluetoothGattService;");
     if (!jni_mid_getService)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getService is null");
@@ -214,11 +235,12 @@ jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
         return NULL;
     }
 
-    jmethodID jni_mid_getCharacteristic = (*env)->GetMethodID(env, jni_cid_bluetoothGattService,
-                                                              "getCharacteristic",
-                                                              "(Ljava/util/UUID;)"
-                                                              "Landroid/bluetooth/"
-                                                              "BluetoothGattCharacteristic;");
+    jmethodID jni_mid_getCharacteristic = CAGetJNIMethodID(env, "android/bluetooth/"
+                                                           "BluetoothGattService",
+                                                           "getCharacteristic",
+                                                           "(Ljava/util/UUID;)"
+                                                           "Landroid/bluetooth/"
+                                                           "BluetoothGattCharacteristic;");
     if (!jni_mid_getCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getCharacteristic is null");
@@ -241,8 +263,9 @@ jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
         return NULL;
     }
 
-    jmethodID jni_mid_setValue = (*env)->GetMethodID(env, jni_cid_bluetoothGattCharacteristic,
-                                                     "setValue", "([B)Z");
+    jmethodID jni_mid_setValue = CAGetJNIMethodID(env, "android/bluetooth/"
+                                                  "BluetoothGattCharacteristic",
+                                                  "setValue", "([B)Z");
     if (!jni_mid_setValue)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_setValue is null");
@@ -274,23 +297,31 @@ CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject respo
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
-                                                           "android/bluetooth/BluetoothGattServer");
-    if (!jni_cid_bluetoothGattServer)
+    if (!g_bluetoothGattServer)
     {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattServer is null");
+        OIC_LOG(ERROR, TAG, "g_bluetoothGattServer is not available");
         return CA_STATUS_FAILED;
     }
 
-    jmethodID jni_mid_notifyCharacteristicChanged = (*env)->GetMethodID(
-            env, jni_cid_bluetoothGattServer, "notifyCharacteristicChanged",
-            "(Landroid/bluetooth/BluetoothDevice;"
-            "Landroid/bluetooth/BluetoothGattCharacteristic;Z)Z");
+    if (g_state_connected != CALEServerGetConnectionState(env, device))
+    {
+        OIC_LOG(ERROR, TAG, "it is not connected state");
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_notifyCharacteristicChanged = CAGetJNIMethodID(env,
+                                                      CLASSPATH_BT_GATTSERVER,
+                                                      "notifyCharacteristicChanged",
+                                                      "(Landroid/bluetooth/BluetoothDevice;"
+                                                      "Landroid/bluetooth/"
+                                                      "BluetoothGattCharacteristic;Z)Z");
     if (!jni_mid_notifyCharacteristicChanged)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_notifyCharacteristicChanged is null");
         return CA_STATUS_FAILED;
     }
+
+    OIC_LOG(DEBUG, TAG, "CALL API - notifyCharacteristicChanged");
 
     jboolean jni_boolean_notifyCharacteristicChanged = (*env)->CallBooleanMethod(
             env, g_bluetoothGattServer, jni_mid_notifyCharacteristicChanged, device, responseData,
@@ -337,18 +368,16 @@ CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, j
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
-                                                           "android/bluetooth/BluetoothGattServer");
-    if (!jni_cid_bluetoothGattServer)
+    if (!g_bluetoothGattServer)
     {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattServer is null");
+        OIC_LOG(ERROR, TAG, "g_bluetoothGattServer is not available");
         return CA_STATUS_FAILED;
     }
 
-    jmethodID jni_mid_sendResponse = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-                                                         "sendResponse",
-                                                         "(Landroid/bluetooth/BluetoothDevice;"
-                                                         "III[B)Z");
+    jmethodID jni_mid_sendResponse = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
+                                                      "sendResponse",
+                                                      "(Landroid/bluetooth/BluetoothDevice;"
+                                                      "III[B)Z");
     if (!jni_mid_sendResponse)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_sendResponse is null");
@@ -524,6 +553,15 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
         return CA_STATUS_FAILED;
     }
 
+    jobject jni_AdvertiseDataBuilderForScanRsp = (*env)->NewObject(env,
+                                                                   jni_cid_AdvertiseDataBuilder,
+                                                                   jni_mid_AdvertiseDataBuilder);
+    if (!jni_AdvertiseDataBuilderForScanRsp)
+    {
+        OIC_LOG(ERROR, TAG, "jni_AdvertiseDataBuilderForScanRsp is null");
+        return CA_STATUS_FAILED;
+    }
+
     jobject jni_obj_serviceUUID = CALEGetUuidFromString(env, OIC_GATT_SERVICE_UUID);
     if (!jni_obj_serviceUUID)
     {
@@ -554,6 +592,29 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
     if (!jni_obj_addServiceUuid)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_addServiceUuid is null");
+        return CA_STATUS_FAILED;
+    }
+
+    // Device name has to be included in advertise packet after Android API 23
+    OIC_LOG(DEBUG, TAG, "device name will be added into advertise packet");
+    jmethodID jni_mid_setIncludeDeviceName = (*env)->GetMethodID(env, jni_cid_AdvertiseDataBuilder,
+                                                                 "setIncludeDeviceName",
+                                                                 "(Z)Landroid/"
+                                                                 "bluetooth/le/"
+                                                                 "AdvertiseData$Builder;");
+    if (!jni_mid_setIncludeDeviceName)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_setIncludeDeviceName is null");
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jni_obj_setIncludeDeviceName  = (*env)->CallObjectMethod(env,
+                                                               jni_AdvertiseDataBuilderForScanRsp,
+                                                               jni_mid_setIncludeDeviceName,
+                                                               JNI_TRUE);
+    if (!jni_obj_setIncludeDeviceName)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_setIncludeDeviceName is null");
         return CA_STATUS_FAILED;
     }
 
@@ -637,29 +698,32 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
         return CA_STATUS_FAILED;
     }
 
-    jclass jni_cid_leAdvertiser = (*env)->FindClass(env,
-                                                    "android/bluetooth/le/BluetoothLeAdvertiser");
-    if (!jni_cid_leAdvertiser)
+    jobject jni_obj_build_LeAdvertiseDataForScanRsp = (*env)->CallObjectMethod(env,
+                                                                jni_AdvertiseDataBuilderForScanRsp,
+                                                                jni_mid_build_LeAdvertiseData);
+    if (!jni_obj_build_LeAdvertiseDataForScanRsp)
     {
-        OIC_LOG(ERROR, TAG, "jni_cid_leAdvertiser is null");
+        OIC_LOG(ERROR, TAG, "jni_obj_build_LeAdvertiseDataForScanRsp is null");
         return CA_STATUS_FAILED;
     }
 
-    jmethodID jni_mid_startAdvertising = (*env)->GetMethodID(env, jni_cid_leAdvertiser,
-                                                             "startAdvertising",
-                                                             "(Landroid/bluetooth/le/"
-                                                             "AdvertiseSettings;Landroid/bluetooth/"
-                                                             "le/AdvertiseData;Landroid/bluetooth/"
-                                                             "le/AdvertiseCallback;)V");
+    jmethodID jni_mid_startAdvertising = CAGetJNIMethodID(env, "android/bluetooth/le/"
+                                                          "BluetoothLeAdvertiser",
+                                                          "startAdvertising",
+                                                          "(Landroid/bluetooth/le/"
+                                                          "AdvertiseSettings;Landroid/bluetooth/"
+                                                          "le/AdvertiseData;Landroid/bluetooth/"
+                                                          "le/AdvertiseData;Landroid/bluetooth/"
+                                                          "le/AdvertiseCallback;)V");
     if (!jni_mid_startAdvertising)
     {
-        OIC_LOG(ERROR, TAG, "jni_mid_startAdvertising is null");
-        return CA_STATUS_FAILED;
+       OIC_LOG(ERROR, TAG, "jni_mid_startAdvertising is null");
+       return CA_STATUS_FAILED;
     }
 
     (*env)->CallVoidMethod(env, jni_obj_getBluetoothLeAdvertiser, jni_mid_startAdvertising,
                            jni_obj_build_LeAdvertiseSettings, jni_obj_build_LeAdvertiseData,
-                           advertiseCallback);
+                           jni_obj_build_LeAdvertiseDataForScanRsp, advertiseCallback);
 
     if ((*env)->ExceptionCheck(env))
     {
@@ -694,14 +758,6 @@ CAResult_t CALEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback)
         return CA_STATUS_FAILED;
     }
 
-    jclass jni_cid_leAdvertiser = (*env)->FindClass(env,
-                                                    "android/bluetooth/le/BluetoothLeAdvertiser");
-    if (!jni_cid_leAdvertiser)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_leAdvertiser is null");
-        return CA_STATUS_FAILED;
-    }
-
     jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
                                                                     "getDefaultAdapter",
                                                                     "()Landroid/bluetooth/"
@@ -722,10 +778,11 @@ CAResult_t CALEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback)
         return CA_STATUS_FAILED;
     }
 
-    jmethodID jni_mid_stopAdvertising = (*env)->GetMethodID(env, jni_cid_leAdvertiser,
-                                                            "stopAdvertising",
-                                                            "(Landroid/bluetooth/le/"
-                                                            "AdvertiseCallback;)V");
+    jmethodID jni_mid_stopAdvertising = CAGetJNIMethodID(env, "android/bluetooth/le/"
+                                                         "BluetoothLeAdvertiser",
+                                                         "stopAdvertising",
+                                                         "(Landroid/bluetooth/le/"
+                                                         "AdvertiseCallback;)V");
     if (!jni_mid_stopAdvertising)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_stopAdvertising is null");
@@ -832,13 +889,6 @@ jobject CALEServerOpenGattServer(JNIEnv *env)
         return NULL;
     }
 
-    jclass jni_cid_bluetoothManager = (*env)->FindClass(env, "android/bluetooth/BluetoothManager");
-    if (!jni_cid_bluetoothManager)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothManager is null");
-        return NULL;
-    }
-
     jfieldID jni_fid_bluetoothService = (*env)->GetStaticFieldID(env, jni_cid_context,
                                                                  "BLUETOOTH_SERVICE",
                                                                  "Ljava/lang/String;");
@@ -858,13 +908,14 @@ jobject CALEServerOpenGattServer(JNIEnv *env)
         return NULL;
     }
 
-    jmethodID jni_mid_openGattServer = (*env)->GetMethodID(env, jni_cid_bluetoothManager,
-                                                           "openGattServer",
-                                                           "(Landroid/content/Context;"
-                                                           "Landroid/bluetooth/"
-                                                           "BluetoothGattServerCallback;)"
-                                                           "Landroid/bluetooth/"
-                                                           "BluetoothGattServer;");
+    jmethodID jni_mid_openGattServer = CAGetJNIMethodID(env, "android/bluetooth/"
+                                                        "BluetoothManager",
+                                                        "openGattServer",
+                                                        "(Landroid/content/Context;"
+                                                        "Landroid/bluetooth/"
+                                                        "BluetoothGattServerCallback;)"
+                                                        "Landroid/bluetooth/"
+                                                        "BluetoothGattServer;");
     if (!jni_mid_openGattServer)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_openGattServer is null");
@@ -887,6 +938,12 @@ jobject CALEServerOpenGattServer(JNIEnv *env)
         OIC_LOG(ERROR, TAG, "jni_obj_bluetoothManager is null");
         return NULL;
     }
+
+    if (g_bluetoothManager)
+    {
+        (*env)->DeleteGlobalRef(env, g_bluetoothManager);
+    }
+    g_bluetoothManager = (*env)->NewGlobalRef(env, jni_obj_bluetoothManager);
 
     jobject jni_obj_bluetoothGattServer = (*env)->CallObjectMethod(env, jni_obj_bluetoothManager,
                                                                    jni_mid_openGattServer,
@@ -1189,23 +1246,15 @@ CAResult_t CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
-                                                           "android/bluetooth/BluetoothGattServer");
-    if (!jni_cid_bluetoothGattServer)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattServer is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jmethodID jni_mid_addService = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-                                                       "addService",
-                                                       "(Landroid/bluetooth/BluetoothGattService;)"
-                                                       "Z");
-    if (!jni_mid_addService)
-    {
-        OIC_LOG(ERROR, TAG, "jni_mid_addService is null");
-        return CA_STATUS_FAILED;
-    }
+    jmethodID jni_mid_addService = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
+                                                    "addService",
+                                                    "(Landroid/bluetooth/BluetoothGattService;)"
+                                                    "Z");
+     if (!jni_mid_addService)
+     {
+         OIC_LOG(ERROR, TAG, "jni_mid_addService is null");
+         return CA_STATUS_FAILED;
+     }
 
     jboolean jni_boolean_addService = (*env)->CallBooleanMethod(env, bluetoothGattServer,
                                                                 jni_mid_addService,
@@ -1233,16 +1282,9 @@ CAResult_t CALEServerConnect(JNIEnv *env, jobject bluetoothDevice)
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
-                                                           "android/bluetooth/BluetoothGattServer");
-    if (!jni_cid_bluetoothGattServer)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattServer is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jmethodID jni_mid_connect = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer, "connect",
-                                                    "(Landroid/bluetooth/BluetoothDevice;Z)Z");
+    jmethodID jni_mid_connect = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
+                                                 "connect",
+                                                 "(Landroid/bluetooth/BluetoothDevice;Z)Z");
     if (!jni_mid_connect)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_connect is null");
@@ -1311,18 +1353,10 @@ CAResult_t CALEServerDisconnect(JNIEnv *env, jobject bluetoothDevice)
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
-                                                           "android/bluetooth/BluetoothGattServer");
-    if (!jni_cid_bluetoothGattServer)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattServer is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jmethodID jni_mid_cancelConnection = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-                                                             "cancelConnection",
-                                                             "(Landroid/bluetooth/BluetoothDevice;)"
-                                                             "V");
+    jmethodID jni_mid_cancelConnection = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
+                                                          "cancelConnection",
+                                                          "(Landroid/bluetooth/BluetoothDevice;)"
+                                                          "V");
     if (!jni_mid_cancelConnection)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_cancelConnection is null");
@@ -1352,14 +1386,8 @@ CAResult_t CALEServerGattClose(JNIEnv *env, jobject bluetoothGattServer)
 
     // get BluetoothGatt class
     OIC_LOG(DEBUG, TAG, "get BluetoothGatt class");
-    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, "android/bluetooth/BluetoothGattServer");
-    if (!jni_cid_BluetoothGatt)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jmethodID jni_mid_closeGatt = (*env)->GetMethodID(env, jni_cid_BluetoothGatt, "close", "()V");
+    jmethodID jni_mid_closeGatt = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
+                                                   "close", "()V");
     if (!jni_mid_closeGatt)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_closeGatt is null");
@@ -1523,6 +1551,12 @@ void CALEServerTerminate()
         g_sendBuffer = NULL;
     }
 
+    if (g_bluetoothManager)
+    {
+        (*env)->DeleteGlobalRef(env, g_bluetoothManager);
+        g_bluetoothManager = NULL;
+    }
+
     ca_cond_free(g_threadSendNotifyCond);
     g_threadSendNotifyCond = NULL;
 
@@ -1677,6 +1711,10 @@ CAResult_t CALEServerStartMulticastServer()
         OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
     }
 
+    // get Constants Value from Android Platform
+    g_state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
+    g_state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
+
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -1758,7 +1796,6 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
 
     ca_mutex_lock(g_threadSendMutex);
 
-    jobject jni_obj_bluetoothDevice = NULL;
     uint32_t length = u_arraylist_length(g_connectedDeviceList);
     for (uint32_t index = 0; index < length; index++)
     {
@@ -1789,20 +1826,30 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         if (!strcmp(setAddress, address))
         {
             OIC_LOG(DEBUG, TAG, "found the device");
-            jni_obj_bluetoothDevice = jarrayObj;
+
+            if (g_obj_bluetoothDevice)
+            {
+                (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+                g_obj_bluetoothDevice = NULL;
+            }
+
+            if (jarrayObj)
+            {
+                g_obj_bluetoothDevice = (*env)->NewGlobalRef(env, jarrayObj);
+            }
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             break;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
     }
 
-    if (jni_obj_bluetoothDevice)
+    if (g_obj_bluetoothDevice)
     {
         jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
         (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
         g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
 
-        CAResult_t res = CALEServerSend(env, jni_obj_bluetoothDevice, g_sendBuffer);
+        CAResult_t res = CALEServerSend(env, g_obj_bluetoothDevice, g_sendBuffer);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "send has failed");
@@ -1830,6 +1877,12 @@ error_exit:
     {
         (*env)->DeleteGlobalRef(env, g_sendBuffer);
         g_sendBuffer = NULL;
+    }
+
+    if (g_obj_bluetoothDevice)
+    {
+        (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+        g_obj_bluetoothDevice = NULL;
     }
 
     ca_mutex_unlock(g_threadSendMutex);
@@ -1888,11 +1941,27 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
             continue;
         }
 
-        CAResult_t res = CALEServerSend(env, jarrayObj, jni_bytearr_data);
+        if (g_obj_bluetoothDevice)
+        {
+            (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+            g_obj_bluetoothDevice = NULL;
+        }
+
+        if (jarrayObj)
+        {
+            g_obj_bluetoothDevice = (*env)->NewGlobalRef(env, jarrayObj);
+        }
+
+        CAResult_t res = CALEServerSend(env, g_obj_bluetoothDevice, jni_bytearr_data);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "send has failed for the device[%s]", address);
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
+            if (g_obj_bluetoothDevice)
+            {
+                (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+                g_obj_bluetoothDevice = NULL;
+            }
             continue;
         }
 
@@ -2099,6 +2168,7 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->ReleaseStringUTFChars(env, address, remoteAddress);
                 (*env)->DeleteGlobalRef(env, jarrayObj);
+                jarrayObj = NULL;
 
                 if (NULL == u_arraylist_remove(g_connectedDeviceList, index))
                 {
@@ -2158,13 +2228,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
 
-    // STATE_CONNECTED
-    jint state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
-
-    // STATE_DISCONNECTED
-    jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
-
-    if (newState == state_connected)
+    if (newState == g_state_connected)
     {
 
         OIC_LOG(DEBUG, TAG, "LE CONNECTED");
@@ -2190,7 +2254,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
         }
         (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     }
-    else if (newState == state_disconnected)
+    else if (newState == g_state_disconnected)
     {
         OIC_LOG(DEBUG, TAG, "LE DISCONNECTED");
 
@@ -2315,6 +2379,13 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "send has failed");
+
+            if (g_obj_bluetoothDevice)
+            {
+                (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+                g_obj_bluetoothDevice = NULL;
+            }
+
             ca_mutex_lock(g_threadSendNotifyMutex);
             g_isSignalSetFlag = true;
             ca_cond_signal(g_threadSendNotifyCond);
@@ -2325,6 +2396,12 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
     else
     {
         OIC_LOG(DEBUG, TAG, "notify success");
+
+        if (g_obj_bluetoothDevice)
+        {
+            (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+            g_obj_bluetoothDevice = NULL;
+        }
 
         // next data can be sent
         ca_mutex_lock(g_threadSendNotifyMutex);
@@ -2357,6 +2434,20 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
 
     OIC_LOG_V(INFO, TAG, "LE Advertise Start Failure Callback(%d)", errorCode);
+
+    jint data_too_large = CALEGetConstantsValue(env, CLASSPATH_BT_ADVERTISE_CB,
+                                                "ADVERTISE_FAILED_DATA_TOO_LARGE");
+    jint already_started = CALEGetConstantsValue(env, CLASSPATH_BT_ADVERTISE_CB,
+                                                 "ADVERTISE_FAILED_ALREADY_STARTED");
+
+    if (data_too_large == errorCode)
+    {
+        OIC_LOG_V(ERROR, TAG, "advertise data too large. please check length of device name");
+    }
+    else if (already_started == errorCode)
+    {
+        OIC_LOG_V(INFO, TAG, "advertising is already started");
+    }
 }
 
 /**
@@ -2440,6 +2531,12 @@ CAResult_t CAStopLEGattServer()
         (*env)->DeleteGlobalRef(env, g_bluetoothGattServerCallback);
     }
 
+    if (g_obj_bluetoothDevice)
+    {
+        (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+        g_obj_bluetoothDevice = NULL;
+    }
+
     ca_mutex_lock(g_threadSendNotifyMutex);
     ca_cond_signal(g_threadSendNotifyCond);
     ca_mutex_unlock(g_threadSendNotifyMutex);
@@ -2507,6 +2604,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue,
 void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(INFO, TAG, "CASetLEServerThreadPoolHandle is not support");
+    (void)handle;
 }
 
 CAResult_t CALEServerInitMutexVaraibles()

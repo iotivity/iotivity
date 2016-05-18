@@ -36,6 +36,12 @@
 #include "pbkdf2.h"
 #include <stdlib.h>
 #include "iotvticalendar.h"
+#include "ocserverrequest.h"
+
+#ifdef __WITH_DTLS__
+#include "global.h"
+#endif //__WITH_DTLS__
+
 #ifdef WITH_ARDUINO
 #include <string.h>
 #else
@@ -304,8 +310,10 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 (cred->credType & SYMMETRIC_GROUP_KEY) ||
                 (cred->credType & PIN_PASSWORD))
             {
-                VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+                if(jsonObj)
+                {
+                    VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+                }
             }
 #ifdef __WITH_X509__
             else if (cred->credType & SIGNED_ASYMMETRIC_KEY)
@@ -330,6 +338,10 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                     VERIFY_NON_NULL(TAG, (cred->privateData.data), ERROR);
                 }
 #endif // __WITH_X509__
+            }
+            else
+            {
+                cred->privateData.data = NULL;
             }
 
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
@@ -373,7 +385,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OWNERS_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-            cred->ownersLen = cJSON_GetArraySize(jsonObj);
+            cred->ownersLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, cred->ownersLen > 0, ERROR);
             cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
             VERIFY_NON_NULL(TAG, (cred->owners), ERROR);
@@ -658,6 +670,215 @@ OCStackResult RemoveAllCredentials(void)
     return OC_STACK_OK;
 }
 
+#ifdef __WITH_DTLS__
+/**
+ * Internal function to fill private data of owner PSK.
+ *
+ * @param receviedCred recevied owner credential from OBT(PT)
+ * @param ownerAdd address of OBT(PT)
+ * @param doxm current device's doxm resource
+ *
+ * @retval
+ *     true successfully done and valid ower psk information
+ *     false Invalid owner psk information or failed to owner psk generation
+ */
+static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoint_t* ownerAddr,
+                           const OicSecDoxm_t* doxm)
+{
+    //Derive OwnerPSK locally
+    const char* oxmLabel = GetOxmString(doxm->oxmSel);
+    VERIFY_NON_NULL(TAG, oxmLabel, ERROR);
+
+    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
+    CAResult_t pskRet = CAGenerateOwnerPSK(ownerAddr,
+        (uint8_t*)oxmLabel, strlen(oxmLabel),
+        doxm->owner.id, sizeof(doxm->owner.id),
+        doxm->deviceID.id, sizeof(doxm->deviceID.id),
+        ownerPSK, OWNER_PSK_LENGTH_128);
+    VERIFY_SUCCESS(TAG, pskRet == CA_STATUS_OK, ERROR);
+
+    OIC_LOG(DEBUG, TAG, "OwnerPSK dump :");
+    OIC_LOG_BUFFER(DEBUG, TAG, ownerPSK, OWNER_PSK_LENGTH_128);
+
+    //Generate owner credential based on recevied credential information
+    size_t b64BufSize = B64ENCODE_OUT_SAFESIZE(OWNER_PSK_LENGTH_128 * sizeof(char));
+    uint8_t* encodeBuff = OICMalloc((b64BufSize + 1) * sizeof(char));
+    VERIFY_NON_NULL(TAG, encodeBuff, ERROR);
+    uint32_t encodedSize = 0;
+    B64Result b64Ret = b64Encode(ownerPSK, OWNER_PSK_LENGTH_128,
+                                 (char*)encodeBuff, b64BufSize + 1, &encodedSize);
+    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
+    encodeBuff[encodedSize] = '\0';
+
+    //memory re-allocation for private data
+    OICFree(receviedCred->privateData.data);
+    receviedCred->privateData.data = (char*)OICMalloc((encodedSize + 1) * sizeof(char));
+    VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
+
+    //fill the base64 encoded private data
+    strncpy(receviedCred->privateData.data, (char*)encodeBuff, b64BufSize + 1);
+
+    OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");
+
+    //deallocate local memory
+    OICFree(encodeBuff);
+
+    //Verify OwnerPSK information
+    return (memcmp(&(receviedCred->subject), &(doxm->owner), sizeof(OicUuid_t)) == 0 &&
+            receviedCred->credType == SYMMETRIC_PAIR_WISE_KEY);
+exit:
+    //receviedCred->privateData.data will be deallocated when deleting credential.
+    OICFree(encodeBuff);
+    return false;
+}
+
+#endif //__WITH_DTLS__
+
+static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehRequest)
+{
+    OCEntityHandlerResult ret = OC_EH_ERROR;
+
+    //Get binary representation of json
+    OicSecCred_t * cred  = JSONToCredBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
+
+    if(cred)
+    {
+#ifdef __WITH_DTLS__
+        OicUuid_t emptyUuid = {.id={0}};
+        const OicSecDoxm_t* doxm = GetDoxmResourceData();
+        if(false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
+        {
+            //in case of owner PSK
+            switch(cred->credType)
+            {
+                case SYMMETRIC_PAIR_WISE_KEY:
+                {
+                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                    if(FillPrivateDataOfOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
+                    {
+                        if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
+                        {
+                            OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
+                        }
+
+                        OIC_LOG(ERROR, TAG, "OwnerPSK was generated successfully.");
+                        if(OC_STACK_OK == AddCredential(cred))
+                        {
+                            ret = OC_EH_RESOURCE_CREATED;
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to save the OwnerPSK as cred resource");
+                            ret = OC_EH_ERROR;
+                        }
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to verify receviced OwnerPKS.");
+                        ret = OC_EH_ERROR;
+                    }
+
+                    if(OC_EH_RESOURCE_CREATED == ret)
+                    {
+                        /**
+                         * in case of random PIN based OxM,
+                         * revert get_psk_info callback of tinyDTLS to use owner credential.
+                         */
+                        if(OIC_RANDOM_DEVICE_PIN == doxm->oxmSel)
+                        {
+                            OicUuid_t emptyUuid = { .id={0}};
+                            SetUuidForRandomPinOxm(&emptyUuid);
+
+                            if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
+                                ret = OC_EH_ERROR;
+                                break;
+                            }
+                        }
+
+                        //Select cipher suite to use owner PSK
+                        if(CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to disable anonymous cipher suite");
+                            ret = OC_EH_ERROR;
+                        }
+                        else
+                        {
+                            OIC_LOG(INFO, TAG, "Anonymous cipher suite is DISABLED");
+                        }
+
+                        if(CA_STATUS_OK !=
+                           CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to select cipher suite");
+                            ret = OC_EH_ERROR;
+                        }
+                    }
+
+                    break;
+                }
+                case SYMMETRIC_GROUP_KEY:
+                case ASYMMETRIC_KEY:
+                case SIGNED_ASYMMETRIC_KEY:
+                case PIN_PASSWORD:
+                case ASYMMETRIC_ENCRYPTION_KEY:
+                {
+                    OIC_LOG(WARNING, TAG, "Unsupported credential type for owner credential.");
+                    ret = OC_EH_ERROR;
+                    break;
+                }
+                default:
+                {
+                    OIC_LOG(WARNING, TAG, "Unknow credential type for owner credential.");
+                    ret = OC_EH_ERROR;
+                    break;
+                }
+            }
+
+            if(OC_EH_RESOURCE_CREATED != ret)
+            {
+                /*
+                  * If some error is occured while ownership transfer,
+                  * ownership transfer related resource should be revert back to initial status.
+                  */
+                RestoreDoxmToInitState();
+                RestorePstatToInitState();
+            }
+        }
+        else
+        {
+            /*
+             * If the post request credential has credId, it will be
+             * discarded and the next available credId will be assigned
+             * to it before getting appended to the existing credential
+             * list and updating svr database.
+             */
+            ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
+        }
+#else //not __WITH_DTLS__
+        /*
+         * If the post request credential has credId, it will be
+         * discarded and the next available credId will be assigned
+         * to it before getting appended to the existing credential
+         * list and updating svr database.
+         */
+        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
+#endif//__WITH_DTLS__
+    }
+
+    if(OC_EH_RESOURCE_CREATED != ret)
+    {
+        if(OC_STACK_OK != RemoveCredential(&cred->subject))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to remove the invalid credential");
+        }
+        FreeCred(cred);
+    }
+
+    return ret;
+}
+
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
@@ -673,6 +894,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
         //list and updating svr database.
         ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
     }
+
     return ret;
 }
 
@@ -741,6 +963,9 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
         {
             case OC_REST_GET:
                 ret = OC_EH_FORBIDDEN;
+                break;
+            case OC_REST_PUT:
+                ret = HandlePutRequest(ehRequest);
                 break;
             case OC_REST_POST:
                 ret = HandlePostRequest(ehRequest);
@@ -986,7 +1211,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    if(tmpSubject == NULL || pin == NULL || pinSize == 0 || tmpCredSubject == NULL)
+    if(NULL == tmpSubject || NULL == pin || 0 == pinSize || NULL == tmpCredSubject)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -995,7 +1220,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, owners->id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,
                                               OWNER_PSK_LENGTH_128, privData);
-    VERIFY_SUCCESS(TAG, (dtlsRes == 0) , ERROR);
+    VERIFY_SUCCESS(TAG, (0 == dtlsRes) , ERROR);
 
     uint32_t outLen = 0;
     char base64Buff[B64ENCODE_OUT_SAFESIZE(OWNER_PSK_LENGTH_128) + 1] = {};
@@ -1016,6 +1241,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     ret = AddCredential(cred);
     if( OC_STACK_OK != ret)
     {
+        RemoveCredential(tmpSubject);
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
     }
 
@@ -1099,18 +1325,20 @@ static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo){
 static OCStackResult GetCertCredPublicData(CADtlsX509Creds_t *credInfo, OicSecCred_t *cred)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    cJSON *jsonRoot = NULL;
+
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
     VERIFY_NON_NULL(TAG, cred, ERROR);
     VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
     //VERIFY_SUCCESS(TAG, NULL == credInfo->certificateChain.data, ERROR);
-    cJSON *jsonRoot = cJSON_Parse(cred->publicData.data);
+    jsonRoot = cJSON_Parse(cred->publicData.data);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     //Get certificate chain
     cJSON *jsonObj = cJSON_GetObjectItem(jsonRoot, CERTIFICATE);//TODO define field names constants
     VERIFY_SUCCESS(TAG, NULL != jsonObj && cJSON_Array == jsonObj->type, ERROR);
 
-    size_t certChainLen = cJSON_GetArraySize(jsonObj);
+    size_t certChainLen = (size_t)cJSON_GetArraySize(jsonObj);
     credInfo->chainLen = certChainLen;
     VERIFY_SUCCESS(TAG, MAX_CHAIN_LEN >= certChainLen, ERROR);
 
@@ -1118,6 +1346,7 @@ static OCStackResult GetCertCredPublicData(CADtlsX509Creds_t *credInfo, OicSecCr
     for (size_t i = 0; i < certChainLen; ++i)
     {
         cJSON *item = cJSON_GetArrayItem(jsonObj, i);
+        VERIFY_NON_NULL(TAG, item, ERROR);
         VERIFY_SUCCESS(TAG, cJSON_String == item->type, ERROR);
         uint32_t appendedLen = appendCert2Chain(credInfo->certificateChain + len, item->valuestring,
                                               MAX_CERT_MESSAGE_LEN - len);
@@ -1135,10 +1364,11 @@ exit:
 static OCStackResult GetCertCredPrivateData(CADtlsX509Creds_t *credInfo, OicSecCred_t *cred)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    cJSON *jsonRoot = NULL;
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
     VERIFY_NON_NULL(TAG, cred, ERROR);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-    cJSON *jsonRoot = cJSON_Parse(cred->privateData.data);
+    jsonRoot = cJSON_Parse(cred->privateData.data);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     cJSON *jsonObj = cJSON_GetObjectItem(jsonRoot, PRIVATE_KEY);//TODO define field names constants

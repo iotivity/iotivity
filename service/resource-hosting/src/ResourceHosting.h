@@ -33,58 +33,55 @@
 
 namespace OIC
 {
-namespace Service
-{
-
-class ResourceHosting
-{
-private:
-    typedef RCSRemoteResourceObject::Ptr RemoteObjectPtr;
-    typedef std::lock_guard<std::mutex> RHLock;
-    typedef std::string HostingObjectKey;
-
-    typedef std::function<void(RemoteObjectPtr)> DiscoveryCallback;
-    typedef HostingObject::DestroyedCallback DestroyedCallback;
-
-public:
-    void startHosting();
-    void stopHosting();
-
-    static ResourceHosting * getInstance();
-
-private:
-    ResourceHosting();
-    ~ResourceHosting() = default;
-
-    ResourceHosting(ResourceHosting&&) = delete;
-    ResourceHosting(const ResourceHosting&) = delete;
-    ResourceHosting& operator=(ResourceHosting&&) = delete;
-    ResourceHosting& operator=(const ResourceHosting&) = delete;
-
-    std::mutex m_mutexForList;
-    std::atomic_bool m_isStartedHosting;
-
-    std::unordered_map<HostingObjectKey, HostingObject::Ptr> m_hostingObjects;
-    RCSDiscoveryManager::DiscoveryTask::Ptr m_discoveryTask;
-
-    void createDiscoveryListener();
-    void discoveryHandler(RemoteObjectPtr remoteResource);
-
-    inline HostingObjectKey generateHostingObjectKey(std::string address, std::string uri)
+    namespace Service
     {
-        return HostingObjectKey(address + uri);
-    }
-    inline HostingObjectKey generateHostingObjectKey(RemoteObjectPtr rResource)
-    {
-        return HostingObjectKey(rResource->getAddress() + rResource->getUri());
-    }
 
-    HostingObject::Ptr findRemoteResource(RemoteObjectPtr remoteResource);
+        class ResourceHosting
+        {
+        private:
+            typedef RCSRemoteResourceObject::Ptr RemoteObjectPtr;
+            typedef std::lock_guard<std::mutex> RHLock;
+            typedef std::string HostingObjectKey;
 
-    void destroyedHostingObject(const HostingObjectKey & key);
-};
+            typedef std::function<void(RemoteObjectPtr)> DiscoveryCallback;
+            typedef HostingObject::DestroyedCallback DestroyedCallback;
 
-} /* namespace Service */
+        public:
+            void startHosting();
+            void stopHosting();
+
+            static ResourceHosting * getInstance();
+
+        private:
+            ResourceHosting();
+            ~ResourceHosting() = default;
+
+            ResourceHosting(const ResourceHosting&) = delete;
+            ResourceHosting & operator = (const ResourceHosting &) = delete;
+
+            ResourceHosting(ResourceHosting &&) = delete;
+            ResourceHosting & operator = (ResourceHosting &&) = delete;
+
+            std::mutex m_mutexForList;
+            std::atomic_bool m_isStartedHosting;
+
+            std::unordered_map<HostingObjectKey, HostingObject::Ptr> m_hostingObjects;
+            RCSDiscoveryManager::DiscoveryTask::Ptr m_discoveryTask;
+
+            void createDiscoveryListener();
+            void discoveryHandler(RemoteObjectPtr remoteResource);
+
+            HostingObjectKey generateHostingObjectKey(RemoteObjectPtr rResource);
+            HostingObjectKey generateHostingObjectKey(std::string && address, std::string && uri);
+            HostingObjectKey generateHostingObjectKey(
+                    const std::string & address, const std::string & uri);
+
+            HostingObject::Ptr findRemoteResource(RemoteObjectPtr remoteResource);
+
+            void destroyedHostingObject(const HostingObjectKey & key);
+        };
+
+    } /* namespace Service */
 } /* namespace OIC */
 
 #endif /* RH_RESOURCEHOSTING_H_ */

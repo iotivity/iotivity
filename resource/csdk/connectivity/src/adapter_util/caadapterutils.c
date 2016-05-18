@@ -255,6 +255,34 @@ jobject *CANativeGetActivity()
     return g_Activity;
 }
 
+jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
+                           const char* methodName,
+                           const char* methodFormat)
+{
+    VERIFY_NON_NULL_RET(env, CA_ADAPTER_UTILS_TAG, "env", NULL);
+    VERIFY_NON_NULL_RET(className, CA_ADAPTER_UTILS_TAG, "className", NULL);
+    VERIFY_NON_NULL_RET(methodName, CA_ADAPTER_UTILS_TAG, "methodName", NULL);
+    VERIFY_NON_NULL_RET(methodFormat, CA_ADAPTER_UTILS_TAG, "methodFormat", NULL);
+
+    jclass jni_cid = (*env)->FindClass(env, className);
+    if (!jni_cid)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_cid [%s] is null", className);
+        return NULL;
+    }
+
+    jmethodID jni_midID = (*env)->GetMethodID(env, jni_cid, methodName, methodFormat);
+    if (!jni_midID)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_midID [%s] is null", methodName);
+        (*env)->DeleteLocalRef(env, jni_cid);
+        return NULL;
+    }
+
+    (*env)->DeleteLocalRef(env, jni_cid);
+    return jni_midID;
+}
+
 void CADeleteGlobalReferences(JNIEnv *env)
 {
     if (g_Context)

@@ -72,7 +72,7 @@ OicSecCred_t * getCredList()
     cred->credType = SYMMETRIC_PAIR_WISE_KEY;
     cred->privateData.data = (char *)OICCalloc(1, strlen("My private Key11") + 1);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-    strcpy(cred->privateData.data, "My private Key11");
+    OICStrcpy(cred->privateData.data, strlen("My private Key11")+1,"My private Key11");
     cred->ownersLen = 1;
     cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
     VERIFY_NON_NULL(TAG, cred->owners, ERROR);

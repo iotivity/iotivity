@@ -26,8 +26,10 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#ifndef WITH_ARDUINO
 #ifdef TCP_ADAPTER
 #define HAVE_SYS_POLL_H
+#endif
 #endif
 
 #include <stdint.h>
@@ -514,14 +516,18 @@ typedef struct
     struct tcpsockets
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
+        CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv6;        /**< IPv6 accept socket */
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
         int shutdownFds[2];     /**< shutdown pipe */
+        int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
+        bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
 #endif
 } CAGlobals_t;
@@ -551,6 +557,14 @@ typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
  */
 typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
                                 const CAErrorInfo_t *errorInfo);
+
+/**
+ * Callback function type for network status changes delivery from CA common logic.
+ * @param[out]   info       Endpoint object from which the network status is changed.
+ *                          It contains endpoint address based on the connectivity type.
+ * @param[out]   status     Current network status info.
+ */
+typedef void (*CANetworkMonitorCallback)(const CAEndpoint_t *info, CANetworkStatus_t status);
 
 #ifdef __cplusplus
 } /* extern "C" */

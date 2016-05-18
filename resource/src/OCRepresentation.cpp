@@ -73,15 +73,9 @@ namespace OC
         }
 
         OCRepresentation rep;
-        char uuidString[UUID_STRING_SIZE];
-        if (payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string(uuidString);
-        }
-        else
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string();
-        }
+        rep[OC_RSRVD_DEVICE_ID] = (payload->sid) ?
+            std::string(payload->sid) :
+            std::string();
         rep[OC_RSRVD_DEVICE_NAME] = payload->deviceName ?
             std::string(payload->deviceName) :
             std::string();
@@ -91,6 +85,10 @@ namespace OC
         rep[OC_RSRVD_DATA_MODEL_VERSION] = payload->dataModelVersion ?
             std::string(payload->dataModelVersion) :
             std::string();
+        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
+        {
+           rep.addResourceType(strll->value);
+        }
         m_reps.push_back(std::move(rep));
     }
 
@@ -135,6 +133,15 @@ namespace OC
         rep[OC_RSRVD_SYSTEM_TIME] = payload->info.systemTime ?
             std::string(payload->info.systemTime) :
             std::string();
+
+        if (payload->rt)
+        {
+            rep.addResourceType(payload->rt);
+        }
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            rep.addResourceInterface(strll->value);
+        }
 
         m_reps.push_back(std::move(rep));
     }

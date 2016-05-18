@@ -72,19 +72,6 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint,
                                CADataType_t dataType);
 
 /**
- * Detaches control from the caller for sending request.
- * @param[in] resourceUri    resource uri that needs to  be sent in the request.
- * @param[in] token          token information of the request.
- * @param[in] tokenLength    length of the token.
- * @param[in] options        header options that need to be append in the request.
- * @param[in] numOptions     number of options be appended.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-                                      uint8_t tokenLength, const CAHeaderOption_t *options,
-                                      uint8_t numOptions);
-
-/**
  * Setting the request and response callbacks for network packets.
  * @param[in] ReqHandler      callback for receiving the requests.
  * @param[in] RespHandler     callback for receiving the response.
@@ -109,6 +96,12 @@ void CATerminateMessageHandler();
  * Handler for receiving request and response callback in single thread model.
  */
 void CAHandleRequestResponseCallbacks();
+
+/**
+ * Setting the Callback funtion for network state change callback.
+ * @param[in] nwMonitorHandler    callback for network state change.
+ */
+void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler);
 
 /**
  * To log the PDU data.

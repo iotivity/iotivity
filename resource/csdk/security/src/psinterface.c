@@ -159,8 +159,10 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
          ACL, PStat & Doxm resources at least have default entries in the database but
          Cred resource may have no entries. The first cred resource entry (for provisioning tool)
          is created when the device is owned by provisioning tool and it's ownerpsk is generated.*/
-        if((strcmp(rsrcName, OIC_JSON_CRED_NAME) == 0 || strcmp(rsrcName, OIC_JSON_CRL_NAME) == 0)
-                                                                                    && (!jsonObj))
+        if((strcmp(rsrcName, OIC_JSON_CRED_NAME) == 0 ||
+                strcmp(rsrcName, OIC_JSON_CRL_NAME) == 0 ||
+                strcmp(rsrcName, OIC_JSON_PCONF_NAME) == 0 ||
+                strcmp(rsrcName, OIC_JSON_DPAIRING_NAME) == 0) && (!jsonObj))
         {
             // Add the fist cred object in existing SVR database json
             cJSON_AddItemToObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);

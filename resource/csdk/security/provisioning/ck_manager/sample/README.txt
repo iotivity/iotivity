@@ -20,10 +20,10 @@ $ ./Door_server
 # 7. Num. of Rowner : 1
 # 8. [1]Rowner : lightDeviceUUID0
 #
-# After successfull sending acl provisioning_client will ask you for CRL data:
+# After successful sending acl provisioning_client will ask you for CRL data:
 # 1. Enter number of revoced certificates(1..9): 1
 # 2. Revoced certificate 0: Serial number (E. g.: 100): 3
-# And then you should see message about successfull sending CRL
+# And then you should see message about successful sending CRL
 #
 # Note: provisioning_client send ACL and CRL only to Light sever
 

@@ -22,69 +22,69 @@
 #define RH_HOSTINGOBJECT_H_
 
 #include "logger.h"
+
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceObject.h"
-#include "RequestObject.h"
 
 #define OIC_HOSTING_LOG(level, fmt, args...) OIC_LOG_V((level), PCF("Hosting"), fmt, ##args)
 
 namespace OIC
 {
-namespace Service
-{
+    namespace Service
+    {
 
-class HostingObject : public std::enable_shared_from_this<HostingObject>
-{
-private:
-    typedef RCSResourceObject::Ptr ResourceObjectPtr;
-    typedef RequestObject::Ptr RequestObjectPtr;
-    typedef RCSRemoteResourceObject::Ptr RemoteObjectPtr;
+        class HostingObject
+        {
+        private:
+            typedef RCSResourceObject::Ptr ResourceObjectPtr;
+            typedef RCSRemoteResourceObject::Ptr RemoteObjectPtr;
 
-public:
-    typedef std::shared_ptr<HostingObject> Ptr;
-    typedef std::weak_ptr<HostingObject> wPtr;
+        public:
+            typedef std::shared_ptr<HostingObject> Ptr;
+            typedef std::weak_ptr<HostingObject> wPtr;
 
-    typedef std::function<void()> DestroyedCallback;
-    typedef RCSRemoteResourceObject::StateChangedCallback BrokerCallback;
-    typedef RCSRemoteResourceObject::CacheUpdatedCallback CacheCallback;
-    typedef RCSResourceObject::SetRequestHandler SetRequestHandler;
+            typedef std::function<void()> DestroyedCallback;
+            typedef RCSRemoteResourceObject::StateChangedCallback BrokerCallback;
+            typedef RCSRemoteResourceObject::CacheUpdatedCallback CacheCallback;
+            typedef RCSResourceObject::SetRequestHandler SetRequestHandler;
 
-public:
-    HostingObject();
-    ~HostingObject();
+        public:
+            HostingObject();
+            ~HostingObject();
 
-    HostingObject(const HostingObject&) = delete;
-    HostingObject(HostingObject&&) = delete;
-    HostingObject& operator=(HostingObject&&) = delete;
-    HostingObject& operator=(const HostingObject&) = delete;
+            HostingObject(const HostingObject &) = delete;
+            HostingObject & operator = (const HostingObject &) = delete;
 
-    static HostingObject::Ptr createHostingObject(const RemoteObjectPtr & rResource,
-            DestroyedCallback destroyCB);
+            HostingObject(HostingObject &&) = delete;
+            HostingObject & operator = (HostingObject &&) = delete;
 
-    RemoteObjectPtr getRemoteResource() const;
+            static HostingObject::Ptr createHostingObject(const RemoteObjectPtr & rResource,
+                    DestroyedCallback destroyCB);
 
-private:
-    RemoteObjectPtr remoteObject;
-    ResourceObjectPtr mirroredServer;
+            RemoteObjectPtr getRemoteResource() const;
 
-    CacheCallback pDataUpdateCB;
-    DestroyedCallback pDestroyCB;
+        private:
+            RemoteObjectPtr remoteObject;
+            ResourceObjectPtr mirroredServer;
 
-    std::mutex mutexForCB;
+            CacheCallback pDataUpdateCB;
+            DestroyedCallback pDestroyCB;
 
-    ResourceObjectPtr createMirroredServer(RemoteObjectPtr rObject);
+            std::mutex mutexForCB;
 
-    RCSSetResponse setRequestHandler(
-            const RCSRequest & request, RCSResourceAttributes & attributes);
+            ResourceObjectPtr createMirroredServer(RemoteObjectPtr rObject);
 
-    void destroyHostingObject();
+            RCSSetResponse setRequestHandler(
+                    const RCSRequest & request, RCSResourceAttributes & attributes);
 
-public:
-    void stateChangedCB(ResourceState state);
-    void dataChangedCB(const RCSResourceAttributes & attributes);
-};
+            void destroyHostingObject();
 
-} /* namespace Service */
+        public:
+            void stateChangedCB(ResourceState state);
+            void dataChangedCB(const RCSResourceAttributes & attributes);
+        };
+
+    } /* namespace Service */
 } /* namespace OIC */
 
 #endif /* RH_HOSTINGOBJECT_H_ */

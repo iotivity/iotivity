@@ -31,7 +31,7 @@
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"
 #define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC }
 
-#define JSON_DB_PATH "./oic_svr_db_client.json"
+#define JSON_DB_PATH "./oic_svr_db_client.dat"
 
 using namespace OC;
 using namespace OIC::Service;
@@ -42,6 +42,7 @@ static WiFiOnboadingConnection onboardingConn;
 static RemoteEnrollee::shared_ptr remoteEnrollee = nullptr;
 
 static std::string ipaddress, ssid, pwd;
+char security;
 
 struct CloseApp
 {
@@ -73,7 +74,8 @@ int processUserInput(int min, int max)
 
 void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > easySetupStatus)
 {
-    OC_LOG_V(DEBUG, ES_SAMPLE_APP_TAG, "easySetupStatusCallback status is Status = %d",
+    OC_UNUSED(easySetupStatus);
+    OIC_LOG_V(DEBUG, ES_SAMPLE_APP_TAG, "easySetupStatusCallback status is Status = %d",
             easySetupStatus->getEasySetupState());
 
 }
@@ -95,30 +97,58 @@ void initEasySetup()
 
     easySetupIntance = EasySetup::getInstance();
 
-    ipaddress = "192.168.1.104";
-    ssid = "hub2.4G";
-    pwd = "22221111";
+    cout<<"\n Enter the IP address : ";
+    cin>>ipaddress;
+    cout<<"\n Enter the Target Network SSID : ";
+    cin>>ssid;
+    cout<<"\n Enter the Target Network Password : ";
+    cin>>pwd;
+    cout<<"\n Enable Security: [Y/N] ";
+    cin>>security;
 
-    netInfo.connType = CT_ADAPTER_IP;
-
-    OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
-    OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
-
-    onboardingConn.isSecured = false;
-    OICStrcpy(onboardingConn.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
-
-    try
+    if ( ipaddress.size() == 0 || ssid.size() == 0  || pwd.size()==0 )
     {
-        remoteEnrollee = easySetupIntance->createEnrolleeDevice(netInfo,onboardingConn);
+         cout<<"\n Invalid information try again !!!";
     }
-    catch (OCException &e)
-    {
-        std::cout << "Exception during createEnrolleeDevice call" << e.reason();
-        return;
-    }
+    else
+     {
+           cout <<"\n Entered details are :  \n";
+           cout<<"\n IP address : "<<ipaddress;
+           cout<<"\n Target Network SSID : "<<ssid;
+           cout<<"\n Target Network Password : "<<pwd;
 
-    remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
+          if (security == 'Y' || security == 'y' )
+          {
+                  onboardingConn.isSecured = true;
+                  cout<<"\n Security is Enabled\n\n\n";
+           }
+           else
+           {
+                 onboardingConn.isSecured = false;
+                 cout<<"\n Security is not Enabled\n\n\n";
+           }
+
+          netInfo.connType = CT_ADAPTER_IP;
+
+         OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
+         OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
+
+         OICStrcpy(onboardingConn.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
+
+         try
+         {
+             remoteEnrollee = easySetupIntance->createEnrolleeDevice(netInfo,onboardingConn);
+         }
+         catch (OCException &e)
+         {
+             std::cout << "Exception during createEnrolleeDevice call" << e.reason();
+             return;
+         }
+
+         remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
+    }
 }
+
 void runEasySetupMenu()
 {
     constexpr int EASY_SETUP_INIT = 1;

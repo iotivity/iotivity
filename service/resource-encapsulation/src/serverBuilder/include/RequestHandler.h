@@ -21,14 +21,10 @@
 #ifndef SERVERBUILDER_REQUESTHANDLER_H
 #define SERVERBUILDER_REQUESTHANDLER_H
 
-#include <RCSResponse.h>
-#include <RCSResourceAttributes.h>
+#include "RCSResponse.h"
+#include "RCSResourceAttributes.h"
 
-namespace OC
-{
-    class OCResourceResponse;
-    class OCRepresentation;
-}
+#include "OCRepresentation.h"
 
 namespace OIC
 {
@@ -39,15 +35,7 @@ namespace OIC
 
         class RequestHandler
         {
-        private:
-            typedef std::function< std::shared_ptr< OC::OCResourceResponse >(RCSResourceObject&) >
-                        BuildResponseHolder;
-
         public:
-            typedef std::shared_ptr< RequestHandler > Pre;
-
-            static constexpr int DEFAULT_ERROR_CODE = 200;
-
             RequestHandler();
 
             RequestHandler(const RequestHandler&) = delete;
@@ -61,10 +49,19 @@ namespace OIC
 
             virtual ~RequestHandler() { };
 
-            std::shared_ptr< OC::OCResourceResponse > buildResponse(RCSResourceObject&);
+            int getErrorCode() const;
+
+            bool hasCustomRepresentation() const;
+
+            OC::OCRepresentation getRepresentation() const;
+
+        public:
+            static constexpr int DEFAULT_ERROR_CODE = 200;
 
         private:
-            const BuildResponseHolder m_holder;
+            const int m_errorCode;
+            const bool m_customRep;
+            const OC::OCRepresentation m_ocRep;
         };
 
         class SetRequestHandler: public RequestHandler
@@ -74,8 +71,6 @@ namespace OIC
             typedef std::vector< AttrKeyValuePair > AttrKeyValuePairs;
 
         public:
-            typedef std::shared_ptr< SetRequestHandler > Ptr;
-
             SetRequestHandler(const SetRequestHandler&) = delete;
             SetRequestHandler(SetRequestHandler&&) = default;
 

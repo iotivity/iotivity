@@ -31,8 +31,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#define OXM_PBKDF2_ITERATIONS 1000
-
 /**
  * Callback implementation to input the PIN code from user.
  *

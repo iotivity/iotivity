@@ -70,6 +70,12 @@ void CANFCSetPacketReceiveCallback(CANFCPacketReceivedCallback callback)
 CAResult_t SetCreateNdefMessageCallbackfromNative(JNIEnv* env)
 {
     OIC_LOG(DEBUG, TAG, "SetCreateNdefMessageCallbackfromNative IN");
+
+    VERIFY_NON_NULL(env, TAG, "env");
+    VERIFY_NON_NULL(g_context, TAG, "g_context");
+    VERIFY_NON_NULL(g_activity, TAG, "g_activity");
+    VERIFY_NON_NULL(g_nfcInterface, TAG, "g_nfcInterface");
+
     jclass cid_NfcAdapter = (*env)->FindClass(env, "android/nfc/NfcAdapter");
     if (!cid_NfcAdapter)
     {
@@ -122,17 +128,9 @@ CAResult_t CANfcCreateJniInterfaceObject()
 {
     OIC_LOG(DEBUG, TAG, "CANfcCreateJniInterfaceObject IN");
 
-    if (!g_context)
-    {
-        OIC_LOG(ERROR, TAG, "g_context is null");
-        return CA_STATUS_FAILED;
-    }
-
-    if (!g_jvm)
-    {
-        OIC_LOG(ERROR, TAG, "g_jvm is null");
-        return CA_STATUS_FAILED;
-    }
+    VERIFY_NON_NULL(g_activity, TAG, "g_activity");
+    VERIFY_NON_NULL(g_context, TAG, "g_context");
+    VERIFY_NON_NULL(g_jvm, TAG, "g_jvm");
 
     bool isAttached = false;
     JNIEnv* env;
@@ -150,7 +148,25 @@ CAResult_t CANfcCreateJniInterfaceObject()
         isAttached = true;
     }
 
-    jclass jni_NfcInterface = (*env)->FindClass(env, "org/iotivity/ca/CaNfcInterface");
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, "android/content/Context",
+                                                           "getApplicationContext",
+                                                           "()Landroid/content/Context;");
+
+    if (!mid_getApplicationContext)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jApplicationContext = (*env)->CallObjectMethod(env, g_context,
+                                                           mid_getApplicationContext);
+    if (!jApplicationContext)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get application context");
+        return CA_STATUS_FAILED;
+    }
+
+    jclass jni_NfcInterface = (*env)->FindClass(env, CLASS_NFCINTERFACE);
     if (!jni_NfcInterface)
     {
         OIC_LOG(ERROR, TAG, "Could not get CaNfcInterface class");
@@ -166,7 +182,7 @@ CAResult_t CANfcCreateJniInterfaceObject()
     }
 
     jobject jni_nfcInstance = (*env)->NewObject(env, jni_NfcInterface,
-                                                NfcInterfaceConstructorMethod, g_context,
+                                                NfcInterfaceConstructorMethod, jApplicationContext,
                                                 g_activity);
     if (!jni_nfcInstance)
     {
@@ -242,7 +258,7 @@ CAResult_t CANFCStartServer()
         isAttached = true;
     }
 
-    jclass jni_NfcInterface = (*env)->FindClass(env, "org/iotivity/ca/CaNfcInterface");
+    jclass jni_NfcInterface = (*env)->FindClass(env, CLASS_NFCINTERFACE);
     if (!jni_NfcInterface)
     {
         OIC_LOG(ERROR, TAG, "Could not get CaNFCClientInterface class");
@@ -325,15 +341,8 @@ Java_org_iotivity_ca_CaNfcInterface_caNativeNfcCreateNdefMessage(JNIEnv *env, jo
         return NULL;
     }
 
-    jclass cid_string = (*env)->FindClass(env, "java/lang/String");
-    if (!cid_string)
-    {
-        OIC_LOG(ERROR, TAG, "Could not get NfcAdapter class for cid_string");
-        return NULL;
-    }
-
-    jmethodID mid_getBytes = (*env)->GetMethodID(env, cid_string, "getBytes",
-                                                 "(Ljava/lang/String;)[B");
+    jmethodID mid_getBytes = CAGetJNIMethodID(env, "java/lang/String", "getBytes",
+                                              "(Ljava/lang/String;)[B");
     if (!mid_getBytes)
     {
         OIC_LOG(ERROR, TAG, "Could not get methodId for mid_getBytes");
@@ -416,6 +425,8 @@ Java_org_iotivity_ca_CaNfcInterface_caNativeNfcInvokeBeam(JNIEnv *env, jobject o
     OIC_LOG(DEBUG, TAG, "cANativeNfcInvokeBeam : IN");
     VERIFY_NON_NULL_RET(env, TAG, "env is null", false);
     VERIFY_NON_NULL_RET(obj, TAG, "obj is null", false);
+    VERIFY_NON_NULL_RET(g_context, TAG, "g_context is null", false);
+    VERIFY_NON_NULL_RET(g_activity, TAG, "g_activity is null", false);
 
     jclass cid_NfcAdapter = (*env)->FindClass(env, "android/nfc/NfcAdapter");
     if (!cid_NfcAdapter)
@@ -516,6 +527,8 @@ CAResult_t CANfcSendDataImpl(const CAEndpoint_t * ep, const char* data, uint32_t
 {
     VERIFY_NON_NULL(ep, TAG, "CANfcSendDataImpl : endpoint is null");
     VERIFY_NON_NULL(data, TAG, "CANfcSendDataImpl : data is null");
+    VERIFY_NON_NULL(g_jvm, TAG, "CANfcSendDataImpl : g_jvm is null");
+
     OIC_LOG(INFO, TAG, "CANfcSendDataImpl moved env outside");
     bool isAttached = false;
     JNIEnv* env;

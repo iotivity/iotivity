@@ -234,7 +234,10 @@ PKIError GenerateCertificate (const UTF8String_t *subjectName, const UTF8String_
             certificate->tbsCertificate.subjectPublicKeyInfo.subjectPublicKey.buf          = NULL;
             certificate->tbsCertificate.signature.algorithm.buf                            = NULL;
             certificate->tbsCertificate.subjectPublicKeyInfo.algorithm.algorithm.buf       = NULL;
-            certificate->tbsCertificate.subjectPublicKeyInfo.algorithm.id_ecPublicKey->buf = NULL;
+            if (certificate->tbsCertificate.subjectPublicKeyInfo.algorithm.id_ecPublicKey)
+            {
+                certificate->tbsCertificate.subjectPublicKeyInfo.algorithm.id_ecPublicKey->buf = NULL;
+            }
             certificate->signatureAlgorithm.algorithm.buf                                  = NULL;
         }
         ASN_STRUCT_FREE(asn_DEF_Certificate, certificate);
