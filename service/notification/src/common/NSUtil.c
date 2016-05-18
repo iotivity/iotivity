@@ -20,6 +20,8 @@
 
 #include "NSUtil.h"
 
+#include "oic_malloc.h"
+
 NSResult NSFreeMessage(NSMessage * obj)
 {
     if (!obj)

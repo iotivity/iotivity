@@ -65,10 +65,6 @@ notification_test_env.AppendUnique(LIBS = ['pthread'])
 notification_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master', gtest_dir + '/include'])
 notification_test_env.AppendUnique(CPPPATH = ['../include'])
 
-#if not env.get('RELEASE'):
-#    notification_test_env.PrependUnique(LIBS = ['gcov'])
-#    notification_test_env.AppendUnique(CXXFLAGS = ['--coverage'])
-
 ######################################################################
 # Build Test
 ######################################################################
@@ -93,4 +89,4 @@ if env.get('TEST') == '1':
     if target_os == 'linux':
             from tools.scons.RunTest import *
             run_test(notification_consumer_test_env, '', 'service/notification/unittest/notification_consumer_test')
-            #run_test(notification_provider_test_env, '', 'service/notification/unittest/notification_provider_test')
+            run_test(notification_provider_test_env, '', 'service/notification/unittest/notification_provider_test')
