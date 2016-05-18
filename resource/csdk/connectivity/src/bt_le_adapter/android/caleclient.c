@@ -1582,6 +1582,46 @@ jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state
     return ret;
 }
 
+CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientDirectConnect");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+    VERIFY_NON_NULL(bluetoothDevice, TAG, "bluetoothDevice is null");
+
+    ca_mutex_lock(g_threadSendMutex);
+
+    jstring jni_address = CALEGetAddressFromBTDevice(env, bluetoothDevice);
+    if (!jni_address)
+    {
+        OIC_LOG(ERROR, TAG, "jni_address is not available");
+        ca_mutex_unlock(g_threadSendMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "address is not available");
+        ca_mutex_unlock(g_threadSendMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    CAResult_t res = CA_STATUS_OK;
+    if(CALEClientIsValidState(address, CA_LE_CONNECTION_STATE,
+                              STATE_DISCONNECTED))
+    {
+        jobject newGatt = CALEClientConnect(env, bluetoothDevice, autoconnect);
+        if (NULL == newGatt)
+        {
+            OIC_LOG(INFO, TAG, "newGatt is not available");
+            res = CA_STATUS_FAILED;
+        }
+    }
+    ca_mutex_unlock(g_threadSendMutex);
+
+    return res;
+}
+
 jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
 {
     OIC_LOG(DEBUG, TAG, "CALEClientConnect");
