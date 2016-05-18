@@ -41,7 +41,7 @@ import android.util.Log;
 public class CaLeClientInterface {
 
     private static String SERVICE_UUID = "ADE3D529-C784-4F63-A987-EB69F70EE816";
-    private static String TAG          = "Sample_Service : CaLeClientInterface";
+    private static String TAG          = "OIC_LE_CB_INTERFACE";
     private static Context mContext;
 
     private CaLeClientInterface(Context context) {
