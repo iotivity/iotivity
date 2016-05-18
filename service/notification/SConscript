@@ -118,8 +118,8 @@ notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
 #	'service/notification', 'NSConsumerIngerface.h')
 
 # Go to build Unit test
-#if target_os == 'linux':
-#	SConscript('unittest/SConscript')
+if target_os == 'linux':
+	SConscript('unittest/SConscript')
 
 # Go to build sample apps
 SConscript('examples/SConscript')
