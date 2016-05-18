@@ -29,7 +29,6 @@ NSResult NSInitMessageList()
 
 NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
-
     *msgPayload = OCRepPayloadCreate();
 
     if (!*msgPayload)
@@ -48,7 +47,6 @@ NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 
 NSResult NSGetSyncPayload(NSSync *sync, OCRepPayload** syncPayload)
 {
-
     *syncPayload = OCRepPayloadCreate();
 
     if (!*syncPayload)
@@ -78,8 +76,6 @@ NSResult NSSendMessage(NSMessage *msg)
         OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Fail to put notification resource"));
         return NS_ERROR;
     }
-
-    // Send Notification to subscribers
 
     if (consumerSubList->head == NULL)
     {
@@ -127,7 +123,6 @@ NSResult NSSendMessage(NSMessage *msg)
         printf("NS_ -------------------------------------------------------message\n");
     }
     printf("printf - no observers - 10\n");
-    // Notify message to subscribers
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray, obCount, payload,
             OC_LOW_QOS);
@@ -227,7 +222,7 @@ void * NSNotificationSchedule(void *ptr)
             NSTask *node = NSHeadMsg[NOTIFICATION_SCHEDULER];
             NSHeadMsg[NOTIFICATION_SCHEDULER] = node->nextTask;
 
-            switch (node->taskType)
+            switch ((int)node->taskType)
             {
                 case TASK_SEND_NOTIFICATION:
                 {

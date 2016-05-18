@@ -109,11 +109,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
     if (resourceType == NS_RESOURCE_MESSAGE)
     {
-        int obId = entityHandlerRequest->obsInfo.obsId;
+        NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
 
-        NSCacheElement * element = (NSCacheElement *) malloc(sizeof(NSCacheElement));
-
-        NSCacheSubData * subData = (NSCacheSubData *) malloc(sizeof(NSCacheSubData));
         subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
         subData->isWhite = false;
         subData->messageObId = entityHandlerRequest->obsInfo.obsId;
@@ -122,6 +120,8 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->data = (void*) subData;
         element->next = NULL;
 
+        printf("NS_ IP = %s in message ob\n", entityHandlerRequest->devAddr.addr);
+        printf("NS_ IP2 = %s in message ob\n", subData->id);
         printf("NS_ message ob Id = %d\n", subData->messageObId);
 
         if (NSCacheWrite(consumerSubList, element) != NS_OK)
@@ -139,16 +139,14 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         else if (NSGetSubscriptionAccepter() == NS_ACCEPTER_CONSUMER)
         {
             printf("state = 0 - 3\n");
-            NSSendSubscriptionResponse(entityHandlerRequest, NS_ACCEPTER_CONSUMER, true);
+            NSSendSubscriptionResponse(entityHandlerRequest, true);
         }
     }
     else if (resourceType == NS_RESOURCE_SYNC)
     {
-        int obId = entityHandlerRequest->obsInfo.obsId;
+        NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
 
-        NSCacheElement * element = (NSCacheElement *) malloc(sizeof(NSCacheElement));
-
-        NSCacheSubData * subData = (NSCacheSubData *) malloc(sizeof(NSCacheSubData));
+        NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
         printf("NS_ entityHandlerRequest->devAddr.addr = %s\n", entityHandlerRequest->devAddr.addr);
         subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
         subData->isWhite = false;
@@ -170,11 +168,6 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 {
     OIC_LOG(INFO, SUBSCRIPTION_TAG, "Start to unsubscription process");
-
-    // ProcessObserveUnregister (entityHandlerRequest);
-
-    // write consumer info to cache
-    int obId = entityHandlerRequest->obsInfo.obsId;
 
     NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
     NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
@@ -221,9 +214,15 @@ NSResult NSSendResponse(const char * id, bool accepted)
     OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
 
     NSCacheElement * element = NSCacheRead(consumerSubList, id);
-    NSCacheSubData * subData = element->data;
 
-    if (OCNotifyListOfObservers(rHandle, &subData->messageObId, 1, payload, OC_HIGH_QOS)
+    if(element == NULL)
+    {
+        printf("NS_ NSSendResponse - element is NULL\n");
+        return NS_ERROR;
+    }
+    NSCacheSubData * subData = (NSCacheSubData*) element->data;
+
+    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_HIGH_QOS)
             != OC_STACK_OK)
     {
         OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to send Acceptance");
@@ -236,8 +235,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     return NS_OK;
 }
 
-NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest,
-        NSAccessPolicy accepter, bool accepted)
+NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest, bool accepted)
 {
     OIC_LOG(INFO, SUBSCRIPTION_TAG, "Send ACCEPT message to consumer");
 
@@ -252,8 +250,6 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
     printf("accepted 1 \n");
     if (accepted)
     {
-        int obId = entityHandlerRequest->obsInfo.obsId;
-
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
 
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
@@ -270,7 +266,7 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         }
     }
 
-    NSSendResponse(&entityHandlerRequest->obsInfo.obsId, accepted);
+    NSSendResponse(entityHandlerRequest->devAddr.addr, accepted);
 
     return NS_OK;
 
@@ -298,7 +294,6 @@ void * NSSubScriptionSchedule(void *ptr)
             {
 
                 case TASK_SEND_POLICY:
-
                     NSSendAccessPolicyResponse((OCEntityHandlerRequest*) node->taskData);
                     break;
 
@@ -319,7 +314,7 @@ void * NSSubScriptionSchedule(void *ptr)
                     NSConsumer * consumer = (NSConsumer *) node->taskData;
                     int * pObId = (int *) consumer->mUserData;
 
-                    NSCacheSubData * subData = (NSCacheMsgData *) OICMalloc(sizeof(NSCacheSubData));
+                    NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
                     subData->id = OICStrdup(consumer->mId);
                     subData->isWhite = true;
                     subData->messageObId = 0;
@@ -338,7 +333,7 @@ void * NSSubScriptionSchedule(void *ptr)
                     NSConsumer * consumer = (NSConsumer *) node->taskData;
                     int * pObId = (int *) consumer->mUserData;
 
-                    NSCacheSubData * subData = (NSCacheMsgData *) OICMalloc(sizeof(NSCacheSubData));
+                    NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
                     subData->id = OICStrdup(consumer->mId);
                     subData->isWhite = false;
                     subData->messageObId = 0;
@@ -352,6 +347,8 @@ void * NSSubScriptionSchedule(void *ptr)
                 case TASK_SYNC_SUBSCRIPTION:
                     NSHandleSubscription((OCEntityHandlerRequest*) node->taskData,
                             NS_RESOURCE_SYNC);
+                    break;
+                default:
                     break;
 
             }

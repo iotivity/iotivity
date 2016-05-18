@@ -126,14 +126,6 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
                 sendOptions[1].optionLength = 10;
                 response.numSendVendorSpecificHeaderOptions = 2;
             }
-
-
-            // Send the response
-            /*if (OCDoResponse(&response) != OC_STACK_OK)
-            {
-                OIC_LOG(ERROR, LISTENER_TAG, "Error sending response");
-                ehResult = OC_EH_ERROR;
-            }*/
         }
     }
 
@@ -385,7 +377,6 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         }
     }
 
-
     OCPayloadDestroy(response.payload);
     return ehResult;
 }
@@ -393,6 +384,11 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char *remote_address,
         bool connected)
 {
+
+    // should be implementation
+    (void)adapter;
+    (void)remote_address;
+
     OIC_LOG (INFO, LISTENER_TAG, "Connection State Changed");
 
     if (connected)
@@ -409,6 +405,9 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
 
 void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
 {
+    // should be implementation
+    (void)adapter;
+
     OIC_LOG (INFO, LISTENER_TAG, "Adapter State Changed");
 
     if (enabled)

@@ -6,15 +6,14 @@
 #include "logger.h"
 #include "octypes.h"
 #include "pthread.h"
-
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 #define TAG "notiProviderExample"
 
 extern char *strdup(const char *s);
 
 bool isExit = false;
-
-pthread_t processThread;
 
 int id;
 
@@ -51,6 +50,7 @@ void syncCallback(NSSync *sync)
 int main()
 {
     int num;
+    pthread_t processThread;
 
     OIC_LOG(INFO, TAG, "NSStartProvider()");
 
@@ -61,13 +61,6 @@ int main()
     }
 
     pthread_create(&processThread, NULL, OCProcessThread, NULL);
-
-    NSMessage * message = (NSMessage*) OICMalloc(sizeof(NSMessage));
-    if (!message)
-    {
-        OIC_LOG(ERROR, TAG, PCF("Fail to allocate memory"));
-        return NS_ERROR;
-    }
 
     while (true)
     {
@@ -120,13 +113,13 @@ int main()
                 printf("app - mContentText : %s \n", body);
 
 
-                NSMessage * msg = (NSMessage *)malloc(sizeof(NSMessage));
+                NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
 
                 sprintf(charID, "%d", id);
 
                 msg->mId = strdup(charID);
                 msg->mTitle = strdup(title);
-                msg->mContentText = strdup(body);
+                msg->mContentText = OICStrdup(body);
 
                 NSSendNotification(msg);
 
@@ -134,12 +127,10 @@ int main()
 
             case 4:
                 OIC_LOG(INFO, TAG, "NSRead");
-                NSSync * sync = (NSSync*) malloc(sizeof(NSSync));
+                NSSync * sync = (NSSync*) OICMalloc(sizeof(NSSync));
 
-                sync->mMessageId = strdup("dev_001");
+                sync->mMessageId = OICStrdup("dev_001");
                 sync->mState = 1;
-
-                NSSendSync(sync);
 
                 break;
 /*

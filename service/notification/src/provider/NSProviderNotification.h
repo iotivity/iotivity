@@ -22,12 +22,14 @@
 #define _NS_PROVIDER_NOTIFICATION_H_
 
 #include <ocstack.h>
-#include "../common/NSCacheAdapter.h"
+#include "NSCacheAdapter.h"
 #include "logger.h"
 #include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
 #include "NSProviderResource.h"
 #include "NSProviderSubscription.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 NSCacheList * messageList;
 

@@ -97,18 +97,14 @@ NSResult NSStopProvider()
 NSResult NSSendNotification(NSMessage *msg)
 {
     OIC_LOG(INFO, INTERFACE_TAG, "Send Notification");
-
     NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_NOTIFICATION, msg);
-
     return NS_OK;
 }
 
 NSResult NSProviderReadCheck(NSMessage *msg)
 {
     OIC_LOG(INFO, INTERFACE_TAG, "Read Sync");
-
     NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ, msg);
-
     return NS_OK;
 }
 
@@ -127,17 +123,6 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted)
 
     return NS_OK;
 }
-
-/*
-NSResult NSGetConsumerList(uint8_t *list, uint32_t size)
-{
-    OIC_LOG(INFO, INTERFACE_TAG, "Get consumer list");
-
-    NSGetObsIdList(list);
-    size = NSGetNumberOfObsList();
-
-    return NS_OK;
-}*/
 
 void * NSResponseSchedule(void * ptr)
 {

@@ -30,9 +30,9 @@
 #include "NSConstants.h"
 
 NSCacheList * NSCacheCreate();
-NSCacheElement * NSCacheRead(NSCacheList * list, char * findId);
+NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId);
 NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj);
-NSResult NSCacheDelete(NSCacheList * list, char * delId);
+NSResult NSCacheDelete(NSCacheList * list, const char * delId);
 NSResult NSCacheDestroy(NSCacheList * list);
 
 #endif /* _NS_CACHEADAPTER__H_ */

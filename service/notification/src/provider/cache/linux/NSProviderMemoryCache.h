@@ -30,10 +30,13 @@
 #include "NSStructs.h"
 #include "NSConstants.h"
 #include "NSCacheAdapter.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
+#include "NSUtil.h"
 
 NSResult NSProviderDeleteCacheData(NSCacheType, void *);
 
-bool NSProviderCompareIdCacheData(NSCacheType, void *, char *);
+bool NSProviderCompareIdCacheData(NSCacheType, void *, const char *);
 
 bool NSProviderIsFoundCacheData(NSCacheType, void *, void*);
 

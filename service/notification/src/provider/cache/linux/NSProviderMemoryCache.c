@@ -36,7 +36,7 @@ NSCacheList * NSCacheCreate()
     return newList;
 }
 
-NSCacheElement * NSCacheRead(NSCacheList * list, char * findId)
+NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId)
 {
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheElement * iter = list->head;
@@ -50,7 +50,6 @@ NSCacheElement * NSCacheRead(NSCacheList * list, char * findId)
         next = iter->next;
 
         printf("NS_ findId2 = %s\n", findId);
-        pthread_mutex_unlock(&NSCacheMutex);
 
         if (NSProviderCompareIdCacheData(type, iter->data, findId))
         {
@@ -70,9 +69,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, NSCacheSubData * sub
 {
     pthread_mutex_lock(&NSCacheMutex);
 
-    NSCacheType type = list->cacheType;
-
-    printf("NS_ NSCacheWrite\n");
+    printf("NS_ NSCacheUpdateSubScriptionState\n");
 
     if (subData == NULL)
     {
@@ -211,9 +208,8 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
     return NS_OK;
 }
 
-NSResult NSCacheDelete(NSCacheList * list, char * delId)
+NSResult NSCacheDelete(NSCacheList * list, const char * delId)
 {
-
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheElement * prev = list->head;
     NSCacheElement * del = list->head;
@@ -280,7 +276,7 @@ NSResult NSCacheDestroy(NSCacheList * list)
     return NS_OK;
 }
 
-bool NSProviderCompareIdCacheData(NSCacheType type, void * data, char * id)
+bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id)
 {
     if (data == NULL)
     {

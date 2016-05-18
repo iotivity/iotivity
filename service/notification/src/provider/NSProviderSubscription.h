@@ -29,6 +29,8 @@
 #include "NSProviderScheduler.h"
 #include "NSProviderResource.h"
 #include "NSCacheAdapter.h"
+#include "NSProviderMemoryCache.h"
+#include "oic_string.h"
 
 NSAccessPolicy NSSubscriptionAccepter;
 NSCacheList * consumerSubList;
@@ -40,7 +42,6 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResourceType resourceType);
 void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest);
 void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest);
-NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest,
-        NSAccessPolicy accepter, bool accepted);
+NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest, bool accepted);
 
 #endif /* _NS_PROVIDER_SUBSCRIPTION_H_ */

@@ -20,17 +20,17 @@
 
 #include "NSProviderResource.h"
 
-const char* NSType = "oic.r.notification";
-const char* NSMessageType = "oic.r.notification.message";
-const char* NSSyncType = "oic.r.notification.sync";
+char* NSType = "oic.r.notification";
+char* NSMessageType = "oic.r.notification.message";
+char* NSSyncType = "oic.r.notification.sync";
 
-const char* NSInterface = "oic.if.baseline";
-const char* NSMessgeInterface = "oic.if.baseline.message";
-const char* NSSyncInterface = "oic.if.baseline.sync";
+char* NSInterface = "oic.if.baseline";
+char* NSMessgeInterface = "oic.if.baseline.message";
+char* NSSyncInterface = "oic.if.baseline.sync";
 
-const char* NSUri = "/notification";
-const char* NSMessageUri = "/notification/message";
-const char* NSSyncUri = "/notification/sync";
+char* NSUri = "/notification";
+char* NSMessageUri = "/notification/message";
+char* NSSyncUri = "/notification/sync";
 
 /* Structure to represent notification resources */
 typedef struct
@@ -83,10 +83,6 @@ NSResult NSCreateResource(char *uri)
             OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Resource"));
             return NS_ERROR;
         }
-
-        printf("NotificationResource.handle = %u\n", NotificationResource.handle);
-
-
     }
     else if (strcmp(uri, NSMessageUri) == 0)
     {
@@ -102,16 +98,12 @@ NSResult NSCreateResource(char *uri)
             OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Message Resource"));
             return NS_ERROR;
         }
-
-        printf("NotificationMessageResource.handle = %u\n", NotificationMessageResource.handle);
-
-
     }
     else if (strcmp(uri, NSSyncUri) == 0)
     {
         NotificationSyncResource.id = NULL;
         NotificationSyncResource.state = NULL;
-        NotificationSyncResource.device;
+        memset(&NotificationSyncResource.device, 0, sizeof(NSDevice));
         NotificationSyncResource.handle = NULL;
 
         if (OCCreateResource(&(NotificationSyncResource.handle), NSSyncType, NSInterface, NSSyncUri,
@@ -120,9 +112,6 @@ NSResult NSCreateResource(char *uri)
             OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Sync Resource"));
             return NS_ERROR;
         }
-
-        printf("NotificationSyncResource.handle = %u\n", NotificationSyncResource.handle);
-
     }
     else
     {
@@ -193,6 +182,9 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
 NSResult NSPutSyncResource(NSSync *sync, OCResourceHandle * handle)
 {
     OIC_LOG(INFO, RESOURCE_TAG, "Put notification sync to Resource");
+
+    //should be implementation
+    (void) sync;
 
     *handle = NotificationSyncResource.handle;
 

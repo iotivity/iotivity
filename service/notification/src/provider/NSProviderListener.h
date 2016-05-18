@@ -30,6 +30,8 @@
 #include "NSProviderSystem.h"
 #include "NSProviderScheduler.h"
 #include "cautilinterface.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback);
