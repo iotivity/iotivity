@@ -129,11 +129,13 @@ CAResult_t CAManagerStartAutoConnection(JNIEnv *env, jstring remote_le_address)
 
     ca_mutex_lock(g_connectRetryMutex);
 
+    CAResult_t res = CA_STATUS_OK;
     for (size_t retry_cnt = 0 ; retry_cnt < MAX_RETRY_COUNT ; retry_cnt++)
     {
         // there is retry logic 5 times when connectGatt call has failed
         // because BT adapter might be not ready yet.
-        if (NULL == CAManagerConnectGatt(env, remote_le_address))
+        res = CAManagerConnectGatt(env, remote_le_address);
+        if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(INFO, TAG, "retry will be started at least %d times after delay 1sec",
                       MAX_RETRY_COUNT - retry_cnt - 1);
@@ -153,13 +155,13 @@ CAResult_t CAManagerStartAutoConnection(JNIEnv *env, jstring remote_le_address)
     }
     ca_mutex_unlock(g_connectRetryMutex);
     OIC_LOG(DEBUG, TAG, "OUT - CAManagerStartAutoConnection");
-    return CA_STATUS_OK;
+    return res;
 }
 
-jobject CAManagerConnectGatt(JNIEnv *env, jstring remote_le_address)
+CAResult_t CAManagerConnectGatt(JNIEnv *env, jstring remote_le_address)
 {
-    VERIFY_NON_NULL_RET(env, TAG, "env", NULL);
-    VERIFY_NON_NULL_RET(remote_le_address, TAG, "remote_le_address", NULL);
+    VERIFY_NON_NULL(env, TAG, "env");
+    VERIFY_NON_NULL(remote_le_address, TAG, "remote_le_address");
 
     OIC_LOG(DEBUG, TAG, "IN - CAManagerConnectGatt");
 
@@ -167,7 +169,7 @@ jobject CAManagerConnectGatt(JNIEnv *env, jstring remote_le_address)
     if (!jni_bluetooth)
     {
         OIC_LOG(ERROR, TAG, "jni_bluetooth is null");
-        return NULL;
+        return CA_STATUS_FAILED;
     }
 
     if (!CAManagerIsDeviceBonded(env, jni_bluetooth))
@@ -177,18 +179,18 @@ jobject CAManagerConnectGatt(JNIEnv *env, jstring remote_le_address)
 
     // request to connection with AutoConnection Flag
     OIC_LOG(INFO, TAG, "request to gatt connection for auto connection");
-    jobject newGatt = (jobject)CALEClientConnect(env, jni_bluetooth, JNI_TRUE);
-    if (NULL == newGatt)
+    CAResult_t res = CALEClientDirectConnect(env, jni_bluetooth, JNI_TRUE);
+    if (CA_STATUS_OK != res)
     {
         OIC_LOG(INFO, TAG, "re-connection will be started");
-        return NULL;
+        return res;
     }
 
     // set flag auto connection is requested.
     CAManagerSetAutoConnectionFlag(env, remote_le_address, true);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAManagerConnectGatt");
-    return newGatt;
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAManagerProcessRecovery(JNIEnv *env, uint16_t adapter_state)
