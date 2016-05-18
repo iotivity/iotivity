@@ -24,9 +24,11 @@
         "passport" : "*",
         "passport-facebook" : "*",
         "passport-twitter" : "*",
+        "passport-uber" : "*",
         "twit": "*",
         "cors" : "*",
         "rvi" : "*",
         "websocket":"*"
+        "node-uber": "*"
     }
 }

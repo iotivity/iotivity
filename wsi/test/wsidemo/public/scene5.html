@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html ng-app="wsidemo">
     <head>
-
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,7 +30,7 @@
 
     </head>
 
-    <body ng-controller="scene4controller">
+    <body ng-controller="scene5controller">
 
         <div id="wrapper">
 
@@ -149,7 +148,7 @@
                                     <a href="scene1.html">Scenario 1</a>
                                 </li>
                                 <li>
-                                    <a href="scene4.html">Scenario 2</a>
+                                    <a href="scene2.html">Scenario 2</a>
                                 </li>
                                 <li>
                                     <a href="scene3.html">Scenario 3</a>
@@ -180,47 +179,55 @@
 
                 <div class="container-fluid">
 
+                    <!-- Page Heading -->
+                    <div class="row">
+
+
                         <!-- Main jumbotron for a primary marketing message or call to action -->
                         <div class="jumbotron">
-                            <h1>Scenario 4</h1>
+                            <h1>Scenario 5</h1>
                             <p>
-                            Observe &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=120px src="assets/images/iotivity.png"/>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=100px width=100px src="assets/images/on.png"/>&nbsp;&nbsp;&nbsp;&nbsp;Status 
+                            Get User Profile & Route Price from &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=50 width=230 src="assets/images/uber.png"/> 
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                             </p>
                         </div>
                     <!-- /.row -->
                     <div class="row">
                         <div class="col-lg-6">
+                            
                             <form role="form">
                                 <div class="form-group">
-                                    <button ng-click="findIoTivityDevices()" type="button" class="btn btn-info">1. Find Resource</button>
-                                    <button ng-click="startObserve()" type="button" class="btn btn-primary">2. Start Observation</button>
-                                    <button ng-click="stopObserve()" type="button" class="btn btn-success">3. Stop Observation</button>
-                                    <button ng-click="createResource()" type="button" class="btn btn-success">4. Create Resource</button>
+                                    <button ng-click="getProfile()" type="button" class="btn btn-info">1. Get User Profile</button>
+                                    <button ng-click="getPrice()" type="button" class="btn btn-primary">2. Get Estimate Price for given route</button>
                                 </div>
                                 <div class="form-group">
-                                    <label>IoTivity Capability</label>
-                                    <textarea id="iotivitycap" class="form-control" rows="5"></textarea>
-                                    <button ng-click="observeIoTivityCap()" type="button" class="btn btn-primary">Submit</button>
+                                    <label>Uber Capability</label>
+                                    <textarea id="ubercap" class="form-control" rows="5"></textarea>
+                                    <button ng-click="executeUberCap()" type="button" class="btn btn-primary">Submit</button>
                                 </div>
+
                             </form>
+
                         </div>
-                        <div id = "scene4updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
+                        <div id = "scene1updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
                             <h1>Alerts</h1>
-                            <div ng-class="scene4update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene4update in scene4updates">
-                                <strong>{{scene4update.title}}</strong> 
-                                <p>{{scene4update.content}}</p>
+                            <div ng-class="scene1update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene1update in scene1updates">
+                                <strong>{{scene1update.title}}</strong> 
+                                <p>{{scene1update.content}}</p>
                             </div>                            
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
     <script src="assets/js/angular/angular.js"></script>
     <script src="app.js"></script>
-    <script src="controllers/scene4controller.js"></script>
+    <script src="controllers/scene5controller.js"></script>
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
-    </body>
+
+</body>
 
 </html>
