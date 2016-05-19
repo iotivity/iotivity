@@ -45,10 +45,9 @@ typedef void (*CAPacketReceiveCallback)(const char *address, const uint8_t *data
 
 /**
  * initialize server for BLE.
- * @param[in]   handle           thread pool handle object.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEServerInitialize(ca_thread_pool_t handle);
+CAResult_t CALEServerInitialize();
 
 /**
  * terminate client for BLE.

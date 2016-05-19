@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -18,8 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-// OCClient.cpp : Defines the entry point for the console application.
-//
+
 #include <string>
 #include <map>
 #include <cstdlib>
@@ -255,7 +254,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 
         std::cout << "Posting light representation..." << std::endl;
 
-        mylight.m_on_off = "false";
+        mylight.m_on_off = false;
 
         rep.setValue("on-off", mylight.m_on_off);
 
@@ -341,7 +340,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 
         // Invoke resource's put API with rep, query map and the callback parameter
 
-        resource->put(rep, QueryParamsMap(), &onPut);
+        resource->post(rep, QueryParamsMap(), &onPut);
     }
 }
 
@@ -363,7 +362,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 
             std::cout << "\ton-off: " << mylight.m_on_off << std::endl;
 
-            putLightRepresentation(curResource);
+            postLightRepresentation(curResource);
         }
         else
         {

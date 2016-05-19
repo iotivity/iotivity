@@ -19,377 +19,683 @@
  ******************************************************************/
 
 #include "simulator_resource_model.h"
+#include "simulator_resource_model_schema.h"
 #include "simulator_exceptions.h"
 #include "logger.h"
-#include "OCPlatform.h"
-#include <sstream>
+
 #include <boost/lexical_cast.hpp>
+#include <cfloat>
+
+#define TAG "SIM_RESOURCE_MODEL"
 
 template <typename T>
-struct TypeConverter
-{
-    constexpr static SimulatorResourceModel::Attribute::ValueType type =
-            SimulatorResourceModel::Attribute::ValueType::UNKNOWN;
-};
+struct TypeConverter {};
 
 template <>
 struct TypeConverter<int>
 {
-    constexpr static SimulatorResourceModel::Attribute::ValueType type =
-            SimulatorResourceModel::Attribute::ValueType::INTEGER;
+    constexpr static AttributeValueType type =
+        AttributeValueType::INTEGER;
 };
 
 template <>
 struct TypeConverter<double>
 {
-    constexpr static SimulatorResourceModel::Attribute::ValueType type =
-            SimulatorResourceModel::Attribute::ValueType::DOUBLE;
+    constexpr static AttributeValueType type =
+        AttributeValueType::DOUBLE;
 };
 
 template <>
 struct TypeConverter<bool>
 {
-    constexpr static SimulatorResourceModel::Attribute::ValueType type =
-            SimulatorResourceModel::Attribute::ValueType::BOOLEAN;
+    constexpr static AttributeValueType type =
+        AttributeValueType::BOOLEAN;
 };
 
 template <>
 struct TypeConverter<std::string>
 {
-    constexpr static SimulatorResourceModel::Attribute::ValueType type =
-            SimulatorResourceModel::Attribute::ValueType::STRING;
+    constexpr static AttributeValueType type =
+        AttributeValueType::STRING;
 };
 
-class attribute_type_visitor : public boost::static_visitor<
-        SimulatorResourceModel::Attribute::ValueType>
+template <>
+struct TypeConverter<SimulatorResourceModel>
+{
+    constexpr static AttributeValueType type =
+        AttributeValueType::RESOURCE_MODEL;
+};
+
+template <typename T>
+struct TypeDetails
+{
+    constexpr static AttributeValueType type =
+        TypeConverter<T>::type;
+    constexpr static AttributeValueType baseType =
+        TypeConverter<T>::type;
+    constexpr static int depth = 0;
+};
+
+template <typename T>
+struct TypeDetails<std::vector<T>>
+{
+    constexpr static AttributeValueType type =
+        AttributeValueType::VECTOR;
+    constexpr static AttributeValueType baseType =
+        TypeDetails<T>::baseType;
+    constexpr static int depth = 1 + TypeDetails<T>::depth;
+};
+
+class AttributeTypeVisitor : public boost::static_visitor<>
 {
     public:
+        AttributeTypeVisitor() : m_type(AttributeValueType::UNKNOWN),
+            m_baseType(AttributeValueType::UNKNOWN), m_depth(0) {}
+
         template <typename T>
-        result_type operator ()(const T &)
+        void operator ()(const T &)
         {
-            return TypeConverter<T>::type;
+            m_type = TypeDetails<T>::type;
+            m_baseType = TypeDetails<T>::baseType;
+            m_depth = TypeDetails<T>::depth;
         }
+
+        AttributeValueType m_type;
+        AttributeValueType m_baseType;
+        int m_depth;
 };
 
-class to_string_visitor : public boost::static_visitor<std::string>
+class OCRepresentationBuilder
 {
     public:
-        template <typename T>
-        result_type operator ()(const T &value)
+        class ValueConverter : public boost::static_visitor<>
         {
-            try
+            public:
+                ValueConverter(OC::OCRepresentation &rep, const std::string &name)
+                    : m_rep(rep), m_name(name) {}
+
+                template <typename T>
+                void operator ()(const T &value)
+                {
+                    m_rep.setValue(m_name, value);
+                }
+
+                void operator ()(const SimulatorResourceModel &value)
+                {
+                    OC::OCRepresentation ocRep;
+                    for (auto &element : value.getAttributeValues())
+                    {
+                        ValueConverter visitor(ocRep, element.first);
+                        boost::apply_visitor(visitor, element.second);
+                    }
+
+                    m_rep.setValue(m_name, ocRep);
+                }
+
+                template <typename T>
+                void operator ()(const std::vector<T> &values)
+                {
+                    m_rep.setValue(m_name, values);
+                }
+
+                void operator ()(const std::vector<SimulatorResourceModel> &values)
+                {
+                    std::vector<OC::OCRepresentation> ocRepArray(values.size());
+                    for (size_t i = 0; i < values.size(); i++)
+                    {
+                        for (auto &element : values[i].getAttributeValues())
+                        {
+                            ValueConverter visitor(ocRepArray[i], element.first);
+                            boost::apply_visitor(visitor, element.second);
+                        }
+                    }
+
+                    m_rep.setValue(m_name, ocRepArray);
+                }
+
+                template <typename T>
+                void operator ()(const std::vector<std::vector<T>> &values)
+                {
+                    m_rep.setValue(m_name, values);
+                }
+
+                void operator ()(const std::vector<std::vector<SimulatorResourceModel>> &values)
+                {
+                    std::vector<std::vector<OC::OCRepresentation>> ocRepArray;
+                    for (size_t i = 0; i < values.size(); i++)
+                    {
+                        for (size_t j = 0; j < values[i].size(); j++)
+                        {
+                            for (auto &element : values[i][j].getAttributeValues())
+                            {
+                                ValueConverter visitor(ocRepArray[i][j], element.first);
+                                boost::apply_visitor(visitor, element.second);
+                            }
+                        }
+                    }
+
+                    m_rep.setValue(m_name, ocRepArray);
+                }
+
+                template <typename T>
+                void operator ()(const std::vector<std::vector<std::vector<T>>> &values)
+                {
+                    m_rep.setValue(m_name, values);
+                }
+
+                void operator ()(const std::vector<std::vector<std::vector<SimulatorResourceModel>>> &values)
+                {
+                    std::vector<std::vector<std::vector<OC::OCRepresentation>>> ocRepArray;
+                    for (size_t i = 0; i < values.size(); i++)
+                    {
+                        for (size_t j = 0; j < values[i].size(); j++)
+                        {
+                            for (size_t k = 0; j < values[i][j].size(); k++)
+                            {
+                                for (auto &element : values[i][j][k].getAttributeValues())
+                                {
+                                    ValueConverter visitor(ocRepArray[i][j][k], element.first);
+                                    boost::apply_visitor(visitor, element.second);
+                                }
+                            }
+                        }
+                    }
+
+                    m_rep.setValue(m_name, ocRepArray);
+                }
+
+            private:
+                OC::OCRepresentation &m_rep;
+                std::string m_name;
+        };
+
+        OC::OCRepresentation build(const SimulatorResourceModel &model)
+        {
+            OC::OCRepresentation ocRep;
+            for (auto &element : model.getAttributeValues())
             {
-                return boost::lexical_cast<std::string>(value);
+                ValueConverter visitor(ocRep, element.first);
+                boost::apply_visitor(visitor, element.second);
             }
-            catch (const boost::bad_lexical_cast &e)
-            {
-                return "";
-            }
+
+            return std::move(ocRep);
         }
 };
 
-class add_to_representation : public boost::static_visitor<>
+// TODO: Class is very heavy, revisit again to clean
+class SimulatorResourceModelBuilder
 {
     public:
-        add_to_representation(OC::OCRepresentation &rep, const std::string &key)
-            : m_rep(rep), m_key(key) {}
-
-        template <typename T>
-        void operator ()(const T &value)
+        SimulatorResourceModel build(const OC::OCRepresentation &ocRep)
         {
-            m_rep.setValue(m_key, value);
-        }
-
-        OC::OCRepresentation &&getRep()
-        {
-            return std::move(m_rep);
+            SimulatorResourceModel resModel;
+            handleRepresentationType(resModel, ocRep);
+            return std::move(resModel);
         }
 
     private:
-        OC::OCRepresentation m_rep;
-        std::string m_key;
+        void handleRepresentationType(SimulatorResourceModel &resModel,
+                                      const OC::OCRepresentation &ocRep)
+        {
+            for (auto &ocAttribute : ocRep)
+            {
+                if (OC::AttributeType::Integer == ocAttribute.type())
+                {
+                    resModel.add<int>(ocAttribute.attrname(), ocAttribute.getValue<int>());
+                }
+                else if (OC::AttributeType::Double == ocAttribute.type())
+                {
+                    resModel.add<double>(ocAttribute.attrname(), ocAttribute.getValue<double>());
+                }
+                else if (OC::AttributeType::Boolean == ocAttribute.type())
+                {
+                    resModel.add<bool>(ocAttribute.attrname(), ocAttribute.getValue<bool>());
+                }
+                else if (OC::AttributeType::String == ocAttribute.type())
+                {
+                    resModel.add<std::string>(ocAttribute.attrname(), ocAttribute.getValue<std::string>());
+                }
+                else if (OC::AttributeType::OCRepresentation == ocAttribute.type())
+                {
+                    SimulatorResourceModel subResModel;
+                    OC::OCRepresentation ocSubRep = ocAttribute.getValue<OC::OCRepresentation>();
+                    handleRepresentationType(subResModel, ocSubRep);
+                    resModel.add<SimulatorResourceModel>(ocAttribute.attrname(), subResModel);
+                }
+                else if (OC::AttributeType::Vector == ocAttribute.type())
+                {
+                    handleVectorType(resModel, ocAttribute);
+                }
+            }
+        }
+
+        void handleVectorType(SimulatorResourceModel &resModel,
+                              const OC::OCRepresentation::AttributeItem &ocAttribute)
+        {
+            if (1 == ocAttribute.depth())
+            {
+                handleVectorTypeDepth1(resModel, ocAttribute);
+            }
+            else if (2 == ocAttribute.depth())
+            {
+                handleVectorTypeDepth2(resModel, ocAttribute);
+            }
+            else if (3 == ocAttribute.depth())
+            {
+                handleVectorTypeDepth3(resModel, ocAttribute);
+            }
+        }
+
+        void handleVectorTypeDepth1(SimulatorResourceModel &resModel,
+                                    const OC::OCRepresentation::AttributeItem &ocAttribute)
+        {
+            if (OC::AttributeType::Integer == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<int>>());
+            }
+            else if (OC::AttributeType::Double == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<double>>());
+            }
+            else if (OC::AttributeType::Boolean == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<bool>>());
+            }
+            else if (OC::AttributeType::String == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<std::string>>());
+            }
+            else if (OC::AttributeType::OCRepresentation == ocAttribute.base_type())
+            {
+                std::vector<OC::OCRepresentation> ocSubRepArray =
+                    ocAttribute.getValue<std::vector<OC::OCRepresentation>>();
+
+                std::vector<SimulatorResourceModel> subResModelArray(ocSubRepArray.size());
+                for  (size_t i = 0; i < ocSubRepArray.size(); i++)
+                {
+                    handleRepresentationType(subResModelArray[i], ocSubRepArray[i]);
+                }
+
+                resModel.add<std::vector<SimulatorResourceModel>>(ocAttribute.attrname(), subResModelArray);
+            }
+        }
+
+        void handleVectorTypeDepth2(SimulatorResourceModel &resModel,
+                                    const OC::OCRepresentation::AttributeItem &ocAttribute)
+        {
+            if (OC::AttributeType::Integer == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<std::vector<int>>>());
+            }
+            else if (OC::AttributeType::Double == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<std::vector<double>>>());
+            }
+            else if (OC::AttributeType::Boolean == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<std::vector<bool>>>());
+            }
+            else if (OC::AttributeType::String == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(), ocAttribute.getValue<std::vector<std::vector<std::string>>>());
+            }
+            else if (OC::AttributeType::OCRepresentation == ocAttribute.base_type())
+            {
+                std::vector<std::vector<OC::OCRepresentation>> ocSubRepArray =
+                            ocAttribute.getValue<std::vector<std::vector<OC::OCRepresentation>>>();
+
+                std::vector<std::vector<SimulatorResourceModel>> subResModelArray(ocSubRepArray.size());
+                for  (size_t i = 0; i < ocSubRepArray.size(); i++)
+                {
+                    std::vector<SimulatorResourceModel> innerArray1(ocSubRepArray[i].size());
+                    for  (size_t j = 0; j < ocSubRepArray[i].size(); j++)
+                        handleRepresentationType(innerArray1[j], ocSubRepArray[i][j]);
+                    subResModelArray[i] = innerArray1;
+                }
+
+                resModel.add<std::vector<std::vector<SimulatorResourceModel>>>(
+                    ocAttribute.attrname(), subResModelArray);
+            }
+        }
+
+        void handleVectorTypeDepth3(SimulatorResourceModel &resModel,
+                                    const OC::OCRepresentation::AttributeItem &ocAttribute)
+        {
+            if (OC::AttributeType::Integer == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(),
+                             ocAttribute.getValue<std::vector<std::vector<std::vector<int>>>>());
+            }
+            else if (OC::AttributeType::Double == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(),
+                             ocAttribute.getValue<std::vector<std::vector<std::vector<double>>>>());
+            }
+            else if (OC::AttributeType::Boolean == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(),
+                             ocAttribute.getValue<std::vector<std::vector<std::vector<bool>>>>());
+            }
+            else if (OC::AttributeType::String == ocAttribute.base_type())
+            {
+                resModel.add(ocAttribute.attrname(),
+                             ocAttribute.getValue<std::vector<std::vector<std::vector<std::string>>>>());
+            }
+            else if (OC::AttributeType::OCRepresentation == ocAttribute.base_type())
+            {
+                std::vector<std::vector<std::vector<OC::OCRepresentation>>> ocSubRepArray =
+                    ocAttribute.getValue<std::vector<std::vector<std::vector<OC::OCRepresentation>>>>();
+
+                std::vector<std::vector<std::vector<SimulatorResourceModel>>> subResModelArray(
+                    ocSubRepArray.size());
+                for  (size_t i = 0; i < ocSubRepArray.size(); i++)
+                {
+                    std::vector<std::vector<SimulatorResourceModel>> innerArray1(ocSubRepArray[i].size());
+                    for  (size_t j = 0; j < ocSubRepArray[i].size(); j++)
+                    {
+                        std::vector<SimulatorResourceModel> innerArray2(ocSubRepArray[i][j].size());
+                        for  (size_t k = 0; k < ocSubRepArray[i][j].size(); k++)
+                        {
+                            handleRepresentationType(innerArray2[k], ocSubRepArray[i][j][k]);
+                        }
+                        innerArray1[j] = innerArray2;
+                    }
+                    subResModelArray[i] = innerArray1;
+                }
+
+                resModel.add<std::vector<std::vector<std::vector<SimulatorResourceModel>>>>(
+                    ocAttribute.attrname(), subResModelArray);
+            }
+        }
 };
 
-class range_validation : public boost::static_visitor<bool>
+class ToStringConverter
 {
     public:
-        range_validation (SimulatorResourceModel::Attribute &attrItem)
-            : m_attrItem(attrItem) {}
-
-        bool operator ()(int &value)
+        class ValueVisitor : public boost::static_visitor<std::string>
         {
-            int min, max;
-            m_attrItem.getRange(min, max);
-            if (value >= min && value <= max)
-                return true;
-            return false;
+            public:
+
+                template <typename T>
+                std::string operator ()(const T &value)
+                {
+                    try
+                    {
+                        return boost::lexical_cast<std::string>(value);
+                    }
+                    catch (const boost::bad_lexical_cast &e)
+                    {
+                        return "CONVERSION_FAILED!";
+                    }
+                }
+
+                std::string operator ()(const SimulatorResourceModel &value)
+                {
+                    std::ostringstream out;
+                    out << "{ ";
+                    for (auto &element : value.getAttributeValues())
+                    {
+                        out << "\"" << element.first << "\" : ";
+
+                        ValueVisitor visitor;
+                        out << boost::apply_visitor(visitor, element.second);
+
+                        out << ", ";
+                    }
+                    out << "}";
+                    return out.str();
+                }
+
+                template <typename T>
+                std::string operator ()(const std::vector<T> &values)
+                {
+                    std::ostringstream out;
+                    out << "[ ";
+
+                    for (size_t i = 0; i < values.size(); i++)
+                    {
+                        out << operator ()(values[i]);
+                        out << " ";
+                    }
+
+                    out << "]";
+                    return out.str();
+                }
+
+                template <typename T>
+                std::string operator ()(const std::vector<std::vector<T>> &values)
+                {
+                    std::ostringstream out;
+                    out << "[ ";
+
+                    for (size_t i = 0; i < values.size(); i++)
+                    {
+                        out << operator ()(values[i]);
+                        out << " ";
+                    }
+
+                    out << "]";
+                    return out.str();
+                }
+
+                template <typename T>
+                std::string operator ()(const std::vector<std::vector<std::vector<T>>> &values)
+                {
+                    std::ostringstream out;
+                    out << "[ ";
+
+                    for (size_t i = 0; i < values.size(); i++)
+                    {
+                        out << operator ()(values[i]);
+                        out << " ";
+                    }
+
+                    out << "]";
+                    return out.str();
+                }
+        };
+
+        std::string getStringRepresentation(const SimulatorResourceModel &resModel)
+        {
+            ValueVisitor visitor;
+            AttributeValueVariant value = resModel;
+            return boost::apply_visitor(visitor, value);
         }
 
-        bool operator ()(double &value)
+        std::string getStringRepresentation(const AttributeValueVariant &value)
         {
-            std::vector<SimulatorResourceModel::Attribute::ValueVariant> values
-                = m_attrItem.getAllowedValues();
-            if(0 == values.size())
-                return true;
-            for (SimulatorResourceModel::Attribute::ValueVariant & val : values)
-            {
-                SimulatorResourceModel::Attribute::ValueVariant vVal = value;
-                if (val == vVal)
-                    return true;
-            }
-            return false;
+            ValueVisitor visitor;
+            return boost::apply_visitor(visitor, value);
         }
-
-        bool operator ()(bool &value)
-        {
-            return true;
-        }
-
-        bool operator ()(std::string &value)
-        {
-            std::vector<SimulatorResourceModel::Attribute::ValueVariant> values
-                = m_attrItem.getAllowedValues();
-            if(0 == values.size())
-                return true;
-            for (SimulatorResourceModel::Attribute::ValueVariant & vVal : values)
-            {
-                std::string val = boost::get<std::string>(vVal);
-                if (val == value)
-                    return true;
-            }
-
-            return false;
-        }
-
-    private:
-        SimulatorResourceModel::Attribute &m_attrItem;
 };
 
-SimulatorResourceModel::Attribute::ValueVariant
-&SimulatorResourceModel::Attribute::AllowedValues::at(unsigned int index)
+SimulatorResourceModel::TypeInfo::TypeInfo(
+    AttributeValueType type, AttributeValueType baseType, int depth)
+    :   m_type (type), m_baseType(baseType), m_depth(depth) {}
+
+AttributeValueType SimulatorResourceModel::TypeInfo::type() const
 {
-    return m_values.at(index);
+    return m_type;
 }
 
-int SimulatorResourceModel::Attribute::AllowedValues::size() const
+AttributeValueType SimulatorResourceModel::TypeInfo::baseType() const
 {
-    return m_values.size();
+    return m_baseType;
 }
 
-std::vector<std::string> SimulatorResourceModel::Attribute::AllowedValues::toString() const
+int SimulatorResourceModel::TypeInfo::depth() const
 {
-    std::vector<std::string> values;
-
-    for (auto & value : m_values)
-    {
-        to_string_visitor visitor;
-        values.push_back(boost::apply_visitor(visitor, value));
-    }
-    return values;
+    return m_depth;
 }
 
-std::vector<SimulatorResourceModel::Attribute::ValueVariant>
-SimulatorResourceModel::Attribute::AllowedValues::getValues() const
+bool SimulatorResourceModel::TypeInfo::operator==(
+    const SimulatorResourceModel::TypeInfo &rhs) const
 {
-    return m_values;
+    if (m_type == rhs.m_type && m_baseType == rhs.m_baseType
+        && m_depth == rhs.m_depth)
+        return true;
+    return false;
 }
 
-std::string SimulatorResourceModel::Attribute::getName(void) const
+SimulatorResourceAttribute::SimulatorResourceAttribute(const std::string &name)
+    : m_name(name) {}
+
+SimulatorResourceAttribute::SimulatorResourceAttribute(const std::string &name,
+        const AttributeValueVariant &value) : m_name(name)
 {
-    return m_name;
+    m_value = std::make_shared<AttributeValueVariant>(value);
 }
 
-void SimulatorResourceModel::Attribute::setName(const std::string &name)
+void SimulatorResourceAttribute::setName(const std::string &name)
 {
     m_name = name;
 }
 
-void SimulatorResourceModel::Attribute::getRange(int &min, int &max) const
+std::string SimulatorResourceAttribute::getName() const
 {
-    min = m_min;
-    max = m_max;
+    return m_name;
 }
 
-void SimulatorResourceModel::Attribute::setRange(const int &min, const int &max)
+const SimulatorResourceModel::TypeInfo SimulatorResourceAttribute::getType() const
 {
-    m_min = min;
-    m_max = max;
+    if (m_value)
+    {
+        AttributeTypeVisitor typeVisitor;
+        boost::apply_visitor(typeVisitor, *(m_value.get()));
+        return SimulatorResourceModel::TypeInfo(typeVisitor.m_type, typeVisitor.m_baseType,
+                                                typeVisitor.m_depth);
+    }
+
+    return SimulatorResourceModel::TypeInfo();
 }
 
-int SimulatorResourceModel::Attribute::getAllowedValuesSize() const
+void SimulatorResourceAttribute::setProperty(const std::shared_ptr<AttributeProperty> &property)
 {
-    return m_allowedValues.size();
+    m_property = property;
 }
 
-void SimulatorResourceModel::Attribute::setFromAllowedValue(unsigned int index)
+std::shared_ptr<AttributeProperty> SimulatorResourceAttribute::getProperty() const
 {
-    m_value = m_allowedValues.at(index);
+    return m_property;
 }
 
-SimulatorResourceModel::Attribute::ValueType SimulatorResourceModel::Attribute::getValueType() const
+AttributeValueVariant SimulatorResourceAttribute::getValue() const
 {
-    attribute_type_visitor typeVisitor;
-    return boost::apply_visitor(typeVisitor, m_value);
+    return *m_value;
 }
 
-std::string SimulatorResourceModel::Attribute::valueToString() const
+std::string SimulatorResourceAttribute::asString() const
 {
-    to_string_visitor visitor;
-    return boost::apply_visitor(visitor, m_value);
+    return ToStringConverter().getStringRepresentation(*m_value);
 }
 
-std::vector<std::string> SimulatorResourceModel::Attribute::allowedValuesToString() const
+bool SimulatorResourceModel::remove(const std::string &name)
 {
-    return m_allowedValues.toString();
-}
-
-void SimulatorResourceModel::Attribute::addValuetoRepresentation(OC::OCRepresentation &rep,
-        const std::string &key) const
-{
-    add_to_representation visitor(rep, key);
-    boost::apply_visitor(visitor, m_value);
-    rep = visitor.getRep();
-}
-
-bool SimulatorResourceModel::Attribute::compare(SimulatorResourceModel::Attribute &attribute)
-{
-    // Check the value types
-    if (m_value.which() != attribute.getValue().which())
+    if (m_attributes.end() == m_attributes.find(name))
     {
         return false;
     }
 
-    // Check the value in allowed range
-    range_validation visitor(*this);
-    return boost::apply_visitor(visitor, attribute.getValue());
+    m_attributes.erase(m_attributes.find(name));
+    return true;
 }
 
-std::vector<SimulatorResourceModel::Attribute::ValueVariant>
-SimulatorResourceModel::Attribute::getAllowedValues() const
+bool SimulatorResourceModel::contains(const std::string &name) const
 {
-    return m_allowedValues.getValues();
-}
-
-bool SimulatorResourceModel::getAttribute(const std::string &attrName, Attribute &value)
-{
-    if (m_attributes.end() != m_attributes.find(attrName))
+    if (m_attributes.end() != m_attributes.find(name))
     {
-        value = m_attributes[attrName];
         return true;
     }
 
     return false;
 }
 
-std::map<std::string, SimulatorResourceModel::Attribute> SimulatorResourceModel::getAttributes()
-const
+size_t SimulatorResourceModel::size() const
+{
+    return m_attributes.size();
+}
+
+SimulatorResourceModel::TypeInfo SimulatorResourceModel::getType(const std::string &name) const
+{
+    if (m_attributes.end() != m_attributes.find(name))
+    {
+        return getTypeInfo(m_attributes.find(name)->second);
+    }
+
+    return SimulatorResourceModel::TypeInfo();
+}
+
+std::map<std::string, AttributeValueVariant> SimulatorResourceModel::getAttributeValues() const
 {
     return m_attributes;
 }
 
-void SimulatorResourceModel::addAttribute(const SimulatorResourceModel::Attribute &attribute, bool overwrite)
+AttributeValueVariant SimulatorResourceModel::getAttributeValue(const std::string &name) const
 {
-    if (!attribute.getName().empty() &&
-        (m_attributes.end() == m_attributes.find(attribute.getName()) || overwrite))
+    auto ite = m_attributes.find(name);
+    if (m_attributes.end() != ite)
     {
-        m_attributes[attribute.getName()] = attribute;
-    }
-}
-
-void SimulatorResourceModel::setRange(const std::string &attrName, const int min, const int max)
-{
-    if (m_attributes.end() != m_attributes.find(attrName))
-        m_attributes[attrName].setRange(min, max);
-}
-
-void SimulatorResourceModel::setUpdateInterval(const std::string &attrName, int interval)
-{
-    if (m_attributes.end() != m_attributes.find(attrName))
-        m_attributes[attrName].setUpdateFrequencyTime(interval);
-}
-
-void SimulatorResourceModel::updateAttributeFromAllowedValues(const std::string &attrName,
-        unsigned int index)
-{
-    if (m_attributes.end() != m_attributes.find(attrName))
-        m_attributes[attrName].setFromAllowedValue(index);
-}
-
-void SimulatorResourceModel::removeAttribute(const std::string &attrName)
-{
-   if (attrName.empty() || m_attributes.end() == m_attributes.find(attrName))
-   {
-       OC_LOG(ERROR, TAG, "Attribute name is empty or not found in model!");
-       throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Attribute not found in model!");
-   }
-
-    m_attributes.erase(attrName);
-    return;
-}
-
-OC::OCRepresentation SimulatorResourceModel::getOCRepresentation() const
-{
-    OC::OCRepresentation rep;
-    for (auto & attribute : m_attributes)
-    {
-        (attribute.second).addValuetoRepresentation(rep, attribute.first);
+        return (*ite).second;
     }
 
-    return rep;
+    return AttributeValueVariant();
 }
 
-bool SimulatorResourceModel::update(OC::OCRepresentation &ocRep)
+std::set<std::string> SimulatorResourceModel::getAttributeNameSet() const
 {
-    if (0 == ocRep.size())
-        return true;
-
-    // Convert OCRepresentation to SimulatorResourceModel
-    SimulatorResourceModelSP resModel = create(ocRep);
-
-    return update(resModel);
-}
-
-bool SimulatorResourceModel::update(SimulatorResourceModelSP &repModel)
-{
-    std::map<std::string, SimulatorResourceModel::Attribute> attributes = repModel->getAttributes();
-    for (auto & attributeItem : attributes)
+    std::set<std::string> nameSet;
+    for (auto &attributeEntry : m_attributes)
     {
-        // Check the attribute presence
-        SimulatorResourceModel::Attribute attribute;
-        if (false == getAttribute((attributeItem.second).getName(), attribute))
-        {
-            return false;
-        }
-
-        // Check the validity of the value to be set
-        if (false == attribute.compare(attributeItem.second))
-        {
-            return false;
-        }
-        m_attributes[(attributeItem.second).getName()].setValue((attributeItem.second).getValue());
+        nameSet.insert(attributeEntry.first);
     }
 
+    return nameSet;
+}
+
+SimulatorResourceModel::TypeInfo SimulatorResourceModel::getTypeInfo(const AttributeValueVariant
+        &value) const
+{
+    AttributeTypeVisitor typeVisitor;
+    boost::apply_visitor(typeVisitor, value);
+    SimulatorResourceModel::TypeInfo typeInfo(typeVisitor.m_type, typeVisitor.m_baseType,
+            typeVisitor.m_depth);
+    return typeInfo;
+}
+
+bool SimulatorResourceModel::updateValue(const std::string &name,
+        const AttributeValueVariant &value)
+{
+    if (name.empty())
+    {
+        return false;
+    }
+
+    if (m_attributes.end() == m_attributes.find(name))
+    {
+        return false;
+    }
+
+    if (!(getTypeInfo(m_attributes[name]) == getTypeInfo(value)))
+    {
+        return false;
+    }
+
+    m_attributes[name] = value;
     return true;
 }
 
-SimulatorResourceModelSP SimulatorResourceModel::create(const OC::OCRepresentation &ocRep)
+OC::OCRepresentation SimulatorResourceModel::asOCRepresentation() const
 {
-    SimulatorResourceModelSP resModel(new SimulatorResourceModel);
-    for (auto & attributeItem : ocRep)
-    {
-        SimulatorResourceModel::Attribute attribute;
-        if (attributeItem.type() == OC::AttributeType::Integer)
-            attribute.setValue(attributeItem.getValue<int>());
-        if (attributeItem.type() == OC::AttributeType::Double)
-            attribute.setValue(attributeItem.getValue<double>());
-        if (attributeItem.type() == OC::AttributeType::String)
-            attribute.setValue(attributeItem.getValue<std::string>());
-        if (attributeItem.type() == OC::AttributeType::Boolean)
-            attribute.setValue(attributeItem.getValue<bool>());
+    return OCRepresentationBuilder().build(*this);
+}
 
-        attribute.setName(attributeItem.attrname());
-        resModel->m_attributes[attributeItem.attrname()] = attribute;
-    }
-    return resModel;
+std::string SimulatorResourceModel::asString() const
+{
+    return ToStringConverter().getStringRepresentation(*this);
+}
+
+SimulatorResourceModel SimulatorResourceModel::build(const OC::OCRepresentation &ocRep)
+{
+    return SimulatorResourceModelBuilder().build(ocRep);
 }
 

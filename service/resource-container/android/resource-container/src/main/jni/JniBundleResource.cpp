@@ -194,7 +194,7 @@ void JniBundleResource::handleSetAttributeRequest(const std::string &attributeNa
 }
 
 
-void JniBundleResource::handleSetAttributesRequest(RCSResourceAttributes &attrs){
+void JniBundleResource::handleSetAttributesRequest(const RCSResourceAttributes &attrs){
     LOGD("handleSetAttributesRequest called %d", attrs.size());
 
     //m_env->CallObjectMethod(m_bundleResource, m_attributeSetRequestHandler, attrName, val);
@@ -222,7 +222,7 @@ void JniBundleResource::handleSetAttributesRequest(RCSResourceAttributes &attrs)
     }
 }
 
-RCSResourceAttributes & JniBundleResource::handleGetAttributesRequest()
+RCSResourceAttributes JniBundleResource::handleGetAttributesRequest()
 {
     LOGD("handleGetAttributesRequest");
 
@@ -243,7 +243,7 @@ RCSResourceAttributes & JniBundleResource::handleGetAttributesRequest()
                 LOGD("parsing attributes");
                 m_env->MonitorEnter(m_bundleResource);
                 LOGD("to native attributes");
-                RCSResourceAttributes attrs = toNativeAttributes(m_env, responseObj);
+                const RCSResourceAttributes attrs = toNativeAttributes(m_env, responseObj);
                 LOGD("Received attributes %d", attrs.size());
                 JniBundleResource::setAttributes(attrs, false);
                 m_env->MonitorExit(m_bundleResource);

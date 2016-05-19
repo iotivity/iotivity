@@ -16,8 +16,7 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import oic.simulator.clientcontroller.utils.Constants;
-
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -32,6 +31,16 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Date;
+
+import org.oic.simulator.ILogger.Level;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
 
 /**
  * This dialog is used for loading the RAML file.
@@ -100,10 +109,11 @@ public class LoadRAMLDialog extends TitleAreaDialog {
                         .getWorkbench().getDisplay().getActiveShell(), SWT.NONE);
                 fileDialog
                         .setFilterExtensions(Constants.BROWSE_RAML_FILTER_EXTENSIONS);
-                configFilePath = fileDialog.open();
-                if (null == configFilePath) {
-                    System.out.println("Config file path is null");
+                String path = fileDialog.open();
+                if (null == path) {
                     configFilePath = "";
+                } else {
+                    configFilePath = path;
                 }
                 locationTxt.setText(configFilePath);
             }
@@ -112,6 +122,40 @@ public class LoadRAMLDialog extends TitleAreaDialog {
 
     public String getConfigFilePath() {
         return configFilePath;
+    }
+
+    @Override
+    protected void okPressed() {
+        configFilePath = locationTxt.getText();
+        if (null == configFilePath) {
+            return;
+        }
+
+        FileInputStream fileStream = null;
+        try {
+            fileStream = new FileInputStream(configFilePath);
+        } catch (Exception e) {
+            MessageDialog
+                    .openError(getShell(), "Invalid File",
+                            "File doesn't exist. Either the file path or file name is invalid.");
+            return;
+        } finally {
+            if (null != fileStream) {
+                try {
+                    fileStream.close();
+                } catch (IOException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while closing the file stream.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
+                }
+            }
+        }
+        close();
     }
 
     @Override

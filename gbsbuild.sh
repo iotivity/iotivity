@@ -40,6 +40,7 @@ cp ./extra_options.scons $sourcedir/tmp
 cp ./tools/tizen/*.spec ./tmp/packaging
 cp ./tools/tizen/*.manifest ./tmp/packaging
 cp ./SConstruct ./tmp
+cp ./LICENSE.md ./tmp
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm ./tmp
@@ -62,7 +63,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT --include-all --repository ./"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Build is successful"

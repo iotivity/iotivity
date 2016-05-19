@@ -58,6 +58,16 @@ const char * OIC_RSRC_TYPE_SEC_SVC = "oic.sec.svc";
 const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";
 const char * OIC_JSON_SVC_NAME = "svc";
 
+//pconf
+const char * OIC_RSRC_TYPE_SEC_PCONF = "oic.sec.pconf";
+const char * OIC_RSRC_PCONF_URI =  "/oic/sec/pconf";
+const char * OIC_JSON_PCONF_NAME = "pconf";
+
+//dpairing
+const char * OIC_RSRC_TYPE_SEC_DPAIRING = "oic.sec.dpairing";
+const char * OIC_RSRC_DPAIRING_URI =  "/oic/sec/dpairing";
+const char * OIC_JSON_DPAIRING_NAME = "dpairing";
+
 
 const char * OIC_JSON_SUBJECT_NAME = "sub";
 const char * OIC_JSON_RESOURCES_NAME = "rsrc";
@@ -89,6 +99,15 @@ const char * OIC_JSON_PERIOD_NAME = "prd";
 const char * OIC_JSON_PERIODS_NAME = "prds";
 const char * OIC_JSON_RECURRENCES_NAME = "recurs";
 const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME = "sct";
+const char * OIC_JSON_DPC_NAME = "dpc";
+const char * OIC_JSON_EDP_NAME = "edp";
+const char * OIC_JSON_PIN_NAME = "pin";
+const char * OIC_JSON_PDACL_NAME = "pdacl";
+const char * OIC_JSON_PDDEV_LIST_NAME = "pddev";
+const char * OIC_JSON_ROWNER_NAME = "rowner";
+const char * OIC_JSON_PRM_NAME = "prm";
+const char * OIC_JSON_SPM_NAME = "spm";
+const char * OIC_JSON_PDEVICE_ID_NAME = "pdeviceid";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;

@@ -16,11 +16,9 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardDialog;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
 /**
@@ -28,8 +26,11 @@ import org.eclipse.swt.widgets.Shell;
  */
 public class ResourceWizardDialog extends WizardDialog {
 
+    private IWizard wizard;
+
     public ResourceWizardDialog(Shell parentShell, IWizard newWizard) {
         super(parentShell, newWizard);
+        wizard = newWizard;
     }
 
     @Override
@@ -43,11 +44,37 @@ public class ResourceWizardDialog extends WizardDialog {
     }
 
     @Override
-    protected void createButtonsForButtonBar(Composite parent) {
-        super.createButtonsForButtonBar(parent);
-        Button finishButton = getButton(IDialogConstants.FINISH_ID);
-        if (finishButton != null) {
-            finishButton.setText(IDialogConstants.OK_LABEL);
+    protected void backPressed() {
+        if (wizard.getClass() == CreateResourceWizard.class) {
+            CreateResourceWizard createWizard = (CreateResourceWizard) wizard;
+
+            MainPage mainPage = createWizard.getMainPage();
+            SimpleResourceBasicDetailsPage simpleResourceBasicDetailsPage = createWizard
+                    .getSimpleResourceBasicDetailsPage();
+            SimpleResourceOtherDetailsPage simpleResourceOtherDetailsPage = createWizard
+                    .getSimpleResourceOtherDetailsPage();
+            SimpleResourceAddAttributePage simpleResourceAddAttributesPage = createWizard
+                    .getSimpleResourceAddAttributePage();
+            LoadRamlPage loadRamlPage = createWizard.getLoadRamlPage();
+            UpdatePropertiesPage updatePropPage = createWizard
+                    .getUpdatePropPage();
+
+            IWizardPage curPage = wizard.getContainer().getCurrentPage();
+            IWizardPage prevPage = null;
+
+            if (curPage == loadRamlPage
+                    || curPage == simpleResourceBasicDetailsPage) {
+                prevPage = mainPage;
+            } else if (curPage == updatePropPage) {
+                loadRamlPage.setResource(null);
+                prevPage = loadRamlPage;
+            } else if (curPage == simpleResourceAddAttributesPage) {
+                prevPage = simpleResourceBasicDetailsPage;
+            } else if (curPage == simpleResourceOtherDetailsPage) {
+                prevPage = simpleResourceAddAttributesPage;
+            }
+            if (null != prevPage)
+                showPage(prevPage);
         }
     }
 }

@@ -37,6 +37,14 @@
 #include <math.h>
 #include <errno.h>
 
+// The following #define must be here under "math.h".
+// This ifdef ensures that "__STDC_IEC_559__" is defined. If it is defined,
+// then we are guaranteed that the 'double' type is 64-bit. Otherwise, the
+// compilation of this file should fail because we are no longer guaranteed.
+#ifndef __STDC_IEC_559__
+#error "Requires IEEE 754 floating point!"
+#endif
+
 #include "zigbee_wrapper.h"
 #include "telegesis_wrapper.h"
 #include "pluginlist.h"
@@ -64,10 +72,12 @@
 #define ZB_ON_OFF_CLUSTER                    "0006"
 #define ZB_ON_OFF_ATTRIBUTE_ID               "0000"
 #define ZB_IAS_ZONE_TYPE_ATTRIBUTE_ID        "0001"
+#define ZB_COLOR_CONTROL_CLUSTER             "0300"
+#define ZB_COLOR_TEMPERATURE_ATTRIBUTE_ID    "0007"
 
-#define IAS_ZONE_TYPE_MOTION_SENSOR          "000d"
+#define IAS_ZONE_TYPE_MOTION_SENSOR          "000D"
 #define IAS_ZONE_TYPE_CONTACT_SENSOR         "0015"
-#define IAS_ZONE_TYPE_WATER_SENSOR           "002a"
+#define IAS_ZONE_TYPE_WATER_SENSOR           "002A"
 
 #define ZB_DATA_TYPE_NULL                    "00"
 #define ZB_DATA_TYPE_1_BYTE                  "08"
@@ -100,13 +110,15 @@ static const char* OIC_CONTACT_SENSOR = "oic.r.sensor.contact";
 static const char* OIC_MOTION_SENSOR = "oic.r.sensor.motion";
 static const char* OIC_WATER_SENSOR = "oic.r.sensor.water";
 static const char* OIC_BINARY_SWITCH = "oic.r.switch.binary";
+static const char* OIC_CHROMA_LIGHT = "oic.r.colour.chroma";
 
 static const char* OIC_TEMPERATURE_ATTRIBUTE = "temperature";
 static const char* OIC_DIMMING_ATTRIBUTE = "dimmingSetting";
 static const char* OIC_CONTACT_ATTRIBUTE = "value";
+static const char* OIC_WATER_ATTRIBUTE = "value";
+static const char* OIC_MOTION_ATTRIBUTE = "value";
 static const char* OIC_ON_OFF_ATTRIBUTE = "value";
-
-PIPlugin_Zigbee ** gPlugin = NULL;
+static const char* OIC_COLOUR_TEMPERATURE_ATTRIBUTE = "colourspacevalue";
 
 typedef enum
 {
@@ -185,9 +197,9 @@ bool getZigBeeAttributesIfValid(const char * OICResourceType,
                                     AttributeList *attributeList,
                                     OCRepPayload *payload);
 
-const char * getResourceTypeForIASZoneType(TWDevice *device)
+const char * getResourceTypeForIASZoneType(TWDevice *device, PIPluginBase* plugin)
 {
-    if(!device)
+    if (!device)
     {
         return NULL;
     }
@@ -202,30 +214,31 @@ const char * getResourceTypeForIASZoneType(TWDevice *device)
         ZB_IAS_ZONE_CLUSTER,
         ZB_IAS_ZONE_TYPE_ATTRIBUTE_ID,
         &IASZoneType,
-        &length
+        &length,
+        (PIPlugin_Zigbee*)plugin
     );
 
     if (ret != OC_STACK_OK || !IASZoneType)
     {
-        OC_LOG_V (ERROR, TAG, "Error %u getting IAS Zone Type", ret);
+        OIC_LOG_V(ERROR, TAG, "Error %u getting IAS Zone Type", ret);
         return NULL;
     }
 
-    if (strcmp (IASZoneType, IAS_ZONE_TYPE_CONTACT_SENSOR) == 0)
+    if (strcmp(IASZoneType, IAS_ZONE_TYPE_CONTACT_SENSOR) == 0)
     {
         resourceType = OIC_CONTACT_SENSOR;
     }
-    else if (strcmp (IASZoneType, IAS_ZONE_TYPE_MOTION_SENSOR) == 0)
+    else if (strcmp(IASZoneType, IAS_ZONE_TYPE_MOTION_SENSOR) == 0)
     {
         resourceType = OIC_MOTION_SENSOR;
     }
-    else if (strcmp (IASZoneType, IAS_ZONE_TYPE_WATER_SENSOR) == 0)
+    else if (strcmp(IASZoneType, IAS_ZONE_TYPE_WATER_SENSOR) == 0)
     {
         resourceType = OIC_WATER_SENSOR;
     }
     else
     {
-        OC_LOG_V (ERROR, TAG, "Unsupported Zone Type %s", IASZoneType);
+        OIC_LOG_V(ERROR, TAG, "Unsupported Zone Type %s", IASZoneType);
         resourceType = NULL;
     }
 
@@ -236,18 +249,18 @@ const char * getResourceTypeForIASZoneType(TWDevice *device)
 
 OCStackResult buildURI(char ** output,
                        const char * prefix,
-                       const char * nodeId,
+                       const char * eui,
                        const char * endpointId,
                        const char * clusterId)
 {
-    if(!output || !prefix || !nodeId || !endpointId || !clusterId)
+    if(!output || !prefix || !eui || !endpointId || !clusterId)
     {
         return OC_STACK_INVALID_PARAM;
     }
     const char LEN_SEPARATOR[] = "/";
     size_t lenSeparatorSize = sizeof(LEN_SEPARATOR) - 1;
     size_t newUriSize = strlen(prefix) + lenSeparatorSize +
-                        strlen(nodeId) + lenSeparatorSize +
+                        strlen(eui) + lenSeparatorSize +
                         strlen(endpointId) + lenSeparatorSize +
                         strlen(clusterId)
                         + 1; // NULL Terminator
@@ -255,42 +268,42 @@ OCStackResult buildURI(char ** output,
 
     if (!*output)
     {
-        OC_LOG (ERROR, TAG, "Out of memory");
+        OIC_LOG(ERROR, TAG, "Out of memory");
         return OC_STACK_NO_MEMORY;
     }
 
     char * temp = OICStrcpy(*output, newUriSize, prefix);
-    if(temp != *output)
+    if (temp != *output)
     {
         goto exit;
     }
     temp = OICStrcat(*output, newUriSize, LEN_SEPARATOR);
-    if(temp != *output)
+    if (temp != *output)
     {
         goto exit;
     }
-    temp = OICStrcat(*output, newUriSize, nodeId);
-    if(temp != *output)
+    temp = OICStrcat(*output, newUriSize, eui);
+    if (temp != *output)
     {
         goto exit;
     }
     temp = OICStrcat(*output, newUriSize, LEN_SEPARATOR);
-    if(temp != *output)
+    if (temp != *output)
     {
         goto exit;
     }
     temp = OICStrcat(*output, newUriSize, endpointId);
-    if(temp != *output)
+    if (temp != *output)
     {
         goto exit;
     }
     temp = OICStrcat(*output, newUriSize, LEN_SEPARATOR);
-    if(temp != *output)
+    if (temp != *output)
     {
         goto exit;
     }
     temp = OICStrcat(*output, newUriSize, clusterId);
-    if(temp != *output)
+    if (temp != *output)
     {
         goto exit;
     }
@@ -303,31 +316,31 @@ exit:
     return OC_STACK_NO_MEMORY;
 }
 
-void foundZigbeeCallback(TWDevice *device)
+void foundZigbeeCallback(TWDevice *device, PIPlugin_Zigbee* plugin)
 {
-    if(!device)
+    if (!device)
     {
-        OC_LOG(ERROR, TAG, "foundZigbeeCallback: Invalid parameter.");
+        OIC_LOG(ERROR, TAG, "foundZigbeeCallback: Invalid parameter.");
         return;
     }
     int count = device->endpointOfInterest->clusterList->count;
-    for(int i=0; i < count; i++)
+    for (int i=0; i < count; i++)
     {
         PIResource_Zigbee *piResource = (PIResource_Zigbee *) OICMalloc(sizeof(*piResource));
         if (!piResource)
         {
-            OC_LOG (ERROR, TAG, "Out of memory");
+            OIC_LOG(ERROR, TAG, "Out of memory");
             return;
         }
-        piResource->header.plugin = (PIPluginBase *)gPlugin;
+        piResource->header.plugin = (PIPluginBase *)plugin;
 
         OCStackResult result = buildURI(&piResource->header.piResource.uri,
                                 PI_ZIGBEE_PREFIX,
-                                device->nodeId,
+                                device->eui,
                                 device->endpointOfInterest->endpointId,
                                 device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
 
-        if(result != OC_STACK_OK)
+        if (result != OC_STACK_OK)
         {
             OICFree(piResource);
             return;
@@ -336,19 +349,20 @@ void foundZigbeeCallback(TWDevice *device)
         char * foundClusterID =
             device->endpointOfInterest->clusterList->clusterIds[i].clusterId;
 
-        if (strcmp (foundClusterID, ZB_IAS_ZONE_CLUSTER) == 0)
+        if (strcmp(foundClusterID, ZB_IAS_ZONE_CLUSTER) == 0)
         {
             piResource->header.piResource.resourceTypeName
-                = getResourceTypeForIASZoneType (device);
+                = getResourceTypeForIASZoneType (device, (PIPluginBase *)plugin);
 
-            OCStackResult ret = TWListenForStatusUpdates (device->nodeId,
-                                      device->endpointOfInterest->endpointId);
+            OCStackResult ret = TWListenForStatusUpdates(device->nodeId,
+                                                          device->endpointOfInterest->endpointId,
+                                                          plugin);
 
             if (ret != OC_STACK_OK)
             {
                 // Just log it and move on if this fails?
                 // or not create this resource at all?
-                OC_LOG (ERROR, TAG, "Command to listen for status updates failed");
+                OIC_LOG(ERROR, TAG, "Command to listen for status updates failed");
             }
         }
         else
@@ -357,9 +371,9 @@ void foundZigbeeCallback(TWDevice *device)
                     (char *) ZigBeeClusterIDToOICResourceType(foundClusterID);
         }
 
-        if(piResource->header.piResource.resourceTypeName == NULL)
+        if (piResource->header.piResource.resourceTypeName == NULL)
         {
-            OC_LOG_V (ERROR, TAG, "unsupported clusterId : %s",
+            OIC_LOG_V(ERROR, TAG, "unsupported clusterId : %s",
                 device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
             OICFree(piResource->header.piResource.uri);
             OICFree(piResource);
@@ -375,43 +389,58 @@ void foundZigbeeCallback(TWDevice *device)
         piResource->endpointId = OICStrdup(device->endpointOfInterest->endpointId);
         piResource->clusterId =
             OICStrdup(device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
-        (*gPlugin)->header.NewResourceFoundCB(&(*gPlugin)->header, &piResource->header);
+        plugin->header.NewResourceFoundCB(&(plugin)->header, &piResource->header);
     }
 }
 
-void zigbeeZoneStatusUpdate(TWUpdate * update)
+void zigbeeZoneStatusUpdate(TWUpdate * update, PIPlugin_Zigbee* plugin)
 {
-    if(!update)
+    if (!update)
     {
         return;
     }
 
-    char * uri = NULL;
-    OCStackResult result = buildURI(&uri,
-                                    PI_ZIGBEE_PREFIX,
-                                    update->nodeId,
-                                    update->endpoint,
-                                    ZB_IAS_ZONE_CLUSTER);
-    if(result != OC_STACK_OK || !uri)
+    PIResource_Zigbee * piResource = NULL;
+    OCStackResult result = GetResourceFromZigBeeNodeId((PIPluginBase *)plugin,
+                                                    &piResource,
+                                                    update->nodeId,
+                                                    update->endpoint,
+                                                    ZB_IAS_ZONE_CLUSTER);
+    if (result != OC_STACK_OK || !piResource)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to build URI with result: %d", result);
+        OIC_LOG_V(ERROR, TAG, "Failed to retrieve resource handle with result: %d", result);
         return;
     }
 
-    (*gPlugin)->header.ObserveNotificationUpdate((PIPluginBase *)*gPlugin, uri);
-    OICFree(uri);
+    plugin->header.ObserveNotificationUpdate((PIPluginBase *)plugin,
+                                                 piResource->header.piResource.resourceHandle);
+}
+
+void deviceNodeIdChanged(const char * eui, const char * nodeId, PIPlugin_Zigbee* plugin)
+{
+    if(!eui || !nodeId)
+    {
+        return;
+    }
+    OCStackResult result = UpdateZigbeeResourceNodeId((PIPluginBase *)plugin,
+                                                  eui,
+                                                  nodeId);
+    if(result != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %s", result);
+    }
 }
 
 OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
                          PINewResourceFound newResourceCB,
                          PIObserveNotificationUpdate observeNotificationUpdate)
 {
-    if(!plugin)
+    if (!plugin)
     {
         return OC_STACK_INVALID_PARAM;
     }
     *plugin = (PIPlugin_Zigbee *) OICMalloc(sizeof(PIPlugin_Zigbee) + sizeof(PIPluginBase));
-    if(!*plugin)
+    if (!*plugin)
     {
         return OC_STACK_NO_MEMORY;
     }
@@ -423,37 +452,39 @@ OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
     ((*plugin)->header).resourceList = NULL;
     ((*plugin)->header).processEHRequest = ProcessEHRequest;
 
-    gPlugin = plugin;
-    OCStackResult result = TWInitialize(comPort);
+    OCStackResult result = TWInitialize(*plugin, comPort);
+    if (result != OC_STACK_OK)
+    {
+        return result;
+    }
+    result = TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate, *plugin);
     if(result != OC_STACK_OK)
     {
         return result;
     }
-
-    return TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate);
+    return TWSetEndDeviceNodeIdChangedCallback(deviceNodeIdChanged, *plugin);
 }
 
 OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
 {
     OCStackResult result = OC_STACK_ERROR;
-    (void)plugin;
-    TWSetDiscoveryCallback(foundZigbeeCallback);
-    result = TWDiscover(NULL);
-    OC_LOG_V (DEBUG, TAG, "ZigbeeDiscover : Status = %d\n", result);
+    TWSetDiscoveryCallback(foundZigbeeCallback, plugin);
+    result = TWDiscover(plugin);
+    OIC_LOG_V(DEBUG, TAG, "ZigbeeDiscover : Status = %d\n", result);
 
     return result;
 }
 
 OCStackResult ZigbeeStop(PIPlugin_Zigbee * plugin)
 {
+    OCStackResult ret = TWUninitialize(plugin);
     free(plugin);
-    return TWUninitialize();
+    return ret;
 }
 
 OCStackResult ZigbeeProcess(PIPlugin_Zigbee * plugin)
 {
-    (void)plugin;
-    return TWProcess();
+    return TWProcess(plugin);
 }
 
 // Function returns an OIC Smart Home resource Type
@@ -462,6 +493,10 @@ OCStackResult ZigbeeProcess(PIPlugin_Zigbee * plugin)
 // NOTE: The returned string is NOT malloc'ed.
 const char* ZigBeeClusterIDToOICResourceType(const char * clusterID) //Discovery/CreateResource
 {
+    if (!clusterID)
+    {
+        return NULL;
+    }
     if (strcmp(clusterID, ZB_TEMPERATURE_CLUSTER) == 0)
     {
         return OIC_TEMPERATURE_SENSOR;
@@ -478,6 +513,10 @@ const char* ZigBeeClusterIDToOICResourceType(const char * clusterID) //Discovery
     {
         return OIC_BINARY_SWITCH;
     }
+    else if (strcmp(clusterID, ZB_COLOR_CONTROL_CLUSTER) == 0)
+    {
+        return OIC_CHROMA_LIGHT;
+    }
     else
     {
         return NULL;
@@ -486,6 +525,10 @@ const char* ZigBeeClusterIDToOICResourceType(const char * clusterID) //Discovery
 
 const char* OICResourceToZigBeeClusterID(char *oicResourceType)
 {
+    if (!oicResourceType)
+    {
+        return NULL;
+    }
     if (strcmp(oicResourceType, OIC_TEMPERATURE_SENSOR) == 0)
     {
         return ZB_TEMPERATURE_CLUSTER;
@@ -506,6 +549,10 @@ const char* OICResourceToZigBeeClusterID(char *oicResourceType)
     {
         return ZB_INDICATOR_CLUSTER;
     }
+    else if (strcmp(oicResourceType, OIC_CHROMA_LIGHT) == 0)
+    {
+        return ZB_COLOR_CONTROL_CLUSTER;
+    }
     else
     {
         return NULL;
@@ -515,7 +562,11 @@ const char* OICResourceToZigBeeClusterID(char *oicResourceType)
 OCStackResult getZigBeeAttributesForOICResource(const char * OICResourceType,
                                                     AttributeList *attributeList) // GET
 {
-    if (strcmp (OICResourceType, OIC_TEMPERATURE_SENSOR) == 0)
+    if (!OICResourceType || !attributeList)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (strcmp(OICResourceType, OIC_TEMPERATURE_SENSOR) == 0)
     {
         attributeList->count = 1;
         attributeList->list[0].oicAttribute = OICStrdup(OIC_TEMPERATURE_ATTRIBUTE);
@@ -524,7 +575,7 @@ OCStackResult getZigBeeAttributesForOICResource(const char * OICResourceType,
         attributeList->list[0].zigbeeType = ZB_16_SINT;
         return OC_STACK_OK;
     }
-    else if (strcmp (OICResourceType, OIC_DIMMABLE_LIGHT) == 0)
+    else if (strcmp(OICResourceType, OIC_DIMMABLE_LIGHT) == 0)
     {
         attributeList->count = 1;
         attributeList->list[0].oicAttribute = OICStrdup(OIC_DIMMING_ATTRIBUTE);
@@ -533,7 +584,7 @@ OCStackResult getZigBeeAttributesForOICResource(const char * OICResourceType,
         attributeList->list[0].zigbeeType = ZB_8_UINT;
         return OC_STACK_OK;
     }
-    else if (strcmp (OICResourceType, OIC_CONTACT_SENSOR) == 0)
+    else if (strcmp(OICResourceType, OIC_CONTACT_SENSOR) == 0)
     {
         attributeList->count = 1;
         attributeList->list[0].oicAttribute = OICStrdup(OIC_CONTACT_ATTRIBUTE);
@@ -542,13 +593,40 @@ OCStackResult getZigBeeAttributesForOICResource(const char * OICResourceType,
         attributeList->list[0].zigbeeType = ZB_BOOL;
         return OC_STACK_OK;
     }
-    else if (strcmp (OICResourceType, OIC_BINARY_SWITCH) == 0)
+    else if (strcmp(OICResourceType, OIC_WATER_SENSOR) == 0)
+    {
+        attributeList->count = 1;
+        attributeList->list[0].oicAttribute = OICStrdup(OIC_WATER_ATTRIBUTE);
+        attributeList->list[0].zigBeeAttribute = ZB_IAS_ZONE_STATUS_ATTRIBUTE_ID;
+        attributeList->list[0].oicType = OIC_ATTR_BOOL;
+        attributeList->list[0].zigbeeType = ZB_BOOL;
+        return OC_STACK_OK;
+    }
+    else if (strcmp(OICResourceType, OIC_MOTION_SENSOR) == 0)
+    {
+        attributeList->count = 1;
+        attributeList->list[0].oicAttribute = OICStrdup(OIC_MOTION_ATTRIBUTE);
+        attributeList->list[0].zigBeeAttribute = ZB_IAS_ZONE_STATUS_ATTRIBUTE_ID;
+        attributeList->list[0].oicType = OIC_ATTR_BOOL;
+        attributeList->list[0].zigbeeType = ZB_BOOL;
+        return OC_STACK_OK;
+    }
+    else if (strcmp(OICResourceType, OIC_BINARY_SWITCH) == 0)
     {
         attributeList->count = 1;
         attributeList->list[0].oicAttribute = OICStrdup(OIC_ON_OFF_ATTRIBUTE);
         attributeList->list[0].zigBeeAttribute = ZB_ON_OFF_ATTRIBUTE_ID;
         attributeList->list[0].oicType = OIC_ATTR_BOOL;
         attributeList->list[0].zigbeeType = ZB_BOOL;
+        return OC_STACK_OK;
+    }
+    else if (strcmp(OICResourceType, OIC_CHROMA_LIGHT) == 0)
+    {
+        attributeList->count = 1;
+        attributeList->list[0].oicAttribute = OICStrdup(OIC_COLOUR_TEMPERATURE_ATTRIBUTE);
+        attributeList->list[0].zigBeeAttribute = ZB_COLOR_TEMPERATURE_ATTRIBUTE_ID;
+        attributeList->list[0].oicType = OIC_ATTR_INT;
+        attributeList->list[0].zigbeeType = ZB_16_UINT;
         return OC_STACK_OK;
     }
 
@@ -559,18 +637,18 @@ bool getZigBeeAttributesIfValid(const char * OICResourceType,
                                     AttributeList *attributeList,
                                     OCRepPayload *payload) // Put
 {
-    if(!OICResourceType)
+    if (!OICResourceType)
     {
         return false;
     }
-    if(strcmp(OICResourceType, OIC_TEMPERATURE_SENSOR) == 0)
+    if (strcmp(OICResourceType, OIC_TEMPERATURE_SENSOR) == 0)
     {
         // Cant really PUT on the temp sensor, but the code is still there.
         int64_t temperature = 0;
 
         // TODO: This if should only look for attributes it supports and ignore the rest
         // or examine every attribute in the payload and complain about unsupported attributes?
-        if(OCRepPayloadGetPropInt(payload, OIC_TEMPERATURE_ATTRIBUTE, &temperature))
+        if (OCRepPayloadGetPropInt(payload, OIC_TEMPERATURE_ATTRIBUTE, &temperature))
         {
             attributeList->count = 1;
             attributeList->list[0].oicAttribute = OICStrdup(OIC_TEMPERATURE_ATTRIBUTE);
@@ -583,11 +661,11 @@ bool getZigBeeAttributesIfValid(const char * OICResourceType,
             return true;
         }
     }
-    else if (strcmp (OICResourceType, OIC_DIMMABLE_LIGHT) == 0)
+    else if (strcmp(OICResourceType, OIC_DIMMABLE_LIGHT) == 0)
     {
         int64_t onLevel = 0;
 
-        if(OCRepPayloadGetPropInt(payload, OIC_DIMMING_ATTRIBUTE, &onLevel))
+        if (OCRepPayloadGetPropInt(payload, OIC_DIMMING_ATTRIBUTE, &onLevel))
         {
             attributeList->count = 1;
             attributeList->list[0].oicAttribute = OICStrdup(OIC_DIMMING_ATTRIBUTE);
@@ -601,11 +679,11 @@ bool getZigBeeAttributesIfValid(const char * OICResourceType,
             return true;
         }
     }
-    else if (strcmp (OICResourceType, OIC_CONTACT_SENSOR) == 0)
+    else if (strcmp(OICResourceType, OIC_CONTACT_SENSOR) == 0)
     {
         int64_t value = 0;
 
-        if(OCRepPayloadGetPropInt(payload, OIC_CONTACT_ATTRIBUTE, &value))
+        if (OCRepPayloadGetPropInt(payload, OIC_CONTACT_ATTRIBUTE, &value))
         {
             attributeList->count = 1;
             attributeList->list[0].oicAttribute = OICStrdup(OIC_CONTACT_ATTRIBUTE);
@@ -618,11 +696,28 @@ bool getZigBeeAttributesIfValid(const char * OICResourceType,
             return true;
         }
     }
-    else if (strcmp (OICResourceType, OIC_BINARY_SWITCH) == 0)
+    else if (strcmp(OICResourceType, OIC_WATER_SENSOR) == 0)
+    {
+        int64_t value = 0;
+
+        if (OCRepPayloadGetPropInt(payload, OIC_WATER_ATTRIBUTE, &value))
+        {
+            attributeList->count = 1;
+            attributeList->list[0].oicAttribute = OICStrdup(OIC_WATER_ATTRIBUTE);
+            attributeList->list[0].zigBeeAttribute = ZB_IAS_ZONE_STATUS_ATTRIBUTE_ID;
+            attributeList->list[0].oicType = OIC_ATTR_BOOL;
+            attributeList->list[0].val.i = value;
+            attributeList->list[0].zigbeeType = ZB_BOOL;
+            attributeList->CIEMask = (CIECommandMask) 0;
+
+            return true;
+        }
+    }
+    else if (strcmp(OICResourceType, OIC_BINARY_SWITCH) == 0)
     {
         bool value = 0;
 
-        if(OCRepPayloadGetPropBool(payload, OIC_ON_OFF_ATTRIBUTE, &value))
+        if (OCRepPayloadGetPropBool(payload, OIC_ON_OFF_ATTRIBUTE, &value))
         {
             attributeList->count = 1;
             attributeList->list[0].oicAttribute = OICStrdup(OIC_ON_OFF_ATTRIBUTE);
@@ -635,14 +730,34 @@ bool getZigBeeAttributesIfValid(const char * OICResourceType,
             return true;
         }
     }
+    else if (strcmp(OICResourceType, OIC_CHROMA_LIGHT) == 0)
+    {
+        char * value = 0;
+        if (OCRepPayloadGetPropString(payload, OIC_COLOUR_TEMPERATURE_ATTRIBUTE, &value))
+        {
+            attributeList->count = 1;
+            attributeList->list[0].oicAttribute = OICStrdup(OIC_COLOUR_TEMPERATURE_ATTRIBUTE);
+            attributeList->list[0].zigBeeAttribute = ZB_COLOR_TEMPERATURE_ATTRIBUTE_ID;
+            attributeList->list[0].oicType = OIC_ATTR_STRING;
+            attributeList->list[0].val.str = value;
+            attributeList->list[0].zigbeeType = ZB_16_UINT;
+            attributeList->CIEMask = (CIECommandMask) 0;
+
+            return true;
+        }
+    }
     return false;
 }
 
-OCEntityHandlerResult getDoubleValueFromString (const char *str, double *outDouble)
+OCEntityHandlerResult getDoubleValueFromString(const char *str, double *outDouble)
 {
+    if (!str || !outDouble)
+    {
+        return OC_EH_ERROR;
+    }
     size_t hexOutValSize = strlen(HexPrepend) + strlen(str) + 1;
     char * hexOutVal = (char *) OICCalloc(1, hexOutValSize);
-    if(!hexOutVal)
+    if (!hexOutVal)
     {
         return OC_EH_ERROR;
     }
@@ -653,7 +768,7 @@ OCEntityHandlerResult getDoubleValueFromString (const char *str, double *outDoub
     errno = 0;
     double value = strtod(hexOutVal, &endPtr);
 
-    if(errno != 0 || *endPtr != 0 || value == HUGE_VALF || value == HUGE_VALL)
+    if (errno != 0 || *endPtr != 0 || value == HUGE_VALF || value == HUGE_VALL)
     {
         OICFree(hexOutVal);
         return OC_EH_ERROR;
@@ -665,7 +780,33 @@ OCEntityHandlerResult getDoubleValueFromString (const char *str, double *outDoub
 
 }
 
-OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
+OCEntityHandlerResult getColourTemperatureFromString(const char* str, int64_t* outVal)
+{
+    if (!str || !outVal)
+    {
+        return OC_EH_ERROR;
+    }
+    // str comes in as "X,Y,T" where "T" is the colour temperature.
+    // Iterate 3 times to retrieve the last value.
+    char * strstr = OICStrdup(str);
+    char * savePtr = NULL;
+    char * temp = NULL;
+    for (int i=0; i<3; i++)
+    {
+        temp = strtok_r(strstr, ",", &savePtr);
+        if (!temp)
+        {
+            *outVal = 0;
+            OICFree(strstr);
+            return OC_EH_ERROR;
+        }
+    }
+    OCStackResult result = getDoubleValueFromString(temp, (double *)outVal);
+    OICFree(strstr);
+    return result;
+}
+
+OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
         OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
 {
     if (!plugin || !ehRequest || !payload)
@@ -682,31 +823,31 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
                         ehRequest->resource);
     if (stackResult != OC_STACK_OK)
     {
-        OC_LOG (ERROR, TAG, "Failed to get resource from handle");
+        OIC_LOG(ERROR, TAG, "Failed to get resource from handle");
         return OC_EH_ERROR;
     }
-    stackResult = getZigBeeAttributesForOICResource (
+    stackResult = getZigBeeAttributesForOICResource(
         piResource->header.piResource.resourceTypeName, &attributeList);
-    if(stackResult != OC_STACK_OK)
+    if (stackResult != OC_STACK_OK)
     {
-        OC_LOG_V (ERROR, TAG, "Failed to fetch attributes for %s",
+        OIC_LOG_V(ERROR, TAG, "Failed to fetch attributes for %s",
             piResource->header.piResource.resourceTypeName);
         return OC_EH_ERROR;
     }
 
     *payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
-        OC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
+        OIC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
         return OC_EH_ERROR;
     }
     bool boolRes = OCRepPayloadSetUri(*payload, piResource->header.piResource.uri);
     if (boolRes == false)
     {
-        OCRepPayloadDestroy (*payload);
+        OCRepPayloadDestroy(*payload);
         return OC_EH_ERROR;
     }
-    for(uint32_t i = 0; i<attributeList.count; i++)
+    for (uint32_t i = 0; i<attributeList.count; i++)
     {
         char * outVal = NULL;
         uint8_t outValLength = 0;
@@ -717,12 +858,13 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
                                      piResource->clusterId,
                                      attributeList.list[i].zigBeeAttribute,
                                      &outVal,
-                                     &outValLength);
+                                     &outValLength,
+                                     (PIPlugin_Zigbee *)plugin);
 
         if (stackResult != OC_STACK_OK || !outVal)
         {
             stackResult = OC_EH_ERROR;
-            OCRepPayloadDestroy (*payload);
+            OCRepPayloadDestroy(*payload);
             goto exit;
         }
         if (attributeList.list[i].oicType == OIC_ATTR_INT)
@@ -730,9 +872,13 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
             char *endPtr = NULL;
             errno = 0;
             // Third arg is 16 as outVal is a hex Number
-            uint64_t value = strtol (outVal, &endPtr, 16);
+            uint64_t value = strtol(outVal, &endPtr, 16);
 
             if (*endPtr != 0 || errno != 0)
+            {
+                return OC_EH_ERROR;
+            }
+            if (!attributeList.list[i].oicAttribute)
             {
                 return OC_EH_ERROR;
             }
@@ -749,6 +895,29 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
                     value = value / 2.54;
                 }
             }
+            else if (strcmp(attributeList.list[i].oicAttribute, OIC_COLOUR_TEMPERATURE_ATTRIBUTE) == 0)
+            {
+                // OIC Chroma requires: Hue, Saturation, and ColorSpaceValue (color space value is
+                // "chromaX, chromaY, colourTemperature").
+                // ZigBee HA requires: "currentX", "currentY", while we're trying to map a specific
+                // device which goes against the HA spec and ONLY implements "ColorTemperature".
+                // Because of the misalignments between OIC Smart Home and ZigBee HA specs, the
+                // follow assumption is required:
+                // - *X and *Y will be zero, and therefore ignored (or passed as zero where
+                // applicable).
+                // OIC ColorTemperature operates between 0-1000 (degrees Kelvin) in string form,
+                // while ZigBee operates between 0-65279 (bits, with an operating range
+                // 15.32-1,000,000 (degrees Kelvin)).
+                // ZigBee HA states: ColorTemperature(bits) = 1,000,000/ColorTemperature(Kelvin)
+                // Invalid: ColorTemperature==0 || ColorTemperature==65535
+                // However the specific bulb we're mapping only operates between 2700-6500 (Kelvin)
+                // which equates to 0x0099-0x0172 (ie. 153-370; giving a resolution of 217 bits).
+                // Conversion from ZigBee HA specific bulb to OIC temporary mapping:
+                // OIC Value: 0-100  ZigBee Value: (0-217)+153
+                // OICValue = (ZigBeeValue-153)/2.17
+
+                value = (value-153)/2.17;
+            }
             boolRes = OCRepPayloadSetPropInt(*payload,
                                              attributeList.list[i].oicAttribute,
                                              (uint64_t) value);
@@ -757,7 +926,11 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
         {
             double value = 0;
 
-            if (getDoubleValueFromString (outVal, &value) != OC_EH_OK)
+            if (getDoubleValueFromString(outVal, &value) != OC_EH_OK)
+            {
+                return OC_EH_ERROR;
+            }
+            if (!piResource->clusterId)
             {
                 return OC_EH_ERROR;
             }
@@ -782,7 +955,7 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
             char *endPtr = NULL;
             errno = 0;
             // Third arg is 16 as outVal is a hex Number
-            uint64_t value = strtol (outVal, &endPtr, 16);
+            uint64_t value = strtol(outVal, &endPtr, 16);
 
             if (errno != 0 || *endPtr != 0)
             {
@@ -796,7 +969,7 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
                                               value);
         }
 
-        OICFree (outVal);
+        OICFree(outVal);
     }
 
     if (boolRes == false)
@@ -806,7 +979,7 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
     }
 
 exit:
-    for(; attributeListIndex < attributeList.count; attributeListIndex++)
+    for (; attributeListIndex < attributeList.count; attributeListIndex++)
     {
         OICFree(attributeList.list[attributeListIndex].oicAttribute);
     }
@@ -833,22 +1006,22 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                                         ehRequest->resource);
     if (stackResult != OC_STACK_OK)
     {
-        OC_LOG (ERROR, TAG, "Failed to get resource from handle");
+        OIC_LOG(ERROR, TAG, "Failed to get resource from handle");
         return OC_EH_ERROR;
     }
 
-    bool boolRes = getZigBeeAttributesIfValid (
+    bool boolRes = getZigBeeAttributesIfValid(
                         piResource->header.piResource.resourceTypeName,
                         &attributeList, *payload);
-    if(boolRes == false)
+    if (boolRes == false)
     {
-        OC_LOG_V (ERROR, TAG, "Failed to fetch attributes for %s",
+        OIC_LOG_V(ERROR, TAG, "Failed to fetch attributes for %s",
             piResource->header.piResource.resourceTypeName);
         return OC_EH_ERROR;
     }
 
     uint32_t i = 0;
-    for(; i<attributeList.count; i++)
+    for (; i<attributeList.count; i++)
     {
         if (attributeList.list[i].oicType == OIC_ATTR_INT)
         {
@@ -869,18 +1042,35 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                 }
                 if (rangeDiff <= 0xFE)
                 {
-                    snprintf(value, sizeof(value), "%02x", (unsigned int) rangeDiff);
+                    errno = 0;
+                    int strRet = snprintf(value, sizeof(value), "%02x", (unsigned int) rangeDiff);
+                    if (strRet <= 0)
+                    {
+                        OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                        return OC_EH_ERROR;
+                    }
                 }
                 stackResult = TWMoveToLevel(piResource->nodeId, piResource->endpointId,
-                                    DEFAULT_MOVETOLEVEL_MODE, value, DEFAULT_TRANS_TIME);
+                                    DEFAULT_MOVETOLEVEL_MODE, value, DEFAULT_TRANS_TIME,
+                                    (PIPlugin_Zigbee*)plugin);
             }
             else
             {
-                snprintf(value, sizeof(value), "%"PRId64, attributeList.list[i].val.i);
+                errno = 0;
+                int strRet = snprintf(value,
+                                      sizeof(value),
+                                      "%"PRId64,
+                                      attributeList.list[i].val.i);
+                if (strRet <= 0)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                    return OC_EH_ERROR;
+                }
                 stackResult = TWSetAttribute(piResource->eui,
                     piResource->nodeId, piResource->endpointId,
                     piResource->clusterId, attributeList.list[i].zigBeeAttribute,
-                    getZBDataTypeString(attributeList.list[i].zigbeeType), value);
+                    getZBDataTypeString(attributeList.list[i].zigbeeType), value,
+                    (PIPlugin_Zigbee*)plugin);
             }
             if (stackResult != OC_STACK_OK)
             {
@@ -890,19 +1080,48 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
         else if (attributeList.list[i].oicType == OIC_ATTR_DOUBLE)
         {
             char value[MAX_STRLEN_DOUBLE] = {};
-            snprintf(value, sizeof(value), "%f", attributeList.list[i].val.d);
+            errno = 0;
+            int strRet = snprintf(value, sizeof(value), "%f", attributeList.list[i].val.d);
+            if (strRet <= 0)
+            {
+                OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                return OC_EH_ERROR;
+            }
             stackResult = TWSetAttribute(piResource->eui,
                 piResource->nodeId, piResource->endpointId,
                  piResource->clusterId, attributeList.list[i].zigBeeAttribute,
-                 getZBDataTypeString(attributeList.list[i].zigbeeType), value);
+                 getZBDataTypeString(attributeList.list[i].zigbeeType), value,
+                 (PIPlugin_Zigbee*)plugin);
         }
         else if (attributeList.list[i].oicType == OIC_ATTR_STRING)
         {
-            stackResult = TWSetAttribute(piResource->eui,
-                piResource->nodeId, piResource->endpointId,
-                piResource->clusterId, attributeList.list[i].zigBeeAttribute,
-                getZBDataTypeString(attributeList.list[i].zigbeeType),
-                attributeList.list[i].val.str);
+            if (strcmp(attributeList.list[i].oicAttribute, OIC_COLOUR_TEMPERATURE_ATTRIBUTE) == 0)
+            {
+                char *endPtr = NULL;
+                uint16_t zbVal = (uint16_t)strtod(attributeList.list[i].val.str, &endPtr);
+                zbVal = (zbVal*2.17)+153;
+                char value[5] = {0};
+                errno = 0;
+                int strRet = snprintf(value, sizeof(value), "%04x", zbVal);
+                if (strRet <= 0)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                    return OC_EH_ERROR;
+                }
+                stackResult =
+                TWColorMoveToColorTemperature(piResource->nodeId, piResource->endpointId,
+                                              value, DEFAULT_TRANS_TIME,
+                                              (PIPlugin_Zigbee*)plugin);
+            }
+            else
+            {
+                stackResult = TWSetAttribute(piResource->eui,
+                    piResource->nodeId, piResource->endpointId,
+                    piResource->clusterId, attributeList.list[i].zigBeeAttribute,
+                    getZBDataTypeString(attributeList.list[i].zigbeeType),
+                    attributeList.list[i].val.str,
+                    (PIPlugin_Zigbee*)plugin);
+            }
             if (stackResult != OC_STACK_OK)
             {
                 return OC_EH_ERROR;
@@ -913,7 +1132,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
             char * value = attributeList.list[i].val.b ? "1" : "0";
             if (attributeList.CIEMask || CIE_RON_OFF)
             {
-                stackResult = TWSwitchOnOff(piResource->nodeId, piResource->endpointId, value);
+                stackResult = TWSwitchOnOff(piResource->nodeId, piResource->endpointId, value,
+                                            (PIPlugin_Zigbee*)plugin);
             }
             else
             {
@@ -921,7 +1141,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                     piResource->nodeId, piResource->endpointId,
                     piResource->clusterId, attributeList.list[i].zigBeeAttribute,
                     getZBDataTypeString(attributeList.list[i].zigbeeType),
-                    value);
+                    value,
+                    (PIPlugin_Zigbee*)plugin);
             }
             if (stackResult != OC_STACK_OK)
             {
@@ -940,15 +1161,15 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
 OCEntityHandlerResult ProcessEHRequest(PIPluginBase * plugin,
     OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
 {
-    if(!ehRequest || !payload)
+    if (!ehRequest || !payload)
     {
         return OC_EH_ERROR;
     }
-    if(ehRequest->method == OC_REST_GET)
+    if (ehRequest->method == OC_REST_GET)
     {
         return processGetRequest(plugin, ehRequest, payload);
     }
-    else if(ehRequest->method == OC_REST_PUT)
+    else if (ehRequest->method == OC_REST_PUT)
     {
         return processPutRequest(plugin, ehRequest, payload);
     }

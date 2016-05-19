@@ -197,7 +197,6 @@ PKIError CKMIssueDeviceCertificate (const uint8_t *uint8SubjectName,
     uint8_t caPrivateKey[PRIVATE_KEY_SIZE];
     uint8_t uint8caName[ISSUER_MAX_NAME_SIZE];
 
-    CHECK_NULL(uint8SubjectPublicKey, ISSUER_NULL_PASSED);
     CHECK_NULL(issuedCertificate, ISSUER_NULL_PASSED);
     CHECK_NULL(issuedCertificate->data, ISSUER_NULL_PASSED);
     CHECK_LESS_EQUAL(ISSUER_MAX_CERT_SIZE, issuedCertificate->len, ISSUER_WRONG_BYTE_ARRAY_LEN);
@@ -339,7 +338,7 @@ PKIError SetSerialNumber (const long serNum)
 
     CHECK_LESS_EQUAL(0, serNum, ISSUER_WRONG_SERIAL_NUMBER);
     CHECK_CALL(InitCKMInfo);
-    CHECK_CALL(SetNextSerialNumber, &serNum);
+    CHECK_CALL(SetNextSerialNumber, serNum);
     CHECK_CALL(SaveCKMInfo);
 
     FUNCTION_CLEAR();
@@ -426,8 +425,11 @@ PKIError GenerateCSR (const uint8_t *uint8SubjectName,
     FUNCTION_CLEAR(
         OICFree(subjectName);
         OICFree(subjectPublicKey);
-        OICFree(subjectPrivateKey->buf);
-        OICFree(subjectPrivateKey);
+        if (subjectPrivateKey)
+        {
+            OICFree(subjectPrivateKey->buf);
+            OICFree(subjectPrivateKey);
+        }
     );
 }
 
@@ -582,7 +584,7 @@ PKIError CKMRevocateCertificate (const uint8_t *uint8ThisUpdateTime, const long 
     CHECK_CALL(InitCKMInfo);
     CHECK_CALL(GetNumberOfRevoked, &numberOfRevoked);
 
-    crlMaxSize = (CRL_MIN_SIZE +
+    crlMaxSize = (uint32_t)(CRL_MIN_SIZE +
             (numberOfRevoked + 1) * (sizeof(CertificateRevocationInfo_t) + 4));
 
     CHECK_NULL(encodedCRL, ISSUER_NULL_PASSED);
@@ -643,9 +645,9 @@ PKIError CKMRevocateCertificate (const uint8_t *uint8ThisUpdateTime, const long 
     CHECK_CALL(InitCKMInfo);
     CHECK_CALL(GetCRLSerialNumber, &serialNumber);
     serialNumber++;
-    CHECK_CALL(SetCRLSerialNumber, &serialNumber);
+    CHECK_CALL(SetCRLSerialNumber, serialNumber);
     numberOfRevoked++;
-    CHECK_CALL(SetNumberOfRevoked, &numberOfRevoked);
+    CHECK_CALL(SetNumberOfRevoked, numberOfRevoked);
     CHECK_CALL(SetCertificateRevocationList, encodedCRL);
     CHECK_CALL(SaveCKMInfo);
 

@@ -16,65 +16,54 @@
 
 package oic.simulator.clientcontroller.remoteresource;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
-import oic.simulator.clientcontroller.utils.Constants;
-
 import org.oic.simulator.SimulatorResourceModel;
-import org.oic.simulator.clientcontroller.SimulatorConnectivityType;
-import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
+import org.oic.simulator.client.SimulatorRemoteResource;
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
+import org.oic.simulator.client.SimulatorRequestModel;
 
 /**
  * This class represents a remote resource. It maintains all the necessary
  * information about the resource.
  */
 public class RemoteResource {
-    private String                               uId;
-    private String                               resourceURI;
-    private String                               host;
-    private LinkedList<String>                   resourceTypes;
-    private LinkedList<String>                   resourceInterfaces;
-    private SimulatorConnectivityType            connectivityType;
-    private boolean                              isObservable;
 
-    private boolean                              observed;
+    private boolean                                 observed;
 
     // Native object references
-    private SimulatorRemoteResource              resourceN;
-    private SimulatorResourceModel               resourceModel;
-    private Map<String, RemoteResourceAttribute> resourceAttributesMap;
+    private SimulatorRemoteResource                 remoteResourceRef;
+    private SimulatorResourceModel                  resourceModelRef;
+    private Map<RequestType, SimulatorRequestModel> requestModels;
+    private ResourceRepresentation                  mResourceRepresentation;
 
-    private boolean                              configUploaded;
+    private boolean                                 configUploaded;
 
-    private boolean                              getAutomtnInProgress;
-    private boolean                              putAutomtnInProgress;
-    private boolean                              postAutomtnInProgress;
+    private boolean                                 getAutomtnInProgress;
+    private boolean                                 putAutomtnInProgress;
+    private boolean                                 postAutomtnInProgress;
 
-    private int                                  getAutomtnId;
-    private int                                  putAutomtnId;
-    private int                                  postAutomtnId;
+    private int                                     getAutomtnId;
+    private int                                     putAutomtnId;
+    private int                                     postAutomtnId;
 
-    private boolean                              isFavorite;
+    private boolean                                 isFavorite;
 
-    public SimulatorResourceModel getResourceModel() {
-        return resourceModel;
+    public SimulatorResourceModel getResourceModelRef() {
+        return resourceModelRef;
     }
 
-    public void setResourceModel(SimulatorResourceModel resourceModel) {
-        this.resourceModel = resourceModel;
+    public void setResourceModelRef(SimulatorResourceModel resourceModel) {
+        this.resourceModelRef = resourceModel;
     }
 
-    public Map<String, RemoteResourceAttribute> getResourceAttributesMap() {
-        return resourceAttributesMap;
+    public Map<RequestType, SimulatorRequestModel> getRequestModels() {
+        return requestModels;
     }
 
-    public void setResourceAttributesMap(
-            Map<String, RemoteResourceAttribute> resourceAttributesMap) {
-        this.resourceAttributesMap = resourceAttributesMap;
+    public void setRequestModels(
+            Map<RequestType, SimulatorRequestModel> requestModels) {
+        this.requestModels = requestModels;
     }
 
     public int getGetAutomtnId() {
@@ -99,54 +88,6 @@ public class RemoteResource {
 
     public void setPostAutomtnId(int postAutomtnId) {
         this.postAutomtnId = postAutomtnId;
-    }
-
-    public String getResourceURI() {
-        return resourceURI;
-    }
-
-    public void setResourceURI(String resourceURI) {
-        this.resourceURI = resourceURI;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public LinkedList<String> getResourceTypes() {
-        return resourceTypes;
-    }
-
-    public void setResourceTypes(LinkedList<String> resourceTypes) {
-        this.resourceTypes = resourceTypes;
-    }
-
-    public LinkedList<String> getResourceInterfaces() {
-        return resourceInterfaces;
-    }
-
-    public void setResourceInterfaces(LinkedList<String> resourceInterfaces) {
-        this.resourceInterfaces = resourceInterfaces;
-    }
-
-    public SimulatorConnectivityType getConnectivityType() {
-        return connectivityType;
-    }
-
-    public void setConnectivityType(SimulatorConnectivityType connectivityType) {
-        this.connectivityType = connectivityType;
-    }
-
-    public boolean isObservable() {
-        return isObservable;
-    }
-
-    public void setObservable(boolean isObservable) {
-        this.isObservable = isObservable;
     }
 
     public boolean isGetAutomtnInProgress() {
@@ -181,12 +122,12 @@ public class RemoteResource {
         this.configUploaded = configUploaded;
     }
 
-    public SimulatorRemoteResource getResource() {
-        return resourceN;
+    public SimulatorRemoteResource getRemoteResourceRef() {
+        return remoteResourceRef;
     }
 
-    public void setResource(SimulatorRemoteResource resource) {
-        this.resourceN = resource;
+    public void setRemoteResourceRef(SimulatorRemoteResource resource) {
+        this.remoteResourceRef = resource;
     }
 
     public boolean isObserved() {
@@ -197,50 +138,13 @@ public class RemoteResource {
         this.observed = observed;
     }
 
-    public List<PutPostAttributeModel> getPutPostModel() {
-        Map<String, RemoteResourceAttribute> attMap = getResourceAttributesMap();
-        if (null == attMap || attMap.size() < 1) {
-            return null;
-        }
-        List<PutPostAttributeModel> putPostModelList = new ArrayList<PutPostAttributeModel>();
-        String attName;
-        RemoteResourceAttribute attribute;
-        PutPostAttributeModel putPostModel;
-        Iterator<String> attItr = attMap.keySet().iterator();
-        while (attItr.hasNext()) {
-            attName = attItr.next();
-            attribute = attMap.get(attName);
-            putPostModel = PutPostAttributeModel.getModel(attribute);
-            if (null != putPostModel) {
-                putPostModelList.add(putPostModel);
-            }
-        }
-        return putPostModelList;
-    }
-
-    public String getAttributeValue(String attName) {
-        RemoteResourceAttribute attribute = resourceAttributesMap.get(attName);
-        if (null == attribute) {
-            return null;
-        }
-        return String.valueOf(attribute.getAttributeValue());
-    }
-
-    public String getuId() {
-        return uId;
-    }
-
-    public void setuId(String uId) {
-        this.uId = uId;
-    }
-
-    public int getAutomationtype(int autoId) {
+    public RequestType getAutomationtype(int autoId) {
         if (getAutomtnId == autoId) {
-            return Constants.GET_AUTOMATION_INDEX;
+            return RequestType.GET;
         } else if (putAutomtnId == autoId) {
-            return Constants.PUT_AUTOMATION_INDEX;
-        } else {// if(postAutomtnId == autoId) {
-            return Constants.POST_AUTOMATION_INDEX;
+            return RequestType.PUT;
+        } else {
+            return RequestType.POST;
         }
     }
 
@@ -249,7 +153,7 @@ public class RemoteResource {
             getAutomtnInProgress = status;
         } else if (putAutomtnId == autoId) {
             putAutomtnInProgress = status;
-        } else {// if(postAutomtnId == autoId) {
+        } else {
             postAutomtnInProgress = status;
         }
     }
@@ -260,5 +164,13 @@ public class RemoteResource {
 
     public void setFavorite(boolean isFavorite) {
         this.isFavorite = isFavorite;
+    }
+
+    public void setResourceRepresentation(SimulatorResourceModel resModel) {
+        mResourceRepresentation = new ResourceRepresentation(resModel);
+    }
+
+    public ResourceRepresentation getResourceRepresentation() {
+        return mResourceRepresentation;
     }
 }

@@ -19,345 +19,649 @@
  ******************************************************************/
 
 #include "simulator_resource_model_jni.h"
-#include "simulator_common_jni.h"
-#include "resource_attributes_jni.h"
-#include "simulator_error_codes.h"
-#include "simulator_jni_utils.h"
+#include "simulator_utils_jni.h"
+#include "jni_string.h"
+#include "jni_map.h"
 
-using namespace std;
-
-extern SimulatorClassRefs gSimulatorClassRefs;
-
-JSimulatorResourceModel::JSimulatorResourceModel(SimulatorResourceModel resModel)
-    : m_resourceModel(resModel)
-{}
-
-JSimulatorResourceModel::JSimulatorResourceModel(SimulatorResourceModelSP resModel)
-    : m_resModelPtr(resModel)
-{}
-
-bool JSimulatorResourceModel::getResourceModel(JNIEnv *env, jobject thiz,
-        SimulatorResourceModel &resModel)
+class JniTypeInfo
 {
-    JSimulatorResourceModel *resource = GetHandle<JSimulatorResourceModel>(env, thiz);
-    if (env->ExceptionCheck())
+    public:
+        JniTypeInfo(JNIEnv *env) : m_env(env) {}
+
+        SimulatorResourceModel::TypeInfo toCpp(jobject jAttributeValue)
+        {
+            static jmethodID typeInfoMID = m_env->GetMethodID(gSimulatorClassRefs.attributeValueCls,
+                                           "typeInfo", "()Lorg/oic/simulator/AttributeValue$TypeInfo;");
+            static jfieldID typeFID = m_env->GetFieldID(gSimulatorClassRefs.attributeTypeInfoCls,
+                                      "mType", "Lorg/oic/simulator/AttributeValue$ValueType;");
+            static jfieldID baseTypeFID = m_env->GetFieldID(gSimulatorClassRefs.attributeTypeInfoCls,
+                                          "mBaseType", "Lorg/oic/simulator/AttributeValue$ValueType;");
+            static jfieldID depthFID = m_env->GetFieldID(gSimulatorClassRefs.attributeTypeInfoCls,
+                                       "mDepth", "I");
+
+            jobject jTypeInfo = m_env->CallObjectMethod(jAttributeValue, typeInfoMID);
+            jobject jType = m_env->GetObjectField(jTypeInfo, typeFID);
+            jobject jBaseType = m_env->GetObjectField(jTypeInfo, baseTypeFID);
+            jint jDepth = m_env->GetIntField(jTypeInfo, depthFID);
+
+            return SimulatorResourceModel::TypeInfo(getValueType(jType),
+                                                    getValueType(jBaseType), jDepth);
+        }
+
+    private:
+        AttributeValueType getValueType(jobject jValueType)
+        {
+            static jmethodID ordinalMID = m_env->GetMethodID(
+                                              gSimulatorClassRefs.attributeValueTypeCls, "ordinal", "()I");
+
+            int ordinal = m_env->CallIntMethod(jValueType, ordinalMID);
+            return AttributeValueType(ordinal);
+        }
+
+        JNIEnv *m_env;
+};
+
+class ValueConverterJava : public boost::static_visitor<jobject>
+{
+    public:
+        ValueConverterJava(JNIEnv *env) : m_env(env) {}
+
+        jobject operator ()(const int &value)
+        {
+            static jmethodID integerCtor =
+                m_env->GetMethodID(gSimulatorClassRefs.integerCls, "<init>", "(I)V");
+            return m_env->NewObject(gSimulatorClassRefs.integerCls,
+                                    integerCtor, value);
+        }
+
+        jobject operator ()(const double &value)
+        {
+            static jmethodID doubleCtor =
+                m_env->GetMethodID(gSimulatorClassRefs.doubleCls, "<init>", "(D)V");
+            return m_env->NewObject(gSimulatorClassRefs.doubleCls,
+                                    doubleCtor, value);
+        }
+
+        jobject operator ()(const bool &value)
+        {
+            static jmethodID booleanCtor =
+                m_env->GetMethodID(gSimulatorClassRefs.booleanCls, "<init>", "(Z)V");
+            return m_env->NewObject(gSimulatorClassRefs.booleanCls,
+                                    booleanCtor, value);
+        }
+
+        jobject operator ()(const std::string &value)
+        {
+            jstring stringValue = m_env->NewStringUTF(value.c_str());
+            return static_cast<jobject>(stringValue);
+        }
+
+        jobject operator ()(const SimulatorResourceModel &value)
+        {
+            return SimulatorResourceModelToJava(m_env, const_cast<SimulatorResourceModel &>(value));
+        }
+
+        template <typename T>
+        jobject operator ()(const std::vector<T> &values)
+        {
+            jobjectArray jArray = m_env->NewObjectArray(values.size(), getClass(values), nullptr);
+            if (!jArray)
+                return nullptr;
+
+            for (size_t index = 0; index < values.size(); index++)
+            {
+                jobject element = operator()(values[index]);
+                m_env->SetObjectArrayElement(jArray, index, element);
+            }
+
+            return jArray;
+        }
+
+        template <typename T>
+        jobject operator ()(const std::vector<std::vector<T>> &values)
+        {
+            jobjectArray jArray = m_env->NewObjectArray(values.size(), getClass(values), nullptr);
+            if (!jArray)
+                return nullptr;
+
+            for (size_t index = 0; index < values.size(); index++)
+            {
+                jobject element = operator()(values[index]);
+                m_env->SetObjectArrayElement(jArray, index, element);
+            }
+
+            return jArray;
+        }
+
+        template <typename T>
+        jobject operator ()(const std::vector<std::vector<std::vector<T>>> &values)
+        {
+            jobjectArray jArray = m_env->NewObjectArray(values.size(), getClass(values), nullptr);
+            if (!jArray)
+                return nullptr;
+
+            for (size_t index = 0; index < values.size(); index++)
+            {
+                jobject element = operator()(values[index]);
+                m_env->SetObjectArrayElement(jArray, index, element);
+            }
+
+            return jArray;
+        }
+
+    private:
+        jclass getClass(const std::vector<int> &)
+        {
+            return gSimulatorClassRefs.integerCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<int>> &)
+        {
+            return gSimulatorClassRefs.integer1DArrayCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<std::vector<int>>> &)
+        {
+            return gSimulatorClassRefs.integer2DArrayCls;
+        }
+
+        jclass getClass(const std::vector<double> &)
+        {
+            return gSimulatorClassRefs.doubleCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<double>> &)
+        {
+            return gSimulatorClassRefs.double1DArrayCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<std::vector<double>>> &)
+        {
+            return gSimulatorClassRefs.double2DArrayCls;
+        }
+
+        jclass getClass(const std::vector<bool> &)
+        {
+            return gSimulatorClassRefs.booleanCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<bool>> &)
+        {
+            return gSimulatorClassRefs.boolean1DArrayCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<std::vector<bool>>> &)
+        {
+            return gSimulatorClassRefs.boolean2DArrayCls;
+        }
+
+        jclass getClass(const std::vector<std::string> &)
+        {
+            return gSimulatorClassRefs.stringCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<std::string>> &)
+        {
+            return gSimulatorClassRefs.string1DArrayCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<std::vector<std::string>>> &)
+        {
+            return gSimulatorClassRefs.string2DArrayCls;
+        }
+
+        jclass getClass(const std::vector<SimulatorResourceModel> &)
+        {
+            return gSimulatorClassRefs.simulatorResourceModelCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<SimulatorResourceModel>> &)
+        {
+            return gSimulatorClassRefs.simulatorResModel1DArrayCls;
+        }
+
+        jclass getClass(const std::vector<std::vector<std::vector<SimulatorResourceModel>>> &)
+        {
+            return gSimulatorClassRefs.simulatorResModel2DArrayCls;
+        }
+
+        JNIEnv *m_env;
+};
+
+class ValueConverterCpp
+{
+    public:
+        ValueConverterCpp(JNIEnv *env, SimulatorResourceModel::TypeInfo &typeInfo,
+                          jobject &value) : m_env(env), m_typeInfo(typeInfo), m_value(value) {}
+
+        void convert()
+        {
+            switch (m_typeInfo.baseType())
+            {
+                case AttributeValueType::INTEGER:
+                    return handleByDepth<int>();
+                case AttributeValueType::DOUBLE:
+                    return handleByDepth<double>();
+                case AttributeValueType::BOOLEAN:
+                    return handleByDepth<bool>();
+                case AttributeValueType::STRING:
+                    return handleByDepth<std::string>();
+                case AttributeValueType::RESOURCE_MODEL:
+                    return handleByDepth<SimulatorResourceModel>();
+                case AttributeValueType::VECTOR:
+                case AttributeValueType::UNKNOWN:
+                    break;
+            }
+        }
+
+        AttributeValueVariant get()
+        {
+            return std::move(m_result);
+        }
+
+    private:
+        template <typename T>
+        void handleByDepth()
+        {
+            if (0 == m_typeInfo.depth())
+            {
+                T value;
+                getValue(m_value, value);
+                m_result = value;
+            }
+            else if (1 == m_typeInfo.depth())
+            {
+                std::vector<T> value;
+                getValue(m_value, value);
+                m_result = value;
+            }
+            else if (2 == m_typeInfo.depth())
+            {
+                std::vector<std::vector<T>> value;
+                getValue(m_value, value);
+                m_result = value;
+            }
+            else if (3 == m_typeInfo.depth())
+            {
+                std::vector<std::vector<std::vector<T>>> value;
+                getValue(m_value, value);
+                m_result = value;
+            }
+        }
+
+        void getValue(jobject &jValue, int &value)
+        {
+            static jmethodID intValueMID = m_env->GetMethodID(
+                                               gSimulatorClassRefs.integerCls, "intValue", "()I");
+
+            jint temp = m_env->CallIntMethod(jValue, intValueMID);
+            value = temp;
+        }
+
+        void getValue(jobject &jValue, std::vector<int> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                int element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<int>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<int> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<std::vector<int>>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<std::vector<int>> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, double &value)
+        {
+            static jmethodID doubleValueMID = m_env->GetMethodID(
+                                                  gSimulatorClassRefs.doubleCls, "doubleValue", "()D");
+
+            value = m_env->CallDoubleMethod(jValue, doubleValueMID);
+        }
+
+        void getValue(jobject &jValue, std::vector<double> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                double element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<double>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<double> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<std::vector<double>>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<std::vector<double>> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, bool &value)
+        {
+            static jmethodID boolValueMID = m_env->GetMethodID(
+                                                gSimulatorClassRefs.booleanCls, "booleanValue", "()Z");
+
+            value = m_env->CallBooleanMethod(jValue, boolValueMID);
+        }
+
+        void getValue(jobject &jValue, std::vector<bool> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                bool element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<bool>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<bool> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<std::vector<bool>>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<std::vector<bool>> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::string &value)
+        {
+            jstring stringValue = (jstring) jValue;
+            JniString jniValue(m_env, stringValue);
+            value = jniValue.get();
+        }
+
+        void getValue(jobject jValue, std::vector<std::string> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::string element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<std::string>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<std::string> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<std::vector<std::string>>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<std::vector<std::string>> element;
+                getValue(jElement, element);
+                value.push_back(element);
+            }
+        }
+
+        void getValue(jobject &jValue, SimulatorResourceModel &value)
+        {
+            SimulatorResourceModelToCpp(m_env, jValue, value);
+        }
+
+        void getValue(jobject &jValue, std::vector<SimulatorResourceModel> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            std::vector<SimulatorResourceModel> result(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                SimulatorResourceModel element;
+                getValue(jElement, element);
+                result[i] = element;
+            }
+
+            value = result;
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<SimulatorResourceModel>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            std::vector<std::vector<SimulatorResourceModel>> result(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<SimulatorResourceModel> childArray;
+                getValue(jElement, childArray);
+                value[i] = childArray;
+            }
+
+            value = result;
+        }
+
+        void getValue(jobject &jValue, std::vector<std::vector<std::vector<SimulatorResourceModel>>> &value)
+        {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            std::vector<std::vector<std::vector<SimulatorResourceModel>>> result(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<std::vector<SimulatorResourceModel>> childArray;
+                getValue(jElement, childArray);
+                value[i] = childArray;
+            }
+
+            value = result;
+        }
+
+        JNIEnv *m_env;
+        SimulatorResourceModel::TypeInfo &m_typeInfo;
+        jobject &m_value;
+        AttributeValueVariant m_result;
+};
+
+class JniAttributeValue
+{
+    public:
+        static jobject toJava(JNIEnv *env, const SimulatorResourceAttribute &attribute)
+        {
+            return toJava(env, attribute.getValue());
+        }
+
+        static jobject toJava(JNIEnv *env, const AttributeValueVariant &value)
+        {
+            ValueConverterJava converter(env);
+            jobject jValue =  boost::apply_visitor(converter, value);
+
+            static jmethodID attrValueCtor = env->GetMethodID(
+                                                 gSimulatorClassRefs.attributeValueCls, "<init>", "(Ljava/lang/Object;)V");
+
+            return env->NewObject(gSimulatorClassRefs.attributeValueCls, attrValueCtor, jValue);
+        }
+
+        static AttributeValueVariant toCpp(JNIEnv *env, jobject &jAttributeValue)
+        {
+            static jmethodID getMID = env->GetMethodID(gSimulatorClassRefs.attributeValueCls,
+                                      "get", "()Ljava/lang/Object;");
+
+            SimulatorResourceModel::TypeInfo typeInfo = JniTypeInfo(env).toCpp(jAttributeValue);
+            jobject jValue = env->CallObjectMethod(jAttributeValue, getMID);
+
+            ValueConverterCpp converter(env, typeInfo, jValue);
+            converter.convert();
+            return converter.get();
+        }
+};
+
+jobject SimulatorResourceModelToJava(JNIEnv *env, const SimulatorResourceModel &resModel)
+{
+    JniMap jAttributesMap(env);
+
+    // Add attribute values for HashMap
+    for (auto &attributeEntry : resModel.getAttributeValues())
     {
-        return false;
+        jstring jAttrName = env->NewStringUTF((attributeEntry.first).c_str());
+        jobject jAttributeValue = JniAttributeValue::toJava(env, attributeEntry.second);
+
+        jAttributesMap.put(jAttrName, jAttributeValue);
     }
 
-    if (nullptr != resource->m_resModelPtr)
-        resModel = *(resource->m_resModelPtr.get());
-    else
-        resModel = resource->m_resourceModel;
+    // Create Java SimulatorResourceModel object
+    static jmethodID simulatorResourceModelCtor = env->GetMethodID(
+                gSimulatorClassRefs.simulatorResourceModelCls, "<init>", "(Ljava/util/Map;)V");
+
+    return env->NewObject(gSimulatorClassRefs.simulatorResourceModelCls,
+                          simulatorResourceModelCtor, jAttributesMap.get());
+}
+
+bool SimulatorResourceModelToCpp(JNIEnv *env, jobject jResModel, SimulatorResourceModel &resModel)
+{
+    if (!jResModel)
+        return false;
+
+    static jfieldID valuesFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceModelCls,
+                                "mValues", "Ljava/util/Map;");
+    static jmethodID entrySetMID = env->GetMethodID(gSimulatorClassRefs.mapCls, "entrySet",
+                                   "()Ljava/util/Set;");
+    static jmethodID iteratorMID = env->GetMethodID(gSimulatorClassRefs.setCls, "iterator",
+                                   "()Ljava/util/Iterator;");
+    static jmethodID hasNextMID = env->GetMethodID(gSimulatorClassRefs.iteratorCls, "hasNext",
+                                  "()Z");
+    static jmethodID nextMID = env->GetMethodID(gSimulatorClassRefs.iteratorCls, "next",
+                               "()Ljava/lang/Object;");
+    static jmethodID getKeyMID = env->GetMethodID(gSimulatorClassRefs.mapEntryCls, "getKey",
+                                 "()Ljava/lang/Object;");
+    static jmethodID getValueMID = env->GetMethodID(gSimulatorClassRefs.mapEntryCls, "getValue",
+                                   "()Ljava/lang/Object;");
+
+    jobject jValues = env->GetObjectField(jResModel, valuesFID);
+    if (jValues)
+    {
+        jobject entrySet = env->CallObjectMethod(jValues, entrySetMID);
+        jobject iterator = env->CallObjectMethod(entrySet, iteratorMID);
+        if (entrySet && iterator)
+        {
+            while (env->CallBooleanMethod(iterator, hasNextMID))
+            {
+                jobject entry = env->CallObjectMethod(iterator, nextMID);
+                jstring key = (jstring) env->CallObjectMethod(entry, getKeyMID);
+                jobject value = env->CallObjectMethod(entry, getValueMID);
+                resModel.add(JniString(env, key).get(), JniAttributeValue::toCpp(env, value));
+
+                env->DeleteLocalRef(entry);
+                env->DeleteLocalRef(key);
+                env->DeleteLocalRef(value);
+            }
+        }
+    }
+
     return true;
 }
 
-SimulatorResourceModelSP JSimulatorResourceModel::getResourceModelPtr(JNIEnv *env, jobject thiz)
+jobject AttributeValueToJava(JNIEnv *env,
+                             const AttributeValueVariant &value)
 {
-    JSimulatorResourceModel *resource = GetHandle<JSimulatorResourceModel>(env, thiz);
-    if (env->ExceptionCheck())
-    {
-        return nullptr;
-    }
-
-    if (nullptr != resource->m_resModelPtr)
-        return resource->m_resModelPtr;
-    return nullptr;
+    return JniAttributeValue::toJava(env, value);
 }
 
-jobject JSimulatorResourceModel::toJava(JNIEnv *env, jlong nativeHandle)
+bool AttributeValueToCpp(JNIEnv *env, jobject jAttributeValue,
+                         AttributeValueVariant &jValue)
 {
-    jobject resourceObj = (jobject) env->NewObject(gSimulatorClassRefs.classSimulatorResourceModel,
-                          gSimulatorClassRefs.classSimulatorResourceModelCtor, nativeHandle);
-    if (!resourceObj)
-    {
-        return NULL;
-    }
-    return resourceObj;
+    if (!jAttributeValue)
+        return false;
+
+    jValue = JniAttributeValue::toCpp(env, jAttributeValue);
+    return true;
 }
 
-void JSimulatorResourceModel::toJava(JNIEnv *env, jobject thiz, jlong nativeHandle)
-{
-    if (env && thiz && nativeHandle)
-    {
-        env->SetLongField(thiz, GetHandleField(env, thiz), nativeHandle);
-    }
-}
-
-static jobject createHashMap(JNIEnv *env)
-{
-    jobject mapobj = env->NewObject(gSimulatorClassRefs.classHashMap,
-                                    gSimulatorClassRefs.classHashMapCtor);
-    return mapobj;
-}
-
-static void addEntryToHashMap(JNIEnv *env, jobject mapobj, jobject key, jobject value)
-{
-    if (!mapobj || !key || !value)
-    {
-        return;
-    }
-
-    env->CallObjectMethod(mapobj, gSimulatorClassRefs.classHashMapPut, key, value);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_create
-(JNIEnv *env, jobject thiz)
-{
-    SimulatorResourceModelSP resModel = std::make_shared<SimulatorResourceModel>();
-    JSimulatorResourceModel *jresModel = new JSimulatorResourceModel(resModel);
-    JSimulatorResourceModel::toJava(env, thiz, reinterpret_cast<jlong>(jresModel));
-}
-
-JNIEXPORT jint JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_size
-(JNIEnv *env, jobject thiz)
-{
-    SimulatorResourceModel resourceModel;
-    bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
-    if (!result)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
-        return SIMULATOR_BAD_OBJECT;
-    }
-
-    return resourceModel.size();
-}
-
-JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_getAttributes
-(JNIEnv *env, jobject thiz)
-{
-    SimulatorResourceModel resourceModel;
-    bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
-    if (!result)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
-        return nullptr;
-    }
-
-    map<string, SimulatorResourceModel::Attribute> attributesMap = resourceModel.getAttributes();
-
-    // Create Java HashMap object
-    jobject jHashMap = NULL;
-    jHashMap = createHashMap(env);
-    if (!jHashMap)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Java map creation failed!");
-        return nullptr;
-    }
-
-    for (auto & attributeEntry : attributesMap)
-    {
-        SimulatorResourceModel::Attribute attribute(attributeEntry.second);
-
-        // Create a object of ResourceAttribute java class
-        JResourceAttributeConverter converter(attribute);
-        jobject jAttribute = converter.toJava(env);
-
-        // Add an entry with attribute.first and javaSimualatorResourceAttribute to the HashMap
-        jstring jAttrName = env->NewStringUTF((attributeEntry.first).c_str());
-        addEntryToHashMap(env, jHashMap, static_cast<jobject>(jAttrName), jAttribute);
-        env->DeleteLocalRef(jAttrName);
-    }
-
-    return jHashMap;
-}
-
-JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_getAttribute
-(JNIEnv *env, jobject thiz, jstring jAttrName)
-{
-    if (!jAttrName)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
-        return nullptr;
-    }
-
-    const char *attrName = env->GetStringUTFChars(jAttrName, NULL);
-    if (!attrName)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
-        return nullptr;
-    }
-
-    SimulatorResourceModel resourceModel;
-    bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
-    if (!result)
-    {
-        env->ReleaseStringUTFChars(jAttrName, attrName);
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
-        return nullptr;
-    }
-
-    SimulatorResourceModel::Attribute attribute;
-    bool found = resourceModel.getAttribute(attrName, attribute);
-    if (!found)
-    {
-        env->ReleaseStringUTFChars(jAttrName, attrName);
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Attribute does not exist!");
-        return nullptr;
-    }
-
-    env->ReleaseStringUTFChars(jAttrName, attrName);
-
-    // Create a object of ResourceAttribute java class
-    JResourceAttributeConverter converter(attribute);
-    return converter.toJava(env);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_addAttributeInt
-(JNIEnv *env, jobject thiz, jstring jname, jint jvalue)
-{
-    if (!jname)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
-        return;
-    }
-
-    SimulatorResourceModelSP resModelPtr;
-    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
-    if (!resModelPtr)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
-        return;
-    }
-
-    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
-    if (!nameCstr)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
-        return;
-    }
-
-    std::string attrName(nameCstr);
-    int value = static_cast<int>(jvalue);
-    resModelPtr->addAttribute(attrName, value);
-
-    // Release created c string
-    env->ReleaseStringUTFChars(jname, nameCstr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_addAttributeDouble
-(JNIEnv *env, jobject thiz, jstring jname, jdouble jvalue)
-{
-    if (!jname)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
-        return;
-    }
-
-    SimulatorResourceModelSP resModelPtr;
-    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
-    if (!resModelPtr)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
-        return;
-    }
-
-    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
-    if (!nameCstr)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
-        return;
-    }
-
-    std::string attrName(nameCstr);
-    double value = static_cast<double>(jvalue);
-    resModelPtr->addAttribute(attrName, value);
-
-    // Release created c string
-    env->ReleaseStringUTFChars(jname, nameCstr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_addAttributeBoolean
-(JNIEnv *env, jobject thiz, jstring jname, jboolean jvalue)
-{
-    if (!jname)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
-        return;
-    }
-
-    SimulatorResourceModelSP resModelPtr;
-    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
-    if (!resModelPtr)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
-        return;
-    }
-
-    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
-    if (!nameCstr)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
-        return;
-    }
-
-    std::string attrName(nameCstr);
-    bool value = static_cast<bool>(jvalue);
-    resModelPtr->addAttribute(attrName, value);
-
-    // Release created c string
-    env->ReleaseStringUTFChars(jname, nameCstr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_addAttributeString
-(JNIEnv *env, jobject thiz, jstring jname, jstring jvalue)
-{
-    if (!jname)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
-        return;
-    }
-
-    if (!jvalue)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Attribute value cannot be null!");
-        return;
-    }
-
-    SimulatorResourceModelSP resModelPtr;
-    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
-    if (!resModelPtr)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
-        return;
-    }
-
-    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
-    if (!nameCstr)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
-        return;
-    }
-
-    const char *valueCstr = env->GetStringUTFChars(jvalue, NULL);
-    if (!valueCstr)
-    {
-        env->ReleaseStringUTFChars(jname, nameCstr);
-        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
-        return;
-    }
-
-    std::string attrName(nameCstr);
-    std::string value(valueCstr);
-    resModelPtr->addAttribute(attrName, value);
-
-    // Release created c string
-    env->ReleaseStringUTFChars(jname, nameCstr);
-    env->ReleaseStringUTFChars(jvalue, valueCstr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorResourceModel_dispose
-(JNIEnv *env, jobject thiz)
-{
-    JSimulatorResourceModel *resourceModel = GetHandle<JSimulatorResourceModel>(env, thiz);
-    delete resourceModel;
-}

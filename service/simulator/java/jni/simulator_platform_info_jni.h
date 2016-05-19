@@ -24,16 +24,16 @@
 #include "simulator_platform_info.h"
 #include <jni.h>
 
-class JPlatformInfo
+class JniPlatformInfo
 {
     public:
-        JPlatformInfo(JNIEnv *env) : m_env(env) {}
-        JPlatformInfo(const JPlatformInfo &) = delete;
-        JPlatformInfo &operator=(const JPlatformInfo &) = delete;
-        JPlatformInfo(const JPlatformInfo &&) = delete;
-        JPlatformInfo &operator=(const JPlatformInfo && ) = delete;
+        JniPlatformInfo(JNIEnv *env) : m_env(env) {}
+        JniPlatformInfo(const JniPlatformInfo &) = delete;
+        JniPlatformInfo &operator=(const JniPlatformInfo &) = delete;
+        JniPlatformInfo(const JniPlatformInfo &&) = delete;
+        JniPlatformInfo &operator=(const JniPlatformInfo && ) = delete;
         jobject toJava(PlatformInfo &platformInfo);
-        PlatformInfo toCPP(jobject jPlatformInfo);
+        PlatformInfo toCpp(jobject jPlatformInfo);
 
     private:
         void setFieldValue(jobject jPlatformInfo, const std::string &fieldName,
@@ -41,20 +41,6 @@ class JPlatformInfo
         std::string getFieldValue(jobject jPlatformInfo, const std::string &fieldName);
 
         JNIEnv *m_env;
-};
-
-class JniPlatformInfoListener
-{
-    public:
-        JniPlatformInfoListener(JNIEnv *env, jobject listener)
-        {
-            m_listener = env->NewWeakGlobalRef(listener);
-        }
-
-        void onPlatformInfoReceived(PlatformInfo &platformInfo);
-
-    private:
-        jweak m_listener;
 };
 
 #endif

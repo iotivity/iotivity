@@ -44,7 +44,9 @@ extern "C"
  *                                 Abstraction Layer.
  * @param[in]   reqRespCallback    Callback to notify request and response messages from
  *                                 server(s) started at Connectivity Abstraction Layer.
- * @param[in]   netCallback        Callback to notify the network additions to Connectivity
+ * @param[in]   netCallback        Callback to notify the adapter changes to Connectivity
+ *                                 Abstraction Layer.
+ * @param[in]   connCallback       Callback to notify the connection changes to Connectivity
  *                                 Abstraction Layer.
  * @param[in]   errorCallback      errorCallback to notify error to connectivity common logic
  *                                 layer from adapter.
@@ -52,8 +54,9 @@ extern "C"
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-                           CANetworkPacketReceivedCallback reqRespCallback,
-                           CANetworkChangeCallback netCallback,
+                           CANetworkPacketReceivedCallback packetReceivedCallback,
+                           CAAdapterChangeCallback netCallback,
+                           CAConnectionChangeCallback connCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**

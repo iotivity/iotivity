@@ -16,18 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.List;
-import java.util.Set;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.view.dialogs.FindResourceWizard;
-import oic.simulator.clientcontroller.view.dialogs.LoadRAMLDialog;
-import oic.simulator.clientcontroller.view.dialogs.ResourceWizardDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -60,6 +48,21 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.List;
+import java.util.Set;
+
+import org.oic.simulator.SimulatorException;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
+import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.view.dialogs.FindResourceWizard;
+import oic.simulator.clientcontroller.view.dialogs.LoadRAMLDialog;
+import oic.simulator.clientcontroller.view.dialogs.ResourceWizardDialog;
 
 /**
  * This class manages and shows the resource manager view in the perspective.
@@ -97,7 +100,6 @@ public class ResourceManagerView extends ViewPart {
 
             @Override
             public void onNewResourceFound(final RemoteResource resource) {
-                System.out.println("View: onNewResourceFound");
                 if (null == resource) {
                     return;
                 }
@@ -123,16 +125,12 @@ public class ResourceManagerView extends ViewPart {
 
                         // Close the find dialog
                         if (null != findDialog) {
-                            boolean status = findDialog.close();
-                            System.out
-                                    .println("dialog close status: " + status);
+                            findDialog.close();
                         }
 
                         // Close the refresh dialog
                         if (null != refreshDialog) {
-                            boolean status = refreshDialog.close();
-                            System.out
-                                    .println("dialog close status: " + status);
+                            refreshDialog.close();
                         }
                     }
                 });
@@ -182,11 +180,6 @@ public class ResourceManagerView extends ViewPart {
         folder.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                /*
-                 * CTabItem selectedTab = folder.getSelection(); if(selectedTab
-                 * == foundResTab) { System.out.println("Found resources tab");
-                 * } else { System.out.println("Favorite resources tab"); }
-                 */
                 // Tab is switched.
                 treeViewer.setSelection(null);
                 favTreeViewer.setSelection(null);
@@ -276,68 +269,10 @@ public class ResourceManagerView extends ViewPart {
                         for (int index = 0; index < items.length; index++) {
                             items[index].dispose();
                         }
-                        MenuItem uploadRAMLItem = new MenuItem(menu, SWT.NONE);
-                        uploadRAMLItem.setText("Upload RAML Configuration");
-                        uploadRAMLItem
-                                .addSelectionListener(new SelectionAdapter() {
-                                    @Override
-                                    public void widgetSelected(SelectionEvent e) {
-                                        // Open the RAML configuration dialog if
-                                        // RAML file is not yet uploaded for the
-                                        // currently selected resource
-                                        RemoteResource resource = resourceManager
-                                                .getCurrentResourceInSelection();
-                                        if (null == resource) {
-                                            return;
-                                        }
-                                        if (!resource.isConfigUploaded()) {
-                                            // Open the dialog in a separate
-                                            // UI thread.
-                                            PlatformUI.getWorkbench()
-                                                    .getDisplay()
-                                                    .syncExec(new Thread() {
-                                                        @Override
-                                                        public void run() {
-                                                            LoadRAMLDialog ramlDialog = new LoadRAMLDialog(
-                                                                    Display.getDefault()
-                                                                            .getActiveShell());
-                                                            if (ramlDialog
-                                                                    .open() != Window.OK) {
-                                                                return;
-                                                            }
-                                                            String configFilePath = ramlDialog
-                                                                    .getConfigFilePath();
-                                                            if (null == configFilePath
-                                                                    || configFilePath
-                                                                            .length() < 1) {
-                                                                MessageDialog
-                                                                        .openInformation(
-                                                                                Display.getDefault()
-                                                                                        .getActiveShell(),
-                                                                                "Invalid RAML Config path",
-                                                                                "Configuration file path is invalid.");
-                                                                return;
-                                                            }
-                                                            resourceManager
-                                                                    .setConfigFilePath(
-                                                                            resourceManager
-                                                                                    .getCurrentResourceInSelection(),
-                                                                            configFilePath);
-                                                        }
-                                                    });
-                                        } else {
-                                            MessageDialog
-                                                    .openInformation(Display
-                                                            .getDefault()
-                                                            .getActiveShell(),
-                                                            "Already Uploaded",
-                                                            "Configuration file for the selected resource is already uploaded");
-                                        }
-                                    }
-                                });
+                        setupUploadRamlMenuItem(menu);
 
-                        RemoteResource resource = resourceManager
-                                .getCurrentResourceInSelection();
+                        final RemoteResource resource = (RemoteResource) ((IStructuredSelection) treeViewer
+                                .getSelection()).getFirstElement();
                         if (null == resource) {
                             return;
                         }
@@ -349,17 +284,11 @@ public class ResourceManagerView extends ViewPart {
                                 .addSelectionListener(new SelectionAdapter() {
                                     @Override
                                     public void widgetSelected(SelectionEvent e) {
-                                        RemoteResource resource = (RemoteResource) ((IStructuredSelection) treeViewer
-                                                .getSelection())
-                                                .getFirstElement();
-                                        if (null == resource) {
-                                            return;
-                                        }
-                                        System.out.println("Selected resource:"
-                                                + resource.getResourceURI());
                                         if (!resource.isFavorite()) {
                                             resourceManager
                                                     .addResourcetoFavorites(resource);
+                                            resourceManager
+                                                    .addResourceURItoFavorites(resource);
                                         } else {
                                             resourceManager
                                                     .removeResourceFromFavorites(resource);
@@ -422,6 +351,9 @@ public class ResourceManagerView extends ViewPart {
                         for (int index = 0; index < items.length; index++) {
                             items[index].dispose();
                         }
+
+                        setupUploadRamlMenuItem(menu);
+
                         MenuItem addToFavMenuItem = new MenuItem(menu, SWT.NONE);
                         addToFavMenuItem.setText("Remove from favorites");
                         addToFavMenuItem
@@ -447,6 +379,73 @@ public class ResourceManagerView extends ViewPart {
         }
     }
 
+    private void setupUploadRamlMenuItem(Menu menu) {
+        MenuItem uploadRAMLItem = new MenuItem(menu, SWT.NONE);
+        uploadRAMLItem.setText("Upload RAML Configuration");
+        uploadRAMLItem.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                // Open the RAML configuration dialog if
+                // RAML file is not yet uploaded for the
+                // currently selected resource
+                RemoteResource resource = resourceManager
+                        .getCurrentResourceInSelection();
+                if (null == resource) {
+                    return;
+                }
+                if (resource.isConfigUploaded()) {
+                    boolean answer = MessageDialog
+                            .openQuestion(
+                                    Display.getDefault().getActiveShell(),
+                                    "Upload Another RAML",
+                                    "This resource is already configured with RAML.\n"
+                                            + "Do you want to upload a new configuration?");
+                    if (!answer) {
+                        return;
+                    }
+                }
+                // Open the dialog in a separate
+                // UI thread.
+                PlatformUI.getWorkbench().getDisplay().syncExec(new Thread() {
+                    @Override
+                    public void run() {
+                        LoadRAMLDialog ramlDialog = new LoadRAMLDialog(Display
+                                .getDefault().getActiveShell());
+                        if (ramlDialog.open() != Window.OK) {
+                            return;
+                        }
+                        String configFilePath = ramlDialog.getConfigFilePath();
+                        if (null == configFilePath
+                                || configFilePath.length() < 1) {
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(),
+                                    "Invalid RAML Config path",
+                                    "Configuration file path is invalid.");
+                            return;
+                        }
+                        try {
+                            boolean result = resourceManager.setConfigFilePath(
+                                    resourceManager
+                                            .getCurrentResourceInSelection(),
+                                    configFilePath);
+                            if (!result) {
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Operation failed",
+                                                "Failed to obtain the details from the given RAML.");
+                            }
+                        } catch (SimulatorException e) {
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(), "Invalid RAML",
+                                    "Given configuration file is invalid.");
+                        }
+                    }
+                });
+            }
+        });
+    }
+
     private void addUIListeners() {
         findResButton.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -467,38 +466,37 @@ public class ResourceManagerView extends ViewPart {
 
                             Set<String> searchTypes = findWizard
                                     .getSearchTypes();
-                            if (null != searchTypes) {
-                                System.out.println(searchTypes);
-                                // Call native method to clear existing
-                                // resources of
-                                // the given search types.
-                                resourceManager.deleteResources(searchTypes);
+                            // Delete cached details of resources based on the
+                            // given search types.
+                            // If there are no resource types to search, then
+                            // all resources
+                            // will be deleted.
+                            resourceManager.deleteResources(searchTypes);
 
-                                // Update the tree
-                                treeViewer.refresh();
-                                favTreeViewer.refresh();
+                            // Update the tree
+                            treeViewer.refresh();
+                            favTreeViewer.refresh();
 
-                                // Call native method to find Resources
-                                boolean result = resourceManager
-                                        .findResourceRequest(searchTypes);
-                                if (result) {
-                                    searchUIOperation(false);
-                                } else {
-                                    MessageDialog
-                                            .openError(Display.getDefault()
-                                                    .getActiveShell(),
-                                                    "Find Resource status",
-                                                    "Operation failed due to some problems in core layer.");
-                                }
-
-                                // Store this information for refresh
-                                // functionality
-                                resourceManager
-                                        .setLastKnownSearchTypes(searchTypes);
-
-                                // Change the refresh visibility
-                                refreshButton.setEnabled(true);
+                            // Call native method to find Resources
+                            boolean result = resourceManager
+                                    .findResourceRequest(searchTypes);
+                            if (result) {
+                                searchUIOperation(false);
+                            } else {
+                                MessageDialog
+                                        .openError(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Find Resource status",
+                                                "Operation failed due to some problems in core layer.");
                             }
+
+                            // Store this information for refresh
+                            // functionality
+                            resourceManager
+                                    .setLastKnownSearchTypes(searchTypes);
+
+                            // Change the refresh visibility
+                            refreshButton.setEnabled(true);
                         }
                     }
                 });
@@ -510,13 +508,12 @@ public class ResourceManagerView extends ViewPart {
             public void widgetSelected(SelectionEvent e) {
                 Set<String> searchTypes = resourceManager
                         .getLastKnownSearchTypes();
-                if (null == searchTypes) {
-                    return;
-                }
                 setFoundResource(false);
 
-                // Call native method to clear existing resources of the given
-                // search types.
+                // Delete cached details of resources based on the given search
+                // types.
+                // If there are no resource types to search, then all resources
+                // will be deleted.
                 resourceManager.deleteResources(searchTypes);
 
                 // Update the tree
@@ -554,8 +551,6 @@ public class ResourceManagerView extends ViewPart {
                     if (null == resource) {
                         return;
                     }
-                    System.out.println("Selected resource: "
-                            + resource.getResourceURI());
                     resourceManager.resourceSelectionChanged(resource);
                 }
             }
@@ -608,7 +603,6 @@ public class ResourceManagerView extends ViewPart {
                         try {
                             Thread.sleep(Constants.FIND_RESOURCES_TIMEOUT * 1000);
                         } catch (InterruptedException e) {
-                            System.out.println("Interrupted during sleep.");
                             return;
                         }
 
@@ -649,14 +643,15 @@ public class ResourceManagerView extends ViewPart {
     }
 
     private void addManagerListeners() {
-        resourceManager.addFindresourceUIListener(findListener);
+        UiListenerHandler.getInstance().addFindresourceUIListener(findListener);
     }
 
     @Override
     public void dispose() {
         // Unregister the listener
         if (null != findListener) {
-            resourceManager.removeFindresourceUIListener(findListener);
+            UiListenerHandler.getInstance().removeFindresourceUIListener(
+                    findListener);
             resourceManager.resourceSelectionChanged(null);
         }
         super.dispose();
@@ -664,8 +659,6 @@ public class ResourceManagerView extends ViewPart {
 
     @Override
     public void setFocus() {
-        // TODO Auto-generated method stub
-
     }
 
     public synchronized void setFoundResource(boolean value) {
@@ -695,7 +688,6 @@ class TreeContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getElements(Object parent) {
-        System.out.println("Inside getElements()");
         List<RemoteResource> resourceList = Activator.getDefault()
                 .getResourceManager().getResourceList();
         return resourceList.toArray();
@@ -731,7 +723,6 @@ class FavTreeContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getElements(Object parent) {
-        System.out.println("Inside getElements()");
         List<RemoteResource> resourceList = Activator.getDefault()
                 .getResourceManager().getFavResourceList();
         return resourceList.toArray();
@@ -753,14 +744,11 @@ class TreeLabelProvider extends LabelProvider {
     @Override
     public String getText(Object element) {
         RemoteResource resource = (RemoteResource) element;
-        return resource.getResourceURI();
+        return resource.getRemoteResourceRef().getURI();
     }
 
     @Override
     public Image getImage(Object element) {
-        RemoteResource resource = (RemoteResource) element;
-        ResourceManager resourceManager = Activator.getDefault()
-                .getResourceManager();
-        return resourceManager.getImage(resource.getResourceURI());
+        return null;
     }
 }

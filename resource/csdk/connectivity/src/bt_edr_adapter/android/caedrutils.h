@@ -27,7 +27,6 @@
 
 #include "cacommon.h"
 #include "cathreadpool.h"
-#include "uarraylist.h"
 #include "caedrinterface.h"
 #include "jni.h"
 
@@ -35,6 +34,15 @@
 extern "C"
 {
 #endif
+
+/**
+ * EDR Socket Information for EDR transport
+ */
+typedef struct
+{
+    jobject deviceSocket;   /**< Bluetooth device socket info */
+    jobject inputStream;    /**< InputStream for read data */
+} CAEDRSocketInfo_t;
 
 /**
  * Get address from device socket.
@@ -96,7 +104,7 @@ void CAEDRUpdateDeviceState(CAConnectedState_t state, const char *address);
  * Add device object to the list.
  * @param[in]  state            connection state object.
  */
-void CAEDRNativeAddDeviceStateToList(state_t *state);
+void CAEDRNativeAddDeviceStateToList(CAConnectedDeviceInfo_t *state);
 
 /**
  * Check whether the device exist in the list or not.
@@ -171,10 +179,10 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address);
 
 /**
  * Get device socket object from the list.
- * @param[in]  idx              index of device list.
+ * @param[in]  index            index of device list.
  * @return Device socket object or NULL.
  */
-jobject CAEDRNativeGetDeviceSocket(uint32_t idx);
+jobject CAEDRNativeGetDeviceSocket(uint32_t index);
 
 /**
  * Get device socket address.
@@ -185,10 +193,24 @@ jobject CAEDRNativeGetDeviceSocket(uint32_t idx);
 jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddress);
 
 /**
+ * Get input stream object from the list.
+ * @param[in]   index           index of device list.
+ * @return Input stream object or NULL.
+ */
+jobject CAEDRNativeGetInputStream(uint32_t index);
+
+/**
  * Get length of device socket list.
  * @return length of list.
  */
 uint32_t CAEDRGetSocketListLength();
+
+/**
+ * Get device information from list.
+ * @param[in]   remoteAddress   remote address.
+ * @return  Device information object or NULL.
+ */
+CAConnectedDeviceInfo_t *CAEDRGetDeviceInfoFromAddress(const char *remoteAddress);
 
 #ifdef __cplusplus
 } /* extern "C" */

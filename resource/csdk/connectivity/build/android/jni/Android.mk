@@ -32,11 +32,12 @@ OIC_C_COMMON_PATH           = $(ROOT_DIR_PATH)/resource/c_common
 EDR             = EDR_ADAPTER
 IP              = IP_ADAPTER
 LE              = LE_ADAPTER
+NFC             = NFC_ADAPTER
 
 #Add Pre processor definitions
 DEFINE_FLAG =  -DWITH_POSIX -D__ANDROID__
 DEFINE_FLAG +=  -D__WITH_DTLS__
-DEFINE_FLAG += -D$(EDR) -D$(LE) -D$(IP)
+DEFINE_FLAG += -D$(EDR) -D$(LE) -D$(IP) -D$(NFC)
 
 #Add Debug flags here
 DEBUG_FLAG      = -DTB_LOG
@@ -44,30 +45,6 @@ DEBUG_FLAG      = -DTB_LOG
 BUILD_FLAG.debug        = $(DEFINE_FLAG) $(DEBUG_FLAG)
 BUILD_FLAG.release      =       $(DEFINE_FLAG)
 BUILD_FLAG = $(BUILD_FLAG.$(BUILD))
-
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include glib
-
-#include $(CLEAR_VARS)
-#LOCAL_PATH = $(PROJECT_LIB_PATH)/android
-#LOCAL_MODULE = Glib
-#LOCAL_SRC_FILES := libglib-2.40.2.so
-#LOCAL_EXPORT_C_INCLUDES = $(GLIB_PATH) \
-#                          $(GLIB_PATH)/glib
-#
-#include $(PREBUILT_SHARED_LIBRARY)
-
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include glibthread
-
-#include $(CLEAR_VARS)
-#LOCAL_PATH = $(PROJECT_LIB_PATH)/android
-#LOCAL_MODULE = GLibThread
-#LOCAL_SRC_FILES := libgthread-2.40.2.so
-#LOCAL_EXPORT_C_INCLUDES = $(GLIB_PATH) \
-#                          $(GLIB_PATH)/glib
-#
-#include $(PREBUILT_SHARED_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #Build TinyDtls
@@ -174,7 +151,6 @@ LOCAL_SRC_FILES = \
                 camessagehandler.c canetworkconfigurator.c caprotocolmessage.c \
                 caretransmission.c caqueueingthread.c cablockwisetransfer.c \
                 $(ADAPTER_UTILS)/caadapternetdtls.c $(ADAPTER_UTILS)/caadapterutils.c \
-                $(ADAPTER_UTILS)/cafragmentation.c \
                 bt_le_adapter/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c \
                 $(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c \
                 $(LE_ADAPTER_PATH)/calenwmonitor.c \
@@ -183,5 +159,6 @@ LOCAL_SRC_FILES = \
                 $(EDR_ADAPTER_PATH)/caedrnwmonitor.c \
                 $(IP_ADAPTER_PATH)/caipadapter.c $(IP_ADAPTER_PATH)/caipserver.c \
                 $(IP_ADAPTER_PATH)/android/caipnwmonitor.c \
+                nfc_adapter/canfcadapter.c nfc_adapter/android/canfcserver.c
 
 include $(BUILD_STATIC_LIBRARY)

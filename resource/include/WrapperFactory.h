@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _WRAPPER_FACTORY_H_
-#define _WRAPPER_FACTORY_H_
+#ifndef OC_WRAPPER_FACTORY_H_
+#define OC_WRAPPER_FACTORY_H_
 
 #include <memory>
 #include <OCApi.h>

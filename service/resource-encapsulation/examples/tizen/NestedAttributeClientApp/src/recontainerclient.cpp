@@ -102,7 +102,7 @@ void *showContainerAPIs(void *data)
         elm_list_item_append(listnew, "1. Find Light resource", NULL, NULL,
                              findLight, NULL);
 
-        elm_list_item_append(listnew, "1. Find Softsensor resource", NULL, NULL,
+        elm_list_item_append(listnew, "2. Find Softsensor resource", NULL, NULL,
                              findSoftsensor, NULL);
 
         elm_list_go(listnew);

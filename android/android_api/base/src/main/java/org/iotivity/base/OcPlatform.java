@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
 package org.iotivity.base;
@@ -70,6 +70,7 @@ public final class OcPlatform {
     public static final String PRESENCE_URI = "/oic/ad";
 
     private static volatile boolean sIsPlatformInitialized = false;
+    private static QualityOfService sPlatformQualityOfService = QualityOfService.NA;
 
     private OcPlatform() {
     }
@@ -84,7 +85,9 @@ public final class OcPlatform {
      */
     public synchronized static void Configure(PlatformConfig platformConfig) {
         if (!sIsPlatformInitialized) {
-            CaInterface.initialize(platformConfig.getContext());
+            CaInterface.initialize(platformConfig.getActivity(), platformConfig.getContext());
+
+            sPlatformQualityOfService = platformConfig.getQualityOfService();
 
             OcPlatform.configure(
                     platformConfig.getServiceType().getValue(),
@@ -463,7 +466,7 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server
-     * <P>
+     * <p/>
      * Note: This API applies to server & client side.
      * </P>
      *
@@ -482,9 +485,10 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server NOTE: This API applies to server side only.
-     * <P>
+     * <p/>
      * Note: This API applies to server side only.
      * </P>
+     *
      * @param resourceUri         The URI of the resource. Example: "a/light"
      * @param resourceTypeName    The resource type. Example: "light"
      * @param resourceInterface   The resource interface (whether it is collection etc).
@@ -932,5 +936,15 @@ public final class OcPlatform {
             throw new IllegalStateException("OcPlatform must be configured by making a call to " +
                     "OcPlatform.Configure before any other API calls are permitted");
         }
+    }
+
+    /**
+     * Gets platform quality of service
+     *
+     * @return quality of service
+     */
+    public static QualityOfService getPlatformQualityOfService() {
+        OcPlatform.initCheck();
+        return sPlatformQualityOfService;
     }
 }

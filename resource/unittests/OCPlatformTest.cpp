@@ -20,6 +20,7 @@
 
 #include <OCPlatform.h>
 #include <OCApi.h>
+#include <oic_malloc.h>
 #include <gtest/gtest.h>
 
 namespace OCPlatformTest
@@ -61,9 +62,22 @@ namespace OCPlatformTest
     }
 
     //Helper methods
+    void DeleteStringLL(OCStringLL* ll)
+    {
+        if (!ll)
+        {
+            return;
+        }
+
+        DeleteStringLL(ll->next);
+        delete[] ll->value;
+        OICFree(ll);
+    }
+
     void DeleteDeviceInfo(OCDeviceInfo deviceInfo)
     {
         delete[] deviceInfo.deviceName;
+        DeleteStringLL(deviceInfo.types);
 
     }
 
@@ -71,6 +85,30 @@ namespace OCPlatformTest
     {
         *targetString = new char[sourceString.length() + 1];
         strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+    }
+
+    bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, std::string value)
+    {
+        char *dup = NULL;
+        DuplicateString(&dup, value);
+        if (!*stringLL)
+        {
+            *stringLL = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+            (*stringLL)->value = dup;
+            return true;
+        }
+        else
+        {
+            OCStringLL *temp = *stringLL;
+            while(temp->next)
+            {
+                temp = temp->next;
+            }
+            temp->next = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+            temp->next->value = dup;
+            return true;
+        }
+        return false;
     }
 
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
@@ -697,15 +735,16 @@ namespace OCPlatformTest
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithValidParameters)
     {
         OCDeviceInfo deviceInfo;
-
         DuplicateString(&deviceInfo.deviceName, "myDeviceName");
+        deviceInfo.types = NULL;
+        OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
         EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
     }
 
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithEmptyObject)
     {
-        OCDeviceInfo di = {0};
+        OCDeviceInfo di = {0, 0};
         EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 

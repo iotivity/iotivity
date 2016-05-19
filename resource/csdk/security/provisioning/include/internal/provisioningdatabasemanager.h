@@ -120,6 +120,15 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t* uuidOfDevice, OCUuidList_t** 
 OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2);
 
 /**
+ * This method is used by provisioning manager to update device status as stale.
+ *
+ * @param[in] uuidOfDevice id of stale device.
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PDMSetDeviceStale(const OicUuid_t* uuidOfDevice);
+
+/**
  * This method is used by provisioning manager to get stale devices.
  *
  * @note in case of sqllite, the caller should set NULL for parameters.
@@ -164,7 +173,8 @@ void PDMDestoryStaleLinkList(OCPairList_t* ptr);
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2,
-                                bool *result );
+                                bool *result);
+
 
 #ifdef __cplusplus
 }

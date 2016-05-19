@@ -87,30 +87,6 @@ TEST(MutexTests, TC_01_CREATE)
     }
 }
 
-TEST(MutexTests, TC_02_TRY_LOCK)
-{
-    ca_mutex mymutex = ca_mutex_new();
-
-    EXPECT_TRUE(mymutex != NULL);
-    if (mymutex != NULL)
-    {
-        EXPECT_TRUE(ca_mutex_trylock(mymutex)); // acquire it
-
-        ca_mutex_unlock(mymutex); // release it
-
-        ca_mutex_lock(mymutex); // acquire it
-
-        EXPECT_FALSE(ca_mutex_trylock(mymutex)); // he should be lock
-
-        EXPECT_FALSE(ca_mutex_trylock(NULL));
-
-        ca_mutex_unlock(mymutex); // release it
-        ca_mutex_free(mymutex);
-
-        EXPECT_FALSE(ca_mutex_trylock(NULL));
-    }
-}
-
 typedef struct _tagFunc1
 {
     ca_mutex mutex;

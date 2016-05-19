@@ -38,13 +38,6 @@
             restorable="true">
         </view>
         <view category="oic.simulator.clientcontroller.category"
-            class="oic.simulator.clientcontroller.view.MultiResourceOrchestrationView"
-            icon="icons/oic_logo_16x16.png"
-            id="oic.simulator.clientcontroller.view.orchestration"
-            name="Multi-Resource Automation"
-            restorable="true">
-        </view>
-        <view category="oic.simulator.clientcontroller.category"
             class="oic.simulator.clientcontroller.view.LogView"
             icon="icons/oic_logo_16x16.png"
             id="oic.simulator.clientcontroller.view.log"
@@ -68,9 +61,6 @@
             </viewShortcut>
             <viewShortcut
                 id="oic.simulator.clientcontroller.view.attribute">
-            </viewShortcut>
-            <viewShortcut
-                id="oic.simulator.clientcontroller.view.orchestration">
             </viewShortcut>
             <viewShortcut
                 id="oic.simulator.clientcontroller.view.log">

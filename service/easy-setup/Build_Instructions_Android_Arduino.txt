@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2015 Samsung Electronics All Rights Reserved.
+# Copyright 2016 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -43,19 +43,26 @@ Steps to build and deploy Easysetup Mediator in Android platform
         export ANDROID_NDK=<ANDROID_NDK>
 
     a) In the IoTivity root source folder execute
-         scons TARGET_OS=android TARGET_ARCH=armeabi TARGET_TRANSPORT=IP RELEASE=0
+         scons TARGET_OS=android TARGET_ARCH=armeabi TARGET_TRANSPORT=IP ES_ROLE=mediator ES_TARGET_ENROLLEE={Platform} RELEASE=0
+		 Note : {Platform} can be -> arduino , linux, tizen
 
     b) If the project is setup correctly, you should see a BUILD SUCCESSFUL message on the terminal
         You should see the .aar files generated inside of '<iotivity>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
 
     c) Now navigate to the Easysetup NDK folder
-        <iotivity-root>/service/easy-setup/sdk/mediator/android
+        <iotivity-root>/service/easy-setup/mediator/richsdk/android
 
     d) Execute NDK-Build with the following command to cross compiled Easysetup JNI .so files
 	<iotivity>/extlibs/android/ndk/android-ndk-r10d/ndk-build
 
     e) Step (d) will generate cross compiled Easysetup JNI .so files in the following folder
-	<iotivity>/service/easy-setup/sdk/mediator/android/libs/armeabi
+	<iotivity>/service/easy-setup/mediator/richsdk/android/libs/armeabi
+
+NOTE: If you are going to use the SECURITY feature :
+
+      (a) please remove the "oic_svr_db_client.dat" file from the application (EasySetup/app/src/main/assets/)
+
+      (b) Copy the same file in the same folder from : <iotivity>/resource/csdk/security/provisioning/sample/oic_svr_db_client.dat
 
 2) Compilation using Android Studio
 
@@ -63,8 +70,8 @@ Steps to build and deploy Easysetup Mediator in Android platform
         Install Android Studio and use the Android SDK manager to update the Android API to 21
 
     a) Import following projects to the Studio using the "File->New->Import Project"
-        - service\easy-setup\sdk\android\EasySetupCore
-        - service\easy-setup\sampleapp\android\EasySetup
+        - service/easy-setup/mediator/richsdk/android/EasySetupCore
+        - service/easy-setup/sampleapp/android/EasySetup
 
     b) EasySetupCore is dependent on the .aar files generated in 1.b
         1) To add an .aar file to the 'EasySetupCore' project,
@@ -76,11 +83,12 @@ Steps to build and deploy Easysetup Mediator in Android platform
     c)    Build EasySetupCore project using "Android Studio->Build->Make Module "easySetupCore"
         If the project is setup correctly, you should see a BUILD SUCCESSFUL in the Android Studio Gradle Build terminal
             You should see the .aar file generated inside of
-            'iotivity\service\easy-setup\sdk\mediator\android\easySetupCore\build\outputs\aar'
+            'iotivity/service/easy-setup/mediator/richsdk/android/easySetupCore/build/outputs/aar'
 
     d) EasySetup application is also dependent on the .so files generated in 1.d step
-        1) Drag and drop the following .so files in to the EasySetup\app\src\main\jniLibs\armeabi folder
-            - libeasysetup-jni.so [Easy Setup file]
+        1) Drag and drop the following .so files in to the EasySetup/app/src/main/jniLibs/armeabi folder
+            - libeasysetup-jni.so [Easy Setup JNI library]
+			- libESMediatorRich.so [Easy Setup Mediator library]
 
     e) EasySetup is also dependent on the .aar files generated in 1.b and 2.c steps
         1) To add an .aar file to the 'EasySetup' project,
@@ -111,11 +119,11 @@ Steps to build and deploy Easysetup Mediator in Arduino platform
         NOTE: 1) BOARD=arduino_due_x_dbg|arduino_due_x. Default is arduino_due_x_dbg.
               2) For Mega board, please use the following options. BOARD=mega & TARGET_ARCH=avr
 
-       Possible values for <transport> are:
+       Possible values for <transport> are: [Only ip is currently supported]
         -> IP :
-        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
+        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI ES_ROLE=enrollee RELEASE=0
         -> BLE :
-        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=BLE RELEASE=0
+        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=BLE RELEASE=0 [Currently not supporting]
 
         Note :- Only single transport can be built at a time for Arduino
     f) The above command will build sample. The "enrollee.hex" can be found at "out/arduino/arm/release/service/easy-setup/sampleapp/enrollee/arduino"
@@ -132,22 +140,38 @@ Steps to build and deploy Easysetup Mediator in Arduino platform
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Folder structure:
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 iotivity/
 └── service
     └── easy-setup/
         │── SConscript
-        │── sdk
+        │── enrollee
         │    └── inc
         │    └── src
-        │    └── android
-        │    └── arduino
-        │        └──wifi
-        │            └──inc
-        │            └──src
+        │    └── arduino/wifi
+        │    └── linux/wifi
+        │    └── tizen/wifi
+        │    └── SConscript
+        │
+        │── mediator
+        │    └── csdk
+        │        └──inc
+        │        └──src
+        │        └──SConscript
+        │    └── richsdk
+        │        └──android
+        │        └──inc
+        │        └──src
+        │        └──SConscript
+        │    └── SConscript
+        │
         │── sampleapp
         │    └──mediator/android
         │    └──mediator/linux
         │    └──enrollee/arduino
+        │    └──enrollee/linux
+        │    └──enrollee/tizen
+        │    └──enrollee/tizen-sdb
+        │
         └── Build_Instructions_Android_Arduino.txt - You are reading this.

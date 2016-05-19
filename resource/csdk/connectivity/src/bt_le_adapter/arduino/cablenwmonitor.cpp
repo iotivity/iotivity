@@ -63,7 +63,7 @@ void CATerminateLENetworkMonitor()
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAInitializeLEAdapter()
+CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -71,6 +71,13 @@ CAResult_t CAInitializeLEAdapter()
 }
 
 CAResult_t CAStartLEAdapter()
+{
+    // Nothing to do.
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopLEAdapter()
 {
     // Nothing to do.
 
@@ -125,3 +132,8 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 }
 
 
+CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
+{
+    //TODO
+    return CA_STATUS_OK;
+}

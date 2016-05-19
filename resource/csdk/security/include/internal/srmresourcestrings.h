@@ -62,6 +62,16 @@ extern const char * OIC_RSRC_TYPE_SEC_SVC;
 extern const char * OIC_RSRC_SVC_URI;
 extern const char * OIC_JSON_SVC_NAME;
 
+//PCONF
+extern const char * OIC_RSRC_TYPE_SEC_PCONF;
+extern const char * OIC_RSRC_PCONF_URI;
+extern const char * OIC_JSON_PCONF_NAME;
+
+//DPAIRING
+extern const char * OIC_RSRC_TYPE_SEC_DPAIRING;
+extern const char * OIC_RSRC_DPAIRING_URI;
+extern const char * OIC_JSON_DPAIRING_NAME;
+
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
 extern const char * OIC_JSON_AMSS_NAME;
@@ -91,6 +101,15 @@ extern const char * OIC_JSON_SM_NAME;
 extern const char * OIC_JSON_SERVICE_DEVICE_ID;
 extern const char * OIC_JSON_SERVICE_TYPE;
 extern const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME;
+extern const char * OIC_JSON_DPC_NAME;
+extern const char * OIC_JSON_EDP_NAME;
+extern const char * OIC_JSON_PIN_NAME;
+extern const char * OIC_JSON_PDACL_NAME;
+extern const char * OIC_JSON_PDDEV_LIST_NAME;
+extern const char * OIC_JSON_ROWNER_NAME;
+extern const char * OIC_JSON_PRM_NAME;
+extern const char * OIC_JSON_SPM_NAME;
+extern const char * OIC_JSON_PDEVICE_ID_NAME;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;

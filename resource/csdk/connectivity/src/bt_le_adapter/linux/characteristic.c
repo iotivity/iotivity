@@ -23,14 +23,10 @@
 #include "bluez.h"
 #include "server.h"
 
-#include "oic_malloc.h"
-#include "oic_string.h"
 #include "logger.h"
 #include "cagattservice.h"
 #include "caremotehandler.h"
 
-#include <inttypes.h>
-#include <string.h>
 #include <assert.h>
 
 
@@ -102,58 +98,6 @@ static gboolean CAGattCharacteristicHandleWriteValue(
 //                      GATT Response Handling
 // ---------------------------------------------------------------------
 /**
- * Make the peer address corresponding to the given GATT
- * characteristic.
- *
- * @param[in] c Information about GATT characteristic for which the
- *              peer (client) @c CAEndpoint_t object is being
- *              created.
- *
- * @return @c String containing an encoded address associated with the
- *         peer connected to the peripheral on which the characteristic
- *         implementation resides, or @c NULL on error.
- */
-static char * CAGattCharacteristicMakePeerAddress(
-    CAGattCharacteristic * c)
-{
-    assert(c != NULL);
-
-    /*
-      Length of stringified pointer in hexadecimal format, plus one
-      for null terminator.
-    */
-    static size_t const PSEUDO_ADDR_LEN = sizeof(intptr_t) / 4 + 1;
-
-    assert(MAX_ADDR_STR_SIZE_CA > PSEUDO_ADDR_LEN);
-
-    /*
-      Since there is no direct way to obtain the client endpoint
-      associated with the GATT characterstics on the server side,
-      embed a stringified pointer to the response charactertistic of
-      the form "&ABCDEF01" is the CAEndpoint_t instead.  This works
-      since:
-          1) only one LE central is ever connected to an LE peripheral
-          2) the CA layer doesn't directly interpret the address
-     */
-    char * const addr = OICMalloc(PSEUDO_ADDR_LEN);
-    int const count = snprintf(addr,
-                               PSEUDO_ADDR_LEN,
-                               "&%" PRIxPTR,
-                               (uintptr_t) c);
-
-    if (count >= (int) PSEUDO_ADDR_LEN)
-    {
-        OIC_LOG(ERROR,
-                TAG,
-                "Error creating peer address on server side.");
-
-        return NULL;
-    }
-
-    return addr;
-}
-
-/**
  * Handle @c org.bluez.GattCharacterstic1.StartNotify() method call.
  *
  * This handler is triggered when the
@@ -181,6 +125,8 @@ static gboolean CAGattCharacteristicHandleStartNotify(
     GDBusMethodInvocation * invocation,
     gpointer user_data)
 {
+    (void) user_data;
+
     /**
      * Only allow the client to start notifications once.
      *
@@ -197,82 +143,12 @@ static gboolean CAGattCharacteristicHandleStartNotify(
         return TRUE;
     }
 
-    // Retrieve the response characteristic information.
-    CAGattCharacteristic * const characteristic = user_data;
-
-    char * const peer =
-        CAGattCharacteristicMakePeerAddress(characteristic);
-
-    if (peer == NULL)
-    {
-        g_dbus_method_invocation_return_dbus_error(
-            invocation,
-            "org.bluez.Error.Failed",
-            "Error creating peer endpoint information");
-
-        return TRUE;
-    }
-
-    /*
-      Create an entry in the endpoint-to-characteristic map so that
-      responses may be sent to the GATT client through the OIC GATT
-      response characteristic through this BLE adapter's
-      CAAdapterSendUnicastData() implementation.
-     */
-    CALEContext * const context = characteristic->context;
-
-    ca_mutex_lock(context->lock);
-
-#if GLIB_CHECK_VERSION(2,40,0)
-    /*
-      GLib hash table functions started returning a boolean result in
-       version 2.40.x.
-    */
-    bool const inserted =
-#endif
-        g_hash_table_insert(context->characteristic_map,
-                            peer,
-                            characteristic);
-
-    ca_mutex_unlock(context->lock);
-
-#if GLIB_CHECK_VERSION(2,40,0)
-    if (!inserted)
-    {
-        g_dbus_method_invocation_return_dbus_error(
-            invocation,
-            "org.bluez.Error.Failed",
-            "Unable to set response endpoint.");
-
-        OICFree(peer);
-
-        return TRUE;
-    }
-#endif
-
     /**
      * @todo Do we need to explicitly emit the @c GObject @c notify or
      *       @c org.freedesktop.Dbus.Properties.PropertiesChanged
      *       signal here?
      */
     gatt_characteristic1_set_notifying(object, TRUE);
-
-    /*
-      Set the client endpoint field in the request characteristic so
-      that it may pass the appropriate endpoint object up the stack
-      through the CA request/response callback once a request has been
-      completely received and reassembled.
-    */
-    CAGattRecvInfo * const recv_info =
-        &characteristic->service->request_characteristic.recv_info;
-
-    recv_info->peer = peer;
-
-    ca_mutex_lock(context->lock);
-    recv_info->on_packet_received = context->on_server_received_data;
-    recv_info->context            = context;
-    ca_mutex_unlock(context->lock);
-
     gatt_characteristic1_complete_start_notify(object, invocation);
 
     return TRUE;
@@ -303,7 +179,7 @@ static gboolean CAGattCharacteristicHandleStopNotify(
     GDBusMethodInvocation * invocation,
     gpointer user_data)
 {
-    assert(user_data != NULL);
+    (void) user_data;
 
     /**
      * @todo Does BlueZ already prevent redundant calls to
@@ -319,44 +195,13 @@ static gboolean CAGattCharacteristicHandleStopNotify(
         return TRUE;
     }
 
-    CAGattCharacteristic * const characteristic = user_data;
-
-    // Clear the client endpoint from the request characteristic.
-    CAGattRecvInfo * const recv_info =
-        &characteristic->service->request_characteristic.recv_info;
-
-    /*
-      Remove the appropriate entry from the endpoint-to-characteristic
-      map so that attempts to send a response through it will fail.
-    */
-    CALEContext * const context = characteristic->context;
-    ca_mutex_lock(context->lock);
-
-    bool const removed =
-        g_hash_table_remove(context->characteristic_map, recv_info->peer);
-
-    ca_mutex_unlock(context->lock);
-
-    CAGattRecvInfoDestroy(recv_info);
-
     /**
      * @todo Do we need to explicitly emit the @c GObject @c notify or
      *       @c org.freedesktop.Dbus.Properties.PropertiesChanged
      *       signal here?
      */
     gatt_characteristic1_set_notifying(object, FALSE);
-
-    if (removed)
-    {
-        gatt_characteristic1_complete_stop_notify(object, invocation);
-    }
-    else
-    {
-        g_dbus_method_invocation_return_dbus_error(
-            invocation,
-            "org.bluez.Error.Failed",
-            "Error removing peer address information");
-    }
+    gatt_characteristic1_complete_stop_notify(object, invocation);
 
     return TRUE;
 }
@@ -419,7 +264,7 @@ static bool CAGattCharacteristicInitialize(
     gatt_characteristic1_set_service(c->characteristic, s->object_path);
     gatt_characteristic1_set_notifying(c->characteristic, FALSE);
 
-    char const * flags[] = { flag, NULL };
+    char const * const flags[] = { flag, NULL };
     gatt_characteristic1_set_flags(c->characteristic, flags);
 
     CAGattRecvInfoInitialize(&c->recv_info);
@@ -475,13 +320,28 @@ bool CAGattRequestCharacteristicInitialize(struct CAGattService * s,
       The descriptor object path is not fixed at compile-time.
       Retrieve the object path that was set at run-time.
     */
-    char const * descriptor_paths[] = {
+    char const * const descriptor_paths[] = {
         c->descriptor.object_path,
         NULL
     };
 
     gatt_characteristic1_set_descriptors(c->characteristic,
                                          descriptor_paths);
+
+    char * const peer = CAGattServiceMakePeerAddress(s);
+
+    if (peer == NULL)
+    {
+        CAGattCharacteristicDestroy(c);
+        return false;
+    }
+
+    ca_mutex_lock(context->lock);
+    c->recv_info.on_packet_received = context->on_server_received_data;
+    ca_mutex_unlock(context->lock);
+
+    c->recv_info.peer    = peer;
+    c->recv_info.context = context;
 
     // The request characteristic only handles writes.
     g_signal_connect(c->characteristic,
@@ -530,7 +390,7 @@ bool CAGattResponseCharacteristicInitialize(struct CAGattService * s,
       enable notifications by writing to the client characteristic
       configuration descriptor.
     */
-    char const * descriptor_paths[] = {
+    char const * const descriptor_paths[] = {
         c->descriptor.object_path,
         NULL
     };

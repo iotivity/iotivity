@@ -36,7 +36,9 @@
 #include "oic_string.h"
 #include "org_iotivity_ca_CaIpInterface.h"
 
-#define TAG "IP_MONITOR"
+#define TAG "OIC_CA_IP_MONITOR"
+
+static CAIPConnectionStateChangeCallback g_networkChangeCallback;
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          uint32_t addr, int flags);
@@ -67,6 +69,11 @@ CAResult_t CAIPStopNetworkMonitor()
 int CAGetPollingInterval(int interval)
 {
     return interval;
+}
+
+void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+{
+    g_networkChangeCallback = callback;
 }
 
 CAInterface_t *CAFindInterfaceChange()
@@ -321,16 +328,10 @@ CAResult_t CAIPJniInit()
         return CA_STATUS_FAILED;
     }
 
-    jclass cls_Context = (*env)->FindClass(env, "android/content/Context");
-    if (!cls_Context)
-    {
-        OIC_LOG(ERROR, TAG, "Could not get context object class");
-        return CA_STATUS_FAILED;
-    }
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, "android/content/Context",
+                                                           "getApplicationContext",
+                                                           "()Landroid/content/Context;");
 
-    jmethodID mid_getApplicationContext = (*env)->GetMethodID(env, cls_Context,
-                                                                "getApplicationContext",
-                                                                "()Landroid/content/Context;");
     if (!mid_getApplicationContext)
     {
         OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
@@ -444,9 +445,9 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *env, jclass class)
 {
     (void)env;
     (void)class;
-    OIC_LOG(DEBUG, TAG, "caIpStateEnabled");
 
-    CAWakeUpForChange();
+    OIC_LOG(DEBUG, TAG, "Wifi is in Activated State");
+    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_UP);
 }
 
 JNIEXPORT void JNICALL
@@ -454,13 +455,7 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateDisabled(JNIEnv *env, jclass class)
 {
     (void)env;
     (void)class;
-    OIC_LOG(DEBUG, TAG, "caIpStateDisabled");
 
-    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
-    if (!iflist)
-    {
-        OIC_LOG_V(ERROR, TAG, "get interface info failed");
-        return;
-    }
-    u_arraylist_destroy(iflist);
+    OIC_LOG(DEBUG, TAG, "Wifi is in Deactivated State");
+    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_DOWN);
 }

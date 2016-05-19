@@ -28,17 +28,18 @@
 #ifndef SIMULATOR_MANAGER_H_
 #define SIMULATOR_MANAGER_H_
 
-#include "simulator_server_types.h"
 #include "simulator_client_types.h"
 #include "simulator_device_info.h"
 #include "simulator_platform_info.h"
-#include "simulator_resource_server.h"
+#include "simulator_single_resource.h"
+#include "simulator_collection_resource.h"
 #include "simulator_remote_resource.h"
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
 
-typedef std::function<void(DeviceInfo &deviceInfo)> DeviceInfoCallback;
-typedef std::function<void(PlatformInfo &platformInfo)> PlatformInfoCallback;
+typedef std::function<void(const std::string &hostUri, DeviceInfo &deviceInfo)> DeviceInfoCallback;
+typedef std::function<void(const std::string &hostUri, PlatformInfo &platformInfo)>
+PlatformInfoCallback;
 
 /**
  * @class   SimulatorManager
@@ -57,15 +58,13 @@ class SimulatorManager
          * RAML file.
          *
          * @param configPath - RAML configuration file path.
-         * @param callback - Callback method for receiving notifications when resource model changes.
          *
-         * @return SimulatorResourceServer shared object representing simulated/created resource.
+         * @return SimulatorResource shared object representing simulated/created resource.
          *
          *  NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
           * @SimulatorException if any other error occured.
          */
-        std::shared_ptr<SimulatorResourceServer> createResource(const std::string &configPath,
-                SimulatorResourceServer::ResourceModelChangedCB callback);
+        std::shared_ptr<SimulatorResource> createResource(const std::string &configPath);
 
         /**
          * This method is for creating multiple resources of same type based on the input data
@@ -75,45 +74,46 @@ class SimulatorManager
          * @param count - Number of resource to be created.
          * @param callback - Callback method for receiving notifications when resource model changes.
          *
-         * @return vector of SimulatorResourceServer shared objects representing simulated/created
+         * @return vector of SimulatorResource shared objects representing simulated/created
          * resources.
          *
          * NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
          * @SimulatorException if any other error occured.
          */
-        std::vector<std::shared_ptr<SimulatorResourceServer>> createResource(
-                    const std::string &configPath, unsigned short count,
-                    SimulatorResourceServer::ResourceModelChangedCB callback);
+        std::vector<std::shared_ptr<SimulatorResource>> createResource(
+                    const std::string &configPath, unsigned int count);
 
         /**
-         * This method is for obtaining a list of created resources.
+         * This method is for creating single type resource.
          *
-         * @param resourceType - Resource type. Empty value will fetch all resources.
-         *                                          Default value is empty string.
+         * @param name - Name of resource to be set if resource created successfully.
+         * @param uri - URI on which resource to be created.
+         * @param resourceType - Resource type of resource to be set if resource
+         * created successfully.
          *
-         * @return vector of SimulatorResourceServer shared objects representing simulated/created
+         * @return shared object of @SimulatorSingleResource.
+         *
+         * NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
+         * @SimulatorException if any other error occured.
          */
-        std::vector<std::shared_ptr<SimulatorResourceServer>> getResources(
-                    const std::string &resourceType = "");
+        std::shared_ptr<SimulatorSingleResource> createSingleResource(
+            const std::string &name, const std::string &uri, const std::string &resourceType);
 
         /**
-          * This method is for deleting/unregistering resource.
-          *
-          * @param resource - SimulatorResourceServer shared object.
-          *
-          * NOTE: API would throw @InvalidArgsException when invalid arguments passed
-          */
-        void deleteResource(const std::shared_ptr<SimulatorResourceServer> &resource);
-
-        /**
-          * This method is for deleting multiple resources based on resource type.
-          *
-          * @param resourceType - Resource type. Empty value will delete all the resources.
-          *                                          Default value is empty string.
-          *
-          * NOTE: API would throw @InvalidArgsException when invalid arguments passed
-          */
-        void deleteResource(const std::string &resourceType = "");
+         * This method is for creating collection type resource.
+         *
+         * @param name - Name of resource to be set if resource created successfully.
+         * @param uri - URI on which resource to be created.
+         * @param resourceType - Resource type of resource to be set if resource
+         * created successfully.
+         *
+         * @return shared object of @SimulatorCollectionResource.
+         *
+         * NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
+         * @SimulatorException if any other error occured.
+         */
+        std::shared_ptr<SimulatorCollectionResource> createCollectionResource(
+            const std::string &name, const std::string &uri, const std::string &resourceType);
 
         /**
          * API for discovering all type of resources.
@@ -150,7 +150,7 @@ class SimulatorManager
          *
          * NOTE: API throws @InvalidArgsException and @SimulatorException on error.
          */
-        void getDeviceInfo(DeviceInfoCallback callback);
+        void getDeviceInfo(const std::string &host, DeviceInfoCallback callback);
 
         /**
          * API for registering device information with stack.
@@ -171,7 +171,7 @@ class SimulatorManager
          *
          * NOTE: API throws @InvalidArgsException and @SimulatorException on error.
          */
-        void getPlatformInfo(PlatformInfoCallback callback);
+        void getPlatformInfo(const std::string &host, PlatformInfoCallback callback);
 
         /**
          * API for registering platform information with stack.

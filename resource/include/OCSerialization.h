@@ -21,6 +21,7 @@
 #include <StringConstants.h>
 #include "ocpayload.h"
 #include "ocrandom.h"
+#include "oic_string.h"
 
 namespace OC
 {
@@ -44,17 +45,10 @@ namespace OC
                     : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                 OCResourcePayload* res = payload->resources;
-                OCResourceCollectionPayload* colRes = payload->collectionResources;
                 if (res)
                 {
                     while(res)
                     {
-                        char uuidString[UUID_STRING_SIZE];
-                        if(OCConvertUuidToString(res->sid, uuidString) != RAND_UUID_OK)
-                        {
-                            uuidString[0]= '\0';
-                        }
-
                         if (res->secure)
                         {
                             m_devAddr.flags =
@@ -65,42 +59,49 @@ namespace OC
                         {
                              m_devAddr.port = res->port;
                         }
-
-                        m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                        if (payload->baseURI)
+                        {
+                            OCDevAddr rdPubAddr = m_devAddr;
+                            OICStrcpy(rdPubAddr.addr, sizeof(rdPubAddr.addr), payload->baseURI);
+                            rdPubAddr.port = res->port;
+                            m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                        new OC::OCResource(m_clientWrapper, rdPubAddr,
+                                            std::string(res->uri),
+                                            std::string(payload->sid),
+                                            (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                            StringLLToVector(res->types),
+                                            StringLLToVector(res->interfaces)
+                                            )));
+                        }
+                        else
+                        {
+                            m_resources.push_back(std::shared_ptr<OC::OCResource>(
                                     new OC::OCResource(m_clientWrapper, m_devAddr,
                                         std::string(res->uri),
-                                        std::string(uuidString),
+                                        std::string(payload->sid),
                                         (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
                                         StringLLToVector(res->types),
                                         StringLLToVector(res->interfaces)
                                         )));
+
+#ifdef TCP_ADAPTER
+                            if (res->tcpPort != 0)
+                            {
+                                OCDevAddr tcpDevAddr = m_devAddr;
+                                tcpDevAddr.port = res->tcpPort;
+                                tcpDevAddr.adapter = OC_ADAPTER_TCP;
+                                m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                            new OC::OCResource(m_clientWrapper, tcpDevAddr,
+                                                std::string(res->uri),
+                                                std::string(payload->sid),
+                                                (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                                StringLLToVector(res->types),
+                                                StringLLToVector(res->interfaces)
+                                                )));
+                            }
+#endif
+                        }
                         res = res->next;
-                    }
-                }
-                else if (colRes)
-                {
-                    while(colRes)
-                    {
-                        if (colRes->tags->bitmap & OC_SECURE)
-                        {
-                            m_devAddr.flags =
-                                  (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
-                        }
-
-                        if (colRes->tags->port != 0)
-                        {
-                             m_devAddr.port = colRes->tags->port;
-                        }
-
-                        m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                    new OC::OCResource(m_clientWrapper, m_devAddr,
-                                        std::string(colRes->setLinks->href),
-                                        std::string((char*)colRes->tags->di.id),
-                                        (colRes->tags->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
-                                        StringLLToVector(colRes->setLinks->rt),
-                                        StringLLToVector(colRes->setLinks->itf)
-                                        )));
-                        colRes = colRes->next;
                     }
                 }
             }

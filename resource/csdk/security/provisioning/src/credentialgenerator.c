@@ -43,7 +43,7 @@
  *       must define "OCStackResult res" for setting error code.
  * */
 #define PM_VERIFY_SUCCESS(tag, op, errCode, logLevel) { if (!(op)) \
-                       {OC_LOG((logLevel), tag, #op " failed!!"); res = errCode; goto bail;} }
+                       {OIC_LOG((logLevel), tag, #op " failed!!"); res = errCode; goto bail;} }
 /**
  * @def PM_VERIFY_NON_NULL
  * @brief Macro to verify argument is not equal to NULL.
@@ -51,7 +51,7 @@
  * @note Invoking function must define "bail:" label for goto functionality to work correctly.
  * */
 #define PM_VERIFY_NON_NULL(tag, arg, errCode, logLevel) { if (NULL == (arg)) \
-                   { OC_LOG((logLevel), tag, #arg " is NULL"); res = errCode; goto bail;} }
+                   { OIC_LOG((logLevel), tag, #arg " is NULL"); res = errCode; goto bail;} }
 
 OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
                                     const OicUuid_t *ptDeviceId,
@@ -62,12 +62,12 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     if (NULL == ptDeviceId || NULL == firstDeviceId || NULL != *firstCred || \
         NULL == secondDeviceId || NULL != *secondCred)
     {
-        OC_LOG(INFO, TAG, "Invalid params");
+        OIC_LOG(INFO, TAG, "Invalid params");
         return OC_STACK_INVALID_PARAM;
     }
     if(!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
     {
-        OC_LOG(INFO, TAG, "Invalid key size");
+        OIC_LOG(INFO, TAG, "Invalid key size");
         return OC_STACK_INVALID_PARAM;
     }
     OCStackResult res = OC_STACK_ERROR;
@@ -132,7 +132,7 @@ static char *CreateCertificatePublicJWK(const char *const *certificateChain,
 {
     if (NULL == certificateChain || chainLength == 0)
     {
-        OC_LOG(ERROR, TAG, "Error CreateCertificatePublicJWK: Invalid params");
+        OIC_LOG(ERROR, TAG, "Error CreateCertificatePublicJWK: Invalid params");
         return NULL;
     }
 
@@ -145,7 +145,7 @@ static char *CreateCertificatePublicJWK(const char *const *certificateChain,
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Error CreateCertificatePublicJWK: Invalid params");
+            OIC_LOG(ERROR, TAG, "Error CreateCertificatePublicJWK: Invalid params");
             return NULL;
         }
 
@@ -169,13 +169,13 @@ static char *CreateCertificatePublicJWK(const char *const *certificateChain,
         size_t offset = strlen(firstPart);
         for (size_t i = 0; i < chainLength; ++i)
         {
-            offset += sprintf(certPubJWK + offset, "\"%s\",", certificateChain[i]);
+            offset += snprintf(certPubJWK + offset, certPubJWKLen - offset, "\"%s\",", certificateChain[i]);
         }
-        sprintf(certPubJWK + offset - 1, secondPart);
+        snprintf(certPubJWK + offset - 1, certPubJWK - offset - 1, secondPart);
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
     }
     return certPubJWK;
 }
@@ -190,21 +190,21 @@ static char *CreateCertificatePrivateJWK(const char *privateKey)
 {
     if (NULL == privateKey)
     {
-        OC_LOG(ERROR, TAG, "Error privateKey is NULL");
+        OIC_LOG(ERROR, TAG, "Error privateKey is NULL");
         return NULL;
     }
     const char firstPart[] = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"d\":\"";
     const char secondPart[] = "\"}";
-    char *certPrivJWK = (char *)OICMalloc(strlen(firstPart) + strlen(secondPart) + strlen(
-            privateKey) + 1);
+    size_t len = strlen(firstPart) + strlen(secondPart) + strlen(privateKey) + 1;
+    char *certPrivJWK = (char *)OICMalloc(len);
 
     if (NULL != certPrivJWK)
     {
-        sprintf(certPrivJWK, "%s%s%s", firstPart, privateKey, secondPart);
+        snprintf(certPrivJWK, len, "%s%s%s", firstPart, privateKey, secondPart);
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
     }
     return certPrivJWK;
 }
@@ -253,12 +253,12 @@ static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, char 
 
     if (PKI_SUCCESS != GenerateKeyPair(&privKeyBA, &pubKeyBA))
     {
-        OC_LOG(ERROR, TAG, "Error generating keys.");
+        OIC_LOG(ERROR, TAG, "Error generating keys.");
         return OC_STACK_ERROR;
     }
     if (PKI_SUCCESS != CKMIssueDeviceCertificate(subjName, NULL, NULL, pubKeyBA.data, cert))
     {
-        OC_LOG(ERROR, TAG, "Error generating certificate.");
+        OIC_LOG(ERROR, TAG, "Error generating certificate.");
         return OC_STACK_ERROR;
     }
 
@@ -267,13 +267,13 @@ static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, char 
     if (B64_OK != b64Encode(privKeyBA.data,  privKeyBA.len, privB64buf,
                              B64ENCODE_OUT_SAFESIZE(PRIVATE_KEY_SIZE) + 1, &privB64len))
     {
-        OC_LOG(ERROR, TAG, "Error while encoding key");
+        OIC_LOG(ERROR, TAG, "Error while encoding key");
         return OC_STACK_ERROR;
     }
 
     if (PKI_SUCCESS != GetCAChain(chainLength , cert + 1))
     {
-        OC_LOG(ERROR, TAG, "Error getting CA certificate chain.");
+        OIC_LOG(ERROR, TAG, "Error getting CA certificate chain.");
         return OC_STACK_ERROR;
     }
 
@@ -296,7 +296,7 @@ static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, char 
         if (B64_OK != b64Encode(cert[i].data, cert[i].len, certB64buf,
                                 B64ENCODE_OUT_SAFESIZE(ISSUER_MAX_CERT_SIZE) + 1, &certB64len))
         {
-            OC_LOG(ERROR, TAG, "Error while encoding certificate");
+            OIC_LOG(ERROR, TAG, "Error while encoding certificate");
             ret = OC_STACK_ERROR;
             goto memclean;
         }
@@ -329,7 +329,7 @@ memclean:
         *chainLength = 0;
         if (OC_STACK_NO_MEMORY == ret)
         {
-            OC_LOG(ERROR, TAG, "Error while memory allocation");
+            OIC_LOG(ERROR, TAG, "Error while memory allocation");
         }
         return ret;
     }
@@ -353,7 +353,7 @@ OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
     if (OC_STACK_OK != GenerateCertificateAndKeys(deviceId, &certificateChain,
             &certChainLen, &privKey))
     {
-        OC_LOG(ERROR, TAG, "Error while generating credential data.");
+        OIC_LOG(ERROR, TAG, "Error while generating credential data.");
         return OC_STACK_ERROR;
     }
 
@@ -369,7 +369,7 @@ OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
     {
         OICFree(publicJWK);
         OICFree(privateJWK);
-        OC_LOG(ERROR, TAG, "Error while converting keys to JWK format.");
+        OIC_LOG(ERROR, TAG, "Error while converting keys to JWK format.");
         return OC_STACK_ERROR;
     }
 
@@ -379,7 +379,7 @@ OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
     OICFree(privateJWK);
     if (NULL == tempCred)
     {
-        OC_LOG(ERROR, TAG, "Error while generating credential.");
+        OIC_LOG(ERROR, TAG, "Error while generating credential.");
         return OC_STACK_ERROR;
     }
     *cred = tempCred;

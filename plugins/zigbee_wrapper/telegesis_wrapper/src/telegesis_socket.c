@@ -37,7 +37,7 @@
 /**
  * New thread's main() ftn.
  */
-void * readForever(/*PIPlugin */void * plugin);
+void * readForever(/*PIPlugin_Zigbee */void * plugin);
 /**
  * Just grabs the next char in the buffer. Called by readBufferLine() multiple times.
  */
@@ -53,7 +53,7 @@ TWEntry * readEntry(int fd);
 /**
  * Posts the TWEntry to the queue.
  */
-TWResultCode TWEnqueueEntry(PIPlugin * plugin, TWEntry * entry);
+TWResultCode TWEnqueueEntry(PIPlugin_Zigbee * plugin, TWEntry * entry);
 
 /**
  * Defines the mapping relationships between Telegesis AT response/prompt tags and
@@ -90,6 +90,7 @@ static TWEntryTypePair TWEntryTypePairArray[] =
     {"ENROLLED:",       1, TW_ENROLLED},
     {"ZONESTATUS:",     1, TW_ZONESTATUS},
     {"AddrResp:",       1, TW_ADDRESS_RESPONSE},
+    {"REPORTATTR:",     1, TW_NONE},
     {"Unknown:",        0, TW_NONE},
     {"Unknown:",        1, TW_MAX_ENTRY}
 };
@@ -98,17 +99,26 @@ TWEntry * TWEntryList = NULL;
 
 TWEntryTypePair getEntryTypePair(const char * bufferLine)
 {
-    size_t bufferLength = strlen(bufferLine);
-    for(uint8_t i = 0; i < TW_MAX_ENTRY; i++)
+    size_t count = sizeof(TWEntryTypePairArray)/sizeof(TWEntryTypePairArray[0]);
+    if (!bufferLine)
     {
+        return TWEntryTypePairArray[count-1];
+    }
+    size_t bufferLength = strlen(bufferLine);
+    for (size_t i = 0; i < count; i++)
+    {
+        if (!TWEntryTypePairArray[i].resultTxt)
+        {
+            return TWEntryTypePairArray[count-1];
+        }
         size_t resultTxtLength = strlen(TWEntryTypePairArray[i].resultTxt);
-        if((bufferLength >= resultTxtLength) &&
+        if ((bufferLength >= resultTxtLength) &&
            strncmp(bufferLine, TWEntryTypePairArray[i].resultTxt, resultTxtLength) == 0)
         {
             return TWEntryTypePairArray[i];
         }
     }
-    return TWEntryTypePairArray[TW_MAX_ENTRY];
+    return TWEntryTypePairArray[count-1];
 }
 
 TWResultCode TWWait(pthread_cond_t * cond, pthread_mutex_t * mutex, uint8_t timeout)
@@ -126,13 +136,13 @@ TWResultCode TWWait(pthread_cond_t * cond, pthread_mutex_t * mutex, uint8_t time
         case 0:
             return TW_RESULT_OK;
         case ETIMEDOUT:
-            OC_LOG(INFO, TAG, "Timed out waiting for CV. Non-error. Please try again.");
+            OIC_LOG(INFO, TAG, "Timed out waiting for CV. Non-error. Please try again.");
             return TW_RESULT_OK;
         case EINVAL:
-            OC_LOG(ERROR, TAG, "Cond or Mutex is invalid. OR timeout value for CV is invalid.");
+            OIC_LOG(ERROR, TAG, "Cond or Mutex is invalid. OR timeout value for CV is invalid.");
             break;
         case EPERM:
-            OC_LOG(ERROR, TAG, "Cannot use CV because the current thread does not own the CV.");
+            OIC_LOG(ERROR, TAG, "Cannot use CV because the current thread does not own the CV.");
             break;
     }
 
@@ -148,16 +158,16 @@ TWResultCode TWGrabMutex(pthread_mutex_t * mutex)
         case 0:
             return TW_RESULT_OK;
         case EINVAL:
-            OC_LOG(ERROR, TAG, "Mutex was not initialized.");
+            OIC_LOG(ERROR, TAG, "Mutex was not initialized.");
             break;
         case ETIMEDOUT:
-            OC_LOG(INFO, TAG, "Timed out waiting for mutex. Non-error. Please try again.");
+            OIC_LOG(INFO, TAG, "Timed out waiting for mutex. Non-error. Please try again.");
             return TW_RESULT_OK;
         case EAGAIN:
-            OC_LOG(ERROR, TAG, "Maximum number of locks for mutex have been exceeded.");
+            OIC_LOG(ERROR, TAG, "Maximum number of locks for mutex have been exceeded.");
             break;
         case EDEADLK:
-            OC_LOG(ERROR, TAG, "Deadlock OR this thread already owns the mutex.");
+            OIC_LOG(ERROR, TAG, "Deadlock OR this thread already owns the mutex.");
             break;
     }
     return TW_RESULT_ERROR;
@@ -172,13 +182,13 @@ TWResultCode TWReleaseMutex(pthread_mutex_t * mutex)
         case 0:
             return TW_RESULT_OK;
         case EINVAL:
-            OC_LOG(ERROR, TAG, "Mutex was not initialized.");
+            OIC_LOG(ERROR, TAG, "Mutex was not initialized.");
             break;
         case EAGAIN:
-            OC_LOG(ERROR, TAG, "Maximum number of locks for mutex have been exceeded.");
+            OIC_LOG(ERROR, TAG, "Maximum number of locks for mutex have been exceeded.");
             break;
         case EPERM:
-            OC_LOG(ERROR, TAG, "Cannot unlock because the current thread does not own the mutex.");
+            OIC_LOG(ERROR, TAG, "Cannot unlock because the current thread does not own the mutex.");
             break;
     }
     return TW_RESULT_ERROR;
@@ -197,7 +207,7 @@ char readBufferChar(int fd, ssize_t * readDataBytes)
     *readDataBytes = read(fd, &byte, sizeof(byte));
     if(*readDataBytes < 0)
     {
-        OC_LOG_V(ERROR, TAG, "\tCould not read from port. Errno is: %d\n", errno);
+        OIC_LOG_V(ERROR, TAG, "\tCould not read from port. Errno is: %d\n", errno);
         return '\0';
     }
     return byte;
@@ -272,7 +282,7 @@ const char * readBufferLine(int fd)
             bufferLine = (char *) OICRealloc(bufferLineHold, bufferLineSize);
             if(!bufferLine)
             {
-                OC_LOG(ERROR, TAG, "Ran out of memory.");
+                OIC_LOG(ERROR, TAG, "Ran out of memory.");
                 return NULL;
             }
             bufferLine[bufferLoc] = '\0';
@@ -280,7 +290,7 @@ const char * readBufferLine(int fd)
             bufferLoc++;
             bufferLineHold = bufferLine;
 
-            OC_LOG_V(DEBUG, TAG, "Incoming: %s", bufferLine);
+            OIC_LOG_V(DEBUG, TAG, "Incoming: %s", bufferLine);
         }
         else
         {
@@ -292,7 +302,7 @@ const char * readBufferLine(int fd)
             bufferLine = (char *) OICRealloc(bufferLineHold, bufferLineSize);
             if(!bufferLine)
             {
-                OC_LOG(ERROR, TAG, "Ran out of memory.");
+                OIC_LOG(ERROR, TAG, "Ran out of memory.");
                 return NULL;
             }
             bufferLine[bufferLoc] = '\0';
@@ -320,13 +330,13 @@ TWResultCode TWAddLineToEntry(const char * line, TWEntry * entry)
 {
     if(!line || !entry)
     {
-        OC_LOG(ERROR, TAG, "Invalid/NULL parameter(s) received.");
+        OIC_LOG(ERROR, TAG, "Invalid/NULL parameter(s) received.");
         return TW_RESULT_ERROR_INVALID_PARAMS;
     }
     TWLine * twLine = (TWLine *) OICCalloc(1, sizeof(TWLine));
     if(!twLine)
     {
-        OC_LOG(ERROR, TAG, "Ran out of memory.");
+        OIC_LOG(ERROR, TAG, "Ran out of memory.");
         return TW_RESULT_ERROR_NO_MEMORY;
     }
     size_t lineLength = strlen(line);
@@ -371,7 +381,7 @@ TWEntry * readEntry(int fd)
     TWEntry * entry = (TWEntry *) OICCalloc(1, sizeof(TWEntry));
     if(!entry)
     {
-        OC_LOG(ERROR, TAG, "Ran out of memory.");
+        OIC_LOG(ERROR, TAG, "Ran out of memory.");
         return NULL;
     }
     entry->count = 0;
@@ -391,6 +401,10 @@ TWEntry * readEntry(int fd)
                 goto exit;
             }
             entryTypePair = getEntryTypePair(bufferLine);
+            if(entryTypePair.entryType == TW_NONE)
+            {
+                goto exit;
+            }
         }
         else
         {
@@ -419,11 +433,31 @@ exit:
     return NULL;
 }
 
-TWResultCode TWRetrieveEUI(PIPlugin * plugin, TWSock * twSock)
+TWResultCode TWRetrieveEUI(PIPlugin_Zigbee * plugin, TWSock * twSock)
 {
+    if(!plugin || !twSock)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid param.");
+        return TW_RESULT_ERROR_INVALID_PARAMS;
+    }
     if(twSock->isActive == false)
     {
+        OIC_LOG(ERROR, TAG, "Tried to retrieve Zigbee EUI on an uninitialized socket.");
         return TW_RESULT_ERROR;
+    }
+
+    //Empty buffer
+    char hideBuffer[1] = "";
+    int p = 1;
+    while(p != 0)
+    {
+        errno = 0;
+        p = read(twSock->fd, hideBuffer, 1);
+        if(p < 0)
+        {
+            OIC_LOG_V(ERROR, TAG, "\tCould not read from port. Errno is: %d\n", errno);
+            return TW_RESULT_ERROR;
+        }
     }
 
     TWEntry * entry = NULL;
@@ -450,12 +484,22 @@ TWResultCode TWRetrieveEUI(PIPlugin * plugin, TWSock * twSock)
     twSock->eui = (char *) OICMalloc(strlen(entry->lines[0].line)+1);
     if(!twSock->eui)
     {
+        result = TWReleaseMutex(&twSock->mutex);
+        if(result != TW_RESULT_OK)
+        {
+            goto exit;
+        }
         result = TW_RESULT_ERROR_NO_MEMORY;
         goto exit;
     }
 
     if(SIZE_EUI != (strlen(entry->lines[0].line)+1))
     {
+        result = TWReleaseMutex(&twSock->mutex);
+        if(result != TW_RESULT_OK)
+        {
+            goto exit;
+        }
         OICFree(twSock->eui);
         result = TW_RESULT_ERROR;
         goto exit;
@@ -478,9 +522,9 @@ exit:
     return result;
 }
 
-TWResultCode TWStartSock(PIPlugin * plugin, const char * fileLoc)
+TWResultCode TWStartSock(PIPlugin_Zigbee * plugin, const char * fileLoc)
 {
-    TWSock * sock = TWGetSock((PIPlugin *)plugin);
+    TWSock * sock = TWGetSock((PIPlugin_Zigbee *)plugin);
     if(sock && sock->isActive == true)
     {
         // Ignore requests to start up the same socket.
@@ -500,10 +544,10 @@ TWResultCode TWStartSock(PIPlugin * plugin, const char * fileLoc)
         goto exit;
     }
 
-    ret = TWRetrieveEUI((PIPlugin *)plugin, sock);
+    ret = TWRetrieveEUI((PIPlugin_Zigbee *)plugin, sock);
     if(ret != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "Unable to retrieve Zigbee Radio's EUI.");
+        OIC_LOG(ERROR, TAG, "Unable to retrieve Zigbee Radio's EUI.");
         return ret;
     }
 
@@ -513,7 +557,7 @@ TWResultCode TWStartSock(PIPlugin * plugin, const char * fileLoc)
                                 (void *) plugin);
     if(result != 0)
     {
-        OC_LOG_V(ERROR, TAG, "Thread start failed with error %d", result);
+        OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", result);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -530,24 +574,24 @@ static void sigHandler(int signal)
     pthread_t tid = pthread_self();
     (void)tid;
     (void)signal;
-    OC_LOG_V(INFO, TAG, "Received signal on thread: %lu\n", tid);
-    OC_LOG_V(INFO, TAG, "Signal is: %d", signal);
+    OIC_LOG_V(INFO, TAG, "Received signal on thread: %lu\n", tid);
+    OIC_LOG_V(INFO, TAG, "Signal is: %d", signal);
 }
 
 void * readForever(/*PIPlugin*/ void * plugin)
 {
     TWResultCode result = TW_RESULT_OK;
     TWEntry * entry = NULL;
-    TWSock * twSock = TWGetSock((PIPlugin *)plugin);
+    TWSock * twSock = TWGetSock((PIPlugin_Zigbee *)plugin);
     if(!twSock)
     {
-        OC_LOG(ERROR, TAG, "Unable to retrieve associated socket.");
+        OIC_LOG(ERROR, TAG, "Unable to retrieve associated socket.");
         return NULL;
     }
 
     pthread_t tid = pthread_self();
     (void)tid;
-    OC_LOG_V(INFO, TAG, "ReadForever Telegesis ThreadId: %lu", tid);
+    OIC_LOG_V(INFO, TAG, "ReadForever Telegesis ThreadId: %lu", tid);
 
     struct sigaction action = { .sa_handler = 0 };
 
@@ -579,13 +623,15 @@ void * readForever(/*PIPlugin*/ void * plugin)
                     continue;
                     // This EINTR signal is not for us. Do not handle it.
                 }
-                OC_LOG(DEBUG, TAG, "Thread has been joined. Exiting thread.");
+                // Notify other threads waiting for a response that the stack is going down.
+                pthread_cond_signal(&twSock->queueCV);
+                OIC_LOG(DEBUG, TAG, "Thread has been joined. Exiting thread.");
                 pthread_exit(PTHREAD_CANCELED);
                 return NULL;
             }
             else
             {
-                OC_LOG_V(ERROR, TAG, "Unaccounted error occurred. Exiting thread."
+                OIC_LOG_V(ERROR, TAG, "Unaccounted error occurred. Exiting thread."
                                      "Errno is: %d", errno);
                 return NULL;
             }
@@ -602,7 +648,7 @@ void * readForever(/*PIPlugin*/ void * plugin)
                     result = TWGrabMutex(&twSock->mutex);
                     if(result != TW_RESULT_OK)
                     {
-                        OC_LOG(ERROR, TAG, "Unable to grab mutex.");
+                        OIC_LOG(ERROR, TAG, "Unable to grab mutex.");
                         return NULL;
                     }
                     haveMutex = true;
@@ -613,7 +659,7 @@ void * readForever(/*PIPlugin*/ void * plugin)
                     result = TWReleaseMutex(&twSock->mutex);
                     if(result != TW_RESULT_OK)
                     {
-                        OC_LOG(ERROR, TAG, "Unable to release mutex.");
+                        OIC_LOG(ERROR, TAG, "Unable to release mutex.");
                         return NULL;
                     }
                     haveMutex = false;
@@ -621,13 +667,13 @@ void * readForever(/*PIPlugin*/ void * plugin)
                     // response. Not necessarily fatal.
                     continue;
                 }
-                result = TWEnqueueEntry((PIPlugin *)plugin, entry);
+                result = TWEnqueueEntry((PIPlugin_Zigbee *)plugin, entry);
                 if(result != TW_RESULT_OK)
                 {
-                    OC_LOG_V(ERROR, TAG, "Could not add TWEntry to queue for"
+                    OIC_LOG_V(ERROR, TAG, "Could not add TWEntry to queue for"
                                           "consumption by the application"
                                           "layer. Error is: %d", result);
-                    TWDeleteEntry((PIPlugin *)plugin, entry);
+                    TWDeleteEntry((PIPlugin_Zigbee *)plugin, entry);
                     // This is most likely a FATAL error, such as out of memory.
                     break;
                 }
@@ -649,13 +695,13 @@ void * readForever(/*PIPlugin*/ void * plugin)
     return NULL;
 }
 
-TWResultCode TWIssueATCommand(PIPlugin * plugin, const char * command)
+TWResultCode TWIssueATCommand(PIPlugin_Zigbee * plugin, const char * command)
 {
     if(!plugin || !command)
     {
         return TW_RESULT_ERROR_INVALID_PARAMS;
     }
-    OC_LOG_V(INFO, TAG, "Attempt to write %s.", command);
+    OIC_LOG_V(INFO, TAG, "Attempt to write %s.", command);
     TWSock * twSock = TWGetSock(plugin);
     if(!twSock)
     {
@@ -697,13 +743,13 @@ TWResultCode TWIssueATCommand(PIPlugin * plugin, const char * command)
     size_t actualWrittenBytes = write(twSock->fd, sendCommand, expectedWrittenBytes);
     if(actualWrittenBytes <= 0)
     {
-        OC_LOG_V(ERROR, TAG, "Could not write to port. Errno is: %d\n", errno);
+        OIC_LOG_V(ERROR, TAG, "Could not write to port. Errno is: %d\n", errno);
         result =  TW_RESULT_ERROR;
         goto exit;
     }
     if(actualWrittenBytes != expectedWrittenBytes)
     {
-        OC_LOG(ERROR, TAG, "Telegesis Adapter did not receive expected command. Unknown state.");
+        OIC_LOG(ERROR, TAG, "Telegesis Adapter did not receive expected command. Unknown state.");
         result = TW_RESULT_ERROR;
     }
 
@@ -717,7 +763,7 @@ exit:
     return result;
 }
 
-TWResultCode TWEnqueueEntry(PIPlugin * plugin, TWEntry * entry)
+TWResultCode TWEnqueueEntry(PIPlugin_Zigbee * plugin, TWEntry * entry)
 {
     if(!plugin || !entry)
     {
@@ -737,7 +783,7 @@ TWResultCode TWEnqueueEntry(PIPlugin * plugin, TWEntry * entry)
     return TW_RESULT_OK;
 }
 
-TWResultCode TWDequeueEntry(PIPlugin * plugin, TWEntry ** entry, TWEntryType type)
+TWResultCode TWDequeueEntry(PIPlugin_Zigbee * plugin, TWEntry ** entry, TWEntryType type)
 {
     if(!plugin || !entry)
     {
@@ -762,31 +808,54 @@ TWResultCode TWDequeueEntry(PIPlugin * plugin, TWEntry ** entry, TWEntryType typ
     {
         return ret;
     }
-
+    *entry = NULL;
     if(type != TW_NONE)
     {
-        // Wait for up to 10 seconds for the entry to put into the queue.
-        ret = TWWait(&twSock->queueCV, &twSock->mutex, TIME_OUT_10_SECONDS);
-        if(ret != TW_RESULT_OK)
-        {
-            return ret;
+        struct timespec abs_time;
+        clock_gettime(CLOCK_REALTIME , &abs_time);
+        abs_time.tv_sec += TIME_OUT_10_SECONDS;
+        while(!*entry)
+         {
+            // Wait for up to 10 seconds for the entry to put into the queue.
+            ret = TWWait(&twSock->queueCV, &twSock->mutex, TIME_OUT_10_SECONDS);
+            if(ret != TW_RESULT_OK)
+            {
+                return ret;
+            }
+            if(twSock->isActive == false)
+            {
+                break;
+            }
+            TWEntry * out = NULL;
+            TWEntry * temp = NULL;
+            LL_FOREACH_SAFE(twSock->queue, out, temp)
+             {
+                if(out->type == type)
+                {
+                    *entry = out;
+                    break;
+                }
+            }
+            struct timespec cur_time;
+            clock_gettime(CLOCK_REALTIME, &cur_time);
+            if(cur_time.tv_sec >= abs_time.tv_sec)
+            {
+                break;
+            }
         }
     }
-
-    *entry = twSock->queue;
+    else
+    {
+        *entry = twSock->queue;
+    }
     if(*entry)
     {
         LL_DELETE(twSock->queue, *entry);
     }
-    ret = TWReleaseMutex(&twSock->mutex);
-    if(ret != TW_RESULT_OK)
-    {
-        return ret;
-    }
-    return ret;
+    return TWReleaseMutex(&twSock->mutex);
 }
 
-TWResultCode TWFreeQueue(PIPlugin * plugin)
+TWResultCode TWFreeQueue(PIPlugin_Zigbee * plugin)
 {
     if(!plugin)
     {
@@ -814,7 +883,7 @@ TWResultCode TWFreeQueue(PIPlugin * plugin)
     return ret;
 }
 
-TWResultCode TWDeleteEntry(PIPlugin * plugin, TWEntry * entry)
+TWResultCode TWDeleteEntry(PIPlugin_Zigbee * plugin, TWEntry * entry)
 {
     if(!plugin || !entry)
     {
@@ -843,7 +912,7 @@ TWResultCode TWDeleteEntry(PIPlugin * plugin, TWEntry * entry)
     {
         if(out == entry)
         {
-            OC_LOG(ERROR, TAG, "Tried to delete an entry that is still in the queue. \
+            OIC_LOG(ERROR, TAG, "Tried to delete an entry that is still in the queue. \
                                 Please dequeue the entry first.");
             return TW_RESULT_ERROR;
         }
@@ -855,7 +924,7 @@ TWResultCode TWDeleteEntry(PIPlugin * plugin, TWEntry * entry)
     return TW_RESULT_OK;
 }
 
-TWResultCode TWGetEUI(PIPlugin * plugin, char ** eui)
+TWResultCode TWGetEUI(PIPlugin_Zigbee * plugin, char ** eui)
 {
     if(!plugin || !eui)
     {
@@ -878,7 +947,7 @@ TWResultCode TWGetEUI(PIPlugin * plugin, char ** eui)
 
 }
 
-TWResultCode TWStopSock(PIPlugin * plugin)
+TWResultCode TWStopSock(PIPlugin_Zigbee * plugin)
 {
     if(!plugin)
     {
@@ -916,16 +985,16 @@ TWResultCode TWStopSock(PIPlugin * plugin)
         switch(pthreadRet)
         {
             case EDEADLK:
-                OC_LOG(ERROR, TAG, "A deadlock has occurred.");
+                OIC_LOG(ERROR, TAG, "A deadlock has occurred.");
                 break;
             case EINVAL:
-                OC_LOG(ERROR, TAG, "Thread is not joinable or another thread has already joined.");
+                OIC_LOG(ERROR, TAG, "Thread is not joinable or another thread has already joined.");
                 break;
             case ESRCH:
-                OC_LOG(ERROR, TAG, "No thread with the ID could be found.");
+                OIC_LOG(ERROR, TAG, "No thread with the ID could be found.");
                 break;
             default:
-                OC_LOG_V(ERROR, TAG, "Unknown error occurred when joining thread: %d", pthreadRet);
+                OIC_LOG_V(ERROR, TAG, "Unknown error occurred when joining thread: %d", pthreadRet);
         }
         return TW_RESULT_ERROR;
     }
@@ -941,3 +1010,4 @@ TWResultCode TWStopSock(PIPlugin * plugin)
 
     return ret;
 }
+

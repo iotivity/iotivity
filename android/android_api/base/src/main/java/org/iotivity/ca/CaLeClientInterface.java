@@ -42,13 +42,13 @@ public class CaLeClientInterface {
 
     private static String SERVICE_UUID = "ADE3D529-C784-4F63-A987-EB69F70EE816";
     private static String TAG          = "Sample_Service : CaLeClientInterface";
+    private static Context mContext;
 
     private CaLeClientInterface(Context context) {
-
         caLeRegisterLeScanCallback(mLeScanCallback);
         caLeRegisterGattCallback(mGattCallback);
-
-        registerIntentFilter(context);
+        mContext = context;
+        registerIntentFilter();
     }
 
     public static void getLeScanCallback() {
@@ -59,12 +59,16 @@ public class CaLeClientInterface {
         caLeRegisterGattCallback(mGattCallback);
     }
 
-    private static IntentFilter registerIntentFilter(Context context) {
+    private static IntentFilter registerIntentFilter() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        context.registerReceiver(mReceiver, filter);
+        mContext.registerReceiver(mReceiver, filter);
         return filter;
+    }
+
+    public static void destroyLeInterface() {
+        mContext.unregisterReceiver(mReceiver);
     }
 
     private native static void caLeRegisterLeScanCallback(BluetoothAdapter.LeScanCallback callback);
@@ -78,7 +82,19 @@ public class CaLeClientInterface {
     private native static void caLeGattConnectionStateChangeCallback(
             BluetoothGatt gatt, int status, int newState);
 
+    // BluetoothGattCallback for Connection Manager
+    private native static void caManagerLeGattConnectionStateChangeCB(
+            BluetoothGatt gatt, int status, int newState);
+
+    private native static void caLeGattNWConnectionStateChangeCallback(
+            BluetoothGatt gatt, int status, int newState);
+
     private native static void caLeGattServicesDiscoveredCallback(BluetoothGatt gatt, int status);
+
+    private native static void caLeGattNWServicesDiscoveredCallback(BluetoothGatt gatt,
+                                                                    int status);
+
+    private native static void caLeGattNWDescriptorWriteCallback(BluetoothGatt gatt, int status);
 
     private native static void caLeGattCharacteristicWriteCallback(
             BluetoothGatt gatt, byte[] data, int status);
@@ -100,6 +116,18 @@ public class CaLeClientInterface {
     // bond state
     private native static void caLeBondStateChangedCallback(String address);
 
+    // adapter state
+    private native static void caManagerAdapterStateChangedCallback(int state);
+
+    // bond state
+    private native static void caManagerBondStateChangedCallback(BluetoothDevice address);
+
+    private native static void caManagerLeServicesDiscoveredCallback(BluetoothGatt gatt,
+                                                                     int status);
+
+    private native static void caManagerLeRemoteRssiCallback(BluetoothGatt gatt, int rssi,
+                                                             int status);
+
     // Callback
     private static BluetoothAdapter.LeScanCallback mLeScanCallback =
                    new BluetoothAdapter.LeScanCallback() {
@@ -113,6 +141,7 @@ public class CaLeClientInterface {
                     Log.d(TAG, "UUID : " + uuid.toString());
                     if(uuid.toString().contains(SERVICE_UUID.toLowerCase())) {
                         Log.d(TAG, "we found that has the Device");
+                        Log.d(TAG, "scanned device address : " + device.getAddress());
                         caLeScanCallback(device);
                     }
                 }
@@ -177,6 +206,8 @@ public class CaLeClientInterface {
             super.onConnectionStateChange(gatt, status, newState);
 
             caLeGattConnectionStateChangeCallback(gatt, status, newState);
+            caManagerLeGattConnectionStateChangeCB(gatt, status, newState);
+            caLeGattNWConnectionStateChangeCallback(gatt, status, newState);
         }
 
         @Override
@@ -184,6 +215,8 @@ public class CaLeClientInterface {
             super.onServicesDiscovered(gatt, status);
 
             caLeGattServicesDiscoveredCallback(gatt, status);
+            caManagerLeServicesDiscoveredCallback(gatt, status);
+            caLeGattNWServicesDiscoveredCallback(gatt, status);
         }
 
         @Override
@@ -220,6 +253,7 @@ public class CaLeClientInterface {
             super.onDescriptorWrite(gatt, descriptor, status);
 
             caLeGattDescriptorWriteCallback(gatt, status);
+            caLeGattNWDescriptorWriteCallback(gatt, status);
         }
 
         @Override
@@ -230,6 +264,7 @@ public class CaLeClientInterface {
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             super.onReadRemoteRssi(gatt, rssi, status);
+            caManagerLeRemoteRssiCallback(gatt, rssi, status);
         }
     };
 
@@ -245,9 +280,11 @@ public class CaLeClientInterface {
                 int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
                                                BluetoothAdapter.ERROR);
 
-                if (state == BluetoothAdapter.STATE_ON || state == BluetoothAdapter.STATE_OFF)
+                if (state == BluetoothAdapter.STATE_ON || state == BluetoothAdapter.STATE_OFF
+                        || state == BluetoothAdapter.STATE_TURNING_OFF)
                 {
                     caLeStateChangedCallback(state);
+                    caManagerAdapterStateChangedCallback(state);
                 }
             }
 
@@ -262,6 +299,7 @@ public class CaLeClientInterface {
                             BluetoothDevice device = intent
                                 .getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
+                        caManagerBondStateChangedCallback(device);
                         caLeBondStateChangedCallback(device.getAddress());
                     }
                 }

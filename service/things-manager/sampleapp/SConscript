@@ -40,5 +40,3 @@ target_os = env.get('TARGET_OS')
 if target_os == 'linux' :
 	# Build linux sample app
 	SConscript('linux/configuration/SConscript')
-	SConscript('linux/groupaction/SConscript')
-	SConscript('linux/groupsyncaction/SConscript')

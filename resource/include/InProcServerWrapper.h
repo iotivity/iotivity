@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _IN_PROC_SERVER_WRAPPER_H_
-#define _IN_PROC_SERVER_WRAPPER_H_
+#ifndef OC_IN_PROC_SERVER_WRAPPER_H_
+#define OC_IN_PROC_SERVER_WRAPPER_H_
 
 #include <thread>
 #include <mutex>

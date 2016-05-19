@@ -21,8 +21,8 @@
 #ifndef RESPONSE_MODEL_H_
 #define RESPONSE_MODEL_H_
 
-#include "simulator_client_types.h"
-#include "simulator_resource_model.h"
+#include "simulator_resource_model_schema.h"
+#include "simulator_error_codes.h"
 
 class RequestModelBuilder;
 class ResponseModel
@@ -30,20 +30,15 @@ class ResponseModel
     public:
         friend class RequestModelBuilder;
 
-        SimulatorResult verifyResponse(const OC::OCRepresentation &rep);
+        std::shared_ptr<SimulatorResourceModelSchema> getSchema();
+        SimulatorResult verifyResponse(const SimulatorResourceModel &resModel);
 
     private:
         ResponseModel(int code);
-        void setRepSchema(SimulatorResourceModelSP &repSchema);
-        SimulatorResult validateAttributeInteger(SimulatorResourceModel::Attribute &attrSchema,
-                const OC::OCRepresentation::AttributeItem &ocAttribute);
-        SimulatorResult validateAttributeDouble(SimulatorResourceModel::Attribute &attrSchema,
-                                                const OC::OCRepresentation::AttributeItem &ocAttribute);
-        SimulatorResult validateAttributeString(SimulatorResourceModel::Attribute &attrSchema,
-                                                const OC::OCRepresentation::AttributeItem &ocAttribute);
+        void setResponseBodyModel(const std::shared_ptr<SimulatorResourceModelSchema> &repSchema);
 
         int m_code;
-        SimulatorResourceModelSP m_repSchema;
+        std::shared_ptr<SimulatorResourceModelSchema> m_repSchema;
 };
 
 typedef std::shared_ptr<ResponseModel> ResponseModelSP;

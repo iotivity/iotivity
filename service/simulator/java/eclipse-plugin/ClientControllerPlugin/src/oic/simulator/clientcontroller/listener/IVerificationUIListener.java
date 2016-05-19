@@ -16,6 +16,8 @@
 
 package oic.simulator.clientcontroller.listener;
 
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
+
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 
 /**
@@ -23,9 +25,12 @@ import oic.simulator.clientcontroller.remoteresource.RemoteResource;
  * the UI listeners.
  */
 public interface IVerificationUIListener {
-    public void onVerificationStarted(RemoteResource resource, int autoType);
+    public void onVerificationStarted(RemoteResource resource,
+            RequestType reqType);
 
-    public void onVerificationAborted(RemoteResource resource, int autoType);
+    public void onVerificationAborted(RemoteResource resource,
+            RequestType reqType);
 
-    public void onVerificationCompleted(RemoteResource resource, int autoType);
+    public void onVerificationCompleted(RemoteResource resource,
+            RequestType reqType);
 }

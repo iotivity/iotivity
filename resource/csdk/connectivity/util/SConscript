@@ -1,0 +1,33 @@
+#######################################################
+#	Build Common Util
+#######################################################
+
+Import('env')
+import os.path
+
+print "Reading util folder script"
+
+ca_os = env.get('TARGET_OS')
+ca_transport = env.get('TARGET_TRANSPORT')
+target_os = env.get('TARGET_OS')
+project_root = env.get('SRC_DIR')
+root_dir = os.path.join(project_root, 'resource', 'csdk', 'connectivity')
+src_dir = os.path.join(root_dir, 'util', 'src')
+
+######################################################################
+# Source files to build common for platforms
+######################################################################
+
+env.AppendUnique(CA_SRC = [os.path.join('./../util/src/cautilinterface.c')])
+
+if target_os == 'android':
+	if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
+			env.AppendUnique(CA_SRC = [
+			os.path.join(src_dir, 'camanager', 'android', 'caleconnectionmanager.c'),
+			os.path.join(src_dir, 'camanager', 'android', 'caleautoconnector.c'),
+			os.path.join(src_dir, 'camanager', 'android', 'camanagerleutil.c'),
+			os.path.join(src_dir, 'camanager', 'android', 'camanagerdevice.c')])
+
+	if (('BT' in ca_transport) or ('ALL' in ca_transport)):
+			env.AppendUnique(CA_SRC = [
+			os.path.join(src_dir, 'btpairing' ,'android', 'cabtpairing.c')])

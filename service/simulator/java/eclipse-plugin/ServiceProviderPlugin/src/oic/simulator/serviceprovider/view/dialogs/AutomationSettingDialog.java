@@ -16,12 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.Iterator;
-import java.util.List;
-
-import oic.simulator.serviceprovider.resource.AutomationSettingHelper;
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
@@ -33,6 +27,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+
+import java.util.Iterator;
+import java.util.List;
+
+import oic.simulator.serviceprovider.model.AutomationSettingHelper;
+import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * This class manages and shows the automation settings dialog from the

@@ -37,9 +37,17 @@
 
 namespace OC
 {
+    static const char COAP[] = "coap://";
+    static const char COAPS[] = "coaps://";
+    static const char COAP_TCP[] = "coap+tcp://";
 
     void MessageContainer::setPayload(const OCPayload* rep)
     {
+        if (rep == nullptr)
+        {
+            return;
+        }
+
         switch(rep->type)
         {
             case PAYLOAD_TYPE_REPRESENTATION:
@@ -59,17 +67,15 @@ namespace OC
 
     void MessageContainer::setPayload(const OCDevicePayload* payload)
     {
+        if (payload == nullptr)
+        {
+            return;
+        }
+
         OCRepresentation rep;
-        rep.setUri(payload->uri);
-        char uuidString[UUID_STRING_SIZE];
-        if(payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string(uuidString);
-        }
-        else
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string();
-        }
+        rep[OC_RSRVD_DEVICE_ID] = (payload->sid) ?
+            std::string(payload->sid) :
+            std::string();
         rep[OC_RSRVD_DEVICE_NAME] = payload->deviceName ?
             std::string(payload->deviceName) :
             std::string();
@@ -79,14 +85,21 @@ namespace OC
         rep[OC_RSRVD_DATA_MODEL_VERSION] = payload->dataModelVersion ?
             std::string(payload->dataModelVersion) :
             std::string();
+        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
+        {
+           rep.addResourceType(strll->value);
+        }
         m_reps.push_back(std::move(rep));
     }
 
     void MessageContainer::setPayload(const OCPlatformPayload* payload)
     {
-        OCRepresentation rep;
-        rep.setUri(payload->uri);
+        if (payload == nullptr)
+        {
+            return;
+        }
 
+        OCRepresentation rep;
         rep[OC_RSRVD_PLATFORM_ID] = payload->info.platformID ?
             std::string(payload->info.platformID) :
             std::string();
@@ -121,6 +134,15 @@ namespace OC
             std::string(payload->info.systemTime) :
             std::string();
 
+        if (payload->rt)
+        {
+            rep.addResourceType(payload->rt);
+        }
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            rep.addResourceInterface(strll->value);
+        }
+
         m_reps.push_back(std::move(rep));
     }
 
@@ -142,7 +164,7 @@ namespace OC
         OCRepPayload* root = nullptr;
         for(const auto& r : representations())
         {
-            if(!root)
+            if (!root)
             {
                 root = r.getPayload();
             }
@@ -364,7 +386,7 @@ namespace OC
     OCRepPayload* OCRepresentation::getPayload() const
     {
         OCRepPayload* root = OCRepPayloadCreate();
-        if(!root)
+        if (!root)
         {
             throw std::bad_alloc();
         }
@@ -421,11 +443,11 @@ namespace OC
 
     size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
     {
-        if(dimensions[0] == 0)
+        if (dimensions[0] == 0)
         {
             throw std::logic_error("invalid calcArrayDepth");
         }
-        else if(dimensions[1] == 0)
+        else if (dimensions[1] == 0)
         {
             return 1;
         }
@@ -487,7 +509,7 @@ namespace OC
     template<typename T>
     void OCRepresentation::payload_array_helper(const OCRepPayloadValue* pl, size_t depth)
     {
-        if(depth == 1)
+        if (depth == 1)
         {
             std::vector<T> val(pl->arr.dimensions[0]);
 
@@ -641,6 +663,42 @@ namespace OC
     {
         m_children = children;
     }
+
+    void OCRepresentation::setDevAddr(const OCDevAddr m_devAddr)
+    {
+        std::ostringstream ss;
+        if (m_devAddr.flags & OC_SECURE)
+        {
+            ss << COAPS;
+        }
+        else if (m_devAddr.adapter & OC_ADAPTER_TCP)
+        {
+            ss << COAP_TCP;
+        }
+        else
+        {
+            ss << COAP;
+        }
+        if (m_devAddr.flags & OC_IP_USE_V6)
+        {
+            ss << '[' << m_devAddr.addr << ']';
+        }
+        else
+        {
+            ss << m_devAddr.addr;
+        }
+        if (m_devAddr.port)
+        {
+            ss << ':' << m_devAddr.port;
+        }
+        m_host = ss.str();
+    }
+
+    const std::string OCRepresentation::getHost() const
+    {
+        return m_host;
+    }
+
     void OCRepresentation::setUri(const char* uri)
     {
         m_uri = uri ? uri : "";
@@ -699,7 +757,7 @@ namespace OC
         // child of a default or link item.
         // Our values array is only printed in the if we are the child of a Batch resource,
         // the parent in a 'default' situation, or not in a child/parent relationship.
-        if(!m_uri.empty())
+        if (!m_uri.empty())
         {
             return false;
         }
@@ -710,7 +768,7 @@ namespace OC
         {
             return false;
         }
-        else if((m_interfaceType == InterfaceType::None
+        else if ((m_interfaceType == InterfaceType::None
                         || m_interfaceType == InterfaceType::BatchChild
                         || m_interfaceType == InterfaceType::DefaultParent)
                     && m_values.size()>0)
@@ -718,7 +776,7 @@ namespace OC
             return false;
         }
 
-        if(m_children.size() > 0)
+        if (m_children.size() > 0)
         {
             return false;
         }
@@ -745,7 +803,7 @@ namespace OC
     {
         auto x = m_values.find(str);
 
-        if(m_values.end() != x)
+        if (m_values.end() != x)
         {
             return x->second.which() == AttributeValueNullIndex;
         }
@@ -967,7 +1025,7 @@ namespace OC
     OCRepresentation::iterator& OCRepresentation::iterator::operator++()
     {
         m_iterator++;
-        if(m_iterator != m_item.m_values.end())
+        if (m_iterator != m_item.m_values.end())
         {
             m_item.m_attrName = m_iterator->first;
         }
@@ -981,7 +1039,7 @@ namespace OC
     OCRepresentation::const_iterator& OCRepresentation::const_iterator::operator++()
     {
         m_iterator++;
-        if(m_iterator != m_item.m_values.end())
+        if (m_iterator != m_item.m_values.end())
         {
             m_item.m_attrName = m_iterator->first;
         }
@@ -1059,7 +1117,7 @@ namespace OC
     std::string OCRepresentation::getValueToString(const std::string& key) const
     {
         auto x = m_values.find(key);
-        if(x != m_values.end())
+        if (x != m_values.end())
         {
             to_string_visitor vis;
             boost::apply_visitor(vis, x->second);
@@ -1082,4 +1140,3 @@ namespace OC
         return os;
     }
 }
-

@@ -28,6 +28,8 @@
 #include "cacommon.h"
 #include "caadapterinterface.h"
 #include "cathreadpool.h"
+#include "cainterface.h"
+#include "pdu.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -35,13 +37,16 @@ extern "C"
 #endif
 
 /**
- * TCP Server Information for IPv4 TCP transport
+ * TCP Session Information for IPv4 TCP transport
  */
 typedef struct
 {
-    char addr[MAX_ADDR_STR_SIZE_CA];    /**< TCP Server address */
-    CASocket_t u4tcp;                   /**< TCP Server port */
-} CATCPServerInfo_t;
+    CASecureEndpoint_t sep;             /**< secure endpoint information */
+    int fd;                             /**< file descriptor info */
+    void *recvData;                     /**< received data from remote device*/
+    size_t recvDataLen;                 /**< received data length */
+    size_t totalDataLen;                /**< total data length */
+} CATCPSessionInfo_t;
 
 /**
  * API to initialize TCP Interface.
@@ -50,7 +55,9 @@ typedef struct
  * @param[in] networkPacketCallback Callback to notify request and
  *                                  response messages from server(s)
  *                                  started at Connectivity Abstraction Layer.
- * @param[in] netCallback           Callback to notify the network additions
+ * @param[in] netCallback           Callback to notify the adapter changes
+ *                                  to Connectivity Abstraction Layer.
+ * @param[in] connCallback          Callback to notify the connection changes
  *                                  to Connectivity Abstraction Layer.
  * @param[in] errorCallback         Callback to notify the network errors to
  *                                  Connectivity Abstraction Layer.
@@ -59,7 +66,8 @@ typedef struct
  */
 CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback networkPacketCallback,
-                           CANetworkChangeCallback netCallback,
+                           CAAdapterChangeCallback netCallback,
+                           CAConnectionChangeCallback connCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
@@ -146,6 +154,13 @@ CAResult_t CAStopTCP();
  * Configuration information will be deleted from further use.
  */
 void CATerminateTCP();
+
+/**
+ * Set connection status changes callback to process KeepAlive.
+ * connection informations are delivered these callbacks.
+ * @param[in]   ConnHandler     Connection status changes callback.
+ */
+void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler);
 
 #ifdef __cplusplus
 } /* extern "C" */

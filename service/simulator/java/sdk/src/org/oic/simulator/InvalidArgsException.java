@@ -21,7 +21,41 @@ package org.oic.simulator;
  */
 @SuppressWarnings("serial")
 public class InvalidArgsException extends SimulatorException {
-    public InvalidArgsException(int errorCode, String errMessage) {
-        super(errorCode, errMessage);
+
+    /**
+     * Constructs {@link InvalidArgsException} with the given ordinal
+     * representing the error code and description.
+     *
+     * @param code
+     *            Ordinal of an error code.
+     * @param message
+     *            Error description.
+     */
+    public InvalidArgsException(int code, String message) {
+        super(code, message);
+    }
+
+    /**
+     * Constructs {@link InvalidArgsException} with the given error code and
+     * description.
+     *
+     * @param code
+     *            {@link SimulatorResult} enum constant representing the error
+     *            code.
+     * @param message
+     *            Error description.
+     */
+    public InvalidArgsException(SimulatorResult code, String message) {
+        super(code, message);
+    }
+
+    /**
+     * Constructs {@link InvalidArgsException} with the given error message.
+     *
+     * @param message
+     *            Error description.
+     */
+    public InvalidArgsException(String message) {
+        super(SimulatorResult.SIMULATOR_INVALID_PARAM, message);
     }
 }

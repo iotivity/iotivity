@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "ocrandom.h"
 #include "cainterface.h"
 #include "caremotehandler.h"
 #include "camessagehandler.h"
@@ -38,9 +39,10 @@
 #include "catcpadapter.h"
 #endif
 
-CAGlobals_t caglobals = { 0 };
+CAGlobals_t caglobals = { .clientFlags = 0,
+                          .serverFlags = 0, };
 
-#define TAG "CA_CONN_MGR"
+#define TAG "OIC_CA_CONN_MGR"
 
 static bool g_isInitialized = false;
 
@@ -59,10 +61,16 @@ extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 
 CAResult_t CAInitialize()
 {
+    OIC_LOG_V(DEBUG, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
     OIC_LOG(DEBUG, TAG, "CAInitialize");
 
     if (!g_isInitialized)
     {
+        if (0 != OCSeedRandom())
+        {
+            OIC_LOG(ERROR, TAG, "Seed Random Failed");
+        }
+
         CAResult_t res = CAInitializeMessageHandler();
         if (res != CA_STATUS_OK)
         {
@@ -71,6 +79,7 @@ CAResult_t CAInitialize()
         }
         g_isInitialized = true;
     }
+
     return CA_STATUS_OK;
 }
 
@@ -138,6 +147,20 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #ifdef __WITH_DTLS__
+CAResult_t CARegisterDTLSHandshakeCallback(CAErrorCallback dtlsHandshakeCallback)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSHandshakeCallback");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetHandshakeCallback(dtlsHandshakeCallback);
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentialsHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
@@ -236,16 +259,67 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
     return CAGetNetworkInformationInternal(info, size);
 }
 
-CAResult_t CASendRequest(const CAEndpoint_t *object,const CARequestInfo_t *requestInfo)
+static CAResult_t CASendMessageMultiAdapter(const CAEndpoint_t *object, const void *sendMsg,
+                                            CADataType_t dataType)
 {
-    OIC_LOG(DEBUG, TAG, "CASendGetRequest");
+    OIC_LOG(DEBUG, TAG, "CASendMessageMultipleAdapter");
+
+    CATransportAdapter_t connTypes[] = {
+            CA_ADAPTER_IP
+#ifdef LE_ADAPTER
+            ,CA_ADAPTER_GATT_BTLE
+#endif
+#ifdef EDR_ADAPTER
+            ,CA_ADAPTER_RFCOMM_BTEDR
+#endif
+#ifdef NFC_ADAPTER
+            ,CA_ADAPTER_NFC
+#endif
+#ifdef RA_ADAPTER
+            ,CA_ADAPTER_REMOTE_ACCESS
+#endif
+#ifdef TCP_ADAPTER
+            ,CA_ADAPTER_TCP
+#endif
+        };
+
+    CAEndpoint_t *cloneEp = CACloneEndpoint(object);
+    if (!cloneEp)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to clone CAEndpoint");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    CAResult_t ret = CA_STATUS_OK;
+    size_t numConnTypes = sizeof(connTypes) / sizeof(connTypes[0]);
+
+    for (size_t i = 0; i < numConnTypes && ret == CA_STATUS_OK; i++)
+    {
+        cloneEp->adapter = connTypes[i];
+        ret = CADetachSendMessage(cloneEp, sendMsg, dataType);
+    }
+    CAFreeEndpoint(cloneEp);
+    return ret;
+}
+
+CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
+{
+    OIC_LOG(DEBUG, TAG, "CASendRequest");
 
     if(!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachRequestMessage(object, requestInfo);
+    if (requestInfo && requestInfo->isMulticast &&
+            (object->adapter == CA_DEFAULT_ADAPTER || object->adapter == CA_ALL_ADAPTERS))
+    {
+        return CASendMessageMultiAdapter(object, requestInfo, CA_REQUEST_DATA);
+    }
+    else
+    {
+        return CADetachSendMessage(object, requestInfo, CA_REQUEST_DATA);
+    }
 }
 
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
@@ -257,7 +331,15 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachResponseMessage(object, responseInfo);
+    if (responseInfo && responseInfo->isMulticast &&
+            (object->adapter == CA_DEFAULT_ADAPTER || object->adapter == CA_ALL_ADAPTERS))
+    {
+        return CASendMessageMultiAdapter(object, responseInfo, CA_RESPONSE_DATA);
+    }
+    else
+    {
+        return CADetachSendMessage(object, responseInfo, CA_RESPONSE_DATA);
+    }
 }
 
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
@@ -304,7 +386,11 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
                   "CAAddNetworkType(CA_ADAPTER_TCP) function returns result : %d", res);
     }
 #endif
-
+    else if (interestedNetwork & CA_ADAPTER_NFC)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_NFC);
+        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_ADAPTER_NFC) function returns result : %d", res);
+    }
     else
     {
         res = CA_NOT_SUPPORTED;
@@ -378,7 +464,6 @@ CAResult_t CAHandleRequestResponse()
 }
 
 #ifdef __WITH_DTLS__
-
 CAResult_t CASelectCipherSuite(const uint16_t cipher)
 {
     OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite");
@@ -466,3 +551,10 @@ CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint)
 }
 
 #endif /* __WITH_DTLS__ */
+
+#ifdef TCP_ADAPTER
+void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
+{
+    CATCPSetKeepAliveCallbacks(ConnHandler);
+}
+#endif

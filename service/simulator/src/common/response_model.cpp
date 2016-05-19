@@ -19,106 +19,27 @@
  ******************************************************************/
 
 #include "response_model.h"
+#include "simulator_resource_model_schema.h"
 
 ResponseModel::ResponseModel(int code) : m_code(code) {}
 
-void ResponseModel::setRepSchema(SimulatorResourceModelSP &repSchema)
+std::shared_ptr<SimulatorResourceModelSchema> ResponseModel::getSchema()
+{
+    return m_repSchema;
+}
+
+SimulatorResult ResponseModel::verifyResponse(const SimulatorResourceModel &resModel)
+{
+    if (m_repSchema->validate(resModel))
+    {
+        return SIMULATOR_OK;
+    }
+
+    return SIMULATOR_ERROR;
+}
+
+void ResponseModel::setResponseBodyModel(const std::shared_ptr<SimulatorResourceModelSchema>
+        &repSchema)
 {
     m_repSchema = repSchema;
-}
-
-SimulatorResult ResponseModel::verifyResponse(const OC::OCRepresentation &rep)
-{
-    for (auto & ocAttribute : rep)
-    {
-        SimulatorResourceModel::Attribute attribute;
-        if (false == m_repSchema->getAttribute(ocAttribute.attrname(), attribute))
-        {
-            return SIMULATOR_UKNOWN_PROPERTY;
-        }
-
-        switch (attribute.getValueType())
-        {
-            case SimulatorResourceModel::Attribute::ValueType::INTEGER : // Integer
-                {
-                    SimulatorResult result = validateAttributeInteger(attribute, ocAttribute);
-                    if (SIMULATOR_OK != result)
-                    {
-                        return result;
-                    }
-                }
-                break;
-
-            case SimulatorResourceModel::Attribute::ValueType::DOUBLE : // Double
-                {
-                    SimulatorResult result = validateAttributeDouble(attribute, ocAttribute);
-                    if (SIMULATOR_OK != result)
-                    {
-                        return result;
-                    }
-                }
-                break;
-
-            case SimulatorResourceModel::Attribute::ValueType::STRING : // String
-                {
-                    SimulatorResult result = validateAttributeString(attribute, ocAttribute);
-                    if (SIMULATOR_OK != result)
-                    {
-                        return result;
-                    }
-                }
-                break;
-        }
-    }
-
-    return SIMULATOR_OK;
-}
-
-SimulatorResult ResponseModel::validateAttributeInteger(
-    SimulatorResourceModel::Attribute &attrSchema,
-    const OC::OCRepresentation::AttributeItem &ocAttribute)
-{
-    // Check the value type
-    if (OC::AttributeType::Integer != ocAttribute.type())
-    {
-        return SIMULATOR_TYPE_MISMATCH;
-    }
-
-    // Check value if it is in range
-    int min, max, value;
-    attrSchema.getRange(min, max);
-    value = ocAttribute.getValue<int>();
-    if (value < min || value > max)
-    {
-        return SIMULATOR_BAD_VALUE;
-    }
-
-    return SIMULATOR_OK;
-}
-
-SimulatorResult ResponseModel::validateAttributeDouble(
-    SimulatorResourceModel::Attribute &attrSchema,
-    const OC::OCRepresentation::AttributeItem &ocAttribute)
-{
-    // Check the value type
-    if (OC::AttributeType::Double != ocAttribute.type())
-    {
-        return SIMULATOR_TYPE_MISMATCH;
-    }
-
-    return SIMULATOR_OK;
-}
-
-SimulatorResult ResponseModel::validateAttributeString(
-    SimulatorResourceModel::Attribute &attrSchema,
-    const OC::OCRepresentation::AttributeItem &ocAttribute)
-{
-    // Check the value type
-    if (OC::AttributeType::String != ocAttribute.type())
-    {
-        return SIMULATOR_TYPE_MISMATCH;
-    }
-
-    // TODO: Check the allowed values
-    return SIMULATOR_OK;
 }

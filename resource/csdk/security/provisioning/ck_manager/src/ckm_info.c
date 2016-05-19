@@ -146,7 +146,7 @@ PKIError CloseCKMInfo(void)
     FUNCTION_CLEAR();
 }
 
-PKIError SetCKMInfo (const long *nextSN, const long *CRLSerialNumber,
+PKIError SetCKMInfo (const long nextSN, const long CRLSerialNumber,
                      const ByteArray *CAPrivateKey, const ByteArray *CAPublicKey,
                      const ByteArray *CAName)
 {
@@ -237,7 +237,7 @@ PKIError SetCAName (const ByteArray *CAName)
     CHECK_NULL_BYTE_ARRAY_PTR(CAName, ISSUER_CA_STORAGE_NULL_PASSED);
     CHECK_LESS_EQUAL(CAName->len, ISSUER_MAX_NAME_SIZE, ISSUER_CA_STORAGE_WRONG_CA_NAME_LEN);
     memcpy(g_ckmInfo.CAName, CAName->data, CAName->len);
-    g_ckmInfo.CANameSize = CAName->len;
+    g_ckmInfo.CANameSize = (uint32_t)CAName->len;
 
     FUNCTION_CLEAR();
 }
@@ -297,7 +297,7 @@ PKIError InitCRT(void)
 
         for (int i = 0; i < g_ckmInfo.CAChainLength; i++)
         {
-            objectsRead = fread(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
+            objectsRead = (uint32_t)fread(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
             CHECK_EQUAL(objectsRead, CERT_LEN_PREFIX, ISSUER_CA_STORAGE_CRT_READ_ERROR);
             g_ckmInfo.CACertificateChain[i].len = ParseCertPrefix(prefix);
 
@@ -305,7 +305,7 @@ PKIError InitCRT(void)
                             (uint8_t *)OICMalloc(g_ckmInfo.CACertificateChain[i].len);
             CHECK_NULL(g_ckmInfo.CACertificateChain[i].data,
                        ISSUER_CA_STORAGE_MEMORY_ALLOC_FAILED);
-            objectsRead = fread(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
+            objectsRead = (uint32_t)fread(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
                                 g_ckmInfo.CACertificateChain[i].len, filePointer);
             CHECK_EQUAL(objectsRead, g_ckmInfo.CACertificateChain[i].len,
                         ISSUER_CA_STORAGE_CRT_READ_ERROR);
@@ -333,9 +333,9 @@ PKIError SaveCRT(void)
     for (int i = 0; i < g_ckmInfo.CAChainLength; i++)
     {
         WriteCertPrefix(prefix, g_ckmInfo.CACertificateChain[i].len);
-        objectsWrote = fwrite(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
+        objectsWrote = (uint32_t)fwrite(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
         CHECK_EQUAL(objectsWrote, CERT_LEN_PREFIX, ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
-        objectsWrote = fwrite(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
+        objectsWrote = (uint32_t)fwrite(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
                               g_ckmInfo.CACertificateChain[i].len, filePointer);
         CHECK_EQUAL(objectsWrote, g_ckmInfo.CACertificateChain[i].len,
                     ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
@@ -351,12 +351,11 @@ PKIError SaveCRT(void)
 }
 
 /*Serial Number*/
-PKIError SetNextSerialNumber (const long *nextSN)
+PKIError SetNextSerialNumber (const long nextSN)
 {
     FUNCTION_INIT();
-    CHECK_NULL(nextSN, ISSUER_CA_STORAGE_NULL_PASSED);
-    CHECK_LESS_EQUAL(0, *nextSN, ISSUER_CA_STORAGE_WRONG_SERIAL_NUMBER);
-    g_ckmInfo.nextSerialNumber = *nextSN;
+    CHECK_LESS_EQUAL(0, nextSN, ISSUER_CA_STORAGE_WRONG_SERIAL_NUMBER);
+    g_ckmInfo.nextSerialNumber = nextSN;
 
     FUNCTION_CLEAR();
 }
@@ -457,12 +456,11 @@ PKIError SaveCRL(void)
 }
 
 /*CRL Serial Number*/
-PKIError SetCRLSerialNumber (const long *CRLSerialNumber)
+PKIError SetCRLSerialNumber (const long CRLSerialNumber)
 {
     FUNCTION_INIT();
-    CHECK_NULL(CRLSerialNumber, ISSUER_CA_STORAGE_NULL_PASSED);
-    CHECK_LESS_EQUAL(0, *CRLSerialNumber, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
-    g_ckmInfo.CRLSerialNumber = *CRLSerialNumber;
+    CHECK_LESS_EQUAL(0, CRLSerialNumber, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
+    g_ckmInfo.CRLSerialNumber = CRLSerialNumber;
 
     FUNCTION_CLEAR();
 }
@@ -498,10 +496,11 @@ PKIError SetCertificateRevocationList (const ByteArray *certificateRevocationLis
 
 PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList)
 {
-    FUNCTION_INIT();
+    FUNCTION_INIT(
+        OicSecCrl_t *tmpCRL = NULL;
+    );
     CHECK_COND(g_crlInfo.CrlData.data, ISSUER_CA_STORAGE_CRL_UNDEFINED);
     CHECK_NULL_BYTE_ARRAY_PTR(certificateRevocationList, ISSUER_CA_STORAGE_NULL_PASSED);
-    OicSecCrl_t *tmpCRL;
     tmpCRL = (OicSecCrl_t *)GetCRLResource();
     g_crlInfo.CrlId = tmpCRL->CrlId;
     g_crlInfo.CrlData = tmpCRL->CrlData;
@@ -513,16 +512,15 @@ PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList)
     certificateRevocationList->len = g_crlInfo.CrlData.len;
 
     FUNCTION_CLEAR(
-            OICFree(tmpCRL);
+        OICFree(tmpCRL);
     );
 }
 
-PKIError SetNumberOfRevoked (const long *numberOfRevoked)
+PKIError SetNumberOfRevoked (const long numberOfRevoked)
 {
     FUNCTION_INIT();
-    CHECK_NULL(numberOfRevoked, ISSUER_CA_STORAGE_NULL_PASSED);
-    CHECK_LESS_EQUAL(0, *numberOfRevoked, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
-    g_ckmInfo.numberOfRevoked = *numberOfRevoked;
+    CHECK_LESS_EQUAL(0, numberOfRevoked, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
+    g_ckmInfo.numberOfRevoked = numberOfRevoked;
 
     FUNCTION_CLEAR();
 }

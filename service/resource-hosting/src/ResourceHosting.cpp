@@ -20,155 +20,125 @@
 
 #include "ResourceHosting.h"
 
-#include "PresenceSubscriber.h"
-#include "OCPlatform.h"
 #include "RCSDiscoveryManager.h"
+#include "RCSAddress.h"
 
 namespace OIC
 {
-namespace Service
-{
-
-namespace
-{
-    std::string HOSTING_TAG = "/hosting";
-    size_t HOSTING_TAG_SIZE = (size_t)HOSTING_TAG.size();
-    std::string MULTICAST_PRESENCE_ADDRESS = std::string("coap://") + OC_MULTICAST_PREFIX;
-    std::string HOSTING_RESOURSE_TYPE = "oic.r.resourcehosting";
-}
-
-ResourceHosting * ResourceHosting::s_instance(nullptr);
-std::mutex ResourceHosting::s_mutexForCreation;
-
-ResourceHosting::ResourceHosting()
-: hostingObjectList(),
-  discoveryManager(nullptr),
-  pDiscoveryCB(nullptr)
-{
-}
-
-ResourceHosting * ResourceHosting::getInstance()
-{
-    if (!s_instance)
+    namespace Service
     {
-        s_mutexForCreation.lock();
-        if (!s_instance)
+
+        namespace
         {
-            s_instance = new ResourceHosting();
-            s_instance->initializeResourceHosting();
+            const std::string HOSTING_TAG = "/hosting";
+            const auto HOSTING_TAG_SIZE = HOSTING_TAG.size();
+            const std::string HOSTING_RESOURSE_TYPE = "oic.r.resourcehosting";
         }
-        s_mutexForCreation.unlock();
-    }
-    return s_instance;
-}
 
-void ResourceHosting::startHosting()
-{
-    try
-    {
-        requestMulticastDiscovery();
-    }catch(const RCSPlatformException &e)
-    {
-        OIC_HOSTING_LOG(DEBUG,
-                "[ResourceHosting::startHosting]PlatformException:%s", e.what());
-        throw;
-    }catch(const RCSInvalidParameterException &e)
-    {
-        OIC_HOSTING_LOG(DEBUG,
-                "[ResourceHosting::startHosting]InvalidParameterException:%s", e.what());
-        throw;
-    }catch(const std::exception &e)
-    {
-        OIC_HOSTING_LOG(DEBUG,
-                "[ResourceHosting::startHosting]std::exception:%s", e.what());
-        throw;
-    }
-}
-
-void ResourceHosting::stopHosting()
-{
-
-    hostingObjectList.clear();
-}
-
-void ResourceHosting::initializeResourceHosting()
-{
-    pDiscoveryCB = std::bind(&ResourceHosting::discoverHandler, this,
-            std::placeholders::_1);
-
-    discoveryManager = RCSDiscoveryManager::getInstance();
-}
-
-void ResourceHosting::requestMulticastDiscovery()
-{
-    discoveryTask = discoveryManager->discoverResourceByType(
-            RCSAddress::multicast(), OC_RSRVD_WELL_KNOWN_URI, HOSTING_RESOURSE_TYPE, pDiscoveryCB);
-}
-
-void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)
-{
-    std::string discoverdUri = remoteResource->getUri();
-    if(discoverdUri.compare(
-            discoverdUri.size()-HOSTING_TAG_SIZE, HOSTING_TAG_SIZE, HOSTING_TAG) != 0)
-    {
-        return;
-    }
-
-    HostingObjectPtr foundHostingObject = findRemoteResource(remoteResource);
-    if(foundHostingObject == nullptr)
-    {
-        try
+        ResourceHosting::ResourceHosting()
+        : m_mutexForList(),
+          m_isStartedHosting(false),
+          m_hostingObjects(),
+          m_discoveryTask()
         {
-            foundHostingObject = std::make_shared<HostingObject>();
-            foundHostingObject->initializeHostingObject(remoteResource,
-                    std::bind(&ResourceHosting::destroyedHostingObject, this,
-                            HostingObjectWeakPtr(foundHostingObject)));
-            hostingObjectList.push_back(foundHostingObject);
-        }catch(const RCSInvalidParameterException &e)
-        {
-            OIC_HOSTING_LOG(DEBUG,
-                    "[ResourceHosting::discoverHandler]InvalidParameterException:%s", e.what());
         }
-    }
-}
 
-ResourceHosting::HostingObjectPtr ResourceHosting::findRemoteResource(
-        RemoteObjectPtr remoteResource)
-{
-    HostingObjectPtr retObject = nullptr;
-
-    for(auto it : hostingObjectList)
-    {
-        RemoteObjectPtr inListPtr = it->getRemoteResource();
-        if(inListPtr != nullptr && isSameRemoteResource(inListPtr, remoteResource))
+        ResourceHosting * ResourceHosting::getInstance()
         {
-            retObject = it;
+            static ResourceHosting instance;
+            return & instance;
         }
-    }
 
-    return retObject;
-}
+        void ResourceHosting::startHosting()
+        {
+            if (m_isStartedHosting) return;
+            m_isStartedHosting = true;
+            createDiscoveryListener();
+        }
 
-bool ResourceHosting::isSameRemoteResource(
-        RemoteObjectPtr remoteResource_1, RemoteObjectPtr remoteResource_2)
-{
-    bool ret = false;
-    if(remoteResource_1->getAddress() == remoteResource_2->getAddress() &&
-       remoteResource_1->getUri() == remoteResource_2->getUri())
-    {
-        ret = true;
-    }
-    return ret;
-}
+        void ResourceHosting::stopHosting()
+        {
+            if (!m_isStartedHosting) return;
 
-void ResourceHosting::destroyedHostingObject(HostingObjectWeakPtr destroyedWeakPtr)
-{
-    auto destroyedPtr = destroyedWeakPtr.lock();
-    if (destroyedPtr) return;
+            if (!m_discoveryTask->isCanceled())
+            {
+                m_discoveryTask->cancel();
+            }
 
-    std::unique_lock<std::mutex> lock(mutexForList);
-    hostingObjectList.remove(destroyedPtr);
-}
+            m_isStartedHosting = false;
 
-} /* namespace Service */
+            RHLock lock(m_mutexForList);
+            m_hostingObjects.clear();
+        }
+
+        void ResourceHosting::createDiscoveryListener()
+        {
+            m_discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+                    RCSAddress::multicast(), OC_RSRVD_WELL_KNOWN_URI, HOSTING_RESOURSE_TYPE,
+                    std::bind(&ResourceHosting::discoveryHandler, this,
+                                std::placeholders::_1));
+        }
+
+        void ResourceHosting::discoveryHandler(RemoteObjectPtr remoteResource)
+        {
+            auto discoverdUri = remoteResource->getUri();
+            if (discoverdUri.compare(
+                    discoverdUri.size()-HOSTING_TAG_SIZE, HOSTING_TAG_SIZE, HOSTING_TAG) != 0)
+            {
+                return;
+            }
+
+            auto foundHostingObject = findRemoteResource(remoteResource);
+            if (foundHostingObject != nullptr) return;
+
+            try
+            {
+                HostingObjectKey key = generateHostingObjectKey(remoteResource);
+                foundHostingObject = HostingObject::createHostingObject(remoteResource,
+                        std::bind(&ResourceHosting::destroyedHostingObject, this, key));
+
+                RHLock lock(m_mutexForList);
+                m_hostingObjects.insert(std::make_pair(key, foundHostingObject));
+
+            } catch (const RCSException & e)
+            {
+                OIC_HOSTING_LOG(DEBUG,
+                        "[ResourceHosting::discoverHandler]InvalidParameterException:%s", e.what());
+            }
+        }
+
+        HostingObject::Ptr ResourceHosting::findRemoteResource(RemoteObjectPtr remoteResource)
+        {
+            RHLock lock(m_mutexForList);
+
+            auto iter = m_hostingObjects.find(generateHostingObjectKey(remoteResource));
+            if (iter != m_hostingObjects.end()) return iter->second;
+
+            return nullptr;
+        }
+
+        void ResourceHosting::destroyedHostingObject(const HostingObjectKey & key)
+        {
+            RHLock lock(m_mutexForList);
+            m_hostingObjects.erase(key);
+        }
+
+        ResourceHosting::HostingObjectKey ResourceHosting::generateHostingObjectKey(
+                std::string && address, std::string && uri)
+        {
+            return HostingObjectKey(address + uri);
+        }
+
+        ResourceHosting::HostingObjectKey ResourceHosting::generateHostingObjectKey(
+                const std::string & address, const std::string & uri)
+        {
+            return generateHostingObjectKey(std::string(address), std::string(uri));
+        }
+        ResourceHosting::HostingObjectKey ResourceHosting::generateHostingObjectKey(
+                RemoteObjectPtr rResource)
+        {
+            return generateHostingObjectKey(rResource->getAddress(), rResource->getUri());
+        }
+
+    } /* namespace Service */
 } /* namespace OIC */

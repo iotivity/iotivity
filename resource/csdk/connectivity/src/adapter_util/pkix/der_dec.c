@@ -46,7 +46,7 @@ PKIError DecodeLength(ByteArray *code, size_t *length)
 
         for (i = 0; i < blocksNum; ++i)
         {
-            *length |= *(code->data) << ((blocksNum - i - 1) * SIZE_OF_BYTE);
+            *length |= (size_t) (((size_t) *(code->data)) << ((blocksNum - i - 1) * SIZE_OF_BYTE));
             CHECK_INC_BYTE_ARRAY_PTR(code, 1);
         }
     }

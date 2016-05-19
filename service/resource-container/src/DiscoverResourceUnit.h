@@ -61,6 +61,8 @@ namespace OIC
                 typedef RemoteResourceUnit::UPDATE_MSG REMOTE_MSG;
 
                 DiscoverResourceUnit(const std::string &bundleId);
+                DiscoverResourceUnit(const DiscoverResourceUnit &other)=delete;
+                DiscoverResourceUnit& operator=( const DiscoverResourceUnit& rhs )=delete;
                 ~DiscoverResourceUnit();
 
                 void startDiscover(DiscoverResourceInfo info, UpdatedCB updatedCB);

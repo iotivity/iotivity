@@ -70,7 +70,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
  * @brief   Set Remote Access information for XMPP Client.
  * @param   raInfo            [IN] remote access info.
  *
- * @return  #CA_STATUS_OK
+ * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
 #endif
@@ -134,7 +134,9 @@ OCStackResult OCProcess();
  *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
  *                          since it is impractical to send other QOS levels on such addresses.
  * @param cbData            Asynchronous callback function that is invoked by the stack when
- *                          discovery or resource interaction is complete.
+ *                          discovery or resource interaction is received. The discovery could be
+ *                          related to filtered/scoped/particular resource. The callback is
+ *                          generated for each response received.
  * @param options           The address of an array containing the vendor specific header options
  *                          to be sent with the request.
  * @param numOptions        Number of header options to be included.
@@ -513,6 +515,41 @@ OCNotifyListOfObservers (OCResourceHandle handle,
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
+
+//#ifdef DIRECT_PAIRING
+/**
+ * The function is responsible for discovery of direct-pairing device is current subnet. It will list
+ * all the device in subnet which support direct-pairing.
+ * Caller must NOT free returned constant pointer
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    client before returning the list of devices.
+ * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
+ */
+const OCDPDev_t* OCDiscoverDirectPairingDevices(unsigned short waittime);
+
+/**
+ * The function is responsible for return of paired device list via direct-pairing. It will list
+ * all the device which is previousely paired with client.
+ * Caller must NOT free returned constant pointer
+ *
+ * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
+ */
+const OCDPDev_t* OCGetDirectPairedDevices();
+
+/**
+ * The function is responsible for establishment of direct-pairing. It will proceed mode negotiation
+ * and connect PIN based dtls session.
+ *
+ * @param[in] peer Target device to establish direct-pairing.
+ * @param[in] pmSel Selected mode of pairing.
+ * @param[in] pinNumber PIN number for authentication, pin lenght is defined DP_PIN_LENGTH(8).
+ * @param[in] resultCallback Callback fucntion to event status of process.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+                                                     OCDirectPairingCB resultCallback);
+//#endif // DIRECT_PAIRING
 
 #ifdef __cplusplus
 }

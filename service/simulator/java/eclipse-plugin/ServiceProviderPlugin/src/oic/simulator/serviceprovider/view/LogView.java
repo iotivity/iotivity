@@ -16,24 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.List;
-
-import oic.simulator.logger.LogContentProvider;
-import oic.simulator.logger.LogEntry;
-import oic.simulator.logger.LogLabelProvider;
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.ILogUIListener;
-import oic.simulator.serviceprovider.manager.LogManager;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.view.dialogs.FilterDialog;
-import oic.simulator.serviceprovider.view.dialogs.LogDetailsDialog;
-
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
@@ -72,7 +54,27 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.List;
+
 import org.oic.simulator.ILogger.Level;
+
+import oic.simulator.logger.LogContentProvider;
+import oic.simulator.logger.LogEntry;
+import oic.simulator.logger.LogLabelProvider;
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.ILogListener;
+import oic.simulator.serviceprovider.manager.LogManager;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.view.dialogs.FilterDialog;
+import oic.simulator.serviceprovider.view.dialogs.LogDetailsDialog;
 
 /**
  * This class manages and shows the log view in the perspective.
@@ -82,7 +84,7 @@ public class LogView extends ViewPart {
     public static final String        VIEW_ID              = "oic.simulator.serviceprovider.view.log";
 
     private LogManager                logManager;
-    private ILogUIListener            logListener;
+    private ILogListener              logListener;
 
     private LogContentProvider        treeContentProvider;
 
@@ -136,7 +138,7 @@ public class LogView extends ViewPart {
 
     public LogView() {
 
-        logListener = new ILogUIListener() {
+        logListener = new ILogListener() {
 
             @Override
             public void logChanged(final List<LogEntry> entry) {
@@ -429,9 +431,10 @@ public class LogView extends ViewPart {
                 String data = sb.toString();
                 BufferedWriter out = null;
                 try {
-                    out = new BufferedWriter(new FileWriter(name));
+                    out = new BufferedWriter(new OutputStreamWriter(
+                            new FileOutputStream(name), "UTF-8"));
                     out.write(data);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     MessageDialog.openError(
                             Display.getDefault().getActiveShell(),

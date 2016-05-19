@@ -26,8 +26,8 @@
  * central entrance to the stack.
  */
 
-#ifndef __OCPLATFORM_IMPL_H
-#define __OCPLATFORM_IMPL_H
+#ifndef OC_PLATFORM_IMPL_H_
+#define OC_PLATFORM_IMPL_H_
 
 #include <map>
 

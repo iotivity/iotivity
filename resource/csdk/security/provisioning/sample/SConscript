@@ -70,17 +70,18 @@ provisioningclient = provisioning_env.Program('provisioningclient', 'provisionin
 sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
 sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
 
-Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin])
-
-provisioning_env.AppendTarget('samples')
-
 src_dir = provisioning_env.get('SRC_DIR')
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
 
-provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_client.json'))
-provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_server_justworks.json'))
-provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_server_randompin.json'))
+clientjson = provisioning_env.Install(sec_provisioning_build_dir,
+                                        sec_provisioning_src_dir + 'oic_svr_db_client.json')
+justworksjson = provisioning_env.Install(sec_provisioning_build_dir,
+                                    sec_provisioning_src_dir + 'oic_svr_db_server_justworks.json')
+randompinjson = provisioning_env.Install(sec_provisioning_build_dir,
+                                    sec_provisioning_src_dir+ 'oic_svr_db_server_randompin.json')
+
+Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin, clientjson, justworksjson, randompinjson])
+
+provisioning_env.AppendTarget('samples')
+

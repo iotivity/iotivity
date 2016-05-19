@@ -232,7 +232,7 @@ OCStackApplicationResult deleteReqCB(void *ctx,
     if(clientResponse)
     {
         cout << "\nStackResult: " << getResult(clientResponse->result);
-        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
@@ -257,7 +257,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
 
     cout << "\nStackResult: " << getResult(clientResponse->result);
     cout << "\nSEQUENCE NUMBER: " << clientResponse->sequenceNumber;
-    //OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    //OIC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
 
     if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
@@ -288,7 +288,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
         cout << "\nStackResult: " << getResult(clientResponse->result);
         cout << "\nSEQUENCE NUMBER: " << clientResponse->sequenceNumber;
         cout << "\nCallback Context for OBSERVE notification recvd successfully ";
-        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
         gNumObserveNotifies++;
         if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
         {
@@ -343,7 +343,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle /*handle*/,
         cout << "\nStackResult: " << getResult(clientResponse->result);
         cout << "\nNONCE NUMBER: " << clientResponse->sequenceNumber;
         cout << "\nCallback Context for Presence notification recvd successfully ";
-        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == 20)
         {
@@ -389,7 +389,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         {
             cout << ":" << clientResponse->devAddr.port;
         }
-        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
         cout << "\nConnectivity type: " << clientResponse->connType;
         g_connType = clientResponse->connType;
         g_serverAddr = clientResponse->devAddr;
@@ -471,8 +471,8 @@ OCStackApplicationResult PlatformDiscoveryReqCB(void* ctx,
 
     if (clientResponse)
     {
-        //OC_LOG truncates the response as it is too long.
-        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        //OIC_LOG truncates the response as it is too long.
+        //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
@@ -492,7 +492,7 @@ OCStackApplicationResult DeviceDiscoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
     if (clientResponse)
     {
-        //OC_LOG truncates the response as it is too long.
+        //OIC_LOG truncates the response as it is too long.
         cout << "\nDiscovery response: ";
         cout << clientResponse->payload;
     }
@@ -829,7 +829,7 @@ int main(int argc, char* argv[])
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
         usleep(SLEEP_DURATION);
@@ -886,7 +886,7 @@ int main(int argc, char* argv[])
     }
 
     // Break from loop with Ctrl+C
-    OC_LOG(INFO, TAG, "Entering occlient main loop...");
+    OIC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag)
     {

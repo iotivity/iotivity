@@ -21,17 +21,18 @@
 #ifndef SIMULATOR_DEVICE_INFO_JNI_H_
 #define SIMULATOR_DEVICE_INFO_JNI_H_
 
-#include "simulator_device_info.h"
 #include <jni.h>
 
-class JDeviceInfo
+#include "simulator_device_info.h"
+
+class JniDeviceInfo
 {
     public:
-        JDeviceInfo(JNIEnv *env) : m_env(env) {}
-        JDeviceInfo(const JDeviceInfo &) = delete;
-        JDeviceInfo &operator=(const JDeviceInfo &) = delete;
-        JDeviceInfo(const JDeviceInfo &&) = delete;
-        JDeviceInfo &operator=(const JDeviceInfo && ) = delete;
+        JniDeviceInfo(JNIEnv *env) : m_env(env) {}
+        JniDeviceInfo(const JniDeviceInfo &) = delete;
+        JniDeviceInfo &operator=(const JniDeviceInfo &) = delete;
+        JniDeviceInfo(const JniDeviceInfo &&) = delete;
+        JniDeviceInfo &operator=(const JniDeviceInfo && ) = delete;
         jobject toJava(DeviceInfo &deviceInfo);
 
     private:
@@ -39,20 +40,6 @@ class JDeviceInfo
                            const std::string &value);
 
         JNIEnv *m_env;
-};
-
-class JniDeviceInfoListener
-{
-    public:
-        JniDeviceInfoListener(JNIEnv *env, jobject listener)
-        {
-            m_listener = env->NewWeakGlobalRef(listener);
-        }
-
-        void onDeviceInfoReceived(DeviceInfo &deviceInfo);
-
-    private:
-        jweak m_listener;
 };
 
 #endif

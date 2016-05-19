@@ -20,248 +20,189 @@
 
 #include "HostingObject.h"
 
+#include "RCSSeparateResponse.h"
+#include "RequestObject.h"
+
 namespace OIC
 {
-namespace Service
-{
-
-void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
-{
-    if (!format)
+    namespace Service
     {
-        return;
-    }
-    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, sizeof buffer - 1, format, args);
-    va_end(args);
-    OCLog(level, PCF("Hosting"), buffer);
-}
 
-namespace
-{
-    std::mutex mutexForCB;
-}
-
-HostingObject::HostingObject()
-: remoteObject(nullptr), mirroredServer(nullptr),
-  remoteState(ResourceState::NONE),
-  pStateChangedCB(nullptr), pDataUpdateCB(nullptr),
-  pDestroyCB(nullptr), pSetRequestHandler(nullptr)
-{
-}
-
-HostingObject::~HostingObject()
-{
-	// shared_ptr release
-    pStateChangedCB = {};
-    pDataUpdateCB = {};
-
-    if (remoteObject)
-    {
-        remoteObject->stopMonitoring();
-        remoteObject->stopCaching();
-    }
-}
-
-HostingObject::RemoteObjectPtr HostingObject::getRemoteResource() const
-{
-    return remoteObject;
-}
-
-void HostingObject::initializeHostingObject(RemoteObjectPtr rResource, DestroyedCallback destroyCB)
-{
-    remoteObject = rResource;
-
-    pStateChangedCB = std::bind(&HostingObject::stateChangedCB, this,
-            std::placeholders::_1, remoteObject);
-    pDataUpdateCB = std::bind(&HostingObject::dataChangedCB, this,
-            std::placeholders::_1, remoteObject);
-    pDestroyCB = destroyCB;
-
-    pSetRequestHandler = std::bind(&HostingObject::setRequestHandler, this,
-            std::placeholders::_1, std::placeholders::_2);
-
-    try
-    {
-        remoteObject->startMonitoring(pStateChangedCB);
-        remoteObject->startCaching(pDataUpdateCB);
-    }catch(...)
-    {
-        throw;
-    }
-}
-
-void HostingObject::destroyHostingObject()
-{
-    pDestroyCB();
-}
-
-void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
-{
-    remoteState = state;
-
-    switch (state)
-    {
-    case ResourceState::ALIVE:
-    {
-        if(rObject->isCaching() == false)
+        namespace
         {
-            try
+            const auto sizeofHostingTag = strlen("/hosting");
+        }
+
+        HostingObject::HostingObject()
+        : remoteObject(nullptr), mirroredServer(nullptr),
+          pDataUpdateCB(nullptr), pDestroyCB(nullptr)
+        {
+        }
+
+        HostingObject::~HostingObject()
+        {
+            pDataUpdateCB = {};
+
+            if (remoteObject)
             {
-                rObject->startCaching(pDataUpdateCB);
-            }catch(const RCSInvalidParameterException &e)
-            {
-                OIC_HOSTING_LOG(DEBUG,
-                        "[HostingObject::stateChangedCB]startCaching InvalidParameterException:%s",
-                        e.what());
+                remoteObject->stopMonitoring();
+                remoteObject->stopCaching();
             }
         }
-        break;
-    }
-    case ResourceState::LOST_SIGNAL:
-    case ResourceState::DESTROYED:
-    {
-        if(rObject->isCaching() == true)
+
+        auto HostingObject::getRemoteResource() const -> RemoteObjectPtr
         {
-            try
+            return remoteObject;
+        }
+
+        auto HostingObject::createHostingObject(const RemoteObjectPtr & rResource,
+                DestroyedCallback destroyCB) -> Ptr
+        {
+            auto newObject = std::make_shared<HostingObject>();
+
+            newObject->remoteObject = rResource;
+            newObject->pDestroyCB = destroyCB;
+
+            newObject->pDataUpdateCB = std::bind(&HostingObject::dataChangedCB, newObject,
+                    std::placeholders::_1);
+
+            newObject->remoteObject->startMonitoring(
+                    std::bind(&HostingObject::stateChangedCB, newObject,
+                            std::placeholders::_1));
+            newObject->remoteObject->startCaching(newObject->pDataUpdateCB);
+
+            return newObject;
+        }
+
+        void HostingObject::destroyHostingObject()
+        {
+            if (pDestroyCB) pDestroyCB();
+        }
+
+        void HostingObject::stateChangedCB(ResourceState state)
+        {
+            switch (state)
             {
-                rObject->stopCaching();
-            }catch(const RCSInvalidParameterException &e)
+            case ResourceState::ALIVE:
             {
-                OIC_HOSTING_LOG(DEBUG,
-                        "[HostingObject::stateChangedCB]stopCaching InvalidParameterException:%s",
-                        e.what());
+                if (!this->remoteObject->isCaching())
+                {
+                    try
+                    {
+                        this->remoteObject->startCaching(pDataUpdateCB);
+                    } catch (const RCSException & e)
+                    {
+                        OIC_HOSTING_LOG(DEBUG,
+                                "[HostingObject::stateChangedCB]startCaching InvalidParameterException:%s",
+                                e.what());
+                    }
+                }
+                break;
+            }
+            case ResourceState::LOST_SIGNAL:
+            case ResourceState::DESTROYED:
+            {
+                try
+                {
+                    this->remoteObject->stopCaching();
+                    this->remoteObject->stopMonitoring();
+                } catch (const RCSException & e)
+                {
+                    OIC_HOSTING_LOG(DEBUG,
+                            "[HostingObject::stateChangedCB]stopWatching InvalidParameterException:%s",
+                            e.what());
+                }
+                mirroredServer.reset();
+                destroyHostingObject();
+                break;
+            }
+            default:
+                // not support of state
+                break;
             }
         }
-        if(rObject->isMonitoring() == true)
+
+        void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes)
         {
-            try
+            if (attributes.empty())
             {
-                rObject->stopMonitoring();
-            }catch(const RCSInvalidParameterException &e)
-            {
-                OIC_HOSTING_LOG(DEBUG,
-                        "[HostingObject::stateChangedCB]stopWatching InvalidParameterException:%s",
-                        e.what());
+                return;
             }
-        }
-        mirroredServer = nullptr;
-        destroyHostingObject();
-        break;
-    }
-    default:
-        // not support of state
-        break;
-    }
-}
 
-void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes, RemoteObjectPtr rObject)
-{
-    std::unique_lock<std::mutex> lock(mutexForCB);
-    if(attributes.empty())
-    {
-        return;
-    }
+            std::unique_lock<std::mutex> lock(mutexForCB);
+            if (mirroredServer == nullptr)
+            {
+                try
+                {
+                    mirroredServer = createMirroredServer(this->remoteObject);
+                } catch (const RCSException & e)
+                {
+                    OIC_HOSTING_LOG(DEBUG,
+                                "[HostingObject::dataChangedCB]createMirroredServer Exception:%s",
+                                e.what());
+                    return;
+                }
+            }
+            lock.unlock();
 
-    if(mirroredServer == nullptr)
-    {
-        try
-        {
-            mirroredServer = createMirroredServer(rObject);
-        }catch(const RCSPlatformException &e)
-        {
-            OIC_HOSTING_LOG(DEBUG,
-                        "[HostingObject::dataChangedCB]createMirroredServer PlatformException:%s",
-                        e.what());
-            mirroredServer = nullptr;
-            return;
-        }
-    }
-
-    RCSResourceAttributes rData;
-    {
-        RCSResourceObject::LockGuard guard(mirroredServer);
-        rData = mirroredServer->getAttributes();
-    }
-    if(rData.empty() || rData != attributes)
-    {
-        {
             RCSResourceObject::LockGuard guard(mirroredServer);
-            for(auto it = rData.begin(); ; ++it)
+            mirroredServer->getAttributes() = std::move(attributes);
+        }
+
+        auto HostingObject::createMirroredServer(RemoteObjectPtr rObject) -> ResourceObjectPtr
+        {
+            if (rObject == nullptr)
             {
-                if(it == rData.end())
-                {
-                    break;
-                }
-                mirroredServer->removeAttribute(it->key());
+                throw RCSPlatformException(OC_STACK_ERROR);
             }
 
-            for(auto it = attributes.begin();; ++it)
+            std::string fulluri = rObject->getUri();
+            std::string uri = fulluri.substr(0, fulluri.size() - sizeofHostingTag);
+            std::vector<std::string> types = rObject->getTypes();
+            std::vector<std::string> interfaces = rObject->getInterfaces();
+            try
             {
-                if(it == attributes.end())
+                auto resourceBuild = RCSResourceObject::Builder(uri, types[0], interfaces[0]);
+                for (unsigned int i = 1; i < types.size(); ++i)
                 {
-                    break;
+                    resourceBuild.addType(types[i]);
                 }
-                mirroredServer->setAttribute(it->key(), it->value());
+                for (unsigned int i = 1; i < interfaces.size(); ++i)
+                {
+                    resourceBuild.addInterface(interfaces[i]);
+                }
+                auto retResource = resourceBuild.build();
+
+                retResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
+                retResource->setSetRequestHandler(
+                        std::bind(&HostingObject::setRequestHandler, this,
+                                std::placeholders::_1, std::placeholders::_2));
+                return retResource;
+            } catch (...)
+            {
+                OIC_HOSTING_LOG(DEBUG, "[HostingObject::createMirroredServer] %s", "Exception");
+                throw;
             }
         }
-    }
-}
 
-HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjectPtr rObject)
-{
-    ResourceObjectPtr retResource = nullptr;
-    if(rObject != nullptr)
-    {
-        std::string fulluri = rObject->getUri();
-        std::string uri = fulluri.substr(0, fulluri.size()-8);
-        std::vector<std::string> types = rObject->getTypes();
-        std::vector<std::string> interfaces = rObject->getInterfaces();
-        try
+        RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequest,
+                    RCSResourceAttributes & resourceAttibutes)
         {
-            std::string type = types.begin()->c_str();
-            std::string interface = interfaces.begin()->c_str();
-            retResource = RCSResourceObject::Builder(uri, type, interface).
-                    setDiscoverable(true).setObservable(true).build();
+            try
+            {
+                RequestObject::invokeRequest(getRemoteResource(),
+                        primitiveRequest, RequestObject::RequestMethod::Set, resourceAttibutes);
 
-            // TODO need to bind types and interfaces
-            retResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
-            retResource->setSetRequestHandler(pSetRequestHandler);
-        }catch(...)
-        {
-            OIC_HOSTING_LOG(DEBUG, "[HostingObject::createMirroredServer] %s", "PlatformException");
-            throw;
+            } catch (const RCSPlatformException & e)
+            {
+                OIC_HOSTING_LOG(DEBUG,
+                        "[HostingObject::setRequestHandler] PlatformException:%s",
+                        e.what());
+                throw;
+            }
+
+            return RCSSetResponse::separate();
         }
-    }
-    else
-    {
-        throw RCSPlatformException(OC_STACK_ERROR);
-    }
 
-    return retResource;
-}
-
-RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequest,
-            RCSResourceAttributes & resourceAttibutes)
-{
-    (void)primitiveRequest;
-    try
-    {
-        RequestObject newRequest = { };
-        newRequest.invokeRequest(remoteObject, RequestObject::RequestMethod::Setter,
-                resourceAttibutes);
-    }catch(const RCSPlatformException &e)
-    {
-        OIC_HOSTING_LOG(DEBUG,
-                "[HostingObject::setRequestHandler] PlatformException:%s",
-                e.what());
-        throw;
-    }
-
-    return RCSSetResponse::create(resourceAttibutes);
-}
-
-} /* namespace Service */
+    } /* namespace Service */
 } /* namespace OIC */

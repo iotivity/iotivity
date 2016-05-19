@@ -23,4 +23,3 @@ compatibilitylib_src = ['OCAndroid.cpp']
 if target_os == 'android':
 	static_compatibilitylib = compatibilitylib_env.StaticLibrary('compatibility', compatibilitylib_src)
 	compatibilitylib_env.InstallTarget(static_compatibilitylib, 'libcompatibility')
-	compatibilitylib_env.UserInstallTargetLib(static_compatibilitylib, 'libcompatibility')

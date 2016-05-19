@@ -25,12 +25,25 @@
 #include "uarraylist.h"
 #include "logger.h"
 
-#define TAG "CA_NW_CONFIG"
+#define TAG "OIC_CA_NW_CONFIG"
 
 static u_arraylist_t *g_selectedNetworkList = NULL;
-static uint32_t NETWORK_IP = CA_ADAPTER_IP;
+
+#ifdef EDR_ADAPTER
 static uint32_t NETWORK_RFCOMM = CA_ADAPTER_RFCOMM_BTEDR;
+#endif
+
+#ifdef LE_ADAPTER
 static uint32_t NETWORK_GATT = CA_ADAPTER_GATT_BTLE;
+#endif
+
+#ifdef IP_ADAPTER
+static uint32_t NETWORK_IP = CA_ADAPTER_IP;
+#endif
+
+#ifdef NFC_ADAPTER
+static uint32_t NETWORK_NFC = CA_ADAPTER_NFC;
+#endif
 
 #ifdef RA_ADAPTER
 static uint32_t NETWORK_RA = CA_ADAPTER_REMOTE_ACCESS;
@@ -42,7 +55,6 @@ static uint32_t NETWORK_TCP = CA_ADAPTER_TCP;
 
 CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == g_selectedNetworkList)
     {
         OIC_LOG(DEBUG, TAG, "Create network list");
@@ -61,7 +73,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 #ifndef IP_ADAPTER
             OIC_LOG(DEBUG, TAG, "Add network type(IP) - Not Supported");
             return CA_NOT_SUPPORTED;
-#endif /* IP_ADAPTER */
+#else
 
             OIC_LOG(DEBUG, TAG, "Add network type(IP)");
             if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_IP))
@@ -69,13 +81,15 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                 goto exit;
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_IP);
+
             break;
+#endif // IP_ADAPTER
 
         case CA_ADAPTER_RFCOMM_BTEDR:
 #ifndef EDR_ADAPTER
             OIC_LOG(DEBUG, TAG, "Add network type(EDR) - Not Supported");
             return CA_NOT_SUPPORTED;
-#endif /* EDR_ADAPTER */
+#else
 
             OIC_LOG(DEBUG, TAG, "Add network type(EDR)");
             if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_RFCOMM))
@@ -83,13 +97,15 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                 goto exit;
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RFCOMM);
+
             break;
+#endif // EDR_ADAPTER
 
         case CA_ADAPTER_GATT_BTLE:
 #ifndef LE_ADAPTER
             OIC_LOG(DEBUG, TAG, "Add network type(LE) - Not Supported");
             return CA_NOT_SUPPORTED;
-#endif /* LE_ADAPTER */
+#else
 
             OIC_LOG(DEBUG, TAG, "Add network type(LE)");
             if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_GATT))
@@ -97,7 +113,9 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
                 goto exit;
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_GATT);
+
             break;
+#endif // LE_ADAPTER
 
 #ifdef RA_ADAPTER
         case CA_ADAPTER_REMOTE_ACCESS:
@@ -109,7 +127,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
            }
            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RA);
            break;
-#endif /* RA_ADAPTER */
+#endif // RA_ADAPTER
 
 #ifdef TCP_ADAPTER
         case CA_ADAPTER_TCP:
@@ -121,7 +139,24 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
            }
            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_TCP);
            break;
-#endif /* TCP_ADAPTER */
+#endif // TCP_ADAPTER
+
+
+        case CA_ADAPTER_NFC:
+ #ifndef NFC_ADAPTER
+            OIC_LOG(DEBUG, TAG, "Add network type(NFC) - Not Supported");
+            return CA_NOT_SUPPORTED;
+
+#else
+           OIC_LOG(DEBUG, TAG, "Add network type(NFC)");
+           if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_NFC))
+           {
+               goto exit;
+           }
+           res = u_arraylist_add(g_selectedNetworkList, &NETWORK_NFC);
+
+           break;
+#endif // CA_ADAPTER_NFC
 
         default:
             break;
@@ -134,7 +169,6 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
     }
     // start selected interface adapter
     CAResult_t result = CAStartAdapter(transportType);
-    OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 
 exit:
@@ -144,8 +178,6 @@ exit:
 
 CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (NULL == g_selectedNetworkList)
     {
         OIC_LOG(ERROR, TAG, "SelectedNetwork list is NULL");
@@ -176,8 +208,9 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 
                     OIC_LOG(DEBUG, TAG, "Remove network type(IP)");
                     u_arraylist_remove(g_selectedNetworkList, index);
-#endif /* IP_ADAPTER */
+
                     break;
+#endif //IP_ADAPTER
 
                 case CA_ADAPTER_RFCOMM_BTEDR:
 #ifndef EDR_ADAPTER
@@ -186,8 +219,9 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 #else
                     OIC_LOG(DEBUG, TAG, "Remove network type(EDR)");
                     u_arraylist_remove(g_selectedNetworkList, index);
-#endif /* EDR_ADAPTER */
+
                     break;
+#endif // EDR_ADAPTER
 
                 case CA_ADAPTER_GATT_BTLE:
 #ifndef LE_ADAPTER
@@ -196,23 +230,34 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 #else
                     OIC_LOG(DEBUG, TAG, "Remove network type(LE)");
                     u_arraylist_remove(g_selectedNetworkList, index);
-#endif /* LE_ADAPTER */
 
                     break;
+#endif // LE_ADAPTER
+
 #ifdef RA_ADAPTER
                 case CA_ADAPTER_REMOTE_ACCESS:
                     OIC_LOG(DEBUG, TAG, "Remove network type(RA)");
                     u_arraylist_remove(g_selectedNetworkList, index);
                     break;
-#endif /* RA_ADAPTER */
+#endif // RA_ADAPTER
 
 #ifdef TCP_ADAPTER
                 case CA_ADAPTER_TCP:
                     OIC_LOG(DEBUG, TAG, "Remove network type(TCP)");
                     u_arraylist_remove(g_selectedNetworkList, index);
                     break;
-#endif /* TCP_ADAPTER */
+#endif // TCP_ADAPTER
 
+#ifndef NFC_ADAPTER
+                case CA_ADAPTER_NFC:
+                    OIC_LOG(DEBUG, TAG, "Add network type(NFC) - Not Supported");
+                    return CA_NOT_SUPPORTED;
+#else
+                   OIC_LOG(DEBUG, TAG, "Add network type(NFC)");
+                   u_arraylist_remove(g_selectedNetworkList, index);
+
+                   break;
+#endif // CA_ADAPTER_NFC
                 default:
                     break;
             }

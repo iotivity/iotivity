@@ -16,14 +16,8 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import oic.simulator.clientcontroller.utils.Constants;
-
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -36,21 +30,22 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import java.util.Set;
+
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
+
 /**
  * This class shows UI for finding resources.
  */
 public class FindResourcePage extends WizardPage {
 
-    private Button      stdResTypeRbtn;
-    private CCombo      resourceTypeCmb;
-    private Button      cusResTypeRbtn;
+    private Button      allRbtn;
+    private Button      resTypeRbtn;
     private Text        resTypeTxt;
-    private Label       stdRTypeLbl;
-    private Label       cusRTypeLbl;
+    private Label       resTypeLbl;
 
     private Set<String> typesToSearch;
-
-    private String      dummyRType;
 
     protected FindResourcePage() {
         super("Find Resource");
@@ -58,7 +53,6 @@ public class FindResourcePage extends WizardPage {
 
     @Override
     public void createControl(Composite parent) {
-        setPageComplete(false);
         setTitle(Constants.FIND_PAGE_TITLE);
         setMessage(Constants.FIND_PAGE_MESSAGE);
 
@@ -69,7 +63,7 @@ public class FindResourcePage extends WizardPage {
         compContent.setLayoutData(gd);
 
         Group configGroup = new Group(compContent, SWT.NONE);
-        gridLayout = new GridLayout(1, false);
+        gridLayout = new GridLayout(2, false);
         gridLayout.verticalSpacing = 10;
         gridLayout.marginTop = 5;
         configGroup.setLayout(gridLayout);
@@ -79,41 +73,26 @@ public class FindResourcePage extends WizardPage {
         configGroup.setLayoutData(gd);
         configGroup.setText("Resource Type");
 
-        stdResTypeRbtn = new Button(configGroup, SWT.RADIO);
-        stdResTypeRbtn.setText("Standard OIC Resources");
-
-        Composite stdConfigComp = new Composite(configGroup, SWT.NONE);
-        stdConfigComp.setLayout(new GridLayout(2, false));
+        allRbtn = new Button(configGroup, SWT.RADIO);
+        allRbtn.setText("All");
         gd = new GridData();
-        gd.horizontalAlignment = SWT.FILL;
-        gd.grabExcessHorizontalSpace = true;
-        stdConfigComp.setLayoutData(gd);
+        gd.horizontalSpan = 2;
+        allRbtn.setLayoutData(gd);
+        allRbtn.setSelection(true);
 
-        stdRTypeLbl = new Label(stdConfigComp, SWT.NONE);
-        stdRTypeLbl.setText("ResourceType:");
-        stdRTypeLbl.setEnabled(false);
-
-        resourceTypeCmb = new CCombo(stdConfigComp, SWT.READ_ONLY | SWT.BORDER);
+        resTypeRbtn = new Button(configGroup, SWT.RADIO);
+        resTypeRbtn.setText("Specific Resource types (seperated by commas)");
         gd = new GridData();
-        gd.widthHint = 150;
-        resourceTypeCmb.setLayoutData(gd);
-        resourceTypeCmb.setEnabled(false);
+        gd.horizontalSpan = 2;
+        resTypeRbtn.setLayoutData(gd);
 
-        cusResTypeRbtn = new Button(configGroup, SWT.RADIO);
-        cusResTypeRbtn.setText("Custom Resources");
+        resTypeLbl = new Label(configGroup, SWT.NONE);
+        resTypeLbl.setText("Resource Types:");
+        resTypeLbl.setEnabled(false);
 
-        Composite cusConfigComp = new Composite(configGroup, SWT.NONE);
-        cusConfigComp.setLayout(new GridLayout(2, false));
-        gd = new GridData();
-        gd.horizontalAlignment = SWT.FILL;
-        gd.grabExcessHorizontalSpace = true;
-        cusConfigComp.setLayoutData(gd);
-
-        cusRTypeLbl = new Label(cusConfigComp, SWT.NONE);
-        cusRTypeLbl.setText("Enter ResourceType:");
-        cusRTypeLbl.setEnabled(false);
-
-        resTypeTxt = new Text(cusConfigComp, SWT.BORDER);
+        resTypeTxt = new Text(configGroup, SWT.BORDER);
+        resTypeTxt.setToolTipText("Ex: sample.light, hall.fridge");
+        resTypeTxt.setMessage("Ex: sample.light, hall.fridge");
         gd = new GridData();
         gd.minimumWidth = 200;
         gd.horizontalAlignment = SWT.FILL;
@@ -121,143 +100,58 @@ public class FindResourcePage extends WizardPage {
         resTypeTxt.setLayoutData(gd);
         resTypeTxt.setEnabled(false);
 
-        populateDataInUI();
-
         addUIListeners();
 
         setControl(compContent);
     }
 
-    private void populateDataInUI() {
-        // Populate Standard resource-types in Combo
-        populateResourceTypeCombo();
-    }
-
-    private void populateResourceTypeCombo() {
-        /*
-         * List<String> configList; configList =
-         * Activator.getDefault().getManager().getResourceConfigurationList();
-         * if(null != configList) { Iterator<String> itr =
-         * configList.iterator(); while(itr.hasNext()) {
-         * resourceTypeCmb.add(itr.next()); } }
-         */
-
-        // TODO: Temporarily adding a resourceType for testing
-        // resourceTypeCmb.add("oic.r.light");
-        // Currently for standard resources we are using resource type as sample.light.
-        resourceTypeCmb.add("sample.light");
-
-        // By default, selecting the first item in the resourceType combo
-        if (resourceTypeCmb.getItemCount() > 0) {
-            resourceTypeCmb.select(0);
-            // TODO: Get the RAML configuration file path of the selected
-            // resource
-            // configFilePath =
-            // Activator.getManager().getConfigFilePath(resourceTypeCmb.getItem(0));
-        }
-    }
-
     private void addUIListeners() {
-        stdResTypeRbtn.addSelectionListener(new SelectionAdapter() {
+        allRbtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                // Clear the existing items from the search list
-                if (null != typesToSearch)
-                    typesToSearch.clear();
-
-                // Set the configFilePath to the first item in the combo
-                if (resourceTypeCmb.getItemCount() > 0) {
-                    resourceTypeCmb.select(0);
-                    addSearchType(resourceTypeCmb.getText());
-                }
-
-                setPageComplete(isSelectionDone());
-
-                // Change the visibility of widgets
-                changeVisibility(true);
-            }
-        });
-
-        cusResTypeRbtn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                // Clear the existing items from the search list
-                if (null != typesToSearch)
-                    typesToSearch.clear();
-
-                addSearchType(resTypeTxt.getText());
-
-                setPageComplete(isSelectionDone());
-
+                typesToSearch = null;
+                setPageComplete(true);
                 // Change the visibility of widgets
                 changeVisibility(false);
-
-                resTypeTxt.setFocus();
             }
         });
 
-        resourceTypeCmb.addSelectionListener(new SelectionAdapter() {
+        resTypeRbtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                int index = resourceTypeCmb.getSelectionIndex();
-                if (index < 0) {
-                    return;
+                String typeText = resTypeTxt.getText();
+                if (null != typeText && typeText.length() > 0) {
+                    typesToSearch = Utility.splitStringByComma(typeText);
                 }
-                String resourceType = resourceTypeCmb.getItem(index);
-                addSearchType(resourceType);
-                setPageComplete(isSelectionDone());
+
+                if (null != typesToSearch && typesToSearch.size() > 0) {
+                    setPageComplete(true);
+                } else {
+                    setPageComplete(false);
+                }
+                // Change the visibility of widgets
+                changeVisibility(true);
+                resTypeTxt.setFocus();
             }
         });
 
         resTypeTxt.addModifyListener(new ModifyListener() {
             @Override
             public void modifyText(ModifyEvent e) {
-                String resourceType = resTypeTxt.getText();
-                if (null != dummyRType) {
-                    removeSearchType(dummyRType);
+                String typeText = resTypeTxt.getText();
+                typesToSearch = Utility.splitStringByComma(typeText);
+                if (null != typesToSearch && typesToSearch.size() > 0) {
+                    setPageComplete(true);
+                } else {
+                    setPageComplete(false);
                 }
-                dummyRType = resourceType;
-                addSearchType(resourceType);
-                setPageComplete(isSelectionDone());
             }
         });
     }
 
     private void changeVisibility(boolean standard) {
-        stdRTypeLbl.setEnabled(standard);
-        resourceTypeCmb.setEnabled(standard);
-        cusRTypeLbl.setEnabled(!standard);
-        resTypeTxt.setEnabled(!standard);
-    }
-
-    private boolean isSelectionDone() {
-        if (null == typesToSearch || typesToSearch.size() < 1) {
-            return false;
-        }
-        return true;
-    }
-
-    private void addSearchType(String resourceType) {
-        if (null == resourceType)
-            return;
-        resourceType = resourceType.trim();
-        if (resourceType.length() < 1) {
-            return;
-        }
-        if (null == typesToSearch) {
-            typesToSearch = new HashSet<String>();
-        }
-        typesToSearch.add(resourceType);
-    }
-
-    private void removeSearchType(String resourceType) {
-        if (null == resourceType || null == typesToSearch)
-            return;
-        resourceType = resourceType.trim();
-        if (resourceType.length() < 1) {
-            return;
-        }
-        typesToSearch.remove(resourceType);
+        resTypeLbl.setEnabled(standard);
+        resTypeTxt.setEnabled(standard);
     }
 
     public Set<String> getSearchTypes() {

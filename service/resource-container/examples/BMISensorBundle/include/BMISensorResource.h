@@ -31,11 +31,13 @@ class BMISensorResource : public SoftSensorResource
 {
     public:
         BMISensorResource();
+        BMISensorResource(const BMISensorResource &other)=delete;
+        BMISensorResource& operator=( const BMISensorResource& rhs )=delete;
         ~BMISensorResource();
 
-        virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attrs);
 
-        virtual RCSResourceAttributes &handleGetAttributesRequest();
+        virtual RCSResourceAttributes handleGetAttributesRequest();
 
         virtual void executeLogic();
 

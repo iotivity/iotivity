@@ -19,123 +19,70 @@
  ******************************************************************/
 
 #include "simulator_platform_info_jni.h"
-#include "simulator_common_jni.h"
+#include "simulator_utils_jni.h"
+#include "jni_string.h"
 
 extern SimulatorClassRefs gSimulatorClassRefs;
-jobject JPlatformInfo::toJava(PlatformInfo &platformInfo)
+
+jobject JniPlatformInfo::toJava(PlatformInfo &platformInfo)
 {
     if (!m_env)
         return nullptr;
 
-    jmethodID constr = m_env->GetMethodID(gSimulatorClassRefs.classPlatformInfo, "<init>", "(V)V");
-    if (constr)
-        return nullptr;
-
-    jobject jPlatformInfo = (jobject) m_env->NewObject(gSimulatorClassRefs.classPlatformInfo, constr);
-    if (jPlatformInfo)
-        return nullptr;
-
+    static jmethodID platformInfoCtor = m_env->GetMethodID(gSimulatorClassRefs.platformInfoCls,
+                                        "<init>", "()V");
+    jobject jPlatformInfo = (jobject) m_env->NewObject(gSimulatorClassRefs.platformInfoCls,
+                            platformInfoCtor);
     setFieldValue(jPlatformInfo, "mPlatformId", platformInfo.getPlatformID());
-    setFieldValue(jPlatformInfo, "m_manufacturerName", platformInfo.getManufacturerName());
-    setFieldValue(jPlatformInfo, "m_manufacturerUrl", platformInfo.getManufacturerUrl());
-    setFieldValue(jPlatformInfo, "m_modelNumber", platformInfo.getModelNumber());
-    setFieldValue(jPlatformInfo, "m_dateOfManufacture", platformInfo.getDateOfManfacture());
-    setFieldValue(jPlatformInfo, "m_platformVersion", platformInfo.getPlatformVersion());
-    setFieldValue(jPlatformInfo, "m_operationSystemVersion", platformInfo.getOSVersion());
-    setFieldValue(jPlatformInfo, "m_hardwareVersion", platformInfo.getHardwareVersion());
-    setFieldValue(jPlatformInfo, "m_firmwareVersion", platformInfo.getFirmwareVersion());
-    setFieldValue(jPlatformInfo, "m_supportUrl", platformInfo.getSupportUrl());
-    setFieldValue(jPlatformInfo, "m_systemTime", platformInfo.getSystemTime());
+    setFieldValue(jPlatformInfo, "mManufacturerName", platformInfo.getManufacturerName());
+    setFieldValue(jPlatformInfo, "mManufacturerUrl", platformInfo.getManufacturerUrl());
+    setFieldValue(jPlatformInfo, "mModelNumber", platformInfo.getModelNumber());
+    setFieldValue(jPlatformInfo, "mDateOfManufacture", platformInfo.getDateOfManfacture());
+    setFieldValue(jPlatformInfo, "mPlatformVersion", platformInfo.getPlatformVersion());
+    setFieldValue(jPlatformInfo, "mOperationSystemVersion", platformInfo.getOSVersion());
+    setFieldValue(jPlatformInfo, "mHardwareVersion", platformInfo.getHardwareVersion());
+    setFieldValue(jPlatformInfo, "mFirmwareVersion", platformInfo.getFirmwareVersion());
+    setFieldValue(jPlatformInfo, "mSupportUrl", platformInfo.getSupportUrl());
+    setFieldValue(jPlatformInfo, "mSystemTime", platformInfo.getSystemTime());
 
     return jPlatformInfo;
 }
 
-PlatformInfo JPlatformInfo::toCPP(jobject jPlatformInfo)
+PlatformInfo JniPlatformInfo::toCpp(jobject jPlatformInfo)
 {
     PlatformInfo platformInfo;
     if (!m_env || !jPlatformInfo)
         return platformInfo;
 
     platformInfo.setPlatformID(getFieldValue(jPlatformInfo, "mPlatformId"));
-    platformInfo.setManufacturerName(getFieldValue(jPlatformInfo, "m_manufacturerName"));
-    platformInfo.setManufacturerUrl(getFieldValue(jPlatformInfo, "m_manufacturerUrl"));
-    platformInfo.setModelNumber(getFieldValue(jPlatformInfo, "m_modelNumber"));
-    platformInfo.setDateOfManfacture(getFieldValue(jPlatformInfo, "m_dateOfManufacture"));
-    platformInfo.setPlatformVersion(getFieldValue(jPlatformInfo, "m_platformVersion"));
-    platformInfo.setOSVersion(getFieldValue(jPlatformInfo, "m_operationSystemVersion"));
-    platformInfo.setHardwareVersion(getFieldValue(jPlatformInfo, "m_hardwareVersion"));
-    platformInfo.setFirmwareVersion(getFieldValue(jPlatformInfo, "m_firmwareVersion"));
-    platformInfo.setSupportUrl(getFieldValue(jPlatformInfo, "m_supportUrl"));
-    platformInfo.setSystemTime(getFieldValue(jPlatformInfo, "m_systemTime"));
+    platformInfo.setManufacturerName(getFieldValue(jPlatformInfo, "mManufacturerName"));
+    platformInfo.setManufacturerUrl(getFieldValue(jPlatformInfo, "mManufacturerUrl"));
+    platformInfo.setModelNumber(getFieldValue(jPlatformInfo, "mModelNumber"));
+    platformInfo.setDateOfManfacture(getFieldValue(jPlatformInfo, "mDateOfManufacture"));
+    platformInfo.setPlatformVersion(getFieldValue(jPlatformInfo, "mPlatformVersion"));
+    platformInfo.setOSVersion(getFieldValue(jPlatformInfo, "mOperationSystemVersion"));
+    platformInfo.setHardwareVersion(getFieldValue(jPlatformInfo, "mHardwareVersion"));
+    platformInfo.setFirmwareVersion(getFieldValue(jPlatformInfo, "mFirmwareVersion"));
+    platformInfo.setSupportUrl(getFieldValue(jPlatformInfo, "mSupportUrl"));
+    platformInfo.setSystemTime(getFieldValue(jPlatformInfo, "mSystemTime"));
 
     return std::move(platformInfo);
 }
 
-void JPlatformInfo::setFieldValue(jobject jPlatformInfo, const std::string &fieldName,
-                                  const std::string &value)
+void JniPlatformInfo::setFieldValue(jobject jPlatformInfo, const std::string &fieldName,
+                                    const std::string &value)
 {
-    jfieldID fieldID = m_env->GetFieldID(gSimulatorClassRefs.classPlatformInfo, fieldName.c_str(),
+    jfieldID fieldID = m_env->GetFieldID(m_env->GetObjectClass(jPlatformInfo), fieldName.c_str(),
                                          "Ljava/lang/String;");
     jstring valueStr = m_env->NewStringUTF(value.c_str());
     m_env->SetObjectField(jPlatformInfo, fieldID, valueStr);
 }
 
-std::string JPlatformInfo::getFieldValue(jobject jPlatformInfo, const std::string &fieldName)
+std::string JniPlatformInfo::getFieldValue(jobject jPlatformInfo, const std::string &fieldName)
 {
-    jfieldID fieldID = m_env->GetFieldID(gSimulatorClassRefs.classPlatformInfo, fieldName.c_str(),
+    jfieldID fieldID = m_env->GetFieldID(m_env->GetObjectClass(jPlatformInfo), fieldName.c_str(),
                                          "Ljava/lang/String;");
     jstring jvalue = (jstring) m_env->GetObjectField(jPlatformInfo, fieldID);
-    const char *valueCStr = m_env->GetStringUTFChars(jvalue, NULL);
-    if (valueCStr)
-        return std::string(valueCStr);
-    return std::string();
+    JniString value(m_env, jvalue);
+    return value.get();
 }
-
-void JniPlatformInfoListener::onPlatformInfoReceived(PlatformInfo &platformInfo)
-{
-    // Get the environment
-    JNIEnv *env = getEnv();
-    if (!env)
-        return;
-
-    jobject listener = env->NewLocalRef(m_listener);
-    if (!listener)
-    {
-        releaseEnv();
-        return;
-    }
-
-    jclass listenerCls = env->GetObjectClass(listener);
-    if (!listenerCls)
-    {
-        releaseEnv();
-        return;
-    }
-
-    jmethodID listenerMId = env->GetMethodID(listenerCls, "onPlatformFound",
-                            "(Lorg/oic/simulator/PlatformInfo;)V");
-    if (!listenerMId)
-    {
-        releaseEnv();
-        return;
-    }
-
-    // Convert CPP to Java DeviceInfo object
-    jobject jPlatformInfo = JPlatformInfo(env).toJava(platformInfo);
-    if (!jPlatformInfo)
-    {
-        releaseEnv();
-        return;
-    }
-
-    // Invoke java listener with DeviceInfo
-    env->CallVoidMethod(listener, listenerMId, jPlatformInfo);
-    if (env->ExceptionCheck())
-    {
-        releaseEnv();
-        return;
-    }
-
-    releaseEnv();
-}
-

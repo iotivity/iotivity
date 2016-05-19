@@ -16,475 +16,711 @@
 
 package org.oic.simulator.test;
 
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.oic.simulator.DeviceInfo;
+import org.oic.simulator.DeviceListener;
+import org.oic.simulator.InvalidArgsException;
+import org.oic.simulator.PlatformInfo;
+import org.oic.simulator.PlatformListener;
+import org.oic.simulator.SimulatorException;
+import org.oic.simulator.SimulatorManager;
+import org.oic.simulator.client.FindResourceListener;
+import org.oic.simulator.client.SimulatorRemoteResource;
+import org.oic.simulator.server.SimulatorResource;
+import org.oic.simulator.utils.ObjectHolder;
+import org.oic.simulator.utils.SampleSingleResource;
+
 import junit.framework.TestCase;
 
-import org.oic.simulator.PlatformInfo;
-import org.oic.simulator.SimulatorManager;
-import org.oic.simulator.serviceprovider.SimulatorResourceServer;
-
 /**
- * This class tests the functionality of Simulator Manager
- * class APIs.
+ * This class tests the functionality of Simulator Manager class APIs.
  */
-public class SimulatorManagerTest extends TestCase
-{
-
-    private static final String CONFIG_PATH = "./ramls/simple-light.raml";
-    private static final String RESOURCE_TYPE = "oic.r.light";
-
-    private CountDownLatch lockObject;
-    private ResourceModelObject resourceModelObject;
-    private ResourceModelChangeListener resourceModelChangeListener;
-
-
-    static
-    {
-        System.loadLibrary("SimulatorManager");
-    }
+public class SimulatorManagerTest extends TestCase {
+    private static final String SINGLE_RES_RAML     = "./ramls/oic.r.light.raml";
+    private static final String COLLECTION_RES_RAML = "./ramls/oic.d.airconditioner.raml";
 
     @Override
-    protected void setUp() throws Exception
-    {
+    protected void setUp() throws Exception {
         super.setUp();
-
-        lockObject = new CountDownLatch(1);
     }
 
     @Override
-    protected void tearDown() throws Exception
-    {
+    protected void tearDown() throws Exception {
         super.tearDown();
-
-        resourceModelObject = null;
-        resourceModelChangeListener = null;
-        lockObject = null;
     }
 
-    private SimulatorResourceServer createResource()
-    {
-        resourceModelObject = new ResourceModelObject();
-        resourceModelChangeListener = new ResourceModelChangeListener(resourceModelObject);
+    public void testCreateResource_P01() {
+        SimulatorResource resource = null;
+        SimulatorResource.Type resType = SimulatorResource.Type.SINGLE;
 
-        SimulatorResourceServer simulatorResourceServer = null;
-        try
-        {
-            simulatorResourceServer = SimulatorManager.createResource(CONFIG_PATH, resourceModelChangeListener);
-        }
-        catch (Exception e)
-        {
+        try {
+            resource = SimulatorManager.createResource(SINGLE_RES_RAML);
+            resType = resource.getType();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
             e.printStackTrace();
         }
 
-        return simulatorResourceServer;
+        assertNotNull(resource);
+        assertTrue(resType == SimulatorResource.Type.SINGLE);
     }
 
-    private SimulatorResourceServer[] createResources(int n)
-    {
-        resourceModelObject = new ResourceModelObject();
-        resourceModelChangeListener = new ResourceModelChangeListener(resourceModelObject);
+    public void testCreateResource_P02() {
+        SimulatorResource resource = null;
+        SimulatorResource.Type resType = SimulatorResource.Type.COLLECTION;
 
-        SimulatorResourceServer[] simulatorResourceServers = null;
-        try
-        {
-            simulatorResourceServers = SimulatorManager.createResource(CONFIG_PATH, n, resourceModelChangeListener);
-        }
-        catch (Exception e)
-        {
+        try {
+            resource = SimulatorManager.createResource(COLLECTION_RES_RAML);
+            resType = resource.getType();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
             e.printStackTrace();
         }
 
-        return simulatorResourceServers;
+        assertNotNull(resource);
+        assertTrue(resType == SimulatorResource.Type.COLLECTION);
     }
 
-    private void deleteResource(SimulatorResourceServer sim)
-    {
-        try
-        {
-            SimulatorManager.deleteResource(sim);
+    public void testCreateResource_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            String configPath = "";
+            SimulatorManager.createResource(configPath);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch (Exception e)
-        {
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+
+    public void testCreateResource_N02() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            SimulatorManager.createResource(null);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+
+    public void testCreateResourceWithCount_P01() {
+        Vector<SimulatorResource> resources = null;
+        SimulatorResource.Type resType = SimulatorResource.Type.SINGLE;
+
+        try {
+            resources = SimulatorManager.createResource(SINGLE_RES_RAML, 1);
+            resType = resources.elementAt(0).getType();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
             e.printStackTrace();
         }
+
+        assertNotNull(resources);
+        assertTrue(resources.size() == 1);
+        assertTrue(resType == SimulatorResource.Type.SINGLE);
     }
 
-    public void testCreateResource_P01()
-    {
-        SimulatorResourceServer simulatorResourceServer = createResource();
+    public void testCreateResourceWithCount_P02() {
+        Vector<SimulatorResource> resources = null;
+        SimulatorResource.Type resType = SimulatorResource.Type.COLLECTION;
 
-        assertNotNull(simulatorResourceServer);
+        try {
+            resources = SimulatorManager.createResource(COLLECTION_RES_RAML, 1);
+            resType = resources.elementAt(0).getType();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
 
-        deleteResource(simulatorResourceServer);
+        assertNotNull(resources);
+        assertTrue(resources.size() == 1);
+        assertTrue(resType == SimulatorResource.Type.COLLECTION);
     }
 
-    /**
-     * When config path is empty
-     */
-    public void testCreateResource_N01()
-    {
-        String configPath = "";
-        boolean result = false;
+    public void testCreateResourceWithCount_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
 
-        resourceModelObject = new ResourceModelObject();
-        resourceModelChangeListener = new ResourceModelChangeListener(resourceModelObject);
-
-        SimulatorResourceServer simulatorResourceServer = null;
-        try
-        {
-            simulatorResourceServer = SimulatorManager.createResource(configPath, resourceModelChangeListener);
-        }
-        catch (Exception e)
-        {
-            result = true;
+        try {
+            String configPath = "";
+            SimulatorManager.createResource(configPath, 1);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
 
-        assertTrue(simulatorResourceServer == null && result);
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-     * When listener is not set. Passed null
-     */
-    public void testCreateResource_N02()
-    {
-        boolean result = false;
-        SimulatorResourceServer simulatorResourceServer = null;
-        try
-        {
-            simulatorResourceServer = SimulatorManager.createResource(CONFIG_PATH, null);
+    public void testCreateResourceWithCount_N02() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            SimulatorManager.createResource(null, 1);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch (Exception e)
-        {
-            result = true;
-        }
-        assertTrue(simulatorResourceServer == null && result);
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-     * When listener and config path are set to null
-     */
-    public void testCreateResource_N03()
-    {
-        boolean result = false;
-        SimulatorResourceServer simulatorResourceServer = null;
-        try
-        {
-            simulatorResourceServer = SimulatorManager.createResource(null, null);
+    public void testCreateResourceWithCount_N03() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            SimulatorManager.createResource(SINGLE_RES_RAML, 0);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch (Exception e)
-        {
-            result = true;
-        }
-        assertTrue(simulatorResourceServer == null && result);
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    public void testCreateResourceCount_P01()
-    {
-        int count = 5;
+    public void testCreateResourceWithCount_N04() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
 
-        SimulatorResourceServer[] simulatorResourceServers = createResources(count);
+        try {
+            SimulatorManager.createResource(SINGLE_RES_RAML, -1);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
 
-        assertTrue(simulatorResourceServers != null && simulatorResourceServers.length == 5);
-
-        for(SimulatorResourceServer srs : simulatorResourceServers)
-            deleteResource(srs);
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-     * When config path is empty
-     */
-    public void testCreateResourceCount_N01()
-    {
-        int count = 5;
-        String configPath = "";
-        boolean result = false;
+    public void testCreateResourceByType_P01() {
+        SimulatorResource resource = null;
+        SimulatorResource.Type resType = SimulatorResource.Type.SINGLE;
 
-        resourceModelObject = new ResourceModelObject();
-        resourceModelChangeListener = new ResourceModelChangeListener(resourceModelObject);
+        try {
+            String name = "test-singleresource";
+            String uri = "/test/singleresource";
+            String resourceType = "test.singleresource";
 
-        SimulatorResourceServer[] simulatorResourceServers = null;
-        try
-        {
-            SimulatorManager.setDeviceInfo("test");
-            simulatorResourceServers = SimulatorManager.createResource(configPath, count, resourceModelChangeListener);
-        }
-        catch (Exception e)
-        {
-            result = true;
+            resource = SimulatorManager.createResource(
+                    SimulatorResource.Type.SINGLE, name, uri, resourceType);
+            resType = resource.getType();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
         }
 
-        assertTrue(simulatorResourceServers == null && result);
+        assertNotNull(resource);
+        assertTrue(resType == SimulatorResource.Type.SINGLE);
     }
 
-    /**
-     * When listener is not set
-     */
-    public void testCreateResourceCount_N02()
-    {
-        int count = 5;
-        boolean result = false;
+    public void testCreateResourceByType_P02() {
+        SimulatorResource resource = null;
+        SimulatorResource.Type resType = SimulatorResource.Type.COLLECTION;
 
-        SimulatorResourceServer[] simulatorResourceServers = null;
-        try
-        {
-            simulatorResourceServers = SimulatorManager.createResource(CONFIG_PATH, count, null);
-        }
-        catch (Exception e)
-        {
-            result = true;
+        try {
+            String name = "test-collectionresource";
+            String uri = "/test/collectionresource";
+            String resourceType = "test.collectionresource";
+
+            resource = SimulatorManager.createResource(
+                    SimulatorResource.Type.COLLECTION, name, uri, resourceType);
+            resType = resource.getType();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
         }
 
-        assertTrue(simulatorResourceServers == null && result);
+        assertNotNull(resource);
+        assertTrue(resType == SimulatorResource.Type.COLLECTION);
     }
 
-    /**
-     * When configPath and listener are set to null
-     */
-    public void testCreateResourceCount_N03()
-    {
-        int count = 5;
-        boolean result = false;
+    public void testCreateResourceByType_N01() {
+        ExceptionType exType = ExceptionType.INVALID_ARGS;
 
-        SimulatorResourceServer[] simulatorResourceServers = null;
-        try
-        {
-            simulatorResourceServers = SimulatorManager.createResource(null, count, null);
-        }
-        catch (Exception e)
-        {
-            result = true;
+        try {
+            String name = "";
+            String uri = "/test/resource";
+            String resourceType = "test.resource";
+
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
 
-        assertTrue(simulatorResourceServers == null && result);
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-     * When count is set to 0
-     */
-    public void testCreateResourceCount_N04()
-    {
-        int count = 0;
+    public void testCreateResourceByType_N02() {
+        ExceptionType exType = ExceptionType.INVALID_ARGS;
 
-        SimulatorResourceServer[] simulatorResourceServers = createResources(count);
+        try {
+            String name = null;
+            String uri = "/test/resource";
+            String resourceType = "test.resource";
 
-        assertTrue(simulatorResourceServers == null);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-     * When count is set to -ve
-     */
+    public void testCreateResourceByType_N03() {
+        ExceptionType exType = ExceptionType.INVALID_ARGS;
 
-    public void testCreateResourceCount_N05()
-    {
-        int count = -10;
+        try {
+            String name = "test-resource";
+            String uri = "";
+            String resourceType = "test.resource";
 
-        SimulatorResourceServer[] simulatorResourceServers = createResources(count);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
 
-        assertTrue(simulatorResourceServers == null  );
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    public void testDeleteResource_P01()
-    {
-        boolean result = true;
+    public void testCreateResourceByType_N04() {
+        ExceptionType exType = ExceptionType.INVALID_ARGS;
 
-        SimulatorResourceServer simRes = createResource();
+        try {
+            String name = "test-resource";
+            String uri = null;
+            String resourceType = "test.resource";
 
-        try
-        {
-            SimulatorManager.deleteResource(simRes);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch (Exception e)
-        {
-            result = false;
-        }
 
-        assertTrue(result);
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    public void testDeleteResource_P02()
-    {
-        boolean result = true;
+    public void testCreateResourceByType_N05() {
+        ExceptionType exType = ExceptionType.INVALID_ARGS;
 
-        SimulatorResourceServer[] simResoruces = createResources(4);
+        try {
+            String name = "test-resource";
+            String uri = "/test/resource";;
+            String resourceType = "";
 
-        try
-        {
-            SimulatorManager.deleteResource(simResoruces[0]);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch (Exception e)
-        {
-            result = false;
-        }
 
-        for(SimulatorResourceServer simResServer : simResoruces)
-            deleteResource(simResServer);
-
-        assertTrue(result);
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    public void testDeleteResources_P01()
-    {
-        boolean result = true;
+    public void testCreateResourceByType_N06() {
+        ExceptionType exType = ExceptionType.INVALID_ARGS;
 
-        createResources(4);
+        try {
+            String name = "test-resource";
+            String uri = "/test/resource";;
+            String resourceType = null;
 
-        try
-        {
-            SimulatorManager.deleteResources(RESOURCE_TYPE);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch (Exception e)
-        {
-            result = false;
-        }
 
-        assertTrue(result);
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    public void testFindResouce_P01()
-    {
-        boolean result = true;
+    public void testFindResource_P01() {
+        // Creating sample single resource to test this API
+        SampleSingleResource testResource = new SampleSingleResource();
+        if (false == testResource.start())
+            return;
 
-        SimulatorResourceServer simulatorResourceServer = createResource();
+        CountDownLatch lockObject = new CountDownLatch(1);
+        boolean syncResult = false;
+        ObjectHolder<SimulatorRemoteResource> resourceHolder = new ObjectHolder<>();
+        FindResourceCallbackListener listener = new FindResourceCallbackListener(
+                lockObject, resourceHolder);
 
-        SimulatorRemoteResourceObject simulatorRemoteResource = new SimulatorRemoteResourceObject();
-
-        FindResourceListener findResourceListener = new FindResourceListener(lockObject, simulatorRemoteResource);
-
-        try
-        {
-            SimulatorManager.findResource(findResourceListener);
+        try {
+            String resourceType = testResource.mResourceType;
+            SimulatorManager.findResource(resourceType, listener);
+            syncResult = true;
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
         }
-        catch (Exception e)
-        {
-            result = false;
+
+        if (false == syncResult)
+            testResource.stop();
+
+        assertTrue(syncResult);
+
+        // Wait for the resource to found
+        try {
+            lockObject.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
         }
 
-        assertTrue(result);
-
-        deleteResource(simulatorResourceServer);
+        testResource.stop();
+        assertNotNull(resourceHolder.get());
     }
 
-    /**
-     * Pass null to listener
-     */
-    public void testFindResouce_N01()
-    {
-        boolean result = true;
+    public void testFindResource_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
 
-        SimulatorResourceServer simulatorResourceServer = createResource();
+        try {
+            String resourceType = "test.singleresource";
+            SimulatorManager.findResource(resourceType, null);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
 
-        try
-        {
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+
+    public void testFindResource_N02() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            String resourceType = "";
+            SimulatorManager.findResource(resourceType,
+                    new FindResourceListener() {
+                        @Override
+                        public void onResourceFound(
+                                SimulatorRemoteResource resource) {
+                        }
+                    });
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+
+    public void testFindResource_N03() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            String resourceType = null;
+            SimulatorManager.findResource(resourceType,
+                    new FindResourceListener() {
+                        @Override
+                        public void onResourceFound(
+                                SimulatorRemoteResource resource) {
+                        }
+                    });
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+
+    public void testFindResourceAll_P01() {
+        // Creating sample single resource to test this API
+        SampleSingleResource testResource = new SampleSingleResource();
+        if (false == testResource.start())
+            return;
+
+        CountDownLatch lockObject = new CountDownLatch(1);
+        boolean syncResult = false;
+        ObjectHolder<SimulatorRemoteResource> resourceHolder = new ObjectHolder<>();
+        FindResourceCallbackListener listener = new FindResourceCallbackListener(
+                lockObject, resourceHolder);
+
+        try {
+            SimulatorManager.findResource(listener);
+            syncResult = true;
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        if (false == syncResult)
+            testResource.stop();
+
+        assertTrue(syncResult);
+
+        // Wait for the resource to found
+        try {
+            lockObject.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
+
+        testResource.stop();
+        assertNotNull(resourceHolder.get());
+    }
+
+    public void testFindResourceAll_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
             SimulatorManager.findResource(null);
-            result = false;
-        }
-        catch (Exception e)
-        {
-            result = true;
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
 
-        assertTrue(result);
-
-        deleteResource(simulatorResourceServer);
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-     *  checking for crash
-     */
-    public void testSetDeviceInfo_P01()
-    {
-        SimulatorManager.setDeviceInfo("test");
+    public void testregisterDeviceInfo_P01() {
+        boolean syncResult = false;
+
+        try {
+            String deviceName = "test-device";
+            SimulatorManager.setDeviceInfo(deviceName);
+            syncResult = true;
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertTrue(syncResult);
     }
 
-    /**
-     *  checking for crash
-     *  Pass empty
-     */
-    public void testSetDeviceInfo_N01()
-    {
-        try
-        {
-            SimulatorManager.setDeviceInfo("");
+    public void testregisterDeviceInfo_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            String deviceName = "";
+            SimulatorManager.setDeviceInfo(deviceName);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch(Exception e)
-        {
-            System.out.println("Exception hit");
-        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-    *  checking for crash
-    * pass null
-    */
-    public void testSetDeviceInfo_N02()
-    {
-        try
-        {
-            SimulatorManager.setDeviceInfo(null);
+    public void testregisterDeviceInfo_N02() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            String deviceName = null;
+            SimulatorManager.setDeviceInfo(deviceName);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch(Exception e)
-        {
-            System.out.println("Exception hit");
-        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    public void testGetDeviceInfo_N01()
-    {
-        try
-        {
-            SimulatorManager.getDeviceInfo(null);
+    public void testregisterPlatformInfo_P01() {
+        boolean syncResult = false;
+
+        try {
+            PlatformInfo platformInfo = new PlatformInfo();
+            platformInfo.setManufacturerName("Samsung");
+
+            SimulatorManager.setPlatformInfo(platformInfo);
+            syncResult = true;
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
         }
-        catch(Exception e)
-        {
-            System.out.println(" Exception hit");
-        }
+
+        assertTrue(syncResult);
     }
 
-    /**
-     * Checking for crash
-     */
-    public void testSetPlatformInfo_P01()
-    {
-        PlatformInfo platformInfo = new PlatformInfo();
-        platformInfo.setDateOfManufacture("asdf");
-        platformInfo.setFirmwareVersion("asdf");
-        platformInfo.setHardwareVersion("asdf");
-        platformInfo.setManufacturerName("asdfdfg");
-        platformInfo.setManufacturerUrl("asdffdg");
-        platformInfo.setModelNumber("fddfg");
-        platformInfo.setOperationSystemVersion("sadfg");
-        platformInfo.setPlatformID("asdf");
-        platformInfo.setPlatformVersion("asdfgfdg");
-        platformInfo.setSupportUrl("adfgg");
-        platformInfo.setSystemTime("adsfgfg");
+    public void testregisterPlatformInfo_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
 
-        SimulatorManager.setPlatformInfo(platformInfo);
+        try {
+            PlatformInfo platformInfo = null;
+            SimulatorManager.setPlatformInfo(platformInfo);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
     }
 
-    /**
-     * Checking for crash
-     */
-    public void testSetPlatformInfo_N01()
-    {
-        try
-        {
-            SimulatorManager.setPlatformInfo(null);
+    public void testFindDevices_P01() {
+        CountDownLatch lockObject = new CountDownLatch(1);
+        boolean syncResult = false;
+        ObjectHolder<DeviceInfo> infoHolder = new ObjectHolder<>();
+        DeviceInfoListener listener = new DeviceInfoListener(lockObject,
+                infoHolder);
+
+        try {
+            SimulatorManager.setDeviceInfo("Samsung");
+            SimulatorManager.findDevices(null, listener);
+            syncResult = true;
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
         }
-        catch(Exception e)
-        {
-          System.out.println("Exception Hit");
+
+        assertTrue(syncResult);
+
+        // Wait for the asynchronous response
+        try {
+            lockObject.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
         }
+
+        assertNotNull(infoHolder.get());
     }
 
-    public void testGetPlatformInfo_N01()
-    {
-        try
-        {
-            SimulatorManager.getPlatformInfo(null);
+    public void testFindDevices_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            SimulatorManager.findDevices(null, null);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
         }
-        catch (Exception e)
-        {
-            System.out.println("Exception Hit");
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+
+    public void testGetPlatformInfo_P01() {
+        CountDownLatch lockObject = new CountDownLatch(1);
+        boolean syncResult = false;
+        ObjectHolder<PlatformInfo> infoHolder = new ObjectHolder<>();
+        PlatformInfoListener listener = new PlatformInfoListener(lockObject,
+                infoHolder);
+
+        try {
+            SimulatorManager.getPlatformInformation(null, listener);
+            syncResult = true;
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
         }
+
+        assertTrue(syncResult);
+
+        // Wait for the asynchronous response
+        try {
+            lockObject.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
+
+        assertNotNull(infoHolder.get());
+    }
+
+    public void testGetPlatformInfo_N01() {
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            SimulatorManager.getPlatformInformation(null, null);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+}
+
+class FindResourceCallbackListener implements FindResourceListener {
+    private CountDownLatch                        mLockObject;
+    private ObjectHolder<SimulatorRemoteResource> mResourceHolder;
+
+    public FindResourceCallbackListener(CountDownLatch lockObject,
+            ObjectHolder<SimulatorRemoteResource> resourceHolder) {
+        mLockObject = lockObject;
+        mResourceHolder = resourceHolder;
+    }
+
+    @Override
+    public void onResourceFound(SimulatorRemoteResource resource) {
+        mResourceHolder.set(resource);
+        mLockObject.countDown();
+    }
+}
+
+class DeviceInfoListener implements DeviceListener {
+    private CountDownLatch           mLockObject;
+    private ObjectHolder<DeviceInfo> mInfoHolder;
+
+    public DeviceInfoListener(CountDownLatch lockObject,
+            ObjectHolder<DeviceInfo> infoHolder) {
+        mLockObject = lockObject;
+        mInfoHolder = infoHolder;
+    }
+
+    @Override
+    public void onDeviceFound(String hostUri, DeviceInfo devInfo) {
+        mInfoHolder.set(devInfo);
+        mLockObject.countDown();
+    }
+}
+
+class PlatformInfoListener implements PlatformListener {
+
+    private CountDownLatch             mLockObject;
+    private ObjectHolder<PlatformInfo> mInfoHolder;
+
+    public PlatformInfoListener(CountDownLatch lockObject,
+            ObjectHolder<PlatformInfo> infoHolder) {
+        mLockObject = lockObject;
+        mInfoHolder = infoHolder;
+    }
+
+    @Override
+    public void onPlatformFound(String hostUri, PlatformInfo platformInfo) {
+        mInfoHolder.set(platformInfo);
+        mLockObject.countDown();
     }
 }

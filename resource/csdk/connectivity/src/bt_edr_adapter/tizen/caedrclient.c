@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <bluetooth.h>
+#include <bluetooth_internal.h>
 
 #include "caedrinterface.h"
 #include "camutex.h"
@@ -40,14 +41,10 @@
 #define MICROSECS_PER_SEC 1000000
 
 /**
- * Condition to check if OIC supported device is found.
+ * Maximum CoAP over TCP header length
+ * to know the total data length.
  */
-static ca_cond g_deviceDescCond = NULL;
-
-/**
- * Flag that will be set when EDR adapter is stopped.
- */
-static bool g_isStopping = false;
+#define EDR_MAX_HEADER_LEN  6
 
 /**
  * Mutex to synchronize the access to Bluetooth device information list.
@@ -71,9 +68,24 @@ static CAEDRDataReceivedCallback g_edrPacketReceivedCallback = NULL;
 static CAEDRErrorHandleCallback g_edrErrorHandler = NULL;
 
 /**
+ * Pending multicast data list to be sent.
+ */
+static u_arraylist_t *g_multicastDataList = NULL;
+
+/**
+ * Mutex to synchronize the access to Pending multicast data list.
+ */
+static ca_mutex g_multicastDataListMutex = NULL;
+
+/**
+ * To Store Adapter Mode information
+ */
+static bool g_isDiscoveryServer = false;
+
+/**
  * This function creates mutex.
  */
-static void CAEDRManagerInitializeMutex(void);
+static CAResult_t CAEDRManagerInitializeMutex(void);
 
 /**
  * This function frees mutex.
@@ -84,11 +96,6 @@ static void CAEDRManagerTerminateMutex(void);
  * This callback is registered to recieve data on any open RFCOMM connection.
  */
 static void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData);
-
-/**
- * This function starts device discovery.
- */
-static CAResult_t CAEDRStartDeviceDiscovery(void);
 
 /**
  * This function stops any ongoing service sevice search.
@@ -261,6 +268,10 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
         case BT_ADAPTER_DEVICE_DISCOVERY_FINISHED:
             {
                 OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Discovery finished!");
+                ca_mutex_lock(g_multicastDataListMutex);
+                u_arraylist_destroy(g_multicastDataList);
+                g_multicastDataList = NULL;
+                ca_mutex_unlock(g_multicastDataListMutex);
             }
             break;
 
@@ -304,9 +315,40 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                         ca_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
+
+                    int lengthData = u_arraylist_length(g_multicastDataList);
+                    for(int len = 0; len < lengthData; len++)
+                    {
+                        // Adding to pending list
+                        EDRData *multicastData =
+                            (EDRData *)u_arraylist_get(g_multicastDataList, len);
+                        if (NULL == multicastData)
+                        {
+                            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "multicastData is NULL");
+                            continue;
+                        }
+                        result = CAAddEDRDataToList(&device->pendingDataList, multicastData->data,
+                                                    multicastData->dataLength);
+                        if (CA_STATUS_OK != result)
+                        {
+                            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
+                                      "Failed to add data to pending list[%d]", result);
+                            continue;
+                        }
+                    }
+                    if (lengthData)
+                    {
+                        result = CAEDRClientConnect(device->remoteAddress, device->serviceUUID);
+                        if (CA_STATUS_OK != result)
+                        {
+                            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
+                                      "Failed to make RFCOMM connection[%d]", result);
+
+                            //Remove the data which added to pending list
+                            CARemoveEDRDataFromList(&device->pendingDataList);
+                        }
+                    }
                     device->serviceSearched = true;
-                    // Signal the wait to send the data.
-                    ca_cond_signal(g_deviceDescCond);
                     ca_mutex_unlock(g_edrDeviceListMutex);
                 }
                 else
@@ -375,7 +417,6 @@ CAResult_t CAEDRStartDeviceDiscovery(void)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-
     bool isDiscoveryStarted = false;
 
     // Check the device discovery state
@@ -398,6 +439,8 @@ CAResult_t CAEDRStartDeviceDiscovery(void)
             return CA_STATUS_FAILED;
         }
     }
+
+    g_isDiscoveryServer = true;
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -478,20 +521,11 @@ CAResult_t CAEDRClientSetCallbacks(void)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    g_isStopping = false;
     // Register for discovery and rfcomm socket connection callbacks
     bt_adapter_set_device_discovery_state_changed_cb(CAEDRDeviceDiscoveryCallback, NULL);
     bt_device_set_service_searched_cb(CAEDRServiceSearchedCallback, NULL);
     bt_socket_set_connection_state_changed_cb(CAEDRSocketConnectionStateCallback, NULL);
     bt_socket_set_data_received_cb(CAEDRDataRecvCallback, NULL);
-
-    // Start device discovery
-    CAResult_t result = CAEDRStartDeviceDiscovery();
-    if(CA_STATUS_OK != result)
-    {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Failed to Start Device discovery");
-        return CA_STATUS_FAILED;
-    }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -508,10 +542,6 @@ void CAEDRClientUnsetCallbacks(void)
     // Stop the device discovery process
     CAEDRStopDeviceDiscovery();
 
-    // Signal the conditional wait for discovery of devices.
-    g_isStopping = true;
-    ca_cond_signal(g_deviceDescCond);
-
     // reset bluetooth adapter callbacks
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Resetting the callbacks");
     bt_adapter_unset_device_discovery_state_changed_cb();
@@ -522,8 +552,9 @@ void CAEDRClientUnsetCallbacks(void)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
-void CAEDRManagerInitializeMutex(void)
+CAResult_t CAEDRManagerInitializeMutex(void)
 {
+    CAResult_t result = CA_STATUS_OK;
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (!g_edrDeviceListMutex)
@@ -531,12 +562,19 @@ void CAEDRManagerInitializeMutex(void)
         g_edrDeviceListMutex = ca_mutex_new();
     }
 
-    if (!g_deviceDescCond)
+    if (!g_multicastDataListMutex)
     {
-        g_deviceDescCond = ca_cond_new();
+        g_multicastDataListMutex = ca_mutex_new();
+    }
+
+    if (!g_edrDeviceListMutex || !g_multicastDataListMutex)
+    {
+        result = CA_STATUS_NOT_INITIALIZED;
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+
+    return result;
 }
 
 void CAEDRManagerTerminateMutex(void)
@@ -549,19 +587,21 @@ void CAEDRManagerTerminateMutex(void)
         g_edrDeviceListMutex = NULL;
     }
 
-    if (g_deviceDescCond)
+    if (g_multicastDataListMutex)
     {
-        ca_cond_free(g_deviceDescCond);
-        g_deviceDescCond = NULL;
+        ca_mutex_free(g_multicastDataListMutex);
+        g_multicastDataListMutex = NULL;
     }
+
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
-void CAEDRInitializeClient(ca_thread_pool_t handle)
+CAResult_t CAEDRClientInitialize()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
-    CAEDRManagerInitializeMutex();
+    CAResult_t result = CAEDRManagerInitializeMutex();
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    return result;
 }
 
 void CAEDRClientTerminate()
@@ -574,6 +614,14 @@ void CAEDRClientTerminate()
         ca_mutex_lock(g_edrDeviceListMutex);
         CADestroyEDRDeviceList(&g_edrDeviceList);
         ca_mutex_unlock(g_edrDeviceListMutex);
+    }
+
+    if (g_multicastDataListMutex)
+    {
+        ca_mutex_lock(g_multicastDataListMutex);
+        u_arraylist_destroy(g_multicastDataList);
+        g_multicastDataList = NULL;
+        ca_mutex_unlock(g_multicastDataListMutex);
     }
 
     // Free the mutex
@@ -728,32 +776,6 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
     // Send the packet to all OIC devices
     ca_mutex_lock(g_edrDeviceListMutex);
 
-    // Check if any device is discovered.
-    if (NULL == g_edrDeviceList)
-    {
-        // Wait for BT devices to be discovered.
-
-        // Number of times to wait for discovery to complete.
-        int const RETRIES = 5;
-
-        uint64_t const TIMEOUT = 2 * MICROSECS_PER_SEC;  // Microseconds
-
-        bool devicesDiscovered = false;
-        for (size_t i = 0; NULL == g_edrDeviceList && i < RETRIES && !g_isStopping;
-             ++i)
-        {
-            if (ca_cond_wait_for(g_deviceDescCond, g_edrDeviceListMutex,
-                                 TIMEOUT) == 0)
-            {
-                devicesDiscovered = true;
-            }
-        }
-        if (!devicesDiscovered || g_isStopping)
-        {
-            goto exit;
-        }
-    }
-
     EDRDeviceList *curList = g_edrDeviceList;
     CAResult_t result = CA_STATUS_FAILED;
     while (curList != NULL)
@@ -806,9 +828,44 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
             }
         }
     }
-exit:
+
     ca_mutex_unlock(g_edrDeviceListMutex);
 
+    if(g_isDiscoveryServer)
+    {
+        // Start the device Discovery.
+        result = CAEDRStartDeviceDiscovery();
+        if (CA_STATUS_OK == result)
+        {
+            OIC_LOG(INFO, EDR_ADAPTER_TAG, "Add the data to the multicast data list");
+
+            EDRData *multicastData = (EDRData *)OICCalloc(1, sizeof(EDRData));
+            if (NULL == multicastData)
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Malloc failed");
+                goto exit;
+            }
+            multicastData->data = OICCalloc(1, dataLength);
+            if (NULL == multicastData->data)
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Malloc failed");
+                goto exit;
+            }
+            memcpy(multicastData->data, data, dataLength);
+            multicastData->dataLength = dataLength;
+
+            // Add the data to pending multicast data list.
+            ca_mutex_lock(g_multicastDataListMutex);
+            if (NULL == g_multicastDataList)
+            {
+                g_multicastDataList = u_arraylist_create();
+            }
+            u_arraylist_add(g_multicastDataList, (void *)multicastData);
+            ca_mutex_unlock(g_multicastDataListMutex);
+        }
+    }
+
+exit:
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -893,18 +950,95 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
     }
     ca_mutex_unlock(g_edrDeviceListMutex);
 
+    //: TODO Need to check if 'check required for socket still connected or not'
     if (!device)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "There is no device!");
         return;
     }
 
-    uint32_t sentLength = 0;
+    CAConnectedDeviceInfo_t *deviceInfo =
+        (CAConnectedDeviceInfo_t *) CAEDRGetDeviceInfoFromAddress(device->remoteAddress);
 
-    g_edrPacketReceivedCallback(device->remoteAddress,
-                                (uint8_t *) data->data,
-                                (uint32_t) data->data_size,
-                                &sentLength);
+    if (!deviceInfo)
+    {
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Received Data from new device");
+        deviceInfo = (CAConnectedDeviceInfo_t *) OICCalloc(1, sizeof(*deviceInfo));
+        if (!deviceInfo)
+        {
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Out of memory");
+            return;
+        }
+
+        deviceInfo->state = STATE_CONNECTED;
+        deviceInfo->recvData = NULL;
+        deviceInfo->recvDataLen = 0;
+        deviceInfo->totalDataLen = 0;
+        result = CAEDRAddDeviceInfoToList(device->remoteAddress, deviceInfo);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Could not add device info to list!");
+            OICFree(deviceInfo);
+            return;
+        }
+    }
+
+    if (!deviceInfo->recvData)
+    {
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Callocing deviceInfo->recvData");
+        deviceInfo->recvData = OICCalloc(data->data_size, sizeof(uint8_t));
+        if (!deviceInfo->recvData)
+        {
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "out of memory");
+            return;
+        }
+    }
+
+    memcpy(deviceInfo->recvData + deviceInfo->recvDataLen, (const char*)data->data,
+           data->data_size);
+    deviceInfo->recvDataLen += data->data_size;
+
+    if (!deviceInfo->totalDataLen)
+    {
+        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+                ((unsigned char *)deviceInfo->recvData)[0] >> 4);
+        size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
+
+        if (deviceInfo->recvDataLen >= headerLen)
+        {
+            // get actual data length from coap over tcp header
+            deviceInfo->totalDataLen = coap_get_total_message_length(deviceInfo->recvData,
+                                                                     deviceInfo->recvDataLen);
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "total data length [%d] bytes", deviceInfo->totalDataLen);
+
+            uint8_t *newBuf = OICRealloc(deviceInfo->recvData, deviceInfo->totalDataLen);
+            if (!newBuf)
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "out of memory");
+                //Memory free
+                return;
+            }
+            deviceInfo->recvData = newBuf;
+        }
+    }
+
+    if (deviceInfo->totalDataLen == deviceInfo->recvDataLen)
+    {
+        if (g_edrPacketReceivedCallback)
+        {
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG,"data will be sent to callback routine: %s, %d",
+                      deviceInfo->recvData, deviceInfo->recvDataLen);
+
+            uint32_t sentLength = 0;
+            g_edrPacketReceivedCallback(device->remoteAddress, (void*) deviceInfo->recvData,
+                                        deviceInfo->recvDataLen, &sentLength);
+
+            OICFree(deviceInfo->recvData);
+            deviceInfo->recvData = NULL;
+            deviceInfo->recvDataLen = 0;
+            deviceInfo->totalDataLen = 0;
+        }
+    }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }

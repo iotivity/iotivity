@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _STRING_CONSTANTS_H_
-#define _STRING_CONSTANTS_H_
+#ifndef OC_STRING_CONSTANTS_H_
+#define OC_STRING_CONSTANTS_H_
 
 #include <string>
 
@@ -60,7 +60,9 @@ namespace OC
         static const char GENERAL_JSON_PARSE_FAILED[]  = "JSON Parser Error";
         static const char RESOURCE_UNREG_FAILED[]      = "Unregistering resource failed";
         static const char OPTION_ID_RANGE_INVALID[]    =
-                            "Error: OptionID valid only from 2048 to 3000 inclusive.";
+                            "Error: OptionID valid only If-Match(1), If-None-Match(5),"
+                            "Location-Path(8), Location-Query(20),"
+                            "and from 2048 to 3000 inclusive.";
         static const char NO_ERROR[]                   = "No Error";
         static const char RESOURCE_CREATED[]           = "Resource Created";
         static const char RESOURCE_DELETED[]           = "Resource Deleted";
@@ -108,7 +110,7 @@ namespace OC
         static const char PDM_DB_NOT_INITIALIZED[]     = "Provisioning DB is not initialized";
         static const char DUPLICATE_UUID[]             = "Duplicate UUID in DB";
         static const char INCONSISTENT_DB[]            = "Data in provisioning DB is inconsistent";
-
+        static const char AUTHENTICATION_FAILURE[]     = "Authentication failure";
     }
 
     namespace Error
@@ -143,5 +145,5 @@ namespace OC
 
 }
 
-#endif // _STRING_CONSTANTS_H_
+#endif // OC_STRING_CONSTANTS_H_
 

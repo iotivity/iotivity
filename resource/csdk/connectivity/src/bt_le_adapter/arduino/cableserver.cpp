@@ -29,23 +29,25 @@
 #include <boards.h>
 #include <RBL_nRF8001.h>
 
+#include "pdu.h"
 #include "caleinterface.h"
 #include "oic_malloc.h"
 #include "caadapterutils.h"
-#include "cafragmentation.h"
 
 #define TAG "LES"
+/**
+ * Maximum TCP header length.
+ */
+#define TCP_MAX_HEADER_LENGTH 6
 
 /**
- * @var    g_bleServerDataReceivedCallback
- * @brief  Maintains the callback to be notified on receival of network packets from other
- *           BLE devices
+ * Maintains the callback to be notified on receival of network packets from other
+ * BLE devices
  */
 static CABLEDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
 
 /**
- * @def MAX_EVENT_COUNT
- * @brief Maximum number of tries to get the event on BLE Shield address.
+ * Maximum number of tries to get the event on BLE Shield address.
  */
 #define MAX_EVENT_COUNT 20
 
@@ -53,16 +55,21 @@ static bool g_serverRunning = false;
 static uint8_t *g_coapBuffer = NULL;
 
 /**
- * @var g_receivedDataLen
- * @brief Actual length of data received.
+ * Actual length of data received.
  */
-static uint32_t g_receivedDataLen = 0;
+static size_t g_receivedDataLen = 0;
 
 /**
- * @var g_packetDataLen
- * @brief Total Length of data that is being fragmented.
+ * Total Length of data that is being fragmented.
  */
-static uint32_t g_packetDataLen = 0;
+static size_t g_packetDataLen = 0;
+
+void CAGetTCPHeaderDetails(unsigned char* recvBuffer, size_t *headerlen)
+{
+    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+        ((unsigned char *)recvBuffer)[0] >> 4);
+    *headerlen = coap_get_tcp_header_length_for_transport(transport);
+}
 
 void CACheckLEDataInternal()
 {
@@ -74,32 +81,43 @@ void CACheckLEDataInternal()
         if (NULL == g_coapBuffer)
         {
             OIC_LOG(DEBUG, TAG, "IN");
-            uint8_t headerArray[CA_HEADER_LENGTH];
-            while (CAIsLEDataAvailable() && g_receivedDataLen < CA_HEADER_LENGTH)
-            {
-                headerArray[g_receivedDataLen++] = CALEReadData();
-            }
-
-            g_packetDataLen = CAParseHeader(headerArray, CA_HEADER_LENGTH);
-
-            if (g_packetDataLen > COAP_MAX_PDU_SIZE)
-            {
-                OIC_LOG(ERROR, TAG, "len > pdu_size");
-                return;
-            }
-
-            g_coapBuffer = (uint8_t *)OICCalloc((size_t)g_packetDataLen, 1);
+            size_t bufSize = TCP_MAX_HEADER_LENGTH;
+            g_coapBuffer = (uint8_t *)OICCalloc(bufSize, 1);
             if (NULL == g_coapBuffer)
             {
                 OIC_LOG(ERROR, TAG, "malloc");
                 return;
             }
 
-            OIC_LOG(DEBUG, TAG, "OUT");
-            g_receivedDataLen = 0;
+            g_coapBuffer[g_receivedDataLen++] = CALEReadData();
+            size_t headerLen;
+            CAGetTCPHeaderDetails(g_coapBuffer, &headerLen);
+            OIC_LOG_V(INFO, TAG, "hdr len %d", headerLen);
+            while (CAIsLEDataAvailable() && g_receivedDataLen < headerLen)
+            {
+                g_coapBuffer[g_receivedDataLen++] = CALEReadData();
+            }
+
+            g_packetDataLen = coap_get_total_message_length(g_coapBuffer, g_receivedDataLen);
+            OIC_LOG_V(INFO, TAG, "pkt len %d", g_packetDataLen);
+            if (g_packetDataLen > COAP_MAX_PDU_SIZE)
+            {
+                OIC_LOG(ERROR, TAG, "len > pdu_size");
+                return;
+            }
+
+            bufSize = g_packetDataLen;
+            uint8_t *newBuf = (uint8_t *)OICRealloc(g_coapBuffer, bufSize);
+            if (NULL == newBuf)
+            {
+                OIC_LOG(ERROR, TAG, "malloc");
+                OICFree(g_coapBuffer);
+                g_coapBuffer = NULL;
+                return;
+            }
+            g_coapBuffer = newBuf;
         }
 
-        OIC_LOG(DEBUG, TAG, "IN");
         while (CAIsLEDataAvailable())
         {
             OIC_LOG(DEBUG, TAG, "In While loop");
@@ -117,6 +135,7 @@ void CACheckLEDataInternal()
                 }
 
                 g_receivedDataLen = 0;
+                OICFree(g_coapBuffer);
                 g_coapBuffer = NULL;
                 break;
             }
@@ -221,16 +240,25 @@ CAResult_t CAStartLEGattServer()
 CAResult_t CAStopLEGattServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    // There is no server running to stop.
+    CATerminateLEGattServer();
     OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAInitializeLEGattServer()
+{
+    OIC_LOG(DEBUG, TAG, "Initialize GATT Server");
     return CA_STATUS_OK;
 }
 
 void CATerminateLEGattServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ble_radio_reset();
-    g_serverRunning = false;
+    if (true == g_serverRunning)
+    {
+        ble_radio_reset();
+        g_serverRunning = false;
+    }
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }

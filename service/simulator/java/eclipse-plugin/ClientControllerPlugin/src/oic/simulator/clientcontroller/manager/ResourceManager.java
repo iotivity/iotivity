@@ -16,7 +16,7 @@
 
 package oic.simulator.clientcontroller.manager;
 
-import java.net.URL;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,41 +27,45 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IConfigurationUpload;
-import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
-import oic.simulator.clientcontroller.listener.IGetUIListener;
-import oic.simulator.clientcontroller.listener.IObserveUIListener;
-import oic.simulator.clientcontroller.listener.IPostUIListener;
-import oic.simulator.clientcontroller.listener.IPutUIListener;
-import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
-import oic.simulator.clientcontroller.listener.IVerificationUIListener;
-import oic.simulator.clientcontroller.remoteresource.MetaProperty;
-import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.remoteresource.RemoteResourceAttribute;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.utils.Utility;
-
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.graphics.Image;
+import org.oic.simulator.ArrayProperty;
+import org.oic.simulator.AttributeProperty;
+import org.oic.simulator.AttributeProperty.Type;
+import org.oic.simulator.AttributeValue;
+import org.oic.simulator.AttributeValue.TypeInfo;
+import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.BooleanProperty;
+import org.oic.simulator.DeviceInfo;
+import org.oic.simulator.DeviceListener;
+import org.oic.simulator.DoubleProperty;
 import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.ResourceAttribute;
-import org.oic.simulator.ResourceAttribute.Range;
-import org.oic.simulator.ResourceAttribute.Type;
+import org.oic.simulator.IntegerProperty;
+import org.oic.simulator.PlatformInfo;
+import org.oic.simulator.PlatformListener;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorManager;
+import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
-import org.oic.simulator.clientcontroller.IFindResourceListener;
-import org.oic.simulator.clientcontroller.IGetListener;
-import org.oic.simulator.clientcontroller.IObserveListener;
-import org.oic.simulator.clientcontroller.IPostListener;
-import org.oic.simulator.clientcontroller.IPutListener;
-import org.oic.simulator.clientcontroller.IVerificationListener;
-import org.oic.simulator.clientcontroller.SimulatorObserveType;
-import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
-import org.oic.simulator.clientcontroller.SimulatorVerificationType;
+import org.oic.simulator.SimulatorResult;
+import org.oic.simulator.StringProperty;
+import org.oic.simulator.client.FindResourceListener;
+import org.oic.simulator.client.SimulatorRemoteResource;
+import org.oic.simulator.client.SimulatorRemoteResource.GetResponseListener;
+import org.oic.simulator.client.SimulatorRemoteResource.ObserveNotificationListener;
+import org.oic.simulator.client.SimulatorRemoteResource.PostResponseListener;
+import org.oic.simulator.client.SimulatorRemoteResource.PutResponseListener;
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
+import org.oic.simulator.client.SimulatorRemoteResource.VerificationListener;
+import org.oic.simulator.client.SimulatorRequestModel;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.remoteresource.DeviceAndPlatformInfo;
+import oic.simulator.clientcontroller.remoteresource.MetaProperty;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.utils.AttributeValueStringConverter;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
 
 /**
  * This class acts as an interface between the simulator java SDK and the
@@ -72,128 +76,261 @@ import org.oic.simulator.clientcontroller.SimulatorVerificationType;
  */
 public class ResourceManager {
 
-    private Set<String>                               lastKnownSearchTypes;
+    private Set<String>                        lastKnownSearchTypes;
 
-    private RemoteResource                            currentResourceInSelection;
+    private RemoteResource                     currentResourceInSelection;
 
-    private IFindResourceListener                     findResourceListener;
-    private IGetListener                              getListener;
-    private IPutListener                              putListener;
-    private IPostListener                             postListener;
-    private IObserveListener                          observeListener;
-    private IVerificationListener                     verifyListener;
+    private FindResourceListener               findResourceListener;
+    private GetResponseListener                getListener;
+    private PutResponseListener                putListener;
+    private PostResponseListener               postListener;
+    private ObserveNotificationListener        observeListener;
+    private VerificationListener               verifyListener;
+    private DeviceListener                     deviceListener;
+    private PlatformListener                   platformListener;
 
-    private ResponseSynchronizerThread                synchronizerThread;
+    private ResponseSynchronizerThread         synchronizerThread;
 
-    private Thread                                    threadHandle;
-
-    private List<IFindResourceUIListener>             findResourceUIListeners;
-    private List<IResourceSelectionChangedUIListener> resourceSelectionChangedUIListeners;
-    private List<IGetUIListener>                      getUIListeners;
-    private List<IPutUIListener>                      putUIListeners;
-    private List<IPostUIListener>                     postUIListeners;
-    private List<IObserveUIListener>                  observeUIListeners;
-    private List<IVerificationUIListener>             verificationUIListeners;
-    private List<IConfigurationUpload>                configUploadUIListeners;
+    private Thread                             threadHandle;
 
     // Map with Server ID as key and the complete object as the value
-    private Map<String, RemoteResource>               resourceMap;
-    private List<RemoteResource>                      favoriteResources;
+    private Map<String, RemoteResource>        resourceMap;
+    private List<RemoteResource>               favoriteResources;
     // Maintaining a list of resource URIs for favorite resources feature.
-    private List<String>                              favoriteURIList;
+    private List<String>                       favoriteURIList;
 
     // Maintaining a list of observed resource URIs.
-    private List<String>                              observedResourceURIList;
+    private List<String>                       observedResourceURIList;
+
+    private Map<String, DeviceAndPlatformInfo> hostDeviceAndPlatformMap;
 
     public ResourceManager() {
         resourceMap = new HashMap<String, RemoteResource>();
         favoriteResources = new ArrayList<RemoteResource>();
         favoriteURIList = new ArrayList<String>();
         observedResourceURIList = new ArrayList<String>();
-        findResourceUIListeners = new ArrayList<IFindResourceUIListener>();
-        resourceSelectionChangedUIListeners = new ArrayList<IResourceSelectionChangedUIListener>();
-        getUIListeners = new ArrayList<IGetUIListener>();
-        putUIListeners = new ArrayList<IPutUIListener>();
-        postUIListeners = new ArrayList<IPostUIListener>();
-        observeUIListeners = new ArrayList<IObserveUIListener>();
-        verificationUIListeners = new ArrayList<IVerificationUIListener>();
-        configUploadUIListeners = new ArrayList<IConfigurationUpload>();
+        hostDeviceAndPlatformMap = new HashMap<String, DeviceAndPlatformInfo>();
 
-        findResourceListener = new IFindResourceListener() {
+        findResourceListener = new FindResourceListener() {
 
             @Override
-            public void onResourceCallback(
-                    final SimulatorRemoteResource resourceN) {
+            public void onResourceFound(final SimulatorRemoteResource resourceN) {
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
-                        System.out.println("onResourceCallback() entry");
                         if (null == resourceN) {
                             return;
                         }
-                        // If resource already exist, then ignore it.
+
+                        // Ignore the response if the resource is a device or
+                        // platform.
+                        Vector<String> resTypes = resourceN.getResourceTypes();
+                        if (null != resTypes
+                                && (resTypes.contains("oic.wk.d") || resTypes
+                                        .contains("oic.wk.p"))) {
+                            return;
+                        }
+
+                        // If id is not available, then it cannot be added to
+                        // the local map as null value should not be allowed as
+                        // key.
                         String uid = resourceN.getId();
                         if (null == uid) {
                             return;
                         }
+
+                        // If resource already exist, then ignore it.
                         boolean exist = isUidExist(uid);
                         if (exist) {
-                            System.out.println("Duplicate resource found: ["
-                                    + uid + "]");
+                            handleExistingResource(resourceN);
                             return;
                         }
 
-                        // Fetch the resource data
-                        RemoteResource resource = fetchResourceDetails(resourceN);
-                        if (null == resource) {
-                            return;
-                        }
+                        RemoteResource resource = new RemoteResource();
+                        resource.setRemoteResourceRef(resourceN);
 
-                        resource.setResource(resourceN);
+                        boolean observeRequestSent = false;
 
-                        String uri = resource.getResourceURI();
-                        if (null != uri) {
+                        String uri = resourceN.getURI();
+                        if (null != uri && uri.trim().length() > 0) {
                             // Add resource to favorite list if it was in
                             // favorites list during find/refresh operation.
-                            if (favoriteURIList.contains(uri)) {
-                                addResourcetoFavorites(resource);
+                            synchronized (favoriteURIList) {
+                                if (favoriteURIList.contains(uri)) {
+                                    addResourcetoFavorites(resource);
+                                }
+                            } // Add resource to observed resources list if it
+                              // was
+                              // in observe list during find/refresh operation.
+                            synchronized (observedResourceURIList) {
+                                if (observedResourceURIList.contains(uri)) {
+                                    observeRequestSent = sendObserveRequest(resource);
+                                }
                             }
-                            // Add resource to observed resources list if it was
-                            // in observe list during find/refresh operation.
-                            if (observedResourceURIList.contains(uri)) {
-                                resource.setObserved(true);
-                            }
+                        } else {
+                            Activator
+                                    .getDefault()
+                                    .getLogManager()
+                                    .log(Level.INFO.ordinal(), new Date(),
+                                            "Found a resource without URI. Ignoring it.");
+                            return;
                         }
 
                         // Add the resource in local data structure
                         addResourceDetails(resource);
 
                         // Notify the UI listener
-                        newResourceFoundNotification(resource);
+                        UiListenerHandler.getInstance()
+                                .newResourceFoundNotification(resource);
 
-                        // Send an initial GET request to get the resource
-                        // attributes
-                        try {
-                            resourceN.get(null, getListener);
-                        } catch (SimulatorException e) {
-                            Activator
-                                    .getDefault()
-                                    .getLogManager()
-                                    .log(Level.ERROR.ordinal(),
-                                            new Date(),
-                                            "[" + e.getClass().getSimpleName()
-                                                    + "]" + e.code().toString()
-                                                    + "-" + e.message());
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.INFO.ordinal(),
+                                        new Date(),
+                                        "Resource Found [" + resourceN.getURI()
+                                                + "].");
+
+                        // Send an initial GET request(If observe request has
+                        // not been sent already) to get the resource
+                        // attributes on an interface supported by the resource.
+                        if (!observeRequestSent) {
+                            try {
+                                String ifType = null;
+                                Vector<String> resInterfaces = resourceN
+                                        .getResourceInterfaces();
+                                if (null != resInterfaces) {
+                                    ifType = resInterfaces.get(0);
+                                }
+                                resourceN.get(
+                                        formQueryParameters(ifType, null),
+                                        getListener);
+                            } catch (SimulatorException e) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(),
+                                                new Date(),
+                                                Utility.getSimulatorErrorString(
+                                                        e, null));
+                            }
+                        }
+
+                        // Get the device information
+                        if (!isDeviceInfoExist(resourceN.getHost())) {
+                            try {
+                                SimulatorManager.findDevices(resource
+                                        .getRemoteResourceRef().getHost(),
+                                        deviceListener);
+                            } catch (SimulatorException e) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(),
+                                                new Date(),
+                                                Utility.getSimulatorErrorString(
+                                                        e, null));
+                            }
+                        }
+
+                        // Get the platform information
+                        if (!isPlatformInfoExist(resourceN.getHost())) {
+                            try {
+                                SimulatorManager.getPlatformInformation(
+                                        resource.getRemoteResourceRef()
+                                                .getHost(), platformListener);
+                            } catch (SimulatorException e) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(),
+                                                new Date(),
+                                                Utility.getSimulatorErrorString(
+                                                        e, null));
+                            }
                         }
                     }
                 });
             }
         };
 
-        getListener = new IGetListener() {
+        // Listeners for device and platform information.
+        deviceListener = new DeviceListener() {
+
             @Override
-            public void onGetCompleted(final String uid,
+            public void onDeviceFound(final String host,
+                    final DeviceInfo deviceInfo) {
+                if (null == deviceInfo || null == host) {
+                    return;
+                }
+                synchronizerThread.addToQueue(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (hostDeviceAndPlatformMap) {
+                            DeviceAndPlatformInfo info = hostDeviceAndPlatformMap
+                                    .get(host);
+                            if (null == info) {
+                                info = new DeviceAndPlatformInfo();
+                                info.setHost(host);
+                                hostDeviceAndPlatformMap.put(host, info);
+                            }
+                            info.setDeviceInfo(deviceInfo);
+                        }
+
+                        // Notify UI listeners
+                        UiListenerHandler.getInstance()
+                                .deviceInfoReceivedNotification();
+                    }
+                });
+            }
+        };
+
+        platformListener = new PlatformListener() {
+
+            @Override
+            public void onPlatformFound(final String host,
+                    final PlatformInfo platformInfo) {
+                if (null == platformInfo || null == host) {
+                    return;
+                }
+                synchronizerThread.addToQueue(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (hostDeviceAndPlatformMap) {
+                            DeviceAndPlatformInfo info = hostDeviceAndPlatformMap
+                                    .get(host);
+                            if (null == info) {
+                                info = new DeviceAndPlatformInfo();
+                                info.setHost(host);
+                                hostDeviceAndPlatformMap.put(host, info);
+                            }
+                            info.setPlatformInfo(platformInfo);
+                        }
+
+                        // Notify UI listeners
+                        UiListenerHandler.getInstance()
+                                .platformInfoReceivedNotification();
+                    }
+                });
+            }
+        };
+
+        getListener = new GetResponseListener() {
+            @Override
+            public void onGetResponse(final String uid,
+                    final SimulatorResult result,
                     final SimulatorResourceModel resourceModelN) {
+                if (result != SimulatorResult.SIMULATOR_OK) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "["
+                                            + result.toString()
+                                            + "] Received error response for GET request.");
+                    return;
+                }
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
@@ -203,27 +340,31 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            getCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .getCompleteNotification(resource);
                         }
-                    }
-                });
-            }
-
-            @Override
-            public void onGetFailed(Throwable th) {
-                synchronizerThread.addToQueue(new Runnable() {
-                    @Override
-                    public void run() {
                     }
                 });
             }
         };
 
-        putListener = new IPutListener() {
+        putListener = new PutResponseListener() {
 
             @Override
-            public void onPutCompleted(final String uid,
+            public void onPutResponse(final String uid,
+                    final SimulatorResult result,
                     final SimulatorResourceModel resourceModelN) {
+                if (result != SimulatorResult.SIMULATOR_OK) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "["
+                                            + result.toString()
+                                            + "] Received error response for PUT request.");
+                    return;
+                }
                 synchronizerThread.addToQueue(new Thread() {
                     @Override
                     public void run() {
@@ -233,26 +374,30 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            putCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .putCompleteNotification(resource);
                         }
-                    }
-                });
-            }
-
-            @Override
-            public void onPutFailed(Throwable th) {
-                synchronizerThread.addToQueue(new Runnable() {
-                    @Override
-                    public void run() {
                     }
                 });
             }
         };
 
-        postListener = new IPostListener() {
+        postListener = new PostResponseListener() {
             @Override
-            public void onPostCompleted(final String uid,
+            public void onPostResponse(final String uid,
+                    final SimulatorResult result,
                     final SimulatorResourceModel resourceModelN) {
+                if (result != SimulatorResult.SIMULATOR_OK) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "["
+                                            + result.toString()
+                                            + "] Received error response for POST request.");
+                    return;
+                }
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
@@ -262,28 +407,19 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            postCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .postCompleteNotification(resource);
                         }
-                    }
-                });
-            }
-
-            @Override
-            public void onPostFailed(Throwable th) {
-                synchronizerThread.addToQueue(new Runnable() {
-                    @Override
-                    public void run() {
                     }
                 });
             }
         };
 
-        observeListener = new IObserveListener() {
+        observeListener = new ObserveNotificationListener() {
 
             @Override
-            public void onObserveCompleted(final String uid,
+            public void onObserveNotification(final String uid,
                     final SimulatorResourceModel resourceModelN, final int seq) {
-                System.out.println("ResourceManager: onObserveCallback()");
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
@@ -293,23 +429,18 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            observeCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .observeCompleteNotification(resource);
                         }
                     }
                 });
             }
-
-            @Override
-            public void onObserveFailed(Throwable th) {
-                // TODO Auto-generated method stub
-            }
         };
 
-        verifyListener = new IVerificationListener() {
+        verifyListener = new VerificationListener() {
 
             @Override
             public void onVerificationStarted(final String uid, final int autoId) {
-                System.out.println("onVefificationStarted: " + autoId);
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
@@ -320,10 +451,13 @@ public class ResourceManager {
                         // Update the automation status.
                         resource.updateAutomationStatus(autoId, true);
 
-                        int autoType = resource.getAutomationtype(autoId);
+                        RequestType reqType = resource
+                                .getAutomationtype(autoId);
 
                         // Notify the listeners.
-                        verificationStartedNotification(resource, autoType);
+                        UiListenerHandler.getInstance()
+                                .verificationStartedNotification(resource,
+                                        reqType);
                     }
                 });
             }
@@ -331,7 +465,6 @@ public class ResourceManager {
             @Override
             public void onVerificationCompleted(final String uid,
                     final int autoId) {
-                System.out.println("onVefificationCompleted: " + autoId);
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
@@ -342,17 +475,19 @@ public class ResourceManager {
                         // Update the automation status.
                         resource.updateAutomationStatus(autoId, false);
 
-                        int autoType = resource.getAutomationtype(autoId);
+                        RequestType reqType = resource
+                                .getAutomationtype(autoId);
 
                         // Notify the listeners.
-                        verificationCompletedNotification(resource, autoType);
+                        UiListenerHandler.getInstance()
+                                .verificationCompletedNotification(resource,
+                                        reqType);
                     }
                 });
             }
 
             @Override
             public void onVerificationAborted(final String uid, final int autoId) {
-                System.out.println("onVefificationAborted: " + autoId);
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
@@ -363,10 +498,13 @@ public class ResourceManager {
                         // Update the automation status.
                         resource.updateAutomationStatus(autoId, false);
 
-                        int autoType = resource.getAutomationtype(autoId);
+                        RequestType reqType = resource
+                                .getAutomationtype(autoId);
 
                         // Notify the listeners.
-                        verificationAbortedNotification(resource, autoType);
+                        UiListenerHandler.getInstance()
+                                .verificationAbortedNotification(resource,
+                                        reqType);
                     }
                 });
             }
@@ -376,6 +514,154 @@ public class ResourceManager {
         threadHandle = new Thread(synchronizerThread);
         threadHandle.setName("Simulator Client Controller Event Queue");
         threadHandle.start();
+    }
+
+    private void handleExistingResource(
+            final SimulatorRemoteResource newNativeResourceRef) {
+        if (null == newNativeResourceRef) {
+            return;
+        }
+
+        RemoteResource existingResource = getResource(newNativeResourceRef
+                .getId());
+        if (null == existingResource) {
+            return;
+        }
+
+        SimulatorRemoteResource existingNativeResourceRef = existingResource
+                .getRemoteResourceRef();
+        if (null == existingNativeResourceRef) {
+            return;
+        }
+
+        // Compare the resource properties(resource types, interface types and
+        // observable)
+        // of the received resource with the existing resource.
+        // If there is a change, then replace the existing resource properties
+        // and send
+        // a GET request to receive the latest resource representation.
+        boolean change = compareResourceProperties(existingNativeResourceRef,
+                newNativeResourceRef);
+        if (!change) {
+            return;
+        }
+
+        existingResource.setRemoteResourceRef(newNativeResourceRef);
+
+        try {
+            String ifType = null;
+            Vector<String> resInterfaces = newNativeResourceRef
+                    .getResourceInterfaces();
+            if (null != resInterfaces) {
+                ifType = resInterfaces.get(0);
+            }
+            newNativeResourceRef.get(formQueryParameters(ifType, null),
+                    getListener);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
+        }
+
+        // Notify the UI listener which may be looking for this callback for
+        // further processing.
+        UiListenerHandler.getInstance().newResourceFoundNotification(
+                existingResource);
+
+        // Notify the UI listeners by re-selecting the same resource.
+        // This is just to refresh the resource properties being shown.
+        RemoteResource resourceInSelection = getCurrentResourceInSelection();
+        if (null != resourceInSelection) {
+            if (resourceInSelection.getRemoteResourceRef().getURI()
+                    .equals(newNativeResourceRef.getURI())) {
+                UiListenerHandler.getInstance()
+                        .resourceSelectionChangedUINotification(
+                                existingResource);
+            }
+        }
+    }
+
+    private boolean compareResourceProperties(
+            SimulatorRemoteResource existingNativeResourceRef,
+            SimulatorRemoteResource newNativeResourceRef) {
+        boolean change = false;
+
+        try {
+            // Compare URI.
+            if (!existingNativeResourceRef.getURI().equals(
+                    existingNativeResourceRef.getURI())) {
+                change = true;
+            }
+
+            // Compare ID.
+            if (!change
+                    && !existingNativeResourceRef.getId().equals(
+                            existingNativeResourceRef.getId())) {
+                change = true;
+            }
+
+            // Compare Host.
+            if (!change
+                    && !existingNativeResourceRef.getHost().equals(
+                            existingNativeResourceRef.getHost())) {
+                change = true;
+            }
+
+            // Compare Observable flag.
+            if (!change
+                    && existingNativeResourceRef.isObservable() != existingNativeResourceRef
+                            .isObservable()) {
+                change = true;
+            }
+
+            // Compare Resource Types.
+            Vector<String> existingResTypes = existingNativeResourceRef
+                    .getResourceTypes();
+            Vector<String> newResTypes = newNativeResourceRef
+                    .getResourceTypes();
+
+            if (!change) {
+                if (existingResTypes.size() != newResTypes.size()) {
+                    change = true;
+                } else {
+                    // Compare both lists.
+                    Iterator<String> itr = existingResTypes.iterator();
+                    while (itr.hasNext()) {
+                        if (!newResTypes.contains(itr.next())) {
+                            change = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Compare Interface Types.
+            Vector<String> existingInterfaceTypes = existingNativeResourceRef
+                    .getResourceInterfaces();
+            Vector<String> newInterfaceTypes = newNativeResourceRef
+                    .getResourceInterfaces();
+
+            if (!change) {
+                if (existingInterfaceTypes.size() != newInterfaceTypes.size()) {
+                    change = true;
+                } else {
+                    // Compare both lists.
+                    Iterator<String> itr = existingInterfaceTypes.iterator();
+                    while (itr.hasNext()) {
+                        if (!newInterfaceTypes.contains(itr.next())) {
+                            change = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            change = true;
+        }
+
+        return change;
     }
 
     private RemoteResource handleResponse(String uid,
@@ -391,18 +677,32 @@ public class ResourceManager {
             return null;
         }
 
-        resource.setResourceModel(resourceModelN);
-        Map<String, RemoteResourceAttribute> attributeMap = fetchResourceAttributesFromModel(resourceModelN);
+        resource.setResourceModelRef(resourceModelN);
+        resource.setResourceRepresentation(resourceModelN);
 
-        // TODO: For debugging
-        if (null != attributeMap) {
-            RemoteResourceAttribute.printAttributes(attributeMap);
-            System.out.println("Attributes found: " + (null != attributeMap));
-            System.out.println("No of attributes: " + attributeMap.size());
-
-            resource.setResourceAttributesMap(attributeMap);
-        }
         return resource;
+    }
+
+    public synchronized boolean isDeviceInfoExist(String host) {
+        DeviceAndPlatformInfo info = hostDeviceAndPlatformMap.get(host);
+        if (null == info) {
+            return false;
+        }
+        if (null == info.getDeviceInfo()) {
+            return false;
+        }
+        return true;
+    }
+
+    public synchronized boolean isPlatformInfoExist(String host) {
+        DeviceAndPlatformInfo info = hostDeviceAndPlatformMap.get(host);
+        if (null == info) {
+            return false;
+        }
+        if (null == info.getPlatformInfo()) {
+            return false;
+        }
+        return true;
     }
 
     private static class ResponseSynchronizerThread implements Runnable {
@@ -446,98 +746,6 @@ public class ResourceManager {
         }
     }
 
-    public void addResourceSelectionChangedUIListener(
-            IResourceSelectionChangedUIListener resourceSelectionChangedUIListener) {
-        synchronized (resourceSelectionChangedUIListeners) {
-            resourceSelectionChangedUIListeners
-                    .add(resourceSelectionChangedUIListener);
-        }
-    }
-
-    public void addGetUIListener(IGetUIListener getUIListener) {
-        synchronized (getUIListeners) {
-            getUIListeners.add(getUIListener);
-        }
-    }
-
-    public void addPutUIListener(IPutUIListener putUIListener) {
-        synchronized (putUIListeners) {
-            putUIListeners.add(putUIListener);
-        }
-    }
-
-    public void addPostUIListener(IPostUIListener postUIListener) {
-        synchronized (postUIListeners) {
-            postUIListeners.add(postUIListener);
-        }
-    }
-
-    public void addObserveUIListener(IObserveUIListener observeUIListener) {
-        synchronized (observeUIListeners) {
-            observeUIListeners.add(observeUIListener);
-        }
-    }
-
-    public void addVerificationUIListener(
-            IVerificationUIListener verificationUIListener) {
-        synchronized (verificationUIListeners) {
-            verificationUIListeners.add(verificationUIListener);
-        }
-    }
-
-    public void addConfigUploadUIListener(IConfigurationUpload configListener) {
-        synchronized (configUploadUIListeners) {
-            configUploadUIListeners.add(configListener);
-        }
-    }
-
-    public void removeResourceSelectionChangedUIListener(
-            IResourceSelectionChangedUIListener listener) {
-        synchronized (resourceSelectionChangedUIListeners) {
-            if (null != listener
-                    && resourceSelectionChangedUIListeners.size() > 0) {
-                resourceSelectionChangedUIListeners.remove(listener);
-            }
-        }
-    }
-
-    public void removeGetUIListener(IGetUIListener getUIListener) {
-        synchronized (getUIListeners) {
-            getUIListeners.remove(getUIListener);
-        }
-    }
-
-    public void removePutUIListener(IPutUIListener putUIListener) {
-        synchronized (putUIListeners) {
-            putUIListeners.remove(putUIListener);
-        }
-    }
-
-    public void removePostUIListener(IPostUIListener postUIListener) {
-        synchronized (postUIListeners) {
-            postUIListeners.remove(postUIListener);
-        }
-    }
-
-    public void removeObserveUIListener(IObserveUIListener observeUIListener) {
-        synchronized (observeUIListeners) {
-            observeUIListeners.remove(observeUIListener);
-        }
-    }
-
-    public void removeVerificationUIListener(
-            IVerificationUIListener verificationUIListener) {
-        synchronized (verificationUIListeners) {
-            verificationUIListeners.remove(verificationUIListener);
-        }
-    }
-
-    public void removeConfigUploadUIListener(IConfigurationUpload configListener) {
-        synchronized (configUploadUIListeners) {
-            configUploadUIListeners.remove(configListener);
-        }
-    }
-
     public void addResourcetoFavorites(RemoteResource resource) {
         if (null == resource) {
             return;
@@ -545,7 +753,6 @@ public class ResourceManager {
         resource.setFavorite(true);
         synchronized (favoriteResources) {
             favoriteResources.add(resource);
-            favoriteURIList.add(resource.getResourceURI());
         }
     }
 
@@ -559,18 +766,28 @@ public class ResourceManager {
         }
     }
 
+    public void addResourceURItoFavorites(RemoteResource resource) {
+        if (null == resource) {
+            return;
+        }
+        synchronized (favoriteURIList) {
+            favoriteURIList.add(resource.getRemoteResourceRef().getURI());
+        }
+    }
+
     public void removeResourceURIFromFavorites(RemoteResource resource) {
         if (null == resource) {
             return;
         }
         synchronized (favoriteURIList) {
-            favoriteURIList.remove(resource.getResourceURI());
+            favoriteURIList.remove(resource.getRemoteResourceRef().getURI());
         }
     }
 
     public void addObservedResourceURI(String resourceURI) {
         synchronized (observedResourceURIList) {
-            observedResourceURIList.add(resourceURI);
+            if (!observedResourceURIList.contains(resourceURI))
+                observedResourceURIList.add(resourceURI);
         }
     }
 
@@ -581,7 +798,7 @@ public class ResourceManager {
     }
 
     public boolean isResourceObserved(String resourceURI) {
-        boolean observed = false;
+        boolean observed;
         synchronized (observedResourceURIList) {
             observed = observedResourceURIList.contains(resourceURI);
         }
@@ -600,45 +817,10 @@ public class ResourceManager {
     private void addResourceDetails(RemoteResource remoteResource) {
         if (null != remoteResource) {
             synchronized (resourceMap) {
-                resourceMap.put(remoteResource.getuId(), remoteResource);
+                resourceMap.put(remoteResource.getRemoteResourceRef().getId(),
+                        remoteResource);
             }
         }
-    }
-
-    public void addFindresourceUIListener(IFindResourceUIListener listener) {
-        if (null == listener) {
-            return;
-        }
-        synchronized (findResourceUIListeners) {
-            findResourceUIListeners.add(listener);
-        }
-    }
-
-    public void removeFindresourceUIListener(IFindResourceUIListener listener) {
-        if (null == listener) {
-            return;
-        }
-        synchronized (findResourceUIListeners) {
-            findResourceUIListeners.remove(listener);
-        }
-    }
-
-    private RemoteResource fetchResourceDetails(
-            SimulatorRemoteResource remoteResourceN) {
-        if (null == remoteResourceN) {
-            return null;
-        }
-        RemoteResource remoteResource = new RemoteResource();
-        remoteResource.setuId(remoteResourceN.getId());
-        remoteResource.setResourceURI(remoteResourceN.getUri());
-        remoteResource.setHost(remoteResourceN.getHost());
-        remoteResource.setResourceTypes(remoteResourceN.getResourceTypes());
-        remoteResource.setResourceInterfaces(remoteResourceN
-                .getResourceInterfaces());
-        remoteResource.setConnectivityType(remoteResourceN
-                .getConnectivityType());
-        remoteResource.setObservable(remoteResourceN.getIsObservable());
-        return remoteResource;
     }
 
     private boolean isUidExist(String uid) {
@@ -660,284 +842,6 @@ public class ResourceManager {
         return resource;
     }
 
-    private Map<String, RemoteResourceAttribute> fetchResourceAttributesFromModel(
-            SimulatorResourceModel resourceModelN) {
-        Map<String, RemoteResourceAttribute> resourceAttributeMap = null;
-        if (null != resourceModelN) {
-            Map<String, ResourceAttribute> attributeMapN;
-            try {
-                attributeMapN = resourceModelN.getAttributes();
-            } catch (SimulatorException e) {
-                Activator
-                        .getDefault()
-                        .getLogManager()
-                        .log(Level.ERROR.ordinal(),
-                                new Date(),
-                                "[" + e.getClass().getSimpleName() + "]"
-                                        + e.code().toString() + "-"
-                                        + e.message());
-                return null;
-            }
-            if (null != attributeMapN) {
-                resourceAttributeMap = new HashMap<String, RemoteResourceAttribute>();
-
-                Set<String> attNameSet = attributeMapN.keySet();
-                String attName;
-                Object attValueObj;
-                ResourceAttribute attributeN;
-                RemoteResourceAttribute attribute;
-                Iterator<String> attNameItr = attNameSet.iterator();
-                while (attNameItr.hasNext()) {
-                    attName = attNameItr.next();
-                    attributeN = attributeMapN.get(attName);
-                    if (null != attributeN) {
-                        attribute = new RemoteResourceAttribute();
-                        attribute.setResourceAttribute(attributeN);
-                        attribute.setAttributeName(attName);
-
-                        attValueObj = attributeN.getValue();
-                        if (null != attValueObj) {
-                            attribute.setAttributeValue(attValueObj);
-                        }
-
-                        // Set the attribute type
-                        attribute.setAttValBaseType(attributeN.getBaseType());
-                        attribute.setAttValType(attributeN.getType());
-
-                        // Set the range and allowed values
-                        Range range = attributeN.getRange();
-                        if (null != range) {
-                            attribute.setMinValue(range.getMin());
-                            attribute.setMaxValue(range.getMax());
-                        } else {
-                            Object[] values = attributeN.getAllowedValues();
-                            if (null != values && values.length > 0) {
-                                List<Object> valueList = new ArrayList<Object>();
-                                for (Object obj : values) {
-                                    valueList.add(obj);
-                                }
-                                attribute.setAllowedValues(valueList);
-                            }
-                            /*
-                             * Type baseType = attribute.getAttValBaseType();
-                             *
-                             * if(baseType == Type.INT) { //int[] values =
-                             * attributeN.getAllowedValues();
-                             * attribute.setAllowedValues
-                             * (attributeN.getAllowedValues()); } else
-                             * if(baseType == Type.DOUBLE) { double[] values =
-                             * attributeN.getAllowedValues();
-                             * attribute.setAllowedValues
-                             * (Utility.converArrayToList(values)); } else
-                             * if(baseType == Type.BOOL) { //boolean[] values =
-                             * attributeN.getAllowedValues(); List<Object> obj =
-                             * new ArrayList<Object>(); obj.add(true);
-                             * obj.add(false); attribute.setAllowedValues(obj);
-                             * } else if(baseType == Type.STRING) { String[]
-                             * values = attributeN.getAllowedValues();
-                             * attribute.
-                             * setAllowedValues(Utility.converArrayToList
-                             * (values)); }
-                             */
-                        }
-                        resourceAttributeMap.put(attName, attribute);
-                    }
-                }
-            }
-        }
-        return resourceAttributeMap;
-    }
-
-    private void newResourceFoundNotification(RemoteResource resource) {
-        synchronized (findResourceUIListeners) {
-            if (findResourceUIListeners.size() > 0) {
-                IFindResourceUIListener listener;
-                Iterator<IFindResourceUIListener> listenerItr = findResourceUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onNewResourceFound(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void resourceSelectionChangedUINotification(RemoteResource resource) {
-        synchronized (resourceSelectionChangedUIListeners) {
-            if (resourceSelectionChangedUIListeners.size() > 0) {
-                IResourceSelectionChangedUIListener listener;
-                Iterator<IResourceSelectionChangedUIListener> listenerItr = resourceSelectionChangedUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onResourceSelectionChange(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void getCompleteNotification(RemoteResource resource) {
-        synchronized (getUIListeners) {
-            if (getUIListeners.size() > 0) {
-                IGetUIListener listener;
-                Iterator<IGetUIListener> listenerItr = getUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onGetCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void putCompleteNotification(RemoteResource resource) {
-        synchronized (putUIListeners) {
-            if (putUIListeners.size() > 0) {
-                IPutUIListener listener;
-                Iterator<IPutUIListener> listenerItr = putUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onPutCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void postCompleteNotification(RemoteResource resource) {
-        synchronized (postUIListeners) {
-            if (postUIListeners.size() > 0) {
-                IPostUIListener listener;
-                Iterator<IPostUIListener> listenerItr = postUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onPostCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void observeCompleteNotification(RemoteResource resource) {
-        synchronized (observeUIListeners) {
-            if (observeUIListeners.size() > 0) {
-                IObserveUIListener listener;
-                Iterator<IObserveUIListener> listenerItr = observeUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onObserveCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void verificationStartedNotification(RemoteResource resource,
-            int autoType) {
-        synchronized (verificationUIListeners) {
-            if (verificationUIListeners.size() > 0) {
-                IVerificationUIListener listener;
-                Iterator<IVerificationUIListener> listenerItr = verificationUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onVerificationStarted(resource, autoType);
-                    }
-                }
-            }
-        }
-    }
-
-    private void verificationAbortedNotification(RemoteResource resource,
-            int autoType) {
-        synchronized (verificationUIListeners) {
-            if (verificationUIListeners.size() > 0) {
-                IVerificationUIListener listener;
-                Iterator<IVerificationUIListener> listenerItr = verificationUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onVerificationAborted(resource, autoType);
-                    }
-                }
-            }
-        }
-    }
-
-    private void verificationCompletedNotification(RemoteResource resource,
-            int autoType) {
-        synchronized (verificationUIListeners) {
-            if (verificationUIListeners.size() > 0) {
-                IVerificationUIListener listener;
-                Iterator<IVerificationUIListener> listenerItr = verificationUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onVerificationCompleted(resource, autoType);
-                    }
-                }
-            }
-        }
-    }
-
-    private void configUploadedNotification(RemoteResource resource) {
-        synchronized (configUploadUIListeners) {
-            if (configUploadUIListeners.size() > 0) {
-                IConfigurationUpload listener;
-                Iterator<IConfigurationUpload> listenerItr = configUploadUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onConfigurationUploaded(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    // TODO: Temporarily used to display the resource in the UI
-    public List<String> getURIList() {
-        List<String> list = new ArrayList<String>();
-        synchronized (resourceMap) {
-            /*
-             * Set<String> idSet = resourceMap.keySet(); Iterator<String> idItr
-             * = idSet.iterator(); String sId; RemoteResource resource;
-             * while(idItr.hasNext()) { sId = idItr.next(); resource =
-             * resourceMap.get(sId); if(null == resource) { continue; }
-             * list.add(resource.getResourceURI()); }
-             */
-            Set<String> uriSet = resourceMap.keySet();
-            Iterator<String> uriItr = uriSet.iterator();
-            String uri;
-            while (uriItr.hasNext()) {
-                uri = uriItr.next();
-                if (null != uri) {
-                    list.add(uri);
-                }
-            }
-
-            // Sort the types
-            Collections.sort(list);
-        }
-        return list;
-    }
-
     public synchronized Set<String> getLastKnownSearchTypes() {
         return lastKnownSearchTypes;
     }
@@ -948,45 +852,80 @@ public class ResourceManager {
     }
 
     public boolean findResourceRequest(Set<String> searchTypes) {
-        if (null == searchTypes || searchTypes.size() < 1) {
-            return false;
-        }
         boolean result = false;
-        Iterator<String> searchItr = searchTypes.iterator();
-        String rType;
-        while (searchItr.hasNext()) {
-            rType = searchItr.next();
+        if (null == searchTypes || searchTypes.size() < 1) {
             try {
-                SimulatorManager.findResource(rType, findResourceListener);
+                SimulatorManager.findResource(findResourceListener);
                 result = true;
             } catch (SimulatorException e) {
                 Activator
                         .getDefault()
                         .getLogManager()
-                        .log(Level.ERROR.ordinal(),
-                                new Date(),
-                                "[" + e.getClass().getSimpleName() + "]"
-                                        + e.code().toString() + "-"
-                                        + e.message());
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+            }
+        } else {
+            Iterator<String> searchItr = searchTypes.iterator();
+            String rType;
+            while (searchItr.hasNext()) {
+                rType = searchItr.next();
+                try {
+                    SimulatorManager.findResource(rType, findResourceListener);
+                    result = true;
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
+                }
             }
         }
         return result;
     }
 
     public void deleteResources(final Set<String> searchTypes) {
-        if (null == searchTypes || searchTypes.size() < 1) {
-            return;
+        synchronized (resourceMap) {
+            if (resourceMap.isEmpty()) {
+                return;
+            }
         }
         new Thread() {
             public void run() {
-                Iterator<String> typeItr = searchTypes.iterator();
-                String resType;
-                while (typeItr.hasNext()) {
-                    resType = typeItr.next();
-                    deleteResourcesByType(resType);
+                if (null == searchTypes || searchTypes.size() < 1) {
+                    synchronized (resourceMap) {
+                        // Stop observing all the resources
+                        Iterator<String> itr = resourceMap.keySet().iterator();
+                        while (itr.hasNext()) {
+                            sendCancelObserveRequest(
+                                    resourceMap.get(itr.next()), false);
+                        }
+                        // Delete all cached details of resources
+                        resourceMap.clear();
 
+                        synchronized (favoriteResources) {
+                            favoriteResources.clear();
+                        }
+
+                        // Clearing the device and platform information
+                        synchronized (hostDeviceAndPlatformMap) {
+                            hostDeviceAndPlatformMap.clear();
+                        }
+                    }
                     // Change the current resource in selection
-                    updateCurrentResourceInSelection(searchTypes);
+                    setCurrentResourceInSelection(null);
+                    UiListenerHandler.getInstance()
+                            .resourceSelectionChangedUINotification(null);
+                } else {
+                    Iterator<String> typeItr = searchTypes.iterator();
+                    String resType;
+                    while (typeItr.hasNext()) {
+                        resType = typeItr.next();
+                        deleteResourcesByType(resType);
+
+                        // Change the current resource in selection
+                        updateCurrentResourceInSelection(searchTypes);
+                    }
                 }
             }
         }.start();
@@ -1000,7 +939,8 @@ public class ResourceManager {
         if (null == resourceInSelection) {
             return;
         }
-        List<String> typesOfSelection = resourceInSelection.getResourceTypes();
+        List<String> typesOfSelection = resourceInSelection
+                .getRemoteResourceRef().getResourceTypes();
         if (null == typesOfSelection || typesOfSelection.size() < 1) {
             return;
         }
@@ -1010,7 +950,8 @@ public class ResourceManager {
             type = itr.next();
             if (searchTypes.contains(type)) {
                 setCurrentResourceInSelection(null);
-                resourceSelectionChangedUINotification(null);
+                UiListenerHandler.getInstance()
+                        .resourceSelectionChangedUINotification(null);
                 break;
             }
         }
@@ -1036,14 +977,21 @@ public class ResourceManager {
                 if (null == resource) {
                     continue;
                 }
-                types = resource.getResourceTypes();
+                types = resource.getRemoteResourceRef().getResourceTypes();
                 if (null != types) {
                     exist = types.contains(resourceType);
                     if (exist) {
-                        // Remove the resource
-                        keyItr.remove();
+                        // Cancel observing the resource.
+                        sendCancelObserveRequest(resource, false);
                         // Remove the resource from favorites list.
                         removeResourceFromFavorites(resource);
+                        // Remove the resource
+                        keyItr.remove();
+                        // Remove the device and platform information
+                        synchronized (hostDeviceAndPlatformMap) {
+                            hostDeviceAndPlatformMap.remove(resource
+                                    .getRemoteResourceRef().getHost());
+                        }
                     }
                 }
             }
@@ -1056,53 +1004,185 @@ public class ResourceManager {
             public void run() {
                 setCurrentResourceInSelection(resource);
                 // Notify all observers for resource selection change event
-                resourceSelectionChangedUINotification(resource);
+                UiListenerHandler.getInstance()
+                        .resourceSelectionChangedUINotification(resource);
             }
         }.start();
     }
 
-    public List<MetaProperty> getMetaProperties(RemoteResource resource) {
+    public List<MetaProperty> getDefaultProperties(RemoteResource resource) {
         if (null != resource) {
             String propName;
-            String propValue;
+            StringBuilder propValue;
 
             List<MetaProperty> metaPropertyList = new ArrayList<MetaProperty>();
 
             for (int index = 0; index < Constants.META_PROPERTY_COUNT; index++) {
                 propName = Constants.META_PROPERTIES[index];
+                propValue = new StringBuilder();
                 if (propName.equals(Constants.RESOURCE_URI)) {
-                    propValue = resource.getResourceURI();
+                    propValue.append(resource.getRemoteResourceRef().getURI());
                 } else if (propName.equals(Constants.CONNECTIVITY_TYPE)) {
-                    propValue = resource.getConnectivityType().toString();
+                    propValue.append(resource.getRemoteResourceRef()
+                            .getConnectivityType().toString());
+                } else if (propName.equals(Constants.ADDRESS)) {
+                    propValue.append(resource.getRemoteResourceRef().getHost());
                 } else if (propName.equals(Constants.OBSERVABLE)) {
-                    propValue = Utility.getObservableInString(resource
-                            .isObservable());
-                    // see in UI
+                    propValue.append(Utility.getObservableInString(resource
+                            .getRemoteResourceRef().isObservable()));
                 } else if (propName.equals(Constants.RESOURCE_TYPES)) {
-                    List<String> types = resource.getResourceTypes();
-                    if (null != types) {
-                        propValue = types.toString();
+                    Vector<String> resTypes = resource.getRemoteResourceRef()
+                            .getResourceTypes();
+                    if (null != resTypes && !resTypes.isEmpty()) {
+                        Iterator<String> itr = resTypes.iterator();
+                        while (itr.hasNext()) {
+                            propValue.append(itr.next());
+                            if (itr.hasNext()) {
+                                propValue.append(", ");
+                            }
+                        }
                     } else {
-                        propValue = Constants.NOT_AVAILABLE;
+                        propValue.append(Constants.NOT_AVAILABLE);
                     }
                 } else if (propName.equals(Constants.RESOURCE_INTERFACES)) {
-                    List<String> interfaces = resource.getResourceInterfaces();
-                    if (null != interfaces) {
-                        propValue = interfaces.toString();
+                    Vector<String> interfaces = resource.getRemoteResourceRef()
+                            .getResourceInterfaces();
+                    if (null != interfaces && !interfaces.isEmpty()) {
+                        Iterator<String> itr = interfaces.iterator();
+                        while (itr.hasNext()) {
+                            propValue.append(itr.next());
+                            if (itr.hasNext()) {
+                                propValue.append(", ");
+                            }
+                        }
                     } else {
-                        propValue = Constants.NOT_AVAILABLE;
+                        propValue.append(Constants.NOT_AVAILABLE);
                     }
                 } else {
                     propValue = null;
                 }
                 if (null != propValue) {
-                    metaPropertyList.add(new MetaProperty(propName, propValue));
+                    metaPropertyList.add(new MetaProperty(propName, propValue
+                            .toString()));
                 }
             }
 
             return metaPropertyList;
         }
         return null;
+    }
+
+    public List<MetaProperty> getDeviceProperties() {
+        RemoteResource resourceInSelection = getCurrentResourceInSelection();
+        if (null == resourceInSelection) {
+            return null;
+        }
+
+        SimulatorRemoteResource remoteResource = resourceInSelection
+                .getRemoteResourceRef();
+        if (null == remoteResource) {
+            return null;
+        }
+
+        String host = remoteResource.getHost();
+        if (null == host) {
+            return null;
+        }
+
+        if (!isDeviceInfoExist(host)) {
+            // Device Information
+            try {
+                SimulatorManager.findDevices(host, deviceListener);
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+            }
+            return null;
+        }
+
+        List<MetaProperty> metaProperties = new ArrayList<MetaProperty>();
+        synchronized (hostDeviceAndPlatformMap) {
+            DeviceInfo devInfo = hostDeviceAndPlatformMap.get(host)
+                    .getDeviceInfo();
+            metaProperties.add(new MetaProperty(Constants.DEVICE_ID, devInfo
+                    .getID()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_NAME, devInfo
+                    .getName()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_SPEC_VERSION,
+                    devInfo.getSpecVersion()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_DMV_VERSION,
+                    devInfo.getDataModelVersion()));
+        }
+
+        return metaProperties;
+    }
+
+    public List<MetaProperty> getPlatformProperties() {
+        RemoteResource resourceInSelection = getCurrentResourceInSelection();
+        if (null == resourceInSelection) {
+            return null;
+        }
+
+        SimulatorRemoteResource remoteResource = resourceInSelection
+                .getRemoteResourceRef();
+        if (null == remoteResource) {
+            return null;
+        }
+
+        String host = remoteResource.getHost();
+        if (null == host) {
+            return null;
+        }
+
+        if (!isPlatformInfoExist(host)) {
+            // Platform Information
+            try {
+                SimulatorManager.getPlatformInformation(host, platformListener);
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+            }
+            return null;
+        }
+
+        List<MetaProperty> metaProperties = new ArrayList<MetaProperty>();
+        synchronized (hostDeviceAndPlatformMap) {
+            PlatformInfo platInfo = hostDeviceAndPlatformMap.get(host)
+                    .getPlatformInfo();
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_ID, platInfo
+                    .getPlatformID()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_MANUFAC_NAME, platInfo
+                            .getManufacturerName()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_MANUFAC_URL,
+                    platInfo.getManufacturerUrl()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_MODEL_NO,
+                    platInfo.getModelNumber()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_DATE_OF_MANUFAC, platInfo
+                            .getDateOfManufacture()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_VERSION,
+                    platInfo.getPlatformVersion()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_OS_VERSION,
+                    platInfo.getOperationSystemVersion()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_HARDWARE_VERSION, platInfo
+                            .getHardwareVersion()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_FIRMWARE_VERSION, platInfo
+                            .getFirmwareVersion()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_SUPPORT_URL,
+                    platInfo.getSupportUrl()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_SYSTEM_TIME,
+                    platInfo.getSystemTime()));
+        }
+        return metaProperties;
     }
 
     public Map<String, Boolean> getAutomationStatus(RemoteResource resource) {
@@ -1114,13 +1194,6 @@ public class ResourceManager {
         autoStatus.put(Constants.PUT, resource.isPutAutomtnInProgress());
         autoStatus.put(Constants.POST, resource.isPostAutomtnInProgress());
         return autoStatus;
-    }
-
-    public Map<String, String> getDummyAttributes() {
-        Map<String, String> attributes = new HashMap<String, String>();
-        attributes.put("intensity", "1");
-        attributes.put("power", "off");
-        return attributes;
     }
 
     public List<RemoteResource> getResourceList() {
@@ -1139,8 +1212,8 @@ public class ResourceManager {
         // Sort the list
         Collections.sort(resourceList, new Comparator<RemoteResource>() {
             public int compare(RemoteResource res1, RemoteResource res2) {
-                String s1 = res1.getResourceURI();
-                String s2 = res2.getResourceURI();
+                String s1 = res1.getRemoteResourceRef().getURI();
+                String s2 = res2.getRemoteResourceRef().getURI();
 
                 String s1Part = s1.replaceAll("\\d", "");
                 String s2Part = s2.replaceAll("\\d", "");
@@ -1169,314 +1242,395 @@ public class ResourceManager {
         return resourceList;
     }
 
-    public String getAttributeValue(RemoteResource res, String attName) {
-        if (null == res || null == attName) {
+    public List<String> getAllValuesOfAttribute(SimulatorResourceAttribute att) {
+        if (null == att) {
             return null;
         }
-        return res.getAttributeValue(attName);
+
+        AttributeValue val = att.value();
+        if (null == val || null == val.get()) {
+            return null;
+        }
+
+        TypeInfo type = val.typeInfo();
+
+        if (type.mBaseType == ValueType.RESOURCEMODEL) {
+            return null;
+        }
+
+        List<String> values = new ArrayList<String>();
+
+        AttributeProperty prop = att.property();
+        if (null == prop) {
+            values.add(new AttributeValueStringConverter(val).toString());
+            return values;
+        }
+
+        if (type.mType == ValueType.ARRAY) {
+            if (type.mDepth == 1) {
+                ArrayProperty arrayProperty = prop.asArray();
+                if (null != arrayProperty) {
+                    AttributeProperty childProp = arrayProperty
+                            .getElementProperty();
+                    switch (childProp.getType()) {
+                        case INTEGER:
+                            IntegerProperty intProperty = childProp.asInteger();
+                            if (null != intProperty) {
+                                values.addAll(getAllValues(att, intProperty,
+                                        Type.INTEGER));
+                            }
+                            break;
+                        case DOUBLE:
+                            DoubleProperty dblProperty = childProp.asDouble();
+                            if (null != dblProperty) {
+                                values.addAll(getAllValues(att, dblProperty,
+                                        Type.DOUBLE));
+                            }
+                            break;
+                        case BOOLEAN:
+                            BooleanProperty boolProperty = childProp
+                                    .asBoolean();
+                            if (null != boolProperty) {
+                                values.addAll(getAllValues(att, boolProperty,
+                                        Type.BOOLEAN));
+                            }
+                            break;
+                        case STRING:
+                            StringProperty stringProperty = childProp
+                                    .asString();
+                            if (null != stringProperty) {
+                                values.addAll(getAllValues(att, stringProperty,
+                                        Type.STRING));
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        } else {
+            switch (prop.getType()) {
+                case INTEGER:
+                    IntegerProperty intProperty = prop.asInteger();
+                    if (null != intProperty) {
+                        values.addAll(getAllValues(att, intProperty,
+                                Type.INTEGER));
+                    }
+                    break;
+                case DOUBLE:
+                    DoubleProperty dblProperty = prop.asDouble();
+                    if (null != dblProperty) {
+                        values.addAll(getAllValues(att, dblProperty,
+                                Type.DOUBLE));
+                    }
+                    break;
+                case BOOLEAN:
+                    BooleanProperty boolProperty = prop.asBoolean();
+                    if (null != boolProperty) {
+                        values.addAll(getAllValues(att, boolProperty,
+                                Type.BOOLEAN));
+                    }
+                    break;
+                case STRING:
+                    StringProperty stringProperty = prop.asString();
+                    if (null != stringProperty) {
+                        values.addAll(getAllValues(att, stringProperty,
+                                Type.STRING));
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return values;
     }
 
-    public void sendGetRequest(RemoteResource resource) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            IntegerProperty intProperty, AttributeProperty.Type type) {
+        List<String> values = new ArrayList<String>();
+
+        if (intProperty.hasRange()) {
+            int min = (int) intProperty.min();
+            int max = (int) intProperty.max();
+            for (int iVal = min; iVal <= max; iVal++) {
+                values.add(String.valueOf(iVal));
+            }
+        } else if (intProperty.hasValues()) {
+            for (Integer val : intProperty.getValues()) {
+                values.add(String.valueOf(val));
+            }
+        } else {
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
+        }
+        return values;
+    }
+
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            DoubleProperty dblProperty, AttributeProperty.Type type) {
+        NumberFormat formatter = NumberFormat.getInstance();
+        List<String> values = new ArrayList<String>();
+
+        if (dblProperty.hasRange()) {
+            double min = (double) dblProperty.min();
+            double max = (double) dblProperty.max();
+            for (double val = min; val <= max; val += 0.1) {
+                formatter.setMaximumFractionDigits(1);
+                formatter.setMinimumFractionDigits(1);
+                values.add(formatter.format(val));
+            }
+        } else if (dblProperty.hasValues()) {
+            for (Double val : dblProperty.getValues()) {
+                values.add(String.valueOf(val));
+            }
+        } else {
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
+        }
+        return values;
+    }
+
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            BooleanProperty boolProperty, AttributeProperty.Type type) {
+        List<String> values = new ArrayList<String>();
+        values.add("true");
+        values.add("false");
+        return values;
+    }
+
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            StringProperty stringProperty, AttributeProperty.Type type) {
+        List<String> values = new ArrayList<String>();
+
+        if (stringProperty.hasValues()) {
+            for (String val : stringProperty.getValues()) {
+                values.add(String.valueOf(val));
+            }
+        } else {
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
+        }
+        return values;
+    }
+
+    public void sendGetRequest(String ifType, String query,
+            RemoteResource resource) {
         if (null == resource) {
             return;
         }
-        SimulatorRemoteResource resourceN = resource.getResource();
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
             return;
         }
+
+        Map<String, String> queryParams = formQueryParameters(ifType, query);
         try {
-            resourceN.get(null, getListener);
+            resourceN.get(queryParams, getListener);
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
-    public void sendPutRequest(RemoteResource resource,
-            List<PutPostAttributeModel> putPostModelList) {
-        System.out.println(putPostModelList);
-        System.out.println("ResourceManager: sendPutRequest");
-        if (null == resource) {
+    public void sendPutRequest(String ifType, RemoteResource resource,
+            SimulatorResourceModel model) {
+        if (null == resource || null == model) {
             return;
         }
-        System.out.println("ResourceManager: resource not null");
-        SimulatorRemoteResource resourceN = resource.getResource();
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
             return;
         }
-        System.out.println("ResourceManager: Native resource not null");
-        Map<String, RemoteResourceAttribute> attMap = resource
-                .getResourceAttributesMap();
-        if (null == attMap || attMap.size() < 1) {
-            return;
-        }
-        System.out.println("ResourceManager: attrubutes obtained");
-        SimulatorResourceModel resourceModel = getUpdatedResourceModel(attMap,
-                putPostModelList);
-        System.out.println("ResourceModel exist?:" + (resourceModel != null));
+        Map<String, String> queryParams = formQueryParameters(ifType, null);
         try {
-            resourceN.put(resourceModel, null, putListener);
-        } catch (SimulatorException e) {
+            resourceN.put(queryParams, model, putListener);
+        } catch (Exception e) {
+            String addlInfo;
+            addlInfo = "Invalid Attribute Value. Cannot send PUT request.";
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, addlInfo));
         }
-        System.out.println("ResourceManager: called native put");
     }
 
-    public void sendPostRequest(RemoteResource resource,
-            List<PutPostAttributeModel> putPostModelList) {
-        System.out.println(putPostModelList);
-        if (null == resource) {
+    public void sendPostRequest(String ifType, RemoteResource resource,
+            SimulatorResourceModel model) {
+        if (null == resource || null == model) {
             return;
         }
-        SimulatorRemoteResource resourceN = resource.getResource();
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
             return;
         }
-        Map<String, RemoteResourceAttribute> attMap = resource
-                .getResourceAttributesMap();
-        if (null == attMap || attMap.size() < 1) {
-            return;
-        }
-        // Filter out the attributes whose modification status is true.
-        Iterator<PutPostAttributeModel> itr = putPostModelList.iterator();
-        PutPostAttributeModel model;
-        while (itr.hasNext()) {
-            model = itr.next();
-            if (!model.isModified()) {
-                itr.remove();
-            }
-        }
-        SimulatorResourceModel resourceModel = getUpdatedResourceModel(attMap,
-                putPostModelList);
+        Map<String, String> queryParams = formQueryParameters(ifType, null);
         try {
-            resourceN.post(resourceModel, null, postListener);
-        } catch (SimulatorException e) {
+            resourceN.post(queryParams, model, postListener);
+        } catch (Exception e) {
+            String addlInfo;
+            addlInfo = "Invalid Attribute Value. Cannot send POST request.";
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, addlInfo));
         }
     }
 
-    private SimulatorResourceModel getUpdatedResourceModel(
-            Map<String, RemoteResourceAttribute> attMap,
-            List<PutPostAttributeModel> putPostModelList) {
-        String attName;
-        SimulatorResourceModel resourceModel = new SimulatorResourceModel();
-        PutPostAttributeModel model;
-        RemoteResourceAttribute attribute;
-        Type attType;
-        Iterator<PutPostAttributeModel> itr = putPostModelList.iterator();
-        while (itr.hasNext()) {
-            model = itr.next();
-            attName = model.getAttName();
-            attribute = attMap.get(attName);
-            if (null == attribute) {
-                continue;
-            }
-            attType = attribute.getAttValBaseType();
-            if (attType == Type.INT) {
-                int attValue;
-                try {
-                    attValue = Integer.parseInt(model.getAttValue());
-                    resourceModel.addAttributeInt(attName, attValue);
-                } catch (NumberFormatException e) {
-                    Activator
-                            .getDefault()
-                            .getLogManager()
-                            .log(Level.ERROR.ordinal(), new Date(),
-                                    e.getMessage());
-                } catch (SimulatorException e) {
-                    Activator
-                            .getDefault()
-                            .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
-                }
-            } else if (attType == Type.DOUBLE) {
-                double attValue;
-                try {
-                    attValue = Double.parseDouble(model.getAttValue());
-                    resourceModel.addAttributeDouble(attName, attValue);
-                } catch (NumberFormatException e) {
-                    Activator
-                            .getDefault()
-                            .getLogManager()
-                            .log(Level.ERROR.ordinal(), new Date(),
-                                    e.getMessage());
-                } catch (SimulatorException e) {
-                    Activator
-                            .getDefault()
-                            .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
-                }
-            } else if (attType == Type.BOOL) {
-                boolean attValue;
-                attValue = Boolean.parseBoolean(model.getAttValue());
-                try {
-                    resourceModel.addAttributeBoolean(attName, attValue);
-                } catch (SimulatorException e) {
-                    Activator
-                            .getDefault()
-                            .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
-                }
-            } else if (attType == Type.STRING) {
-                String attValue;
-                attValue = model.getAttValue();
-                try {
-                    resourceModel.addAttributeString(attName, attValue);
-                } catch (SimulatorException e) {
-                    Activator
-                            .getDefault()
-                            .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
-                }
-            }
-        }
-        return resourceModel;
-    }
-
-    public void sendObserveRequest(RemoteResource resource) {
-        System.out.println("sendObserverRequest() entry");
+    public boolean sendObserveRequest(RemoteResource resource) {
         if (null == resource) {
-            return;
+            return false;
         }
-        System.out.println("Resource is null:" + (resource == null));
-        resource.setObserved(true);
-        SimulatorRemoteResource resourceN = resource.getResource();
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
-            return;
+            return false;
         }
         try {
-            resourceN.startObserve(SimulatorObserveType.OBSERVE, null,
-                    observeListener);
+            resourceN.observe(observeListener);
+            resource.setObserved(true);
             // Add observed resource URI to show the proper status after every
             // find/refresh operations.
-            addObservedResourceURI(resource.getResourceURI());
+            addObservedResourceURI(resource.getRemoteResourceRef().getURI());
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
+            return false;
         }
-        System.out.println("Observer called.");
+        return true;
     }
 
-    public void sendCancelObserveRequest(RemoteResource resource) {
-        if (null == resource) {
-            return;
+    private Map<String, String> formQueryParameters(String ifType, String query) {
+        Map<String, String> queryParams = new HashMap<String, String>();
+
+        // Including the interface type, if given,
+        if (null != ifType) {
+            ifType = ifType.trim();
+            if (ifType.length() > 0)
+                queryParams.put("if", ifType);
         }
-        resource.setObserved(false);
-        SimulatorRemoteResource resourceN = resource.getResource();
+
+        // Including other queries, if given.
+        if (null != query) {
+            query = query.trim();
+            if (query.length() > 0) {
+                // Parse the query parameters and fill the map.
+                String queries[] = query.split(";");
+                if (queries.length > 0) {
+                    for (String pair : queries) {
+                        String tok[] = pair.split("=");
+                        if (null != tok && tok.length == 2) {
+                            queryParams.put(tok[0].trim(), tok[1].trim());
+                        }
+                    }
+                }
+            }
+        }
+        return queryParams;
+    }
+
+    public boolean sendCancelObserveRequest(RemoteResource resource,
+            boolean removeEntry) {
+        if (null == resource || !resource.isObserved()) {
+            return false;
+        }
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
-            return;
+            return false;
         }
         try {
             resourceN.stopObserve();
+            resource.setObserved(false);
             // Remove observed resource URI to show the proper status after
             // every find/refresh operations.
-            removeObservedResourceURI(resource.getResourceURI());
+            if (removeEntry)
+                removeObservedResourceURI(resource.getRemoteResourceRef()
+                        .getURI());
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
+            return false;
         }
+        return true;
     }
 
-    public void startAutomationRequest(int reqType, RemoteResource resource) {
+    public void startAutomationRequest(RequestType reqType,
+            RemoteResource resource) {
         if (null == resource) {
             return;
         }
-        SimulatorRemoteResource resourceN = resource.getResource();
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
             return;
         }
-        SimulatorVerificationType type = SimulatorVerificationType
-                .getVerificationType(reqType);
-        if (null == type) {
+        if (null == reqType) {
             return;
         }
-        System.out.println("Before calling startVerification: " + reqType);
         int autoId;
         try {
-            autoId = resourceN.startVerification(type, verifyListener);
-            System.out.println("After calling startVerification: " + autoId);
+            autoId = resourceN.startVerification(reqType, verifyListener);
             if (autoId != -1) {
-                if (reqType == Constants.GET_AUTOMATION_INDEX) {
-                    // resource.setGetAutomtnInProgress(true);
+                if (reqType == RequestType.GET) {
                     resource.setGetAutomtnId(autoId);
-                } else if (reqType == Constants.PUT_AUTOMATION_INDEX) {
-                    // resource.setPutAutomtnInProgress(true);
+                } else if (reqType == RequestType.PUT) {
                     resource.setPutAutomtnId(autoId);
-                } else {// if(reqType == Constants.POST_AUTOMATION_INDEX) {
-                        // resource.setPostAutomtnInProgress(true);
+                } else {
                     resource.setPostAutomtnId(autoId);
                 }
             }
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.INFO.ordinal(),
+                            new Date(),
+                            "[" + reqType.toString()
+                                    + "] Verification Started for \""
+                                    + resourceN.getURI() + "\".");
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
-    public void stopAutomationRequest(int reqType, RemoteResource resource) {
+    public void stopAutomationRequest(RequestType reqType,
+            RemoteResource resource) {
         if (null == resource) {
             return;
         }
-        SimulatorRemoteResource resourceN = resource.getResource();
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
             return;
         }
         int autoId;
-        if (reqType == Constants.GET_AUTOMATION_INDEX) {
+        if (reqType == RequestType.GET) {
             resource.setGetAutomtnInProgress(false);
             autoId = resource.getGetAutomtnId();
-        } else if (reqType == Constants.PUT_AUTOMATION_INDEX) {
+        } else if (reqType == RequestType.PUT) {
             resource.setPutAutomtnInProgress(false);
             autoId = resource.getPutAutomtnId();
-        } else {// if(reqType == Constants.POST_AUTOMATION_INDEX) {
+        } else {
             resource.setPostAutomtnInProgress(false);
             autoId = resource.getPostAutomtnId();
         }
@@ -1486,60 +1640,55 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
-    public void setConfigFilePath(RemoteResource resource, String configFilePath) {
+    public boolean setConfigFilePath(RemoteResource resource,
+            String configFilePath) throws SimulatorException {
+
         if (null == resource) {
-            return;
+            return false;
         }
-        SimulatorRemoteResource resourceN = resource.getResource();
+        SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
-            return;
+            return false;
         }
         try {
-            resourceN.setConfigInfo(configFilePath);
+            Map<RequestType, SimulatorRequestModel> requestModels;
+            requestModels = resourceN.setConfigInfo(configFilePath);
+            if (null == requestModels) {
+                return false;
+            }
+
+            // Store the resource model in the local cache
+            resource.setRequestModels(requestModels);
         } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
+            throw e;
+        } catch (Exception e) {
             Activator
                     .getDefault()
                     .getLogManager()
                     .log(Level.ERROR.ordinal(),
                             new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
-            return;
+                            Utility.getSimulatorErrorString(e,
+                                    "Error while configuring the attribute properties"));
         }
         // Update the status
         resource.setConfigUploaded(true);
 
         // Notify the UI listeners
-        configUploadedNotification(resource);
-    }
+        UiListenerHandler.getInstance().configUploadedNotification(resource);
 
-    public Image getImage(String resourceURI) {
-        if (null == resourceURI) {
-            return null;
-        }
-        URL url = Activator.getDefault().getBundle()
-                .getEntry(getImageURL(resourceURI));
-        if (null == url) {
-            return null;
-        }
-        return ImageDescriptor.createFromURL(url).createImage();
-    }
-
-    private String getImageURL(String resourceURI) {
-        // TODO: Hard-coding the image file name temporarily.
-        // It will be included in a separate class which manages all image
-        // resources
-        return "/icons/light_16x16.png";
+        return true;
     }
 
     public void shutdown() {
-        // TODO: To be implemented for clean-up activities.
     }
 }

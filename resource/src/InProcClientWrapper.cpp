@@ -123,6 +123,8 @@ namespace OC
 
         // first one is considered the root, everything else is considered a child of this one.
         OCRepresentation root = *it;
+        root.setDevAddr(clientResponse->devAddr);
+        root.setUri(clientResponse->resourceUri);
         ++it;
 
         std::for_each(it, oc.representations().end(),
@@ -446,6 +448,11 @@ namespace OC
     {
         MessageContainer ocInfo;
         ocInfo.addRepresentation(rep);
+        for(const OCRepresentation& r : rep.getChildren())
+        {
+            ocInfo.addRepresentation(r);
+        }
+
         return reinterpret_cast<OCPayload*>(ocInfo.getPayload());
     }
 

@@ -16,16 +16,7 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.utils.Constants;
-
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -35,9 +26,14 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+
+import oic.simulator.clientcontroller.utils.Constants;
 
 /**
  * Dialog for starting and stopping the automatic verifications.
@@ -89,38 +85,18 @@ public class VerificationDialog extends TrayDialog {
 
                 @Override
                 public void widgetSelected(SelectionEvent e) {
-                    boolean checked = checkbox.getSelection();
-                    boolean answer = MessageDialog.openQuestion(Display
-                            .getDefault().getActiveShell(), "Verification",
-                            "Do you want to "
-                                    + (checked ? "enable" : "disable")
-                                    + " the verification?");
-                    if (!answer) {
-                        checkbox.setSelection(!checked);
-                        checked = !checked;
-                    } else {
-                        ResourceManager resourceManager = Activator
-                                .getDefault().getResourceManager();
-                        String reqTypeTxt = checkbox.getText();
-                        int reqType;
-                        if (reqTypeTxt.equals("Get")) {
-                            reqType = Constants.GET_AUTOMATION_INDEX;
-                        } else if (reqTypeTxt.equals("Put")) {
-                            reqType = Constants.PUT_AUTOMATION_INDEX;
-                        } else {// if(reqTypeTxt.equals("Post")) {
-                            reqType = Constants.POST_AUTOMATION_INDEX;
-                        }
-                        if (checked) {
-                            resourceManager.startAutomationRequest(reqType,
-                                    resourceManager
-                                            .getCurrentResourceInSelection());
-                        } else {
-                            resourceManager.stopAutomationRequest(reqType,
-                                    resourceManager
-                                            .getCurrentResourceInSelection());
-                        }
+                    Button btn = (Button) e.getSource();
+                    if (null == btn) {
+                        return;
                     }
-                    automationStatus.put(str, checked);
+                    String btnText = btn.getText();
+                    if (btnText.equalsIgnoreCase(Constants.GET)) {
+                        automationStatus.put(Constants.GET, btn.getSelection());
+                    } else if (btnText.equalsIgnoreCase(Constants.PUT)) {
+                        automationStatus.put(Constants.PUT, btn.getSelection());
+                    } else if (btnText.equalsIgnoreCase(Constants.POST)) {
+                        automationStatus.put(Constants.POST, btn.getSelection());
+                    }
                 }
             });
         }
@@ -138,5 +114,9 @@ public class VerificationDialog extends TrayDialog {
     @Override
     public boolean isHelpAvailable() {
         return false;
+    }
+
+    public Map<String, Boolean> getAutomationStatus() {
+        return automationStatus;
     }
 }

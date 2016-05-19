@@ -16,26 +16,32 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.List;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.remoteresource.MetaProperty;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.List;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.listener.IDevicePlatformInfoUIListener;
+import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
+import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
+import oic.simulator.clientcontroller.remoteresource.MetaProperty;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 
 /**
  * This class manages and shows the meta properties view in the perspective.
@@ -44,7 +50,9 @@ public class MetaPropertiesView extends ViewPart {
 
     public static final String                  VIEW_ID       = "oic.simulator.clientcontroller.view.metaproperties";
 
-    private TableViewer                         tableViewer;
+    private TableViewer                         defaultTblViewer;
+    private TableViewer                         deviceTblViewer;
+    private TableViewer                         platformTblViewer;
 
     private final String[]                      columnHeaders = { "Property",
             "Value"                                          };
@@ -52,8 +60,14 @@ public class MetaPropertiesView extends ViewPart {
     private final Integer[]                     columnWidth   = { 150, 150 };
 
     private IResourceSelectionChangedUIListener resourceSelectionChangedListener;
+    private IDevicePlatformInfoUIListener       devicePlatformInfoUIListener;
 
     private ResourceManager                     resourceManager;
+
+    private CTabFolder                          folder;
+    private CTabItem                            defaultPropTab;
+    private CTabItem                            devicePropTab;
+    private CTabItem                            platformPropTab;
 
     public MetaPropertiesView() {
 
@@ -67,8 +81,37 @@ public class MetaPropertiesView extends ViewPart {
 
                     @Override
                     public void run() {
-                        if (null != tableViewer) {
-                            updateViewer(getData(resource));
+                        updateUI(resource);
+                    }
+                });
+            }
+        };
+
+        devicePlatformInfoUIListener = new IDevicePlatformInfoUIListener() {
+
+            @Override
+            public void onPlatformInfoFound() {
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (null != platformTblViewer) {
+                            updateViewer(platformTblViewer,
+                                    getPlatformPropData());
+                        }
+                    }
+                });
+
+            }
+
+            @Override
+            public void onDeviceInfoFound() {
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (null != deviceTblViewer) {
+                            updateViewer(deviceTblViewer, getDevicePropData());
                         }
                     }
                 });
@@ -76,48 +119,164 @@ public class MetaPropertiesView extends ViewPart {
         };
     }
 
+    private void updateUI(final RemoteResource resource) {
+        if (null != defaultTblViewer) {
+            updateViewer(defaultTblViewer, getDefaultPropData(resource));
+        }
+        if (null != deviceTblViewer) {
+            updateViewer(deviceTblViewer, getDevicePropData());
+        }
+        if (null != platformTblViewer) {
+            updateViewer(platformTblViewer, getPlatformPropData());
+        }
+    }
+
     @Override
     public void createPartControl(Composite parent) {
-        parent.setLayout(new GridLayout(1, false));
+        parent.setLayout(new GridLayout());
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        parent.setLayoutData(gd);
 
-        tableViewer = new TableViewer(parent, SWT.SINGLE | SWT.H_SCROLL
-                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+        // Create a Tab Folder.
+        folder = new CTabFolder(parent, SWT.BORDER);
+        gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        folder.setLayoutData(gd);
+        folder.setSimple(false);
+        folder.setUnselectedCloseVisible(false);
+        folder.setUnselectedImageVisible(false);
 
-        createColumns(tableViewer);
+        createDefaultPropertiesTab();
 
-        // make lines and header visible
-        final Table table = tableViewer.getTable();
-        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        table.setHeaderVisible(true);
-        table.setLinesVisible(true);
+        createDevicePropertiesTab();
 
-        tableViewer.setContentProvider(new PropertycontentProvider());
+        createPlatformPropertiesTab();
+
+        folder.setSelection(defaultPropTab);
 
         addManagerListeners();
 
         // Check whether there is any resource selected already
-        List<MetaProperty> propertyList = getData(null);
-        if (null != propertyList) {
-            updateViewer(propertyList);
-        }
-
+        updateUI(null);
     }
 
-    private List<MetaProperty> getData(RemoteResource resource) {
+    private void createDefaultPropertiesTab() {
+        defaultPropTab = new CTabItem(folder, SWT.NULL);
+        defaultPropTab.setText("Default");
+
+        // Adding the group to the folder.
+        Group propGroup = new Group(folder, SWT.NONE);
+
+        Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
+        propGroup.setBackground(color);
+
+        propGroup.setLayout(new GridLayout());
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        propGroup.setLayoutData(gd);
+
+        defaultTblViewer = new TableViewer(propGroup, SWT.SINGLE | SWT.H_SCROLL
+                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+
+        createColumns(defaultTblViewer);
+
+        // Make lines and header visible
+        final Table table = defaultTblViewer.getTable();
+        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        table.setHeaderVisible(true);
+        table.setLinesVisible(true);
+
+        defaultTblViewer.setContentProvider(new PropertycontentProvider());
+
+        defaultPropTab.setControl(propGroup);
+    }
+
+    private void createDevicePropertiesTab() {
+        devicePropTab = new CTabItem(folder, SWT.NULL);
+        devicePropTab.setText("Device");
+
+        // Adding the group to the folder.
+        Group propGroup = new Group(folder, SWT.NONE);
+
+        Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
+        propGroup.setBackground(color);
+
+        propGroup.setLayout(new GridLayout());
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        propGroup.setLayoutData(gd);
+
+        deviceTblViewer = new TableViewer(propGroup, SWT.SINGLE | SWT.H_SCROLL
+                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+
+        createColumns(deviceTblViewer);
+
+        // Make lines and header visible
+        final Table table = deviceTblViewer.getTable();
+        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        table.setHeaderVisible(true);
+        table.setLinesVisible(true);
+
+        deviceTblViewer.setContentProvider(new PropertycontentProvider());
+
+        devicePropTab.setControl(propGroup);
+    }
+
+    private void createPlatformPropertiesTab() {
+        platformPropTab = new CTabItem(folder, SWT.NULL);
+        platformPropTab.setText("Platform");
+
+        // Adding the group to the folder.
+        Group propGroup = new Group(folder, SWT.NONE);
+
+        Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
+        propGroup.setBackground(color);
+
+        propGroup.setLayout(new GridLayout());
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        propGroup.setLayoutData(gd);
+
+        platformTblViewer = new TableViewer(propGroup, SWT.SINGLE
+                | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+
+        createColumns(platformTblViewer);
+
+        // Make lines and header visible
+        final Table table = platformTblViewer.getTable();
+        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        table.setHeaderVisible(true);
+        table.setLinesVisible(true);
+
+        platformTblViewer.setContentProvider(new PropertycontentProvider());
+
+        platformPropTab.setControl(propGroup);
+    }
+
+    private List<MetaProperty> getDefaultPropData(RemoteResource resource) {
         if (null == resource) {
             resource = Activator.getDefault().getResourceManager()
                     .getCurrentResourceInSelection();
         }
         List<MetaProperty> metaPropertyList = resourceManager
-                .getMetaProperties(resource);
+                .getDefaultProperties(resource);
         return metaPropertyList;
     }
 
-    private void updateViewer(List<MetaProperty> metaPropertyList) {
-        if (null != tableViewer) {
-            Table tbl = tableViewer.getTable();
+    private List<MetaProperty> getDevicePropData() {
+        List<MetaProperty> metaPropertyList = resourceManager
+                .getDeviceProperties();
+        return metaPropertyList;
+    }
+
+    private List<MetaProperty> getPlatformPropData() {
+        List<MetaProperty> metaPropertyList = resourceManager
+                .getPlatformProperties();
+        return metaPropertyList;
+    }
+
+    private void updateViewer(TableViewer tblViewer,
+            List<MetaProperty> metaPropertyList) {
+        if (null != tblViewer) {
+            Table tbl = tblViewer.getTable();
             if (null != metaPropertyList) {
-                tableViewer.setInput(metaPropertyList.toArray());
+                tblViewer.setInput(metaPropertyList.toArray());
                 if (!tbl.isDisposed()) {
                     tbl.setLinesVisible(true);
                 }
@@ -165,11 +324,14 @@ public class MetaPropertiesView extends ViewPart {
     }
 
     private void addManagerListeners() {
-        resourceManager
-                .addResourceSelectionChangedUIListener(resourceSelectionChangedListener);
+        UiListenerHandler.getInstance().addResourceSelectionChangedUIListener(
+                resourceSelectionChangedListener);
+        UiListenerHandler.getInstance().addDevicePlatformInfoUIListener(
+                devicePlatformInfoUIListener);
     }
 
-    class PropertycontentProvider implements IStructuredContentProvider {
+    private static class PropertycontentProvider implements
+            IStructuredContentProvider {
 
         @Override
         public void dispose() {
@@ -183,15 +345,15 @@ public class MetaPropertiesView extends ViewPart {
         public Object[] getElements(Object element) {
             return (Object[]) element;
         }
-
     }
 
     @Override
     public void dispose() {
         // Unregister the listener
         if (null != resourceSelectionChangedListener) {
-            resourceManager
-                    .removeResourceSelectionChangedUIListener(resourceSelectionChangedListener);
+            UiListenerHandler.getInstance()
+                    .removeResourceSelectionChangedUIListener(
+                            resourceSelectionChangedListener);
         }
         super.dispose();
     }

@@ -20,315 +20,201 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
-import org.oic.simulator.ResourceAttribute;
+import org.oic.simulator.AttributeValue;
+import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorResourceModel;
 
 /**
- * This class tests the functionality of Simulator Resource Model
- * class APIs.
+ * This class tests the APIs of SimulatorResourceModel class.
  */
-public class SimulatorResourceModelTest extends TestCase
-{
-
-    private SimulatorResourceModel simulatorResourceModel;
-
-    private static final String KEY = "test";
-
-    static
-    {
-        System.loadLibrary("SimulatorManager");
-        System.loadLibrary("RamlParser");
-        System.loadLibrary("oc");
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("octbstack");
-    }
+public class SimulatorResourceModelTest extends TestCase {
+    private static final String INT_KEY    = "Interger";
+    private static final String DOUBLE_KEY = "Double";
+    private static final String BOOL_KEY   = "Boolean";
+    private static final String STRING_KEY = "String";
 
     @Override
-    protected void setUp() throws Exception
-    {
+    protected void setUp() throws Exception {
         super.setUp();
-
-        simulatorResourceModel = new SimulatorResourceModel();
     }
 
     @Override
-    protected void tearDown() throws Exception
-    {
+    protected void tearDown() throws Exception {
         super.tearDown();
-
-        simulatorResourceModel = null;
     }
 
-    public void testAddAttributeInt_P01()
-    {
-        int val = 100;
-
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeInt(KEY, val);
-            result = result && Integer.parseInt(simulatorResourceModel.getAttribute(KEY).getValue().toString()) == val;
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
+    public void testSimulatorResourceModel_P01() {
+        SimulatorResourceModel resModel = new SimulatorResourceModel();
+        assertNotNull(resModel);
     }
 
-    public void testAddAttributeInt_N01()
-    {
-        int val = -10;
+    public void testSetInt_P01() {
+        int result = -1;
 
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeInt(KEY, val);
-            result = result && Integer.parseInt(simulatorResourceModel.getAttribute(KEY).getValue().toString()) == val;
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
-    }
-
-    public void testAddAttributeInt_N02()
-    {
-        int val = 666666;
-
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeInt(KEY, val);
-            result = result && Integer.parseInt(simulatorResourceModel.getAttribute(KEY).getValue().toString()) == val;
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
-    }
-
-    public void testAddAttributeDouble_P01()
-    {
-        double val = 10.11;
-
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeDouble(KEY, val);
-            result = result && Double.parseDouble(simulatorResourceModel.getAttribute(KEY).getValue().toString()) == val;
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
-    }
-
-    public void testAddAttributeDouble_N01()
-    {
-        double val = -11.12;
-
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeDouble(KEY, val);
-            result = result && Double.parseDouble(simulatorResourceModel.getAttribute(KEY).getValue().toString()) == val;
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
-    }
-
-    public void testAddAttributeDouble_N02()
-    {
-        double val = 0.0044444444444;
-
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeDouble(KEY, val);
-            result = result && Double.parseDouble(simulatorResourceModel.getAttribute(KEY).getValue().toString()) == val;
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
-    }
-
-    public void testAddAttributeString_P01()
-    {
-        String val = "asdf";
-
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeString(KEY, val);
-            result = result && simulatorResourceModel.getAttribute(KEY).getValue().toString().equals(val);
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
-    }
-
-    public void testAddAttributeString_N01()
-    {
-        String val = "";
-
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeString(KEY, val);
-            result = result && simulatorResourceModel.getAttribute(KEY).getValue().toString().equals(val);
-        }
-        catch(Exception e)
-        {
-            result = false;
-        }
-
-        assertTrue(result);
-    }
-
-   public void testAddAttributeString_N02() {
-        String val = null;
-
-        boolean result = false;
         try {
-
-            simulatorResourceModel.addAttributeString(KEY, val);
-
-            result = result && simulatorResourceModel.getAttribute(KEY).getValue().toString().equals(val);
-
-        } catch(Exception e) {
-            result = true;
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(INT_KEY, new AttributeValue(10));
+            result = ((Integer) resModel.get(INT_KEY).get()).intValue();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
         }
 
-        assertTrue(result);
+        assertEquals(10, result);
     }
 
-    public void testAddAttributeString_N03()
-    {
-        String val = "@#$$&^*^(*^&";
+    public void testSetInt_P02() {
+        int result = -1;
 
-        boolean result = true;
-        try
-        {
-            simulatorResourceModel.addAttributeString(KEY, val);
-            result = result && simulatorResourceModel.getAttribute(KEY).getValue().toString().equals(val);
-        }
-        catch(Exception e)
-        {
-            result = false;
+        try {
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(INT_KEY, new AttributeValue(-10));
+            result = ((Integer) resModel.get(INT_KEY).get()).intValue();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
         }
 
-        assertTrue(result);
+        assertEquals(-10, result);
     }
 
-    public void testAddAttributeBoolean_P01()
-    {
-        boolean result = true;
+    public void testSetDouble_P01() {
+        double result = 0.0;
 
-        boolean val;
-
-        try
-        {
-            val=Boolean.parseBoolean("true");
-            simulatorResourceModel.addAttributeBoolean(KEY, val);
-
-            result = result && ((Boolean.parseBoolean(simulatorResourceModel.getAttribute(KEY).getValue().toString()+"")));
-
-            val = Boolean.parseBoolean("false");
-
-            simulatorResourceModel.addAttributeBoolean(KEY, val);
-
-            result = result && !((Boolean.parseBoolean(simulatorResourceModel.getAttribute(KEY).getValue().toString()+"")));
-        }
-        catch (Exception e)
-        {
-            result = false;
+        try {
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(DOUBLE_KEY, new AttributeValue(4.0));
+            result = ((Double) resModel.get(DOUBLE_KEY).get()).doubleValue();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
         }
 
-        assertTrue(result);
+        assertEquals(4.0, result);
     }
 
-    public void testSize_P01()
-    {
-        boolean result = true;
+    public void testSetDouble_P02() {
+        double result = 0.0;
 
-        try
-        {
-            simulatorResourceModel.addAttributeInt("test1", 1234);
-
-            result = result && (simulatorResourceModel.size() == 1);
-
-            simulatorResourceModel.addAttributeString("test2", "asdf");
-            simulatorResourceModel.addAttributeBoolean("test3", Boolean.parseBoolean("true"));
-            simulatorResourceModel.addAttributeDouble("test4", 22.435234);
-
-            result = result && (simulatorResourceModel.size() == 4);
+        try {
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(DOUBLE_KEY, new AttributeValue(-4.0));
+            result = ((Double) resModel.get(DOUBLE_KEY).get()).doubleValue();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
         }
-        catch(Exception e)
-        {
-            result = false;
-        }
-        assertTrue(result);
+
+        assertEquals(-4.0, result);
     }
 
-    public void testGetAttributes_P01()
-    {
-        boolean result = true;
+    public void testSetBoolean_P01() {
+        boolean result = false;
 
-        try
-        {
-            simulatorResourceModel.addAttributeInt("test1", 1234);
-            simulatorResourceModel.addAttributeString("test2", "asdf");
-            simulatorResourceModel.addAttributeBoolean("test3", Boolean.parseBoolean("true"));
-            simulatorResourceModel.addAttributeDouble("test4", 22.435234);
-
-            Map<String, ResourceAttribute> attributes = simulatorResourceModel.getAttributes();
-
-            result = result && (((Integer)attributes.get("test1").getValue()) == 1234) &&
-                     (((String)attributes.get("test2").getValue()).equals("asdf")) &&
-                     ((Boolean.parseBoolean(attributes.get("test3").getValue().toString() + "")==true)) &&
-                     (((Double)attributes.get("test4").getValue()) == 22.435234);
+        try {
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(BOOL_KEY, new AttributeValue(true));
+            result = ((Boolean) resModel.get(BOOL_KEY).get()).booleanValue();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
         }
-        catch(Exception e)
-        {
-            result = false;
-        }
-        assertTrue(result);
+
+        assertEquals(true, result);
     }
 
-    public void testGetAttribute_P01()
-    {
-        int val = 100;
+    public void testSetString_P01() {
+        String result = null;
 
-        boolean result = true;
-
-        try
-        {
-            simulatorResourceModel.addAttributeInt(KEY, val);
-
-            result = result && Integer.parseInt(simulatorResourceModel.getAttribute(KEY).getValue().toString()) == val;
+        try {
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(STRING_KEY, new AttributeValue("string-value"));
+            result = (String) resModel.get(STRING_KEY).get();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
         }
-        catch(Exception e)
-        {
-            result = false;
+
+        assertEquals("string-value", result);
+    }
+
+    public void testSetString_P02() {
+        String result = null;
+
+        try {
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(STRING_KEY, new AttributeValue(""));
+            result = (String) resModel.get(STRING_KEY).get();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
         }
-        assertTrue(result);
+
+        assertEquals("", result);
+    }
+
+    public void testSetString_P03() {
+        String result = null;
+
+        try {
+            SimulatorResourceModel resModel = new SimulatorResourceModel();
+            resModel.set(STRING_KEY, new AttributeValue("@#$$&^*^(*^&"));
+            result = (String) resModel.get(STRING_KEY).get();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals("@#$$&^*^(*^&", result);
+    }
+
+    public void testSize_P01() {
+        int result = -1;
+
+        SimulatorResourceModel resModel = new SimulatorResourceModel();
+        result = resModel.size();
+
+        assertEquals(0, result);
+    }
+
+    public void testSize_P02() {
+        int result = -1;
+
+        SimulatorResourceModel resModel = new SimulatorResourceModel();
+        try {
+            resModel.set(INT_KEY, new AttributeValue(1234));
+            resModel.set(DOUBLE_KEY, new AttributeValue(1.234));
+            resModel.set(BOOL_KEY, new AttributeValue(true));
+            resModel.set(STRING_KEY, new AttributeValue("string-value"));
+            result = resModel.size();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(4, result);
+    }
+
+    public void testGet_P01() {
+        AttributeValue result = null;
+
+        SimulatorResourceModel resModel = new SimulatorResourceModel();
+        try {
+            resModel.set(INT_KEY, new AttributeValue(10));
+            result = resModel.get(INT_KEY);
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        }
+
+        assertNotNull(result);
+    }
+
+    public void testGet_P02() {
+        Map<String, AttributeValue> result = null;
+
+        SimulatorResourceModel resModel = new SimulatorResourceModel();
+        try {
+            resModel.set(INT_KEY, new AttributeValue(1234));
+            resModel.set(DOUBLE_KEY, new AttributeValue(1.234));
+            resModel.set(BOOL_KEY, new AttributeValue(true));
+            resModel.set(STRING_KEY, new AttributeValue("string-value"));
+            result = resModel.get();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        }
+
+        assertNotNull(result);
+        assertEquals(4, result.size());
     }
 }

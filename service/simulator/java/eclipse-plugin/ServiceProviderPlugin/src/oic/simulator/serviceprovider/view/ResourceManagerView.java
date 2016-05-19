@@ -16,24 +16,16 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IResourceListChangedUIListener;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.resource.DeleteCategory;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
-import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
-import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuAdapter;
@@ -51,42 +43,71 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.SimulatorException;
+import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
+import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.AutomationSettingHelper;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceType;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
+import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.MainPage;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
+import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
 
 /**
  * This class manages and shows the resource manager view in the perspective.
  */
 public class ResourceManagerView extends ViewPart {
 
-    public static final String             VIEW_ID = "oic.simulator.serviceprovider.view.resourcemanager";
+    public static final String           VIEW_ID = "oic.simulator.serviceprovider.view.resourcemanager";
 
-    private Button                         createButton;
-    private Button                         deleteButton;
+    private Button                       createButton;
+    private Button                       deleteButton;
 
-    private TreeViewer                     treeViewer;
+    private TreeViewer                   singleResTreeViewer;
 
-    private IResourceListChangedUIListener resourceListChangedListener;
+    private IResourceListChangedListener resourceListChangedListener;
 
-    private ResourceManager                resourceManager;
+    private IPropertiesChangedListener   resourcePropertiesChangedListener;
+
+    private ResourceManager              resourceManager;
 
     public ResourceManagerView() {
 
         resourceManager = Activator.getDefault().getResourceManager();
 
-        resourceListChangedListener = new IResourceListChangedUIListener() {
+        resourceListChangedListener = new IResourceListChangedListener() {
 
             @Override
-            public void onResourceCreation() {
-                Display.getDefault().asyncExec(new Runnable() {
+            public void onResourceCreation(final ResourceType type) {
+                Display.getDefault().syncExec(new Runnable() {
 
                     @Override
                     public void run() {
-                        if (null != treeViewer) {
-                            treeViewer.refresh();
+                        if (type == ResourceType.SINGLE) {
+                            if (null != singleResTreeViewer) {
+                                singleResTreeViewer.refresh();
+                            }
                         }
 
                         // Trigger the visibility of delete button
@@ -96,17 +117,50 @@ public class ResourceManagerView extends ViewPart {
             }
 
             @Override
-            public void onResourceDeletion() {
+            public void onResourceDeletion(final ResourceType type) {
                 Display.getDefault().asyncExec(new Runnable() {
 
                     @Override
                     public void run() {
-                        if (null != treeViewer) {
-                            treeViewer.refresh();
+                        switch (type) {
+                            case SINGLE:
+                                if (null != singleResTreeViewer)
+                                    singleResTreeViewer.refresh();
+                                break;
                         }
 
                         // Trigger the visibility of delete button
                         changeDeleteVisibility();
+                    }
+                });
+            }
+
+            @Override
+            public void onResourceListUpdate(final ResourceType type) {
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        switch (type) {
+                            case SINGLE:
+                                if (null != singleResTreeViewer)
+                                    singleResTreeViewer.refresh();
+                                break;
+                        }
+                    }
+                });
+            }
+        };
+
+        resourcePropertiesChangedListener = new IPropertiesChangedListener() {
+
+            @Override
+            public void onResourcePropertyChange() {
+                Display.getDefault().asyncExec(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (null != singleResTreeViewer)
+                            singleResTreeViewer.refresh();
                     }
                 });
             }
@@ -114,16 +168,7 @@ public class ResourceManagerView extends ViewPart {
     }
 
     public void changeDeleteVisibility() {
-        if (null == treeViewer) {
-            return;
-        }
-        boolean visibility;
-        Tree tree = treeViewer.getTree();
-        if (null != tree && !tree.isDisposed() && tree.getItemCount() > 0) {
-            visibility = true;
-        } else {
-            visibility = false;
-        }
+        boolean visibility = resourceManager.isAnyResourceExist();
         if (null != deleteButton && !deleteButton.isDisposed()) {
             deleteButton.setEnabled(visibility);
         }
@@ -163,25 +208,7 @@ public class ResourceManagerView extends ViewPart {
         gd.widthHint = 90;
         deleteButton.setLayoutData(gd);
 
-        Group resourceGroup = new Group(compContent, SWT.NONE);
-        resourceGroup.setText("Created Resources");
-
-        Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
-        resourceGroup.setBackground(color);
-
-        resourceGroup.setLayout(new GridLayout(1, false));
-        gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        resourceGroup.setLayoutData(gd);
-
-        PatternFilter filter = new PatternFilter();
-        FilteredTree filteredTree = new FilteredTree(resourceGroup,
-                SWT.H_SCROLL | SWT.V_SCROLL | SWT.SINGLE, filter, true);
-        treeViewer = filteredTree.getViewer();
-        treeViewer.getTree().setLayoutData(
-                new GridData(SWT.FILL, SWT.FILL, true, true));
-        treeViewer.setContentProvider(new TreeContentProvider());
-        treeViewer.setLabelProvider(new TreeLabelProvider());
-        treeViewer.setInput(new Object());
+        createSimpleResourcesArea(compContent);
 
         addUIListeners();
 
@@ -192,38 +219,245 @@ public class ResourceManagerView extends ViewPart {
         changeDeleteVisibility();
     }
 
+    private void createSimpleResourcesArea(Composite compContent) {
+        // Create a group to show all the discovered resources.
+        // Adding the group to the folder.
+        Group resourceGroup = new Group(compContent, SWT.NONE);
+
+        Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
+        resourceGroup.setBackground(color);
+
+        resourceGroup.setLayout(new GridLayout(1, false));
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        resourceGroup.setLayoutData(gd);
+
+        PatternFilter filter = new PatternFilter();
+        FilteredTree filteredTree = new FilteredTree(resourceGroup,
+                SWT.H_SCROLL | SWT.V_SCROLL | SWT.SINGLE, filter, true);
+        singleResTreeViewer = filteredTree.getViewer();
+        singleResTreeViewer.getTree().setLayoutData(
+                new GridData(SWT.FILL, SWT.FILL, true, true));
+        singleResTreeViewer
+                .setContentProvider(new SingleResourceContentProvider());
+        singleResTreeViewer.setLabelProvider(new TreeLabelProvider());
+        singleResTreeViewer.setInput(new Object());
+
+        singleResTreeViewer
+                .addSelectionChangedListener(new ISelectionChangedListener() {
+                    @Override
+                    public void selectionChanged(SelectionChangedEvent e) {
+                        IStructuredSelection selection = (IStructuredSelection) e
+                                .getSelection();
+                        if (null == selection) {
+                            return;
+                        }
+
+                        Resource res = null;
+                        int size = selection.size();
+                        if (size == 1) {
+                            res = (Resource) selection.getFirstElement();
+                        }
+                        resourceManager.resourceSelectionChanged(res);
+                    }
+                });
+
+        addMenuToSimpleResources();
+    }
+
+    private void addMenuToSimpleResources() {
+        if (null != singleResTreeViewer) {
+            final Tree resourceTreeHead = singleResTreeViewer.getTree();
+            if (null != resourceTreeHead) {
+                // Below code creates menu entries and shows them on right
+                // clicking a resource
+                final Menu menu = new Menu(resourceTreeHead);
+                resourceTreeHead.setMenu(menu);
+                menu.addMenuListener(new MenuAdapter() {
+                    @Override
+                    public void menuShown(MenuEvent e) {
+                        // Clear existing menu items
+                        MenuItem[] items = menu.getItems();
+                        for (int index = 0; index < items.length; index++) {
+                            items[index].dispose();
+                        }
+
+                        IStructuredSelection selection = ((IStructuredSelection) singleResTreeViewer
+                                .getSelection());
+                        final SingleResource resource = (SingleResource) selection
+                                .getFirstElement();
+                        if (null == resource) {
+                            return;
+                        }
+
+                        addAutomationMenu(menu, resource);
+
+                        // Menu to remove the resource.
+                        MenuItem deleteResource = new MenuItem(menu, SWT.NONE);
+                        deleteResource.setText("Delete");
+                        deleteResource
+                                .addSelectionListener(new SelectionAdapter() {
+                                    @Override
+                                    public void widgetSelected(SelectionEvent e) {
+                                        try {
+                                            resourceManager
+                                                    .removeResource(resource);
+                                            singleResTreeViewer.refresh();
+
+                                            resourceManager
+                                                    .resourceSelectionChanged(null);
+                                        } catch (SimulatorException e1) {
+                                            MessageDialog
+                                                    .openInformation(Display
+                                                            .getDefault()
+                                                            .getActiveShell(),
+                                                            "Deletion Failed",
+                                                            "Failed to delete the resource.");
+                                        }
+                                        changeDeleteVisibility();
+                                    }
+                                });
+                    }
+                });
+            }
+        }
+    }
+
+    private void addAutomationMenu(final Menu menu,
+            final SingleResource selectedResource) {
+        MenuItem startItem = new MenuItem(menu, SWT.NONE);
+        startItem.setText(Constants.START_RESOURCE_AUTOMATION);
+        startItem.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                // Block starting resource level
+                // automation if any attribute level
+                // automation is in progress for the
+                // selected resource
+                boolean started = resourceManager
+                        .isAttributeAutomationStarted(selectedResource);
+                if (started) {
+                    MessageDialog
+                            .openInformation(
+                                    Display.getDefault().getActiveShell(),
+                                    "Attribute automation is in progress",
+                                    "Attribute level automation for this resource is already in progress!!!\nPlease stop all "
+                                            + "running attribute level automations to start resource level automation.");
+                } else {
+                    // Start the automation
+                    // Fetch the settings data
+                    List<AutomationSettingHelper> automationSettings;
+                    automationSettings = AutomationSettingHelper
+                            .getAutomationSettings(null);
+
+                    // Open the settings dialog
+                    AutomationSettingDialog dialog = new AutomationSettingDialog(
+                            Activator.getDefault().getWorkbench()
+                                    .getActiveWorkbenchWindow().getShell(),
+                            automationSettings);
+                    dialog.create();
+                    if (dialog.open() == Window.OK) {
+                        String automationType = dialog.getAutomationType();
+                        String updateFreq = dialog.getUpdateFrequency();
+
+                        AutoUpdateType autoType = AutoUpdateType
+                                .valueOf(automationType);
+                        int updFreq = Utility
+                                .getUpdateIntervalFromString(updateFreq);
+                        boolean status = resourceManager
+                                .startResourceAutomationUIRequest(autoType,
+                                        updFreq, selectedResource);
+                        if (!status) {
+                            String statusMsg = "Automation request failed!!!";
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(), "Automation Status",
+                                    statusMsg);
+                        }
+                    }
+                }
+            }
+        });
+
+        MenuItem stopItem = new MenuItem(menu, SWT.NONE);
+        stopItem.setText(Constants.STOP_RESOURCE_AUTOMATION);
+        stopItem.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                boolean status = resourceManager
+                        .stopResourceAutomationUIRequest(selectedResource);
+                if (!status) {
+                    String statusMsg = "Automation stop failed.";
+                    MessageDialog.openInformation(Display.getDefault()
+                            .getActiveShell(), "Automation Status", statusMsg);
+                }
+            }
+        });
+
+        // Set the initial visibility of menu items
+        boolean status = resourceManager
+                .isResourceAutomationStarted(selectedResource);
+        startItem.setEnabled(!status);
+        stopItem.setEnabled(status);
+    }
+
     private void addUIListeners() {
 
         createButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
+                if (resourceManager.getResourceCount() >= Constants.MAX_RESOURCE_COUNT) {
+                    MessageDialog.openInformation(Display.getDefault()
+                            .getActiveShell(), "Resource limit exceeded",
+                            Constants.RESOURCE_LIMIT_EXCEEDED_MSG);
+                    return;
+                }
                 PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
 
                     @Override
                     public void run() {
                         CreateResourceWizard createWizard = new CreateResourceWizard();
                         ResourceWizardDialog wizardDialog = new ResourceWizardDialog(
-                                PlatformUI.getWorkbench().getDisplay()
-                                        .getActiveShell(), createWizard);
+                                Display.getDefault().getActiveShell(),
+                                createWizard);
+                        createWizard.setWizardDialog(wizardDialog);
                         int open = wizardDialog.open();
-                        if (open == WizardDialog.OK) {
-                            String configFilePath;
-                            int count;
-                            configFilePath = createWizard.getConfigFilePath();
-                            System.out.println("Resultant config file path is "
-                                    + configFilePath);
-                            count = createWizard.getResourceCount();
-                            if (count > 0) {
-                                if (count == 1) {
-                                    // Single resource creation
-                                    resourceManager
-                                            .createResource(configFilePath);
-                                } else {
-                                    // Multi-resource creation
-                                    resourceManager.createResource(
-                                            configFilePath, count);
+                        if (open == WizardDialog.OK
+                                || createWizard.isDlgForceClosed()) {
+
+                            MainPage mainPage = createWizard.getMainPage();
+                            if (null == mainPage) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(), new Date(),
+                                                "There is an error while creating the wizard.\n");
+                                return;
+                            }
+
+                            Option option = mainPage.getOption();
+                            if (option == Option.SIMPLE_FROM_RAML
+                                    || option == Option.SIMPLE) {
+                                SingleResource res = (SingleResource) createWizard
+                                        .getCreatedResource();
+                                if (null != res) {
+                                    boolean canSelect = true;
+                                    if (option == Option.SIMPLE_FROM_RAML
+                                            && createWizard.getResourceCount() > 1) {
+                                        canSelect = false;
+                                    }
+                                    if (canSelect) {
+                                        singleResTreeViewer.setSelection(
+                                                new StructuredSelection(res),
+                                                true);
+                                        resourceManager
+                                                .resourceSelectionChanged(res);
+                                    }
                                 }
                             }
+
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(),
+                                    "Resource Creation Status", createWizard
+                                            .getStatus());
                         }
                     }
                 });
@@ -237,138 +471,38 @@ public class ResourceManagerView extends ViewPart {
 
                     @Override
                     public void run() {
+                        boolean exist = resourceManager.isAnyResourceExist();
+                        if (!exist) {
+                            return;
+                        }
                         DeleteResourceWizard deleteWizard = new DeleteResourceWizard();
                         ResourceWizardDialog wizardDialog = new ResourceWizardDialog(
                                 PlatformUI.getWorkbench().getDisplay()
                                         .getActiveShell(), deleteWizard);
                         int open = wizardDialog.open();
-                        if (open == WizardDialog.OK) {
-                            DeleteCategory deleteCategory = deleteWizard
-                                    .getDeleteCategory();
-                            if (deleteCategory == DeleteCategory.BY_URI) {
-                                String uri = deleteWizard.getDeleteCandidate();
-                                if (null != uri) {
-                                    boolean dispName = Activator.getDefault()
-                                            .getResourceManager()
-                                            .isDisplayName(uri);
-                                    if (dispName) {
-                                        uri = Activator
-                                                .getDefault()
-                                                .getResourceManager()
-                                                .getCompleteUriFromDisplayName(
-                                                        uri);
-                                    }
-                                    resourceManager.deleteResourceByURI(uri);
-                                }
-                            } else if (deleteCategory == DeleteCategory.BY_TYPE) {
-                                resourceManager
-                                        .deleteResourceByType(deleteWizard
-                                                .getDeleteCandidate());
-                            } else if (deleteCategory == DeleteCategory.ALL) {
-                                resourceManager.deleteAllResources();
+                        if (open == Window.OK) {
+                            singleResTreeViewer.refresh();
+
+                            if (!deleteWizard.getStatus()) {
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Resource Deletion Failed",
+                                                "Failed to delete the resources. Please try again.");
                             }
+                            changeDeleteVisibility();
                         }
                     }
                 });
             }
         });
-
-        if (null != treeViewer) {
-            final Tree resourceTreeHead = treeViewer.getTree();
-            if (null != resourceTreeHead) {
-                // Below code adds a listener to the tree for selection changes
-                // and notifies the resource manager
-                resourceTreeHead.addSelectionListener(new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent e) {
-                        TreeItem selectedItem = (TreeItem) e.item;
-                        if (null != selectedItem) {
-                            String selectedItemText = selectedItem.getText();
-                            selectedItemText = resourceManager
-                                    .getCompleteUriFromDisplayName(selectedItemText);
-                            // Propagate this selection change event to manager
-                            resourceManager
-                                    .resourceSelectionChanged(selectedItemText);
-                        }
-                    }
-                });
-                // Below code creates menu entries and shows them on right
-                // clicking a resource
-                final Menu menu = new Menu(resourceTreeHead);
-                resourceTreeHead.setMenu(menu);
-                menu.addMenuListener(new MenuAdapter() {
-                    @Override
-                    public void menuShown(MenuEvent e) {
-                        // Clear existing menu items
-                        MenuItem[] items = menu.getItems();
-                        for (int index = 0; index < items.length; index++) {
-                            items[index].dispose();
-                        }
-                        final String selectedItem = resourceTreeHead
-                                .getSelection()[0].getText();
-                        MenuItem startItem = new MenuItem(menu, SWT.NONE);
-                        startItem.setText(Constants.START_RESOURCE_AUTOMATION);
-                        startItem.addSelectionListener(new SelectionAdapter() {
-                            @Override
-                            public void widgetSelected(SelectionEvent e) {
-                                // Block starting resource level
-                                // automation if any attribute level
-                                // automation is in progress for the
-                                // selected resource
-                                boolean started = resourceManager
-                                        .isAttributeAutomationStarted(resourceManager
-                                                .getCompleteUriFromDisplayName(selectedItem));
-                                if (started) {
-                                    MessageDialog
-                                            .openInformation(
-                                                    Display.getDefault()
-                                                            .getActiveShell(),
-                                                    "Attribute automation is in progress",
-                                                    "Attribute level automation for this resource is already in progress!!!\nPlease stop all "
-                                                            + "running attribute level automations to start resource level automation.");
-                                } else {
-                                    boolean status = resourceManager
-                                            .startResourceAutomationUIRequest(resourceManager
-                                                    .getCompleteUriFromDisplayName(selectedItem));
-                                    String statusMsg = status ? "Automation started successfully!!!"
-                                            : "Automation request failed!!!";
-                                    MessageDialog.openInformation(Display
-                                            .getDefault().getActiveShell(),
-                                            "Automation Status", statusMsg);
-                                }
-                            }
-                        });
-
-                        MenuItem stopItem = new MenuItem(menu, SWT.NONE);
-                        stopItem.setText(Constants.STOP_RESOURCE_AUTOMATION);
-                        stopItem.addSelectionListener(new SelectionAdapter() {
-                            @Override
-                            public void widgetSelected(SelectionEvent e) {
-                                boolean status = resourceManager
-                                        .stopResourceAutomationUIRequest(resourceManager
-                                                .getCompleteUriFromDisplayName(selectedItem));
-                                String statusMsg = status ? "Automation stop requested!!!"
-                                        : "Automation stop failed.";
-                                MessageDialog.openInformation(Display
-                                        .getDefault().getActiveShell(),
-                                        "Automation Status", statusMsg);
-                            }
-                        });
-
-                        // Set the initial visibility of menu items
-                        boolean status = resourceManager.isResourceAutomationStarted(resourceManager
-                                .getCompleteUriFromDisplayName(selectedItem));
-                        startItem.setEnabled(!status);
-                        stopItem.setEnabled(status);
-                    }
-                });
-            }
-        }
     }
 
     public void addManagerListeners() {
-        resourceManager
-                .addResourceListChangedUIListener(resourceListChangedListener);
+        UiListenerHandler.getInstance().addResourceListChangedUIListener(
+                resourceListChangedListener);
+        UiListenerHandler.getInstance().addResourcePropertiesChangedUIListener(
+                resourcePropertiesChangedListener);
     }
 
     @Override
@@ -379,15 +513,21 @@ public class ResourceManagerView extends ViewPart {
     public void dispose() {
         // Unregister the listener
         if (null != resourceListChangedListener) {
-            resourceManager
-                    .removeResourceListChangedUIListener(resourceListChangedListener);
+            UiListenerHandler.getInstance()
+                    .removeResourceListChangedUIListener(
+                            resourceListChangedListener);
             resourceManager.resourceSelectionChanged(null);
+        }
+        if (null != resourcePropertiesChangedListener) {
+            UiListenerHandler.getInstance()
+                    .removeResourcePropertiesChangedUIListener(
+                            resourcePropertiesChangedListener);
         }
         super.dispose();
     }
 }
 
-class TreeContentProvider implements ITreeContentProvider {
+class SingleResourceContentProvider implements ITreeContentProvider {
 
     @Override
     public void dispose() {
@@ -404,12 +544,13 @@ class TreeContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getElements(Object parent) {
-        List<String> uriList;
-        uriList = Activator.getDefault().getResourceManager().getURIList();
-        if (null == uriList) {
-            uriList = new ArrayList<String>();
+        List<SingleResource> resList;
+        resList = Activator.getDefault().getResourceManager()
+                .getSingleResourceList();
+        if (null == resList) {
+            resList = new ArrayList<SingleResource>();
         }
-        return uriList.toArray();
+        return resList.toArray();
     }
 
     @Override
@@ -426,15 +567,19 @@ class TreeContentProvider implements ITreeContentProvider {
 class TreeLabelProvider extends LabelProvider {
     @Override
     public String getText(Object element) {
-        String value = (String) element;
-        value = Utility.uriToDisplayName(value);
-        return value;
+        if (element instanceof Resource) {
+            Resource res = (Resource) element;
+            return res.getResourceName();
+        }
+        return null;
     }
 
     @Override
     public Image getImage(Object element) {
-        ResourceManager resourceManager = Activator.getDefault()
-                .getResourceManager();
-        return resourceManager.getImage((String) element);
+        if (element instanceof SingleResource) {
+            return Activator.getDefault().getImageRegistry()
+                    .get(Constants.SINGLE_RESOURCE);
+        }
+        return null;
     }
 }

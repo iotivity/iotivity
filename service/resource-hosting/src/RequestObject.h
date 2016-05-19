@@ -22,44 +22,45 @@
 #define RH_REQUESTOBJECT_H_
 
 #include "RCSRemoteResourceObject.h"
-#include "RCSResourceObject.h"
+#include "RCSRequest.h"
 
 namespace OIC
 {
-namespace Service
-{
-
-class RequestObject
-{
-public:
-    typedef std::shared_ptr<RequestObject> Ptr;
-    typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
-    typedef void (*SetRequestCallback)(const RCSResourceAttributes &, RCSResourceAttributes &);
-
-    enum class RequestMethod
+    namespace Service
     {
-        Getter = 0,
-        Setter,
-        Delete
-    };
+        class RequestObject
+        {
+        public:
+            typedef std::shared_ptr<RequestObject> Ptr;
+            typedef std::function<void(const RCSResourceAttributes &, int,
+                    const RCSRequest &, RequestObject::Ptr)> SetRequestCallback;
 
-private:
-    SetRequestCallback pSetRequestCB;
+            enum class RequestMethod
+            {
+                Get = 0,
+                Set,
+                Post,
+                Delete
+            };
 
-public:
-    RequestObject();
-    RequestObject(SetRequestCallback cb);
-    ~RequestObject();
+        private:
+            typedef RCSRemoteResourceObject::Ptr RemoteObjectPtr;
 
-    void invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-            RCSResourceAttributes & resourceAttibutes);
+        public:
+            RequestObject() = default;
+            ~RequestObject() = default;
 
-private:
-    void setRequestCB(const RCSResourceAttributes & returnedAttributes,
-            RCSResourceAttributes & putAttibutes);
-};
+            static void invokeRequest(RCSRemoteResourceObject::Ptr remoteObject,
+                    const RCSRequest & request, RequestMethod method,
+                    const RCSResourceAttributes & resourceAttibutes,
+                    SetRequestCallback setCB = nullptr);
 
-} /* namespace Service */
+        private:
+            void setRequestCB(const RCSResourceAttributes & returnedAttributes, int eCode,
+                    const RCSRequest & request, RequestObject::Ptr this_ptr);
+        };
+
+    } /* namespace Service */
 } /* namespace OIC */
 
 #endif /* RH_REQUESTOBJECT_H_ */

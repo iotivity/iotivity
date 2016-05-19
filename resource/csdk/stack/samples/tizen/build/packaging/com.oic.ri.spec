@@ -16,6 +16,7 @@ BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: pkgconfig(uuid)
+BuildRequires: pkgconfig(sqlite3)
 BuildRequires: boost-devel
 BuildRequires: boost-thread
 BuildRequires: boost-system
@@ -48,13 +49,14 @@ cp -f %{ROOTDIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %
 cp -f %{ROOTDIR}/resource/csdk/connectivity/lib/libcoap-4.1.1/libcoap.a %{buildroot}/%{_libdir}
 cp /usr/lib/libuuid.so.1 %{buildroot}%{_libdir}
 if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 fi
 
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstackconfig.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/octypes.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/resource/csdk/logger/include/logger.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/resource/csdk/logger/include/logger_types.h* %{DEST_INC_DIR}/
 cp resource/oc_logger/include/oc_logger.hpp %{DEST_INC_DIR}/
 cp resource/oc_logger/include/oc_log_stream.hpp %{DEST_INC_DIR}/
 cp resource/oc_logger/include/oc_logger.h %{DEST_INC_DIR}/

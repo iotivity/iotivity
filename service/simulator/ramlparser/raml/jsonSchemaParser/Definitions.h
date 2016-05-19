@@ -47,6 +47,30 @@ namespace RAML
                   * Constructor of Definitions.
                   */
             Definitions() = default;
+            /**
+                  * Copy Constructor of Definitions.
+                  *
+                  * @param Definitions
+                  */
+            Definitions(const Definitions &) = default;
+            /**
+                  * Assignment operator for Definitions.
+                  *
+                  * @param Definitions
+                  */
+            Definitions &operator=(const Definitions &) = default;
+            /**
+                  * Copy Constructor of Definitions.
+                  *
+                  * @param Definitions
+                  */
+            Definitions(Definitions &&) = default;
+            /**
+                  * Assignment operator for Definitions.
+                  *
+                  * @param Definitions
+                  */
+            Definitions &operator=(Definitions &&) = default;
 
             /**
                   * Constructor of Definitions.
@@ -60,69 +84,40 @@ namespace RAML
                  *
                  * @return Definitions name as string
                  */
-            inline std::string getName(void) const
-            {
-                return m_defName;
-            }
-
+            std::string getName() const;
             /**
                  * This method is for setting name to Definitions
                  *
                  * @param name - Definitions name as string.
                  */
-            inline void setName(const std::string &name)
-            {
-                m_defName = name;
-            }
+            void setName(const std::string &name);
 
             /**
                  * This method is for getting Type from Definitions.
                  *
                  * @return Definitions Type as string
                  */
-            inline std::string getType(void) const
-            {
-                return m_type;
-            }
+            std::string getType() const;
 
             /**
                  * This method is for setting Type to Definitions
                  *
                  * @param type - Definitions Type as string.
                  */
-            inline void setType(const std::string &type)
-            {
-                m_type = type;
-            }
-
+            void setType(const std::string &type);
             /**
                  * This method is for getting RequiredValue from Definitions.
                  *
                  * @return list of RequiredValue as string
                  */
-            std::vector<std::string> const &getRequiredValues() const
-            {
-                return m_required;
-            }
+            std::vector<std::string> const &getRequiredValues() const;
 
             /**
                  * This method is for setting RequiredValue to Definitions
                  *
                  * @param reqValue - RequiredValue as string.
                  */
-            void setRequiredValue(const std::string &reqValue)
-            {
-                auto it = m_required.begin();
-                for (; it != m_required.end(); ++it)
-                {
-                    if (*it == reqValue)
-                        break;
-                }
-                if (m_required.end() != it)
-                {
-                    m_required.push_back(reqValue);
-                }
-            }
+            void setRequiredValue(const std::string &reqValue);
 
             /**
                  * This method is for getting size of Properties from Definitions.
@@ -138,24 +133,14 @@ namespace RAML
                  *
                  * @return pointer to Properties.
                  */
-            inline PropertiesPtr getproperty(const std::string &propName )
-            {
-                if (m_properties.end() != m_properties.find(propName))
-                {
-                    return m_properties[propName];
-                }
-                return nullptr;
-            }
+            PropertiesPtr getproperty(const std::string &propName );
 
             /**
                  * This method is for getting Properties from Definitions.
                  *
                  * @return map of Property name and pointer to Properties
                  */
-            inline std::map<std::string, PropertiesPtr> const  &getProperties()
-            {
-                return m_properties;
-            }
+            std::map<std::string, PropertiesPtr> const  &getProperties();
 
             /**
                  * This method is for setting Properties to Definitions
@@ -163,13 +148,8 @@ namespace RAML
                  * @param propName - Definitions Type as string.
                  * @param property - pointer to Properties.
                  */
-            void addProperty(const std::string &propName, const PropertiesPtr &property)
-            {
-                if (m_properties.end() == m_properties.find(propName))
-                {
-                    m_properties[propName] =  property;
-                }
-            }
+            void addProperty(const std::string &propName, const PropertiesPtr &property);
+
         private:
             std::map<std::string, PropertiesPtr > m_properties;
             std::string m_defName;

@@ -26,10 +26,19 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#ifndef WITH_ARDUINO
+#ifdef TCP_ADAPTER
+#define HAVE_SYS_POLL_H
+#endif
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -141,7 +150,9 @@ typedef enum
     CA_ADAPTER_REMOTE_ACCESS = (1 << 3),   // Remote Access over XMPP.
 #endif
 
-    CA_ADAPTER_TCP = (1 << 4),   // CoAP over TCP
+    CA_ADAPTER_TCP           = (1 << 4),   // CoAP over TCP
+    CA_ADAPTER_NFC           = (1 << 5),   // NFC Adapter
+
     CA_ALL_ADAPTERS          = 0xffffffff
 } CATransportAdapter_t;
 
@@ -276,6 +287,7 @@ typedef enum
     CA_DESTINATION_DISCONNECTED,    /**< Destination is disconnected */
     CA_NOT_SUPPORTED,               /**< Not supported */
     CA_STATUS_NOT_INITIALIZED,      /**< Not Initialized*/
+    CA_DTLS_AUTHENTICATION_FAILURE, /**< Decryption error in DTLS */
     CA_STATUS_FAILED =255           /**< Failure */
     /* Result code - END HERE */
 } CAResult_t;
@@ -495,9 +507,6 @@ typedef struct
     struct calayer
     {
         CAHistory_t requestHistory;  /**< filter IP family in requests */
-        CAHistory_t responseHistory; /**< filter IP family in responses */
-        CATransportFlags_t previousRequestFlags;/**< address family filtering */
-        uint16_t previousRequestMessageId;      /**< address family filtering */
     } ca;
 
 #ifdef TCP_ADAPTER
@@ -507,18 +516,55 @@ typedef struct
     struct tcpsockets
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
+        CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv6;        /**< IPv6 accept socket */
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
+        int shutdownFds[2];     /**< shutdown pipe */
+        int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
+        bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
 #endif
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;
+
+/**
+ * Callback function type for request delivery.
+ * @param[out]   object       Endpoint object from which the request is received.
+ *                            It contains endpoint address based on the connectivity type.
+ * @param[out]   requestInfo  Info for resource model to understand about the request.
+ */
+typedef void (*CARequestCallback)(const CAEndpoint_t *object,
+                                  const CARequestInfo_t *requestInfo);
+
+/**
+ * Callback function type for response delivery.
+ * @param[out]   object           Endpoint object from which the response is received.
+ * @param[out]   responseInfo     Identifier which needs to be mapped with response.
+ */
+typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
+                                   const CAResponseInfo_t *responseInfo);
+/**
+ * Callback function type for error.
+ * @param[out]   object           remote device information.
+ * @param[out]   errorInfo        CA Error information.
+ */
+typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
+                                const CAErrorInfo_t *errorInfo);
+
+/**
+ * Callback function type for network status changes delivery from CA common logic.
+ * @param[out]   info       Endpoint object from which the network status is changed.
+ *                          It contains endpoint address based on the connectivity type.
+ * @param[out]   status     Current network status info.
+ */
+typedef void (*CANetworkMonitorCallback)(const CAEndpoint_t *info, CANetworkStatus_t status);
 
 #ifdef __cplusplus
 } /* extern "C" */

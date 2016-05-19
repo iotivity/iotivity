@@ -25,8 +25,8 @@
  * Resource.
  */
 
-#ifndef __OCRESOURCE_H
-#define __OCRESOURCE_H
+#ifndef OC_RESOURCE_H_
+#define OC_RESOURCE_H_
 
 #include <memory>
 #include <random>
@@ -548,5 +548,5 @@ namespace OC
 
 } // namespace OC
 
-#endif //__OCRESOURCE_H
+#endif // OC_RESOURCE_H
 

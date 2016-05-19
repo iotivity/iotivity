@@ -54,9 +54,9 @@ namespace OIC
 
             RCSResourceAttributes::Value handleGetAttributeRequest(const std::string& key);
 
-            virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
+            virtual void handleSetAttributesRequest(const RCSResourceAttributes &attrs);
 
-            virtual RCSResourceAttributes& handleGetAttributesRequest();
+            virtual RCSResourceAttributes handleGetAttributesRequest();
 
             /**
             * SoftSensor logic. Has to be provided by the soft sensor developer.

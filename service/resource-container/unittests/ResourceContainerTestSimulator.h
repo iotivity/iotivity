@@ -66,13 +66,20 @@ class ResourceContainerTestSimulator
 
         ~ResourceContainerTestSimulator()
         {
-            if (remoteResource != nullptr && remoteResource->isCaching())
+            try
             {
-                remoteResource->stopCaching();
+                if (remoteResource != nullptr && remoteResource->isCaching())
+                {
+                    remoteResource->stopCaching();
+                }
+                if (remoteResource != nullptr && remoteResource->isMonitoring())
+                {
+                    remoteResource->stopMonitoring();
+                }
             }
-            if (remoteResource != nullptr && remoteResource->isMonitoring())
+            catch (RCSException &e)
             {
-                remoteResource->stopMonitoring();
+                std::cout << "exception : " << e.what() << std::endl;
             }
         }
 
@@ -150,7 +157,7 @@ class ResourceContainerTestSimulator
                                               std::weak_ptr<ResourceContainerTestSimulator>(shared_from_this())));
                 mutexForDiscovery.lock();
             }
-            catch (std::exception &e)
+            catch (RCSInvalidParameterException &e)
             {
                 std::cout << "exception : " << e.what() << std::endl;
             }

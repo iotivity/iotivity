@@ -40,35 +40,12 @@
 #include "logger.h"
 #include "pdu.h"
 #include "uarraylist.h"
+#include "cacommonutil.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return ret; \
-    } \
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL(arg, log_tag, log_message) \
-    VERIFY_NON_NULL_RET((arg), (log_tag), (log_message), CA_STATUS_INVALID_PARAM)
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_VOID(arg, log_tag, log_message) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return; \
-    } \
 
 /**
  * Length of network interface name.
@@ -212,13 +189,16 @@ void CAClearNetInterfaceInfoList(u_arraylist_t *infoList);
  */
 void CAClearServerInfoList(u_arraylist_t *serverInfoList);
 
+#ifndef WITH_ARDUINO
 /**
  * Convert address from binary to string.
- * @param[in]    ipaddr   IP address info.
- * @param[out]   host     address string (must be CA_IPADDR_SIZE).
- * @param[out]   port     host order port number.
+ * @param[in]    sockAddr     IP address info.
+ * @param[in]    sockAddrLen  size of sockAddr.
+ * @param[out]   host         address string (must be CA_IPADDR_SIZE).
+ * @param[out]   port         host order port number.
  */
-void CAConvertAddrToName(const struct sockaddr_storage *sockaddr, char *host, uint16_t *port);
+void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
+                         char *host, uint16_t *port);
 
 /**
  * Convert address from string to binary.
@@ -227,6 +207,7 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockaddr, char *host, ui
  * @param[out]  ipaddr    IP address info.
  */
 void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
+#endif /* WITH_ARDUINO */
 
 #ifdef __ANDROID__
 /**
@@ -257,6 +238,40 @@ jobject CANativeJNIGetContext();
  * @return  JVM object.
  */
 JavaVM *CANativeJNIGetJavaVM();
+
+/**
+ * To set Activity to JNI.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI Environment pointer.
+ * @param[in]   activity    Activity object.
+ */
+void CANativeSetActivity(JNIEnv *env, jobject activity);
+
+/**
+ * To get Activity.
+ * Called from adapters to get Activity.
+ * @return  Activity object.
+ */
+jobject *CANativeGetActivity();
+
+/**
+ * get method ID for method Name and class
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   className        android class.
+ * @param[in]   methodName       android method name.
+ * @param[in]   methodFormat     method type of methodName.
+ * @return      jmethodID        iD of the method.
+ */
+jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
+                           const char* methodName,
+                           const char* methodFormat);
+
+/**
+ * To Delete other Global References
+ * Called during CATerminate to remove global references
+ */
+void CADeleteGlobalReferences();
+
 #endif
 
 #ifdef __cplusplus

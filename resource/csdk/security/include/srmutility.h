@@ -65,7 +65,7 @@ struct OicParseQueryIter
  *
  */
 #define VERIFY_SUCCESS(tag, op, logLevel) do{ if (!(op)) \
-            {OC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
+            {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
  * @def VERIFY_NON_NULL
@@ -75,7 +75,7 @@ struct OicParseQueryIter
  *
  */
 #define VERIFY_NON_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
-            { OC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
+            { OIC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
 
 /**
  * This method initializes the OicParseQueryIter_t struct
@@ -113,6 +113,15 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
  */
 OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
                            size_t *numUuids, OicUuid_t** uuids );
+
+/**
+ * Function to getting string of ownership transfer method
+ *
+ * @prarm oxmType ownership transfer method
+ *
+ * @return string value of ownership transfer method
+ */
+const char* GetOxmString(OicSecOxm_t oxmType);
 
 #ifdef __cplusplus
 }

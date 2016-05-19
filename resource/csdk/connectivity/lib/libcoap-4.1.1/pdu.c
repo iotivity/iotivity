@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -243,24 +244,43 @@ void coap_delete_pdu(coap_pdu_t *pdu)
 }
 
 #ifdef WITH_TCP
+size_t coap_get_total_message_length(const unsigned char *data, size_t size)
+{
+    if (!data || !size)
+    {
+        debug("received data length is null\n");
+        return 0;
+    }
+
+    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+            ((unsigned char *)data)[0] >> 4);
+    size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)data,
+                                                        transport);
+    size_t headerLen = coap_get_tcp_header_length((unsigned char *)data);
+
+    return headerLen + optPaylaodLen;
+}
+
 coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
 {
-    if (COAP_TCP_LENGTH_LIMIT_8_BIT < size && COAP_TCP_LENGTH_LIMIT_16_BIT >= size)
-    {
-        return coap_tcp_8bit;
-    }
-    else if (COAP_TCP_LENGTH_LIMIT_16_BIT < size && COAP_TCP_LENGTH_LIMIT_32_BIT >= size)
-    {
-        return coap_tcp_16bit;
-    }
-    else if (COAP_TCP_LENGTH_LIMIT_32_BIT < size)
-    {
-        return coap_tcp_32bit;
-    }
-    else
+    if (size < COAP_TCP_LENGTH_FIELD_8_BIT)
     {
         return coap_tcp;
     }
+    else if (size < COAP_TCP_LENGTH_FIELD_16_BIT)
+    {
+        return coap_tcp_8bit;
+    }
+    else if (size < COAP_TCP_LENGTH_FIELD_32_BIT)
+    {
+        return coap_tcp_16bit;
+    }
+    else if (size < ULONG_MAX + COAP_TCP_LENGTH_FIELD_32_BIT)
+    {
+        return coap_tcp_32bit;
+    }
+
+    return -1;
 }
 
 coap_transport_type coap_get_tcp_header_type_from_initbyte(unsigned int length)
@@ -407,13 +427,13 @@ unsigned int coap_get_tcp_header_length_for_transport(coap_transport_type transp
         case coap_tcp:
             length = COAP_TCP_HEADER_NO_FIELD;
             break;
-        case coap_tcp_8bit:
+        case coap_tcp_8bit:   /* len(4bit) + TKL(4bit) + Len+bytes(1byte) + Code(1byte) */
             length = COAP_TCP_HEADER_8_BIT;
             break;
-        case coap_tcp_16bit:
+        case coap_tcp_16bit:  /* len(4bit) + TKL(4bit) + Len+bytes(2byte) + Code(1byte) */
             length = COAP_TCP_HEADER_16_BIT;
             break;
-        case coap_tcp_32bit:
+        case coap_tcp_32bit:  /* len(4bit) + TKL(4bit) + Len+bytes(4byte) + Code(1byte) */
             length = COAP_TCP_HEADER_32_BIT;
             break;
         default:
@@ -436,14 +456,9 @@ size_t coap_get_opt_header_length(unsigned short key, size_t length)
     {
         optDeltaLength = 1;
     }
-    else if (COAP_OPTION_FIELD_16_BIT < key && COAP_OPTION_FIELD_32_BIT >= key)
-    {
-        optDeltaLength = 2;
-    }
     else
     {
-        printf("Error : Reserved for the Payload marker for Delta");
-        return 0;
+        optDeltaLength = 2;
     }
 
     size_t optLength = 0;

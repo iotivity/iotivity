@@ -23,19 +23,54 @@ package org.oic.simulator;
 @SuppressWarnings("serial")
 public class SimulatorException extends Exception {
 
-    private SimulatorResult errorCode;
-    private String          errorMessage;
+    private SimulatorResult code;
+    private String          message;
 
-    public SimulatorException(int errorCode, String errMessage) {
-        this.errorCode = SimulatorResult.get(errorCode);
-        this.errorMessage = errMessage;
+    /**
+     * Constructs {@link SimulatorException} with the given ordinal representing
+     * the error code and description.
+     *
+     * @param code
+     *            Ordinal of an error code.
+     * @param message
+     *            Error description.
+     */
+    public SimulatorException(int code, String message) {
+        this.code = SimulatorResult.get(code);
+        this.message = message;
     }
 
+    /**
+     * Constructs {@link SimulatorException} with the given error code and
+     * description.
+     *
+     * @param code
+     *            {@link SimulatorResult} enum constant representing the error
+     *            code.
+     * @param message
+     *            Error description.
+     */
+    public SimulatorException(SimulatorResult code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
+    /**
+     * API to get the error code.
+     *
+     * @return {@link SimulatorResult} enum constant representing the error
+     *         code.
+     */
     public SimulatorResult code() {
-        return errorCode;
+        return code;
     }
 
+    /**
+     * API to get the error description.
+     *
+     * @return Error description.
+     */
     public String message() {
-        return errorMessage;
+        return message;
     }
 }

@@ -19,22 +19,18 @@
  ******************************************************************/
 
 #include "simulator_device_info_jni.h"
-#include "simulator_common_jni.h"
+#include "simulator_utils_jni.h"
 
 extern SimulatorClassRefs gSimulatorClassRefs;
-jobject JDeviceInfo::toJava(DeviceInfo &deviceInfo)
+
+jobject JniDeviceInfo::toJava(DeviceInfo &deviceInfo)
 {
     if (!m_env)
         return nullptr;
 
-    jmethodID deviceInfoMId = m_env->GetMethodID(gSimulatorClassRefs.classDeviceInfo, "<init>", "(V)V");
-    if (!deviceInfoMId)
-        return nullptr;
-
-    jobject jDeviceInfo = (jobject) m_env->NewObject(gSimulatorClassRefs.classDeviceInfo, deviceInfoMId);
-    if (!jDeviceInfo)
-        return nullptr;
-
+    static jmethodID deviceInfoCtor = m_env->GetMethodID(gSimulatorClassRefs.deviceInfoCls, "<init>",
+                                      "()V");
+    jobject jDeviceInfo = m_env->NewObject(gSimulatorClassRefs.deviceInfoCls, deviceInfoCtor);
     setFieldValue(jDeviceInfo, "mName", deviceInfo.getName());
     setFieldValue(jDeviceInfo, "mID", deviceInfo.getID());
     setFieldValue(jDeviceInfo, "mSpecVersion", deviceInfo.getSpecVersion());
@@ -43,60 +39,11 @@ jobject JDeviceInfo::toJava(DeviceInfo &deviceInfo)
     return jDeviceInfo;
 }
 
-void JDeviceInfo::setFieldValue(jobject jDeviceInfo, const std::string &fieldName,
-                                const std::string &value)
+void JniDeviceInfo::setFieldValue(jobject jDeviceInfo, const std::string &fieldName,
+                                  const std::string &value)
 {
-    jfieldID fieldID = m_env->GetFieldID(gSimulatorClassRefs.classDeviceInfo, fieldName.c_str(),
+    jfieldID fieldID = m_env->GetFieldID(m_env->GetObjectClass(jDeviceInfo), fieldName.c_str(),
                                          "Ljava/lang/String;");
     jstring valueStr = m_env->NewStringUTF(value.c_str());
     m_env->SetObjectField(jDeviceInfo, fieldID, valueStr);
 }
-
-void JniDeviceInfoListener::onDeviceInfoReceived(DeviceInfo &deviceInfo)
-{
-    // Get the environment
-    JNIEnv *env = getEnv();
-    if (!env)
-        return;
-
-    jobject listener = env->NewLocalRef(m_listener);
-    if (!listener)
-    {
-        releaseEnv();
-        return;
-    }
-
-    jclass listenerCls = env->GetObjectClass(listener);
-    if (!listenerCls)
-    {
-        releaseEnv();
-        return;
-    }
-
-    jmethodID listenerMId = env->GetMethodID(listenerCls, "onDeviceFound",
-                            "(Lorg/oic/simulator/DeviceInfo;)V");
-    if (!listenerMId)
-    {
-        releaseEnv();
-        return;
-    }
-
-    // Convert CPP to Java DeviceInfo object
-    jobject jDeviceInfo = JDeviceInfo(env).toJava(deviceInfo);
-    if (!jDeviceInfo)
-    {
-        releaseEnv();
-        return;
-    }
-
-    // Invoke java listener with DeviceInfo
-    env->CallVoidMethod(listener, listenerMId, jDeviceInfo);
-    if (env->ExceptionCheck())
-    {
-        releaseEnv();
-        return;
-    }
-
-    releaseEnv();
-}
-

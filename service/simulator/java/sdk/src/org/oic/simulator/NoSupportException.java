@@ -21,7 +21,28 @@ package org.oic.simulator;
  */
 @SuppressWarnings("serial")
 public class NoSupportException extends SimulatorException {
-    public NoSupportException(int errorCode, String errMessage) {
-        super(errorCode, errMessage);
+
+    /**
+     * Constructs {@link NoSupportException} with the given error message.
+     *
+     * @param message
+     *            Error description.
+     */
+    public NoSupportException(String message) {
+        super(SimulatorResult.SIMULATOR_NOT_SUPPORTED, message);
+    }
+
+    /**
+     * Constructs {@link NoSupportException} with the given error code and
+     * description.
+     *
+     * @param code
+     *            {@link SimulatorResult} enum constant representing the error
+     *            code.
+     * @param message
+     *            Error description.
+     */
+    public NoSupportException(SimulatorResult code, String message) {
+        super(code, message);
     }
 }

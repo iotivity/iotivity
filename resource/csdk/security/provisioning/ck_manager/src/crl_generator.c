@@ -31,7 +31,7 @@ static const uint8_t g_ECDSA_WITH_SHA256_OID[] = {0x2A, 0x86, 0x48, 0xCE, 0x3D, 
 static const uint8_t g_COMMON_NAME_OID[] = {0x55, 0x04, 0x03};
 
 PKIError GenerateCRL (const UTF8String_t *issuerName,
-                       const UTCTime_t *thisUpdateTime, const uint32_t nuberOfRevoked,
+                       const UTCTime_t *thisUpdateTime, const uint32_t numberOfRevoked,
                        const CertificateRevocationInfo_t *certificateRevocationInfo,
                        const BIT_STRING_t *issuerPrivateKey, ByteArray *encodedCRL)
 {
@@ -42,8 +42,8 @@ PKIError GenerateCRL (const UTF8String_t *issuerName,
     RelativeDistinguishedName_t *issuerRDN          = NULL;
     CertificateRevocationInfo_t *cri                = NULL;
 
-    uint32_t crlMaxSize = (CRL_MIN_SIZE +
-            nuberOfRevoked * (sizeof(CertificateRevocationInfo_t) + 4));
+    uint32_t crlMaxSize = (uint32_t)(CRL_MIN_SIZE +
+            numberOfRevoked * (sizeof(CertificateRevocationInfo_t) + 4));
 
     uint32_t i;
     long serialNumber = 0;
@@ -95,7 +95,7 @@ PKIError GenerateCRL (const UTF8String_t *issuerName,
     certificateRevocationList->tbsCertList.thisUpdate = *thisUpdateTime;
 
     //add revoked info
-    for ( i = 0; i < nuberOfRevoked; i++)
+    for ( i = 0; i < numberOfRevoked; i++)
     {
         cri = OICCalloc(1, sizeof(CertificateRevocationInfo_t));
         CHECK_NULL(cri, ISSUER_CRL_ENCODER_MEMORY_ALLOC_FAILED);
@@ -116,8 +116,8 @@ PKIError GenerateCRL (const UTF8String_t *issuerName,
     CHECK_CALL(InitCKMInfo);
     CHECK_CALL(GetCRLSerialNumber, &serialNumber);
     serialNumber++;
-    CHECK_CALL(SetCRLSerialNumber, &serialNumber);
-    CHECK_CALL(SetNumberOfRevoked, (const long *)&nuberOfRevoked);
+    CHECK_CALL(SetCRLSerialNumber, serialNumber);
+    CHECK_CALL(SetNumberOfRevoked, numberOfRevoked);
     CHECK_CALL(SaveCKMInfo);
 
     FUNCTION_CLEAR(

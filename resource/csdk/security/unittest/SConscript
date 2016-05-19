@@ -44,6 +44,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include',
 		'../../../../extlibs/cjson/',
+                '../provisioning/include',
 #		'../../../../extlibs/tinydtls/',
 		'../include'
 		])
@@ -78,7 +79,8 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'iotvticalendartest.cpp',
                                             'base64tests.cpp',
                                             'svcresourcetest.cpp',
-                                            'srmtestcommon.cpp'])
+                                            'srmtestcommon.cpp',
+                                            'directpairingtest.cpp'])
 
 Alias("test", [unittest])
 

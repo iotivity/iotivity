@@ -43,61 +43,66 @@ namespace RAML
     {
         public:
             /**
-                 * This method is for getting CJson object of schema.
-                 *
-                 * @return pointer to cJSON.
-                 */
+             * This method is for getting CJson object of schema.
+             *
+             * @return pointer to cJSON.
+             */
             virtual cJSON *getJson() const;
 
             /**
-                 * This method is for setting schema as CJson object.
-                 *
-                 * @param cjson - Cjson pointer.
-                 */
+             * This method is for setting schema as CJson object.
+             *
+             * @param cjson - Cjson pointer.
+             */
             virtual void setJson(cJSON *cjson);
 
             /**
-                 * This method is for getting schema as string.
-                 *
-                 * @return string.
-                 */
+             * This method is for getting schema as string.
+             *
+             * @return string.
+             */
             virtual std::string getSchema() const;
 
             /**
-                  * This method is for setting schema as string.
-                  *
-                  * @param schema - schema string.
-                  */
+             * This method is for setting schema as string.
+             *
+             * @param schema - schema string.
+             */
             virtual void setSchema(const std::string &schema);
 
             /**
-                 * This method is for getting Properties from JsonSchema.
-                 *
-                 * @return pointer to JsonSchema.
-                 */
+             * This method is for getting Properties from JsonSchema.
+             *
+             * @return pointer to JsonSchema.
+             */
             virtual JsonSchemaPtr const &getProperties() const;
 
             /**
-                   * Constructor of Schema.
-                   *
-                   * @param schema - contents of schema to be parsed
-                   * @param includeResolver - Reference to IncludeResolver for reading external files
-                   *
-                   */
+             * Constructor of Schema.
+             *
+             * @param schema - contents of schema to be parsed
+             * @param includeResolver - Reference to IncludeResolver for reading external files
+             *
+             */
             Schema(const std::string &schema, const IncludeResolverPtr &includeResolver):
                 m_schema(schema) , m_cjson(cJSON_Parse(schema.c_str())),
                 m_resProperties(std::make_shared<JsonSchema>(m_cjson, includeResolver) ) ,
                 m_includeResolver(includeResolver) {}
 
             /**
-                  * Constructor of Schema.
-                  */
+             * Constructor of Schema.
+             */
             Schema(): m_cjson(NULL), m_resProperties(std::make_shared<JsonSchema>()),
                 m_includeResolver(NULL) {}
 
+            Schema(const Schema&) = delete;
+            Schema& operator=(const Schema&) = delete;
+            Schema(Schema&&) = delete;
+            Schema& operator=(Schema&&) = delete;
+
             /**
-                  * Destructor of Schema.
-                  */
+             * Destructor of Schema.
+             */
             ~Schema() { cJSON_Delete(m_cjson); }
 
         private:

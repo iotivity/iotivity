@@ -6,11 +6,11 @@
         <activator>huesample</activator>
         <version>1.0.0</version>
         <resources>
-            <resourceInfo>
-                <name>light</name>
-                <resourceType>oic.r.control</resourceType>
-                <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
-            </resourceInfo>
+            
         </resources>
-    </bundle>
+    </bundle>       
 </container>
+
+
+
+

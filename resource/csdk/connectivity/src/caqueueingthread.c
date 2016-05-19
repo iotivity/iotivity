@@ -28,7 +28,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG PCF("CA_QING")
+#define TAG PCF("OIC_CA_QING")
 
 static void CAQueueingThreadBaseRoutine(void *threadValue)
 {
@@ -58,8 +58,6 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 
             OIC_LOG(DEBUG, TAG, "wake up..");
         }
-
-
 
         // check stop flag
         if (thread->isStop)
@@ -92,28 +90,6 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         }
 
         OICFree(message);
-    }
-
-    // remove all remained list data.
-    while (u_queue_get_size(thread->dataQueue) > 0)
-    {
-        // get data
-        u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
-
-        // free
-        if(NULL != message)
-        {
-            if (NULL != thread->destroy)
-            {
-                thread->destroy(message->msg, message->size);
-            }
-            else
-            {
-                OICFree(message->msg);
-            }
-
-            OICFree(message);
-        }
     }
 
     ca_mutex_lock(thread->threadMutex);
@@ -263,6 +239,29 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
     ca_mutex_free(thread->threadMutex);
     thread->threadMutex = NULL;
     ca_cond_free(thread->threadCond);
+
+    // remove all remained list data.
+    while (u_queue_get_size(thread->dataQueue) > 0)
+    {
+        // get data
+        u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
+
+        // free
+        if(NULL != message)
+        {
+            if (NULL != thread->destroy)
+            {
+                thread->destroy(message->msg, message->size);
+            }
+            else
+            {
+                OICFree(message->msg);
+            }
+
+            OICFree(message);
+        }
+    }
+
     u_queue_delete(thread->dataQueue);
 
     return CA_STATUS_OK;

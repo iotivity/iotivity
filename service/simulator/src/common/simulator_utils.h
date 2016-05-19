@@ -34,7 +34,7 @@
 #include <map>
 
 /**
- * Utilities for Invokation of OC platfrom level APIs.
+ * Utilities for Invocation of OC platfrom level APIs.
  */
 template <typename FnT, typename... ArgsT>
 typename std::enable_if<std::is_same<OCStackResult, decltype(std::declval<FnT>()(std::declval<ArgsT>()...))>::value>::type
@@ -62,8 +62,13 @@ namespace OC
 }
 
 std::string getPayloadString(const OC::OCRepresentation &);
+std::string getPayloadTypeString(OCPayloadType type);
 std::string getRequestString(const std::map<std::string, std::string> &queryParams,
                              const OC::OCRepresentation &rep);
 std::string getRequestString(const std::map<std::string, std::string> &queryParams);
+
+
+#define VALIDATE_INPUT(CONDITION, MSG) if (CONDITION) {throw InvalidArgsException(SIMULATOR_INVALID_PARAM, MSG);}
+#define VALIDATE_CALLBACK(CALLBACK) if (!CALLBACK){throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");}
 
 #endif

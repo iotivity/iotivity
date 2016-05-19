@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "RCSDiscoveryManager.h"
+#include "RCSRepresentation.h"
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
@@ -138,6 +139,30 @@ void handleItems(const std::vector<T>& items)
     selectItem(items);
 }
 
+std::string inputInterface()
+{
+    std::string interfaceName;
+
+    std::cout << "\tInput the Interface you want to set : ";
+    std::cin >> interfaceName;
+
+    return interfaceName;
+}
+
+RCSResourceAttributes inputKeyValue()
+{
+    std::string key;
+
+    std::cout << "\tEnter the Key you want to set : ";
+    std::cin >> key;
+
+    std::cout << "\tEnter the value(INT) you want to set :";
+    RCSResourceAttributes attrs;
+    attrs[key] = processUserInput();
+
+    return attrs;
+}
+
 void printAttribute(const std::string& key, const RCSResourceAttributes::Value& value)
 {
     std::cout << "\tkey : " << key << std::endl
@@ -154,6 +179,60 @@ void printAttributes(const RCSResourceAttributes& attributes)
     for(const auto& attr : attributes)
     {
         printAttribute(attr.key(), attr.value());
+    }
+}
+
+void print(const std::string& name, const std::vector< std::string >& elements)
+{
+    if (elements.empty())
+    {
+       std::cout << "\t" << name << " is empty" << std::endl;
+       return;
+    }
+
+    std::cout << "\t" << name << " : " << std::endl;
+    for(const auto& item : elements)
+    {
+        std::cout << item << " ";
+    }
+    std::cout << std::endl;
+}
+
+void printUri(const std::string& uri)
+{
+    if(uri.empty())
+    {
+        std::cout << "\turi is empty" << std::endl;
+    }
+    else
+    {
+        std::cout << "\turi : " << uri << std::endl;
+    }
+}
+
+void printRepresentation(const RCSRepresentation& rep)
+{
+    printUri(rep.getUri());
+    print("interfaces", rep.getInterfaces());
+    print("resourceTypes", rep.getResourceTypes());
+    printAttributes(rep.getAttributes());
+
+    const auto& children = rep.getChildren();
+
+    if(children.empty())
+    {
+        std::cout << "\tchildren is empty" << std::endl;
+    }
+    else
+    {
+        int cnt = 0;
+        for(const auto& child : children)
+        {
+            std::cout << "========================================================" << std::endl;
+            std::cout << ++cnt << " chlid" << std::endl;
+            printRepresentation(child);
+            std::cout << "========================================================" << std::endl;
+        }
     }
 }
 
@@ -199,6 +278,20 @@ void onRemoteAttributesReceived(const RCSResourceAttributes& attributes, int)
     printAttributes(attributes);
 }
 
+void onRemoteGetReceived(const HeaderOpts&, const RCSRepresentation& rep, int)
+{
+    std::cout << "onRemoteGetReceived callback" << std::endl;
+
+    printRepresentation(rep);
+}
+
+void onRemoteSetReceived(const HeaderOpts&, const RCSRepresentation& rep, int)
+{
+    std::cout << "onRemoteSetReceived callback" << std::endl;
+
+    printRepresentation(rep);
+}
+
 void startMonitoring()
 {
     if (g_selectedResource->isMonitoring())
@@ -230,16 +323,23 @@ void getRemoteAttributes()
 
 void setRemoteAttributes()
 {
-    std::string key;
+    g_selectedResource->setRemoteAttributes(inputKeyValue(), onRemoteAttributesReceived);
+}
 
-    std::cout << "\tEnter the Key you want to set : ";
-    std::cin >> key;
+void getWithInterface()
+{
+    RCSQueryParams queryParams;
+    queryParams.setResourceInterface(inputInterface());
 
-    std::cout << "\tEnter the value(INT) you want to set :";
-    RCSResourceAttributes attrs;
-    attrs[key] = processUserInput();
+    g_selectedResource->get(queryParams, onRemoteGetReceived);
+}
 
-    g_selectedResource->setRemoteAttributes(attrs, onRemoteAttributesReceived);
+void setWithInterface()
+{
+    RCSQueryParams queryParams;
+    queryParams.setResourceInterface(inputInterface());
+
+    g_selectedResource->set(queryParams, inputKeyValue(), onRemoteSetReceived);
 }
 
 void startCaching(RCSRemoteResourceObject::CacheUpdatedCallback cb)
@@ -353,7 +453,7 @@ void discoverResource()
     {
         std::cout << "onResourceDiscovered callback :: " << std::endl;
 
-        std::cout << "luri : " << discoveredResource->getUri() << std::endl;
+        std::cout << "uri : " << discoveredResource->getUri() << std::endl;
         std::cout << "host address : " << discoveredResource->getAddress() << std::endl;
 
         g_discoveredResources.push_back(discoveredResource);
@@ -381,6 +481,8 @@ void runResourceControl()
         DECLARE_MENU(stopMonitoring),
         DECLARE_MENU(getRemoteAttributes),
         DECLARE_MENU(setRemoteAttributes),
+        DECLARE_MENU(getWithInterface),
+        DECLARE_MENU(setWithInterface),
         DECLARE_MENU(startCachingWithoutCallback),
         DECLARE_MENU(startCachingWithCallback),
         DECLARE_MENU(getResourceCacheState),

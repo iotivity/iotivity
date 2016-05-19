@@ -20,14 +20,20 @@
 #include "gtest/gtest.h"
 #include "provisioningdatabasemanager.h"
 
-const char ID_1[] = "1111111111111111";
-const char ID_2[] = "2111111111111111";
-const char ID_3[] = "3111111111111111";
-const char ID_4[] = "4111111111111111";
-const char ID_5[] = "5111111111111111";
-const char ID_6[] = "6111111111111111";
-const char ID_7[] = "7777777777777777";
-const char ID_8[] = "8777777777777777";
+const char ID_1 [] = "1111111111111111";
+const char ID_2 [] = "2111111111111111";
+const char ID_3 [] = "3111111111111111";
+const char ID_4 [] = "4111111111111111";
+const char ID_5 [] = "5111111111111111";
+const char ID_6 [] = "6111111111111111";
+const char ID_7 [] = "7111111111111111";
+const char ID_8 [] = "8111111111111111";
+const char ID_9 [] = "9111111111111111";
+const char ID_10[] = "1222222222222222";
+const char ID_11[] = "2222222222222222";
+const char ID_12[] = "3222222222222222";
+const char ID_13[] = "4222222222222222";
+
 
 TEST(CallPDMAPIbeforeInit, BeforeInit)
 {
@@ -263,4 +269,98 @@ TEST(PDMIsLinkExistsTest, DuplicateID)
     OCStackResult res = PDMIsLinkExists(&uid1, &uid2, &linkExisits);
     EXPECT_EQ(OC_STACK_OK, res);
     EXPECT_FALSE(linkExisits);
+}
+
+TEST(PDMSetDeviceStaleTest, NULLUUID)
+{
+    EXPECT_EQ(OC_STACK_OK, PDMInit(NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PDMSetDeviceStale(NULL));
+}
+
+TEST(PDMSetDeviceStaleTest, VALIDUUID)
+{
+    EXPECT_EQ(OC_STACK_OK, PDMInit(NULL));
+    OicUuid_t uid1 = {{0,}};
+    memcpy(&uid1.id, ID_9, sizeof(uid1.id));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid1));
+    EXPECT_EQ(OC_STACK_OK,PDMSetDeviceStale(&uid1));
+}
+
+TEST(PDMSetDeviceStaleTest, StaleDeviceNotinDeviceList)
+{
+    EXPECT_EQ(OC_STACK_OK, PDMInit(NULL));
+    OicUuid_t uid1 = {{0,}};
+    memcpy(&uid1.id, ID_10, sizeof(uid1.id));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid1));
+    EXPECT_EQ(OC_STACK_OK,PDMSetDeviceStale(&uid1));
+
+    OCUuidList_t *list = NULL;
+    size_t noOfDevcies = 0;
+    EXPECT_EQ(OC_STACK_OK, PDMGetOwnedDevices(&list, &noOfDevcies));
+
+    while (list)
+    {
+        EXPECT_FALSE(0 == memcmp(list->dev.id, uid1.id,sizeof(uid1.id)));
+        list = list->next;
+    }
+}
+
+TEST(PDMSetDeviceStaleTest, StaleDeviceNotinLinkedDevice)
+{
+    EXPECT_EQ(OC_STACK_OK, PDMInit(NULL));
+    OicUuid_t uid1 = {{0,}};
+    memcpy(&uid1.id, ID_11, sizeof(uid1.id));
+
+    OicUuid_t uid2 = {{0,}};
+    memcpy(&uid2.id, ID_12, sizeof(uid2.id));
+
+    OicUuid_t uid3 = {{0,}};
+    memcpy(&uid3.id, ID_13, sizeof(uid3.id));
+
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid1));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid2));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid3));
+
+    EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(&uid1, &uid2));
+    EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(&uid2, &uid3));
+    EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(&uid1, &uid3));
+
+    EXPECT_EQ(OC_STACK_OK,PDMSetDeviceStale(&uid1));
+
+    OCUuidList_t *list1 = NULL;
+    size_t noOfDevices1 = 0;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PDMGetLinkedDevices(&uid1, &list1, &noOfDevices1));
+
+    OCUuidList_t *list2 = NULL;
+    size_t noOfDevices2 = 0;
+    EXPECT_EQ(OC_STACK_OK, PDMGetLinkedDevices(&uid2, &list2, &noOfDevices2));
+    OCUuidList_t *ptr = list2;
+    while(ptr)
+    {
+        EXPECT_FALSE(0 == memcmp(ptr->dev.id, uid1.id,sizeof(uid1.id)));
+        ptr = ptr->next;
+    }
+    ptr = list2;
+    while(ptr)
+    {
+        EXPECT_TRUE(0 == memcmp(ptr->dev.id, uid3.id,sizeof(uid3.id)));
+        ptr = ptr->next;
+    }
+
+    OCUuidList_t *list3 = NULL;
+    size_t noOfDevices3 = 0;
+    EXPECT_EQ(OC_STACK_OK, PDMGetLinkedDevices(&uid3, &list3, &noOfDevices3));
+    ptr = list3;
+    while(ptr)
+    {
+        EXPECT_FALSE(0 == memcmp(ptr->dev.id, uid1.id,sizeof(uid1.id)));
+        ptr = ptr->next;
+    }
+
+    ptr = list3;
+    while(ptr)
+    {
+        EXPECT_TRUE(0 == memcmp(ptr->dev.id, uid2.id,sizeof(uid2.id)));
+        ptr = ptr->next;
+    }
 }

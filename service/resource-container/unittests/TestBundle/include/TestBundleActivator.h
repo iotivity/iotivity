@@ -52,13 +52,13 @@ class TestBundleResource : public BundleResource
     public:
         void initAttributes() { };
 
-        RCSResourceAttributes &handleGetAttributesRequest()
+        RCSResourceAttributes handleGetAttributesRequest()
         {
             return BundleResource::getAttributes();
         }
 
         void handleSetAttributesRequest(
-            RCSResourceAttributes &value)
+            const RCSResourceAttributes &value)
         {
             BundleResource::setAttributes(value);
         }

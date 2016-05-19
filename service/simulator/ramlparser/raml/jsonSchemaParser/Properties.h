@@ -33,13 +33,211 @@
 #include <boost/variant.hpp>
 #include <boost/lexical_cast.hpp>
 #include <limits>
-#include "Items.h"
-#include "AllowedValues.h"
 #include "cJSON.h"
 #include <memory>
 
 namespace RAML
 {
+    class Properties;
+
+    /** ValueVariant - Boost Variant to hold type of property*/
+    typedef boost::variant <
+    int,
+    double,
+    bool,
+    std::string,
+    Properties,
+    std::vector<Properties>
+
+    > ValueVariant;
+
+    /** VariantType - enumeration for variant types*/
+    enum class VariantType
+    {
+        UNKNOWN,
+        INTEGER,
+        DOUBLE,
+        BOOLEAN,
+        STRING,
+        PROPERTY,
+        ARRAY,
+        OBJECT
+    };
+
+    /**
+     * @class   ValueProperty
+     * @brief   This class provides data Model for Json Schema Value Property.
+     */
+    class ValueProperty
+    {
+        public:
+            /** Type - enumeration for ValueProperty types*/
+            enum class Type
+            {
+                UNKNOWN,
+                RANGE,
+                VALUE_SET,
+                PATTERN,
+                FORMAT,
+                ARRAY
+            };
+
+            /**
+             * Constructor of ValueProperty.
+             */
+            ValueProperty();
+
+            ValueProperty(const ValueProperty &) = default;
+
+            ValueProperty &operator=(const ValueProperty &) = default;
+
+            ValueProperty(ValueProperty &&) = default;
+
+            ValueProperty &operator=(ValueProperty &&) = default;
+
+            /**
+             * explicit Constructor of ValueProperty for Type RANGE.
+             *
+             * @param min - minimum value of property.
+             * @param max- maximum value of property.
+             * @param multipleOf- multipleOf value of property.
+             */
+            explicit ValueProperty(double min, double max, int multipleOf);
+
+            /**
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
+            explicit ValueProperty(const std::vector<int> &valueSet);
+
+            /**
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
+            explicit ValueProperty(const std::vector<double> &valueSet);
+
+            /**
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
+            explicit ValueProperty(const std::vector<bool> &valueSet);
+
+            /**
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
+            explicit ValueProperty(const std::vector<std::string> &valueSet);
+
+            /**
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
+            explicit ValueProperty(const std::vector<ValueVariant> &valueSet);
+
+            /**
+             * explicit Constructor of ValueProperty for Type PATTERN or FORMAT.
+             *
+             * @param type - ValueProperty Type.
+             * @param value - value for the pattern or format.
+             */
+            explicit ValueProperty(Type type, std::string value);
+
+            /**
+             * explicit Constructor of ValueProperty for Type ARRAY.
+             *
+             * @param type - ValueProperty Type.
+             * @param minItems - minimum elements in the Array property.
+             * @param maxItems - maximum elements in the Array property.
+             * @param unique - unique elements in the Array property.
+             * @param additionalItems - additional elements in the Array property.
+             */
+            explicit ValueProperty(Type type, int minItems, int maxItems, bool unique, bool additionalItems);
+
+            /**
+             * This method is for getting type of ValueProperty.
+             *
+             * @return Type of ValueProperty
+             */
+            Type type() const;
+
+            /**
+             * This method is for getting minimum value of ValueProperty.
+             *
+             * @return min value of ValueProperty
+             */
+            double min() const;
+
+            /**
+             * This method is for getting maximum value of ValueProperty.
+             *
+             * @return max value of ValueProperty
+             */
+            double max() const;
+
+            /**
+             * This method is for getting multipleOf value of ValueProperty.
+             *
+             * @return multipleOf value of ValueProperty
+             */
+            int multipleOf() const;
+
+            /**
+             * This method is for getting pattern value of ValueProperty.
+             *
+             * @return pattern value of ValueProperty
+             */
+            std::string pattern() const;
+
+            /**
+             * This method is for getting format value of ValueProperty.
+             *
+             * @return format value of ValueProperty
+             */
+            std::string format() const;
+
+            /**
+             * This method is for getting valueSet of ValueProperty.
+             *
+             * @return valueSet of ValueProperty
+             */
+            int valueSetSize() const;
+
+            /**
+             * This method is for getting valueSet of ValueProperty.
+             *
+             * @return valueSet of ValueProperty
+             */
+            std::vector<ValueVariant> valueSet() const;
+
+            /**
+             * This method is for getting valueArray of ValueProperty.
+             *
+             * @param minItems - reference to get minimum elements in the Array property.
+             * @param maxItems - reference to get maximum elements in the Array property.
+             * @param unique - reference to get unique elements in the Array property.
+             * @param additionalItems - reference to get additional elements in the Array property.
+             */
+            void valueArray(int &minItems, int &maxItems, bool &unique, bool &additionalItems) const;
+
+        private:
+            Type m_type;
+            double m_min;
+            double m_max;
+            int m_multipleOf;
+            std::vector<ValueVariant> m_valueSet;
+            std::string m_pattern;
+            std::string m_format;
+            int m_minItems;
+            int m_maxItems;
+            bool m_unique;
+            bool m_additionalItems;
+    };
+
     /**
      * @class   Properties
      * @brief   This class provides data Model for Json Schema Properties.
@@ -48,455 +246,211 @@ namespace RAML
     {
         public:
             /**
-                  * Constructor of Properties.
-                  */
-            Properties(): m_min(INT_MAX), m_max(INT_MAX), m_doubleMin(INT_MAX), m_doubleMax(INT_MAX),
-                m_multipleOf(INT_MAX), m_unique(false), m_additionalItems(false) {}
-
-            /**
-                  * Constructor of Properties.
-                  *
-                  * @param name - Properties name as string.
-                  */
-            Properties(const std::string &name) : m_name(name), m_min(INT_MAX), m_max(INT_MAX),
-                m_doubleMin(INT_MAX), m_doubleMax(INT_MAX), m_multipleOf(INT_MAX),
-                m_unique(false), m_additionalItems(false) {}
-
-            /**
-                 * This method is for getting Name from Properties.
-                 *
-                 * @return Properties name as string
-                 */
-            inline std::string getName(void) const
+             * @class   TypeInfo
+             * @brief   This class provides type information of Json Properties.
+             */
+            class TypeInfo
             {
-                return m_name;
-            }
+                public:
+                    /**
+                     * Constructor of TypeInfo.
+                     *
+                     * @param VariantType - type of property.
+                     * @param VariantType - type of parent property.
+                     * @param int - depth of property.
+                     */
+                    TypeInfo(VariantType type = VariantType::UNKNOWN,
+                             VariantType baseType = VariantType::UNKNOWN,
+                             int depth = 0);
+
+                    TypeInfo(const TypeInfo &) = default;
+
+                    TypeInfo &operator=(const TypeInfo &) = default;
+
+                    TypeInfo(TypeInfo &&) = default;
+
+                    TypeInfo &operator=(TypeInfo &&) = default;
+
+                    /**
+                     * This method is for getting type of properties.
+                     *
+                     * @return VariantType of Property
+                     */
+                    VariantType type() const;
+
+                    /**
+                     * This method is for getting base or parent type of properties.
+                     *
+                     * @return VariantType of parent Property
+                     */
+                    VariantType baseType() const;
+
+                    /**
+                     * This method is for getting depth of properties.
+                     *
+                     * @return depth as int
+                     */
+                    int depth() const;
+
+                    /**
+                     *  operator for TypeInfo to check equality.
+                     *
+                     * @param TypeInfo.
+                     */
+                    bool operator ==(const TypeInfo &) const;
+
+                    /**
+                     *  operator for TypeInfo to check inequality.
+                     *
+                     * @param TypeInfo.
+                     */
+                    bool operator !=(const TypeInfo &) const;
+
+                private:
+                    VariantType m_type;
+                    VariantType m_baseType;
+                    int m_depth;
+            };
 
             /**
-                 * This method is for setting name to Properties
-                 *
-                 * @param name - Properties name as string.
-                 */
-            inline void setName(const std::string &name)
-            {
-                m_name = name;
-            }
+              * Constructor of Properties.
+              *
+              * @param name - Properties name as string.
+              */
+            Properties(const std::string &name) : m_name(name) {}
+
+            Properties() = default;
+
+            Properties(const Properties &) = default;
+
+            Properties &operator=(const Properties &) = default;
+
+            Properties(Properties &&) = default;
+
+            Properties &operator=(Properties &&) = default;
 
             /**
-                 * This method is for getting Value from Properties.
-                 *
-                 * @return Properties Value
-                 */
-            template <typename T>
-            T getValue() const
-            {
-                return boost::get<T>(m_value);
-            }
+             * This method is for getting TypeInfo of Properties.
+             *
+             * @return Properties TypeInfo
+             */
+            TypeInfo getType() const;
 
             /**
-                 * This method is for getting Value from Properties.
-                 *
-                 * @return Properties Value
-                 */
-            ValueVariant &getValue()
-            {
-                return m_value;
-            }
+             * This method is for setting type of Properties.
+             *
+             * @param type -Propertie's Type
+             */
+            void setTypeString(const std::string &type);
 
             /**
-                 * This method is for getting ValueVariant type from Properties.
-                 *
-                 * @return Properties Value type as Int
-                 */
-            int getValueType() const
-            {
-                return m_value.which();
-            }
+             * This method is for getting Name from Properties.
+             *
+             * @return Properties name as string
+             */
+            std::string getName() const;
 
             /**
-                 * This method is for getting ValueVariant type from Properties.
-                 *
-                 * @return Properties VariantType type
-                 */
-            VariantType getVariantType() const
-            {
-                if (m_value.which() == 3)
-                    return VariantType::STRING;
-                else if (m_value.which() == 2)
-                    return VariantType::BOOL;
-                else if (m_value.which() == 1)
-                    return VariantType::DOUBLE;
-                else
-                    return VariantType::INT;
-            }
+             * This method is for setting name to Properties
+             *
+             * @param name - Properties name as string.
+             */
+            void setName(const std::string &name);
 
             /**
-                 * This method is for getting Value type as Integer from Properties.
-                 *
-                 * @return Properties Value type as Integer
-                 */
-            int getValueInt()
-            {
-                return boost::lexical_cast<int> (m_value);
-            }
+             * This method is for getting Description from Properties.
+             *
+             * @return Description as string
+             */
+            std::string getDescription() const;
 
             /**
-                 * This method is for getting Value type as String from Properties.
-                 *
-                 * @return Properties Value type as String
-                 */
-            std::string getValueString()
-            {
-                return boost::lexical_cast<std::string> (m_value);
-            }
+             * This method is for setting Description to Properties
+             *
+             * @param description - Description as string.
+             */
+            void setDescription(const std::string &description);
 
             /**
-                 * This method is for getting Value type as double from Properties.
-                 *
-                 * @return Properties Value type as double
-                 */
-            double getValueDouble()
-            {
-                return boost::lexical_cast<double> (m_value);
-            }
-
-            /**
-                 * This method is for getting Value type as bool from Properties.
-                 *
-                 * @return Properties Value type as bool
-                 */
-            bool getValueBool()
-            {
-                return boost::lexical_cast<bool> (m_value);
-            }
-
-            /**
-                 * This method is for setting Value to Properties
-                 *
-                 * @param value - Properties Value.
-                 */
+             * This method is for setting Value to Properties.
+             *
+             * @param value -  Value of Properties
+             */
             template <typename T>
             void setValue(const T &value)
             {
-                m_value = value;
+                m_value = std::make_shared<ValueVariant>(value);
             }
 
             /**
-                 * This method is for getting Range from Properties.
-                 *
-                 * @param min - reference to hold Minimum value of Properties.
-                 * @param max -  reference to hold Maximum value of Properties.
-                 * @param multipleOf -  reference to hold multipleOf value of Properties.
-                 */
-            inline void getRange(int &min, int &max, int &multipleOf) const
-            {
-                min = m_min;
-                max = m_max;
-                multipleOf = m_multipleOf;
-            }
+             * This method is for getting Value from Properties.
+             *
+             * @return Properties Value
+             */
+            ValueVariant getValue() const;
 
             /**
-                 * This method is for getting Range from Properties.
-                 *
-                 * @param min - reference to hold Minimum value of Properties.
-                 * @param max -  reference to hold Maximum value of Properties.
-                 * @param multipleOf -  reference to hold multipleOf value of Properties.
-                 */
-            inline void getRangeDouble(double &min, double &max, int &multipleOf) const
-            {
-                min = m_doubleMin;
-                max = m_doubleMax;
-                multipleOf = m_multipleOf;
-            }
-            /**
-                 * This method is for setting Minimum to Properties
-                 *
-                 * @param min - Minimum value of Properties.
-                 */
-            inline void setMin(const int &min)
-            {
-                m_min = min;
-            }
-
-            /**
-                 * This method is for setting Maximum to Properties
-                 *
-                 * @param max - Maximum value of Properties.
-                 */
-            inline void setMax(const int &max)
-            {
-                m_max = max;
-            }
-
-            /**
-                 * This method is for setting Minimum to Properties
-                 *
-                 * @param min - Minimum value of Properties.
-                 */
-            inline void setMinDouble(const double &min)
-            {
-                m_doubleMin = min;
-            }
-
-            /**
-                 * This method is for setting Maximum to Properties
-                 *
-                 * @param max - Maximum value of Properties.
-                 */
-            inline void setMaxDouble(const double &max)
-            {
-                m_doubleMax = max;
-            }
-            /**
-                 * This method is for setting multipleOf to Properties
-                 *
-                 * @param multipleOf - multipleOf value of Properties.
-                 */
-            inline void setMultipleOf(const int &multipleOf)
-            {
-                m_multipleOf = multipleOf;
-            }
-
-            /**
-                 * This method is for setting AllowedValues to Properties
-                 *
-                 * @param values - list of AllowedValues of Properties.
-                 */
+             * This method is for getting Value from Properties.
+             *
+             * @return Properties Value
+             */
             template <typename T>
-            bool setAllowedValues(const std::vector<T> &values)
+            T getValue() const
             {
-                ValueVariant temp = values.at(0);
-                if (temp.which() != m_value.which())
-                {
-                    return false;
-                }
-
-                m_allowedValues.addValues(values);
-                return true;
+                return boost::get<T>(*(m_value.get()));
             }
 
             /**
-                 * This method is for getting size of AllowedValues from Properties.
-                 *
-                 * @return  size of AllowedValues
-                 */
-            inline int getAllowedValuesSize() const
-            {
-                return m_allowedValues.size();
-            }
+             * This method is for checking if default Value exists in the Properties.
+             *
+             * @return true if present and false if not present
+             */
+            bool isDefaultValue() const { return ((m_value != nullptr) ? true : false); }
 
             /**
-                 * This method is for getting AllowedValues from Properties.
-                 *
-                 * @return list of AllowedValues of Properties.
-                 */
-            inline std::vector<ValueVariant> getAllowedValues()
-            {
-                return m_allowedValues.getValues();
-            }
+             * This method is for getting ValueProperty from Properties.
+             *
+             * @return vector of pointer to ValueProperty
+             */
+            std::vector<std::shared_ptr<ValueProperty> > const &getValueProperties() const;
 
             /**
-                 * This method is for getting AllowedValues as integer from Properties.
-                 *
-                 * @return list of AllowedValues as integer
-                 */
-            inline std::vector<int> getAllowedValuesInt()
-            {
-                return m_allowedValues.getValuesInt();
-            }
-
-            /**
-                 * This method is for getting AllowedValues as String from Properties.
-                 *
-                 * @return list of AllowedValues as String
-                 */
-            inline std::vector<std::string> getAllowedValuesString()
-            {
-                return m_allowedValues.getValuesString();
-            }
-
-            /**
-                 * This method is for getting AllowedValues as Double from Properties.
-                 *
-                 * @return list of AllowedValues as Double
-                 */
-            inline std::vector<double> getAllowedValuesDouble()
-            {
-                return m_allowedValues.getValuesDouble();
-            }
-
-            /**
-                 * This method is for getting AllowedValues as Bool from Properties.
-                 *
-                 * @return list of AllowedValues as Bool
-                 */
-            inline std::vector<bool> getAllowedValuesBool()
-            {
-                return m_allowedValues.getValuesBool();
-            }
-
-            /**
-                 * This method is for setting Description to Properties
-                 *
-                 * @param description - Description as string.
-                 */
-            inline void setDescription(const std::string &description)
-            {
-                m_description = description;
-            }
-
-            /**
-                 * This method is for getting Description from Properties.
-                 *
-                 * @return Description as string
-                 */
-            inline std::string getDescription()
-            {
-                return m_description;
-            }
-
-            /**
-                 * This method is for setting Type to Properties
-                 *
-                 * @param type - Type as string.
-                 */
-            void setType(const std::string &type)
-            {
-                m_type = type;
-            }
-
-            /**
-                 * This method is for getting Type from Properties.
-                 *
-                 * @return Type as string
-                 */
-            std::string getType()
-            {
-                return m_type;
-            }
-
-            /**
-                 * This method is for setting Pattern to Properties
-                 *
-                 * @param pattern - Pattern as string.
-                 */
-            void setPattern(const std::string &pattern)
-            {
-                m_pattern = pattern;
-            }
+             * This method is for setting ValueProperty to Properties
+             *
+             * @param value - pointer to ValueProperty
+             */
+            void setValueProperty(const std::shared_ptr<ValueProperty> &value);
 
 
             /**
-                 * This method is for getting Pattern from Properties.
-                 *
-                 * @return Pattern as string
-                 */
-            std::string getPattern()
-            {
-                return m_pattern;
-            }
+             * This method is for getting RequiredValue from Properties.
+             *
+             * @return list of RequiredValue as string
+             */
+            std::vector<std::string> const &getRequiredValues() const;
 
             /**
-                 * This method is for setting Format to Properties
-                 *
-                 * @param format - Format as string.
-                 */
-            void setFormat(const std::string &format)
-            {
-                m_format = format;
-            }
+             * This method is for setting RequiredValue to Properties
+             *
+             * @param reqValue - RequiredValue as string.
+             */
+            void setRequiredValue(const std::string &reqValue);
 
-            /**
-                 * This method is for getting Format from Properties.
-                 *
-                 * @return Format as string
-                 */
-            std::string getFormat()
-            {
-                return m_format;
-            }
-
-            /**
-                 * This method is for setting Items to Properties
-                 *
-                 * @param item - pointer to Items
-                 */
-            void setItem(const ItemsPtr &item)
-            {
-                m_items.push_back(item);
-            }
-
-            /**
-                 * This method is for getting Items from Properties.
-                 *
-                 * @return list of pointer to Items
-                 */
-            std::vector<ItemsPtr> const &getItems() const
-            {
-                return m_items;
-            }
-
-            /**
-                 * This method is for setting Unique to Properties
-                 *
-                 * @param value - Unique as bool
-                 */
-            void setUnique( int value)
-            {
-                if (value == cJSON_True) m_unique = true;
-                else m_unique = false;
-            }
-
-            /**
-                 * This method is for getting isUnique from Properties.
-                 *
-                 * @return isUnique as bool
-                 */
-            bool getUnique()
-            {
-                return m_unique;
-            }
-
-            /**
-                 * This method is for setting AdditionalItems to Properties
-                 *
-                 * @param value - AdditionalItems as bool
-                 */
-            void setAdditionalItems(int value)
-            {
-                if (value == cJSON_True) m_additionalItems = true;
-                else m_additionalItems = false;
-            }
-
-            /**
-                 * This method is for getting AdditionalItems from Properties.
-                 *
-                 * @return AdditionalItems as bool
-                 */
-            bool getAdditionalItems()
-            {
-                return m_additionalItems;
-            }
         private:
+            TypeInfo m_type;
+            std::string m_typeString;
             std::string m_name;
-            ValueVariant m_value;
-            int m_min;
-            int m_max;
-            double m_doubleMin;
-            double m_doubleMax;
-            int m_multipleOf;
-            AllowedValues m_allowedValues;
-            std::string m_type;
-            std::string m_pattern;
-            std::string m_format;
             std::string m_description;
-            bool m_unique;
-            bool m_additionalItems;
-            std::vector<ItemsPtr > m_items;
+            std::shared_ptr<ValueVariant> m_value;
+            std::vector<std::shared_ptr<ValueProperty> > m_valueProperty;
+            std::vector<std::string> m_required;
     };
 
     /** PropertiesPtr - shared Ptr to Properties.*/
     typedef std::shared_ptr<Properties> PropertiesPtr;
+
+    /** ValuePropertyPtr - shared Ptr to ValueProperty.*/
+    typedef std::shared_ptr<ValueProperty> ValuePropertyPtr;
 
 }
 #endif

@@ -4587,6 +4587,7 @@ dtls_new_context(void *app_data) {
 
   if (fread(buf, 1, sizeof(buf), urandom) != sizeof(buf)) {
     dtls_emerg("cannot initialize PRNG\n");
+    fclose(urandom);
     return NULL;
   }
 

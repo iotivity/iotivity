@@ -16,22 +16,23 @@
 
 package oic.simulator.serviceprovider.manager;
 
+import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.swt.graphics.Image;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import oic.simulator.logger.LogEntry;
-import oic.simulator.logger.LoggerCallback;
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.ILogUIListener;
-import oic.simulator.serviceprovider.utils.Constants;
-
-import org.eclipse.jface.resource.ImageRegistry;
-import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.ILogger;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorManager;
+
+import oic.simulator.logger.LogEntry;
+import oic.simulator.logger.LoggerCallback;
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.ILogListener;
+import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * Class which handles the native logs, maintains log entries and updates the
@@ -39,7 +40,7 @@ import org.oic.simulator.SimulatorManager;
  */
 public class LogManager {
     private LinkedList<LogEntry>         entries           = new LinkedList<LogEntry>();
-    private ArrayList<ILogUIListener>    listeners         = new ArrayList<ILogUIListener>();
+    private ArrayList<ILogListener>      listeners         = new ArrayList<ILogListener>();
     private LinkedList<LogEntry>         visibleEntries    = new LinkedList<LogEntry>();
     private HashMap<Integer, Boolean>    visibleSeverities = new HashMap<Integer, Boolean>();
 
@@ -154,13 +155,13 @@ public class LogManager {
     }
 
     private void notifyListeners() {
-        for (ILogUIListener l : listeners) {
+        for (ILogListener l : listeners) {
             l.logChanged(new ArrayList<LogEntry>(visibleEntries));
         }
     }
 
     private void notifyListeners(LogEntry added) {
-        for (ILogUIListener l : listeners) {
+        for (ILogListener l : listeners) {
             l.logAdded(added);
         }
     }
@@ -199,7 +200,7 @@ public class LogManager {
         }
     }
 
-    public void addLogListener(final ILogUIListener listener) {
+    public void addLogListener(final ILogListener listener) {
         synchronizerThread.addToQueue(new Runnable() {
             @Override
             public void run() {
@@ -210,7 +211,7 @@ public class LogManager {
         });
     }
 
-    public void removeLogListener(final ILogUIListener listener) {
+    public void removeLogListener(final ILogListener listener) {
         synchronizerThread.addToQueue(new Runnable() {
             @Override
             public void run() {

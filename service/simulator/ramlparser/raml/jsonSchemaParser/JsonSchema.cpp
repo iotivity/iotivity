@@ -18,9 +18,14 @@
  *
  ******************************************************************/
 
-#include "JsonSchema.h"
-using namespace std;
+/**
+ * @file   JsonSchema.cpp
+ *
+ * @brief   This file reads data from Json Schema.
+ */
 
+#include "JsonSchema.h"
+#include <iostream>
 namespace RAML
 {
 
@@ -78,26 +83,11 @@ namespace RAML
         }
         if (m_type == "array")
         {
-            cJSON *jsonItems = cJSON_GetObjectItem(m_cjson, "items");
-            if (jsonItems)
-            {
-                if (jsonItems->type == 5)
-                {
-                    int item_size = cJSON_GetArraySize(jsonItems);
-                    int item_index = 0;
-                    do
-                    {
-                        cJSON *item = cJSON_GetArrayItem(jsonItems, item_index);
-                        setItem(readItems(item));
-                    }
-                    while ( ++item_index < item_size);
-                }
-                else
-                {
-                    setItem(readItems(jsonItems));
-                }
-            }
+            PropertiesPtr property = std::make_shared<Properties>("array");
+            readArray(m_cjson, property);
+            addProperty("array" , property);
         }
+
         cJSON *jsonAdditionalProperties = cJSON_GetObjectItem(m_cjson, "additionalProperties");
         if (jsonAdditionalProperties)
             m_additionalProperties = jsonAdditionalProperties->type;
@@ -107,12 +97,37 @@ namespace RAML
         cJSON *jsonReference = cJSON_GetObjectItem(m_cjson, "$ref");
         if (jsonReference)
         {
-            readJsonRef(jsonReference);
+            JsonParameters param;
+            readJsonRef(jsonReference, param);
+
+            for (auto it : param.getProperties())
+            {
+                addProperty(it.first, it.second);
+            }
+            for ( auto it : param.getRequired())
+            {
+                setRequiredValue(it);
+            }
+            if (m_type.empty())
+                m_type = param.getType();
         }
         cJSON *jsonAllOf = cJSON_GetObjectItem(m_cjson, "allOf");
         if (jsonAllOf)
         {
-            readAllOf(jsonAllOf);
+            JsonParameters param;
+
+            readAllOf(jsonAllOf, param);
+
+            for (auto it : param.getProperties())
+            {
+                addProperty(it.first, it.second);
+            }
+            for ( auto it : param.getRequired())
+            {
+                setRequiredValue(it);
+            }
+            if (m_type.empty())
+                m_type = param.getType();
         }
         cJSON *jsonRequiredValues = cJSON_GetObjectItem(m_cjson, "required");
         if (jsonRequiredValues)
@@ -136,6 +151,12 @@ namespace RAML
         {
             std::string type = defType->valuestring;
             definition->setType(type);
+            if (type == "array")
+            {
+                PropertiesPtr property = std::make_shared<Properties>("array");
+                readArray(childDefinitions, property);
+                definition->addProperty("array" , property);
+            }
         }
         cJSON *defProperties = cJSON_GetObjectItem(childDefinitions, "properties");
         if (defProperties)
@@ -162,12 +183,36 @@ namespace RAML
         cJSON *defReference = cJSON_GetObjectItem(childDefinitions, "$ref");
         if (defReference)
         {
-            readDefRef(defReference, definition);
+            JsonParameters param;
+            readJsonRef(defReference, param);
+
+            for (auto it : param.getProperties())
+            {
+                definition->addProperty(it.first, it.second);
+            }
+            for ( auto it : param.getRequired())
+            {
+                definition->setRequiredValue(it);
+            }
+            if (definition->getType().empty())
+                definition->setType(param.getType());
         }
         cJSON *defAllOf = cJSON_GetObjectItem(childDefinitions, "allOf");
         if (defAllOf)
         {
-            readDefAllOf(defAllOf, definition);
+            JsonParameters param;
+            readAllOf(defAllOf, param);
+
+            for (auto it : param.getProperties())
+            {
+                definition->addProperty(it.first, it.second);
+            }
+            for ( auto it : param.getRequired())
+            {
+                definition->setRequiredValue(it);
+            }
+            if (definition->getType().empty())
+                definition->setType(param.getType());
         }
         return definition;
     }
@@ -182,106 +227,125 @@ namespace RAML
             property->setDescription(propertyDescription->valuestring);
         }
         cJSON *propertyType = cJSON_GetObjectItem(childProperties, "type");
+        std::string attType;
         if (propertyType)
         {
-            std::string attType;
             if (propertyType->type == 4)
             {
                 attType = propertyType->valuestring;
-                property->setType(attType);
             }
             else if (propertyType->type == 5)
             {
                 attType = cJSON_GetArrayItem(propertyType, 0)->valuestring;
-                property->setType(attType);
             }
-            readValues(childProperties, property, attType);
         }
-        cJSON *defaultValue = cJSON_GetObjectItem(childProperties, "default");
-        if (defaultValue)
+        if (!(attType == "array") && !(attType == "object"))
         {
-            if (defaultValue->type == 4)
+            cJSON *defaultValue = cJSON_GetObjectItem(childProperties, "default");
+            if (defaultValue)
             {
-                property->setValue((std::string)defaultValue->valuestring);
+                readDefaultValue(defaultValue, property, attType);
             }
-            else if (defaultValue->type == 3)
-            {
-                if (property->getType() == "number")
-                    property->setValue((double)defaultValue->valuedouble);
-                else
-                    property->setValue((int)defaultValue->valueint );
-            }
-            else if (defaultValue->type == 1)
-            {
-                property->setValue((bool)true);
-            }
-            else if (defaultValue->type == 0)
-            {
-                property->setValue((bool)false);
-            }
-
         }
+        readValues(childProperties, property, attType);
         cJSON *allowedvalues = cJSON_GetObjectItem(childProperties, "enum");
         if (allowedvalues)
         {
-            if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 4)
-            {
-                int size = cJSON_GetArraySize(allowedvalues);
-                int idx = 0;
-                std::vector<std::string> allwdValues;
-                do
-                {
-                    allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valuestring);
-                }
-                while ( ++idx < size);
-                property->setAllowedValues(allwdValues);
-            }
-            else if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 3)
-            {
-                int size = cJSON_GetArraySize(allowedvalues);
-                int idx = 0;
-                if (property->getType() == "number")
-                {
-                    std::vector<double> allwdValues;
-                    do
-                    {
-                        allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valuedouble);
-                    }
-                    while ( ++idx < size);
-                    property->setAllowedValues(allwdValues);
-                }
-                else
-                {
-                    std::vector<int> allwdValues;
-                    do
-                    {
-                        allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valueint);
-                    }
-                    while ( ++idx < size);
-                    property->setAllowedValues(allwdValues);
-                }
-            }
-            else if (((cJSON_GetArrayItem(allowedvalues, 0)->type) == 1)
-                     || ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 0))
-            {
-                int size = cJSON_GetArraySize(allowedvalues);
-                int idx = 0;
-                std::vector<bool> allwdValues;
-                do
-                {
-                    if (cJSON_GetArrayItem(allowedvalues, idx)->type)
-                        allwdValues.push_back(true);
-                    else
-                        allwdValues.push_back(false);
-                }
-                while ( ++idx < size);
-                property->setAllowedValues(allwdValues);
-            }
+            readAllowedValues(allowedvalues, property, attType);
         }
+        property->setTypeString(attType);
         return property;
     }
 
-    void JsonSchema::readValues(cJSON *childProperties,  PropertiesPtr property ,
+    void JsonSchema::readDefaultValue(cJSON *defaultValue,  PropertiesPtr &property,
+                                      const std::string &attType)
+    {
+        if (defaultValue->type == 4)
+        {
+            property->setValue((std::string)defaultValue->valuestring);
+        }
+        else if (defaultValue->type == 3)
+        {
+            if (attType == "number")
+                property->setValue((double)defaultValue->valuedouble);
+            else
+                property->setValue((int)defaultValue->valueint );
+        }
+        else if (defaultValue->type == 1)
+        {
+            property->setValue((bool)true);
+        }
+        else if (defaultValue->type == 0)
+        {
+            property->setValue((bool)false);
+        }
+    }
+
+    void JsonSchema::readAllowedValues(cJSON *allowedvalues,  PropertiesPtr &property,
+                                       std::string &attType)
+    {
+        if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 4)
+        {
+            int size = cJSON_GetArraySize(allowedvalues);
+            int idx = 0;
+            std::vector<std::string> allwdValues;
+            do
+            {
+                allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valuestring);
+            }
+            while ( ++idx < size);
+            property->setValueProperty(std::make_shared<ValueProperty>(allwdValues));
+            if (attType.empty())
+                attType = "string";
+        }
+        else if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 3)
+        {
+            int size = cJSON_GetArraySize(allowedvalues);
+            int idx = 0;
+            if (attType == "number")
+            {
+                std::vector<double> allwdValues;
+                do
+                {
+                    allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valuedouble);
+                }
+                while ( ++idx < size);
+                property->setValueProperty(std::make_shared<ValueProperty>(allwdValues));
+            }
+            else
+            {
+                std::vector<int> allwdValues;
+                do
+                {
+                    allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valueint);
+                }
+                while ( ++idx < size);
+                property->setValueProperty(std::make_shared<ValueProperty>(allwdValues));
+                if (attType.empty())
+                    attType = "integer";
+            }
+        }
+        else if (((cJSON_GetArrayItem(allowedvalues, 0)->type) == 1)
+                 || ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 0))
+        {
+            int size = cJSON_GetArraySize(allowedvalues);
+            int idx = 0;
+            std::vector<bool> allwdValues;
+            do
+            {
+                if (cJSON_GetArrayItem(allowedvalues, idx)->type)
+                    allwdValues.push_back(true);
+                else
+                    allwdValues.push_back(false);
+            }
+            while ( ++idx < size);
+            property->setValueProperty(std::make_shared<ValueProperty>(allwdValues));
+            if (attType.empty())
+                attType = "boolean";
+        }
+    }
+
+    void JsonSchema::readValues(cJSON *childProperties,  PropertiesPtr &property ,
                                 const std::string &attType)
     {
         if (attType == "string")
@@ -292,31 +356,36 @@ namespace RAML
         {
             readInteger(childProperties, property);
         }
-        else if (attType == "array")
-        {
-            readArray(childProperties, property);
-        }
         else if (attType == "number")
         {
             readDouble(childProperties, property);
         }
+        else if (attType == "array")
+        {
+            readArray(childProperties, property);
+        }
+        else if (attType == "object")
+        {
+            readObject(childProperties, property);
+        }
     }
 
-    void JsonSchema::readString(cJSON *childProperties, PropertiesPtr property)
+    void JsonSchema::readString(cJSON *childProperties, PropertiesPtr &property)
     {
         cJSON *stringMax = cJSON_GetObjectItem(childProperties, "maxLength");
+        int min = INT_MIN, max = INT_MAX;
         if (stringMax)
         {
             cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
             if (exclusiveMax)
             {
                 if (exclusiveMax->type == cJSON_True)
-                    property->setMax (--(stringMax->valueint));
+                    max = --(stringMax->valueint);
                 else
-                    property->setMax(stringMax->valueint);
+                    max = stringMax->valueint;
             }
             else
-                property->setMax(stringMax->valueint);
+                max = stringMax->valueint;
         }
         cJSON *stringMin = cJSON_GetObjectItem(childProperties, "minLength");
         if (stringMin)
@@ -325,203 +394,405 @@ namespace RAML
             if (exclusiveMin)
             {
                 if (exclusiveMin->type == cJSON_True)
-                    property->setMin( ++(stringMin->valueint));
+                    min = ++(stringMin->valueint);
                 else
-                    property->setMin(stringMin->valueint);
+                    min = stringMin->valueint;
             }
             else
-                property->setMin(stringMin->valueint);
+                min = stringMin->valueint;
         }
+        if (min != INT_MIN || max != INT_MAX)
+            property->setValueProperty(std::make_shared<ValueProperty>(min, max, 0));
+
         cJSON *stringFormat = cJSON_GetObjectItem(childProperties, "format");
         if (stringFormat)
         {
-            property->setFormat(stringFormat->valuestring);
+            property->setValueProperty(std::make_shared<ValueProperty>
+                                       (ValueProperty::Type::FORMAT, (stringFormat->valuestring)));
         }
+
         cJSON *stringPattern = cJSON_GetObjectItem(childProperties, "pattern");
         if (stringPattern)
         {
-            property->setPattern(stringPattern->valuestring);
+            property->setValueProperty(std::make_shared<ValueProperty>
+                                       (ValueProperty::Type::PATTERN, (stringPattern->valuestring)));
         }
     }
 
-    void JsonSchema::readArray(cJSON *childProperties,  PropertiesPtr property)
+    void JsonSchema::readInteger(cJSON *childProperties,  PropertiesPtr &property)
+    {
+        cJSON *Max = cJSON_GetObjectItem(childProperties, "maximum");
+        int min = INT_MIN, max = INT_MAX, multipleOf = INT_MAX;
+        if (Max)
+        {
+            cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
+            if (exclusiveMax)
+            {
+                if (exclusiveMax->type == cJSON_True)
+                    max = --(Max->valueint);
+                else
+                    max = Max->valueint;
+            }
+            else
+                max = Max->valueint;
+        }
+        cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
+        if (Min)
+        {
+            cJSON *exclusiveMin = cJSON_GetObjectItem(childProperties, "exclusiveMinimum");
+            if (exclusiveMin)
+            {
+                if (exclusiveMin->type == cJSON_True)
+                    min = ++(Min->valueint);
+                else
+                    min = Min->valueint;
+            }
+            else
+                min = Min->valueint;
+        }
+        cJSON *MultipleOff = cJSON_GetObjectItem(childProperties, "multipleOf");
+        if (MultipleOff)
+        {
+            multipleOf = MultipleOff->valueint;
+        }
+        if (min != INT_MIN || max != INT_MAX)
+            property->setValueProperty(std::make_shared<ValueProperty>(min, max, multipleOf));
+
+    }
+
+    void JsonSchema::readDouble(cJSON *childProperties,  PropertiesPtr &property)
+    {
+        cJSON *Max = cJSON_GetObjectItem(childProperties, "maximum");
+        double min = INT_MIN, max = INT_MAX;
+        int multipleOf = INT_MAX;
+        if (Max)
+        {
+            cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
+            if (exclusiveMax)
+            {
+                if (exclusiveMax->type == cJSON_True)
+                    max = --(Max->valuedouble);
+                else
+                    max = Max->valuedouble;
+            }
+            else
+                max = Max->valuedouble;
+        }
+        cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
+        if (Min)
+        {
+            cJSON *exclusiveMin = cJSON_GetObjectItem(childProperties, "exclusiveMinimum");
+            if (exclusiveMin)
+            {
+                if (exclusiveMin->type == cJSON_True)
+                    min = ++(Min->valuedouble);
+                else
+                    min = Min->valuedouble;
+            }
+            else
+                min = Min->valuedouble;
+        }
+
+        cJSON *MultipleOff = cJSON_GetObjectItem(childProperties, "multipleOf");
+        if (MultipleOff)
+        {
+            multipleOf = MultipleOff->valueint;
+        }
+        if (min != INT_MIN || max != INT_MAX)
+            property->setValueProperty(std::make_shared<ValueProperty>(min, max, multipleOf));
+
+    }
+
+    void JsonSchema::readArray(cJSON *childProperties,  PropertiesPtr &property)
     {
         cJSON *itemValues = cJSON_GetObjectItem(childProperties, "items");
         if (itemValues)
         {
             if (itemValues->type == 5)
             {
-                int item_size = cJSON_GetArraySize(itemValues);
+                //int item_size = cJSON_GetArraySize(itemValues);
                 int item_index = 0;
-                do
-                {
-                    cJSON *item = cJSON_GetArrayItem(itemValues, item_index);
-                    property->setItem(readItems(item));
-                }
-                while ( ++item_index < item_size);
+                //do
+                //{
+                cJSON *item = cJSON_GetArrayItem(itemValues, item_index);
+                readItems(item, property);
+                //break;
+                //}
+                //while ( ++item_index < item_size);
             }
             else
             {
-                property->setItem(readItems(itemValues));
+                readItems(itemValues, property);
             }
         }
         cJSON *itemsMax = cJSON_GetObjectItem(childProperties, "maxItems");
+        int min = INT_MIN, max = INT_MAX;
+        bool unique = cJSON_False, addItems = cJSON_False;
         if (itemsMax)
         {
             cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
             if (exclusiveMax)
             {
                 if (exclusiveMax->type == cJSON_True)
-                    property->setMax( --(itemsMax->valueint));
+                    max = --(itemsMax->valueint);
                 else
-                    property->setMax(itemsMax->valueint);
+                    max = itemsMax->valueint;
             }
             else
-                property->setMax(itemsMax->valueint);
+                max = itemsMax->valueint;
         }
-        cJSON *itemsMin = cJSON_GetObjectItem(childProperties, "minLength");
+        cJSON *itemsMin = cJSON_GetObjectItem(childProperties, "minItems");
         if (itemsMin)
         {
             cJSON *exclusiveMin = cJSON_GetObjectItem(childProperties, "exclusiveMinimum");
             if (exclusiveMin)
             {
                 if (exclusiveMin->type == cJSON_True)
-                    property->setMin( ++(itemsMin->valueint));
+                    min = ++(itemsMin->valueint);
                 else
-                    property->setMin(itemsMin->valueint);
+                    min = itemsMin->valueint;
             }
             else
-                property->setMin(itemsMin->valueint);
+                min = itemsMin->valueint;
         }
         cJSON *uniqueItems = cJSON_GetObjectItem(childProperties, "uniqueItems");
         if (uniqueItems)
         {
-            property->setUnique(uniqueItems->type);
-        }
-        else
-        {
-            property->setUnique(cJSON_True);
+            unique = uniqueItems->type;
         }
         cJSON *additionalItems = cJSON_GetObjectItem(childProperties, "additionalItems");
         if (additionalItems)
         {
-            property->setAdditionalItems(additionalItems->type);
+            addItems = additionalItems->type;
+        }
+        property->setValueProperty(std::make_shared<ValueProperty>
+                                   (ValueProperty::Type::ARRAY, min, max, unique, addItems));
+    }
+
+    void JsonSchema::readItems(cJSON *item, PropertiesPtr &property)
+    {
+        std::string type;
+        JsonParameters param;
+        cJSON *itemType = cJSON_GetObjectItem(item, "type");
+        if (itemType)
+        {
+            type = itemType->valuestring;
+        }
+
+        cJSON *itemAllOf = cJSON_GetObjectItem(item, "allOf");
+        if (itemAllOf)
+        {
+            readAllOf(itemAllOf , param);
         }
         else
         {
-            property->setAdditionalItems(cJSON_True);
+            cJSON *itemOneOf = cJSON_GetObjectItem(item, "oneOf");
+            if (itemOneOf)
+            {
+                readAllOf(itemOneOf , param);
+            }
+        }
+
+        cJSON *itemReference = cJSON_GetObjectItem(item, "$ref");
+        if (itemReference)
+        {
+            readJsonRef(itemReference , param);
+        }
+
+        if (type == "object")
+        {
+            cJSON *itemProperties = cJSON_GetObjectItem(item, "properties");
+            if (itemProperties)
+            {
+                cJSON *childProperties = itemProperties->child;
+                std::vector<Properties> propertyVector;
+                while (childProperties)
+                {
+                    std::string attName = childProperties->string;
+                    PropertiesPtr prop = std::make_shared<Properties>(attName);
+                    readProp(childProperties, attName);
+                    propertyVector.push_back(*prop);
+                    childProperties = childProperties->next;
+                }
+                property->setValue(propertyVector);
+            }
+
+            cJSON *itemRequiredValues = cJSON_GetObjectItem(item, "required");
+            if (itemRequiredValues)
+            {
+                int size = cJSON_GetArraySize(itemRequiredValues);
+                int index = 0;
+                do
+                {
+                    property->setRequiredValue(cJSON_GetArrayItem(itemRequiredValues, index)->valuestring);
+                }
+                while ( ++index < size);
+            }
+        }
+
+        else if (param.getType() == "object")
+        {
+            std::vector<Properties> propertyVector;
+            for (auto prop : param.getProperties())
+            {
+                propertyVector.push_back(*(prop.second));
+            }
+            property->setValue(propertyVector);
+
+            for (auto req : param.getRequired())
+            {
+                property->setRequiredValue(req);
+            }
+        }
+        else
+        {
+            PropertiesPtr prop = std::make_shared<Properties>("property");
+
+            cJSON *defaultValue = cJSON_GetObjectItem(item, "default");
+            if (defaultValue)
+            {
+                readDefaultValue(defaultValue, prop, type);
+            }
+            cJSON *allowedvalues = cJSON_GetObjectItem(item, "enum");
+            if (allowedvalues)
+            {
+                readAllowedValues(allowedvalues, prop, type);
+            }
+            readValues(item, prop, type);
+            prop->setTypeString(type);
+            property->setValue(*prop);
         }
     }
 
-    void JsonSchema::readInteger(cJSON *childProperties,  PropertiesPtr property)
+    void JsonSchema::readObject(cJSON *childProperties,  PropertiesPtr &property)
     {
-        cJSON *Max = cJSON_GetObjectItem(childProperties, "maximum");
-        if (Max)
-        {
-            cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
-            if (exclusiveMax)
-            {
-                if (exclusiveMax->type == cJSON_True)
-                    property->setMax( --(Max->valueint));
-                else
-                    property->setMax(Max->valueint);
-            }
-            else
-                property->setMax(Max->valueint);
-        }
-        cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
-        if (Min)
-        {
-            cJSON *exclusiveMin = cJSON_GetObjectItem(childProperties, "exclusiveMinimum");
-            if (exclusiveMin)
-            {
-                if (exclusiveMin->type == cJSON_True)
-                    property->setMin( ++(Min->valueint));
-                else
-                    property->setMin(Min->valueint);
-            }
-            else
-                property->setMin(Min->valueint);
-        }
-        cJSON *multipleOf = cJSON_GetObjectItem(childProperties, "multipleOf");
-        if (multipleOf)
-        {
-            property->setMultipleOf(multipleOf->valueint);
-        }
+        property->setTypeString("object");
 
+        cJSON *subProperties = cJSON_GetObjectItem(childProperties, "properties");
+        cJSON *itemRequiredValues = cJSON_GetObjectItem(childProperties, "required");
+        if (subProperties)
+        {
+            cJSON *childProperties = subProperties->child;
+            std::vector<Properties> propertyVector;
+            while (childProperties)
+            {
+                std::string attName = childProperties->string;
+                PropertiesPtr prop = std::make_shared<Properties>(attName);
+                readProp(childProperties, attName);
+                propertyVector.push_back(*prop);
+                childProperties = childProperties->next;
+            }
+            property->setValue(propertyVector);
+            if (itemRequiredValues)
+            {
+                int size = cJSON_GetArraySize(itemRequiredValues);
+                int index = 0;
+                do
+                {
+                    property->setRequiredValue(cJSON_GetArrayItem(itemRequiredValues, index)->valuestring);
+                }
+                while ( ++index < size);
+            }
+        }
+        else
+        {
+            JsonParameters param;
+
+            cJSON *itemAllOf = cJSON_GetObjectItem(childProperties, "allOf");
+            if (itemAllOf)
+            {
+                readAllOf(itemAllOf , param);
+            }
+            cJSON *itemReference = cJSON_GetObjectItem(childProperties, "$ref");
+            if (itemReference)
+            {
+                readJsonRef(itemReference , param);
+            }
+
+            if (param.getType() == "object")
+            {
+                std::vector<Properties> propertyVector;
+                for (auto prop : param.getProperties())
+                {
+                    propertyVector.push_back(*(prop.second));
+                }
+                property->setValue(propertyVector);
+
+                for (auto req : param.getRequired())
+                {
+                    property->setRequiredValue(req);
+                }
+            }
+        }
     }
 
-    void JsonSchema::readDouble(cJSON *childProperties,  PropertiesPtr property)
+    void JsonSchema::readFile(std::string &fileName ,  JsonParameters &param)
     {
-        cJSON *Max = cJSON_GetObjectItem(childProperties, "maximum");
-        if (Max)
-        {
-            cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
-            if (exclusiveMax)
-            {
-                if (exclusiveMax->type == cJSON_True)
-                    property->setMaxDouble( --(Max->valuedouble));
-                else
-                    property->setMaxDouble(Max->valuedouble);
-            }
-            else
-                property->setMaxDouble(Max->valuedouble);
-        }
-        cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
-        if (Min)
-        {
-            cJSON *exclusiveMin = cJSON_GetObjectItem(childProperties, "exclusiveMinimum");
-            if (exclusiveMin)
-            {
-                if (exclusiveMin->type == cJSON_True)
-                    property->setMinDouble( ++(Min->valuedouble));
-                else
-                    property->setMinDouble(Min->valuedouble);
-            }
-            else
-                property->setMinDouble(Min->valuedouble);
-        }
-        cJSON *multipleOf = cJSON_GetObjectItem(childProperties, "multipleOf");
-        if (multipleOf)
-        {
-            property->setMultipleOf(multipleOf->valueint);
-        }
+        std::string name = fileName;
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        if (name.compare("oic.baseresource.json") == 0)
+            return;
 
+        cJSON *json = m_includeResolver->readToJson(fileName);
+        JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(json, m_includeResolver);
+
+        param.addProperties(Refparser->getProperties());
+        param.addRequired(Refparser->getRequiredValues());
+        param.setType(Refparser->getType());
     }
 
-    DefinitionsPtr JsonSchema::readRef(std::string m_ref)
+    void JsonSchema::readFile(std::string &fileName , std::string &defName ,  JsonParameters &param)
+    {
+        std::string name = fileName;
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        if (name.compare("oic.baseresource.json") == 0)
+            return;
+
+        cJSON *json = m_includeResolver->readToJson(fileName);
+        JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(json, m_includeResolver);
+
+        DefinitionsPtr definition = Refparser->getDefinition(defName);
+        if (definition == nullptr)
+            throw JsonException("Definition Name Incorrect");
+
+        param.addProperties(definition->getProperties());
+        param.addRequired(definition->getRequiredValues());
+        param.setType(definition->getType());
+    }
+
+    void JsonSchema::readRef(std::string ref ,  JsonParameters &param)
     {
         std::string delimiter1 = "#";
         std::string delimiter2 = "/";
         std::string fileName;
-        if (! m_ref.empty())
+        if (! ref.empty())
         {
-            std::size_t pos = m_ref.find(delimiter1);
-            if ( (pos = m_ref.find(delimiter1)) != std::string::npos)
+            std::size_t pos = std::string::npos;
+            if ( (pos = ref.find(delimiter1)) != std::string::npos)
             {
-                fileName = m_ref.substr(0, pos);
-                m_ref.erase(0, pos);
+                fileName = ref.substr(0, pos);
+                ref.erase(0, pos);
             }
-            m_ref.erase(0, delimiter1 .length());
+            ref.erase(0, delimiter1 .length());
             std::string defName;
 
-            if (! m_ref.empty())
+            if (! ref.empty())
             {
-                m_ref.erase(0, delimiter2 .length());
+                ref.erase(0, delimiter2 .length());
                 std::string keyName;
-                if ( (pos = m_ref.find(delimiter2)) != std::string::npos)
+                if ( (pos = ref.find(delimiter2)) != std::string::npos)
                 {
-                    keyName = m_ref.substr(0, pos);
-                    m_ref.erase(0, pos + delimiter2.length());
+                    keyName = ref.substr(0, pos);
+                    ref.erase(0, pos + delimiter2.length());
                     if (keyName == "definitions")
                     {
-                        if ( (pos = m_ref.find(delimiter2)) != std::string::npos)
+                        if ( (pos = ref.find(delimiter2)) != std::string::npos)
                         {
-                            defName = m_ref.substr(0, pos);
+                            defName = ref.substr(0, pos);
                         }
-                        else if (! m_ref.empty())
+                        else if (! ref.empty())
                         {
-                            defName = m_ref;
+                            defName = ref;
                         }
                     }
                 }
@@ -530,12 +801,11 @@ namespace RAML
             {
                 if (!(defName.empty()))
                 {
-                    cJSON *m_json = m_includeResolver->readToJson(fileName);
-                    JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
-                    DefinitionsPtr definition = Refparser->getDefinition(defName);
-                    if (definition == nullptr)
-                        throw JsonException("Definition Name Incorrect");
-                    return definition;
+                    readFile(fileName, defName, param);
+                }
+                else
+                {
+                    throw JsonException("Definition Name Empty");
                 }
             }
             else
@@ -544,24 +814,57 @@ namespace RAML
                 {
                     if (getDefinition(defName) == nullptr)
                         throw JsonException("Definition Name Incorrect");
-                    return getDefinition(defName);
+                    param.addProperties(getDefinition(defName)->getProperties());
+                    param.addRequired(getDefinition(defName)->getRequiredValues());
+                    param.setType(getDefinition(defName)->getType());
+                }
+                else
+                {
+                    throw JsonException("Definition Name Empty");
                 }
             }
         }
-        throw JsonException("Definition Name Empty");
-        return nullptr;
     }
-    void JsonSchema::readAllOf(cJSON *allofValues)
+
+    void JsonSchema::readJsonRef(cJSON *jsonReference , JsonParameters &param)
+    {
+        std::string ref = jsonReference->valuestring;
+
+        std::string web = "http://";
+        std::string delimiter = "#";
+        std::size_t pos = ref.find(web);
+
+        if (pos == std::string::npos)   // If Web Link Is GIVEN TO READ
+        {
+            pos = ref.find(delimiter);
+            if ( pos ==  (ref.length() - 1) )
+            {
+                std::string fileName = ref.substr(0, pos);
+                readFile(fileName, param);
+            }
+            else
+            {
+                readRef(ref, param);
+            }
+        }
+    }
+
+    void JsonSchema::readAllOf(cJSON *allofValues ,  JsonParameters &allParams)
     {
         int size = cJSON_GetArraySize(allofValues);
         int index = 0;
         do
         {
+            JsonParameters param;
+
             cJSON *childAllOf = cJSON_GetArrayItem(allofValues, index);
             cJSON *jsonReference = cJSON_GetObjectItem(childAllOf, "$ref");
             if (jsonReference)
             {
-                readJsonRef(jsonReference );
+                readJsonRef(jsonReference, param);
+                allParams.addProperties(param.getProperties());
+                allParams.addRequired(param.getRequired());
+                allParams.setType(param.getType());
             }
             cJSON *jsonRequiredValues = cJSON_GetObjectItem(childAllOf, "required");
             if (jsonRequiredValues)
@@ -570,289 +873,7 @@ namespace RAML
                 int idx = 0;
                 do
                 {
-                    setRequiredValue(cJSON_GetArrayItem(jsonRequiredValues, idx)->valuestring);
-                }
-                while ( ++idx < len);
-            }
-        }
-        while ( ++index < size);
-    }
-    void JsonSchema::readJsonRef(cJSON *jsonReference)
-    {
-        std::string m_ref = jsonReference->valuestring;
-        std::map<std::string, PropertiesPtr > properties;
-        std::vector<std::string> required;
-
-        std::string web = "http://";
-        std::string delimiter = "#";
-        std::size_t pos = m_ref.find(web);
-
-        if (pos == std::string::npos)   // If Web Link Is GIVEN TO READ
-        {
-            pos = m_ref.find(delimiter);
-            if ( pos ==  (m_ref.length() - 1) )
-            {
-                std::string fileName = m_ref.substr(0, pos);
-                cJSON *m_json = m_includeResolver->readToJson(fileName);
-                JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
-
-                properties = Refparser->getProperties();
-                required = Refparser->getRequiredValues();
-            }
-            else
-            {
-                DefinitionsPtr definition = readRef(m_ref);
-                properties = definition->getProperties();
-                required = definition->getRequiredValues();
-            }
-            for ( auto it : properties)
-            {
-                std:: string name = it.first;
-                addProperty(name, it.second);
-            }
-            for (auto it : required )
-            {
-                setRequiredValue(it);
-            }
-
-        }
-    }
-    void JsonSchema::readDefAllOf(cJSON *allofValues, DefinitionsPtr definition)
-    {
-        int size = cJSON_GetArraySize(allofValues);
-        int index = 0;
-        do
-        {
-            cJSON *childAllOf = cJSON_GetArrayItem(allofValues, index);
-            cJSON *defReference = cJSON_GetObjectItem(childAllOf, "$ref");
-            if (defReference)
-            {
-                readDefRef(defReference , definition);
-            }
-            cJSON *defRequiredValues = cJSON_GetObjectItem(allofValues, "required");
-            if (defRequiredValues)
-            {
-                int len = cJSON_GetArraySize(defRequiredValues);
-                int idx = 0;
-                do
-                {
-                    definition->setRequiredValue(cJSON_GetArrayItem(defRequiredValues, idx)->valuestring);
-                }
-                while ( ++idx < len);
-            }
-        }
-        while ( ++index < size);
-    }
-    void JsonSchema::readDefRef(cJSON *defReference, DefinitionsPtr definition)
-    {
-        std::string m_ref = defReference->valuestring;
-        std::map<std::string, PropertiesPtr > properties;
-        std::vector<std::string> required;
-        std::string type;
-
-        std::string web = "http://";
-        std::string delimiter = "#";
-        std::size_t pos = m_ref.find(web);
-
-        if (pos == std::string::npos)   // If Web Link Is GIVEN TO READ
-        {
-            pos = m_ref.find(delimiter);
-            if ( pos ==  (m_ref.length() - 1) )
-            {
-                std::string fileName = m_ref.substr(0, pos);
-                cJSON *m_json = m_includeResolver->readToJson(fileName);
-                JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
-
-                properties = Refparser->getProperties();
-                required = Refparser->getRequiredValues();
-                type =    Refparser->getType();
-            }
-            else
-            {
-                DefinitionsPtr definitionRef = readRef(m_ref);
-                properties = definitionRef->getProperties();
-                required = definitionRef->getRequiredValues();
-                type =    definitionRef->getType();
-            }
-            for (auto it : properties)
-            {
-                definition->addProperty(it.first, it.second);
-            }
-            for ( auto it : required)
-            {
-                definition->setRequiredValue(it);
-            }
-            definition->setType(type);
-        }
-    }
-    ItemsPtr JsonSchema::readItems(cJSON *item)
-    {
-        ItemsPtr newItem = std::make_shared<Items>();
-        cJSON *itemType = cJSON_GetObjectItem(item, "type");
-        if (itemType)
-        {
-            std::string type = itemType->valuestring;
-            newItem->setType(type);
-        }
-
-        cJSON *itemProperties = cJSON_GetObjectItem(item, "properties");
-        if (itemProperties)
-        {
-            cJSON *childProperties = itemProperties->child;
-            while (childProperties)
-            {
-                std::string attName = childProperties->string;
-
-                newItem->addProperty(attName, readProp(childProperties, attName));
-                childProperties = childProperties->next;
-            }
-        }
-
-        cJSON *allowedvalues = cJSON_GetObjectItem(item, "enum");
-        if (allowedvalues)
-        {
-            if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 4)
-            {
-                int size = cJSON_GetArraySize(allowedvalues);
-                int idx = 0;
-                std::vector<std::string> allwdValues;
-                do
-                {
-                    allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valuestring);
-                }
-                while ( ++idx < size);
-                newItem->setAllowedValues(allwdValues);
-            }
-            else if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 3)
-            {
-                int size = cJSON_GetArraySize(allowedvalues);
-                int idx = 0;
-                if (newItem->getType() == "number")
-                {
-                    std::vector<double> allwdValues;
-                    do
-                    {
-                        allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valuedouble);
-                    }
-                    while ( ++idx < size);
-                    newItem->setAllowedValues(allwdValues);
-                }
-                else
-                {
-                    std::vector<int> allwdValues;
-                    do
-                    {
-                        allwdValues.push_back(cJSON_GetArrayItem(allowedvalues, idx)->valueint);
-                    }
-                    while ( ++idx < size);
-                    newItem->setAllowedValues(allwdValues);
-                }
-            }
-            else if (((cJSON_GetArrayItem(allowedvalues, 0)->type) == 1)
-                     || ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 0))
-            {
-                int size = cJSON_GetArraySize(allowedvalues);
-                int idx = 0;
-                std::vector<bool> allwdValues;
-                do
-                {
-                    if (cJSON_GetArrayItem(allowedvalues, idx)->type)
-                        allwdValues.push_back(true);
-                    else
-                        allwdValues.push_back(false);
-                }
-                while ( ++idx < size);
-                newItem->setAllowedValues(allwdValues);
-            }
-        }
-        cJSON *itemRequiredValues = cJSON_GetObjectItem(item, "required");
-        if (itemRequiredValues)
-        {
-            int size = cJSON_GetArraySize(itemRequiredValues);
-            int index = 0;
-            do
-            {
-                newItem->setRequiredValue(cJSON_GetArrayItem(itemRequiredValues, index)->valuestring);
-            }
-            while ( ++index < size);
-        }
-        cJSON *itemReference = cJSON_GetObjectItem(item, "$ref");
-        if (itemReference)
-        {
-            readItemRef(itemReference , newItem);
-        }
-        cJSON *itemAllOf = cJSON_GetObjectItem(item, "allOf");
-        if (itemAllOf)
-        {
-            readItemAllOf(itemAllOf , newItem);
-        }
-        return newItem;
-    }
-
-    void JsonSchema::readItemRef(cJSON *itemReference, ItemsPtr item)
-    {
-        std::string m_ref = itemReference->valuestring;
-        std::map<std::string, PropertiesPtr > properties;
-        std::vector<std::string> required;
-        std::string type;
-
-        std::string web = "http://";
-        std::string delimiter = "#";
-        std::size_t pos = m_ref.find(web);
-
-        if (pos == std::string::npos)   // If Web Link Is GIVEN TO READ
-        {
-            pos = m_ref.find(delimiter);
-            if ( pos ==  (m_ref.length() - 1 ) )
-            {
-                std::string fileName = m_ref.substr(0, pos);
-                cJSON *m_json = m_includeResolver->readToJson(fileName);
-                JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
-
-                properties = Refparser->getProperties();
-                required = Refparser->getRequiredValues();
-                type =    Refparser->getType();
-            }
-            else
-            {
-                DefinitionsPtr definitionRef = readRef(m_ref);
-                properties = definitionRef->getProperties();
-                required = definitionRef->getRequiredValues();
-                type =    definitionRef->getType();
-            }
-            for ( auto it : properties)
-            {
-                std:: string name = it.first;
-                item->addProperty(name, it.second);
-            }
-            for ( auto it : required)
-            {
-                item->setRequiredValue(it);
-            }
-            item->setType(type);
-        }
-    }
-
-    void JsonSchema::readItemAllOf(cJSON *allofValues, ItemsPtr item)
-    {
-        int size = cJSON_GetArraySize(allofValues);
-        int index = 0;
-        do
-        {
-            cJSON *childAllOf = cJSON_GetArrayItem(allofValues, index);
-            cJSON *itemReference = cJSON_GetObjectItem(childAllOf, "$ref");
-            if (itemReference)
-            {
-                readItemRef(itemReference, item);
-            }
-            cJSON *itemRequiredValues = cJSON_GetObjectItem(allofValues, "required");
-            if (itemRequiredValues)
-            {
-                int len = cJSON_GetArraySize(itemRequiredValues);
-                int idx = 0;
-                do
-                {
-                    item->setRequiredValue(cJSON_GetArrayItem(itemRequiredValues, idx)->valuestring);
+                    allParams.addRequired(cJSON_GetArrayItem(jsonRequiredValues, idx)->valuestring);
                 }
                 while ( ++idx < len);
             }

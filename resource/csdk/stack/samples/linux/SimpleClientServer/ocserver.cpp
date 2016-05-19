@@ -88,7 +88,7 @@ OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
     OCRepPayload* payload = OCRepPayloadCreate();
     if(!payload)
     {
-        OC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
+        OIC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
         return nullptr;
     }
 
@@ -104,7 +104,7 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
 {
     if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, TAG, PCF("Incoming payload not a representation"));
+        OIC_LOG(ERROR, TAG, PCF("Incoming payload not a representation"));
         return nullptr;
     }
 
@@ -163,7 +163,7 @@ bool checkIfQueryForPowerPassed(char * query)
             int powerRequested = atoi(pointerToOperator + 1);
             if (Light.power > powerRequested)
             {
-                OC_LOG_V(INFO, TAG, "Current power: %d. Requested: <%d", Light.power
+                OIC_LOG_V(INFO, TAG, "Current power: %d. Requested: <%d", Light.power
                             , powerRequested);
                 return false;
             }
@@ -177,8 +177,8 @@ bool checkIfQueryForPowerPassed(char * query)
  */
 OCEntityHandlerResult ValidateQueryParams (OCEntityHandlerRequest *entityHandlerRequest)
 {
-    OC_LOG_V(INFO, TAG, PCF("Received query %s"), entityHandlerRequest->query);
-    OC_LOG(INFO, TAG, PCF("Not processing query"));
+    OIC_LOG_V(INFO, TAG, PCF("Received query %s"), entityHandlerRequest->query);
+    OIC_LOG(INFO, TAG, PCF("Not processing query"));
     return OC_EH_OK;
 }
 
@@ -194,7 +194,7 @@ OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
         OCRepPayload *getResp = constructResponse(ehRequest);
         if(!getResp)
         {
-            OC_LOG(ERROR, TAG, "constructResponse failed");
+            OIC_LOG(ERROR, TAG, "constructResponse failed");
             return OC_EH_ERROR;
         }
 
@@ -217,7 +217,7 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
 
     if(!putResp)
     {
-        OC_LOG(ERROR, TAG, "Failed to construct Json response");
+        OIC_LOG(ERROR, TAG, "Failed to construct Json response");
         return OC_EH_ERROR;
     }
 
@@ -258,7 +258,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
 
             if (0 == createLightResource (newLightUri, &gLightInstance[gCurrLightInstance]))
             {
-                OC_LOG (INFO, TAG, "Created new Light instance\n");
+                OIC_LOG (INFO, TAG, "Created new Light instance\n");
                 gLightInstance[gCurrLightInstance].state = 0;
                 gLightInstance[gCurrLightInstance].power = 0;
                 gCurrLightInstance++;
@@ -301,7 +301,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
     }
     else
     {
-        OC_LOG(INFO, TAG, "Payload was NULL");
+        OIC_LOG(INFO, TAG, "Payload was NULL");
         ehResult = OC_EH_ERROR;
     }
 
@@ -312,12 +312,12 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
 {
     if(ehRequest == NULL)
     {
-        OC_LOG(INFO, TAG, "The ehRequest is NULL");
+        OIC_LOG(INFO, TAG, "The ehRequest is NULL");
         return OC_EH_ERROR;
     }
     OCEntityHandlerResult ehResult = OC_EH_OK;
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s for resource %p ", __func__, ehRequest->resource);
+    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s for resource %p ", __func__, ehRequest->resource);
 
     /*
      * In the sample below, the application will:
@@ -335,7 +335,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
 
         if (result == OC_STACK_OK)
         {
-            OC_LOG (INFO, TAG, "\n\nDelete Resource operation succeeded.");
+            OIC_LOG (INFO, TAG, "\n\nDelete Resource operation succeeded.");
             ehResult = OC_EH_OK;
 
             //Step 2: clear observers who wanted to observe this resource at the app level.
@@ -351,12 +351,12 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
         }
         else if (result == OC_STACK_NO_RESOURCE)
         {
-            OC_LOG(INFO, TAG, "\n\nThe resource doesn't exist or it might have been deleted.");
+            OIC_LOG(INFO, TAG, "\n\nThe resource doesn't exist or it might have been deleted.");
             ehResult = OC_EH_RESOURCE_DELETED;
         }
         else
         {
-            OC_LOG(INFO, TAG, "\n\nEncountered error from OCDeleteResource().");
+            OIC_LOG(INFO, TAG, "\n\nEncountered error from OCDeleteResource().");
             ehResult = OC_EH_ERROR;
         }
     }
@@ -364,7 +364,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
     {
         //Let's this app not supporting DELETE on some resources so
         //consider the DELETE request is received for a non-support resource.
-        OC_LOG_V(INFO, TAG, "\n\nThe request is received for a non-support resource.");
+        OIC_LOG_V(INFO, TAG, "\n\nThe request is received for a non-support resource.");
         ehResult = OC_EH_FORBIDDEN;
     }
 
@@ -373,14 +373,14 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
 
 OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest * /*ehRequest*/)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s ", __func__);
+    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s ", __func__);
 
     return OC_EH_RESOURCE_NOT_FOUND;
 }
 
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG_V (INFO, TAG, "Received observation registration request with observation Id %d",
+    OIC_LOG_V (INFO, TAG, "Received observation registration request with observation Id %d",
             ehRequest->obsInfo.obsId);
 
     if (!observeThreadStarted)
@@ -404,7 +404,7 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
 {
     bool clientStillObserving = false;
 
-    OC_LOG_V (INFO, TAG, "Received observation deregistration request for observation Id %d",
+    OIC_LOG_V (INFO, TAG, "Received observation deregistration request for observation Id %d",
             ehRequest->obsInfo.obsId);
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
@@ -428,7 +428,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
                          char* uri,
                          void* /*callbackParam*/)
 {
-    OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
+    OIC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -436,7 +436,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        OIC_LOG (ERROR, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
     // Initialize certain response fields
@@ -449,31 +449,31 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
 
         if (entityHandlerRequest->resource == NULL)
         {
-            OC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
+            OIC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
             ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest);
         }
         else if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_GET from client");
             ehResult = ProcessGetRequest (entityHandlerRequest, &payload);
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
             ehResult = ProcessPutRequest (entityHandlerRequest, &payload);
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
             ehResult = ProcessDeleteRequest (entityHandlerRequest);
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+            OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                       entityHandlerRequest->method);
             ehResult = OC_EH_ERROR;
         }
@@ -491,21 +491,21 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OIC_LOG(ERROR, TAG, "Error sending response");
                 ehResult = OC_EH_ERROR;
             }
         }
     }
     if (flag & OC_OBSERVE_FLAG)
     {
-        OC_LOG(INFO, TAG, "Flag includes OC_OBSERVE_FLAG");
+        OIC_LOG(INFO, TAG, "Flag includes OC_OBSERVE_FLAG");
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
+            OIC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
         }
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
+            OIC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
         }
     }
 
@@ -526,7 +526,7 @@ OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* /*callback*/)
 {
-    OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
+    OIC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
@@ -534,7 +534,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        OIC_LOG (ERROR, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -547,31 +547,31 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
 
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_GET from client");
             ehResult = ProcessGetRequest (entityHandlerRequest, &payload);
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
             ehResult = ProcessPutRequest (entityHandlerRequest, &payload);
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_POST from client");
             ehResult = ProcessPostRequest (entityHandlerRequest, &response, &payload);
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
             ehResult = ProcessDeleteRequest (entityHandlerRequest);
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+            OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                       entityHandlerRequest->method);
             ehResult = OC_EH_ERROR;
         }
@@ -590,7 +590,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             if(entityHandlerRequest->rcvdVendorSpecificHeaderOptions &&
                     entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
             {
-                OC_LOG (INFO, TAG, "Received vendor specific options");
+                OIC_LOG (INFO, TAG, "Received vendor specific options");
                 uint8_t i = 0;
                 OCHeaderOption * rcvdOptions =
                         entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
@@ -598,10 +598,10 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 {
                     if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
                     {
-                        OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                        OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
                                 ((OCHeaderOption)rcvdOptions[i]).optionID );
 
-                        OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                        OIC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                             MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
@@ -622,23 +622,23 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OIC_LOG(ERROR, TAG, "Error sending response");
                 ehResult = OC_EH_ERROR;
             }
         }
     }
     if (flag & OC_OBSERVE_FLAG)
     {
-        OC_LOG(INFO, TAG, "Flag includes OC_OBSERVE_FLAG");
+        OIC_LOG(INFO, TAG, "Flag includes OC_OBSERVE_FLAG");
 
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
+            OIC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
             ProcessObserveRegister (entityHandlerRequest);
         }
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
+            OIC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
             ProcessObserveDeregister (entityHandlerRequest);
         }
     }
@@ -671,7 +671,7 @@ void *ChangeLightRepresentation (void *param)
         Light.power += 5;
         if (gLightUnderObservation)
         {
-            OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
+            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
             if (gObserveNotifyType == 1)
             {
                 // Notify list of observers. Alternate observers on the list will be notified.
@@ -696,14 +696,14 @@ void *ChangeLightRepresentation (void *param)
                 result = OCNotifyAllObservers (Light.handle, OC_NA_QOS);
                 if (OC_STACK_NO_OBSERVERS == result)
                 {
-                    OC_LOG (INFO, TAG,
+                    OIC_LOG (INFO, TAG,
                             "=======> No more observers exist, stop sending observations");
                     gLightUnderObservation = 0;
                 }
             }
             else
             {
-                OC_LOG (ERROR, TAG, "Incorrect notification type selected");
+                OIC_LOG (ERROR, TAG, "Incorrect notification type selected");
             }
         }
     }
@@ -714,7 +714,7 @@ void *ChangeLightRepresentation (void *param)
 void *presenceNotificationGenerator(void *param)
 {
     uint8_t secondsBeforePresence = 10;
-    OC_LOG_V(INFO, TAG, "Will send out presence in %u seconds", secondsBeforePresence);
+    OIC_LOG_V(INFO, TAG, "Will send out presence in %u seconds", secondsBeforePresence);
     sleep(secondsBeforePresence);
     (void)param;
     OCDoHandle presenceNotificationHandles[numPresenceResources];
@@ -742,12 +742,12 @@ void *presenceNotificationGenerator(void *param)
         }
         if(res != OC_STACK_OK)
         {
-            OC_LOG_V(ERROR, TAG, "\"Presence Notification Generator\" failed to create resource "
+            OIC_LOG_V(ERROR, TAG, "\"Presence Notification Generator\" failed to create resource "
                     "%s with result %s.", presenceNotificationResources.at(i).c_str(),
                     getResult(res));
             break;
         }
-        OC_LOG_V(INFO, TAG, PCF("Created %s for presence notification"),
+        OIC_LOG_V(INFO, TAG, PCF("Created %s for presence notification"),
                                 presenceNotificationUris[i].c_str());
     }
     sleep(5);
@@ -759,15 +759,15 @@ void *presenceNotificationGenerator(void *param)
         }
         if(res != OC_STACK_OK)
         {
-            OC_LOG_V(ERROR, TAG, "\"Presence Notification Generator\" failed to delete "\
+            OIC_LOG_V(ERROR, TAG, "\"Presence Notification Generator\" failed to delete "\
                     "resource %s.", presenceNotificationResources.at(i).c_str());
             break;
         }
-        OC_LOG_V(INFO, TAG, PCF("Deleted %s for presence notification"),
+        OIC_LOG_V(INFO, TAG, PCF("Deleted %s for presence notification"),
                                 presenceNotificationUris[i].c_str());
     }
 
-    OC_LOG(INFO, TAG, "================ stopping presence");
+    OIC_LOG(INFO, TAG, "================ stopping presence");
     OCStopPresence();
 
     return NULL;
@@ -778,7 +778,7 @@ int createLightResource (char *uri, LightResource *lightResource)
 {
     if (!uri)
     {
-        OC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
+        OIC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
         return -1;
     }
 
@@ -791,7 +791,7 @@ int createLightResource (char *uri, LightResource *lightResource)
             OCEntityHandlerCb,
             NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 
     return 0;
 }
@@ -928,15 +928,15 @@ OCStackResult SetDeviceInfo(const char* deviceName)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : ocserver -o <0|1>");
-    OC_LOG(INFO, TAG, "-o 0 : Notify all observers");
-    OC_LOG(INFO, TAG, "-o 1 : Notify list of observers");
+    OIC_LOG(INFO, TAG, "Usage : ocserver -o <0|1>");
+    OIC_LOG(INFO, TAG, "-o 0 : Notify all observers");
+    OIC_LOG(INFO, TAG, "-o 1 : Notify list of observers");
 }
 
 #ifdef RA_ADAPTER
 static void jidbound(char *jid)
 {
-    OC_LOG_V(INFO, TAG, "\n\n    Bound JID: %s\n\n", jid);
+    OIC_LOG_V(INFO, TAG, "\n\n    Bound JID: %s\n\n", jid);
 }
 #endif
 
@@ -1007,17 +1007,17 @@ int main(int argc, char* argv[])
     OCSetRAInfo(&rainfo);
 #endif
 
-    OC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 #ifdef WITH_PRESENCE
     if (OCStartPresence(0) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack presence/discovery error");
+        OIC_LOG(ERROR, TAG, "OCStack presence/discovery error");
         return 0;
     }
 #endif
@@ -1031,7 +1031,7 @@ int main(int argc, char* argv[])
 
     if (registrationResult != OC_STACK_OK)
     {
-        OC_LOG(INFO, TAG, "Platform info setting failed locally!");
+        OIC_LOG(INFO, TAG, "Platform info setting failed locally!");
         exit (EXIT_FAILURE);
     }
 
@@ -1039,7 +1039,7 @@ int main(int argc, char* argv[])
 
     if (registrationResult != OC_STACK_OK)
     {
-        OC_LOG(INFO, TAG, "Platform Registration failed!");
+        OIC_LOG(INFO, TAG, "Platform Registration failed!");
         exit (EXIT_FAILURE);
     }
 
@@ -1047,15 +1047,17 @@ int main(int argc, char* argv[])
 
     if (registrationResult != OC_STACK_OK)
     {
-        OC_LOG(INFO, TAG, "Device info setting failed locally!");
+        OIC_LOG(INFO, TAG, "Device info setting failed locally!");
         exit (EXIT_FAILURE);
     }
+
+    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
 
     registrationResult = OCSetDeviceInfo(deviceInfo);
 
     if (registrationResult != OC_STACK_OK)
     {
-        OC_LOG(INFO, TAG, "Device Registration failed!");
+        OIC_LOG(INFO, TAG, "Device Registration failed!");
         exit (EXIT_FAILURE);
     }
 
@@ -1081,7 +1083,7 @@ int main(int argc, char* argv[])
     #endif
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
 
     DeletePlatformInfo();
     DeleteDeviceInfo();
@@ -1092,7 +1094,7 @@ int main(int argc, char* argv[])
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
     }
@@ -1106,11 +1108,11 @@ int main(int argc, char* argv[])
     pthread_cancel(threadId_presence);
     pthread_join(threadId_presence, NULL);
 
-    OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;

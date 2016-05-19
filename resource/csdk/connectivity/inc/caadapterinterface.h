@@ -169,14 +169,15 @@ typedef struct
     /** Terminate function address stored in this pointer. **/
     CAAdapterTerminate terminate;
 
+    /** Type of transport adapter. **/
+    CATransportAdapter_t cType;
 } CAConnectivityHandler_t;
 
 /**
  * This will be used during the registration of adapters call backs to the common logic.
- * @see ::CAConnectivityHandler_t , ::CATransportAdapter_t
+ * @see ::CAConnectivityHandler_t
  */
-typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
-        CATransportAdapter_t cType);
+typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler);
 
 /**
  * This will be used during the receive of network requests and response.
@@ -187,9 +188,13 @@ typedef void (*CANetworkPacketReceivedCallback)(const CASecureEndpoint_t *sep,
 
 /**
  * This will be used to notify network changes to the connectivity common logic layer.
- * @see SendUnicastData(), SendMulticastData()
  */
-typedef void (*CANetworkChangeCallback)(const CAEndpoint_t *info, CANetworkStatus_t status);
+typedef void (*CAAdapterChangeCallback)(CATransportAdapter_t adapter, CANetworkStatus_t status);
+
+/**
+ * This will be used to notify connection changes to the connectivity common logic layer.
+ */
+typedef void (*CAConnectionChangeCallback)(const CAEndpoint_t *info, bool isConnected);
 
 /**
  * This will be used to notify error result to the connectivity common logic layer.

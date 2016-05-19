@@ -2,13 +2,20 @@
 
 prefix=@PREFIX@
 exec_prefix=${prefix}
-libdir=${prefix}/lib
-includedir=${prefix}/include/
+libdir=@LIB_INSTALL_DIR@
+includedir=${prefix}/include
+svcincludedir=${includedir}/service
 
 Name: iotivity
-Description: IoTivity is an open source reference implementation of the OIC standard specifications.
+Description: IoTivity is an open source reference implementation of the OIC standard specifications. This includes the libs for resource c and c++ sdk apis.
 Version: @VERSION@
 URL: https://www.iotivity.org
 Requires:
-Libs: -L${libdir} -lBMISensor -lc_common -loctbstack -lcoap -lpmimpl -lconnectivity_abstraction -lppm -lcpluff -lDiscomfortIndexSensor -lrcs_client -lmosquitto -lmosquittopp -lSSMCore -loc_logger_core -lSSMSDK -loc_logger -loc -lTGMSDKLibrary -locsrm
-Cflags: -I${includedir}
+Libs: -L${libdir} -loc -loc_logger -loc_logger_core -loctbstack -lconnectivity_abstraction
+Cflags: -I${includedir}/resource \
+			-I${svcincludedir}/resource-encapsulation \
+			-I${svcincludedir}/resource-container \
+			-I${svcincludedir}/resource-hosting \
+			-I${svcincludedir}/resource-directory \
+			-I${svcincludedir}/things-manager \
+			-D@ROUTING_DEFINE@

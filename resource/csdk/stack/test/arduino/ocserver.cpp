@@ -9,8 +9,8 @@ static uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0F, 0x2B, 0x72 };
 #define TAG ("ocserver")
 
 void ocInitialize () {
-    OC_LOG(DEBUG, TAG, ("IP addr is:"));
-    OC_LOG_BUFFER(INFO, TAG, (uint8_t*)ipAddr, sizeof(ipAddr));
+    OIC_LOG(DEBUG, TAG, ("IP addr is:"));
+    OIC_LOG_BUFFER(INFO, TAG, (uint8_t*)ipAddr, sizeof(ipAddr));
     delay(2000);
     OCInit (NULL, 0, OC_SERVER);
 }

@@ -17,21 +17,21 @@
 package org.oic.simulator;
 
 /**
- * This class contains remote device platform information and provide APIs
- * access it.
+ * This class contains remote device platform information and provide APIs to
+ * access and update it.
  */
 public class PlatformInfo {
     private String mPlatformId;
-    private String m_manufacturerName;
-    private String m_manufacturerUrl;
-    private String m_modelNumber;
-    private String m_dateOfManufacture;
-    private String m_platformVersion;
-    private String m_operationSystemVersion;
-    private String m_hardwareVersion;
-    private String m_firmwareVersion;
-    private String m_supportUrl;
-    private String m_systemTime;
+    private String mManufacturerName;
+    private String mManufacturerUrl;
+    private String mModelNumber;
+    private String mDateOfManufacture;
+    private String mPlatformVersion;
+    private String mOperationSystemVersion;
+    private String mHardwareVersion;
+    private String mFirmwareVersion;
+    private String mSupportUrl;
+    private String mSystemTime;
 
     /**
      * This method is for getting platform id.
@@ -58,7 +58,7 @@ public class PlatformInfo {
      * @return Manufacturer name.
      */
     public String getManufacturerName() {
-        return m_manufacturerName;
+        return mManufacturerName;
     }
 
     /**
@@ -68,7 +68,7 @@ public class PlatformInfo {
      *            Manufacturer name.
      */
     public void setManufacturerName(String m_manufacturerName) {
-        this.m_manufacturerName = m_manufacturerName;
+        this.mManufacturerName = m_manufacturerName;
     }
 
     /**
@@ -77,7 +77,7 @@ public class PlatformInfo {
      * @return Manufacturer URL.
      */
     public String getManufacturerUrl() {
-        return m_manufacturerUrl;
+        return mManufacturerUrl;
     }
 
     /**
@@ -87,7 +87,7 @@ public class PlatformInfo {
      *            Manufacturer URL.
      */
     public void setManufacturerUrl(String m_manufacturerUrl) {
-        this.m_manufacturerUrl = m_manufacturerUrl;
+        this.mManufacturerUrl = m_manufacturerUrl;
     }
 
     /**
@@ -96,7 +96,7 @@ public class PlatformInfo {
      * @return Model number.
      */
     public String getModelNumber() {
-        return m_modelNumber;
+        return mModelNumber;
     }
 
     /**
@@ -106,7 +106,7 @@ public class PlatformInfo {
      *            Model number.
      */
     public void setModelNumber(String m_modelNumber) {
-        this.m_modelNumber = m_modelNumber;
+        this.mModelNumber = m_modelNumber;
     }
 
     /**
@@ -115,7 +115,7 @@ public class PlatformInfo {
      * @return Date of manufacture.
      */
     public String getDateOfManufacture() {
-        return m_dateOfManufacture;
+        return mDateOfManufacture;
     }
 
     /**
@@ -125,7 +125,7 @@ public class PlatformInfo {
      *            Date of manufacture.
      */
     public void setDateOfManufacture(String m_dateOfManufacture) {
-        this.m_dateOfManufacture = m_dateOfManufacture;
+        this.mDateOfManufacture = m_dateOfManufacture;
     }
 
     /**
@@ -134,7 +134,7 @@ public class PlatformInfo {
      * @return Platform version.
      */
     public String getPlatformVersion() {
-        return m_platformVersion;
+        return mPlatformVersion;
     }
 
     /**
@@ -144,7 +144,7 @@ public class PlatformInfo {
      *            Platform version.
      */
     public void setPlatformVersion(String m_platformVersion) {
-        this.m_platformVersion = m_platformVersion;
+        this.mPlatformVersion = m_platformVersion;
     }
 
     /**
@@ -153,7 +153,7 @@ public class PlatformInfo {
      * @return Operation system version.
      */
     public String getOperationSystemVersion() {
-        return m_operationSystemVersion;
+        return mOperationSystemVersion;
     }
 
     /**
@@ -163,7 +163,7 @@ public class PlatformInfo {
      *            Operation system version.
      */
     public void setOperationSystemVersion(String m_operationSystemVersion) {
-        this.m_operationSystemVersion = m_operationSystemVersion;
+        this.mOperationSystemVersion = m_operationSystemVersion;
     }
 
     /**
@@ -172,7 +172,7 @@ public class PlatformInfo {
      * @return Hardware version.
      */
     public String getHardwareVersion() {
-        return m_hardwareVersion;
+        return mHardwareVersion;
     }
 
     /**
@@ -182,7 +182,7 @@ public class PlatformInfo {
      *            Hardware version.
      */
     public void setHardwareVersion(String m_hardwareVersion) {
-        this.m_hardwareVersion = m_hardwareVersion;
+        this.mHardwareVersion = m_hardwareVersion;
     }
 
     /**
@@ -191,7 +191,7 @@ public class PlatformInfo {
      * @return Firmware version.
      */
     public String getFirmwareVersion() {
-        return m_firmwareVersion;
+        return mFirmwareVersion;
     }
 
     /**
@@ -201,7 +201,7 @@ public class PlatformInfo {
      *            Firmware version.
      */
     public void setFirmwareVersion(String m_firmwareVersion) {
-        this.m_firmwareVersion = m_firmwareVersion;
+        this.mFirmwareVersion = m_firmwareVersion;
     }
 
     /**
@@ -210,7 +210,7 @@ public class PlatformInfo {
      * @return URL of support link.
      */
     public String getSupportUrl() {
-        return m_supportUrl;
+        return mSupportUrl;
     }
 
     /**
@@ -220,7 +220,7 @@ public class PlatformInfo {
      *            URL of support link.
      */
     public void setSupportUrl(String m_supportUrl) {
-        this.m_supportUrl = m_supportUrl;
+        this.mSupportUrl = m_supportUrl;
     }
 
     /**
@@ -229,7 +229,7 @@ public class PlatformInfo {
      * @return System time.
      */
     public String getSystemTime() {
-        return m_systemTime;
+        return mSystemTime;
     }
 
     /**
@@ -239,6 +239,6 @@ public class PlatformInfo {
      *            System time.
      */
     public void setSystemTime(String m_systemTime) {
-        this.m_systemTime = m_systemTime;
+        this.mSystemTime = m_systemTime;
     }
 }

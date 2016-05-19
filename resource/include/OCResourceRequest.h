@@ -25,8 +25,8 @@
  * ResourceRequest.
  */
 
-#ifndef __OCRESOURCEREQUEST_H
-#define __OCRESOURCEREQUEST_H
+#ifndef OC_RESOURCEREQUEST_H_
+#define OC_RESOURCEREQUEST_H_
 
 #include "OCApi.h"
 #include "OCRepresentation.h"
@@ -219,4 +219,4 @@ namespace OC
     };
  }// namespace OC
 
-#endif //__OCRESOURCEREQUEST_H
+#endif // OC_RESOURCEREQUEST_H_

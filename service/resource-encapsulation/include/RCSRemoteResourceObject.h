@@ -31,10 +31,25 @@
 
 #include "RCSResourceAttributes.h"
 
+namespace OC
+{
+    class OCResource;
+
+    namespace HeaderOption
+    {
+        class OCHeaderOption;
+    }
+}
+
 namespace OIC
 {
     namespace Service
     {
+
+        class RCSRepresentation;
+
+        typedef std::vector< OC::HeaderOption::OCHeaderOption > HeaderOpts;
+
         /**
          * The states of caching.
          *
@@ -67,6 +82,74 @@ namespace OIC
         };
 
         class PrimitiveResource;
+
+        /**
+         * This is to specify query parameters for requests to the server.
+         *
+         * @see RCSRemoteResourceObject
+         */
+        class RCSQueryParams
+        {
+        public:
+            typedef std::unordered_map< std::string, std::string > Map;
+
+        public:
+
+            /**
+             * Sets an interface of the resource to operate on
+             *
+             * @param interface interface
+             */
+            RCSQueryParams& setResourceInterface(std::string interface);
+
+            /**
+             * Sets a resource type of the resource to operate on
+             *
+             * @param type resource type
+             */
+            RCSQueryParams& setResourceType(std::string type);
+
+            /**
+             * Sets a resource type of the resource to operate on
+             *
+             * @param key key to be inserted
+             * @param value value to be inserted
+             *
+             * @note "rt" and "if" are reserved, so you should avoid them as a key.
+             *
+             */
+            RCSQueryParams& put(std::string key, std::string value);
+
+            /**
+             * Returns the resource interface.
+             */
+            std::string getResourceInterface() const;
+
+            /**
+             * Returns the resource type.
+             */
+            std::string getResourceType() const;
+
+            /**
+             * Returns a value.
+             *
+             * @param key key of the element whose mapped value is accessed.
+             *
+             * @throws InvalidKeyException If @a key doesn't match the key of any value.
+             */
+            std::string get(const std::string& key) const;
+
+            /**
+             * Returns all params.
+             */
+            const Map& getAll() const;
+
+        private:
+            std::string m_resourceInterface;
+            std::string m_resourceType;
+
+            std::unordered_map< std::string, std::string > m_map;
+        };
 
         /**
          *
@@ -112,6 +195,18 @@ namespace OIC
                 RemoteAttributesGetCallback;
 
             /**
+             * Callback definition to be invoked when the response of get is received.
+             *
+             * @param HeaderOpts
+             * @param rep the result representation
+             * @param eCode the error code received from the resource
+             *
+             * @see get
+             */
+            typedef std::function< void(const HeaderOpts& headerOpts,
+                    const RCSRepresentation& rep, int eCode) > GetCallback;
+
+            /**
              * Callback definition to be invoked when the response of setRemoteAttributes is
              * received.
              *
@@ -120,8 +215,20 @@ namespace OIC
              *
              * @see setRemoteAttributes
              */
-            typedef std::function< void(const RCSResourceAttributes&, int) >
+            typedef std::function< void(const RCSResourceAttributes& attrs, int eCode) >
                 RemoteAttributesSetCallback;
+
+            /**
+             * Callback definition to be invoked when the response of set is received.
+             *
+             * @param HeaderOpts
+             * @param rep the result representation
+             * @param eCode the error code received from the resource
+             *
+             * @see set
+             */
+            typedef std::function< void(const HeaderOpts& headerOpts,
+                    const RCSRepresentation& rep, int eCode) > SetCallback;
 
         private:
             typedef int CacheID;
@@ -133,6 +240,14 @@ namespace OIC
             //! @endcond
 
             ~RCSRemoteResourceObject();
+
+            /**
+             * Creates an instance from an OCResource instance.
+             *
+             * @throw RCSInvalidParameterException If ocResource is nullptr.
+             */
+            static RCSRemoteResourceObject::Ptr fromOCResource(
+                    std::shared_ptr< OC::OCResource > ocResource);
 
             /**
              * Returns whether monitoring is enabled.
@@ -298,16 +413,41 @@ namespace OIC
              * Gets resource attributes directly from the server.
              *
              * This API send a get request to the resource of interest and provides
-             * the attributes to the caller in the RemoteAttributesReceivedCallback.
+             * the attributes to the caller in the RemoteAttributesGetCallback.
              *
              * @throws PlatformException If the operation failed
              * @throws InvalidParameterException If cb is an empty function or null.
              *
-             * @see RCSResourceAttributes::Value
-             *
              * @note The callback will be invoked in an internal thread.
              */
             void getRemoteAttributes(RemoteAttributesGetCallback cb);
+
+            /**
+             * Gets resource representation with empty query parameters directly from the server.
+             *
+             * @param cb A callback to receive the response.
+             *
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void get(GetCallback cb);
+
+            /**
+             * Gets resource representation directly from the server.
+             *
+             * The response could be different by the query parameters, it depends on server.
+             *
+             * @param queryParams Query parameters
+             * @param cb A callback to receive the response.
+             *
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void get(const RCSQueryParams& queryParams, GetCallback cb);
 
             /**
              * Sends a set request with resource attributes to the server.
@@ -327,6 +467,44 @@ namespace OIC
              */
             void setRemoteAttributes(const RCSResourceAttributes& attributes,
                     RemoteAttributesSetCallback cb);
+
+            /**
+             * Sends a set request with resource attributes to the server.
+             *
+             * The SetRequest behavior depends on query parameters and the server.
+             *
+             * @param attributes Attributes to set
+             * @param cb A callback to receive the response.
+             *
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
+             *
+             * @see RCSResourceObject
+             * @see RCSResourceObject::SetRequestHandlerPolicy
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void set(const RCSResourceAttributes& attributes, SetCallback cb);
+
+            /**
+             * Sends a set request with resource attributes to the server.
+             *
+             * The SetRequest behavior depends on query parameters and the server.
+             *
+             * @param queryParams Query parameters
+             * @param attributes Attributes to set
+             * @param cb A callback to receive the response.
+             *
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
+             *
+             * @see RCSResourceObject
+             * @see RCSResourceObject::SetRequestHandlerPolicy
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void set(const RCSQueryParams& queryParams, const RCSResourceAttributes& attributes,
+                    SetCallback cb);
 
             /**
              * Returns the uri of the resource.

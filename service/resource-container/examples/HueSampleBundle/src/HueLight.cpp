@@ -44,44 +44,44 @@ HueLight::~HueLight()
 
 void HueLight::initAttributes()
 {
-    BundleResource::setAttribute("on-off", false);
-    BundleResource::setAttribute("dim", 0);
-    BundleResource::setAttribute("color", 0);
+    BundleResource::setAttribute("on-off", false, false);
+    BundleResource::setAttribute("dim", 0, false);
+    BundleResource::setAttribute("color", 0, false);
 }
 
-RCSResourceAttributes &HueLight::handleGetAttributesRequest()
+RCSResourceAttributes HueLight::handleGetAttributesRequest()
 {
     cout << "HueLight::handleGetAttributesRequest" << endl;
     // TODO read from HueLight and update attribute data
     return BundleResource::getAttributes();
 }
 
-void HueLight::handleSetAttributesRequest(RCSResourceAttributes &value)
+void HueLight::handleSetAttributesRequest(const RCSResourceAttributes &value)
 {
     cout << "HueLight::handleSetAttributesRequest" << std::endl;
 
     // TODO construct single write
 
-    for (RCSResourceAttributes::iterator it = value.begin(); it != value.end(); it++)
+    for (RCSResourceAttributes::const_iterator it = value.begin(); it != value.end(); it++)
     {
         std::string attributeName = it->key();
         RCSResourceAttributes::Value attrValue = it->value();
 
         if (attributeName == "on-off")
         {
-            m_connector->transmit(this->m_address + "/state", "{\"on\":" + attrValue.toString() + "}");
+            //m_connector->transmit(this->m_address + "/state", "{\"on\":" + attrValue.toString() + "}");
         }
 
         if (attributeName == "dim")
         {
             // needs conversion * 2.5
-            m_connector->transmit(this->m_address + "/state", "{\"bri\":" + attrValue.toString() + "}");
+            //m_connector->transmit(this->m_address + "/state", "{\"bri\":" + attrValue.toString() + "}");
         }
 
         if (attributeName == "color")
         {
             // needs conversion *650
-            m_connector->transmit(this->m_address + "/state", "{\"hue\":" + attrValue.toString() + "}");
+            //m_connector->transmit(this->m_address + "/state", "{\"hue\":" + attrValue.toString() + "}");
         }
     }
 

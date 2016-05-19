@@ -43,7 +43,7 @@ RemoteResourceUnit::~RemoteResourceUnit()
                 remoteObject->stopCaching();
             }
             catch(std::exception &e){
-                OC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
             }
         }
         if(remoteObject->isMonitoring())
@@ -52,7 +52,7 @@ RemoteResourceUnit::~RemoteResourceUnit()
                 remoteObject->stopMonitoring();
             }
             catch(std::exception &e){
-                OC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
             }
         }
     }

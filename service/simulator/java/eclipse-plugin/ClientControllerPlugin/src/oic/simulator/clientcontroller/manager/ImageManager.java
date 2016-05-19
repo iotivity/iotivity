@@ -16,15 +16,15 @@
 
 package oic.simulator.clientcontroller.manager;
 
-import java.net.URL;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.utils.Constants;
-
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.osgi.framework.Bundle;
+
+import java.net.URL;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.utils.Constants;
 
 /**
  * Class which loads the icons/images into the image registry, and has methods
@@ -49,10 +49,6 @@ public class ImageManager {
                 .getEntry("icons/checked.gif")));
         r.put(Constants.UNCHECKED, ImageDescriptor.createFromURL(bundle
                 .getEntry("icons/unchecked.gif")));
-
-        // Resource icons based on the resource type
-        r.put(Constants.OIC_R_LIGHT, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/light_16x16.png")));
 
         // Log View related icons
         r.put(Constants.DEBUG_LOG, ImageDescriptor.createFromURL(bundle

@@ -43,6 +43,11 @@ namespace OIC
                 DataCache();
                 ~DataCache();
 
+                DataCache(const DataCache &) = default;
+                DataCache(DataCache &&) = default;
+                DataCache & operator = (const DataCache &) = default;
+                DataCache & operator = (DataCache &&) = default;
+
                 void initializeDataCache(PrimitiveResourcePtr pResource);
 
                 CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);

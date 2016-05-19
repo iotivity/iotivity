@@ -49,7 +49,7 @@
 /**
  * Logging tag for module name.
  */
-#define RA_ADAPTER_TAG "RA_ADAP_IBB"
+#define RA_ADAPTER_TAG "OIC_RA_ADAP_IBB"
 
 /**
  * Network Packet Received Callback to CA.
@@ -59,7 +59,7 @@ static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 /**
  * Network Changed Callback to CA.
  */
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
+static CAAdapterChangeCallback g_networkChangeCallback = NULL;
 
 /**
  * Holds XMPP data information.
@@ -91,25 +91,15 @@ void CARANotifyNetworkChange(const char *address, CANetworkStatus_t status)
 
     g_xmppData.connectionStatus = status;
 
-    CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
-                                CA_ADAPTER_REMOTE_ACCESS,
-                                address, 0);
-    if (!localEndpoint)
-    {
-        OIC_LOG(ERROR, RA_ADAPTER_TAG, "localEndpoint creation failed!");
-        return;
-    }
-    CANetworkChangeCallback networkChangeCallback = g_networkChangeCallback;
+    CAAdapterChangeCallback networkChangeCallback = g_networkChangeCallback;
     if (networkChangeCallback)
     {
-        networkChangeCallback(localEndpoint, status);
+        networkChangeCallback(CA_ADAPTER_REMOTE_ACCESS, status);
     }
     else
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "g_networkChangeCallback is NULL");
     }
-
-    CAFreeEndpoint(localEndpoint);
 
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CARANotifyNetworkChange OUT");
 }
@@ -359,8 +349,8 @@ static int CARAConnHandler(xmpp_t *xmpp, xmppconn_info_t *conninfo, void *udata)
 }
 
 CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
-                                CANetworkPacketReceivedCallback networkPacketCallback,
-                                CANetworkChangeCallback netCallback, ca_thread_pool_t handle)
+                          CANetworkPacketReceivedCallback networkPacketCallback,
+                          CAAdapterChangeCallback netCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CAInitializeRA IN");
     if (!registerCallback || !networkPacketCallback || !netCallback || !handle)
@@ -374,15 +364,17 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
 
     CAConnectivityHandler_t raHandler = {
         .startAdapter = CAStartRA,
+        .stopAdapter = CAStopRA,
         .startListenServer = CAStartRAListeningServer,
         .startDiscoveryServer = CAStartRADiscoveryServer,
         .sendData = CASendRAUnicastData,
         .sendDataToAll = CASendRAMulticastData,
         .GetnetInfo = CAGetRAInterfaceInformation,
         .readData = CAReadRAData,
-        .stopAdapter = CAStopRA,
-        .terminate = CATerminateRA};
-    registerCallback(raHandler, CA_ADAPTER_REMOTE_ACCESS);
+        .terminate = CATerminateRA,
+        .cType = CA_ADAPTER_REMOTE_ACCESS};
+
+    registerCallback(raHandler);
 #ifdef NDEBUG
     xmpp_log_t *log = xmpp_get_default_logger(XMPP_LEVEL_ERROR);
 #else
@@ -613,7 +605,7 @@ static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 /**
  * Network Changed Callback to CA.
  */
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
+static CAAdapterChangeCallback g_networkChangeCallback = NULL;
 
 /**
  * Holds XMPP data information.
@@ -655,25 +647,15 @@ void CARANotifyNetworkChange(const char *address, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CARANotifyNetworkChange IN");
 
-    CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
-                                CA_ADAPTER_REMOTE_ACCESS,
-                                address, 0);
-    if (!localEndpoint)
-    {
-        OIC_LOG(ERROR, RA_ADAPTER_TAG, "localEndpoint creation failed!");
-        return;
-    }
-    CANetworkChangeCallback networkChangeCallback = g_networkChangeCallback;
+    CAAdapterChangeCallback networkChangeCallback = g_networkChangeCallback;
     if (networkChangeCallback)
     {
-        networkChangeCallback(localEndpoint, status);
+        networkChangeCallback(CA_ADAPTER_REMOTE_ACCESS, status);
     }
     else
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "g_networkChangeCallback is NULL");
     }
-
-    CAFreeEndpoint(localEndpoint);
 
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CARANotifyNetworkChange OUT");
 }
@@ -781,8 +763,8 @@ void CARAXmppMessageReceivedCB(void * const param, xmpp_error_code_t result,
 }
 
 CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
-                                CANetworkPacketReceivedCallback networkPacketCallback,
-                                CANetworkChangeCallback netCallback, ca_thread_pool_t handle)
+                          CANetworkPacketReceivedCallback networkPacketCallback,
+                          CAAdapterChangeCallback netCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CAInitializeRA IN");
     if (!registerCallback || !networkPacketCallback || !netCallback || !handle)
@@ -793,18 +775,19 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
     g_networkChangeCallback = netCallback;
     g_networkPacketCallback = networkPacketCallback;
 
-    CAConnectivityHandler_t raHandler = {};
-    raHandler.startAdapter = CAStartRA;
-    raHandler.startListenServer = CAStartRAListeningServer;
-    raHandler.stopListenServer = CAStopRAListeningServer;
-    raHandler.startDiscoveryServer = CAStartRADiscoveryServer;
-    raHandler.sendData = CASendRAUnicastData;
-    raHandler.sendDataToAll = CASendRAMulticastData;
-    raHandler.GetnetInfo = CAGetRAInterfaceInformation;
-    raHandler.readData = CAReadRAData;
-    raHandler.stopAdapter = CAStopRA;
-    raHandler.terminate = CATerminateRA;
-    registerCallback(raHandler, CA_ADAPTER_REMOTE_ACCESS);
+    CAConnectivityHandler_t raHandler = {
+        .startAdapter = CAStartRA,
+        .stopAdapter = CAStopRA,
+        .startListenServer = CAStartRAListeningServer,
+        .stopListenServer = CAStopRAListeningServer,
+        .startDiscoveryServer = CAStartRADiscoveryServer,
+        .sendData = CASendRAUnicastData,
+        .sendDataToAll = CASendRAMulticastData,
+        .GetnetInfo = CAGetRAInterfaceInformation,
+        .readData = CAReadRAData,
+        .terminate = CATerminateRA,
+        .cType = CA_ADAPTER_REMOTE_ACCESS};
+    registerCallback(raHandler);
 
     return CA_STATUS_OK;
 }

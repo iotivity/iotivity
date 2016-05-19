@@ -23,53 +23,145 @@
 
 std::string getPayloadString(const OC::OCRepresentation &rep)
 {
-    std::ostringstream data;
     OCRepPayload *payload = rep.getPayload();
     if (!payload)
+        return "Empty payload";
+
+    std::ostringstream payLoadString;
+    while (payload)
     {
-        return "Payload: No payload";
+        // Payload type
+        std::string payloadType;
+        payloadType = getPayloadTypeString(payload->base.type);
+        payLoadString << "Payload type: " << payloadType << std::endl;
+
+        // URI
+        if (NULL != payload->uri && strlen(payload->uri) > 0)
+            payLoadString << "URI: " << payload->uri << std::endl;
+
+        // Types
+        std::ostringstream typeString;
+        OCStringLL *ocTypes = payload->types;
+        while (ocTypes)
+        {
+            if (NULL != ocTypes->value)
+            {
+                typeString << ocTypes->value;
+                if (ocTypes->next)
+                    typeString << ", ";
+            }
+
+            ocTypes = ocTypes->next;
+        }
+
+        if (!typeString.str().empty())
+        {
+            payLoadString << "Types: " << typeString.str() << std::endl;
+        }
+
+        // Interfaces
+        std::ostringstream interfaceString;
+        OCStringLL *ocInterfaces = payload->interfaces;
+        while (ocInterfaces)
+        {
+            if (NULL != ocInterfaces->value)
+            {
+                interfaceString << ocInterfaces->value;
+                if (ocInterfaces->next)
+                    interfaceString << ", ";
+            }
+
+            ocInterfaces = ocInterfaces->next;
+        }
+
+        if (!interfaceString.str().empty())
+        {
+            payLoadString << "Interfaces: " << interfaceString.str() << std::endl;
+        }
+
+        // Values
+        std::ostringstream valueString;
+        OCRepPayloadValue *ocValues = payload->values;
+        while (ocValues)
+        {
+            valueString << "\t" << ocValues->name << ":" << rep.getValueToString(ocValues->name) <<
+                        std::endl;
+            ocValues = ocValues->next;
+        }
+
+        if (!valueString.str().empty())
+        {
+            payLoadString << "Values:" << std::endl;
+            payLoadString << valueString.str();
+        }
+
+        payload = payload->next;
+        if (payload)
+            payLoadString << "----------------" << std::endl;
     }
 
-    // URI
-    data << "URI: " << payload->uri << std::endl;
+    return payLoadString.str();
+}
 
-    // Attributes
-    data << "Attributes:" << std::endl;
-    OCRepPayloadValue *values = payload->values;
-    while (NULL != values)
+std::string getPayloadTypeString(OCPayloadType type)
+{
+    std::string typeStr;
+    switch (type)
     {
-        data << values->name << ":" << rep.getValueToString(values->name) << std::endl;
-        values = values->next;
+        case PAYLOAD_TYPE_INVALID:
+            typeStr = "PAYLOAD_TYPE_INVALID";
+            break;
+        case PAYLOAD_TYPE_DISCOVERY:
+            typeStr = "PAYLOAD_TYPE_DISCOVERY";
+            break;
+        case PAYLOAD_TYPE_DEVICE:
+            typeStr = "PAYLOAD_TYPE_DEVICE";
+            break;
+        case PAYLOAD_TYPE_PLATFORM:
+            typeStr = "PAYLOAD_TYPE_PLATFORM";
+            break;
+        case PAYLOAD_TYPE_REPRESENTATION:
+            typeStr = "PAYLOAD_TYPE_REPRESENTATION";
+            break;
+        case PAYLOAD_TYPE_SECURITY:
+            typeStr = "PAYLOAD_TYPE_SECURITY";
+            break;
+        case PAYLOAD_TYPE_PRESENCE:
+            typeStr = "PAYLOAD_TYPE_PRESENCE";
+            break;
+        case PAYLOAD_TYPE_RD:
+            typeStr = "PAYLOAD_TYPE_RD";
+            break;
     }
-
-    return data.str();
+    return typeStr;
 }
 
 std::string getRequestString(const std::map<std::string, std::string> &queryParams,
                              const OC::OCRepresentation &rep)
 {
-    std::ostringstream data;
-    data << "qp: ";
+    std::ostringstream requestString;
     if (queryParams.size() > 0)
     {
-        for (auto & qp : queryParams)
-            data << qp.second << ",";
+        requestString << "qp: ";
+        for (auto &qp : queryParams)
+            requestString << qp.first << "=" << qp.second << ";";
     }
 
-    data << getPayloadString(rep);
-    return data.str();
+    requestString << std::endl;
+    requestString << getPayloadString(rep);
+    return requestString.str();
 }
 
 std::string getRequestString(const std::map<std::string, std::string> &queryParams)
 {
-    std::ostringstream data;
-    data << "qp: ";
+    std::ostringstream requestString;
     if (queryParams.size() > 0)
     {
-        for (auto & qp : queryParams)
-            data << qp.second << ",";
+        requestString << "qp: ";
+        for (auto &qp : queryParams)
+            requestString << qp.first << "=" << qp.second << ";";
     }
 
-    data << "Payload:  No payload";
-    return data.str();
+    requestString << std::endl;
+    return requestString.str();
 }

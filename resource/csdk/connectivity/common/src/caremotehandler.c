@@ -55,6 +55,20 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         return NULL;
     }
 
+    // check the method type of request info.
+    // Keep this check in sync with CAMethod_t
+    switch (rep->method)
+    {
+        case CA_GET:
+        case CA_POST:
+        case CA_PUT:
+        case CA_DELETE:
+            break;
+        default:
+            OIC_LOG_V(ERROR, TAG, "Method %u is invalid", rep->method);
+            return NULL;
+    }
+
     // allocate the request info structure.
     CARequestInfo_t *clone = (CARequestInfo_t *) OICMalloc(sizeof(CARequestInfo_t));
     if (!clone)
@@ -266,6 +280,8 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         memcpy(clone->options, info->options, sizeof(CAHeaderOption_t) * info->numOptions);
         clone->numOptions = info->numOptions;
     }
+
+    memcpy(&(clone->identity), &(info->identity), sizeof(info->identity));
 
     if ((info->payload) && (0 < info->payloadSize))
     {

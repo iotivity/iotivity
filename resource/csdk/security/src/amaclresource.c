@@ -48,12 +48,10 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
         OicSecAmacl_t *amaclTmp1 = NULL, *amaclTmp2 = NULL;
         LL_FOREACH_SAFE(amacl, amaclTmp1, amaclTmp2)
         {
-            unsigned int i = 0;
-
             LL_DELETE(amacl, amaclTmp1);
 
             // Clean Resources
-            for (i = 0; i < amaclTmp1->resourcesLen; i++)
+            for (size_t i = 0; i < amaclTmp1->resourcesLen; i++)
             {
                 OICFree(amaclTmp1->resources[i]);
             }
@@ -206,7 +204,7 @@ OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            amacl->resourcesLen = cJSON_GetArraySize(jsonObj);
+            amacl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, amacl->resourcesLen > 0, ERROR);
             amacl->resources = (char**)OICCalloc(amacl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (amacl->resources), ERROR);
@@ -259,7 +257,7 @@ static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest
 
     OICFree(jsonStr);
 
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -294,7 +292,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -316,7 +314,7 @@ OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -353,7 +351,7 @@ OCStackResult CreateAmaclResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, "Unable to instantiate Amacl resource");
+        OIC_LOG (FATAL, TAG, "Unable to instantiate Amacl resource");
         DeInitAmaclResource();
     }
     return ret;
