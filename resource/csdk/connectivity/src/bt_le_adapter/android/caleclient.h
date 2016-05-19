@@ -52,6 +52,15 @@ typedef struct le_state_info
 } CALEState_t;
 
 /**
+ * BLE Scanning State.
+ */
+typedef enum
+{
+    BLE_SCAN_ENABLE = 0, /**< BLE scan is working */
+    BLE_SCAN_DISABLE     /**< BLE scan is not working */
+} CALEScanState_t;
+
+/**
  * Callback to be notified on reception of any data from remote devices.
  * @param[in]  address                MAC address of remote device.
  * @param[in]  data                   Data received from remote device.
@@ -246,12 +255,6 @@ jobject CALEClientGetUUIDObject(JNIEnv *env, const char *uuid);
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientStopScan();
-
-/**
- * set ble scanning flag.
- * @param[in]   flag        scan flag.
- */
-void CALEClientSetScanFlag(bool flag);
 
 /**
  * stop scan (implement).
@@ -602,6 +605,31 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
+
+/**
+ * set new interval time and working count.
+ * @param[in]  intervalTime             interval time(Seconds).
+ * @param[in]  workingCount             working count for selected interval time.
+ */
+void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount);
+
+/**
+ * restart scanning with new interval time and working count.
+ * @param[in]  intervalTime             interval time(Seconds).
+ * @param[in]  workingCount             working count for selected interval time.
+ */
+void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount);
+
+/**
+ * start LE scanning logic with interval time and working count.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientStartScanWithInterval();
+
+/**
+ * stop LE scanning logic with interval time and cycle.
+ */
+void CALEClientStopScanWithInterval();
 
 #ifdef __cplusplus
 } /* extern "C" */

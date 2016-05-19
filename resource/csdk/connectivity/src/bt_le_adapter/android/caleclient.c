@@ -41,6 +41,8 @@
 
 #define MICROSECS_PER_SEC 1000000
 #define WAIT_TIME_WRITE_CHARACTERISTIC 10 * MICROSECS_PER_SEC
+#define WAIT_TIME_SCAN_INTERVAL_DEFAULT 10
+#define WAIT_TIME_SCANNED_CHECKING 30
 
 #define GATT_CONNECTION_PRIORITY_BALANCED   0
 #define GATT_FAILURE                        257
@@ -68,7 +70,6 @@ static jobjectArray g_uuidList = NULL;
 
 // it will be prevent to start send logic when adapter has stopped.
 static bool g_isStartedLEClient = false;
-static bool g_isStartedScan = false;
 
 static jbyteArray g_sendBuffer = NULL;
 static uint32_t g_targetCnt = 0;
@@ -94,8 +95,16 @@ static ca_mutex g_deviceStateListMutex = NULL;
 static ca_mutex g_deviceScanRetryDelayMutex = NULL;
 static ca_cond g_deviceScanRetryDelayCond = NULL;
 
-static ca_mutex g_scanMutex = NULL;
+static ca_mutex g_threadScanIntervalMutex = NULL;
+static ca_cond g_threadScanIntervalCond = NULL;
+
 static ca_mutex g_threadSendStateMutex = NULL;
+
+static int32_t g_scanIntervalTime = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
+static int32_t g_scanIntervalTimePrev = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
+static int32_t g_intervalCount = 0;
+static bool g_isWorkingScanThread = false;
+static CALEScanState_t g_scanningStep = BLE_SCAN_DISABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
@@ -123,6 +132,143 @@ static bool CALECheckConnectionStateValue(jint state)
             return true;
     }
     return false;
+}
+
+void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSetScanInterval : %d -> %d",
+              g_scanIntervalTime, intervalTime);
+
+    // previous time should be stored.
+    if (0 < workingCount)
+    {
+        g_scanIntervalTimePrev = g_scanIntervalTime;
+    }
+    g_scanIntervalTime = intervalTime;
+    g_intervalCount = workingCount;
+}
+
+void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount)
+{
+    // restart scan with interval
+    CALEClientSetScanInterval(intervalTime, workingCount);
+    ca_cond_signal(g_threadScanIntervalCond);
+}
+
+static void CALEScanThread(void* object)
+{
+    (void)object;
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return;
+        }
+        isAttached = true;
+    }
+
+    ca_mutex_lock(g_threadScanIntervalMutex);
+    while(g_isWorkingScanThread)
+    {
+        OIC_LOG(DEBUG, TAG, "scan waiting time out");
+        if (BLE_SCAN_ENABLE == g_scanningStep)
+        {
+            //stop scan
+            CAResult_t ret = CALEClientStopScan();
+            if (CA_STATUS_OK != ret)
+            {
+                OIC_LOG(INFO, TAG, "CALEClientStopScan has failed");
+            }
+        }
+        else
+        {
+            //start scan
+            CAResult_t ret = CALEClientStartScan();
+            if (CA_STATUS_OK != ret)
+            {
+                OIC_LOG(INFO, TAG, "CALEClientStartScan has failed");
+            }
+        }
+
+        OIC_LOG_V(DEBUG, TAG, "wait for Scan Interval Time during %d sec", g_scanIntervalTime);
+        if (CA_WAIT_SUCCESS == ca_cond_wait_for(g_threadScanIntervalCond,
+                                                g_threadScanIntervalMutex,
+                                                g_scanIntervalTime * MICROSECS_PER_SEC))
+        {
+            // called signal scan thread will be terminated
+            OIC_LOG(DEBUG, TAG, "signal scanInterval waiting");
+            g_scanningStep = BLE_SCAN_DISABLE;
+        }
+        else
+        {
+           if (BLE_SCAN_ENABLE == g_scanningStep)
+           {
+               if (g_intervalCount > 0)
+               {
+                   if (g_intervalCount == 1)
+                   {
+                       OIC_LOG(DEBUG, TAG, "reset default time");
+                       CALEClientSetScanInterval(g_scanIntervalTimePrev, 0);
+                   }
+                   g_intervalCount--;
+                   OIC_LOG_V(DEBUG, TAG, "interval count : %d", g_intervalCount);
+               }
+               g_scanningStep = BLE_SCAN_DISABLE;
+           }
+           else
+           {
+               g_scanningStep = BLE_SCAN_ENABLE;
+           }
+        }
+    }
+    ca_mutex_unlock(g_threadScanIntervalMutex);
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+}
+
+CAResult_t CALEClientStartScanWithInterval()
+{
+    OIC_LOG(DEBUG, TAG, "IN - CALEClientStartScanWithInterval");
+
+    if (g_isWorkingScanThread)
+    {
+        OIC_LOG(DEBUG, TAG, "scan interval logic already running");
+        return CA_STATUS_OK;
+    }
+
+    // initialize scan flags
+    g_scanningStep = BLE_SCAN_DISABLE;
+    g_isWorkingScanThread = true;
+    g_intervalCount = 0;
+    g_scanIntervalTime = g_scanIntervalTimePrev;
+
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle,
+                                                CALEScanThread, NULL))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to create read thread!");
+        g_isWorkingScanThread = false;
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT - CALEClientStartScanWithInterval");
+    return CA_STATUS_OK;
+}
+
+void CALEClientStopScanWithInterval()
+{
+    g_isWorkingScanThread = false;
+    ca_cond_signal(g_threadScanIntervalCond);
 }
 
 //getting jvm
@@ -284,6 +430,7 @@ CAResult_t CALEClientInitialize()
     g_threadCond = ca_cond_new();
     g_threadWriteCharacteristicCond = ca_cond_new();
     g_deviceScanRetryDelayCond = ca_cond_new();
+    g_threadScanIntervalCond =  ca_cond_new();
 
     CALEClientCreateDeviceList();
     CALEClientJNISetContext();
@@ -391,7 +538,6 @@ void CALEClientTerminate()
         OIC_LOG(ERROR, TAG, "CALEClientRemoveAllGattObjs has failed");
     }
 
-    CALEClientSetScanFlag(false);
     CALEClientSetSendFinishFlag(true);
 
     CALEClientTerminateGattMutexVariables();
@@ -401,13 +547,18 @@ void CALEClientTerminate()
     ca_cond_free(g_threadCond);
     ca_cond_free(g_threadWriteCharacteristicCond);
     ca_cond_free(g_deviceScanRetryDelayCond);
+    ca_cond_free(g_threadScanIntervalCond);
 
     g_deviceDescCond = NULL;
     g_threadCond = NULL;
     g_threadWriteCharacteristicCond = NULL;
     g_deviceScanRetryDelayCond = NULL;
+    g_threadScanIntervalCond = NULL;
 
     g_isSignalSetFlag = false;
+
+    // stop scanning
+    CALEClientStopScanWithInterval();
 
     if (isAttached)
     {
@@ -609,6 +760,9 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
         static uint64_t const TIMEOUT =
             2 * MICROSECS_PER_SEC;  // Microseconds
 
+        // set scan interval and start scan
+        CALERestartScanWithInterval(WAIT_TIME_SCANNED_CHECKING, 1);
+
         bool devicesDiscovered = false;
         for (size_t i = 0; i < RETRIES; ++i)
         {
@@ -659,6 +813,9 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
             }
         }
 
+        // reset scan interval time after checking scanned devices
+        CALERestartScanWithInterval(g_scanIntervalTimePrev, 0);
+
         // time out for scanning devices
         if (!devicesDiscovered)
         {
@@ -671,7 +828,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
 
 
 CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* data,
-                                      const uint32_t dataLen)
+                                            const uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %p", address,
               data);
@@ -743,13 +900,8 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->DeleteLocalRef(env, jni_setAddress);
 
-                // connect to gatt server
-                ret = CALEClientStopScan();
-                if (CA_STATUS_OK != ret)
-                {
-                    OIC_LOG(ERROR, TAG, "CALEClientStopScan has failed");
-                    goto error_exit;
-                }
+                // stop scan while sending
+                CALEClientStopScanWithInterval();
 
                 if (g_sendBuffer)
                 {
@@ -797,10 +949,10 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     }
 
     // start LE Scan again
-    ret = CALEClientStartScan();
+    ret = CALEClientStartScanWithInterval();
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
         ca_mutex_unlock(g_threadSendMutex);
         return ret;
     }
@@ -831,10 +983,10 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 error_exit:
 
     // start LE Scan again
-    ret = CALEClientStartScan();
+    ret = CALEClientStartScanWithInterval();
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
         ca_mutex_unlock(g_threadSendMutex);
         if (isAttached)
         {
@@ -883,14 +1035,9 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         goto error_exit;
     }
 
-    // connect to gatt server
-    res = CALEClientStopScan();
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStopScan has failed");
-        ca_mutex_unlock(g_threadSendMutex);
-        return res;
-    }
+    // stop scan while sending
+    CALEClientStopScanWithInterval();
+
     uint32_t length = u_arraylist_length(g_deviceList);
     g_targetCnt = length;
 
@@ -927,10 +1074,10 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     ca_mutex_unlock(g_threadMutex);
 
     // start LE Scan again
-    res = CALEClientStartScan();
+    res = CALEClientStartScanWithInterval();
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
         ca_mutex_unlock(g_threadSendMutex);
         return res;
     }
@@ -940,10 +1087,10 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     return CA_STATUS_OK;
 
 error_exit:
-    res = CALEClientStartScan();
+    res = CALEClientStartScanWithInterval();
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
         ca_mutex_unlock(g_threadSendMutex);
         return res;
     }
@@ -1150,12 +1297,6 @@ CAResult_t CALEClientStartScan()
         return CA_STATUS_FAILED;
     }
 
-    if (g_isStartedScan)
-    {
-        OIC_LOG(INFO, TAG, "scanning is already started");
-        return CA_STATUS_OK;
-    }
-
     bool isAttached = false;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
@@ -1230,6 +1371,7 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
     if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1240,6 +1382,7 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
     if (!jni_mid_startLeScan)
     {
         OIC_LOG(ERROR, TAG, "startLeScan: jni_mid_startLeScan is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1249,6 +1392,7 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
     if (!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_obj_BTAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1263,9 +1407,10 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
     else
     {
         OIC_LOG(DEBUG, TAG, "LeScan has started");
-        CALEClientSetScanFlag(true);
     }
 
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
     return CA_STATUS_OK;
 }
 
@@ -1295,6 +1440,7 @@ CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobj
     if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1305,6 +1451,7 @@ CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobj
     if (!jni_mid_startLeScan)
     {
         OIC_LOG(ERROR, TAG, "startLeScan: jni_mid_startLeScan is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1314,6 +1461,7 @@ CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobj
     if (!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "getState From BTAdapter: jni_obj_BTAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1328,9 +1476,10 @@ CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobj
     else
     {
         OIC_LOG(DEBUG, TAG, "LeScan has started");
-        CALEClientSetScanFlag(true);
     }
 
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
     return CA_STATUS_OK;
 }
 
@@ -1376,12 +1525,6 @@ CAResult_t CALEClientStopScan()
         return CA_STATUS_FAILED;
     }
 
-    if (!g_isStartedScan)
-    {
-        OIC_LOG(INFO, TAG, "scanning is already stopped");
-        return CA_STATUS_OK;
-    }
-
     bool isAttached = false;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
@@ -1409,10 +1552,6 @@ CAResult_t CALEClientStopScan()
             OIC_LOG(ERROR, TAG, "CALEClientStopScanImpl has failed");
         }
     }
-    else
-    {
-        CALEClientSetScanFlag(false);
-    }
 
     if (isAttached)
     {
@@ -1420,13 +1559,6 @@ CAResult_t CALEClientStopScan()
     }
 
     return ret;
-}
-
-void CALEClientSetScanFlag(bool flag)
-{
-    ca_mutex_lock(g_scanMutex);
-    g_isStartedScan = flag;
-    ca_mutex_unlock(g_scanMutex);
 }
 
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
@@ -1456,6 +1588,7 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
     if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1466,6 +1599,7 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
     if (!jni_mid_stopLeScan)
     {
         OIC_LOG(ERROR, TAG, "stopLeScan: jni_mid_stopLeScan is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1475,6 +1609,7 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
     if (!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
 
@@ -1484,11 +1619,15 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
     if ((*env)->ExceptionCheck(env))
     {
         OIC_LOG(ERROR, TAG, "stopLeScan has failed");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
         return CA_STATUS_FAILED;
     }
 
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
     return CA_STATUS_OK;
 }
 
@@ -2637,12 +2776,7 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
     if (!g_deviceList)
     {
         OIC_LOG(ERROR, TAG, "gdevice_list is null");
-
-        CALEClientSetScanFlag(false);
-        if (CA_STATUS_OK != CALEClientStopScan())
-        {
-            OIC_LOG(ERROR, TAG, "CALEClientStopScan has failed");
-        }
+        CALEClientStopScanWithInterval();
 
         ca_mutex_unlock(g_deviceListMutex);
         return CA_STATUS_FAILED;
@@ -3742,16 +3876,6 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
-    if (NULL == g_scanMutex)
-    {
-        g_scanMutex = ca_mutex_new();
-        if (NULL == g_scanMutex)
-        {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
     if (NULL == g_threadWriteCharacteristicMutex)
     {
         g_threadWriteCharacteristicMutex = ca_mutex_new();
@@ -3782,6 +3906,16 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
+    if (NULL == g_threadScanIntervalMutex)
+    {
+        g_threadScanIntervalMutex = ca_mutex_new();
+        if (NULL == g_threadScanIntervalMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -3805,9 +3939,6 @@ void CALEClientTerminateGattMutexVariables()
     ca_mutex_free(g_SendFinishMutex);
     g_SendFinishMutex = NULL;
 
-    ca_mutex_free(g_scanMutex);
-    g_scanMutex = NULL;
-
     ca_mutex_free(g_threadWriteCharacteristicMutex);
     g_threadWriteCharacteristicMutex = NULL;
 
@@ -3816,6 +3947,9 @@ void CALEClientTerminateGattMutexVariables()
 
     ca_mutex_free(g_threadSendStateMutex);
     g_threadSendStateMutex = NULL;
+
+    ca_mutex_free(g_threadScanIntervalMutex);
+    g_threadScanIntervalMutex = NULL;
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
@@ -3849,10 +3983,10 @@ CAResult_t CAStartLEGattClient()
         g_threadWriteCharacteristicCond = ca_cond_new();
     }
 
-    CAResult_t ret = CALEClientStartScan();
+    CAResult_t ret = CALEClientStartScanWithInterval();
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
         return ret;
     }
 
@@ -3892,11 +4026,7 @@ void CAStopLEGattClient()
         OIC_LOG(ERROR, TAG, "CALEClientDisconnectAll has failed");
     }
 
-    ret = CALEClientStopScan();
-    if(CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStopScan has failed");
-    }
+    CALEClientStopScanWithInterval();
 
     ca_mutex_lock(g_threadMutex);
     OIC_LOG(DEBUG, TAG, "signal - connection cond");
@@ -3914,15 +4044,22 @@ void CAStopLEGattClient()
     ca_cond_signal(g_deviceScanRetryDelayCond);
     ca_mutex_unlock(g_deviceScanRetryDelayMutex);
 
+    ca_mutex_lock(g_threadScanIntervalMutex);
+    OIC_LOG(DEBUG, TAG, "signal - delay cond");
+    ca_cond_signal(g_threadScanIntervalCond);
+    ca_mutex_unlock(g_threadScanIntervalMutex);
+
     ca_cond_free(g_deviceDescCond);
     ca_cond_free(g_threadCond);
     ca_cond_free(g_threadWriteCharacteristicCond);
     ca_cond_free(g_deviceScanRetryDelayCond);
+    ca_cond_free(g_threadScanIntervalCond);
 
     g_deviceDescCond = NULL;
     g_threadCond = NULL;
     g_threadWriteCharacteristicCond = NULL;
     g_deviceScanRetryDelayCond = NULL;
+    g_threadScanIntervalCond = NULL;
 
     if (isAttached)
     {

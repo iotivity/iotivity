@@ -301,4 +301,16 @@ void CAUtilSetFoundDeviceListener(jobject listener)
     (void)listener;
 #endif
 }
+
+CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLEScanInterval");
+#ifdef LE_ADAPTER
+    CAManagerLESetScanInterval(intervalTime, workingCount);
+    return CA_STATUS_OK;
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
 #endif
