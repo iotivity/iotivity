@@ -44,7 +44,7 @@ finalize_hash(uint8 *buf) {
 #if DTLS_VERSION == 0xfeff
   unsigned char statebuf[sizeof(md5_state_t) + sizeof(SHA_CTX)];
 #elif DTLS_VERSION == 0xfefd
-  unsigned char statebuf[sizeof(DTLS_SHA256_CTX)];
+  unsigned char statebuf[sizeof(dtls_sha256_ctx)];
 #endif
 
   if (!hs_hash[0])
