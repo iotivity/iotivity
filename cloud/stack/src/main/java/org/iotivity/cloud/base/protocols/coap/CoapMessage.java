@@ -33,11 +33,11 @@ import org.iotivity.cloud.util.Logger;
 
 public class CoapMessage {
 
-    private int    tokenLength = 0;
-    protected int  code        = 0;
-    private byte[] token       = null;
+    private int            tokenLength    = 0;
+    protected int          code           = 0;
+    private byte[]         token          = null;
 
-    private byte[] payload = null;
+    private byte[]         payload        = null;
 
     // Option fields
     protected List<byte[]> if_match       = null;
@@ -55,7 +55,7 @@ public class CoapMessage {
     protected byte[]       proxy_uri      = null;
     protected byte[]       proxy_scheme   = null;
     protected byte[]       size1          = null;
-    protected boolean      observe        = false;
+    protected byte[]       observe        = null;
 
     public CoapMessage() {
     }
@@ -186,7 +186,7 @@ public class CoapMessage {
 
             // OBSERVE
             case 6:
-                observe = true;
+                observe = value;
                 break;
         }
     }
@@ -236,7 +236,7 @@ public class CoapMessage {
 
             // ACCEPT
             case 17:
-                return accept != null ? Arrays.asList(content_format) : null;
+                return accept != null ? Arrays.asList(accept) : null;
 
             // LOCATION_QUERY
             case 20:
@@ -257,7 +257,7 @@ public class CoapMessage {
 
             // OBSERVE
             case 6:
-                return observe == true ? new ArrayList<byte[]>() : null;
+                return observe != null ? Arrays.asList(observe) : null;
         }
 
         return null;
@@ -302,18 +302,19 @@ public class CoapMessage {
         else {
             decodedPayload = cbor.parsePayloadFromCbor(payload,
                     ArrayList.class);
+            String deviceId = null;
+            if (decodedPayload != null) {
+                HashMap<Object, Object> tags = (HashMap<Object, Object>) decodedPayload
+                        .get(0);
 
-            HashMap<Object, Object> tags = (HashMap<Object, Object>) decodedPayload
-                    .get(0);
+                deviceId = tags.get("di").toString();
 
-            String deviceId = tags.get("di").toString();
+                if (deviceId == null) {
+                    throw new IllegalArgumentException("deviceId is null");
+                }
 
-            if (deviceId == null) {
-                throw new IllegalArgumentException("deviceId is null");
+                Logger.i("deviceId : " + deviceId);
             }
-
-            Logger.i("deviceId : " + deviceId);
-
             return deviceId;
         }
     }

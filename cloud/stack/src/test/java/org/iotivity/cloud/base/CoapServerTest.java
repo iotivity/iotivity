@@ -23,27 +23,15 @@ package org.iotivity.cloud.base;
 
 import java.net.InetSocketAddress;
 
-import org.iotivity.cloud.base.protocols.coap.CoapRequest;
+import org.iotivity.cloud.util.CoapLogHandler;
 import org.junit.Test;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-
 public class CoapServerTest {
-    private static class CoapHandler
-            extends SimpleChannelInboundHandler<CoapRequest> {
-        @Override
-        protected void channelRead0(ChannelHandlerContext ctx, CoapRequest msg)
-                throws Exception {
-            // TODO Auto-generated method stub
-        }
-    }
-
     @Test
     public void testAddHandler() throws Exception {
         CoapServer server = new CoapServer();
         server.startServer(new InetSocketAddress(5683));
-        server.addHandler(new CoapHandler());
+        server.addHandler(new CoapLogHandler());
         server.stopServer();
     }
 

@@ -57,7 +57,7 @@ static char gTargetPass[MAXNETCREDLEN];
  * @var gEnrolleeStatusCb
  * @brief Fucntion pointer holding the callback for intimation of EasySetup Enrollee status callback
  */
-static EventCallback gEnrolleeStatusCb = NULL;
+static ESEnrolleeEventCallback gEnrolleeStatusCb = NULL;
 
 /**
  * @var gIsSecured
@@ -65,9 +65,9 @@ static EventCallback gEnrolleeStatusCb = NULL;
  */
 static bool gIsSecured = false;
 
-void OnboardingCallback(ESResult esResult)
+void ESOnboardingCallback(ESResult esResult)
 {
-        OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "OnboardingCallback with  result = %d", esResult);
+        OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESOnboardingCallback with  result = %d", esResult);
         if(esResult == ES_OK)
         {
             gEnrolleeStatusCb(esResult, ES_ON_BOARDED_STATE);
@@ -80,9 +80,9 @@ void OnboardingCallback(ESResult esResult)
         }
 }
 
-void ProvisioningCallback(ESResult esResult)
+void ESProvisioningCallback(ESResult esResult)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ProvisioningCallback with  result = %d", esResult);
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESProvisioningCallback with  result = %d", esResult);
 
     if (esResult == ES_RECVTRIGGEROFPROVRES)
     {
@@ -91,7 +91,7 @@ void ProvisioningCallback(ESResult esResult)
         OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting with target network");
 
         // Connecting/onboarding to target network
-        ConnectToWiFiNetwork(gTargetSsid, gTargetPass, OnboardingCallbackTargetNet);
+        ConnectToWiFiNetwork(gTargetSsid, gTargetPass, ESOnboardingCallbackTargetNet);
     }
     else
     {
@@ -101,9 +101,9 @@ void ProvisioningCallback(ESResult esResult)
     }
 }
 
-void OnboardingCallbackTargetNet(ESResult esResult)
+void ESOnboardingCallbackTargetNet(ESResult esResult)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "OnboardingCallback on target network with result = %d",
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESOnboardingCallback on target network with result = %d",
                                                                                         esResult);
     if(esResult == ES_OK)
     {
@@ -119,15 +119,15 @@ void OnboardingCallbackTargetNet(ESResult esResult)
     }
 }
 
-ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const char *passwd,
+ESResult ESInitEnrollee(OCConnectivityType networkType, const char *ssid, const char *passwd,
         bool isSecured,
-        EventCallback cb)
+        ESEnrolleeEventCallback cb)
 {
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "InitEasySetup IN");
-    if(!ValidateParam(networkType,ssid,passwd,cb))
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitEnrollee IN");
+    if(!ESEnrolleeValidateParam(networkType,ssid,passwd,cb))
     {
         OIC_LOG(ERROR, ES_ENROLLEE_TAG,
-                            "InitEasySetup::Stopping Easy setup due to invalid parameters");
+                            "ESInitEnrollee::Stopping Easy setup due to invalid parameters");
         return ES_ERROR;
     }
 
@@ -143,18 +143,18 @@ ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const c
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "received callback");
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "onboarding now..");
 
-    if(!ESOnboard(ssid, passwd, OnboardingCallback))
+    if(!ESOnboard(ssid, passwd, ESOnboardingCallback))
     {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "InitEasySetup::On-boarding failed");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESInitEnrollee::On-boarding failed");
         cb(ES_ERROR, ES_INIT_STATE);
         return ES_ERROR;
     }
 
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "InitEasySetup OUT");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitEnrollee OUT");
     return ES_OK;
 }
 
-ESResult TerminateEasySetup()
+ESResult ESTerminateEnrollee()
 {
     UnRegisterResourceEventCallBack();
 
@@ -165,13 +165,13 @@ ESResult TerminateEasySetup()
         return ES_ERROR;
     }
 
-    OIC_LOG(ERROR, ES_ENROLLEE_TAG, "TerminateEasySetup success");
+    OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESTerminateEnrollee success");
     return ES_OK;
 }
 
-ESResult InitProvisioning()
+ESResult ESInitProvisioning()
 {
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "InitProvisioning <<IN>>");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitProvisioning <<IN>>");
 
     if (CreateProvisioningResource(gIsSecured) != OC_STACK_OK)
     {
@@ -179,18 +179,18 @@ ESResult InitProvisioning()
         return ES_ERROR;
     }
 
-    RegisterResourceEventCallBack(ProvisioningCallback);
+    RegisterResourceEventCallBack(ESProvisioningCallback);
 
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "InitProvisioning OUT");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitProvisioning <<OUT>>");
     return ES_RESOURCECREATED;
 }
 
-static bool ValidateParam(OCConnectivityType networkType, const char *ssid, const char *passwd,
-              EventCallback cb)
+static bool ESEnrolleeValidateParam(OCConnectivityType networkType, const char *ssid,
+                                                const char *passwd, ESEnrolleeEventCallback cb)
 {
     if (!ssid || !passwd || !cb)
     {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ValidateParam - Invalid parameters");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESEnrolleeValidateParam - Invalid parameters");
         return false;
     }
     return true;

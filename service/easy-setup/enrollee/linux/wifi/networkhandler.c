@@ -31,7 +31,7 @@
 const char *gSsid = "DLNA_LISMORE1";
 const char *gPass = "dlna@010203";
 char *gIpAddress;
-NetworkEventCallback gNetworkEventCb;
+ESEnrolleeNetworkEventCallback gNetworkEventCb;
 
 /*
  * All the functions defined in this file are stub functions to be implemented by the end user of
@@ -48,7 +48,8 @@ static void start()
     ESActivateWifi();
 }
 
-void ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
+void ConnectToWiFiNetwork(const char *ssid, const char *pass,
+                                                        ESEnrolleeNetworkEventCallback cb)
 {
     OIC_LOG_V(INFO, LOG_TAG, "ConnectToWiFiNetwork %s %s",ssid,pass);
     gPass = pass;

@@ -60,11 +60,11 @@ void printspeed(char *caption, unsigned long bytes, double time) {
 
 
 int main(int argc, char **argv) {
-	SHA256_CTX	c256;
-	SHA384_CTX	c384;
-	SHA512_CTX	c512;
+	DTLS_SHA256_CTX	c256;
+	DTLS_SHA384_CTX	c384;
+	DTLS_SHA512_CTX	c512;
 	char		buf[BUFSIZE];
-	char		md[SHA512_DIGEST_STRING_LENGTH];
+	char		md[DTLS_SHA512_DIGEST_STRING_LENGTH];
 	int		bytes, blocks, rep, i, j;
 	struct timeval	start, end;
 	double		t, ave256, ave384, ave512;
@@ -97,18 +97,18 @@ int main(int argc, char **argv) {
 	ave256 = ave384 = ave512 = 0;
 	best256 = best384 = best512 = 100000;
 	for (i = 0; i < rep; i++) {
-		SHA256_Init(&c256);
-		SHA384_Init(&c384);
-		SHA512_Init(&c512);
+		DTLS_SHA256_Init(&c256);
+		DTLS_SHA384_Init(&c384);
+		DTLS_SHA512_Init(&c512);
 	
 		gettimeofday(&start, (struct timezone*)0);
 		for (j = 0; j < blocks; j++) {
-			SHA256_Update(&c256, (unsigned char*)buf, BUFSIZE);
+			DTLS_SHA256_Update(&c256, (unsigned char*)buf, BUFSIZE);
 		}
 		if (bytes % BUFSIZE) {
-			SHA256_Update(&c256, (unsigned char*)buf, bytes % BUFSIZE);
+			DTLS_SHA256_Update(&c256, (unsigned char*)buf, bytes % BUFSIZE);
 		}
-		SHA256_End(&c256, md);
+		DTLS_SHA256_End(&c256, md);
 		gettimeofday(&end, (struct timezone*)0);
 		t = ((end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec)) / 1000000.0;
 		ave256 += t;
@@ -119,12 +119,12 @@ int main(int argc, char **argv) {
 
 		gettimeofday(&start, (struct timezone*)0);
 		for (j = 0; j < blocks; j++) {
-			SHA384_Update(&c384, (unsigned char*)buf, BUFSIZE);
+			DTLS_SHA384_Update(&c384, (unsigned char*)buf, BUFSIZE);
 		}
 		if (bytes % BUFSIZE) {
-			SHA384_Update(&c384, (unsigned char*)buf, bytes % BUFSIZE);
+			DTLS_SHA384_Update(&c384, (unsigned char*)buf, bytes % BUFSIZE);
 		}
-		SHA384_End(&c384, md);
+		DTLS_SHA384_End(&c384, md);
 		gettimeofday(&end, (struct timezone*)0);
 		t = ((end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec)) / 1000000.0;
 		ave384 += t;
@@ -135,12 +135,12 @@ int main(int argc, char **argv) {
 
 		gettimeofday(&start, (struct timezone*)0);
 		for (j = 0; j < blocks; j++) {
-			SHA512_Update(&c512, (unsigned char*)buf, BUFSIZE);
+			DTLS_SHA512_Update(&c512, (unsigned char*)buf, BUFSIZE);
 		}
 		if (bytes % BUFSIZE) {
-			SHA512_Update(&c512, (unsigned char*)buf, bytes % BUFSIZE);
+			DTLS_SHA512_Update(&c512, (unsigned char*)buf, bytes % BUFSIZE);
 		}
-		SHA512_End(&c512, md);
+		DTLS_SHA512_End(&c512, md);
 		gettimeofday(&end, (struct timezone*)0);
 		t = ((end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec)) / 1000000.0;
 		ave512 += t;

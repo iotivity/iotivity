@@ -42,30 +42,33 @@ OCStackResult InitDpairingResource();
 OCStackResult DeInitDpairingResource();
 
 /**
- * This method converts JSON DPAIRING into binary DPAIRING.
- * The JSON DPAIRING can be from persistent database or
+ * This method converts CBOR DPAIRING into binary DPAIRING.
+ * The CBOR DPAIRING can be from persistent database or
  * or received as POST request.
  *
- * @param[in] jsonStr  pconf data in json string.
- * @return pointer to OicSecDpairing_t.
+ * @param cborPayload pconf data in cbor format.
+ * @param size size of the cbor payload
+ * @param secDpair binary Dpairing resource
+ * @return OC_STACK_OK for Success, otherwise some error value.
  *
- * @note Caller needs to invoke OCFree after done
+ * @note Caller needs to invoke OICFree after done
  *       using the return pointer
  */
-OicSecDpairing_t * JSONToDpairingBin(const char * jsonStr);
+OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
+        OicSecDpairing_t **secDpair);
 
 /**
- * This method converts DPAIRING data into JSON format.
- * Caller needs to invoke 'free' when finished done using
- * return string
+ * This method converts DPAIRING data into CBOR format.
  *
- * @param[in] dpair  Pointer to OicSecDpairing_t.
- * @return pointer to json string.
+ * @param dpair  Pointer to OicSecDpairing_t.
+ * @param payload CBOR format converted from binary dpairing
+ * @param size Size of the coverted payload
+ * @return OC_STACK_OK for Success, otherwise some error value.
  *
- * @note Caller needs to invoke OCFree after done
+ * @note Caller needs to invoke OICFree after done
  *       using the return pointer
  */
-char * BinToDpairingJSON(const OicSecDpairing_t * dpair);
+OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **payload, size_t *size);
 
 /** This function deallocates the memory for OicSecPconf_t .
  *
@@ -87,6 +90,22 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
             OicUuid_t *peerDevID, OicUuid_t *owner, bool isPairingServer);
 #endif // __WITH_DTLS__
 
+/**
+ * Gets the OicUuid_t value for the rownerid of the Dpairing resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetDpairingRownerId(OicUuid_t *rowneruuid);
+
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetDpairingRownerId(const OicUuid_t* newROwner);
 
 #ifdef __cplusplus
 }

@@ -50,7 +50,7 @@
 
 static OicSecAcl_t        *gAcl = NULL;
 static OicSecCrl_t        *gCrl = NULL;
-static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.json";
+static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.dat";
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
 static int gOwnershipState = 0;
 
@@ -79,9 +79,6 @@ static void deleteACL(OicSecAcl_t *acl)
             OICFree((acl)->resources[i]);
         }
         OICFree((acl)->resources);
-
-        /* Clean Owners */
-        OICFree((acl)->owners);
 
         /* Clean ACL node itself */
         OICFree((acl));
@@ -275,43 +272,28 @@ static int InputACL(OicSecAcl_t *acl)
     }
     while (0 != CalculateAclPermission(temp_pms, &(acl->permission)) );
     // Set Rowner
-    printf("Num. of Rowner : ");
-    ret = scanf("%zu", &acl->ownersLen);
-    if(-1 == ret)
+    printf("-URN identifying the rowner\n");
+    printf("ex) lightDeviceUUID0 (16 Numbers except to '-')\n");
+
+    printf("Rowner : ");
+    char *ptr_temp_id = NULL;
+    ret = scanf("%19ms", &ptr_temp_id);
+    if (1 == ret)
+    {
+        OICStrcpy(temp_id, sizeof(temp_id), ptr_temp_id);
+        OICFree(ptr_temp_id);
+    }
+    else
     {
         printf("Error while input\n");
         return -1;
     }
-    printf("-URN identifying the rowner\n");
-    printf("ex) lightDeviceUUID0 (16 Numbers except to '-')\n");
-    acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-    if (NULL == acl->owners)
+    j = 0;
+    for (int k = 0; temp_id[k] != '\0'; k++)
     {
-        OIC_LOG(ERROR, TAG, "Error while memory allocation");
-        return -1;
-    }
-    for (size_t i = 0; i < acl->ownersLen; i++)
-    {
-        printf("[%zu]Rowner : ", i + 1);
-        char *ptr_temp_id = NULL;
-        ret = scanf("%19ms", &ptr_temp_id);
-        if (1 == ret)
+        if (DASH != temp_id[k])
         {
-            OICStrcpy(temp_id, sizeof(temp_id), ptr_temp_id);
-            OICFree(ptr_temp_id);
-        }
-        else
-        {
-            printf("Error while input\n");
-            return -1;
-        }
-        j = 0;
-        for (int k = 0; temp_id[k] != '\0'; k++)
-        {
-            if (DASH != temp_id[k])
-            {
-                acl->owners[i].id[j++] = temp_id[k];
-            }
+            acl->rownerID.id[j++] = temp_id[k];
         }
     }
     return 0;

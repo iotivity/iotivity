@@ -144,7 +144,7 @@ typedef enum
      * Enrollee moves to this state after connecting to target network
      */
     ES_ON_BOARDED_TARGET_NETWORK_STATE,
-}EnrolleeState;
+}ESEnrolleeState;
 
 /**
  * Provisioning Device Status

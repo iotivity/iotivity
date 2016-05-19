@@ -42,11 +42,11 @@ env.AppendUnique(CPPDEFINES = ['CPP_MEDIATOR'])
 
 if target_os not in ['windows', 'winrt']:
     mediator_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
-	
+
 mediator_env.PrependUnique(CPPPATH = [
             env.get('SRC_DIR') + '/resource/include',
             env.get('SRC_DIR') + '/resource/oc_logger/include',
-			env.get('SRC_DIR') + '/resource/csdk/ocmalloc/include',		
+			env.get('SRC_DIR') + '/resource/csdk/ocmalloc/include',
 			env.get('SRC_DIR') + '/resource/csdk/stack/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
@@ -58,13 +58,10 @@ mediator_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/service/easy-setup/mediator/richsdk/src',
 			env.get('SRC_DIR') + '/service/easy-setup/inc'])
 
-mediator_env.PrependUnique(LIBS = ['coap'])
-mediator_env.AppendUnique(LIBS = ['connectivity_abstraction'])
-mediator_env.AppendUnique(LIBS = ['oc_logger'])
-mediator_env.AppendUnique(LIBS = ['octbstack'])
-mediator_env.AppendUnique(LIBS = ['oc'])
-mediator_env.AppendUnique(LIBS = ['pthread'])
-mediator_env.AppendUnique(LIBS = ['ESMediatorRich'])
+if env.get('SECURED') == '1':
+	mediator_env.PrependUnique(LIBS = ['tinydtls', 'timer'])
+
+mediator_env.PrependUnique(LIBS = ['ESMediatorRich', 'oc', 'octbstack', 'oc_logger'])
 
 if env.get('SECURED') == '1':
 	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])

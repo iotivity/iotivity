@@ -30,6 +30,10 @@
 #include "crlresource.h"
 #include "crl_generator.h"
 
+#ifdef __unix__
+#include <sys/stat.h>
+#endif // __unix__
+
 //constants used in ckmInfo
 #define CKM_INFO_IS_NOT_LOADED                       (0)
 #define CKM_INFO_IS_LOADED                           (1)
@@ -84,6 +88,14 @@ PKIError InitCKMInfo(void)
         }
         else ////create new storage
         {
+#ifdef __unix__
+            struct stat st;
+            if (0 == lstat(CA_STORAGE_FILE, &st))
+            {
+                CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+                CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+            }
+#endif
             filePointer = fopen(CA_STORAGE_FILE, "wb");
             CHECK_NULL(filePointer, ISSUER_CA_STORAGE_FILE_WRITE_ERROR);
             objectsWrote = fwrite(&g_ckmInfo, sizeof(CKMInfo_t), count, filePointer);
@@ -108,8 +120,18 @@ PKIError SaveCKMInfo(void)
     FILE *filePointer = NULL;
     int count = 1;
     int objectsWrote = 0;
+#ifdef __unix__
+    struct stat st;
+#endif
 
     CHECK_COND(g_ckmInfo.CKMInfoIsLoaded, CKM_INFO_IS_NOT_INIT);
+#ifdef __unix__
+    if (0 == lstat(CA_STORAGE_FILE, &st))
+    {
+        CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+        CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    }
+#endif
     filePointer = fopen(CA_STORAGE_FILE, "wb");
     CHECK_NULL(filePointer, ISSUER_CA_STORAGE_FILE_WRITE_ERROR);
     objectsWrote = fwrite(&g_ckmInfo, sizeof(CKMInfo_t), count, filePointer);
@@ -326,7 +348,14 @@ PKIError SaveCRT(void)
     FILE *filePointer = NULL;
     uint32_t objectsWrote = 0;
     uint8_t prefix[CERT_LEN_PREFIX] = {0};
-
+#ifdef __unix__
+    struct stat st;
+    if (0 == lstat(CA_STORAGE_CRT_FILE, &st))
+    {
+        CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+        CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    }
+#endif
     filePointer = fopen(CA_STORAGE_CRT_FILE, "wb");
     CHECK_NULL(filePointer, ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
 
@@ -502,6 +531,7 @@ PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList)
     CHECK_COND(g_crlInfo.CrlData.data, ISSUER_CA_STORAGE_CRL_UNDEFINED);
     CHECK_NULL_BYTE_ARRAY_PTR(certificateRevocationList, ISSUER_CA_STORAGE_NULL_PASSED);
     tmpCRL = (OicSecCrl_t *)GetCRLResource();
+    CHECK_NULL(tmpCRL, ISSUER_CA_STORAGE_NULL_PASSED);
     g_crlInfo.CrlId = tmpCRL->CrlId;
     g_crlInfo.CrlData = tmpCRL->CrlData;
     g_crlInfo.ThisUpdate = tmpCRL->ThisUpdate;

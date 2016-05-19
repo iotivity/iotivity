@@ -199,6 +199,7 @@ OCPayload* getChangeBulbTempLevelPayload(uint32_t level)
     errno = 0;
     size_t sizeValue = sizeof(value);
     int strRet = snprintf(value, sizeValue, "%d", level);
+
     if (strRet < 0 || strRet >= (int)sizeValue)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);

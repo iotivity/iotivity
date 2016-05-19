@@ -42,7 +42,7 @@ cc_sample_app_env.AppendUnique(CPPPATH = [
 cc_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x', '-pthread'])
 cc_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 cc_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack'])
+cc_sample_app_env.PrependUnique(LIBS = ['octbstack', 'pthread'])
 
 ######################################################################
 # Source files and Targets
@@ -53,4 +53,3 @@ cc_sample_src = [
          ]
 
 cc_client = cc_sample_app_env.Program('cloud_device', cc_sample_src)
-cc_sample_app_env.InstallTarget(cc_client, 'cloud_device')
