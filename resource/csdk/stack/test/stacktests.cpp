@@ -1021,6 +1021,8 @@ TEST(StackBind, BindResourceTypeNameBad)
     EXPECT_STREQ("core.led", resourceTypeName);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, "core.nameBad"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, "core.name bad"));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1057,6 +1059,12 @@ TEST(StackBind, BindResourceTypeNameGood)
     EXPECT_EQ(3, numResourceTypes);
     resourceTypeName = OCGetResourceTypeName(handle, 2);
     EXPECT_STREQ("core.reallybrightled", resourceTypeName);
+
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "x.ReallyReallyBrightLED"));
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
+    EXPECT_EQ(4, numResourceTypes);
+    resourceTypeName = OCGetResourceTypeName(handle, 3);
+    EXPECT_STREQ("x.ReallyReallyBrightLED", resourceTypeName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }

@@ -131,6 +131,7 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP[] = "coap+tcp:";
+static const char CORESPEC[] = "core";
 
 //#ifdef DIRECT_PAIRING
 OCDirectPairingCB gDirectpairingCallback = NULL;
@@ -3373,29 +3374,46 @@ OCStackResult OCUnBindResource(
     return OC_STACK_ERROR;
 }
 
-// Precondition is that the parameter has been checked to not equal NULL.
 static bool ValidateResourceTypeInterface(const char *resourceItemName)
 {
-    if (resourceItemName[0] < 'a' || resourceItemName[0] > 'z')
+    if (!resourceItemName)
     {
         return false;
     }
-
-    size_t index = 1;
-    while (resourceItemName[index] != '\0')
+    // Per RFC 6690 only registered values must follow the first rule below.
+    // At this point in time the only values registered begin with "core", and
+    // all other values are specified as opaque strings where multiple values
+    // are separated by a space.
+    if (strncmp(resourceItemName, CORESPEC, sizeof(CORESPEC) - 1) == 0)
     {
-        if (resourceItemName[index] != '.' &&
-                resourceItemName[index] != '-' &&
-                (resourceItemName[index] < 'a' || resourceItemName[index] > 'z') &&
-                (resourceItemName[index] < '0' || resourceItemName[index] > '9'))
+        for(size_t index = sizeof(CORESPEC) - 1;  resourceItemName[index]; ++index)
         {
-            return false;
+            if (resourceItemName[index] != '.'
+                && resourceItemName[index] != '-'
+                && (resourceItemName[index] < 'a' || resourceItemName[index] > 'z')
+                && (resourceItemName[index] < '0' || resourceItemName[index] > '9'))
+            {
+                return false;
+            }
         }
-        ++index;
+    }
+    else
+    {
+        for (size_t index = 0; resourceItemName[index]; ++index)
+        {
+            if (resourceItemName[index] == ' '
+                || resourceItemName[index] == '\t'
+                || resourceItemName[index] == '\r'
+                || resourceItemName[index] == '\n')
+            {
+                return false;
+            }
+        }
     }
 
     return true;
 }
+
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName)
 {
