@@ -163,10 +163,10 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    registerDeviceInfo0
-    * Signature: (Ljava/lang/String;)V
+    * Signature: (Ljava/lang/String;[Ljava/lang/String;)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0
-        (JNIEnv *, jclass, jstring);
+        (JNIEnv *, jclass, jstring, jobjectArray);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
