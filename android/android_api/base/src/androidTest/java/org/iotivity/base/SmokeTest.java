@@ -25,6 +25,7 @@ package org.iotivity.base;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -1048,7 +1049,10 @@ public class SmokeTest extends InstrumentationTestCase {
             }
         };
 
-        OcDeviceInfo devInfo = new OcDeviceInfo("myDeviceName");
+        OcDeviceInfo devInfo = new OcDeviceInfo(
+                "myDeviceName",
+                Arrays.asList(new String[]{"oic.d.test"})
+        );
 
         try {
             //server
