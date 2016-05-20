@@ -102,8 +102,7 @@ jmethodID g_mid_OcOicSecAcl_get_permission = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_periods_cnt = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_periods = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_recurrences = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_owners_cnt = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_owners = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
@@ -458,11 +457,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     g_mid_OcOicSecAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecAcl, "getRecurrences", "(I)Ljava/lang/String;");
     if (!g_mid_OcOicSecAcl_get_recurrences) return JNI_ERR;
 
-    g_mid_OcOicSecAcl_get_owners_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getOwnersCount", "()I");
-    if (!g_mid_OcOicSecAcl_get_owners_cnt) return JNI_ERR;
-
-    g_mid_OcOicSecAcl_get_owners = env->GetMethodID(g_cls_OcOicSecAcl, "getOwners", "(I)Ljava/lang/String;");
-    if (!g_mid_OcOicSecAcl_get_owners) return JNI_ERR;
+    g_mid_OcOicSecAcl_get_rownerID = env->GetMethodID(g_cls_OcOicSecAcl, "getRownerID", "()Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_rownerID) return JNI_ERR;
 
     return JNI_CURRENT_VERSION;
 }

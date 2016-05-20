@@ -74,7 +74,6 @@ int processUserInput(int min, int max)
 
 void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > easySetupStatus)
 {
-    OC_UNUSED(easySetupStatus);
     OIC_LOG_V(DEBUG, ES_SAMPLE_APP_TAG, "easySetupStatusCallback status is Status = %d",
             easySetupStatus->getEasySetupState());
 
@@ -147,8 +146,8 @@ void initEasySetup()
 
          remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
     }
-}
 
+}
 void runEasySetupMenu()
 {
     constexpr int EASY_SETUP_INIT = 1;

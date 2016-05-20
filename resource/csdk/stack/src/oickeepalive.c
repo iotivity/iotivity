@@ -393,7 +393,7 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
 
     // Send response message.
-    SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_VALID, requestInfo->info.type,
+    SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_CHANGED, requestInfo->info.type,
                             requestInfo->info.numOptions, requestInfo->info.options,
                             requestInfo->info.token, requestInfo->info.tokenLength,
                             requestInfo->info.resourceUri);

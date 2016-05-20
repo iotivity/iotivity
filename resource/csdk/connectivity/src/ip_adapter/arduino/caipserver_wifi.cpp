@@ -127,7 +127,11 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
     // wifi shield does not support multicast
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_NOT_SUPPORTED;
+    //Arduino wifi shiled does not support multicast.
+    //OCInit() is failing if an error code is returned here,
+    //hence blocking even uni-cast operations.
+    //So default return value is changed to CA_STATUS_OK.
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAIPStartServer()

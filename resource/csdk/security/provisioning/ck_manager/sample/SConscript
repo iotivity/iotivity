@@ -88,4 +88,10 @@ provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_bui
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
 	sec_provisioning_src_dir + 'oic_svr_db_door.json'))
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+	sec_provisioning_src_dir + 'oic_svr_db_pt.dat'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+	sec_provisioning_src_dir + 'oic_svr_db_light.dat'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+	sec_provisioning_src_dir + 'oic_svr_db_door.dat'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
 	sec_provisioning_src_dir + 'README.txt'))

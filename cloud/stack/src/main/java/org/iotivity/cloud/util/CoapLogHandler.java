@@ -21,6 +21,8 @@
  */
 package org.iotivity.cloud.util;
 
+import java.nio.charset.StandardCharsets;
+
 import org.iotivity.cloud.base.protocols.coap.CoapMessage;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 
@@ -70,7 +72,7 @@ public class CoapLogHandler extends ChannelDuplexHandler {
             Logger.d(strBuilder.toString());
 
             ByteBuf outByteBuf = ctx.alloc().buffer();
-            outByteBuf.writeBytes(message.getBytes());
+            outByteBuf.writeBytes(message.getBytes(StandardCharsets.UTF_8));
         }
 
         ctx.write(msg);

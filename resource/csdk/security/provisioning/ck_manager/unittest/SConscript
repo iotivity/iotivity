@@ -82,7 +82,7 @@ pki_test_env.Alias("install",env.Install( unittest_build_dir, [ unittest_src_dir
 								unittest_src_dir + 'capub.der',
 								unittest_src_dir + 'cert_chain.dat',
 								unittest_src_dir + 'chain.der',
-								unittest_src_dir + 'CKMInfo.json' ]))
+								unittest_src_dir + 'CKMInfo.dat' ]))
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':

@@ -23,7 +23,7 @@ package org.iotivity.cloud.accountserver.db;
 
 import java.util.ArrayList;
 
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 
 /**
  *
@@ -39,10 +39,10 @@ public class AccountDBManager {
 
         try {
 
-            mongoDB = new MongoDB(Const.DB_NAME);
+            mongoDB = new MongoDB(Constants.DB_NAME);
 
-            mongoDB.createTable(Const.DEVICE_TABLE);
-            mongoDB.createTable(Const.SESSION_TABLE);
+            mongoDB.createTable(Constants.DEVICE_TABLE);
+            mongoDB.createTable(Constants.SESSION_TABLE);
 
             registerAdminAccount();
 
@@ -58,28 +58,14 @@ public class AccountDBManager {
         return accoutDBManager;
     }
 
-    private void registerAdminAccount() {
-
-        String adminId = "admin";
-        String adminSessionCode = "00000000";
-
-        UserSession userSession = new UserSession();
-
-        userSession.setUserId(adminId);
-        userSession.setSessionCode(adminSessionCode);
-
-        mongoDB.createResource(userSession);
-        mongoDB.printResources();
-    }
-
     /**
-     * API for storing session information of authorized user to mongoDB
-     * 
+     * API for storing session information of authorized user
+     *
      * @param userId
-     *            identifier of authorized user
+     *            user identifier
      * @param sessionCode
      *            session code
-     * @return Boolean - true if stored, false if not
+     * @return Boolean - true if stored, otherwise false
      */
     public Boolean registerUserSessionCode(String userId, String sessionCode) {
 
@@ -94,6 +80,15 @@ public class AccountDBManager {
         return true;
     }
 
+    /**
+     * API for storing device information of authorized user
+     *
+     * @param userId
+     *            user identifier
+     * @param deviceId
+     *            device identifier
+     * @return Boolean - true if stored, otherwise false
+     */
     public Boolean registerUserDevice(String userId, String deviceId) {
 
         UserDevice userDevice = new UserDevice();
@@ -107,6 +102,16 @@ public class AccountDBManager {
         return true;
     }
 
+    /**
+     * API for getting user identifier information corresponding with session
+     * code
+     *
+     * @param userId
+     *            identifier of authorized user
+     * @param sessionCode
+     *            session code
+     * @return Boolean - true if stored, otherwise false
+     */
     public String getUserId(String sessionCode) {
 
         String userId = null;
@@ -117,18 +122,30 @@ public class AccountDBManager {
     }
 
     /**
-     * API for getting devices according to authorized user
-     * 
+     * API for getting devices corresponding with user identifier
+     *
      * @param userId
-     *            identifier of authorized user
+     *            user identifier
      * @return ArrayList<String> - list of devices
      */
     public ArrayList<String> getDevices(String userId) {
 
-        ArrayList<String> deviceList = new ArrayList<String>();
-
-        deviceList = mongoDB.getDevices(userId);
+        ArrayList<String> deviceList = mongoDB.getDevices(userId);
 
         return deviceList;
+    }
+
+    private void registerAdminAccount() {
+
+        String adminId = "admin";
+        String adminSessionCode = "00000000";
+
+        UserSession userSession = new UserSession();
+
+        userSession.setUserId(adminId);
+        userSession.setSessionCode(adminSessionCode);
+
+        mongoDB.createResource(userSession);
+        mongoDB.printResources();
     }
 }

@@ -26,28 +26,28 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.AccountServerManager;
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.util.CoapMessageBuilder;
-import org.iotivity.cloud.accountserver.util.JSONUtil;
 import org.iotivity.cloud.base.Resource;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
+import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
  *
- * This class provides a set of APIs to handle requests for publishing and
- * finding resources.
+ * This class provides a set of APIs to manage resources corresponding with user
+ * account
  *
  */
 public class AccountResource extends Resource {
 
     public AccountResource() {
-        setUri(Const.ACCOUNT_URI);
+        setUri(Constants.ACCOUNT_URI);
     }
 
     @Override
@@ -87,19 +87,10 @@ public class AccountResource extends Resource {
         }
     }
 
-    /**
-     * API for handling GET message
-     * 
-     * @param ctx
-     *            ChannelHandlerContext of request message
-     * @param request
-     *            CoAP request message
-     * @throws Exception
-     */
     private void handleGetRequest(ChannelHandlerContext ctx,
             CoapRequest request) throws Exception {
 
-        String reqType = extractQuery(request, Const.REQ_TYPE);
+        String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
             throw new IllegalArgumentException(
@@ -108,40 +99,31 @@ public class AccountResource extends Resource {
         CoapResponse response = null;
 
         switch (reqType) {
-
-            case Const.TYPE_FIND:
+            case Constants.TYPE_FIND:
                 response = handleFindRequest(request);
                 break;
             default:
                 Logger.w("reqType[" + reqType + "] is not supported");
         }
-
-        ctx.write(response);
+        if (response != null) {
+            ctx.writeAndFlush(response);
+        }
 
     }
 
-    /**
-     * API for handling POST message
-     * 
-     * @param ctx
-     *            ChannelHandlerContext of request message
-     * @param request
-     *            CoAP request message
-     * @throws Exception
-     */
     private void handlePostRequest(ChannelHandlerContext ctx,
             CoapRequest request) throws Exception {
 
-        String reqType = extractQuery(request, Const.REQ_TYPE);
+        String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
             throw new IllegalArgumentException(
                     "request type is null in query!");
 
-        CoapResponse response = null;
+        CoapResponse response;
 
         switch (reqType) {
-            case Const.TYPE_PUBLISH:
+            case Constants.TYPE_PUBLISH:
                 response = handlePublishRequest(request);
                 break;
             default:
@@ -149,16 +131,25 @@ public class AccountResource extends Resource {
                         "request type is not supported");
         }
 
-        ctx.write(response);
+        ctx.writeAndFlush(response);
     }
 
+    /**
+     * API for handling request for publishing resource corresponding with user
+     * account
+     *
+     * @param requeset
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handlePublishRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();
 
-        JSONUtil util = new JSONUtil();
-        String userId = util.parseJSON(payload, Const.REQUEST_USER_ID);
-        String deviceId = util.parseJSON(payload, Const.REQUEST_DEVICE_ID);
+        String userId = JSONUtil.parseJSON(payload, Constants.REQUEST_USER_ID);
+        String deviceId = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_DEVICE_ID);
 
         Logger.d("userId: " + userId + ", deviceId: " + deviceId);
 
@@ -169,7 +160,7 @@ public class AccountResource extends Resource {
         Logger.d("status : " + status);
 
         CoapMessageBuilder responseMessage = new CoapMessageBuilder();
-        CoapResponse coapResponse = null;
+        CoapResponse coapResponse;
 
         if (status) {
             coapResponse = responseMessage.buildCoapResponse(request.getToken(),
@@ -182,13 +173,22 @@ public class AccountResource extends Resource {
         return coapResponse;
     }
 
+    /**
+     * API for handling request for finding resource corresponding with user
+     * account
+     *
+     * @param requeset
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handleFindRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();
         // String payload = getPayloadString(request.getPayload());
 
         JSONUtil util = new JSONUtil();
-        String userId = util.parseJSON(payload, Const.REQUEST_USER_ID);
+        String userId = util.parseJSON(payload, Constants.REQUEST_USER_ID);
 
         Logger.d("userId: " + userId);
 
@@ -214,10 +214,9 @@ public class AccountResource extends Resource {
         HashMap<Object, Object> responseMap = new HashMap<Object, Object>();
 
         ArrayList<String> deviceList = response.getDeviceList();
-        responseMap.put(Const.RESPONSE_DEVICES, deviceList);
+        responseMap.put(Constants.RESPONSE_DEVICES, deviceList);
 
-        JSONUtil jsonUtil = new JSONUtil();
-        String responseJson = jsonUtil.writeJSON(responseMap);
+        String responseJson = JSONUtil.writeJSON(responseMap);
 
         return responseJson;
     }
@@ -228,13 +227,15 @@ public class AccountResource extends Resource {
 
         List<String> Segments = request.getUriQuerySegments();
 
-        for (String s : Segments) {
+        if (Segments != null) {
+            for (String s : Segments) {
 
-            String pair[] = s.split("=");
+                String pair[] = s.split("=");
 
-            if (pair[0].equals(key)) {
+                if (pair[0].equals(key)) {
 
-                value = pair[1];
+                    value = pair[1];
+                }
             }
         }
 
@@ -243,9 +244,9 @@ public class AccountResource extends Resource {
 
     /*
      * private static String getPayloadString(byte[] payload) {
-     * 
+     *
      * if (payload == null) return "";
-     * 
+     *
      * return new String(payload, Charset.forName("UTF-8")); }
      */
 

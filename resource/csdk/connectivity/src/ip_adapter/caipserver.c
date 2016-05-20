@@ -119,55 +119,23 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags);
         flags = FLAGS; \
     }
 
+#define CLOSE_SOCKET(TYPE) \
+    if (caglobals.ip.TYPE.fd != -1) \
+    { \
+        close(caglobals.ip.TYPE.fd); \
+        caglobals.ip.TYPE.fd = -1; \
+    }
+
 void CADeInitializeIPGlobals()
 {
-    if (caglobals.ip.u6.fd != -1)
-    {
-        close(caglobals.ip.u6.fd);
-        caglobals.ip.u6.fd = -1;
-    }
-
-    if (caglobals.ip.u6s.fd != -1)
-    {
-        close(caglobals.ip.u6s.fd);
-        caglobals.ip.u6s.fd = -1;
-    }
-
-    if (caglobals.ip.u4.fd != -1)
-    {
-        close(caglobals.ip.u4.fd);
-        caglobals.ip.u4.fd = -1;
-    }
-
-    if (caglobals.ip.u4s.fd != -1)
-    {
-        close(caglobals.ip.u4s.fd);
-        caglobals.ip.u4s.fd = -1;
-    }
-
-    if (caglobals.ip.m6.fd != -1)
-    {
-        close(caglobals.ip.m6.fd);
-        caglobals.ip.m6.fd = -1;
-    }
-
-    if (caglobals.ip.m6s.fd != -1)
-    {
-        close(caglobals.ip.m6s.fd);
-        caglobals.ip.m6s.fd = -1;
-    }
-
-    if (caglobals.ip.m4.fd != -1)
-    {
-        close(caglobals.ip.m4.fd);
-        caglobals.ip.m4.fd = -1;
-    }
-
-    if (caglobals.ip.m4s.fd != -1)
-    {
-        close(caglobals.ip.m4s.fd);
-        caglobals.ip.m4s.fd = -1;
-    }
+    CLOSE_SOCKET(u6);
+    CLOSE_SOCKET(u6s);
+    CLOSE_SOCKET(u4);
+    CLOSE_SOCKET(u4s);
+    CLOSE_SOCKET(m6);
+    CLOSE_SOCKET(m6s);
+    CLOSE_SOCKET(m4);
+    CLOSE_SOCKET(m4s);
 
     if (caglobals.ip.netlinkFd != -1)
     {
@@ -842,9 +810,6 @@ static void CAProcessNewInterface(CAInterface_t *ifitem)
         struct in_addr inaddr = { .s_addr = ifitem->ipv4addr };
         applyMulticastToInterface4(inaddr);
     }
-}
-static void CAHandleNetlink()
-{
 }
 
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)

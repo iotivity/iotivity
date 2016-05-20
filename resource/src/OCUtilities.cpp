@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <OCApi.h>
+#include "OCApi.h"
 
-#include <OCUtilities.h>
+#include "OCUtilities.h"
 
 #include <boost/algorithm/string.hpp>
 

@@ -308,7 +308,10 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
         {
             return res;
         }
-        return CA_STATUS_FAILED;
+        else
+        {
+            return CA_STATUS_FAILED;
+        }
     }
 
     // #3. add data into result

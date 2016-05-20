@@ -193,7 +193,7 @@ namespace OIC
             }
         }
 
-        void Configuration::getResourceConfiguration(std::string bundleId, std::string resourceName,
+        void Configuration::getResourceConfiguration(std::string bundleId, std::string resourceUri,
                         resourceInfo *resourceInfoOut){
             rapidxml::xml_node< char > *bundle;
             rapidxml::xml_node< char > *resource;
@@ -202,7 +202,7 @@ namespace OIC
             string strBundleId;
             string strKey, strValue;
             OIC_LOG_V(INFO, CONTAINER_TAG, "Loading resource configuration for %s %s!",
-                    bundleId.c_str(), resourceName.c_str());
+                bundleId.c_str(), resourceUri.c_str());
 
             if (m_loaded)
             {
@@ -239,12 +239,18 @@ namespace OIC
 
                                             if (!strKey.compare(OUTPUT_RESOURCE_NAME))
                                             {
-                                                if (trim_both(strValue).compare(resourceName) != 0) break;
+                                                
                                                 resourceInfoOut->name = trim_both(strValue);
                                             }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_URI))
+                                            {
+                                                if (trim_both(strValue).compare(resourceUri) != 0)
+                                                {
+                                                    break;
+                                                }
                                                 resourceInfoOut->uri = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_ADDR))
                                                 resourceInfoOut->address = trim_both(strValue);

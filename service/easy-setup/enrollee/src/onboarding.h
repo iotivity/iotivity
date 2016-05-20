@@ -32,18 +32,21 @@ extern "C" {
  * @file
  *
  * This file contains APIs to on-board ( connect ) Enrollee device into Ad-hoc network
- * @Note : Some of the APIs of this file need to be modified by the OEM according to the device configuration
+ * @Note :  Some of the APIs of this file need to be modified by the OEM according to the
+ *          device configuration
  */
 
 /**
  * This function on-board Enrollee device onto ad-hoc network.
- * @param ssid       	    	SSID of the target SoftAP network to which the Enrollee is connecting.
- * @param passwd              	Password of the target SoftAP network to which the Enrollee is connecting.
- * @param NetworkEventCallback  Callback function for result update
+ * @param ssid                              SSID of the target SoftAP network to which the Enrollee
+ *                                          is connecting.
+ * @param passwd                            Password of the target SoftAP network to which the
+ *                                          Enrollee is connecting.
+ * @param ESEnrolleeNetworkEventCallback    Callback function for result update
  * @return ::True, if on-boarding is successful.
  */
 
-bool ESOnboard(const char * ssid, const char* passwd, NetworkEventCallback cb);
+bool ESOnboard(const char * ssid, const char* passwd, ESEnrolleeNetworkEventCallback cb);
 
 /**
  * This function verify if the on-boarding is through SoftAP.

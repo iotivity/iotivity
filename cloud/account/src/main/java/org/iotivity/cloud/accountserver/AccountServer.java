@@ -22,29 +22,24 @@
 package org.iotivity.cloud.accountserver;
 
 import java.net.InetSocketAddress;
+import java.util.Scanner;
 
 import org.iotivity.cloud.accountserver.resources.AccountResource;
 import org.iotivity.cloud.accountserver.resources.AuthResource;
 import org.iotivity.cloud.base.CoapServer;
 import org.iotivity.cloud.base.ResourceManager;
 import org.iotivity.cloud.util.Logger;
-import org.iotivity.cloud.util.Net;
 
 /**
- * 
- * This class is in charge of running account server.
- * 
+ *
+ * This class is in charge of running of account server.
+ *
  */
 public class AccountServer {
 
     public static void main(String[] args) throws Exception {
 
         System.out.println("-----Account SERVER-----");
-        String hostAddress = Net.getMyIpAddress();
-        if (hostAddress.equals("") == true) {
-            Logger.e("cannot find host address.");
-            return;
-        }
 
         if (args.length != 1) {
             Logger.e("coap server port required");
@@ -65,6 +60,19 @@ public class AccountServer {
 
         coapServer
                 .startServer(new InetSocketAddress(Integer.parseInt(args[0])));
-    }
 
+        Scanner in = new Scanner(System.in, "UTF-8");
+
+        System.out.println("press 'q' to terminate");
+
+        while (!in.nextLine().equals("q"));
+
+        in.close();
+
+        System.out.println("Terminating...");
+
+        coapServer.stopServer();
+
+        System.out.println("Terminated");
+    }
 }

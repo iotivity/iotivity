@@ -36,14 +36,12 @@ extern "C" {
 /**
  * Initialize Amacl resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitAmaclResource();
 
 /**
  * Perform cleanup for Amacl resources.
- *
- * @retval  none
  */
 void DeInitAmaclResource();
 
@@ -52,30 +50,48 @@ void DeInitAmaclResource();
  * If the Amacl is found for the given resource then populate the parameter
  * amsId with Amacl resource amss id.
  *
- * @param resource  resource for which AMS service is required.
- * @param amsId     ID of the ams service for the given resource
+ * @param resource for which AMS service is required.
+ * @param amsId of the ams service for the given resource.
  *
- * @retval
- *  OC_STACK_OK     If Amacl found for the resource
- *  OC_STACK_ERROR  If no Amacl found for the resource
- *
+ * @return ::OC_STACK_OK, if Amacl is found for the resource, else ::OC_STACK_ERROR,
+ *  if no Amacl found for the resource.
  */
 OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
 
 /**
- * This function converts Amacl data into JSON format.
- * Caller needs to invoke 'free' when done using
- * returned string.
- * @param Amacl  instance of OicSecAmacl_t structure.
+ * This function converts Amacl data into CBOR format.
+ * Caller needs to invoke 'free' when done using returned string.
  *
- * @retval  pointer to Amacl in json format.
+ * @param amacl instance of @ref OicSecAmacl_t structure.
+ * @param cborPayload is the converted cbor value of @ref OicSecAmacl_t structure.
+ * @param cborSize is the size of the cbor payload. This value is the size of the
+ * cborPayload. It should not be NON-NULL value.
+ *
+ * @return ::OC_STACK_OK for Success. ::OC_STACK_INVALID in case of invalid parameters.
+ * ::OC_STACK_ERROR in case of error in converting to cbor.
  */
-char* BinToAmaclJSON(const OicSecAmacl_t * amacl);
+OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amacl, uint8_t **cborPayload,
+                                 size_t *cborSize);
+
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetAmaclRownerId(const OicUuid_t* newROwner);
+
+/**
+ * Gets the OicUuid_t value for the rownerid of the amacl resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetAmaclRownerId(OicUuid_t *rowneruuid);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_AMACLR_H
-
-

@@ -84,14 +84,6 @@ void CANativeStartListenTask(JNIEnv *env);
 jobject CAEDRNativeListen(JNIEnv *env);
 
 /**
- * This function will listen the connection from remote device.
- * @param[in]  env              JNI interface pointer.
- * @param[in]  socket           server socket object.
- * @return JNI_TRUE or JNI_FALSE.
- */
-jboolean CAEDRIsConnectedForSocket(JNIEnv *env, jobject socket);
-
-/**
  * This function will accept the connection from remote device.
  * @param[in]  env                  JNI interface pointer.
  * @param[in]  severSocketObject    server socket object.
