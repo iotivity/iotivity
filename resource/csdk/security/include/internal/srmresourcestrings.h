@@ -113,6 +113,7 @@ extern const char * OIC_JSON_PUBDATA_NAME;
 extern const char * OIC_JSON_PRIVDATA_NAME;
 extern const char * OIC_JSON_OPTDATA_NAME;
 extern const char * OIC_JSON_CRMS_NAME;
+extern const char * OIC_JSON_VALIDITY_NAME;
 extern const char * OIC_JSON_PERIOD_NAME;
 extern const char * OIC_JSON_PERIODS_NAME;
 extern const char * OIC_JSON_RECURRENCES_NAME;

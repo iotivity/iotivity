@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include "securevirtualresourcetypes.h"
+#include "octypes.h"
 
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * SVR_DB_DAT_FILE_NAME = "oic_svr_db.dat";
@@ -114,6 +115,7 @@ const char * OIC_JSON_PRIVDATA_NAME = "privdata";
 const char * OIC_JSON_OPTDATA_NAME = "optdata";
 const char * OIC_JSON_SERVICE_DEVICE_ID = "svcdid";
 const char * OIC_JSON_SERVICE_TYPE = "svct";
+const char* OIC_JSON_VALIDITY_NAME = "validity";
 const char * OIC_JSON_PERIOD_NAME = "period";
 const char * OIC_JSON_PERIODS_NAME = "prds";
 const char * OIC_JSON_CRMS_NAME = "crms";
@@ -129,10 +131,10 @@ const char * OIC_JSON_PRM_NAME = "prm";
 const char * OIC_JSON_SPM_NAME = "spm";
 const char * OIC_JSON_PDEVICE_ID_NAME = "pdeviceuuid";
 const char * OIC_JSON_RLIST_NAME = "rlist";
-const char * OIC_JSON_HREF_NAME = "href";
-const char * OIC_JSON_REL_NAME = "rel";
-const char * OIC_JSON_RT_NAME = "rt";
-const char * OIC_JSON_IF_NAME = "if";
+const char * OIC_JSON_HREF_NAME = OC_RSRVD_HREF;
+const char * OIC_JSON_REL_NAME = OC_RSRVD_REL;
+const char * OIC_JSON_RT_NAME = OC_RSRVD_RESOURCE_TYPE;
+const char * OIC_JSON_IF_NAME = OC_RSRVD_INTERFACE;
 const char * OIC_JSON_ROWNERID_NAME = "rowneruuid";
 const char * OIC_JSON_ENCODING_NAME = "encoding";
 const char * OIC_JSON_DATA_NAME = "data";

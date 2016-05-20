@@ -8,50 +8,38 @@
                         {
                             "href": "/oic/res",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.res"],
+                            "if": ["oic.if.ll"]
                         },
                         {
                             "href": "/oic/d",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.d"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
                         },
                         {
                             "href": "/oic/p",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/res/d",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/res/types/d",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.p"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
                         },
                         {
                             "href": "/oic/ad",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.ad"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/acl",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.acl"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/amacl",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.amacl"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 2
