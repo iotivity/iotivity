@@ -30,18 +30,27 @@ src_dir = sptest_env.get('SRC_DIR')
 # Build flags
 ######################################################################
 sptest_env.PrependUnique(CPPPATH = [
-		'../../../connectivity/inc',
-		'../../../connectivity/api',
+		'../include',
 		'../../include',
-		'../../../../../extlibs/tinydtls',
 		'../include/internal',
-		'../include/oxm',
+		'../../../stack/include',
+		'../../../ocrandom/include',
 		'../../../logger/include',
 		'../../../stack/include',
+		'../../../security/include',
+		'../../../security/include/internal',
+		'../../../security/provisioning/include/internal',
 		'../../../../oc_logger/include',
-		'../../../../../extlibs/gtest/gtest-1.7.0/include',
-		'../include',
-		'../include/internal'
+		'../include/oxm',
+		'../../../../../extlibs/tinydtls',
+		'../../../../../extlibs/cjson',
+		'../../../../../extlibs/base64',
+		'../../../connectivity/inc',
+		'../../../connectivity/common/inc',
+		'../../../connectivity/lib/libcoap-4.1.1',
+		'../../../connectivity/api',
+		'../../../../../extlibs/tinydtls',
+		'../../../../../extlibs/gtest/gtest-1.7.0/include'
 		])
 sptest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 sptest_env.AppendUnique(LIBS = ['-lpthread','-ldl'])
@@ -69,12 +78,18 @@ if not env.get('RELEASE'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittest = sptest_env.Program('unittest', ['pmutilitytest.cpp', 'otmunittest.cpp',
+unittest = sptest_env.Program('unittest', ['pmutilitytest.cpp',
                                            'secureresourceprovider.cpp',
                                            'provisioningdatabasemanager.cpp',
-                                           'ocprovisioningmanager.cpp' ])
+                                           'ocprovisioningmanager.cpp','otmunittest.cpp' ])
 
-Alias("test", [unittest])
+sample_server1 = sptest_env.Program('sample_server1', ['sampleserver1.cpp'])
+sample_server2 = sptest_env.Program('sample_server2', ['sampleserver2.cpp'])
+
+provisioning_unittest_src_dir = src_dir + '/resource/csdk/security/provisioning/unittest/'
+provisioning_unittest_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/unittest/'
+
+Alias("test", [unittest, sample_server1, sample_server2])
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':
