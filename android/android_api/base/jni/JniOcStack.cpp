@@ -62,6 +62,8 @@ jclass g_cls_OcResourceIdentifier = nullptr;
 jclass g_cls_OcProvisionResult = nullptr;
 jclass g_cls_OcSecureResource = nullptr;
 jclass g_cls_OcOicSecAcl = nullptr;
+jclass g_cls_OcOicSecPdAcl = nullptr;
+jclass g_cls_OcDirectPairDevice = nullptr;
 
 jmethodID g_mid_Integer_ctor = nullptr;
 jmethodID g_mid_Double_ctor = nullptr;
@@ -94,6 +96,8 @@ jmethodID g_mid_OcPresenceStatus_get = nullptr;
 jmethodID g_mid_OcResourceIdentifier_N_ctor = nullptr;
 jmethodID g_mid_OcProvisionResult_ctor = nullptr;
 jmethodID g_mid_OcSecureResource_ctor = nullptr;
+jmethodID g_mid_OcDirectPairDevice_ctor = nullptr;
+jmethodID g_mid_OcDirectPairDevice_dev_ctor = nullptr;
 
 jmethodID g_mid_OcOicSecAcl_get_subject = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_resources_cnt = nullptr;
@@ -103,6 +107,12 @@ jmethodID g_mid_OcOicSecAcl_get_periods_cnt = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_periods = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_recurrences = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_resources_cnt = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_resources = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_permission = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_periods_cnt = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_periods = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_recurrences = nullptr;
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
@@ -430,6 +440,18 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     g_mid_OcProvisionResult_ctor = env->GetMethodID(g_cls_OcProvisionResult, "<init>", "(Ljava/lang/String;I)V");
     if (!g_mid_OcProvisionResult_ctor) return JNI_ERR;
 
+    //OcDirectPairDevice
+    clazz = env->FindClass("org/iotivity/base/OcDirectPairDevice");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcDirectPairDevice =  (jclass)env->NewGlobalRef(clazz);
+    //env->DeleteLocalRef(clazz);
+    g_mid_OcDirectPairDevice_ctor = env->GetMethodID(g_cls_OcDirectPairDevice, "<init>", "(J)V");
+    if (!g_mid_OcDirectPairDevice_ctor) return JNI_ERR;
+
+    g_mid_OcDirectPairDevice_dev_ctor = env->GetMethodID(g_cls_OcDirectPairDevice, "<init>", "(Ljava/lang/String;)V");
+    if (!g_mid_OcDirectPairDevice_dev_ctor) return JNI_ERR;
+    env->DeleteLocalRef(clazz);
+
     //OicSecAcl
     clazz = env->FindClass("org/iotivity/base/OicSecAcl");
     if (!clazz) return JNI_ERR;
@@ -459,6 +481,30 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 
     g_mid_OcOicSecAcl_get_rownerID = env->GetMethodID(g_cls_OcOicSecAcl, "getRownerID", "()Ljava/lang/String;");
     if (!g_mid_OcOicSecAcl_get_rownerID) return JNI_ERR;
+
+    //OicSecPdAcl
+    clazz = env->FindClass("org/iotivity/base/OicSecPdAcl");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcOicSecPdAcl =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecPdAcl_get_resources_cnt = env->GetMethodID(g_cls_OcOicSecPdAcl, "getResourcesCount", "()I");
+    if (!g_mid_OcOicSecPdAcl_get_resources_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecPdAcl_get_resources = env->GetMethodID(g_cls_OcOicSecPdAcl, "getResources", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecPdAcl_get_resources) return JNI_ERR;
+
+    g_mid_OcOicSecPdAcl_get_permission = env->GetMethodID(g_cls_OcOicSecPdAcl, "getPermission", "()I");
+    if (!g_mid_OcOicSecPdAcl_get_permission) return JNI_ERR;
+
+    g_mid_OcOicSecPdAcl_get_periods_cnt = env->GetMethodID(g_cls_OcOicSecPdAcl, "getPeriodsCount", "()I");
+    if (!g_mid_OcOicSecPdAcl_get_periods_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecPdAcl_get_periods = env->GetMethodID(g_cls_OcOicSecPdAcl, "getPeriods", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecPdAcl_get_periods) return JNI_ERR;
+
+    g_mid_OcOicSecPdAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecPdAcl, "getRecurrences", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecPdAcl_get_recurrences) return JNI_ERR;
 
     return JNI_CURRENT_VERSION;
 }
