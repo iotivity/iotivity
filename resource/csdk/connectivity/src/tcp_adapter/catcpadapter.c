@@ -202,9 +202,7 @@ void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler)
 static void CAInitializeTCPGlobals()
 {
     caglobals.tcp.ipv4.fd = -1;
-    caglobals.tcp.ipv4.port = 0;
     caglobals.tcp.ipv6.fd = -1;
-    caglobals.tcp.ipv6.port = 0;
     caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
     caglobals.tcp.svrlist = NULL;
@@ -273,6 +271,10 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
 CAResult_t CAStartTCP()
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
+    // Specific the port number received from application.
+    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
+    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
 
 #ifndef SINGLE_THREAD
     if (CA_STATUS_OK != CATCPInitializeQueueHandles())

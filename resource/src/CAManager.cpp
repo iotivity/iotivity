@@ -37,6 +37,23 @@ namespace
         CAManager::ConnectionChangedCallback g_connectionHandler = NULL;
 }
 
+OCStackResult convertCAResultToOCResult(CAResult_t caResult)
+{
+    switch (caResult)
+    {
+        case CA_STATUS_OK:
+            return OC_STACK_OK;
+        case CA_STATUS_INVALID_PARAM:
+            return OC_STACK_INVALID_PARAM;
+        case CA_STATUS_FAILED:
+            return OC_STACK_ERROR;
+        case CA_NOT_SUPPORTED:
+            return OC_STACK_NOTIMPL;
+        default:
+            return OC_STACK_ERROR;
+    }
+}
+
 void DefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled)
 {
     if (g_adapterHandler)
@@ -63,13 +80,19 @@ OCStackResult CAManager::setNetworkMonitorHandler(AdapterChangedCallback adapter
     CAResult_t ret = CARegisterNetworkMonitorHandler(DefaultAdapterStateChangedHandler,
                                                      DefaultConnectionStateChangedHandler);
 
-    switch (ret)
-    {
-        case CA_STATUS_OK:
-            return OC_STACK_OK;
-        case CA_NOT_SUPPORTED:
-            return OC_STACK_NOTIMPL;
-        default:
-            return OC_STACK_ERROR;
-    }
+    return convertCAResultToOCResult(ret);
+}
+
+OCStackResult CAManager::setPortNumberToAssign(OCTransportAdapter adapter,
+                                               OCTransportFlags flag, uint16_t port)
+{
+    CAResult_t ret = CASetPortNumberToAssign((CATransportAdapter_t) adapter,
+                                             (CATransportFlags_t) flag, port);
+
+    return convertCAResultToOCResult(ret);
+}
+
+uint16_t CAManager::getAssignedPortNumber(OCTransportAdapter adapter, OCTransportFlags flag)
+{
+    return CAGetAssignedPortNumber((CATransportAdapter_t) adapter, (CATransportFlags_t) flag);
 }

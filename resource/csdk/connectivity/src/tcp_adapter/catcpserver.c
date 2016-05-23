@@ -615,6 +615,15 @@ static void CAInitializePipe(int *fds)
     }
 }
 
+#define NEWSOCKET(FAMILY, NAME) \
+    caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
+    if (caglobals.tcp.NAME.fd == -1) \
+    { \
+        caglobals.tcp.NAME.port = 0; \
+        caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
+    } \
+    CHECKFD(caglobals.tcp.NAME.fd);
+
 CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 {
     if (caglobals.tcp.started)
@@ -651,11 +660,8 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 
     if (caglobals.server)
     {
-        caglobals.tcp.ipv4.fd = CACreateAcceptSocket(AF_INET, &caglobals.tcp.ipv4);
-        CHECKFD(caglobals.tcp.ipv4.fd);
-        caglobals.tcp.ipv6.fd = CACreateAcceptSocket(AF_INET6, &caglobals.tcp.ipv6);
-        CHECKFD(caglobals.tcp.ipv6.fd);
-
+        NEWSOCKET(AF_INET, ipv4);
+        NEWSOCKET(AF_INET6, ipv6);
         OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
                   caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 socket fd=%d, port=%d",
