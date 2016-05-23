@@ -547,7 +547,7 @@ const OCDPDev_t* OCGetDirectPairedDevices();
  * @param[in] resultCallback Callback fucntion to event status of process.
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                                      OCDirectPairingCB resultCallback);
 //#endif // DIRECT_PAIRING
 
