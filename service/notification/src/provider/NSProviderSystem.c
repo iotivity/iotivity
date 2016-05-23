@@ -24,6 +24,7 @@ static NSConnectionState NSProviderConnectionState;
 void NSSetProviderConnectionState(NSConnectionState state)
 {
     OIC_LOG(INFO, SUBSCRIPTION_TAG, "Change Connection State");
+    NS_LOG(DEBUG, "NSSetProviderConnectionState");
 
     NSProviderConnectionState = state;
 }
@@ -31,6 +32,7 @@ void NSSetProviderConnectionState(NSConnectionState state)
 NSConnectionState NSGetProviderConnectionState()
 {
     OIC_LOG(INFO, SUBSCRIPTION_TAG, "Change Connection State");
+    //NS_LOG(DEBUG, "NSGetProviderConnectionState");
 
     return NSProviderConnectionState;
 }

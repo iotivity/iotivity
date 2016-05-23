@@ -45,6 +45,7 @@ target_os = env.get('TARGET_OS')
 notification_env.AppendUnique(CPPPATH = ['include'])
 notification_env.AppendUnique(CPPPATH = ['src/common'])
 notification_env.AppendUnique(CPPPATH = ['src/provider'])
+notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
 

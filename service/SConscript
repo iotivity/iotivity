@@ -43,7 +43,7 @@ if target_os not in ['arduino','darwin', 'ios']:
     if target_os in ['linux']:
         SConscript('scene-manager/SConscript')
 
-    if target_os in ['linux']:
+    if target_os in ['linux','android']:
         SConscript('notification/SConscript')
 
     # Build simulator module

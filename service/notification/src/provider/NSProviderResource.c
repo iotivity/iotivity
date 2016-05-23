@@ -63,9 +63,11 @@ NSSyncResource NotificationSyncResource;
 
 NSResult NSCreateResource(char *uri)
 {
+    NS_LOG(DEBUG, "NSCreateResource - IN");
     if (!uri)
     {
         OIC_LOG(ERROR, RESOURCE_TAG, "Resource URI cannot be NULL");
+        NS_LOG(NS_ERROR, "Resource URI cannot be NULL");
         return NS_ERROR;
     }
 
@@ -81,6 +83,7 @@ NSResult NSCreateResource(char *uri)
                 NSEntityHandlerNotificationCb, NULL, OC_DISCOVERABLE) != OC_STACK_OK)
         {
             OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Resource"));
+            NS_LOG(NS_ERROR, "Fail to Create Notification Resource");
             return NS_ERROR;
         }
     }
@@ -96,6 +99,7 @@ NSResult NSCreateResource(char *uri)
                 NSMessageUri, NSEntityHandlerMessageCb, NULL, OC_OBSERVABLE) != OC_STACK_OK)
         {
             OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Message Resource"));
+            NS_LOG(NS_ERROR, "Fail to Create Notification Message Resource");
             return NS_ERROR;
         }
     }
@@ -110,71 +114,84 @@ NSResult NSCreateResource(char *uri)
                 NSEntityHandlerSyncCb, NULL, OC_OBSERVABLE) != OC_STACK_OK)
         {
             OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Sync Resource"));
+            NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");
             return NS_ERROR;
         }
     }
     else
     {
         OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to create resource with invalid URI"));
+        NS_LOG(DEBUG, "Fail to create resource with invalid URI");
         return NS_ERROR;
     }
 
+    NS_LOG(DEBUG, "NSCreateResource - OUT");
     return NS_OK;
 }
 
 NSResult NSRegisterResource()
 {
     OIC_LOG(INFO, RESOURCE_TAG, "NSRegisterResource");
+    NS_LOG(DEBUG, "NSRegisterResource - IN");
 
     if (NSCreateResource(NSSyncUri) != NS_OK)
     {
         OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to register Sync Resource"));
+        NS_LOG(DEBUG, "Fail to register Sync Resource");
         return NS_ERROR;
     }
 
     if (NSCreateResource(NSMessageUri) != NS_OK)
     {
         OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to register Message Resource"));
+        NS_LOG(DEBUG, "Fail to register Message Resource");
         return NS_ERROR;
     }
 
     if (NSCreateResource(NSUri) != NS_OK)
     {
         OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to register Notification Resource"));
+        NS_LOG(DEBUG, "Fail to register Notification Resource");
         return NS_ERROR;
     }
 
+    NS_LOG(DEBUG, "NSRegisterResource - OUT");
     return NS_OK;
 }
 
 NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle)
 {
+    NS_LOG(DEBUG, "NSPutNotificationResource - IN");
+
     NotificationResource.accepter = accepter;
     NotificationResource.message_uri = NSMessageUri;
     NotificationResource.sync_uri = NSSyncUri;
 
     *handle = NotificationResource.handle;
 
+    NS_LOG(DEBUG, "NSPutNotificationResource - OUT");
     return NS_OK;
 }
 
 NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
 {
     OIC_LOG(INFO, RESOURCE_TAG, "Put notification message to Resource");
+    NS_LOG(DEBUG, "NSPutMessageResource - IN");
 
     if(msg != NULL)
     {
-        printf("msg is not null\n");
+        NS_LOG(ERROR, "NSMessage is valid");
         NotificationMessageResource.id = strdup(msg->mId);
         NotificationMessageResource.title = strdup(msg->mTitle);
         NotificationMessageResource.body = strdup(msg->mContentText);
     }
     else
     {
-        printf("msg is null\n");
+        NS_LOG(ERROR, "NSMessage is NULL");
     }
 
     *handle = NotificationMessageResource.handle;
+    NS_LOG(DEBUG, "NSPutMessageResource - OUT");
 
     return NS_OK;
 }
@@ -182,12 +199,13 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
 NSResult NSPutSyncResource(NSSync *sync, OCResourceHandle * handle)
 {
     OIC_LOG(INFO, RESOURCE_TAG, "Put notification sync to Resource");
+    NS_LOG(DEBUG, "NSPutSyncResource - IN");
 
-    //should be implementation
     (void) sync;
 
     *handle = NotificationSyncResource.handle;
 
+    NS_LOG(DEBUG, "NSPutSyncResource - OUT");
     return NS_OK;
 }
 

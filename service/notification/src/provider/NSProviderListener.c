@@ -24,6 +24,7 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
     OIC_LOG_V (INFO, LISTENER_TAG, "Inside entity handler - flags: 0x%x", flag);
+    NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - IN");
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response =
@@ -54,6 +55,7 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         if (OC_REST_GET == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
+            NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_GET");
 
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY, (void *)entityHandlerRequest);
             ehResult = OC_EH_OK;
@@ -62,16 +64,19 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_PUT from client");
+            NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_PUT");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
+            NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_POST");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_DELETE from client");
+            NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_DELETE");
             ehResult = OC_EH_OK;
         }
         else
@@ -130,6 +135,7 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
     }
 
     OCPayloadDestroy(response.payload);
+    NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OUT");
     return ehResult;
 }
 
@@ -137,6 +143,7 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
     OIC_LOG_V (INFO, LISTENER_TAG, "Inside entity handler - flags: 0x%x", flag);
+    NS_LOG(DEBUG, "NSEntityHandlerMessageCb - IN");
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response =
@@ -167,21 +174,25 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         if (OC_REST_GET == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
+            NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_GET");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_PUT from client");
+            NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_PUT");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
+            NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_POST");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_DELETE from client");
+            NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_DELETE");
             ehResult = OC_EH_OK;
         }
         else
@@ -242,18 +253,20 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
     if (flag & OC_OBSERVE_FLAG)
     {
         OIC_LOG(INFO, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
+        NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_FLAG");
 
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
-
-            printf("NS_ register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
+            NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_REGISTER");
+            NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n"
+                    "Register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_SUBSCRIPTION, entityHandlerRequest);
-
         }
     }
 
     OCPayloadDestroy(response.payload);
+    NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OUT");
     return ehResult;
 }
 
@@ -261,7 +274,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
     OIC_LOG_V (INFO, LISTENER_TAG, "Inside entity handler - flags: 0x%x", flag);
-
+    NS_LOG(DEBUG, "NSEntityHandlerSyncCb - IN");
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response =
     { 0, 0, OC_EH_ERROR, 0, 0,
@@ -291,18 +304,21 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         if (OC_REST_GET == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
+            NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_GET");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_PUT from client");
+            NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_PUT");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
-
-            NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ, NSBuildOICNotificationSync(entityHandlerRequest->payload));
+            NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
+            NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ,
+                    NSBuildOICNotificationSync(entityHandlerRequest->payload));
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
@@ -372,12 +388,15 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
-            printf("NS_ register sync observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
+            NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_REGISTER");
+            NS_LOG_V(DEBUG, "NSEntityHandlerSyncCb\n - "
+                    "Register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SYNC_SUBSCRIPTION, entityHandlerRequest);
         }
     }
 
     OCPayloadDestroy(response.payload);
+    NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OUT");
     return ehResult;
 }
 
@@ -390,10 +409,12 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
     (void)remote_address;
 
     OIC_LOG (INFO, LISTENER_TAG, "Connection State Changed");
+    NS_LOG(DEBUG, "NSProviderConnectionStateListener - IN");
 
     if (connected)
     {
         OIC_LOG (INFO, LISTENER_TAG, "CONNECTED");
+        NS_LOG(DEBUG, "CONNECTED");
 
         // Set Connection State
         NSSetProviderConnectionState(CONNECTED);
@@ -401,6 +422,8 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
         // Start Presence
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
     }
+
+    NS_LOG(DEBUG, "NSProviderConnectionStateListener - OUT");
 }
 
 void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
@@ -409,10 +432,12 @@ void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
     (void)adapter;
 
     OIC_LOG (INFO, LISTENER_TAG, "Adapter State Changed");
+    NS_LOG(DEBUG, "NSProviderAdapterStateListener - IN");
 
     if (enabled)
     {
         OIC_LOG (INFO, LISTENER_TAG, "CONNECTED");
+        NS_LOG(DEBUG, "CONNECTED");
 
         // Set Connection State
         NSSetProviderConnectionState(CONNECTED);
@@ -420,10 +445,14 @@ void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
         // Start Presence
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
     }
+
+    NS_LOG(DEBUG, "NSProviderAdapterStateListener - OUT");
 }
 
 NSSync * NSBuildOICNotificationSync(OCPayload * payload)
 {
+    NS_LOG(DEBUG, "NSBuildOICNotificationSync - IN");
+
     if(!payload)
     {
         return NULL;
@@ -460,11 +489,15 @@ NSSync * NSBuildOICNotificationSync(OCPayload * payload)
     OIC_LOG_V(DEBUG, LISTENER_TAG, "Sync ID : %s", retSync->mMessageId);
     OIC_LOG_V(DEBUG, LISTENER_TAG, "Sync State : %d", (int) retSync->mState);
 
+    NS_LOG(DEBUG, "NSBuildOICNotificationSync - OUT");
+
     return retSync;
 }
 
 NSResult NSMakeTask(NSTaskType type, OCEntityHandlerRequest *request, NSTask * task)
 {
+    NS_LOG(DEBUG, "NSMakeTask - IN");
+
     task = (NSTask*) OICMalloc(sizeof(NSTask));
     if (!task)
     {
@@ -476,6 +509,7 @@ NSResult NSMakeTask(NSTaskType type, OCEntityHandlerRequest *request, NSTask * t
     task->taskData = request;
     task->nextTask = NULL;
 
+    NS_LOG(DEBUG, "NSMakeTask - OUT");
     return NS_OK;
 }
 

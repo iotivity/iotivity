@@ -39,9 +39,9 @@ void * NSNotificationSchedule(void *ptr);
 bool NSInitScheduler()
 {
     OIC_LOG(INFO, SCHEDULER_TAG, "NSInitScheduler()");
+    NS_LOG(DEBUG, "NSInitScheduler - IN");
 
     int i = 0;
-    //	NsQsStopScheduler(ALL_SCHEDULER);
 
     for (i = 0; i < THREAD_COUNT; i++)
     {
@@ -50,6 +50,7 @@ bool NSInitScheduler()
         sem_init(&(NSSemaphore[i]), 0, 0);
     }
 
+    NS_LOG(DEBUG, "NSInitScheduler - OUT");
     return true;
 }
 
@@ -65,24 +66,28 @@ bool NSStartScheduler()
         {
             case RESPONSE_SCHEDULER:
             {
+                NS_LOG(DEBUG, "CASE RESPONSE_SCHEDULER :");
                 pthread_create(&NSThread[i], NULL, NSResponseSchedule, NULL);
             }
                 break;
 
             case DISCOVERY_SCHEDULER:
             {
+                NS_LOG(DEBUG, "CASE DISCOVERY_SCHEDULER :");
                 pthread_create(&NSThread[i], NULL, NSDiscoverySchedule, NULL);
             }
                 break;
 
             case SUBSCRIPTION_SCHEDULER:
             {
+                NS_LOG(DEBUG, "CASE SUBSCRIPTION_SCHEDULER :");
                 pthread_create(&NSThread[i], NULL, NSSubScriptionSchedule, NULL);
             }
                 break;
 
             case NOTIFICATION_SCHEDULER:
             {
+                NS_LOG(DEBUG, "CASE NOTIFICATION_SCHEDULER :");
                 pthread_create(&NSThread[i], NULL, NSNotificationSchedule, NULL);
             }
                 break;
@@ -103,6 +108,7 @@ bool NSStartScheduler()
 
 bool NSStopScheduler()
 {
+    NS_LOG(DEBUG, "NSStopScheduler - IN");
     int i = 0;
 
     for (i = THREAD_COUNT - 1; i >= 0; --i)
@@ -127,16 +133,21 @@ bool NSStopScheduler()
         pthread_mutex_unlock(&NSMutex[i]);
     }
 
+    NS_LOG(DEBUG, "NSStopScheduler - OUT");
+
     return true;
 }
 
 void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
 {
     pthread_mutex_lock(&NSMutex[schedulerType]);
-    // mutext Lock
+
+    NS_LOG(DEBUG, "NSPushQueue - IN");
+    NS_LOG_V(DEBUG, "NSSchedulerType = %d", schedulerType);
+    NS_LOG_V(DEBUG, "NSTaskType = %d", taskType);
+
     if (NSHeadMsg[schedulerType] == NULL)
     {
-        printf("first schedule");
         NSHeadMsg[schedulerType] = (NSTask*) malloc(sizeof(NSTask));
         memset(NSHeadMsg[schedulerType], 0, sizeof(NSTask));
         NSHeadMsg[schedulerType]->taskType = taskType;
@@ -146,7 +157,6 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     }
     else
     {
-        printf("after first schedule");
         NSTask* newNode = (NSTask*) malloc(sizeof(NSTask));
         memset(newNode, 0, sizeof(NSTask));
         newNode->taskType = taskType;
@@ -158,8 +168,7 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     }
 
     sem_post(&(NSSemaphore[schedulerType]));
+    NS_LOG(DEBUG, "NSPushQueue - OUT");
     pthread_mutex_unlock(&NSMutex[schedulerType]);
-
-    // mutext UnLock
 }
 

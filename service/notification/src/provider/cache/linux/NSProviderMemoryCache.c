@@ -33,26 +33,31 @@ NSCacheList * NSCacheCreate()
 
     pthread_mutex_unlock(&NSCacheMutex);
 
+    NS_LOG(DEBUG, "NSCacheCreate");
+
     return newList;
 }
 
 NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId)
 {
     pthread_mutex_lock(&NSCacheMutex);
+
+    NS_LOG(DEBUG, "NSCacheRead - IN");
+
     NSCacheElement * iter = list->head;
     NSCacheElement * next = NULL;
     NSCacheType type = list->cacheType;
 
-    printf("NS_ findId = %s\n", findId);
+
+    NS_LOG_V(DEBUG, "Find ID - %s", findId);
 
     while (iter)
     {
         next = iter->next;
 
-        printf("NS_ findId2 = %s\n", findId);
-
         if (NSProviderCompareIdCacheData(type, iter->data, findId))
         {
+            NS_LOG(DEBUG, "Found in Cache");
             pthread_mutex_unlock(&NSCacheMutex);
             return iter;
         }
@@ -60,56 +65,64 @@ NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId)
         iter = next;
     }
 
+    NS_LOG(DEBUG, "Not found in Cache");
+    NS_LOG(DEBUG, "NSCacheRead - OUT");
     pthread_mutex_unlock(&NSCacheMutex);
 
     return NULL;
 }
 
-NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, NSCacheSubData * subData)
+NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, NSCacheSubData * updateData)
 {
     pthread_mutex_lock(&NSCacheMutex);
 
-    printf("NS_ NSCacheUpdateSubScriptionState\n");
+    NS_LOG(DEBUG, "NSCacheUpdateSubScriptionState - IN");
 
-    if (subData == NULL)
+    if (updateData == NULL)
     {
-        printf("NS_ NSCacheWrite - newObj is NULL\n");
+        NS_LOG(DEBUG, "updateData is NULL");
         pthread_mutex_unlock(&NSCacheMutex);
         return NS_ERROR;
     }
 
-    printf("NS_ findId0 - 0 = %s\n", subData->id);
     pthread_mutex_unlock(&NSCacheMutex);
-    NSCacheElement * it = NSCacheRead(list, subData->id);
+    NSCacheElement * it = NSCacheRead(list, updateData->id);
     pthread_mutex_lock(&NSCacheMutex);
-    printf("NS_ findId0 -1 = %s\n", subData->id);
+
     if (it)
     {
-        printf("NS_ findId1 = %s\n", subData->id);
         NSCacheSubData * itData = (NSCacheSubData *) it->data;
-        printf("NS_ findId2 = %s\n", subData->id);
-        if (strcmp(itData->id, subData->id) == 0)
+        if (strcmp(itData->id, updateData->id) == 0)
         {
-            printf("NS_ findId3_subdata_id = %s\n", subData->id);
-            printf("NS_ findId3_subdata_messageobId = %d\n", subData->messageObId);
-            printf("NS_ findId3_subdata_syncobId = %d\n", subData->syncObId);
-            printf("NS_ findId3_subdata_isWhite = %d\n", subData->isWhite);
+            NS_LOG(DEBUG, "Update Data - IN");
 
-            printf("NS_ findId3_itdata_id = %s\n", itData->id);
-            printf("NS_ findId3_itdata_messageobId = %d\n", itData->messageObId);
-            printf("NS_ findId3_itdata_isWhite = %d\n", itData->isWhite);
+            NS_LOG_V(DEBUG, "currData_ID = %s", itData->id);
+            NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
+            NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
+            NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
 
-            itData->isWhite = subData->isWhite;
+            NS_LOG(DEBUG,"");
 
-            printf("_NS : PROVIDER_CACHE_SUBSCRIBER UPDATE\n");
+            NS_LOG_V(DEBUG, "updateData_ID = %s", updateData->id);
+            NS_LOG_V(DEBUG, "updateData_MsgObID = %d", updateData->messageObId);
+            NS_LOG_V(DEBUG, "updateData_SyncObID = %d", updateData->syncObId);
+            NS_LOG_V(DEBUG, "updateData_IsWhite = %d", updateData->isWhite);
 
+            itData->isWhite = updateData->isWhite;
+
+            NS_LOG(DEBUG, "Update Data - OUT");
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_OK;
-
         }
     }
+    else
+    {
+        NS_LOG(DEBUG, "Not Found Data");
+    }
+
+    NS_LOG(DEBUG, "NSCacheUpdateSubScriptionState - OUT");
     pthread_mutex_unlock(&NSCacheMutex);
-    return NS_OK;
+    return NS_ERROR;
 }
 
 NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
@@ -118,39 +131,45 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
 
     NSCacheType type = list->cacheType;
 
-    printf("NS_ NSCacheWrite\n");
+    NS_LOG(DEBUG, "NSCacheWrite - IN");
 
     if (newObj == NULL)
     {
-        printf("NS_ NSCacheWrite - newObj is NULL\n");
+        NS_LOG(DEBUG, "newObj is NULL - IN");
         pthread_mutex_unlock(&NSCacheMutex);
         return NS_ERROR;
     }
 
     if (type == NS_PROVIDER_CACHE_SUBSCRIBER)
     {
+        NS_LOG(DEBUG, "Type is SUBSCRIBER");
+
         NSCacheSubData * subData = (NSCacheSubData *) newObj->data;
 
-        printf("NS_ findId0 - 0 = %s\n", subData->id);
         pthread_mutex_unlock(&NSCacheMutex);
         NSCacheElement * it = NSCacheRead(list, subData->id);
         pthread_mutex_lock(&NSCacheMutex);
-        printf("NS_ findId0 -1 = %s\n", subData->id);
+
         if (it)
         {
-            printf("NS_ findId1 = %s\n", subData->id);
             NSCacheSubData * itData = (NSCacheSubData *) it->data;
-            printf("NS_ findId2 = %s\n", subData->id);
+
             if (strcmp(itData->id, subData->id) == 0)
             {
-                printf("NS_ findId3_subdata_id = %s\n", subData->id);
-                printf("NS_ findId3_subdata_messageobId = %d\n", subData->messageObId);
-                printf("NS_ findId3_subdata_syncobId = %d\n", subData->syncObId);
-                printf("NS_ findId3_subdata_isWhite = %d\n", subData->isWhite);
+                NS_LOG(DEBUG, "Update Data - IN");
 
-                printf("NS_ findId3_itdata_id = %s\n", itData->id);
-                printf("NS_ findId3_itdata_messageobId = %d\n", itData->messageObId);
-                printf("NS_ findId3_itdata_isWhite = %d\n", itData->isWhite);
+                NS_LOG_V(DEBUG, "currData_ID = %s", itData->id);
+                NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
+                NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
+                NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
+
+                NS_LOG(DEBUG,"");
+
+                NS_LOG_V(DEBUG, "subData_ID = %s", subData->id);
+                NS_LOG_V(DEBUG, "subData_MsgObID = %d", subData->messageObId);
+                NS_LOG_V(DEBUG, "subData_SyncObID = %d", subData->syncObId);
+                NS_LOG_V(DEBUG, "subData_IsWhite = %d", subData->isWhite);
+
                 if (itData->messageObId == 0)
                 {
                     itData->messageObId = subData->messageObId;
@@ -161,19 +180,18 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
                     itData->syncObId = subData->syncObId;
                 }
 
-                //itData->isWhite = subData->isWhite;
-
-                printf("_NS : PROVIDER_CACHE_SUBSCRIBER UPDATE\n");
+                NS_LOG(DEBUG, "Update Data - OUT");
 
                 pthread_mutex_unlock(&NSCacheMutex);
                 return NS_OK;
-
             }
         }
 
     }
     else if (type == NS_PROVIDER_CACHE_MESSAGE)
     {
+        NS_LOG(DEBUG, "Type is MESSAGE");
+
         NSCacheMsgData * msgData = (NSCacheMsgData *) newObj->data;
 
         NSCacheElement * it = NSCacheRead(list, msgData->id);
@@ -185,7 +203,7 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
             {
 
                 itData->messageType = msgData->messageType;
-                printf("_NS : PROVIDER_CACHE_MESSAGE UPDATE\n");
+                NS_LOG(DEBUG, "Updated messageType");
                 pthread_mutex_unlock(&NSCacheMutex);
                 return NS_OK;
 
@@ -193,17 +211,16 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
         }
     }
 
-    printf("NS_ berfore list->head == NULL\n");
     if (list->head == NULL)
     {
+        NS_LOG(DEBUG, "list->head is NULL, Insert First Data");
         list->head = list->tail = newObj;
-        printf("NS_ list->head == NULL\n");
         pthread_mutex_unlock(&NSCacheMutex);
         return NS_OK;
     }
 
     list->tail = list->tail->next = newObj;
-    printf("NS_ list->head == not NULL\n");
+    NS_LOG(DEBUG, "list->head is not NULL");
     pthread_mutex_unlock(&NSCacheMutex);
     return NS_OK;
 }
@@ -278,6 +295,8 @@ NSResult NSCacheDestroy(NSCacheList * list)
 
 bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id)
 {
+    NS_LOG(DEBUG, "NSProviderCompareIdCacheData - IN");
+
     if (data == NULL)
     {
         return false;
@@ -287,13 +306,17 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
     {
         NSCacheSubData * subData = (NSCacheSubData *) data;
 
-        printf("NS_ subdata->id = %s\n", subData->id);
-        printf("NS_ id = %s\n", id);
+
+        NS_LOG_V(DEBUG, "Data(subData) = [%s]", subData->id);
+        NS_LOG_V(DEBUG, "Data(compData) = [%s]", id);
 
         if (strcmp(subData->id, id) == 0)
         {
+            NS_LOG(DEBUG, "SubData is Same");
             return true;
         }
+
+        NS_LOG(DEBUG, "Message Data is Not Same");
         return false;
 
     }
@@ -303,11 +326,15 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
 
         if (strcmp(msgData->id, id) == 0)
         {
+            NS_LOG(DEBUG, "Message Data is Same");
             return true;
         }
 
+        NS_LOG(DEBUG, "Message Data is Not Same");
         return false;
     }
+
+    NS_LOG(DEBUG, "NSProviderCompareIdCacheData - OUT");
 
     return false;
 }

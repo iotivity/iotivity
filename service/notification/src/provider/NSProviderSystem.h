@@ -21,6 +21,7 @@
 #ifndef _NS_PROVIDER_SYSTEM__H_
 #define _NS_PROVIDER_SYSTEM__H_
 
+#include <string.h>
 #include "logger.h"
 #include "NSCommon.h"
 #include "NSConstants.h"
