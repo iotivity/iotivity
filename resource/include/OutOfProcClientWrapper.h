@@ -115,6 +115,18 @@ namespace OC
 
         virtual OCStackResult GetDefaultQos(QualityOfService& /*QoS*/)
             {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult FindDirectPairingDevices(unsigned short /*waittime*/,
+                       GetDirectPairedCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult GetDirectPairedDevices(GetDirectPairedCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> /*peer*/,
+                const OCPrm_t& /*pmSel*/,
+                const std::string& /*pinNumber*/, DirectPairingCallback& /*resultCallback*/)
+            {return OC_STACK_NOTIMPL;}
     };
 }
 

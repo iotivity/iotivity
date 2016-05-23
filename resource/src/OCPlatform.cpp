@@ -43,7 +43,7 @@ namespace OC
         }
 
         OCStackResult notifyAllObservers(OCResourceHandle resourceHandle,
-                                                QualityOfService QoS)
+                                     QualityOfService QoS)
         {
             return OCPlatform_impl::Instance().notifyAllObservers(resourceHandle, QoS);
         }
@@ -54,106 +54,106 @@ namespace OC
         }
 
         OCStackResult notifyListOfObservers(OCResourceHandle resourceHandle,
-                                                ObservationIds& observationIds,
-                                                const std::shared_ptr<OCResourceResponse> pResponse)
+                                     ObservationIds& observationIds,
+                                     const std::shared_ptr<OCResourceResponse> pResponse)
         {
             return OCPlatform_impl::Instance().notifyListOfObservers(resourceHandle,
-                                                observationIds, pResponse);
+                                     observationIds, pResponse);
         }
 
         OCStackResult notifyListOfObservers(OCResourceHandle resourceHandle,
-                                                ObservationIds& observationIds,
-                                                const std::shared_ptr<OCResourceResponse> pResponse,
-                                                QualityOfService QoS)
+                                     ObservationIds& observationIds,
+                                     const std::shared_ptr<OCResourceResponse> pResponse,
+                                     QualityOfService QoS)
         {
             return OCPlatform_impl::Instance().notifyListOfObservers(resourceHandle,
-                                                    observationIds, pResponse, QoS);
+                                     observationIds, pResponse, QoS);
         }
 
         OCResource::Ptr constructResourceObject(const std::string& host,
-                                                const std::string& uri,
-                                                OCConnectivityType connectivityType,
-                                                bool isObservable,
-                                                const std::vector<std::string>& resourceTypes,
-                                                const std::vector<std::string>& interfaces)
+                                     const std::string& uri,
+                                     OCConnectivityType connectivityType,
+                                     bool isObservable,
+                                     const std::vector<std::string>& resourceTypes,
+                                     const std::vector<std::string>& interfaces)
         {
             return OCPlatform_impl::Instance().constructResourceObject(host,
-                                                uri, connectivityType,
-                                                isObservable,
-                                                resourceTypes, interfaces);
+                                     uri, connectivityType,
+                                     isObservable,
+                                     resourceTypes, interfaces);
         }
 
         OCStackResult findResource(const std::string& host,
-                                            const std::string& resourceName,
-                                            OCConnectivityType connectivityType,
-                                            FindCallback resourceHandler)
+                                 const std::string& resourceName,
+                                 OCConnectivityType connectivityType,
+                                 FindCallback resourceHandler)
         {
             return OCPlatform_impl::Instance().findResource(host, resourceName,
-                                    connectivityType, resourceHandler);
+                                 connectivityType, resourceHandler);
         }
 
         OCStackResult findResource(const std::string& host,
-                                            const std::string& resourceName,
-                                            OCConnectivityType connectivityType,
-                                            FindCallback resourceHandler,
-                                            QualityOfService QoS)
+                                 const std::string& resourceName,
+                                 OCConnectivityType connectivityType,
+                                 FindCallback resourceHandler,
+                                 QualityOfService QoS)
         {
             return OCPlatform_impl::Instance().findResource(host, resourceName,
-                                    connectivityType, resourceHandler, QoS);
+                                 connectivityType, resourceHandler, QoS);
         }
 
         OCStackResult getDeviceInfo(const std::string& host,
-                                            const std::string& deviceURI,
-                                            OCConnectivityType connectivityType,
-                                            FindDeviceCallback deviceInfoHandler)
+                                 const std::string& deviceURI,
+                                 OCConnectivityType connectivityType,
+                                 FindDeviceCallback deviceInfoHandler)
         {
             return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI,
-                   connectivityType, deviceInfoHandler);
+                                 connectivityType, deviceInfoHandler);
         }
 
         OCStackResult getDeviceInfo(const std::string& host,
-                                            const std::string& deviceURI,
-                                            OCConnectivityType connectivityType,
-                                            FindDeviceCallback deviceInfoHandler,
-                                            QualityOfService QoS)
+                                 const std::string& deviceURI,
+                                 OCConnectivityType connectivityType,
+                                 FindDeviceCallback deviceInfoHandler,
+                                 QualityOfService QoS)
         {
             return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, connectivityType,
-                    deviceInfoHandler, QoS);
+                                 deviceInfoHandler, QoS);
         }
 
         OCStackResult getPlatformInfo(const std::string& host,
-                                                const std::string& platformURI,
-                                                OCConnectivityType connectivityType,
-                                                FindPlatformCallback platformInfoHandler)
+                                 const std::string& platformURI,
+                                 OCConnectivityType connectivityType,
+                                 FindPlatformCallback platformInfoHandler)
         {
             return OCPlatform_impl::Instance().getPlatformInfo(host, platformURI,
-                   connectivityType, platformInfoHandler);
+                                 connectivityType, platformInfoHandler);
         }
 
         OCStackResult getPlatformInfo(const std::string& host,
-                                                const std::string& platformURI,
-                                                OCConnectivityType connectivityType,
-                                                FindPlatformCallback platformInfoHandler,
-                                                QualityOfService QoS)
+                                 const std::string& platformURI,
+                                 OCConnectivityType connectivityType,
+                                 FindPlatformCallback platformInfoHandler,
+                                 QualityOfService QoS)
         {
             return OCPlatform_impl::Instance().getPlatformInfo(host, platformURI, connectivityType,
-                    platformInfoHandler, QoS);
+                                 platformInfoHandler, QoS);
         }
 
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
-                                                std::string& resourceURI,
-                                                const std::string& resourceTypeName,
-                                                const std::string& resourceInterface,
-                                                EntityHandler entityHandler,
-                                                uint8_t resourceProperty)
+                                 std::string& resourceURI,
+                                 const std::string& resourceTypeName,
+                                 const std::string& resourceInterface,
+                                 EntityHandler entityHandler,
+                                 uint8_t resourceProperty)
         {
             return OCPlatform_impl::Instance().registerResource(resourceHandle, resourceURI,
-                                                resourceTypeName, resourceInterface,
-                                                entityHandler, resourceProperty);
+                                 resourceTypeName, resourceInterface,
+                                 entityHandler, resourceProperty);
         }
 
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
-                                                const std::shared_ptr< OCResource > resource)
+                                 const std::shared_ptr< OCResource > resource)
         {
             return OCPlatform_impl::Instance().registerResource(resourceHandle, resource);
         }
@@ -174,42 +174,41 @@ namespace OC
         }
 
         OCStackResult unbindResource(OCResourceHandle collectionHandle,
-                                                OCResourceHandle resourceHandle)
+                                 OCResourceHandle resourceHandle)
         {
             return OCPlatform_impl::Instance().unbindResource(collectionHandle, resourceHandle);
         }
 
         OCStackResult unbindResources(const OCResourceHandle collectionHandle,
-                                                const std::vector<OCResourceHandle>& resourceHandles
-                                                )
+                                 const std::vector<OCResourceHandle>& resourceHandles)
         {
             return OCPlatform_impl::Instance().unbindResources(collectionHandle, resourceHandles);
         }
 
         OCStackResult bindResource(const OCResourceHandle collectionHandle,
-                                                const OCResourceHandle resourceHandle)
+                                 const OCResourceHandle resourceHandle)
         {
             return OCPlatform_impl::Instance().bindResource(collectionHandle, resourceHandle);
         }
 
         OCStackResult bindResources(const OCResourceHandle collectionHandle,
-                                                const std::vector<OCResourceHandle>& resourceHandles
-                                                )
+                                 const std::vector<OCResourceHandle>& resourceHandles
+                                 )
         {
             return OCPlatform_impl::Instance().bindResources(collectionHandle, resourceHandles);
         }
 
         OCStackResult bindTypeToResource(const OCResourceHandle& resourceHandle,
-                                                const std::string& resourceTypeName)
+                                 const std::string& resourceTypeName)
         {
             return OCPlatform_impl::Instance().bindTypeToResource(resourceHandle,resourceTypeName);
         }
 
         OCStackResult bindInterfaceToResource(const OCResourceHandle& resourceHandle,
-                                                const std::string& resourceInterfaceName)
+                                 const std::string& resourceInterfaceName)
         {
             return OCPlatform_impl::Instance().bindInterfaceToResource(resourceHandle,
-                                                resourceInterfaceName);
+                                                             resourceInterfaceName);
         }
 
         OCStackResult startPresence(const unsigned int announceDurationSeconds)
@@ -223,22 +222,22 @@ namespace OC
         }
 
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle,
-                                                const std::string& host,
-                                                OCConnectivityType connectivityType,
-                                                SubscribeCallback presenceHandler)
+                                     const std::string& host,
+                                     OCConnectivityType connectivityType,
+                                     SubscribeCallback presenceHandler)
         {
             return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
-                                                connectivityType, presenceHandler);
+                                                             connectivityType, presenceHandler);
         }
 
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle,
-                                                const std::string& host,
-                                                const std::string& resourceType,
-                                                OCConnectivityType connectivityType,
-                                                SubscribeCallback presenceHandler)
+                                     const std::string& host,
+                                     const std::string& resourceType,
+                                     OCConnectivityType connectivityType,
+                                     SubscribeCallback presenceHandler)
         {
             return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
-                                                resourceType, connectivityType, presenceHandler);
+                                             resourceType, connectivityType, presenceHandler);
         }
 
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle)
@@ -250,6 +249,27 @@ namespace OC
         {
             return OCPlatform_impl::Instance().sendResponse(pResponse);
         }
+
+        OCStackResult findDirectPairingDevices(unsigned short waittime,
+                                         GetDirectPairedCallback directPairingHandler)
+        {
+            return OCPlatform_impl::Instance().findDirectPairingDevices(waittime,
+                                         directPairingHandler);
+        }
+
+        OCStackResult getDirectPairedDevices(GetDirectPairedCallback directPairingHandler)
+        {
+            return OCPlatform_impl::Instance().getDirectPairedDevices(directPairingHandler);
+        }
+
+        OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
+                                 const std::string& pinNumber,
+                                 DirectPairingCallback resultCallback)
+        {
+            return OCPlatform_impl::Instance().doDirectPairing(peer, pmSel,
+                                             pinNumber, resultCallback);
+        }
+
     } // namespace OCPlatform
 } //namespace OC
 

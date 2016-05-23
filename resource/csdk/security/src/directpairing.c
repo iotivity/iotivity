@@ -1011,6 +1011,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
         }
         else
         {
+            OCProcess();
             nanosleep(&timeout, NULL);
         }
     }

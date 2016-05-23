@@ -81,6 +81,13 @@ namespace OC
             ObserveCallback callback;
             ObserveContext(ObserveCallback cb) : callback(cb){}
         };
+
+        struct DirectPairingContext
+        {
+            DirectPairingCallback callback;
+            DirectPairingContext(DirectPairingCallback cb) : callback(cb){}
+
+        };
     }
 
     class InProcClientWrapper : public IClientWrapper
@@ -146,12 +153,23 @@ namespace OC
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
         OCStackResult GetDefaultQos(QualityOfService& QoS);
+
+
+        virtual OCStackResult FindDirectPairingDevices(unsigned short waittime,
+                       GetDirectPairedCallback& callback);
+
+        virtual OCStackResult GetDirectPairedDevices(GetDirectPairedCallback& callback);
+
+        virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> peer, const OCPrm_t& pmSel,
+                const std::string& pinNumber, DirectPairingCallback& resultCallback);
+
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
         OCPayload* assembleSetResourcePayload(const OCRepresentation& attributes);
         OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
            const HeaderOptions& headerOptions);
+        void convert(const OCDPDev_t *list, PairedDevices& dpList);
         std::thread m_listeningThread;
         bool m_threadRun;
         std::weak_ptr<std::recursive_mutex> m_csdkLock;

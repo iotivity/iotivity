@@ -91,11 +91,14 @@ lightserver = examples_env.Program('lightserver', 'lightserver.cpp')
 devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicediscoveryserver.cpp')
 devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
 threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
+directpairingclient = examples_env.Program('directpairingclient', 'directpairingclient.cpp')
 
 clientjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
+directpairingdat = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
+				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client_directpairing.dat')
 Alias("examples", [simpleserver, simpleclient,
 		simpleserverHQ, simpleclientHQ,
 		fridgeserver, fridgeclient,
@@ -105,7 +108,7 @@ Alias("examples", [simpleserver, simpleclient,
 		groupserver, groupclient,
 		lightserver,
 		devicediscoveryserver, devicediscoveryclient,
-		threadingsample,
-		serverjson, clientjson
+		threadingsample, directpairingclient,
+		serverjson, clientjson, directpairingdat
      ])
 env.AppendTarget('examples')

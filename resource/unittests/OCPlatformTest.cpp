@@ -62,6 +62,14 @@ namespace OCPlatformTest
     {
     }
 
+    void directPairHandler(std::shared_ptr<OCDirectPairing> /*dev*/, OCStackResult /*res*/)
+    {
+    }
+
+    void pairedHandler(const PairedDevices& /*list*/)
+    {
+    }
+
     //Helper methods
     void DeleteStringLL(OCStringLL* ll)
     {
@@ -814,5 +822,47 @@ namespace OCPlatformTest
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
                 OC_MULTICAST_IP, CT_DEFAULT, &presenceHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+
+    TEST(FindDirectPairingTest, FindDirectPairingNullCallback)
+    {
+        EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(1, nullptr));
+    }
+
+    TEST(FindDirectPairingTest, FindDirectPairingZeroTimeout)
+    {
+        EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(0, &pairedHandler));
+    }
+
+    TEST(GetDirectPairedTest, GetDirectPairedNullCallback)
+    {
+        EXPECT_ANY_THROW(OCPlatform::getDirectPairedDevices(nullptr));
+    }
+
+    TEST(DoDirectPairingTest, DoDirectPairingNullCallback)
+    {
+        OCDPDev_t peer;
+        OCPrm_t pmSel = DP_PRE_CONFIGURED;
+        std::string pin("");
+        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
+        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(s_dp, pmSel, pin, nullptr));
+    }
+
+    TEST(DoDirectPairingTest, DoDirectPairingNullPeer)
+    {
+        OCDPDev_t peer;
+        OCPrm_t pmSel = DP_PRE_CONFIGURED;
+        std::string pin("");
+        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
+        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(nullptr, pmSel, pin, &directPairHandler));
+    }
+
+    TEST(DoDirectPairingTest, DoDirectPairingNullPeerNullCallback)
+    {
+        OCDPDev_t peer;
+        OCPrm_t pmSel = DP_PRE_CONFIGURED;
+        std::string pin("");
+        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
+        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(nullptr, pmSel, pin, nullptr));
     }
 }

@@ -365,5 +365,31 @@ namespace OC
     {
         return m_csdkLock;
     }
+
+    OCStackResult OCPlatform_impl::findDirectPairingDevices(unsigned short waittime,
+                             GetDirectPairedCallback directPairingHandler)
+    {
+        return checked_guard(m_client, &IClientWrapper::FindDirectPairingDevices,
+                             waittime, directPairingHandler);
+
+    }
+
+    OCStackResult OCPlatform_impl::getDirectPairedDevices(
+                             GetDirectPairedCallback directPairingHandler)
+    {
+
+        return checked_guard(m_client, &IClientWrapper::GetDirectPairedDevices,
+                             directPairingHandler);
+    }
+
+    OCStackResult OCPlatform_impl::doDirectPairing(std::shared_ptr<OCDirectPairing> peer,
+                             OCPrm_t pmSel,
+                             const std::string& pinNumber,
+                             DirectPairingCallback resultCallback)
+    {
+        return checked_guard(m_client, &IClientWrapper::DoDirectPairing,
+                             peer, pmSel, pinNumber, resultCallback);
+    }
+
 } //namespace OC
 

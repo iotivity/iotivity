@@ -37,6 +37,7 @@
 #include "OCResourceRequest.h"
 #include "OCResourceResponse.h"
 #include "OCRepresentation.h"
+#include "OCDirectPairing.h"
 
 #include "oc_logger.hpp"
 
@@ -223,6 +224,15 @@ namespace OC
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
 
         std::weak_ptr<std::recursive_mutex> csdkLock();
+
+        OCStackResult findDirectPairingDevices(unsigned short waittime,
+                                         GetDirectPairedCallback callback);
+
+        OCStackResult getDirectPairedDevices(GetDirectPairedCallback callback);
+
+        OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
+                                         const std::string& pinNumber,
+                                         DirectPairingCallback resultCallback);
 
     private:
         PlatformConfig m_cfg;

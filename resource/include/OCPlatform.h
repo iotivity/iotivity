@@ -515,45 +515,45 @@ namespace OC
                         SubscribeCallback presenceHandler);
 
         /**
-        * unsubscribes from a previously subscribed server's presence events. Note that
-        * you may for a short time still receive events from the server since it may take time
-        * for the unsubscribe to take effect.
-        *
-        * @param presenceHandle the handle object provided by the subscribePresence call that
-        *               identifies this subscription.
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        */
+         * unsubscribes from a previously subscribed server's presence events. Note that
+         * you may for a short time still receive events from the server since it may take time
+         * for the unsubscribe to take effect.
+         *
+         * @param presenceHandle the handle object provided by the subscribePresence call that
+         *               identifies this subscription.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
         /**
-        * Creates a resource proxy object so that get/put/observe functionality
-        * can be used without discovering the object in advance.  Note that the
-        * consumer of this method needs to provide all of the details required to
-        * correctly contact and observe the object. If the consumer lacks any of
-        * this information, they should discover the resource object normally.
-        * Additionally, you can only create this object if OCPlatform was initialized
-        * to be a Client or Client/Server.  Otherwise, this will return an empty
-        * shared ptr.
-        *
-        * @param host a string containing a resolvable host address of the server
-        *           holding the resource. Currently this should be in the format
-        *           coap://address:port, though in the future, we expect this to
-        *           change to //address:port
-        *
-        * @param uri the rest of the resource's URI that will permit messages to be
-        *           properly routed.  Example: /a/light
-        *
-        * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-        *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
-        *
-        * @param isObservable a boolean containing whether the resource supports observation
-        *
-        * @param resourceTypes a collection of resource types implemented by the resource
-        *
-        * @param interfaces a collection of interfaces that the resource supports/implements
-        * @return OCResource::Ptr a shared pointer to the new resource object
-        */
+         * Creates a resource proxy object so that get/put/observe functionality
+         * can be used without discovering the object in advance.  Note that the
+         * consumer of this method needs to provide all of the details required to
+         * correctly contact and observe the object. If the consumer lacks any of
+         * this information, they should discover the resource object normally.
+         * Additionally, you can only create this object if OCPlatform was initialized
+         * to be a Client or Client/Server.  Otherwise, this will return an empty
+         * shared ptr.
+         *
+         * @param host a string containing a resolvable host address of the server
+         *           holding the resource. Currently this should be in the format
+         *           coap://address:port, though in the future, we expect this to
+         *           change to //address:port
+         *
+         * @param uri the rest of the resource's URI that will permit messages to be
+         *           properly routed.  Example: /a/light
+         *
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *
+         * @param isObservable a boolean containing whether the resource supports observation
+         *
+         * @param resourceTypes a collection of resource types implemented by the resource
+         *
+         * @param interfaces a collection of interfaces that the resource supports/implements
+         * @return OCResource::Ptr a shared pointer to the new resource object
+         */
         OCResource::Ptr constructResourceObject(const std::string& host,
                         const std::string& uri,
                         OCConnectivityType connectivityType, bool isObservable,
@@ -561,14 +561,48 @@ namespace OC
                         const std::vector<std::string>& interfaces);
 
         /**
-        * Allows application entity handler to send response to an incoming request.
-        *
-        * @param pResponse OCResourceResponse pointer that will permit to set values related
-        * to resource response.
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        */
+         * Allows application entity handler to send response to an incoming request.
+         *
+         * @param pResponse OCResourceResponse pointer that will permit to set values related
+         * to resource response.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
+
+        /**
+         * Find all the Direct Pairing capable devices.
+         *
+         * @param waittime timeoutbefore the callback is called
+         * @param callback function to callback with discovered devices after timeout
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult findDirectPairingDevices(unsigned short waittime,
+                                     GetDirectPairedCallback callback);
+
+        /**
+         * Get all the Direct paired devices.
+         *
+         * @param callback function to callback with the list of paired devices
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult getDirectPairedDevices(GetDirectPairedCallback callback);
+
+        /**
+         * Perform the Direct Pairing with the selected peer device
+         *
+         * @param peer device to direct pair with
+         * @param pmSel Selected pairing method
+         * @param pinNumber pin to validate peer & perform the direct pairing
+         * @param resultCallback callback function that will get the result of the operation
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
+                                     const std::string& pinNumber,
+                                     DirectPairingCallback resultCallback);
     }
 }
 
