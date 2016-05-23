@@ -1,6 +1,22 @@
+//******************************************************************
 //
-// Created by jaesick.shin on 2016-04-26.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <android/log.h>
 #include <stdio.h>
@@ -11,7 +27,8 @@
 #define  LOGE(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 static JavaVM *g_jvm = NULL;
-static jobject g_obj = NULL;
+static jobject g_obj_subscriptionListener = NULL;
+static jobject g_obj_syncListener = NULL;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
@@ -22,119 +39,66 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSStartProvider(
-        JNIEnv * env, jobject jObj, jboolean jAccess)
+        JNIEnv * env, jobject jObj, jboolean jAccess, jobject jSubscriptionListener,
+        jobject jSyncListener)
 {
-    LOGI("JNI TEST - NSStartProvider...");
+    LOGI("NSStartProvider...");
 
-    g_obj = jObj;
+    if (!jSubscriptionListener || !jSyncListener)
+    {
+        LOGI("Fail to set listeners");
+        //return (jint) NS_ERROR;
+    }
 
-    //JNIlogPrintedCallback(env, jObj, "NSStartProvider");
+    g_obj_subscriptionListener = (jobject) (*env)->NewGlobalRef(env, jSubscriptionListener);
+    g_obj_syncListener = (jobject) (*env)->NewGlobalRef(env, jSyncListener);
 
+    // check access policy
     NSAccessPolicy access = NS_ACCEPTER_PROVIDER;
-    if(NSStartProvider(access, NSSubscribeRequestCb, NSSyncCb) == 0)
-    {
-        LOGI("JNI TEST - Success to start NSProvider service");
-    }
-    else
-    {
-        LOGE("JNI TEST - Fail to start NSProvider service");
-    }
-    //NSStartProvider(access, NULL, NULL);
 
-    return 0;
+    if (NSStartProvider(access, NSSubscribeRequestCb, NSSyncCb) != NS_OK)
+    {
+        LOGE("Fail to start NSProvider service");
+        return (jint) NS_ERROR;
+    }
+
+    return (jint) NS_OK;
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSStopProvider(
         JNIEnv * env, jobject jObj)
 {
-    LOGI("JNI TEST - NSStopProvider");
-    return NSStopProvider();
+    LOGI("NSStopProvider");
 
-    return 0;
+    (*env)->DeleteGlobalRef(env, g_obj_subscriptionListener);
+    (*env)->DeleteGlobalRef(env, g_obj_syncListener);
+
+    if (NSStopProvider() != NS_OK)
+    {
+        LOGE("Fail to stop NSProvider service");
+        return (jint) NS_ERROR;
+    }
+
+    return (jint) NS_OK;
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSSendNotification(
         JNIEnv * env, jobject jObj, jobject jMsg)
 {
+    LOGI("NSSendNotification");
+
+    if (!jMsg)
+    {
+        LOGI("Fail to send notification - Message is null");
+        return (jint) NS_ERROR;
+    }
+
+    NSMessage * nsMsg = NSGetMessage(env, jMsg);
+
     LOGI("JNI TEST - NSSendNotification");
+    NSSendNotification(nsMsg);
 
-//    bool isAttached = false;
-//    //JNIEnv* env;
-//    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
-//    if (JNI_OK != res)
-//    {
-//        LOGI("AttachCurrentThread for JNIEnv pointer");
-//        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
-//
-//        if (JNI_OK != res)
-//        {
-//            LOGE("AttachCurrentThread has failed");
-//            return -1;
-//        }
-//        isAttached = true;
-//    }
-
-    jclass cls = (*env)->GetObjectClass(env, jMsg);
-
-    // Message ID
-    jfieldID fid_id = (*env)->GetFieldID(env, cls, "id", "Ljava/lang/String;");
-    if (fid_id == NULL)
-    {
-        LOGI("JNI TEST - Error: jfieldID for message id is null");
-        return 0;
-    }
-    jstring jmsgId = (*env)->GetObjectField(env, jMsg, fid_id);
-    const char * messageId = (*env)->GetStringUTFChars(env, jmsgId, NULL);
-    if (messageId == NULL)
-    {
-        printf("JNI TEST - Error: messageId is null\n");
-        return 0;
-    }
-    LOGI("JNI TEST - Message ID: %s\n", messageId);
-    JNIlogPrintedCallback(env, jObj, messageId);
-
-    (*env)->ReleaseStringUTFChars(env, jmsgId, messageId);
-
-    // Message Title
-    jfieldID fid_title = (*env)->GetFieldID(env, cls, "title", "Ljava/lang/String;");
-    if (fid_title == NULL)
-    {
-        LOGE("JNI TEST - Error: jfieldID for message id is null");
-        return 0;
-    }
-    jstring jmsgTitle = (*env)->GetObjectField(env, jMsg, fid_title);
-    const char * messageTitle = (*env)->GetStringUTFChars(env, jmsgTitle, NULL);
-    if (messageTitle == NULL)
-    {
-        printf("JNI TEST - Error: messageTitle is null\n");
-        return 0;
-    }
-    LOGI("JNI TEST - Message Title: %s\n", messageTitle);
-    (*env)->ReleaseStringUTFChars(env, jmsgTitle, messageTitle);
-
-    // Message Body
-    jfieldID fid_body = (*env)->GetFieldID(env, cls, "body", "Ljava/lang/String;");
-    if (fid_body == NULL)
-    {
-        LOGE("JNI TEST - Error: jfieldID for message id is null");
-        return 0;
-    }
-    jstring jmsgBody = (*env)->GetObjectField(env, jMsg, fid_body);
-    const char * messageBody = (*env)->GetStringUTFChars(env, jmsgBody, NULL);
-    if (messageBody == NULL)
-    {
-        printf("JNI TEST - Error: messageBody is null\n");
-        return 0;
-    }
-    LOGI("JNI TEST - Message Body: %s\n", messageBody);
-    (*env)->ReleaseStringUTFChars(env, jmsgBody, messageBody);
-
-//    if (isAttached)
-//    {
-//        (*g_jvm)->DetachCurrentThread(g_jvm);
-//    }
-
-    return 0;
+    return (jint) NS_OK;
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSProviderReadCheck(
@@ -161,149 +125,169 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NS
     return 0;
 }
 
-void JNIlogPrintedCallback(JNIEnv * env, jobject jObj, const char * log)
-{
-    static jmethodID cb = NULL;
-    //jclass cls = (*env)->FindClass(env, "com/sec/notiproviderexample/ProviderExample");
-    jclass cls = (*env)->GetObjectClass(env, jObj);
-    if (cls == NULL)
-    {
-        LOGE("JNI TEST - Error: cannot find callback class");
-    }
-
-    if (cb == NULL)
-    {
-        cb = (*env)->GetMethodID(env, cls, "onLogPrinted", "(Ljava/lang/String;)V");
-        if (cb == NULL)
-        {
-            LOGE("JNI TEST - Error: cannot get callback method");
-            return;
-        }
-        LOGI("JNI TEST - Get callback method - onLogPrinted");
-
-        jstring msg = (*env)->NewStringUTF(env, log);
-        LOGI("print: %s", log);
-
-        (*env)->CallVoidMethod(env, jObj, cb, msg);
-    }
-}
-
-void JNISubscribeRequestCallback(JNIEnv * env, jobject jObj, char * consumer)
-{
-    static jmethodID cb = NULL;
-    //jclass cls = (*env)->FindClass(env, "com/sec/notiproviderexample/ProviderExample");
-    jclass cls = (*env)->GetObjectClass(env, jObj);
-    if (cls == NULL)
-    {
-        LOGE("JNI TEST - Error: cannot find callback class");
-    }
-
-    if (cb == NULL)
-    {
-        cb = (*env)->GetMethodID(env, cls, "onSubscribeRequest", "(Ljava/lang/String;)V");
-        if (cb == NULL)
-        {
-            LOGE("JNI TEST - Error: cannot get callback method");
-            return;
-        }
-        LOGI("JNI TEST - Get callback method - onSubscribeRequest");
-
-        jstring msg = (*env)->NewStringUTF(env, consumer);
-        LOGI("print: %s", consumer);
-
-        (*env)->CallVoidMethod(env, jObj, cb, msg);
-    }
-}
-
-void JNIMessageSyncCallback(JNIEnv * env, jobject jObj, char * message)
-{
-    static jmethodID cb = NULL;
-    //jclass cls = (*env)->FindClass(env, "com/sec/notiproviderexample/ProviderExample");
-    jclass cls = (*env)->GetObjectClass(env, jObj);
-    if (cls == NULL)
-    {
-        LOGE("JNI TEST - Error: cannot find callback class");
-    }
-
-    if (cb == NULL)
-    {
-        cb = (*env)->GetMethodID(env, cls, "onMessageSync", "(Ljava/lang/String;)V");
-        if (cb == NULL)
-        {
-            LOGE("JNI TEST - Error: cannot get callback method");
-            return;
-        }
-        LOGI("JNI TEST - Get callback method - onMessageSync");
-
-        jstring msg = (*env)->NewStringUTF(env, message);
-        LOGI("print: %s", message);
-
-        (*env)->CallVoidMethod(env, jObj, cb, msg);
-    }
-}
-
 void NSSubscribeRequestCb(NSConsumer *consumer)
 {
-    LOGI("JNI TEST - consumer requested to subscribe");
+    LOGI("Subscription requested by consumer");
 
-    char *cid = consumer->mId;
-    LOGI("JNI TEST - NS_ Consumer ID: %s\n", cid);
-
-    bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv * env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        LOGI("AttachCurrentThread for JNIEnv pointer");
-        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
-
-        if (JNI_OK != res)
+        if (res == JNI_EDETACHED)
         {
-            LOGE("AttachCurrentThread has failed");
+            if ((*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL) != JNI_OK)
+            {
+                LOGE("Failed to get the environment");
+                return;
+            }
+            else
+            {
+                LOGE("Success to get the environment");
+            }
+        }
+        else
+        {
+            LOGE("Failed to get the environment using GetEnv()");
             return;
         }
-        isAttached = true;
     }
 
-    // callback to app
-    JNISubscribeRequestCallback(env, g_obj, cid);
-
-    if (isAttached)
+    jclass cls = (*env)->GetObjectClass(env, g_obj_subscriptionListener);
+    if (!cls)
     {
-        (*g_jvm)->DetachCurrentThread(g_jvm);
+        LOGE("Failed to Get ObjectClass");
+        return;
     }
+    jmethodID mid = (*env)->GetMethodID(env, cls, "OnNSSubscribedEvent", "(Ljava/lang/String;)V");
+    if (!mid)
+    {
+        LOGE("Failed to Get MethodID");
+        return;
+    }
+
+    //(*env)->CallVoidMethod(env, g_obj_subscriptionListener, mid);
+
+    (*g_jvm)->DetachCurrentThread(g_jvm);
 
     NSAccept(consumer, true);
+
+    return;
 }
 
 void NSSyncCb(NSProvider *provider, NSSync *sync)
 {
-    LOGI("JNI TEST - sync requested");
-    LOGI("JNI TEST - NS_ Sync MessageID: %s\n", sync->mMessageId);
-    LOGI("JNI TEST - NS_ Sync State: %d\n", sync->mState);
+    LOGI("Sync requested");
 
-    bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv * env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
-        LOGI("AttachCurrentThread for JNIEnv pointer");
-        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
-
-        if (JNI_OK != res)
+        if (JNI_EDETACHED)
         {
-            LOGE("AttachCurrentThread has failed");
+            if ((*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL) < 0)
+            {
+                LOGE("Failed to get the environment");
+                return;
+            }
+            else
+            {
+                LOGE("Success to get the environment");
+            }
+        }
+        else
+        {
+            LOGE("Failed to get the environment using GetEnv()");
             return;
         }
-        isAttached = true;
     }
 
-    // callback to app
-    JNIMessageSyncCallback(env, g_obj, sync->mMessageId);
+    LOGI("Sync ID : %s\n", sync->mMessageId);
+    LOGI("Sync STATE : %d\n", sync->mState);
 
-    if (isAttached)
+    jstring strMessageId = (*env)->NewStringUTF(env, sync->mMessageId);
+
+    jclass cls = (*env)->GetObjectClass(env, g_obj_syncListener);
+    if (!cls)
     {
-        (*g_jvm)->DetachCurrentThread(g_jvm);
+        LOGE("Failed to Get ObjectClass");
+        return;
     }
+    jmethodID mid = (*env)->GetMethodID(env, cls, "OnNSSynchronizedEvent",
+            "(Ljava/lang/String;I)V");
+    if (!mid)
+    {
+        LOGE("Failed to Get MethodID");
+        return;
+    }
+
+    //(*env)->CallVoidMethod(env, g_obj_syncListener, mid, strMessageId, (jint) sync->mState);
+
+    (*g_jvm)->DetachCurrentThread(g_jvm);
+
+    return;
+
+}
+
+NSMessage * NSGetMessage(JNIEnv * env, jobject jMsg)
+{
+    LOGI("NSGetMessage");
+
+    jclass cls = (*env)->GetObjectClass(env, jMsg);
+
+    // Message ID
+    jfieldID fid_id = (*env)->GetFieldID(env, cls, "id", "Ljava/lang/String;");
+    if (fid_id == NULL)
+    {
+        LOGI("Error: jfieldID for message id is null");
+        return (jint) NS_ERROR;
+    }
+    jstring jmsgId = (*env)->GetObjectField(env, jMsg, fid_id);
+    const char * messageId = (*env)->GetStringUTFChars(env, jmsgId, NULL);
+    if (messageId == NULL)
+    {
+        printf("Error: messageId is null\n");
+        return (jint) NS_ERROR;
+    }
+    LOGI("Message ID: %s\n", messageId);
+
+    // Message Title
+    jfieldID fid_title = (*env)->GetFieldID(env, cls, "title", "Ljava/lang/String;");
+    if (fid_title == NULL)
+    {
+        LOGE("Error: jfieldID for message id is null");
+        return (jint) NS_ERROR;
+    }
+    jstring jmsgTitle = (*env)->GetObjectField(env, jMsg, fid_title);
+    const char * messageTitle = (*env)->GetStringUTFChars(env, jmsgTitle, NULL);
+    if (messageTitle == NULL)
+    {
+        printf("Error: messageTitle is null\n");
+        return (jint) NS_ERROR;
+    }
+    LOGI("Message Title: %s\n", messageTitle);
+
+    // Message Body
+    jfieldID fid_body = (*env)->GetFieldID(env, cls, "body", "Ljava/lang/String;");
+    if (fid_body == NULL)
+    {
+        LOGE("Error: jfieldID for message id is null");
+        return (jint) NS_ERROR;
+    }
+    jstring jmsgBody = (*env)->GetObjectField(env, jMsg, fid_body);
+    const char * messageBody = (*env)->GetStringUTFChars(env, jmsgBody, NULL);
+    if (messageBody == NULL)
+    {
+        printf("Error: messageBody is null\n");
+        return (jint) NS_ERROR;
+    }
+    LOGI("Message Body: %s\n", messageBody);
+
+    NSMessage * nsMsg = (NSMessage *) malloc(sizeof(NSMessage));
+
+    nsMsg->mId = strdup(messageId);
+    nsMsg->mTitle = strdup(messageTitle);
+    nsMsg->mContentText = strdup(messageBody);
+
+    return nsMsg;
 
 }
