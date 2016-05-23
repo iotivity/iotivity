@@ -257,12 +257,7 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
-{
-    // TODO
-}
-
-void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback)
+void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");

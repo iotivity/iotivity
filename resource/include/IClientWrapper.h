@@ -46,6 +46,13 @@ namespace OC
                         FindCallback& callback,
                         QualityOfService QoS) = 0;
 
+        virtual OCStackResult ListenErrorForResource(const std::string& serviceUrl,
+                        const std::string& resourceType,
+                        OCConnectivityType connectivityType,
+                        FindCallback& callback,
+                        FindErrorCallback& errorCallback,
+                        QualityOfService QoS) = 0;
+
         virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
                         const std::string& deviceURI,
                         OCConnectivityType connectivityType,

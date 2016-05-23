@@ -182,6 +182,28 @@ namespace OC
                              host, resourceName, connectivityType, resourceHandler, QoS);
     }
 
+    OCStackResult OCPlatform_impl::findResource(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler,
+                                            FindErrorCallback errorHandler)
+    {
+        return findResource(host, resourceName, connectivityType, resourceHandler,
+                            errorHandler, m_cfg.QoS);
+    }
+
+    OCStackResult OCPlatform_impl::findResource(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler,
+                                            FindErrorCallback errorHandler,
+                                            QualityOfService QoS)
+    {
+        return checked_guard(m_client, &IClientWrapper::ListenErrorForResource,
+                             host, resourceName, connectivityType, resourceHandler,
+                             errorHandler, QoS);
+    }
+
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
                                             const std::string& deviceURI,
                                             OCConnectivityType connectivityType,

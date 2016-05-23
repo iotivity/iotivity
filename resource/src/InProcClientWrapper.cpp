@@ -184,6 +184,57 @@ namespace OC
         return OC_STACK_KEEP_TRANSACTION;
     }
 
+    OCStackApplicationResult listenErrorCallback(void* ctx, OCDoHandle /*handle*/,
+        OCClientResponse* clientResponse)
+    {
+        if (!ctx || !clientResponse)
+        {
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        ClientCallbackContext::ListenErrorContext* context =
+            static_cast<ClientCallbackContext::ListenErrorContext*>(ctx);
+        if (!context)
+        {
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        OCStackResult result = clientResponse->result;
+        if (result == OC_STACK_OK)
+        {
+            if (!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+            {
+                oclog() << "listenCallback(): clientResponse payload was null or the wrong type"
+                    << std::flush;
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+
+            auto clientWrapper = context->clientWrapper.lock();
+
+            if (!clientWrapper)
+            {
+                oclog() << "listenCallback(): failed to get a shared_ptr to the client wrapper"
+                        << std::flush;
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+
+            ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                        reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+            // loop to ensure valid construction of all resources
+            for (auto resource : container.Resources())
+            {
+                std::thread exec(context->callback, resource);
+                exec.detach();
+            }
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        std::string resourceURI = clientResponse->resourceUri;
+        std::thread exec(context->errorCallback, resourceURI, result);
+        exec.detach();
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+
     OCStackResult InProcClientWrapper::ListenForResource(
             const std::string& serviceUrl,
             const std::string& resourceType,
@@ -209,6 +260,55 @@ namespace OC
 
         auto cLock = m_csdkLock.lock();
         if(cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDoResource(nullptr, OC_REST_DISCOVER,
+                                  resourceUri.str().c_str(),
+                                  nullptr, nullptr, connectivityType,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  nullptr, 0);
+        }
+        else
+        {
+            delete context;
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult InProcClientWrapper::ListenErrorForResource(
+            const std::string& serviceUrl,
+            const std::string& resourceType,
+            OCConnectivityType connectivityType,
+            FindCallback& callback, FindErrorCallback& errorCallback,
+            QualityOfService QoS)
+    {
+        if (!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        ostringstream resourceUri;
+        resourceUri << serviceUrl << resourceType;
+
+        ClientCallbackContext::ListenErrorContext* context =
+            new ClientCallbackContext::ListenErrorContext(callback, errorCallback,
+                                                          shared_from_this());
+        if (!context)
+        {
+            return OC_STACK_ERROR;
+        }
+
+        OCCallbackData cbdata(
+                static_cast<void*>(context),
+                listenErrorCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::ListenErrorContext*>(c);}
+            );
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(nullptr, OC_REST_DISCOVER,

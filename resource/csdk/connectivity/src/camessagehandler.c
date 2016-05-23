@@ -34,6 +34,7 @@
 #include "caadapterutils.h"
 #include "cainterfacecontroller.h"
 #include "caretransmission.h"
+#include "oic_string.h"
 
 #ifdef WITH_BWT
 #include "cablockwisetransfer.h"
@@ -824,7 +825,7 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
         CAResult_t res = CAReceiveBlockWiseData(pdu, &(sep->endpoint), cadata, dataLen);
         if (CA_NOT_SUPPORTED == res || CA_REQUEST_TIMEOUT == res)
         {
-            OIC_LOG(ERROR, TAG, "this message does not have block option");
+            OIC_LOG(DEBUG, TAG, "this message does not have block option");
             CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
         }
         else

@@ -102,6 +102,27 @@ namespace OC
                                     connectivityType, resourceHandler, QoS);
         }
 
+        OCStackResult findResource(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler,
+                                            FindErrorCallback errorHandler)
+        {
+            return OCPlatform_impl::Instance().findResource(host, resourceName,
+                                    connectivityType, resourceHandler, errorHandler);
+        }
+
+        OCStackResult findResource(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler,
+                                            FindErrorCallback errorHandler,
+                                            QualityOfService QoS)
+        {
+            return OCPlatform_impl::Instance().findResource(host, resourceName,
+                                    connectivityType, resourceHandler, errorHandler, QoS);
+        }
+
         OCStackResult getDeviceInfo(const std::string& host,
                                             const std::string& deviceURI,
                                             OCConnectivityType connectivityType,

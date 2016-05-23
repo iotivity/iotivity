@@ -39,6 +39,14 @@ namespace OC
                                                 QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
+        virtual OCStackResult ListenErrorForResource(const std::string& /*servUrl*/,
+                                                     const std::string& /*rsrcType*/,
+                                                     OCConnectivityType /*connType*/,
+                                                     FindCallback& /*callback*/,
+                                                     FindErrorCallback& /*errorCallback*/,
+                                                     QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
         virtual OCStackResult ListenForDevice(const std::string& /*serviceUrl*/,
                                               const std::string& /*deviceURI*/,
                                               OCConnectivityType /*connType*/,
