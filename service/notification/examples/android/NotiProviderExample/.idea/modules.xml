@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/NotiProviderExample.iml" filepath="$PROJECT_DIR$/NotiProviderExample.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/iotivity-armeabi-notification-service-debug/iotivity-armeabi-notification-service-debug.iml" filepath="$PROJECT_DIR$/iotivity-armeabi-notification-service-debug/iotivity-armeabi-notification-service-debug.iml" />
+      <module fileurl="file://$PROJECT_DIR$/iotivity-base-armeabi-debug/iotivity-base-armeabi-debug.iml" filepath="$PROJECT_DIR$/iotivity-base-armeabi-debug/iotivity-base-armeabi-debug.iml" />
+    </modules>
+  </component>
+</project>
