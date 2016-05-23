@@ -111,11 +111,12 @@ typedef void (*OCProvisionResultCB)(void* ctx, int nOfRes, OCProvisionResult_t *
 /**
  * Callback function definition of direct-pairing
  *
+ * @param[OUT] ctx - User context which will be returned wth callback
  * @param[OUT] peer - pairing device info.
  * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
-typedef void (*OCDirectPairingResultCB)(OCDirectPairingDev_t *peer, OCStackResult result);
+typedef void (*OCDirectPairingResultCB)(void *ctx, OCDirectPairingDev_t *peer, OCStackResult result);
 
 
 #ifdef __cplusplus

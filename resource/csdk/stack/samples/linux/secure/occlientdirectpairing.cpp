@@ -270,10 +270,11 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
 }
 
 // This is a function called back when direct-pairing status is changed
-void pairingReqCB(OCDPDev_t* peer, OCStackResult result)
+void pairingReqCB(void *ctx, OCDPDev_t* peer, OCStackResult result)
 {
     OIC_LOG(INFO, TAG, "Callback Context for Direct-Pairing establishment\n");
 
+    (void) ctx;
     if (OC_STACK_OK == result)
     {
         OIC_LOG_V(INFO, TAG,
@@ -359,7 +360,7 @@ OCStackResult DoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber)
 
     // start direct pairing
     OIC_LOG(INFO, TAG, "   Start Direct Pairing..");
-    if(OC_STACK_OK != OCDoDirectPairing(peer, pmSel, pinNumber, pairingReqCB))
+    if(OC_STACK_OK != OCDoDirectPairing(NULL, peer, pmSel, pinNumber, pairingReqCB))
     {
         OIC_LOG(ERROR, TAG, "OCDoDirectPairing API error");
         return OC_STACK_ERROR;
