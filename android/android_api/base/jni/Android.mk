@@ -58,7 +58,7 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniEntityHandler.cpp \
                     JniOnResourceFoundListener.cpp \
                     JniOnDeviceInfoListener.cpp \
-		    JniOnPlatformInfoListener.cpp \
+                    JniOnPlatformInfoListener.cpp \
                     JniOnPresenceListener.cpp \
                     JniOnGetListener.cpp \
                     JniOnPutListener.cpp \
@@ -74,15 +74,18 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOcPlatform.cpp \
                     JniOcResource.cpp \
                     JniOcResourceIdentifier.cpp \
-                    JniOcSecurity.cpp
+                    JniOcSecurity.cpp \
+                    JniOnDPDevicesFoundListener.cpp \
+                    JniOnDirectPairingListener.cpp \
+                    JniOcDirectPairDevice.cpp
 ifeq ($(SECURED), 1)
-LOCAL_SRC_FILES +=  JniOcSecureResource.cpp \
-                    JniOcProvisioning.cpp \
-                    JniSecureUtils.cpp \
-                    JniProvisionResultListner.cpp \
-                    JniPinCheckListener.cpp \
-                    JniDisplayPinListener.cpp
-endif
+    LOCAL_SRC_FILES +=  JniOcSecureResource.cpp \
+                        JniOcProvisioning.cpp \
+                        JniSecureUtils.cpp \
+                        JniProvisionResultListner.cpp \
+                        JniPinCheckListener.cpp \
+                        JniDisplayPinListener.cpp
+                        endif
 
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc

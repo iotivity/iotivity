@@ -131,6 +131,46 @@ public class OcSecureResource {
             ProvisionPairwiseDevicesListener provisionPairwiseDevicesListener) throws OcException;
 
     /**
+     *  Method to configure resource for direct pairing
+     *
+     *  @param pin                      pin number
+     *  @param pdacls                   Array of Device Pairing Access Control List
+     *  @param type                     List of supported OcPrmType
+     *  @param edp                      enable (1) / disable (0)
+     *  @param ProvisionDirectPairing   Callback function, which will be called after completion
+     *                                  of Direct Pairing.
+     *  @throws OcException
+     */
+
+    public void doProvisionDirectPairing(String pin, OicSecPdAcl[] pdacls, List<OcPrmType> type,
+            boolean edp , ProvisionDirectPairingListener provisionDirectPairingListener)
+        throws OcException {
+
+            int[] typeArray = new int[type.size()];
+            int i = 0;
+            for (OcPrmType ocPrmType:type) {
+                typeArray[i++] = ocPrmType.getValue();
+            }
+
+            this.provisionDirectPairing(pin, pdacls, typeArray, (edp?1:0),
+                    provisionDirectPairingListener);
+        }
+
+    private native void provisionDirectPairing(String pin, OicSecPdAcl[] pdacls, int[] type,
+            int edp , ProvisionDirectPairingListener provisionDirectPairingListener)
+        throws OcException;
+
+    /**
+     * provisionDirectPairingListener can be registered with doOwnershipTransfer
+     * call.
+     * Listener notified asynchronously.
+     */
+    public interface ProvisionDirectPairingListener {
+        public void provisionDirectPairingListener(List<ProvisionResult> provisionResultList,
+                int hasError);
+    }
+
+    /**
      * doOwnershipTransferListener can be registered with doOwnershipTransfer
      * call.
      * Listener notified asynchronously.

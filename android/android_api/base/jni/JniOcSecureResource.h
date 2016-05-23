@@ -55,7 +55,8 @@ class JniOcSecureResource
                 jobject device2, jobject jListener);
         OCStackResult unlinkDevices(JNIEnv* env, jobject device2, jobject jListener);
         OCStackResult removeDevice(JNIEnv* env, jint timeout, jobject jListener);
-
+        OCStackResult provisionDirectPairing(JNIEnv* env, jobjectArray jpdacls,jobject jListener,
+                std::string pin, std::vector<int> prms, int edp);
     private:
 
         std::map<jobject, std::pair<JniProvisionResultListner*, int>> resultMap;
@@ -115,6 +116,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionACL
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionPairwiseDevices1
   (JNIEnv *, jobject, jint, jint, jobject, jobject, jobject, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    provisionDirectPairing
+ * Signature: (Ljava/lang/Object;Lorg/iotivity/base/OcSecureResource/ProvisionDirectPairingListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionDirectPairing
+  (JNIEnv *, jobject, jstring, jobjectArray, jintArray, jint, jobject);
 
 /*
  * Class:     org_iotivity_base_OcSecureResource

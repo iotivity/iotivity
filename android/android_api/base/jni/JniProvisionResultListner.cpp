@@ -109,6 +109,11 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
             calledFunc = "provisionPairwiseDevicesListener";
         }
         break;
+        case ListenerFunc::PROVISIONDIRECTPAIRING:
+        {
+            calledFunc = "provisionDirectPairingListener";
+        }
+        break;
         default:
         {
             checkExAndRemoveListener(env);

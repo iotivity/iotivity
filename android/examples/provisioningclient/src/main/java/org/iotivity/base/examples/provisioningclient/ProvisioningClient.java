@@ -24,6 +24,8 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcProvisioning;
 import org.iotivity.base.OcSecureResource;
 import org.iotivity.base.OicSecAcl;
+import org.iotivity.base.OicSecPdAcl;
+import org.iotivity.base.OcPrmType;
 import org.iotivity.base.OxmType;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.ProvisionResult;
@@ -59,6 +61,22 @@ public class ProvisioningClient extends Activity implements
     private List<OcSecureResource> deviceList;
     private List<OcSecureResource> ownedDeviceList;
     private TextView mEventsTextView;
+
+    OcSecureResource.ProvisionDirectPairingListener provisionDPListener =
+            new OcSecureResource.ProvisionDirectPairingListener() {
+                @Override
+                public void provisionDirectPairingListener(List<ProvisionResult> provisionResults,
+                                                           int hasError) {
+                    Log.d(TAG, "Inside provisionDPListener");
+                    ProvisionResult pResult = provisionResults.get(0);
+                    if (hasError == StringConstants.ERROR_CODE) {
+                        logMessage(TAG + "Provision direct pairing Failed for " + pResult.getDevId());
+                    } else {
+                        logMessage(TAG + "Provision direct pairing Successful for " + pResult.getDevId());
+                    }
+                }
+            };
+
     OcSecureResource.ProvisionAclListener provisionAclListener =
             new OcSecureResource.ProvisionAclListener() {
                 @Override
@@ -123,7 +141,7 @@ public class ProvisioningClient extends Activity implements
         mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
         LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
         layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
         );
         filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
         //copy CBOR file when application runs first time
@@ -187,6 +205,32 @@ public class ProvisioningClient extends Activity implements
             new OwnedDiscoveryAsyncTask().execute();
         }
     }
+
+
+    private void doDPProvisioning() {
+        try {
+            logMessage(TAG + "Provision direct pairing for " + ownedDeviceList.get(0).getDeviceID());
+            newSecureResource = ownedDeviceList.get(0);
+            String pin = "00000000";
+            List<OcPrmType>prmTypes = new ArrayList<OcPrmType>();
+            prmTypes.add(OcPrmType.DP_PRE_CONFIGURED);
+            boolean edp = true;
+            List<String> resources = new ArrayList<String>();
+            List<String> periods = new ArrayList<String>();
+            List<String> recurrences = new ArrayList<String>();
+            resources.add(StringConstants.DEFAULT_RESOURCES);
+            OicSecPdAcl pdAcl = new OicSecPdAcl(recurrences, periods,
+                    StringConstants.DEFAULT_PERMISSION, resources);
+            OicSecPdAcl[] oicSecPdAcls = new OicSecPdAcl[1];
+            oicSecPdAcls[0] = pdAcl;
+            newSecureResource.doProvisionDirectPairing(pin, oicSecPdAcls, prmTypes, edp,
+                    provisionDPListener);
+        } catch (Exception e) {
+            logMessage(TAG + "Direct Pairing Provisioning error: " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
 
     private void doPairwiseProvisioning() {
         try {
@@ -544,11 +588,11 @@ public class ProvisioningClient extends Activity implements
                 if (ownedDeviceList.size() > 0) {
                     for (int i = 0; i < ownedDeviceList.size(); i++) {
                         publishProgress(TAG + "Owned Discovered Device " + (i + 1) + "= " +
-                                        ownedDeviceList.get(i).getDeviceID()
-                                        + "\nIP Address= " + ownedDeviceList.get(i).getIpAddr()
-                                        + "\nOwned Status= " + ownedDeviceList.get(i).getOwnedStatus()
-                                        + "\nDevice Status= " + ((ownedDeviceList.get(i).
-                                        getDeviceStatus() == DeviceStatus.ON) ? "ON" : "OFF")
+                                ownedDeviceList.get(i).getDeviceID()
+                                + "\nIP Address= " + ownedDeviceList.get(i).getIpAddr()
+                                + "\nOwned Status= " + ownedDeviceList.get(i).getOwnedStatus()
+                                + "\nDevice Status= " + ((ownedDeviceList.get(i).
+                                getDeviceStatus() == DeviceStatus.ON) ? "ON" : "OFF")
                         );
                     }
                 } else {
@@ -568,6 +612,12 @@ public class ProvisioningClient extends Activity implements
 
         @Override
         protected void onPostExecute(String s) {
+
+
+            if (ownedDeviceList.size() > 0 && "success".equals(s)) {
+                doDPProvisioning();
+            }
+
             if (ownedDeviceList.size() > 1 && "success".equals(s)) {
                 doPairwiseProvisioning();
             }

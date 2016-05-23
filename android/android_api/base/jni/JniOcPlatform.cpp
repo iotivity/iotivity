@@ -25,6 +25,7 @@
 #include "JniOcPresenceHandle.h"
 #include "JniOcResourceResponse.h"
 #include "JniOcSecurity.h"
+#include "JniOcDirectPairDevice.h"
 #include "JniUtils.h"
 #include "ocpayload.h"
 
@@ -319,6 +320,148 @@ void RemoveOnPresenceListener(JNIEnv* env, jobject jListener)
         ThrowOcException(JNI_EXCEPTION, "OnPresenceListener not found");
     }
     presenceMapLock.unlock();
+}
+
+JniOnDPDevicesFoundListener* AddOnDPDevicesFoundListener(JNIEnv* env, jobject jListener)
+{
+    JniOnDPDevicesFoundListener *onDPDeviceListener = nullptr;
+
+    dpDevicesFoundListenerMapLock.lock();
+
+    for (auto it = onDPDevicesFoundListenerMap.begin(); it !=
+            onDPDevicesFoundListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            onDPDeviceListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            onDPDevicesFoundListenerMap.insert(*it);
+            LOGD("onDPDeviceListener: ref. count incremented");
+            break;
+        }
+    }
+    if (!onDPDeviceListener)
+    {
+        onDPDeviceListener = new JniOnDPDevicesFoundListener(env, jListener,
+                RemoveOnDPDevicesFoundListener);
+        jobject jgListener = env->NewGlobalRef(jListener);
+        onDPDevicesFoundListenerMap.insert(
+                std::pair<jobject, std::pair<JniOnDPDevicesFoundListener*, int>>(
+                    jgListener,
+                    std::pair<JniOnDPDevicesFoundListener*, int>(onDPDeviceListener, 1)));
+        LOGI("onDPDeviceListener: new listener");
+    }
+    dpDevicesFoundListenerMapLock.unlock();
+    return onDPDeviceListener;
+}
+
+void RemoveOnDPDevicesFoundListener(JNIEnv* env, jobject jListener)
+{
+    dpDevicesFoundListenerMapLock.lock();
+    bool isFound = false;
+    for (auto it = onDPDevicesFoundListenerMap.begin(); it !=
+            onDPDevicesFoundListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                onDPDevicesFoundListenerMap.insert(*it);
+                LOGI("onDPDeviceListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnDPDevicesFoundListener* listener = refPair.first;
+                delete listener;
+                onDPDevicesFoundListenerMap.erase(it);
+                LOGI("onDPDeviceListener is removed");
+            }
+            isFound = true;
+            break;
+        }
+    }
+    if (!isFound)
+    {
+        ThrowOcException(JNI_EXCEPTION, "onDPDeviceListener not found");
+    }
+    dpDevicesFoundListenerMapLock.unlock();
+}
+
+JniOnDirectPairingListener* AddOnDirectPairingListener(JNIEnv* env, jobject jListener)
+{
+    JniOnDirectPairingListener *onDirectPairingListener = nullptr;
+
+    directPairingListenerMapLock.lock();
+
+    for (auto it = directPairingListenerMap.begin(); it !=
+            directPairingListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            onDirectPairingListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            directPairingListenerMap.insert(*it);
+            LOGD("onDirectPairingListener: ref. count incremented");
+            break;
+        }
+    }
+    if (!onDirectPairingListener)
+    {
+        onDirectPairingListener = new JniOnDirectPairingListener(env, jListener,
+                RemoveOnDirectPairingListener);
+        jobject jgListener = env->NewGlobalRef(jListener);
+        directPairingListenerMap.insert(
+                std::pair<jobject, std::pair<JniOnDirectPairingListener*, int>>(
+                    jgListener,
+                    std::pair<JniOnDirectPairingListener*, int>(onDirectPairingListener, 1)));
+        LOGI("onDirectPairingListener: new listener");
+    }
+    directPairingListenerMapLock.unlock();
+    return onDirectPairingListener;
+}
+
+void RemoveOnDirectPairingListener(JNIEnv* env, jobject jListener)
+{
+    directPairingListenerMapLock.lock();
+    bool isFound = false;
+    for (auto it = directPairingListenerMap.begin(); it !=
+            directPairingListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                directPairingListenerMap.insert(*it);
+                LOGI("onDirectPairingListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnDirectPairingListener* listener = refPair.first;
+                delete listener;
+                directPairingListenerMap.erase(it);
+                LOGI("onDirectPairingListener is removed");
+            }
+            isFound = true;
+            break;
+        }
+    }
+    if (!isFound)
+    {
+        ThrowOcException(JNI_EXCEPTION, "onDirectPairingListener not found");
+    }
+    directPairingListenerMapLock.unlock();
 }
 
 /*
@@ -693,6 +836,145 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Find resource has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcPlatform
+ * Method:    findDirectPairingDevices
+ * Signature: (ILorg/iotivity/base/OcPlatform/FindDirectPairingListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findDirectPairingDevices
+  (JNIEnv * env, jclass clazz, jint jTimeout, jobject jListener)
+{
+    LOGD("OcPlatform_findDirectPairingDevices");
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onDPDevicesFoundListener cannot be null");
+        return;
+    }
+    JniOnDPDevicesFoundListener *onDPDevsFoundListener = AddOnDPDevicesFoundListener(env,
+            jListener);
+
+    GetDirectPairedCallback getDirectPairedCallback =
+        [onDPDevsFoundListener](PairedDevices pairingDevList)
+        {
+            onDPDevsFoundListener->directPairingDevicesCallback(pairingDevList,
+                    DPFunc::FIND_DIRECT_PAIRED_DEV_LIST);
+        };
+
+    try
+    {
+        OCStackResult result = OCPlatform::findDirectPairingDevices(jTimeout,
+                getDirectPairedCallback);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OCPlatform::findDirectPairingDevices has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcPlatform
+ * Method:    getDirectPairedDevices
+ * Signature: (Lorg/iotivity/base/OcDirectPairDevice/GetDirectPairedListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDirectPairedDevices
+(JNIEnv *env, jclass jclazz, jobject jListener)
+{
+    LOGD("OcPlatform_getDirectPairedDevices");
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "getPairedDevList Callback cannot be null");
+        return;
+    }
+    JniOnDPDevicesFoundListener *onGetPairedDevicesListener = AddOnDPDevicesFoundListener(env,
+            jListener);
+
+    GetDirectPairedCallback getDirectPairedCallback =
+        [onGetPairedDevicesListener](PairedDevices pairedDevList)
+        {
+            onGetPairedDevicesListener->directPairingDevicesCallback(pairedDevList,
+                    DPFunc::GET_PAIRED_DEV_LIST);
+        };
+
+    try
+    {
+        OCStackResult result = OCPlatform::getDirectPairedDevices(getDirectPairedCallback);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcDirectPairDevice_getDirectPairedDevices");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcPlatform
+ * Method:    doDirectPairing
+ * Signature: (Lorg/iotivity/base/OcDirectPairDevice;Lorg/iotivity/base/OcPrmType;
+ *           Ljava/lang/String;Lorg/iotivity/base/OcDirectPairDevice/DirectPairingListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_doDirectPairing0
+(JNIEnv *env, jclass clazz, jobject jpeer, jint jprmType, jstring jpin, jobject jListener)
+{
+    LOGD("OcPlatform_doDirectPairing");
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "doDirectPairing Callback cannot be null");
+        return;
+    }
+    if (!jpeer)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "Peer cannot be null");
+        return;
+    }
+
+    JniOnDirectPairingListener *onDirectPairingListener = AddOnDirectPairingListener(env,
+            jListener);
+
+    DirectPairingCallback DirectPairingCB =
+        [onDirectPairingListener](std::shared_ptr<OCDirectPairing> dpDev, OCStackResult result)
+        {
+            onDirectPairingListener->doDirectPairingCB(dpDev, result);
+        };
+
+    JniOcDirectPairDevice *dev = JniOcDirectPairDevice::getJniOcDirectPairDevicePtr(env, jpeer);
+
+    if (!dev)
+    {
+        return ;
+    }
+    std::string pin = env->GetStringUTFChars(jpin, 0);
+
+    try
+    {
+        OCStackResult result = OCPlatform::doDirectPairing(dev->getPtr(), (OCPrm_t)jprmType,
+                pin, DirectPairingCB);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcPlatform_oDirectPairing");
             return;
         }
     }

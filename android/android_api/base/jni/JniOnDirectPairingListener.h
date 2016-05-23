@@ -1,7 +1,7 @@
 /*
 * //******************************************************************
 * //
-* // Copyright 2015 Samsung Electronics All Rights Reserved.
+* // Copyright 2016 Samsung Electronics All Rights Reserved.
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 * //
@@ -19,21 +19,25 @@
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
-
+#include <jni.h>
+#include "OCDirectPairing.h"
 #include "JniOcStack.h"
-#include "OCProvisioningManager.h"
 
-class JniSecureUtils
+#ifndef _Included_org_iotivity_base_OcPlatform_JniOnDirectPairingListener
+#define _Included_org_iotivity_base_OcPlatform_JniOnDirectPairingListener
+
+class JniOnDirectPairingListener
 {
-    private:
-        static std::string convertUUIDtoStr(OicUuid_t uuid);
-        static void convertStrToUUID(char *str, OicUuid_t &uuid);
-    public:
-        static jobject convertProvisionresultVectorToJavaList(JNIEnv *,
-                const OC::PMResultList_t *);
-        static jobjectArray convertDeviceVectorToJavaArray(JNIEnv *env,
-                std::vector<std::shared_ptr<OC::OCSecureResource>>& deviceListVector);
-        static jobject convertUUIDVectorToJavaStrList(JNIEnv *env, OC::UuidList_t &vector);
-        static OCStackResult convertJavaACLToOCAcl(JNIEnv *env, jobject in, OicSecAcl_t *out);
-        static OCStackResult convertJavaPdACLToOCAcl(JNIEnv *env, jobject in, OicSecPdAcl_t *pdacl);
+public:
+    JniOnDirectPairingListener(JNIEnv *env, jobject jListener,
+            RemoveListenerCallback removeListenerCallback);
+    ~JniOnDirectPairingListener();
+
+   void doDirectPairingCB(std::shared_ptr<OC::OCDirectPairing>, OCStackResult);
+
+private:
+    RemoveListenerCallback m_removeListenerCallback;
+    jweak m_jwListener;
+    void checkExAndRemoveListener(JNIEnv* env);
 };
+#endif
