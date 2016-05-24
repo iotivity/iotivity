@@ -64,6 +64,18 @@ static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNU
     (void) UNUSED4;
 }
 
+static OCStackResult OTMLoadSecretCallback(OTMContext_t* otmCtx)
+{
+    //dummy callback
+    (void) otmCtx;
+    return OC_STACK_OK;
+}
+
+TEST(OCInitPMTest, NullPath)
+{
+    EXPECT_EQ(OC_STACK_OK, OCInitPM(NULL));
+}
+
 TEST(OCProvisionPairwiseDevicesTest, NullDevice1)
 {
     pDev1.doxm = &defaultDoxm1;
@@ -173,4 +185,43 @@ TEST(OCGetLinkedStatusTest, NULLDeviceID)
     OCUuidList_t *list = NULL;
     size_t noOfDevices = 0;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetLinkedStatus(NULL, &list, &noOfDevices));
+}
+
+TEST(OCDeleteUuidListTest, NullUuidList)
+{
+    OCDeleteUuidList(NULL);
+    EXPECT_EQ(1, 1);
+}
+
+TEST(OCDeleteACLListTest, NullACLList)
+{
+    OCDeleteACLList(NULL);
+    EXPECT_EQ(1, 1);
+}
+
+TEST(OCDeletePdAclListTest, NullPdACLList)
+{
+    OCDeletePdAclList(NULL);
+    EXPECT_EQ(1, 1);
+}
+
+TEST(OCDeleteDiscoveredDevicesTest, NullProvisionDevList)
+{
+    OCDeleteDiscoveredDevices(NULL);
+    EXPECT_EQ(1, 1);
+}
+
+TEST(OCSetOwnerTransferCallbackDataTest, NULLCallback)
+{
+    OicSecOxm_t ownershipTransferMethod = OIC_JUST_WORKS;
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCSetOwnerTransferCallbackData(ownershipTransferMethod,
+    NULL));
+}
+
+TEST(OCSetOwnerTransferCallbackDataTest, InvalidOXMType)
+{
+    OicSecOxm_t ownershipTransferMethod = OIC_OXM_COUNT;
+    OTMCallbackData_t stOTMCallbackData = { &OTMLoadSecretCallback, NULL, NULL, NULL};
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetOwnerTransferCallbackData(ownershipTransferMethod,
+    &stOTMCallbackData));
 }

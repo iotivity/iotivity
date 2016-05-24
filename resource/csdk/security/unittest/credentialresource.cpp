@@ -112,7 +112,7 @@ static void printCred(const OicSecCred_t * cred)
            OIC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
 #endif /* __WITH_X509__ */
-	OIC_LOG_V(INFO, TAG, "cred->rownerID = %s", credTmp1->rownerID.id);
+    OIC_LOG_V(INFO, TAG, "cred->rownerID = %s", credTmp1->rownerID.id);
     }
 }
 
@@ -432,3 +432,19 @@ TEST(CredResourceTest, GetDtlsX509Credentials)
 }
 
 #endif
+#if defined(__WITH_DTLS__)
+TEST(CredGetDtlsPskCredentialsTest, NullResult)
+{
+    EXPECT_EQ(-1, GetDtlsPskCredentials(CA_DTLS_PSK_KEY, NULL, 0, NULL, 0));
+}
+
+TEST(CredAddTmpPskWithPINTest, NullSubject)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, AddTmpPskWithPIN(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              NULL, 0, NULL, NULL));
+}
+#endif
+TEST(CredCBORPayloadToCredTest, NullPayload)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToCred(NULL, 0, NULL));
+}
