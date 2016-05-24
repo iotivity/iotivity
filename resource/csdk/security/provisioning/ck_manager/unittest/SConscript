@@ -68,14 +68,19 @@ if not env.get('RELEASE'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittest = pki_test_env.Program('unittest', ['pki_test.cpp'])
+unittest = pki_test_env.Program('unittest', ['pki_test.cpp',
+                                            'ckm_info_test.cpp',
+                                            'crl_generator_test.cpp',
+                                            'csr_generator_test.cpp'])
 
 Alias("test", [unittest])
 
 
 
 unittest_src_dir = src_dir + '/resource/csdk/security/provisioning/ck_manager/unittest/test_data/'
-unittest_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/ck_manager/unittest'
+unittest_build_dir = env.get('BUILD_DIR') +'resource/csdk/security/provisioning/ck_manager/unittest'
+
+pki_test_env.AppendUnique(CPPDEFINES = ['SECURITY_BUILD_UNITTEST_DIR='+unittest_build_dir])
 
 pki_test_env.Alias("install",env.Install( unittest_build_dir, [ unittest_src_dir + '01.der',
 								unittest_src_dir + 'cacert.der',
@@ -95,6 +100,6 @@ if env.get('TEST') == '1':
 		pki_test_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		pki_test_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		pki_test_env.AppendENVPath('LD_LIBRARY_PATH', [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
- 		ut = pki_test_env.Command ('ut', None, out_dir + '/resource/csdk/security/unittest/unittest')
+ 		ut = pki_test_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/ck_manager/unittest/unittest')
 AlwaysBuild ('ut')
 

@@ -121,7 +121,7 @@ typedef int (*CAGetDTLSX509CredentialsHandler)(CADtlsX509Creds_t *credInfo);
  *                                  credInfo which is then freed by CA
  * @return  NONE
  */
-typedef void (*CAGetDTLSCrlHandler)(ByteArray crlInfo);
+typedef void (*CAGetDTLSCrlHandler)(ByteArray* crlInfo);
 
 /**
  * @brief   Register callback to get DTLS Cert credentials.
