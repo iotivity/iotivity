@@ -81,7 +81,8 @@ if not env.get('RELEASE'):
 unittest = sptest_env.Program('unittest', ['pmutilitytest.cpp',
                                            'secureresourceprovider.cpp',
                                            'provisioningdatabasemanager.cpp',
-                                           'ocprovisioningmanager.cpp','otmunittest.cpp' ])
+                                           'ocprovisioningmanager.cpp', 'otmunittest.cpp', 
+                                           'credentialgeneratortest.cpp' ])
 
 sample_server1 = sptest_env.Program('sample_server1', ['sampleserver1.cpp'])
 sample_server2 = sptest_env.Program('sample_server2', ['sampleserver2.cpp'])
