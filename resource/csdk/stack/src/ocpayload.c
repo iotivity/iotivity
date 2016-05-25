@@ -188,6 +188,12 @@ static void OCCopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *sou
         case OCREP_PROP_STRING:
             dest->str = OICStrdup(source->str);
             break;
+        case OCREP_PROP_BYTE_STRING:
+            dest->ocByteStr.bytes = (uint8_t*)OICMalloc(source->ocByteStr.len * sizeof(uint8_t));
+            VERIFY_PARAM_NON_NULL(TAG, dest->ocByteStr.bytes, "Failed allocating memory");
+            dest->ocByteStr.len = source->ocByteStr.len;
+            memcpy(dest->ocByteStr.bytes, source->ocByteStr.bytes, dest->ocByteStr.len);
+            break;
         case OCREP_PROP_OBJECT:
             dest->obj = OCRepPayloadClone(source->obj);
             break;
@@ -198,6 +204,8 @@ static void OCCopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *sou
             // Nothing to do for the trivially copyable types.
             break;
     }
+exit:
+    return;
 }
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
