@@ -10,8 +10,8 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/iotivity-armeabi-notification-service-debug" />
-            <option value="$PROJECT_DIR$/iotivity-base-armeabi-debug" />
+            <option value="$PROJECT_DIR$/iotivity-armeabi-notification-service-release" />
+            <option value="$PROJECT_DIR$/iotivity-base-armeabi-release" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -44,7 +44,7 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Create NotiListener with MainActivity");
 
         this.mActivity = activity;
-        this.mProviderProxy = mActivity.getProviderExample();
+        this.mProviderProxy = mActivity.getProviderProxy();
 
         if(mProviderProxy == null) {
             Log.i(TAG, "Fail to get providerProxy instance");
@@ -56,14 +56,17 @@ public class NotiListener extends NotificationListenerService {
         super.onNotificationPosted(sbn);
 
         Bundle bundle = sbn.getNotification().extras;
-        //Log.i("PACKAGENAME : ", sbn.getPackageName());
 
         if (sbn.getPackageName().equals("android"))
             return;
 
+        Log.i(TAG, "Noti. Package Name : " + sbn.getPackageName());
+        Log.i(TAG, "Noti. ID : " + sbn.getId());
+
         String id = Integer.toString(sbn.getId());
         String title = bundle.getString(Notification.EXTRA_TITLE, "");
         String body = bundle.getString(Notification.EXTRA_TEXT, "");
+        String source = "OCF";
 
         Log.i(TAG, "onNotificationPosted .. ");
         Log.i(TAG, "Id : " + id);
@@ -71,11 +74,7 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Body : " + body);
 
         if (mProviderProxy != null) {
-
-            NotificationObject notiObject = new NotificationObject(id, title);
-            notiObject.setContentText(body);
-            mProviderProxy.sendNSMessage(id, title, body);
-
+            mProviderProxy.sendNSMessage(id, title, body, source);
         } else {
             Log.i(TAG, "providerExample is NULL");
         }
@@ -85,6 +84,14 @@ public class NotiListener extends NotificationListenerService {
     public void onNotificationRemoved(StatusBarNotification sbn) {
         super.onNotificationRemoved(sbn);
 
-        Log.i(TAG, "onNotificationRemoved .. ");
+        Bundle bundle = sbn.getNotification().extras;
+
+        if (sbn.getPackageName().equals("android"))
+            return;
+
+        Log.i(TAG, "Noti. Package Name : " + sbn.getPackageName());
+        Log.i(TAG, "Noti. ID : " + sbn.getId());
+
+        mProviderProxy.readCheck(Integer.toString(sbn.getId()));
     }
 }

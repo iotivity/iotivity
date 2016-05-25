@@ -26,19 +26,20 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int  PERMISSIONS_REQUEST_READ_PHONE_STATE = 0;
-    private final String TAG = "NS_JNI_MAIN_ACTIVITY";
-
+    private final String TAG = "NS_MAIN_ACTIVITY";
+    private static final int MESSAGE_SUBSCRIPTION = 1;
+    private static final int MESSAGE_SYNC = 2;
     private Button btnTitle;
     private Button btnBody;
     private Button btnSend;
@@ -48,16 +49,36 @@ public class MainActivity extends AppCompatActivity {
     private Button btnSync;
     private EditText editTextTitle;
     private EditText editTextBody;
-    private TextView TvLog;
+    private static TextView TvLog;
 
-    private static int notiId = 0;
-
+    private static int notiId = 100;
+    private static int subCnt = 0;
     private boolean isStarted = false;
-    private String LastMessageId = null;
     private String consumerId;
 
     private NotiListener mNotiListener = null;
     private ProviderProxy mProviderProxy = null;
+
+    public static Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MESSAGE_SUBSCRIPTION:
+                    String subscriber = (String) msg.obj;
+                    if(subscriber != null)
+                        TvLog.append("Recv-Sub(" + subCnt++ + ") " + subscriber + "\n");
+                    break;
+
+                case MESSAGE_SYNC:
+                    String sync = (String) msg.obj;
+                    if(sync != null)
+                        TvLog.append("Sync-Read(#" + sync + ")\n");
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,23 +115,33 @@ public class MainActivity extends AppCompatActivity {
         btnStop.setOnClickListener(mClickListener);
 
         mProviderProxy = new ProviderProxy(getApplicationContext());
+        mProviderProxy.setHandler(mHandler);
+
         mNotiListener = new NotiListener(this);
 
         Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
         startActivity(intent);
     }
 
-    public ProviderProxy getProviderExample() {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    public ProviderProxy getProviderProxy()
+    {
         return mProviderProxy;
     }
 
-   Button.OnClickListener mClickListener = new View.OnClickListener() {
+    Button.OnClickListener mClickListener = new View.OnClickListener() {
         public void onClick(View v) {
             switch (v.getId()) {
 
                 case R.id.BtnStart: {
                     if (isStarted == false) {
                         Log.i(TAG, "Start NS Provider Service");
+
+                        TvLog.setText("Start NS-Provider\n");
 
                         boolean access = true; // ptovider controls the acceptance of consumers
                         mProviderProxy.startNotificationServer(access);
@@ -133,9 +164,6 @@ public class MainActivity extends AppCompatActivity {
 
                 case R.id.BtnCreateNoti: {
 
-                    Random r = new Random();
-                    int notiId = r.nextInt(901) + 100; //[100, 1000]
-
                     String id = Integer.toString(notiId); // generate notificaion ID
                     String title = editTextTitle.getText().toString();
                     String body = editTextBody.getText().toString();
@@ -150,13 +178,16 @@ public class MainActivity extends AppCompatActivity {
                     Notification.Builder notiBuilder = new Notification.Builder(getApplicationContext());
                     notiBuilder.setContentTitle(title);
                     notiBuilder.setContentText(body);
+                    notiBuilder.setPriority(Notification.PRIORITY_MAX);
+                    notiBuilder.setDefaults(Notification.DEFAULT_ALL);
                     notiBuilder.setSmallIcon(R.mipmap.ic_launcher);
                     NotificationManager notiMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                     notiMgr.notify(notiId, notiBuilder.build());
 
-                    LastMessageId= id; // for test to send sync
+                    notiId++;
 
                     Log.i(TAG, "#" + notiId + " notified ..");
+                    TvLog.append("Send Notitication(#" + notiId + ")\n");
 
                 }
                 break;
@@ -167,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(TAG, "Fail to send sync");
                         break;
                     }
-                    mProviderProxy.readCheck(LastMessageId);
+                    //mProviderProxy.readCheck(LastMessageId);
                 }
                 break;
 
@@ -180,6 +211,8 @@ public class MainActivity extends AppCompatActivity {
 
                     mProviderProxy.stopNotificationServer();
                     isStarted = false;
+
+                    TvLog.append("Stop NS-Provider\n");
                 }
                 break;
             }

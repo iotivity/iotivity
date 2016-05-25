@@ -36,6 +36,7 @@
 #define NS_ATTRIBUTE_ID "ID"
 #define NS_ATTRIBUTE_TITLE "TITLE"
 #define NS_ATTRIBUTE_TEXT "CONTENTTEXT"
+#define NS_ATTRIBUTE_SOURCE "SOURCE"
 #define NS_ATTRIBUTE_STATE "STATE"
 #define NS_ATTRIBUTE_DEVICE "DEVICE"
 
@@ -68,8 +69,10 @@ typedef enum eAccessPolicy
  */
 typedef enum
 {
-    Notification_Read,
-    Notification_Dismiss,
+    Notification_Read = 0,
+    Notification_Dismiss = 1,
+    Notification_Unread = 2,
+
 } NSSyncTypes;
 
 /**
@@ -79,6 +82,7 @@ typedef struct
 {
     char * mId;
     void * mUserData;
+
 } NSDevice;
 
 /**
@@ -97,6 +101,7 @@ typedef struct
     char * syncUri;
     OCDoHandle messageHandle;
     OCDoHandle syncHandle;
+
 } NSProvider;
 
 /**
@@ -107,6 +112,8 @@ typedef struct
     char * mId;
     char * mTitle;
     char * mContentText;
+    char * mSource;
+
 } NSMessage;
 
 /**
@@ -120,6 +127,7 @@ typedef struct
 
     //Optional
     NSDevice * mDevice;
+
 } NSSync;
 
 #endif /* _NS_COMMON_H_ */

@@ -315,10 +315,20 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
+            /** Receive sync data from consumer which read or dismiss notification message.
+                And broadcast the sync data to all subscribers including provider app
+                to synchronize the notification message status. */
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
+
+            // send to subscribers
             NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ,
                     NSBuildOICNotificationSync(entityHandlerRequest->payload));
+
+            // send to provider app
+            NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ,
+                    NSBuildOICNotificationSync(entityHandlerRequest->payload));
+
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
@@ -383,6 +393,9 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_OBSERVE_FLAG)
     {
+        /** Requested by consumers to synchronize notification message status.
+            Store the observer IDs to storage or cache */
+
         OIC_LOG(INFO, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
 
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)

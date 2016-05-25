@@ -152,6 +152,9 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
         }
     }
 
+    LOGI("consumer ID : %s\n", consumer->mId);
+    jstring consumerId = (*env)->NewStringUTF(env, consumer->mId);
+
     jclass cls = (*env)->GetObjectClass(env, g_obj_subscriptionListener);
     if (!cls)
     {
@@ -165,7 +168,7 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
         return;
     }
 
-    //(*env)->CallVoidMethod(env, g_obj_subscriptionListener, mid);
+    (*env)->CallVoidMethod(env, g_obj_subscriptionListener, mid, consumerId);
 
     (*g_jvm)->DetachCurrentThread(g_jvm);
 
@@ -220,7 +223,7 @@ void NSSyncCb(NSProvider *provider, NSSync *sync)
         return;
     }
 
-    //(*env)->CallVoidMethod(env, g_obj_syncListener, mid, strMessageId, (jint) sync->mState);
+    (*env)->CallVoidMethod(env, g_obj_syncListener, mid, strMessageId, (jint) sync->mState);
 
     (*g_jvm)->DetachCurrentThread(g_jvm);
 
@@ -282,11 +285,28 @@ NSMessage * NSGetMessage(JNIEnv * env, jobject jMsg)
     }
     LOGI("Message Body: %s\n", messageBody);
 
+    // Message Source
+    jfieldID fid_source = (*env)->GetFieldID(env, cls, "source", "Ljava/lang/String;");
+    if (fid_source == NULL)
+    {
+        LOGE("Error: jfieldID for message source is null");
+        return (jint) NS_ERROR;
+    }
+    jstring jmsgSource = (*env)->GetObjectField(env, jMsg, fid_source);
+    const char * messageSource = (*env)->GetStringUTFChars(env, jmsgSource, NULL);
+    if (messageSource == NULL)
+    {
+        printf("Error: messageSource is null\n");
+        return (jint) NS_ERROR;
+    }
+    LOGI("Message Source: %s\n", messageSource);
+
     NSMessage * nsMsg = (NSMessage *) malloc(sizeof(NSMessage));
 
     nsMsg->mId = strdup(messageId);
     nsMsg->mTitle = strdup(messageTitle);
     nsMsg->mContentText = strdup(messageBody);
+    nsMsg->mSource = strdup(messageSource);
 
     return nsMsg;
 

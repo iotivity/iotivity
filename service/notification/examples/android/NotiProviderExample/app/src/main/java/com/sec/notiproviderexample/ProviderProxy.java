@@ -23,6 +23,8 @@
 package com.sec.notiproviderexample;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import org.iotivity.base.ModeType;
@@ -35,21 +37,33 @@ import org.iotivity.service.notification.IoTNotification;
 import org.iotivity.service.notification.NSConsumer;
 import org.iotivity.service.notification.NSMessage;
 
-public class ProviderProxy {
+import java.util.HashMap;
 
-    private static final String TAG = "NS_JNI_PROVIDER_PROXY";
+public class ProviderProxy
+        implements IoTNotification.NSSubscriptionListner, IoTNotification.NSSynchListner{
+
+    private static final String TAG = "NS_PROVIDER_PROXY";
 
     private Context mContext = null;
     private OcResourceHandle mResourceHandle;   //resource handle
     private IoTNotification ioTNotification = null;
+    private HashMap<String, Integer> msgMap;
 
-    private final int SUCCESS = 200;
+    private Handler mHandler = null;
+    private static final int MESSAGE_SUBSCRIPTION = 1;
+    private static final int MESSAGE_SYNC = 2;
 
     public ProviderProxy(Context context) {
         Log.i(TAG, "Create providerProxy Instance");
 
+        this.msgMap = new HashMap<>();
         this.mContext = context;
         ioTNotification = new IoTNotification();
+    }
+
+    public void setHandler(Handler handler)
+    {
+        this.mHandler = handler;
     }
 
     private void configurePlatform() {
@@ -68,7 +82,7 @@ public class ProviderProxy {
         try {
             OcPlatform.stopPresence(); // Initialize OcPlatform
         } catch(Exception e) {
-            Log.e(TAG, "Exception during sropPresence: " + e);
+            Log.e(TAG, "Exception: stopping presence when configuration step: " + e);
         }
         Log.i(TAG, "Configuration done Successfully");
     }
@@ -76,7 +90,7 @@ public class ProviderProxy {
     public void startNotificationServer(boolean access)
     {
         configurePlatform();
-        ioTNotification.NSStartProvider(access);
+        ioTNotification.NSStartProvider(access, this, this);
     }
 
     public void stopNotificationServer() {
@@ -84,29 +98,52 @@ public class ProviderProxy {
         try {
             OcPlatform.stopPresence();
         } catch (Exception e) {
-            Log.e(TAG, "Exception during stopPresence to terminate ns: " + e);
+            Log.e(TAG, "Exception: stopping presence when terminating NS server: " + e);
         }
 
         ioTNotification.NSStopProvider();
     }
 
-    public void sendNSMessage(String id, String title, String body) {
+    public void sendNSMessage(String id, String title, String body, String source) {
 
         NSMessage notiMessage = new NSMessage(id);
         notiMessage.setTitle(title);
         notiMessage.setBody(body);
+        notiMessage.setSource(source);
+        msgMap.put(id, 1);
         ioTNotification.NSSendNotification(notiMessage);
     }
 
     public void readCheck(String messageId) {
-
-        NSMessage notiMessage = new NSMessage(messageId);
-        ioTNotification.NSProviderReadCheck(notiMessage);
+        if(msgMap.containsKey(messageId)) {
+            NSMessage notiMessage = new NSMessage(messageId);
+            ioTNotification.NSProviderReadCheck(notiMessage);
+        }
     }
 
     public void accept(String consumerId, boolean accepted)
     {
         NSConsumer consumer = new NSConsumer(consumerId);
         ioTNotification.NSAccept(consumer, accepted);
+    }
+
+    @Override
+    public void OnNSSubscribedEvent(String consumerId) {
+        Log.i(TAG, "OnNSSubscribedEvent");
+
+        Log.i(TAG, "Consumer: " + consumerId);
+        Message msg = mHandler.obtainMessage(MESSAGE_SUBSCRIPTION, consumerId);
+        mHandler.sendMessage(msg);
+    }
+
+    @Override
+    public void OnNSSynchronizedEvent(String messageId, int syncState) {
+        Log.i(TAG, "OnNSSynchronizedEvent");
+
+        Log.i(TAG, "Message Id: " + messageId);
+        Log.i(TAG, "Sync state: " + syncState);
+
+        Message msg = mHandler.obtainMessage(MESSAGE_SYNC, messageId + "(" + syncState + ")");
+        mHandler.sendMessage(msg);
     }
 }
