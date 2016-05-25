@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _NS_CONSUMER_CACHE_H_
-#define _NS_CONSUMER_CACHE_H_
+#ifndef _NS_CONSUMER_MEMORY_CACHE_H_
+#define _NS_CONSUMER_MEMORY_CACHE_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,33 +27,16 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdbool.h>
-
-#include "NSCommon.h"
+#include <pthread.h>
+#include "NSCacheAdapter.h"
 #include "NSConsumerCommon.h"
 
 
-typedef void * NSCacheData;
-
-typedef struct _NSCacheObject
-{
-    NSCacheData * data;
-    struct _NSCacheObject * next;
-} NSCacheObject;
-
-NSCacheList * NSConsumerCacheInit();
-NSResult NSConsumerCacheDestroy(NSCacheList * list);
-
-NSResult NSConsumerCacheInsert(NSCacheList * list, NSCacheObject * newObj);
-NSResult NSConsumerCacheDelete(NSCacheList * list, NSCacheObject * delObj);
-
-NSCacheObject * NSConsumerCacheFind(NSCacheList * list, char * findId);
-
-NSResult NSConsumerCacheWrite(NSCacheList * list, NSCacheObject * writeObj);
-NSCacheObject * NSConsumerCacheRead(NSCacheList * list, NSCacheObject * readObj);
-
+bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id);
+NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj);
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif // _NS_CONSUMER_CACHE_H_
+#endif // _NS_CONSUMER_MEMORY_CACHE_H_

@@ -26,8 +26,10 @@ extern "C" {
 #endif // __cplusplus
 
 #include "NSStructs.h"
-#include "NSConsumerCache.h"
+#include "NSCacheAdapter.h"
 #include "NSConsumerNotification.h"
+
+void NSDestroyCacheList();
 
 void NSConsumerSubscriptionHandleMsg(NSTask *);
 

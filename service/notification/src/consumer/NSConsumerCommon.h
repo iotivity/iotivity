@@ -28,10 +28,9 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "NSCommon.h"
+#include "NSConsumerInterface.h"
 #include "NSStructs.h"
 #include "ocstack.h"
-#include "NSConsumerInterface.h"
 
 #define NS_QOS OC_LOW_QOS
 #define NS_RESOURCE_TYPE "oic.r.notification"

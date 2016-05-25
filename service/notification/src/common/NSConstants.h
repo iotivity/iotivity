@@ -124,6 +124,8 @@ typedef enum eCacheType
 {
     NS_PROVIDER_CACHE_SUBSCRIBER = 1000,
     NS_PROVIDER_CACHE_MESSAGE = 1001,
+
+    NS_CONSUMER_CACHE_MESSAGE = 2001,
 } NSCacheType;
 
 typedef enum eResourceType

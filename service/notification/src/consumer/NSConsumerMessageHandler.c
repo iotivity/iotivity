@@ -115,6 +115,7 @@ NSResult NSConsumerPushEvent(NSTask * task)
 
 void NSConsumerMessageHandlerExit()
 {
+    NSDestroyCacheList();
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
 }
 

@@ -46,14 +46,17 @@ notification_env.AppendUnique(CPPPATH = ['include'])
 notification_env.AppendUnique(CPPPATH = ['src/common'])
 notification_env.AppendUnique(CPPPATH = ['src/provider'])
 notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
+notification_env.AppendUnique(CPPPATH = ['src/consumer'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
 
 if target_os == 'linux':
     notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
+    notification_env.AppendUnique(CPPPATH = ['src/consumer/cache/linux'])
 
 if target_os == 'android':
     notification_env.AppendUnique(CPPPATH = ['src/provider/cache/android'])
+    notification_env.AppendUnique(CPPPATH = ['src/consumer/cache/android'])
 
 notification_env.PrependUnique(LIBS = [
 	'octbstack',
@@ -89,16 +92,18 @@ if not env.get('RELEASE'):
 
 if target_os == 'linux':
     PROVIDER_CACHE = File('src/provider/cache/linux/NSProviderMemoryCache.c')
+    CONSUMER_CACHE = File('src/consumer/cache/linux/NSConsumerMemoryCache.c')
 
 if target_os == 'android':
     PROVIDER_CACHE = File('src/provider/cache/linux/NSProviderMemoryCache.c')
+    CONSUMER_CACHE = File('src/consumer/cache/linux/NSConsumerMemoryCache.c')
 
 notification_provider_src = [
 	env.Glob('src/provider/*.c'),
 	env.Glob('src/common/*.c'), PROVIDER_CACHE]
 notification_consumer_src = [
-	env.Glob('src/common/*.c'),
-	env.Glob('src/consumer/*.c')]
+	env.Glob('src/consumer/*.c'),
+	env.Glob('src/common/*.c'), CONSUMER_CACHE]
 
 providersdk = notification_env.SharedLibrary('notification_provider', notification_provider_src)
 notification_env.InstallTarget(providersdk, 'libnotification_provider')
@@ -116,9 +121,9 @@ consumersdk = notification_env.StaticLibrary('notification_consumer', notificati
 notification_env.InstallTarget(consumersdk, 'libnotification_consumer')
 notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
 
-notification_env.UserInstallTargetHeader('include/NSProviderIngerface.h',\
+notification_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
 	'service/notification', 'NSProviderInterface.h')
-notification_env.UserInstallTargetHeader('include/NSConsumerIngerface.h',\
+notification_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
 	'service/notification', 'NSConsumerInterface.h')
 
 # Go to build Unit test

@@ -22,7 +22,6 @@
 
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
-#include "NSConsumerCache.h"
 #include "NSStructs.h"
 
 #include "oic_malloc.h"
@@ -38,12 +37,22 @@ void NSSetCacheList(NSCacheList * cache)
     *(NSGetCacheList()) = cache;
 }
 
+void NSDestroyCacheList()
+{
+    NSCacheList * cache;
+    cache = *(NSGetCacheList());
+    if (!cache)
+    {
+        NSCacheDestroy(cache);
+    }
+}
+
 NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageTypes type)
 {
     NSMessage_consumer * noti = (NSMessage_consumer *) task->taskData;
     noti->type = type;
 
-    NSCacheObject * obj = (NSCacheObject *)OICMalloc(sizeof(NSCacheObject));
+    NSCacheElement * obj = (NSCacheElement *)OICMalloc(sizeof(NSCacheElement));
     if (!obj)
     {
         NS_LOG(ERROR, "Cache allocation is failed");
@@ -51,14 +60,10 @@ NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageType
     obj->data = (NSCacheData *) noti;
     obj->next = NULL;
 
-    if (NS_OK != NSConsumerCacheWrite(cache, obj))
+    if (NS_OK != NSCacheWrite(cache, obj))
     {
-        NS_LOG(DEBUG, "CacheUpdate - NSConsumerCacheInsert");
-        if (NS_OK != NSConsumerCacheInsert(cache, (NSCacheObject *) obj))
-        {
-            NS_LOG(ERROR, "Cache insert fail");
-            return NS_ERROR;
-        }
+        NS_LOG(ERROR, "Cache write fail");
+        return NS_ERROR;
     }
 
     NSRemoveMessage(noti);
@@ -79,7 +84,8 @@ void NSConsumerSubscriptionHandleMsg(NSTask * task)
     if (!*(NSGetCacheList()))
     {
         NS_LOG(DEBUG, "Cache Init");
-        cache = NSConsumerCacheInit();
+        cache = NSCacheCreate();
+        cache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
         if (!cache)
         {
             NS_LOG(ERROR, "Cache create fail");
@@ -88,14 +94,6 @@ void NSConsumerSubscriptionHandleMsg(NSTask * task)
         NSSetCacheList(cache);
     }
     cache = *(NSGetCacheList());
-    if (!cache->head)
-    {
-        NS_LOG(DEBUG, "Cache Head is null 2");
-    }
-    else{
-        NS_LOG(DEBUG, "Cache Head is not null 2");
-    }
-
 
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
 
@@ -115,7 +113,7 @@ void NSConsumerSubscriptionHandleMsg(NSTask * task)
         case TASK_RECV_READ:
         {
             NS_LOG(DEBUG, "Receive Read Notification");
-            // TODO update Cache.
+
             if (NS_OK != NSCacheUpdate(cache, task, Read))
             {
                 NS_LOG(ERROR, "Cache Update fail");
