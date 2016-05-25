@@ -868,7 +868,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         else
         {
             payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
-                savedDeviceInfo.types, OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
+                savedDeviceInfo.types, savedDeviceInfo.specVersion, savedDeviceInfo.dataModleVersion);
             if (!payload)
             {
                 discoveryResult = OC_STACK_NO_MEMORY;
@@ -1339,8 +1339,11 @@ void DeleteDeviceInfo()
 
     OICFree(savedDeviceInfo.deviceName);
     OCFreeOCStringLL(savedDeviceInfo.types);
+    OICFree(savedDeviceInfo.specVersion);
+    OICFree(savedDeviceInfo.dataModleVersion);
     savedDeviceInfo.deviceName = NULL;
-
+    savedDeviceInfo.specVersion = NULL;
+    savedDeviceInfo.dataModleVersion = NULL;
 }
 
 static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
@@ -1362,6 +1365,45 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
             return OC_STACK_NO_MEMORY;
         }
     }
+
+    if (info.specVersion)
+    {
+        savedDeviceInfo.specVersion = OICStrdup(info.specVersion);
+        if(!savedDeviceInfo.specVersion && info.specVersion)
+        {
+            DeleteDeviceInfo();
+            return OC_STACK_NO_MEMORY;
+        }
+    }
+    else
+    {
+        savedDeviceInfo.specVersion = OICStrdup(OC_SPEC_VERSION);
+        if(!savedDeviceInfo.specVersion && OC_SPEC_VERSION)
+        {
+            DeleteDeviceInfo();
+            return OC_STACK_NO_MEMORY;
+        }
+    }
+
+    if (info.dataModleVersion)
+    {
+        savedDeviceInfo.dataModleVersion = OICStrdup(info.dataModleVersion);
+        if(!savedDeviceInfo.dataModleVersion && info.dataModleVersion)
+        {
+            DeleteDeviceInfo();
+            return OC_STACK_NO_MEMORY;
+        }
+    }
+    else
+    {
+        savedDeviceInfo.dataModleVersion = OICStrdup(OC_DATA_MODEL_VERSION);
+        if(!savedDeviceInfo.dataModleVersion && OC_DATA_MODEL_VERSION)
+        {
+            DeleteDeviceInfo();
+            return OC_STACK_NO_MEMORY;
+        }
+    }
+
     return OC_STACK_OK;
 }
 

@@ -934,6 +934,10 @@ typedef struct
     char *deviceName;
     /** Pointer to the types.*/
     OCStringLL *types;
+    /** Pointer to the device specification version.*/
+    char *specVersion;
+    /** Pointer to the device data model version.*/
+    char *dataModleVersion;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER

@@ -232,7 +232,7 @@ static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
     OIC_LOG(level, PL_TAG, "Payload Type: Device");
     OIC_LOG_V(level, PL_TAG, "\tSID:%s", payload->sid);
     OIC_LOG_V(level, PL_TAG, "\tDevice Name:%s", payload->deviceName);
-    OIC_LOG_V(level, PL_TAG, "\tSpec Version%s", payload->specVersion);
+    OIC_LOG_V(level, PL_TAG, "\tSpec Version:%s", payload->specVersion);
     OIC_LOG_V(level, PL_TAG, "\tData Model Version:%s", payload->dataModelVersion);
     if (payload->types)
     {
