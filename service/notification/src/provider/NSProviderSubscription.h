@@ -43,5 +43,6 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest);
 void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest);
 NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest, bool accepted);
+NSResult NSSendResponse(const char * id, bool accepted);
 
 #endif /* _NS_PROVIDER_SUBSCRIPTION_H_ */

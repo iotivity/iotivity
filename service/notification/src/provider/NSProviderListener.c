@@ -57,7 +57,8 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
             NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_GET");
 
-            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY, (void *)entityHandlerRequest);
+            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
             ehResult = OC_EH_OK;
 
         }
@@ -252,16 +253,17 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_OBSERVE_FLAG)
     {
-        OIC_LOG(INFO, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
+        OIC_LOG(DEBUG, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
         NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_FLAG");
 
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
+            OIC_LOG (DEBUG, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_REGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n"
                     "Register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
-            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_SUBSCRIPTION, entityHandlerRequest);
+            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_SUBSCRIPTION,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
     }
 
@@ -316,19 +318,14 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             /** Receive sync data from consumer which read or dismiss notification message.
-                And broadcast the sync data to all subscribers including provider app
-                to synchronize the notification message status. */
+                           And broadcast the sync data to all subscribers including provider app
+                           to synchronize the notification message status. */
+
             OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
 
-            // send to subscribers
-            NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ,
-                    NSBuildOICNotificationSync(entityHandlerRequest->payload));
-
-            // send to provider app
             NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ,
                     NSBuildOICNotificationSync(entityHandlerRequest->payload));
-
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
@@ -396,15 +393,17 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         /** Requested by consumers to synchronize notification message status.
             Store the observer IDs to storage or cache */
 
-        OIC_LOG(INFO, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
+        OIC_LOG(DEBUG, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
+        NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_FLAG");
 
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
+            OIC_LOG (DEBUG, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_REGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerSyncCb\n - "
-                    "Register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
-            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SYNC_SUBSCRIPTION, entityHandlerRequest);
+                    "Register Sync observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
+            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SYNC_SUBSCRIPTION,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
     }
 

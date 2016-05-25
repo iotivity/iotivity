@@ -106,6 +106,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         return NS_ERROR;
     }
     OCRepPayloadDestroy(payload);
+    NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSSendAccessPolicyResponse - OUT");
     return NS_OK;
@@ -130,6 +131,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         element->data = (void*) subData;
         element->next = NULL;
+
+        NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
+        NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->messageObId);
 
         if (NSCacheWrite(consumerSubList, element) != NS_OK)
         {
@@ -163,7 +167,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->next = NULL;
 
         NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
-        NS_LOG_V(DEBUG, "SubList observation ID = [%d]", subData->syncObId);
+        NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->syncObId);
 
         if (NSCacheWrite(consumerSubList, element) != NS_OK)
         {
@@ -198,6 +202,7 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
     }
 
     NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
+    NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 }
 
 void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest)
@@ -290,6 +295,7 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
     }
 
     NSSendResponse(entityHandlerRequest->devAddr.addr, accepted);
+    NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;

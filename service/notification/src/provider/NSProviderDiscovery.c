@@ -58,7 +58,7 @@ void * NSDiscoverySchedule(void * ptr)
 {
     if (ptr == NULL)
     {
-        OIC_LOG(INFO, DISCOVERY_TAG, "Create NSDiscoverySchedule");
+        OIC_LOG(INFO, DISCOVERY_TAG, "Create NSDiscoverySchedule\n");
         NS_LOG(INFO, "Create NSDiscoverySchedule");
     }
 

@@ -113,7 +113,16 @@ NSResult NSSendNotification(NSMessage *msg)
 {
     OIC_LOG(INFO, INTERFACE_TAG, "Send Notification");
     NS_LOG(DEBUG, "NSSendNotification - IN");
-    NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_NOTIFICATION, msg);
+
+    NSMessage * newMsg = NSDuplicateMessage(msg);
+
+    if(newMsg == NULL)
+    {
+        NS_LOG(ERROR, "Msg is NULL");
+        return NS_ERROR;
+    }
+
+    NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_NOTIFICATION, newMsg);
     NS_LOG(DEBUG, "NSSendNotification - OUT");
     return NS_OK;
 }
@@ -180,6 +189,7 @@ void * NSResponseSchedule(void * ptr)
                     consumer.mUserData = obId;
 
                     NSSubscribeRequestCb(&consumer);
+                    NSFreeOCEntityHandlerRequest(request);
 
                     break;
                 }

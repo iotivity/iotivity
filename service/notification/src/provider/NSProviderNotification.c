@@ -144,6 +144,7 @@ NSResult NSSendMessage(NSMessage *msg)
         return NS_ERROR;
     }
     OCRepPayloadDestroy(payload);
+    NSFreeMessage(msg);
 
     NS_LOG(DEBUG, "NSSendMessage - OUT");
 

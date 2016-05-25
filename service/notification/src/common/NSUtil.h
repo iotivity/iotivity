@@ -26,9 +26,15 @@
 #include <stdbool.h>
 #include "ocstack.h"
 #include "ocpayload.h"
+#include "octypes.h"
 #include "NSStructs.h"
 #include "NSConstants.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 NSResult NSFreeMessage(NSMessage *);
+NSMessage * NSDuplicateMessage(NSMessage *);
+OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *);
+NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
 
 #endif /* _NS_UTIL__H_ */

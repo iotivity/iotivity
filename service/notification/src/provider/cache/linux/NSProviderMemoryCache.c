@@ -101,8 +101,6 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, NSCacheSubData * upd
             NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
             NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
 
-            NS_LOG(DEBUG,"");
-
             NS_LOG_V(DEBUG, "updateData_ID = %s", updateData->id);
             NS_LOG_V(DEBUG, "updateData_MsgObID = %d", updateData->messageObId);
             NS_LOG_V(DEBUG, "updateData_SyncObID = %d", updateData->syncObId);
@@ -162,8 +160,6 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
                 NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
                 NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
                 NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
-
-                NS_LOG(DEBUG,"");
 
                 NS_LOG_V(DEBUG, "subData_ID = %s", subData->id);
                 NS_LOG_V(DEBUG, "subData_MsgObID = %d", subData->messageObId);

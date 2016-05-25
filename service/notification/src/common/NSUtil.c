@@ -20,8 +20,6 @@
 
 #include "NSUtil.h"
 
-#include "oic_malloc.h"
-
 NSResult NSFreeMessage(NSMessage * obj)
 {
     if (!obj)
@@ -48,6 +46,96 @@ NSResult NSFreeMessage(NSMessage * obj)
     }
 
     OICFree(obj);
+
+    return NS_OK;
+}
+
+NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
+{
+    if(copyMsg == NULL)
+    {
+        NS_LOG(ERROR, "Copy Msg is NULL");
+        return NULL;
+    }
+
+    NSMessage * newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
+
+    if (!copyMsg->mId)
+    {
+        newMsg->mId = OICStrdup(copyMsg->mId);
+    }
+
+    if (!copyMsg->mTitle)
+    {
+        newMsg->mTitle = OICStrdup(copyMsg->mTitle);
+    }
+
+    if (!copyMsg->mContentText)
+    {
+        newMsg->mContentText = OICStrdup(copyMsg->mContentText);
+    }
+
+    return newMsg;
+}
+
+OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *entityHandlerRequest)
+{
+    NS_LOG(DEBUG, "NSCopyOCEntityHandlerRequest - IN");
+
+    OCEntityHandlerRequest *copyOfRequest =
+            (OCEntityHandlerRequest *)OICMalloc(sizeof(OCEntityHandlerRequest));
+
+    if (copyOfRequest)
+    {
+        // Do shallow copy
+        memcpy(copyOfRequest, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
+
+
+        if (copyOfRequest->query)
+        {
+            copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
+            if(!copyOfRequest->query)
+            {
+                NS_LOG(ERROR, "Copy failed due to allocation failure");
+                OICFree(copyOfRequest);
+                return NULL;
+            }
+        }
+
+        if (entityHandlerRequest->payload)
+        {
+            copyOfRequest->payload = (OCPayload *)
+                    (OCRepPayloadClone ((OCRepPayload*) entityHandlerRequest->payload));
+        }
+
+        // Ignore vendor specific header options for example
+        copyOfRequest->numRcvdVendorSpecificHeaderOptions = 0;
+        copyOfRequest->rcvdVendorSpecificHeaderOptions = NULL;
+    }
+
+    if (copyOfRequest)
+    {
+        NS_LOG(DEBUG, "Copied client request");
+    }
+    else
+    {
+        NS_LOG(DEBUG, "Error copying client request");
+    }
+
+    NS_LOG(DEBUG, "NSCopyOCEntityHandlerRequest - OUT");
+
+    return copyOfRequest;
+}
+
+NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequest)
+{
+    NS_LOG(DEBUG, "NSFreeOCEntityHandlerRequest - IN");
+
+    OICFree(entityHandlerRequest->query);
+    OCPayloadDestroy(entityHandlerRequest->payload);
+    OICFree(entityHandlerRequest);
+
+    NS_LOG(DEBUG, "NSFreeOCEntityHandlerRequest - OUT");
 
     return NS_OK;
 }
