@@ -4148,51 +4148,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             OIC_LOG(ERROR, TAG, "CALEClientGattClose has failed");
         }
 
-        if (GATT_ERROR == status)
+        if (CALECheckConnectionStateValue(status))
         {
-            // when we get GATT ERROR(0x85), gatt connection can be called again.
-            OIC_LOG(INFO, TAG, "retry gatt connect");
-
-            jstring leAddress = CALEClientGetAddressFromGatt(env, gatt);
-            if (!leAddress)
-            {
-                OIC_LOG(ERROR, TAG, "CALEClientGetAddressFromGatt has failed");
-                goto error_exit;
-            }
-
-            jobject btObject = CALEGetRemoteDevice(env, leAddress);
-            if (!btObject)
-            {
-                OIC_LOG(ERROR, TAG, "CALEGetRemoteDevice has failed");
-                goto error_exit;
-            }
-
-            jobject newGatt = CALEClientConnect(env, btObject, JNI_TRUE);
-            if (!newGatt)
-            {
-                OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
-                goto error_exit;
-            }
-
-            return;
+            // this state is unexpected reason to disconnect
+            // if the reason is suitable, connection logic of the device will be destroyed.
+            OIC_LOG(INFO, TAG, "connection logic destroy");
+            goto error_exit;
         }
         else
         {
-            if (CALECheckConnectionStateValue(status))
-            {
-                // this state is unexpected reason to disconnect
-                // if the reason is suitable, connection logic of the device will be destroyed.
-                OIC_LOG(INFO, TAG, "connection logic destroy");
-                goto error_exit;
-            }
-            else
-            {
-                // other reason except for gatt_success is expected to running
-                // background connection in BT platform.
-                OIC_LOG(INFO, TAG, "unknown status or manual disconnected state");
-                CALEClientUpdateSendCnt(env);
-                return;
-            }
+            // other reason except for gatt_success is expected to running
+            // background connection in BT platform.
+            OIC_LOG(INFO, TAG, "unknown status or manual disconnected state");
+            CALEClientUpdateSendCnt(env);
+            return;
         }
 
         if (g_sendBuffer)
