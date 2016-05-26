@@ -45,6 +45,7 @@
 #define TAG  "SRM-ACL"
 #define NUMBER_OF_SEC_PROV_RSCS 4
 #define NUMBER_OF_DEFAULT_SEC_RSCS 2
+#define STRING_UUID_SIZE (UUID_LENGTH * 2 + 5)
 
 static const uint8_t ACL_MAP_SIZE = 2;
 static const uint8_t ACL_ACLIST_MAP_SIZE = 1;
@@ -836,8 +837,11 @@ static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
     {
         if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_SUBJECTID_NAME, parseIter.attrLen) == 0)
         {
+            char strUuid[STRING_UUID_SIZE] = {0};
             VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
-            memcpy(subject->id, parseIter.valPos, parseIter.valLen);
+            memcpy(strUuid, parseIter.valPos, parseIter.valLen);
+            OCStackResult res = ConvertStrToUuid(strUuid, subject);
+            VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
             return true;
         }
     }
