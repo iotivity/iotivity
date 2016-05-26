@@ -171,6 +171,7 @@ NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse)
     retNoti->mId = NULL;
     retNoti->mTitle = NULL;
     retNoti->mContentText = NULL;
+    retNoti->mSource = NULL;
 
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
     if (!OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ID, &retNoti->mId))
@@ -182,11 +183,13 @@ NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse)
 
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retNoti->mTitle);
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TEXT, &retNoti->mContentText);
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SOURCE, &retNoti->mSource);
 
     NS_LOG_V(DEBUG, "Msg Address : %s", clientResponse->addr->addr);
     NS_LOG_V(DEBUG, "Msg ID : %s", retNoti->mId);
     NS_LOG_V(DEBUG, "Msg Title : %s", retNoti->mTitle);
     NS_LOG_V(DEBUG, "Msg Content : %s", retNoti->mContentText);
+    NS_LOG_V(DEBUG, "Msg Source : %s", retNoti->mSource);
 
     retNoti->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     memcpy(retNoti->addr, clientResponse->addr, sizeof(OCDevAddr));

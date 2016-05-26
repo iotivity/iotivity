@@ -12,6 +12,7 @@ void onNotificationPosted(NSProvider * provider, NSMessage * notification)
     printf("id : %s\n", notification->mId);
     printf("title : %s\n", notification->mTitle);
     printf("content : %s\n", notification->mContentText);
+    printf("source : %s\n", notification->mSource);
 //    NSDropNSObject(notification);
     NSConsumerReadCheck(notification);
 }

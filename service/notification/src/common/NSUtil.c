@@ -45,6 +45,12 @@ NSResult NSFreeMessage(NSMessage * obj)
         obj->mContentText = NULL;
     }
 
+    if (obj->mSource)
+    {
+        OICFree(obj->mSource);
+        obj->mSource = NULL;
+    }
+
     OICFree(obj);
 
     return NS_OK;
@@ -73,6 +79,11 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     if (!copyMsg->mContentText)
     {
         newMsg->mContentText = OICStrdup(copyMsg->mContentText);
+    }
+
+    if (!copyMsg->mSource)
+    {
+        newMsg->mSource = OICStrdup(copyMsg->mSource);
     }
 
     return newMsg;

@@ -211,6 +211,7 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
     newMsg->mId = OICStrdup(msg->mId);
     newMsg->mTitle = OICStrdup(msg->mTitle);
     newMsg->mContentText = OICStrdup(msg->mContentText);
+    newMsg->mSource = OICStrdup(msg->mSource);
     newMsg->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     if (!newMsg->addr)
     {
@@ -236,6 +237,11 @@ void NSRemoveMessage(NSMessage_consumer * msg)
     {
         OICFree(msg->mContentText);
         msg->mContentText = NULL;
+    }
+    if (msg->mSource)
+    {
+        OICFree(msg->mSource);
+        msg->mSource = NULL;
     }
     if (msg->addr)
     {

@@ -59,6 +59,7 @@ typedef struct
 
     //Optional
     char * mContentText;
+    char * mSource;
 
     OCDevAddr * addr;
     char * syncUri;

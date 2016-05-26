@@ -170,6 +170,12 @@ NSResult NSDropNSObject(NSMessage * obj)
         obj->mContentText = NULL;
     }
 
+    if (obj->mSource)
+    {
+        OICFree(obj->mSource);
+        obj->mSource = NULL;
+    }
+
     OICFree(obj);
 
     return NS_OK;
