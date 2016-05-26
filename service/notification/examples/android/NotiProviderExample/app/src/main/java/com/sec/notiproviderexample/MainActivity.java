@@ -34,12 +34,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
     private final String TAG = "NS_MAIN_ACTIVITY";
     private static final int MESSAGE_SUBSCRIPTION = 1;
     private static final int MESSAGE_SYNC = 2;
+    private static final int MESSAGE_NOTIFICATION = 3;
+
     private Button btnTitle;
     private Button btnBody;
     private Button btnSend;
@@ -66,19 +69,30 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_SUBSCRIPTION:
                     String subscriber = (String) msg.obj;
                     if(subscriber != null)
-                        TvLog.append("Recv-Sub(" + subCnt++ + ") " + subscriber + "\n");
+                        TvLog.append("Subscriber IP(" + ++subCnt + "): " + subscriber + "\n");
                     break;
 
                 case MESSAGE_SYNC:
                     String sync = (String) msg.obj;
                     if(sync != null)
-                        TvLog.append("Sync-Read(#" + sync + ")\n");
+                        TvLog.append("Sync-Read(Msg ID: " + sync + ")\n");
                     break;
+
                 default:
                     break;
             }
         }
     };
+
+    public void showToast(final String toast)
+    {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), toast, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,11 +198,9 @@ public class MainActivity extends AppCompatActivity {
                     NotificationManager notiMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                     notiMgr.notify(notiId, notiBuilder.build());
 
-                    notiId++;
-
                     Log.i(TAG, "#" + notiId + " notified ..");
-                    TvLog.append("Send Notitication(#" + notiId + ")\n");
-
+                    TvLog.append("Send Notitication(Msg ID: " + notiId + ")\n");
+                    notiId++;
                 }
                 break;
 

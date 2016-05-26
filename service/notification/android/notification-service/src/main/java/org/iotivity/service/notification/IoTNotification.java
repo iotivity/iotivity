@@ -29,7 +29,7 @@ public class IoTNotification
     }
 
     public interface NSSynchListner {
-        public void OnNSSynchronizedEvent(String messageId, int syncState);
+	public void OnNSSynchronizedEvent(String messageId, int syncState);
     }
 }
 

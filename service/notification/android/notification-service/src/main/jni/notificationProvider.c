@@ -24,7 +24,7 @@
 
 #define  LOG_TAG   "JNI_NS_INTERFACE"
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define  LOGE(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define  LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 static JavaVM *g_jvm = NULL;
 static jobject g_obj_subscriptionListener = NULL;
@@ -47,7 +47,6 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NS
     if (!jSubscriptionListener || !jSyncListener)
     {
         LOGI("Fail to set listeners");
-        //return (jint) NS_ERROR;
     }
 
     g_obj_subscriptionListener = (jobject) (*env)->NewGlobalRef(env, jSubscriptionListener);
@@ -104,7 +103,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NS
 JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSProviderReadCheck(
         JNIEnv * env, jobject jObj, jobject jMsg)
 {
-    printf("JNI TEST - NSReasCheck\n");
+    LOGI("NSReasCheck");
     return 0;
 }
 
@@ -113,12 +112,12 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NS
 {
     if (jAccepted)
     {
-        printf("JNI TEST - Accepted\n");
+        LOGI("Accepted");
         //NSAccept(consumer, true);
     }
     else
     {
-        printf("JNI TEST - Denied\n");
+        LOGI("Denied");
         //NSAccept(consumer, false);
     }
 
@@ -177,7 +176,7 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
     return;
 }
 
-void NSSyncCb(NSProvider *provider, NSSync *sync)
+void NSSyncCb(NSSync *sync)
 {
     LOGI("Sync requested");
 
@@ -241,14 +240,14 @@ NSMessage * NSGetMessage(JNIEnv * env, jobject jMsg)
     jfieldID fid_id = (*env)->GetFieldID(env, cls, "id", "Ljava/lang/String;");
     if (fid_id == NULL)
     {
-        LOGI("Error: jfieldID for message id is null");
+        LOGE("Error: jfieldID for message id is null");
         return (jint) NS_ERROR;
     }
     jstring jmsgId = (*env)->GetObjectField(env, jMsg, fid_id);
     const char * messageId = (*env)->GetStringUTFChars(env, jmsgId, NULL);
     if (messageId == NULL)
     {
-        printf("Error: messageId is null\n");
+        LOGE("Error: messageId is null");
         return (jint) NS_ERROR;
     }
     LOGI("Message ID: %s\n", messageId);
@@ -264,7 +263,7 @@ NSMessage * NSGetMessage(JNIEnv * env, jobject jMsg)
     const char * messageTitle = (*env)->GetStringUTFChars(env, jmsgTitle, NULL);
     if (messageTitle == NULL)
     {
-        printf("Error: messageTitle is null\n");
+        LOGE("Error: messageTitle is null");
         return (jint) NS_ERROR;
     }
     LOGI("Message Title: %s\n", messageTitle);
@@ -280,7 +279,7 @@ NSMessage * NSGetMessage(JNIEnv * env, jobject jMsg)
     const char * messageBody = (*env)->GetStringUTFChars(env, jmsgBody, NULL);
     if (messageBody == NULL)
     {
-        printf("Error: messageBody is null\n");
+        LOGE("Error: messageBody is null");
         return (jint) NS_ERROR;
     }
     LOGI("Message Body: %s\n", messageBody);
@@ -296,7 +295,7 @@ NSMessage * NSGetMessage(JNIEnv * env, jobject jMsg)
     const char * messageSource = (*env)->GetStringUTFChars(env, jmsgSource, NULL);
     if (messageSource == NULL)
     {
-        printf("Error: messageSource is null\n");
+        LOGE("Error: messageSource is null");
         return (jint) NS_ERROR;
     }
     LOGI("Message Source: %s\n", messageSource);

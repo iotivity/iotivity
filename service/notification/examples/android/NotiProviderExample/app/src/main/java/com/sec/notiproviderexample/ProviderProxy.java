@@ -22,10 +22,12 @@
 
 package com.sec.notiproviderexample;
 
+import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
@@ -50,8 +52,13 @@ public class ProviderProxy
     private HashMap<String, Integer> msgMap;
 
     private Handler mHandler = null;
+
     private static final int MESSAGE_SUBSCRIPTION = 1;
     private static final int MESSAGE_SYNC = 2;
+
+    private static final int SYNC_READ = 0;
+    private static final int SYNC_DISMISS = 1;
+    private static final int SYNC_UNREAD = 2;
 
     public ProviderProxy(Context context) {
         Log.i(TAG, "Create providerProxy Instance");
@@ -110,14 +117,25 @@ public class ProviderProxy
         notiMessage.setTitle(title);
         notiMessage.setBody(body);
         notiMessage.setSource(source);
-        msgMap.put(id, 1);
+        msgMap.put(id, SYNC_UNREAD);
         ioTNotification.NSSendNotification(notiMessage);
+
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(mContext, "Notification sent", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public void readCheck(String messageId) {
         if(msgMap.containsKey(messageId)) {
-            NSMessage notiMessage = new NSMessage(messageId);
-            ioTNotification.NSProviderReadCheck(notiMessage);
+            if(msgMap.get(messageId) == SYNC_UNREAD)
+            {
+                NSMessage notiMessage = new NSMessage(messageId);
+                ioTNotification.NSProviderReadCheck(notiMessage);
+                msgMap.put(messageId, SYNC_READ);
+            }
         }
     }
 
@@ -143,7 +161,26 @@ public class ProviderProxy
         Log.i(TAG, "Message Id: " + messageId);
         Log.i(TAG, "Sync state: " + syncState);
 
-        Message msg = mHandler.obtainMessage(MESSAGE_SYNC, messageId + "(" + syncState + ")");
+        Message msg = mHandler.obtainMessage(MESSAGE_SYNC, messageId + " / Sync State: " + syncState);
         mHandler.sendMessage(msg);
+
+        NotificationManager manager = (NotificationManager)mContext
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if(messageId != null)
+            try
+            {
+                manager.cancel(Integer.valueOf(messageId));
+            }
+            catch (Exception e)
+            {
+                Log.e(TAG, "Handle exception for invalid message id" + e);
+            }
+        else
+            Log.i(TAG, "message id is null");
+    }
+
+    public HashMap<String, Integer> getMsgMap() {
+        return msgMap;
     }
 }

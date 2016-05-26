@@ -27,12 +27,14 @@ import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+import java.util.ArrayList;
 
 public class NotiListener extends NotificationListenerService {
 
     private final String TAG = "NS_JNI_NOTI_LISTENER";
     private static ProviderProxy mProviderProxy = null;
     private MainActivity mActivity = null;
+    ArrayList mBlackSourceList = new ArrayList<String>();
 
     public NotiListener() {
 
@@ -46,9 +48,18 @@ public class NotiListener extends NotificationListenerService {
         this.mActivity = activity;
         this.mProviderProxy = mActivity.getProviderProxy();
 
+        setBlackSourceList();
+
         if(mProviderProxy == null) {
             Log.i(TAG, "Fail to get providerProxy instance");
         }
+    }
+
+    public void setBlackSourceList() {
+
+        // set blacklist of app package name not to receive notification
+        mBlackSourceList.add("android");
+        mBlackSourceList.add("com.android.systemui");
     }
 
     @Override
@@ -56,9 +67,28 @@ public class NotiListener extends NotificationListenerService {
         super.onNotificationPosted(sbn);
 
         Bundle bundle = sbn.getNotification().extras;
+        String source = null;
 
-        if (sbn.getPackageName().equals("android"))
+        // prevent not to send notification
+        for(int i = 0; i < mBlackSourceList.size(); ++i)
+        {
+            if (sbn.getPackageName().equals(mBlackSourceList.get(i)))
+            {
+                return;
+            }
+        }
+
+        // filter exception case : Some notification are generated twice
+        if(sbn.getId() > 10000 || sbn.getId() < 0)
             return;
+
+        // Temporary protocol code to display ICON on consumer app.
+        // For example, consumer app shows KAKAOTALK Icon when receiving Notification with SOURCE
+        // that is set to KAKAO, otherwise it displays OCF Icon on current sample app.
+        if(sbn.getPackageName().equals("com.kakao.talk"))
+            source = "KAKAO";
+        else
+            source = "OCF";
 
         Log.i(TAG, "Noti. Package Name : " + sbn.getPackageName());
         Log.i(TAG, "Noti. ID : " + sbn.getId());
@@ -66,9 +96,9 @@ public class NotiListener extends NotificationListenerService {
         String id = Integer.toString(sbn.getId());
         String title = bundle.getString(Notification.EXTRA_TITLE, "");
         String body = bundle.getString(Notification.EXTRA_TEXT, "");
-        String source = "OCF";
 
         Log.i(TAG, "onNotificationPosted .. ");
+        Log.i(TAG, "source : " + source);
         Log.i(TAG, "Id : " + id);
         Log.i(TAG, "Title : " + title);
         Log.i(TAG, "Body : " + body);
@@ -92,6 +122,12 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Noti. Package Name : " + sbn.getPackageName());
         Log.i(TAG, "Noti. ID : " + sbn.getId());
 
-        mProviderProxy.readCheck(Integer.toString(sbn.getId()));
+        if(mProviderProxy.getMsgMap().containsKey(sbn.getId()))
+        {
+            if(mProviderProxy.getMsgMap().get(sbn.getId()) == 2)
+            {
+                mProviderProxy.readCheck(Integer.toString(sbn.getId()));
+            }
+        }
     }
 }
