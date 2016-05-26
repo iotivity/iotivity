@@ -134,9 +134,9 @@ namespace OC
             std::string(payload->info.systemTime) :
             std::string();
 
-        if (payload->rt)
+        for (OCStringLL *strll = payload->rt; strll; strll = strll->next)
         {
-            rep.addResourceType(payload->rt);
+            rep.addResourceType(strll->value);
         }
         for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
         {
