@@ -148,7 +148,7 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
 
     if (NSHeadMsg[schedulerType] == NULL)
     {
-        NSHeadMsg[schedulerType] = (NSTask*) malloc(sizeof(NSTask));
+        NSHeadMsg[schedulerType] = (NSTask*) OICMalloc(sizeof(NSTask));
         memset(NSHeadMsg[schedulerType], 0, sizeof(NSTask));
         NSHeadMsg[schedulerType]->taskType = taskType;
         NSHeadMsg[schedulerType]->taskData = data;
@@ -157,7 +157,7 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     }
     else
     {
-        NSTask* newNode = (NSTask*) malloc(sizeof(NSTask));
+        NSTask* newNode = (NSTask*) OICMalloc(sizeof(NSTask));
         memset(newNode, 0, sizeof(NSTask));
         newNode->taskType = taskType;
         newNode->taskData = data;

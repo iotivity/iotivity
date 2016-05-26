@@ -22,14 +22,24 @@
 #include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
 #include "NSCacheAdapter.h"
-#include "cautilinterface.h"
 #include "NSProviderSubscription.h"
 #include "NSProviderNotification.h"
+#include "NSProviderMemoryCache.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
+#include "cautilinterface.h"
 
 bool initProvider = false;
 static NSSubscribeRequestCallback g_subscribeRequestCb = NULL;
 static NSSyncCallback g_syncCb = NULL;
-pthread_mutex_t NSCacheMutex;
+
+pthread_mutex_t nsInitMutex;
+
+void initializeMutex()
+{
+    static pthread_mutex_t initMutex = PTHREAD_MUTEX_INITIALIZER;
+    nsInitMutex = initMutex;
+}
 
 void NSRegisterSubscribeRequestCb(NSSubscribeRequestCallback subscribeRequestCb)
 {
@@ -64,26 +74,34 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
 {
     OIC_LOG(INFO, INTERFACE_TAG, "Notification Service Start Provider..");
     NS_LOG(DEBUG, "NSStartProvider - IN");
-    NSSetSubscriptionAcceptPolicy(policy);
+
+    initializeMutex();
+
+    pthread_mutex_lock(&nsInitMutex);
 
     if (!initProvider)
     {
         NS_LOG(DEBUG, "Init Provider");
         initProvider = true;
+        NSSetSubscriptionAcceptPolicy(policy);
+        NSRegisterSubscribeRequestCb(subscribeRequestCb);
+        NSRegisterSyncCb(syncCb);
+        CARegisterNetworkMonitorHandler(NSProviderAdapterStateListener,
+                NSProviderConnectionStateListener);
 
         NSSetList();
         NSInitScheduler();
         NSStartScheduler();
+
+        NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
+        NSPushQueue(DISCOVERY_SCHEDULER, TASK_REGISTER_RESOURCE, NULL);
+    }
+    else
+    {
+        NS_LOG(DEBUG, "Already started Notification Provider");
     }
 
-    NSRegisterSubscribeRequestCb(subscribeRequestCb);
-    NSRegisterSyncCb(syncCb);
-
-    CARegisterNetworkMonitorHandler(NSProviderAdapterStateListener,
-            NSProviderConnectionStateListener);
-
-    NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
-    NSPushQueue(DISCOVERY_SCHEDULER, TASK_REGISTER_RESOURCE, NULL);
+    pthread_mutex_unlock(&nsInitMutex);
 
     NS_LOG(DEBUG, "NSStartProvider - OUT");
 
@@ -102,9 +120,14 @@ void NSSetList()
 NSResult NSStopProvider()
 {
     NS_LOG(DEBUG, "NSStopProvider - IN");
+
+    pthread_mutex_lock(&nsInitMutex);
+
     NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
     NSRegisterSyncCb((NSSyncCallback)NULL);
     initProvider = false;
+
+    pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSStopProvider - OUT");
     return NS_OK;
 }
@@ -145,7 +168,6 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted)
     {
         NS_LOG(DEBUG, "accepted is true - ALLOW");
         NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, consumer);
-
     }
     else
     {
@@ -183,7 +205,7 @@ void * NSResponseSchedule(void * ptr)
                     OCEntityHandlerRequest * request = (OCEntityHandlerRequest*)node->taskData;
                     NSConsumer consumer;
 
-                    consumer.mId = strdup(request->devAddr.addr);
+                    consumer.mId = OICStrdup(request->devAddr.addr);
                     int * obId = (int *) OICMalloc(sizeof(int));
                     *obId = request->obsInfo.obsId;
                     consumer.mUserData = obId;
@@ -203,12 +225,7 @@ void * NSResponseSchedule(void * ptr)
                 default:
                     OIC_LOG(INFO, INTERFACE_TAG, "Response to User");
 
-                    // TODO: NSSubscribeRequestCb
-
-                    // TODO: NSSyncCb
-
                     break;
-
             }
             OICFree(node);
         }

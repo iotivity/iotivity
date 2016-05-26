@@ -30,16 +30,13 @@
 #include "NSProviderSubscription.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include "NSUtil.h"
 
 NSCacheList * messageList;
 
 NSResult NSRegisterResource();
-
 NSResult NSInitMessageList();
-
 NSResult NSPutNotificationMessage(NSMessage *, OCResourceHandle *);
-
 NSResult NSSendNotificationMessage(NSMessage *);
-
 
 #endif /* _NS_PROVIDER_NOTIFICATION_H_ */

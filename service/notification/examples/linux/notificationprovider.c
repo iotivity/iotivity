@@ -122,7 +122,6 @@ int main()
                 char charID[100];
 
                 printf("id : %d\n", ++id);
-
                 printf("title : ");
 
                 gets(title);

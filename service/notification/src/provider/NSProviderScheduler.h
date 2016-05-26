@@ -24,13 +24,14 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <oic_malloc.h>
 #include <stdbool.h>
 #include "ocstack.h"
 #include "NSCommon.h"
 #include "NSConstants.h"
 #include "NSStructs.h"
 #include "logger.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 extern NSTask* NSHeadMsg[THREAD_COUNT]; // Current MSG;
 extern NSTask* NSTailMsg[THREAD_COUNT]; // Recently MSG;

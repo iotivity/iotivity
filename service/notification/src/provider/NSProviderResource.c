@@ -180,10 +180,14 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
 
     if(msg != NULL)
     {
-        NS_LOG(ERROR, "NSMessage is valid");
-        NotificationMessageResource.id = strdup(msg->mId);
-        NotificationMessageResource.title = strdup(msg->mTitle);
-        NotificationMessageResource.body = strdup(msg->mContentText);
+        NS_LOG(DEBUG, "NSMessage is valid");
+        NS_LOG_V(DEBUG, "msg -> mId : %s", msg->mId);
+        NS_LOG_V(DEBUG, "msg -> mTitle : %s", msg->mTitle);
+        NS_LOG_V(DEBUG, "msg -> mContentText : %s", msg->mContentText);
+
+        NotificationMessageResource.id = OICStrdup(msg->mId);
+        NotificationMessageResource.title = OICStrdup(msg->mTitle);
+        NotificationMessageResource.body = OICStrdup(msg->mContentText);
     }
     else
     {

@@ -25,6 +25,8 @@
 #include "logger.h"
 #include "NSCommon.h"
 #include "NSProviderListener.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 NSResult NSCreateResource(char *uri);
 

@@ -58,32 +58,34 @@ NSResult NSFreeMessage(NSMessage * obj)
 
 NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
 {
+    NSMessage * newMsg = NULL;
+
     if(copyMsg == NULL)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
     }
 
-    NSMessage * newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
+    newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
 
-    if (!copyMsg->mId)
+    if (copyMsg->mId)
     {
         newMsg->mId = OICStrdup(copyMsg->mId);
     }
 
-    if (!copyMsg->mTitle)
+    if (copyMsg->mTitle)
     {
         newMsg->mTitle = OICStrdup(copyMsg->mTitle);
     }
 
-    if (!copyMsg->mContentText)
+    if (copyMsg->mContentText)
     {
         newMsg->mContentText = OICStrdup(copyMsg->mContentText);
     }
 
-    if (!copyMsg->mSource)
+    if (copyMsg->mSource)
     {
-        newMsg->mSource = OICStrdup(copyMsg->mSource);
+       newMsg->mSource = OICStrdup(copyMsg->mSource);
     }
 
     return newMsg;

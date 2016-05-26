@@ -47,6 +47,7 @@ NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_ID, msg->mId);
     OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TITLE, msg->mTitle);
     OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TEXT, msg->mContentText);
+    OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_SOURCE, msg->mSource);
 
     NS_LOG(DEBUG, "NSGetMessagePayload - OUT");
     return NS_OK;
@@ -237,7 +238,7 @@ void * NSNotificationSchedule(void *ptr)
                 case TASK_SEND_NOTIFICATION:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_NOTIFICATION : ");
-                    NSMessage * nsMsg = node->taskData;
+                    NSMessage * nsMsg = (NSMessage *)node->taskData;
                     NSSendMessage(nsMsg);
                     break;
                 }
