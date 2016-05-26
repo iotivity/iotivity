@@ -26,6 +26,8 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 
+const char NS_MESSAGE_ACCEPTANCE[] = "0000-0000-0000-0000";
+
 NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse);
 NSSync * NSBuildOICNotificationSync(OCClientResponse * clientResponse);
 
@@ -119,6 +121,15 @@ OCStackApplicationResult NSConsumerNotificationListener(
     NSMessage_consumer * newNoti = NSBuildOICNotification(clientResponse);
     if (!newNoti)
     {
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    if (!strcmp(newNoti->mId, NS_MESSAGE_ACCEPTANCE))
+    {
+        NS_LOG(DEBUG, "Receive Subscribe confirm");
+        OICFree(provider->mUserData);
+        OICFree(provider);
+        NSRemoveMessage(newNoti);
         return OC_STACK_KEEP_TRANSACTION;
     }
 
