@@ -710,6 +710,22 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
+                res = GetDoxmDeviceID(&myId);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                //if this is owned discovery and this is PT's reply, discard it
+                if((pDInfo->isOwnedDiscovery) &&
+                        (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
+                {
+                    OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
                 res = AddDevice(ppDevicesList, clientResponse->devAddr.addr,
                         clientResponse->devAddr.port,
                         clientResponse->devAddr.adapter,
