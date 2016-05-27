@@ -58,6 +58,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <oic_malloc.h>
+#include "platform_features.h"
 #include "camutex.h"
 #include "logger.h"
 

@@ -99,7 +99,7 @@ typedef struct coap_address_t
     }addr;
 }coap_address_t;
 
-static inline int
+INLINE_API int
 _coap_address_equals_impl(const coap_address_t *a,
         const coap_address_t *b)
 {
@@ -124,7 +124,7 @@ _coap_address_equals_impl(const coap_address_t *a,
     return 0;
 }
 
-static inline int
+INLINE_API int
 _coap_is_mcast_impl(const coap_address_t *a)
 {
     if (!a)
@@ -151,7 +151,7 @@ typedef struct coap_address_t
     uint8_t      addr[DEV_ADDR_SIZE_MAX]; /**< device address. */
 } coap_address_t;
 
-static inline int
+INLINE_API int
 _coap_address_equals_impl(const coap_address_t *a,
                           const coap_address_t *b)
 {
@@ -171,7 +171,7 @@ _coap_address_equals_impl(const coap_address_t *a,
     return 1;
 }
 
-static inline int
+INLINE_API int
 _coap_is_mcast_impl(const coap_address_t *a)
 {
     if (!a)
@@ -190,7 +190,7 @@ _coap_is_mcast_impl(const coap_address_t *a)
  *
  * @param addr The coap_address_t object to initialize.
  */
-static inline void coap_address_init(coap_address_t *addr)
+INLINE_API void coap_address_init(coap_address_t *addr)
 {
     assert(addr);
     memset(addr, 0, sizeof(coap_address_t));
@@ -205,7 +205,7 @@ static inline void coap_address_init(coap_address_t *addr)
  * @c 1 if addresses are equal, @c 0 otherwise. The parameters @p a
  * and @p b must not be @c NULL;
  */
-static inline int coap_address_equals(const coap_address_t *a, const coap_address_t *b)
+INLINE_API int coap_address_equals(const coap_address_t *a, const coap_address_t *b)
 {
     assert(a);
     assert(b);
@@ -216,7 +216,7 @@ static inline int coap_address_equals(const coap_address_t *a, const coap_addres
  * Checks if given address @p a denotes a multicast address.  This
  * function returns @c 1 if @p a is multicast, @c 0 otherwise.
  */
-static inline int coap_is_mcast(const coap_address_t *a)
+INLINE_API int coap_is_mcast(const coap_address_t *a)
 {
     return a && _coap_is_mcast_impl(a);
 }

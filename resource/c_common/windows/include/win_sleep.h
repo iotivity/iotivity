@@ -26,6 +26,14 @@
 extern "C" {
 #endif
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+struct timespec
+{
+    time_t tv_sec;  // Seconds - >= 0
+    long   tv_nsec; // Nanoseconds - [0, 999999999]
+};
+#endif
+
 int nanosleep(const struct timespec *req, struct timespec *rem);
 int usleep(unsigned int usec);
 

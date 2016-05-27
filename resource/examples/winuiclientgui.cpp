@@ -171,15 +171,17 @@ WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         }
         break;
       case WM_CREATE:
-          hIcon1 = LoadIcon (NULL, IDI_WARNING);
-          SendMessage(icon_button,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcon1);
-          GetClientRect(hwnd, &rect);
-          g_BkgndBrush = GetSysColorBrush(COLOR_MENU);
+          {
+              hIcon1 = LoadIcon (NULL, IDI_WARNING);
+              SendMessage(icon_button,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcon1);
+              GetClientRect(hwnd, &rect);
+              g_BkgndBrush = GetSysColorBrush(COLOR_MENU);
 
-          app = new WinUIClient::WinUIClientApp({client_open, fread, fwrite, fclose, unlink });
-          app->Initialize();
-          app->Run();
-
+              OCPersistentStorage ps = {client_open, fread, fwrite, fclose, unlink };
+              app = new WinUIClient::WinUIClientApp(ps);
+              app->Initialize();
+              app->Run();
+          }
           break;
       case WM_DESTROY:
 

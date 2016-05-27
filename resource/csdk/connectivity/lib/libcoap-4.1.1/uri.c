@@ -32,7 +32,7 @@
  * @return A pointer to the first occurence of @p c, or @c NULL
  * if not found.
  */
-static inline unsigned char *
+INLINE_API unsigned char *
 strnchr(unsigned char *s, size_t len, unsigned char c)
 {
     while (len && *s++ != c)
@@ -493,7 +493,7 @@ coap_clone_uri(const coap_uri_t *uri)
 
 /* The function signature of coap_hash() is different from
  * segment_handler_t hence we use this wrapper as safe typecast. */
-static inline void hash_segment(unsigned char *s, size_t len, void *data)
+INLINE_API void hash_segment(unsigned char *s, size_t len, void *data)
 {
     coap_hash(s, len, (unsigned char *) data);
 }

@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+
 int vs12_snprintf(char *buffer, size_t count, const char *format, ...);
 
 #if defined(_MSC_VER) && (_MSC_VER < 1900)

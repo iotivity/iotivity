@@ -53,7 +53,7 @@ static char *loglevels[] =
 
 #ifdef HAVE_TIME_H
 
-static inline size_t print_timestamp(char *s, size_t len, coap_tick_t t)
+INLINE_API size_t print_timestamp(char *s, size_t len, coap_tick_t t)
 {
     struct tm *tmp;
     time_t now = clock_offset + (t / COAP_TICKS_PER_SECOND);
@@ -63,7 +63,7 @@ static inline size_t print_timestamp(char *s, size_t len, coap_tick_t t)
 
 #else /* alternative implementation: just print the timestamp */
 
-static inline size_t
+INLINE_API size_t
 print_timestamp(char *s, size_t len, coap_tick_t t)
 {
 #ifdef HAVE_SNPRINTF
@@ -89,7 +89,7 @@ print_timestamp(char *s, size_t len, coap_tick_t t)
  *
  * @return The length of @p s.
  */
-static inline size_t
+INLINE_API size_t
 strnlen(const char *s, size_t maxlen)
 {
     size_t n = 0;

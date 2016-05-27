@@ -155,7 +155,7 @@ extern "C"
      * @param context The context to register the handler for.
      * @param handler The response handler to register.
      */
-    static inline void coap_register_response_handler(coap_context_t *context,
+    INLINE_API void coap_register_response_handler(coap_context_t *context,
             coap_response_handler_t handler)
     {
         context->response_handler = handler;
@@ -168,7 +168,7 @@ extern "C"
      * @param ctx  The context to use.
      * @param type The option type to register.
      */
-    inline static void coap_register_option(coap_context_t *ctx, unsigned char type)
+    INLINE_API void coap_register_option(coap_context_t *ctx, unsigned char type)
     {
         coap_option_setb(ctx->known_options, type);
     }
@@ -197,7 +197,7 @@ extern "C"
  * @param context the current coap_context_t object
  * @return incremented message id in network byte order
  */
-static inline unsigned short coap_new_message_id(coap_context_t *context)
+INLINE_API unsigned short coap_new_message_id(coap_context_t *context)
 {
     ++(context->message_id);
 #if defined(WITH_ARDUINO)
@@ -317,7 +317,7 @@ static inline unsigned short coap_new_message_id(coap_context_t *context)
      * @return The transaction id if RST was sent or @c COAP_INVALID_TID
      * on error.
      */
-    static inline coap_tid_t coap_send_rst(coap_context_t *context, const coap_address_t *dst,
+    INLINE_API coap_tid_t coap_send_rst(coap_context_t *context, const coap_address_t *dst,
             coap_pdu_t *request)
     {
         return coap_send_message_type(context, dst, request, COAP_MESSAGE_RST);
@@ -372,7 +372,7 @@ static inline unsigned short coap_new_message_id(coap_context_t *context)
      *
      * @return @c 1 if node was found, removed and destroyed, @c 0 otherwise.
      */
-    inline static int coap_remove_transaction(coap_queue_t **queue, coap_tid_t id)
+    INLINE_API int coap_remove_transaction(coap_queue_t **queue, coap_tid_t id)
     {
         coap_queue_t *node;
         if (!coap_remove_from_queue(queue, id, &node))

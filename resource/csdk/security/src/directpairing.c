@@ -956,9 +956,6 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     }
 
     OCStackResult ret;
-    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
-    struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
-    struct timespec timeout;
 
     const char DP_DISCOVERY_QUERY[] = "/oic/sec/pconf";
 
@@ -979,12 +976,16 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     }
 
     // wait..
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
 
     int clock_res = -1;
+#if defined(_MSC_VER)
+    time_t startTime;
+    clock_res = (time(&startTime) == -1);
+#else
+    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
     clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
+#endif
 #endif
     if (0 != clock_res)
     {
@@ -998,8 +999,14 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
 
     while (1)
     {
+#if defined(_MSC_VER)
+        time_t currTime;
+        clock_res = (time(&currTime) == -1);
+#else
+        struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
         clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
+#endif
 #endif
         if (0 != clock_res)
         {
@@ -1007,22 +1014,23 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
             ret = OC_STACK_ERROR;
             break;
         }
+#if defined(_MSC_VER)
+        long elapsed = currTime - startTime;
+#else
         long elapsed = (currTime.tv_sec - startTime.tv_sec);
+#endif
         if (elapsed > waittime)
         {
             break;
         }
         else
         {
-#if defined(_WIN32)
-            Sleep(100);
-#else
+            struct timespec timeout = {.tv_sec=0, .tv_nsec=100000000L};
             nanosleep(&timeout, NULL);
-#endif // defined (_WIN32)
         }
     }
 
-    //Waiting for each response.
+    // Waiting for each response.
     ret = OCCancel(handle, OC_LOW_QOS, NULL, 0);
     if (OC_STACK_OK != ret)
     {

@@ -60,13 +60,13 @@
 
 time_t clock_offset=0;
 
-static inline coap_queue_t *
+INLINE_API coap_queue_t *
 coap_malloc_node()
 {
     return (coap_queue_t *)coap_malloc(sizeof(coap_queue_t));
 }
 
-static inline void
+INLINE_API void
 coap_free_node(coap_queue_t *node)
 {
     coap_free(node);
@@ -79,13 +79,13 @@ coap_free_node(coap_queue_t *node)
 static void coap_retransmittimer_execute(void *arg);
 static void coap_retransmittimer_restart(coap_context_t *ctx);
 
-static inline coap_queue_t *
+INLINE_API coap_queue_t *
 coap_malloc_node()
 {
     return (coap_queue_t *)memp_malloc(MEMP_COAP_NODE);
 }
 
-static inline void
+INLINE_API void
 coap_free_node(coap_queue_t *node)
 {
     memp_free(MEMP_COAP_NODE, node);
@@ -115,13 +115,13 @@ MEMB(node_storage, coap_queue_t, COAP_PDU_MAXCNT);
 
 PROCESS(coap_retransmit_process, "message retransmit process");
 
-static inline coap_queue_t *
+INLINE_API coap_queue_t *
 coap_malloc_node()
 {
     return (coap_queue_t *)memb_alloc(&node_storage);
 }
 
-static inline void
+INLINE_API void
 coap_free_node(coap_queue_t *node)
 {
     memb_free(&node_storage, node);
@@ -888,7 +888,7 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node)
  * This function returns @c 1 on success, or @c 0 if the option @p opt
  * would exceed @p maxpos.
  */
-static inline int check_opt_size(coap_opt_t *opt, unsigned char *maxpos)
+INLINE_API int check_opt_size(coap_opt_t *opt, unsigned char *maxpos)
 {
     if (opt && opt < maxpos)
     {
@@ -1076,7 +1076,7 @@ int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id, coap_queue_t **n
 
 }
 
-static inline int token_match(const unsigned char *a, size_t alen, const unsigned char *b,
+INLINE_API int token_match(const unsigned char *a, size_t alen, const unsigned char *b,
         size_t blen)
 {
     return alen == blen && (alen == 0 || memcmp(a, b, alen) == 0);
@@ -1238,7 +1238,7 @@ coap_new_error_response(coap_pdu_t *request, unsigned char code, coap_opt_filter
  * Quick hack to determine the size of the resource description for
  * .well-known/core.
  */
-static inline size_t get_wkc_len(coap_context_t *context, coap_opt_t *query_filter)
+INLINE_API size_t get_wkc_len(coap_context_t *context, coap_opt_t *query_filter)
 {
     unsigned char buf[1];
     size_t len = 0;
@@ -1513,7 +1513,7 @@ void handle_request(coap_context_t *context, coap_queue_t *node, const char* res
     }
 }
 
-static inline void handle_response(coap_context_t *context, coap_queue_t *sent, coap_queue_t *rcvd)
+INLINE_API void handle_response(coap_context_t *context, coap_queue_t *sent, coap_queue_t *rcvd)
 {
 
     /* Call application-specific reponse handler when available.  If
@@ -1531,7 +1531,7 @@ static inline void handle_response(coap_context_t *context, coap_queue_t *sent, 
     }
 }
 
-static inline int
+INLINE_API int
 #ifdef __GNUC__
 handle_locally(coap_context_t *context __attribute__ ((unused)),
         coap_queue_t *node __attribute__ ((unused)))

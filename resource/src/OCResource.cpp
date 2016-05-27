@@ -75,15 +75,15 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-    , {0}
-#endif
-    },
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
+    m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0,
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+                          {0}
+#endif
+                        };
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
                         != m_interfaces.end();
 
@@ -464,7 +464,7 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 
     OCStackResult result =  checked_guard(m_clientWrapper.lock(),
             &IClientWrapper::CancelObserveResource,
-            m_observeHandle, "", m_uri, m_headerOptions, QoS);
+            m_observeHandle, (const char*)"", m_uri, m_headerOptions, QoS);
 
     if(result == OC_STACK_OK)
     {
