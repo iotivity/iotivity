@@ -227,6 +227,16 @@ dtls_send(dtls_context_t *ctx, dtls_peer_t *peer, unsigned char type,
  */
 static void dtls_stop_retransmission(dtls_context_t *context, dtls_peer_t *peer);
 
+/**
+ * Starts retransmissions of handshake messages for @p peer.
+ */
+static void dtls_start_retransmission(dtls_context_t *context, dtls_peer_t *peer);
+
+/**
+ * Clears retransmissions of handshake messages for @p peer.
+ */
+static void dtls_clear_retransmission(dtls_context_t *context, dtls_peer_t *peer);
+
 dtls_peer_t *
 dtls_get_peer(const dtls_context_t *ctx, const session_t *session) {
   dtls_peer_t *p = NULL;
@@ -3777,7 +3787,11 @@ handle_handshake_msg(dtls_context_t *ctx, dtls_peer_t *peer, session_t *session,
    * we do everything accordingly to the DTLS 1.2 standard this should
    * not be a problem. */
   if (peer) {
-    dtls_stop_retransmission(ctx, peer);
+    dtls_handshake_header_t *hs_header = DTLS_HANDSHAKE_HEADER(data);
+    if (state == DTLS_STATE_WAIT_CHANGECIPHERSPEC && hs_header->msg_type ==  DTLS_HT_FINISHED) {
+      return 0;
+    }
+    dtls_clear_retransmission(ctx, peer);
   }
 
   /* The following switch construct handles the given message with
@@ -4194,6 +4208,18 @@ handle_handshake(dtls_context_t *ctx, dtls_peer_t *peer, session_t *session,
       return 0;
     }
   }
+  /* This is a ClientHello send when doing retransmission */
+  if (peer && hs_header->msg_type == DTLS_HT_CLIENT_HELLO &&
+              dtls_uint16_to_int(hs_header->message_seq) == 0) {
+     res = dtls_verify_peer(ctx, peer, session, state, data, data_length);
+     if (res < 0) {
+       dtls_warn("error in dtls_verify_peer err: %i\n", res);
+     }
+     if (res > 0) {
+       dtls_debug("server hello verify was sent\n");
+     }
+     return res;
+  }
 
   if (dtls_uint16_to_int(hs_header->message_seq) < peer->handshake_params->hs_state.mseq_r) {
     dtls_warn("The message sequence number is too small, expected %i, got: %i\n",
@@ -4366,7 +4392,7 @@ handle_alert(dtls_context_t *ctx, dtls_peer_t *peer,
   }
   
   if (free_peer) {
-    dtls_stop_retransmission(ctx, peer);
+    dtls_clear_retransmission(ctx, peer);
     dtls_destroy_peer(ctx, peer, 0);
   }
 
@@ -4439,23 +4465,28 @@ dtls_handle_message(dtls_context_t *ctx,
           state = DTLS_STATE_WAIT_CLIENTHELLO;
           role = DTLS_SERVER;
         } else {
-	  int err =  dtls_alert_fatal_create(DTLS_ALERT_DECRYPT_ERROR);
-          dtls_info("decrypt_verify() failed\n");
-	  if (peer->state < DTLS_STATE_CONNECTED) {
+	  if (DTLS_CT_HANDSHAKE == msg[0] && DTLS_STATE_WAIT_FINISHED == peer->state) {
+	    int err =  dtls_alert_fatal_create(DTLS_ALERT_DECRYPT_ERROR);
+	    dtls_info("decrypt_verify() failed\n");
+
 	    dtls_alert_send_from_err(ctx, peer, &peer->session, err);
 
-	  (void)CALL(ctx, event, &peer->session,
-	    DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
-
+	    (void)CALL(ctx, event, &peer->session,
+		    DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
 	    peer->state = DTLS_STATE_CLOSED;
-	    /* dtls_stop_retransmission(ctx, peer); */
+		  /* dtls_clear_retransmission(ctx, peer); */
 	    dtls_destroy_peer(ctx, peer, 1);
+	    return err;
+	  } else {
+	    data = msg + DTLS_RH_LENGTH;
+	    data_length = rlen - DTLS_RH_LENGTH;
+	    role = peer->role;
+	    state = peer->state;
 	  }
-          return err;
-        }
+	}
       } else {
-        role = peer->role;
-        state = peer->state;
+	role = peer->role;
+	state = peer->state;
       }
     } else {
       /* is_record() ensures that msg contains at least a record header */
@@ -4476,9 +4507,6 @@ dtls_handle_message(dtls_context_t *ctx,
     switch (msg[0]) {
 
     case DTLS_CT_CHANGE_CIPHER_SPEC:
-      if (peer) {
-        dtls_stop_retransmission(ctx, peer);
-      }
       err = handle_ccs(ctx, peer, msg, data, data_length);
       if (err < 0) {
 	dtls_warn("error while handling ChangeCipherSpec message\n");
@@ -4488,6 +4516,7 @@ dtls_handle_message(dtls_context_t *ctx,
                 DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
 
 	  /* invalidate peer */
+	  dtls_clear_retransmission(ctx, peer);
 	  dtls_destroy_peer(ctx, peer, 1);
 	  peer = NULL;
         }
@@ -4497,7 +4526,7 @@ dtls_handle_message(dtls_context_t *ctx,
 
     case DTLS_CT_ALERT:
       if (peer) {
-        dtls_stop_retransmission(ctx, peer);
+        dtls_clear_retransmission(ctx, peer);
       }
       err = handle_alert(ctx, peer, msg, data, data_length);
       if (err < 0 || err == 1) {
@@ -4509,10 +4538,18 @@ dtls_handle_message(dtls_context_t *ctx,
       break;
 
     case DTLS_CT_HANDSHAKE:
+
       /* Handshake messages other than Finish must use the current
        * epoch, Finish has epoch + 1. */
 
       if (peer) {
+
+	      /* Handle the client's last flight retransmission when the server's
+	       * Finished message is lost. This avoids deadlock. */
+	if (DTLS_SERVER == role && DTLS_STATE_CONNECTED == state) {
+	  dtls_start_retransmission(ctx, peer);
+	  break;
+	}
 	uint16_t expected_epoch = dtls_security_params(peer)->epoch;
 	uint16_t msg_epoch = 
 	  dtls_uint16_to_int(DTLS_RECORD_HEADER(msg)->epoch);
@@ -4565,7 +4602,7 @@ dtls_handle_message(dtls_context_t *ctx,
         // TODO: should we send a alert here?
         return -1;
       }
-      dtls_stop_retransmission(ctx, peer);
+      dtls_clear_retransmission(ctx, peer);
       CALL(ctx, read, &peer->session, data, data_length);
       break;
     default:
@@ -4748,7 +4785,11 @@ dtls_retransmit(dtls_context_t *context, netq_t *node) {
 
       dtls_ticks(&now);
       node->retransmit_cnt++;
-      node->t = now + (node->timeout << node->retransmit_cnt);
+      if (node->t == 1) {
+        node->t = 0;
+      } else {
+        node->t = now + (node->timeout << node->retransmit_cnt);
+      }
       netq_insert_node(context->sendqueue, node);
       
       if (node->type == DTLS_CT_HANDSHAKE) {
@@ -4789,12 +4830,40 @@ dtls_stop_retransmission(dtls_context_t *context, dtls_peer_t *peer) {
 
   while (node) {
     if (dtls_session_equals(&node->peer->session, &peer->session)) {
+      node->t = 0;
+    }
+    node = list_item_next(node);
+  }
+}
+
+static void
+dtls_start_retransmission(dtls_context_t *context, dtls_peer_t *peer) {
+  netq_t *node;
+  node = list_head(context->sendqueue);
+
+  while (node) {
+    if (dtls_session_equals(&node->peer->session, &peer->session)) {
+      node->retransmit_cnt = 0;
+      node->t = 1;
+    }
+    node = list_item_next(node);
+  }
+}
+
+static void
+dtls_clear_retransmission(dtls_context_t *context, dtls_peer_t *peer) {
+  netq_t *node;
+  node = list_head(context->sendqueue);
+
+  while (node) {
+    if (dtls_session_equals(&node->peer->session, &peer->session)) {
       netq_t *tmp = node;
       node = list_item_next(node);
       list_remove(context->sendqueue, tmp);
       netq_node_free(tmp);
-    } else
-      node = list_item_next(node);    
+    } else {
+      node = list_item_next(node);
+    }
   }
 }
 
@@ -4804,14 +4873,16 @@ dtls_check_retransmit(dtls_context_t *context, clock_time_t *next) {
   netq_t *node = netq_head(context->sendqueue);
 
   dtls_ticks(&now);
-  while (node && node->t <= now) {
-    netq_pop_first(context->sendqueue);
-    dtls_retransmit(context, node);
-    node = netq_head(context->sendqueue);
-  }
 
-  if (next && node)
-    *next = node->t;
+  while (node) {
+    if (node->t && node->t <= now){
+      netq_pop_first(context->sendqueue);
+      dtls_retransmit(context, node);
+      node = netq_head(context->sendqueue);
+    } else {
+      node = list_item_next(node);
+    }
+  }
 }
 
 size_t
