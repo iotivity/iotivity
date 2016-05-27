@@ -1361,7 +1361,7 @@ static int waitCallbackRet(void)
 
 static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 {
-    if(!a || !b || 2>=max || !str)
+    if(!a || !b || 2>max || !str)
     {
         return -1;
     }
