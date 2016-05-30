@@ -20,77 +20,6 @@
 
 #include "NSUtil.h"
 
-NSResult NSFreeMessage(NSMessage * obj)
-{
-    if (!obj)
-    {
-        return NS_ERROR;
-    }
-
-    if (obj->mId)
-    {
-        OICFree(obj->mId);
-        obj->mId = NULL;
-    }
-
-    if (obj->mTitle)
-    {
-        OICFree(obj->mTitle);
-        obj->mTitle = NULL;
-    }
-
-    if (obj->mContentText)
-    {
-        OICFree(obj->mContentText);
-        obj->mContentText = NULL;
-    }
-
-    if (obj->mSource)
-    {
-        OICFree(obj->mSource);
-        obj->mSource = NULL;
-    }
-
-    OICFree(obj);
-
-    return NS_OK;
-}
-
-NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
-{
-    NSMessage * newMsg = NULL;
-
-    if(copyMsg == NULL)
-    {
-        NS_LOG(ERROR, "Copy Msg is NULL");
-        return NULL;
-    }
-
-    newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
-
-    if (copyMsg->mId)
-    {
-        newMsg->mId = OICStrdup(copyMsg->mId);
-    }
-
-    if (copyMsg->mTitle)
-    {
-        newMsg->mTitle = OICStrdup(copyMsg->mTitle);
-    }
-
-    if (copyMsg->mContentText)
-    {
-        newMsg->mContentText = OICStrdup(copyMsg->mContentText);
-    }
-
-    if (copyMsg->mSource)
-    {
-       newMsg->mSource = OICStrdup(copyMsg->mSource);
-    }
-
-    return newMsg;
-}
-
 OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSCopyOCEntityHandlerRequest - IN");
@@ -153,4 +82,180 @@ NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequ
     return NS_OK;
 }
 
+NSResult NSFreeMessage(NSMessage * obj)
+{
+    if (!obj)
+    {
+        return NS_ERROR;
+    }
 
+    if (obj->mId)
+    {
+        OICFree(obj->mId);
+        obj->mId = NULL;
+    }
+
+    if (obj->mTitle)
+    {
+        OICFree(obj->mTitle);
+        obj->mTitle = NULL;
+    }
+
+    if (obj->mContentText)
+    {
+        OICFree(obj->mContentText);
+        obj->mContentText = NULL;
+    }
+
+    if (obj->mSource)
+    {
+        OICFree(obj->mSource);
+        obj->mSource = NULL;
+    }
+
+    OICFree(obj);
+
+    return NS_OK;
+}
+
+NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
+{
+    NSMessage * newMsg = NULL;
+
+    if(copyMsg == NULL)
+    {
+        NS_LOG(ERROR, "Copy Msg is NULL");
+        return NULL;
+    }
+
+    newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
+    newMsg->mContentText = NULL;
+    newMsg->mId = NULL;
+    newMsg->mSource = NULL;
+    newMsg->mTitle = NULL;
+
+    if (copyMsg->mId)
+    {
+        newMsg->mId = OICStrdup(copyMsg->mId);
+    }
+
+    if (copyMsg->mTitle)
+    {
+        newMsg->mTitle = OICStrdup(copyMsg->mTitle);
+    }
+
+    if (copyMsg->mContentText)
+    {
+        newMsg->mContentText = OICStrdup(copyMsg->mContentText);
+    }
+
+    if (copyMsg->mSource)
+    {
+       newMsg->mSource = OICStrdup(copyMsg->mSource);
+    }
+
+    return newMsg;
+}
+
+NSResult NSFreeSync(NSSync * obj)
+{
+    if (!obj)
+    {
+        return NS_ERROR;
+    }
+
+    if (obj->mMessageId)
+    {
+        OICFree(obj->mMessageId);
+        obj->mMessageId = NULL;
+    }
+
+    if (obj->mSourceId)
+    {
+        OICFree(obj->mSourceId);
+        obj->mSourceId = NULL;
+    }
+
+    OICFree(obj);
+
+    return NS_OK;
+}
+
+NSSync* NSDuplicateSync(NSSync * copyMsg)
+{
+    NSSync * newMsg = NULL;
+
+    if(copyMsg == NULL)
+    {
+        NS_LOG(ERROR, "Copy Msg is NULL");
+        return NULL;
+    }
+
+    newMsg = (NSSync *)OICMalloc(sizeof(NSSync));
+    newMsg->mMessageId = NULL;
+    newMsg->mSourceId = NULL;
+    newMsg->mState = -1;
+
+    if (copyMsg->mMessageId)
+    {
+        newMsg->mMessageId = OICStrdup(copyMsg->mMessageId);
+    }
+
+    if (copyMsg->mSourceId)
+    {
+        newMsg->mSourceId = OICStrdup(copyMsg->mSourceId);
+    }
+
+    return newMsg;
+}
+
+NSResult NSFreeConsumer(NSConsumer * obj)
+{
+    if (!obj)
+    {
+        return NS_ERROR;
+    }
+
+    if (obj->mAddress)
+    {
+        OICFree(obj->mAddress);
+        obj->mAddress = NULL;
+    }
+
+    if (obj->mDeviceId)
+    {
+        OICFree(obj->mDeviceId);
+        obj->mDeviceId = NULL;
+    }
+
+    OICFree(obj);
+
+    return NS_OK;
+}
+
+NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
+{
+    NSConsumer * newMsg = NULL;
+
+    if(copyMsg == NULL)
+    {
+        NS_LOG(ERROR, "Copy Msg is NULL");
+        return NULL;
+    }
+
+    newMsg = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
+    newMsg->mAddress = NULL;
+    newMsg->mDeviceId = NULL;
+
+    if (copyMsg->mAddress)
+    {
+        newMsg->mAddress = OICStrdup(copyMsg->mAddress);
+    }
+
+    if (copyMsg->mDeviceId)
+    {
+        newMsg->mDeviceId = OICStrdup(copyMsg->mDeviceId);
+    }
+
+    return newMsg;
+}

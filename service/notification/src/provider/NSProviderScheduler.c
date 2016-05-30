@@ -38,7 +38,6 @@ void * NSNotificationSchedule(void *ptr);
 
 bool NSInitScheduler()
 {
-    OIC_LOG(INFO, SCHEDULER_TAG, "NSInitScheduler()");
     NS_LOG(DEBUG, "NSInitScheduler - IN");
 
     int i = 0;
@@ -113,24 +112,30 @@ bool NSStopScheduler()
 
     for (i = THREAD_COUNT - 1; i >= 0; --i)
     {
+        int status = -1;
 
         NSIsRunning[i] = false;
 
-        pthread_join(NSThread[i], (void *) NULL);
+        sem_post(&(NSSemaphore[i]));
+        pthread_join(NSThread[i], (void **) &status);
+
         NSThread[i] = 0;
 
         pthread_mutex_lock(&NSMutex[i]);
 
-        while (NSHeadMsg[i]->nextTask != NULL)
+        while (NSHeadMsg[i] != NULL)
         {
             NSTask* temp = NSHeadMsg[i];
             NSHeadMsg[i] = NSHeadMsg[i]->nextTask;
+            NSFreeData(i, NSHeadMsg[i]);
             OICFree(temp);
         }
 
         OICFree(NSHeadMsg[i]);
+        NSTailMsg[i] = NSHeadMsg[i] = NULL;
 
         pthread_mutex_unlock(&NSMutex[i]);
+        pthread_mutex_destroy(&NSMutex[i]);
     }
 
     NS_LOG(DEBUG, "NSStopScheduler - OUT");
@@ -140,6 +145,10 @@ bool NSStopScheduler()
 
 void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
 {
+
+    if(NSIsRunning[schedulerType] == false)
+        return;
+
     pthread_mutex_lock(&NSMutex[schedulerType]);
 
     NS_LOG(DEBUG, "NSPushQueue - IN");
@@ -172,3 +181,86 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     pthread_mutex_unlock(&NSMutex[schedulerType]);
 }
 
+void NSFreeData(NSSchedulerType type, NSTask * task)
+{
+    NS_LOG(DEBUG, "NSFreeData - IN");
+
+    if (type == RESPONSE_SCHEDULER)
+    {
+        switch (task->taskType)
+        {
+            case TASK_CB_SUBSCRIPTION:
+                NS_LOG(DEBUG, "CASE TASK_CB_SUBSCRIPTION : Free");
+                NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) task->taskData);
+                break;
+            case TASK_CB_SYNC:
+                NS_LOG(DEBUG, "CASE TASK_CB_SYNC : Free");
+                NSSync * sync = (NSSync*) task->taskData;
+                NSFreeSync(sync);
+                break;
+            default:
+                NS_LOG(DEBUG, "No Task Type");
+                break;
+        }
+    }
+    else if (type == DISCOVERY_SCHEDULER)
+    {
+        switch (task->taskType)
+        {
+            case TASK_START_PRESENCE:
+            case TASK_STOP_PRESENCE:
+            case TASK_REGISTER_RESOURCE:
+                NS_LOG(DEBUG, "Not required Free");
+                break;
+            default:
+                NS_LOG(DEBUG, "No Task Type");
+                break;
+        }
+    }
+    else if (type == SUBSCRIPTION_SCHEDULER)
+    {
+        switch (task->taskType)
+        {
+            case TASK_SEND_POLICY:
+            case TASK_RECV_SUBSCRIPTION:
+            case TASK_RECV_UNSUBSCRIPTION:
+            case TASK_SYNC_SUBSCRIPTION:
+                NS_LOG(DEBUG, "NSFreeOCEntityHandlerRequest : Free ");
+                NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) task->taskData);
+                break;
+
+            case TASK_SEND_ALLOW:
+            case TASK_SEND_DENY:
+                NS_LOG(DEBUG, "NSFreeConsumer : Free ");
+                NSConsumer * consumer = (NSConsumer *) task->taskData;
+                NSFreeConsumer(consumer);
+                break;
+            default:
+                NS_LOG(DEBUG, "No Task Type");
+                break;
+        }
+    }
+    else if (type == NOTIFICATION_SCHEDULER)
+    {
+        switch (task->taskType)
+        {
+            case TASK_SEND_NOTIFICATION:
+            {
+                NS_LOG(DEBUG, "NSFreeMessage : Free ");
+                NSFreeMessage((NSMessage *)task->taskData);
+                break;
+            }
+            case TASK_SEND_READ:
+            case TASK_RECV_READ:
+                NS_LOG(DEBUG, "NSFreeSync : Free ");
+                NSFreeSync((NSSync*) task->taskData);
+                break;
+
+            default:
+                NS_LOG(DEBUG, "No Task Type");
+                break;
+        }
+    }
+
+    NS_LOG(DEBUG, "NSFreeData - OUT");
+}

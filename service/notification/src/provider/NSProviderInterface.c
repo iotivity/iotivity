@@ -72,7 +72,6 @@ void NSSyncCb(NSSync *sync)
 NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
         NSSyncCallback syncCb)
 {
-    OIC_LOG(INFO, INTERFACE_TAG, "Notification Service Start Provider..");
     NS_LOG(DEBUG, "NSStartProvider - IN");
 
     initializeMutex();
@@ -93,6 +92,7 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
         NSInitScheduler();
         NSStartScheduler();
 
+
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_REGISTER_RESOURCE, NULL);
     }
@@ -100,7 +100,6 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
     {
         NS_LOG(DEBUG, "Already started Notification Provider");
     }
-
     pthread_mutex_unlock(&nsInitMutex);
 
     NS_LOG(DEBUG, "NSStartProvider - OUT");
@@ -123,9 +122,17 @@ NSResult NSStopProvider()
 
     pthread_mutex_lock(&nsInitMutex);
 
-    NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
-    NSRegisterSyncCb((NSSyncCallback)NULL);
-    initProvider = false;
+    if(initProvider)
+    {
+        NSUnRegisterResource();
+        NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
+        NSRegisterSyncCb((NSSyncCallback)NULL);
+        NSStopScheduler();
+        NSCacheDestroy(consumerSubList);
+        NSCacheDestroy(messageList);
+
+        initProvider = false;
+    }
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSStopProvider - OUT");
@@ -134,47 +141,59 @@ NSResult NSStopProvider()
 
 NSResult NSSendNotification(NSMessage *msg)
 {
-    OIC_LOG(INFO, INTERFACE_TAG, "Send Notification");
     NS_LOG(DEBUG, "NSSendNotification - IN");
 
-    NSMessage * newMsg = NSDuplicateMessage(msg);
+    pthread_mutex_lock(&nsInitMutex);
 
-    if(newMsg == NULL)
+    if(msg == NULL)
     {
         NS_LOG(ERROR, "Msg is NULL");
+        pthread_mutex_unlock(&nsInitMutex);
         return NS_ERROR;
     }
 
+    NSMessage * newMsg = NSDuplicateMessage(msg);
+
     NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_NOTIFICATION, newMsg);
+
+    pthread_mutex_unlock(&nsInitMutex);
+
     NS_LOG(DEBUG, "NSSendNotification - OUT");
     return NS_OK;
 }
 
 NSResult NSProviderReadCheck(NSMessage *msg)
 {
-    OIC_LOG(INFO, INTERFACE_TAG, "Read Sync");
     NS_LOG(DEBUG, "NSProviderReadCheck - IN");
+
+    pthread_mutex_lock(&nsInitMutex);
     NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ, msg);
+    pthread_mutex_unlock(&nsInitMutex);
+
     NS_LOG(DEBUG, "NSProviderReadCheck - OUT");
     return NS_OK;
 }
 
 NSResult NSAccept(NSConsumer *consumer, bool accepted)
 {
-    OIC_LOG(INFO, INTERFACE_TAG, "Response Acceptance");
     NS_LOG(DEBUG, "NSAccept - IN");
+
+    pthread_mutex_lock(&nsInitMutex);
+
+    NSConsumer * newConsumer = NSDuplicateConsumer(consumer);
 
     if(accepted)
     {
         NS_LOG(DEBUG, "accepted is true - ALLOW");
-        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, consumer);
+        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, newConsumer);
     }
     else
     {
         NS_LOG(DEBUG, "accepted is false - DENY");
-        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_DENY, consumer);
+        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_DENY, newConsumer);
     }
 
+    pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSAccept - OUT");
     return NS_OK;
 }
@@ -183,7 +202,6 @@ void * NSResponseSchedule(void * ptr)
 {
     if (ptr == NULL)
     {
-        OIC_LOG(INFO, INTERFACE_TAG, "Init NSResponseSchedule");
         NS_LOG(DEBUG, "Create NSReponseSchedule");
     }
 
@@ -202,15 +220,14 @@ void * NSResponseSchedule(void * ptr)
                 case TASK_CB_SUBSCRIPTION:
                 {
                     NS_LOG(DEBUG, "CASE TASK_CB_SUBSCRIPTION : ");
+
                     OCEntityHandlerRequest * request = (OCEntityHandlerRequest*)node->taskData;
-                    NSConsumer consumer;
+                    NSConsumer * consumer = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
+                    consumer->mDeviceId = OICStrdup(request->devAddr.addr);
+                    consumer->mAddress = OICStrdup(request->devAddr.addr);
 
-                    consumer.mId = OICStrdup(request->devAddr.addr);
-                    int * obId = (int *) OICMalloc(sizeof(int));
-                    *obId = request->obsInfo.obsId;
-                    consumer.mUserData = obId;
-
-                    NSSubscribeRequestCb(&consumer);
+                    NSSubscribeRequestCb(consumer);
+                    NSFreeConsumer(consumer);
                     NSFreeOCEntityHandlerRequest(request);
 
                     break;
@@ -223,8 +240,7 @@ void * NSResponseSchedule(void * ptr)
                     break;
                 }
                 default:
-                    OIC_LOG(INFO, INTERFACE_TAG, "Response to User");
-
+                    NS_LOG(DEBUG, "No Task Type");
                     break;
             }
             OICFree(node);
@@ -233,6 +249,8 @@ void * NSResponseSchedule(void * ptr)
         pthread_mutex_unlock(&NSMutex[RESPONSE_SCHEDULER]);
 
     }
+
+    NS_LOG(DEBUG, "Destroy NSResponseSchedule");
     return NULL;
 }
 

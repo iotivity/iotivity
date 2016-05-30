@@ -32,9 +32,16 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-NSResult NSFreeMessage(NSMessage *);
-NSMessage * NSDuplicateMessage(NSMessage *);
 OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *);
 NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
+
+NSResult NSFreeMessage(NSMessage *);
+NSMessage * NSDuplicateMessage(NSMessage *);
+
+NSResult NSFreeSync(NSSync *);
+NSSync * NSDuplicateSync(NSSync *);
+
+NSResult NSFreeConsumer(NSConsumer *);
+NSConsumer * NSDuplicateConsumer(NSConsumer *);
 
 #endif /* _NS_UTIL__H_ */

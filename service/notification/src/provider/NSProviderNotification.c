@@ -39,15 +39,19 @@ NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 
     if (!*msgPayload)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Failed to allocate payload"));
+        NS_LOG(ERROR, "Failed to allocate payload");
         return NS_ERROR;
     }
 
     OCRepPayloadSetUri(*msgPayload, NSGetNotificationMessageUri());
-    OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_ID, msg->mId);
-    OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TITLE, msg->mTitle);
-    OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TEXT, msg->mContentText);
-    OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_SOURCE, msg->mSource);
+    if(msg->mId)
+        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_ID, msg->mId);
+    if(msg->mTitle)
+        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TITLE, msg->mTitle);
+    if(msg->mContentText)
+        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TEXT, msg->mContentText);
+    if(msg->mSource)
+        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_SOURCE, msg->mSource);
 
     NS_LOG(DEBUG, "NSGetMessagePayload - OUT");
     return NS_OK;
@@ -61,13 +65,17 @@ NSResult NSGetSyncPayload(NSSync *sync, OCRepPayload** syncPayload)
 
     if (!*syncPayload)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Failed to allocate payload"));
+        NS_LOG(ERROR, "Failed to allocate payload");
         return NS_ERROR;
     }
 
     OCRepPayloadSetUri(*syncPayload, NSGetNotificationSyncUri());
-    OCRepPayloadSetPropString(*syncPayload, NS_ATTRIBUTE_ID, sync->mMessageId);
-    OCRepPayloadSetPropInt(*syncPayload, NS_ATTRIBUTE_STATE, sync->mState);
+
+    if(sync->mMessageId)
+    {
+        OCRepPayloadSetPropString(*syncPayload, NS_ATTRIBUTE_ID, sync->mMessageId);
+        OCRepPayloadSetPropInt(*syncPayload, NS_ATTRIBUTE_STATE, sync->mState);
+    }
 
     NS_LOG(DEBUG, "NSGetSyncPayload - OUT");
     return NS_OK;
@@ -75,7 +83,6 @@ NSResult NSGetSyncPayload(NSSync *sync, OCRepPayload** syncPayload)
 
 NSResult NSSendMessage(NSMessage *msg)
 {
-    OIC_LOG(DEBUG, NOTIFICATION_TAG, "Send Notification Message to consumer");
     NS_LOG(DEBUG, "NSSendMessage - IN");
 
     OCResourceHandle rHandle;
@@ -84,14 +91,12 @@ NSResult NSSendMessage(NSMessage *msg)
 
     if (NSPutMessageResource(msg, &rHandle) != NS_OK)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Fail to put notification resource"));
-        NS_LOG(DEBUG, "fail to Put notification resource");
+        NS_LOG(ERROR, "fail to Put notification resource");
         return NS_ERROR;
     }
 
     if (consumerSubList->head == NULL)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("no observers"));
         NS_LOG(ERROR, "SubList->head is NULL, empty SubList");
         return NS_ERROR;
     }
@@ -100,7 +105,6 @@ NSResult NSSendMessage(NSMessage *msg)
 
     if (NSGetMessagePayload(msg, &payload) != NS_OK)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Failed to allocate payload"));
         NS_LOG(ERROR, "fail to Get message payload");
         return NS_ERROR;
     }
@@ -139,7 +143,6 @@ NSResult NSSendMessage(NSMessage *msg)
 
     if (ocstackResult != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, "fail to send message");
         NS_LOG(ERROR, "fail to send message");
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
@@ -154,7 +157,6 @@ NSResult NSSendMessage(NSMessage *msg)
 
 NSResult NSSendSync(NSSync *sync)
 {
-    OIC_LOG(DEBUG, NOTIFICATION_TAG, "Send Notification Sync to consumer");
     NS_LOG(DEBUG, "NSSendSync - IN");
 
     OCObservationId obArray[255] = { 0, };
@@ -164,7 +166,7 @@ NSResult NSSendSync(NSSync *sync)
     OCResourceHandle rHandle;
     if (NSPutSyncResource(sync, &rHandle) != NS_OK)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Fail to put sync resource"));
+        NS_LOG(ERROR, PCF("Fail to put sync resource"));
         return NS_ERROR;
     }
 
@@ -185,7 +187,7 @@ NSResult NSSendSync(NSSync *sync)
     OCRepPayload* payload;
     if (NSGetSyncPayload(sync, &payload) != NS_OK)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Failed to allocate payload"));
+        NS_LOG(ERROR, "Failed to allocate payload");
         return NS_ERROR;
     }
 
@@ -203,7 +205,7 @@ NSResult NSSendSync(NSSync *sync)
 
     if (ocstackResult != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, "fail to send Sync");
+        NS_LOG(ERROR, "fail to send Sync");
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
 
@@ -219,7 +221,6 @@ void * NSNotificationSchedule(void *ptr)
 {
     if (ptr == NULL)
     {
-        OIC_LOG(DEBUG, NOTIFICATION_TAG, "Create NSNotifiactionSchedule");
         NS_LOG(DEBUG, "Create NSNotifiactionSchedule");
     }
 
@@ -233,13 +234,12 @@ void * NSNotificationSchedule(void *ptr)
             NSTask *node = NSHeadMsg[NOTIFICATION_SCHEDULER];
             NSHeadMsg[NOTIFICATION_SCHEDULER] = node->nextTask;
 
-            switch ((int)node->taskType)
+            switch (node->taskType)
             {
                 case TASK_SEND_NOTIFICATION:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_NOTIFICATION : ");
-                    NSMessage * nsMsg = (NSMessage *)node->taskData;
-                    NSSendMessage(nsMsg);
+                    NSSendMessage((NSMessage *)node->taskData);
                     break;
                 }
                 case TASK_SEND_READ:
@@ -253,8 +253,7 @@ void * NSNotificationSchedule(void *ptr)
                     break;
 
                 default:
-                    OIC_LOG(ERROR, NOTIFICATION_TAG, "Unknown type message");
-                    NS_LOG(ERROR, "Unknow type message");
+                    NS_LOG(ERROR, "Unknown type message");
                     break;
 
             }
@@ -264,5 +263,7 @@ void * NSNotificationSchedule(void *ptr)
         pthread_mutex_unlock(&NSMutex[NOTIFICATION_SCHEDULER]);
 
     }
+
+    NS_LOG(INFO, "Destroy NSNotificationSchedule");
     return NULL;
 }

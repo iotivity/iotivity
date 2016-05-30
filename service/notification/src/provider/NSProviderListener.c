@@ -23,7 +23,6 @@
 OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
-    OIC_LOG_V (INFO, LISTENER_TAG, "Inside entity handler - flags: 0x%x", flag);
     NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - IN");
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
@@ -37,7 +36,7 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OIC_LOG (ERROR, LISTENER_TAG, "Invalid request pointer");
+        NS_LOG(ERROR, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -50,11 +49,10 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OIC_LOG (INFO, LISTENER_TAG, "Flag includes OC_REQUEST_FLAG");
+        NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
 
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
             NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_GET");
 
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY,
@@ -64,25 +62,22 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_PUT from client");
             NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_PUT");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
             NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_POST");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_DELETE from client");
             NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_DELETE");
             ehResult = OC_EH_OK;
         }
         else
         {
-            OIC_LOG_V (INFO, LISTENER_TAG, "Received unsupported method %d from client",
+            NS_LOG_V (DEBUG, "Received unsupported method %d from client",
                     entityHandlerRequest->method);
             ehResult = OC_EH_OK;
         }
@@ -103,17 +98,17 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
             if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions
                     && entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
             {
-                OIC_LOG (INFO, LISTENER_TAG, "Received vendor specific options");
+                NS_LOG (DEBUG, "Received vendor specific options");
                 uint8_t i = 0;
                 OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
                 for (i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
                 {
                     if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
                     {
-                        OIC_LOG_V(INFO, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
+                        OIC_LOG_V(DEBUG, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
                                 ((OCHeaderOption)rcvdOptions[i]).optionID );
 
-                        OIC_LOG_BUFFER(INFO, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                        OIC_LOG_BUFFER(DEBUG, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                                 MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
@@ -143,7 +138,6 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
 OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
-    OIC_LOG_V (INFO, LISTENER_TAG, "Inside entity handler - flags: 0x%x", flag);
     NS_LOG(DEBUG, "NSEntityHandlerMessageCb - IN");
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
@@ -157,7 +151,7 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OIC_LOG (ERROR, LISTENER_TAG, "Invalid request pointer");
+        NS_LOG (ERROR,"Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -170,35 +164,31 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OIC_LOG (INFO, LISTENER_TAG, "Flag includes OC_REQUEST_FLAG");
+        NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
 
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_GET");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_PUT from client");
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_PUT");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_POST");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_DELETE from client");
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_DELETE");
             ehResult = OC_EH_OK;
         }
         else
         {
-            OIC_LOG_V (INFO, LISTENER_TAG, "Received unsupported method %d from client",
+            NS_LOG_V(DEBUG, "Received unsupported method %d from client",
                     entityHandlerRequest->method);
             ehResult = OC_EH_OK;
         }
@@ -219,17 +209,17 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
             if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions
                     && entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
             {
-                OIC_LOG (INFO, LISTENER_TAG, "Received vendor specific options");
+                NS_LOG(DEBUG, "Received vendor specific options");
                 uint8_t i = 0;
                 OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
                 for (i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
                 {
                     if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
                     {
-                        OIC_LOG_V(INFO, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
+                        OIC_LOG_V(DEBUG, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
                                 ((OCHeaderOption)rcvdOptions[i]).optionID );
 
-                        OIC_LOG_BUFFER(INFO, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                        OIC_LOG_BUFFER(DEBUG, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                                 MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
@@ -253,12 +243,10 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_OBSERVE_FLAG)
     {
-        OIC_LOG(DEBUG, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
         NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_FLAG");
 
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OIC_LOG (DEBUG, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_REGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n"
                     "Register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
@@ -275,7 +263,6 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
 OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
-    OIC_LOG_V (INFO, LISTENER_TAG, "Inside entity handler - flags: 0x%x", flag);
     NS_LOG(DEBUG, "NSEntityHandlerSyncCb - IN");
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response =
@@ -288,7 +275,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OIC_LOG (ERROR, LISTENER_TAG, "Invalid request pointer");
+        NS_LOG(ERROR, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -301,17 +288,15 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OIC_LOG (INFO, LISTENER_TAG, "Flag includes OC_REQUEST_FLAG");
+        NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
 
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_GET from client");
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_GET");
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_PUT from client");
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_PUT");
             ehResult = OC_EH_OK;
         }
@@ -321,7 +306,6 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
                            And broadcast the sync data to all subscribers including provider app
                            to synchronize the notification message status. */
 
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_POST from client");
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
 
             NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ,
@@ -330,12 +314,12 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
-            OIC_LOG (INFO, LISTENER_TAG, "Received OC_REST_DELETE from client");
+            NS_LOG(DEBUG, "Received OC_REST_DELETE from client");
             ehResult = OC_EH_OK;
         }
         else
         {
-            OIC_LOG_V (INFO, LISTENER_TAG, "Received unsupported method %d from client",
+            NS_LOG_V(DEBUG, "Received unsupported method %d from client",
                     entityHandlerRequest->method);
             ehResult = OC_EH_OK;
         }
@@ -356,17 +340,17 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
             if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions
                     && entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
             {
-                OIC_LOG (INFO, LISTENER_TAG, "Received vendor specific options");
+                NS_LOG(DEBUG, "Received vendor specific options");
                 uint8_t i = 0;
                 OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
                 for (i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
                 {
                     if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
                     {
-                        OIC_LOG_V(INFO, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
+                        OIC_LOG_V(DEBUG, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
                                 ((OCHeaderOption)rcvdOptions[i]).optionID );
 
-                        OIC_LOG_BUFFER(INFO, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                        OIC_LOG_BUFFER(DEBUG, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                                 MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
@@ -393,12 +377,10 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         /** Requested by consumers to synchronize notification message status.
             Store the observer IDs to storage or cache */
 
-        OIC_LOG(DEBUG, LISTENER_TAG, "Flag includes OC_OBSERVE_FLAG");
         NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_FLAG");
 
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OIC_LOG (DEBUG, LISTENER_TAG, "Received OC_OBSERVE_REGISTER from client");
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_REGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerSyncCb\n - "
                     "Register Sync observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
@@ -420,12 +402,10 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
     (void)adapter;
     (void)remote_address;
 
-    OIC_LOG (INFO, LISTENER_TAG, "Connection State Changed");
     NS_LOG(DEBUG, "NSProviderConnectionStateListener - IN");
 
     if (connected)
     {
-        OIC_LOG (INFO, LISTENER_TAG, "CONNECTED");
         NS_LOG(DEBUG, "CONNECTED");
 
         // Set Connection State
@@ -443,12 +423,10 @@ void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
     // should be implementation
     (void)adapter;
 
-    OIC_LOG (INFO, LISTENER_TAG, "Adapter State Changed");
     NS_LOG(DEBUG, "NSProviderAdapterStateListener - IN");
 
     if (enabled)
     {
-        OIC_LOG (INFO, LISTENER_TAG, "CONNECTED");
         NS_LOG(DEBUG, "CONNECTED");
 
         // Set Connection State
@@ -481,16 +459,12 @@ NSSync * NSBuildOICNotificationSync(OCPayload * payload)
     OCRepPayload * repPayload = (OCRepPayload *)payload;
     if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_ID, &retSync->mMessageId))
     {
-        OIC_LOG(DEBUG, LISTENER_TAG, "id of received sync is null");
         OICFree(retSync);
         return NULL;
     }
     int64_t state;
     if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_STATE, & state))
     {
-
-        OIC_LOG(DEBUG, LISTENER_TAG, "id of received sync is null");
-
         OICFree(retSync->mMessageId);
         OICFree(retSync);
         return NULL;
@@ -498,8 +472,8 @@ NSSync * NSBuildOICNotificationSync(OCPayload * payload)
 
     retSync->mState = (NSSyncTypes) state;
 
-    OIC_LOG_V(DEBUG, LISTENER_TAG, "Sync ID : %s", retSync->mMessageId);
-    OIC_LOG_V(DEBUG, LISTENER_TAG, "Sync State : %d", (int) retSync->mState);
+    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->mMessageId);
+    NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->mState);
 
     NS_LOG(DEBUG, "NSBuildOICNotificationSync - OUT");
 
@@ -513,7 +487,7 @@ NSResult NSMakeTask(NSTaskType type, OCEntityHandlerRequest *request, NSTask * t
     task = (NSTask*) OICMalloc(sizeof(NSTask));
     if (!task)
     {
-        OIC_LOG(ERROR, LISTENER_TAG, PCF("Fail to allocate memory"));
+        NS_LOG(ERROR, "Fail to allocate memory");
         return NS_ERROR;
     }
 

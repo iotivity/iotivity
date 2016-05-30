@@ -72,27 +72,27 @@ NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId)
     return NULL;
 }
 
-NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, NSCacheSubData * updateData)
+NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool state)
 {
     pthread_mutex_lock(&NSCacheMutex);
 
     NS_LOG(DEBUG, "NSCacheUpdateSubScriptionState - IN");
 
-    if (updateData == NULL)
+    if (id == NULL)
     {
-        NS_LOG(DEBUG, "updateData is NULL");
+        NS_LOG(DEBUG, "id is NULL");
         pthread_mutex_unlock(&NSCacheMutex);
         return NS_ERROR;
     }
 
     pthread_mutex_unlock(&NSCacheMutex);
-    NSCacheElement * it = NSCacheRead(list, updateData->id);
+    NSCacheElement * it = NSCacheRead(list, id);
     pthread_mutex_lock(&NSCacheMutex);
 
     if (it)
     {
         NSCacheSubData * itData = (NSCacheSubData *) it->data;
-        if (strcmp(itData->id, updateData->id) == 0)
+        if (strcmp(itData->id, id) == 0)
         {
             NS_LOG(DEBUG, "Update Data - IN");
 
@@ -101,12 +101,9 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, NSCacheSubData * upd
             NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
             NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
 
-            NS_LOG_V(DEBUG, "updateData_ID = %s", updateData->id);
-            NS_LOG_V(DEBUG, "updateData_MsgObID = %d", updateData->messageObId);
-            NS_LOG_V(DEBUG, "updateData_SyncObID = %d", updateData->syncObId);
-            NS_LOG_V(DEBUG, "updateData_IsWhite = %d", updateData->isWhite);
+            NS_LOG_V(DEBUG, "update state = %d", state);
 
-            itData->isWhite = updateData->isWhite;
+            itData->isWhite = state;
 
             NS_LOG(DEBUG, "Update Data - OUT");
             pthread_mutex_unlock(&NSCacheMutex);

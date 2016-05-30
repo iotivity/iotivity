@@ -22,35 +22,29 @@
 
 NSResult NSStartPresence()
 {
-    OIC_LOG(INFO, DISCOVERY_TAG, "NSStartPresence()");
-    NS_LOG(INFO, "NSStartPresence()");
+    NS_LOG(DEBUG, "NSStartPresence()");
 
     if (OCStartPresence(0) != OC_STACK_OK)
     {
-        OIC_LOG(INFO, DISCOVERY_TAG, "NSStartPresence() NS_ERROR");
-        NS_LOG(INFO, "NSStartPresence() NS_ERROR");
+        NS_LOG(DEBUG, "NSStartPresence() NS_ERROR");
         return NS_ERROR;
     }
 
-    OIC_LOG(INFO, DISCOVERY_TAG, "NSStartPresence() NS_OK");
-    NS_LOG(INFO, "NSStartPresence() NS_OK");
+    NS_LOG(DEBUG, "NSStartPresence() NS_OK");
     return NS_OK;
 }
 
 NSResult NSStopPresence()
 {
-    OIC_LOG(INFO, DISCOVERY_TAG, "NSStopPresence()");
-    NS_LOG(INFO, "NSStopPresence()");
+    NS_LOG(DEBUG, "NSStopPresence()");
 
     if (OCStopPresence() != OC_STACK_OK)
     {
-        OIC_LOG(INFO, DISCOVERY_TAG, "NSStopPresence() NS_ERROR");
-        NS_LOG(INFO, "NSStopPresence() NS_ERROR");
+        NS_LOG(DEBUG, "NSStopPresence() NS_ERROR");
         return NS_ERROR;
     }
 
-    OIC_LOG(INFO, DISCOVERY_TAG, "NSStopPresence() NS_OK");
-    NS_LOG(INFO, "NSStopPresence() NS_OK");
+    NS_LOG(DEBUG, "NSStopPresence() NS_OK");
     return NS_OK;
 }
 
@@ -58,8 +52,7 @@ void * NSDiscoverySchedule(void * ptr)
 {
     if (ptr == NULL)
     {
-        OIC_LOG(INFO, DISCOVERY_TAG, "Create NSDiscoverySchedule\n");
-        NS_LOG(INFO, "Create NSDiscoverySchedule");
+        NS_LOG(DEBUG, "Create NSDiscoverySchedule");
     }
 
     while (NSIsRunning[DISCOVERY_SCHEDULER])
@@ -75,15 +68,15 @@ void * NSDiscoverySchedule(void * ptr)
             switch (node->taskType)
             {
                 case TASK_START_PRESENCE:
-                    NS_LOG(INFO, "CASE TASK_START_PRESENCE : ");
+                    NS_LOG(DEBUG, "CASE TASK_START_PRESENCE : ");
                     NSStartPresence();
                     break;
                 case TASK_STOP_PRESENCE:
-                    NS_LOG(INFO, "CASE TASK_STOP_PRESENCE : ");
+                    NS_LOG(DEBUG, "CASE TASK_STOP_PRESENCE : ");
                     NSStopPresence();
                     break;
                 case TASK_REGISTER_RESOURCE:
-                    NS_LOG(INFO, "CASE TASK_REGISTER_RESOURCE : ");
+                    NS_LOG(DEBUG, "CASE TASK_REGISTER_RESOURCE : ");
                     NSRegisterResource();
                     break;
                 default:
@@ -96,5 +89,7 @@ void * NSDiscoverySchedule(void * ptr)
         pthread_mutex_unlock(&NSMutex[DISCOVERY_SCHEDULER]);
 
     }
+
+    NS_LOG(DEBUG, "Destroy NSDiscoverySchedule");
     return NULL;
 }

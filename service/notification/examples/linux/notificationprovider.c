@@ -55,9 +55,9 @@ void* OCProcessThread(void * ptr)
 void subscribeRequestCallback(NSConsumer *consumer)
 {
     OIC_LOG(INFO, TAG, "consumer requested to subscribe");
-    char *cid = consumer->mId;
 
-    printf("NS_ Consumer ID: %s\n", cid);
+    printf("NS_APP Consumer Address ID: %s\n", consumer->mAddress);
+    printf("NS_APP Consumer Device ID: %s\n", consumer->mDeviceId);
 
     NSAccept(consumer, true);
 }
@@ -66,7 +66,7 @@ void syncCallback(NSSync *sync)
 {
     OIC_LOG(INFO, TAG, "sync requested");
 
-    printf("NS_ Sync State: %d\n", sync->mState);
+    printf("NS_APP Sync State: %d\n", sync->mState);
 }
 
 int main()
@@ -84,7 +84,7 @@ int main()
 
     pthread_create(&processThread, NULL, OCProcessThread, NULL);
 
-    while (true)
+    while (!isExit)
     {
         char dummy;
 
@@ -92,7 +92,7 @@ int main()
         printf("2. NSStartProvider(Accepter: Consumer) \n");
         printf("3. NSSendNotification() \n");
         printf("4. NSRead \n");
-        //printf("5. NSAccept \n");
+        printf("5. NSStopProvider() \n");
         printf("6. NSGetConsumerList \n");
         //printf("7. startPresence \n");
         //printf("8. stopPresence \n");
@@ -101,6 +101,7 @@ int main()
         printf("input : ");
 
         scanf("%d", &num);
+        fflush(stdin);
         scanf("%c", &dummy);
         fflush(stdin);
 
@@ -129,7 +130,7 @@ int main()
                 printf("body : ");
                 gets(body);
 
-                printf("app - mId : %d \n", charID);
+                printf("app - mId : %s \n", charID);
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
 
@@ -140,6 +141,7 @@ int main()
                 msg->mId = strdup(charID);
                 msg->mTitle = strdup(title);
                 msg->mContentText = OICStrdup(body);
+                msg->mSource = NULL;
 
                 NSSendNotification(msg);
 
@@ -153,37 +155,12 @@ int main()
                 sync->mState = 1;
 
                 break;
-/*
+
             case 5:
-                OIC_LOG(INFO, TAG, "NSAccept");
-
-                NSConsumer * consumer = (NSConsumer *)malloc(sizeof(NSConsumer));
-                consumer->mId = strdup("dev_001");
-                consumer->mUserData = NULL;
-                bool accepted = true;
-
-                NSAccept(consumer, accepted);
-
-                break;*/
-
+                NSStopProvider();
+                break;
             case 6:
                 OIC_LOG(INFO, TAG, "NSGetConsumerList");
-
-                /*
-                NSConsumer *list = NULL;
-                int numberOfList;
-
-                NSGetConsumerList(list, numberOfList);
-
-                if(list != NULL)
-                {
-                    OIC_LOG(INFO, TAG, "Consumer list");
-                }
-                else
-                {
-                    OIC_LOG(INFO, TAG, "No Consumer list");
-                }
-                    */
                 break;
             case 7:
                 OIC_LOG(INFO, TAG, "NSStartPresence - not working");
@@ -192,6 +169,10 @@ int main()
             case 8:
                 OIC_LOG(INFO, TAG, "NSStopPresence- not working");
                 //NSTestStopPresence();
+                break;
+            case 0:
+                NSStopProvider();
+                isExit = true;
                 break;
             default:
                 OIC_LOG(INFO, TAG, "Under Construction");

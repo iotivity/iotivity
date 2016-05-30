@@ -76,19 +76,14 @@ typedef enum
 } NSSyncTypes;
 
 /**
- *  Device information
+ *  Consumer information
  */
 typedef struct
 {
-    char * mId;
-    void * mUserData;
+    char * mDeviceId;
+    char * mAddress;
 
-} NSDevice;
-
-/**
- *  Consumer information is same to device information
- */
-typedef NSDevice NSConsumer;
+} NSConsumer;
 
 /**
  *  Provider information
@@ -123,10 +118,8 @@ typedef struct
 {
     // Mandatory
     char * mMessageId;
+    char * mSourceId; // TO-DO from whom
     NSSyncTypes mState;
-
-    //Optional
-    NSDevice * mDevice;
 
 } NSSync;
 

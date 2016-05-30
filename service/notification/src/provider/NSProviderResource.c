@@ -54,7 +54,6 @@ typedef struct
     OCResourceHandle handle;
     char* id;
     char* state;
-    NSDevice device;
 } NSSyncResource;
 
 NSNotificationResource NotificationResource;
@@ -66,7 +65,6 @@ NSResult NSCreateResource(char *uri)
     NS_LOG(DEBUG, "NSCreateResource - IN");
     if (!uri)
     {
-        OIC_LOG(ERROR, RESOURCE_TAG, "Resource URI cannot be NULL");
         NS_LOG(NS_ERROR, "Resource URI cannot be NULL");
         return NS_ERROR;
     }
@@ -82,7 +80,6 @@ NSResult NSCreateResource(char *uri)
         if (OCCreateResource(&NotificationResource.handle, NSType, NSInterface, NSUri,
                 NSEntityHandlerNotificationCb, NULL, OC_DISCOVERABLE) != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Resource"));
             NS_LOG(NS_ERROR, "Fail to Create Notification Resource");
             return NS_ERROR;
         }
@@ -98,7 +95,6 @@ NSResult NSCreateResource(char *uri)
         if (OCCreateResource(&NotificationMessageResource.handle, NSMessageType, NSInterface,
                 NSMessageUri, NSEntityHandlerMessageCb, NULL, OC_OBSERVABLE) != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Message Resource"));
             NS_LOG(NS_ERROR, "Fail to Create Notification Message Resource");
             return NS_ERROR;
         }
@@ -107,21 +103,18 @@ NSResult NSCreateResource(char *uri)
     {
         NotificationSyncResource.id = NULL;
         NotificationSyncResource.state = NULL;
-        memset(&NotificationSyncResource.device, 0, sizeof(NSDevice));
         NotificationSyncResource.handle = NULL;
 
         if (OCCreateResource(&(NotificationSyncResource.handle), NSSyncType, NSInterface, NSSyncUri,
                 NSEntityHandlerSyncCb, NULL, OC_OBSERVABLE) != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to Create Notification Sync Resource"));
             NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");
             return NS_ERROR;
         }
     }
     else
     {
-        OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to create resource with invalid URI"));
-        NS_LOG(DEBUG, "Fail to create resource with invalid URI");
+        NS_LOG(ERROR, "Fail to create resource with invalid URI");
         return NS_ERROR;
     }
 
@@ -131,31 +124,53 @@ NSResult NSCreateResource(char *uri)
 
 NSResult NSRegisterResource()
 {
-    OIC_LOG(INFO, RESOURCE_TAG, "NSRegisterResource");
     NS_LOG(DEBUG, "NSRegisterResource - IN");
 
     if (NSCreateResource(NSSyncUri) != NS_OK)
     {
-        OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to register Sync Resource"));
-        NS_LOG(DEBUG, "Fail to register Sync Resource");
+        NS_LOG(ERROR, "Fail to register Sync Resource");
         return NS_ERROR;
     }
 
     if (NSCreateResource(NSMessageUri) != NS_OK)
     {
-        OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to register Message Resource"));
-        NS_LOG(DEBUG, "Fail to register Message Resource");
+        NS_LOG(ERROR, "Fail to register Message Resource");
         return NS_ERROR;
     }
 
     if (NSCreateResource(NSUri) != NS_OK)
     {
-        OIC_LOG(ERROR, RESOURCE_TAG, PCF("Fail to register Notification Resource"));
-        NS_LOG(DEBUG, "Fail to register Notification Resource");
+        NS_LOG(ERROR, "Fail to register Notification Resource");
         return NS_ERROR;
     }
 
     NS_LOG(DEBUG, "NSRegisterResource - OUT");
+    return NS_OK;
+}
+
+NSResult NSUnRegisterResource()
+{
+    NS_LOG(DEBUG, "NSUnRegisterResource - IN");
+
+    if (OCDeleteResource(NotificationResource.handle) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to Delete Notification Resource");
+        return NS_ERROR;
+    }
+
+    if (OCDeleteResource(NotificationMessageResource.handle) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to Delete Notification Message Resource");
+        return NS_ERROR;
+    }
+
+    if (OCDeleteResource(NotificationSyncResource.handle) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to Delete Notification Sync Resource");
+        return NS_ERROR;
+    }
+
+    NS_LOG(DEBUG, "NSUnRegisterResource - OUT");
     return NS_OK;
 }
 
@@ -175,15 +190,11 @@ NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle)
 
 NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
 {
-    OIC_LOG(INFO, RESOURCE_TAG, "Put notification message to Resource");
     NS_LOG(DEBUG, "NSPutMessageResource - IN");
 
     if(msg != NULL)
     {
         NS_LOG(DEBUG, "NSMessage is valid");
-        NS_LOG_V(DEBUG, "msg -> mId : %s", msg->mId);
-        NS_LOG_V(DEBUG, "msg -> mTitle : %s", msg->mTitle);
-        NS_LOG_V(DEBUG, "msg -> mContentText : %s", msg->mContentText);
 
         NotificationMessageResource.id = OICStrdup(msg->mId);
         NotificationMessageResource.title = OICStrdup(msg->mTitle);
@@ -202,7 +213,6 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
 
 NSResult NSPutSyncResource(NSSync *sync, OCResourceHandle * handle)
 {
-    OIC_LOG(INFO, RESOURCE_TAG, "Put notification sync to Resource");
     NS_LOG(DEBUG, "NSPutSyncResource - IN");
 
     (void) sync;

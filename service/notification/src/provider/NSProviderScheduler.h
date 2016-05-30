@@ -32,6 +32,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "NSUtil.h"
 
 extern NSTask* NSHeadMsg[THREAD_COUNT]; // Current MSG;
 extern NSTask* NSTailMsg[THREAD_COUNT]; // Recently MSG;
@@ -51,5 +52,6 @@ bool NSInitScheduler();
 bool NSStartScheduler();
 bool NSStopScheduler();
 void NSPushQueue(NSSchedulerType, NSTaskType, void*);
+void NSFreeData(NSSchedulerType, NSTask * );
 
 #endif /* _PROVIDER_SCHEDULER_H_ */

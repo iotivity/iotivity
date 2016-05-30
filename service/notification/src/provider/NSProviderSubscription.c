@@ -37,12 +37,10 @@ NSResult NSSetSubscriptionAcceptPolicy(NSAccessPolicy policy)
 
     if (policy == NS_ACCEPTER_PROVIDER)
     {
-        OIC_LOG(INFO, SUBSCRIPTION_TAG, "Place Provider as a subscription accepter");
         NS_LOG(DEBUG, "Place Provider as a subscription accepter");
     }
     else if (policy == NS_ACCEPTER_CONSUMER)
     {
-        OIC_LOG(INFO, SUBSCRIPTION_TAG, "Place Consumer as a subscription accepter");
         NS_LOG(DEBUG, "Place Consumer as a subscription accepter");
     }
 
@@ -59,7 +57,6 @@ int NSGetSubscriptionAccepter()
 
 NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest)
 {
-    OIC_LOG(DEBUG, NOTIFICATION_TAG, "Send Notification Policy to consumer");
     NS_LOG(DEBUG, "NSSendAccessPolicyResponse - IN");
 
     // put notification resource
@@ -67,7 +64,6 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     if (NSPutNotificationResource(NSGetSubscriptionAccepter(), &notificationResourceHandle)
             != NS_OK)
     {
-        OIC_LOG(ERROR, SUBSCRIPTION_TAG, PCF("Failed to put notification resource"));
         NS_LOG(ERROR, "Fail to put notification resource");
         return NS_ERROR;
     }
@@ -82,7 +78,6 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OIC_LOG(ERROR, SUBSCRIPTION_TAG, PCF("Failed to allocate Payload"));
         NS_LOG(ERROR, "payload is NULL");
         return NS_ERROR;
     }
@@ -101,7 +96,6 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     // Send Response
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, SUBSCRIPTION_TAG, PCF("Fail to send response"));
         NS_LOG(ERROR, "Fail to AccessPolicy send response");
         return NS_ERROR;
     }
@@ -114,8 +108,6 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
 void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResourceType resourceType)
 {
-
-    OIC_LOG(INFO, SUBSCRIPTION_TAG, "Start to subscription process");
     NS_LOG(DEBUG, "NSHandleSubscription - IN");
 
     if (resourceType == NS_RESOURCE_MESSAGE)
@@ -180,7 +172,6 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
 void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 {
-    OIC_LOG(INFO, SUBSCRIPTION_TAG, "Start to unsubscription process");
     NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
 
     NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
@@ -197,7 +188,6 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     if (NSCacheWrite(consumerSubList, element) != NS_OK)
     {
-        OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to write consumer white list");
         NS_LOG(ERROR, "fail to write consumer white list");
     }
 
@@ -207,7 +197,6 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
 void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest)
 {
-    OIC_LOG(DEBUG, SUBSCRIPTION_TAG, "Ask for user to Allow or Deny");
     NS_LOG(DEBUG, "NSAskAcceptanceToUser - IN");
 
     NSPushQueue(RESPONSE_SCHEDULER, TASK_CB_SUBSCRIPTION, entityHandlerRequest);
@@ -222,7 +211,6 @@ NSResult NSSendResponse(const char * id, bool accepted)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OIC_LOG(ERROR, SUBSCRIPTION_TAG, PCF("Failed to allocate Payload"));
         NS_LOG(ERROR, "fail to create playload");
         return NS_ERROR;
     }
@@ -230,7 +218,6 @@ NSResult NSSendResponse(const char * id, bool accepted)
     OCResourceHandle rHandle;
     if (NSPutMessageResource(NULL, &rHandle) != NS_OK)
     {
-        OIC_LOG(ERROR, NOTIFICATION_TAG, PCF("Fail to put notification resource"));
         NS_LOG(ERROR, "Fail to put notification resource");
         return NS_ERROR;
     }
@@ -251,7 +238,6 @@ NSResult NSSendResponse(const char * id, bool accepted)
     if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_HIGH_QOS)
             != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to send Acceptance");
         NS_LOG(ERROR, "fail to send Acceptance");
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
@@ -265,12 +251,11 @@ NSResult NSSendResponse(const char * id, bool accepted)
 
 NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest, bool accepted)
 {
-    OIC_LOG(INFO, SUBSCRIPTION_TAG, "Send ACCEPT message to consumer");
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - IN");
 
     if (!entityHandlerRequest)
     {
-        OIC_LOG (ERROR, LISTENER_TAG, "Invalid request pointer");
+        NS_LOG(ERROR, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -289,7 +274,6 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
 
         if (NSCacheWrite(consumerSubList, element) != NS_OK)
         {
-            OIC_LOG(ERROR, SUBSCRIPTION_TAG, "fail to write consumer white list");
             NS_LOG(ERROR, "fail to write consumer white list");
         }
     }
@@ -303,10 +287,8 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
 
 void * NSSubScriptionSchedule(void *ptr)
 {
-
     if (ptr == NULL)
     {
-        OIC_LOG(INFO, SUBSCRIPTION_TAG, "Create NSSubscriptionSchedule");
         NS_LOG(DEBUG, "Create NSSubScriptionSchedule");
     }
 
@@ -343,32 +325,26 @@ void * NSSubScriptionSchedule(void *ptr)
                     NS_LOG(DEBUG, "CASE TASK_SEND_ALLOW : ");
                     NSConsumer * consumer = (NSConsumer *) node->taskData;
 
-                    NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-                    subData->id = OICStrdup(consumer->mId);
-                    subData->isWhite = true;
-                    subData->messageObId = 0;
-                    subData->syncObId = 0;
+                    char * id = OICStrdup(consumer->mDeviceId);
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, subData);
-                    NSSendResponse(consumer->mId, true);
-
+                    NSCacheUpdateSubScriptionState(consumerSubList, id, true);
+                    NSSendResponse(id, true);
+                    OICFree(id);
+                    NSFreeConsumer(consumer);
                     break;
                 }
                 case TASK_SEND_DENY:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_DENY : ");
                     NSConsumer * consumer = (NSConsumer *) node->taskData;
-                    int * pObId = (int *) consumer->mUserData;
 
-                    NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-                    subData->id = OICStrdup(consumer->mId);
-                    subData->isWhite = false;
-                    subData->messageObId = 0;
-                    subData->syncObId = 0;
+                    char * id = OICStrdup(consumer->mDeviceId);
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, subData);
-                    printf("observer ID = %d\n", *pObId);
-                    NSSendResponse(consumer->mId, false);
+                    NSCacheUpdateSubScriptionState(consumerSubList, id, false);
+                    NSSendResponse(id, false);
+                    OICFree(id);
+                    NSFreeConsumer(consumer);
+
                     break;
                 }
                 case TASK_SYNC_SUBSCRIPTION:
@@ -386,5 +362,6 @@ void * NSSubScriptionSchedule(void *ptr)
         pthread_mutex_unlock(&NSMutex[SUBSCRIPTION_SCHEDULER]);
 
     }
+    NS_LOG(INFO, "Destroy NSSubScriptionSchedule");
     return NULL;
 }

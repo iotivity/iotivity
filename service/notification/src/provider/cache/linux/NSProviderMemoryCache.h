@@ -40,7 +40,7 @@ bool NSProviderCompareIdCacheData(NSCacheType, void *, const char *);
 
 bool NSProviderIsFoundCacheData(NSCacheType, void *, void*);
 
-NSResult NSCacheUpdateSubScriptionState(NSCacheList *, NSCacheSubData *);
+NSResult NSCacheUpdateSubScriptionState(NSCacheList *, char *, bool);
 
 pthread_mutex_t NSCacheMutex;
 
