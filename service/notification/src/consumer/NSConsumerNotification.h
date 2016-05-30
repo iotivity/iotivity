@@ -31,7 +31,7 @@ extern "C" {
 #include "NSStructs.h"
 #include "ocstack.h"
 
-void NSConsumerNotificationHandleMsg(NSTask *);
+void NSConsumerNotificationTaskProcessing(NSTask *);
 
 NSResult NSConsumerSubscribeProvider(NSProvider *);
 NSResult NSConsumerPostProvider(OCDevAddr *, OCPayload *, const char *);

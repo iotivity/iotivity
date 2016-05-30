@@ -54,14 +54,14 @@ NSResult NSConsumerListenerInit()
 //        return NS_ERROR;
 //    }
 
-    if (OC_STACK_OK != NSRequestToResourceIntrospection(NULL, OC_REST_PRESENCE, NULL,
+    if (OC_STACK_OK != NSSendRequest(NULL, OC_REST_PRESENCE, NULL,
             NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener))
     {
         NS_LOG(ERROR, "Presence request fail");
         return NS_ERROR;
     }
 
-    if (OC_STACK_OK != NSRequestToResourceIntrospection(NULL, OC_REST_DISCOVER, NULL,
+    if (OC_STACK_OK != NSSendRequest(NULL, OC_REST_DISCOVER, NULL,
             NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener))
     {
         NS_LOG(ERROR, "Discover request fail");

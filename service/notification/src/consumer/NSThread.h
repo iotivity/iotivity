@@ -43,18 +43,20 @@ typedef struct
     pthread_t thread_id;
     pthread_mutex_t mutex;
     pthread_mutexattr_t mutex_attr;
-} NSThreadHandle;
+} NSThread;
 #endif
 
 typedef void *(*NSThreadFunc)(void *);
 
-NSThreadHandle * NSThreadInit(NSThreadFunc, void *);
+NSThread * NSThreadInit(NSThreadFunc, void *);
 
-void NSThreadLock(NSThreadHandle *);
+void NSThreadLock(NSThread *);
 
-void NSThreadUnlock(NSThreadHandle *);
+void NSThreadUnlock(NSThread *);
 
-void NSThreadStop(NSThreadHandle *);
+void NSThreadJoin(NSThread *);
+
+void NSThreadStop(NSThread *);
 
 #ifdef __cplusplus
 }

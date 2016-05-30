@@ -30,7 +30,7 @@ extern "C" {
 #include "ocstack.h"
 #include "NSStructs.h"
 
-void NSConsumerDiscoveryHandleMsg(NSTask *);
+void NSConsumerDiscoveryTaskProcessing(NSTask *);
 
 OCStackApplicationResult NSConsumerPresenceListener(OCDoHandle, OCClientResponse *);
 
@@ -38,7 +38,7 @@ OCStackApplicationResult NSConsumerPresenceListener(OCDoHandle, OCClientResponse
 OCStackApplicationResult NSProviderDiscoverListener(OCDoHandle, OCClientResponse *);
 
 // for checking Permission
-OCStackApplicationResult NSGetProviderInformation(OCDoHandle, OCClientResponse *);
+OCStackApplicationResult NSIntrospectProvider(OCDoHandle, OCClientResponse *);
 
 #ifdef __cplusplus
 }

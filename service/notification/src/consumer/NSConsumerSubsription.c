@@ -72,7 +72,7 @@ NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageType
     return NS_OK;
 }
 
-void NSConsumerSubscriptionHandleMsg(NSTask * task)
+void NSConsumerSubscriptionTaskProcessing(NSTask * task)
 {
     if (!task)
     {

@@ -66,7 +66,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
 
     else if (payload->trigger == OC_PRESENCE_TRIGGER_CREATE)
     {
-    NSRequestToResourceIntrospection(NULL, OC_REST_DISCOVER, clientResponse->addr,
+    NSSendRequest(NULL, OC_REST_DISCOVER, clientResponse->addr,
             NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener);
     }
 
@@ -99,9 +99,9 @@ OCStackApplicationResult NSProviderDiscoverListener(
     {
         if (!strcmp(resource->uri, NS_RESOURCE_URI))
         {
-            NSRequestToResourceIntrospection(
+            NSSendRequest(
                     NULL, OC_REST_GET, clientResponse->addr,
-                    NS_RESOURCE_URI, NULL, NSGetProviderInformation);
+                    NS_RESOURCE_URI, NULL, NSIntrospectProvider);
         }
         resource = resource->next;
     }
@@ -109,7 +109,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult NSGetProviderInformation(
+OCStackApplicationResult NSIntrospectProvider(
         OCDoHandle handle, OCClientResponse * clientResponse)
 {
     (void) handle;
@@ -211,7 +211,7 @@ OCStackApplicationResult NSGetProviderInformation(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-void NSConsumerDiscoveryHandleMsg(NSTask * task)
+void NSConsumerDiscoveryTaskProcessing(NSTask * task)
 {
     if (!task)
     {
@@ -222,7 +222,7 @@ void NSConsumerDiscoveryHandleMsg(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     if (task->taskType == TASK_EVENT_CONNECTED || task->taskType == TASK_CONSUMER_REQ_DISCOVER)
     {
-        NSRequestToResourceIntrospection(NULL, OC_REST_DISCOVER, NULL, NS_DISCOVER_QUERY,
+        NSSendRequest(NULL, OC_REST_DISCOVER, NULL, NS_DISCOVER_QUERY,
                 NULL, NSProviderDiscoverListener);
     }
     else

@@ -36,14 +36,14 @@ NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type);
 
 NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 {
-    if (OC_STACK_OK != NSRequestToResourceIntrospection(&(provider->messageHandle),
+    if (OC_STACK_OK != NSSendRequest(&(provider->messageHandle),
             OC_REST_OBSERVE, (OCDevAddr *) provider->mUserData,
             provider->messageUri, NULL, NSConsumerNotificationListener))
     {
         return NS_ERROR;
     }
 
-    if (OC_STACK_OK != NSRequestToResourceIntrospection(&(provider->syncHandle),
+    if (OC_STACK_OK != NSSendRequest(&(provider->syncHandle),
             OC_REST_OBSERVE, (OCDevAddr *) provider->mUserData,
             provider->syncUri, NULL, NSConsumerSyncListener))
     {
@@ -56,7 +56,7 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 NSResult NSConsumerPostProvider(OCDevAddr * addr, OCPayload * payload, const char * uri)
 {
 
-    if (OC_STACK_OK != NSRequestToResourceIntrospection(NULL, OC_REST_POST, addr,
+    if (OC_STACK_OK != NSSendRequest(NULL, OC_REST_POST, addr,
             uri, payload, NULL))
     {
         return NS_ERROR;
@@ -272,7 +272,7 @@ NSProvider * NSGetProvider(OCClientResponse * clientResponse)
     return newProvider;
 }
 
-void NSConsumerNotificationHandleMsg(NSTask * task)
+void NSConsumerNotificationTaskProcessing(NSTask * task)
 {
     if (!task)
     {

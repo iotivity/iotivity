@@ -26,9 +26,9 @@
 #include <memory.h>
 #include "oic_malloc.h"
 
-void NSDestroyThreadHandle(NSThreadHandle *);
+void NSDestroyThreadHandle(NSThread *);
 
-NSThreadHandle * NSThreadInit(NSThreadFunc func, void * data)
+NSThread * NSThreadInit(NSThreadFunc func, void * data)
 {
     if (!func)
     {
@@ -36,14 +36,14 @@ NSThreadHandle * NSThreadInit(NSThreadFunc func, void * data)
         return NULL;
     }
 
-    NSThreadHandle * handle = (NSThreadHandle *)OICMalloc(sizeof(NSThreadHandle));
+    NSThread * handle = (NSThread *)OICMalloc(sizeof(NSThread));
     if (!handle)
     {
         NS_LOG(ERROR, "thread allocation fail");
         return NULL;
     }
 
-    memset(handle, 0, sizeof(NSThreadHandle));
+    memset(handle, 0, sizeof(NSThread));
 
     pthread_mutexattr_init(&(handle->mutex_attr));
     if (pthread_mutexattr_settype(&(handle->mutex_attr), PTHREAD_MUTEX_RECURSIVE))
@@ -82,29 +82,34 @@ NSThreadHandle * NSThreadInit(NSThreadFunc func, void * data)
     return handle;
 }
 
-void NSThreadLock(NSThreadHandle * handle)
+void NSThreadLock(NSThread * handle)
 {
     pthread_mutex_lock(&(handle->mutex));
 }
 
-void NSThreadUnlock(NSThreadHandle * handle)
+void NSThreadUnlock(NSThread * handle)
 {
     pthread_mutex_unlock(&(handle->mutex));
 }
 
-void NSThreadStop(NSThreadHandle * handle)
+void NSThreadStop(NSThread * handle)
 {
     NSDestroyThreadHandle(handle);
 }
 
-void NSDestroyThreadHandle(NSThreadHandle * handle)
+void NSThreadJoin(NSThread * handle)
+{
+	if (handle->thread_id)
+	{
+		pthread_join(handle->thread_id, NULL);
+	}
+}
+
+void NSDestroyThreadHandle(NSThread * handle)
 {
     handle->isStarted = false;
 
-    if (handle->thread_id)
-    {
-        pthread_join(handle->thread_id, NULL);
-    }
+    NSThreadJoin(handle);
 
     pthread_mutex_destroy(&(handle->mutex));
     pthread_mutexattr_destroy(&(handle->mutex_attr));

@@ -253,7 +253,7 @@ void NSRemoveMessage(NSMessage_consumer * msg)
     msg = NULL;
 }
 
-OCStackResult NSRequestToResourceIntrospection(OCDoHandle * handle,
+OCStackResult NSSendRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload, void * callback)
 {

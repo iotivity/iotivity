@@ -50,7 +50,7 @@ NSConsumerQueueObject * NSPopQueue(NSConsumerQueue *);
 
 int NSGetQueueSize(NSConsumerQueue *);
 
-bool NSIsEmptyQueue(NSConsumerQueue *);
+bool NSIsQueueEmpty(NSConsumerQueue *);
 
 #ifdef __cplusplus
 }

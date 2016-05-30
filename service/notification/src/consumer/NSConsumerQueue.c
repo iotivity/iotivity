@@ -116,7 +116,7 @@ int NSGetQueueSize(NSConsumerQueue * queue)
     return queue->size;
 }
 
-bool NSIsEmptyQueue(NSConsumerQueue * queue)
+bool NSIsQueueEmpty(NSConsumerQueue * queue)
 {
     return (queue->size <= 0);
 }

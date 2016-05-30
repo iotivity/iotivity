@@ -88,7 +88,7 @@ NSResult NSConsumerPushEvent(NSTask *);
 NSMessage_consumer * NSCopyMessage(NSMessage_consumer *);
 void NSRemoveMessage(NSMessage_consumer *);
 
-OCStackResult NSRequestToResourceIntrospection(OCDoHandle * handle,
+OCStackResult NSSendRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload, void * callback);
 

@@ -31,7 +31,7 @@ extern "C" {
 
 void NSDestroyCacheList();
 
-void NSConsumerSubscriptionHandleMsg(NSTask *);
+void NSConsumerSubscriptionTaskProcessing(NSTask *);
 
 #ifdef __cplusplus
 }
