@@ -768,7 +768,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
 
     OCDoHandle handle = NULL;
     res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
-                                     CT_DEFAULT, OC_LOW_QOS, &cbData, NULL, 0);
+                                     CT_DEFAULT, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -782,14 +782,14 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     {
         OIC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
         OICFree(pDInfo);
-        OCStackResult resCancel = OCCancel(handle, OC_LOW_QOS, NULL, 0);
+        OCStackResult resCancel = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
         if(OC_STACK_OK !=  resCancel)
         {
             OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
         }
         return res;
     }
-    res = OCCancel(handle,OC_LOW_QOS,NULL,0);
+    res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
@@ -836,7 +836,7 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     cbData.context = (void*)discoveryInfo;
     cbData.cd = NULL;
     OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
-            clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            clientResponse->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
@@ -879,7 +879,7 @@ static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
     cbData.context = (void*)discoveryInfo;
     cbData.cd = NULL;
     OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
-            clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            clientResponse->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Failed to Security Version Discovery");
