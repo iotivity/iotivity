@@ -127,6 +127,70 @@ void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCRes
     }
 }
 
+void JniOnResourceFoundListener::findResourceErrorCallback(const std::string& uri, const int eCode)
+{
+    LOGI("findResource error callback value : %d", eCode);
+    jint ret;
+    JNIEnv *env = GetJNIEnv(ret);
+    if (nullptr == env)
+    {
+        return;
+    }
+
+    jobject jListener = env->NewLocalRef(m_jwListener);
+    if (!jListener)
+    {
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
+    }
+
+    jclass clsL = env->GetObjectClass(jListener);
+    if (!clsL)
+    {
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
+    }
+
+    jobject ex = GetOcException(eCode, "stack error in onFindResourceErrorCallback");
+    if (!ex)
+    {
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
+    }
+
+
+    jmethodID midL = env->GetMethodID(clsL, "onFindResourceFailed",
+                                      "(Ljava/lang/Throwable;Ljava/lang/String;)V");
+    if (!midL)
+    {
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
+    }
+    env->CallVoidMethod(jListener, midL, ex, env->NewStringUTF(uri.c_str()));
+
+    checkExAndRemoveListener(env);
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
+}
+
 void JniOnResourceFoundListener::checkExAndRemoveListener(JNIEnv* env)
 {
     if (env->ExceptionCheck())

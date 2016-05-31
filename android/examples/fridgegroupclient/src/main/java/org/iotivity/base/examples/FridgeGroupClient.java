@@ -108,6 +108,12 @@ public class FridgeGroupClient extends Activity implements
         logMessage("-----------------------------------------------------");
     }
 
+    @Override
+    public synchronized void onFindResourceFailed(Throwable throwable, String uri) {
+        logMessage("findResource request has failed");
+        Log.e(TAG, throwable.toString());
+    }
+
     /**
      * once the fridge resource is discovered, create proxy child resources of the fridge
      * and call GET on each of the child resource proxies.

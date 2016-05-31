@@ -122,6 +122,12 @@ public class PresenceClient extends Activity implements
     }
 
     @Override
+    public synchronized void onFindResourceFailed(Throwable throwable, String uri) {
+        msg("findResource request has failed");
+        Log.e(TAG, throwable.toString());
+    }
+
+    @Override
     public void onPresence(OcPresenceStatus ocPresenceStatus, int nonce, String hostAddress) {
         msg("Received presence notification from : " + hostAddress);
         switch (ocPresenceStatus) {
