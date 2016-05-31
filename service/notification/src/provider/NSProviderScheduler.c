@@ -26,12 +26,10 @@ sem_t NSSemaphore[THREAD_COUNT];
 bool NSIsRunning[THREAD_COUNT] =
 { false, };
 
-NSTask* NSHeadMsg[THREAD_COUNT] =
-{ 0, };
-NSTask* NSTailMsg[THREAD_COUNT] =
-{ 0, };
+NSTask* NSHeadMsg[THREAD_COUNT];
+NSTask* NSTailMsg[THREAD_COUNT];
 
-void * NSResponseSchedule(void *ptr);
+void * NSCallbackSchedule(void *ptr);
 void * NSDiscoverySchedule(void *ptr);
 void * NSSubScriptionSchedule(void *ptr);
 void * NSNotificationSchedule(void *ptr);
@@ -50,6 +48,7 @@ bool NSInitScheduler()
     }
 
     NS_LOG(DEBUG, "NSInitScheduler - OUT");
+
     return true;
 }
 
@@ -63,10 +62,10 @@ bool NSStartScheduler()
 
         switch (i)
         {
-            case RESPONSE_SCHEDULER:
+            case CALLBACK_SCHEDULER:
             {
                 NS_LOG(DEBUG, "CASE RESPONSE_SCHEDULER :");
-                pthread_create(&NSThread[i], NULL, NSResponseSchedule, NULL);
+                pthread_create(&NSThread[i], NULL, NSCallbackSchedule, NULL);
             }
                 break;
 
@@ -185,7 +184,7 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
 {
     NS_LOG(DEBUG, "NSFreeData - IN");
 
-    if (type == RESPONSE_SCHEDULER)
+    if (type == CALLBACK_SCHEDULER)
     {
         switch (task->taskType)
         {
@@ -195,8 +194,7 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
                 break;
             case TASK_CB_SYNC:
                 NS_LOG(DEBUG, "CASE TASK_CB_SYNC : Free");
-                NSSync * sync = (NSSync*) task->taskData;
-                NSFreeSync(sync);
+                NSFreeSync((NSSync*) task->taskData);
                 break;
             default:
                 NS_LOG(DEBUG, "No Task Type");
@@ -228,12 +226,10 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
                 NS_LOG(DEBUG, "NSFreeOCEntityHandlerRequest : Free ");
                 NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) task->taskData);
                 break;
-
             case TASK_SEND_ALLOW:
             case TASK_SEND_DENY:
                 NS_LOG(DEBUG, "NSFreeConsumer : Free ");
-                NSConsumer * consumer = (NSConsumer *) task->taskData;
-                NSFreeConsumer(consumer);
+                NSFreeConsumer((NSConsumer *) task->taskData);
                 break;
             default:
                 NS_LOG(DEBUG, "No Task Type");

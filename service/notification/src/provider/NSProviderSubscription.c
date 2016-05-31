@@ -82,10 +82,10 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         return NS_ERROR;
     }
 
-    OCRepPayloadSetUri(payload, NSGetNotificationUri());
+    OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetSubscriptionAccepter());
-    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, NSGetNotificationMessageUri());
-    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, NSGetNotificationSyncUri());
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, NS_COLLECTION_MESSAGE_URI);
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, NS_COLLECTION_SYNC_URI);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
@@ -199,7 +199,7 @@ void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSAskAcceptanceToUser - IN");
 
-    NSPushQueue(RESPONSE_SCHEDULER, TASK_CB_SUBSCRIPTION, entityHandlerRequest);
+    NSPushQueue(CALLBACK_SCHEDULER, TASK_CB_SUBSCRIPTION, entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSAskAcceptanceToUser - OUT");
 }
@@ -222,7 +222,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
         return NS_ERROR;
     }
 
-    OCRepPayloadSetUri(payload, NSGetNotificationMessageUri());
+    OCRepPayloadSetUri(payload, NS_COLLECTION_MESSAGE_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_ID, "0000-0000-0000-0000");
     OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
 

@@ -20,42 +20,6 @@
 
 #include "NSProviderResource.h"
 
-char* NSType = "oic.r.notification";
-char* NSMessageType = "oic.r.notification.message";
-char* NSSyncType = "oic.r.notification.sync";
-
-char* NSInterface = "oic.if.baseline";
-char* NSMessgeInterface = "oic.if.baseline.message";
-char* NSSyncInterface = "oic.if.baseline.sync";
-
-char* NSUri = "/notification";
-char* NSMessageUri = "/notification/message";
-char* NSSyncUri = "/notification/sync";
-
-/* Structure to represent notification resources */
-typedef struct
-{
-    OCResourceHandle handle;
-    int accepter;
-    char* message_uri;
-    char* sync_uri;
-} NSNotificationResource;
-
-typedef struct
-{
-    OCResourceHandle handle;
-    char* id;
-    char* title;
-    char* body;
-} NSMessageResource;
-
-typedef struct
-{
-    OCResourceHandle handle;
-    char* id;
-    char* state;
-} NSSyncResource;
-
 NSNotificationResource NotificationResource;
 NSMessageResource NotificationMessageResource;
 NSSyncResource NotificationSyncResource;
@@ -69,22 +33,21 @@ NSResult NSCreateResource(char *uri)
         return NS_ERROR;
     }
 
-    if (strcmp(uri, NSUri) == 0)
+    if (strcmp(uri, NS_ROOT_URI) == 0)
     {
-
         NotificationResource.accepter = 0;
-        NotificationResource.message_uri = NSMessageUri;
-        NotificationResource.sync_uri = NSSyncUri;
+        NotificationResource.message_uri = NS_COLLECTION_MESSAGE_URI;
+        NotificationResource.sync_uri = NS_COLLECTION_SYNC_URI;
         NotificationResource.handle = NULL;
 
-        if (OCCreateResource(&NotificationResource.handle, NSType, NSInterface, NSUri,
-                NSEntityHandlerNotificationCb, NULL, OC_DISCOVERABLE) != OC_STACK_OK)
+        if (OCCreateResource(&NotificationResource.handle, NS_ROOT_TYPE, NS_DEFAULT_INTERFACE,
+                NS_ROOT_URI, NSEntityHandlerNotificationCb, NULL, OC_DISCOVERABLE) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Resource");
             return NS_ERROR;
         }
     }
-    else if (strcmp(uri, NSMessageUri) == 0)
+    else if (strcmp(uri, NS_COLLECTION_MESSAGE_URI) == 0)
     {
 
         NotificationMessageResource.id = NULL;
@@ -92,21 +55,23 @@ NSResult NSCreateResource(char *uri)
         NotificationMessageResource.body = NULL;
         NotificationMessageResource.handle = NULL;
 
-        if (OCCreateResource(&NotificationMessageResource.handle, NSMessageType, NSInterface,
-                NSMessageUri, NSEntityHandlerMessageCb, NULL, OC_OBSERVABLE) != OC_STACK_OK)
+        if (OCCreateResource(&NotificationMessageResource.handle, NS_COLLECTION_MESSAGE_TYPE,
+                NS_DEFAULT_INTERFACE, NS_COLLECTION_MESSAGE_URI, NSEntityHandlerMessageCb, NULL,
+                OC_OBSERVABLE) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Message Resource");
             return NS_ERROR;
         }
     }
-    else if (strcmp(uri, NSSyncUri) == 0)
+    else if (strcmp(uri, NS_COLLECTION_SYNC_URI) == 0)
     {
         NotificationSyncResource.id = NULL;
         NotificationSyncResource.state = NULL;
         NotificationSyncResource.handle = NULL;
 
-        if (OCCreateResource(&(NotificationSyncResource.handle), NSSyncType, NSInterface, NSSyncUri,
-                NSEntityHandlerSyncCb, NULL, OC_OBSERVABLE) != OC_STACK_OK)
+        if (OCCreateResource(&(NotificationSyncResource.handle), NS_COLLECTION_SYNC_TYPE,
+                NS_DEFAULT_INTERFACE, NS_COLLECTION_SYNC_URI, NSEntityHandlerSyncCb, NULL,
+                OC_OBSERVABLE) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");
             return NS_ERROR;
@@ -126,19 +91,19 @@ NSResult NSRegisterResource()
 {
     NS_LOG(DEBUG, "NSRegisterResource - IN");
 
-    if (NSCreateResource(NSSyncUri) != NS_OK)
+    if (NSCreateResource(NS_COLLECTION_SYNC_URI) != NS_OK)
     {
         NS_LOG(ERROR, "Fail to register Sync Resource");
         return NS_ERROR;
     }
 
-    if (NSCreateResource(NSMessageUri) != NS_OK)
+    if (NSCreateResource(NS_COLLECTION_MESSAGE_URI) != NS_OK)
     {
         NS_LOG(ERROR, "Fail to register Message Resource");
         return NS_ERROR;
     }
 
-    if (NSCreateResource(NSUri) != NS_OK)
+    if (NSCreateResource(NS_ROOT_URI) != NS_OK)
     {
         NS_LOG(ERROR, "Fail to register Notification Resource");
         return NS_ERROR;
@@ -179,8 +144,8 @@ NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle)
     NS_LOG(DEBUG, "NSPutNotificationResource - IN");
 
     NotificationResource.accepter = accepter;
-    NotificationResource.message_uri = NSMessageUri;
-    NotificationResource.sync_uri = NSSyncUri;
+    NotificationResource.message_uri = NS_COLLECTION_MESSAGE_URI;
+    NotificationResource.sync_uri = NS_COLLECTION_SYNC_URI;
 
     *handle = NotificationResource.handle;
 
@@ -221,35 +186,4 @@ NSResult NSPutSyncResource(NSSync *sync, OCResourceHandle * handle)
 
     NS_LOG(DEBUG, "NSPutSyncResource - OUT");
     return NS_OK;
-}
-
-const char* NSGetNotificationUri()
-{
-    return NSUri;
-}
-
-const char* NSGetNotificationMessageUri()
-{
-    return NSMessageUri;
-}
-
-const char* NSGetNotificationSyncUri()
-{
-    return NSSyncUri;
-}
-
-NSResult NSCopyString(char** targetString, const char* sourceString)
-{
-    if (sourceString)
-    {
-        *targetString = (char *) malloc(strlen(sourceString) + 1);
-
-        if (*targetString)
-        {
-            strncpy(*targetString, sourceString, (strlen(sourceString) + 1));
-            return NS_SUCCESS;
-        }
-    }
-
-    return NS_FAIL;
 }

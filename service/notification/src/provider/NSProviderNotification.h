@@ -36,7 +36,5 @@ NSCacheList * messageList;
 
 NSResult NSRegisterResource();
 NSResult NSInitMessageList();
-NSResult NSPutNotificationMessage(NSMessage *, OCResourceHandle *);
-NSResult NSSendNotificationMessage(NSMessage *);
 
 #endif /* _NS_PROVIDER_NOTIFICATION_H_ */

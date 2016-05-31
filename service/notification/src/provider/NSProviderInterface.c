@@ -92,7 +92,6 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
         NSInitScheduler();
         NSStartScheduler();
 
-
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_REGISTER_RESOURCE, NULL);
     }
@@ -198,22 +197,22 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted)
     return NS_OK;
 }
 
-void * NSResponseSchedule(void * ptr)
+void * NSCallbackSchedule(void * ptr)
 {
     if (ptr == NULL)
     {
         NS_LOG(DEBUG, "Create NSReponseSchedule");
     }
 
-    while (NSIsRunning[RESPONSE_SCHEDULER])
+    while (NSIsRunning[CALLBACK_SCHEDULER])
     {
-        sem_wait(&NSSemaphore[RESPONSE_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[RESPONSE_SCHEDULER]);
+        sem_wait(&NSSemaphore[CALLBACK_SCHEDULER]);
+        pthread_mutex_lock(&NSMutex[CALLBACK_SCHEDULER]);
 
-        if (NSHeadMsg[RESPONSE_SCHEDULER] != NULL)
+        if (NSHeadMsg[CALLBACK_SCHEDULER] != NULL)
         {
-            NSTask *node = NSHeadMsg[RESPONSE_SCHEDULER];
-            NSHeadMsg[RESPONSE_SCHEDULER] = node->nextTask;
+            NSTask *node = NSHeadMsg[CALLBACK_SCHEDULER];
+            NSHeadMsg[CALLBACK_SCHEDULER] = node->nextTask;
 
             switch (node->taskType)
             {
@@ -246,24 +245,11 @@ void * NSResponseSchedule(void * ptr)
             OICFree(node);
         }
 
-        pthread_mutex_unlock(&NSMutex[RESPONSE_SCHEDULER]);
+        pthread_mutex_unlock(&NSMutex[CALLBACK_SCHEDULER]);
 
     }
 
     NS_LOG(DEBUG, "Destroy NSResponseSchedule");
     return NULL;
 }
-
-NSResult NSTestStartPresence()
-{
-    NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
-    return NS_OK;
-}
-
-NSResult NSTestStopPresence()
-{
-    NSPushQueue(DISCOVERY_SCHEDULER, TASK_STOP_PRESENCE, NULL);
-    return NS_OK;
-}
-
 

@@ -62,6 +62,16 @@
 #define LISTENER_TAG "NS_PROVIDER_LISTENER"
 #define RESOURCE_TAG "NS_PROVIDER_RESOURCE"
 
+#define NS_ROOT_TYPE "oic.r.notification"
+#define NS_COLLECTION_MESSAGE_TYPE "oic.r.notification.message"
+#define NS_COLLECTION_SYNC_TYPE "oic.r.notification.sync"
+
+#define NS_DEFAULT_INTERFACE "oic.if.baseline"
+
+#define NS_ROOT_URI "/notification"
+#define NS_COLLECTION_MESSAGE_URI "/notification/message"
+#define NS_COLLECTION_SYNC_URI "/notification/sync"
+
 typedef enum eConnectionState
 {
     DISCONNECTED = 0,
@@ -71,7 +81,7 @@ typedef enum eConnectionState
 
 typedef enum eSchedulerType
 {
-    RESPONSE_SCHEDULER = 0,
+    CALLBACK_SCHEDULER = 0,
     DISCOVERY_SCHEDULER = 1,
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,

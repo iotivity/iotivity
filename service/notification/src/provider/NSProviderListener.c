@@ -480,22 +480,3 @@ NSSync * NSBuildOICNotificationSync(OCPayload * payload)
     return retSync;
 }
 
-NSResult NSMakeTask(NSTaskType type, OCEntityHandlerRequest *request, NSTask * task)
-{
-    NS_LOG(DEBUG, "NSMakeTask - IN");
-
-    task = (NSTask*) OICMalloc(sizeof(NSTask));
-    if (!task)
-    {
-        NS_LOG(ERROR, "Fail to allocate memory");
-        return NS_ERROR;
-    }
-
-    task->taskType = type;
-    task->taskData = request;
-    task->nextTask = NULL;
-
-    NS_LOG(DEBUG, "NSMakeTask - OUT");
-    return NS_OK;
-}
-

@@ -65,4 +65,27 @@ typedef struct
     NSMessage * nsMessage;
 }NSCacheMsgData;
 
+typedef struct
+{
+    OCResourceHandle handle;
+    int accepter;
+    char* message_uri;
+    char* sync_uri;
+} NSNotificationResource;
+
+typedef struct
+{
+    OCResourceHandle handle;
+    char* id;
+    char* title;
+    char* body;
+} NSMessageResource;
+
+typedef struct
+{
+    OCResourceHandle handle;
+    char* id;
+    char* state;
+} NSSyncResource;
+
 #endif /* _NS_STRUCTS_H_ */

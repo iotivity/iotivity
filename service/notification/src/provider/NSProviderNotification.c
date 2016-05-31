@@ -43,7 +43,7 @@ NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
         return NS_ERROR;
     }
 
-    OCRepPayloadSetUri(*msgPayload, NSGetNotificationMessageUri());
+    OCRepPayloadSetUri(*msgPayload, NS_COLLECTION_MESSAGE_URI);
     if(msg->mId)
         OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_ID, msg->mId);
     if(msg->mTitle)
@@ -69,8 +69,7 @@ NSResult NSGetSyncPayload(NSSync *sync, OCRepPayload** syncPayload)
         return NS_ERROR;
     }
 
-    OCRepPayloadSetUri(*syncPayload, NSGetNotificationSyncUri());
-
+    OCRepPayloadSetUri(*syncPayload, NS_COLLECTION_SYNC_URI);
     if(sync->mMessageId)
     {
         OCRepPayloadSetPropString(*syncPayload, NS_ATTRIBUTE_ID, sync->mMessageId);
@@ -123,7 +122,6 @@ NSResult NSSendMessage(NSMessage *msg)
         {
             obArray[obCount++] = subData->messageObId;
         }
-
         it = it->next;
     }
 
@@ -179,9 +177,7 @@ NSResult NSSendSync(NSSync *sync)
         {
             obArray[obCount++] = subData->syncObId;
         }
-
         it = it->next;
-
     }
 
     OCRepPayload* payload;
@@ -249,7 +245,7 @@ void * NSNotificationSchedule(void *ptr)
                 case TASK_RECV_READ:
                     NS_LOG(DEBUG, "CASE TASK_RECV_READ : ");
                     NSSendSync((NSSync*) node->taskData);
-                    NSPushQueue(RESPONSE_SCHEDULER, TASK_CB_SYNC, node->taskData);
+                    NSPushQueue(CALLBACK_SCHEDULER, TASK_CB_SYNC, node->taskData);
                     break;
 
                 default:
