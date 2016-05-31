@@ -26,7 +26,7 @@ extern "C" {
 #endif // __cplusplus
 
 #include "NSStructs.h"
-#include "NSCacheAdapter.h"
+#include "../common/NSStorageAdapter.h"
 #include "NSConsumerNotification.h"
 
 void NSDestroyCacheList();

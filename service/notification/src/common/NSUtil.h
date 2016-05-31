@@ -40,8 +40,13 @@ NSMessage * NSDuplicateMessage(NSMessage *);
 
 NSResult NSFreeSync(NSSync *);
 NSSync * NSDuplicateSync(NSSync *);
+NSSync * NSGetSyncInfo(OCPayload * payload);
 
 NSResult NSFreeConsumer(NSConsumer *);
 NSConsumer * NSDuplicateConsumer(NSConsumer *);
+
+void NSDuplicateSetPropertyString(OCRepPayload **, const char *, const char *);
+
+
 
 #endif /* _NS_UTIL__H_ */

@@ -24,16 +24,16 @@ NSResult NSInitMessageList()
 {
     NS_LOG(DEBUG, "NSInitMessageList - IN");
 
-    messageList = NSCacheCreate();
+    messageList = NSStorageCreate();
     messageList->cacheType = NS_PROVIDER_CACHE_MESSAGE;
 
     NS_LOG(DEBUG, "NSInitMessageList - OUT");
     return NS_OK;
 }
 
-NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
+NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
-    NS_LOG(DEBUG, "NSGetMessagePayload - IN");
+    NS_LOG(DEBUG, "NSSetMessagePayload - IN");
 
     *msgPayload = OCRepPayloadCreate();
 
@@ -44,22 +44,19 @@ NSResult NSGetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     }
 
     OCRepPayloadSetUri(*msgPayload, NS_COLLECTION_MESSAGE_URI);
-    if(msg->mId)
-        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_ID, msg->mId);
-    if(msg->mTitle)
-        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TITLE, msg->mTitle);
-    if(msg->mContentText)
-        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TEXT, msg->mContentText);
-    if(msg->mSource)
-        OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_SOURCE, msg->mSource);
 
-    NS_LOG(DEBUG, "NSGetMessagePayload - OUT");
+    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_ID, msg->mId);
+    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TITLE, msg->mTitle);
+    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->mContentText);
+    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->mSource);
+
+    NS_LOG(DEBUG, "NSSetMessagePayload - OUT");
     return NS_OK;
 }
 
-NSResult NSGetSyncPayload(NSSync *sync, OCRepPayload** syncPayload)
+NSResult NSSetSyncPayload(NSSync *sync, OCRepPayload** syncPayload)
 {
-    NS_LOG(DEBUG, "NSGetSyncPayload - IN");
+    NS_LOG(DEBUG, "NSSetSyncPayload - IN");
 
     *syncPayload = OCRepPayloadCreate();
 
@@ -70,17 +67,17 @@ NSResult NSGetSyncPayload(NSSync *sync, OCRepPayload** syncPayload)
     }
 
     OCRepPayloadSetUri(*syncPayload, NS_COLLECTION_SYNC_URI);
-    if(sync->mMessageId)
-    {
-        OCRepPayloadSetPropString(*syncPayload, NS_ATTRIBUTE_ID, sync->mMessageId);
-        OCRepPayloadSetPropInt(*syncPayload, NS_ATTRIBUTE_STATE, sync->mState);
-    }
 
-    NS_LOG(DEBUG, "NSGetSyncPayload - OUT");
+    NSDuplicateSetPropertyString(syncPayload, NS_ATTRIBUTE_ID, sync->mMessageId);
+    NSDuplicateSetPropertyString(syncPayload, NS_ATTRIBUTE_SOURCE, sync->mSourceId);
+
+    OCRepPayloadSetPropInt(*syncPayload, NS_ATTRIBUTE_STATE, sync->mState);
+
+    NS_LOG(DEBUG, "NSSetSyncPayload - OUT");
     return NS_OK;
 }
 
-NSResult NSSendMessage(NSMessage *msg)
+NSResult NSSendNotification(NSMessage *msg)
 {
     NS_LOG(DEBUG, "NSSendMessage - IN");
 
@@ -102,7 +99,7 @@ NSResult NSSendMessage(NSMessage *msg)
 
     OCRepPayload* payload;
 
-    if (NSGetMessagePayload(msg, &payload) != NS_OK)
+    if (NSSetMessagePayload(msg, &payload) != NS_OK)
     {
         NS_LOG(ERROR, "fail to Get message payload");
         return NS_ERROR;
@@ -181,7 +178,7 @@ NSResult NSSendSync(NSSync *sync)
     }
 
     OCRepPayload* payload;
-    if (NSGetSyncPayload(sync, &payload) != NS_OK)
+    if (NSSetSyncPayload(sync, &payload) != NS_OK)
     {
         NS_LOG(ERROR, "Failed to allocate payload");
         return NS_ERROR;
@@ -235,17 +232,18 @@ void * NSNotificationSchedule(void *ptr)
                 case TASK_SEND_NOTIFICATION:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_NOTIFICATION : ");
-                    NSSendMessage((NSMessage *)node->taskData);
+                    NSSendNotification((NSMessage *)node->taskData);
                     break;
                 }
                 case TASK_SEND_READ:
                     NS_LOG(DEBUG, "CASE TASK_SEND_READ : ");
                     NSSendSync((NSSync*) node->taskData);
+                    NSFreeSync((NSSync*) node->taskData);
                     break;
                 case TASK_RECV_READ:
                     NS_LOG(DEBUG, "CASE TASK_RECV_READ : ");
                     NSSendSync((NSSync*) node->taskData);
-                    NSPushQueue(CALLBACK_SCHEDULER, TASK_CB_SYNC, node->taskData);
+                    NSPushQueue(INTERFACE_SCHEDULER, TASK_CB_SYNC, node->taskData);
                     break;
 
                 default:

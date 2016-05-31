@@ -309,7 +309,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
 
             NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ,
-                    NSBuildOICNotificationSync(entityHandlerRequest->payload));
+                    NSGetSyncInfo(entityHandlerRequest->payload));
             ehResult = OC_EH_OK;
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
@@ -437,46 +437,5 @@ void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
     }
 
     NS_LOG(DEBUG, "NSProviderAdapterStateListener - OUT");
-}
-
-NSSync * NSBuildOICNotificationSync(OCPayload * payload)
-{
-    NS_LOG(DEBUG, "NSBuildOICNotificationSync - IN");
-
-    if(!payload)
-    {
-        return NULL;
-    }
-    NSSync * retSync = (NSSync *)OICMalloc(sizeof(NSSync));
-    if (!retSync)
-    {
-        return NULL;
-    }
-
-    retSync->mMessageId = NULL;
-    retSync->mState = Notification_Read;
-
-    OCRepPayload * repPayload = (OCRepPayload *)payload;
-    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_ID, &retSync->mMessageId))
-    {
-        OICFree(retSync);
-        return NULL;
-    }
-    int64_t state;
-    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_STATE, & state))
-    {
-        OICFree(retSync->mMessageId);
-        OICFree(retSync);
-        return NULL;
-    }
-
-    retSync->mState = (NSSyncTypes) state;
-
-    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->mMessageId);
-    NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->mState);
-
-    NS_LOG(DEBUG, "NSBuildOICNotificationSync - OUT");
-
-    return retSync;
 }
 

@@ -59,6 +59,8 @@ typedef enum eResult
  */
 typedef enum eAccessPolicy
 {
+    NS_ACCESS_ALLOW = 0,
+    NS_ACCESS_DENY = 1,
     NS_ACCEPTER_PROVIDER = 0,
     NS_ACCEPTER_CONSUMER = 1,
 

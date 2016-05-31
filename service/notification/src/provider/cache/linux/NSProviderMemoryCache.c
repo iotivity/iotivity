@@ -17,9 +17,10 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #include "NSProviderMemoryCache.h"
 
-NSCacheList * NSCacheCreate()
+NSCacheList * NSStorageCreate()
 {
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheList * newList = (NSCacheList *) OICMalloc(sizeof(NSCacheList));
@@ -38,7 +39,7 @@ NSCacheList * NSCacheCreate()
     return newList;
 }
 
-NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId)
+NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId)
 {
     pthread_mutex_lock(&NSCacheMutex);
 
@@ -86,7 +87,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
     }
 
     pthread_mutex_unlock(&NSCacheMutex);
-    NSCacheElement * it = NSCacheRead(list, id);
+    NSCacheElement * it = NSStorageRead(list, id);
     pthread_mutex_lock(&NSCacheMutex);
 
     if (it)
@@ -120,7 +121,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
     return NS_ERROR;
 }
 
-NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
+NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
     pthread_mutex_lock(&NSCacheMutex);
 
@@ -142,7 +143,7 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
         NSCacheSubData * subData = (NSCacheSubData *) newObj->data;
 
         pthread_mutex_unlock(&NSCacheMutex);
-        NSCacheElement * it = NSCacheRead(list, subData->id);
+        NSCacheElement * it = NSStorageRead(list, subData->id);
         pthread_mutex_lock(&NSCacheMutex);
 
         if (it)
@@ -187,7 +188,7 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
 
         NSCacheMsgData * msgData = (NSCacheMsgData *) newObj->data;
 
-        NSCacheElement * it = NSCacheRead(list, msgData->id);
+        NSCacheElement * it = NSStorageRead(list, msgData->id);
         if (it)
         {
             NSCacheMsgData * itData = (NSCacheMsgData *) it->data;
@@ -218,7 +219,7 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
     return NS_OK;
 }
 
-NSResult NSCacheDelete(NSCacheList * list, const char * delId)
+NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 {
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheElement * prev = list->head;
@@ -264,7 +265,7 @@ NSResult NSCacheDelete(NSCacheList * list, const char * delId)
     return NS_OK;
 }
 
-NSResult NSCacheDestroy(NSCacheList * list)
+NSResult NSStorageDestroy(NSCacheList * list)
 {
     NSCacheElement * iter = list->head;
     NSCacheElement * next = NULL;

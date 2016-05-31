@@ -45,7 +45,6 @@ target_os = env.get('TARGET_OS')
 notification_env.AppendUnique(CPPPATH = ['include'])
 notification_env.AppendUnique(CPPPATH = ['src/common'])
 notification_env.AppendUnique(CPPPATH = ['src/provider'])
-notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
 notification_env.AppendUnique(CPPPATH = ['src/consumer'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
@@ -54,9 +53,10 @@ if target_os == 'linux':
     notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
     notification_env.AppendUnique(CPPPATH = ['src/consumer/cache/linux'])
 
-if target_os == 'android':
-    notification_env.AppendUnique(CPPPATH = ['src/provider/cache/android'])
-    notification_env.AppendUnique(CPPPATH = ['src/consumer/cache/android'])
+# [TO-DO] change to android DB. 
+if target_os == 'android': 
+    notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
+    notification_env.AppendUnique(CPPPATH = ['src/consumer/cache/linux'])
 
 notification_env.PrependUnique(LIBS = [
 	'octbstack',
@@ -77,7 +77,7 @@ if target_os == 'linux':
 if target_os == 'android':
 	notification_env.AppendUnique(CCFLAGS = ['-frtti', '-fexceptions'])
 	notification_env.AppendUnique(LIBS = ['gnustl_shared','log'])
-        notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider.so'])
+	notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider.so'])
 
 	if not env.get('RELEASE'):
 		notification_env.AppendUnique(LIBS = ['log'])

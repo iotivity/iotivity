@@ -43,7 +43,7 @@ void NSDestroyCacheList()
     cache = *(NSGetCacheList());
     if (!cache)
     {
-        NSCacheDestroy(cache);
+        NSStorageDestroy(cache);
     }
 }
 
@@ -60,7 +60,7 @@ NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageType
     obj->data = (NSCacheData *) noti;
     obj->next = NULL;
 
-    if (NS_OK != NSCacheWrite(cache, obj))
+    if (NS_OK != NSStorageWrite(cache, obj))
     {
         NS_LOG(ERROR, "Cache write fail");
         return NS_ERROR;
@@ -84,7 +84,7 @@ void NSConsumerSubscriptionTaskProcessing(NSTask * task)
     if (!*(NSGetCacheList()))
     {
         NS_LOG(DEBUG, "Cache Init");
-        cache = NSCacheCreate();
+        cache = NSStorageCreate();
         cache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
         if (!cache)
         {

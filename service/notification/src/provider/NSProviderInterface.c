@@ -21,9 +21,9 @@
 #include "NSProviderInterface.h"
 #include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
-#include "NSCacheAdapter.h"
 #include "NSProviderSubscription.h"
 #include "NSProviderNotification.h"
+#include "NSStorageAdapter.h"
 #include "NSProviderMemoryCache.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -82,7 +82,7 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
     {
         NS_LOG(DEBUG, "Init Provider");
         initProvider = true;
-        NSSetSubscriptionAcceptPolicy(policy);
+        NSSetSubscriptionAccessPolicy(policy);
         NSRegisterSubscribeRequestCb(subscribeRequestCb);
         NSRegisterSyncCb(syncCb);
         CARegisterNetworkMonitorHandler(NSProviderAdapterStateListener,
@@ -127,8 +127,8 @@ NSResult NSStopProvider()
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSSyncCallback)NULL);
         NSStopScheduler();
-        NSCacheDestroy(consumerSubList);
-        NSCacheDestroy(messageList);
+        NSStorageDestroy(consumerSubList);
+        NSStorageDestroy(messageList);
 
         initProvider = false;
     }
@@ -138,7 +138,7 @@ NSResult NSStopProvider()
     return NS_OK;
 }
 
-NSResult NSSendNotification(NSMessage *msg)
+NSResult NSSendMessage(NSMessage *msg)
 {
     NS_LOG(DEBUG, "NSSendNotification - IN");
 
@@ -161,7 +161,7 @@ NSResult NSSendNotification(NSMessage *msg)
     return NS_OK;
 }
 
-NSResult NSProviderReadCheck(NSMessage *msg)
+NSResult NSReadCheck(NSMessage *msg)
 {
     NS_LOG(DEBUG, "NSProviderReadCheck - IN");
 
@@ -197,22 +197,22 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted)
     return NS_OK;
 }
 
-void * NSCallbackSchedule(void * ptr)
+void * NSInterfaceSchedule(void * ptr)
 {
     if (ptr == NULL)
     {
         NS_LOG(DEBUG, "Create NSReponseSchedule");
     }
 
-    while (NSIsRunning[CALLBACK_SCHEDULER])
+    while (NSIsRunning[INTERFACE_SCHEDULER])
     {
-        sem_wait(&NSSemaphore[CALLBACK_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[CALLBACK_SCHEDULER]);
+        sem_wait(&NSSemaphore[INTERFACE_SCHEDULER]);
+        pthread_mutex_lock(&NSMutex[INTERFACE_SCHEDULER]);
 
-        if (NSHeadMsg[CALLBACK_SCHEDULER] != NULL)
+        if (NSHeadMsg[INTERFACE_SCHEDULER] != NULL)
         {
-            NSTask *node = NSHeadMsg[CALLBACK_SCHEDULER];
-            NSHeadMsg[CALLBACK_SCHEDULER] = node->nextTask;
+            NSTask *node = NSHeadMsg[INTERFACE_SCHEDULER];
+            NSHeadMsg[INTERFACE_SCHEDULER] = node->nextTask;
 
             switch (node->taskType)
             {
@@ -235,7 +235,8 @@ void * NSCallbackSchedule(void * ptr)
                 {
                     NS_LOG(DEBUG, "CASE TASK_CB_SYNC : ");
                     NSSync * sync = (NSSync*)node->taskData;
-                    NSSyncCb(sync);
+                    NSSyncCb(NSDuplicateSync(sync));
+                    NSFreeSync(sync);
                     break;
                 }
                 default:
@@ -245,7 +246,7 @@ void * NSCallbackSchedule(void * ptr)
             OICFree(node);
         }
 
-        pthread_mutex_unlock(&NSMutex[CALLBACK_SCHEDULER]);
+        pthread_mutex_unlock(&NSMutex[INTERFACE_SCHEDULER]);
 
     }
 

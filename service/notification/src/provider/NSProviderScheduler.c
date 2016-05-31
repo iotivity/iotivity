@@ -29,7 +29,7 @@ bool NSIsRunning[THREAD_COUNT] =
 NSTask* NSHeadMsg[THREAD_COUNT];
 NSTask* NSTailMsg[THREAD_COUNT];
 
-void * NSCallbackSchedule(void *ptr);
+void * NSInterfaceSchedule(void *ptr);
 void * NSDiscoverySchedule(void *ptr);
 void * NSSubScriptionSchedule(void *ptr);
 void * NSNotificationSchedule(void *ptr);
@@ -62,10 +62,10 @@ bool NSStartScheduler()
 
         switch (i)
         {
-            case CALLBACK_SCHEDULER:
+            case INTERFACE_SCHEDULER:
             {
                 NS_LOG(DEBUG, "CASE RESPONSE_SCHEDULER :");
-                pthread_create(&NSThread[i], NULL, NSCallbackSchedule, NULL);
+                pthread_create(&NSThread[i], NULL, NSInterfaceSchedule, NULL);
             }
                 break;
 
@@ -184,7 +184,7 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
 {
     NS_LOG(DEBUG, "NSFreeData - IN");
 
-    if (type == CALLBACK_SCHEDULER)
+    if (type == INTERFACE_SCHEDULER)
     {
         switch (task->taskType)
         {

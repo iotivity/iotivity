@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _NS_CACHEADAPTER__H_
-#define _NS_CACHEADAPTER__H_
+#ifndef _NS_STORAGEADAPTER__H_
+#define _NS_STORAGEADAPTER__H_
 
 #include "logger.h"
 #include <octypes.h>
@@ -29,10 +29,10 @@
 #include "NSStructs.h"
 #include "NSConstants.h"
 
-NSCacheList * NSCacheCreate();
-NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId);
-NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj);
-NSResult NSCacheDelete(NSCacheList * list, const char * delId);
-NSResult NSCacheDestroy(NSCacheList * list);
+NSCacheList * NSStorageCreate();
+NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId);
+NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj);
+NSResult NSStorageDelete(NSCacheList * list, const char * delId);
+NSResult NSStorageDestroy(NSCacheList * list);
 
-#endif /* _NS_CACHEADAPTER__H_ */
+#endif /* _NS_STORAGEADAPTER__H_ */

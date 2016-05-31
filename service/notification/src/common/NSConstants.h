@@ -81,12 +81,11 @@ typedef enum eConnectionState
 
 typedef enum eSchedulerType
 {
-    CALLBACK_SCHEDULER = 0,
+    INTERFACE_SCHEDULER = 0,
     DISCOVERY_SCHEDULER = 1,
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,
 } NSSchedulerType;
-
 
 typedef enum eTaskType
 {

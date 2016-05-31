@@ -21,17 +21,16 @@
 #ifndef _NS_PROVIDER_CACHEADAPTER__H_
 #define _NS_PROVIDER_CACHEADAPTER__H_
 
-#include <stdbool.h>
-#include <octypes.h>
 #include <pthread.h>
-#include "logger.h"
-#include "ocstack.h"
-#include "ocpayload.h"
-#include "NSStructs.h"
+#include <stdbool.h>
+#include <string.h>
+
+#include "NSCommon.h"
 #include "NSConstants.h"
-#include "NSCacheAdapter.h"
+#include "NSStructs.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "NSStorageAdapter.h"
 #include "NSUtil.h"
 
 NSResult NSProviderDeleteCacheData(NSCacheType, void *);

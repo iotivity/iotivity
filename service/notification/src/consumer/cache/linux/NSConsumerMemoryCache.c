@@ -33,7 +33,7 @@ void NSSetCacheMutex(pthread_mutex_t mutex)
     *(NSGetCacheMutex()) = mutex;
 }
 
-NSCacheList * NSCacheCreate()
+NSCacheList * NSStorageCreate()
 {
     pthread_mutex_t * mutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
     pthread_mutex_init(mutex, NULL);
@@ -58,7 +58,7 @@ NSCacheList * NSCacheCreate()
     return newList;
 }
 
-NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId)
+NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId)
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
 
@@ -89,7 +89,7 @@ NSCacheElement * NSCacheRead(NSCacheList * list, const char * findId)
     return NULL;
 }
 
-NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
+NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
 
@@ -117,7 +117,7 @@ NSResult NSCacheWrite(NSCacheList * list, NSCacheElement * newObj)
     return NS_ERROR;
 }
 
-NSResult NSCacheDelete(NSCacheList * list, const char * delId)
+NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
 
@@ -190,7 +190,7 @@ NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj
     NSMessage_consumer * newMsgObj = (NSMessage_consumer *) newObj->data;
 
     pthread_mutex_unlock(mutex);
-    NSCacheElement * it = NSCacheRead(list, newMsgObj->mId);
+    NSCacheElement * it = NSStorageRead(list, newMsgObj->mId);
     pthread_mutex_lock(mutex);
 
     if (it)
@@ -245,7 +245,7 @@ NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj
     return NS_OK;
 }
 
-NSResult NSCacheDestroy(NSCacheList * list)
+NSResult NSStorageDestroy(NSCacheList * list)
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
 

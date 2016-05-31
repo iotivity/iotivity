@@ -200,7 +200,7 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
     msg->mId = strdup(std::string("NeverCallNotifyOnConsumerByAcceptIsFalse").c_str());
     msg->mTitle = strdup(std::string("Title").c_str());
     msg->mContentText = strdup(std::string("ContentText").c_str());
-    NSSendNotification(msg);
+    NSSendMessage(msg);
     {
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait_for(lock, g_waitForResponse);
@@ -230,7 +230,7 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
     msg->mId = strdup(std::string("ExpectCallNotifyOnConsumerByAcceptIsTrue").c_str());
     msg->mTitle = strdup(std::string("Title").c_str());
     msg->mContentText = strdup(std::string("ContentText").c_str());
-    NSSendNotification(msg);
+    NSSendMessage(msg);
     {
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait_for(lock, g_waitForResponse);

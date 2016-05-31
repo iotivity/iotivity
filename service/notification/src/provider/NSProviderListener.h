@@ -33,6 +33,7 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "NSUtil.h"
+#include "NSStorageAdapter.h"
 
 OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback);
@@ -49,7 +50,5 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
 void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled);
 
 NSResult NSMakeTask(NSTaskType type, OCEntityHandlerRequest *request, NSTask * task);
-
-NSSync * NSBuildOICNotificationSync(OCPayload * payload);
 
 #endif /* _NS_PROVIDER_LISTENER__H_ */

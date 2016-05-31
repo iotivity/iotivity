@@ -143,7 +143,7 @@ int main()
                 msg->mContentText = OICStrdup(body);
                 msg->mSource = NULL;
 
-                NSSendNotification(msg);
+                NSSendMessage(msg);
 
                 break;
 

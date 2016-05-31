@@ -28,7 +28,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include "NSCacheAdapter.h"
+#include "NSStorageAdapter.h"
 #include "NSConsumerCommon.h"
 
 

@@ -28,15 +28,15 @@
 #include "NSConstants.h"
 #include "NSProviderScheduler.h"
 #include "NSProviderResource.h"
-#include "NSCacheAdapter.h"
 #include "NSProviderMemoryCache.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
 
-NSAccessPolicy NSSubscriptionAccepter;
+NSAccessPolicy NSSubscriptionAccess;
 NSCacheList * consumerSubList;
 
 NSResult NSInitSubscriptionList();
-NSResult NSSetSubscriptionAcceptPolicy(NSAccessPolicy policy);
+NSResult NSSetSubscriptionAccessPolicy(NSAccessPolicy policy);
 int NSGetSubscriptionAccepter();
 NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest);
 void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResourceType resourceType);

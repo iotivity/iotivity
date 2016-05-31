@@ -71,7 +71,7 @@ NSResult NSStopProvider();
  * @param[in]  message  Notification message including id, title, contentText
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSSendNotification(NSMessage *msg);
+NSResult NSSendMessage(NSMessage *msg);
 
 /**
  * Send acceptance to consumer who subscribes the resource of notification message
@@ -94,7 +94,7 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted);
  * @param[in]  message  Notification message to synchronize the status
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderReadCheck(NSMessage *);
+NSResult NSReadCheck(NSMessage *);
 
 #ifdef __cplusplus
 }

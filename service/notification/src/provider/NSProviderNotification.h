@@ -22,7 +22,6 @@
 #define _NS_PROVIDER_NOTIFICATION_H_
 
 #include <ocstack.h>
-#include "NSCacheAdapter.h"
 #include "logger.h"
 #include "NSProviderScheduler.h"
 #include "NSProviderListener.h"

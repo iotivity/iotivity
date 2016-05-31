@@ -24,27 +24,27 @@ NSResult NSInitSubscriptionList()
 {
     NS_LOG(DEBUG, "NSInitSubscriptionList - IN");
 
-    consumerSubList = NSCacheCreate();
+    consumerSubList = NSStorageCreate();
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
     NS_LOG(DEBUG, "NSInitSubscriptionList - OUT");
     return NS_OK;
 }
 
-NSResult NSSetSubscriptionAcceptPolicy(NSAccessPolicy policy)
+NSResult NSSetSubscriptionAccessPolicy(NSAccessPolicy access)
 {
     NS_LOG(DEBUG, "NSSetSubscriptionAcceptPolicy - IN");
 
-    if (policy == NS_ACCEPTER_PROVIDER)
+    if (access == NS_ACCESS_ALLOW)
     {
         NS_LOG(DEBUG, "Place Provider as a subscription accepter");
     }
-    else if (policy == NS_ACCEPTER_CONSUMER)
+    else if (access == NS_ACCESS_DENY)
     {
         NS_LOG(DEBUG, "Place Consumer as a subscription accepter");
     }
 
-    NSSubscriptionAccepter = policy;
+    NSSubscriptionAccess = access;
 
     NS_LOG(DEBUG, "NSSetSubscriptionAcceptPolicy - OUT");
     return NS_OK;
@@ -52,7 +52,7 @@ NSResult NSSetSubscriptionAcceptPolicy(NSAccessPolicy policy)
 
 int NSGetSubscriptionAccepter()
 {
-    return NSSubscriptionAccepter;
+    return NSSubscriptionAccess;
 }
 
 NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest)
@@ -127,7 +127,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
         NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->messageObId);
 
-        if (NSCacheWrite(consumerSubList, element) != NS_OK)
+        if (NSStorageWrite(consumerSubList, element) != NS_OK)
         {
             NS_LOG(DEBUG, "fail to write cache");
         }
@@ -161,7 +161,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
         NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->syncObId);
 
-        if (NSCacheWrite(consumerSubList, element) != NS_OK)
+        if (NSStorageWrite(consumerSubList, element) != NS_OK)
         {
             NS_LOG(ERROR, "Fail to write cache");
         }
@@ -186,7 +186,7 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
     NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
     NS_LOG_V(DEBUG, "SubList observation ID = [%d]", subData->syncObId);
 
-    if (NSCacheWrite(consumerSubList, element) != NS_OK)
+    if (NSStorageWrite(consumerSubList, element) != NS_OK)
     {
         NS_LOG(ERROR, "fail to write consumer white list");
     }
@@ -199,7 +199,7 @@ void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSAskAcceptanceToUser - IN");
 
-    NSPushQueue(CALLBACK_SCHEDULER, TASK_CB_SUBSCRIPTION, entityHandlerRequest);
+    NSPushQueue(INTERFACE_SCHEDULER, TASK_CB_SUBSCRIPTION, entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSAskAcceptanceToUser - OUT");
 }
@@ -226,7 +226,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_ID, "0000-0000-0000-0000");
     OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
 
-    NSCacheElement * element = NSCacheRead(consumerSubList, id);
+    NSCacheElement * element = NSStorageRead(consumerSubList, id);
 
     if(element == NULL)
     {
@@ -272,7 +272,7 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         element->data = (void*) subData;
         element->next = NULL;
 
-        if (NSCacheWrite(consumerSubList, element) != NS_OK)
+        if (NSStorageWrite(consumerSubList, element) != NS_OK)
         {
             NS_LOG(ERROR, "fail to write consumer white list");
         }

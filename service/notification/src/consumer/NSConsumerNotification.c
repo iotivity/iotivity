@@ -307,6 +307,7 @@ void NSConsumerNotificationTaskProcessing(NSTask * task)
 
         int type = (task->taskType == TASK_SEND_READ) ? 0 : 1;
         OCRepPayloadSetPropString(payload, "ID", (char *) nsConsumer->mId);
+        OCRepPayloadSetPropString(payload, "SOURCE", (char *) nsConsumer->mSource);
         OCRepPayloadSetPropInt(payload, "STATE", type);
 
         // TODO fix param for uri
