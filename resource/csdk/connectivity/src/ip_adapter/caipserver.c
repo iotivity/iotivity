@@ -100,7 +100,6 @@ static CAIPPacketReceivedCallback g_packetReceivedCallback = NULL;
 
 static CAIPErrorHandleCallback g_ipErrorHandler = NULL;
 
-static void CAHandleNetlink();
 static void CAFindReadyMessage();
 static void CASelectReturned(fd_set *readFds, int ret);
 static void CAProcessNewInterface(CAInterface_t *ifchanged);
