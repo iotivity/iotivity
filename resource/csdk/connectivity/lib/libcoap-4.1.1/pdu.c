@@ -275,7 +275,7 @@ coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
     {
         return coap_tcp_16bit;
     }
-    else if (size < ULONG_MAX + COAP_TCP_LENGTH_FIELD_32_BIT)
+    else if (size - COAP_TCP_LENGTH_FIELD_32_BIT < ULONG_MAX)
     {
         return coap_tcp_32bit;
     }
