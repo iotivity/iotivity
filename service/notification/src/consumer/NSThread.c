@@ -26,9 +26,11 @@
 #include <memory.h>
 #include "oic_malloc.h"
 
-void NSDestroyThreadHandle(NSThread *);
+static pthread_mutex_t g_create_mutex;
 
-NSThread * NSThreadInit(NSThreadFunc func, void * data)
+void NSDestroyThreadHandle(NSConsumerThread *);
+
+NSConsumerThread * NSThreadInit(NSThreadFunc func, void * data)
 {
     if (!func)
     {
@@ -36,14 +38,16 @@ NSThread * NSThreadInit(NSThreadFunc func, void * data)
         return NULL;
     }
 
-    NSThread * handle = (NSThread *)OICMalloc(sizeof(NSThread));
+    pthread_mutex_init(&g_create_mutex, NULL);
+
+    NSConsumerThread * handle = (NSConsumerThread *)OICMalloc(sizeof(NSConsumerThread));
     if (!handle)
     {
         NS_LOG(ERROR, "thread allocation fail");
         return NULL;
     }
 
-    memset(handle, 0, sizeof(NSThread));
+    memset(handle, 0, sizeof(NSConsumerThread));
 
     pthread_mutexattr_init(&(handle->mutex_attr));
     if (pthread_mutexattr_settype(&(handle->mutex_attr), PTHREAD_MUTEX_RECURSIVE))
@@ -60,12 +64,7 @@ NSThread * NSThreadInit(NSThreadFunc func, void * data)
         return NULL;
     }
 
-    if (pthread_mutex_lock(&(handle->mutex)))
-    {
-        NS_LOG(ERROR, "thread mutex lock fail");
-        NSDestroyThreadHandle(handle);
-        return NULL;
-    }
+    pthread_mutex_lock(&g_create_mutex);
 
     handle->isStarted = true;
 
@@ -76,28 +75,27 @@ NSThread * NSThreadInit(NSThreadFunc func, void * data)
         NSDestroyThreadHandle(handle);
         return NULL;
     }
-
-    pthread_mutex_unlock(&(handle->mutex));
+    pthread_mutex_unlock(&g_create_mutex);
 
     return handle;
 }
 
-void NSThreadLock(NSThread * handle)
+void NSThreadLock(NSConsumerThread * handle)
 {
     pthread_mutex_lock(&(handle->mutex));
 }
 
-void NSThreadUnlock(NSThread * handle)
+void NSThreadUnlock(NSConsumerThread * handle)
 {
     pthread_mutex_unlock(&(handle->mutex));
 }
 
-void NSThreadStop(NSThread * handle)
+void NSThreadStop(NSConsumerThread * handle)
 {
     NSDestroyThreadHandle(handle);
 }
 
-void NSThreadJoin(NSThread * handle)
+void NSThreadJoin(NSConsumerThread * handle)
 {
 	if (handle->thread_id)
 	{
@@ -105,7 +103,7 @@ void NSThreadJoin(NSThread * handle)
 	}
 }
 
-void NSDestroyThreadHandle(NSThread * handle)
+void NSDestroyThreadHandle(NSConsumerThread * handle)
 {
     handle->isStarted = false;
 

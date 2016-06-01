@@ -58,7 +58,7 @@ NSProviderDiscoveredCallback NSGetDiscoverCb()
     return * NSGetBoneDiscoverCb();
 }
 
-void * NSDiscoverdProviderFunc(void * provider)
+void * NSDiscoveredProviderFunc(void * provider)
 {
     NSGetDiscoverCb()((NSProvider *) provider);
 
@@ -67,7 +67,7 @@ void * NSDiscoverdProviderFunc(void * provider)
 
 void NSDiscoveredProvider(NSProvider * provider)
 {
-    if (!NSThreadInit(NSDiscoverdProviderFunc, (void *) provider))
+    if (!NSThreadInit(NSDiscoveredProviderFunc, (void *) provider))
     {
         NS_LOG(ERROR, "execute discovered provider callback fail");
         return;
@@ -163,23 +163,6 @@ void NSNotificationPost(NSProvider * provider, NSMessage * msg)
     }
 }
 
-onRIResponseListener * NSGetBoneResponseListener()
-{
-    static onRIResponseListener g_responseCb = NULL;
-
-    return & g_responseCb;
-}
-
-void NSSetResponseListener(onRIResponseListener cb)
-{
-    * NSGetBoneResponseListener() = cb;
-}
-
-onRIResponseListener NSGetResponseListener()
-{
-    return * NSGetBoneResponseListener();
-}
-
 NSTask * NSMakeTask(NSTaskType type, void * data)
 {
     NSTask * retTask = OICMalloc(sizeof(NSTask));
@@ -253,17 +236,17 @@ void NSRemoveMessage(NSMessage_consumer * msg)
     msg = NULL;
 }
 
-OCStackResult NSSendRequest(OCDoHandle * handle,
+OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
-        const char * queryUrl, OCPayload * payload, void * callback)
+        const char * queryUrl, OCPayload * payload,
+        void * callbackFunc, void * callbackData)
 {
     OCCallbackData cbdata;
 
-    cbdata.cb = NSGetResponseListener();
-    cbdata.context = callback;
+    cbdata.cb = callbackFunc;
+    cbdata.context = callbackData;
     cbdata.cd = NULL;
 
     return OCDoResource(handle, method, queryUrl, addr,
             payload, CT_DEFAULT, NS_QOS, &cbdata, NULL, 0);
 }
-

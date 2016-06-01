@@ -26,7 +26,7 @@
 #include "NSCommon.h"
 #include "NSConsumerCommon.h"
 #include "NSConstants.h"
-#include "NSConsumerMessageHandler.h"
+#include "NSConsumerQueueScheduler.h"
 #include "oic_malloc.h"
 
 // Public APIs

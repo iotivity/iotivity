@@ -41,8 +41,26 @@ extern "C" {
 
 #define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
 
-typedef OCStackApplicationResult (*onRIResponseListener)(
-        void *, OCDoHandle, OCClientResponse *);
+#define NS_VERTIFY_NOT_NULL(obj, retVal) { if ((obj) == NULL) \
+    { \
+        NS_LOG_V(ERROR, "%s : obj is null", __func__); \
+        return (retVal); \
+    }}
+
+#define NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(obj, retVal, func) { \
+    if ((obj) == NULL) \
+    { \
+        NS_LOG_V(ERROR, "%s : obj is null", __func__); \
+        NS_LOG(ERROR, "execute deletion"); \
+        (func); \
+        return (retVal); \
+    }}
+
+#define NS_VERTIFY_STACK_OK(obj, retVal) { if ((obj) != OC_STACK_OK) \
+    { \
+        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK", __func__); \
+        return (retVal); \
+    }}
 
 typedef enum
 {
@@ -78,9 +96,6 @@ void NSNotificationPost(NSProvider * provider, NSMessage * obj);
 void NSSetNotificationSyncCb(NSSyncCallback cb);
 void NSNotificationSync(NSProvider * provider, NSSync * sync);
 
-onRIResponseListener NSGetResponseListener();
-void NSSetResponseListener(onRIResponseListener cb);
-
 NSTask * NSMakeTask(NSTaskType, void *);
 
 NSResult NSConsumerPushEvent(NSTask *);
@@ -88,9 +103,10 @@ NSResult NSConsumerPushEvent(NSTask *);
 NSMessage_consumer * NSCopyMessage(NSMessage_consumer *);
 void NSRemoveMessage(NSMessage_consumer *);
 
-OCStackResult NSSendRequest(OCDoHandle * handle,
+OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
-        const char * queryUrl, OCPayload * payload, void * callback);
+        const char * queryUrl, OCPayload * payload,
+        void * callbackFunc, void * callbackData);
 
 #ifdef __cplusplus
 }

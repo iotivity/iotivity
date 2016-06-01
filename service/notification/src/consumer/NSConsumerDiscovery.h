@@ -32,13 +32,13 @@ extern "C" {
 
 void NSConsumerDiscoveryTaskProcessing(NSTask *);
 
-OCStackApplicationResult NSConsumerPresenceListener(OCDoHandle, OCClientResponse *);
+OCStackApplicationResult NSConsumerPresenceListener(void *, OCDoHandle, OCClientResponse *);
 
 // for discover result
-OCStackApplicationResult NSProviderDiscoverListener(OCDoHandle, OCClientResponse *);
+OCStackApplicationResult NSProviderDiscoverListener(void *, OCDoHandle, OCClientResponse *);
 
 // for checking Permission
-OCStackApplicationResult NSIntrospectProvider(OCDoHandle, OCClientResponse *);
+OCStackApplicationResult NSIntrospectProvider(void *, OCDoHandle, OCClientResponse *);
 
 #ifdef __cplusplus
 }

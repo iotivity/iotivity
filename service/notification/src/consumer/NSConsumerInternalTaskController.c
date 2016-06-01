@@ -18,10 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSConsumerSubsription.h"
-
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
+#include "NSConsumerInternalTaskController.h"
 #include "NSStructs.h"
 
 #include "oic_malloc.h"

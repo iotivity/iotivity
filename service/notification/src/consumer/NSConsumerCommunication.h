@@ -36,9 +36,9 @@ void NSConsumerNotificationTaskProcessing(NSTask *);
 NSResult NSConsumerSubscribeProvider(NSProvider *);
 NSResult NSConsumerPostProvider(OCDevAddr *, OCPayload *, const char *);
 
-OCStackApplicationResult NSConsumerNotificationListener(OCDoHandle, OCClientResponse *);
+OCStackApplicationResult NSConsumerMessageListener(void *, OCDoHandle, OCClientResponse *);
 
-OCStackApplicationResult NSConsumerSyncListener(OCDoHandle, OCClientResponse *);
+OCStackApplicationResult NSConsumerSyncInfoListener(void *, OCDoHandle, OCClientResponse *);
 
 #ifdef __cplusplus
 }

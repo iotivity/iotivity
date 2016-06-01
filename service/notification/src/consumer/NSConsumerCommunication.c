@@ -18,34 +18,33 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSConsumerNotification.h"
-
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
+#include "NSConsumerCommunication.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
 
 const char NS_MESSAGE_ACCEPTANCE[] = "0000-0000-0000-0000";
 
-NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse);
-NSSync * NSBuildOICNotificationSync(OCClientResponse * clientResponse);
+NSMessage_consumer * NSGetNSMessage(OCClientResponse * clientResponse);
+NSSync * NSGetNSSyncInfo(OCClientResponse * clientResponse);
 
-NSProvider * NSGetProvider(OCClientResponse * clientResponse);
+NSProvider * NSGetNSProvider(OCClientResponse * clientResponse);
 NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type);
 
 NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 {
-    if (OC_STACK_OK != NSSendRequest(&(provider->messageHandle),
+    if (OC_STACK_OK != NSInvokeRequest(&(provider->messageHandle),
             OC_REST_OBSERVE, (OCDevAddr *) provider->mUserData,
-            provider->messageUri, NULL, NSConsumerNotificationListener))
+            provider->messageUri, NULL, NSConsumerMessageListener, NULL))
     {
         return NS_ERROR;
     }
 
-    if (OC_STACK_OK != NSSendRequest(&(provider->syncHandle),
+    if (OC_STACK_OK != NSInvokeRequest(&(provider->syncHandle),
             OC_REST_OBSERVE, (OCDevAddr *) provider->mUserData,
-            provider->syncUri, NULL, NSConsumerSyncListener))
+            provider->syncUri, NULL, NSConsumerSyncInfoListener, NULL))
     {
         return NS_ERROR;
     }
@@ -55,9 +54,7 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 
 NSResult NSConsumerPostProvider(OCDevAddr * addr, OCPayload * payload, const char * uri)
 {
-
-    if (OC_STACK_OK != NSSendRequest(NULL, OC_REST_POST, addr,
-            uri, payload, NULL))
+    if (OC_STACK_OK != NSInvokeRequest(NULL, OC_REST_POST, addr, uri, payload, NULL, NULL))
     {
         return NS_ERROR;
     }
@@ -65,20 +62,24 @@ NSResult NSConsumerPostProvider(OCDevAddr * addr, OCPayload * payload, const cha
     return NS_OK;
 }
 
-OCStackApplicationResult NSConsumerSyncListener(
-        OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult NSConsumerSyncInfoListener(
+        void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
+    (void) ctx;
     (void) handle;
 
+    NS_VERTIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERTIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+
     NSSync * newNoti = NULL;
-    NSProvider * provider = NSGetProvider(clientResponse);
+    NSProvider * provider = NSGetNSProvider(clientResponse);
     if (!provider)
     {
         NS_LOG(ERROR, "getting provider is failed");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    newNoti = NSBuildOICNotificationSync(clientResponse);
+    newNoti = NSGetNSSyncInfo(clientResponse);
     if (!newNoti)
     {
         return OC_STACK_KEEP_TRANSACTION;
@@ -106,19 +107,23 @@ OCStackApplicationResult NSConsumerSyncListener(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult NSConsumerNotificationListener(
-        OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult NSConsumerMessageListener(
+        void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
+    (void) ctx;
     (void) handle;
 
-    NSProvider * provider = NSGetProvider(clientResponse);
+    NS_VERTIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERTIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+
+    NSProvider * provider = NSGetNSProvider(clientResponse);
     if (!provider)
     {
         NS_LOG(ERROR, "getting provider is failed");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    NSMessage_consumer * newNoti = NSBuildOICNotification(clientResponse);
+    NSMessage_consumer * newNoti = NSGetNSMessage(clientResponse);
     if (!newNoti)
     {
         return OC_STACK_KEEP_TRANSACTION;
@@ -149,7 +154,7 @@ OCStackApplicationResult NSConsumerNotificationListener(
 
 NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type)
 {
-    NSMessage_consumer * cachedNoti = NSBuildOICNotification(clientResponse);
+    NSMessage_consumer * cachedNoti = NSGetNSMessage(clientResponse);
     if (!cachedNoti)
     {
         return NS_ERROR;
@@ -166,7 +171,7 @@ NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type)
     return NS_OK;
 }
 
-NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse)
+NSMessage_consumer * NSGetNSMessage(OCClientResponse * clientResponse)
 {
     if(!clientResponse->payload)
     {
@@ -210,7 +215,7 @@ NSMessage_consumer * NSBuildOICNotification(OCClientResponse * clientResponse)
     return retNoti;
 }
 
-NSSync * NSBuildOICNotificationSync(OCClientResponse * clientResponse)
+NSSync * NSGetNSSyncInfo(OCClientResponse * clientResponse)
 {
     if(!clientResponse->payload)
     {
@@ -249,7 +254,7 @@ NSSync * NSBuildOICNotificationSync(OCClientResponse * clientResponse)
     return retSync;
 }
 
-NSProvider * NSGetProvider(OCClientResponse * clientResponse)
+NSProvider * NSGetNSProvider(OCClientResponse * clientResponse)
 {
     NSProvider * newProvider = (NSProvider *)OICMalloc(sizeof(NSProvider));
     if (!newProvider)

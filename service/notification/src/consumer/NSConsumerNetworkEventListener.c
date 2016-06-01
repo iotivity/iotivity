@@ -18,24 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSConsumerListener.h"
-
 #include <memory.h>
 #include <string.h>
 
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
-#include "payload_logging.h"
 #include "cautilinterface.h"
 
 #include "NSConsumerDiscovery.h"
+#include "NSConsumerNetworkEventListener.h"
 
 #define NS_PRESENCE_SUBSCRIBE_QUERY "coap://224.0.1.187:5683/oic/ad?rt=oic.r.notification"
-
-typedef OCStackApplicationResult(*onRIResponse)(OCDoHandle, OCClientResponse *);
-
-OCStackApplicationResult NSRIResponseListener(
-        void * ctx, OCDoHandle handle, OCClientResponse * clientResponse);
 
 void NSConnectionStateListener(CATransportAdapter_t adapter,
         const char *remote_address, bool connected);
@@ -44,8 +37,6 @@ void NSAdapterStateListener(CATransportAdapter_t adapter, bool enabled);
 
 NSResult NSConsumerListenerInit()
 {
-    NSSetResponseListener(NSRIResponseListener);
-
     // TODO replace with comment lines when enable network monitor of IP Adapter
     CARegisterNetworkMonitorHandler(NSAdapterStateListener, NSConnectionStateListener);
 //    if (CARegisterNetworkMonitorHandler(NSAdapterStateListener, NSConnectionStateListener)
@@ -54,43 +45,21 @@ NSResult NSConsumerListenerInit()
 //        return NS_ERROR;
 //    }
 
-    if (OC_STACK_OK != NSSendRequest(NULL, OC_REST_PRESENCE, NULL,
-            NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener))
+    if (OC_STACK_OK != NSInvokeRequest(NULL, OC_REST_PRESENCE, NULL,
+            NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener, NULL))
     {
         NS_LOG(ERROR, "Presence request fail");
         return NS_ERROR;
     }
 
-    if (OC_STACK_OK != NSSendRequest(NULL, OC_REST_DISCOVER, NULL,
-            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener))
+    if (OC_STACK_OK != NSInvokeRequest(NULL, OC_REST_DISCOVER, NULL,
+            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL))
     {
         NS_LOG(ERROR, "Discover request fail");
         return NS_ERROR;
     }
 
     return NS_OK;
-}
-
-OCStackApplicationResult NSRIResponseListener(
-        void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
-{
-    if (ctx == NULL)
-    {
-        NS_LOG(ERROR, "Callback is null");
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
-    if (clientResponse->result == OC_STACK_OK && clientResponse != NULL)
-    {
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        ((onRIResponse)ctx)(handle, clientResponse);
-    }
-    else
-    {
-        NS_LOG_V(ERROR, "result is not ok : %d", clientResponse->result);
-    }
-
-    return OC_STACK_KEEP_TRANSACTION;
 }
 
 void NSConnectionStateListener(CATransportAdapter_t adapter,
