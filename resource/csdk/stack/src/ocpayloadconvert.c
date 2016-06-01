@@ -229,7 +229,6 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         [                                                       // rootArray
             {                                                   // rootMap
                 "di" : UUID,                                    // device ID
-                "href": "/oic/res"
                 "rt": "oic.wk.res"
                 "n":"MyDevice"
                 "if":"oic.if.ll oic.if.baseline"
@@ -263,11 +262,6 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_NAME,
                 sizeof(OC_RSRVD_DEVICE_NAME) - 1, payload->name);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting name");
-
-        // Insert URI
-        err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                payload->uri);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting href");
 
         // Insert Device ID into the root map
         err |= AddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1,
