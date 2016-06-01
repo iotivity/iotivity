@@ -752,13 +752,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
                         bool result = false;
-                        if (resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
-                        {
-                            if (resourceTypeQuery && resourceMatchesRTFilter(resource, resourceTypeQuery))
-                            {
-                                result = true;
-                            }
-                        }
                         if (resource->resourceProperties & OC_DISCOVERABLE)
                         {
                             result = true;
@@ -773,8 +766,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                 }
                 else
                 {
-                    if ((interfaceQuery && (0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))) ||
-                        !interfaceQuery)
+                    if (interfaceQuery && (0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
                     {
                         discPayload->uri = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
                         VERIFY_NON_NULL(discPayload->uri, ERROR, OC_STACK_NO_MEMORY);
