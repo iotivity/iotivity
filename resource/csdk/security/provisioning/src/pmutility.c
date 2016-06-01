@@ -352,31 +352,68 @@ exit:
  */
 OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 {
+    OCStackResult res = OC_STACK_OK;
+#if defined(HAVE_GETSYSTEMTIMEASFILETIME)
+    FILETIME startTime = {0};
+    FILETIME currTime = {0};
+    int clock_res = 1;
+
+    GetSystemTimeAsFileTime(&startTime);
+#elif defined(HAVE_CLOCK_GETTIME)
     struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
     struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
 
-    OCStackResult res = OC_STACK_OK;
-#ifdef _POSIX_MONOTONIC_CLOCK
+# if defined(_POSIX_MONOTONIC_CLOCK)
     int clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
-#else
+# else
     int clock_res = clock_gettime(CLOCK_REALTIME, &startTime);
+# endif // defined(_POSIX_MONOTONIC_CLOCK)
+
+#else
+    ERROR Need PMTimeout implementation
+    return OC_STACK_ERROR;
 #endif
+
     if (0 != clock_res)
     {
         return OC_STACK_ERROR;
     }
     while (OC_STACK_OK == res)
     {
-#ifdef _POSIX_MONOTONIC_CLOCK
+#if defined(HAVE_GETSYSTEMTIMEASFILETIME)
+        GetSystemTimeAsFileTime(&currTime);
+#elif defined(HAVE_CLOCK_GETTIME)
+
+# if defined(_POSIX_MONOTONIC_CLOCK)
         clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
-#else
+# else
         clock_res = clock_gettime(CLOCK_REALTIME, &currTime);
-#endif
+# endif
         if (0 != clock_res)
         {
             return OC_STACK_TIMEOUT;
         }
+#else
+        ERROR Need PMTimeout implementation
+#endif
+
+#if defined(HAVE_GETSYSTEMTIMEASFILETIME)
+#define HNS_TO_S(VAL)  ((VAL)/(10*1000*1000))
+        ULARGE_INTEGER currTimeInt;
+        ULARGE_INTEGER startTimeInt;
+
+        currTimeInt.LowPart  = currTime.dwLowDateTime;
+        currTimeInt.HighPart = currTime.dwHighDateTime;
+
+        startTimeInt.LowPart  = startTime.dwLowDateTime;
+        startTimeInt.HighPart = startTime.dwHighDateTime;
+
+        long elapsed = (long)HNS_TO_S(currTimeInt.QuadPart - startTimeInt.QuadPart);
+#elif defined(HAVE_CLOCK_GETTIME)
         long elapsed = (currTime.tv_sec - startTime.tv_sec);
+#else
+        ERROR Need PMTimeout implementation
+#endif
         if (elapsed > waittime)
         {
             return OC_STACK_OK;

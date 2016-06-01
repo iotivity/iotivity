@@ -29,6 +29,10 @@
 #include <ctime>
 
 #include <timer.h>
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+/** @todo: Ensure null termination. This is not identical */
+#define snprintf _snprintf
+#endif
 
 using namespace std;
 

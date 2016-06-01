@@ -485,7 +485,11 @@ static void dtls_handle_signal(int sig)
   dtls_free_context(dtls_context);
   dtls_free_context(orig_dtls_context);
   signal(sig, SIG_DFL);
+#ifdef _WIN32
+  exit(sig);
+#else
   kill(getpid(), sig);
+#endif
 }
 
 /* stolen from libcoap: */
@@ -792,7 +796,7 @@ main(int argc, char **argv) {
     return 0;
   }
 
-  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) ) < 0) {
+  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, OPTVAL_T(&on), sizeof(on) ) < 0) {
     dtls_alert("setsockopt SO_REUSEADDR: %s\n", strerror(errno));
   }
 #if 0
@@ -804,9 +808,9 @@ main(int argc, char **argv) {
 #endif
   on = 1;
 #ifdef IPV6_RECVPKTINFO
-  if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof(on) ) < 0) {
+  if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, OPTVAL_T(&on), sizeof(on) ) < 0) {
 #else /* IPV6_RECVPKTINFO */
-  if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &on, sizeof(on) ) < 0) {
+  if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, OPTVAL_T(&on), sizeof(on) ) < 0) {
 #endif /* IPV6_RECVPKTINFO */
     dtls_alert("setsockopt IPV6_PKTINFO: %s\n", strerror(errno));
   }

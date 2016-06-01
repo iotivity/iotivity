@@ -158,7 +158,7 @@ typedef struct {
 /* The following macros provide access to the components of the
  * key_block in the security parameters. */
 
-static inline int dtls_kb_mac_secret_size(dtls_cipher_t cipher)
+INLINE_API int dtls_kb_mac_secret_size(dtls_cipher_t cipher)
 {
     switch(cipher)
     {
@@ -184,7 +184,7 @@ static inline int dtls_kb_mac_secret_size(dtls_cipher_t cipher)
 }
 
 
-static inline int dtls_kb_iv_size(dtls_cipher_t cipher)
+INLINE_API int dtls_kb_iv_size(dtls_cipher_t cipher)
 {
     switch(cipher)
     {

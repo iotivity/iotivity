@@ -30,13 +30,14 @@
 #endif
 #include <iostream>
 #include <sstream>
-#if defined(_WIN32)
+#if defined(HAVE_WINDOWS_H)
 #include <windows.h>
 /** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
 #ifdef ERROR
 #undef ERROR
 #endif
-#endif // defined(_WIN32)
+#endif // defined(HAVE_WINDOWS_H)
+#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -416,19 +417,19 @@ FILE* client_fopen(const char *path, const char *mode)
 
 void *CLInterface(void *data)
 {
-    printf(RED_BEGIN"#Ready to operation ('h' for help)#\n"COLOR_END);
+    printf(RED_BEGIN "#Ready to operation ('h' for help)#\n" COLOR_END);
 
     (void)data;
     OCStackResult ret;
-    char query[MAX_LINE] = {0,};
-    const char prompt[] = BOLD_BEGIN"IoTivity-DP#"COLOR_END" ";
+    char query[MAX_LINE] = {0};
+    const char prompt[] = BOLD_BEGIN "IoTivity-DP#" COLOR_END" ";
     const char* helpmsg[6] = {
-            GREEN_BEGIN"# h  (or help) : show help message"COLOR_END,
-            GREEN_BEGIN"# dd (DP device discovery) : discover Direct-Pairing devices"COLOR_END,
-            GREEN_BEGIN"# dp (start Direct-Pairing) : negotiate DP method & start Direct-Pairing"COLOR_END,
-            GREEN_BEGIN"# sd (send data) : send data to device"COLOR_END,
-            GREEN_BEGIN"# ll (list all device) : list all discovered/paired devices"COLOR_END,
-            GREEN_BEGIN"# q  (quit) : quit test"COLOR_END,
+            GREEN_BEGIN "# h  (or help) : show help message" COLOR_END,
+            GREEN_BEGIN "# dd (DP device discovery) : discover Direct-Pairing devices" COLOR_END,
+            GREEN_BEGIN "# dp (start Direct-Pairing) : negotiate DP method & start Direct-Pairing" COLOR_END,
+            GREEN_BEGIN "# sd (send data) : send data to device" COLOR_END,
+            GREEN_BEGIN "# ll (list all device) : list all discovered/paired devices" COLOR_END,
+            GREEN_BEGIN "# q  (quit) : quit test" COLOR_END,
         };
 
     for (size_t i=0; i<(sizeof(helpmsg)/sizeof(char*)); i++)

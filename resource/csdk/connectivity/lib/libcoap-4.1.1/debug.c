@@ -146,10 +146,12 @@ unsigned int print_readable(const unsigned char *data, unsigned int len, unsigne
 
 size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, size_t len)
 {
-#ifdef HAVE_ARPA_INET_H
+#if defined(HAVE_ARPA_INET_H) || defined(_WIN32)
     const void *addrptr = NULL;
 #if defined(__ANDROID__)
     __uint16_t port;
+#elif defined(_WIN32)
+    uint16_t port;
 #else
     in_port_t port;
 #endif

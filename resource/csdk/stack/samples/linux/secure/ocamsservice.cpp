@@ -13,6 +13,7 @@
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
+#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "common.h"
@@ -69,11 +70,7 @@ int main(int /*argc*/, char* /*argv*/[])
             OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-#if defined(_WIN32)
-        Sleep(100);
-#else
         nanosleep(&timeout, NULL);
-#endif // defined(_WIN32)
     }
 
     OIC_LOG(INFO, TAG, "Exiting ocamsservice main loop...");

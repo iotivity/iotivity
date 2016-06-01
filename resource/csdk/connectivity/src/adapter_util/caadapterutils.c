@@ -26,15 +26,21 @@
 #include "oic_malloc.h"
 #include <errno.h>
 
-#if !defined(WITH_ARDUINO) && !defined(__msys_nt__)
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif
-
-#if defined(__msys_nt__)
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
 #endif
 
 #ifdef __ANDROID__

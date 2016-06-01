@@ -86,6 +86,7 @@ typedef struct
 } CARetransmissionData_t;
 
 static const uint64_t USECS_PER_SEC = 1000000;
+static const uint64_t MSECS_PER_SEC = 1000;
 
 /**
  * @brief   getCurrent monotonic time
@@ -103,7 +104,7 @@ uint64_t getCurrentTimeInMicroSeconds();
  */
 static uint64_t CAGetTimeoutValue()
 {
-#if !defined(__msys_nt__)
+#if !defined(_WIN32)
     return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * (random() & 0xFF)) >> 8)) *
             (uint64_t) 1000;
 #else
@@ -660,6 +661,10 @@ uint64_t getCurrentTimeInMicroSeconds()
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     currentTime = ts.tv_sec * USECS_PER_SEC + ts.tv_nsec / 1000;
+#elif defined(_WIN32)
+    struct __timeb64 tb;
+    _ftime64_s(&tb);
+    currentTime = tb.time * USECS_PER_SEC + tb.millitm * MSECS_PER_SEC;
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);

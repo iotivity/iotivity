@@ -37,8 +37,66 @@
 #if (__STDC_VERSION__ >= 201112L)
     #include <assert.h>
     #define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
+#elif defined(_WIN32)
+    #if defined(__msys_nt__) && !defined(__cplusplus)
+        #define static_assert _Static_assert
+    #endif
+    #define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
 #else
     #define OC_STATIC_ASSERT(condition, msg) ((void)sizeof(char[2*!!(condition) - 1]))
+#endif
+
+#ifndef INLINE_API
+#  if defined(__cplusplus)
+#    define INLINE_API inline
+#  else
+#    ifdef _WIN32
+#      define INLINE_API static __inline
+#    else
+#      define INLINE_API static inline
+#    endif
+#  endif
+#endif
+
+#ifdef _MSC_VER
+#  ifdef OC_EXPORT_DLL
+#    define OC_EXPORT __declspec(dllexport)
+#  else
+#    define OC_EXPORT __declspec(dllimport)
+#  endif
+#  ifdef ENABLE_TEST_EXPORTS
+#    define OC_EXPORT_TEST OC_EXPORT
+#  else
+#    define OC_EXPORT_TEST
+#  endif
+#  define OC_ANNOTATE_UNUSED
+#else
+#  define OC_ANNOTATE_UNUSED  __attribute__((unused))
+#  define OC_EXPORT
+#  define OC_EXPORT_TEST
+#endif
+
+#ifdef _WIN32
+#  define __func__ __FUNCTION__
+#  define strncasecmp _strnicmp
+#  define strtok_r strtok_s
+#  if _MSC_VER && (_MSC_VER < 1900)
+#    include "vs12_snprintf.h"
+#  endif
+#  define ssize_t SSIZE_T
+#  define F_OK                0
+#  define sleep(SECS)         Sleep(1000*(SECS))
+#  ifdef __cplusplus
+#    define SUPPORTS_DEFAULT_CTOR
+#  endif
+#  include "win_sleep.h"
+#  include "pthread_create.h"
+#endif
+
+#ifdef HAVE_WINSOCK2_H
+#  define OPTVAL_T(t)    (const char*)(t)
+#else
+#  define OPTVAL_T(t)    (t)
 #endif
 
 #endif

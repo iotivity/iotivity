@@ -39,7 +39,9 @@
 #endif
 
 #include <stdio.h>
+#if !defined(_MSC_VER)
 #include <unistd.h>
+#endif //!defined(_MSC_VER)
 #include <sys/types.h>
 #include <fcntl.h>
 #if !defined(_WIN32)
@@ -63,6 +65,7 @@
 #include "camutex.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "platform_features.h"
 
 #define USE_IP_MREQN
 #if defined(_WIN32)
@@ -348,8 +351,7 @@ static void CAFindReadyMessage()
     int eventIndex;
 
     // fdArray and eventArray should have same number of elements
-    /** @todo: replace with OC_STATIC_ASSERT */
-    _Static_assert(_countof(fdArray) == _countof(eventArray), "Arrays should have same number of elements");
+    OC_STATIC_ASSERT(_countof(fdArray) == _countof(eventArray), "Arrays should have same number of elements");
 
     PUSH_IP_SOCKET(u6,  eventArray, fdArray, arraySize);
     PUSH_IP_SOCKET(u6s, eventArray, fdArray, arraySize);
@@ -673,7 +675,7 @@ static int CACreateSocket(int family, uint16_t *port)
     {
         int on = 1;
 
-        if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof (on)))
+        if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, OPTVAL_T(&on), sizeof (on)))
         {
             OIC_LOG_V(ERROR, TAG, "IPV6_V6ONLY failed: %s", CAIPS_GET_ERROR);
         }
@@ -683,7 +685,7 @@ static int CACreateSocket(int family, uint16_t *port)
 #if defined(IPV6_RECVPKTINFO)
             if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof (on)))
 #else
-            if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &on, sizeof (on)))
+            if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, OPTVAL_T(&on), sizeof (on)))
 #endif
             {
                 OIC_LOG_V(ERROR, TAG, "IPV6_RECVPKTINFO failed: %s",CAIPS_GET_ERROR);
@@ -698,7 +700,7 @@ static int CACreateSocket(int family, uint16_t *port)
         if (*port) // only do this for multicast ports
         {
             int on = 1;
-            if (-1 == setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &on, sizeof (on)))
+            if (-1 == setsockopt(fd, IPPROTO_IP, IP_PKTINFO, OPTVAL_T(&on), sizeof (on)))
             {
                 OIC_LOG_V(ERROR, TAG, "IP_PKTINFO failed: %s", CAIPS_GET_ERROR);
             }
@@ -1010,7 +1012,7 @@ static void applyMulticastToInterface4(uint32_t ifindex)
                              .imr_interface.s_addr = htonl(ifindex) };
 #endif
 
-    int ret = setsockopt(caglobals.ip.m4.fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof (mreq));
+    int ret = setsockopt(caglobals.ip.m4.fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, OPTVAL_T(&mreq), sizeof (mreq));
     if (-1 == ret)
     {
 #if !defined(WSAEINVAL)
@@ -1254,12 +1256,12 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
                 OIC_LOG_V(DEBUG, TAG, "%s%s %s sendTo (Partial Send) is successful: "
                                       "currently sent: %ld bytes, "
                                       "total sent: %ld bytes, "
-                                      "remaining: %ld bytes", 
+                                      "remaining: %ld bytes",
                                       secure, cast, fam, len, sent, dlen-sent);
             }
             else
             {
-                OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %ld bytes", 
+                OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %ld bytes",
                                      secure, cast, fam, len);
             }
         }
@@ -1305,7 +1307,7 @@ static void sendMulticastData6(const u_arraylist_t *iflist,
         }
 
         int index = ifitem->index;
-        if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof (index)))
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, OPTVAL_T(&index), sizeof (index)))
         {
             OIC_LOG_V(ERROR, TAG, "setsockopt6 failed: %s", CAIPS_GET_ERROR);
             return;
@@ -1353,7 +1355,7 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
 #else
         mreq.imr_interface.s_addr = htonl(ifitem->index);
 #endif
-        if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &mreq, sizeof (mreq)))
+        if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, OPTVAL_T(&mreq), sizeof (mreq)))
         {
             OIC_LOG_V(ERROR, TAG, "send IP_MULTICAST_IF failed: %s (using defualt)",
                     CAIPS_GET_ERROR);

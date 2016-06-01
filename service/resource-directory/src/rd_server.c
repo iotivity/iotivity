@@ -122,8 +122,13 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
  * This internal method is the entity handler for RD resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
+#ifdef _MSC_VER
+static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *ehRequest, void *callbackParameter)
+#else
 static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *ehRequest, __attribute__((unused)) void *callbackParameter)
+#endif
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 

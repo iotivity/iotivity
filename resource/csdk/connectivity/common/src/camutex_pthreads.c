@@ -36,29 +36,30 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#if !defined(_WIN32)
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
-#include <errno.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#include <assert.h>
-#include <oic_malloc.h>
-#include "camutex.h"
-#include "logger.h"
 #endif
-
-#if defined(_WIN32)
-#include <string.h>
-#include <time.h>
-#include <assert.h>
-#include <oic_malloc.h>
-#include "camutex.h"
-#include "logger.h"
+#ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
-#include <stdio.h>
 #endif
+#include <stdio.h>
+#include <errno.h>
+#include <assert.h>
+#include <oic_malloc.h>
+#include "camutex.h"
+#include "logger.h"
 
 /**
  * TAG

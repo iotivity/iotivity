@@ -35,6 +35,7 @@
 #include "ocstackinternal.h"
 #include "payload_logging.h"
 #include "rdpayload.h"
+#include "platform_features.h"
 
 #define TAG "OIC_RI_PAYLOADPARSE"
 

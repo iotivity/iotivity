@@ -40,6 +40,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 
 #include "cacommon.h"
 #include "logger.h"

@@ -27,8 +27,7 @@
 #include "oic_string.h"
 
 #ifndef HAVE_STRPTIME
-//  ### to be fixed later
-#define    strptime(a,b,c)   NULL
+char *strptime(const char *buf, const char *fmt, struct tm *tm);
 #endif
 
 static char dtFormat[] =  "%Y%m%dT%H%M%S"; //date-time format

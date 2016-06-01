@@ -741,7 +741,7 @@ bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
 {
     if (!array)
     {
-        return NULL;
+        return false;
     }
 
     size_t dimTotal = calcDimTotal(dimensions);

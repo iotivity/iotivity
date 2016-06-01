@@ -40,9 +40,9 @@
 #include <sys/poll.h>
 #endif
 
-#if defined(_WIN32)
-#include <mswsock.h>
+#ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
+#include <mswsock.h>
 #endif
 
 #ifdef __cplusplus

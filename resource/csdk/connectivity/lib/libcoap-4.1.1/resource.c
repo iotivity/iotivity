@@ -27,7 +27,7 @@
 #define COAP_FREE_TYPE(Type, Object) memp_free(MEMP_COAP_##Type, Object)
 
 #endif
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
 #include "utlist.h"
 #include "mem.h"
 
@@ -339,7 +339,7 @@ coap_resource_init(const unsigned char *uri, size_t len, int flags)
 {
     coap_resource_t *r;
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     r = (coap_resource_t *)coap_malloc(sizeof(coap_resource_t));
 #endif
 #ifdef WITH_LWIP
@@ -381,7 +381,7 @@ coap_add_attr(coap_resource_t *resource, const unsigned char *name, size_t nlen,
     if (!resource || !name)
         return NULL;
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     attr = (coap_attr_t *)coap_malloc(sizeof(coap_attr_t));
 #endif
 #ifdef WITH_LWIP
@@ -501,7 +501,7 @@ int coap_delete_resource(coap_context_t *context, coap_key_t key)
     if (!resource)
         return 0;
 
-#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO) || defined(_WIN32)
 #ifdef COAP_RESOURCES_NOHASH
     LL_DELETE(context->resources, resource);
 #else
@@ -514,7 +514,7 @@ int coap_delete_resource(coap_context_t *context, coap_key_t key)
     if (resource->flags & COAP_RESOURCE_FLAGS_RELEASE_URI)
         coap_free(resource->uri.s);
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     coap_free(resource);
 #endif
 #ifdef WITH_LWIP

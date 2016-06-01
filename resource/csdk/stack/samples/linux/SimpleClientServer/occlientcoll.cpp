@@ -31,10 +31,11 @@
 #include <ocstack.h>
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "logger.h"
-const char *getResult(OCStackResult result);
+#include "common.h"
 std::string getQueryStrForGetPut();
 
 #define TAG ("occlient")

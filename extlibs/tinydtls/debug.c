@@ -87,7 +87,7 @@ static char *loglevels[] = {
 
 #ifdef HAVE_TIME_H
 
-static inline size_t
+INLINE_API size_t
 print_timestamp(char *s, size_t len, time_t t) {
   struct tm *tmp;
   tmp = localtime(&t);
@@ -96,7 +96,7 @@ print_timestamp(char *s, size_t len, time_t t) {
 
 #else /* alternative implementation: just print the timestamp */
 
-static inline size_t
+INLINE_API size_t
 print_timestamp(char *s, size_t len, clock_time_t t) {
 #ifdef HAVE_SNPRINTF
   return snprintf(s, len, "%u.%03u", 
@@ -118,7 +118,7 @@ print_timestamp(char *s, size_t len, clock_time_t t) {
  * 
  * @return The length of @p s.
  */
-static inline size_t
+INLINE_API size_t
 dtls_strnlen(const char *s, size_t maxlen) {
   size_t n = 0;
   while(*s++ && n < maxlen)
@@ -132,9 +132,9 @@ dtls_strnlen(const char *s, size_t maxlen) {
 
 static size_t
 dsrv_print_addr(const session_t *addr, char *buf, size_t len) {
-#ifdef HAVE_ARPA_INET_H
+#if defined(HAVE_ARPA_INET_H) || defined(_WIN32)
   const void *addrptr = NULL;
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(_WIN32)
   unsigned short int port;
 #else
   in_port_t port;

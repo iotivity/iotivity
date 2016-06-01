@@ -526,7 +526,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.type = CA_MSG_NONCONFIRM;
     }
 
-    char rspToken[CA_MAX_TOKEN_LEN + 1] = {};
+    char rspToken[CA_MAX_TOKEN_LEN + 1] = {0};
     responseInfo.info.messageId = serverRequest->coapID;
     responseInfo.info.token = (CAToken_t)rspToken;
 

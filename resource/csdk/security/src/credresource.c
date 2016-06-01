@@ -21,9 +21,10 @@
 #define __STDC_LIMIT_MACROS
 
 #include <stdlib.h>
-#ifdef WITH_ARDUINO
+#ifdef HAVE_STRING_H
 #include <string.h>
-#else
+#endif
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 #include <stdint.h>
@@ -1207,7 +1208,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
             {
-                OicUuid_t deviceID = {.id={}};
+                OicUuid_t deviceID = {.id={0}};
                 // Retrieve Device ID from doxm resource
                 if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
                 {

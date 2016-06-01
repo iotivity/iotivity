@@ -21,6 +21,10 @@
 #ifndef IOTVT_SRM_RSRC_STRINGS_H
 #define IOTVT_SRM_RSRC_STRINGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "securevirtualresourcetypes.h"
 
 extern const char * SVR_DB_FILE_NAME;
@@ -165,6 +169,10 @@ extern char OIC_SEC_REST_QUERY_DELIMETER;
 
 //Security Version
 extern const char * DEFAULT_SEC_VERSION;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IOTVT_SRM_RSRC_STRINGS_H
 

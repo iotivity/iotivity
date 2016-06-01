@@ -23,12 +23,7 @@
 
 #include <functional>
 #include <mutex>
-#if defined(__msys_nt__)
-#include <unistd.h>
-#elif defined(_VS2015_)
-//#include <win32alias.h>
-#define sleep(SECS)   Sleep(1000*(SECS))
-#endif
+#include "platform_features.h"
 #include <condition_variable>
 
 #include "OCPlatform.h"

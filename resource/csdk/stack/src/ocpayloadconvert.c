@@ -65,7 +65,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
     // TinyCbor Version 47a78569c0 or better on master is required for the re-allocation
     // strategy to work.  If you receive the following assertion error, please do a git-pull
     // from the extlibs/tinycbor/tinycbor directory
-    #define CborNeedsUpdating  (CborErrorOutOfMemory < CborErrorDataTooLarge)
+    #define CborNeedsUpdating  (((unsigned int)CborErrorOutOfMemory) < ((unsigned int)CborErrorDataTooLarge))
     OC_STATIC_ASSERT(!CborNeedsUpdating, "tinycbor needs to be updated to at least 47a78569c0");
     #undef CborNeedsUpdating
 

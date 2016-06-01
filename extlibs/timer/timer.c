@@ -22,14 +22,26 @@
 
 #define _BSD_SOURCE
 
-#ifndef WITH_ARDUINO
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
-
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#include "platform_features.h"
+
 #include <stdio.h>
 
 #include "timer.h"
@@ -255,9 +267,8 @@ void *loop(void *threadid)
 int initThread()
 {
     int res;
-    long t = 0;
 
-    res = pthread_create(&thread_id, NULL, loop, (void *) t);
+    res = pthread_create(&thread_id, NULL, loop, NULL);
 
     if (res)
     {

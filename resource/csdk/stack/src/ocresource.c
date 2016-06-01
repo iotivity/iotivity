@@ -26,9 +26,10 @@
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
 
-#ifdef WITH_ARDUINO
+#ifdef WITH_STRING_H
 #include <string.h>
-#else
+#endif
+#ifdef WITH_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -63,6 +64,8 @@
 
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \
              TAG, #arg " is NULL"); return (retVal); } }
+
+#include "platform_features.h"
 
 extern OCResource *headResource;
 static OCPlatformInfo savedPlatformInfo = {0};

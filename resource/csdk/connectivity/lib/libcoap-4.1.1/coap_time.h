@@ -34,6 +34,9 @@ extern "C"
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 #ifdef WITH_LWIP
 
 #include <stdint.h>
@@ -93,7 +96,7 @@ extern "C"
 #define coap_ticks contiki_ticks_impl
 
 #endif /* WITH_CONTIKI */
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(_WIN32)
     typedef unsigned int coap_tick_t;
 
     /**
@@ -107,7 +110,7 @@ extern "C"
 
     /** Set at startup to initialize the internal clock (time in seconds). */
     extern time_t clock_offset;
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || _WIN32 */
 
 #ifdef WITH_ARDUINO
 #include "Time.h"
@@ -176,7 +179,12 @@ extern time_t clock_offset;
 #endif
     *t = (tv - clock_offset) * COAP_TICKS_PER_SECOND;
 #  else
+#ifdef HAVE_TIME_H
+    time_t tv = time(NULL);
+    *t = difftime(tv, clock_offset) * COAP_TICKS_PER_SECOND;
+#else
 #    error "clock not implemented"
+#endif /* HAVE_TIME_H */
 #  endif /* WITH_ARDUINO */
 #endif /* HAVE_SYS_TIME_H */
 }

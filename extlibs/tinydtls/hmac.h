@@ -39,17 +39,17 @@ typedef DTLS_SHA256_CTX dtls_hash_ctx;
 typedef dtls_hash_ctx *dtls_hash_t;
 #define DTLS_HASH_CTX_SIZE sizeof(DTLS_SHA256_CTX)
 
-static inline void
+INLINE_API void
 dtls_hash_init(dtls_hash_t ctx) {
   DTLS_SHA256_Init((DTLS_SHA256_CTX *)ctx);
 }
 
-static inline void 
+INLINE_API void 
 dtls_hash_update(dtls_hash_t ctx, const unsigned char *input, size_t len) {
   DTLS_SHA256_Update((DTLS_SHA256_CTX *)ctx, input, len);
 }
 
-static inline size_t
+INLINE_API size_t
 dtls_hash_finalize(unsigned char *buf, dtls_hash_t ctx) {
   DTLS_SHA256_Final(buf, (DTLS_SHA256_CTX *)ctx);
   return DTLS_SHA256_DIGEST_LENGTH;
@@ -57,7 +57,7 @@ dtls_hash_finalize(unsigned char *buf, dtls_hash_t ctx) {
 #endif /* WITH_SHA256 */
 
 #ifndef WITH_CONTIKI
-static inline void dtls_hmac_storage_init()
+INLINE_API void dtls_hmac_storage_init()
 { }
 #else
 void dtls_hmac_storage_init();

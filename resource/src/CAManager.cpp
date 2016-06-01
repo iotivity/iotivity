@@ -33,8 +33,8 @@ using namespace OC;
 
 namespace
 {
-        CAManager::AdapterChangedCallback g_adapterHandler = NULL;
-        CAManager::ConnectionChangedCallback g_connectionHandler = NULL;
+        CAManager::AdapterChangedCallback g_adapterHandler = nullptr;
+        CAManager::ConnectionChangedCallback g_connectionHandler = nullptr;
 }
 
 void DefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled)

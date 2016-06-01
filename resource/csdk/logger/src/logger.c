@@ -51,14 +51,18 @@
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
 #endif
+
+#if defined(_MSC_VER)
+#define LINE_BUFFER_SIZE (16 * 2) + 16 + 1  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#else
+static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#endif //defined(_MSC_VER)
+
 #ifdef __ANDROID__
-#elif defined __linux__ || defined __APPLE__ || defined __msys_nt__
+#elif defined __linux__ || defined __APPLE__ || defined _WIN32
 static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
                                       OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
 #endif
-
-// Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
-static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
@@ -70,6 +74,10 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
     static android_LogPriority LEVEL[] =
     {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
 #endif
+#elif defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
+    static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#elif defined(_MSC_VER)
+    static const char * LEVEL[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
 #include <stdarg.h>
 #include "Arduino.h"
@@ -153,7 +161,7 @@ void OCLogInit()
 
 void OCLogShutdown()
 {
-#if defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
+#if defined(__linux__) || defined(__APPLE__) || defined(_WIN32)
     if (logCtx && logCtx->destroy)
     {
         logCtx->destroy(logCtx);
@@ -174,7 +182,7 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...)
     if (!format || !tag) {
         return;
     }
-    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
+    char buffer[MAX_LOG_V_BUFFER_SIZE] = {0};
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
@@ -228,6 +236,12 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
                sec = when.tv_sec % 60;
                ms = when.tv_nsec / 1000000;
            }
+   #elif defined(_WIN32)
+           SYSTEMTIME systemTime = {0};
+           GetLocalTime(&systemTime);
+           min = (int)systemTime.wMinute;
+           sec = (int)systemTime.wSecond;
+           ms  = (int)systemTime.wMilliseconds;
    #else
            struct timeval now;
            if (!gettimeofday(&now, NULL))

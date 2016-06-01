@@ -202,7 +202,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
     OCLogBuffer((level), (tag), (buffer), (bufferSize))
 
-#else // These macros are defined for Linux, Android, MSYS_NT, and Arduino
+#else // These macros are defined for Linux, Android, Win32, and Arduino
 
 #define OIC_LOG_INIT()    OCLogInit()
 
@@ -223,7 +223,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 #define OIC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OCLogShutdown()
 #define OIC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
-// Define variable argument log function for Linux, Android, and MSYS_NT
+// Define variable argument log function for Linux, Android, and Win32
 #define OIC_LOG_V(level, tag, ...)  OCLogv((level), (tag), __VA_ARGS__)
 
 #endif //ARDUINO

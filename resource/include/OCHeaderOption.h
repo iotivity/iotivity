@@ -80,11 +80,25 @@ namespace OC
 
             OCHeaderOption(const OCHeaderOption&) = default;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCHeaderOption(OCHeaderOption&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+            }
+#else
             OCHeaderOption(OCHeaderOption&&) = default;
+#endif
 
             OCHeaderOption& operator=(const OCHeaderOption&) = default;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCHeaderOption& operator=(OCHeaderOption&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+            }
+#else
             OCHeaderOption& operator=(OCHeaderOption&&) = default;
+#endif
 
             /**
             * API to get Option ID

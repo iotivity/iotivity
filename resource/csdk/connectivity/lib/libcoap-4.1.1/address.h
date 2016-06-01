@@ -36,8 +36,11 @@
 #include <sys/socket.h>
 #endif
 
-#if defined(__msys_nt__)
+#ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
+#endif
+
+#ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
 #endif
 
@@ -81,7 +84,7 @@ typedef struct coap_address_t
 
 #define _coap_is_mcast_impl(Address) uip_is_addr_mcast(&((Address)->addr))
 #endif /* WITH_CONTIKI */
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(_WIN32)
 
 /** multi-purpose address abstraction */
 typedef struct coap_address_t

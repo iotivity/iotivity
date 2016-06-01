@@ -445,11 +445,7 @@ int main()
             OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-#if defined(_WIN32)
-        Sleep(100);
-#else
         nanosleep(&timeout, NULL);
-#endif //defined(_WIN32)
     }
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");

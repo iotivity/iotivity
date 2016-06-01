@@ -30,11 +30,14 @@
 #endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
+#include "common.h"
+#include "platform_features.h"
 
 #ifdef ROUTING_GATEWAY
 /**
@@ -62,8 +65,6 @@ static OCConnectivityType ConnType = CT_ADAPTER_IP;
 static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
-
-void StripNewLineChar(char* str);
 
 #ifdef WITH_PRESENCE
 // The handle for observe registration

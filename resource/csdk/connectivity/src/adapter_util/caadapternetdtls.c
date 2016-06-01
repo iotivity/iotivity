@@ -25,11 +25,11 @@
 #include "oic_string.h"
 #include "global.h"
 #include "timer.h"
-
-#if defined(__msys_nt__)
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#else
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
 

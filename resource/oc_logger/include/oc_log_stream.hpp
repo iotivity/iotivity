@@ -55,9 +55,9 @@ class oc_log_stream : boost::iostreams::sink
  {}
 
  public:
- inline void flush()                                    noexcept { return oc_log_flush(m_log.get()); }
- inline void set_level(const oc_log_level new_level)    noexcept { return oc_log_set_level(m_log.get(), new_level); }
- inline int  set_module(const std::string& module_name) noexcept { return oc_log_set_module(m_log.get(), module_name.c_str()); }
+ inline void flush()                                    BOOST_NOEXCEPT { return oc_log_flush(m_log.get()); }
+ inline void set_level(const oc_log_level new_level)    BOOST_NOEXCEPT { return oc_log_set_level(m_log.get(), new_level); }
+ inline int  set_module(const std::string& module_name) BOOST_NOEXCEPT { return oc_log_set_module(m_log.get(), module_name.c_str()); }
 
  public:
  std::streamsize write(const char_type *s, std::streamsize n)

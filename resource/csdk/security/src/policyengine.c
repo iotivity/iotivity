@@ -214,9 +214,9 @@ bool IsRequestFromResourceOwner(PEContext_t *context)
     return retVal;
 }
 
-inline static bool IsRequestSubjectEmpty(PEContext_t *context)
+INLINE_API bool IsRequestSubjectEmpty(PEContext_t *context)
 {
-    OicUuid_t emptySubject = {.id={}};
+    OicUuid_t emptySubject = {.id={0}};
 
     if(NULL == context)
     {
@@ -235,7 +235,7 @@ inline static bool IsRequestSubjectEmpty(PEContext_t *context)
  *
  * @return true if 'permission' bits include all 'request' bits.
  */
-static inline bool IsPermissionAllowingRequest(const uint16_t permission,
+INLINE_API bool IsPermissionAllowingRequest(const uint16_t permission,
     const uint16_t request)
 {
     if (request == (request & permission))
@@ -253,7 +253,7 @@ static inline bool IsPermissionAllowingRequest(const uint16_t permission,
  *
  * @return true if 'subject' is the wildcard, false if it is not.
  */
-static inline bool IsWildCardSubject(OicUuid_t *subject)
+INLINE_API bool IsWildCardSubject(OicUuid_t *subject)
 {
     if(NULL == subject)
     {
@@ -476,7 +476,7 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
         // Else request is a "normal" request that must be tested against ACL
         else
         {
-            OicUuid_t saveSubject = {.id={}};
+            OicUuid_t saveSubject = {.id={0}};
             bool isSubEmpty = IsRequestSubjectEmpty(context);
 
             ProcessAccessRequest(context);

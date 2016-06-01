@@ -113,7 +113,7 @@ extern "C"
      * to sendqueue_basetime. */
     coap_tick_t sendqueue_basetime;
     coap_queue_t *sendqueue, *recvqueue;
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     int sockfd; /**< send/receive socket */
 #endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI

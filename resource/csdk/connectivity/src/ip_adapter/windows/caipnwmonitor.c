@@ -23,15 +23,14 @@
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
 #include <winsock2.h>
+#include "platform_features.h"
 #include <iptypes.h>
 #include <stdbool.h>
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-
 
 #define TAG "IP_MONITOR"
 
@@ -58,6 +57,16 @@ CAResult_t CAIPStopNetworkMonitor()
 int CAGetPollingInterval(int interval)
 {
     return interval;
+}
+
+/** @todo Implement network interface monitoring.
+ *  Not used in win32, but caipserver currently requires this function
+ *  be defined. not critical.
+ */
+CAInterface_t *CAFindInterfaceChange()
+{
+    CAInterface_t *foundNewInterface = NULL;
+    return foundNewInterface;
 }
 
 /** @todo Implement network interface monitoring.

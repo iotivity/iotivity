@@ -62,7 +62,7 @@
  when compiling c++ code), this code uses whatever method is needed
  or, for VS2008 where neither is available, uses casting workarounds. */
 #ifdef _MSC_VER            /* MS compiler */
-#if _MSC_VER >= 1600 && __cplusplus  /* VS2010 and newer in C++ mode */
+#if (_MSC_VER >= 1600) && (defined(__cplusplus) && (__cplusplus >= 201103L))  /* VS2010 and newer in C++ mode */
 #define LDECLTYPE(x) decltype(x)
 #else                     /* VS2008 or older (or VS2010 in C mode) */
 #define NO_DECLTYPE
@@ -338,11 +338,11 @@ do {                                                                            
     (head)=(head)->next;                                                                       \
   } else {                                                                                     \
     char *_tmp = (char*)(head);                                                                \
-    while (head->next && (head->next != (del))) {                                              \
-      head = head->next;                                                                       \
+    while ((head)->next && ((head)->next != (del))) {                                          \
+      (head) = (head)->next;                                                                   \
     }                                                                                          \
-    if (head->next) {                                                                          \
-      head->next = ((del)->next);                                                              \
+    if ((head)->next) {                                                                        \
+      (head)->next = ((del)->next);                                                            \
     }                                                                                          \
     {                                                                                          \
       char **_head_alias = (char**)&(head);                                                    \

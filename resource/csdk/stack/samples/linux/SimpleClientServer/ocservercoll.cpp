@@ -35,9 +35,10 @@
 #endif
 #include <ocstack.h>
 #include <logger.h>
+#include <getopt.h>
 #include "ocpayload.h"
-
-const char *getResult(OCStackResult result);
+#include "common.h"
+#include "platform_features.h"
 
 #define TAG PCF("ocservercontainer")
 
@@ -549,8 +550,10 @@ int main(int argc, char* argv[])
     /*
      * Cancel the light thread and wait for it to terminate
      */
+#ifdef HAVE_PTHREAD_H
     pthread_cancel(threadId);
     pthread_join(threadId, NULL);
+#endif
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 

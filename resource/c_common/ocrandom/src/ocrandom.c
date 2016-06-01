@@ -49,6 +49,9 @@
 #include <ctype.h>
 #include <linux/time.h>
 #endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include "ocrandom.h"
 #include <stdio.h>
 
@@ -117,6 +120,11 @@ int8_t OCSeedRandom()
     struct timespec getTs;
     clock_gettime(CLOCK_MONOTONIC, &getTs);
     currentTime = (getTs.tv_sec * (uint64_t)NANO_SEC + getTs.tv_nsec)/1000;
+#elif _WIN32
+    LARGE_INTEGER count;
+    if (QueryPerformanceCounter(&count)) {
+        currentTime = count.QuadPart;
+    }
 #elif  _POSIX_TIMERS > 0
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
