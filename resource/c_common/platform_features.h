@@ -81,7 +81,7 @@
 #  define strncasecmp _strnicmp
 #  define strtok_r strtok_s
 #  if _MSC_VER && (_MSC_VER < 1900)
-#    include "vs12_snprintf.h"
+#    include "windows/include/vs12_snprintf.h"
 #  endif
 #  define ssize_t SSIZE_T
 #  define F_OK                0
@@ -89,8 +89,8 @@
 #  ifdef __cplusplus
 #    define SUPPORTS_DEFAULT_CTOR
 #  endif
-#  include "win_sleep.h"
-#  include "pthread_create.h"
+#  include "windows/include/win_sleep.h"
+#  include "windows/include/pthread_create.h"
 #endif
 
 #ifdef HAVE_WINSOCK2_H

@@ -713,7 +713,7 @@ static int CACreateSocket(int family, uint16_t *port)
     if (*port) // use the given port
     {
         int on = 1;
-        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof (on)))
+        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, OPTVAL_T(&on), sizeof (on)))
         {
             OIC_LOG_V(ERROR, TAG, "SO_REUSEADDR failed: %s", CAIPS_GET_ERROR);
 #ifdef _WIN32
@@ -1024,7 +1024,7 @@ static void applyMulticastToInterface4(uint32_t ifindex)
             OIC_LOG_V(ERROR, TAG, "       IPv4 IP_ADD_MEMBERSHIP failed: %s", CAIPS_GET_ERROR);
         }
     }
-    ret = setsockopt(caglobals.ip.m4s.fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof (mreq));
+    ret = setsockopt(caglobals.ip.m4s.fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, OPTVAL_T(&mreq), sizeof (mreq));
     if (-1 == ret)
     {
 #if !defined(WSAEINVAL)
@@ -1042,7 +1042,7 @@ static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
 {
     struct ipv6_mreq mreq = {.ipv6mr_multiaddr = *addr,
                              .ipv6mr_interface = ifindex };
-    int ret = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof (mreq));
+    int ret = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, OPTVAL_T(&mreq), sizeof (mreq));
     if (-1 == ret)
     {
 #if !defined(_WIN32)

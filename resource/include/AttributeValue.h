@@ -136,7 +136,7 @@ namespace OC
     template<>
     struct AttributeTypeConvert<std::vector<uint8_t>>
     {
-        constexpr static AttributeType type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Binary;
     };
 
     std::ostream& operator << (std::ostream& os, const AttributeType at);

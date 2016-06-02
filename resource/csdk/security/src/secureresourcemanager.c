@@ -343,7 +343,7 @@ OCStackResult SRMInitPolicyEngine()
 
 void SRMDeInitPolicyEngine()
 {
-    return DeInitPolicyEngine(&g_policyEngineContext);
+    DeInitPolicyEngine(&g_policyEngineContext);
 }
 
 bool SRMIsSecurityResourceURI(const char* uri)

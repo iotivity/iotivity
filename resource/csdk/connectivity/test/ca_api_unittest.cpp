@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "platform_features.h"
 #include "gtest/gtest.h"
 #include "cainterface.h"
 #include "cautilinterface.h"

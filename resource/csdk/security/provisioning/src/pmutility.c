@@ -476,8 +476,8 @@ uint16_t GetSecurePortFromJSON(char* jsonStr)
 }
 
 bool PMGenerateQuery(bool isSecure,
-                     const char* address, const uint16_t port,
-                     const OCConnectivityType connType,
+                     const char* address, uint16_t port,
+                     OCConnectivityType connType,
                      char* buffer, size_t bufferSize, const char* uri)
 {
     if(!address || !buffer || !uri)

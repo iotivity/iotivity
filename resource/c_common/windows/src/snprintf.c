@@ -28,7 +28,7 @@ int vs12_snprintf(char *buffer, size_t count, const char *format, ...)
 
     va_start(args, format);
 
-    length = _snprintf(buffer, count, format, args);
+    length = _vsnprintf(buffer, count, format, args);
 
     va_end(args);
 

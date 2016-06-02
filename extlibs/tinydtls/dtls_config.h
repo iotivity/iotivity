@@ -204,7 +204,7 @@
 /* #undef size_t */
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
 #define ssize_t SSIZE_T
-#define snprintf _snprintf
+#define snprintf vs12_snprintf
 #endif
 #if defined(_WIN32)
 #define MSG_DONTWAIT 0

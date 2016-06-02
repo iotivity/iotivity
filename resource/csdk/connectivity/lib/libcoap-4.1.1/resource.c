@@ -64,7 +64,9 @@ coap_free_subscription(coap_subscription_t *subscription)
 }
 #endif /* WITH_CONTIKI */
 
+#ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
+#endif
 
 /* Helper functions for conditional output of character sequences into
  * a given buffer. The first Offset characters are skipped.

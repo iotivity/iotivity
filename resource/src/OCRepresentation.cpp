@@ -926,9 +926,9 @@ namespace OC
     {
         typedef std::vector<uint8_t> type;
         typedef std::vector<uint8_t> base_type;
-        constexpr static AttributeType enum_type = AttributeType::Binary;
-        constexpr static AttributeType enum_base_type = AttributeType::Binary;
-        constexpr static size_t depth = 0;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_base_type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR size_t depth = 0;
     };
 
 

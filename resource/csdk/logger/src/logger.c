@@ -34,12 +34,11 @@
 // clock_gettime() support.
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-
-// if we have unistd.h, we're a Unix system
+#endif
 #include <time.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
@@ -47,6 +46,7 @@
 #include "logger.h"
 #include "string.h"
 #include "logger_types.h"
+#include "platform_features.h"
 
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
