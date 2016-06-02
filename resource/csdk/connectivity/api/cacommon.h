@@ -134,7 +134,7 @@ typedef char *CAToken_t;
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE_CA (256)
 #else
-#define MAX_ADDR_STR_SIZE_CA (40)
+#define MAX_ADDR_STR_SIZE_CA (59)
 #endif
 
 typedef enum
