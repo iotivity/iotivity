@@ -140,6 +140,18 @@ elif target_os == 'windows':
 		if not vs_version_year or not vs_target_arch:
 			Exit(1)
 
+		if not env.WhereIs('cmake', env.get('PATH')):
+			print '''*********************** Error ************************
+*                                                    *
+* Please make sure that CMake is in your System PATH *
+*                                                    *
+* You can download CMake from:                       *
+*            https://cmake.org/download/             *
+*                                                    *
+******************************************************
+'''
+			Exit(1)
+
 		if not os.path.exists(gtest_lib_dir):
 			# Create lib dir
 			os.mkdir(gtest_lib_dir)
