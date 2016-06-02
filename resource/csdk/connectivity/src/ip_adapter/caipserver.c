@@ -133,9 +133,9 @@ static char *ipv6mcnames[IPv6_DOMAINS] = {
 #define CAIPS_GET_ERROR \
     strerror(errno)
 #endif
-static CAIPExceptionCallback g_exceptionCallback;
+static CAIPErrorHandleCallback g_ipErrorHandler = NULL;
 
-static CAIPPacketReceivedCallback g_packetReceivedCallback;
+static CAIPPacketReceivedCallback g_packetReceivedCallback = NULL;
 
 static void CAHandleNetlink();
 static void CAFindReadyMessage();
@@ -1183,11 +1183,6 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
     g_packetReceivedCallback = callback;
 }
 
-void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
-{
-    g_exceptionCallback = callback;
-}
-
 void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback)
 {
     CAIPSetNetworkMonitorCallback(callback);
@@ -1202,13 +1197,16 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     if (!endpoint)
     {
         OIC_LOG(DEBUG, TAG, "endpoint is null");
+        if (g_ipErrorHandler)
+        {
+            g_ipErrorHandler(endpoint, data, dlen, CA_STATUS_INVALID_PARAM);
+        }
         return;
     }
 
     char *secure = (endpoint->flags & CA_SECURE) ? "secure " : "";
 
-    (void)secure;   // eliminates release warning
-    (void)cast;
+    (void)cast;  // eliminates release warning
     (void)fam;
 
     struct sockaddr_storage sock;
@@ -1228,6 +1226,11 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     ssize_t len = sendto(fd, data, dlen, 0, (struct sockaddr *)&sock, socklen);
     if (-1 == len)
     {
+         // If logging is not defined/enabled.
+        if (g_ipErrorHandler)
+        {
+            g_ipErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+        }
         OIC_LOG_V(ERROR, TAG, "%s%s %s sendTo failed: %s", secure, cast, fam, strerror(errno));
     }
     else
@@ -1245,6 +1248,12 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
             err = WSAGetLastError();
             if ((WSAEWOULDBLOCK != err) && (WSAENOBUFS != err))
             {
+                 // If logging is not defined/enabled.
+                if (g_ipErrorHandler)
+                {
+                    g_ipErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+                }
+
                 OIC_LOG_V(ERROR, TAG, "%s%s %s sendTo failed: %i", secure, cast, fam, err);
             }
         }
@@ -1501,4 +1510,9 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     u_arraylist_destroy(iflist);
 
     return CA_STATUS_OK;
+}
+
+void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback)
+{
+    g_ipErrorHandler = errorHandleCallback;
 }

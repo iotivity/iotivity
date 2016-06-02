@@ -1756,7 +1756,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLENetworkMonitor() failed");
         return CA_STATUS_FAILED;
     }
-    CAInitializeLEAdapter(handle);
+    CAInitializeLEAdapter();
 
     CASetLEClientThreadPoolHandle(handle);
 

@@ -239,6 +239,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     CAInitializeIPGlobals();
     caglobals.ip.threadpool = handle;
 
+    CAIPSetErrorHandler(CAIPErrorHandler);
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
 #ifndef SINGLE_THREAD
     CAIPSetConnectionStateChangeCallback(CAIPConnectionStateCB);

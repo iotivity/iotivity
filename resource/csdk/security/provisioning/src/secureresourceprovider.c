@@ -1057,7 +1057,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     OIC_LOG(DEBUG, TAG, "Sending PCONF info to resource server");
     OCStackResult ret = OCDoResource(&handle, method, query,
             &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            selectedDeviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (OC_STACK_OK != ret)
     {
         OICFree(pconfData->resArr);

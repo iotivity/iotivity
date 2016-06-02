@@ -286,6 +286,8 @@ namespace OCRepresentationEncodingTest
         subRep.setValue("DoubleAttr", 3.333);
         subRep.setValue("BoolAttr", true);
         subRep.setValue("StringAttr", std::string("String attr"));
+        std::vector<uint8_t> bin_data {5,3,4,5,6,0,34,2,4,5,6,3};
+        subRep.setValue("BinaryAttr", bin_data);
         startRep.setValue("Sub", subRep);
 
         OC::MessageContainer mc1;
@@ -315,6 +317,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(3.333, newSubRep.getValue<double>("DoubleAttr"));
         EXPECT_EQ(true, newSubRep.getValue<bool>("BoolAttr"));
         EXPECT_STREQ("String attr", newSubRep.getValue<std::string>("StringAttr").c_str());
+        EXPECT_EQ(bin_data,
+                newSubRep.getValue<std::vector<uint8_t>>("BinaryAttr"));
         OCPayloadDestroy(cparsed);
     }
 

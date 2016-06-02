@@ -594,6 +594,15 @@ CAResult_t CALEClientCloseProfileProxy(JNIEnv *env, jobject gatt);
  */
 jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
 
+/**
+ * connect to GATT Server hosted by this device directly.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   bluetoothDevice       bluetooth device object.
+ * @param[in]   autoconnect           connect as soon as the device becomes avaiable(true).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -772,9 +772,8 @@ static bool CALEWaitForNonEmptyList(GList * const * list,
 
 // -----------------------------------------------------------------------
 
-CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
+CAResult_t CAInitializeLEAdapter()
 {
-    (void)threadPool;
 #if !GLIB_CHECK_VERSION(2,36,0)
     /*
       Initialize the GLib type system.

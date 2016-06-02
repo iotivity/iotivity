@@ -155,6 +155,15 @@ struct JObjectConverter : boost::static_visitor < jobject >
         }
         return repArr;
     }
+    jobject operator()(const std::vector<uint8_t>& val) const
+    {
+        size_t len = val.size();
+        jbyteArray jByteArray = env->NewByteArray(len);
+        if (!jByteArray) return nullptr;
+        const uint8_t* bytes = &val[0];
+        env->SetByteArrayRegion(jByteArray, 0, len, reinterpret_cast<const jbyte*>(bytes));
+        return jByteArray;
+    }
 
     // Nested sequences:
     jobject operator()(const std::vector<std::vector<int>>& val) const
@@ -618,6 +627,14 @@ extern "C" {
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation3DArray
         (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueByteArray
+    * Signature: (Ljava/lang/String;[B)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueByteArray
+        (JNIEnv *, jobject, jstring, jbyteArray);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation

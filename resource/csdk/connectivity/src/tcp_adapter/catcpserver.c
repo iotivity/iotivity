@@ -73,12 +73,12 @@ static ca_cond g_condObjectList = NULL;
 /**
  * Maintains the callback to be notified when data received from remote device.
  */
-static CATCPPacketReceivedCallback g_packetReceivedCallback;
+static CATCPPacketReceivedCallback g_packetReceivedCallback = NULL;
 
 /**
  * Error callback to update error in TCP.
  */
-static CATCPErrorHandleCallback g_TCPErrorHandler = NULL;
+static CATCPErrorHandleCallback g_tcpErrorHandler = NULL;
 
 /**
  * Connected Callback to pass the connection information to RI.
@@ -789,7 +789,10 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         if (!svritem)
         {
             OIC_LOG(ERROR, TAG, "Failed to create TCP server object");
-            g_TCPErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+            if (g_tcpErrorHandler)
+            {
+                g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+            }
             return;
         }
     }
@@ -810,7 +813,10 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         // if file descriptor value is wrong, remove TCP Server info from list
         OIC_LOG(ERROR, TAG, "Failed to connect to TCP server");
         CADisconnectTCPSession(svritem, index);
-        g_TCPErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+        if (g_tcpErrorHandler)
+        {
+            g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+        }
         return;
     }
 
@@ -824,7 +830,10 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
             if (EWOULDBLOCK != errno)
             {
                 OIC_LOG_V(ERROR, TAG, "unicast ipv4tcp sendTo failed: %s", strerror(errno));
-                g_TCPErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+                if (g_tcpErrorHandler)
+                {
+                    g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+                }
                 return;
             }
             continue;
@@ -1035,5 +1044,5 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
 
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback)
 {
-    g_TCPErrorHandler = errorHandleCallback;
+    g_tcpErrorHandler = errorHandleCallback;
 }

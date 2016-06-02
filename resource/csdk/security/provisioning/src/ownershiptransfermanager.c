@@ -982,7 +982,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         cbData.cd = NULL;
         OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query,
                                          &deviceInfo->endpoint, (OCPayload*)secPayload,
-                                         deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                                         deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
         if (res != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1044,7 +1044,7 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
     cbData.cd = NULL;
     res = OCDoResource(NULL, OC_REST_PUT, query,
                        &deviceInfo->endpoint, (OCPayload *)secPayload,
-                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                       deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1082,7 +1082,7 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
     OCStackResult res = OCDoResource(NULL, OC_REST_GET, query, NULL, NULL,
-                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                                     deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1139,7 +1139,7 @@ static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx)
     cbData.cd = NULL;
 
     res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload *)secPayload,
-            deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1198,7 +1198,7 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     cbData.cd = NULL;
 
     res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                       deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1251,7 +1251,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
     res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload *)secPayload,
-                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                       deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");

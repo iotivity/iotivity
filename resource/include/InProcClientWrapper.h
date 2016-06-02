@@ -56,6 +56,17 @@ namespace OC
                 : callback(cb), clientWrapper(cw){}
         };
 
+        struct ListenErrorContext
+        {
+            FindCallback callback;
+            FindErrorCallback errorCallback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenErrorContext(FindCallback cb1, FindErrorCallback cb2,
+                               std::weak_ptr<IClientWrapper> cw)
+                : callback(cb1), errorCallback(cb2), clientWrapper(cw){}
+        };
+
         struct DeviceListenContext
         {
             FindDeviceCallback callback;
@@ -95,6 +106,10 @@ namespace OC
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
             const std::string& resourceType, OCConnectivityType transportFlags,
             FindCallback& callback, QualityOfService QoS);
+
+        virtual OCStackResult ListenErrorForResource(const std::string& serviceUrl,
+            const std::string& resourceType, OCConnectivityType transportFlags,
+            FindCallback& callback, FindErrorCallback& errorCallback, QualityOfService QoS);
 
         virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
             const std::string& deviceURI, OCConnectivityType transportFlags,

@@ -171,6 +171,13 @@ namespace OC
                 m_values[str] = val;
             }
 
+            // using R-value(or universal ref depending) to move string and vector<uint8_t>
+            template <typename T>
+            void setValue(const std::string& str, T&& val)
+            {
+                m_values[str] = std::forward<T>(val);
+            }
+
             /**
              *  Retrieve the attribute value associated with the supplied name
              *

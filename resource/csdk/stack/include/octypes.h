@@ -746,6 +746,7 @@ typedef enum
 
     /** Request is not authorized by Resource Server. */
     OC_STACK_UNAUTHORIZED_REQ,
+    OC_STACK_TOO_LARGE_REQ,
 
     /** Error code from PDM */
     OC_STACK_PDM_IS_NOT_INITIALIZED,
@@ -949,6 +950,10 @@ typedef struct
     char *deviceName;
     /** Pointer to the types.*/
     OCStringLL *types;
+    /** Pointer to the device specification version.*/
+    char *specVersion;
+    /** Pointer to the device data model version.*/
+    char *dataModleVersion;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER

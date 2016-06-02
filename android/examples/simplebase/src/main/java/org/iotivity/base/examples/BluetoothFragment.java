@@ -178,7 +178,6 @@ public class BluetoothFragment extends Fragment implements
         super.onDestroy();
         CaInterface.stopBtPairingService();
         CaInterface.stopManagerService();
-        CaBtPairingInterface.destroyEdrInterface();
         if (mGatt != null) {
             mGatt.close();
             mGatt = null;
