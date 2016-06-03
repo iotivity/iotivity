@@ -133,6 +133,19 @@ typedef char *CAURI_t;
  */
 typedef char *CAToken_t;
 
+/**
+ * Socket types and error definitions
+ */
+#ifdef HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      SOCKET_ERROR
+# define OC_INVALID_SOCKET    INVALID_SOCKET
+typedef HANDLE CASocketFd_t;
+#else // HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      (-1)
+# define OC_INVALID_SOCKET    (-1)
+typedef int    CASocketFd_t;
+#endif
+
 /** The following flags are the same as the equivalent OIC values in
  * octypes.h, allowing direct copying with slight fixup.
  * The CA layer should used the OC types when build allows that.
@@ -451,8 +464,8 @@ typedef struct
  */
 typedef struct
 {
-    int fd;        /**< socket fd */
-    uint16_t port; /**< socket port */
+    CASocketFd_t fd;    /**< socket fd */
+    uint16_t port;      /**< socket port */
 } CASocket_t;
 
 #define HISTORYSIZE (4)
@@ -521,7 +534,7 @@ typedef struct
         CASocket_t m6s;             /**< multicast IPv6 secure */
         CASocket_t m4;              /**< multicast IPv4 */
         CASocket_t m4s;             /**< multicast IPv4 secure */
-        int netlinkFd;              /**< netlink */
+        CASocketFd_t netlinkFd;     /**< netlink */
 #if defined(_WIN32)
         WSAEVENT shutdownEvent;     /**< Event used to signal threads to stop */
 #else
