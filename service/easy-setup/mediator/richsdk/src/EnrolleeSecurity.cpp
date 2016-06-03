@@ -23,7 +23,7 @@
 #include "EnrolleeSecurity.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "RemoteEnrolleeResource.h"
+#include "EnrolleeResource.h"
 #include "logger.h"
 #include "ESException.h"
 #include "oic_malloc.h"
@@ -47,11 +47,11 @@ namespace OIC
 #define ES_SEC_DISCOVERY_TIMEOUT 5
 
         EnrolleeSecurity::EnrolleeSecurity(
-        std::shared_ptr< RemoteEnrolleeResource > remoteEnrolleeResource,
+        std::shared_ptr< EnrolleeResource > EnrolleeResource,
         std::string secDbPath)
         {
             m_enrolleeSecState = EnrolleeSecState::ES_SEC_UNKNOWN;
-            m_remoteEnrolleeResource = remoteEnrolleeResource;
+            m_EnrolleeResource = EnrolleeResource;
         }
 
         ESResult EnrolleeSecurity::registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
@@ -108,10 +108,10 @@ namespace OIC
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! in OwnershipTransfer");
 
-                std::shared_ptr< SecProvisioningResult > securityProvisioningStatus = nullptr;
+                std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus = nullptr;
                 std::string uuid;
                 convertUUIDToString(result->at(0).deviceId, uuid);
-                securityProvisioningStatus = std::make_shared< SecProvisioningResult >(uuid,
+                securityProvisioningStatus = std::make_shared< SecProvisioningStatus >(uuid,
                         ES_ERROR);
 
                 m_enrolleeSecStatusCb(securityProvisioningStatus);
@@ -127,8 +127,8 @@ namespace OIC
                     convertUUIDToString(result->at(0).deviceId, uuid);
 
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "UUID : %s",uuid.c_str());
-                    std::shared_ptr< SecProvisioningResult > securityProvisioningStatus = nullptr;
-                    securityProvisioningStatus = std::make_shared< SecProvisioningResult >(uuid,
+                    std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus = nullptr;
+                    securityProvisioningStatus = std::make_shared< SecProvisioningStatus >(uuid,
                             ES_OK);
 
                     m_enrolleeSecStatusCb(securityProvisioningStatus);
@@ -216,7 +216,7 @@ namespace OIC
                         ownershipStatus = DEVICE_NOT_OWNED;
                         return ownershipStatus;
                     }
-                    ownershipStatus = DEVICE_NOT_OWNED;
+                    ownershipStatus = DEVICE_OWNED;
                 }
             }
             else

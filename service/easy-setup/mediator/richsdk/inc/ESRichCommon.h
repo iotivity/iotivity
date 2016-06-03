@@ -38,6 +38,7 @@ using namespace std;
 #define IP_PORT                 55555
 #define NET_WIFI_SSID_SIZE      100
 #define NET_WIFI_PWD_SIZE       100
+#define NET_WIFI_AUTH_SIZE      100
 
 /**
  * @brief Mac address length for BT port
@@ -47,19 +48,33 @@ using namespace std;
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
  */
-#define OC_RSRVD_ES_PS                     "ps"
-#define OC_RSRVD_ES_TNN                    "tnn"
-#define OC_RSRVD_ES_CD                     "cd"
-#define OC_RSRVD_ES_TR                     "tr"
-#define OC_RSRVD_ES_TNT                    "tnt"
-#define OC_RSRVD_ES_ANT                    "ant"
+#define OC_RSRVD_ES_PROVSTATUS        "ps"
+#define OC_RSRVD_ES_TRIGGER                "tr"
+#define OC_RSRVD_ES_SSID                       "tnn"
+#define OC_RSRVD_ES_CRED                     "cd"
+#define OC_RSRVD_ES_AUTHTYPE             "wat"
+#define OC_RSRVD_ES_ENCTYPE                "wet"
+#define OC_RSRVD_ES_AUTHCODE            "ac"
+#define OC_RSRVD_ES_AUTHPROVIDER    "apn"
+#define OC_RSRVD_ES_CISERVER              "cisurl"
+#define OC_RSRVD_ES_DEVNAME              "dn"
+#define OC_RSRVD_ES_LANGUAGE            "lang"
+#define OC_RSRVD_ES_COUNTRY              "cont"
+#define OC_RSRVD_ES_TNT                        "tnt"
+#define OC_RSRVD_ES_ANT                        "ant"
 
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_PROV_RES_TYPE           "oic.r.prov"
-#define OC_RSRVD_ES_URI_PROV               "/oic/prov"
-#define OC_RSRVD_ES_URI_NET                "/oic/net"
+#define OC_RSRVD_ES_PROV_RES_TYPE                 "oic.r.prov"
+#define OC_RSRVD_ES_URI_PROV                           "/.well-known/ocf/prov"
+#define OC_RSRVD_ES_RES_TYPE_WIFI                   "ocf.r.wifi"
+#define OC_RSRVD_ES_URI_WIFI                             "/.well-known/ocf/prov/wifi"
+#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.r.cloudserver"
+#define OC_RSRVD_ES_URI_CLOUDSERVER            "/.well-known/ocf/prov/cloudserver"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF          "ocf.r.devconf"
+#define OC_RSRVD_ES_URI_DEVCONF                    "/.well-known/ocf/prov/devconf"
+#define OC_RSRVD_ES_URI_NET                             "/oic/net"
 
 /**
  * @brief Defines for Provisioning status accepted values
@@ -74,26 +89,6 @@ namespace OIC
 {
     namespace Service
     {
-
-        /**
-        * Device Roles defined for each device type used in easy setup
-        */
-        typedef enum
-        {
-            ENROLLEE,
-            MEDIATOR,
-            ENROLLER,
-        } DeviceRole;
-
-        /**
-        * On-boarding connection to create Adhoc network.
-        */
-        typedef enum
-        {
-            SOFTAP,
-            BLE,
-        } OBConnection;
-
         typedef enum
         {
             ES_ERROR = -1,
@@ -106,69 +101,8 @@ namespace OIC
             ES_RECVREQOFNETRES,
             ES_RECVUPDATEOFPROVRES,
             ES_RECVTRIGGEROFPROVRES,
+            ES_UNAUTHORIZED = 31
         } ESResult;
-
-        typedef enum
-        {
-            /**
-             * Default state of the device
-             */
-            ES_INIT_STATE,
-
-            /**
-             * Device will move to this state once the on boarding begins
-             */
-            ES_ON_BOARDING_STATE,
-
-            /**
-             * Device will move to this state after successful on-boarding of the device
-             */
-            ES_ON_BOARDED_STATE,
-
-            /**
-             * Device will move to this state once the on boarding is done
-             */
-            ES_PROVISIONING_STATE,
-
-            /**
-             * Easy setup process is successful.
-             */
-            ES_PROVISIONED_STATE,
-
-            /**
-             * This state is arbitrary one, any time device can come into this state
-             * Device will move to this state if the ownership transfer initiated  by the Application
-             */
-            ES_OWNERSHIP_TRANSFERRING_STATE,
-
-            /**
-             * This state is arbitrary one, any time device can come into this state
-             * Device will move to this state if the ownership transfer is completed
-             */
-            ES_OWNERSHIP_TRANSFERRED_STATE,
-
-            /**
-             * This state is arbitrary one, any time device can come into this state
-             * Device will move to this state once the Application factory reset the device
-             */
-            ES_FACTORY_RESET_STATE,
-
-            /**
-             * Enrollee moves to this state after connecting to target network
-             */
-            ES_ON_BOARDED_TARGET_NETWORK_STATE,
-        }EnrolleeState;
-
-        /**
-         * Provisioning Device Status
-         */
-        typedef struct
-        {
-            // Address of remote server
-            OCDevAddr * addr;
-            // Indicates adaptor type on which the response was received
-            OCConnectivityType connType;
-        } EasySetupDeviceInfo;
 
         /**
          * Provosioning Status
@@ -179,18 +113,31 @@ namespace OIC
             DEVICE_NOT_PROVISIONED,
             DEVICE_OWNED,
             DEVICE_NOT_OWNED
-        } EasySetupState, ProvStatus;
+        } EasySetupState;
 
         /**
-         * Response from queries to remote servers.
+         * @brief  WIFI Authentication type of the Enroller
          */
-        typedef struct
+        typedef enum
         {
-            // EasySetup Status
-            EasySetupState provStatus;
-            // EasySetup Device Info
-            EasySetupDeviceInfo provDeviceInfo;
-        } EasySetupInfo, ProvisioningInfo;
+            NONE_AUTH = 0,
+            WEP,
+            WPA_PSK,
+            WPA2_PSK
+        } WIFI_AUTHTYPE;
+
+        /**
+         * @brief  WIFI ecnrytion type of the Enroller
+         */
+        typedef enum
+        {
+            NONE_ENC = 0,
+            WEP_64,
+            WEP_128,
+            TKIP,
+            AES,
+            TKIP_AES
+        } WIFI_ENCTYPE;
 
         /**
          * @brief  Network information of the Enroller
@@ -220,6 +167,11 @@ namespace OIC
             {
                 char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
                 char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
+                WIFI_AUTHTYPE authtype; /**< auth type of the Enroller**/
+                WIFI_ENCTYPE enctype; /**< encryption type of the Enroller**/
+                char authcode[NET_WIFI_AUTH_SIZE];
+                char authserverUrl[NET_WIFI_AUTH_SIZE];
+                char apiserverUrl[NET_WIFI_AUTH_SIZE];
             } WIFI;
         } ProvData;
 
@@ -231,23 +183,6 @@ namespace OIC
             ProvData provData;    /**< Enroller Network Info**/
             OCConnectivityType connType;    /**< Connectivity Type**/
         } ProvConfig;
-
-        /**
-         * Client applications implement this callback to consume responses received from Servers.
-         */
-        typedef void (*OCProvisioningStatusCB)(EasySetupInfo *easySetupInfo);
-
-        /**
-         * @brief This structure represent configuration information to create wifi onboarding SoftAP or connection.
-        */
-
-        // Note : Below structure is not currently used but added for future purpose.
-        typedef struct
-        {
-            char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the onboarding Adhoc Wifi network**/
-            char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the onboarding Adhoc wifi network**/
-            bool isSecured;                 /**< Secure connection**/
-        }WiFiOnboardingConfig;
 
         /**
          * @brief This structure represent onboarding connection instance.
@@ -287,11 +222,10 @@ namespace OIC
         /**
          * Security Provisioning Status
          */
-        class SecProvisioningResult
+        class SecProvisioningStatus
         {
         public:
-            std::shared_ptr< SecProvisioningResult > shared_ptr;
-            SecProvisioningResult(std::string deviceUUID, ESResult result) :
+            SecProvisioningStatus(std::string deviceUUID, ESResult result) :
                 m_devUUID(deviceUUID), m_result(result)
             {
 
@@ -311,25 +245,56 @@ namespace OIC
             ESResult m_result;
         };
 
-        /**
-         * Callback function definition for providing Enrollee security status .
-         */
-        typedef std::function< void(std::shared_ptr<SecProvisioningResult>) > EnrolleeSecStatusCb;
+        class CapabilityData
+        {
+        public:
+            CapabilityData()
+            {
 
-        /**
-         * Callback definition to be invoked when the security stack expects a pin from application.
-         */
-        typedef std::function< void(std::string&) > SecurityPinCb;
+            }
+        private:
+        };
 
-        /**
-         * Callback definition to be invoked when the stack expects a db path.
-         */
-        typedef std::function< void(std::string&) > SecProvisioningDbPathCb;
+        class InitRemoteEnrolleeStatus
+        {
+        public:
+            InitRemoteEnrolleeStatus(ESResult result) :
+                    m_result(result)
+            {
+
+            }
+
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+        private:
+            ESResult m_result;
+        };
+
+        class RequestCapabilityStatus
+        {
+        public:
+            RequestCapabilityStatus(ESResult result, const CapabilityData& data) :
+                    m_result(result), m_capabilityData(data)
+            {
+            }
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+            CapabilityData getCapabilityData()
+            {
+                return m_capabilityData;
+            }
+        private:
+            ESResult m_result;
+            CapabilityData m_capabilityData;
+        };
 
         class ProvisioningStatus
         {
         public:
-            std::shared_ptr< ProvisioningStatus > shared_ptr;
             ProvisioningStatus(ESResult result, ESState esState) :
                     m_result(result), m_esState(esState)
             {
@@ -353,7 +318,6 @@ namespace OIC
         class EasySetupStatus
         {
         public:
-            std::shared_ptr< EasySetupStatus > shared_ptr;
             EasySetupStatus(const EasySetupState& easySetupState,
                     const ProvConfig& provConfig) :
                     m_easySetupState(easySetupState), m_ProvConfig(provConfig)
@@ -374,6 +338,36 @@ namespace OIC
             EasySetupState m_easySetupState;
             ProvConfig m_ProvConfig;
         };
+
+        /**
+         * Callback function definition for providing Enrollee security status .
+         */
+        typedef std::function< void(std::shared_ptr< InitRemoteEnrolleeStatus >) > InitRemoteEnrolleeStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee security status .
+         */
+        typedef std::function< void(std::shared_ptr< RequestCapabilityStatus >) > RequestCapabilityStatusCb;
+        /**
+         * Callback function definition for providing Enrollee security status .
+         */
+        typedef std::function< void(std::shared_ptr< ProvisioningStatus >) > DataProvStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee security status .
+         */
+        typedef std::function< void(std::shared_ptr<SecProvisioningStatus>) > EnrolleeSecStatusCb;
+
+        /**
+         * Callback definition to be invoked when the security stack expects a pin from application.
+         */
+        typedef std::function< void(std::string&) > SecurityPinCb;
+
+        /**
+         * Callback definition to be invoked when the stack expects a db path.
+         */
+        typedef std::function< void(std::string&) > SecProvisioningDbPathCb;
+
     }
 }
 #endif //WITH_ARDUINO

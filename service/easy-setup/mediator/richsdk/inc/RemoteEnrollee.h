@@ -27,7 +27,7 @@ namespace OIC
 {
     namespace Service
     {
-        class RemoteEnrolleeResource;
+        class EnrolleeResource;
         class EnrolleeSecurity;
 
         /**
@@ -45,22 +45,9 @@ namespace OIC
              *
              * @throw ESBadRequestException is thrown if the parameters are invalid
              */
-            RemoteEnrollee(const ProvConfig& enrolleeNWProvInfo, const WiFiOnboadingConnection& connection) ;
+            RemoteEnrollee(const WiFiOnboadingConnection& wifiOnboardingconn);
 
             ~RemoteEnrollee() = default;
-
-            typedef std::shared_ptr< RemoteEnrollee > shared_ptr;
-
-            /**
-             * Callback definition to be invoked when EasySetup status is changed.
-             * The same callback will be invoked when there is an error in the
-             * EasySetup process.
-             *
-             * @see registerResourceHandler
-             * @see ResourceState
-             */
-            typedef std::function< void(std::shared_ptr< EasySetupStatus >) >
-                                                                        EasySetupStatusCB;
 
 #ifdef __WITH_DTLS__
             /**
@@ -80,18 +67,22 @@ namespace OIC
 #endif //__WITH_DTLS__
 
             /**
-             * Register EasySetup status handler.
+             * Start provisioning of target Enrollers information to the Enrollee.
              *
-             * @param callback Callback to get EasySetup status.
-             * @param secProvisioningDbCB Callback to be invoked when the stack expects a
-             *        path for the provisioning db.
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
-             * @throws InvalidParameterException If callback is an empty function or null.
-             * @throws ESBadRequestException If registration is already completed.
-             *
-             * @see EasySetupStatus
+             * @see RemoteEnrollee
              */
-            void registerEasySetupStatusHandler(EasySetupStatusCB callback);
+             void initRemoteEnrollee(InitRemoteEnrolleeStatusCb callback);
+
+             /**
+             * Start provisioning of target Enrollers information to the Enrollee.
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see RemoteEnrollee
+             */
+            void startSecurityProvisioning(EnrolleeSecStatusCb callback);
 
             /**
              * Start provisioning of target Enrollers information to the Enrollee.
@@ -100,7 +91,16 @@ namespace OIC
              *
              * @see RemoteEnrollee
              */
-            void startProvisioning();
+            void getCapabilityData(RequestCapabilityStatusCb callback);
+
+            /**
+             * Start provisioning of target Enrollers information to the Enrollee.
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see RemoteEnrollee
+             */
+            void startDataProvisioning(const ProvConfig& dataProvConfig, DataProvStatusCb callback);
 
             /**
              * Stop provisioning process that is currently in progress.
@@ -130,11 +130,13 @@ namespace OIC
             WiFiOnboadingConnection getOnboardConn();
 
         private:
-            std::shared_ptr< RemoteEnrolleeResource > m_remoteResource;
-            EasySetupStatusCB m_easySetupStatusCb;
+            std::shared_ptr< EnrolleeResource > m_remoteResource;
             EnrolleeSecStatusCb m_enrolleeSecStatusCb;
+            InitRemoteEnrolleeStatusCb m_initRemoteEnrolleeStatusCb;
+            RequestCapabilityStatusCb m_requestCapabilityStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
+            DataProvStatusCb m_dataProvStatusCb;
             ProvConfig m_ProvConfig;
             WiFiOnboadingConnection m_wifiOnboardingconn;
 
@@ -142,9 +144,11 @@ namespace OIC
             CurrentESState m_currentESState;
             bool m_isSecured;
 
-            void provisioningStatusHandler (std::shared_ptr< ProvisioningStatus > provStatus);
+            void InitRemoteEnrolleeStatusHandler (std::shared_ptr< InitRemoteEnrolleeStatus > initRemoteEnrolleeStatus);
+            void requestCapabilityStatusHandler (std::shared_ptr< RequestCapabilityStatus > requestCapabilityStatus);
+            void dataProvisioningStatusHandler (std::shared_ptr< ProvisioningStatus > provStatus);
             void easySetupSecurityStatusCallback(
-            std::shared_ptr< SecProvisioningResult > secProvisioningResult);
+            std::shared_ptr< SecProvisioningStatus > secProvisioningResult);
         };
     }
 }

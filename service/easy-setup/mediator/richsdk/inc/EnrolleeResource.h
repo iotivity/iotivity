@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef REMOTE_ENROLLEE_RESOURCE_H_
-#define REMOTE_ENROLLEE_RESOURCE_H_
+#ifndef ENROLLEE_RESOURCE_H_
+#define ENROLLEE_RESOURCE_H_
 
 #include <mutex>
 #include <memory>
@@ -40,28 +40,26 @@ namespace OIC
         /**
          * This class contains the resource discovery methods.
          *
-         * @see RemoteEnrolleeResource
+         * @see EnrolleeResource
          */
-        class RemoteEnrolleeResource
+        class EnrolleeResource
         {
             friend class EnrolleeSecurity;
 
         public:
-            typedef std::shared_ptr< RemoteEnrolleeResource > Ptr;
-
-            typedef std::function< void(std::shared_ptr< ProvisioningStatus >) > ProvStatusCb;
 
             /**
-             * RemoteEnrolleeResource constructor
+             * EnrolleeResource constructor
              *
              * @param enrolleeNWProvInfo Provisioning information for the Enrollee
              *
              * @throw ESBadRequestException is thrown if the parameters are invalid
              */
-            RemoteEnrolleeResource(const ProvConfig &enrolleeNWProvInfo,
-                                               const WiFiOnboadingConnection &onboardingconn);
+            EnrolleeResource(const WiFiOnboadingConnection &onboardingconn);
+            // EnrolleeResource(const ProvConfig &enrolleeNWProvInfo,
+            //                                    const WiFiOnboadingConnection &onboardingconn);
 
-            ~RemoteEnrolleeResource() = default;
+            ~EnrolleeResource() = default;
 
             /**
              * Register provisioning status handler.
@@ -73,11 +71,13 @@ namespace OIC
              *
              * @see ProvisioningStatus
              */
-            void registerProvStatusCallback (ProvStatusCb provStatusCb);
+            void registerInitRemoteEnrolleeStatusCallback (InitRemoteEnrolleeStatusCb callback);
+            void registerCapabilityStatusCallback (RequestCapabilityStatusCb callback);
+            void registerProvStatusCallback (DataProvStatusCb callback);
 
             /**
              * Construct Remote OIC resource using the enrollee host and connectivity information
-             * provided in the constructor of RemoteEnrolleeResource.
+             * provided in the constructor of EnrolleeResource.
              *
              * @throws InvalidParameterException If the provided information is invalid.
              * @throws ESBadRequestException If resource is already constructed.
@@ -85,6 +85,8 @@ namespace OIC
              * @see ProvisioningStatus
              */
             ESResult constructResourceObject();
+
+            void getCapabilityData();
 
             /**
              * Function for provisioning of Remote Enrollee resource using the information provided.
@@ -105,10 +107,15 @@ namespace OIC
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
             std::mutex m_mutex;
-            ProvStatusCb m_provStatusCb;
+            InitRemoteEnrolleeStatusCb m_initRemoteEnrolleeStatusCb;
+            RequestCapabilityStatusCb m_requestCapabilityStatusCb;
+            DataProvStatusCb m_dataProvStatusCb;
             ProvConfig m_ProvConfig;
             WiFiOnboadingConnection m_wifiOnboardingconn;
             bool m_discoveryResponse;
+
+            void getCapabilityResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+                    const int eCode);
 
             void getProvStatusResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);

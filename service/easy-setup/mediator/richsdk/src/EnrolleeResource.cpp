@@ -21,7 +21,7 @@
 #include <functional>
 #include <time.h>
 
-#include "RemoteEnrolleeResource.h"
+#include "EnrolleeResource.h"
 
 #include "OCPlatform.h"
 #include "ESException.h"
@@ -39,15 +39,21 @@ namespace OIC
         static const char ES_PROV_RES_URI[] = "/oic/prov";
         static const char ES_PROV_RES_TYPE[] = "oic.r.prov";
 
-        RemoteEnrolleeResource::RemoteEnrolleeResource(const ProvConfig &provConfig,
+        EnrolleeResource::EnrolleeResource(const WiFiOnboadingConnection &onboardingconn)
+        {
+            m_wifiOnboardingconn = onboardingconn;
+            m_discoveryResponse = false;
+        }
+/*
+        EnrolleeResource::EnrolleeResource(const ProvConfig &provConfig,
                                                   const WiFiOnboadingConnection &onboardingconn)
         {
             m_ProvConfig = provConfig;
             m_wifiOnboardingconn = onboardingconn;
             m_discoveryResponse = false;
         }
-
-        void RemoteEnrolleeResource::triggerNetworkConnectionCb(
+*/
+        void EnrolleeResource::triggerNetworkConnectionCb(
                 const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep,
                 const int eCode)
         {
@@ -61,7 +67,7 @@ namespace OIC
                         "triggerNetworkConnectionCb : Trigger action failed ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
-                m_provStatusCb(provStatus);
+                m_dataProvStatusCb(provStatus);
                 return;
             }
             else
@@ -70,12 +76,12 @@ namespace OIC
                         "triggerNetworkConnectionCb : Provisioning is success ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
-                m_provStatusCb(provStatus);
+                m_dataProvStatusCb(provStatus);
                 return;
             }
         }
 
-        void RemoteEnrolleeResource::triggerNetworkConnection()
+        void EnrolleeResource::triggerNetworkConnection()
         {
             if (m_ocResource == nullptr)
             {
@@ -84,18 +90,18 @@ namespace OIC
 
             OCRepresentation provisioningRepresentation;
 
-            provisioningRepresentation.setValue(OC_RSRVD_ES_TR, 1);
+            provisioningRepresentation.setValue(OC_RSRVD_ES_TRIGGER, 1);
 
             m_ocResource->post(provisioningRepresentation, QueryParamsMap(),
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                                     const int eCode) >(
-                            std::bind(&RemoteEnrolleeResource::triggerNetworkConnectionCb, this,
+                            std::bind(&EnrolleeResource::triggerNetworkConnectionCb, this,
                                     std::placeholders::_1, std::placeholders::_2,
                                     std::placeholders::_3)));
         }
 
-        void RemoteEnrolleeResource::checkProvInformationCb(const HeaderOptions& /*headerOptions*/,
+        void EnrolleeResource::checkProvInformationCb(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
@@ -108,13 +114,13 @@ namespace OIC
                         "checkProvInformationCb : Provisioning is failed ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
-                m_provStatusCb(provStatus);
+                m_dataProvStatusCb(provStatus);
                 return;
             }
 
             int ps = -1;
 
-            rep.getValue(OC_RSRVD_ES_PS, ps);
+            rep.getValue(OC_RSRVD_ES_PROVSTATUS, ps);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : ps - %d", ps);
 
@@ -128,7 +134,7 @@ namespace OIC
                 #ifdef REMOTE_ARDUINO_ENROLEE
                  std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
-                m_provStatusCb(provStatus);
+                m_dataProvStatusCb(provStatus);
                 #endif
 
                 triggerNetworkConnection();
@@ -140,12 +146,45 @@ namespace OIC
                         "checkProvInformationCb : Provisioning is failed ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
-                m_provStatusCb(provStatus);
+                m_dataProvStatusCb(provStatus);
                 return;
             }
         }
 
-        void RemoteEnrolleeResource::getProvStatusResponse(const HeaderOptions& /*headerOptions*/,
+        void EnrolleeResource::getCapabilityResponse(const HeaderOptions& /*headerOptions*/,
+                const OCRepresentation& rep, const int eCode)
+        {
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getCapabilityResponse : %s, eCode = %d",
+                    rep.getUri().c_str(), eCode);
+
+            if (eCode != 0)
+            {
+                ESResult result  = ESResult::ES_ERROR;
+
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,"getCapabilityResponse : getCapabilityResponse is failed ");
+
+                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                {
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "Mediator is unauthorized from Enrollee.");
+                    result = ESResult::ES_UNAUTHORIZED;
+                }
+
+                CapabilityData capabilityData;
+                std::shared_ptr< RequestCapabilityStatus > requestCapabilityStatus = std::make_shared<
+                        RequestCapabilityStatus >(result, capabilityData);
+                m_requestCapabilityStatusCb(requestCapabilityStatus);
+
+                return;
+            }
+
+            CapabilityData capabilityData = CapabilityData();
+            std::shared_ptr< RequestCapabilityStatus > requestCapabilityStatus = std::make_shared<
+                    RequestCapabilityStatus >(ESResult::ES_OK, capabilityData);
+            m_requestCapabilityStatusCb(requestCapabilityStatus);
+        }
+
+        void EnrolleeResource::getProvStatusResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : %s, eCode = %d",
@@ -154,17 +193,26 @@ namespace OIC
 
             if (eCode != 0)
             {
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "getProvStatusResponse : Provisioning is failed ");
+                ESResult result  = ESResult::ES_ERROR;
+
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,"getProvStatusResponse : Provisioning is failed ");
+
+                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                {
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "Mediator is unauthorized from Enrollee.");
+                    result = ESResult::ES_UNAUTHORIZED;
+                }
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
-                        ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
-                m_provStatusCb(provStatus);
+                        ProvisioningStatus >(result, ESState::ES_PROVISIONING_ERROR);
+                m_dataProvStatusCb(provStatus);
+
                 return;
             }
 
             int ps = -1;
 
-            rep.getValue(OC_RSRVD_ES_PS, ps);
+            rep.getValue(OC_RSRVD_ES_PROVSTATUS, ps);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ps - %d",
                     ps);
@@ -173,21 +221,41 @@ namespace OIC
             {
                 OCRepresentation provisioningRepresentation;
 
-                provisioningRepresentation.setValue(OC_RSRVD_ES_TNN,
+                provisioningRepresentation.setValue(OC_RSRVD_ES_SSID,
                 std::string(m_ProvConfig.provData.WIFI.ssid));
-                provisioningRepresentation.setValue(OC_RSRVD_ES_CD,
+                provisioningRepresentation.setValue(OC_RSRVD_ES_CRED,
                 std::string(m_ProvConfig.provData.WIFI.pwd));
+                provisioningRepresentation.setValue(OC_RSRVD_ES_AUTHCODE,
+                std::string(m_ProvConfig.provData.WIFI.authcode));
+                provisioningRepresentation.setValue(OC_RSRVD_ES_AUTHPROVIDER,
+                std::string(m_ProvConfig.provData.WIFI.authserverUrl));
+                provisioningRepresentation.setValue(OC_RSRVD_ES_CISERVER,
+                std::string(m_ProvConfig.provData.WIFI.apiserverUrl));
+                provisioningRepresentation.setValue( OC_RSRVD_ES_AUTHTYPE,
+                m_ProvConfig.provData.WIFI.authtype);
+                provisioningRepresentation.setValue(OC_RSRVD_ES_ENCTYPE,
+                m_ProvConfig.provData.WIFI.enctype);
 
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ssid - %s",
                         m_ProvConfig.provData.WIFI.ssid);
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
                         m_ProvConfig.provData.WIFI.pwd);
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : AuthCode - %s",
+                        m_ProvConfig.provData.WIFI.authcode);
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : AuthServerUrl - %s",
+                        m_ProvConfig.provData.WIFI.authserverUrl);
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : APIServerUrl - %s",
+                        m_ProvConfig.provData.WIFI.apiserverUrl);
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : authtype - %d",
+                        m_ProvConfig.provData.WIFI.authtype);
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : enctype - %d",
+                        m_ProvConfig.provData.WIFI.enctype);
 
                 m_ocResource->post(provisioningRepresentation, QueryParamsMap(),
                         std::function<
                                 void(const HeaderOptions& headerOptions,
                                         const OCRepresentation& rep, const int eCode) >(
-                        std::bind(&RemoteEnrolleeResource::checkProvInformationCb, this,
+                        std::bind(&EnrolleeResource::checkProvInformationCb, this,
                         std::placeholders::_1, std::placeholders::_2,
                         std::placeholders::_3)));
             }
@@ -197,16 +265,26 @@ namespace OIC
                         "getProvStatusResponse : Provisioning is successful");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONED_ALREADY);
-                m_provStatusCb(provStatus);
+                m_dataProvStatusCb(provStatus);
             }
         }
 
-        void RemoteEnrolleeResource::registerProvStatusCallback(ProvStatusCb provStatusCb)
+        void EnrolleeResource::registerInitRemoteEnrolleeStatusCallback (InitRemoteEnrolleeStatusCb callback)
         {
-            m_provStatusCb = provStatusCb;
+            m_initRemoteEnrolleeStatusCb = callback;
         }
 
-        ESResult RemoteEnrolleeResource::ESDiscoveryTimeout(unsigned short waittime)
+        void EnrolleeResource::registerCapabilityStatusCallback(RequestCapabilityStatusCb callback)
+        {
+            m_requestCapabilityStatusCb = callback;
+        }
+
+        void EnrolleeResource::registerProvStatusCallback(DataProvStatusCb callback)
+        {
+            m_dataProvStatusCb = callback;
+        }
+
+        ESResult EnrolleeResource::ESDiscoveryTimeout(unsigned short waittime)
         {
             struct timespec startTime;
             startTime.tv_sec=0;
@@ -237,6 +315,9 @@ namespace OIC
 
                 if (0 != clock_res)
                 {
+                    std::shared_ptr< InitRemoteEnrolleeStatus > initRemoteEnrolleeStatus = std::make_shared<
+                        InitRemoteEnrolleeStatus >(ESResult::ES_ERROR);
+                    m_initRemoteEnrolleeStatusCb(initRemoteEnrolleeStatus);
                     return ES_ERROR;
                 }
                 long elapsed = (currTime.tv_sec - startTime.tv_sec);
@@ -252,12 +333,13 @@ namespace OIC
              return res;
         }
 
-        void RemoteEnrolleeResource::onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource)
+        void EnrolleeResource::onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource)
         {
             OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onDeviceDiscovered");
 
             std::string resourceURI;
             std::string hostAddress;
+            std::string hostDeviceID;
             try
             {
                 if(resource)
@@ -272,6 +354,9 @@ namespace OIC
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "Host address of the resource: %s", hostAddress.c_str());
 
+                    hostDeviceID = resource->sid();
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                            "Host DeviceID of the resource: %s", hostDeviceID.c_str());
                     /*
                      * Easysetup is always performed with a single Enrollee device and
                      * in a private network (SoftAP or BLE), so the assumption is that
@@ -280,10 +365,18 @@ namespace OIC
                      */
                     m_ocResource = resource;
                     m_discoveryResponse = true;
+
+                    std::shared_ptr< InitRemoteEnrolleeStatus > initRemoteEnrolleeStatus = std::make_shared<
+                        InitRemoteEnrolleeStatus >(ESResult::ES_OK);
+                    m_initRemoteEnrolleeStatusCb(initRemoteEnrolleeStatus);
                 }
                 else
                 {
                     OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Resource is invalid");
+
+                    std::shared_ptr< InitRemoteEnrolleeStatus > initRemoteEnrolleeStatus = std::make_shared<
+                        InitRemoteEnrolleeStatus >(ESResult::ES_ERROR);
+                    m_initRemoteEnrolleeStatusCb(initRemoteEnrolleeStatus);
                 }
 
             }
@@ -295,7 +388,7 @@ namespace OIC
         }
 
 
-        ESResult RemoteEnrolleeResource::constructResourceObject()
+        ESResult EnrolleeResource::constructResourceObject()
         {
             if (m_ocResource != nullptr)
             {
@@ -379,30 +472,20 @@ namespace OIC
                 host.append("coap://");
             }
 
-            if (m_ProvConfig.connType == CT_ADAPTER_IP)
-            {
-                // TODO : RemoteEnrollee is current handling easysetup on IP transport.
-                // WiFiRemoteEnrollee need to extend RemoteEnrollee for providing IP specific
-                // Enrollee easysetup.
-
-                host.append(m_wifiOnboardingconn.ipAddress);
-            }
-
             query.append(ES_BASE_RES_URI);
             query.append("?rt=");
             query.append(ES_PROV_RES_TYPE);
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Before OCPlatform::constructResourceObject");
 
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "host = %s",
-                    host.c_str());
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "host = %s", host.c_str());
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "query = %s", query.c_str());
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_connectivityType = %d",
                     m_ProvConfig.connType);
 
             m_discoveryResponse = false;
             std::function< void (std::shared_ptr<OC::OCResource>) > onDeviceDiscoveredCb =
-                    std::bind(&RemoteEnrolleeResource::onDeviceDiscovered, this,
+                    std::bind(&EnrolleeResource::onDeviceDiscovered, this,
                                                     std::placeholders::_1);
             OCStackResult result = OC::OCPlatform::findResource("", query, CT_DEFAULT,
                     onDeviceDiscoveredCb);
@@ -428,7 +511,38 @@ namespace OIC
 #endif
         }
 
-        void RemoteEnrolleeResource::provisionEnrollee()
+        void EnrolleeResource::getCapabilityData()
+        {
+            if (m_ocResource == nullptr)
+            {
+                throw ESBadRequestException("Resource is not initialized");
+            }
+
+            OC::QueryParamsMap query;
+            OC::OCRepresentation rep;
+
+            std::function< OCStackResult(void) > getCapabilityStatus = [&]
+            {   return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
+                        BATCH_INTERFACE, query, std::function<void(const HeaderOptions& headerOptions,
+                        const OCRepresentation& rep, const int eCode) >(
+                                std::bind(&EnrolleeResource::getCapabilityResponse, this,
+                                        std::placeholders::_1, std::placeholders::_2,
+                                        std::placeholders::_3)));
+            };
+
+            OCStackResult result = getCapabilityStatus();
+
+            if (result != OCStackResult::OC_STACK_OK)
+            {
+                CapabilityData capabilityData;
+                std::shared_ptr< RequestCapabilityStatus > requestCapabilityStatus = std::make_shared<
+                        RequestCapabilityStatus >(ESResult::ES_ERROR, capabilityData);
+                m_requestCapabilityStatusCb(requestCapabilityStatus);
+                return;
+            }
+        }
+
+        void EnrolleeResource::provisionEnrollee()
 
         {
             if (m_ocResource == nullptr)
@@ -445,7 +559,7 @@ namespace OIC
                         std::function<
                         void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                                 const int eCode) >(
-                                std::bind(&RemoteEnrolleeResource::getProvStatusResponse, this,
+                                std::bind(&EnrolleeResource::getProvStatusResponse, this,
                                         std::placeholders::_1, std::placeholders::_2,
                                         std::placeholders::_3)));
             };
@@ -456,12 +570,12 @@ namespace OIC
             {
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
-                m_provStatusCb(provStatus);
+                m_dataProvStatusCb(provStatus);
                 return;
             }
         }
 
-        void RemoteEnrolleeResource::unprovisionEnrollee()
+        void EnrolleeResource::unprovisionEnrollee()
         {
             if (m_ocResource == nullptr)
             {
@@ -470,14 +584,14 @@ namespace OIC
 
             OCRepresentation provisioningRepresentation;
 
-            provisioningRepresentation.setValue(OC_RSRVD_ES_TNN, "");
-            provisioningRepresentation.setValue(OC_RSRVD_ES_CD, "");
+            provisioningRepresentation.setValue(OC_RSRVD_ES_SSID, "");
+            provisioningRepresentation.setValue(OC_RSRVD_ES_CRED, "");
 
             m_ocResource->post(provisioningRepresentation, QueryParamsMap(),
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                                     const int eCode) >(
-                    std::bind(&RemoteEnrolleeResource::checkProvInformationCb, this,
+                    std::bind(&EnrolleeResource::checkProvInformationCb, this,
                     std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3)));
         }

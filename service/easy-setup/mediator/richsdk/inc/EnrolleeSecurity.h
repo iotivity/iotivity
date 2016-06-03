@@ -32,7 +32,7 @@ namespace OIC
     {
 #define ENROLEE_SECURITY_TAG "ENROLEE_SECURITY"
 
-        class RemoteEnrolleeResource;
+        class EnrolleeResource;
         class OCSecureResource;
 
         /**
@@ -43,14 +43,14 @@ namespace OIC
         class EnrolleeSecurity
         {
         public:
-            EnrolleeSecurity(std::shared_ptr< RemoteEnrolleeResource > remoteEnrolleeResource,
+            EnrolleeSecurity(std::shared_ptr< EnrolleeResource > EnrolleeResource,
             std::string secDbPath);
             ESResult registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
             EasySetupState performOwnershipTransfer();
 
         private:
-            std::shared_ptr< RemoteEnrolleeResource > m_remoteEnrolleeResource;
+            std::shared_ptr< EnrolleeResource > m_EnrolleeResource;
             EnrolleeSecStatusCb m_enrolleeSecStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;

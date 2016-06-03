@@ -50,8 +50,7 @@ namespace OIC
             static EasySetup* getInstance();
 
             /**
-             * This API is used for creating a remote Enrollee device instance.
-             * @param ProvConfig Provisioning information for configuring the Enrollee.
+             * This API is used for creating a remote Enrollee  instance.
              * @param WiFiOnboadingConnection Onboarding connection information for configuring the Enrollee.
              *
              * @throws ESBadRequestException If createEnrolleeDevice is invoked with the same
@@ -59,20 +58,12 @@ namespace OIC
              *
              * @return Pointer to RemoteEnrollee instance.
              */
-            std::shared_ptr<RemoteEnrollee> createEnrolleeDevice (
-                         const ProvConfig& enrolleeNWProvInfo,
-                         const WiFiOnboadingConnection& wifiOnboardingconn);
+            std::shared_ptr<RemoteEnrollee> createRemoteEnrollee(const WiFiOnboadingConnection& wifiOnboardingconn);
+
         private:
             EasySetup();
             ~EasySetup();
 
-            RemoteEnrollee::shared_ptr findDeviceInProvisioningList(
-                                const ProvConfig& enrolleeNWProvInfo,
-                                const WiFiOnboadingConnection& wifiOnboardingconn);
-            bool addDeviceToProvisioningList(const RemoteEnrollee::shared_ptr remoteEnrollee);
-            bool deleteDeviceFromProvisioningList (const ProvConfig& enrolleeNWProvInfo);
-
-            std::vector< RemoteEnrollee::shared_ptr > m_activeEnrolleeList;
             static EasySetup *s_instance;
         };
     }
