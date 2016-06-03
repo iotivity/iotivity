@@ -159,7 +159,7 @@ ESResult ESTerminateEnrollee()
     UnRegisterResourceEventCallBack();
 
     //Delete Prov resource
-    if (DeleteProvisioningResource() != OC_STACK_OK)
+    if (DeleteEasySetupResources() != OC_STACK_OK)
     {
         OIC_LOG(ERROR, ES_ENROLLEE_TAG, "Deleting prov resource error!!");
         return ES_ERROR;
@@ -173,7 +173,7 @@ ESResult ESInitProvisioning()
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitProvisioning <<IN>>");
 
-    if (CreateProvisioningResource(gIsSecured) != OC_STACK_OK)
+    if (CreateEasySetupResources(gIsSecured) != OC_STACK_OK)
     {
         OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CreateProvisioningResource error");
         return ES_ERROR;

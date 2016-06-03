@@ -39,28 +39,78 @@
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
  */
-#define OC_RSRVD_ES_PS                     "ps"
-#define OC_RSRVD_ES_TNN                    "tnn"
-#define OC_RSRVD_ES_CD                     "cd"
-#define OC_RSRVD_ES_TR                     "tr"
-#define OC_RSRVD_ES_TNT                    "tnt"
-#define OC_RSRVD_ES_ANT                    "ant"
+#define OC_RSRVD_ES_PROVSTATUS             "ps"
+#define OC_RSRVD_ES_ERRORCODE              "ec"
+#define OC_RSRVD_ES_TRIGGER                "tr"
+#define OC_RSRVD_ES_SUPPORTEDWIFIMODE      "swmt"
+#define OC_RSRVD_ES_SUPPORTEDWIFIFREQ      "swf"
+#define OC_RSRVD_ES_SSID                   "tnn"
+#define OC_RSRVD_ES_CRED                   "cd"
+#define OC_RSRVD_ES_AUTHTYPE               "wat"
+#define OC_RSRVD_ES_ENCTYPE                "wet"
+#define OC_RSRVD_ES_AUTHCODE               "ac"
+#define OC_RSRVD_ES_AUTHPROVIDER           "apn"
+#define OC_RSRVD_ES_CISERVER               "cisurl"
+#define OC_RSRVD_ES_DEVNAME                "dn"
+#define OC_RSRVD_ES_LANGUAGE               "lang"
+#define OC_RSRVD_ES_COUNTRY                "cont"
 
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_PROV_RES_TYPE           "oic.r.prov"
-#define OC_RSRVD_ES_URI_PROV               "/oic/prov"
-#define OC_RSRVD_ES_URI_NET                "/oic/net"
+#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.r.prov"
+#define OC_RSRVD_ES_URI_PROV              "/.well-known/ocf/prov"
+#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.r.wifi"
+#define OC_RSRVD_ES_URI_WIFI              "/.well-known/ocf/prov/wifi"
+#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.r.cloudserver"
+#define OC_RSRVD_ES_URI_CLOUDSERVER       "/.well-known/ocf/prov/cloudserver"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.r.devconf"
+#define OC_RSRVD_ES_URI_DEVCONF           "/.well-known/ocf/prov/devconf"
 
-/**
- * @brief Defines for Provisioning status accepted values
- */
-#define ES_PS_NEED_PROVISIONING         1
-#define ES_PS_PROVISIONING_COMPLETED    2
-#define ES_PS_TRIGGER_INIT_VALUE        0
-#define ES_PS_TRIGGER_CONNECTION        1
+#define OC_RSRVD_ES_URI_NET               "/oic/net"
 
+#define NUM_WIFIMODE    10
+
+typedef enum
+{
+    NO_PROVISION = 0,
+    CONNECTED_ENROLLER,
+    FAILED_CONNECTION
+} PROV_STATUS;
+
+typedef enum
+{
+    WiFi_11A = 0,
+    WiFi_11B,
+    WiFi_11G,
+    WiFi_11N,
+    WiFi_11AC
+} WIFI_MODE;
+
+typedef enum
+{
+    WiFi_24G = 0,
+    WiFi_5G,
+    WiFi_BOTH
+} WIFI_FREQ;
+
+typedef enum
+{
+    NONE_AUTH = 0,
+    WEP,
+    WPA_PSK,
+    WPA2_PSK
+} WIFI_AUTHTYPE;
+
+typedef enum
+{
+    NONE_ENC = 0,
+    WEP_64,
+    WEP_128,
+    TKIP,
+    AES,
+    TKIP_AES
+} WIFI_ENCTYPE;
 
 /**
 * Device Roles defined for each device type used in easy setup

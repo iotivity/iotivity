@@ -40,12 +40,9 @@
  * connect to the target network
  */
 static ProvResource gProvResource;
-
-/**
- * @var gNetResource
- * @brief Structure forr holding the Provisioning status of network information
- */
-static NetResource gNetResource;
+static WiFiResource gWiFiResource;
+static CloudResource gCloudResource;
+static DevConfResource gDevConfResource;
 
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
@@ -77,37 +74,358 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 {
     if (name != NULL && pass != NULL)
     {
-        OICStrcpy(name, MAXSSIDLEN, gProvResource.tnn);
-        OICStrcpy(pass, MAXNETCREDLEN, gProvResource.cd);
+        OICStrcpy(name, MAXSSIDLEN, gWiFiResource.ssid);
+        OICStrcpy(pass, MAXNETCREDLEN, gWiFiResource.cred);
     }
 }
 
-OCStackResult CreateProvisioningResource(bool isSecured)
+OCStackResult initProvResource(bool isSecured)
 {
-    gProvResource.ps = ES_PS_NEED_PROVISIONING;
-    gProvResource.tr = ES_PS_TRIGGER_INIT_VALUE;
-
-    gProvResource.tnt = CT_ADAPTER_IP;
-    OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn), "Unknown");
-    OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), "Unknown");
+    gProvResource.status = NO_PROVISION;
+    gProvResource.trigger = false;
 
     OCStackResult res = OC_STACK_ERROR;
     if (isSecured)
     {
-        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_PROV_RES_TYPE,
+        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
-    }
-    else
+    }else
     {
-        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_PROV_RES_TYPE,
+        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     }
+    if(res)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+        return res;
+    }
+
+    res = OCBindResourceInterfaceToResource(gProvResource.handle, OC_RSRVD_INTERFACE_LL);
+    if(res)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+        return res;
+    }
+    res = OCBindResourceInterfaceToResource(gProvResource.handle, OC_RSRVD_INTERFACE_BATCH);
+    if(res)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+        return res;
+    }
 
     OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+    return res;
+}
+
+OCStackResult initWiFiResource(bool isSecured)
+{
+    OCStackResult res = OC_STACK_ERROR;
+
+    gWiFiResource.supportedFreq = WiFi_BOTH;
+    gWiFiResource.supportedMode[0] = WiFi_11A;
+    gWiFiResource.supportedMode[1] = WiFi_11B;
+    gWiFiResource.supportedMode[2] = WiFi_11G;
+    gWiFiResource.supportedMode[3] = WiFi_11N;
+    gWiFiResource.numMode = 4;
+    gWiFiResource.authType = NONE_AUTH;
+    gWiFiResource.encType = NONE_ENC;
+    OICStrcpy(gWiFiResource.ssid, sizeof(gWiFiResource.ssid), "");
+    OICStrcpy(gWiFiResource.cred, sizeof(gWiFiResource.cred), "");
+
+    if (isSecured)
+    {
+        res = OCCreateResource(&gWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
+        OC_RSRVD_INTERFACE_DEFAULT,
+        OC_RSRVD_ES_URI_WIFI, OCEntityHandlerCb,
+        NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
+    }else
+    {
+        res = OCCreateResource(&gWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
+        OC_RSRVD_INTERFACE_DEFAULT,
+        OC_RSRVD_ES_URI_WIFI, OCEntityHandlerCb,
+        NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    }
+
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created WiFi resource with result: %s", getResult(res));
+    return res;
+
+}
+
+OCStackResult initCloudServerResource(bool isSecured)
+{
+    OCStackResult res = OC_STACK_ERROR;
+
+    OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), "");
+    OICStrcpy(gCloudResource.authProvider, sizeof(gCloudResource.authProvider), "");
+    OICStrcpy(gCloudResource.ciServer, sizeof(gCloudResource.ciServer), "");
+
+    if (isSecured)
+    {
+        res = OCCreateResource(&gCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
+        OC_RSRVD_INTERFACE_DEFAULT,
+        OC_RSRVD_ES_URI_CLOUDSERVER, OCEntityHandlerCb,
+        NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
+    }else
+    {
+        res = OCCreateResource(&gCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
+        OC_RSRVD_INTERFACE_DEFAULT,
+        OC_RSRVD_ES_URI_CLOUDSERVER, OCEntityHandlerCb,
+        NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    }
+
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created CloudServer resource with result: %s", getResult(res));
+    return res;
+
+}
+
+OCStackResult initDevConfResource(bool isSecured)
+{
+    OCStackResult res = OC_STACK_ERROR;
+
+    OICStrcpy(gDevConfResource.devName, sizeof(gDevConfResource.devName), "");
+    OICStrcpy(gDevConfResource.country, sizeof(gDevConfResource.country), "");
+    OICStrcpy(gDevConfResource.language, sizeof(gDevConfResource.language), "");
+
+    if (isSecured)
+    {
+        res = OCCreateResource(&gDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
+        OC_RSRVD_INTERFACE_DEFAULT,
+        OC_RSRVD_ES_URI_DEVCONF, OCEntityHandlerCb,
+        NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
+    }else
+    {
+        res = OCCreateResource(&gDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
+        OC_RSRVD_INTERFACE_DEFAULT,
+        OC_RSRVD_ES_URI_DEVCONF, OCEntityHandlerCb,
+        NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    }
+
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created DevConf resource with result: %s", getResult(res));
+    return res;
+
+}
+
+void updateProvResource(OCRepPayload* input)
+{
+    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.status %lld", gProvResource.status);
+    bool trigger;
+    if (OCRepPayloadGetPropBool(input, OC_RSRVD_ES_TRIGGER, &trigger))
+    {
+        // Triggering
+        gProvResource.trigger = trigger;
+    }
+}
+
+void updateWiFiResource(OCRepPayload* input)
+{
+    char* ssid;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SSID, &ssid))
+    {
+        OICStrcpy(gWiFiResource.ssid, sizeof(gWiFiResource.ssid), ssid);
+        OIC_LOG(INFO, ES_RH_TAG, "got ssid");
+    }
+
+    char* cred;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CRED, &cred))
+    {
+        OICStrcpy(gWiFiResource.cred, sizeof(gWiFiResource.cred), cred);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.cred %s", gWiFiResource.cred);
+    }
+
+    int64_t authType;
+    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_AUTHTYPE, &authType))
+    {
+        gWiFiResource.authType = authType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.authType %u", gWiFiResource.authType);
+    }
+
+    int64_t encType;
+    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ENCTYPE, &encType))
+    {
+        gWiFiResource.encType = encType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.encType %u", gWiFiResource.encType);
+    }
+}
+void updateCloudResource(OCRepPayload* input)
+{
+    char *authCode;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &authCode))
+    {
+        OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), authCode);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authCode %s", gCloudResource.authCode);
+    }
+
+    char *authProvider;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHPROVIDER, &authProvider))
+    {
+        OICStrcpy(gCloudResource.authProvider, sizeof(gCloudResource.authProvider), authProvider);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authServerUrl %s", gCloudResource.authProvider);
+    }
+
+    char *ciServer;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CISERVER, &ciServer))
+    {
+        OICStrcpy(gCloudResource.ciServer, sizeof(gCloudResource.ciServer), ciServer);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.ciServer %s", gCloudResource.ciServer);
+    }
+}
+
+void updateDevConfResource(OCRepPayload* input)
+{
+    char *country;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &country))
+    {
+        OICStrcpy(gDevConfResource.country, sizeof(gDevConfResource.country), country);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.country %s", gDevConfResource.country);
+    }
+
+    char *language;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHPROVIDER, &language))
+    {
+        OICStrcpy(gDevConfResource.language, sizeof(gDevConfResource.language), language);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.language %s", gDevConfResource.language);
+    }
+}
+
+OCRepPayload* constructResponseOfWiFi(OCEntityHandlerRequest *ehRequest)
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+        return NULL;
+    }
+
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse wifi res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFI);
+
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {gWiFiResource.numMode, 0, 0};
+    OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, gWiFiResource.supportedMode, dimensions);
+
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, gWiFiResource.supportedFreq);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, gWiFiResource.ssid);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, gWiFiResource.cred);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, gWiFiResource.authType);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, gWiFiResource.encType);
+
+    printf("%s\n", gWiFiResource.ssid);
+
+    return payload;
+}
+
+OCRepPayload* constructResponseOfCloud(OCEntityHandlerRequest *ehRequest)
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+        return NULL;
+    }
+
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_CLOUDSERVER);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, gCloudResource.authCode);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, gCloudResource.authProvider);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
+
+    return payload;
+}
+
+OCRepPayload* constructResponseOfDevConf(OCEntityHandlerRequest *ehRequest)
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+        return NULL;
+    }
+
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_DEVCONF);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, gDevConfResource.devName);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LANGUAGE, gDevConfResource.language);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, gDevConfResource.country);
+
+    return payload;
+}
+
+OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+        return NULL;
+    }
+
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
+    OCRepPayloadSetPropBool(payload, OC_RSRVD_ES_TRIGGER, gProvResource.trigger);
+
+    if(ehRequest->query)
+    {
+        if(strstr(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
+        {// When Provisioning resource has a GET with BatchInterface
+            payload->next = constructResponseOfWiFi(ehRequest);
+
+            if(payload->next)
+                payload->next->next = constructResponseOfCloud(ehRequest);
+            else
+                return payload;
+
+            if(payload->next->next)
+                payload->next->next->next = constructResponseOfDevConf(ehRequest);
+            else
+                return payload;
+        }
+    }
+
+    return payload;
+}
+
+
+OCStackResult CreateEasySetupResources(bool isSecured)
+{
+    OCStackResult res = OC_STACK_ERROR;
+
+    res = initProvResource(isSecured);
+    if(res)
+    {
+        // TODO: destroy logic will be added
+        return res;
+    }
+
+    res = initWiFiResource(isSecured);
+    if(res)
+    {
+        // TODO: destroy logic will be added
+        return res;
+    }
+
+    res = initCloudServerResource(isSecured);
+    if(res)
+    {
+        // TODO: destroy logic will be added
+        return res;
+    }
+
+    res = initDevConfResource(isSecured);
+    if(res)
+    {
+        // TODO: destroy logic will be added
+        return res;
+    }
+
+    OCBindResource(gProvResource.handle, gWiFiResource.handle);
+    OCBindResource(gProvResource.handle, gCloudResource.handle);
+    OCBindResource(gProvResource.handle, gDevConfResource.handle);
+
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created all resources with result: %s", getResult(res));
     return res;
 }
 
@@ -117,6 +435,32 @@ OCStackResult DeleteProvisioningResource()
     if (res != OC_STACK_OK)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
+    }
+
+    return res;
+}
+
+OCStackResult DeleteEasySetupResources()
+{
+    OCStackResult res = OCDeleteResource(gProvResource.handle);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
+    }
+    res = OCDeleteResource(gWiFiResource.handle);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting WiFi resource error with result: %s", getResult(res));
+    }
+    res = OCDeleteResource(gCloudResource.handle);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting CloudServer resource error with result: %s", getResult(res));
+    }
+    res = OCDeleteResource(gDevConfResource.handle);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting DevConf resource error with result: %s", getResult(res));
     }
 
     return res;
@@ -136,7 +480,17 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         return ehResult;
     }
 
-    OCRepPayload *getResp = constructResponse(ehRequest);
+    OCRepPayload *getResp = NULL;
+
+    if(ehRequest->resource == gProvResource.handle)
+        getResp = constructResponseOfProv(ehRequest);
+    else if(ehRequest->resource == gWiFiResource.handle)
+        getResp = constructResponseOfWiFi(ehRequest);
+    else if(ehRequest->resource == gCloudResource.handle)
+        getResp = constructResponseOfCloud(ehRequest);
+    else if(ehRequest->resource == gDevConfResource.handle)
+        getResp = constructResponseOfDevConf(ehRequest);
+
     if (!getResp)
     {
         OIC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
@@ -166,34 +520,18 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         return ehResult;
     }
 
-    char* tnn;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn))
-    {
-        OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn), tnn);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.tnn %s", gProvResource.tnn);
-
-        gProvResource.ps = ES_PS_PROVISIONING_COMPLETED;
-    }
-
-    char* cd;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
-    {
-        OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), cd);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.cd %s", gProvResource.cd);
-    }
-
-    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.ps %lld", gProvResource.ps);
-
-    int64_t tr;
-    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_TR, &tr))
-    {
-        // Triggering
-        gProvResource.tr = tr;
-    }
+    if(ehRequest->resource == gProvResource.handle)
+        updateProvResource(input);
+    else if(ehRequest->resource == gWiFiResource.handle)
+        updateWiFiResource(input);
+    else if(ehRequest->resource == gCloudResource.handle)
+        updateCloudResource(input);
+    else if(ehRequest->resource == gDevConfResource.handle)
+        updateDevConfResource(input);
 
     //ES_PS_PROVISIONING_COMPLETED state indicates that already provisioning is completed.
     // A new request for provisioning means overriding existing network provisioning information.
-    if (gProvResource.ps == ES_PS_PROVISIONING_COMPLETED && tr == ES_PS_TRIGGER_CONNECTION)
+    if (gProvResource.trigger)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Provisioning already completed."
                 "Tiggering the network connection");
@@ -205,25 +543,30 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         }
         else
         {
-            gProvResource.tr = ES_PS_TRIGGER_INIT_VALUE;
             OIC_LOG(ERROR, ES_RH_TAG, "gNetworkInfoProvEventCb is NULL."
                     "Network handler not registered. Failed to connect to the network");
             ehResult = OC_EH_ERROR;
+            return ehResult;
         }
-
-        return ehResult;
-    }
-    else if (gProvResource.ps == ES_PS_PROVISIONING_COMPLETED)
-    {
-        OIC_LOG(DEBUG, ES_RH_TAG, "Provisioning already completed. "
-                "This a request to override the existing the network provisioning information");
     }
     else
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Provisioning the network information to the Enrollee.");
     }
 
-    OCRepPayload *getResp = constructResponse(ehRequest);
+    OCRepPayload *getResp = NULL;
+    if(ehRequest->resource == gProvResource.handle)
+        getResp = constructResponseOfProv(ehRequest);
+    else if(ehRequest->resource == gWiFiResource.handle)
+        getResp = constructResponseOfWiFi(ehRequest);
+    else if(ehRequest->resource == gCloudResource.handle)
+        getResp = constructResponseOfCloud(ehRequest);
+    else if(ehRequest->resource == gDevConfResource.handle)
+        getResp = constructResponseOfDevConf(ehRequest);
+
+    if (gProvResource.trigger)// Trigger false should be restored after executed
+        gProvResource.trigger = false;
+
     if (!getResp)
     {
         OIC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
@@ -243,32 +586,6 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest * ehRequest,
 
     return ehResult;
 }
-
-OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
-{
-    OCRepPayload* payload = OCRepPayloadCreate();
-    if (!payload)
-    {
-        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-        return NULL;
-    }
-
-    if (ehRequest->resource == gProvResource.handle)
-    {
-        OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
-        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PS, gProvResource.ps);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_TNT, gProvResource.tnt);
-    }
-    else if (ehRequest->requestHandle == gNetResource.handle)
-    {
-
-        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_NET);
-        OCRepPayloadSetPropInt(payload, "ant", gNetResource.ant[0]);
-    }
-    return payload;
-}
-
 /**
  * This is the entity handler for the registered resource.
  * This is invoked by OCStack whenever it recevies a request for this resource.
@@ -296,8 +613,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             OIC_LOG(INFO, ES_RH_TAG, "Received PUT request");
 
             //PUT request will be handled in the internal implementation
-            if (gProvResource.handle != NULL
-                    && entityHandlerRequest->resource == gProvResource.handle)
+            if (gProvResource.handle != NULL)
             {
                 ehRet = ProcessPutRequest(entityHandlerRequest, &payload);
             }
@@ -310,8 +626,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             OIC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
-            if (gProvResource.handle != NULL
-                    && entityHandlerRequest->resource == gProvResource.handle)
+            if (gProvResource.handle != NULL)
             {
                 ehRet = ProcessPostRequest(entityHandlerRequest, &payload);
             }

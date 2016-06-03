@@ -40,25 +40,45 @@ typedef void (*ESEnrolleeResourceEventCallback)(ESResult);
 typedef struct PROVRESOURCE
 {
     OCResourceHandle handle;
-    int64_t ps; // provisiong status, 1 : need to provisioning, 2 : Connected to Enroller.
-    int64_t tr; // Trigger network connection, 0 : Init value, 1 : Connected to the target network.
-    int64_t tnt; // target network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
-    char tnn[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
-    char cd[MAXNETCREDLEN]; // credential information.
+    int64_t status; // provisiong status, 1 : need to provisioning, 2 : Connected to Enroller.
+    bool trigger; // Trigger network connection, 0 : Init value, 1 : Connected to the target network.
+    int64_t errorCode;
 } ProvResource;
 
-/* Structure to represent a Light resource */
-typedef struct NETRESOURCE
+typedef struct
 {
     OCResourceHandle handle;
-    int64_t cnt; // current network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
-    int64_t ant[MAXNUMTYPE]; // available network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
-    char ipaddr[MAXADDRLEN]; // ip address.
-    char cnn[MAXSSIDLEN]; // current network name.
-} NetResource;
+    int64_t supportedMode[NUM_WIFIMODE];
+    uint8_t numMode;
+    int64_t supportedFreq;
+    char ssid[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
+    char cred[MAXNETCREDLEN]; // credential information.
+    int64_t authType;
+    int64_t encType;
+} WiFiResource;
+
+typedef struct
+{
+    OCResourceHandle handle;
+    char authCode[OIC_STRING_MAX_VALUE];
+    char authProvider[OIC_STRING_MAX_VALUE];
+    char ciServer[OIC_STRING_MAX_VALUE];
+} CloudResource;
+
+typedef struct
+{
+    OCResourceHandle handle;
+    char devName[OIC_STRING_MAX_VALUE];
+    char language[OIC_STRING_MAX_VALUE];
+    char country[OIC_STRING_MAX_VALUE];
+} DevConfResource;
+
 
 OCStackResult CreateProvisioningResource(bool isSecured);
+OCStackResult CreateEasySetupResources(bool isSecured);
 OCStackResult DeleteProvisioningResource();
+OCStackResult DeleteEasySetupResources();
+
 
 void GetTargetNetworkInfoFromProvResource(char *, char *);
 void RegisterResourceEventCallBack(ESEnrolleeResourceEventCallback);
