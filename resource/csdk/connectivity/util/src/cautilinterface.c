@@ -53,7 +53,7 @@ static void CAManagerAdapterMonitorHandler(CATransportAdapter_t adapter,
 
 static void CAManagerConnectionMonitorHandler(const CAEndpoint_t *info, bool isConnected)
 {
-    if (!info || !info->addr)
+    if (!info || !info->addr[0])
     {
         OIC_LOG(ERROR, TAG, "remoteAddress is NULL");
         return;
