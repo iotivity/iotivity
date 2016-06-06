@@ -30,12 +30,6 @@
 #include "boost/mpl/size.hpp"
 #include "boost/mpl/deref.hpp"
 
-#ifdef __APPLE__
-#define OC_CONSTEXPR_INLINE inline
-#else
-#define OC_CONSTEXPR_INLINE constexpr inline
-#endif
-
 namespace
 {
 
@@ -212,7 +206,7 @@ namespace
     };
 
     template< typename VARIANT, int POS >
-    OC_CONSTEXPR_INLINE std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
+    inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
     {
         auto vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
         vec.push_back(TypeInfo::get< VARIANT, POS >());
@@ -220,7 +214,7 @@ namespace
     }
 
     template< typename VARIANT >
-    OC_CONSTEXPR_INLINE std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >) noexcept
+    inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >) noexcept
     {
         return { TypeInfo::get< VARIANT, 0 >() };
     }
