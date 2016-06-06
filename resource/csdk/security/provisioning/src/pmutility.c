@@ -356,7 +356,6 @@ OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 #if defined(HAVE_GETSYSTEMTIMEASFILETIME)
     FILETIME startTime = {0};
     FILETIME currTime = {0};
-    int clock_res = 1;
 
     GetSystemTimeAsFileTime(&startTime);
 #elif defined(HAVE_CLOCK_GETTIME)
@@ -368,16 +367,16 @@ OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 # else
     int clock_res = clock_gettime(CLOCK_REALTIME, &startTime);
 # endif // defined(_POSIX_MONOTONIC_CLOCK)
+    if (0 != clock_res)
+    {
+        return OC_STACK_ERROR;
+    }
 
 #else
     ERROR Need PMTimeout implementation
     return OC_STACK_ERROR;
 #endif
 
-    if (0 != clock_res)
-    {
-        return OC_STACK_ERROR;
-    }
     while (OC_STACK_OK == res)
     {
 #if defined(HAVE_GETSYSTEMTIMEASFILETIME)
