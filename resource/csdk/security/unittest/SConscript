@@ -65,7 +65,7 @@ srmtest_env.PrependUnique(LIBS = ['ocsrm',
 if env.get('SECURED') == '1':
     srmtest_env.AppendUnique(LIBS = ['tinydtls', 'timer'])
 
-if env.get('LOGGING'):
+if env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os == 'windows':
