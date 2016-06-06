@@ -280,16 +280,6 @@ static void deleteAllResources();
  */
 static void incrementSequenceNumber(OCResource * resPtr);
 
-/**
- * Verify the lengths of the URI and the query separately.
- *
- * @param inputUri Input URI and query.
- * @param uriLen The length of the initial URI with query.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-static OCStackResult verifyUriQueryLength(const char * inputUri,
-        uint16_t uriLen);
-
 /*
  * Attempts to initialize every network interface that the CA Layer might have compiled in.
  *
@@ -2240,31 +2230,6 @@ CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
         default:
             return CA_MSG_NONCONFIRM;
     }
-}
-
-OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
-{
-    char *query;
-
-    query = strchr (inputUri, '?');
-
-    if (query != NULL)
-    {
-        if((query - inputUri) > MAX_URI_LENGTH)
-        {
-            return OC_STACK_INVALID_URI;
-        }
-
-        if((inputUri + uriLen - 1 - query) > MAX_QUERY_LENGTH)
-        {
-            return OC_STACK_INVALID_QUERY;
-        }
-    }
-    else if(uriLen > MAX_URI_LENGTH)
-    {
-        return OC_STACK_INVALID_URI;
-    }
-    return OC_STACK_OK;
 }
 
 /**
