@@ -88,8 +88,9 @@ protected:
     WrapRequest *m_typeRequest;
 };
 
-struct WrapRequest
+class WrapRequest
 {
+public:
     WrapRequest(WrapResource *wres, RequestType type, token_t token);
 
     friend class WrapResource;
