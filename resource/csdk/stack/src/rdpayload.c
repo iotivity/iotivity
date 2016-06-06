@@ -604,10 +604,6 @@ OCTagsPayload* OCCopyTagsResources(const char *deviceName, const unsigned char *
     if (id)
     {
         OICStrcpy((char*)tags->di.id, MAX_IDENTITY_SIZE, (char *)id);
-        if (!tags->di.id)
-        {
-            goto memory_allocation_failed;
-        }
     }
     if (baseURI)
     {
