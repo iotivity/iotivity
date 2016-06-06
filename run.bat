@@ -77,6 +77,7 @@ if "!CURRENT_ARG!"=="server" (
   %DEBUG% %BUILD_DIR%\resource\csdk\stack\test\stacktests.exe
   %DEBUG% %BUILD_DIR%\resource\csdk\stack\test\cbortests.exe
   %DEBUG% %BUILD_DIR%\resource\csdk\security\unittest\unittest.exe
+  %DEBUG% %BUILD_DIR%\resource\csdk\security\provisioning\unittest\unittest.exe
 ) else if "!CURRENT_ARG!"=="build" (
   echo Starting IoTivity build with these options:
   echo   TARGET_OS=%TARGET_OS%

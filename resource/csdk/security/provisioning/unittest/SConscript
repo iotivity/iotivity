@@ -25,6 +25,7 @@ import os.path
 sptest_env = env.Clone()
 
 src_dir = sptest_env.get('SRC_DIR')
+target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
@@ -58,6 +59,7 @@ sptest_env.PrependUnique(LIBS = [   'ocpmapi',
                                     'gtest_main'])
 
 if env.get('SECURED') == '1':
+    sptest_env.AppendUnique(LIBS = ['timer'])
     sptest_env.AppendUnique(LIBS = ['tinydtls'])
 if env.get('DTLS_WITH_X509') == '1':
 	sptest_env.AppendUnique(LIBS = ['CKManager'])
@@ -65,6 +67,12 @@ if env.get('DTLS_WITH_X509') == '1':
 
 if not env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os in ['msys_nt', 'windows']:
+    sptest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
+    sptest_env.AppendUnique(LIBS = ['ws2_32',
+                                    'advapi32',
+                                    'iphlpapi'])
 
 ######################################################################
 # Source files and Targets
@@ -78,7 +86,6 @@ Alias("test", [unittest])
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
 	if target_os == 'linux':
 		out_dir = env.get('BUILD_DIR')
 		result_dir = env.get('BUILD_DIR') + '/test_out/'
@@ -86,6 +93,7 @@ if env.get('TEST') == '1':
 			os.makedirs(result_dir)
 		sptest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
+		sptest_env.AppendENVPath('PATH', env.get('BUILD_DIR'))
 		sptest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
 		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/unittest/unittest')
 		AlwaysBuild ('ut')
