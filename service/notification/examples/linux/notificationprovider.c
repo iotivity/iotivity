@@ -141,7 +141,7 @@ int main()
                 msg->mId = strdup(charID);
                 msg->mTitle = strdup(title);
                 msg->mContentText = OICStrdup(body);
-                msg->mSource = NULL;
+                msg->mSource = OICStrdup("OCF");
 
                 NSSendMessage(msg);
 
