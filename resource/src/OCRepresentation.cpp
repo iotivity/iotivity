@@ -863,13 +863,13 @@ namespace OC
     OCRepresentation::AttributeItem OCRepresentation::operator[](const std::string& key)
     {
         OCRepresentation::AttributeItem attr{key, m_values};
-        return std::move(attr);
+        return attr;
     }
 
     const OCRepresentation::AttributeItem OCRepresentation::operator[](const std::string& key) const
     {
         OCRepresentation::AttributeItem attr{key, m_values};
-        return std::move(attr);
+        return attr;
     }
 
     const std::string& OCRepresentation::AttributeItem::attrname() const
