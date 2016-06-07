@@ -25,8 +25,8 @@
  */
 
 #include "easysetup.h"
-#include "softap.h"
-#include "onboarding.h"
+//#include "softap.h"
+//#include "onboarding.h"
 #include "logger.h"
 #include "resourcehandler.h"
 #include "easysetupcallbacks.h"
@@ -91,7 +91,7 @@ void ESProvisioningCallback(ESResult esResult)
         OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting with target network");
 
         // Connecting/onboarding to target network
-        ConnectToWiFiNetwork(gTargetSsid, gTargetPass, ESOnboardingCallbackTargetNet);
+        //ConnectToWiFiNetwork(gTargetSsid, gTargetPass, ESOnboardingCallbackTargetNet);
     }
     else
     {
@@ -140,6 +140,7 @@ ESResult ESInitEnrollee(OCConnectivityType networkType, const char *ssid, const 
     // knows when actually on-boarding started.
     cb(ES_ERROR,ES_ON_BOARDING_STATE);
 
+    /*
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "received callback");
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "onboarding now..");
 
@@ -149,6 +150,7 @@ ESResult ESInitEnrollee(OCConnectivityType networkType, const char *ssid, const 
         cb(ES_ERROR, ES_INIT_STATE);
         return ES_ERROR;
     }
+    */
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitEnrollee OUT");
     return ES_OK;

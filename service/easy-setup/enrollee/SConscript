@@ -113,11 +113,12 @@ es_enrollee_src = None
 
 if target_os == 'linux':
 	es_enrollee_common_src = [enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/softapnative.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/networkhandler.c']
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c'
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/softapnative.c',
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/networkhandler.c'
+		]
 
 	enrollee_env.AppendUnique(es_enrollee_src = es_enrollee_common_src)
 
@@ -126,11 +127,12 @@ if target_os == 'linux':
 
 if target_os == 'tizen':
 	es_enrollee_common_src = [enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/softapnative.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/networkhandler.c']
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c'
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/softapnative.c',
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi/networkhandler.c'
+		]
 
 	enrollee_env.AppendUnique(es_enrollee_src = es_enrollee_common_src)
 	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', enrollee_env.get('es_enrollee_src'))
@@ -145,10 +147,11 @@ if target_os == 'arduino':
 #		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/resourcehandler.cpp',
 #		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi/networkhandler.cpp'])
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi/networkhandler.cpp'])
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.c',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c'
+		#enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi/networkhandler.cpp'
+		])
 
 	enrollee_env.InstallTarget(es_sdk_static, 'libESEnrolleeSDK')
 

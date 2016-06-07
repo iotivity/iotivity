@@ -70,6 +70,8 @@
 #define OC_RSRVD_ES_URI_NET               "/oic/net"
 
 #define NUM_WIFIMODE    10
+#define MAXSSIDLEN 33
+#define MAXNETCREDLEN 20
 
 typedef enum
 {
