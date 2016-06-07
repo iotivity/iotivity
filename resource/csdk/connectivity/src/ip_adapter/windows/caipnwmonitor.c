@@ -24,6 +24,7 @@
 #include <string.h>
 #include <errno.h>
 #include <winsock2.h>
+#include <iphlpapi.h>
 #include "platform_features.h"
 #include <iptypes.h>
 #include <stdbool.h>
