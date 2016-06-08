@@ -2333,7 +2333,7 @@ CAResult_t CACheckBlockDataValidation(const CAData_t *sendData, CABlockData_t **
     VERIFY_NON_NULL(sendData, TAG, "sendData");
     VERIFY_NON_NULL(blockData, TAG, "blockData");
 
-    CABlockDataID_t* blockDataID;
+    CABlockDataID_t* blockDataID = NULL;
     if(sendData->requestInfo)
     {
         blockDataID = CACreateBlockDatablockId(

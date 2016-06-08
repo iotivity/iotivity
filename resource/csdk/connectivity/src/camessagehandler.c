@@ -140,7 +140,6 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
     }
 
     OIC_LOG_V(DEBUG, TAG, "address : %s", ep->addr);
-    CAResult_t result;
 
     if(CA_RESPONSE_DATA == dataType)
     {
@@ -153,7 +152,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
             return NULL;
         }
 
-        result = CAGetResponseInfoFromPDU(data, resInfo, endpoint);
+        CAResult_t result = CAGetResponseInfoFromPDU(data, resInfo, endpoint);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetResponseInfoFromPDU Failed");
@@ -182,7 +181,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
             return NULL;
         }
 
-        result = CAGetRequestInfoFromPDU(data, endpoint, reqInfo);
+        CAResult_t result = CAGetRequestInfoFromPDU(data, endpoint, reqInfo);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetRequestInfoFromPDU failed");
@@ -415,7 +414,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
     CAResult_t res = CA_SEND_FAILED;
     if (NULL != data->requestInfo)
     {
@@ -520,11 +519,12 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
 
     if (SEND_TYPE_UNICAST == type)
     {
         OIC_LOG(DEBUG,TAG,"Unicast message");
+
 #ifdef ROUTING_GATEWAY
         /*
          * When forwarding a packet, do not attempt retransmission as its the responsibility of

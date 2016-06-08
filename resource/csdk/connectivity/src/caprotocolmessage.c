@@ -313,7 +313,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 #endif
     {
         OIC_LOG_V(DEBUG, TAG, "msgID is %d", info->messageId);
-        uint16_t message_id;
+        uint16_t message_id = 0;
         if (0 == info->messageId)
         {
             /* initialize message id */
@@ -662,7 +662,7 @@ int CAOrderOpts(void *a, void *b)
 uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
 {
     uint32_t count = 0;
-    coap_opt_t *option;
+    coap_opt_t *option = NULL;
 
     while ((option = coap_option_next(&opt_iter)))
     {
@@ -747,7 +747,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         }
     }
 
-    coap_opt_t *option;
+    coap_opt_t *option = NULL;
     char optionResult[CA_MAX_URI_LENGTH] = {0};
     uint32_t idx = 0;
     uint32_t optionLength = 0;
@@ -962,17 +962,13 @@ CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
     VERIFY_NON_NULL(outInfo, TAG, "outInfo");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
 
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
 #ifdef WITH_TCP
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu_hdr)[0] >> 4);
     }
-    else
 #endif
-    {
-        transport = coap_udp;
-    }
 
     unsigned char* token = NULL;
     unsigned int token_length = 0;

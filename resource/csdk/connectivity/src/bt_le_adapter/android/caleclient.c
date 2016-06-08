@@ -301,7 +301,7 @@ CAResult_t CALECreateJniInterfaceObject()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -382,7 +382,7 @@ CAResult_t CALEClientInitialize()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -481,7 +481,7 @@ void CALEClientTerminate()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -577,7 +577,7 @@ CAResult_t CALEClientDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -677,7 +677,7 @@ CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -842,7 +842,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -970,11 +970,12 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     }
 
     // reset send state
-    ret = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
-                                      STATE_SEND_NONE);
-    if (CA_STATUS_OK != ret)
+    CAResult_t resetRet = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                                      STATE_SEND_NONE);
+    if (CA_STATUS_OK != resetRet)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+        OIC_LOG_V(ERROR, TAG, "CALEClientUpdateDeviceState has failed (%d)", resetRet);
+        ret = CA_SEND_FAILED;
     }
 
     return ret;
@@ -1298,7 +1299,7 @@ CAResult_t CALEClientStartScan()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1526,7 +1527,7 @@ CAResult_t CALEClientStopScan()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -2124,7 +2125,7 @@ static void CALEWriteCharacteristicThread(void* object)
     VERIFY_NON_NULL_VOID(object, TAG, "object is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -2585,7 +2586,7 @@ CAResult_t CALEClientCreateUUIDList()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -4005,7 +4006,7 @@ void CAStopLEGattClient()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -4233,13 +4234,14 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
     }
     OIC_LOG_V(DEBUG, TAG, "CALeGattConnectionStateChangeCallback - address [%s]", address);
 
-    CAResult_t res;
     if (state_connected == newstate)
     {
         OIC_LOG(DEBUG, TAG, "LE is connected");
         if (GATT_SUCCESS == status)
         {
-            res = CALEClientUpdateDeviceState(address, CA_LE_CONNECTION_STATE, STATE_CONNECTED);
+            CAResult_t res = CALEClientUpdateDeviceState(address,
+                                                         CA_LE_CONNECTION_STATE,
+                                                         STATE_CONNECTED);
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
             if (CA_STATUS_OK != res)
             {
@@ -4271,7 +4273,9 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
     {
         OIC_LOG(DEBUG, TAG, "LE is disconnected");
 
-        res = CALEClientUpdateDeviceState(address, CA_LE_CONNECTION_STATE, STATE_DISCONNECTED);
+        CAResult_t res = CALEClientUpdateDeviceState(address,
+                                                     CA_LE_CONNECTION_STATE,
+                                                     STATE_DISCONNECTED);
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
         if (CA_STATUS_OK != res)
         {

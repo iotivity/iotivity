@@ -213,7 +213,6 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     caglobals.ip.nm.numIfItems = 0;
     for (size_t i = 0; i < interfaces; i++)
     {
-        CAResult_t result = CA_STATUS_OK;
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
         struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
@@ -245,7 +244,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         }
 
         // Add IPv4 interface
-        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
+        CAResult_t result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
         if (CA_STATUS_OK != result)
         {
             goto exit;
@@ -321,7 +320,7 @@ CAResult_t CAIPJniInit()
         return CA_STATUS_FAILED;
     }
 
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     if ((*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
     {
         OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
@@ -380,7 +379,7 @@ static CAResult_t CAIPDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {

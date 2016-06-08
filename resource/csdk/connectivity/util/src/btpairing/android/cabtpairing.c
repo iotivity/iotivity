@@ -46,7 +46,7 @@ static const char CLASSPATH_BT_DEVICE[] = "android/bluetooth/BluetoothDevice";
 
 static void CABTPaitingCreateJNIInterfaceObject(jobject context)
 {
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     OIC_LOG(INFO, TAG, "OICEDRCreateJNIInterfaceObject");
 
     if ((*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)

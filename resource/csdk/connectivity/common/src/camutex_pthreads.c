@@ -189,7 +189,8 @@ ca_cond ca_cond_new(void)
 
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
 #ifdef __ANDROID__
-        if (camutex_condattr_setclock) {
+        if (camutex_condattr_setclock)
+        {
             ret = camutex_condattr_setclock(&(eventInfo->condattr), CLOCK_MONOTONIC);
 #else
         {
@@ -334,7 +335,8 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
         struct timespec abstime;
 
 #ifdef __ANDROID__
-        if (camutex_cond_timedwait_relative) {
+        if (camutex_cond_timedwait_relative)
+        {
             abstime.tv_sec = microseconds / USECS_PER_SEC;
             abstime.tv_nsec = (microseconds % USECS_PER_SEC) * NANOSECS_PER_USECS;
             //Wait for the given time

@@ -247,7 +247,7 @@ static void CASelectReturned(fd_set *readFds, int ret)
 
 static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
 {
-    char recvBuffer[COAP_MAX_PDU_SIZE];
+    char recvBuffer[COAP_MAX_PDU_SIZE] = {0};
 
     size_t len;
     int level, type, namelen;

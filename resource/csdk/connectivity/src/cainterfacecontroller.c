@@ -451,9 +451,8 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
 
         int index = CAGetAdapterIndex(connType);
         if (0 > index)
-        if (-1 == index)
         {
-            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
+            OIC_LOG(ERROR, TAG, "unknown connectivity type!");
             continue;
         }
 
