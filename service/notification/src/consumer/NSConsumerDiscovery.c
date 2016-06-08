@@ -32,13 +32,6 @@
 #define NS_PRESENCE_SUBSCRIBE_QUERY "coap://224.0.1.187:5683/oic/ad?rt=oic.r.notification"
 #define NS_GET_INFORMATION_QUERY "/notification?if=oic.if.notification"
 
-OCDoHandle * getPresenceHandle()
-{
-    static OCDoHandle * g_PresenceHandle = NULL;
-
-    return g_PresenceHandle;
-}
-
 OCStackApplicationResult NSConsumerPresenceListener(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
@@ -128,6 +121,8 @@ OCStackApplicationResult NSIntrospectProvider(
     NS_VERTIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
 
     int64_t accepter = 0;
+    char * messageUri = NULL;
+    char * syncUri = NULL;
 
     NS_LOG_V(DEBUG, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
@@ -143,64 +138,44 @@ OCStackApplicationResult NSIntrospectProvider(
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    if (!clientResponse->payload)
+    NS_VERTIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
+
+    OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
+    while (payload)
     {
-        NS_LOG(ERROR, "payload is null");
-        return OC_STACK_KEEP_TRANSACTION;
+        NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
+        payload = payload->next;
     }
 
-    if (!OCRepPayloadGetPropInt((OCRepPayload *)clientResponse->payload,
-            NS_PAYLOAD_KEY_ACCEPTER, & accepter))
-    {
-        NS_LOG(ERROR, "can not seach for accepter");
-        return OC_STACK_KEEP_TRANSACTION;
-    }
+    NS_LOG(DEBUG, "getting information of accepter");
+    bool getResult = OCRepPayloadGetPropInt((OCRepPayload *)clientResponse->payload,
+                                            NS_PAYLOAD_KEY_ACCEPTER, & accepter);
+    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, OC_STACK_KEEP_TRANSACTION);
+
+    NS_LOG(DEBUG, "getting message URI");
+    getResult = OCRepPayloadGetPropString(
+            (OCRepPayload *)clientResponse->payload,
+            "MESSAGE_URI", & messageUri);
+    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, OC_STACK_KEEP_TRANSACTION);
+
+    NS_LOG(DEBUG, "getting sync URI");
+    getResult = OCRepPayloadGetPropString((OCRepPayload *)clientResponse->payload,
+                NS_ATTRIBUTE_SYNC, & syncUri);
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL,
+            OC_STACK_KEEP_TRANSACTION, OICFree(messageUri));
 
     NSProvider * newProvider = (NSProvider *)OICMalloc(sizeof(NSProvider));
-    if (!newProvider)
-    {
-        NS_LOG(DEBUG, "NSProvider allocation fail");
-        return OC_STACK_KEEP_TRANSACTION;
-    }
+    NS_VERTIFY_NOT_NULL(newProvider, OC_STACK_KEEP_TRANSACTION);
 
     // TODO set id
     newProvider->mId = NULL;
+    newProvider->messageUri = messageUri;
+    newProvider->syncUri = syncUri;
+
     newProvider->mUserData = (void *)OICMalloc(sizeof(OCDevAddr));
-    if (!newProvider)
-    {
-        NS_LOG(DEBUG, "OCDevAddr allocation fail");
-        OICFree(newProvider);
-        return OC_STACK_KEEP_TRANSACTION;
-    }
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(newProvider->mUserData,
+                   OC_STACK_KEEP_TRANSACTION, OICFree(newProvider));
     memcpy(newProvider->mUserData, clientResponse->addr, sizeof(OCDevAddr));
-
-    {
-        OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-        while (payload)
-        {
-            NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
-            payload = payload->next;
-        }
-    }
-
-    if (!OCRepPayloadGetPropString((OCRepPayload *)clientResponse->payload,
-            "MESSAGE_URI", & newProvider->messageUri))
-    {
-        OICFree(newProvider->mUserData);
-        OICFree(newProvider);
-        NS_LOG(ERROR, "can not seach for message uri");
-        return OC_STACK_KEEP_TRANSACTION;
-    }
-
-    if (!OCRepPayloadGetPropString((OCRepPayload *)clientResponse->payload,
-            NS_ATTRIBUTE_SYNC, & newProvider->syncUri))
-    {
-        OICFree(newProvider->messageUri);
-        OICFree(newProvider->mUserData);
-        OICFree(newProvider);
-        NS_LOG(ERROR, "can not seach for sync uri");
-        return OC_STACK_KEEP_TRANSACTION;
-    }
 
     if (accepter == NS_ACCEPTER_CONSUMER)
     {
@@ -213,11 +188,7 @@ OCStackApplicationResult NSIntrospectProvider(
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
 
         NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) newProvider);
-        if (!task)
-        {
-            NS_LOG(DEBUG, "NSTask allocation fail");
-            return OC_STACK_KEEP_TRANSACTION;
-        }
+        NS_VERTIFY_NOT_NULL(task, OC_STACK_KEEP_TRANSACTION);
 
         NSConsumerPushEvent(task);
     }
@@ -227,11 +198,7 @@ OCStackApplicationResult NSIntrospectProvider(
 
 void NSConsumerDiscoveryTaskProcessing(NSTask * task)
 {
-    if (!task)
-    {
-        NS_LOG(ERROR, "task is null");
-        return;
-    }
+    NS_VERTIFY_NOT_NULL_V(task);
 
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     if (task->taskType == TASK_EVENT_CONNECTED || task->taskType == TASK_CONSUMER_REQ_DISCOVER)

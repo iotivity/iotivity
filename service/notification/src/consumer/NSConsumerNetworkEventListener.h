@@ -33,6 +33,8 @@ extern "C" {
 
 NSResult NSConsumerListenerInit();
 
+void NSConsumerListenerTermiate();
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -35,40 +35,21 @@ NSResult NSStartConsumer(
         NSNotificationReceivedCallback  postCb,
         NSSyncCallback syncCb)
 {
-    if (NSIsStartedConsumer())
-    {
-        NS_LOG(DEBUG, "is already started consumer service?");
-        return NS_OK;
-    }
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERTIFY_NOT_NULL(isStartedConsumer == false ? (void *) 1 : NULL, NS_OK);
 
-    if (!discoverCb)
-    {
-        NS_LOG(ERROR, "discoverCb is NULL");
-        return NS_ERROR;
-    }
-
-    if (!postCb)
-    {
-        NS_LOG(ERROR, "postCb is NULL");
-        return NS_ERROR;
-    }
-
-    if (!syncCb)
-    {
-        NS_LOG(ERROR, "syncCb is NULL");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(discoverCb, NS_ERROR);
+    NS_VERTIFY_NOT_NULL(postCb, NS_ERROR);
+    NS_VERTIFY_NOT_NULL(syncCb, NS_ERROR);
 
     NSSetDiscoverProviderCb(discoverCb);
     NSSetNotificationPostedCb(postCb);
     NSSetNotificationSyncCb(syncCb);
     NSSetIsStartedConsumer(true);
 
-    if (NS_OK != NSConsumerMessageHandlerInit())
-    {
-        NSStopConsumer();
-        return NS_ERROR;
-    }
+    NSResult ret = NSConsumerMessageHandlerInit();
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
+            NS_ERROR, NSStopConsumer());
 
     return NS_OK;
 }
@@ -88,11 +69,7 @@ NSResult NSStopConsumer()
 NSResult NSSubscribe(NSProvider * provider)
 {
     NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
-    if (!subscribeTask)
-    {
-        NS_LOG(ERROR, "NSTask allocation fail");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(subscribeTask, NS_ERROR);
 
     return NSConsumerPushEvent(subscribeTask);
 }
@@ -100,11 +77,7 @@ NSResult NSSubscribe(NSProvider * provider)
 NSResult NSUnsubscribe(NSProvider * provider)
 {
     NSTask * unsubscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) provider);
-    if (!unsubscribeTask)
-    {
-        NS_LOG(ERROR, "NSTask allocation fail");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(unsubscribeTask, NS_ERROR);
 
     return NSConsumerPushEvent(unsubscribeTask);
 }
@@ -112,11 +85,7 @@ NSResult NSUnsubscribe(NSProvider * provider)
 NSResult NSRescanProvider()
 {
     NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, NULL);
-    if (!discoverTask)
-    {
-        NS_LOG(ERROR, "NSTask allocation fail");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(discoverTask, NS_ERROR);
 
     return NSConsumerPushEvent(discoverTask);
 }
@@ -124,11 +93,7 @@ NSResult NSRescanProvider()
 NSResult NSConsumerReadCheck(NSMessage * obj)
 {
     NSTask * readTask = NSMakeTask(TASK_SEND_READ, (void *) obj);
-    if (!readTask)
-    {
-        NS_LOG(ERROR, "NSTask allocation fail");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(readTask, NS_ERROR);
 
     return NSConsumerPushEvent(readTask);
 }
@@ -136,21 +101,14 @@ NSResult NSConsumerReadCheck(NSMessage * obj)
 NSResult NSConsumerDismissCheck(NSMessage * obj)
 {
     NSTask * dismissTask = NSMakeTask(TASK_SEND_DISMISS, (void *) obj);
-    if (!dismissTask)
-    {
-        NS_LOG(ERROR, "NSTask allocation fail");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(dismissTask, NS_ERROR);
 
     return NSConsumerPushEvent(dismissTask);
 }
 
 NSResult NSDropNSObject(NSMessage * obj)
 {
-    if (!obj)
-    {
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(obj, NS_ERROR);
 
     if (obj->mId)
     {

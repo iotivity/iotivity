@@ -67,11 +67,8 @@ void * NSDiscoveredProviderFunc(void * provider)
 
 void NSDiscoveredProvider(NSProvider * provider)
 {
-    if (!NSThreadInit(NSDiscoveredProviderFunc, (void *) provider))
-    {
-        NS_LOG(ERROR, "execute discovered provider callback fail");
-        return;
-    }
+    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
+    NS_VERTIFY_NOT_NULL_V(thread);
 }
 
 NSSyncCallback * NSGetBoneNotificationSyncCb()
@@ -103,14 +100,12 @@ void * NSNotificationSyncFunc(void * obj)
 void NSNotificationSync(NSProvider * provider, NSSync * sync)
 {
     NSSyncData * obj = (NSSyncData *)OICMalloc(sizeof(NSSyncData));
+    NS_VERTIFY_NOT_NULL_V(obj);
     obj->provider = provider;
     obj->sync = sync;
 
-    if (!NSThreadInit(NSNotificationSyncFunc, (void *) obj))
-    {
-        NS_LOG(ERROR, "execute noti post callback fail");
-        return;
-    }
+    NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) obj);
+    NS_VERTIFY_NOT_NULL_V(thread);
 }
 
 NSNotificationReceivedCallback  * NSGetBoneNotificationPostedCb()
@@ -148,28 +143,18 @@ void * NSNotificationPostFunc(void * obj)
 void NSNotificationPost(NSProvider * provider, NSMessage * msg)
 {
     NSMessageData * obj = (NSMessageData *)OICMalloc(sizeof(NSMessageData));
-    if (!obj)
-    {
-        NS_LOG(ERROR, "NSMessageData allocation is failed");
-        return;
-    }
+    NS_VERTIFY_NOT_NULL_V(obj);
     obj->provider = provider;
     obj->msg = msg;
 
-    if (!NSThreadInit(NSNotificationPostFunc, (void *) obj))
-    {
-        NS_LOG(ERROR, "execute noti post callback fail");
-        return;
-    }
+    NSConsumerThread * thread = NSThreadInit(NSNotificationPostFunc, (void *) obj);
+    NS_VERTIFY_NOT_NULL_V(thread);
 }
 
 NSTask * NSMakeTask(NSTaskType type, void * data)
 {
     NSTask * retTask = OICMalloc(sizeof(NSTask));
-    if (!retTask)
-    {
-        return NULL;
-    }
+    NS_VERTIFY_NOT_NULL(retTask, NULL);
 
     retTask->taskType = type;
     retTask->taskData = data;
@@ -180,27 +165,19 @@ NSTask * NSMakeTask(NSTaskType type, void * data)
 
 NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
 {
-    if (!msg)
-    {
-        return NULL;
-    }
+    NS_VERTIFY_NOT_NULL(msg, NULL);
 
     NSMessage_consumer * newMsg = (NSMessage_consumer *)OICMalloc(sizeof(NSMessage_consumer));
-    if (!newMsg)
-    {
-        return NULL;
-    }
+    NS_VERTIFY_NOT_NULL(newMsg, NULL);
+
+    newMsg->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, OICFree(newMsg));
+    memcpy(newMsg->addr, msg->addr, sizeof(OCDevAddr));
 
     newMsg->mId = OICStrdup(msg->mId);
     newMsg->mTitle = OICStrdup(msg->mTitle);
     newMsg->mContentText = OICStrdup(msg->mContentText);
     newMsg->mSource = OICStrdup(msg->mSource);
-    newMsg->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    if (!newMsg->addr)
-    {
-        NS_LOG(ERROR, "OCDevAddr allocation is failed");
-    }
-    memcpy(newMsg->addr, msg->addr, sizeof(OCDevAddr));
 
     return newMsg;
 }

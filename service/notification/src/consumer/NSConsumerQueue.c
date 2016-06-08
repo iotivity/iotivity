@@ -27,10 +27,7 @@
 NSConsumerQueue * NSCreateQueue()
 {
     NSConsumerQueue * newQueue = (NSConsumerQueue *)OICMalloc(sizeof(NSConsumerQueue));
-    if (!newQueue)
-    {
-        return NULL;
-    }
+    NS_VERTIFY_NOT_NULL(newQueue, NULL);
 
     newQueue->size = 0;
     newQueue->head = NULL;
@@ -54,15 +51,8 @@ void NSDestroyQueue(NSConsumerQueue * queue)
 
 bool NSPushQueue(NSConsumerQueue * queue, NSConsumerQueueObject * object)
 {
-    if (!queue)
-    {
-        return false;
-    }
-
-    if (!object)
-    {
-        NS_LOG(ERROR, "object is null. can not insert to queue");
-    }
+    NS_VERTIFY_NOT_NULL(queue, false);
+    NS_VERTIFY_NOT_NULL(object, false);
 
     if (!(queue->head))
     {
@@ -83,17 +73,10 @@ NSConsumerQueueObject * NSPopQueue(NSConsumerQueue * queue)
 {
     NSConsumerQueueObject * retObject = NULL;
 
-    if (!queue)
-    {
-        return NULL;
-    }
+    NS_VERTIFY_NOT_NULL(queue, NULL);
+    NS_VERTIFY_NOT_NULL(queue->head, NULL);
 
     if (queue->size <= 0)
-    {
-        return NULL;
-    }
-
-    if (!(queue->head))
     {
         return NULL;
     }

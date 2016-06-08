@@ -41,6 +41,12 @@ extern "C" {
 
 #define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
 
+#define NS_VERTIFY_NOT_NULL_V(obj) { if ((obj) == NULL) \
+    { \
+        NS_LOG_V(ERROR, "%s : obj is null", __func__); \
+        return; \
+    }}
+
 #define NS_VERTIFY_NOT_NULL(obj, retVal) { if ((obj) == NULL) \
     { \
         NS_LOG_V(ERROR, "%s : obj is null", __func__); \
@@ -56,9 +62,26 @@ extern "C" {
         return (retVal); \
     }}
 
-#define NS_VERTIFY_STACK_OK(obj, retVal) { if ((obj) != OC_STACK_OK) \
+#define NS_VERTIFY_STACK_OK_V(obj) { OCStackResult _ret = (obj); \
+    if ( _ret != OC_STACK_OK) \
     { \
-        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK", __func__); \
+        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
+        return; \
+    }}
+
+#define NS_VERTIFY_STACK_OK(obj, retVal) { OCStackResult _ret = (obj); \
+    if ( _ret != OC_STACK_OK) \
+    { \
+        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
+        return (retVal); \
+    }}
+
+#define NS_VERTIFY_STACK_OK_WITH_POST_CLEANING(obj, retVal, func) { \
+    OCStackResult _ret = (obj); \
+    if ( _ret != OC_STACK_OK) \
+    { \
+        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
+        (func); \
         return (retVal); \
     }}
 

@@ -40,7 +40,7 @@ void NSDestroyCacheList()
 {
     NSCacheList * cache;
     cache = *(NSGetCacheList());
-    if (!cache)
+    if (cache)
     {
         NSStorageDestroy(cache);
     }
@@ -52,18 +52,15 @@ NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageType
     noti->type = type;
 
     NSCacheElement * obj = (NSCacheElement *)OICMalloc(sizeof(NSCacheElement));
-    if (!obj)
-    {
-        NS_LOG(ERROR, "Cache allocation is failed");
-    }
+    NS_VERTIFY_NOT_NULL(obj, NS_ERROR);
+
     obj->data = (NSCacheData *) noti;
     obj->next = NULL;
 
-    if (NS_OK != NSStorageWrite(cache, obj))
-    {
-        NS_LOG(ERROR, "Cache write fail");
-        return NS_ERROR;
-    }
+    NS_LOG(DEBUG, "try to write to storage");
+    NSResult ret = NSStorageWrite(cache, obj);
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
+            NS_ERROR, NSRemoveMessage(noti));
 
     NSRemoveMessage(noti);
     OICFree(obj);
@@ -73,61 +70,46 @@ NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageType
 
 void NSConsumerSubscriptionTaskProcessing(NSTask * task)
 {
-    if (!task)
-    {
-        NS_LOG(ERROR, "task is null");
-        return;
-    }
+    NS_VERTIFY_NOT_NULL_V(task);
 
     NSCacheList * cache;
     if (!*(NSGetCacheList()))
     {
         NS_LOG(DEBUG, "Cache Init");
         cache = NSStorageCreate();
+        NS_VERTIFY_NOT_NULL_V(cache);
+
         cache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
-        if (!cache)
-        {
-            NS_LOG(ERROR, "Cache create fail");
-            return;
-        }
         NSSetCacheList(cache);
     }
     cache = *(NSGetCacheList());
 
+    NSResult ret = NS_ERROR;
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
-
     switch (task->taskType)
     {
-        case TASK_CONSUMER_RECV_NOTIFICATION:
+        case TASK_CONSUMER_RECV_MESSAGE:
         {
             NS_LOG(DEBUG, "Receive New Notification");
 
-            if (NS_OK != NSCacheUpdate(cache, task, Notification))
-            {
-                NS_LOG(ERROR, "Cache Update fail");
-                return;
-            }
+            ret = NSCacheUpdate(cache, task, Notification);
+            NS_VERTIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
             break;
         }
         case TASK_RECV_READ:
         {
             NS_LOG(DEBUG, "Receive Read Notification");
 
-            if (NS_OK != NSCacheUpdate(cache, task, Read))
-            {
-                NS_LOG(ERROR, "Cache Update fail");
-                return;
-            }
+            ret = NSCacheUpdate(cache, task, Read);
+            NS_VERTIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
             break;
         }
         case TASK_RECV_DISMISS:
         {
             NS_LOG(DEBUG, "Receive Dismiss Notification");
-            if (NS_OK != NSCacheUpdate(cache, task, Dismiss))
-            {
-                NS_LOG(ERROR, "Cache Update fail");
-                return;
-            }
+
+            ret = NSCacheUpdate(cache, task, Dismiss);
+            NS_VERTIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
             break;
         }
         default :

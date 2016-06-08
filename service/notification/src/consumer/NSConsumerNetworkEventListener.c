@@ -35,6 +35,14 @@ void NSConnectionStateListener(CATransportAdapter_t adapter,
 
 void NSAdapterStateListener(CATransportAdapter_t adapter, bool enabled);
 
+OCDoHandle * getPresenceHandle()
+{
+    static OCDoHandle g_PresenceHandle = NULL;
+
+    return & g_PresenceHandle;
+}
+
+
 NSResult NSConsumerListenerInit()
 {
     // TODO replace with comment lines when enable network monitor of IP Adapter
@@ -45,21 +53,23 @@ NSResult NSConsumerListenerInit()
 //        return NS_ERROR;
 //    }
 
-    if (OC_STACK_OK != NSInvokeRequest(NULL, OC_REST_PRESENCE, NULL,
-            NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener, NULL))
-    {
-        NS_LOG(ERROR, "Presence request fail");
-        return NS_ERROR;
-    }
+    NS_LOG(DEBUG, "Request to subscribe presence");
+    OCStackResult stackResult = NSInvokeRequest(getPresenceHandle(), OC_REST_PRESENCE, NULL,
+                        NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener, NULL);
+    NS_VERTIFY_STACK_OK(stackResult, NS_ERROR);
 
-    if (OC_STACK_OK != NSInvokeRequest(NULL, OC_REST_DISCOVER, NULL,
-            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL))
-    {
-        NS_LOG(ERROR, "Discover request fail");
-        return NS_ERROR;
-    }
+    NS_LOG(DEBUG, "Request to discover provider");
+    stackResult = NSInvokeRequest(NULL, OC_REST_DISCOVER, NULL,
+                      NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL);
+    NS_VERTIFY_STACK_OK(stackResult, NS_ERROR);
 
     return NS_OK;
+}
+
+void NSConsumerListenerTermiate()
+{
+    CARegisterNetworkMonitorHandler(NULL, NULL);
+    OCCancel(*getPresenceHandle(), NS_QOS, NULL, 0);
 }
 
 void NSConnectionStateListener(CATransportAdapter_t adapter,
@@ -77,11 +87,8 @@ void NSConnectionStateListener(CATransportAdapter_t adapter,
         NS_LOG(DEBUG, "try to discover notification provider.");
 
         NSTask * task = NSMakeTask(TASK_EVENT_CONNECTED, NULL);
-        if (!task)
-        {
-            NS_LOG(ERROR, "NSTask allocation fail.");
-            return;
-        }
+        NS_VERTIFY_NOT_NULL_V(task);
+
         NSConsumerPushEvent(task);
     }
 }
@@ -98,11 +105,8 @@ void NSAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
         NS_LOG(DEBUG, "try to discover notification provider.");
 
         NSTask * task = NSMakeTask(TASK_EVENT_CONNECTED, NULL);
-        if (!task)
-        {
-            NS_LOG(ERROR, "NSTask allocation fail.");
-            return;
-        }
+        NS_VERTIFY_NOT_NULL_V(task);
+
         NSConsumerPushEvent(task);
     }
 }

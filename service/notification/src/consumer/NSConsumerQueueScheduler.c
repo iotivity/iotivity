@@ -71,32 +71,22 @@ NSResult NSConsumerMessageHandlerInit()
     NSConsumerThread * handle = NULL;
     NSConsumerQueue * queue = NULL;
 
-    if (NS_OK != NSConsumerListenerInit())
-    {
-        NS_LOG(ERROR, "listener init fail");
-        return NS_ERROR;
-    }
+    NS_LOG(DEBUG, "listener init");
+    NSResult ret = NSConsumerListenerInit();
+    NS_VERTIFY_NOT_NULL(ret == NS_OK ? (void *) 1 : NULL, NS_ERROR);
 
-    if (NS_OK != NSConsumerSystemInit())
-    {
-        NS_LOG(ERROR, "system init fail");
-        return NS_ERROR;
-    }
+    NS_LOG(DEBUG, "system init");
+    ret = NSConsumerSystemInit();
+    NS_VERTIFY_NOT_NULL(ret == NS_OK ? (void *) 1 : NULL, NS_ERROR);
 
+    NS_LOG(DEBUG, "queue thread init");
     handle = NSThreadInit(NSConsumerMsgHandleThreadFunc, NULL);
-    if (!handle)
-    {
-        NS_LOG(ERROR, "msg handle thread init fail");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(handle, NS_ERROR);
     NSSetMsgHandleThreadHandle(handle);
 
+    NS_LOG(DEBUG, "create queue");
     queue = NSCreateQueue();
-    if (!queue)
-    {
-        NS_LOG(ERROR, "msg handle queue create fail");
-        return NS_ERROR;
-    }
+    NS_VERTIFY_NOT_NULL(queue, NS_ERROR);
     NSSetMsgHandleQueue(queue);
 
     return NS_OK;
@@ -104,11 +94,8 @@ NSResult NSConsumerMessageHandlerInit()
 
 NSResult NSConsumerPushEvent(NSTask * task)
 {
-    if (!NSThreadInit(NSConsumerMsgPushThreadFunc, (void *) task))
-    {
-        NS_LOG(ERROR, "insert to queue thread init fail");
-        return NS_ERROR;
-    }
+    NSConsumerThread * thread = NSThreadInit(NSConsumerMsgPushThreadFunc, (void *) task);
+    NS_VERTIFY_NOT_NULL(thread, NS_ERROR);
 
     return NS_OK;
 }
@@ -116,20 +103,19 @@ NSResult NSConsumerPushEvent(NSTask * task)
 void NSConsumerMessageHandlerExit()
 {
     NSDestroyCacheList();
+    NSConsumerListenerTermiate();
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
+    NSDestroyQueue(*(NSGetMsgHandleQueue()));
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 {
     NSConsumerQueue * queue = NULL;
     NSConsumerQueueObject * obj = NULL;
+
+    NS_LOG(DEBUG, "create thread for consumer message handle");
     NSConsumerThread * queueHandleThread = (NSConsumerThread *) threadHandle;
-    NS_LOG(DEBUG, "created thread for consumer message handle");
-    if (!queueHandleThread)
-    {
-        NS_LOG(ERROR, "thread handle is null");
-        return NULL;
-    }
+    NS_VERTIFY_NOT_NULL(queueHandleThread, NULL);
 
     while (true)
     {
@@ -171,19 +157,14 @@ void * NSConsumerMsgPushThreadFunc(void * data)
 {
     NSConsumerQueueObject * obj = NULL;
     NSConsumerQueue * queue = NULL;
-    NSConsumerThread * msgHandleThread = *(NSGetMsgHandleThreadHandle());
-    if (!msgHandleThread)
-    {
-        NS_LOG(ERROR, "NSThreadHandle is null. can not insert to queue");
-        return NULL;
-    }
 
+    NS_LOG(DEBUG, "get queueThread handle");
+    NSConsumerThread * msgHandleThread = *(NSGetMsgHandleThreadHandle());
+    NS_VERTIFY_NOT_NULL(msgHandleThread, NULL);
+
+    NS_LOG(DEBUG, "create queue object");
     obj = (NSConsumerQueueObject *)OICMalloc(sizeof(NSConsumerQueueObject));
-    if (!obj)
-    {
-        NS_LOG(ERROR, "NSConsumerQueueObject allocation fail");
-        return NULL;
-    }
+    NS_VERTIFY_NOT_NULL(obj, NULL);
 
     obj->data = data;
     obj->next = NULL;
@@ -227,7 +208,7 @@ void NSConsumerTaskProcessing(NSTask * task)
     }
     case TASK_RECV_READ:
     case TASK_RECV_DISMISS:
-    case TASK_CONSUMER_RECV_NOTIFICATION:
+    case TASK_CONSUMER_RECV_MESSAGE:
     {
         NSConsumerSubscriptionTaskProcessing(task);
         break;
