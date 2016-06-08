@@ -103,12 +103,14 @@ class TestBundleResource: public BundleResource
         virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
                                                 const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             BundleResource::setAttributes(attr);
         }
 
         virtual RCSResourceAttributes handleGetAttributesRequest(const
                 std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             return BundleResource::getAttributes();
         }
 };
@@ -126,12 +128,14 @@ class TestBundleResourceWithAttrs: public BundleResource
         virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
                                                 const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             BundleResource::setAttributes(attr);
         }
 
         virtual RCSResourceAttributes handleGetAttributesRequest(const
                 std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             return BundleResource::getAttributes();
         }
 };
@@ -148,12 +152,14 @@ class TestSoftSensorResource: public SoftSensorResource
         virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
                                                 const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             BundleResource::setAttributes(attr);
         }
 
         virtual RCSResourceAttributes handleGetAttributesRequest(const
                  std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             return BundleResource::getAttributes();
         }
 
