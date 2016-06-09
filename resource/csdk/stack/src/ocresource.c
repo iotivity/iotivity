@@ -334,9 +334,11 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     {
         tcpPort = 0;
     }
+    OCDiscoveryPayloadAddResource(payload, resourcePtr, securePort, tcpPort);
+#else
+    OCDiscoveryPayloadAddResource(payload, resourcePtr, securePort);
 #endif
 
-    OCDiscoveryPayloadAddResource(payload, resourcePtr, securePort, tcpPort);
     return OC_STACK_OK;
 }
 
