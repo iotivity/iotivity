@@ -350,10 +350,10 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
  * resource or create a new resource.
  * For pstat, it updates only tm and om.
  */
-static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest *ehRequest)
+static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OIC_LOG(INFO, TAG, "HandlePstatPutRequest  processing PUT request");
+    OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing POST request");
     OicSecPstat_t *pstat = NULL;
 
     if (ehRequest->payload)
@@ -441,8 +441,8 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
             case OC_REST_GET:
                 ehRet = HandlePstatGetRequest(ehRequest);
                 break;
-            case OC_REST_PUT:
-                ehRet = HandlePstatPutRequest(ehRequest);
+            case OC_REST_POST:
+                ehRet = HandlePstatPostRequest(ehRequest);
                 break;
             default:
                 ehRet = OC_EH_ERROR;
