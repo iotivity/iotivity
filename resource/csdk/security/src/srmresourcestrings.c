@@ -26,60 +26,60 @@ const char * SVR_DB_DAT_FILE_NAME = "oic_svr_db.dat";
 const char * OIC_MI_DEF = "oic.mi.def";
 
 //AMACL
-const char * OIC_RSRC_TYPE_SEC_AMACL = "oic.sec.amacl";
+const char * OIC_RSRC_TYPE_SEC_AMACL = "oic.r.amacl";
 const char * OIC_RSRC_AMACL_URI =  "/oic/sec/amacl";
 const char * OIC_JSON_AMACL_NAME = "amacl";
 
 //ACL
-const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
+const char * OIC_RSRC_TYPE_SEC_ACL = "oic.r.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
 const char * OIC_JSON_ACL_NAME = "acl";
 const char * OIC_JSON_ACLIST_NAME = "aclist";
 const char * OIC_JSON_ACES_NAME = "aces";
 
 //Pstat
-const char * OIC_RSRC_TYPE_SEC_PSTAT = "oic.sec.pstat";
+const char * OIC_RSRC_TYPE_SEC_PSTAT = "oic.r.pstat";
 const char * OIC_RSRC_PSTAT_URI =  "/oic/sec/pstat";
 const char * OIC_JSON_PSTAT_NAME = "pstat";
 
 //doxm
-const char * OIC_RSRC_TYPE_SEC_DOXM = "oic.sec.doxm";
+const char * OIC_RSRC_TYPE_SEC_DOXM = "oic.r.doxm";
 const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
 const char * OIC_JSON_DOXM_NAME = "doxm";
 
 //cred
-const char * OIC_RSRC_TYPE_SEC_CRED = "oic.sec.cred";
+const char * OIC_RSRC_TYPE_SEC_CRED = "oic.r.cred";
 const char * OIC_RSRC_CRED_URI =  "/oic/sec/cred";
 const char * OIC_JSON_CRED_NAME = "cred";
 const char * OIC_JSON_CREDS_NAME = "creds";
 
 //CRL
-const char * OIC_RSRC_TYPE_SEC_CRL = "oic.sec.crl";
+const char * OIC_RSRC_TYPE_SEC_CRL = "oic.r.crl";
 const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";
 const char * OIC_JSON_CRL_NAME = "crl";
 
 //SACL
-const char * OIC_RSRC_TYPE_SEC_SACL = "oic.sec.sacl";
+const char * OIC_RSRC_TYPE_SEC_SACL = "oic.r.sacl";
 const char * OIC_RSRC_SACL_URI =  "/oic/sec/sacl";
 const char * OIC_JSON_SACL_NAME = "sacl";
 
 //svc
-const char * OIC_RSRC_TYPE_SEC_SVC = "oic.sec.svc";
+const char * OIC_RSRC_TYPE_SEC_SVC = "oic.r.svc";
 const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";
 const char * OIC_JSON_SVC_NAME = "svc";
 
 //pconf
-const char * OIC_RSRC_TYPE_SEC_PCONF = "oic.sec.pconf";
+const char * OIC_RSRC_TYPE_SEC_PCONF = "oic.r.pconf";
 const char * OIC_RSRC_PCONF_URI =  "/oic/sec/pconf";
 const char * OIC_JSON_PCONF_NAME = "pconf";
 
 //dpairing
-const char * OIC_RSRC_TYPE_SEC_DPAIRING = "oic.sec.dpairing";
+const char * OIC_RSRC_TYPE_SEC_DPAIRING = "oic.r.dpairing";
 const char * OIC_RSRC_DPAIRING_URI =  "/oic/sec/dpairing";
 const char * OIC_JSON_DPAIRING_NAME = "dpairing";
 
 //version
-const char * OIC_RSRC_TYPE_SEC_VER = "oic.sec.ver";
+const char * OIC_RSRC_TYPE_SEC_VER = "oic.r.ver";
 const char * OIC_RSRC_VER_URI =  "/oic/sec/ver";
 const char * OIC_JSON_VER_NAME = "ver";
 
