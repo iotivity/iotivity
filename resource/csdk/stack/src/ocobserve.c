@@ -155,7 +155,8 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                                     request->numRcvdVendorSpecificHeaderOptions,
                                     request->rcvdVendorSpecificHeaderOptions,
                                     OC_OBSERVE_NO_OPTION,
-                                    0);
+                                    0,
+                                    request->coapID);
                         if (result == OC_STACK_OK)
                         {
                             ehResult = resPtr->entityHandler(OC_REQUEST_FLAG, &ehRequest,

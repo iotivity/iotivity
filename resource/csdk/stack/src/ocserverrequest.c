@@ -362,7 +362,8 @@ OCStackResult FormOCEntityHandlerRequest(
         uint8_t numVendorOptions,
         OCHeaderOption * vendorOptions,
         OCObserveAction observeAction,
-        OCObservationId observeID)
+        OCObservationId observeID,
+        uint16_t messageID)
 {
     if (entityHandlerRequest)
     {
@@ -373,6 +374,7 @@ OCStackResult FormOCEntityHandlerRequest(
         entityHandlerRequest->query = queryBuf;
         entityHandlerRequest->obsInfo.action = observeAction;
         entityHandlerRequest->obsInfo.obsId = observeID;
+        entityHandlerRequest->messageID = messageID;
 
         if(payload && payloadSize)
         {

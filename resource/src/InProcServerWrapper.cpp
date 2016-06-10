@@ -59,6 +59,7 @@ void formResourceRequest(OCEntityHandlerFlag flag,
     {
         pRequest->setRequestHandle(entityHandlerRequest->requestHandle);
         pRequest->setResourceHandle(entityHandlerRequest->resource);
+        pRequest->setMessageID(entityHandlerRequest->messageID);
     }
 
     if(flag & OC_REQUEST_FLAG)

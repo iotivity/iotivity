@@ -51,6 +51,7 @@ namespace OC
             m_resourceUri{},
             m_queryParameters{},
             m_requestHandlerFlag{},
+            m_messageID{},
             m_representation{},
             m_observationInfo{},
             m_headerOptions{},
@@ -154,11 +155,19 @@ namespace OC
             return m_resourceHandle;
         }
 
+        /**
+        * This API retrieves the request message ID
+        *
+        * @return int16_t value of message ID
+        */
+        int16_t getMessageID() const {return m_messageID;}
+
     private:
         std::string m_requestType;
         std::string m_resourceUri;
         QueryParamsMap m_queryParameters;
         int m_requestHandlerFlag;
+        int16_t m_messageID;
         OCRepresentation m_representation;
         ObservationInfo m_observationInfo;
         HeaderOptions m_headerOptions;
@@ -184,6 +193,11 @@ namespace OC
         void setRequestHandlerFlag(int requestHandlerFlag)
         {
             m_requestHandlerFlag = requestHandlerFlag;
+        }
+
+        void setMessageID(int16_t messageID)
+        {
+            m_messageID = messageID;
         }
 
         void setObservationInfo(const ObservationInfo& observationInfo)
