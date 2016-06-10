@@ -9,10 +9,10 @@ void onNotificationPosted(NSProvider * provider, NSMessage * notification)
 {
     printf("Notification from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
             ((OCDevAddr *)provider->mUserData)->port);
-    printf("id : %s\n", notification->mId);
-    printf("title : %s\n", notification->mTitle);
-    printf("content : %s\n", notification->mContentText);
-    printf("source : %s\n", notification->mSource);
+    printf("id : %s\n", notification->messageId);
+    printf("title : %s\n", notification->title);
+    printf("content : %s\n", notification->contentText);
+    printf("source : %s\n", notification->sourceName);
 //    NSDropNSObject(notification);
     NSConsumerReadCheck(notification);
 }
@@ -24,12 +24,12 @@ void onDiscoverNotification(NSProvider * provider)
     printf("startSubscribing\n");
 }
 
-void onNotificationSync(NSProvider * provider, NSSync * sync)
+void onNotificationSync(NSProvider * provider, NSSyncInfo * sync)
 {
     printf("Sync from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
             ((OCDevAddr *)provider->mUserData)->port);
-    printf("Sync ID : %s\n", sync->mMessageId);
-    printf("Sync STATE : %d\n", sync->mState);
+    printf("Sync ID : %s\n", sync->messageId);
+    printf("Sync STATE : %d\n", sync->state);
 }
 
 int main(void)

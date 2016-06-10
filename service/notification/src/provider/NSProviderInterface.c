@@ -62,7 +62,7 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
     NS_LOG(DEBUG, "NSSubscribeRequestCb - OUT");
 }
 
-void NSSyncCb(NSSync *sync)
+void NSSyncCb(NSSyncInfo *sync)
 {
     NS_LOG(DEBUG, "NSSyncCb - IN");
     g_syncCb(sync);
@@ -234,7 +234,7 @@ void * NSInterfaceSchedule(void * ptr)
                 case TASK_CB_SYNC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_CB_SYNC : ");
-                    NSSync * sync = (NSSync*)node->taskData;
+                    NSSyncInfo * sync = (NSSyncInfo*)node->taskData;
                     NSSyncCb(NSDuplicateSync(sync));
                     NSFreeSync(sync);
                     break;

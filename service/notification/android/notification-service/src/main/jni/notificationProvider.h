@@ -46,7 +46,7 @@ extern "C"
 
     void NSSubscribeRequestCb(NSConsumer*);
 
-    void NSSyncCb(NSSync*);
+    void NSSyncCb(NSSyncInfo*);
 
     NSMessage * NSGetMessage(JNIEnv *, jobject);
 

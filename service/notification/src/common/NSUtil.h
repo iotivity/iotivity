@@ -38,9 +38,9 @@ NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
 NSResult NSFreeMessage(NSMessage *);
 NSMessage * NSDuplicateMessage(NSMessage *);
 
-NSResult NSFreeSync(NSSync *);
-NSSync * NSDuplicateSync(NSSync *);
-NSSync * NSGetSyncInfo(OCPayload * payload);
+NSResult NSFreeSync(NSSyncInfo *);
+NSSyncInfo * NSDuplicateSync(NSSyncInfo *);
+NSSyncInfo * NSGetSyncInfo(OCPayload * payload);
 
 NSResult NSFreeConsumer(NSConsumer *);
 NSConsumer * NSDuplicateConsumer(NSConsumer *);

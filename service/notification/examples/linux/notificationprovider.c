@@ -62,11 +62,11 @@ void subscribeRequestCallback(NSConsumer *consumer)
     NSAccept(consumer, true);
 }
 
-void syncCallback(NSSync *sync)
+void syncCallback(NSSyncInfo *sync)
 {
     OIC_LOG(INFO, TAG, "sync requested");
 
-    printf("NS_APP Sync State: %d\n", sync->mState);
+    printf("NS_APP Sync State: %d\n", sync->state);
 }
 
 int main()
@@ -109,18 +109,17 @@ int main()
         {
             case 1:
                 OIC_LOG(INFO, TAG, "NSStartProvider(Accepter: Provider)");
-                NSStartProvider(NS_ACCEPTER_PROVIDER, subscribeRequestCallback, syncCallback);
+                NSStartProvider(NS_ACCESS_ALLOW, subscribeRequestCallback, syncCallback);
                 break;
             case 2:
                 OIC_LOG(INFO, TAG, "NSStartProvider(Accepter: Consumer)");
-                NSStartProvider(NS_ACCEPTER_CONSUMER, subscribeRequestCallback, syncCallback);
+                NSStartProvider(NS_ACCESS_DENY, subscribeRequestCallback, syncCallback);
                 break;
             case 3:
                 OIC_LOG(INFO, TAG, "NSSendNotification()");
 
                 char title[100];
                 char body[100];
-                char charID[100];
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
@@ -130,18 +129,14 @@ int main()
                 printf("body : ");
                 gets(body);
 
-                printf("app - mId : %s \n", charID);
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
 
                 NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
 
-                sprintf(charID, "%d", id);
-
-                msg->mId = strdup(charID);
-                msg->mTitle = strdup(title);
-                msg->mContentText = OICStrdup(body);
-                msg->mSource = OICStrdup("OCF");
+                msg->title = strdup(title);
+                msg->contentText = OICStrdup(body);
+                msg->sourceName = OICStrdup("OCF");
 
                 NSSendMessage(msg);
 
@@ -149,10 +144,10 @@ int main()
 
             case 4:
                 OIC_LOG(INFO, TAG, "NSRead");
-                NSSync * sync = (NSSync*) OICMalloc(sizeof(NSSync));
+                NSSyncInfo * sync = (NSSyncInfo*) OICMalloc(sizeof(NSSyncInfo));
 
-                sync->mMessageId = OICStrdup("dev_001");
-                sync->mState = 1;
+                sync->messageId = OICStrdup("dev_001");
+                sync->state = 1;
 
                 break;
 

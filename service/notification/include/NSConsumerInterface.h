@@ -40,7 +40,7 @@ extern "C"
  * @param[in] provider    Provider who requests synchronization with the status
  * @param[in] sync        Synchronization information of the notification message
  */
-typedef void (*NSSyncCallback)(NSProvider *, NSSync *);
+typedef void (*NSSyncCallback)(NSProvider *, NSSyncInfo *);
 
 /**
  * Consumer uses this callback function to receive the discovered providers

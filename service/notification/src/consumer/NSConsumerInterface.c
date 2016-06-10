@@ -110,28 +110,28 @@ NSResult NSDropNSObject(NSMessage * obj)
 {
     NS_VERTIFY_NOT_NULL(obj, NS_ERROR);
 
-    if (obj->mId)
+    if (obj->messageId)
     {
-        OICFree(obj->mId);
-        obj->mId = NULL;
+        OICFree(obj->messageId);
+        obj->messageId = NULL;
     }
 
-    if (obj->mTitle)
+    if (obj->title)
     {
-        OICFree(obj->mTitle);
-        obj->mTitle = NULL;
+        OICFree(obj->title);
+        obj->title = NULL;
     }
 
-    if (obj->mContentText)
+    if (obj->contentText)
     {
-        OICFree(obj->mContentText);
-        obj->mContentText = NULL;
+        OICFree(obj->contentText);
+        obj->contentText = NULL;
     }
 
-    if (obj->mSource)
+    if (obj->sourceName)
     {
-        OICFree(obj->mSource);
-        obj->mSource = NULL;
+        OICFree(obj->sourceName);
+        obj->sourceName = NULL;
     }
 
     OICFree(obj);

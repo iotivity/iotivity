@@ -132,12 +132,12 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
             NS_LOG(DEBUG, "fail to write cache");
         }
 
-        if (NSGetSubscriptionAccepter() == NS_ACCEPTER_PROVIDER)
+        if (NSGetSubscriptionAccepter() == NS_ACCESS_ALLOW)
         {
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_PROVIDER");
             NSAskAcceptanceToUser(entityHandlerRequest);
         }
-        else if (NSGetSubscriptionAccepter() == NS_ACCEPTER_CONSUMER)
+        else if (NSGetSubscriptionAccepter() == NS_ACCESS_DENY)
         {
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_CONSUMER");
             NSSendSubscriptionResponse(entityHandlerRequest, true);
@@ -223,7 +223,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
 
     OCRepPayloadSetUri(payload, NS_COLLECTION_MESSAGE_URI);
-    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_ID, "0000-0000-0000-0000");
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE_ID, "0000-0000-0000-0000");
     OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
 
     NSCacheElement * element = NSStorageRead(consumerSubList, id);

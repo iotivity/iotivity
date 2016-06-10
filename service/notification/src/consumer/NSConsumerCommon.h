@@ -117,7 +117,7 @@ void NSSetNotificationPostedCb(NSNotificationReceivedCallback  cb);
 void NSNotificationPost(NSProvider * provider, NSMessage * obj);
 
 void NSSetNotificationSyncCb(NSSyncCallback cb);
-void NSNotificationSync(NSProvider * provider, NSSync * sync);
+void NSNotificationSync(NSProvider * provider, NSSyncInfo * sync);
 
 NSTask * NSMakeTask(NSTaskType, void *);
 

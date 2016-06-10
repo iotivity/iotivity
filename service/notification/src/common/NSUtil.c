@@ -89,28 +89,28 @@ NSResult NSFreeMessage(NSMessage * obj)
         return NS_ERROR;
     }
 
-    if (obj->mId)
+    if (obj->messageId)
     {
-        OICFree(obj->mId);
-        obj->mId = NULL;
+        OICFree(obj->messageId);
+        obj->messageId = NULL;
     }
 
-    if (obj->mTitle)
+    if (obj->title)
     {
-        OICFree(obj->mTitle);
-        obj->mTitle = NULL;
+        OICFree(obj->title);
+        obj->title = NULL;
     }
 
-    if (obj->mContentText)
+    if (obj->contentText)
     {
-        OICFree(obj->mContentText);
-        obj->mContentText = NULL;
+        OICFree(obj->contentText);
+        obj->contentText = NULL;
     }
 
-    if (obj->mSource)
+    if (obj->sourceName)
     {
-        OICFree(obj->mSource);
-        obj->mSource = NULL;
+        OICFree(obj->sourceName);
+        obj->sourceName = NULL;
     }
 
     OICFree(obj);
@@ -129,52 +129,52 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     }
 
     newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
-    newMsg->mContentText = NULL;
-    newMsg->mId = NULL;
-    newMsg->mSource = NULL;
-    newMsg->mTitle = NULL;
+    newMsg->contentText = NULL;
+    newMsg->messageId = NULL;
+    newMsg->sourceName = NULL;
+    newMsg->title = NULL;
 
-    if (copyMsg->mId)
+    if (copyMsg->messageId)
     {
-        newMsg->mId = OICStrdup(copyMsg->mId);
+        newMsg->messageId = OICStrdup(copyMsg->messageId);
     }
 
-    if (copyMsg->mTitle)
+    if (copyMsg->title)
     {
-        newMsg->mTitle = OICStrdup(copyMsg->mTitle);
+        newMsg->title = OICStrdup(copyMsg->title);
     }
 
-    if (copyMsg->mContentText)
+    if (copyMsg->contentText)
     {
-        newMsg->mContentText = OICStrdup(copyMsg->mContentText);
+        newMsg->contentText = OICStrdup(copyMsg->contentText);
     }
 
-    if (copyMsg->mSource)
+    if (copyMsg->sourceName)
     {
-       newMsg->mSource = OICStrdup(copyMsg->mSource);
+       newMsg->sourceName = OICStrdup(copyMsg->sourceName);
     }
 
     return newMsg;
 }
 
-NSResult NSFreeSync(NSSync * obj)
+NSResult NSFreeSync(NSSyncInfo * obj)
 {
     if (!obj)
     {
         return NS_ERROR;
     }
 
-    if (obj->mMessageId)
+    if (obj->messageId)
     {
-        OICFree(obj->mMessageId);
-        obj->mMessageId = NULL;
+        OICFree(obj->messageId);
+        obj->messageId = NULL;
     }
 
-    if (obj->mSourceId)
+    if (obj->providerId)
     {
-        NS_LOG_V(DEBUG, "obj->mSourceid = %s", obj->mSourceId);
-        OICFree(obj->mSourceId);
-        obj->mSourceId = NULL;
+        NS_LOG_V(DEBUG, "obj->mSourceid = %s", obj->providerId);
+        OICFree(obj->providerId);
+        obj->providerId = NULL;
     }
 
     OICFree(obj);
@@ -182,9 +182,9 @@ NSResult NSFreeSync(NSSync * obj)
     return NS_OK;
 }
 
-NSSync* NSDuplicateSync(NSSync * copyMsg)
+NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
 {
-    NSSync * newMsg = NULL;
+    NSSyncInfo * newMsg = NULL;
 
     if(copyMsg == NULL)
     {
@@ -192,22 +192,22 @@ NSSync* NSDuplicateSync(NSSync * copyMsg)
         return NULL;
     }
 
-    newMsg = (NSSync *)OICMalloc(sizeof(NSSync));
-    newMsg->mMessageId = NULL;
-    newMsg->mSourceId = NULL;
-    newMsg->mState = -1;
+    newMsg = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+    newMsg->messageId = NULL;
+    newMsg->providerId = NULL;
+    newMsg->state = -1;
 
-    if (copyMsg->mMessageId)
+    if (copyMsg->messageId)
     {
-        newMsg->mMessageId = OICStrdup(copyMsg->mMessageId);
+        newMsg->messageId = OICStrdup(copyMsg->messageId);
     }
 
-    if (copyMsg->mSourceId)
+    if (copyMsg->providerId)
     {
-        newMsg->mSourceId = OICStrdup(copyMsg->mSourceId);
+        newMsg->providerId = OICStrdup(copyMsg->providerId);
     }
 
-    newMsg->mState = copyMsg->mState;
+    newMsg->state = copyMsg->state;
 
     return newMsg;
 }
@@ -277,7 +277,7 @@ void NSDuplicateSetPropertyString(OCRepPayload** msgPayload, const char * name,
 }
 
 
-NSSync * NSGetSyncInfo(OCPayload * payload)
+NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
 {
     NS_LOG(DEBUG, "NSBuildOICNotificationSync - IN");
 
@@ -285,38 +285,38 @@ NSSync * NSGetSyncInfo(OCPayload * payload)
     {
         return NULL;
     }
-    NSSync * retSync = (NSSync *)OICMalloc(sizeof(NSSync));
+    NSSyncInfo * retSync = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
     if (!retSync)
     {
         return NULL;
     }
 
-    retSync->mMessageId = NULL;
-    retSync->mState = Notification_Read;
+    retSync->messageId = NULL;
+    retSync->state = NS_SYNC_READ;
 
     OCRepPayload * repPayload = (OCRepPayload *)payload;
-    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_ID, &retSync->mMessageId))
+    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_MESSAGE_ID, &retSync->messageId))
     {
         OICFree(retSync);
         return NULL;
     }
-    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_SOURCE, &retSync->mSourceId))
+    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_PROVIDER_ID, &retSync->providerId))
     {
         OICFree(retSync);
         return NULL;
     }
     int64_t state;
-    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_STATE, & state))
+    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_STATE, &state))
     {
-        OICFree(retSync->mMessageId);
+        OICFree(retSync->messageId);
         OICFree(retSync);
         return NULL;
     }
 
-    retSync->mState = (NSSyncTypes) state;
+    retSync->state = (NSSyncType) state;
 
-    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->mMessageId);
-    NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->mState);
+    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
 
     NS_LOG(DEBUG, "NSBuildOICNotificationSync - OUT");
 

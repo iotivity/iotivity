@@ -47,7 +47,7 @@ typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
  * synchronization
  * @param[in] sync        Synchronization information of the notification message
  */
-typedef void (*NSSyncCallback)(NSSync *);
+typedef void (*NSSyncCallback)(NSSyncInfo *);
 
 /**
  * Initialize notification service for provider

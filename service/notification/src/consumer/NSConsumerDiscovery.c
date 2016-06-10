@@ -177,7 +177,7 @@ OCStackApplicationResult NSIntrospectProvider(
                    OC_STACK_KEEP_TRANSACTION, OICFree(newProvider));
     memcpy(newProvider->mUserData, clientResponse->addr, sizeof(OCDevAddr));
 
-    if (accepter == NS_ACCEPTER_CONSUMER)
+    if (accepter == NS_ACCESS_DENY)
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
 

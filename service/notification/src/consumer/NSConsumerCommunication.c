@@ -28,7 +28,7 @@
 const char NS_MESSAGE_ACCEPTANCE[] = "0000-0000-0000-0000";
 
 NSMessage_consumer * NSGetNSMessage(OCClientResponse * clientResponse);
-NSSync * NSGetNSSyncInfo(OCClientResponse * clientResponse);
+NSSyncInfo * NSGetNSSyncInfo(OCClientResponse * clientResponse);
 NSProvider * NSGetNSProvider(OCClientResponse * clientResponse);
 OCRepPayload * NSGetPayloadofSyncInfo(NSMessage_consumer * message, int type);
 
@@ -82,7 +82,7 @@ OCStackApplicationResult NSConsumerSyncInfoListener(
     NS_VERTIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
     NS_VERTIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
 
-    NSSync * newNoti = NULL;
+    NSSyncInfo * newNoti = NULL;
 
     NS_LOG(ERROR, "get provider");
     NSProvider * provider = NSGetNSProvider(clientResponse);
@@ -93,7 +93,7 @@ OCStackApplicationResult NSConsumerSyncInfoListener(
 
     NSTaskType taskType = TASK_RECV_READ;
 
-    if (newNoti->mState != Notification_Read)
+    if (newNoti->state != NS_SYNC_READ)
     {
         NS_LOG(DEBUG, "newNoti->type : Dismiss");
         taskType = TASK_RECV_DISMISS;
@@ -170,7 +170,7 @@ NSMessage_consumer * NSGetNSMessage(OCClientResponse * clientResponse)
     NS_LOG(DEBUG, "get id");
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
     char * id = NULL;
-    bool getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ID, &id);
+    bool getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE_ID, &id);
     NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "create NSMessage");
@@ -202,7 +202,7 @@ NSMessage_consumer * NSGetNSMessage(OCClientResponse * clientResponse)
     return retNoti;
 }
 
-NSSync * NSGetNSSyncInfo(OCClientResponse * clientResponse)
+NSSyncInfo * NSGetNSSyncInfo(OCClientResponse * clientResponse)
 {
     NS_VERTIFY_NOT_NULL(clientResponse->payload, NULL);
 
@@ -215,18 +215,18 @@ NSSync * NSGetNSSyncInfo(OCClientResponse * clientResponse)
 
     NS_LOG(DEBUG, "get id");
     char * id = NULL;
-    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ID, &id);
+    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE_ID, &id);
     NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "create NSSyncInfo");
-    NSSync * retSync = (NSSync *)OICMalloc(sizeof(NSSync));
+    NSSyncInfo * retSync = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
     NS_VERTIFY_NOT_NULL(retSync, NULL);
 
-    retSync->mMessageId = id;
-    retSync->mState = (NSSyncTypes) state;
+    retSync->messageId = id;
+    retSync->state = (NSSyncType) state;
 
-    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->mMessageId);
-    NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->mState);
+    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
 
     return retSync;
 }

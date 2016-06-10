@@ -161,9 +161,9 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
     {
         NS_LOG(DEBUG, "NSMessage is valid");
 
-        NotificationMessageResource.id = OICStrdup(msg->mId);
-        NotificationMessageResource.title = OICStrdup(msg->mTitle);
-        NotificationMessageResource.body = OICStrdup(msg->mContentText);
+        NotificationMessageResource.id = OICStrdup(msg->messageId);
+        NotificationMessageResource.title = OICStrdup(msg->title);
+        NotificationMessageResource.body = OICStrdup(msg->contentText);
     }
     else
     {
@@ -176,7 +176,7 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
     return NS_OK;
 }
 
-NSResult NSPutSyncResource(NSSync *sync, OCResourceHandle * handle)
+NSResult NSPutSyncResource(NSSyncInfo *sync, OCResourceHandle * handle)
 {
     NS_LOG(DEBUG, "NSPutSyncResource - IN");
 

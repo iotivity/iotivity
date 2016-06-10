@@ -53,7 +53,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NS
     g_obj_syncListener = (jobject) (*env)->NewGlobalRef(env, jSyncListener);
 
     // check access policy
-    NSAccessPolicy access = NS_ACCEPTER_PROVIDER;
+    NSAccessPolicy access = NS_ACCESS_ALLOW;
 
     if (NSStartProvider(access, NSSubscribeRequestCb, NSSyncCb) != NS_OK)
     {
@@ -176,7 +176,7 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
     return;
 }
 
-void NSSyncCb(NSSync *sync)
+void NSSyncCb(NSSyncInfo *sync)
 {
     LOGI("Sync requested");
 
@@ -203,10 +203,10 @@ void NSSyncCb(NSSync *sync)
         }
     }
 
-    LOGI("Sync ID : %s\n", sync->mMessageId);
-    LOGI("Sync STATE : %d\n", sync->mState);
+    LOGI("Sync ID : %s\n", sync->messageId);
+    LOGI("Sync STATE : %d\n", sync->state);
 
-    jstring strMessageId = (*env)->NewStringUTF(env, sync->mMessageId);
+    jstring strMessageId = (*env)->NewStringUTF(env, sync->messageId);
 
     jclass cls = (*env)->GetObjectClass(env, g_obj_syncListener);
     if (!cls)
@@ -222,7 +222,7 @@ void NSSyncCb(NSSync *sync)
         return;
     }
 
-    (*env)->CallVoidMethod(env, g_obj_syncListener, mid, strMessageId, (jint) sync->mState);
+    (*env)->CallVoidMethod(env, g_obj_syncListener, mid, strMessageId, (jint) sync->state);
 
     (*g_jvm)->DetachCurrentThread(g_jvm);
 
@@ -302,10 +302,10 @@ NSMessage * NSGetMessage(JNIEnv * env, jobject jMsg)
 
     NSMessage * nsMsg = (NSMessage *) malloc(sizeof(NSMessage));
 
-    nsMsg->mId = strdup(messageId);
-    nsMsg->mTitle = strdup(messageTitle);
-    nsMsg->mContentText = strdup(messageBody);
-    nsMsg->mSource = strdup(messageSource);
+    nsMsg->messageId = strdup(messageId);
+    nsMsg->title = strdup(messageTitle);
+    nsMsg->contentText = strdup(messageBody);
+    nsMsg->sourceName = strdup(messageSource);
 
     return nsMsg;
 

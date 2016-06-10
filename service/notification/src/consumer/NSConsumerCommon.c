@@ -86,18 +86,18 @@ void NSSetNotificationSyncCb(NSSyncCallback cb)
 typedef struct
 {
     NSProvider * provider;
-    NSSync * sync;
+    NSSyncInfo * sync;
 } NSSyncData;
 
 void * NSNotificationSyncFunc(void * obj)
 {
     NSProvider * provider = ((NSSyncData *) obj)->provider;
-    NSSync * syncData = ((NSSyncData *) obj)->sync;
+    NSSyncInfo * syncData = ((NSSyncData *) obj)->sync;
     (* NSGetBoneNotificationSyncCb())(provider, syncData);
     return NULL;
 }
 
-void NSNotificationSync(NSProvider * provider, NSSync * sync)
+void NSNotificationSync(NSProvider * provider, NSSyncInfo * sync)
 {
     NSSyncData * obj = (NSSyncData *)OICMalloc(sizeof(NSSyncData));
     NS_VERTIFY_NOT_NULL_V(obj);

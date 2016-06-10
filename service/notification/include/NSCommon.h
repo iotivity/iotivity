@@ -33,7 +33,8 @@
 #define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
 #define NS_ATTRIBUTE_SYNC "SYNC_URI"
 #define NS_ATTRIBUTE_ACCPETANCE "ACCEPTANCE"
-#define NS_ATTRIBUTE_ID "ID"
+#define NS_ATTRIBUTE_MESSAGE_ID "MESSAGE_ID"
+#define NS_ATTRIBUTE_PROVIDER_ID "PROVIDER_ID"
 #define NS_ATTRIBUTE_TITLE "TITLE"
 #define NS_ATTRIBUTE_TEXT "CONTENTTEXT"
 #define NS_ATTRIBUTE_SOURCE "SOURCE"
@@ -61,9 +62,6 @@ typedef enum eAccessPolicy
 {
     NS_ACCESS_ALLOW = 0,
     NS_ACCESS_DENY = 1,
-    NS_ACCEPTER_PROVIDER = 0,
-    NS_ACCEPTER_CONSUMER = 1,
-
 } NSAccessPolicy;
 
 /**
@@ -71,11 +69,26 @@ typedef enum eAccessPolicy
  */
 typedef enum
 {
-    Notification_Read = 0,
-    Notification_Dismiss = 1,
-    Notification_Unread = 2,
+    NS_SYNC_UNREAD = 0,
+    NS_SYNC_READ = 1,
+    NS_SYNC_DELETED = 2,
+} NSSyncType;
 
-} NSSyncTypes;
+/**
+ * Notification Message Type
+ * Alert mean is High / critical
+ * Notice mean is low / critical
+ * Event mean is High / Normal
+ * Information mean is Low / Normal
+ */
+typedef enum
+{
+    NS_MESSAGE_ALERT = 0,
+    NS_MESSAGE_NOTICE = 1,
+    NS_MESSAGE_EVENT = 2,
+    NS_MESSAGE_INFO = 3,
+
+} NSMessageType;
 
 /**
  *  Consumer information
@@ -102,14 +115,31 @@ typedef struct
 } NSProvider;
 
 /**
+ *  Media Contents of Notification Message (Optional)
+ */
+typedef struct
+{
+    char * iconImage;
+
+} NSMediaContents;
+
+/**
  *  Notification Message
  */
 typedef struct
 {
-    char * mId;
-    char * mTitle;
-    char * mContentText;
-    char * mSource;
+    //Mandatory
+    uint64_t messageId;
+    char * providerId;
+
+    //optional
+    NSMessageType type;
+    char * dateTime;
+    uint64_t ttl;
+    char * title;
+    char * contentText;
+    char * sourceName;
+    NSMediaContents mediaContents;
 
 } NSMessage;
 
@@ -118,12 +148,11 @@ typedef struct
  */
 typedef struct
 {
-    // Mandatory
-    char * mMessageId;
-    char * mSourceId; // TO-DO from whom
-    NSSyncTypes mState;
+    uint64_t messageId;
+    char * providerId;
+    NSSyncType state;
 
-} NSSync;
+} NSSyncInfo;
 
 #endif /* _NS_COMMON_H_ */
 

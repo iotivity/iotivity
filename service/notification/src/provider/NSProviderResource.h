@@ -38,7 +38,7 @@ NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle);
 
 NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle);
 
-NSResult NSPutSyncResource(NSSync *sync, OCResourceHandle * handle);
+NSResult NSPutSyncResource(NSSyncInfo *sync, OCResourceHandle * handle);
 
 const char* NSGetNotificationMessageUri();
 

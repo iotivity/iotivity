@@ -194,7 +194,7 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
                 break;
             case TASK_CB_SYNC:
                 NS_LOG(DEBUG, "CASE TASK_CB_SYNC : Free");
-                NSFreeSync((NSSync*) task->taskData);
+                NSFreeSync((NSSyncInfo*) task->taskData);
                 break;
             default:
                 NS_LOG(DEBUG, "No Task Type");
@@ -249,7 +249,7 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
             case TASK_SEND_READ:
             case TASK_RECV_READ:
                 NS_LOG(DEBUG, "NSFreeSync : Free ");
-                NSFreeSync((NSSync*) task->taskData);
+                NSFreeSync((NSSyncInfo*) task->taskData);
                 break;
 
             default:
