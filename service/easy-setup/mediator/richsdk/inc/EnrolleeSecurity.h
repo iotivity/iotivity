@@ -47,7 +47,7 @@ namespace OIC
             std::string secDbPath);
             ESResult registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
-            EasySetupState performOwnershipTransfer();
+            bool performOwnershipTransfer();
 
         private:
             std::shared_ptr< EnrolleeResource > m_EnrolleeResource;

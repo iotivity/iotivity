@@ -55,8 +55,8 @@ namespace OIC
              *
              * @throw ESBadRequestException is thrown if the parameters are invalid
              */
-            EnrolleeResource(const WiFiOnboadingConnection &onboardingconn);
-            // EnrolleeResource(const ProvConfig &enrolleeNWProvInfo,
+            EnrolleeResource(std::shared_ptr< OC::OCResource > resource);
+            // EnrolleeResource(const DataProvInfo &enrolleeNWProvInfo,
             //                                    const WiFiOnboadingConnection &onboardingconn);
 
             ~EnrolleeResource() = default;
@@ -69,31 +69,19 @@ namespace OIC
              * @throws InvalidParameterException If callback is an empty function or null.
              * @throws ESBadRequestException If registration is already completed.
              *
-             * @see ProvisioningStatus
+             * @see DataProvisioningStatus
              */
-            void registerInitRemoteEnrolleeStatusCallback (InitRemoteEnrolleeStatusCb callback);
-            void registerCapabilityStatusCallback (RequestCapabilityStatusCb callback);
+            void registerRequestPropertyDataStatusCallback (RequestPropertyDataStatusCb callback);
             void registerProvStatusCallback (DataProvStatusCb callback);
 
-            /**
-             * Construct Remote OIC resource using the enrollee host and connectivity information
-             * provided in the constructor of EnrolleeResource.
-             *
-             * @throws InvalidParameterException If the provided information is invalid.
-             * @throws ESBadRequestException If resource is already constructed.
-             *
-             * @see ProvisioningStatus
-             */
-            ESResult constructResourceObject();
-
-            void getCapabilityData();
+            void RequestPropertyData();
 
             /**
              * Function for provisioning of Remote Enrollee resource using the information provided.
              *
              * @throws InvalidParameterException If cb is empty.
              */
-            void provisionEnrollee();
+            void provisionEnrollee(const DataProvInfo& dataProvInfo);
 
             /**
              * Function for unprovisioning of Remote Enrollee and bring to unprovisioned state
@@ -102,36 +90,22 @@ namespace OIC
              */
             void unprovisionEnrollee();
 
-
-
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
-            std::mutex m_mutex;
-            InitRemoteEnrolleeStatusCb m_initRemoteEnrolleeStatusCb;
-            RequestCapabilityStatusCb m_requestCapabilityStatusCb;
+
+            RequestPropertyDataStatusCb m_RequestPropertyDataStatusCb;
             DataProvStatusCb m_dataProvStatusCb;
-            ProvConfig m_ProvConfig;
-            WiFiOnboadingConnection m_wifiOnboardingconn;
-            bool m_discoveryResponse;
 
-            void getCapabilityResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            DataProvInfo m_dataProvInfo;
+
+        private:
+            void onRequestPropertyDataResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
-
             void getProvStatusResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
-
             void checkProvInformationCb(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
-
-            ESResult ESDiscoveryTimeout(unsigned short waittime);
-
-            void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
-
-            void triggerNetworkConnection();
-
-            void triggerNetworkConnectionCb(
-                    const HeaderOptions& headerOptions, const OCRepresentation& rep,
-                    const int eCode);
+            PropertyData parsePropertyDataFromRepresentation(const OCRepresentation& rep);
         };
     }
 }

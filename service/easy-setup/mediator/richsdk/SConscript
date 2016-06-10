@@ -121,6 +121,7 @@ if target_os in ['linux']:
 
 	es_common_src =	['src/RemoteEnrollee.cpp',
 		'src/EnrolleeResource.cpp',
+		'src/CloudResource.cpp',
 		'src/EasySetup.cpp',
 		'src/ESException.cpp']
 
@@ -134,8 +135,8 @@ print "Files path is %s" % env.get('es_src')
 ######################################################################
 # Build RichSDK Mediator Sample App
 ################################################ ######################
-#if target_os == 'linux':
-#	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
+if target_os == 'linux':
+	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]

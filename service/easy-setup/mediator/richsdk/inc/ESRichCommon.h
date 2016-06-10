@@ -25,6 +25,7 @@
 #include <string>
 #ifndef WITH_ARDUINO
 #include <memory>
+#include <vector>
 #endif
 
 #include "ocstack.h"
@@ -33,40 +34,32 @@
 using namespace std;
 
 // Defines
-#define OIC_STRING_MAX_VALUE    100
-#define IPV4_ADDR_SIZE          16
 #define IP_PORT                 55555
-#define NET_WIFI_SSID_SIZE      100
-#define NET_WIFI_PWD_SIZE       100
-#define NET_WIFI_AUTH_SIZE      100
-
-/**
- * @brief Mac address length for BT port
- */
-#define NET_MACADDR_SIZE 18
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
  */
-#define OC_RSRVD_ES_PROVSTATUS        "ps"
-#define OC_RSRVD_ES_TRIGGER                "tr"
-#define OC_RSRVD_ES_SSID                       "tnn"
-#define OC_RSRVD_ES_CRED                     "cd"
-#define OC_RSRVD_ES_AUTHTYPE             "wat"
-#define OC_RSRVD_ES_ENCTYPE                "wet"
-#define OC_RSRVD_ES_AUTHCODE            "ac"
-#define OC_RSRVD_ES_AUTHPROVIDER    "apn"
-#define OC_RSRVD_ES_CISERVER              "cisurl"
-#define OC_RSRVD_ES_DEVNAME              "dn"
-#define OC_RSRVD_ES_LANGUAGE            "lang"
-#define OC_RSRVD_ES_COUNTRY              "cont"
-#define OC_RSRVD_ES_TNT                        "tnt"
-#define OC_RSRVD_ES_ANT                        "ant"
+#define OC_RSRVD_ES_PROVSTATUS                       "ps"
+#define OC_RSRVD_ES_TRIGGER                              "tr"
+#define OC_RSRVD_ES_SSID                                     "tnn"
+#define OC_RSRVD_ES_CRED                                   "cd"
+#define OC_RSRVD_ES_SUPPORTEDWIFIMODE       "swmt"
+#define OC_RSRVD_ES_SUPPORTEDWIFIFREQ        "swf"
+#define OC_RSRVD_ES_AUTHTYPE                          "wat"
+#define OC_RSRVD_ES_ENCTYPE                             "wet"
+#define OC_RSRVD_ES_AUTHCODE                         "ac"
+#define OC_RSRVD_ES_AUTHPROVIDER                  "apn"
+#define OC_RSRVD_ES_CISERVER                            "cisurl"
+#define OC_RSRVD_ES_DEVNAME                            "dn"
+#define OC_RSRVD_ES_LANGUAGE                          "lang"
+#define OC_RSRVD_ES_COUNTRY                            "cont"
+#define OC_RSRVD_ES_TNT                                      "tnt"
+#define OC_RSRVD_ES_ANT                                     "ant"
 
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_PROV_RES_TYPE                 "oic.r.prov"
+#define OC_RSRVD_ES_PROV_RES_TYPE                 "ocf.r.prov"
 #define OC_RSRVD_ES_URI_PROV                           "/.well-known/ocf/prov"
 #define OC_RSRVD_ES_RES_TYPE_WIFI                   "ocf.r.wifi"
 #define OC_RSRVD_ES_URI_WIFI                             "/.well-known/ocf/prov/wifi"
@@ -74,7 +67,6 @@ using namespace std;
 #define OC_RSRVD_ES_URI_CLOUDSERVER            "/.well-known/ocf/prov/cloudserver"
 #define OC_RSRVD_ES_RES_TYPE_DEVCONF          "ocf.r.devconf"
 #define OC_RSRVD_ES_URI_DEVCONF                    "/.well-known/ocf/prov/devconf"
-#define OC_RSRVD_ES_URI_NET                             "/oic/net"
 
 /**
  * @brief Defines for Provisioning status accepted values
@@ -105,17 +97,6 @@ namespace OIC
         } ESResult;
 
         /**
-         * Provosioning Status
-         */
-        typedef enum
-        {
-            DEVICE_PROVISIONED = 0,
-            DEVICE_NOT_PROVISIONED,
-            DEVICE_OWNED,
-            DEVICE_NOT_OWNED
-        } EasySetupState;
-
-        /**
          * @brief  WIFI Authentication type of the Enroller
          */
         typedef enum
@@ -139,61 +120,59 @@ namespace OIC
             TKIP_AES
         } WIFI_ENCTYPE;
 
-        /**
-         * @brief  Network information of the Enroller
-         */
-        typedef union
+        typedef enum
         {
-            /**
-             * @brief BT Mac Information
-             */
-            struct
-            {
-                char btMacAddress[NET_MACADDR_SIZE];   /**< BT mac address **/
-            } BT;
+            WIFI_24G = 0,
+            WIFI_5G,
+            WIFI_BOTH
+        } WIFI_FREQ;
 
-            /**
-             * @brief LE MAC Information
-             */
-            struct
-            {
-                char leMacAddress[NET_MACADDR_SIZE];   /**< BLE mac address **/
-            } LE;
+        typedef enum
+        {
+            WiFi_11A = 0,
+            WiFi_11B,
+            WiFi_11G,
+            WiFi_11N,
+            WiFi_11AC
+        } WIFI_MODE;
 
-            /**
-             * @brief IP Information
-             */
+        typedef struct
+        {
+            string authCode;
+            string authProvider;
+            string ciServer;
+        } CloudProvInfo;
+
+        typedef struct
+        {
             struct
             {
-                char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
-                char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
+                string ssid; /**< ssid of the Enroller**/
+                string pwd; /**< pwd of the Enroller**/
                 WIFI_AUTHTYPE authtype; /**< auth type of the Enroller**/
                 WIFI_ENCTYPE enctype; /**< encryption type of the Enroller**/
-                char authcode[NET_WIFI_AUTH_SIZE];
-                char authserverUrl[NET_WIFI_AUTH_SIZE];
-                char apiserverUrl[NET_WIFI_AUTH_SIZE];
             } WIFI;
-        } ProvData;
 
-        /**
-         * @brief Network Information
-         */
+            struct
+            {
+                string language;
+                string country;
+            } Device;
+        } DataProvInfo;
+
         typedef struct
         {
-            ProvData provData;    /**< Enroller Network Info**/
-            OCConnectivityType connType;    /**< Connectivity Type**/
-        } ProvConfig;
+            string id;
+            string name;
+            string language;
+            string country;
+        } DeviceConfig;
 
-        /**
-         * @brief This structure represent onboarding connection instance.
-        */
         typedef struct
         {
-         /*Actual use of ipAddress is for unicast discovery, but also used to identify the Enrollee device as of now,
-            device identification should be based on DeviceID in next release.*/
-           char ipAddress[IPV4_ADDR_SIZE]; /**< IP Address of the Enrollee **/
-           bool isSecured;                 /**< Secure connection**/
-        }WiFiOnboadingConnection;
+            vector<WIFI_MODE> types;
+            WIFI_FREQ freq;
+        } NetworkInfo;
 
         typedef enum
         {
@@ -205,11 +184,11 @@ namespace OIC
 
         typedef enum
         {
-            ES_UNKNOWN = 0,
-            ES_ONBOARDED,
-            ES_OWNED,
-            ES_PROVISIONED
-        } CurrentESState;
+            ES_CLOUD_PROVISIONING_ERROR = -1,
+            ES_CLOUD_PROVISIONING_SUCCESS,
+            ES_ENROLLEE_FOUND,
+            ES_ENROLLEE_NOT_FOUND
+        }ESCloudProvState;
 
         typedef enum
         {
@@ -225,13 +204,12 @@ namespace OIC
         class SecProvisioningStatus
         {
         public:
-            SecProvisioningStatus(std::string deviceUUID, ESResult result) :
+            SecProvisioningStatus(string deviceUUID, ESResult result) :
                 m_devUUID(deviceUUID), m_result(result)
             {
-
             }
 
-            std::string getDeviceUUID()
+            const string getDeviceUUID()
             {
                 return m_devUUID;
             }
@@ -241,64 +219,72 @@ namespace OIC
                 return m_result;
             }
         private:
-            std::string m_devUUID;
+            string m_devUUID;
             ESResult m_result;
         };
 
-        class CapabilityData
+        class PropertyData
         {
         public:
-            CapabilityData()
+            PropertyData()
             {
-
             }
+
+            PropertyData(DeviceConfig devConfig, NetworkInfo netInfo, bool cloudable) :
+                m_devConfig(devConfig), m_netInfo(netInfo), m_cloudable(cloudable)
+            {
+            }
+
+            const DeviceConfig getDevInfo()
+            {
+                return m_devConfig;
+            }
+
+            const NetworkInfo getNetInfo()
+            {
+                return m_netInfo;
+            }
+
+            bool isCloudable()
+            {
+                return m_cloudable;
+            }
+
         private:
+            DeviceConfig m_devConfig;
+            NetworkInfo m_netInfo;
+            bool m_cloudable;
         };
 
-        class InitRemoteEnrolleeStatus
+        class RequestPropertyDataStatus
         {
         public:
-            InitRemoteEnrolleeStatus(ESResult result) :
-                    m_result(result)
+            RequestPropertyDataStatus(ESResult result, const PropertyData& data) :
+                    m_result(result), m_PropertyData(data)
             {
-
             }
 
             ESResult getESResult()
             {
                 return m_result;
             }
+
+            const PropertyData getPropertyData()
+            {
+                return m_PropertyData;
+            }
+
         private:
             ESResult m_result;
+            PropertyData m_PropertyData;
         };
 
-        class RequestCapabilityStatus
+        class DataProvisioningStatus
         {
         public:
-            RequestCapabilityStatus(ESResult result, const CapabilityData& data) :
-                    m_result(result), m_capabilityData(data)
-            {
-            }
-            ESResult getESResult()
-            {
-                return m_result;
-            }
-            CapabilityData getCapabilityData()
-            {
-                return m_capabilityData;
-            }
-        private:
-            ESResult m_result;
-            CapabilityData m_capabilityData;
-        };
-
-        class ProvisioningStatus
-        {
-        public:
-            ProvisioningStatus(ESResult result, ESState esState) :
+            DataProvisioningStatus(ESResult result, ESState esState) :
                     m_result(result), m_esState(esState)
             {
-
             }
 
             ESResult getESResult()
@@ -310,63 +296,64 @@ namespace OIC
             {
                 return m_esState;
             }
+
         private:
             ESResult m_result;
             ESState m_esState;
         };
 
-        class EasySetupStatus
+        class CloudProvisioningStatus
         {
         public:
-            EasySetupStatus(const EasySetupState& easySetupState,
-                    const ProvConfig& provConfig) :
-                    m_easySetupState(easySetupState), m_ProvConfig(provConfig)
+            CloudProvisioningStatus(ESResult result, ESCloudProvState state) :
+                    m_result(result), m_esCloudState(state)
             {
-
             }
 
-            ProvConfig getProvConfig()
+            ESResult getESResult()
             {
-                return m_ProvConfig;
+                return m_result;
             }
 
-            EasySetupState getEasySetupState()
+            ESCloudProvState getESCloudState()
             {
-                return m_easySetupState;
+                return m_esCloudState;
             }
+
         private:
-            EasySetupState m_easySetupState;
-            ProvConfig m_ProvConfig;
+            ESResult m_result;
+            ESCloudProvState m_esCloudState;
         };
 
         /**
          * Callback function definition for providing Enrollee security status .
          */
-        typedef std::function< void(std::shared_ptr< InitRemoteEnrolleeStatus >) > InitRemoteEnrolleeStatusCb;
+        typedef function< void(shared_ptr< RequestPropertyDataStatus >) > RequestPropertyDataStatusCb;
 
         /**
          * Callback function definition for providing Enrollee security status .
          */
-        typedef std::function< void(std::shared_ptr< RequestCapabilityStatus >) > RequestCapabilityStatusCb;
-        /**
-         * Callback function definition for providing Enrollee security status .
-         */
-        typedef std::function< void(std::shared_ptr< ProvisioningStatus >) > DataProvStatusCb;
+        typedef function< void(shared_ptr< DataProvisioningStatus >) > DataProvStatusCb;
 
         /**
          * Callback function definition for providing Enrollee security status .
          */
-        typedef std::function< void(std::shared_ptr<SecProvisioningStatus>) > EnrolleeSecStatusCb;
+        typedef function< void(shared_ptr< CloudProvisioningStatus >) > CloudProvStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee security status .
+         */
+        typedef function< void(shared_ptr<SecProvisioningStatus>) > EnrolleeSecStatusCb;
 
         /**
          * Callback definition to be invoked when the security stack expects a pin from application.
          */
-        typedef std::function< void(std::string&) > SecurityPinCb;
+        typedef function< void(string&) > SecurityPinCb;
 
         /**
          * Callback definition to be invoked when the stack expects a db path.
          */
-        typedef std::function< void(std::string&) > SecProvisioningDbPathCb;
+        typedef function< void(string&) > SecProvisioningDbPathCb;
 
     }
 }

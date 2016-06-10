@@ -51,14 +51,13 @@ namespace OIC
 
             /**
              * This API is used for creating a remote Enrollee  instance.
-             * @param WiFiOnboadingConnection Onboarding connection information for configuring the Enrollee.
              *
              * @throws ESBadRequestException If createEnrolleeDevice is invoked with the same
              *         provisioning information.
              *
              * @return Pointer to RemoteEnrollee instance.
              */
-            std::shared_ptr<RemoteEnrollee> createRemoteEnrollee(const WiFiOnboadingConnection& wifiOnboardingconn);
+            std::shared_ptr<RemoteEnrollee> createRemoteEnrollee();
 
         private:
             EasySetup();

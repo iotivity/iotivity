@@ -21,13 +21,20 @@
 #ifndef REMOTE_ENROLLEE_H_
 #define REMOTE_ENROLLEE_H_
 
+#include <memory>
+
 #include "ESRichCommon.h"
+#include "OCApi.h"
+
+using namespace OC;
 
 namespace OIC
 {
     namespace Service
     {
+        class OCResource;
         class EnrolleeResource;
+        class CloudResource;
         class EnrolleeSecurity;
 
         /**
@@ -38,15 +45,6 @@ namespace OIC
         class RemoteEnrollee
         {
         public:
-            /**
-             * RemoteEnrollee constructor
-             *
-             * @param enrolleeNWProvInfo Provisioning information for the Enrollee
-             *
-             * @throw ESBadRequestException is thrown if the parameters are invalid
-             */
-            RemoteEnrollee(const WiFiOnboadingConnection& wifiOnboardingconn);
-
             ~RemoteEnrollee() = default;
 
 #ifdef __WITH_DTLS__
@@ -73,7 +71,16 @@ namespace OIC
              *
              * @see RemoteEnrollee
              */
-             void initRemoteEnrollee(InitRemoteEnrolleeStatusCb callback);
+            void  initRemoteEnrollee();
+
+            /**
+             * Start provisioning of target Enrollers information to the Enrollee.
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see RemoteEnrollee
+             */
+            void requestPropertyData(RequestPropertyDataStatusCb callback);
 
              /**
              * Start provisioning of target Enrollers information to the Enrollee.
@@ -91,7 +98,7 @@ namespace OIC
              *
              * @see RemoteEnrollee
              */
-            void getCapabilityData(RequestCapabilityStatusCb callback);
+            void startDataProvisioning(DataProvStatusCb callback);
 
             /**
              * Start provisioning of target Enrollers information to the Enrollee.
@@ -100,55 +107,52 @@ namespace OIC
              *
              * @see RemoteEnrollee
              */
-            void startDataProvisioning(const ProvConfig& dataProvConfig, DataProvStatusCb callback);
-
-            /**
-             * Stop provisioning process that is currently in progress.
-             *
-             * @throws BadRequestException If provisioning is not in progress.
-             */
-            void stopProvisioning();
-
-            /**
-             * Check if the Enrollee device provisioned.
-             */
-            bool isEnrolleeProvisioned();
+            void startCloudProvisioning(CloudProvStatusCb callback);
 
             /**
              * Get the Provisioning information provided for the current Enrollee.
              *
-             * @return ProvConfig Provisioning information provided for the current Enrollee.
+             * @return DataProvInfo Provisioning information provided for the current Enrollee.
              */
-            ProvConfig getProvConfig ();
+            DataProvInfo getDataProvInfo();
 
-            /**
-             * Get the Onboarding connection information between Mediator and Enrollee.
-             *
-             * @return WiFiOnboadingConnection information between Mediator and Enrollee.
-             */
-
-            WiFiOnboadingConnection getOnboardConn();
+            void setDataProvInfo(const DataProvInfo& );
+            void setCloudProvInfo(const CloudProvInfo& );
 
         private:
-            std::shared_ptr< EnrolleeResource > m_remoteResource;
+            RemoteEnrollee();
+
+            ESResult discoverResource();
+            ESResult ESDiscoveryTimeout(unsigned short waittime);
+            void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
+            void initCloudResource();
+
+            void RequestPropertyDataStatusHandler (std::shared_ptr< RequestPropertyDataStatus > status);
+            void dataProvisioningStatusHandler (std::shared_ptr< DataProvisioningStatus > status);
+            void cloudProvisioningStatusHandler (std::shared_ptr< CloudProvisioningStatus > status);
+            void easySetupSecurityStatusCallback(std::shared_ptr< SecProvisioningStatus > status);
+
+        private:
+            std::shared_ptr< OC::OCResource > m_ocResource;
+            std::shared_ptr< EnrolleeResource > m_enrolleeResource;
+            std::shared_ptr< EnrolleeSecurity > m_enrolleeSecurity;
+            std::shared_ptr< CloudResource > m_cloudResource;
+
+            std::string  m_deviceId;
+            bool m_discoveryResponse;
+
             EnrolleeSecStatusCb m_enrolleeSecStatusCb;
-            InitRemoteEnrolleeStatusCb m_initRemoteEnrolleeStatusCb;
-            RequestCapabilityStatusCb m_requestCapabilityStatusCb;
+            RequestPropertyDataStatusCb m_RequestPropertyDataStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
             DataProvStatusCb m_dataProvStatusCb;
-            ProvConfig m_ProvConfig;
-            WiFiOnboadingConnection m_wifiOnboardingconn;
+            CloudProvStatusCb m_cloudProvStatusCb;
 
-            std::shared_ptr< EnrolleeSecurity > m_enrolleeSecurity;
-            CurrentESState m_currentESState;
-            bool m_isSecured;
+            DataProvInfo m_dataProvInfo;
+            CloudProvInfo m_cloudProvInfo;
+            PropertyData m_propertyData;
 
-            void InitRemoteEnrolleeStatusHandler (std::shared_ptr< InitRemoteEnrolleeStatus > initRemoteEnrolleeStatus);
-            void requestCapabilityStatusHandler (std::shared_ptr< RequestCapabilityStatus > requestCapabilityStatus);
-            void dataProvisioningStatusHandler (std::shared_ptr< ProvisioningStatus > provStatus);
-            void easySetupSecurityStatusCallback(
-            std::shared_ptr< SecProvisioningStatus > secProvisioningResult);
+            friend class EasySetup;
         };
     }
 }

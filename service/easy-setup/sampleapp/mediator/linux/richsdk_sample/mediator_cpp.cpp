@@ -23,10 +23,10 @@
 
 #include "oic_string.h"
 #include "EasySetup.h"
+#include "ESRichCommon.h"
 #include "OCPlatform.h"
 #include "logger.h"
 #include "OCProvisioningManager.h"
-
 
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"
 #define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC }
@@ -37,34 +37,26 @@ using namespace OC;
 using namespace OIC::Service;
 
 static EasySetup *easySetupIntance = nullptr;
-static ProvConfig netInfo;
-static WiFiOnboadingConnection onboardingConn;
-static RemoteEnrollee::shared_ptr remoteEnrollee = nullptr;
+static std::shared_ptr<RemoteEnrollee> remoteEnrollee = nullptr;
 
 static std::string ipaddress, ssid, pwd;
 char security;
-
-struct CloseApp
-{
-};
 
 typedef void (*Runner)();
 
 Runner g_currentRun;
 
-int processUserInput(int min, int max)
+int processUserInput(int min = std::numeric_limits<int>::min(),
+        int max = std::numeric_limits<int>::max())
 {
     assert(min <= max);
 
     int input;
 
     std::cin >> input;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    if (!std::cin.fail())
-    {
-        if(input == max + 1) throw CloseApp();
-        if(min <= input && input <= max) return input;
-    }
+    if (!std::cin.fail() && min <= input && input <= max) return input;
 
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -72,112 +64,198 @@ int processUserInput(int min, int max)
     throw std::runtime_error("Invalid Input, please try again");
 }
 
-void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > easySetupStatus)
+void printPropertyData(PropertyData propData)
 {
-    OIC_LOG_V(DEBUG, ES_SAMPLE_APP_TAG, "easySetupStatusCallback status is Status = %d",
-            easySetupStatus->getEasySetupState());
+    cout << "===========================================" << endl;
+    DeviceConfig devConfig = propData.getDevInfo();
+    NetworkInfo netInfo = propData.getNetInfo();
+    bool cloudable = propData.isCloudable();
 
+    cout << "\tDeviceConfig.id : " << devConfig.id << endl;
+    cout << "\tDeviceConfig.name : " << devConfig.name << endl;
+    cout << "\tDeviceConfig.language : " << devConfig.language << endl;
+    cout << "\tDeviceConfig.country : " << devConfig.country << endl;
+
+    for(auto type = netInfo.types.begin(); type != netInfo.types.end(); ++type)
+    {
+        cout << "\tnetInfo.types : " << static_cast<int>(*type) << endl;
+    }
+    cout << "\tnetInfo.freq : " << static_cast<int>(netInfo.freq) << endl;
+    cout << "===========================================" << endl;
 }
 
-void startProvisioning()
+void RequestPropertyDataStatusCallback(std::shared_ptr< RequestPropertyDataStatus > requestPropertyDataStatus)
+{
+    cout << "Enter RequestPropertyDataStatusCb." << endl;
+
+    if(requestPropertyDataStatus->getESResult() != ES_OK)
+    {
+      cout << "requestPropertyDataStatus is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "requestPropertyDataStatus is success." << endl;
+      printPropertyData(requestPropertyDataStatus->getPropertyData());
+    }
+}
+
+void dataProvisioningStatusCallback(std::shared_ptr< DataProvisioningStatus > provStatus)
+{
+    cout << "Enter dataProvisioningStatusCallback." << endl;
+
+    if(provStatus->getESResult() != ES_OK)
+    {
+      cout << "dataProvisioningStatusCallback is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "dataProvisioningStatusCallback is success." << endl;
+      cout << "ESState : " << provStatus->getESState() << endl;
+    }
+}
+
+void cloudProvisioningStatusCallback(std::shared_ptr< CloudProvisioningStatus > status)
+{
+    cout << "Enter cloudProvisioningStatusCallback." << endl;
+    cout << "CloudProvStatus : " <<  status->getESCloudState() << endl;
+}
+
+void createRemoteEnrollee()
+{
+    easySetupIntance = EasySetup::getInstance();
+    try
+    {
+        remoteEnrollee = easySetupIntance->createRemoteEnrollee();
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during createEnrolleeDevice call" << e.reason();
+        return;
+    }
+    cout << "createRemoteEnrollee is success." << endl;
+}
+
+void initRemoteEnrollee()
 {
     try
     {
-        remoteEnrollee->startProvisioning();
+        remoteEnrollee->initRemoteEnrollee();
     }
-    catch(OCException &exception)
+    catch (OCException &e)
     {
-        std::cout << "Exception : " << exception.reason();
+        std::cout << "Exception during initRemoteEnrollee call" << e.reason();
+        return;
     }
 }
 
-void initEasySetup()
+void requestPropertyData()
 {
-
-    easySetupIntance = EasySetup::getInstance();
-
-    cout<<"\n Enter the IP address : ";
-    cin>>ipaddress;
-    cout<<"\n Enter the Target Network SSID : ";
-    cin>>ssid;
-    cout<<"\n Enter the Target Network Password : ";
-    cin>>pwd;
-    cout<<"\n Enable Security: [Y/N] ";
-    cin>>security;
-
-    if ( ipaddress.size() == 0 || ssid.size() == 0  || pwd.size()==0 )
+    try
     {
-         cout<<"\n Invalid information try again !!!";
+        remoteEnrollee->requestPropertyData(RequestPropertyDataStatusCallback);
     }
-    else
-     {
-           cout <<"\n Entered details are :  \n";
-           cout<<"\n IP address : "<<ipaddress;
-           cout<<"\n Target Network SSID : "<<ssid;
-           cout<<"\n Target Network Password : "<<pwd;
-
-          if (security == 'Y' || security == 'y' )
-          {
-                  onboardingConn.isSecured = true;
-                  cout<<"\n Security is Enabled\n\n\n";
-           }
-           else
-           {
-                 onboardingConn.isSecured = false;
-                 cout<<"\n Security is not Enabled\n\n\n";
-           }
-
-          netInfo.connType = CT_ADAPTER_IP;
-
-         OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
-         OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
-
-         OICStrcpy(onboardingConn.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
-
-         try
-         {
-             remoteEnrollee = easySetupIntance->createEnrolleeDevice(netInfo,onboardingConn);
-         }
-         catch (OCException &e)
-         {
-             std::cout << "Exception during createEnrolleeDevice call" << e.reason();
-             return;
-         }
-
-         remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
+    catch (OCException &e)
+    {
+        std::cout << "Exception during requestPropertyData call" << e.reason();
+        return;
     }
-
 }
-void runEasySetupMenu()
+
+void setDataProvInfo()
 {
-    constexpr int EASY_SETUP_INIT = 1;
-    constexpr int START_PROVISIONING = 2;
-    constexpr int STOP_PROVISIONING = 3;
-    constexpr int STOP_EASY_SETUP = 4;
+    DataProvInfo dataProvInfo;
+    dataProvInfo.WIFI.ssid = "Iotivity_2.4G";
+    dataProvInfo.WIFI.pwd = "1234567890";
+    dataProvInfo.WIFI.authtype = WPA2_PSK;
+    dataProvInfo.WIFI.enctype = TKIP_AES;
+    dataProvInfo.Device.language = "korean";
+    dataProvInfo.Device.country = "korea";
+
+    remoteEnrollee->setDataProvInfo(dataProvInfo);
+}
+
+void setCloudProvInfo()
+{
+    CloudProvInfo cloudProvInfo;
+    cloudProvInfo.authCode = "authCode";
+    cloudProvInfo.authProvider = "authProvider";
+    cloudProvInfo.ciServer = "ciServer";
+
+    remoteEnrollee->setCloudProvInfo(cloudProvInfo);
+}
+
+void startDataProvisioning()
+{
+    try
+    {
+        remoteEnrollee->startDataProvisioning(dataProvisioningStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during startDataProvisioning call" << e.reason();
+        return;
+    }
+}
+
+void startCloudProvisioning()
+{
+    try
+    {
+        remoteEnrollee->startCloudProvisioning(cloudProvisioningStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during startDataProvisioning call" << e.reason();
+        return;
+    }
+}
+
+void DisplayMenu()
+{
+    constexpr int CREATE_REMOTE_ENROLLEE = 1;
+    constexpr int EASY_SETUP_INIT = 2;
+    constexpr int REQUEST_PROPERTY_DATA = 3;
+    constexpr int SET_DATA_PROVISIONING_INFO = 4;
+    constexpr int START_DATA_PROVISIONING = 5;
+    constexpr int SET_CLOUD_PROVISIONING_INFO = 6;
+    constexpr int START_CLOUD_PROVISIONING = 7;
 
     std::cout << "========================================================\n";
+    std::cout << CREATE_REMOTE_ENROLLEE << ". Create Remote Enrollee                    \n";
     std::cout << EASY_SETUP_INIT << ". Easy Setup Init                    \n";
-    std::cout << START_PROVISIONING << ". Start Provisioning              \n";
-    std::cout << STOP_PROVISIONING << ". Stop Provisioning                \n";
-    std::cout << STOP_EASY_SETUP << ". Stop Easy Setup                    \n";
-    std::cout << STOP_EASY_SETUP + 1 << ". Quit                           \n";
+    std::cout << REQUEST_PROPERTY_DATA << ". Request PropertyData              \n";
+    std::cout << SET_DATA_PROVISIONING_INFO << ". Set Data Provisioning Info              \n";
+    std::cout << START_DATA_PROVISIONING << ". Start Data Provisioning              \n";
+    std::cout << SET_CLOUD_PROVISIONING_INFO << ". Set Cloud Provisioning Info              \n";
+    std::cout << START_CLOUD_PROVISIONING << ". Start Cloud Provisioning              \n";
     std::cout << "========================================================\n";
 
-    int selection = processUserInput(EASY_SETUP_INIT, STOP_EASY_SETUP);
+    int selection = processUserInput(CREATE_REMOTE_ENROLLEE, START_CLOUD_PROVISIONING);
 
     switch (selection)
     {
+        case CREATE_REMOTE_ENROLLEE:
+            createRemoteEnrollee();
+            break;
         case EASY_SETUP_INIT:
-            initEasySetup();
+            initRemoteEnrollee();
             break;
-        case START_PROVISIONING:
-            startProvisioning();
+        case REQUEST_PROPERTY_DATA:
+            requestPropertyData();
             break;
-        case STOP_PROVISIONING:
-            //stopProvisioning();
+        case SET_DATA_PROVISIONING_INFO:
+            setDataProvInfo();
             break;
-        case STOP_EASY_SETUP:
-            //stopEasySetup();
+        case START_DATA_PROVISIONING:
+            startDataProvisioning();
+            break;
+        case SET_CLOUD_PROVISIONING_INFO:
+            setCloudProvInfo();
+            break;
+        case START_CLOUD_PROVISIONING:
+            startCloudProvisioning();
             break;
         default:
             break;
@@ -211,21 +289,15 @@ int main()
     }
 #endif
 
-    g_currentRun = runEasySetupMenu;
-
     while (true)
     {
         try
         {
-            g_currentRun();
+            DisplayMenu();
         }
         catch (const std::exception& e)
         {
             std::cout << "Exception caught in main " << e.what() << std::endl;
-        }
-        catch (const CloseApp&)
-        {
-            break;
         }
     }
 

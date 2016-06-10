@@ -139,10 +139,8 @@ namespace OIC
             }
         }
 
-        EasySetupState EnrolleeSecurity::performOwnershipTransfer()
+        bool EnrolleeSecurity::performOwnershipTransfer()
         {
-            EasySetupState ownershipStatus = DEVICE_NOT_OWNED;
-
             OC::DeviceList_t pUnownedDevList, pOwnedDevList;
 
             pOwnedDevList.clear();
@@ -183,7 +181,6 @@ namespace OIC
             if (result != OC_STACK_OK)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "UnOwned Discovery failed.");
-                ownershipStatus = DEVICE_NOT_OWNED;
                 //Throw exception
                 throw ESPlatformException(result);
             }
@@ -213,21 +210,17 @@ namespace OIC
                     if (m_unownedDevice->doOwnershipTransfer(ownershipTransferCb) != OC_STACK_OK)
                     {
                         OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransferCallback is failed");
-                        ownershipStatus = DEVICE_NOT_OWNED;
-                        return ownershipStatus;
+                        return false;
                     }
-                    ownershipStatus = DEVICE_OWNED;
                 }
             }
             else
             {
-                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No unSecure devices found.");
-                ownershipStatus = DEVICE_NOT_OWNED;
-
-                return ownershipStatus;
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No unOwned devices found.");
+                return false;
             }
 
-            return ownershipStatus;
+            return true;
         }
     }
 }
