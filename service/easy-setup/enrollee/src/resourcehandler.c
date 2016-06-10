@@ -53,7 +53,10 @@ const char *getResult(OCStackResult result);
 OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
-OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest);
+void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
+void updateWiFiResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
+void updateCloudResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
+void updateDevConfResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
 
 ESEnrolleeResourceEventCallback gNetworkInfoProvEventCb = NULL;
 
@@ -209,7 +212,7 @@ OCStackResult initDevConfResource(bool isSecured)
 
 }
 
-void updateProvResource(OCRepPayload* input)
+void updateProvResource(OCEntityHandlerRequest *ehRequest, OCRepPayload* input)
 {
     OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.status %lld", gProvResource.status);
     bool trigger;
@@ -218,10 +221,21 @@ void updateProvResource(OCRepPayload* input)
         // Triggering
         gProvResource.trigger = trigger;
     }
+
+    if(ehRequest->query)
+    {
+        if(strstr(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
+        {// When Provisioning resource has a POST with BatchInterface
+            updateCloudResource(ehRequest, input);
+            updateWiFiResource(ehRequest, input);
+            updateDevConfResource(ehRequest, input);
+        }
+    }
 }
 
-void updateWiFiResource(OCRepPayload* input)
+void updateWiFiResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 {
+    (void) ehRequest;
     char* ssid;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SSID, &ssid))
     {
@@ -250,8 +264,9 @@ void updateWiFiResource(OCRepPayload* input)
         OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.encType %u", gWiFiResource.encType);
     }
 }
-void updateCloudResource(OCRepPayload* input)
+void updateCloudResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 {
+    (void) ehRequest;
     char *authCode;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &authCode))
     {
@@ -274,8 +289,9 @@ void updateCloudResource(OCRepPayload* input)
     }
 }
 
-void updateDevConfResource(OCRepPayload* input)
+void updateDevConfResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 {
+    (void) ehRequest;
     char *country;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &country))
     {
@@ -293,6 +309,7 @@ void updateDevConfResource(OCRepPayload* input)
 
 OCRepPayload* constructResponseOfWiFi(OCEntityHandlerRequest *ehRequest)
 {
+    (void) ehRequest;
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
@@ -319,6 +336,7 @@ OCRepPayload* constructResponseOfWiFi(OCEntityHandlerRequest *ehRequest)
 
 OCRepPayload* constructResponseOfCloud(OCEntityHandlerRequest *ehRequest)
 {
+    (void) ehRequest;
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
@@ -337,6 +355,7 @@ OCRepPayload* constructResponseOfCloud(OCEntityHandlerRequest *ehRequest)
 
 OCRepPayload* constructResponseOfDevConf(OCEntityHandlerRequest *ehRequest)
 {
+    (void) ehRequest;
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
@@ -521,15 +540,15 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     }
 
     if(ehRequest->resource == gProvResource.handle)
-        updateProvResource(input);
+        updateProvResource(ehRequest, input);
     else if(ehRequest->resource == gWiFiResource.handle)
-        updateWiFiResource(input);
+        updateWiFiResource(ehRequest, input);
     else if(ehRequest->resource == gCloudResource.handle)
-        updateCloudResource(input);
+        updateCloudResource(ehRequest, input);
     else if(ehRequest->resource == gDevConfResource.handle)
-        updateDevConfResource(input);
+        updateDevConfResource(ehRequest, input);
 
-    //ES_PS_PROVISIONING_COMPLETED state indicates that already provisioning is completed.
+    // ES_PS_PROVISIONING_COMPLETED state indicates that already provisioning is completed.
     // A new request for provisioning means overriding existing network provisioning information.
     if (gProvResource.trigger)
     {
@@ -582,6 +601,8 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
 OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest * ehRequest,
         OCRepPayload** payload)
 {
+    (void) ehRequest;
+    (void) payload;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
     return ehResult;
