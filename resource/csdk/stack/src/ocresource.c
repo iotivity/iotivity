@@ -979,7 +979,8 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
                                         request->numRcvdVendorSpecificHeaderOptions,
                                         request->rcvdVendorSpecificHeaderOptions,
                                         (OCObserveAction)request->observationOption,
-                                        (OCObservationId)0);
+                                        (OCObservationId)0,
+                                        request->coapID);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // At this point we know for sure that defaultDeviceHandler exists
@@ -1043,7 +1044,8 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
                                         request->numRcvdVendorSpecificHeaderOptions,
                                         request->rcvdVendorSpecificHeaderOptions,
                                         (OCObserveAction)request->observationOption,
-                                        0);
+                                        0,
+                                        request->coapID);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
@@ -1178,7 +1180,8 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
                                         request->numRcvdVendorSpecificHeaderOptions,
                                         request->rcvdVendorSpecificHeaderOptions,
                                         (OCObserveAction)request->observationOption,
-                                        (OCObservationId)0);
+                                        (OCObservationId)0,
+                                        request->coapID);
     if(result == OC_STACK_OK)
     {
         result = DefaultCollectionEntityHandler (OC_REQUEST_FLAG, &ehRequest);

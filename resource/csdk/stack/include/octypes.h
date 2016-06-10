@@ -1304,6 +1304,9 @@ typedef struct
     /** Pointer to the array of the received vendor specific header options.*/
     OCHeaderOption * rcvdVendorSpecificHeaderOptions;
 
+    /** Message id.*/
+    uint16_t messageID;
+
     /** the payload from the request PDU.*/
     OCPayload *payload;
 

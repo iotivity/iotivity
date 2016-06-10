@@ -518,7 +518,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 NULL, PAYLOAD_TYPE_REPRESENTATION,
                                                 NULL, 0, 0, NULL,
                                                 OC_OBSERVE_DEREGISTER,
-                                                observer->observeId);
+                                                observer->observeId,
+                                                0);
             if(result != OC_STACK_OK)
             {
                 return result;
@@ -569,7 +570,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     NULL, PAYLOAD_TYPE_REPRESENTATION,
                                                     NULL, 0, 0, NULL,
                                                     OC_OBSERVE_DEREGISTER,
-                                                    observer->observeId);
+                                                    observer->observeId,
+                                                    0);
                 if(result != OC_STACK_OK)
                 {
                     return OC_STACK_ERROR;
