@@ -112,8 +112,7 @@ NSResult NSDropNSObject(NSMessage * obj)
 
     if (obj->messageId)
     {
-        OICFree(obj->messageId);
-        obj->messageId = NULL;
+        obj->messageId = 0;
     }
 
     if (obj->title)

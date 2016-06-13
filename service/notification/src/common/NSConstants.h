@@ -34,14 +34,18 @@
         ((level) == 1) ? "INFO" : \
         ((level) == 2) ? "WARNING" : \
 	((level) == 3) ? "ERROR" : "FATAL")
-#define NS_LOG_V(level, format, ...) { \
+#define NS_LOG_V(level, format, ...) \
+    { \
         printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
         printf((format), __VA_ARGS__); \
-        printf("\n"); }
-#define NS_LOG(level, msg) { \
+        printf("\n"); \
+    }
+#define NS_LOG(level, msg) \
+    { \
         printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \
         printf((msg)); \
-        printf("\n"); }
+        printf("\n"); \
+    }
 #endif
 
 #define NS_TAG "IOT_NOTI"
@@ -113,6 +117,10 @@ typedef enum eTaskType
     TASK_CONSUMER_REQ_SUBSCRIBE = 8002,
     TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL = 8003,
     TASK_CONSUMER_RECV_MESSAGE = 8101,
+
+    TASK_CONSUMER_PROVIDER_DISCOVERED = 8201,
+    TASK_CONSUMER_PROVIDER_DELETED = 8202,
+    TASK_CONSUMER_RECV_CONFIRM = 8206,
 
     TASK_EVENT_CONNECTED = 9000,
     TASK_EVENT_DISCONNECTED = 9001,

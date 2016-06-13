@@ -72,8 +72,8 @@ void NSConsumerSubscriptionTaskProcessing(NSTask * task)
 {
     NS_VERTIFY_NOT_NULL_V(task);
 
-    NSCacheList * cache;
-    if (!*(NSGetCacheList()))
+    NSCacheList * cache = *(NSGetCacheList());
+    if (!cache)
     {
         NS_LOG(DEBUG, "Cache Init");
         cache = NSStorageCreate();
@@ -82,7 +82,6 @@ void NSConsumerSubscriptionTaskProcessing(NSTask * task)
         cache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
         NSSetCacheList(cache);
     }
-    cache = *(NSGetCacheList());
 
     NSResult ret = NS_ERROR;
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);

@@ -40,6 +40,9 @@
 #define NS_ATTRIBUTE_SOURCE "SOURCE"
 #define NS_ATTRIBUTE_STATE "STATE"
 #define NS_ATTRIBUTE_DEVICE "DEVICE"
+#define NS_ATTRIBUTE_TYPE "TYPE"
+#define NS_ATTRIBUTE_DATETIME "DATE_TIME"
+#define NS_ATTRIBUTE_TTL "TTL"
 
 /**
  * Result code of notification service

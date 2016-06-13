@@ -174,34 +174,33 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
     NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, OICFree(newMsg));
     memcpy(newMsg->addr, msg->addr, sizeof(OCDevAddr));
 
-    newMsg->mId = OICStrdup(msg->mId);
-    newMsg->mTitle = OICStrdup(msg->mTitle);
-    newMsg->mContentText = OICStrdup(msg->mContentText);
-    newMsg->mSource = OICStrdup(msg->mSource);
+    newMsg->messageId = msg->messageId;
+    newMsg->title = OICStrdup(msg->title);
+    newMsg->contentText = OICStrdup(msg->contentText);
+    newMsg->sourceName = OICStrdup(msg->sourceName);
 
     return newMsg;
 }
 void NSRemoveMessage(NSMessage_consumer * msg)
 {
-    if (msg->mId)
+    if (msg->messageId)
     {
-        OICFree(msg->mId);
-        msg->mId = NULL;
+        msg->messageId = 0;
     }
-    if (msg->mTitle)
+    if (msg->title)
     {
-        OICFree(msg->mTitle);
-        msg->mTitle = NULL;
+        OICFree(msg->title);
+        msg->title = NULL;
     }
-    if (msg->mContentText)
+    if (msg->contentText)
     {
-        OICFree(msg->mContentText);
-        msg->mContentText = NULL;
+        OICFree(msg->contentText);
+        msg->contentText = NULL;
     }
-    if (msg->mSource)
+    if (msg->sourceName)
     {
-        OICFree(msg->mSource);
-        msg->mSource = NULL;
+        OICFree(msg->sourceName);
+        msg->sourceName = NULL;
     }
     if (msg->addr)
     {

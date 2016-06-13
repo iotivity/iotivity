@@ -89,7 +89,8 @@ OCStackApplicationResult NSConsumerSyncInfoListener(
     NS_VERTIFY_NOT_NULL(provider, OC_STACK_KEEP_TRANSACTION);
 
     newNoti = NSGetNSSyncInfo(clientResponse);
-    NS_VERTIFY_NOT_NULL(newNoti, OC_STACK_KEEP_TRANSACTION);
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(
+            newNoti, OC_STACK_KEEP_TRANSACTION, OICFree(provider));
 
     NSTaskType taskType = TASK_RECV_READ;
 
@@ -129,7 +130,7 @@ OCStackApplicationResult NSConsumerMessageListener(
     NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(
             newNoti, OC_STACK_KEEP_TRANSACTION, OICFree(provider));
 
-    if (!strcmp(newNoti->mId, NS_MESSAGE_ACCEPTANCE))
+    if (newNoti->messageId == 0)
     {
         // TODO update provider list.
         NS_LOG(DEBUG, "Receive Subscribe confirm");
@@ -167,37 +168,50 @@ NSMessage_consumer * NSGetNSMessage(OCClientResponse * clientResponse)
 {
     NS_VERTIFY_NOT_NULL(clientResponse->payload, NULL);
 
-    NS_LOG(DEBUG, "get id");
+    NS_LOG(DEBUG, "get msg id");
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-    char * id = NULL;
-    bool getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE_ID, &id);
+    uint64_t id = NULL;
+    bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&id);
+    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
+
+    NS_LOG(DEBUG, "get provider id");
+    char * pId = NULL;
+    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
     NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "create NSMessage");
     NSMessage_consumer * retNoti = (NSMessage_consumer *)OICMalloc(sizeof(NSMessage_consumer));
     NS_VERTIFY_NOT_NULL(retNoti, NULL);
 
-    retNoti->mId = id;
-    retNoti->mTitle = NULL;
-    retNoti->mContentText = NULL;
-    retNoti->mSource = NULL;
+    retNoti->messageId = id;
+    retNoti->providerId = pId;
+    retNoti->title = NULL;
+    retNoti->contentText = NULL;
+    retNoti->sourceName = NULL;
 
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retNoti->mTitle);
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TEXT, &retNoti->mContentText);
-    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SOURCE, &retNoti->mSource);
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retNoti->title);
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TEXT, &retNoti->contentText);
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SOURCE, &retNoti->sourceName);
+
+    OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *)&retNoti->type);
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_DATETIME, &retNoti->dateTime);
+    OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retNoti->ttl);
 
     NS_LOG_V(DEBUG, "Msg Address : %s", clientResponse->addr->addr);
-    NS_LOG_V(DEBUG, "Msg ID : %s", retNoti->mId);
-    NS_LOG_V(DEBUG, "Msg Title : %s", retNoti->mTitle);
-    NS_LOG_V(DEBUG, "Msg Content : %s", retNoti->mContentText);
-    NS_LOG_V(DEBUG, "Msg Source : %s", retNoti->mSource);
+    NS_LOG_V(DEBUG, "Msg ID : %ld", retNoti->messageId);
+    NS_LOG_V(DEBUG, "Msg Title : %s", retNoti->title);
+    NS_LOG_V(DEBUG, "Msg Content : %s", retNoti->contentText);
+    NS_LOG_V(DEBUG, "Msg Source : %s", retNoti->sourceName);
+    NS_LOG_V(DEBUG, "Msg Type : %d", retNoti->type);
+    NS_LOG_V(DEBUG, "Msg Date : %s", retNoti->dateTime);
+    NS_LOG_V(DEBUG, "Msg ttl : %ld", retNoti->ttl);
 
     NS_LOG(DEBUG, "copy target address");
     retNoti->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     NS_VERTIFY_NOT_NULL(retNoti->addr, NULL);
     memcpy(retNoti->addr, clientResponse->addr, sizeof(OCDevAddr));
 
-    retNoti->type = Notification;
+    retNoti->messageTypes = Notification;
 
     return retNoti;
 }
@@ -213,9 +227,14 @@ NSSyncInfo * NSGetNSSyncInfo(OCClientResponse * clientResponse)
     bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_STATE, & state);
     NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
-    NS_LOG(DEBUG, "get id");
-    char * id = NULL;
-    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE_ID, &id);
+    NS_LOG(DEBUG, "get msg id");
+    uint64_t id = NULL;
+    getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&id);
+    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
+
+    NS_LOG(DEBUG, "get provider id");
+    char * pId = NULL;
+    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
     NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "create NSSyncInfo");
@@ -224,9 +243,11 @@ NSSyncInfo * NSGetNSSyncInfo(OCClientResponse * clientResponse)
 
     retSync->messageId = id;
     retSync->state = (NSSyncType) state;
+    retSync->providerId = pId;
 
-    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync ID : %ld", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
+    NS_LOG_V(DEBUG, "Sync Provider ID : %s", retSync->providerId);
 
     return retSync;
 }
@@ -285,11 +306,11 @@ OCRepPayload * NSGetPayloadofSyncInfo(NSMessage_consumer * message, int type)
     OCRepPayload * payload = OCRepPayloadCreate();
     NS_VERTIFY_NOT_NULL(payload, NULL);
 
-    OCRepPayloadSetPropString(payload, "ID", (char *) message->mId);
+    OCRepPayloadSetPropInt(payload, "ID", (int64_t)message->messageId);
     OCRepPayloadSetPropInt(payload, "STATE", type);
-    if (message->mSource)
+    if (message->sourceName)
     {
-        OCRepPayloadSetPropString(payload, "SOURCE", (char *) message->mSource);
+        OCRepPayloadSetPropString(payload, "SOURCE", (char *) message->sourceName);
     }
 
     return payload;

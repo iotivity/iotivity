@@ -190,7 +190,9 @@ NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj
     NSMessage_consumer * newMsgObj = (NSMessage_consumer *) newObj->data;
 
     pthread_mutex_unlock(mutex);
-    NSCacheElement * it = NSStorageRead(list, newMsgObj->mId);
+    char msgId[] = {0, };
+    sprintf(msgId, "%ld", newMsgObj->messageId);
+    NSCacheElement * it = NSStorageRead(list, msgId);
     pthread_mutex_lock(mutex);
 
     if (it)
@@ -288,7 +290,9 @@ bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id
     {
         NSMessage_consumer * msg = (NSMessage_consumer *) data;
 
-        if (!strcmp(msg->mId, id))
+        char msgId[] = {0, };
+        sprintf(msgId, "%ld", msg->messageId);
+        if (!strcmp(msgId, id))
         {
             return true;
         }

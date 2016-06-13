@@ -95,16 +95,22 @@ typedef enum
 typedef struct
 {
     // Mandatory
-    char * mId;
-    char * mTitle;
+    uint64_t messageId;
+    char * providerId;
+    
+    //optional
+    NSMessageType type;
+    char * dateTime;
+    uint64_t ttl;
+    char * title;
+    char * contentText;
+    char * sourceName;
+    NSMediaContents mediaContents;
 
     //Optional
-    char * mContentText;
-    char * mSource;
-
     OCDevAddr * addr;
     char * syncUri;
-    NSConsumerMessageTypes type;
+    NSConsumerMessageTypes messageTypes;
 } NSMessage_consumer;
 
 bool NSIsStartedConsumer();

@@ -91,8 +91,7 @@ NSResult NSFreeMessage(NSMessage * obj)
 
     if (obj->messageId)
     {
-        OICFree(obj->messageId);
-        obj->messageId = NULL;
+        obj->messageId = 0;
     }
 
     if (obj->title)
@@ -130,13 +129,13 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
 
     newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
     newMsg->contentText = NULL;
-    newMsg->messageId = NULL;
+    newMsg->messageId = 0;
     newMsg->sourceName = NULL;
     newMsg->title = NULL;
 
     if (copyMsg->messageId)
     {
-        newMsg->messageId = OICStrdup(copyMsg->messageId);
+        newMsg->messageId = copyMsg->messageId;
     }
 
     if (copyMsg->title)
@@ -166,8 +165,7 @@ NSResult NSFreeSync(NSSyncInfo * obj)
 
     if (obj->messageId)
     {
-        OICFree(obj->messageId);
-        obj->messageId = NULL;
+        obj->messageId = 0;
     }
 
     if (obj->providerId)
@@ -193,13 +191,13 @@ NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
     }
 
     newMsg = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
-    newMsg->messageId = NULL;
+    newMsg->messageId = 0;
     newMsg->providerId = NULL;
     newMsg->state = -1;
 
     if (copyMsg->messageId)
     {
-        newMsg->messageId = OICStrdup(copyMsg->messageId);
+        newMsg->messageId = copyMsg->messageId;
     }
 
     if (copyMsg->providerId)
@@ -291,11 +289,11 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
         return NULL;
     }
 
-    retSync->messageId = NULL;
+    retSync->messageId = 0;
     retSync->state = NS_SYNC_READ;
 
     OCRepPayload * repPayload = (OCRepPayload *)payload;
-    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_MESSAGE_ID, &retSync->messageId))
+    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&retSync->messageId))
     {
         OICFree(retSync);
         return NULL;
@@ -308,14 +306,13 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     int64_t state;
     if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_STATE, &state))
     {
-        OICFree(retSync->messageId);
         OICFree(retSync);
         return NULL;
     }
 
     retSync->state = (NSSyncType) state;
 
-    NS_LOG_V(DEBUG, "Sync ID : %s", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync ID : %ld", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
 
     NS_LOG(DEBUG, "NSBuildOICNotificationSync - OUT");
