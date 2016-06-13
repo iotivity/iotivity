@@ -100,7 +100,15 @@ CborError OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, s
         cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing discovery map");
     }
-    *size = encoder.ptr - outPayload;
+
+    if (cborEncoderResult == CborErrorOutOfMemory)
+    {
+        *size += encoder.ptr - encoder.end;
+    }
+    else
+    {
+        *size = encoder.ptr - outPayload;
+    }
 
     return cborEncoderResult;
 
