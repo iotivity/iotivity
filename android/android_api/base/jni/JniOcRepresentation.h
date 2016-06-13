@@ -462,6 +462,14 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
+    * Method:    getValues
+    * Signature: ()Ljava/util/Map;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getValues
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
     * Method:    getValueN
     * Signature: (Ljava/lang/String;)Ljava/lang/Object;
     */

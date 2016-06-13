@@ -19,6 +19,9 @@
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
+
+#include <map>
+
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
 
@@ -36,6 +39,30 @@ OCRepresentation* JniOcRepresentation::getOCRepresentationPtr(JNIEnv *env, jobje
         ThrowOcException(JNI_NO_NATIVE_POINTER, "");
     }
     return rep;
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    getValues
+* Signature: ()Ljava/util/Map;
+*/
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getValues
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcRepresentation_getValues");
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    if (!rep) return nullptr;
+
+    std::map<std::string, AttributeValue> values = rep->getValues();
+    jobject jHashMap = env->NewObject(g_cls_HashMap, g_mid_HashMap_ctor);
+    if (!jHashMap) return nullptr;
+
+    for (std::map<std::string, AttributeValue>::const_iterator it = values.begin(); it != values.end(); it++) {
+        jobject key = static_cast<jobject>(env->NewStringUTF(it->first.c_str()));
+        jobject val = boost::apply_visitor(JObjectConverter(env), it->second);
+        env->CallObjectMethod(jHashMap, g_mid_HashMap_put, key, val);
+    }
+    return jHashMap;
 }
 
 /*

@@ -135,6 +135,16 @@ CAResult_t CAUtilCreateBond(JNIEnv *env, jobject device);
  * @param[in]  listener         callback listener
  */
 void CAUtilSetFoundDeviceListener(jobject listener);
+
+/**
+ * set interval time and working count for LE scan.
+ * @param[in]  intervalTime         interval time(Seconds).
+ * @param[in]  workingCount         working cycle for selected interval time.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount);
+
 #endif
 
 #ifdef __cplusplus

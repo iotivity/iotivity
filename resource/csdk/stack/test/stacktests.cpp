@@ -21,6 +21,7 @@
 
 extern "C"
 {
+    #include "ocpayload.h"
     #include "ocstack.h"
     #include "ocstackinternal.h"
     #include "logger.h"
@@ -1757,4 +1758,30 @@ TEST(StackResource, MultipleResourcesDiscovery)
                                         0));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackPayload, CloneByteString)
+{
+    uint8_t bytes[] = { 0, 1, 2, 3 };
+    OCByteString byteString;
+    byteString.bytes = bytes;
+    byteString.len = sizeof(bytes);
+
+    OCRepPayload *original = OCRepPayloadCreate();
+    ASSERT_TRUE(original != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropByteString(original, "name", byteString));
+
+    OCRepPayload *clone = OCRepPayloadClone(original);
+    ASSERT_TRUE(clone != NULL);
+
+    OCRepPayloadDestroy(original);
+
+    OCByteString cloneByteString;
+    EXPECT_TRUE(OCRepPayloadGetPropByteString(clone, "name", &cloneByteString));
+    ASSERT_TRUE(cloneByteString.bytes != NULL);
+    EXPECT_EQ(sizeof(bytes), cloneByteString.len);
+    EXPECT_TRUE(0 == memcmp(bytes, cloneByteString.bytes, sizeof(bytes)));
+    OICFree(cloneByteString.bytes);
+
+    OCRepPayloadDestroy(clone);
 }

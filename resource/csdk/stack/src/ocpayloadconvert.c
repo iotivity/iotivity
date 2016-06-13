@@ -514,8 +514,7 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload *payload, uint8_t *out
     // Resource type
     if (payload->rt)
     {
-        err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_RESOURCE_TYPE,
-                sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, payload->rt);
+        err |= OCStringLLJoin(&repMap, OC_RSRVD_RESOURCE_TYPE, payload->rt);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type.");
     }
 

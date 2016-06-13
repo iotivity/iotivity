@@ -188,6 +188,12 @@ static void OCCopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *sou
         case OCREP_PROP_STRING:
             dest->str = OICStrdup(source->str);
             break;
+        case OCREP_PROP_BYTE_STRING:
+            dest->ocByteStr.bytes = (uint8_t*)OICMalloc(source->ocByteStr.len * sizeof(uint8_t));
+            VERIFY_PARAM_NON_NULL(TAG, dest->ocByteStr.bytes, "Failed allocating memory");
+            dest->ocByteStr.len = source->ocByteStr.len;
+            memcpy(dest->ocByteStr.bytes, source->ocByteStr.bytes, dest->ocByteStr.len);
+            break;
         case OCREP_PROP_OBJECT:
             dest->obj = OCRepPayloadClone(source->obj);
             break;
@@ -198,6 +204,8 @@ static void OCCopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *sou
             // Nothing to do for the trivially copyable types.
             break;
     }
+exit:
+    return;
 }
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
@@ -1386,8 +1394,7 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
     return NULL;
 }
 
-static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
-                                         uint16_t tcpPort)
+static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort)
 {
     OCResourcePayload* pl = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
     if (!pl)
@@ -1492,7 +1499,8 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, tcpPort));
+    OC_UNUSED(tcpPort);
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort));
 }
 
 bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, const char *value)
@@ -1681,7 +1689,12 @@ OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
         return NULL;
     }
     payload->interfaces->value = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+    payload->rt = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+    if (!payload->rt)
+    {
+        return NULL;
+    }
+    payload->rt->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
     payload->info = *platformInfo;
 
     return payload;
@@ -1697,7 +1710,7 @@ OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+    OCResourcePayloadAddStringLL(&payload->rt, OC_RSRVD_RESOURCE_TYPE_PLATFORM);
 
     OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
     OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
@@ -1730,7 +1743,7 @@ void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
     }
     OICFree(payload->uri);
     OCPlatformInfoDestroy(&payload->info);
-    OICFree(payload->rt);
+    OCFreeOCStringLL(payload->rt);
     OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }

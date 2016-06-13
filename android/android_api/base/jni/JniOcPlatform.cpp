@@ -26,6 +26,7 @@
 #include "JniOcResourceResponse.h"
 #include "JniOcSecurity.h"
 #include "JniUtils.h"
+#include "ocpayload.h"
 
 using namespace OC;
 
@@ -1070,20 +1071,44 @@ jobject jListener, jint jResourceProperty)
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     JNIEnv *env,
     jclass clazz,
-    jstring jDeviceName)
+    jstring jDeviceName,
+    jobjectArray jDeviceTypes)
 {
     LOGI("OcPlatform_registerDeviceInfo");
 
-    std::string deviceName;
-    if (jDeviceName)
+    if (!jDeviceName)
     {
-        deviceName = env->GetStringUTFChars(jDeviceName, nullptr);
+        ThrowOcException(OC_STACK_INVALID_PARAM, "deviceName cannot be null");
+        return;
+    }
+
+    if (!jDeviceTypes)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "deviceTypes cannot be null");
+        return;
     }
 
     OCDeviceInfo deviceInfo;
     try
     {
-        DuplicateString(&deviceInfo.deviceName, deviceName);
+        DuplicateString(&deviceInfo.deviceName, env->GetStringUTFChars(jDeviceName, nullptr));
+        deviceInfo.types = NULL;
+
+        jsize len = env->GetArrayLength(jDeviceTypes);
+        for (jsize i = 0; i < len; ++i)
+        {
+            jstring jStr = (jstring)env->GetObjectArrayElement(jDeviceTypes, i);
+            if (!jStr)
+            {
+                ThrowOcException(OC_STACK_INVALID_PARAM, "device type cannot be null");
+                return;
+            }
+
+            OCResourcePayloadAddStringLL(&deviceInfo.types, env->GetStringUTFChars(jStr, nullptr));
+            if (env->ExceptionCheck()) return;
+
+            env->DeleteLocalRef(jStr);
+        }
     }
     catch (std::exception &e)
     {

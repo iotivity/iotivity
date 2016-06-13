@@ -81,7 +81,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
     ASSERT_TRUE(convertedAcl != NULL);
 
     EXPECT_EQ(defaultAcl->resourcesLen, convertedAcl->resourcesLen);
-    for(int i = 0; i < convertedAcl->resourcesLen; i++)
+    for(size_t i = 0; i < convertedAcl->resourcesLen; i++)
     {
         EXPECT_EQ(0, strcmp(defaultAcl->resources[i], convertedAcl->resources[i]));
     }
@@ -366,7 +366,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
     // Create Entity Handler DELETE request
     ehReq.method = OC_REST_DELETE;
-    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
+    char query[] = "subjectuuid=32323232-3232-3232-3232-323232323232;resources=/a/led";
     ehReq.query = (char *)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL !=  ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);
@@ -417,7 +417,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     // Create Entity Handler DELETE request
     ehReq.method = OC_REST_DELETE;
-    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
+    char query[] = "subjectuuid=32323232-3232-3232-3232-323232323232;resources=/a/led";
     ehReq.query = (char *)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);
@@ -465,7 +465,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
 
     //Create Entity Handler GET request wit query
     ehReq.method = OC_REST_GET;
-    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
+    char query[] = "subjectuuid=32323232-3232-3232-3232-323232323232;resources=/a/led";
     ehReq.query = (char*)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);

@@ -177,4 +177,19 @@ public class CaInterface {
     private static native void caBtPairingStartScan();
     private static native void caBtPairingStopScan();
     private static native void caBtPairingCreateBond(BluetoothDevice device);
+
+    /**
+     *  set BLE scan interval time and working count.
+     *  scanning logic (start scan -> stop scan) will be worked repeatly for workingCount.
+     *  and if you choose '0' value for workingCount parameter,
+     *  scanning will be worked continually as interval time.
+     *  @param intervalTime                  interval time(Seconds).
+     *  @param workingCount                  working count with interval time.
+     */
+
+    public synchronized static void setLeScanIntervalTime(int intervalTime, int workingCount){
+        CaInterface.setLeScanIntervalTimeImpl(intervalTime, workingCount);
+    }
+
+    private static native void setLeScanIntervalTimeImpl(int intervalTime, int workingCount);
 }

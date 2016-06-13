@@ -271,7 +271,10 @@ INLINE_API void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)
     if (payload->rt)
     {
         OIC_LOG(level, PL_TAG, "\tResource Types:");
-        OIC_LOG_V(level, PL_TAG, "\t\t%s", payload->rt);
+        for (OCStringLL *strll = payload->rt; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
     }
     if (payload->interfaces)
     {

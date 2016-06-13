@@ -53,7 +53,7 @@ static void CAManagerAdapterMonitorHandler(CATransportAdapter_t adapter,
 
 static void CAManagerConnectionMonitorHandler(const CAEndpoint_t *info, bool isConnected)
 {
-    if (!info || !info->addr)
+    if (!info || !info->addr[0])
     {
         OIC_LOG(ERROR, TAG, "remoteAddress is NULL");
         return;
@@ -299,6 +299,18 @@ void CAUtilSetFoundDeviceListener(jobject listener)
     CABTPairingSetFoundDeviceListener(listener);
 #else
     (void)listener;
+#endif
+}
+
+CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLEScanInterval");
+#ifdef LE_ADAPTER
+    CAManagerLESetScanInterval(intervalTime, workingCount);
+    return CA_STATUS_OK;
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
 #endif
 }
 #endif

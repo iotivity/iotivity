@@ -329,3 +329,14 @@ Java_org_iotivity_ca_CaInterface_caBtPairingCreateBond(JNIEnv *env, jclass clazz
     (void)clazz;
     CAUtilCreateBond(env, device);
 }
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_setLeScanIntervalTimeImpl(JNIEnv *env, jclass clazz,
+                                                           jint intervalTime, jint workignCount)
+{
+    LOGI("setLeScanIntervalTimeImpl");
+    (void)env;
+    (void)clazz;
+    CAUtilSetLEScanInterval(intervalTime, workignCount);
+}
+
