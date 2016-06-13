@@ -124,7 +124,7 @@ static size_t OicSecCredCount(const OicSecCred_t *secCred)
 }
 
 OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
-                                size_t *cborSize)
+                                size_t *cborSize, int secureFlag)
 {
     if (NULL == credS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
@@ -180,7 +180,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             mapSize++;
         }
 #endif /* __WITH_X509__ */
-        if (cred->privateData.data)
+        if (!secureFlag && cred->privateData.data)
         {
             mapSize++;
         }
@@ -245,7 +245,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         }
 #endif /*__WITH_X509__*/
         //PrivateData -- Not Mandatory
-        if(cred->privateData.data)
+        if(!secureFlag && cred->privateData.data)
         {
             CborEncoder privateMap;
             const size_t privateMapSize = 2;
@@ -357,7 +357,7 @@ exit:
         // Since the allocated initial memory failed, double the memory.
         cborLen += encoder.ptr - encoder.end;
         cborEncoderResult = CborNoError;
-        ret = CredToCBORPayload(credS, cborPayload, &cborLen);
+        ret = CredToCBORPayload(credS, cborPayload, &cborLen, secureFlag);
         *cborSize = cborLen;
     }
 
@@ -739,7 +739,8 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     {
         uint8_t *payload = NULL;
         size_t size = 0;
-        OCStackResult res = CredToCBORPayload(cred, &payload, &size);
+        int secureFlag = 0;
+        OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
         if ((OC_STACK_OK == res) && payload)
         {
             if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, payload, size))
@@ -1118,6 +1119,34 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
     return ret;
 }
 
+/**
+ * The entity handler determines how to process a GET request.
+ */
+static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * ehRequest)
+{
+    OIC_LOG(INFO, TAG, "HandleGetRequest  processing GET request");
+
+    // Convert Cred data into CBOR for transmission
+    size_t size = 0;
+    uint8_t *payload = NULL;
+    int secureFlag = 1;
+
+    const OicSecCred_t *cred = gCred;
+    OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
+
+    // A device should always have a default cred. Therefore, payload should never be NULL.
+    OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
+
+    // Send response payload to request originator
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatGetRequest");
+    }
+    OICFree(payload);
+    return ehRet;
+}
+
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
@@ -1192,7 +1221,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
         switch (ehRequest->method)
         {
             case OC_REST_GET:
-                ret = OC_EH_FORBIDDEN;
+                ret = HandleGetRequest(ehRequest);;
                 break;
             case OC_REST_PUT:
                 ret = HandlePutRequest(ehRequest);
@@ -1543,6 +1572,7 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *cborPayload = NULL;
     size_t size = 0;
+    int secureFlag = 0;
     OicUuid_t prevId = {.id={0}};
 
     if(NULL == newROwner)
@@ -1559,7 +1589,7 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
         memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
         memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
-        ret = CredToCBORPayload(gCred, &cborPayload, &size);
+        ret = CredToCBORPayload(gCred, &cborPayload, &size, secureFlag);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         ret = UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, cborPayload, size);

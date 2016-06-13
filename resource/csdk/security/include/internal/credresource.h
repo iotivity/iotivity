@@ -63,11 +63,12 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
  * @param cred is the pointer to instance of OicSecCred_t structure.
  * @param cborPayload is the CBOR converted value.
  * @param cborSize is the size of the CBOR.
+ * @param secureFlag shows fill or not private key.
  *
  * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
  */
 OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
-                                size_t *cborSize);
+                                size_t *cborSize, int secureFlag);
 
 /**
  * This function generates the bin credential data.

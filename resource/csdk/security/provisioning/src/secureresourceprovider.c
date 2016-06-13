@@ -91,6 +91,16 @@ struct ACLData
     int numOfResults;                           /**< Number of results in result array.**/
 };
 
+// Structure to carry get security resource APIs data to callback.
+typedef struct GetSecData GetSecData_t;
+struct GetSecData {
+    void *ctx;
+    const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
+    OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
+    OCProvisionResult_t *resArr;                /**< Result array.**/
+    int numOfResults;                        /**< Number of results in result array.**/
+};
+
 /**
  * Structure to carry PCONF provision API data to callback.
  */
@@ -304,7 +314,9 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData, &secPayload->payloadSize);
+    int secureFlag = 0;
+    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData,
+                                          &secPayload->payloadSize, secureFlag);
     if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -541,8 +553,9 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+    int secureFlag = 0;
     OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData,
-        &secPayload->payloadSize);
+        &secPayload->payloadSize, secureFlag);
 
     if ((OC_STACK_OK != res) || (NULL == secPayload->securityData))
     {
@@ -1709,3 +1722,126 @@ error:
     OIC_LOG(INFO, TAG, "OUT ERROR case SRPRemoveDevice");
     return res;
 }
+
+/**
+ * Internal Function to store results in result array during GetCredResourceCB.
+ */
+static void registerResultForGetCredResourceCB(GetSecData_t *GetSecData,
+                                             OCStackResult stackresult)
+{
+   OIC_LOG_V(INFO, TAG, "Inside registerResultForGetCredResourceCB "
+           "GetSecData->numOfResults is %d\n", GetSecData->numOfResults);
+   memcpy(GetSecData->resArr[(GetSecData->numOfResults)].deviceId.id,
+          GetSecData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
+   GetSecData->resArr[(GetSecData->numOfResults)].res = stackresult;
+   ++(GetSecData->numOfResults);
+}
+
+/**
+ * Callback handler of SRPGetCredResource.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPGetCredResourceCB(void *ctx, OCDoHandle UNUSED,
+                                                  OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(INFO, TAG, "Inside SRPGetCredResourceCB.");
+    (void)UNUSED;
+    VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    GetSecData_t *GetSecData = (GetSecData_t*)ctx;
+    OCProvisionResultCB resultCallback = GetSecData->resultCallback;
+
+    if (clientResponse)
+    {
+        if(OC_STACK_OK == clientResponse->result)
+        {
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+            OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
+            registerResultForGetCredResourceCB(GetSecData, OC_STACK_OK);
+            ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
+                                                    GetSecData->resArr,
+                                                    false);
+             OICFree(GetSecData->resArr);
+             OICFree(GetSecData);
+
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+    }
+    registerResultForGetCredResourceCB(GetSecData, OC_STACK_OK);
+    ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
+                                            GetSecData->resArr,
+                                            false);
+    OIC_LOG_V(ERROR, TAG, "SRPGetCredResourceCB received Null clientResponse");
+    OICFree(GetSecData->resArr);
+    OICFree(GetSecData);
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+
+OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCProvisionResultCB resultCallback)
+{
+    VERIFY_NON_NULL(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        selectedDeviceInfo->endpoint.addr,
+                        selectedDeviceInfo->securePort,
+                        selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_CRED_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SRPGetCredResource : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    cbData.cb = &SRPGetCredResourceCB;
+    GetSecData_t* GetSecData = (GetSecData_t*)OICCalloc(1, sizeof(GetSecData_t));
+    if (NULL == GetSecData)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    GetSecData->deviceInfo = selectedDeviceInfo;
+    GetSecData->resultCallback = resultCallback;
+    GetSecData->numOfResults=0;
+    GetSecData->ctx = ctx;
+
+    int noOfRiCalls = 1;
+    GetSecData->resArr = (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
+    if (NULL == GetSecData->resArr)
+    {
+        OICFree(GetSecData);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    cbData.context = (void *)GetSecData;
+    cbData.cd = NULL;
+    OCMethod method = OC_REST_GET;
+    OCDoHandle handle = NULL;
+    OIC_LOG(DEBUG, TAG, "Sending Get Cred to  resource server");
+    OCStackResult ret = OCDoResource(&handle, method, query, NULL, NULL,
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(GetSecData->resArr);
+        OICFree(GetSecData);
+    }
+    VERIFY_SUCCESS(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    OIC_LOG(DEBUG, TAG, "OUT SRPGetCredResource");
+
+    return OC_STACK_OK;
+}
+
+
