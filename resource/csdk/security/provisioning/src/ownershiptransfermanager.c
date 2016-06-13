@@ -959,9 +959,10 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         newCredential.publicData.data = NULL;
         newCredential.publicData.len = 0;
 #endif
-
+        int secureFlag = 0;
         //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
-        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData, &secPayload->payloadSize))
+        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData,
+                                        &secPayload->payloadSize, secureFlag))
         {
             OICFree(secPayload);
             OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");

@@ -41,7 +41,18 @@ extern "C"
  */
 OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
                                         OicSecAcl_t *acl, OCProvisionResultCB resultCallback);
-                                        
+
+/**
+ * API to request CRED information to resource.
+ *
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCProvisionResultCB resultCallback);
+
 #ifdef __WITH_X509__
 /**
  * API to send CRL information to resource.
