@@ -890,6 +890,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
         return NULL;
     }
     memcpy(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr));
+    svritem->sep.endpoint.adapter = endpoint->adapter;
     svritem->sep.endpoint.port = endpoint->port;
     svritem->sep.endpoint.flags = endpoint->flags;
     svritem->sep.endpoint.interface = endpoint->interface;
@@ -925,7 +926,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
     // pass the connection information to CA Common Layer.
     if (g_connectionCallback)
     {
-        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, true);
+        g_connectionCallback(&(svritem->sep.endpoint), true);
     }
 
     return svritem;
@@ -948,7 +949,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     // pass the connection information to CA Common Layer.
     if (g_connectionCallback)
     {
-        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, false);
+        g_connectionCallback(&(svritem->sep.endpoint), false);
     }
 
     OICFree(svritem);
