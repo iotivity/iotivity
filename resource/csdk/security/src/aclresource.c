@@ -889,20 +889,20 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
     size_t size = 0;
     OCEntityHandlerResult ehRet;
 
-    // Process the REST querystring parameters
-    if (ehRequest->query)
+    OicUuid_t subject = {.id= { 0 } };
+
+    // In case, 'subject' field is included in REST request.
+    if (ehRequest->query && GetSubjectFromQueryString(ehRequest->query, &subject))
     {
+        OIC_LOG(DEBUG,TAG,"'subject' field is inculded in REST request.");
         OIC_LOG(DEBUG, TAG, "HandleACLGetRequest processing query");
 
-        OicUuid_t subject = {.id= { 0 } };
         char resource[MAX_URI_LENGTH] = { 0 };
 
         OicSecAcl_t *savePtr = NULL;
         const OicSecAcl_t *currentAce = NULL;
 
         // 'Subject' field is MUST for processing a querystring in REST request.
-        VERIFY_SUCCESS(TAG, true == GetSubjectFromQueryString(ehRequest->query, &subject), ERROR);
-
         GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
 
         /*
@@ -944,8 +944,10 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
             }
         }
     }
+    // In case, 'subject' field is not included in REST request.
     else
     {
+        OIC_LOG(DEBUG,TAG,"'subject' field is not inculded in REST request.");
         // Convert ACL data into CBOR format for transmission.
         if (OC_STACK_OK != AclToCBORPayload(gAcl, &payload, &size))
         {
