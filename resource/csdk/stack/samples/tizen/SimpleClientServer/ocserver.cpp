@@ -77,7 +77,7 @@ const char *supportUrl = "mySupportUrl";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
 const char *specVersion = "myDeviceSpecVersion";
-const char* dataModleVersion = "myDeviceModleVersion";
+const char* dataModelVersion = "myDeviceModelVersion";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -810,7 +810,7 @@ void DeleteDeviceInfo()
 {
     free (deviceInfo.deviceName);
     free (deviceInfo.specVersion);
-    free (deviceInfo.dataModleVersion);
+    free (deviceInfo.dataModelVersion);
 }
 
 bool DuplicateString(char** targetString, const char* sourceString)
@@ -914,7 +914,7 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
-OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModleVersion)
+OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModelVersion)
 {
     if(!DuplicateString(&deviceInfo.deviceName, deviceName))
     {
@@ -924,7 +924,7 @@ OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, con
     {
         return OC_STACK_ERROR;
     }
-    if(!DuplicateString(&deviceInfo.dataModleVersion, dataModleVersion))
+    if(!DuplicateString(&deviceInfo.dataModelVersion, dataModelVersion))
     {
         return OC_STACK_ERROR;
     }
@@ -1029,7 +1029,7 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
-    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModleVersion);
+    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModelVersion);
 
     if (registrationResult != OC_STACK_OK)
     {
