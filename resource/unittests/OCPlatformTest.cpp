@@ -88,7 +88,7 @@ namespace OCPlatformTest
         delete[] deviceInfo.deviceName;
         DeleteStringLL(deviceInfo.types);
         delete[] deviceInfo.specVersion;
-        delete[] deviceInfo.dataModleVersion;
+        delete[] deviceInfo.dataModelVersion;
     }
 
     void DuplicateString(char ** targetString, std::string sourceString)
@@ -750,7 +750,7 @@ namespace OCPlatformTest
         OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
         OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
         DuplicateString(&deviceInfo.specVersion, "mySpecVersion");
-        DuplicateString(&deviceInfo.dataModleVersion, "myDataModleVersion");
+        DuplicateString(&deviceInfo.dataModelVersion, "myDataModelVersion");
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
         EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
     }

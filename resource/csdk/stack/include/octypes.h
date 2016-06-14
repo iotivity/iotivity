@@ -937,7 +937,7 @@ typedef struct
     /** Pointer to the device specification version.*/
     char *specVersion;
     /** Pointer to the device data model version.*/
-    char *dataModleVersion;
+    char *dataModelVersion;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER

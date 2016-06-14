@@ -553,7 +553,7 @@ class ClientController
                     out << "Platform version: " << platformInfo.getPlatformVersion() << std::endl;
                     out << "Manufacturer name: " << platformInfo.getManufacturerName() << std::endl;
                     out << "Manufacturer url: " << platformInfo.getManufacturerUrl() << std::endl;
-                    out << "Modle number: " << platformInfo.getModelNumber() << std::endl;
+                    out << "Model number: " << platformInfo.getModelNumber() << std::endl;
                     out << "Date of manufacture: " << platformInfo.getDateOfManfacture() << std::endl;
                     out << "Operatio system version: " << platformInfo.getOSVersion() << std::endl;
                     out << "Hardware version: " << platformInfo.getHardwareVersion() << std::endl;
