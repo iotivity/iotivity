@@ -86,22 +86,27 @@ if target_os in ['msys_nt', 'windows']:
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittest = sptest_env.Program('unittest', ['pmutilitytest.cpp',
-                                           'secureresourceprovider.cpp',
-                                           'provisioningdatabasemanager.cpp',
-                                           'ocprovisioningmanager.cpp','otmunittest.cpp' ])
+unittest_src = ['pmutilitytest.cpp',
+                'secureresourceprovider.cpp',
+                'provisioningdatabasemanager.cpp',
+                'ocprovisioningmanager.cpp',
+                ]
 
-sample_server1 = sptest_env.Program('sample_server1', ['sampleserver1.cpp'])
-sample_server2 = sptest_env.Program('sample_server2', ['sampleserver2.cpp'])
+if target_os not in ['windows']:
+    unittest_src += [ 'otmunittest.cpp' ]
 
-provisioning_unittest_src_dir = src_dir + '/resource/csdk/security/provisioning/unittest/'
-provisioning_unittest_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/unittest/'
+unittest = sptest_env.Program('unittest', unittest_src)
 
-Alias("test", [unittest, sample_server1, sample_server2])
+if target_os not in ['windows']:
+    sample_server1 = sptest_env.Program('sample_server1', ['sampleserver1.cpp'])
+    sample_server2 = sptest_env.Program('sample_server2', ['sampleserver2.cpp'])
+    Alias("test", [sample_server1, sample_server2])
+
+Alias("test", [unittest])
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':
-	if target_os == 'linux':
+	if target_os in ['linux', 'windows']:
 		out_dir = env.get('BUILD_DIR')
 		result_dir = env.get('BUILD_DIR') + '/test_out/'
 		if not os.path.isdir(result_dir):

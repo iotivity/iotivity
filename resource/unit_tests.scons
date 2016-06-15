@@ -72,6 +72,10 @@ elif target_os == 'windows' and env.get('TEST') == '1':
 	# Build Security Resource Manager unit tests
 	SConscript('csdk/security/unittest/SConscript')
 
+	# Build Provisioning API unit test
+	if env.get('SECURED') == '1':
+		SConscript('csdk/security/provisioning/unittest/SConscript')
+
 elif target_os in ['darwin', 'msys_nt']:
 	# Verify that 'google unit test' library is installed.  If not,
 	# get it and install it
