@@ -145,7 +145,6 @@ OCStackResult SetDeviceInfo()
     char *dup = OICStrdup("oic.wk.d");
     deviceInfo.types = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
     deviceInfo.types->value = dup;
-    OICFree(dup);
     return OCSetDeviceInfo(deviceInfo);
 }
 
