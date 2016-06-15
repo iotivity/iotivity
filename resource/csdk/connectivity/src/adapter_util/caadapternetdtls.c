@@ -844,7 +844,7 @@ int CAInitX509()
     {
         uint8_t crlData[CRL_MAX_LEN] = {0};
         ByteArray crlArray = {crlData, CRL_MAX_LEN};
-        g_getCrlCallback(crlArray);
+        g_getCrlCallback(&crlArray);
         if (crlArray.len > 0)
         {
             uint8_t keyData[PUBLIC_KEY_SIZE] = {0};

@@ -221,8 +221,13 @@ OC_EXPORT OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 OC_EXPORT OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
 OC_EXPORT void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
+#ifndef TCP_ADAPTER
 OC_EXPORT void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
-                                   uint16_t securePort, uint16_t tcpPort);
+                                             uint16_t securePort);
+#else
+OC_EXPORT void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
+                                             uint16_t securePort, uint16_t tcpPort);
+#endif
 OC_EXPORT void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
 OC_EXPORT bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 

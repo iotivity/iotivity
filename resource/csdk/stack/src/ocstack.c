@@ -134,10 +134,6 @@ void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP[] = "coap+tcp:";
 static const char CORESPEC[] = "core";
 
-//#ifdef DIRECT_PAIRING
-OCDirectPairingCB gDirectpairingCallback = NULL;
-//#endif
-
 //-----------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------
@@ -3962,16 +3958,7 @@ const OCDPDev_t* OCGetDirectPairedDevices()
     return (const OCDPDev_t*)DPGetPairedDevices();
 }
 
-void DirectPairingCB (OCDirectPairingDev_t * peer, OCStackResult result)
-{
-    if (gDirectpairingCallback)
-    {
-        gDirectpairingCallback((OCDPDev_t*)peer, result);
-        gDirectpairingCallback = NULL;
-    }
-}
-
-OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                                      OCDirectPairingCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "Start OCDoDirectPairing");
@@ -3986,9 +3973,8 @@ OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
         return OC_STACK_INVALID_CALLBACK;
     }
 
-    gDirectpairingCallback = resultCallback;
-    return DPDirectPairing((OCDirectPairingDev_t*)peer, (OicSecPrm_t)pmSel,
-                                           pinNumber, DirectPairingCB);
+    return DPDirectPairing(ctx, (OCDirectPairingDev_t*)peer, (OicSecPrm_t)pmSel,
+                                           pinNumber, (OCDirectPairingResultCB)resultCallback);
 }
 //#endif // DIRECT_PAIRING
 

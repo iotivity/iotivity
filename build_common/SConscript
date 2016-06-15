@@ -187,6 +187,14 @@ if target_os in targets_support_cc:
 	if prefix or tc_path:
 		print tc_set_msg
 
+# If cross-compiling, honor environment settings for toolchain to avoid picking up native tools
+if os.environ.get('PKG_CONFIG') != None:
+	env["ENV"]["PKG_CONFIG"] = os.environ.get("PKG_CONFIG")
+if os.environ.get('PKG_CONFIG_PATH') != None:
+	env["ENV"]["PKG_CONFIG_PATH"] = os.environ.get("PKG_CONFIG_PATH")
+if os.environ.get('PKG_CONFIG_SYSROOT_DIR') != None:
+	env["ENV"]["PKG_CONFIG_SYSROOT_DIR"] = os.environ.get("PKG_CONFIG_SYSROOT_DIR")
+
 # Ensure scons be able to change its working directory
 env.SConscriptChdir(1)
 

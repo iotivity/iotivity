@@ -1394,7 +1394,12 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
     return NULL;
 }
 
+#ifndef TCP_ADAPTER
 static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort)
+#else
+static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
+                                         uint16_t tcpPort)
+#endif
 {
     OCResourcePayload* pl = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
     if (!pl)
@@ -1496,12 +1501,19 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
     return pl;
 }
 
+#ifndef TCP_ADAPTER
+void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
+                                   uint16_t securePort)
+{
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort));
+}
+#else
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort)
 {
-    OC_UNUSED(tcpPort);
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, tcpPort));
 }
+#endif
 
 bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, const char *value)
 {

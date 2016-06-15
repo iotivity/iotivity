@@ -91,7 +91,8 @@ oclib_src = [
 		'InProcServerWrapper.cpp',
 		'InProcClientWrapper.cpp',
 		'OCResourceRequest.cpp',
-		'CAManager.cpp'
+		'CAManager.cpp',
+		'OCDirectPairing.cpp'
 	]
 
 if target_os in ['windows']:
@@ -130,6 +131,7 @@ oclib_env.UserInstallTargetHeader(header_dir + 'OCResourceResponse.h', 'resource
 oclib_env.UserInstallTargetHeader(header_dir + 'OCUtilities.h', 'resource', 'OCUtilities.h')
 
 oclib_env.UserInstallTargetHeader(header_dir + 'CAManager.h', 'resource', 'CAManager.h')
+oclib_env.UserInstallTargetHeader(header_dir + 'OCDirectPairing.h', 'resource', 'OCDirectPairing.h')
 
 # Add Provisioning library
 if target_os in ['linux', 'android', 'tizen'] and env.get('SECURED') == '1':

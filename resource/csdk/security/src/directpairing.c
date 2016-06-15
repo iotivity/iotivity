@@ -71,6 +71,7 @@ typedef struct DPairData
     OCDirectPairingDev_t        *peer;                         /**< Pointer to pairing target info.**/
     char                                  pin[DP_PIN_LENGTH];  /**< PIN **/
     OCDirectPairingResultCB    resultCallback;           /**< Pointer to result callback.**/
+    void *userCtx;                                      /** < user context to pass in callback **/
 } DPairData_t;
 
 static OCDirectPairingDev_t *g_dp_paired = NULL;
@@ -353,7 +354,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             if (OC_STACK_OK != GetDoxmDeviceID(&ptDeviceID))
             {
                 OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-                resultCallback(peer, OC_STACK_ERROR);
+                resultCallback(dpairData->userCtx, peer, OC_STACK_ERROR);
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
@@ -362,7 +363,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to PairingPSK generation");
-                resultCallback(peer, res);
+                resultCallback(dpairData->userCtx, peer, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
@@ -391,7 +392,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
                 OIC_LOG(ERROR, TAG, "Error while adding a device to paired list.");
             }
 
-            resultCallback(peer, OC_STACK_OK);
+            resultCallback(dpairData->userCtx, peer, OC_STACK_OK);
 
             return OC_STACK_DELETE_TRANSACTION;
         }
@@ -405,7 +406,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
         OIC_LOG(ERROR, TAG, "DirectPairingFinalizeHandler received Null clientResponse");
     }
 
-    resultCallback(peer, OC_STACK_ERROR);
+    resultCallback(dpairData->userCtx, peer, OC_STACK_ERROR);
     OICFree(dpairData);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -418,7 +419,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
+OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
                                                      OCDirectPairingResultCB resultCallback)
 {
     if(NULL == peer)
@@ -480,6 +481,7 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
     }
     dpairData->peer = peer;
     dpairData->resultCallback = resultCallback;
+    dpairData->userCtx = ctx;
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = DirectPairingFinalizeHandler;
@@ -531,17 +533,17 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
             {
                 OIC_LOG(INFO, TAG, "Now, finalize Direct-Pairing procedure.");
 
-                res = FinalizeDirectPairing(peer, resultCallback);
+                res = FinalizeDirectPairing(g_dp_proceed_ctx->userCtx, peer, resultCallback);
                 if(OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to finalize direct-pairing");
-                    resultCallback(peer, res);
+                    resultCallback(g_dp_proceed_ctx->userCtx, peer, res);
                 }
             }
             else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
             {
                 OIC_LOG(INFO, TAG, "DirectPairingDTLSHandshakeCB - Authentication failed");
-                resultCallback(peer, OC_STACK_AUTHENTICATION_FAILURE);
+                resultCallback(g_dp_proceed_ctx->userCtx, peer, OC_STACK_AUTHENTICATION_FAILURE);
             }
 
 #ifdef __WITH_DTLS__
@@ -659,7 +661,7 @@ exit:
             g_dp_proceed_ctx = NULL;
         }
 
-        resultCallback(dpairData->peer, res);
+        resultCallback(dpairData->userCtx, dpairData->peer, res);
     }
     OIC_LOG_V(INFO, TAG, "OUT DirectPairingHandler.");
     return OC_STACK_DELETE_TRANSACTION;
@@ -674,8 +676,8 @@ exit:
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, char *pinNumber,
-                                                     OCDirectPairingResultCB resultCallback)
+OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t pmSel,
+                                char *pinNumber, OCDirectPairingResultCB resultCallback)
 {
     if(NULL == peer || NULL == pinNumber)
     {
@@ -738,6 +740,7 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
     dpairData->peer = peer;
     memcpy(dpairData->pin, pinNumber, DP_PIN_LENGTH);
     dpairData->resultCallback = resultCallback;
+    dpairData->userCtx = ctx;
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = DirectPairingHandler;
@@ -1026,6 +1029,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
         else
         {
             struct timespec timeout = {.tv_sec=0, .tv_nsec=100000000L};
+            OCProcess();
             nanosleep(&timeout, NULL);
         }
     }

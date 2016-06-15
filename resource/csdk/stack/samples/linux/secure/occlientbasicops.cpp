@@ -63,7 +63,7 @@ static OCConnectivityType ocConnType;
 //of other devices which the client trusts
 static char CRED_FILE_DEVOWNER[] = "oic_svr_db_client_devowner.dat";
 static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
-
+const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
 
 int gQuitFlag = 0;
 
@@ -428,9 +428,15 @@ int parseClientResponse(OCClientResponse * clientResponse)
     {
         coapServerResource.assign(res->uri);
         OIC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
-
+        if (0 == strcmp(coapServerResource.c_str(),OIC_RSRC_DOXM_URI))
+        {
+            OIC_LOG(INFO,TAG,"Skip: doxm is secure virtual resource");
+            res = res->next;
+            continue;
+        }
         if (res->secure)
         {
+        OIC_LOG_V(INFO,TAG,"SECUREPORT: %d",res->port);
             endpoint.port = res->port;
             coapSecureResource = 1;
         }

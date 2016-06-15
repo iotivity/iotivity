@@ -29,20 +29,21 @@ static OCDirectPairingDev_t peer;
 static OicSecPrm_t pmSel;
 static char pinNumber;
 
-static void ResultCB(OCDirectPairingDev_t *UNUSED1, OCStackResult UNUSED2)
+static void ResultCB(void *UNUSED1, OCDirectPairingDev_t *UNUSED2, OCStackResult UNUSED3)
 {
     //dummy callback
     (void) UNUSED1;
     (void) UNUSED2;
+    (void) UNUSED3;
 }
 
 TEST(DPDirectPairingTest, NullPeer)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DPDirectPairing(NULL, pmSel, &pinNumber, &ResultCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DPDirectPairing(NULL, NULL, pmSel, &pinNumber, &ResultCB));
 }
 
 TEST(DPDirectPairingTest, NullPinNumber)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DPDirectPairing(&peer, pmSel, NULL, &ResultCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DPDirectPairing(NULL, &peer, pmSel, NULL, &ResultCB));
 }
 

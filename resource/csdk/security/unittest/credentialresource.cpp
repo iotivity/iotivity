@@ -357,3 +357,45 @@ TEST(CredGetResourceDataTest, GetCredResourceDataValidSubject)
     EXPECT_TRUE(NULL != GetCredResourceData(cred->subject));
 }
 #endif
+
+#ifdef __WITH_X509__
+#include <stdlib.h>
+
+static char PROV_TOOL_DB_FILE[] = "/oic_svr_db_prov.dat";
+
+#define STRINGIZE2(x) #x
+#define STRINGIZE(x) STRINGIZE2(x)
+
+static FILE *client_fopen(const char* UNUSED_PARAM , const char *mode)
+{
+    (void)UNUSED_PARAM;
+
+    int len = strlen(STRINGIZE(SECURITY_BUILD_UNITTEST_DIR)) + strlen(PROV_TOOL_DB_FILE) + 1;
+    char *filepath = (char *)OICCalloc(1, len);
+
+    if (!filepath)
+    {
+        printf("filepath memory allocation failed. \n");
+        return NULL;
+    }
+
+    snprintf(filepath, len, "%s%s", STRINGIZE(SECURITY_BUILD_UNITTEST_DIR), PROV_TOOL_DB_FILE);
+
+    FILE* file =  fopen(filepath, mode);
+    OICFree(filepath);
+    return file;
+}
+
+static OCPersistentStorage ps = { client_fopen, fread, fwrite, fclose, unlink };
+
+//GetDtlsX509Credentials Test
+TEST(CredResourceTest, GetDtlsX509Credentials)
+{
+    ASSERT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_CLIENT_SERVER));
+    OCRegisterPersistentStorageHandler(&ps);
+    InitCredResource();
+    CADtlsX509Creds_t g_X509Cred = {{0}, 0, 0, {0}, {0}, {0}};
+    EXPECT_EQ(0, GetDtlsX509Credentials(&g_X509Cred));
+}
+
+#endif

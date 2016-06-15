@@ -93,6 +93,7 @@ def make_single_file_cpp_program(program_name):
 example_names = [
 	'simpleserver', 'simpleclient',
 	'simpleclientserver',
+	'directpairingclient',
 	'devicediscoveryserver', 'devicediscoveryclient'
 	]
 
@@ -119,8 +120,10 @@ clientjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
+directpairingdat = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
+				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client_directpairing.dat')
 
-examples += [clientjson, serverjson]
+examples += [clientjson, serverjson, directpairingdat]
 
 if target_os in ['msys_nt', 'windows']:
 	winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])

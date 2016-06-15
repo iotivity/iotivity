@@ -23,7 +23,6 @@
 
 #include <memory>
 #include <string>
-
 #include <OCApi.h>
 
 namespace OC
@@ -110,6 +109,14 @@ namespace OC
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle) =0;
 
         virtual OCStackResult GetDefaultQos(QualityOfService& qos) = 0;
+
+        virtual OCStackResult FindDirectPairingDevices(unsigned short waittime,
+                        GetDirectPairedCallback& callback) = 0;
+
+        virtual OCStackResult GetDirectPairedDevices(GetDirectPairedCallback& callback) = 0;
+
+        virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> peer, const OCPrm_t& pmSel,
+                const std::string& pinNumber, DirectPairingCallback& resultCallback) = 0;
 
         virtual ~IClientWrapper(){}
     };

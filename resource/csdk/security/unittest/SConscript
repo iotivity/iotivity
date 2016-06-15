@@ -90,7 +90,8 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'base64tests.cpp',
                                             'svcresourcetest.cpp',
                                             'srmtestcommon.cpp',
-                                            'directpairingtest.cpp'])
+                                            'directpairingtest.cpp',
+                                            'crlresourcetest.cpp'])
 
 Alias("test", [unittest])
 
@@ -112,7 +113,9 @@ srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_acl1.dat'))
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_default_acl.dat'))
-
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_svr_db_prov.dat'))
+    
 env.AppendTarget('test')
 if env.get('TEST') == '1':
 	target_os = env.get('TARGET_OS')
