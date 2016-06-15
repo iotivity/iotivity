@@ -47,7 +47,7 @@ typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
  * synchronization
  * @param[in] sync        Synchronization information of the notification message
  */
-typedef void (*NSSyncCallback)(NSSyncInfo *);
+typedef void (*NSProviderSyncInfoCallback)(NSSyncInfo *);
 
 /**
  * Initialize notification service for provider
@@ -58,7 +58,7 @@ typedef void (*NSSyncCallback)(NSSyncInfo *);
  * @return ::NS_OK or result code of NSResult
  */
 NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
-        NSSyncCallback syncCb);
+        NSProviderSyncInfoCallback syncCb);
 
 /**
  * Terminate notification service for provider
@@ -94,7 +94,7 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted);
  * @param[in]  message  Notification message to synchronize the status
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSReadCheck(NSMessage *);
+NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 
 #ifdef __cplusplus
 }

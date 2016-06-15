@@ -48,33 +48,41 @@
     }
 #endif
 
-#define NS_TAG "IOT_NOTI"
+#define NS_TAG                     "IOT_NOTI"
 
 // SCHEDULE //
-#define THREAD_COUNT 4
+#define THREAD_COUNT               4
 
 // NOTIOBJ // 
-#define NOTIOBJ_TITLE_KEY "title"
-#define NOTIOBJ_ID_KEY "id"
-#define NOTOOBJ_CONTENT_KEY "contentText"
+#define NOTIOBJ_TITLE_KEY          "title"
+#define NOTIOBJ_ID_KEY             "id"
+#define NOTOOBJ_CONTENT_KEY        "contentText"
 
-#define DISCOVERY_TAG "NS_PROVIDER_DISCOVERY"
-#define SUBSCRIPTION_TAG "NS_PROVIDER_SUBSCRIPTION"
-#define INTERFACE_TAG "NS_PROVIDER_INTERFACE"
-#define NOTIFICATION_TAG "NS_PROVIDER_NOTIFICATION"
-#define SCHEDULER_TAG "NS_PROVIDER_SCHEDULER"
-#define LISTENER_TAG "NS_PROVIDER_LISTENER"
-#define RESOURCE_TAG "NS_PROVIDER_RESOURCE"
+#define DISCOVERY_TAG              "NS_PROVIDER_DISCOVERY"
+#define SUBSCRIPTION_TAG           "NS_PROVIDER_SUBSCRIPTION"
+#define INTERFACE_TAG              "NS_PROVIDER_INTERFACE"
+#define NOTIFICATION_TAG           "NS_PROVIDER_NOTIFICATION"
+#define SCHEDULER_TAG              "NS_PROVIDER_SCHEDULER"
+#define LISTENER_TAG               "NS_PROVIDER_LISTENER"
+#define RESOURCE_TAG               "NS_PROVIDER_RESOURCE"
 
-#define NS_ROOT_TYPE "oic.r.notification"
+#define NS_ROOT_TYPE               "oic.r.notification"
 #define NS_COLLECTION_MESSAGE_TYPE "oic.r.notification.message"
-#define NS_COLLECTION_SYNC_TYPE "oic.r.notification.sync"
+#define NS_COLLECTION_SYNC_TYPE    "oic.r.notification.sync"
 
-#define NS_DEFAULT_INTERFACE "oic.if.baseline"
+#define NS_DEFAULT_INTERFACE       "oic.if.baseline"
 
-#define NS_ROOT_URI "/notification"
-#define NS_COLLECTION_MESSAGE_URI "/notification/message"
-#define NS_COLLECTION_SYNC_URI "/notification/sync"
+#define NS_ROOT_URI                "/notification"
+#define NS_COLLECTION_MESSAGE_URI  "/notification/message"
+#define NS_COLLECTION_SYNC_URI     "/notification/sync"
+
+#define NS_QUERY_SEPARATOR         "&;"
+#define NS_KEY_VALUE_DELIMITER     "="
+
+#define NS_QUERY_CONSUMER_ID       "consumerid"
+#define NS_QUERY_PROVIDER_ID       "providerid"
+
+#define NS_QUERY_ID_SIZE           10
 
 typedef enum eConnectionState
 {

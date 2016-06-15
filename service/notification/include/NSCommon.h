@@ -86,10 +86,10 @@ typedef enum
  */
 typedef enum
 {
-    NS_MESSAGE_ALERT = 0,
-    NS_MESSAGE_NOTICE = 1,
-    NS_MESSAGE_EVENT = 2,
-    NS_MESSAGE_INFO = 3,
+    NS_MESSAGE_ALERT = 1,
+    NS_MESSAGE_NOTICE = 2,
+    NS_MESSAGE_EVENT = 3,
+    NS_MESSAGE_INFO = 4,
 
 } NSMessageType;
 
@@ -98,8 +98,7 @@ typedef enum
  */
 typedef struct
 {
-    char * mDeviceId;
-    char * mAddress;
+    char consumerId[37];
 
 } NSConsumer;
 
@@ -133,7 +132,7 @@ typedef struct
 {
     //Mandatory
     uint64_t messageId;
-    char * providerId;
+    char providerId[37];
 
     //optional
     NSMessageType type;
@@ -142,7 +141,7 @@ typedef struct
     char * title;
     char * contentText;
     char * sourceName;
-    NSMediaContents mediaContents;
+    NSMediaContents * mediaContents;
 
 } NSMessage;
 
@@ -152,7 +151,7 @@ typedef struct
 typedef struct
 {
     uint64_t messageId;
-    char * providerId;
+    char providerId[37];
     NSSyncType state;
 
 } NSSyncInfo;

@@ -49,7 +49,6 @@ NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId)
     NSCacheElement * next = NULL;
     NSCacheType type = list->cacheType;
 
-
     NS_LOG_V(DEBUG, "Find ID - %s", findId);
 
     while (iter)

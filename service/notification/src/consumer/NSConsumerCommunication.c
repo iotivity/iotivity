@@ -243,7 +243,7 @@ NSSyncInfo * NSGetNSSyncInfo(OCClientResponse * clientResponse)
 
     retSync->messageId = id;
     retSync->state = (NSSyncType) state;
-    retSync->providerId = pId;
+    (retSync->providerId)[0] = '\0';
 
     NS_LOG_V(DEBUG, "Sync ID : %ld", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);

@@ -116,7 +116,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
 
-        subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+        char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+        OICStrcpy(subData->id, UUID_STRING_SIZE, id);
+        OICFree(id);
         subData->isWhite = false;
         subData->messageObId = entityHandlerRequest->obsInfo.obsId;
         subData->syncObId = 0;
@@ -150,7 +152,10 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
 
-        subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+        char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+        OICStrcpy(subData->id, UUID_STRING_SIZE, id);
+        OICFree(id);
+
         subData->isWhite = false;
         subData->syncObId = entityHandlerRequest->obsInfo.obsId;
         subData->messageObId = 0;
@@ -176,7 +181,11 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
     NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-    subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+
+    char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+    OICStrcpy(subData->id, UUID_STRING_SIZE, id);
+    OICFree(id);
+
     subData->isWhite = false;
     subData->messageObId = entityHandlerRequest->obsInfo.obsId;
 
@@ -223,7 +232,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
 
     OCRepPayloadSetUri(payload, NS_COLLECTION_MESSAGE_URI);
-    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE_ID, "0000-0000-0000-0000");
+    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, 1);
     OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
 
     NSCacheElement * element = NSStorageRead(consumerSubList, id);
@@ -265,7 +274,9 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
 
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-        subData->id = OICStrdup(entityHandlerRequest->devAddr.addr);
+        char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+        OICStrcpy(subData->id, UUID_STRING_SIZE, id);
+        OICFree(id);
         subData->isWhite = true;
         subData->messageObId = entityHandlerRequest->obsInfo.obsId;
 
@@ -278,7 +289,10 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         }
     }
 
-    NSSendResponse(entityHandlerRequest->devAddr.addr, accepted);
+    char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+    NSSendResponse(id, accepted);
+
+    OICFree(id);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
@@ -325,11 +339,8 @@ void * NSSubScriptionSchedule(void *ptr)
                     NS_LOG(DEBUG, "CASE TASK_SEND_ALLOW : ");
                     NSConsumer * consumer = (NSConsumer *) node->taskData;
 
-                    char * id = OICStrdup(consumer->mDeviceId);
-
-                    NSCacheUpdateSubScriptionState(consumerSubList, id, true);
-                    NSSendResponse(id, true);
-                    OICFree(id);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, true);
+                    NSSendResponse(consumer->consumerId, true);
                     NSFreeConsumer(consumer);
                     break;
                 }
@@ -338,11 +349,8 @@ void * NSSubScriptionSchedule(void *ptr)
                     NS_LOG(DEBUG, "CASE TASK_SEND_DENY : ");
                     NSConsumer * consumer = (NSConsumer *) node->taskData;
 
-                    char * id = OICStrdup(consumer->mDeviceId);
-
-                    NSCacheUpdateSubScriptionState(consumerSubList, id, false);
-                    NSSendResponse(id, false);
-                    OICFree(id);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, false);
+                    NSSendResponse(consumer->consumerId, false);
                     NSFreeConsumer(consumer);
 
                     break;

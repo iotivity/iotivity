@@ -50,10 +50,16 @@ NSResult NSCreateResource(char *uri)
     else if (strcmp(uri, NS_COLLECTION_MESSAGE_URI) == 0)
     {
 
-        NotificationMessageResource.id = NULL;
+        NotificationMessageResource.messageId = 0;
+
+        (NotificationMessageResource.providerId)[0] = '\0';
+        NotificationMessageResource.type = 0;
+        NotificationMessageResource.dateTime = NULL;
+        NotificationMessageResource.ttl = 0;
         NotificationMessageResource.title = NULL;
-        NotificationMessageResource.body = NULL;
-        NotificationMessageResource.handle = NULL;
+        NotificationMessageResource.contentText = NULL;
+        NotificationMessageResource.sourceName = NULL;
+        NotificationMessageResource.mediaContents = NULL;
 
         if (OCCreateResource(&NotificationMessageResource.handle, NS_COLLECTION_MESSAGE_TYPE,
                 NS_DEFAULT_INTERFACE, NS_COLLECTION_MESSAGE_URI, NSEntityHandlerMessageCb, NULL,
@@ -161,9 +167,15 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
     {
         NS_LOG(DEBUG, "NSMessage is valid");
 
-        NotificationMessageResource.id = OICStrdup(msg->messageId);
-        NotificationMessageResource.title = OICStrdup(msg->title);
-        NotificationMessageResource.body = OICStrdup(msg->contentText);
+        NotificationMessageResource.messageId = msg->messageId;
+        OICStrcpy(NotificationMessageResource.providerId, UUID_STRING_SIZE, msg->providerId);
+        NotificationMessageResource.type = msg->type;
+        NotificationMessageResource.dateTime = msg->dateTime;
+        NotificationMessageResource.ttl = msg->ttl;
+        NotificationMessageResource.title = msg->title;
+        NotificationMessageResource.contentText = msg->contentText;
+        NotificationMessageResource.sourceName = msg->sourceName;
+        NotificationMessageResource.mediaContents = msg->mediaContents;
     }
     else
     {

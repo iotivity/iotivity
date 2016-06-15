@@ -31,6 +31,7 @@
 #include "NSConstants.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocrandom.h"
 
 OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *);
 NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
@@ -46,7 +47,9 @@ NSResult NSFreeConsumer(NSConsumer *);
 NSConsumer * NSDuplicateConsumer(NSConsumer *);
 
 void NSDuplicateSetPropertyString(OCRepPayload **, const char *, const char *);
+NSResult NSGenerateUUIDStr(char uuidStr[UUID_STRING_SIZE]);
 
+char * NSGetValueFromQuery(char *query, char * compareKey);
 
 
 #endif /* _NS_UTIL__H_ */

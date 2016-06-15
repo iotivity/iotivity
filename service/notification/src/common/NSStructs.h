@@ -76,9 +76,19 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char* id;
-    char* title;
-    char* body;
+
+    uint64_t messageId;
+    char providerId[37];
+
+    //optional
+    NSMessageType type;
+    char * dateTime;
+    uint64_t ttl;
+    char * title;
+    char * contentText;
+    char * sourceName;
+    NSMediaContents * mediaContents;
+
 } NSMessageResource;
 
 typedef struct
@@ -87,5 +97,11 @@ typedef struct
     char* id;
     char* state;
 } NSSyncResource;
+
+typedef struct
+{
+  char providerId[37];
+  char * providerName;
+} NSProviderInfo;
 
 #endif /* _NS_STRUCTS_H_ */

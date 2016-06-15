@@ -56,8 +56,7 @@ void subscribeRequestCallback(NSConsumer *consumer)
 {
     OIC_LOG(INFO, TAG, "consumer requested to subscribe");
 
-    printf("NS_APP Consumer Address ID: %s\n", consumer->mAddress);
-    printf("NS_APP Consumer Device ID: %s\n", consumer->mDeviceId);
+    printf("NS_APP Consumer Device ID: %s\n", consumer->consumerId);
 
     NSAccept(consumer, true);
 }
@@ -134,7 +133,7 @@ int main()
 
                 NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
 
-                msg->title = strdup(title);
+                msg->title = OICStrdup(title);
                 msg->contentText = OICStrdup(body);
                 msg->sourceName = OICStrdup("OCF");
 

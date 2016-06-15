@@ -25,8 +25,14 @@
 #include "logger.h"
 #include "NSCommon.h"
 #include "NSConstants.h"
+#include "oic_malloc.h"
+#include "NSStructs.h"
 
 void NSSetProviderConnectionState(NSConnectionState state);
 NSConnectionState NSGetProviderConnectionState();
+
+void NSInitProviderInfo();
+void NSDeinitProviderInfo();
+NSProviderInfo * NSGetProviderInfo();
 
 #endif /* _NS_PROVIDER_SYSTEM__H_ */

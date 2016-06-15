@@ -28,10 +28,12 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cautilinterface.h"
+#include "NSProviderSystem.h"
+#include "oic_time.h"
 
 bool initProvider = false;
 static NSSubscribeRequestCallback g_subscribeRequestCb = NULL;
-static NSSyncCallback g_syncCb = NULL;
+static NSProviderSyncInfoCallback g_syncCb = NULL;
 
 pthread_mutex_t nsInitMutex;
 
@@ -48,7 +50,7 @@ void NSRegisterSubscribeRequestCb(NSSubscribeRequestCallback subscribeRequestCb)
     NS_LOG(DEBUG, "NSRegisterSubscribeRequestCb - OUT");
 }
 
-void  NSRegisterSyncCb(NSSyncCallback syncCb)
+void  NSRegisterSyncCb(NSProviderSyncInfoCallback syncCb)
 {
     NS_LOG(DEBUG, "NSRegisterSyncCb - IN");
     g_syncCb = syncCb;
@@ -70,7 +72,7 @@ void NSSyncCb(NSSyncInfo *sync)
 }
 
 NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
-        NSSyncCallback syncCb)
+        NSProviderSyncInfoCallback syncCb)
 {
     NS_LOG(DEBUG, "NSStartProvider - IN");
 
@@ -82,6 +84,7 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
     {
         NS_LOG(DEBUG, "Init Provider");
         initProvider = true;
+        NSInitProviderInfo();
         NSSetSubscriptionAccessPolicy(policy);
         NSRegisterSubscribeRequestCb(subscribeRequestCb);
         NSRegisterSyncCb(syncCb);
@@ -123,9 +126,10 @@ NSResult NSStopProvider()
 
     if(initProvider)
     {
+        NSDeinitProviderInfo();
         NSUnRegisterResource();
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
-        NSRegisterSyncCb((NSSyncCallback)NULL);
+        NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
         NSStopScheduler();
         NSStorageDestroy(consumerSubList);
         NSStorageDestroy(messageList);
@@ -153,6 +157,8 @@ NSResult NSSendMessage(NSMessage *msg)
 
     NSMessage * newMsg = NSDuplicateMessage(msg);
 
+    OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
+
     NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_NOTIFICATION, newMsg);
 
     pthread_mutex_unlock(&nsInitMutex);
@@ -161,12 +167,17 @@ NSResult NSSendMessage(NSMessage *msg)
     return NS_OK;
 }
 
-NSResult NSReadCheck(NSMessage *msg)
+NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
 {
     NS_LOG(DEBUG, "NSProviderReadCheck - IN");
 
     pthread_mutex_lock(&nsInitMutex);
-    NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ, msg);
+    NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+    OICStrcpy(syncInfo->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
+    syncInfo->messageId = messageId;
+    syncInfo->state = type;
+
+    NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ, syncInfo);
     pthread_mutex_unlock(&nsInitMutex);
 
     NS_LOG(DEBUG, "NSProviderReadCheck - OUT");
@@ -222,8 +233,17 @@ void * NSInterfaceSchedule(void * ptr)
 
                     OCEntityHandlerRequest * request = (OCEntityHandlerRequest*)node->taskData;
                     NSConsumer * consumer = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
-                    consumer->mDeviceId = OICStrdup(request->devAddr.addr);
-                    consumer->mAddress = OICStrdup(request->devAddr.addr);
+
+                    char * consumerId = NSGetValueFromQuery(request->query, NS_QUERY_CONSUMER_ID);
+                    if(!consumerId)
+                    {
+                        NSFreeConsumer(consumer);
+                        NS_LOG(ERROR, "Consumer ID NULL");
+                        break;
+                    }
+
+                    OICStrcpy(consumer->consumerId, UUID_STRING_SIZE, consumerId);
+                    OICFree(consumerId);
 
                     NSSubscribeRequestCb(consumer);
                     NSFreeConsumer(consumer);

@@ -45,7 +45,7 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 
     OCRepPayloadSetUri(*msgPayload, NS_COLLECTION_MESSAGE_URI);
 
-    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->messageId);
+    OCRepPayloadSetPropInt(msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->messageId);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TITLE, msg->title);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
@@ -68,9 +68,8 @@ NSResult NSSetSyncPayload(NSSyncInfo *sync, OCRepPayload** syncPayload)
 
     OCRepPayloadSetUri(*syncPayload, NS_COLLECTION_SYNC_URI);
 
-    NSDuplicateSetPropertyString(syncPayload, NS_ATTRIBUTE_MESSAGE_ID, sync->messageId);
     NSDuplicateSetPropertyString(syncPayload, NS_ATTRIBUTE_PROVIDER_ID, sync->providerId);
-
+    OCRepPayloadSetPropInt(syncPayload, NS_ATTRIBUTE_MESSAGE_ID, sync->messageId);
     OCRepPayloadSetPropInt(*syncPayload, NS_ATTRIBUTE_STATE, sync->state);
 
     NS_LOG(DEBUG, "NSSetSyncPayload - OUT");

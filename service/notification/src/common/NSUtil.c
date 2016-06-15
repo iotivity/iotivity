@@ -32,7 +32,6 @@ OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *ent
         // Do shallow copy
         memcpy(copyOfRequest, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
 
-
         if (copyOfRequest->query)
         {
             copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
@@ -163,18 +162,6 @@ NSResult NSFreeSync(NSSyncInfo * obj)
         return NS_ERROR;
     }
 
-    if (obj->messageId)
-    {
-        obj->messageId = 0;
-    }
-
-    if (obj->providerId)
-    {
-        NS_LOG_V(DEBUG, "obj->mSourceid = %s", obj->providerId);
-        OICFree(obj->providerId);
-        obj->providerId = NULL;
-    }
-
     OICFree(obj);
 
     return NS_OK;
@@ -191,20 +178,9 @@ NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
     }
 
     newMsg = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
-    newMsg->messageId = 0;
-    newMsg->providerId = NULL;
-    newMsg->state = -1;
 
-    if (copyMsg->messageId)
-    {
-        newMsg->messageId = copyMsg->messageId;
-    }
-
-    if (copyMsg->providerId)
-    {
-        newMsg->providerId = OICStrdup(copyMsg->providerId);
-    }
-
+    newMsg->messageId = copyMsg->messageId;
+    OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);
     newMsg->state = copyMsg->state;
 
     return newMsg;
@@ -217,19 +193,10 @@ NSResult NSFreeConsumer(NSConsumer * obj)
         return NS_ERROR;
     }
 
-    if (obj->mAddress)
-    {
-        OICFree(obj->mAddress);
-        obj->mAddress = NULL;
-    }
-
-    if (obj->mDeviceId)
-    {
-        OICFree(obj->mDeviceId);
-        obj->mDeviceId = NULL;
-    }
+    (obj->consumerId)[0] = '\0';
 
     OICFree(obj);
+    obj = NULL;
 
     return NS_OK;
 }
@@ -245,18 +212,9 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
     }
 
     newMsg = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
-    newMsg->mAddress = NULL;
-    newMsg->mDeviceId = NULL;
+    (newMsg->consumerId)[0] = '\0';
 
-    if (copyMsg->mAddress)
-    {
-        newMsg->mAddress = OICStrdup(copyMsg->mAddress);
-    }
-
-    if (copyMsg->mDeviceId)
-    {
-        newMsg->mDeviceId = OICStrdup(copyMsg->mDeviceId);
-    }
+    OICStrcpy(newMsg->consumerId, UUID_STRING_SIZE, copyMsg->consumerId);
 
     return newMsg;
 }
@@ -268,16 +226,14 @@ void NSDuplicateSetPropertyString(OCRepPayload** msgPayload, const char * name,
     {
         OCRepPayloadSetPropString(*msgPayload, name, copyString);
     }
-    else
-    {
-        OCRepPayloadSetNull(*msgPayload, name);
-    }
 }
 
 
 NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
 {
-    NS_LOG(DEBUG, "NSBuildOICNotificationSync - IN");
+    NS_LOG(DEBUG, "NSGetSyncInfo - IN");
+    char * providerId = NULL;
+    int64_t state;
 
     if(!payload)
     {
@@ -298,12 +254,13 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
         OICFree(retSync);
         return NULL;
     }
-    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_PROVIDER_ID, &retSync->providerId))
+
+    if (!OCRepPayloadGetPropString(repPayload, NS_ATTRIBUTE_PROVIDER_ID, &providerId))
     {
         OICFree(retSync);
         return NULL;
     }
-    int64_t state;
+
     if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_STATE, &state))
     {
         OICFree(retSync);
@@ -311,11 +268,69 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     }
 
     retSync->state = (NSSyncType) state;
+    OICStrcpy(retSync->providerId, UUID_STRING_SIZE, providerId);
+    OICFree(providerId);
 
-    NS_LOG_V(DEBUG, "Sync ID : %ld", retSync->messageId);
+    NS_LOG_V(DEBUG, "Provider ID : %s", retSync->providerId);
+    NS_LOG_V(DEBUG, "Sync ID : %lld", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
 
-    NS_LOG(DEBUG, "NSBuildOICNotificationSync - OUT");
+    NS_LOG(DEBUG, "NSGetSyncInfo - OUT");
 
     return retSync;
+}
+
+NSResult NSGenerateUUIDStr(char uuidStr[UUID_STRING_SIZE])
+{
+    uint8_t uuid[UUID_SIZE] = { 0, };
+
+    if (RAND_UUID_OK == OCGenerateUuid(uuid))
+    {
+        if (RAND_UUID_OK == OCConvertUuidToString(uuid, uuidStr))
+        {
+            return NS_OK;
+        }
+    }
+    return NS_ERROR;
+}
+
+char * NSGetValueFromQuery(char *query, char * compareKey)
+{
+
+    char *key = NULL;
+    char *value = NULL;
+    char *restOfQuery = NULL;
+    int numKeyValuePairsParsed = 0;
+
+    NS_LOG_V(INFO, "NS Query Params = %s", query);
+
+    char *keyValuePair = strtok_r (query, NS_QUERY_SEPARATOR, &restOfQuery);
+
+    while(keyValuePair)
+    {
+        if (numKeyValuePairsParsed >= 2)
+        {
+            NS_LOG(ERROR, "More than 2 queries params in URI.");
+            return NULL;
+        }
+
+        key = strtok_r(keyValuePair, NS_KEY_VALUE_DELIMITER, &value);
+
+        if (!key || !value)
+        {
+            NS_LOG(ERROR, "More than 2 queries params in URI.");
+            return NULL;
+        }
+
+        if (strcmp(key, compareKey) == 0)
+        {
+            return value;
+        }
+
+        ++numKeyValuePairsParsed;
+
+        keyValuePair = strtok_r(NULL, NS_QUERY_SEPARATOR, &restOfQuery);
+    }
+
+    return NULL;
 }

@@ -40,12 +40,4 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle);
 
 NSResult NSPutSyncResource(NSSyncInfo *sync, OCResourceHandle * handle);
 
-const char* NSGetNotificationMessageUri();
-
-const char* NSGetNotificationSyncUri();
-
-const char* NSGetNotificationUri();
-
-NSResult NSCopyString(char** targetString, const char* sourceString);
-
 #endif /* _NS_PROVIDER_RESOURCE_H_ */

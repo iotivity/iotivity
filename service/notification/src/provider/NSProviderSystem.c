@@ -20,6 +20,7 @@
 #include "NSProviderSystem.h"
 
 static NSConnectionState NSProviderConnectionState;
+NSProviderInfo * providerInfo;
 
 void NSSetProviderConnectionState(NSConnectionState state)
 {
@@ -34,3 +35,40 @@ NSConnectionState NSGetProviderConnectionState()
 
     return NSProviderConnectionState;
 }
+
+void NSInitProviderInfo()
+{
+    NS_LOG(DEBUG, "NSInitProviderInfo");
+
+    providerInfo = (NSProviderInfo *) OICMalloc(sizeof(NSProviderInfo));
+    NSGenerateUUIDStr(providerInfo->providerId);
+    providerInfo->providerName = NULL;
+}
+
+void NSDeinitProviderInfo()
+{
+    NS_LOG(DEBUG, "NSDeinitProviderInfo");
+
+    if(providerInfo == NULL)
+    {
+        NS_LOG(DEBUG, "providerInfo is NULL");
+        return;
+    }
+
+    if(providerInfo->providerName != NULL)
+    {
+        OICFree(providerInfo->providerName);
+        providerInfo->providerName = NULL;
+    }
+
+    OICFree(providerInfo);
+    providerInfo = NULL;
+}
+
+NSProviderInfo * NSGetProviderInfo()
+{
+    NS_LOG(DEBUG, "Change Connection State");
+
+    return providerInfo;
+}
+

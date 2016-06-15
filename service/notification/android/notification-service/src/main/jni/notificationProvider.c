@@ -151,8 +151,8 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
         }
     }
 
-    LOGI("consumer ID : %s\n", consumer->mDeviceId);
-    jstring consumerId = (*env)->NewStringUTF(env, consumer->mDeviceId);
+    LOGI("consumer ID : %s\n", consumer->consumerId);
+    jstring consumerId = (*env)->NewStringUTF(env, consumer->consumerId);
 
     jclass cls = (*env)->GetObjectClass(env, g_obj_subscriptionListener);
     if (!cls)
