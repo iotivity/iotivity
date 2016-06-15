@@ -18,17 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the declaration of exception classes for easy setup
- */
+
 #ifndef EASY_SETUP_EXCEPTION_H
 #define EASY_SETUP_EXCEPTION_H
 
 #include <string>
 #include <octypes.h>
-
+/**
+ * @file
+ *
+ * This file contains the declaration of exception classes for easy setup
+ */
 namespace OIC
 {
     namespace Service
@@ -81,6 +81,12 @@ namespace OIC
         class ESPlatformException: public ESException
         {
         public:
+
+            /**
+             * Constructs an exception with a description.
+             *
+             * @param OCStackResult The description for the error.
+             */
             explicit ESPlatformException(OCStackResult reason);
 
             /**
@@ -90,7 +96,7 @@ namespace OIC
             OCStackResult getReasonCode() const;
 
             /**
-             * Returns the reason description.
+             * This function returns description of the exception.
              *
              */
             std::string getReason() const;
@@ -106,7 +112,15 @@ namespace OIC
         class ESBadRequestException: public ESException
         {
         public:
+            /**
+             * Constructs an exception with a description.
+             *
+             * @param OCStackResult The description for the error.
+             */
             explicit ESBadRequestException(const std::string& what);
+            /**
+             * @overload
+             */
             explicit ESBadRequestException(std::string&& what);
         };
 
@@ -117,7 +131,15 @@ namespace OIC
         class ESInvalidParameterException: public ESException
         {
         public:
+            /**
+             * Constructs an exception with a description.
+             *
+             * @param OCStackResult The description for the error.
+             */
             explicit ESInvalidParameterException(const std::string& what);
+         /**
+             * @overload
+             */
             explicit ESInvalidParameterException(std::string&& what);
         };
 
@@ -127,7 +149,15 @@ namespace OIC
         class ESBadGetException: public ESException
         {
         public:
+            /**
+             * Constructs an exception with a description.
+             *
+             * @param OCStackResult The description for the error.
+             */
             explicit ESBadGetException(const std::string& what);
+           /**
+             * @overload
+             */
             explicit ESBadGetException(std::string&& what);
         };
 
@@ -138,7 +168,15 @@ namespace OIC
         class ESInvalidKeyException: public ESException
         {
         public:
+            /**
+             * Constructs an exception with a description.
+             *
+             * @param OCStackResult The description for the error.
+             */
             explicit ESInvalidKeyException(const std::string& what);
+             /**
+             * @overload
+             */
             explicit ESInvalidKeyException(std::string&& what);
         };
     }

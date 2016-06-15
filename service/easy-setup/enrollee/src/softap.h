@@ -33,7 +33,8 @@ extern "C" {
  * @file
  *
  * This file contains platform agnostic API for creation of Soft AP
- * @Note : Some of the APIs of this file need to be modified by the OEM according to the device configuration
+ * @Note :  Some of the APIs of this file need to be modified by the OEM according to the device
+ *          configuration
  */
 
 /**
@@ -64,12 +65,14 @@ DeviceRole ESSoftapHost();
 /**
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API
  *
- * @param ssid                 SSID of the target SoftAP network to which the Enrollee is connecting.
- * @param passwd               Password of the target SoftAP network to which the Enrollee is connecting
- * @param NetworkEventCallback Callback function for result update
+ * @param ssid                  SSID of the target SoftAP network to which the Enrollee is
+ *                              connecting.
+ * @param passwd                Password of the target SoftAP network to which the Enrollee is
+ *                              connecting
+ * @param ESEnrolleeNetworkEventCallback Callback function for result update
  * @return ::void.
  */
-void ESCreateSoftap(const char * ssid, const char* passwd, NetworkEventCallback cb);
+void ESCreateSoftap(const char * ssid, const char* passwd, ESEnrolleeNetworkEventCallback cb);
 
 
 #ifdef __cplusplus

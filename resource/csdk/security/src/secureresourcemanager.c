@@ -57,7 +57,7 @@ static SPResponseCallback gSPResponseHandler = NULL;
 PEContext_t g_policyEngineContext;
 
 /**
- * @brief function to register provisoning API's response callback.
+ * Function to register provisoning API's response callback.
  * @param respHandler response handler callback.
  */
 void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
@@ -65,12 +65,16 @@ void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
     gSPResponseHandler = respHandler;
 }
 
+void SetResourceRequestType(PEContext_t *context, const char *resourceUri)
+{
+    context->resourceType = GetSvrTypeFromUri(resourceUri);
+}
 
 static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
 {
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
 
-    if(NULL == context ||
+    if (NULL == context ||
        NULL == context->amsMgrContext->requestInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s : NULL Parameter(s)",__func__);
@@ -91,7 +95,6 @@ static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
         OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
     }
 }
-
 
 void SRMSendResponse(SRMAccessResponse_t responseVal)
 {
@@ -121,12 +124,11 @@ exit:
     SetPolicyEngineState(&g_policyEngineContext, AWAITING_REQUEST);
 }
 
-
 /**
- * @brief   Handle the request from the SRM.
- * @param   endPoint       [IN] Endpoint object from which the response is received.
- * @param   requestInfo    [IN] Information for the request.
- * @return  NONE
+ * Handle the request from the SRM.
+ *
+ * @param endPoint object from which the response is received.
+ * @param requestInfo contains information for the request.
  */
 void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
@@ -163,8 +165,10 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     char newUri[MAX_URI_LENGTH + 1];
     OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
 
+    SetResourceRequestType(&g_policyEngineContext, newUri);
+
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
-    if(AWAITING_REQUEST == g_policyEngineContext.state)
+    if (AWAITING_REQUEST == g_policyEngineContext.state)
     {
         OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
                 requestInfo->info.resourceUri, requestInfo->method);
@@ -189,7 +193,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     VERIFY_NON_NULL(TAG, gRequestHandler, ERROR);
 
-    if(ACCESS_WAITING_FOR_AMS == response)
+    if (ACCESS_WAITING_FOR_AMS == response)
     {
         OIC_LOG(INFO, TAG, "Sending slow response");
 
@@ -222,10 +226,10 @@ exit:
 }
 
 /**
- * @brief   Handle the response from the SRM.
- * @param   endPoint     [IN] The remote endpoint.
- * @param   responseInfo [IN] Response information from the endpoint.
- * @return  NONE
+ * Handle the response from the SRM.
+ *
+ * @param endPoint points to the remote endpoint.
+ * @param responseInfo contains response information from the endpoint.
  */
 void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
 {
@@ -248,12 +252,11 @@ void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *re
     }
 }
 
-
 /**
- * @brief   Handle the error from the SRM.
- * @param   endPoint  [IN] The remote endpoint.
- * @param   errorInfo [IN] Error information from the endpoint.
- * @return  NONE
+ * Handle the error from the SRM.
+ *
+ * @param endPoint is the remote endpoint.
+ * @param errorInfo contains error information from the endpoint.
  */
 void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
@@ -265,16 +268,6 @@ void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInf
     }
 }
 
-
-/**
- * @brief   Register request and response callbacks.
- *          Requests and responses are delivered in these callbacks.
- * @param   reqHandler   [IN] Request handler callback ( for GET,PUT ..etc)
- * @param   respHandler  [IN] Response handler callback.
- * @return
- *     OC_STACK_OK    - No errors; Success
- *     OC_STACK_INVALID_PARAM - invalid parameter
- */
 OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
                                  CAResponseCallback respHandler,
                                  CAErrorCallback errHandler)
@@ -298,13 +291,6 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
     return OC_STACK_OK;
 }
 
-/**
- * @brief   Register Persistent storage callback.
- * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
- * @return
- *     OC_STACK_OK    - No errors; Success
- *     OC_STACK_INVALID_PARAM - Invalid parameter
- */
 OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
     OIC_LOG(DEBUG, TAG, "SRMRegisterPersistentStorageHandler !!");
@@ -317,22 +303,11 @@ OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persisten
     return OC_STACK_OK;
 }
 
-/**
- * @brief   Get Persistent storage handler pointer.
- * @return
- *     The pointer to Persistent Storage callback handler
- */
-
 OCPersistentStorage* SRMGetPersistentStorageHandler()
 {
     return gPersistentStorageHandler;
 }
 
-
-/**
- * @brief   Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult SRMInitSecureResources()
 {
     // TODO: temporarily returning OC_STACK_OK every time until default
@@ -355,38 +330,21 @@ OCStackResult SRMInitSecureResources()
     return ret;
 }
 
-/**
- * @brief   Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- * @retval  none
- */
 void SRMDeInitSecureResources()
 {
     DestroySecureResources();
 }
 
-/**
- * @brief   Initialize Policy Engine.
- * @return  OC_STACK_OK for Success, otherwise some error value.
- */
 OCStackResult SRMInitPolicyEngine()
 {
     return InitPolicyEngine(&g_policyEngineContext);
 }
 
-/**
- * @brief   Cleanup Policy Engine.
- * @return  none
- */
 void SRMDeInitPolicyEngine()
 {
     return DeInitPolicyEngine(&g_policyEngineContext);
 }
 
-/**
- * @brief   Check the security resource URI.
- * @param   uri [IN] Pointers to security resource URI.
- * @return  true if the URI is one of security resources, otherwise false.
- */
 bool SRMIsSecurityResourceURI(const char* uri)
 {
     if (!uri)
@@ -404,6 +362,7 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_PSTAT_URI,
         OIC_RSRC_PCONF_URI,
         OIC_RSRC_DPAIRING_URI,
+        OIC_RSRC_VER_URI,
     };
 
     // Remove query from Uri for resource string comparison
@@ -426,4 +385,121 @@ bool SRMIsSecurityResourceURI(const char* uri)
     }
 
     return false;
+}
+
+/**
+ * Get the Secure Virtual Resource (SVR) type from the URI.
+ * @param   uri [IN] Pointer to URI in question.
+ * @return  The OicSecSvrType_t of the URI passed (note: if not a Secure Virtual
+            Resource, e.g. /a/light, will return "NOT_A_SVR_TYPE" enum value)
+ */
+static const char URI_QUERY_CHAR = '?';
+OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
+{
+    if (!uri)
+    {
+        return NOT_A_SVR_RESOURCE;
+    }
+
+    // Remove query from Uri for resource string comparison
+    size_t uriLen = strlen(uri);
+    char *query = strchr (uri, URI_QUERY_CHAR);
+    if (query)
+    {
+        uriLen = query - uri;
+    }
+
+    size_t svrLen = 0;
+
+    svrLen = strlen(OIC_RSRC_ACL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_ACL_URI, svrLen))
+        {
+            return OIC_R_ACL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_AMACL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_AMACL_URI, svrLen))
+        {
+            return OIC_R_AMACL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_CRED_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_CRED_URI, svrLen))
+        {
+            return OIC_R_CRED_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_CRL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_CRL_URI, svrLen))
+        {
+            return OIC_R_CRL_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_DOXM_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_DOXM_URI, svrLen))
+        {
+            return OIC_R_DOXM_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_DPAIRING_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_DPAIRING_URI, svrLen))
+        {
+            return OIC_R_DPAIRING_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_PCONF_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_PCONF_URI, svrLen))
+        {
+            return OIC_R_PCONF_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_PSTAT_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_PSTAT_URI, svrLen))
+        {
+            return OIC_R_PSTAT_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_SVC_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_SVC_URI, svrLen))
+        {
+            return OIC_R_SVC_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_SACL_URI);
+    if(uriLen == svrLen)
+    {
+        if(0 == strncmp(uri, OIC_RSRC_SACL_URI, svrLen))
+        {
+            return OIC_R_SACL_TYPE;
+        }
+    }
+
+    return NOT_A_SVR_RESOURCE;
 }

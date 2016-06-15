@@ -21,6 +21,7 @@
 
 extern "C"
 {
+    #include "ocpayload.h"
     #include "ocstack.h"
     #include "ocstackinternal.h"
     #include "logger.h"
@@ -85,10 +86,11 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-static void resultCallback(OCDPDev_t *UNUSED1, OCStackResult UNUSED2)
+static void resultCallback(void *UNUSED1, OCDPDev_t *UNUSED2, OCStackResult UNUSED3)
 {
     (void) (UNUSED1);
     (void) (UNUSED2);
+    (void) (UNUSED3);
 }
 
 extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
@@ -1021,6 +1023,8 @@ TEST(StackBind, BindResourceTypeNameBad)
     EXPECT_STREQ("core.led", resourceTypeName);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, "core.nameBad"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, "core.name bad"));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1057,6 +1061,12 @@ TEST(StackBind, BindResourceTypeNameGood)
     EXPECT_EQ(3, numResourceTypes);
     resourceTypeName = OCGetResourceTypeName(handle, 2);
     EXPECT_STREQ("core.reallybrightled", resourceTypeName);
+
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "x.ReallyReallyBrightLED"));
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
+    EXPECT_EQ(4, numResourceTypes);
+    resourceTypeName = OCGetResourceTypeName(handle, 3);
+    EXPECT_STREQ("x.ReallyReallyBrightLED", resourceTypeName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1680,17 +1690,17 @@ TEST(PODTests, OCCallbackData)
 
 TEST(OCDoDirectPairingTests, Nullpeer)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, pmSel, &pinNumber, &resultCallback));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, NULL, pmSel, &pinNumber, &resultCallback));
 }
 
 TEST(OCDoDirectPairingTests, NullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(&peer, pmSel, &pinNumber, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(NULL, &peer, pmSel, &pinNumber, NULL));
 }
 
 TEST(OCDoDirectPairingTests, NullpinNumber)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(&peer, pmSel, NULL, &resultCallback));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, &peer, pmSel, NULL, &resultCallback));
 }
 
 TEST(StackResource, MultipleResourcesDiscovery)
@@ -1744,4 +1754,30 @@ TEST(StackResource, MultipleResourcesDiscovery)
                                         0));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackPayload, CloneByteString)
+{
+    uint8_t bytes[] = { 0, 1, 2, 3 };
+    OCByteString byteString;
+    byteString.bytes = bytes;
+    byteString.len = sizeof(bytes);
+
+    OCRepPayload *original = OCRepPayloadCreate();
+    ASSERT_TRUE(original != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropByteString(original, "name", byteString));
+
+    OCRepPayload *clone = OCRepPayloadClone(original);
+    ASSERT_TRUE(clone != NULL);
+
+    OCRepPayloadDestroy(original);
+
+    OCByteString cloneByteString;
+    EXPECT_TRUE(OCRepPayloadGetPropByteString(clone, "name", &cloneByteString));
+    ASSERT_TRUE(cloneByteString.bytes != NULL);
+    EXPECT_EQ(sizeof(bytes), cloneByteString.len);
+    EXPECT_TRUE(0 == memcmp(bytes, cloneByteString.bytes, sizeof(bytes)));
+    OICFree(cloneByteString.bytes);
+
+    OCRepPayloadDestroy(clone);
 }

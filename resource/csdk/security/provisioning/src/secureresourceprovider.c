@@ -40,6 +40,7 @@
 #include "provisioningdatabasemanager.h"
 #include "base64.h"
 #include "utlist.h"
+#include "ocpayload.h"
 
 #ifdef __WITH_X509__
 #include "crlresource.h"
@@ -297,21 +298,22 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         OCClientResponseHandler responseHandler)
 {
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    if (!secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCredJSON(cred);
-    if(NULL == secPayload->securityData)
+    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData, &secPayload->payloadSize);
+    if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
 
-    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
+    OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -455,14 +457,15 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCrlJSON(crl);
-    if (NULL == secPayload->securityData)
+    OCStackResult res = CrlToCBORPayload(crl, &secPayload->securityData, &secPayload->payloadSize);
+    if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
     {
         OICFree(secPayload);
         OIC_LOG(ERROR, TAG, "Failed to BinToCrlJSON");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "CRL : %s", secPayload->securityData);
+    OIC_LOG(DEBUG, TAG, "Created payload for CRL:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -472,8 +475,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
                         query, sizeof(query), OIC_RSRC_CRL_URI))
     {
         OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -483,8 +485,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     CRLData_t *crlData = (CRLData_t *) OICCalloc(1, sizeof(CRLData_t));
     if (crlData == NULL)
     {
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -497,8 +498,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     crlData->resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
     if (crlData->resArr == NULL)
     {
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -541,16 +541,18 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCredJSON(cred);
+    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData,
+        &secPayload->payloadSize);
 
-    if (NULL == secPayload->securityData)
+    if ((OC_STACK_OK != res) || (NULL == secPayload->securityData))
     {
         OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
+        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
 
-    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
+    OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -559,8 +561,7 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
         OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -636,7 +637,17 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
     {
         VERIFY_NON_NULL(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
     }
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+    if (SYMMETRIC_PAIR_WISE_KEY == type &&
+        0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : Same device ID");
+        return OC_STACK_INVALID_PARAM;
+    }
 
     if (SYMMETRIC_PAIR_WISE_KEY == type &&
        !(OWNER_PSK_LENGTH_128 == keySize || OWNER_PSK_LENGTH_256 == keySize))
@@ -848,15 +859,12 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToAclJSON(acl);
-    if(NULL == secPayload->securityData)
+    if(OC_STACK_OK != AclToCBORPayload(acl, &secPayload->securityData, &secPayload->payloadSize))
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToAclJSON");
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
-
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         selectedDeviceInfo->endpoint.addr,
@@ -874,8 +882,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     ACLData_t *aclData = (ACLData_t *) OICCalloc(1, sizeof(ACLData_t));
     if (aclData == NULL)
     {
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -889,8 +896,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     if (aclData->resArr == NULL)
     {
         OICFree(aclData);
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -917,8 +923,8 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
 static void registerResultForDirectPairingProvisioning(PconfData_t *pconfData,
                                              OCStackResult stackresult)
 {
-   OIC_LOG_V(INFO, TAG, "Inside registerResultForDirectPairingProvisioning pconfData->numOfResults is %d\n",
-                       pconfData->numOfResults);
+   OIC_LOG_V(INFO, TAG, "Inside registerResultForDirectPairingProvisioning "
+           "pconfData->numOfResults is %d\n", pconfData->numOfResults);
    memcpy(pconfData->resArr[(pconfData->numOfResults)].deviceId.id,
           pconfData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
    pconfData->resArr[(pconfData->numOfResults)].res = stackresult;
@@ -947,7 +953,7 @@ static OCStackApplicationResult SRPProvisionDirectPairingCB(void *ctx, OCDoHandl
     {
         if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
         {
-            registerResultForDirectPairingProvisioning(pconfData, OC_STACK_RESOURCE_CREATED);
+            registerResultForDirectPairingProvisioning(pconfData, OC_STACK_OK);
             ((OCProvisionResultCB)(resultCallback))(pconfData->ctx, pconfData->numOfResults,
                                                     pconfData->resArr,
                                                     false);
@@ -986,7 +992,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
         OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return OC_STACK_ERROR;
     }
-    memcpy(&pconf->rowner, &provTooldeviceID, sizeof(OicUuid_t));
+    memcpy(&pconf->rownerID, &provTooldeviceID, sizeof(OicUuid_t));
 
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
@@ -995,21 +1001,24 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToPconfJSON(pconf);
-    if(NULL == secPayload->securityData)
+
+    if (OC_STACK_OK != PconfToCBORPayload(pconf, &(secPayload->securityData),
+                &(secPayload->payloadSize)))
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToPconfJSON");
+        OCPayloadDestroy((OCPayload*)secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to PconfToCborPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "PCONF : %s", secPayload->securityData);
+    OIC_LOG(DEBUG, TAG, "Created payload for pconf set");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
-                        selectedDeviceInfo->endpoint.addr,
-                        selectedDeviceInfo->securePort,
-                        selectedDeviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_PCONF_URI))
+                selectedDeviceInfo->endpoint.addr,
+                selectedDeviceInfo->securePort,
+                selectedDeviceInfo->connType,
+                query, sizeof(query), OIC_RSRC_PCONF_URI))
     {
         OIC_LOG(ERROR, TAG, "SRPProvisionDirectPairing : Failed to generate query");
         return OC_STACK_ERROR;
@@ -1021,8 +1030,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     PconfData_t *pconfData = (PconfData_t *) OICCalloc(1, sizeof(PconfData_t));
     if (NULL == pconfData)
     {
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload*)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -1036,8 +1044,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     if (NULL == pconfData->resArr)
     {
         OICFree(pconfData);
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload*)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -1048,7 +1055,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     OIC_LOG(DEBUG, TAG, "Sending PCONF info to resource server");
     OCStackResult ret = OCDoResource(&handle, method, query,
             &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            selectedDeviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (OC_STACK_OK != ret)
     {
         OICFree(pconfData->resArr);
@@ -1106,20 +1113,20 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         return OC_STACK_INVALID_PARAM;
     }
 
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(revokedDev->doxm->deviceID.id)) + 1] = {};
-    uint32_t base64Len = 0;
-    if (B64_OK != b64Encode(revokedDev->doxm->deviceID.id, sizeof(revokedDev->doxm->deviceID.id),
-                           base64Buff, sizeof(base64Buff), &base64Len))
+    char *subID = NULL;
+    OCStackResult ret = ConvertUuidToStr(&revokedDev->doxm->deviceID, &subID);
+    if(OC_STACK_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "SendDeleteCredentialRequest : Failed to base64 encoding");
+        OIC_LOG(ERROR, TAG, "SendDeleteCredentialRequest : Failed to canonical UUID encoding");
         return OC_STACK_ERROR;
     }
 
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
-                    //coaps://0.0.0.0:5684/oic/sec/cred?sub=(BASE64 ENCODED UUID)
+                    //coaps://0.0.0.0:5684/oic/sec/cred?subjectid=(Canonical ENCODED UUID)
     snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,
-                     destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECT_NAME, base64Buff);
+                     destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECTID_NAME, subID);
+    OICFree(subID);
     if (snRet < 0)
     {
         OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error (snprintf) %d\n", snRet);
@@ -1140,7 +1147,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
 
     OIC_LOG(DEBUG, TAG, "Sending remove credential request to resource server");
 
-    OCStackResult ret = OCDoResource(NULL, OC_REST_DELETE, reqBuf,
+    ret = OCDoResource(NULL, OC_REST_DELETE, reqBuf,
                                      &destDev->endpoint, NULL,
                                      CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
     if (OC_STACK_OK != ret)
@@ -1306,11 +1313,22 @@ OCStackResult SRPUnlinkDevices(void* ctx,
 {
     OIC_LOG(INFO, TAG, "IN SRPUnlinkDevices");
 
-    if (!pTargetDev1 || !pTargetDev2 || !resultCallback)
+    if (!pTargetDev1 || !pTargetDev2 || !pTargetDev1->doxm || !pTargetDev2->doxm)
     {
         OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL parameters");
         return OC_STACK_INVALID_PARAM;
     }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+    if (0 == memcmp(&pTargetDev1->doxm->deviceID, &pTargetDev2->doxm->deviceID, sizeof(OicUuid_t)))
+    {
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : Same device ID");
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OIC_LOG(INFO, TAG, "Unlinking following devices: ");
     PMPrintOCProvisionDev(pTargetDev1);
     PMPrintOCProvisionDev(pTargetDev2);
@@ -1434,67 +1452,61 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
     OCStackResult res = OC_STACK_ERROR;
 
     RemoveData_t* removeData = (RemoveData_t*)delDevCtx;
-    if(removeData)
+
+    if (clientResponse)
     {
-        if (clientResponse)
+        OicUuid_t revDevUuid = {.id={0}};
+        if(UUID_LENGTH == clientResponse->identity.id_length)
         {
-            OicUuid_t revDevUuid = {.id={0}};
-            if(UUID_LENGTH == clientResponse->identity.id_length)
+            memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
+            if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
             {
-                memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
-                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+                res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID, &revDevUuid);
+                if (OC_STACK_OK != res)
                 {
-                    res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID, &revDevUuid);
-                    if (OC_STACK_OK != res)
-                    {
-                        OIC_LOG(ERROR, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
-                               registerResultForRemoveDevice(removeData, &revDevUuid,
-                               OC_STACK_INCONSISTENT_DB, true);
+                    OIC_LOG(ERROR, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
+                           registerResultForRemoveDevice(removeData, &revDevUuid,
+                           OC_STACK_INCONSISTENT_DB, true);
 
-                        return OC_STACK_DELETE_TRANSACTION;
-                    }
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
 
-                    registerResultForRemoveDevice(removeData, &revDevUuid,
-                                                  OC_STACK_RESOURCE_DELETED, false);
-                }
-                else
-                {
-                    registerResultForRemoveDevice(removeData, &revDevUuid,
-                                                  clientResponse->result, true);
-                    OIC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
-                }
+                registerResultForRemoveDevice(removeData, &revDevUuid,
+                                              OC_STACK_RESOURCE_DELETED, false);
             }
             else
             {
-                OIC_LOG_V(WARNING, TAG, "Incorrect length of device UUID was sent from %s:%d",
-                         clientResponse->devAddr.addr, clientResponse->devAddr.port);
-
-                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
-                {
-                    /**
-                      * Since server's credential was deleted,
-                      * register result as OC_STACK_INCONSISTENT_DB with NULL UUID.
-                      */
-
-                    OIC_LOG_V(ERROR, TAG, "But server's credential was deleted.");
-                    registerResultForRemoveDevice(removeData, NULL, OC_STACK_INCONSISTENT_DB, true);
-                }
-                else
-                {
-                    registerResultForRemoveDevice(removeData, NULL, clientResponse->result, true);
-                }
+                registerResultForRemoveDevice(removeData, &revDevUuid,
+                                              clientResponse->result, true);
+                OIC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
             }
         }
         else
         {
-            registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
-            OIC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
+            OIC_LOG_V(WARNING, TAG, "Incorrect length of device UUID was sent from %s:%d",
+                     clientResponse->devAddr.addr, clientResponse->devAddr.port);
+
+            if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+            {
+                /**
+                  * Since server's credential was deleted,
+                  * register result as OC_STACK_INCONSISTENT_DB with NULL UUID.
+                  */
+                OIC_LOG_V(ERROR, TAG, "But server's credential was deleted.");
+                registerResultForRemoveDevice(removeData, NULL, OC_STACK_INCONSISTENT_DB, true);
+            }
+            else
+            {
+                registerResultForRemoveDevice(removeData, NULL, clientResponse->result, true);
+            }
         }
     }
     else
     {
-        OIC_LOG(WARNING, TAG, "SRPRemoveDevices received null context");
+        registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
     }
+
 
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -1568,10 +1580,15 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
 {
     OIC_LOG(INFO, TAG, "IN SRPRemoveDevice");
 
-    if (!pTargetDev || !resultCallback || 0 == waitTimeForOwnedDeviceDiscovery)
+    if (!pTargetDev  || 0 == waitTimeForOwnedDeviceDiscovery)
     {
         OIC_LOG(INFO, TAG, "SRPRemoveDevice : NULL parameters");
         return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPRemoveDevice : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
     }
 
     // Declare variables in here to handle error cases with goto statement.

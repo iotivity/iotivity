@@ -22,23 +22,18 @@
 package org.iotivity.cloud.rdserver;
 
 import java.net.InetSocketAddress;
+import java.util.Scanner;
 
 import org.iotivity.cloud.base.CoapServer;
 import org.iotivity.cloud.base.ResourceManager;
 import org.iotivity.cloud.rdserver.resources.ResourceDirectoryResource;
 import org.iotivity.cloud.util.Logger;
-import org.iotivity.cloud.util.Net;
 
 public class ResourceDirectoryServer {
 
     public static void main(String[] args) throws Exception {
 
         System.out.println("-----RD SERVER-----");
-        String hostAddress = Net.getMyIpAddress();
-        if (hostAddress.equals("") == true) {
-            Logger.e("cannot find host address.");
-            return;
-        }
 
         if (args.length != 1) {
             Logger.e("coap server port required");
@@ -59,6 +54,19 @@ public class ResourceDirectoryServer {
 
         coapServer
                 .startServer(new InetSocketAddress(Integer.parseInt(args[0])));
-    }
 
+        Scanner in = new Scanner(System.in, "UTF-8");
+
+        System.out.println("press 'q' to terminate");
+
+        while (!in.nextLine().equals("q"));
+
+        in.close();
+
+        System.out.println("Terminating...");
+
+        coapServer.stopServer();
+
+        System.out.println("Terminated");
+    }
 }

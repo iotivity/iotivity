@@ -20,12 +20,12 @@
 void ESCreateSoftapCallback(int result, const char *ip, const char* mac_addr,
                                                             const char* device_name );
 
-NetworkEventCallback gCallback;
+ESEnrolleeNetworkEventCallback gCallback;
 
 /**
  * It will return Device which is creating Soft AP.
  * i.e.Enrollee or Mediator.
- * This decesion is based on, what is the value set for ES_SOFTAP_MODE in build command as well as 
+ * This decision is based on, what is the value set for ES_SOFTAP_MODE in build command as well as
  * in iotivity.spec file.
  */
 DeviceRole ESSoftapHost()
@@ -76,7 +76,7 @@ void ESCreateSoftapCallback(int result, const char *ip, const char* mac_addr,
 /**
  * This API will create the softap at enrollee
  */
-void ESCreateSoftap(const char * ssid, const char* passwd, NetworkEventCallback cb)
+void ESCreateSoftap(const char * ssid, const char* passwd, ESEnrolleeNetworkEventCallback cb)
 {
     gCallback = cb;
 

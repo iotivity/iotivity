@@ -23,6 +23,7 @@
 package org.iotivity.base;
 
 import org.iotivity.ca.CaInterface;
+import org.iotivity.base.BuildConfig;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -40,6 +41,10 @@ public final class OcPlatform {
         System.loadLibrary("octbstack");
         System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
+        if (0 != BuildConfig.SECURED)
+        {
+            System.loadLibrary("ocprovision");
+        }
         System.loadLibrary("ocstack-jni");
     }
 
@@ -536,12 +541,16 @@ public final class OcPlatform {
             OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerDeviceInfo0(
-                ocDeviceInfo.getDeviceName()
+                ocDeviceInfo.getDeviceName(),
+                ocDeviceInfo.getDeviceTypes().toArray(
+                        new String[ocDeviceInfo.getDeviceTypes().size()]
+                )
         );
     }
 
     private static native void registerDeviceInfo0(
-            String deviceName
+            String deviceName,
+            String[] deviceTypes
     ) throws OcException;
 
     /**

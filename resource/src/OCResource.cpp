@@ -122,7 +122,7 @@ void OCResource::setHost(const std::string& host)
     else if(host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
     {
         prefix_len = sizeof(COAPS) - 1;
-        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_SECURE);
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
     }
     else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
     {

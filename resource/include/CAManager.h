@@ -49,6 +49,24 @@ namespace OC
         */
         OCStackResult setNetworkMonitorHandler(AdapterChangedCallback adapterHandler,
                                                ConnectionChangedCallback connectionHandler);
+
+        /**
+        * Set port number to use.
+        * @param adapter transport adapter type to assign the specified port number.
+        * @param flag transport flag information.
+        * @param port the specified port number to use.
+        * @return Returns ::OC_STACK_OK if success.
+        */
+        OCStackResult setPortNumberToAssign(OCTransportAdapter adapter,
+                                            OCTransportFlags flag, uint16_t port);
+
+        /**
+        * Get the assigned port number.
+        * @param adapter transport adapter type to get the opened port number.
+        * @param flag   transport flag information.
+        * @return Returns currently assigned port number.
+        */
+        uint16_t getAssignedPortNumber(OCTransportAdapter adapter, OCTransportFlags flag);
     }
 }
 

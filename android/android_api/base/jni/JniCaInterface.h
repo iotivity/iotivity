@@ -121,6 +121,14 @@ extern "C" {
     JNIEXPORT void JNICALL Java_org_iotivity_ca_CaInterface_initialize
         (JNIEnv *, jclass, jobject, jobject);
 
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_setLeScanIntervalTimeImpl
+     * Method:    setLeScanIntervalTimeImpl
+     * Signature: (II)V
+     */
+    JNIEXPORT void JNICALL Java_org_iotivity_ca_CaInterface_setLeScanIntervalTimeImpl
+        (JNIEnv *, jclass, jint, jint);
+
 #ifdef __cplusplus
 }
 #endif

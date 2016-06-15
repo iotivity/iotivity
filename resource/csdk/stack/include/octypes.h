@@ -743,6 +743,7 @@ typedef enum
 
     /** Request is not authorized by Resource Server. */
     OC_STACK_UNAUTHORIZED_REQ,
+    OC_STACK_TOO_LARGE_REQ,
 
     /** Error code from PDM */
     OC_STACK_PDM_IS_NOT_INITIALIZED,
@@ -751,7 +752,7 @@ typedef enum
 
     /**
      * Error code from OTM
-     * This error is plused from DTLS interface when handshake failure happens
+     * This error is pushed from DTLS interface when handshake failure happens
      */
     OC_STACK_AUTHENTICATION_FAILURE,
 
@@ -809,6 +810,7 @@ typedef enum
  * Persistent storage handlers. An APP must provide OCPersistentStorage handler pointers
  * when it calls OCRegisterPersistentStorageHandler.
  * Persistent storage open handler points to default file path.
+ * It should check file path and whether the file is symbolic link or no.
  * Application can point to appropriate SVR database path for it's IoTivity Server.
  */
 typedef struct {
@@ -945,6 +947,10 @@ typedef struct
     char *deviceName;
     /** Pointer to the types.*/
     OCStringLL *types;
+    /** Pointer to the device specification version.*/
+    char *specVersion;
+    /** Pointer to the device data model version.*/
+    char *dataModleVersion;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER
@@ -974,19 +980,33 @@ typedef struct
 /** Enum to describe the type of object held by the OCPayload object.*/
 typedef enum
 {
+    /** Contents of the payload are invalid */
     PAYLOAD_TYPE_INVALID,
+    /** The payload is an OCDiscoveryPayload */
     PAYLOAD_TYPE_DISCOVERY,
+    /** The payload is an OCDevicePayload */
     PAYLOAD_TYPE_DEVICE,
+    /** The payload is an OCPlatformPayload */
     PAYLOAD_TYPE_PLATFORM,
+    /** The payload is an OCRepPayload */
     PAYLOAD_TYPE_REPRESENTATION,
+    /** The payload is an OCSecurityPayload */
     PAYLOAD_TYPE_SECURITY,
+    /** The payload is an OCPresencePayload */
     PAYLOAD_TYPE_PRESENCE,
+    /** The payload is an OCRDPayload */
     PAYLOAD_TYPE_RD
 } OCPayloadType;
 
+/**
+ * A generic struct representing a payload returned from a resource operation
+ *
+ * A pointer to OCPayLoad can be cast to a more specific struct to access members
+ * for the its type.
+ */
 typedef struct
 {
-    // The type of message that was received
+    /** The type of message that was received */
     OCPayloadType type;
 } OCPayload;
 
@@ -1229,15 +1249,17 @@ typedef struct
     OCPayload base;
     char* uri;
     OCPlatformInfo info;
-    char* rt;
+    OCStringLL* rt;
     OCStringLL* interfaces;
 } OCPlatformPayload;
 
 typedef struct
 {
     OCPayload base;
-    char* securityData;
+    uint8_t* securityData;
+    size_t payloadSize;
 } OCSecurityPayload;
+
 #ifdef WITH_PRESENCE
 typedef struct
 {
@@ -1367,11 +1389,16 @@ typedef enum
 } OCEntityHandlerFlag;
 
 /**
- * Possible returned values from client application.
+ * Possible return values from client application callback
+ *
+ * A client application callback returns an OCStackApplicationResult to indicate whether
+ * the stack should continue to keep the callback registered.
  */
 typedef enum
 {
+    /** Make no more calls to the callback and call the OCClientContextDeleter for this callback */
     OC_STACK_DELETE_TRANSACTION = 0,
+    /** Keep this callback registered and call it if an apropriate event occurs */
     OC_STACK_KEEP_TRANSACTION
 } OCStackApplicationResult;
 
@@ -1463,11 +1490,12 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 /**
  * Callback function definition of direct-pairing
  *
+ * @param[OUT] ctx - user context returned in the callback.
  * @param[OUT] peer - pairing device info.
  * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
-typedef void (*OCDirectPairingCB)(OCDPDev_t *peer, OCStackResult result);
+typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
 //#endif // DIRECT_PAIRING
 
 #ifdef __cplusplus

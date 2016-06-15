@@ -29,6 +29,10 @@
 #ifndef SINGLE_THREAD
 #include "caqueueingthread.h"
 #endif
+#if defined(__TIZEN__) || defined(__ANDROID__)
+#include "caleserver.h"
+#include "caleclient.h"
+#endif
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
@@ -1752,7 +1756,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLENetworkMonitor() failed");
         return CA_STATUS_FAILED;
     }
-    CAInitializeLEAdapter(handle);
+    CAInitializeLEAdapter();
 
     CASetLEClientThreadPoolHandle(handle);
 
@@ -1913,6 +1917,7 @@ static CAResult_t CAStartLEListeningServer()
             OIC_LOG(DEBUG,
                     CALEADAPTER_TAG,
                     "Listen Server will be started once BT Adapter is enabled");
+            result = CA_STATUS_OK;
         }
     }
     else
@@ -1969,6 +1974,7 @@ static CAResult_t CAStartLEDiscoveryServer()
             OIC_LOG(DEBUG,
                     CALEADAPTER_TAG,
                     "Discovery Server will be started once BT Adapter is enabled");
+            result = CA_STATUS_OK;
         }
     }
     else

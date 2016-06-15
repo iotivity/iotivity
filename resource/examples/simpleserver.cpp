@@ -36,6 +36,7 @@ using namespace OC;
 using namespace std;
 namespace PH = std::placeholders;
 
+static const char* SVR_DB_FILE_NAME = "./oic_svr_db_server.dat";
 int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
 void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest);
@@ -484,7 +485,7 @@ void PrintUsage()
 
 static FILE* client_open(const char* /*path*/, const char *mode)
 {
-    return fopen("./oic_svr_db_server.json", mode);
+    return fopen(SVR_DB_FILE_NAME, mode);
 }
 
 int main(int argc, char* argv[])

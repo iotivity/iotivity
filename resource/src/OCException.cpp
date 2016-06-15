@@ -97,6 +97,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INVALID_REPRESENTATION;
         case OC_STACK_UNAUTHORIZED_REQ:
             return OC::Exception::UNAUTHORIZED_REQUEST;
+        case OC_STACK_TOO_LARGE_REQ:
+            return OC::Exception::TOO_LARGE_REQ;
         case OC_STACK_PDM_IS_NOT_INITIALIZED:
             return OC::Exception::PDM_DB_NOT_INITIALIZED;
         case OC_STACK_DUPLICATE_UUID:

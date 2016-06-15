@@ -131,10 +131,7 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP[] = "coap+tcp:";
-
-//#ifdef DIRECT_PAIRING
-OCDirectPairingCB gDirectpairingCallback = NULL;
-//#endif
+static const char CORESPEC[] = "core";
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -278,16 +275,6 @@ static void deleteAllResources();
  */
 static void incrementSequenceNumber(OCResource * resPtr);
 
-/**
- * Verify the lengths of the URI and the query separately.
- *
- * @param inputUri Input URI and query.
- * @param uriLen The length of the initial URI with query.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-static OCStackResult verifyUriQueryLength(const char * inputUri,
-        uint16_t uriLen);
-
 /*
  * Attempts to initialize every network interface that the CA Layer might have compiled in.
  *
@@ -308,12 +295,20 @@ static CAResult_t OCSelectNetwork();
 static uint32_t GetTicks(uint32_t afterMilliSeconds);
 
 /**
+ * Convert CAResult_t to OCStackResult.
+ *
+ * @param caResult CAResult_t code.
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult CAResultToOCStackResult(CAResult_t caResult);
+
+/**
  * Convert CAResponseResult_t to OCStackResult.
  *
  * @param caCode CAResponseResult_t code.
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult CAToOCStackResult(CAResponseResult_t caCode);
+static OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode);
 
 /**
  * Convert OCStackResult to CAResponseResult_t.
@@ -609,7 +604,30 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         }
     return result;
 }
-OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
+
+static OCStackResult CAResultToOCStackResult(CAResult_t caResult)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    switch(caResult)
+    {
+        case CA_ADAPTER_NOT_ENABLED:
+        case CA_SERVER_NOT_STARTED:
+            ret = OC_STACK_ADAPTER_NOT_ENABLED;
+            break;
+        case CA_MEMORY_ALLOC_FAILED:
+            ret = OC_STACK_NO_MEMORY;
+            break;
+        case CA_STATUS_INVALID_PARAM:
+            ret = OC_STACK_INVALID_PARAM;
+            break;
+        default:
+            break;
+    }
+    return ret;
+}
+
+OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -640,6 +658,9 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
             break;
         case CA_RETRANSMIT_TIMEOUT:
             ret = OC_STACK_COMM_ERROR;
+            break;
+        case CA_REQUEST_ENTITY_TOO_LARGE:
+            ret = OC_STACK_TOO_LARGE_REQ;
             break;
         default:
             break;
@@ -1116,7 +1137,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                                                 sizeof (response.identity.id));
             response.identity.id_length = responseInfo->info.identity.id_length;
 
-            response.result = CAToOCStackResult(responseInfo->result);
+            response.result = CAResponseToOCStackResult(responseInfo->result);
             cbNode->callBack(cbNode->context,
                     cbNode->handle, &response);
             FindAndDeleteClientCB(cbNode);
@@ -1136,7 +1157,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                                                 sizeof (response.identity.id));
             response.identity.id_length = responseInfo->info.identity.id_length;
 
-            response.result = CAToOCStackResult(responseInfo->result);
+            response.result = CAResponseToOCStackResult(responseInfo->result);
 
             if(responseInfo->info.payload &&
                responseInfo->info.payloadSize)
@@ -1376,7 +1397,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
         return;
     }
 
-    OIC_LOG(INFO, TAG, "Exit HandleCAResponses");
+    OIC_LOG(INFO, TAG, "Exit OCHandleResponse");
 }
 
 void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
@@ -1423,21 +1444,39 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
  * This function handles error response from CA
  * code shall be added to handle the errors
  */
-void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errrorInfo)
+void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
     OIC_LOG(INFO, TAG, "Enter HandleCAErrorResponse");
 
-    if(NULL == endPoint)
+    if (NULL == endPoint)
     {
         OIC_LOG(ERROR, TAG, "endPoint is NULL");
         return;
     }
 
-    if(NULL == errrorInfo)
+    if (NULL == errorInfo)
     {
-        OIC_LOG(ERROR, TAG, "errrorInfo is NULL");
+        OIC_LOG(ERROR, TAG, "errorInfo is NULL");
         return;
     }
+
+    ClientCB *cbNode = GetClientCB(errorInfo->info.token,
+                                   errorInfo->info.tokenLength, NULL, NULL);
+    if (cbNode)
+    {
+        OCClientResponse response = { .devAddr = { .adapter = OC_DEFAULT_ADAPTER } };
+        CopyEndpointToDevAddr(endPoint, &response.devAddr);
+        FixUpClientResponse(&response);
+        response.resourceUri = errorInfo->info.resourceUri;
+        memcpy(response.identity.id, errorInfo->info.identity.id,
+               sizeof (response.identity.id));
+        response.identity.id_length = errorInfo->info.identity.id_length;
+        response.result = CAResultToOCStackResult(errorInfo->result);
+
+        cbNode->callBack(cbNode->context, cbNode->handle, &response);
+        FindAndDeleteClientCB(cbNode);
+    }
+
     OIC_LOG(INFO, TAG, "Exit HandleCAErrorResponse");
 }
 
@@ -1793,10 +1832,13 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     requestResult = HandleStackRequests (&serverRequest);
 
     // Send ACK to client as precursor to slow response
-    if(requestResult == OC_STACK_SLOW_RESOURCE)
+    if (requestResult == OC_STACK_SLOW_RESOURCE)
     {
-        SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
-                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
+        if (requestInfo->info.type == CA_MSG_CONFIRM)
+        {
+            SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
+                                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
+        }
     }
     else if(requestResult != OC_STACK_OK)
     {
@@ -2185,31 +2227,6 @@ CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
     }
 }
 
-OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
-{
-    char *query;
-
-    query = strchr (inputUri, '?');
-
-    if (query != NULL)
-    {
-        if((query - inputUri) > MAX_URI_LENGTH)
-        {
-            return OC_STACK_INVALID_URI;
-        }
-
-        if((inputUri + uriLen - 1 - query) > MAX_QUERY_LENGTH)
-        {
-            return OC_STACK_INVALID_QUERY;
-        }
-    }
-    else if(uriLen > MAX_URI_LENGTH)
-    {
-        return OC_STACK_INVALID_URI;
-    }
-    return OC_STACK_OK;
-}
-
 /**
  *  A request uri consists of the following components in order:
  *                              example
@@ -2484,13 +2501,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     OCDevAddr *devAddr = NULL;
     char *resourceUri = NULL;
     char *resourceType = NULL;
-
-    // This validation is broken, but doesn't cause harm
-    size_t uriLen = strlen(requestUri );
-    if ((result = verifyUriQueryLength(requestUri , uriLen)) != OC_STACK_OK)
-    {
-        goto exit;
-    }
 
     /*
      * Support original behavior with address on resourceUri argument.
@@ -3377,29 +3387,46 @@ OCStackResult OCUnBindResource(
     return OC_STACK_ERROR;
 }
 
-// Precondition is that the parameter has been checked to not equal NULL.
 static bool ValidateResourceTypeInterface(const char *resourceItemName)
 {
-    if (resourceItemName[0] < 'a' || resourceItemName[0] > 'z')
+    if (!resourceItemName)
     {
         return false;
     }
-
-    size_t index = 1;
-    while (resourceItemName[index] != '\0')
+    // Per RFC 6690 only registered values must follow the first rule below.
+    // At this point in time the only values registered begin with "core", and
+    // all other values are specified as opaque strings where multiple values
+    // are separated by a space.
+    if (strncmp(resourceItemName, CORESPEC, sizeof(CORESPEC) - 1) == 0)
     {
-        if (resourceItemName[index] != '.' &&
-                resourceItemName[index] != '-' &&
-                (resourceItemName[index] < 'a' || resourceItemName[index] > 'z') &&
-                (resourceItemName[index] < '0' || resourceItemName[index] > '9'))
+        for(size_t index = sizeof(CORESPEC) - 1;  resourceItemName[index]; ++index)
         {
-            return false;
+            if (resourceItemName[index] != '.'
+                && resourceItemName[index] != '-'
+                && (resourceItemName[index] < 'a' || resourceItemName[index] > 'z')
+                && (resourceItemName[index] < '0' || resourceItemName[index] > '9'))
+            {
+                return false;
+            }
         }
-        ++index;
+    }
+    else
+    {
+        for (size_t index = 0; resourceItemName[index]; ++index)
+        {
+            if (resourceItemName[index] == ' '
+                || resourceItemName[index] == '\t'
+                || resourceItemName[index] == '\r'
+                || resourceItemName[index] == '\n')
+            {
+                return false;
+            }
+        }
     }
 
     return true;
 }
+
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName)
 {
@@ -3930,33 +3957,23 @@ const OCDPDev_t* OCGetDirectPairedDevices()
     return (const OCDPDev_t*)DPGetPairedDevices();
 }
 
-void DirectPairingCB (OCDirectPairingDev_t * peer, OCStackResult result)
-{
-    if (gDirectpairingCallback)
-    {
-        gDirectpairingCallback((OCDPDev_t*)peer, result);
-        gDirectpairingCallback = NULL;
-    }
-}
-
-OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                                      OCDirectPairingCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "Start OCDoDirectPairing");
-    if(NULL ==  peer)
+    if(NULL ==  peer || NULL == pinNumber)
     {
         OIC_LOG(ERROR, TAG, "Invalid parameters");
         return OC_STACK_INVALID_PARAM;
     }
-
-    if(NULL == resultCallback)
+    if (NULL == resultCallback)
     {
-        OIC_LOG(ERROR, TAG, "Invalid parameters");
+        OIC_LOG(ERROR, TAG, "Invalid callback");
         return OC_STACK_INVALID_CALLBACK;
     }
-    gDirectpairingCallback = resultCallback;
-    return DPDirectPairing((OCDirectPairingDev_t*)peer, (OicSecPrm_t)pmSel,
-                                           pinNumber, DirectPairingCB);
+
+    return DPDirectPairing(ctx, (OCDirectPairingDev_t*)peer, (OicSecPrm_t)pmSel,
+                                           pinNumber, (OCDirectPairingResultCB)resultCallback);
 }
 //#endif // DIRECT_PAIRING
 

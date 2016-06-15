@@ -247,6 +247,9 @@ void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress)
     if (!connected)
     {
         OIC_LOG_V(DEBUG, TAG, "DisConnected from [%s] ", remoteAddress);
+        ca_mutex_lock(g_LEServerListMutex);
+        CARemoveLEServerInfoFromList(&g_LEServerList, remoteAddress);
+        ca_mutex_unlock(g_LEServerListMutex);
     }
     else
     {
@@ -373,6 +376,26 @@ CAResult_t CAStartLEGattClient()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    ca_mutex_lock(g_LEClientStateMutex);
+    if (true  == g_isLEGattClientStarted)
+    {
+        OIC_LOG(ERROR, TAG, "Gatt Client is already running!!");
+        ca_mutex_unlock(g_LEClientStateMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    CAResult_t  result = CALEGattSetCallbacks();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "CABleGattSetCallbacks Failed");
+        ca_mutex_unlock(g_LEClientStateMutex);
+        CATerminateLEGattClient();
+        return CA_STATUS_FAILED;
+    }
+
+    g_isLEGattClientStarted = true;
+    ca_mutex_unlock(g_LEClientStateMutex);
+
     ca_mutex_lock(g_LEClientThreadPoolMutex);
     if (NULL == g_LEClientThreadPool)
     {
@@ -382,7 +405,7 @@ CAResult_t CAStartLEGattClient()
         return CA_STATUS_FAILED;
     }
 
-    CAResult_t result = ca_thread_pool_add_task(g_LEClientThreadPool, CAStartLEGattClientThread,
+    result = ca_thread_pool_add_task(g_LEClientThreadPool, CAStartTimerThread,
                                      NULL);
     if (CA_STATUS_OK != result)
     {
@@ -395,62 +418,6 @@ CAResult_t CAStartLEGattClient()
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
-}
-
-void CAStartLEGattClientThread(void *data)
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    ca_mutex_lock(g_LEClientStateMutex);
-    if (true  == g_isLEGattClientStarted)
-    {
-        OIC_LOG(ERROR, TAG, "Gatt Client is already running!!");
-        ca_mutex_unlock(g_LEClientStateMutex);
-        return;
-    }
-
-    CAResult_t  result = CALEGattSetCallbacks();
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, TAG, "CABleGattSetCallbacks Failed");
-        ca_mutex_unlock(g_LEClientStateMutex);
-        CATerminateLEGattClient();
-        return;
-    }
-
-    g_isLEGattClientStarted = true;
-    ca_mutex_unlock(g_LEClientStateMutex);
-
-    ca_mutex_lock(g_LEClientThreadPoolMutex);
-    if (NULL == g_LEClientThreadPool)
-    {
-        OIC_LOG(ERROR, TAG, "gBleServerThreadPool is NULL");
-        CATerminateGattClientMutexVariables();
-        ca_mutex_unlock(g_LEClientThreadPoolMutex);
-        return;
-    }
-
-    result = ca_thread_pool_add_task(g_LEClientThreadPool, CAStartTimerThread,
-                                     NULL);
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, TAG, "ca_thread_pool_add_task failed");
-        ca_mutex_unlock(g_LEClientThreadPoolMutex);
-        return;
-    }
-    ca_mutex_unlock(g_LEClientThreadPoolMutex);
-
-    OIC_LOG(DEBUG, TAG, "Giving the control to threadPool");
-
-    GMainContext *thread_context = g_main_context_new();
-
-    g_eventLoop = g_main_loop_new(thread_context, FALSE);
-
-    g_main_context_push_thread_default(thread_context);
-
-    g_main_loop_run(g_eventLoop);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CAStartTimerThread(void *data)
@@ -1020,7 +987,7 @@ CAResult_t CALEGattDiscoverServices(const char *remoteAddress)
     CAResult_t result = CAAddLEServerInfoToList(&g_LEServerList, serverInfo);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG(ERROR, TAG, "CAAddBLEClientInfoToList failed");
+        OIC_LOG(ERROR, TAG, "CAAddLEServerInfoToList failed");
         bt_gatt_client_destroy(clientHandle);
         CALEGattDisConnect(remoteAddress);
         return CA_STATUS_FAILED;

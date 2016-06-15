@@ -73,12 +73,12 @@ static ca_cond g_condObjectList = NULL;
 /**
  * Maintains the callback to be notified when data received from remote device.
  */
-static CATCPPacketReceivedCallback g_packetReceivedCallback;
+static CATCPPacketReceivedCallback g_packetReceivedCallback = NULL;
 
 /**
  * Error callback to update error in TCP.
  */
-static CATCPErrorHandleCallback g_TCPErrorHandler = NULL;
+static CATCPErrorHandleCallback g_tcpErrorHandler = NULL;
 
 /**
  * Connected Callback to pass the connection information to RI.
@@ -231,6 +231,21 @@ static void CASelectReturned(fd_set *readFds, int ret)
     else if (caglobals.tcp.ipv6.fd != -1 && FD_ISSET(caglobals.tcp.ipv6.fd, readFds))
     {
         CAAcceptConnection(CA_IPV6, &caglobals.tcp.ipv6);
+        return;
+    }
+    else if (-1 != caglobals.tcp.connectionFds[0] &&
+            FD_ISSET(caglobals.tcp.connectionFds[0], readFds))
+    {
+        // new connection was created from remote device.
+        // exit the function to update read file descriptor.
+        char buf[MAX_ADDR_STR_SIZE_CA] = {0};
+        ssize_t len = read(caglobals.tcp.connectionFds[0], buf, sizeof (buf));
+        if (-1 == len)
+        {
+            return;
+        }
+        OIC_LOG_V(DEBUG, TAG, "Received new connection event with [%s]", buf);
+        FD_CLR(caglobals.tcp.connectionFds[0], readFds);
         return;
     }
     else if (-1 != caglobals.tcp.connectionFds[0] &&
@@ -600,6 +615,15 @@ static void CAInitializePipe(int *fds)
     }
 }
 
+#define NEWSOCKET(FAMILY, NAME) \
+    caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
+    if (caglobals.tcp.NAME.fd == -1) \
+    { \
+        caglobals.tcp.NAME.port = 0; \
+        caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
+    } \
+    CHECKFD(caglobals.tcp.NAME.fd);
+
 CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 {
     if (caglobals.tcp.started)
@@ -636,11 +660,8 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 
     if (caglobals.server)
     {
-        caglobals.tcp.ipv4.fd = CACreateAcceptSocket(AF_INET, &caglobals.tcp.ipv4);
-        CHECKFD(caglobals.tcp.ipv4.fd);
-        caglobals.tcp.ipv6.fd = CACreateAcceptSocket(AF_INET6, &caglobals.tcp.ipv6);
-        CHECKFD(caglobals.tcp.ipv6.fd);
-
+        NEWSOCKET(AF_INET, ipv4);
+        NEWSOCKET(AF_INET6, ipv6);
         OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
                   caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 socket fd=%d, port=%d",
@@ -774,7 +795,10 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         if (!svritem)
         {
             OIC_LOG(ERROR, TAG, "Failed to create TCP server object");
-            g_TCPErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+            if (g_tcpErrorHandler)
+            {
+                g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+            }
             return;
         }
     }
@@ -795,7 +819,10 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         // if file descriptor value is wrong, remove TCP Server info from list
         OIC_LOG(ERROR, TAG, "Failed to connect to TCP server");
         CADisconnectTCPSession(svritem, index);
-        g_TCPErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+        if (g_tcpErrorHandler)
+        {
+            g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+        }
         return;
     }
 
@@ -809,7 +836,10 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
             if (EWOULDBLOCK != errno)
             {
                 OIC_LOG_V(ERROR, TAG, "unicast ipv4tcp sendTo failed: %s", strerror(errno));
-                g_TCPErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+                if (g_tcpErrorHandler)
+                {
+                    g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+                }
                 return;
             }
             continue;
@@ -1020,5 +1050,5 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
 
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback)
 {
-    g_TCPErrorHandler = errorHandleCallback;
+    g_tcpErrorHandler = errorHandleCallback;
 }

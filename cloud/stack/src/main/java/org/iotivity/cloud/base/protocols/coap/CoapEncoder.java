@@ -100,9 +100,16 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
         for (int i = 0; i < 40; i++) {
             List<byte[]> values = coapMessage.getOption(i);
             if (values != null) {
-                for (byte[] value : values) {
-                    writeOption(i - preOptionNum,
-                            value != null ? value.length : 0, byteBuf, value);
+                if (values.size() > 0) {
+                    for (byte[] value : values) {
+                        writeOption(i - preOptionNum,
+                                value != null ? value.length : 0, byteBuf,
+                                value);
+                        preOptionNum = i;
+                    }
+
+                } else {
+                    writeOption(i - preOptionNum, 0, byteBuf, null);
                     preOptionNum = i;
                 }
             }

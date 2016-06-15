@@ -19,6 +19,7 @@
  * *****************************************************************/
 
 #include "ocstack.h"
+#include "srmutility.h"
 #include "base64.h"
 #include "OCProvisioningManager.h"
 
@@ -29,7 +30,7 @@ namespace OC
         OCStackResult result;
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCInitPM(dbPath.c_str());
@@ -51,7 +52,7 @@ namespace OC
         auto csdkLock = OCPlatform_impl::Instance().csdkLock();
         auto cLock = csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDiscoverUnownedDevices(timeout, &pDevList);
@@ -90,7 +91,7 @@ namespace OC
         auto csdkLock = OCPlatform_impl::Instance().csdkLock();
         auto cLock = csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDiscoverOwnedDevices(timeout, &pDevList);
@@ -123,13 +124,13 @@ namespace OC
     OCStackResult OCSecure::setOwnerTransferCallbackData(OicSecOxm_t oxm,
             OTMCallbackData_t* callbackData, InputPinCallback inputPin)
     {
-        if(NULL == callbackData || oxm >= OIC_OXM_COUNT)
+        if (NULL == callbackData || oxm >= OIC_OXM_COUNT)
         {
             oclog() <<"Invalid callbackData or OXM type";
             return OC_STACK_INVALID_PARAM;
         }
 
-        if((OIC_RANDOM_DEVICE_PIN == oxm) && !inputPin)
+        if ((OIC_RANDOM_DEVICE_PIN == oxm) && !inputPin)
         {
             oclog() <<"for OXM type DEVICE_PIN, inputPin callback can't be null";
             return OC_STACK_INVALID_PARAM;
@@ -138,11 +139,11 @@ namespace OC
         OCStackResult result;
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCSetOwnerTransferCallbackData(oxm, callbackData);
-            if(result == OC_STACK_OK && (OIC_RANDOM_DEVICE_PIN == oxm))
+            if (result == OC_STACK_OK && (OIC_RANDOM_DEVICE_PIN == oxm))
             {
                 SetInputPinCB(inputPin);
             }
@@ -166,7 +167,7 @@ namespace OC
         auto csdkLock = OCPlatform_impl::Instance().csdkLock();
         auto cLock = csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
@@ -206,7 +207,7 @@ namespace OC
 
     OCStackResult OCSecure::setDisplayPinCB(GeneratePinCallback displayPin)
     {
-        if(!displayPin)
+        if (!displayPin)
         {
             oclog() <<"displayPin can't be null";
             return OC_STACK_INVALID_PARAM;
@@ -215,7 +216,7 @@ namespace OC
         OCStackResult result = OC_STACK_OK;
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             SetGeneratePinCB(displayPin);
@@ -268,7 +269,7 @@ namespace OC
 
     OCSecureResource::~OCSecureResource()
     {
-        if(devPtr)
+        if (devPtr)
         {
             OCDeleteDiscoveredDevices(devPtr);
         }
@@ -276,16 +277,16 @@ namespace OC
 
     OCStackResult OCSecureResource::doOwnershipTransfer(ResultCallBack resultCallback)
     {
-        if(!resultCallback)
+        if (!resultCallback)
         {
             oclog() <<"Result callback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
@@ -304,16 +305,21 @@ namespace OC
     OCStackResult OCSecureResource::provisionACL( const OicSecAcl_t* acl,
             ResultCallBack resultCallback)
     {
-        if(!resultCallback || !acl)
+        if (!acl)
         {
-            oclog() <<"Result callback or ACL can't be null";
+            oclog() <<"ACL can't be null";
             return OC_STACK_INVALID_PARAM;
+        }
+        if (!resultCallback)
+        {
+            oclog() <<"result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
@@ -333,16 +339,16 @@ namespace OC
     OCStackResult OCSecureResource::provisionCredentials(const Credential &cred,
             const OCSecureResource &device2, ResultCallBack resultCallback)
     {
-        if(!resultCallback)
+        if (!resultCallback)
         {
             oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
@@ -365,16 +371,16 @@ namespace OC
             const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2,
             ResultCallBack resultCallback)
     {
-        if(!resultCallback)
+        if (!resultCallback)
         {
-            oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            oclog() << "Result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
@@ -397,16 +403,16 @@ namespace OC
     OCStackResult OCSecureResource::unlinkDevices(const OCSecureResource &device2,
             ResultCallBack resultCallback)
     {
-        if(!resultCallback)
+        if (!resultCallback)
         {
             oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
@@ -426,16 +432,16 @@ namespace OC
     OCStackResult OCSecureResource::removeDevice(unsigned short waitTimeForOwnedDeviceDiscovery,
             ResultCallBack resultCallback)
     {
-        if(!resultCallback)
+        if (!resultCallback)
         {
             oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_INVALID_CALLBACK;
         }
 
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
@@ -459,7 +465,7 @@ namespace OC
         auto devUuid = devPtr->doxm->deviceID;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
@@ -482,20 +488,55 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecureResource::provisionDirectPairing( const OicSecPconf_t* pconf,
+            ResultCallBack resultCallback)
+    {
+        if (!pconf)
+        {
+            oclog() <<"PCONF can't be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+        if (!resultCallback)
+        {
+            oclog() <<"result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            ProvisionContext* context = new ProvisionContext(resultCallback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCProvisionDirectPairing(static_cast<void*>(context),
+                    devPtr, const_cast<OicSecPconf_t*>(pconf),
+                    &OCSecureResource::callbackWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
     std::string OCSecureResource::getDeviceID()
     {
-        char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {0,};
-        uint32_t outLen = 0;
-        B64Result b64Ret = B64_OK;
         std::ostringstream deviceId("");
+        char *devID = nullptr;
 
         validateSecureResource();
-        b64Ret = b64Encode(devPtr->doxm->deviceID.id, sizeof(devPtr->doxm->deviceID.id), base64Buff,
-                sizeof(base64Buff), &outLen);
 
-        if (B64_OK == b64Ret)
+        if (OC_STACK_OK == ConvertUuidToStr(&(devPtr->doxm->deviceID), &devID))
         {
-            deviceId << base64Buff;
+            deviceId << devID;
+            free(devID);
+        }
+        else
+        {
+            oclog() <<"Can not convert uuid to struuid";
         }
         return deviceId.str();
     }

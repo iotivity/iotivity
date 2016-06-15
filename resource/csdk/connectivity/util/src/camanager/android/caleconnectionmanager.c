@@ -280,6 +280,12 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env)
     return res;
 }
 
+void CAManagerLESetScanInterval(jint interval, jint count)
+{
+    OIC_LOG(DEBUG, TAG, "CAManagerLESetScanInterval");
+    CALERestartScanWithInterval(interval, count);
+}
+
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
         JNIEnv *env, jobject obj, jint state)

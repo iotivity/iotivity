@@ -77,16 +77,13 @@ if target_os not in ['windows', 'winrt']:
 
 
 if env.get('SECURED') == '1':
-	     mediator_rich_test_env.PrependUnique(LIBS = ['tinydtls','ocprovision', 'ocpmapi'])
+	     mediator_rich_test_env.PrependUnique(LIBS = ['tinydtls','ocprovision', 'ocpmapi', 'timer'])
 
 mediator_rich_test_env.PrependUnique(LIBS = [
-    'coap',
-    'connectivity_abstraction',
-    'oc_logger',
-    'oc_logger_core',
-    'octbstack',
-    'oc',
     'ESMediatorRich',
+    'oc',
+    'octbstack',
+    'oc_logger',
     gtest,
     gtest_main])
 

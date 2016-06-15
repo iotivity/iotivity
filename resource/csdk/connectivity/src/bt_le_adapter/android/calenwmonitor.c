@@ -85,11 +85,10 @@ void CALESetAdapterStateCallback(CALEDeviceStateChangedCallback callback)
     g_bleDeviceStateChangedCallback = callback;
 }
 
-CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
+CAResult_t CAInitializeLEAdapter()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-    (void)threadPool;
-    OIC_LOG(DEBUG, TAG, "OUT");
+    // Nothing to do.
+
     return CA_STATUS_OK;
 }
 
@@ -343,8 +342,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
         {
             OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
         }
-
-        CALEClientSetScanFlag(false);
 
         CANetworkStatus_t newStatus = CA_INTERFACE_DOWN;
         g_bleDeviceStateChangedCallback(newStatus);

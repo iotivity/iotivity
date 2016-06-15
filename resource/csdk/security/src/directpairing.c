@@ -20,10 +20,8 @@
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200112L
 #endif
-
 #ifndef WITH_ARDUINO
 #include <unistd.h>
-#include <string.h>
 #include <time.h>
 #include <sys/time.h>
 #endif
@@ -57,6 +55,7 @@
 
 
 #define TAG ("DP")
+static const uint16_t CBOR_SIZE = 1024;
 
 /**
  * Structure to carry direct-pairing API data to callback.
@@ -66,11 +65,13 @@ typedef struct DPairData
     OCDirectPairingDev_t        *peer;                         /**< Pointer to pairing target info.**/
     char                                  pin[DP_PIN_LENGTH];  /**< PIN **/
     OCDirectPairingResultCB    resultCallback;           /**< Pointer to result callback.**/
+    void *userCtx;                                      /** < user context to pass in callback **/
 } DPairData_t;
 
 static OCDirectPairingDev_t *g_dp_paired = NULL;
 static OCDirectPairingDev_t *g_dp_discover = NULL;
 static DPairData_t *g_dp_proceed_ctx = NULL;
+
 
 /**
  * Function to search node in linked list that matches given IP and port.
@@ -142,7 +143,7 @@ OCStackResult addDev(OCDirectPairingDev_t **ppList, OCDevAddr *endpoint,
         pconf->prm = NULL;  // to prevent free
         ptr->prmLen = pconf->prmLen;
         memcpy(&ptr->deviceID, &pconf->deviceID, sizeof(OicUuid_t));
-        memcpy(&ptr->rowner, &pconf->rowner, sizeof(OicUuid_t));
+        memcpy(&ptr->rowner, &pconf->rownerID, sizeof(OicUuid_t));
         ptr->next = NULL;
 
         LL_PREPEND(*ppList, ptr);
@@ -334,7 +335,8 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
         if(OC_STACK_OK == clientResponse->result)
         {
             // result
-            OIC_LOG(INFO, TAG, "DirectPairingFinalizeHandler : success PUT request to /oic/sec/dpairing");
+            OIC_LOG(INFO, TAG, "DirectPairingFinalizeHandler : success PUT"
+                    " request to /oic/sec/dpairing");
 
             CAEndpoint_t endpoint;
             memset(&endpoint, 0x00, sizeof(CAEndpoint_t));
@@ -346,7 +348,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             if (OC_STACK_OK != GetDoxmDeviceID(&ptDeviceID))
             {
                 OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-                resultCallback(peer, OC_STACK_ERROR);
+                resultCallback(dpairData->userCtx, peer, OC_STACK_ERROR);
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
@@ -355,7 +357,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to PairingPSK generation");
-                resultCallback(peer, res);
+                resultCallback(dpairData->userCtx, peer, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
@@ -376,14 +378,15 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             OIC_LOG(INFO, TAG, "Direct-Papring was successfully completed.");
 
             // update paired list
-            OCDirectPairingDev_t *dev = getDev(&g_dp_discover, peer->endpoint.addr, peer->endpoint.port);
+            OCDirectPairingDev_t *dev = getDev(&g_dp_discover, peer->endpoint.addr,
+                    peer->endpoint.port);
             res = addDev2(&g_dp_paired, dev);
             if (OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Error while adding a device to paired list.");
             }
 
-            resultCallback(peer, OC_STACK_OK);
+            resultCallback(dpairData->userCtx, peer, OC_STACK_OK);
 
             return OC_STACK_DELETE_TRANSACTION;
         }
@@ -397,7 +400,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
         OIC_LOG(ERROR, TAG, "DirectPairingFinalizeHandler received Null clientResponse");
     }
 
-    resultCallback(peer, OC_STACK_ERROR);
+    resultCallback(dpairData->userCtx, peer, OC_STACK_ERROR);
     OICFree(dpairData);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -410,7 +413,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
+OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
                                                      OCDirectPairingResultCB resultCallback)
 {
     if(NULL == peer)
@@ -437,14 +440,18 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToDpairingJSON(&dpair);
-    if(NULL == secPayload->securityData)
+
+    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData),
+            &(secPayload->payloadSize));
+
+    if(OC_STACK_OK != ret)
     {
         OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToDpairingJSON");
+        OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "DPARING : %s", secPayload->securityData);
+    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(true,
@@ -468,6 +475,7 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
     }
     dpairData->peer = peer;
     dpairData->resultCallback = resultCallback;
+    dpairData->userCtx = ctx;
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = DirectPairingFinalizeHandler;
@@ -477,7 +485,7 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
     OCMethod method = OC_REST_PUT;
     OCDoHandle handle = NULL;
     OIC_LOG(DEBUG, TAG, "Sending DPAIRNG setting to resource server");
-    OCStackResult ret = OCDoResource(&handle, method, query,
+    ret = OCDoResource(&handle, method, query,
             &peer->endpoint, (OCPayload*)secPayload,
             peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
@@ -519,17 +527,17 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
             {
                 OIC_LOG(INFO, TAG, "Now, finalize Direct-Pairing procedure.");
 
-                res = FinalizeDirectPairing(peer, resultCallback);
+                res = FinalizeDirectPairing(g_dp_proceed_ctx->userCtx, peer, resultCallback);
                 if(OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to finalize direct-pairing");
-                    resultCallback(peer, res);
+                    resultCallback(g_dp_proceed_ctx->userCtx, peer, res);
                 }
             }
             else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
             {
                 OIC_LOG(INFO, TAG, "DirectPairingDTLSHandshakeCB - Authentication failed");
-                resultCallback(peer, OC_STACK_AUTHENTICATION_FAILURE);
+                resultCallback(g_dp_proceed_ctx->userCtx, peer, OC_STACK_AUTHENTICATION_FAILURE);
             }
 
 #ifdef __WITH_DTLS__
@@ -590,7 +598,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             res = AddTmpPskWithPIN(&dpairData->peer->deviceID,
                            SYMMETRIC_PAIR_WISE_KEY,
                            (char*)dpairData->pin, DP_PIN_LENGTH,
-                           1, &dpairData->peer->rowner, &subjectId);
+                           &dpairData->peer->rowner, &subjectId);
             VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 
 
@@ -613,7 +621,8 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             VERIFY_NON_NULL(TAG, endpoint, FATAL);
             memcpy(endpoint,&dpairData->peer->endpoint,sizeof(CAEndpoint_t));
             endpoint->port = dpairData->peer->securePort;
-            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr, endpoint->port);
+            OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr,
+                    endpoint->port);
 
             caresult = CAInitiateHandshake(endpoint);
             OICFree(endpoint);
@@ -646,7 +655,7 @@ exit:
             g_dp_proceed_ctx = NULL;
         }
 
-        resultCallback(dpairData->peer, res);
+        resultCallback(dpairData->userCtx, dpairData->peer, res);
     }
     OIC_LOG_V(INFO, TAG, "OUT DirectPairingHandler.");
     return OC_STACK_DELETE_TRANSACTION;
@@ -661,8 +670,8 @@ exit:
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, char *pinNumber,
-                                                     OCDirectPairingResultCB resultCallback)
+OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t pmSel,
+                                char *pinNumber, OCDirectPairingResultCB resultCallback)
 {
     if(NULL == peer || NULL == pinNumber)
     {
@@ -688,14 +697,18 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToDpairingJSON(&dpair);
-    if(NULL == secPayload->securityData)
+
+    OCStackResult ret = DpairingToCBORPayload(&dpair, &(secPayload->securityData),
+            &(secPayload->payloadSize));
+
+    if(OC_STACK_OK != ret)
     {
         OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToDpairingJSON");
+        OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "DPAIRING : %s", secPayload->securityData);
+    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(false,
@@ -721,6 +734,7 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
     dpairData->peer = peer;
     memcpy(dpairData->pin, pinNumber, DP_PIN_LENGTH);
     dpairData->resultCallback = resultCallback;
+    dpairData->userCtx = ctx;
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = DirectPairingHandler;
@@ -730,7 +744,7 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
     OIC_LOG(DEBUG, TAG, "Sending DPAIRNG setting to resource server");
-    OCStackResult ret = OCDoResource(&handle, method, query,
+    ret = OCDoResource(&handle, method, query,
             &peer->endpoint, (OCPayload*)secPayload,
             peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
@@ -756,7 +770,8 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
 static OCStackApplicationResult DirectPairingPortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                  OCClientResponse *clientResponse)
 {
-    OIC_LOG(INFO, TAG, "Callback Context for Direct-Pairing Secure Port DISCOVER query recvd successfully");
+    OIC_LOG(INFO, TAG, "Callback Context for Direct-Pairing Secure Port DISCOVER "
+            "query recvd successfully");
 
     (void)ctx;
     (void)UNUSED;
@@ -845,65 +860,70 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
         }
 
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OicSecPconf_t *pconf = JSONToPconfBin(
-                    ((OCSecurityPayload*)clientResponse->payload)->securityData);
-        if (NULL == pconf)
+        OicSecPconf_t *pconf = NULL;
+
+        OCStackResult res = CBORPayloadToPconf(
+                ((OCSecurityPayload*)clientResponse->payload)->securityData,
+                CBOR_SIZE,&pconf);
+        if (OC_STACK_OK != res )
         {
-            OIC_LOG(INFO, TAG, "Ignoring malformed JSON");
+            OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
             return OC_STACK_KEEP_TRANSACTION;
         }
         else
         {
-            OCDevAddr endpoint;
-            memcpy(&endpoint, &clientResponse->devAddr, sizeof(OCDevAddr));
-
-            OCStackResult res = addDev(&g_dp_discover, &endpoint,
-                        clientResponse->connType, pconf);
-            DeletePconfBinData(pconf);
-            if (OC_STACK_OK != res)
+            if(pconf->edp)
             {
-                OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
+                OCDevAddr endpoint;
+                memcpy(&endpoint, &clientResponse->devAddr, sizeof(OCDevAddr));
+
+                OCStackResult res = addDev(&g_dp_discover, &endpoint,
+                            clientResponse->connType, pconf);
+                DeletePconfBinData(pconf);
+                if (OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
 
 
-            char rsrc_uri[MAX_URI_LENGTH+1] = {0};
-            int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
-                      OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DPAIRING);
-            if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
-            {
-                OIC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
+                char rsrc_uri[MAX_URI_LENGTH+1] = {0};
+                int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
+                          OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DPAIRING);
+                if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
+                {
+                    OIC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
 
-            //Try to the unicast discovery to getting secure port
-            char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
-            if(!DPGenerateQuery(false,
-                                clientResponse->devAddr.addr, clientResponse->devAddr.port,
-                                clientResponse->connType,
-                                query, sizeof(query), rsrc_uri))
-            {
-                OIC_LOG(ERROR, TAG, "DirectPairingDiscoveryHandler : Failed to generate query");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
-            OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+                //Try to the unicast discovery to getting secure port
+                char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
+                if(!DPGenerateQuery(false,
+                                    clientResponse->devAddr.addr, clientResponse->devAddr.port,
+                                    clientResponse->connType,
+                                    query, sizeof(query), rsrc_uri))
+                {
+                    OIC_LOG(ERROR, TAG, "DirectPairingDiscoveryHandler : Failed to generate query");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-            OCCallbackData cbData;
-            cbData.cb = &DirectPairingPortDiscoveryHandler;
-            cbData.context = NULL;
-            cbData.cd = NULL;
-            OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
-                    clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
-            if(OC_STACK_OK != ret)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
-                return OC_STACK_KEEP_TRANSACTION;
+                OCCallbackData cbData;
+                cbData.cb = &DirectPairingPortDiscoveryHandler;
+                cbData.context = NULL;
+                cbData.cd = NULL;
+                OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
+                        clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                if(OC_STACK_OK != ret)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                else
+                {
+                    OIC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
+                }
             }
-            else
-            {
-                OIC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
-            }
-
             return  OC_STACK_KEEP_TRANSACTION;
         }
     }
@@ -914,7 +934,6 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
 
     return OC_STACK_DELETE_TRANSACTION;
 }
-
 #ifndef WITH_ARDUINO
 /**
  * Discover direct-pairing devices in the same IP subnet. .
@@ -992,6 +1011,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
         }
         else
         {
+            OCProcess();
             nanosleep(&timeout, NULL);
         }
     }

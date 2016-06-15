@@ -219,7 +219,7 @@ void OCRepPayloadDestroy(OCRepPayload* payload);
 // Discovery Payload
 OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 
-OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData);
+OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,

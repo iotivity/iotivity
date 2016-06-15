@@ -71,7 +71,7 @@ char passwd[] = "EasySetup123";
 // Callback functions
 //-----------------------------------------------------------------------------
 extern "C"  void EventCallbackInApplication(ESResult esResult,
-                                                                    EnrolleeState enrolleeState)
+                                                                    ESEnrolleeState enrolleeState)
 {
     OIC_LOG(INFO, TAG, "Entering EventCallbackInApplication");
 
@@ -108,7 +108,7 @@ void InitESEnrollee()
 {
     OIC_LOG(INFO, TAG, "Entering InitESEnrollee");
 
-    EXPECT_EQ(ES_OK, InitEasySetup(CT_ADAPTER_IP,
+    EXPECT_EQ(ES_OK, ESInitEnrollee(CT_ADAPTER_IP,
                                     "EasySetup123",
                                     "EasySetup123",
                                     0,
@@ -122,22 +122,22 @@ void InitESEnrollee()
 
 TEST(ESEnrolleeInit, ESEnrolleeInitNullSSID)
 {
-    EXPECT_EQ(ES_ERROR, InitEasySetup(CT_ADAPTER_IP, 0, passwd, 0, EventCallbackInApplication));
+    EXPECT_EQ(ES_ERROR, ESInitEnrollee(CT_ADAPTER_IP, 0, passwd, 0, EventCallbackInApplication));
 }
 
 TEST(ESEnrolleeInit, ESEnrolleeInitNullPassword)
 {
-    EXPECT_EQ(ES_ERROR, InitEasySetup(CT_ADAPTER_IP, ssid, 0, 0, EventCallbackInApplication));
+    EXPECT_EQ(ES_ERROR, ESInitEnrollee(CT_ADAPTER_IP, ssid, 0, 0, EventCallbackInApplication));
 }
 
 TEST(ESEnrolleeInit, ESEnrolleeInitNullCb)
 {
-    EXPECT_EQ(ES_ERROR, InitEasySetup(CT_ADAPTER_IP, ssid, passwd, 0, 0));
+    EXPECT_EQ(ES_ERROR, ESInitEnrollee(CT_ADAPTER_IP, ssid, passwd, 0, 0));
 }
 
-TEST(ESEnrolleeInit, ESEnrolleeInitEasySetupSuccess)
+TEST(ESEnrolleeInit, ESEnrolleeESInitEnrolleeSuccess)
 {
-    EXPECT_EQ(ES_OK, InitEasySetup(CT_ADAPTER_IP,
+    EXPECT_EQ(ES_OK, ESInitEnrollee(CT_ADAPTER_IP,
                                     ssid,
                                     passwd,
                                     0,
@@ -178,15 +178,15 @@ TEST(ESOCInit, ESOCInitInvalidMode)
     EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
-TEST(ESProvisioning, ESInitProvisioning)
+TEST(ESProvisioning, ESInitProvisioningResource)
 {
-    EXPECT_EQ(ES_RESOURCECREATED, InitProvisioning());
+    EXPECT_EQ(ES_RESOURCECREATED, ESInitProvisioning());
 }
 
 TEST(ESProvisioning, ESInitProvisioningWithOCStackClientMode)
 {
     EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_CLIENT));
-    EXPECT_EQ(ES_ERROR, InitProvisioning());
+    EXPECT_EQ(ES_ERROR, ESInitProvisioning());
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
@@ -221,7 +221,7 @@ TEST(ESProvisioningResource, ESDeleteProvisioningResourceWithoutCreating)
 
 TEST(ESOnboarding, ESOnboardingSoftAp)
 {
-    EXPECT_EQ(1, ESOnboard(ssid, passwd, OnboardingCallback));
+    EXPECT_EQ(1, ESOnboard(ssid, passwd, ESOnboardingCallback));
 }
 
 TEST(ESOnboarding, ESOnboardingSoftApEnrollee)
@@ -251,53 +251,53 @@ TEST(ESOnboarding, ESOnboardingSoftApHost)
 
 TEST(ESStop, ESTerminateEasysetupWithoutESInit)
 {
-    EXPECT_EQ(ES_ERROR, TerminateEasySetup());
+    EXPECT_EQ(ES_ERROR, ESTerminateEnrollee());
 }
 
 TEST(ESStop, ESTerminateEasysetupWithoutOCStack)
 {
-    EXPECT_EQ(ES_OK, InitEasySetup(CT_ADAPTER_IP,
+    EXPECT_EQ(ES_OK, ESInitEnrollee(CT_ADAPTER_IP,
                                     ssid,
                                     passwd,
                                     0,
                                     EventCallbackInApplication));
-    EXPECT_EQ(ES_ERROR, TerminateEasySetup());
+    EXPECT_EQ(ES_ERROR, ESTerminateEnrollee());
 }
 
 TEST(ESStop, ESTerminateEasysetupWithOutCreateProvisioningResource)
 {
-    EXPECT_EQ(ES_OK, InitEasySetup(CT_ADAPTER_IP,
+    EXPECT_EQ(ES_OK, ESInitEnrollee(CT_ADAPTER_IP,
                                     ssid,
                                     passwd,
                                     0,
                                     EventCallbackInApplication));
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 0, OC_SERVER));
-    EXPECT_EQ(ES_ERROR, TerminateEasySetup());
+    EXPECT_EQ(ES_ERROR, ESTerminateEnrollee());
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(ESStop, ESTerminateEasysetupWithoutProviosioningResource)
 {
-    EXPECT_EQ(ES_OK, InitEasySetup(CT_ADAPTER_IP,
+    EXPECT_EQ(ES_OK, ESInitEnrollee(CT_ADAPTER_IP,
                                     ssid,
                                     passwd,
                                     0,
                                     EventCallbackInApplication));
     EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_SERVER));
-    EXPECT_EQ(ES_ERROR, TerminateEasySetup());
+    EXPECT_EQ(ES_ERROR, ESTerminateEnrollee());
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(ESStop, ESTerminateEasysetupSuccess)
 {
-    EXPECT_EQ(ES_OK, InitEasySetup(CT_ADAPTER_IP,
+    EXPECT_EQ(ES_OK, ESInitEnrollee(CT_ADAPTER_IP,
                                     ssid,
                                     passwd,
                                     0,
                                     EventCallbackInApplication));
     EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_SERVER));
-    EXPECT_EQ(ES_RESOURCECREATED, InitProvisioning());
-    EXPECT_EQ(ES_OK, TerminateEasySetup());
+    EXPECT_EQ(ES_RESOURCECREATED, ESInitProvisioning());
+    EXPECT_EQ(ES_OK, ESTerminateEnrollee());
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 

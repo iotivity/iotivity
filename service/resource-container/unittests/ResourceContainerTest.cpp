@@ -100,12 +100,14 @@ class TestBundleResource: public BundleResource
     public:
         virtual void initAttributes() { }
 
-        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr)
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
+                                                const std::map< std::string, std::string > &queryParams)
         {
             BundleResource::setAttributes(attr);
         }
 
-        virtual RCSResourceAttributes handleGetAttributesRequest()
+        virtual RCSResourceAttributes handleGetAttributesRequest(const
+                std::map< std::string, std::string > &queryParams)
         {
             return BundleResource::getAttributes();
         }
@@ -121,12 +123,14 @@ class TestBundleResourceWithAttrs: public BundleResource
             setAttribute("attrib3", RCSResourceAttributes::Value(true));
         }
 
-        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr)
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
+                                                const std::map< std::string, std::string > &queryParams)
         {
             BundleResource::setAttributes(attr);
         }
 
-        virtual RCSResourceAttributes handleGetAttributesRequest()
+        virtual RCSResourceAttributes handleGetAttributesRequest(const
+                std::map< std::string, std::string > &queryParams)
         {
             return BundleResource::getAttributes();
         }
@@ -141,12 +145,14 @@ class TestSoftSensorResource: public SoftSensorResource
             SoftSensorResource::initAttributes();
         }
 
-        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr)
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
+                                                const std::map< std::string, std::string > &queryParams)
         {
             BundleResource::setAttributes(attr);
         }
 
-        virtual RCSResourceAttributes handleGetAttributesRequest()
+        virtual RCSResourceAttributes handleGetAttributesRequest(const
+                 std::map< std::string, std::string > &queryParams)
         {
             return BundleResource::getAttributes();
         }
@@ -195,6 +201,7 @@ TEST_F(ResourceContainerTest, TestBundleResource)
     testResource.getAttributeNames();
 
     RCSResourceAttributes fullAttributes;
+    const std::map< std::string, std::string > queryParams = {};
 
     fullAttributes["attrib1"] = "test";
     fullAttributes["attrib2"] = 1;
@@ -208,11 +215,11 @@ TEST_F(ResourceContainerTest, TestBundleResource)
     fullAttributes["attrib2"] = 2;
     fullAttributes["attrib3"] = false;
 
-    testResource.handleSetAttributesRequest(fullAttributes);
+    testResource.handleSetAttributesRequest(fullAttributes, queryParams);
 
     EXPECT_EQ((unsigned int) 3, testResource.getAttributeNames().size());
 
-    EXPECT_EQ((unsigned int) 3, testResource.handleGetAttributesRequest().size());
+    EXPECT_EQ((unsigned int) 3, testResource.handleGetAttributesRequest(queryParams).size());
     std::string testString = "test";
     testResource.setAttribute("attrib1", RCSResourceAttributes::Value(testString), false);
 

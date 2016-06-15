@@ -21,7 +21,6 @@
  */
 package org.iotivity.cloud.rdserver.resources;
 
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -36,11 +35,10 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapOption;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.JSONUtil;
 import org.iotivity.cloud.rdserver.MongoDB;
 import org.iotivity.cloud.util.Cbor;
+import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Logger;
-import org.iotivity.cloud.util.Net;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -173,7 +171,8 @@ public class ResourceDirectoryResource extends Resource {
         for (HashMap<Object, Object> segmentPayload : discoverPayload) {
             String stringDi = segmentPayload.get(Constants.RS_DEVICE_ID)
                     .toString();
-            segmentPayload.put(Constants.RS_DEVICE_ID, stringDi.getBytes(StandardCharsets.UTF_8));
+            segmentPayload.put(Constants.RS_DEVICE_ID,
+                    stringDi.getBytes(StandardCharsets.UTF_8));
         }
 
         Logger.i("discoverPayload :" + discoverPayload.toString());
@@ -264,8 +263,7 @@ public class ResourceDirectoryResource extends Resource {
                         "st is not null, so this is the get msg about private devices");
                 // parse payload
                 byte[] payload = request.getPayload();
-                JSONUtil util = new JSONUtil();
-                ArrayList<String> deviceList = util.parseJSON(payload,
+                ArrayList<String> deviceList = JSONUtil.parseJSON(payload,
                         Constants.RS_DEVICE_LIST_KEY);
                 if (deviceList == null) {
                     throw new IllegalArgumentException("deviceList is null");
@@ -325,17 +323,14 @@ public class ResourceDirectoryResource extends Resource {
 
             PublishPayloadFormat pubPayload = new PublishPayloadFormat();
 
-            String ciAddress = ((InetSocketAddress) ctx.channel()
-                    .remoteAddress()).getAddress().getHostAddress();
-
-            if (ciAddress.equalsIgnoreCase("127.0.0.1")) {
-                ciAddress = Net.getMyIpAddress().replace("/", "");
-            }
-
             ArrayList<Object> payloadData = cbor.parsePayloadFromCbor(
                     request.getPayload(), ArrayList.class);
 
-            Logger.i("payloadData: " + payloadData.toString());
+            if (payloadData == null) {
+                throw new IllegalArgumentException("parsed payload is null");
+            } else {
+                Logger.i("payloadData: " + payloadData.toString());
+            }
 
             HashMap<Object, Object> tags = (HashMap<Object, Object>) payloadData
                     .get(0);
@@ -344,54 +339,61 @@ public class ResourceDirectoryResource extends Resource {
                 throw new IllegalArgumentException("tags is null!");
             }
 
-            if (tags.get(Constants.RS_DEVICE_ID) != null) {
-                pubPayload.setDi(tags.get(Constants.RS_DEVICE_ID).toString());
+            Object di = tags.get(Constants.RS_DEVICE_ID);
+            if (di != null) {
+                pubPayload.setDi(di.toString());
                 Logger.i("di : " + pubPayload.getDi());
             } else {
                 throw new IllegalArgumentException("device id is null!");
             }
 
-            if (tags.get(Constants.RS_DEVICE_NAME) != null) {
-                pubPayload.setDeviceName(
-                        tags.get(Constants.RS_DEVICE_NAME).toString());
+            Object deviceName = tags.get(Constants.RS_DEVICE_NAME);
+            if (deviceName != null) {
+                pubPayload.setDeviceName(deviceName.toString());
                 Logger.i("device name : " + pubPayload.getDeviceName());
             }
 
-            if (tags.get(Constants.RS_BASE_URI) != null) {
-                pubPayload
-                        .setBaseUri(tags.get(Constants.RS_BASE_URI).toString());
+            Object baseUri = tags.get(Constants.RS_BASE_URI);
+            if (baseUri != null) {
+                pubPayload.setBaseUri(baseUri.toString());
                 Logger.i("baseURI : " + pubPayload.getBaseUri());
             }
 
-            if (tags.get(Constants.RS_BITMAP) != null) {
-                pubPayload.setBitmap((int) tags.get(Constants.RS_BITMAP));
+            Object bitMap = tags.get(Constants.RS_BITMAP);
+            if (bitMap != null) {
+                pubPayload.setBitmap((int) bitMap);
                 Logger.i("bm : " + pubPayload.getBitmap());
             }
 
-            if (tags.get(Constants.RS_HOSTING_PORT) != null) {
-                pubPayload.setPort((int) tags.get(Constants.RS_HOSTING_PORT));
+            Object hostingPort = tags.get(Constants.RS_HOSTING_PORT);
+            if (hostingPort != null) {
+                pubPayload.setPort((int) hostingPort);
                 Logger.i("port : " + pubPayload.getPort());
             }
 
-            if (tags.get(Constants.RS_INS) != null) {
-                pubPayload.setIns((int) tags.get(Constants.RS_INS));
+            Object ins = tags.get(Constants.RS_INS);
+            if (ins != null) {
+                pubPayload.setIns((int) ins);
                 Logger.i("ins : " + pubPayload.getIns());
             }
 
-            if (tags.get(Constants.RS_RTS) != null) {
-                pubPayload.setRts(tags.get(Constants.RS_RTS).toString());
+            Object rts = tags.get(Constants.RS_RTS);
+            if (rts != null) {
+                pubPayload.setRts(rts.toString());
                 Logger.i("rts : " + pubPayload.getRts());
             }
 
-            if (tags.get(Constants.RS_DREL) != null) {
-                pubPayload.setDrel(tags.get(Constants.RS_DREL).toString());
+            Object drel = tags.get(Constants.RS_DREL);
+            if (drel != null) {
+                pubPayload.setDrel(drel.toString());
                 Logger.i("drel : " + pubPayload.getDrel());
             }
 
-            if (tags.get(Constants.RS_TTL) != null) {
-                pubPayload.setTtl((int) tags.get(Constants.RS_TTL));
-                Logger.i("ttl : " + pubPayload.getTtl());
-            }
+            // Object ttl = tags.get(Constants.RS_TTL);
+            // if (ttl != null) {
+            // pubPayload.setTtl((int) ttl);
+            // Logger.i("ttl : " + pubPayload.getTtl());
+            // }
 
             ArrayList<LinkedHashMap<Object, Object>> publishLinks = (ArrayList<LinkedHashMap<Object, Object>>) payloadData
                     .get(1);
@@ -404,54 +406,80 @@ public class ResourceDirectoryResource extends Resource {
 
                 LinksPayloadFormat storeLinks = new LinksPayloadFormat();
 
-                if (o.get(Constants.RS_HREF) != null) {
-                    String prefix = "/" + ciAddress + "/" + pubPayload.getDi();
-                    storeLinks.setHref(
-                            prefix + o.get(Constants.RS_HREF).toString());
+                Object href = o.get(Constants.RS_HREF);
+                if (href != null) {
+                    String prefix = "/" + pubPayload.getDi();
+                    storeLinks.setHref(prefix + href.toString());
                     Logger.i("href : " + storeLinks.getHref());
                 }
 
                 if (o.get(Constants.RS_RESOURCE_TYPE) != null) {
-                    storeLinks.setRt((ArrayList<String>) o
-                            .get(Constants.RS_RESOURCE_TYPE));
-                    Logger.i("rt : " + storeLinks.getRt().toString());
+                    Object obj = o.get(Constants.RS_RESOURCE_TYPE);
+                    if (obj != null) {
+                        storeLinks.setRt((ArrayList<String>) obj);
+                    }
+                    Object rt = storeLinks.getRt();
+                    if (rt != null) {
+                        Logger.i("rt : " + storeLinks.getRt().toString());
+                    }
                 }
 
                 if (o.get(Constants.RS_INTERFACE) != null) {
                     storeLinks.setItf(
                             (ArrayList<String>) o.get(Constants.RS_INTERFACE));
-                    Logger.i("if : " + storeLinks.getItf().toString());
+                    Object itf = storeLinks.getItf();
+                    if (itf != null) {
+                        Logger.i("if : " + storeLinks.getItf().toString());
+                    }
                 }
 
-                if (o.get(Constants.RS_REL) != null) {
-                    storeLinks.setRel(o.get(Constants.RS_REL).toString());
+                Object rel = o.get(Constants.RS_REL);
+                if (rel != null) {
+                    storeLinks.setRel(rel.toString());
                     Logger.i("rel : " + storeLinks.getRel());
                 }
 
                 if (o.get(Constants.RS_OBS) != null) {
-                    storeLinks.setObs((boolean) o.get(Constants.RS_OBS));
+                    Object obj = o.get(Constants.RS_OBS);
+                    if (obj != null) {
+                        storeLinks.setObs((boolean) obj);
+                    }
                     Logger.i("obs : " + storeLinks.isObs());
                 }
 
                 if (o.get(Constants.RS_TITLE) != null) {
-                    storeLinks.setTitle(o.get(Constants.RS_TITLE).toString());
+                    Object obj = o.get(Constants.RS_TITLE);
+                    if (obj != null) {
+                        storeLinks.setTitle(obj.toString());
+                    }
                     Logger.i("title : " + storeLinks.getTitle());
                 }
 
                 if (o.get(Constants.RS_URI) != null) {
-                    storeLinks.setUri(o.get(Constants.RS_URI).toString());
+                    Object obj = o.get(Constants.RS_URI);
+                    if (obj != null) {
+                        storeLinks.setUri(obj.toString());
+                    }
                     Logger.i("uri : " + storeLinks.getUri());
                 }
 
                 if (o.get(Constants.RS_INS) != null) {
-                    storeLinks.setIns((int) (o.get(Constants.RS_INS)));
+                    Object obj = o.get(Constants.RS_INS);
+                    if (obj != null) {
+                        storeLinks.setIns((int) obj);
+                    }
                     Logger.i("ins : " + storeLinks.getIns());
                 }
 
                 if (o.get(Constants.RS_MEDIA_TYPE) != null) {
-                    storeLinks.setMt(
-                            (ArrayList<String>) o.get(Constants.RS_MEDIA_TYPE));
-                    Logger.i("mt : " + storeLinks.getMt().toString());
+                    Object obj = o.get(Constants.RS_MEDIA_TYPE);
+                    if (obj != null) {
+                        storeLinks.setMt((ArrayList<String>) obj);
+                    }
+                    Object mt = storeLinks.getMt();
+                    if (mt != null) {
+                        Logger.i("mt : " + mt.toString());
+                    }
                 }
 
                 pubPayload.links.add(storeLinks);

@@ -49,7 +49,7 @@ static char DISCOVERY_QUERY[] = "%s/oic/res";
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-static char CRED_FILE[] = "oic_svr_db_client_directpairing.json";
+static char CRED_FILE[] = "oic_svr_db_client_directpairing.dat";
 
 static const OCDPDev_t *discoveredDevs = NULL;
 static const OCDPDev_t *pairedDevs = NULL;
@@ -270,10 +270,11 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
 }
 
 // This is a function called back when direct-pairing status is changed
-void pairingReqCB(OCDPDev_t* peer, OCStackResult result)
+void pairingReqCB(void *ctx, OCDPDev_t* peer, OCStackResult result)
 {
     OIC_LOG(INFO, TAG, "Callback Context for Direct-Pairing establishment\n");
 
+    (void) ctx;
     if (OC_STACK_OK == result)
     {
         OIC_LOG_V(INFO, TAG,
@@ -359,7 +360,7 @@ OCStackResult DoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber)
 
     // start direct pairing
     OIC_LOG(INFO, TAG, "   Start Direct Pairing..");
-    if(OC_STACK_OK != OCDoDirectPairing(peer, pmSel, pinNumber, pairingReqCB))
+    if(OC_STACK_OK != OCDoDirectPairing(NULL, peer, pmSel, pinNumber, pairingReqCB))
     {
         OIC_LOG(ERROR, TAG, "OCDoDirectPairing API error");
         return OC_STACK_ERROR;
@@ -514,7 +515,7 @@ void *CLInterface(void *data)
                     OIC_LOG(ERROR, TAG, "Invalid PIN");
                     continue;
                 }
-                sscanf(input, "%9s", pinNumber);
+                sscanf(input, "%8s", pinNumber);
                 printf("\n");
 
                 ret = DoDirectPairing(peer, pmSel, pinNumber);
@@ -636,6 +637,3 @@ int main(void)
 
     return 0;
 }
-
-
-

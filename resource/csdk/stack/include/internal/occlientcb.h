@@ -112,10 +112,10 @@ typedef struct ClientCB {
 
     /** Struct to hold TTL info for presence.*/
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     OCPresence * presence;
     OCResourceType * filterResourceType;
-    #endif
+#endif
 
     /** The connectivity type on which the request was sent on.*/
     OCConnectivityType conType;
@@ -155,12 +155,11 @@ extern struct ClientCB *cbList;
  *
  * @return OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult
-AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             CAToken_t token, uint8_t tokenLength,
-             OCDoHandle *handle, OCMethod method,
-             OCDevAddr *devAddr, char * requestUri,
-             char * resourceTypeName, uint32_t ttl);
+OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
+                          CAToken_t token, uint8_t tokenLength,
+                          OCDoHandle *handle, OCMethod method,
+                          OCDevAddr *devAddr, char * requestUri,
+                          char * resourceTypeName, uint32_t ttl);
 
 /** @ingroup ocstack
  *
@@ -185,7 +184,7 @@ void DeleteClientCB(ClientCB *cbNode);
  * @return address of the node if found, otherwise NULL
  */
 ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
-        OCDoHandle handle, const char * requestUri);
+                      OCDoHandle handle, const char * requestUri);
 
 #ifdef WITH_PRESENCE
 /**
