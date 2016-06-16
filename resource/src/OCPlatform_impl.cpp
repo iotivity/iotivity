@@ -417,6 +417,120 @@ namespace OC
         return checked_guard(m_client, &IClientWrapper::DoDirectPairing,
                              peer, pmSel, pinNumber, resultCallback);
     }
+#ifdef WITH_CLOUD
+    OCStackResult OCPlatform_impl::signUp(const std::string& host,
+                                          const std::string& authProvider,
+                                          const std::string& authCode,
+                                          OCConnectivityType connectivityType,
+                                          PostCallback cloudConnectHandler)
+    {
+        const char* di = OCGetServerInstanceIDString();
+        if (!di)
+        {
+            oclog() << "The mode should be Server or Both to generate UUID" << std::flush;
+            return result_guard(OC_STACK_ERROR);
+        }
+        std::string deviceId(di);
 
+        OCRepresentation rep;
+        rep.setValue(OC_RSRVD_DEVICE_ID, deviceId);
+        rep.setValue(OC_RSRVD_AUTHPROVIDER, authProvider);
+        rep.setValue(OC_RSRVD_AUTHCODE, authCode);
+
+        std::string uri = host + OC_RSRVD_ACCOUNT_URI;
+
+        OCDevAddr devAddr;
+        QueryParamsMap queryParams;
+        HeaderOptions headerOptions;
+
+        QualityOfService defaultQos = OC::QualityOfService::NaQos;
+        checked_guard(m_client, &IClientWrapper::GetDefaultQos, defaultQos);
+
+        return checked_guard(m_client, &IClientWrapper::PostResourceRepresentation,
+                             devAddr, uri, rep, queryParams, headerOptions,
+                             connectivityType, cloudConnectHandler, defaultQos);
+    }
+
+    OCStackResult OCPlatform_impl::signIn(const std::string& host,
+                                          const std::string& accessToken,
+                                          OCConnectivityType connectivityType,
+                                          PostCallback cloudConnectHandler)
+    {
+        return signInOut(host, accessToken, true, connectivityType, cloudConnectHandler);
+    }
+
+    OCStackResult OCPlatform_impl::signOut(const std::string& host,
+                                           const std::string& accessToken,
+                                           OCConnectivityType connectivityType,
+                                           PostCallback cloudConnectHandler)
+    {
+        return signInOut(host, accessToken, false, connectivityType, cloudConnectHandler);
+    }
+
+    OCStackResult OCPlatform_impl::signInOut(const std::string& host,
+                                             const std::string& accessToken,
+                                             bool isSignIn,
+                                             OCConnectivityType connectivityType,
+                                             PostCallback cloudConnectHandler)
+    {
+        const char* di = OCGetServerInstanceIDString();
+        if (!di)
+        {
+            oclog() << "The mode should be Server or Both to generate UUID" << std::flush;
+            return result_guard(OC_STACK_ERROR);
+        }
+        std::string deviceId(di);
+
+        OCRepresentation rep;
+        rep.setValue(OC_RSRVD_DEVICE_ID, deviceId);
+        rep.setValue(OC_RSRVD_ACCESS_TOKEN, accessToken);
+        rep.setValue(OC_RSRVD_STATUS, isSignIn);
+
+        std::string uri = host + OC_RSRVD_ACCOUNT_SESSION_URI;
+
+        OCDevAddr devAddr;
+        QueryParamsMap queryParams;
+        HeaderOptions headerOptions;
+
+        QualityOfService defaultQos = OC::QualityOfService::NaQos;
+        checked_guard(m_client, &IClientWrapper::GetDefaultQos, defaultQos);
+
+        return checked_guard(m_client, &IClientWrapper::PostResourceRepresentation,
+                             devAddr, uri, rep, queryParams, headerOptions,
+                             connectivityType, cloudConnectHandler, defaultQos);
+    }
+
+    OCStackResult OCPlatform_impl::refreshAccessToken(const std::string& host,
+                                                      const std::string& refreshToken,
+                                                      OCConnectivityType connectivityType,
+                                                      PostCallback cloudConnectHandler)
+    {
+        const char* di = OCGetServerInstanceIDString();
+        if (!di)
+        {
+            oclog() << "The mode should be Server or Both to generate UUID" << std::flush;
+            return result_guard(OC_STACK_ERROR);
+        }
+        std::string deviceId(di);
+
+        OCRepresentation rep;
+        rep.setValue(OC_RSRVD_DEVICE_ID, deviceId);
+        rep.setValue(OC_RSRVD_REFRESH_TOKEN, refreshToken);
+        rep.setValue(OC_RSRVD_GRANT_TYPE, OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN);
+
+        std::string uri = host + OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI;
+
+        OCDevAddr devAddr;
+        QueryParamsMap queryParams;
+        HeaderOptions headerOptions;
+
+        QualityOfService defaultQos = OC::QualityOfService::NaQos;
+        checked_guard(m_client, &IClientWrapper::GetDefaultQos, defaultQos);
+
+        return checked_guard(m_client, &IClientWrapper::PostResourceRepresentation,
+                             devAddr, uri, rep, queryParams, headerOptions,
+                             connectivityType, cloudConnectHandler, defaultQos);
+    }
+#endif // WITH_CLOUD
 } //namespace OC
 

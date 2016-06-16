@@ -138,7 +138,8 @@ namespace OC
             const OCDevAddr& devAddr,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS);
+            const HeaderOptions& headerOptions, OCConnectivityType connectivityType,
+            PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult DeleteResource(
             const OCDevAddr& devAddr,

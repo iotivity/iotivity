@@ -84,6 +84,7 @@ namespace OC
             const OCRepresentation& /*attributes*/,
             const QueryParamsMap& /*queryParams*/,
             const HeaderOptions& /*headerOptions*/,
+            OCConnectivityType /*connectivityType*/,
             PostCallback& /*callback*/, QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 

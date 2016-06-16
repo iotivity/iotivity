@@ -615,6 +615,82 @@ namespace OC
         OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
                                      const std::string& pinNumber,
                                      DirectPairingCallback resultCallback);
+#ifdef WITH_CLOUD
+        /**
+         * API for Account Registration to Account Server
+         * @note Not supported on client mode for now since device id is not generated yet on
+         *       client mode. So it should be server or both mode for API to work.
+         *
+         * @param host Host IP Address of a account server.
+         * @param authProvider Provider name used for authentication.
+         * @param authCode The authorization code obtained by using an authorization server
+         *                 as an intermediary between the client and resource owner.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult signUp(const std::string& host,
+                             const std::string& authProvider,
+                             const std::string& authCode,
+                             OCConnectivityType connectivityType,
+                             PostCallback cloudConnectHandler);
+
+        /**
+         * API for Sign-In to Account Server
+         * @note Not supported on client mode for now since device id is not generated yet on
+         *       client mode. So it should be server or both mode for API to work.
+         *
+         * @param host Host IP Address of a account server.
+         * @param accessToken Identifier of the resource obtained by account registration.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult signIn(const std::string& host,
+                             const std::string& accessToken,
+                             OCConnectivityType connectivityType,
+                             PostCallback cloudConnectHandler);
+
+        /**
+         * API for Sign-Out to Account Server
+         * @note Not supported on client mode for now since device id is not generated yet on
+         *       client mode. So it should be server or both mode for API to work.
+         *
+         * @param host Host IP Address of a account server.
+         * @param accessToken Identifier of the resource obtained by account registration.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult signOut(const std::string& host,
+                              const std::string& accessToken,
+                              OCConnectivityType connectivityType,
+                              PostCallback cloudConnectHandler);
+
+        /**
+         * API for Refresh Access token to Account Server
+         * @note Not supported on client mode for now since device id is not generated yet on
+         *       client mode. So it should be server or both mode for API to work.
+         *
+         * @param host Host IP Address of a account server.
+         * @param refreshToken Refresh token used for access token refresh.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult refreshAccessToken(const std::string& host,
+                                         const std::string& refreshToken,
+                                         OCConnectivityType connectivityType,
+                                         PostCallback cloudConnectHandler);
+#endif // WITH_CLOUD
     }
 }
 

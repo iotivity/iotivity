@@ -376,7 +376,7 @@ OCStackResult OCResource::post(const OCRepresentation& rep,
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
                          m_devAddr, m_uri, rep, queryParametersMap,
-                         m_headerOptions, attributeHandler, QoS);
+                         m_headerOptions, CT_DEFAULT, attributeHandler, QoS);
 }
 
 OCStackResult OCResource::post(const OCRepresentation& rep,

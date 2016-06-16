@@ -338,6 +338,38 @@ extern "C" {
 /** To represent resource type with Publish RD.*/
 #define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdpub"
 
+/** Cloud Account */
+
+/** Account URI.*/
+#define OC_RSRVD_ACCOUNT_URI               "/.well-known/ocf/account"
+
+/** Account session URI.*/
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/.well-known/ocf/account/session"
+
+/** Account token refresh URI.*/
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/.well-known/ocf/account/tokenrefresh"
+
+/** Defines auth provider. */
+#define OC_RSRVD_AUTHPROVIDER              "authprovider"
+
+/** Defines auth code. */
+#define OC_RSRVD_AUTHCODE                  "authcode"
+
+/** Defines session. */
+#define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
+
+/** Defines status. */
+#define OC_RSRVD_STATUS                    "status"
+
+/** Defines grant type. */
+#define OC_RSRVD_GRANT_TYPE                "granttype"
+
+/** Defines refresh token. */
+#define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
+
+/** To represent grant type with refresh token. */
+#define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
+
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
  * Used in three cases:

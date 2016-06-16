@@ -576,6 +576,7 @@ namespace OC
         const std::string& uri,
         const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+        OCConnectivityType connectivityType,
         PostCallback& callback, QualityOfService QoS)
     {
         if (!callback)
@@ -602,7 +603,7 @@ namespace OC
             result = OCDoResource(nullptr, OC_REST_POST,
                                   url.c_str(), &devAddr,
                                   assembleSetResourcePayload(rep),
-                                  CT_DEFAULT,
+                                  connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),

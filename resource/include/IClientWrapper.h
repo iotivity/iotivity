@@ -77,6 +77,7 @@ namespace OC
                         const std::string& uri,
                         const OCRepresentation& rep, const QueryParamsMap& queryParams,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         PostCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult DeleteResource(

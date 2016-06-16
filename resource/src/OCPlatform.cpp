@@ -290,7 +290,44 @@ namespace OC
             return OCPlatform_impl::Instance().doDirectPairing(peer, pmSel,
                                              pinNumber, resultCallback);
         }
+#ifdef WITH_CLOUD
+        OCStackResult signUp(const std::string& host,
+                             const std::string& authProvider,
+                             const std::string& authCode,
+                             OCConnectivityType connectivityType,
+                             PostCallback cloudConnectHandler)
+        {
+            return OCPlatform_impl::Instance().signUp(host, authProvider, authCode,
+                                                      connectivityType, cloudConnectHandler);
+        }
 
+        OCStackResult signIn(const std::string& host,
+                             const std::string& accessToken,
+                             OCConnectivityType connectivityType,
+                             PostCallback cloudConnectHandler)
+        {
+            return OCPlatform_impl::Instance().signIn(host, accessToken,
+                                                      connectivityType, cloudConnectHandler);
+        }
+
+        OCStackResult signOut(const std::string& host,
+                              const std::string& accessToken,
+                              OCConnectivityType connectivityType,
+                              PostCallback cloudConnectHandler)
+        {
+            return OCPlatform_impl::Instance().signOut(host, accessToken,
+                                                       connectivityType, cloudConnectHandler);
+        }
+
+        OCStackResult refreshAccessToken(const std::string& host,
+                                         const std::string& refreshToken,
+                                         OCConnectivityType connectivityType,
+                                         PostCallback cloudConnectHandler)
+        {
+            return OCPlatform_impl::Instance().refreshAccessToken(host, refreshToken,
+                                                       connectivityType, cloudConnectHandler);
+        }
+#endif // WITH_CLOUD
     } // namespace OCPlatform
 } //namespace OC
 
