@@ -261,6 +261,13 @@ typedef enum
     OIC_OXM_COUNT
 }OicSecOxm_t;
 
+typedef enum
+{
+    OIC_ENCODING_UNKNOW = 0,
+    OIC_ENCODING_RAW = 1,
+    OIC_ENCODING_BASE64 = 2
+}OicEncodingType_t;
+
 typedef struct OicSecKey OicSecKey_t;
 
 typedef struct OicSecPstat OicSecPstat_t;
@@ -308,6 +315,10 @@ struct OicSecKey
 {
     uint8_t                *data;
     size_t                  len;
+
+    // TODO: This field added as workaround. Will be replaced soon.
+    OicEncodingType_t encoding;
+
 };
 
 /**

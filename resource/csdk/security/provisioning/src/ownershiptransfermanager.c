@@ -419,6 +419,27 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
                 &ownerKey, &ptDeviceID);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
+        // TODO: Added as workaround. Will be replaced soon.
+        cred->privateData.encoding = OIC_ENCODING_RAW;
+
+#if 1
+        // NOTE: Test codes to use BASE64 encoded owner PSK.
+        uint32_t outSize = 0;
+        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
+        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
+
+        OICFree( cred->privateData.data );
+        cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
+        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+
+        strcpy(cred->privateData.data, b64Buf);
+        cred->privateData.encoding = OIC_ENCODING_BASE64;
+        cred->privateData.len = outSize;
+        OICFree(b64Buf);
+#endif //End of Test codes
+
         res = AddCredential(cred);
         if(res != OC_STACK_OK)
         {
@@ -953,8 +974,9 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         memcpy(&(newCredential.subject), &credSubjectId, sizeof(OicUuid_t));
 
         //Fill private data as empty string
-        newCredential.privateData.data = NULL;
+        newCredential.privateData.data = "";
         newCredential.privateData.len = 0;
+        newCredential.privateData.encoding = ownerCredential->privateData.encoding;
 #ifdef __WITH_X509__
         newCredential.publicData.data = NULL;
         newCredential.publicData.len = 0;
