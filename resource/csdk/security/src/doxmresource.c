@@ -313,7 +313,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
 
         int i = 0;
         size_t len = 0;
-        while (cbor_value_is_valid(&oxmType))
+        while (cbor_value_is_valid(&oxmType) && cbor_value_is_text_string(&oxmType))
         {
             cborFindResult = cbor_value_dup_text_string(&oxmType, &doxm->oxmType[i++],
                                                         &len, NULL);
@@ -339,7 +339,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmName Array.")
 
         int i = 0;
-        while (cbor_value_is_valid(&oxm))
+        while (cbor_value_is_valid(&oxm) && cbor_value_is_integer(&oxm))
         {
             cborFindResult = cbor_value_get_int(&oxm, (int *) &doxm->oxm[i++]);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmName Value")
