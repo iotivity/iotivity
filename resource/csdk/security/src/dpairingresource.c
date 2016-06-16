@@ -297,7 +297,7 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
     dpair = (OicSecDpairing_t *)OICCalloc(1, sizeof(*dpair));
     VERIFY_NON_NULL(TAG, dpair, ERROR);
 
-    while (cbor_value_is_valid(&dpairMap))
+    while (cbor_value_is_valid(&dpairMap) && cbor_value_is_text_string(&dpairMap))
     {
         char *name = NULL;
         size_t len = 0;
@@ -308,7 +308,7 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing a value in DPair map");
 
         type = cbor_value_get_type(&dpairMap);
-        if (0 == strcmp(OIC_JSON_SPM_NAME, name))
+        if (0 == strcmp(OIC_JSON_SPM_NAME, name) && cbor_value_is_integer(&dpairMap))
         {
             cborFindResult = cbor_value_get_int(&dpairMap, (int *) &dpair->spm);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SPM Value");

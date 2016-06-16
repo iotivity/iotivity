@@ -375,7 +375,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         char* tagName = NULL;
         size_t len = 0;
         CborType type = cbor_value_get_type(&CredRootMap);
-        if (type == CborTextStringType)
+        if (type == CborTextStringType && cbor_value_is_text_string(&CredRootMap))
         {
             cborFindResult = cbor_value_dup_text_string(&CredRootMap, &tagName, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in CRED Root Map.");
@@ -419,7 +419,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 
                     VERIFY_NON_NULL(TAG, cred, ERROR);
 
-                    while(cbor_value_is_valid(&credMap))
+                    while(cbor_value_is_valid(&credMap) && cbor_value_is_text_string(&credMap))
                     {
                         char* name = NULL;
                         CborType type = cbor_value_get_type(&credMap);
@@ -464,7 +464,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 {
                                     char* privname = NULL;
                                     CborType type = cbor_value_get_type(&privateMap);
-                                    if (type == CborTextStringType)
+                                    if (type == CborTextStringType && cbor_value_is_text_string(&privateMap))
                                     {
                                         cborFindResult = cbor_value_dup_text_string(&privateMap, &privname,
                                                 &len, NULL);
@@ -475,7 +475,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     if (privname)
                                     {
                                         // PrivateData::privdata -- Mandatory
-                                        if (strcmp(privname, OIC_JSON_DATA_NAME) == 0)
+                                        if (strcmp(privname, OIC_JSON_DATA_NAME) == 0 && cbor_value_is_byte_string(&privateMap))
                                         {
                                             cborFindResult = cbor_value_dup_byte_string(&privateMap, &cred->privateData.data,
                                                 &cred->privateData.len, NULL);
@@ -506,7 +506,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 {
                                     char* pubname = NULL;
                                     CborType type = cbor_value_get_type(&pubMap);
-                                    if (type == CborTextStringType)
+                                    if (type == CborTextStringType && cbor_value_is_text_string(&pubMap))
                                     {
                                         cborFindResult = cbor_value_dup_text_string(&pubMap, &pubname,
                                                 &len, NULL);
@@ -517,7 +517,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     if (pubname)
                                     {
                                         // PrivateData::privdata -- Mandatory
-                                        if (strcmp(pubname, OIC_JSON_DATA_NAME) == 0)
+                                        if (strcmp(pubname, OIC_JSON_DATA_NAME) == 0 && cbor_value_is_byte_string(&pubMap))
                                         {
                                             cborFindResult = cbor_value_dup_byte_string(&pubMap, &cred->publicData.data,
                                                 &cred->publicData.len, NULL);
@@ -563,7 +563,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
             }
 
             //ROwner -- Mandatory
-            if (strcmp(tagName, OIC_JSON_ROWNERID_NAME)  == 0)
+            if (strcmp(tagName, OIC_JSON_ROWNERID_NAME)  == 0 && cbor_value_is_text_string(&CredRootMap))
             {
                 char *stRowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&CredRootMap, &stRowner, &len, NULL);

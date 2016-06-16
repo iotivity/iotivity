@@ -421,7 +421,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
         char* tagName = NULL;
         size_t len = 0;
         CborType type = cbor_value_get_type(&aclMap);
-        if (type == CborTextStringType)
+        if (type == CborTextStringType && cbor_value_is_text_string(&aclMap))
         {
             cborFindResult = cbor_value_dup_text_string(&aclMap, &tagName, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in ACL Map.");
@@ -443,7 +443,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                     char* acName = NULL;
                     size_t acLen = 0;
                     CborType acType = cbor_value_get_type(&aclistMap);
-                    if (acType == CborTextStringType)
+                    if (acType == CborTextStringType && cbor_value_is_text_string(&aclistMap))
                     {
                         cborFindResult = cbor_value_dup_text_string(&aclistMap, &acName, &acLen, NULL);
                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in ACLIST Map.");
@@ -491,7 +491,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                     char* name = NULL;
                                     size_t len = 0;
                                     CborType type = cbor_value_get_type(&aclMap);
-                                    if (type == CborTextStringType)
+                                    if (type == CborTextStringType && cbor_value_is_text_string(&aclMap))
                                     {
                                         cborFindResult = cbor_value_dup_text_string(&aclMap, &name, &len, NULL);
                                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in ACL Map.");
@@ -501,7 +501,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                     if (name)
                                     {
                                         // Subject -- Mandatory
-                                        if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0)
+                                        if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0 && cbor_value_is_text_string(&aclMap))
                                         {
                                             char *subject = NULL;
                                             cborFindResult = cbor_value_dup_text_string(&aclMap, &subject, &len, NULL);
@@ -538,7 +538,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Resource Map");
 
 
-                                                while(cbor_value_is_valid(&rMap))
+                                                while(cbor_value_is_valid(&rMap) && cbor_value_is_text_string(&rMap))
                                                 {
                                                     char *rMapName = NULL;
                                                     size_t rMapNameLen = 0;
@@ -607,7 +607,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         }
 
                                         // Period -- Not mandatory
-                                        if (strcmp(name, OIC_JSON_PERIOD_NAME) == 0)
+                                        if (strcmp(name, OIC_JSON_PERIOD_NAME) == 0 && cbor_value_is_array(&aclMap))
                                         {
                                             CborValue period = { .parser = NULL };
                                             cborFindResult = cbor_value_get_array_length(&aclMap, &acl->prdRecrLen);
@@ -617,7 +617,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                             acl->periods = (char**)OICCalloc(acl->prdRecrLen, sizeof(char*));
                                             VERIFY_NON_NULL(TAG, acl->periods, ERROR);
                                             int i = 0;
-                                            while (cbor_value_is_text_string(&period))
+                                            while (cbor_value_is_text_string(&period) && cbor_value_is_text_string(&period))
                                             {
                                                 cborFindResult = cbor_value_dup_text_string(&period, &acl->periods[i++],
                                                     &len, NULL);
@@ -636,7 +636,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                             acl->recurrences = (char**)OICCalloc(acl->prdRecrLen, sizeof(char*));
                                             VERIFY_NON_NULL(TAG, acl->recurrences, ERROR);
                                             int i = 0;
-                                            while (cbor_value_is_text_string(&recurrences))
+                                            while (cbor_value_is_text_string(&recurrences) && cbor_value_is_text_string(&recurrences))
                                             {
                                                 cborFindResult = cbor_value_dup_text_string(&recurrences,
                                                     &acl->recurrences[i++], &len, NULL);
@@ -677,7 +677,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
             }
 
             // TODO : Need to modify headAcl->owners[0].id to headAcl->rowner based on RAML spec.
-            if (strcmp(tagName, OIC_JSON_ROWNERID_NAME)  == 0)
+            if (strcmp(tagName, OIC_JSON_ROWNERID_NAME)  == 0 && cbor_value_is_text_string(&aclMap))
             {
                 char *stRowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&aclMap, &stRowner, &len, NULL);
