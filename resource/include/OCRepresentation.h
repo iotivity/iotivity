@@ -131,6 +131,8 @@ namespace OC
 
             const std::vector<std::string>& getResourceTypes() const;
 
+            const std::vector<std::string>& getDataModelVersions() const;
+
             void setResourceTypes(const std::vector<std::string>& resourceTypes);
 
             void addResourceType(const std::string& str);
@@ -140,6 +142,8 @@ namespace OC
             void setResourceInterfaces(const std::vector<std::string>& resourceInterfaces);
 
             void addResourceInterface(const std::string& str);
+
+            void addDataModelVersion(const std::string& str);
 
             bool emptyData() const;
 
@@ -445,6 +449,7 @@ namespace OC
             mutable std::map<std::string, AttributeValue> m_values;
             std::vector<std::string> m_resourceTypes;
             std::vector<std::string> m_interfaces;
+            std::vector<std::string> m_dataModelVersions;
 
             InterfaceType m_interfaceType;
     };

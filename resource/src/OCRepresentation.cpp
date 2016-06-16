@@ -82,9 +82,10 @@ namespace OC
         rep[OC_RSRVD_SPEC_VERSION] = payload->specVersion ?
             std::string(payload->specVersion) :
             std::string();
-        rep[OC_RSRVD_DATA_MODEL_VERSION] = payload->dataModelVersion ?
-            std::string(payload->dataModelVersion) :
-            std::string();
+        for (OCStringLL *strll = payload->dataModelVersions; strll; strll = strll->next)
+        {
+            rep.addDataModelVersion(strll->value);
+        }
         for (OCStringLL *strll = payload->types; strll; strll = strll->next)
         {
            rep.addResourceType(strll->value);
@@ -744,6 +745,16 @@ namespace OC
         m_interfaces = resourceInterfaces;
     }
 
+    const std::vector<std::string>& OCRepresentation::getDataModelVersions() const
+    {
+        return m_dataModelVersions;
+    }
+
+    void OCRepresentation::addDataModelVersion(const std::string& str)
+    {
+        m_dataModelVersions.push_back(str);
+    }
+
     bool OCRepresentation::hasAttribute(const std::string& str) const
     {
         return m_values.find(str) != m_values.end();
@@ -764,7 +775,8 @@ namespace OC
         else if ((m_interfaceType == InterfaceType::None
                         || m_interfaceType==InterfaceType::DefaultChild
                         || m_interfaceType==InterfaceType::LinkChild)
-                    && (m_resourceTypes.size()>0 || m_interfaces.size()>0))
+                    && (m_resourceTypes.size()>0 || m_interfaces.size()>0
+                        || m_dataModelVersions.size()>0))
         {
             return false;
         }

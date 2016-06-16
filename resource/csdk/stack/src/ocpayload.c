@@ -18,7 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Required for strok_r
+#define _POSIX_C_SOURCE 200112L
 
+#include <stdio.h>
 #include "ocpayload.h"
 #include "octypes.h"
 #include <string.h>
@@ -30,6 +33,8 @@
 #include "rdpayload.h"
 
 #define TAG "OIC_RI_PAYLOAD"
+#define CSV_SEPARATOR ','
+#define CSV_SEPARATORS ",;"
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
 
@@ -1273,6 +1278,82 @@ OCStringLL* CloneOCStringLL (OCStringLL* ll)
     return headOfClone;
 }
 
+OCStringLL* OCCreateOCStringLL(const char* text)
+{
+    char *token = NULL;
+    char *head = NULL;
+    char *tail = NULL;
+    char *backup  = NULL;
+    OCStringLL* result = NULL;
+    OCStringLL* iter = NULL;
+    OCStringLL* prev = NULL;
+
+    VERIFY_PARAM_NON_NULL(TAG, text, "Invalid parameter");
+    backup = OICStrdup(text);
+    VERIFY_PARAM_NON_NULL(TAG, backup, "Failed allocating memory");
+    for (head = backup; ; head = NULL)
+    {
+        token = (char *) strtok_r(head, CSV_SEPARATORS, &tail);
+        if (!token) break;
+        iter = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
+        VERIFY_PARAM_NON_NULL(TAG, iter, "Failed allocating memory");
+        if (!result)
+        {
+             result = iter;
+        }
+        else
+        {
+             prev->next = iter;
+        }
+        iter->value = OICStrdup(token);
+        VERIFY_PARAM_NON_NULL(TAG, iter->value, "Failed allocating memory");
+        prev = iter;
+        iter = iter->next;
+    }
+    OICFree(backup);
+    return result;
+
+exit:
+    OICFree(backup);
+    OCFreeOCStringLL(result);
+    return NULL;
+}
+
+char* OCCreateString(const OCStringLL* ll)
+{
+    char *str = NULL;
+    char *pos = NULL;
+    size_t len = 0;
+    size_t sublen = 0;
+    int count = 0;
+
+    if (!ll) return NULL;
+
+    for (const OCStringLL *it = ll; it ; it = it->next )
+    {
+        len += strlen(it->value) + 1;
+    }
+    str = (char*) malloc(len + 1);
+    if (!str)
+        return NULL;
+
+    pos = str;
+    for (const OCStringLL *it = ll; it ; it = it->next )
+    {
+        sublen = strlen(it->value) + 1;
+        count = snprintf(pos, len + 1, "%s%c", it->value, CSV_SEPARATOR);
+        if (count<sublen)
+        {
+            free(str);
+            return NULL;
+        }
+        len-=sublen;
+        pos+=count;
+    }
+
+    return str;
+}
+
 OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)
 {
     if (!payload)
@@ -1607,8 +1688,8 @@ OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
         goto exit;
     }
 
-    payload->dataModelVersion = OICStrdup(dmVer);
-    if (dmVer && !payload->dataModelVersion)
+    payload->dataModelVersions = OCCreateOCStringLL(dmVer);
+    if (!payload->dataModelVersions || (dmVer && !payload->dataModelVersions->value))
     {
         goto exit;
     }
@@ -1639,7 +1720,7 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
     OICFree(payload->sid);
     OICFree(payload->deviceName);
     OICFree(payload->specVersion);
-    OICFree(payload->dataModelVersion);
+    OCFreeOCStringLL(payload->dataModelVersions);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);

@@ -425,10 +425,16 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
             sizeof(OC_RSRVD_SPEC_VERSION) - 1, payload->specVersion);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data spec version");
 
-    // Device data Model Version
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
-            sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1, payload->dataModelVersion);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data model version");
+    // Device data Model Versions
+    if (payload->dataModelVersions)
+    {
+        OIC_LOG(INFO, TAG, "Payload has data models versions");
+        char *str = OCCreateString(payload->dataModelVersions);
+        err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
+                sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1, str);
+        OICFree(str);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data model version");
+    }
 
     err |= cbor_encoder_close_container(&encoder, &repMap);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing device map");

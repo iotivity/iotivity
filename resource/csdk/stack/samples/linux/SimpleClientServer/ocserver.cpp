@@ -27,6 +27,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <array>
+#include "oic_malloc.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -75,7 +76,7 @@ const char *supportUrl = "mySupportUrl";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
 const char *specVersion = "myDeviceSpecVersion";
-const char* dataModelVersion = "myDeviceModelVersion";
+const char *dataModelVersions = "myDeviceModelVersions";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -817,7 +818,7 @@ void DeleteDeviceInfo()
 {
     free (deviceInfo.deviceName);
     free (deviceInfo.specVersion);
-    free (deviceInfo.dataModelVersion);
+    OCFreeOCStringLL (deviceInfo.dataModelVersions);
 }
 
 bool DuplicateString(char** targetString, const char* sourceString)
@@ -921,7 +922,7 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
-OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModelVersion)
+OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModelVersions)
 {
     if(!DuplicateString(&deviceInfo.deviceName, deviceName))
     {
@@ -931,7 +932,9 @@ OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, con
     {
         return OC_STACK_ERROR;
     }
-    if(!DuplicateString(&deviceInfo.dataModelVersion, dataModelVersion))
+    OCFreeOCStringLL(deviceInfo.dataModelVersions);
+    deviceInfo.dataModelVersions = OCCreateOCStringLL(dataModelVersions);
+    if (!deviceInfo.dataModelVersions)
     {
         return OC_STACK_ERROR;
     }
@@ -1055,7 +1058,7 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
-    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModelVersion);
+    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
 
     if (registrationResult != OC_STACK_OK)
     {
