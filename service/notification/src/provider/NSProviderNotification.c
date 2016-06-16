@@ -44,8 +44,12 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     }
 
     OCRepPayloadSetUri(*msgPayload, NS_COLLECTION_MESSAGE_URI);
+    OCRepPayloadSetPropInt(*msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->messageId);
+    OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_TITLE, msg->providerId);
 
-    OCRepPayloadSetPropInt(msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->messageId);
+    NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->type);
+    NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->ttl);
+    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_DATETIME, msg->dateTime);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TITLE, msg->title);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
@@ -68,8 +72,8 @@ NSResult NSSetSyncPayload(NSSyncInfo *sync, OCRepPayload** syncPayload)
 
     OCRepPayloadSetUri(*syncPayload, NS_COLLECTION_SYNC_URI);
 
-    NSDuplicateSetPropertyString(syncPayload, NS_ATTRIBUTE_PROVIDER_ID, sync->providerId);
-    OCRepPayloadSetPropInt(syncPayload, NS_ATTRIBUTE_MESSAGE_ID, sync->messageId);
+    OCRepPayloadSetPropString(*syncPayload, NS_ATTRIBUTE_PROVIDER_ID, sync->providerId);
+    OCRepPayloadSetPropInt(*syncPayload, NS_ATTRIBUTE_MESSAGE_ID, sync->messageId);
     OCRepPayloadSetPropInt(*syncPayload, NS_ATTRIBUTE_STATE, sync->state);
 
     NS_LOG(DEBUG, "NSSetSyncPayload - OUT");
@@ -121,13 +125,17 @@ NSResult NSSendNotification(NSMessage *msg)
         it = it->next;
     }
 
-    NS_LOG_V(DEBUG, "observer Count = %d", obCount);
-
     for (i = 0; i < obCount; ++i)
     {
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
         NS_LOG_V(DEBUG, "SubScription WhiteList[%d] = %d", i, obArray[i]);
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
+    }
+
+    if(!obCount)
+    {
+        NS_LOG(ERROR, "observer count is zero");
+        return NS_ERROR;
     }
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray, obCount, payload,
@@ -200,7 +208,6 @@ NSResult NSSendSync(NSSyncInfo *sync)
         NS_LOG(ERROR, "fail to send Sync");
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
-
     }
 
     OCRepPayloadDestroy(payload);

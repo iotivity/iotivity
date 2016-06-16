@@ -49,6 +49,4 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
 
 void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled);
 
-NSResult NSMakeTask(NSTaskType type, OCEntityHandlerRequest *request, NSTask * task);
-
 #endif /* _NS_PROVIDER_LISTENER__H_ */

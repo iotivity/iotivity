@@ -131,7 +131,7 @@ int main()
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
 
-                NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
+                NSMessage * msg = NSCreateMessage();
 
                 msg->title = OICStrdup(title);
                 msg->contentText = OICStrdup(body);

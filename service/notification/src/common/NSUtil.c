@@ -64,7 +64,6 @@ OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *ent
     }
 
     NS_LOG(DEBUG, "NSCopyOCEntityHandlerRequest - OUT");
-
     return copyOfRequest;
 }
 
@@ -88,28 +87,15 @@ NSResult NSFreeMessage(NSMessage * obj)
         return NS_ERROR;
     }
 
-    if (obj->messageId)
-    {
-        obj->messageId = 0;
-    }
+    obj->messageId = 0;
+    (obj->providerId)[0] = '\0';
 
-    if (obj->title)
-    {
-        OICFree(obj->title);
-        obj->title = NULL;
-    }
-
-    if (obj->contentText)
-    {
-        OICFree(obj->contentText);
-        obj->contentText = NULL;
-    }
-
-    if (obj->sourceName)
-    {
-        OICFree(obj->sourceName);
-        obj->sourceName = NULL;
-    }
+    NSFreeMalloc(&(obj->dateTime));
+    obj->ttl = 0;
+    NSFreeMalloc(&(obj->title));
+    NSFreeMalloc(&(obj->contentText));
+    NSFreeMalloc(&(obj->sourceName));
+    NSFreeMediaContents(obj->mediaContents);
 
     OICFree(obj);
 
@@ -126,16 +112,17 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
         return NULL;
     }
 
-    newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
-    newMsg->contentText = NULL;
-    newMsg->messageId = 0;
-    newMsg->sourceName = NULL;
-    newMsg->title = NULL;
+    newMsg = NSInitializeMessage();
 
-    if (copyMsg->messageId)
+    newMsg->messageId = copyMsg->messageId;
+    OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);
+
+    if(copyMsg->dateTime)
     {
-        newMsg->messageId = copyMsg->messageId;
+        newMsg->dateTime = OICStrdup(copyMsg->dateTime);
     }
+
+    newMsg->ttl = copyMsg->ttl;
 
     if (copyMsg->title)
     {
@@ -150,6 +137,11 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     if (copyMsg->sourceName)
     {
        newMsg->sourceName = OICStrdup(copyMsg->sourceName);
+    }
+
+    if (copyMsg->mediaContents)
+    {
+       newMsg->mediaContents = NSDuplicateMediaContents(copyMsg->mediaContents);
     }
 
     return newMsg;
@@ -228,6 +220,14 @@ void NSDuplicateSetPropertyString(OCRepPayload** msgPayload, const char * name,
     }
 }
 
+void NSDuplicateSetPropertyInt(OCRepPayload** msgPayload, const char * name,
+        int64_t value)
+{
+    if(value)
+    {
+        OCRepPayloadSetPropInt(*msgPayload, name, value);
+    }
+}
 
 NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
 {
@@ -302,6 +302,12 @@ char * NSGetValueFromQuery(char *query, char * compareKey)
     char *restOfQuery = NULL;
     int numKeyValuePairsParsed = 0;
 
+    if(!query || query[0] != '\0' || !strlen(query))
+    {
+        NS_LOG(ERROR, "query is null or \\0 or size is 0");
+        return NULL;
+    }
+
     NS_LOG_V(INFO, "NS Query Params = %s", query);
 
     char *keyValuePair = strtok_r (query, NS_QUERY_SEPARATOR, &restOfQuery);
@@ -324,6 +330,7 @@ char * NSGetValueFromQuery(char *query, char * compareKey)
 
         if (strcmp(key, compareKey) == 0)
         {
+            NS_LOG_V(DEBUG, "found Key : [%s] - Value : [%s] = ", key, value);
             return value;
         }
 
@@ -333,4 +340,62 @@ char * NSGetValueFromQuery(char *query, char * compareKey)
     }
 
     return NULL;
+}
+
+NSResult NSFreeMalloc(char ** obj)
+{
+    if(*obj)
+    {
+        OICFree(*obj);
+        *obj = NULL;
+        return NS_OK;
+    }
+
+    return NS_FAIL;
+}
+
+NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj)
+{
+    if(!copyObj)
+    {
+        return NULL;
+    }
+
+    NSMediaContents * newObj = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
+
+    if(copyObj->iconImage)
+    {
+        newObj->iconImage = OICStrdup(copyObj->iconImage);
+    }
+
+    return newObj;
+}
+
+NSResult NSFreeMediaContents(NSMediaContents * obj)
+{
+    if(!obj)
+    {
+        return NS_OK;
+    }
+
+    NSFreeMalloc(&(obj->iconImage));
+    OICFree(obj);
+
+    return NS_OK;
+}
+
+NSMessage * NSInitializeMessage()
+{
+    NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
+    msg->messageId = OICGetCurrentTime(TIME_IN_MS);
+    (msg->providerId)[0] = '\0';
+    msg->type = 0;
+    msg->dateTime = NULL;
+    msg->ttl = 0;
+    msg->title = NULL;
+    msg->contentText = NULL;
+    msg->sourceName = NULL;
+    msg->mediaContents = NULL;
+
+    return msg;
 }

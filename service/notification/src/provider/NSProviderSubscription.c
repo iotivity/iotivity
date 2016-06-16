@@ -83,6 +83,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     }
 
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetSubscriptionAccepter());
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, NS_COLLECTION_MESSAGE_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, NS_COLLECTION_SYNC_URI);
@@ -110,15 +111,24 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 {
     NS_LOG(DEBUG, "NSHandleSubscription - IN");
 
+    char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+
+    if(!id)
+    {
+        NSFreeOCEntityHandlerRequest(entityHandlerRequest);
+        NS_LOG(ERROR, "Invalid ConsumerID");
+        return;
+    }
+
     if (resourceType == NS_RESOURCE_MESSAGE)
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_MESSAGE");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
 
-        char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         OICFree(id);
+
         subData->isWhite = false;
         subData->messageObId = entityHandlerRequest->obsInfo.obsId;
         subData->syncObId = 0;
@@ -149,10 +159,8 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_SYNC");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
 
-        char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         OICFree(id);
 
@@ -170,6 +178,8 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         {
             NS_LOG(ERROR, "Fail to write cache");
         }
+
+        NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     }
 
     NS_LOG(DEBUG, "NSHandleSubscription - OUT");
@@ -179,13 +189,18 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
 
+    char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+
+    if(!id)
+    {
+        NSFreeOCEntityHandlerRequest(entityHandlerRequest);
+        NS_LOG(ERROR, "Invalid ConsumerID");
+        return;
+    }
+
     NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
     NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-
-    char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
     OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-    OICFree(id);
-
     subData->isWhite = false;
     subData->messageObId = entityHandlerRequest->obsInfo.obsId;
 
@@ -201,6 +216,8 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
     }
 
     NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
+
+    OICFree(id);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 }
 
@@ -268,13 +285,21 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         return OC_EH_ERROR;
     }
 
+    char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+
+    if(!id)
+    {
+        NSFreeOCEntityHandlerRequest(entityHandlerRequest);
+        NS_LOG(ERROR, "Invalid ConsumerID");
+        return NS_ERROR;
+    }
+
     if (accepted)
     {
         NS_LOG(DEBUG, "accepted is true");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-        char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
+
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         OICFree(id);
         subData->isWhite = true;
@@ -289,7 +314,6 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         }
     }
 
-    char * id = NSGetValueFromQuery(entityHandlerRequest->query, NS_QUERY_CONSUMER_ID);
     NSSendResponse(id, accepted);
 
     OICFree(id);

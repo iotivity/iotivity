@@ -56,14 +56,14 @@ typedef struct
     int syncObId;
     int messageObId;
     bool isWhite;
-}NSCacheSubData;
+} NSCacheSubData;
 
 typedef struct
 {
     char * id; // ip ? ? ?
     int messageType; // noti = 1, read = 2, dismiss = 3
     NSMessage * nsMessage;
-}NSCacheMsgData;
+} NSCacheMsgData;
 
 typedef struct
 {
@@ -88,7 +88,6 @@ typedef struct
     char * contentText;
     char * sourceName;
     NSMediaContents * mediaContents;
-
 } NSMessageResource;
 
 typedef struct

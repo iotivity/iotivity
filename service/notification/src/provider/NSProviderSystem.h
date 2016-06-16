@@ -27,6 +27,7 @@
 #include "NSConstants.h"
 #include "oic_malloc.h"
 #include "NSStructs.h"
+#include "NSUtil.h"
 
 void NSSetProviderConnectionState(NSConnectionState state);
 NSConnectionState NSGetProviderConnectionState();

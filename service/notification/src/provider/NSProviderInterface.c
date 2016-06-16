@@ -105,7 +105,6 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
     pthread_mutex_unlock(&nsInitMutex);
 
     NS_LOG(DEBUG, "NSStartProvider - OUT");
-
     return NS_OK;
 }
 
@@ -121,7 +120,6 @@ void NSSetList()
 NSResult NSStopProvider()
 {
     NS_LOG(DEBUG, "NSStopProvider - IN");
-
     pthread_mutex_lock(&nsInitMutex);
 
     if(initProvider)
@@ -156,9 +154,6 @@ NSResult NSSendMessage(NSMessage *msg)
     }
 
     NSMessage * newMsg = NSDuplicateMessage(msg);
-
-    OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
-
     NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_NOTIFICATION, newMsg);
 
     pthread_mutex_unlock(&nsInitMutex);
@@ -170,16 +165,15 @@ NSResult NSSendMessage(NSMessage *msg)
 NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
 {
     NS_LOG(DEBUG, "NSProviderReadCheck - IN");
-
     pthread_mutex_lock(&nsInitMutex);
+
     NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
     OICStrcpy(syncInfo->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
     syncInfo->messageId = messageId;
     syncInfo->state = type;
-
     NSPushQueue(NOTIFICATION_SCHEDULER, TASK_SEND_READ, syncInfo);
-    pthread_mutex_unlock(&nsInitMutex);
 
+    pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderReadCheck - OUT");
     return NS_OK;
 }
@@ -206,6 +200,20 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted)
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSAccept - OUT");
     return NS_OK;
+}
+
+NSMessage * NSCreateMessage()
+{
+    NS_LOG(DEBUG, "NSCreateMessage - IN");
+
+    pthread_mutex_lock(&nsInitMutex);
+    NSMessage * msg = NSInitializeMessage();
+    msg->messageId = OICGetCurrentTime(TIME_IN_MS);
+    OICStrcpy(msg->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
+    pthread_mutex_unlock(&nsInitMutex);
+
+    NS_LOG(DEBUG, "NSCreateMessage - OUT");
+    return msg;
 }
 
 void * NSInterfaceSchedule(void * ptr)
@@ -267,7 +275,6 @@ void * NSInterfaceSchedule(void * ptr)
         }
 
         pthread_mutex_unlock(&NSMutex[INTERFACE_SCHEDULER]);
-
     }
 
     NS_LOG(DEBUG, "Destroy NSResponseSchedule");

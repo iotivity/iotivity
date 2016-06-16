@@ -32,10 +32,13 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocrandom.h"
+#include "oic_time.h"
+#include "NSProviderSystem.h"
 
 OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *);
 NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
 
+NSMessage * NSInitializeMessage();
 NSResult NSFreeMessage(NSMessage *);
 NSMessage * NSDuplicateMessage(NSMessage *);
 
@@ -47,9 +50,13 @@ NSResult NSFreeConsumer(NSConsumer *);
 NSConsumer * NSDuplicateConsumer(NSConsumer *);
 
 void NSDuplicateSetPropertyString(OCRepPayload **, const char *, const char *);
+void NSDuplicateSetPropertyInt(OCRepPayload ** msgPayload, const char * name, int64_t value);
 NSResult NSGenerateUUIDStr(char uuidStr[UUID_STRING_SIZE]);
 
 char * NSGetValueFromQuery(char *query, char * compareKey);
+NSResult NSFreeMalloc(char ** obj);
 
+NSResult NSFreeMediaContents(NSMediaContents * obj);
+NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj);
 
 #endif /* _NS_UTIL__H_ */

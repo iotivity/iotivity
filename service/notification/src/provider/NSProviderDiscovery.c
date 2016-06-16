@@ -87,7 +87,6 @@ void * NSDiscoverySchedule(void * ptr)
         }
 
         pthread_mutex_unlock(&NSMutex[DISCOVERY_SCHEDULER]);
-
     }
 
     NS_LOG(DEBUG, "Destroy NSDiscoverySchedule");

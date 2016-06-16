@@ -96,6 +96,13 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted);
  */
 NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 
+
+/**
+ * Initialize NSMessage struct, our service set message id and provider(device) id
+ * @return ::NSMessage *
+ */
+NSMessage * NSCreateMessage();
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
