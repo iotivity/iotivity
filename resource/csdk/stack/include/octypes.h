@@ -949,8 +949,8 @@ typedef struct
     OCStringLL *types;
     /** Pointer to the device specification version.*/
     char *specVersion;
-    /** Pointer to the device data model version.*/
-    char *dataModelVersion;
+    /** Pointer to the device data model versions (in CSV format).*/
+    OCStringLL *dataModelVersions;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER
@@ -1239,7 +1239,7 @@ typedef struct
     char *sid;
     char* deviceName;
     char* specVersion;
-    char* dataModelVersion;
+    OCStringLL *dataModelVersions;
     OCStringLL *interfaces;
     OCStringLL *types;
 } OCDevicePayload;

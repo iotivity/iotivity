@@ -864,15 +864,24 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
         else
         {
-            payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
-                savedDeviceInfo.types, savedDeviceInfo.specVersion, savedDeviceInfo.dataModelVersion);
-            if (!payload)
+            char *dataModelVersions = OCCreateString(savedDeviceInfo.dataModelVersions);
+            if (!dataModelVersions)
             {
                 discoveryResult = OC_STACK_NO_MEMORY;
             }
             else
             {
-                discoveryResult = OC_STACK_OK;
+                payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
+                    savedDeviceInfo.types, savedDeviceInfo.specVersion, dataModelVersions);
+                if (!payload)
+                {
+                     discoveryResult = OC_STACK_NO_MEMORY;
+                }
+                else
+                {
+                     discoveryResult = OC_STACK_OK;
+                }
+                OICFree(dataModelVersions);
             }
         }
     }
@@ -1341,10 +1350,10 @@ void DeleteDeviceInfo()
     OICFree(savedDeviceInfo.deviceName);
     OCFreeOCStringLL(savedDeviceInfo.types);
     OICFree(savedDeviceInfo.specVersion);
-    OICFree(savedDeviceInfo.dataModelVersion);
+    OCFreeOCStringLL(savedDeviceInfo.dataModelVersions);
     savedDeviceInfo.deviceName = NULL;
     savedDeviceInfo.specVersion = NULL;
-    savedDeviceInfo.dataModelVersion = NULL;
+    savedDeviceInfo.dataModelVersions = NULL;
 }
 
 static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
@@ -1386,10 +1395,10 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
         }
     }
 
-    if (info.dataModelVersion)
+    if (info.dataModelVersions)
     {
-        savedDeviceInfo.dataModelVersion = OICStrdup(info.dataModelVersion);
-        if(!savedDeviceInfo.dataModelVersion && info.dataModelVersion)
+        savedDeviceInfo.dataModelVersions = CloneOCStringLL(info.dataModelVersions);
+        if(!savedDeviceInfo.dataModelVersions && info.dataModelVersions)
         {
             DeleteDeviceInfo();
             return OC_STACK_NO_MEMORY;
@@ -1397,8 +1406,13 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
     }
     else
     {
-        savedDeviceInfo.dataModelVersion = OICStrdup(OC_DATA_MODEL_VERSION);
-        if(!savedDeviceInfo.dataModelVersion && OC_DATA_MODEL_VERSION)
+        savedDeviceInfo.dataModelVersions = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
+        if (!savedDeviceInfo.dataModelVersions)
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+        savedDeviceInfo.dataModelVersions->value = OICStrdup(OC_DATA_MODEL_VERSION);
+        if(!savedDeviceInfo.dataModelVersions->value && OC_DATA_MODEL_VERSION)
         {
             DeleteDeviceInfo();
             return OC_STACK_NO_MEMORY;

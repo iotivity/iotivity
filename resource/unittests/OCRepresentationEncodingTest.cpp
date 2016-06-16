@@ -52,7 +52,7 @@ namespace OCRepresentationEncodingTest
     static const char sid1[] = "646F6F72-4465-7669-6365-555549443030";
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
-    static const char dmver1[] = "data model version";
+    static const char dmver1[] = "one-1,two-2";
     static OCStringLL *types = NULL;
     // Device Payloads
     TEST(DeviceDiscoveryEncoding, Normal)
@@ -66,10 +66,14 @@ namespace OCRepresentationEncodingTest
                 types,
                 specver1,
                 dmver1);
+        EXPECT_TRUE(device);
         EXPECT_STREQ(sid1, device->sid);
         EXPECT_STREQ(devicename1, device->deviceName);
         EXPECT_STREQ(specver1, device->specVersion);
-        EXPECT_STREQ(dmver1, device->dataModelVersion);
+        EXPECT_TRUE(device->dataModelVersions);
+        EXPECT_STREQ("one-1", device->dataModelVersions->value);
+        EXPECT_TRUE(device->dataModelVersions->next);
+        EXPECT_STREQ("two-2", device->dataModelVersions->next->value);
         EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload*)device)->type);
         EXPECT_STREQ("oic.wk.d", device->types->value);
         EXPECT_STREQ("oic.d.tv", device->types->next->value);
@@ -85,7 +89,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(device->sid, ((OCDevicePayload*)parsedDevice)->sid);
         EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
         EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
-        EXPECT_STREQ(device->dataModelVersion, ((OCDevicePayload*)parsedDevice)->dataModelVersion);
+        EXPECT_STREQ(device->dataModelVersions->value, ((OCDevicePayload*)parsedDevice)->dataModelVersions->value);
         EXPECT_STREQ("oic.wk.d", ((OCDevicePayload*)parsedDevice)->types->value);
         EXPECT_STREQ("oic.d.tv", ((OCDevicePayload*)parsedDevice)->types->next->value);
         EXPECT_EQ(device->base.type, ((OCDevicePayload*)parsedDevice)->base.type);
@@ -99,7 +103,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(sid1, r.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
         EXPECT_STREQ(devicename1, r.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
         EXPECT_STREQ(specver1, r.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
-        EXPECT_STREQ(dmver1, r.getValue<std::string>(OC_RSRVD_DATA_MODEL_VERSION).c_str());
+        EXPECT_STREQ("one-1", r.getDataModelVersions()[0].c_str());
+        EXPECT_STREQ("two-2", r.getDataModelVersions()[1].c_str());
 
         OCPayloadDestroy(parsedDevice);
     }

@@ -444,13 +444,17 @@ static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *roo
             err = cbor_value_dup_text_string(&curVal, &out->specVersion, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find spec version in device payload");
         }
-        // Data Model Version
+        // Data Model Versions
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DATA_MODEL_VERSION, &curVal);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find data model ver tag");
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find data model versions tag");
         if (cbor_value_is_valid(&curVal))
         {
-            err = cbor_value_dup_text_string(&curVal, &out->dataModelVersion, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, err, "to find data model version in device payload");
+            size_t len = 0;
+            char * str = NULL;
+            err = cbor_value_dup_text_string(&curVal, &str, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find data model versions in device payload");
+            out->dataModelVersions = OCCreateOCStringLL(str);
+            OICFree(str);
         }
         err = cbor_value_advance(rootValue);
         VERIFY_CBOR_SUCCESS(TAG, err, "to advance device payload");
