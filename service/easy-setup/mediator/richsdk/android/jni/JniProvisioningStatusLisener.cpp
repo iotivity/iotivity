@@ -42,7 +42,7 @@ JniProvisioningStatusListener::~JniProvisioningStatusListener()
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
-
+/*
 void JniProvisioningStatusListener::provisionStatusCallback (std::shared_ptr<EasySetupStatus>
         easySetupStatus)
 {
@@ -105,3 +105,4 @@ void JniProvisioningStatusListener::checkExAndRemoveListener(JNIEnv *env)
         m_ownerResource->removeProvisioningStatusListener(env, m_jwListener);
     }
 }
+*/

@@ -51,7 +51,7 @@ JniRemoteEnrollee *JniRemoteEnrollee::getJniRemoteEnrollee(JNIEnv *env, jobject 
     }
     return remoteEnrollee;
 }
-
+/*
 void JniRemoteEnrollee::startProvisioning(JNIEnv *env)
 {
     try
@@ -156,4 +156,4 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRegisterProvis
 
     LOGD("nativeRegisterProvisioningHandler Exit");
 }
-
+*/

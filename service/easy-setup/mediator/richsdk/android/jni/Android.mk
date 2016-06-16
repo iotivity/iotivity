@@ -20,7 +20,7 @@ LOCAL_MODULE    := easysetup-jni
 DEFINE_FLAG =  -DWITH_POSIX -D__ANDROID__
 
 #Add Debug flags here
-DEBUG_FLAG      = -DTB_LOG
+DEBUG_FLAG = -DTB_LOG
 
 BUILD_FLAG = $(DEFINE_FLAG) $(DEBUG_FLAG)
 
@@ -34,7 +34,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../src \
 					$(LOCAL_PATH)/../../../../inc \
 					$(LOCAL_PATH)/../../../../../../resource/csdk/logger/include \
-				    $(LOCAL_PATH)/../../../../../../resource/csdk/connectivity/common/inc \
+					$(LOCAL_PATH)/../../../../../../resource/csdk/connectivity/common/inc \
 					$(LOCAL_PATH)/../../../../../../resource/c_common/oic_string/include \
 					$(LOCAL_PATH)/../../../../../../resource/include \
 					$(LOCAL_PATH)/../../../../../../resource/c_common \
@@ -46,7 +46,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../resource/csdk/security/include \
 					$(LOCAL_PATH)/../../../../../../extlibs/cjson \
 					$(LOCAL_PATH)/../../../../../../extlibs/boost/boost_1_58_0 \
-                    $(LOCAL_PATH)/../../../../../../extlibs/timer \
+					$(LOCAL_PATH)/../../../../../../extlibs/timer \
 					$(LOCAL_PATH)/../../../../../../android/android_api/base/jni \
 
 LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.cpp))

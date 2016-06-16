@@ -142,6 +142,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
         mProvisioningCallback.onProgress(this);
         final EnrolleeDevice device = this;
         if (mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi) {
+            /*
              try {
                  mRemoteEnrollee.registerProvisioningHandler(new IProvisionStatusNativeHandler() {
                      @Override
@@ -154,22 +155,26 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                          }
                      }
                  });
+
                  //native call
                 mRemoteEnrollee.startProvision();
              }catch(ESException e) {
                  Log.i(TAG,"startProvisioningProcess Register Listener to native exception");
              }
+             */
         }
     }
 
     protected void stopProvisioningProcess(){
         if(mState == EnrolleeState.DEVICE_PROVISIONING_STATE)
         {    //native call
+            /*
             try {
                 mRemoteEnrollee.stopProvision();
             } catch (ESException e) {
                 Log.i(TAG,"stopProvisioningProcess exception");
             }
+            */
         }else{
            Log.i(TAG,"stopProvisioningProcess : Provisioning is not in progress");
         }

@@ -60,17 +60,17 @@ class JniRemoteEnrollee
 
         // ***** JNI APIs internally call the APIs of this class ***** //
 
-        void startProvisioning(JNIEnv *env);
-        void stopProvisioning(JNIEnv *env);
-        void registerProvisioningHandler(JNIEnv *env, jobject jListener);
+        //void startProvisioning(JNIEnv *env);
+        //void stopProvisioning(JNIEnv *env);
+        //void registerProvisioningHandler(JNIEnv *env, jobject jListener);
 
-        JniProvisioningStatusListener *addProvisioningStatusListener(JNIEnv *env, jobject jListener);
-        void removeProvisioningStatusListener(JNIEnv *env, jobject jListener);
+        //JniProvisioningStatusListener *addProvisioningStatusListener(JNIEnv *env, jobject jListener);
+        //void removeProvisioningStatusListener(JNIEnv *env, jobject jListener);
 
         static JniRemoteEnrollee *getJniRemoteEnrollee(JNIEnv *env, jobject thiz);
 
     private:
-        JniEsListenerManager<JniProvisioningStatusListener> m_provisioingStatus;
+        //JniEsListenerManager<JniProvisioningStatusListener> m_provisioingStatus;
         std::shared_ptr<RemoteEnrollee> m_sharedResource;
 
 };
@@ -83,25 +83,25 @@ extern "C" {
 /**
  * API for starting the provisioning process.
  */
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartProvision
-(JNIEnv *env, jobject jClass);
+//JNIEXPORT void JNICALL
+//Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartProvision
+//(JNIEnv *env, jobject jClass);
 
 /**
  * API for stopping the provisioning process.
  */
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStopProvision
-(JNIEnv *env, jobject jClass);
+//JNIEXPORT void JNICALL
+//Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStopProvision
+//(JNIEnv *env, jobject jClass);
 
 /**
  * API for setting the lisener for recieiving provisioning status.
  *
  * @param provisiongListener - Provisioning listener [callback from native layer will be passing to this listener]
  */
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRegisterProvisioningHandler
-(JNIEnv *env, jobject jClass, jobject provisiongListener);
+//JNIEXPORT void JNICALL
+//Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRegisterProvisioningHandler
+//(JNIEnv *env, jobject jClass, jobject provisiongListener);
 
 #ifdef __cplusplus
 }

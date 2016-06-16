@@ -47,18 +47,11 @@ extern "C" {
 /**
  * API for creating and returning the RemoteEnrollee object to Java Layer
  *
- * @param ip - ip address of Enrollee
- * @param ssid - ssid of the Enroller
- * @param password - password of the enroller
- * @param connectivityType - Connectivity Type
- * @param needSecuredEasysetup - need secured easy setup or not
- *
  * @return jobject - RemoteEnrolleee
  */
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateEnrolleeDevice
-(JNIEnv *env, jobject interfaceClass, jstring ip, jstring ssid, jstring password,
- jint connectivityType, jboolean needSecuredEasysetup);
+Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateRemoteEnrollee
+(JNIEnv *env, jobject interfaceClass);
 
 #ifdef __cplusplus
 }

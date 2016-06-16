@@ -57,7 +57,7 @@ class JniProvisioningStatusListener
         /**
          * @brief callback function that will be passed to Native layer
         */
-        void provisionStatusCallback (std::shared_ptr<EasySetupStatus> easySetupStatus);
+        //void provisionStatusCallback (std::shared_ptr<EasySetupStatus> easySetupStatus);
 
     private:
         jweak m_jwListener;

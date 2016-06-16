@@ -44,7 +44,7 @@ OCConnectivityType  getOCConnectivityTypeFromInt(int connectivityType)
     }
     return CT_DEFAULT;
 }
-
+/*
 int convertNativeProvisionStateToInt(EasySetupState nativeState)
 {
     switch (nativeState)
@@ -60,3 +60,4 @@ int convertNativeProvisionStateToInt(EasySetupState nativeState)
     }
     return -1;
 }
+*/

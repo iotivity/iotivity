@@ -26,42 +26,23 @@ using namespace OIC::Service;
 extern "C" {
 #endif
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateEnrolleeDevice
-(JNIEnv *env, jobject interfaceClass, jstring ip, jstring ssid, jstring password,
- jint connectivityType, jboolean isSecured)
+Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateRemoteEnrollee
+(JNIEnv *env, jobject interfaceClass)
 {
 
-    LOGI("JniEasySetup::nativeCreateEnrolleeDevice enter");
+    LOGI("JniEasySetup::nativeCreateRemoteEnrollee enter");
 
     std::shared_ptr<RemoteEnrollee> nativeRemoteEnrollee;
     jobject jRemoteEnrollee;
-    ProvConfig netInfo;
-    WiFiOnboadingConnection onboardConn;
-
-    const char *cIp = (env)->GetStringUTFChars(ip, NULL);
-    const char *cSssid = (env)->GetStringUTFChars(ssid, NULL);
-    const char *cPassword = (env)->GetStringUTFChars(password, NULL);
-
-    std::string sIp(cIp);
-    std::string sSssid(cSssid);
-    std::string sPassword(cPassword);
-
-    netInfo.connType = getOCConnectivityTypeFromInt(connectivityType);
-
-    onboardConn.isSecured = bool(isSecured);
-
-    OICStrcpy(onboardConn.ipAddress, IPV4_ADDR_SIZE - 1, sIp.c_str());
-    OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, sSssid.c_str());
-    OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, sPassword.c_str());
 
     try
     {
-        nativeRemoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo,onboardConn);
+        nativeRemoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee();
         //create the java object
         jRemoteEnrollee = env->NewObject(g_cls_RemoteEnrollee, g_mid_RemoteEnrollee_ctor);
         if (!jRemoteEnrollee)
         {
-            LOGE("JniEasySetup::nativeCreateEnrolleeDevice Unable to create the java object");
+            LOGE("JniEasySetup::nativeCreateRemoteEnrollee Unable to create the java object");
             return NULL;
         }
 
@@ -70,12 +51,12 @@ Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateEnroll
     }
     catch (ESBadRequestException exception)
     {
-        LOGE("JniEasySetup::nativeCreateEnrolleeDevice Unable to create the Native EnrolleeDevice");
+        LOGE("JniEasySetup::nativeCreateRemoteEnrollee Unable to create the Native EnrolleeDevice");
         //throw the exception to java layer
         throwESException( env,  exception.what());
     }
 
-    LOGI("JniEasySetup::nativeCreateEnrolleeDevice exit");
+    LOGI("JniEasySetup::nativeCreateRemoteEnrollee exit");
 
     return jRemoteEnrollee;
 }
