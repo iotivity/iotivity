@@ -107,12 +107,7 @@ typedef struct
  */
 typedef struct
 {
-    char * mId;
-    char * mUserData;
-    char * messageUri;
-    char * syncUri;
-    OCDoHandle messageHandle;
-    OCDoHandle syncHandle;
+    char providerId[37];
 
 } NSProvider;
 

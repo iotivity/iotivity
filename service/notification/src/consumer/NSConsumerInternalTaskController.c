@@ -38,8 +38,7 @@ void NSSetCacheList(NSCacheList * cache)
 
 void NSDestroyCacheList()
 {
-    NSCacheList * cache;
-    cache = *(NSGetCacheList());
+    NSCacheList * cache = *(NSGetCacheList());
     if (cache)
     {
         NSStorageDestroy(cache);
@@ -49,6 +48,8 @@ void NSDestroyCacheList()
 NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageTypes type)
 {
     NSMessage_consumer * noti = (NSMessage_consumer *) task->taskData;
+    NS_VERTIFY_NOT_NULL(noti, NS_ERROR);
+
     noti->type = type;
 
     NSCacheElement * obj = (NSCacheElement *)OICMalloc(sizeof(NSCacheElement));
@@ -63,12 +64,57 @@ NSResult NSCacheUpdate(NSCacheList * cache, NSTask * task, NSConsumerMessageType
             NS_ERROR, NSRemoveMessage(noti));
 
     NSRemoveMessage(noti);
-    OICFree(obj);
+    NSOICFree(obj);
 
     return NS_OK;
 }
 
-void NSConsumerSubscriptionTaskProcessing(NSTask * task)
+void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
+{
+    // TODO need to check for discovered provider is new.
+
+    if (provider->accessPolicy == NS_ACCESS_DENY)
+    {
+        NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
+        NSDiscoveredProvider((NSProvider *) provider);
+    }
+    else
+    {
+        NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
+        NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
+        NS_VERTIFY_NOT_NULL_V(task);
+
+        NSConsumerPushEvent(task);
+    }
+}
+
+void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
+{
+    // TODO need to check for provider is new and callback to upper apis.
+    (void) msg;
+}
+
+void NSConsumerHandleRecvMessage(NSMessage_consumer * msg)
+{
+    NSMessagePost(NULL, (NSMessage *) msg);
+
+//    NSResult ret = NSCacheUpdate(cache, task, Notification);
+//    NS_VERTIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+}
+
+void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
+{
+    NS_VERTIFY_NOT_NULL_V(sync);
+
+    // TODO need to check for provider is available.
+    NSNotificationSync(NULL, sync);
+
+    // TODO need to update msg list.
+//        NSResult ret = NSPushToCache(clientResponse, taskType);
+//        NS_VERTIFY_NOT_NULL(ret == NS_OK ? (void *)1 : NULL, OC_STACK_KEEP_TRANSACTION);
+}
+
+void NSConsumerInternalTaskProcessing(NSTask * task)
 {
     NS_VERTIFY_NOT_NULL_V(task);
 
@@ -87,12 +133,29 @@ void NSConsumerSubscriptionTaskProcessing(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     switch (task->taskType)
     {
+        case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+        {
+            NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
+            NSConsumerHandleRecvSubscriptionConfirmed((NSMessage_consumer *)task->taskData);
+            break;
+        }
         case TASK_CONSUMER_RECV_MESSAGE:
         {
             NS_LOG(DEBUG, "Receive New Notification");
+            NSConsumerHandleRecvMessage((NSMessage_consumer *)task->taskData);
 
-            ret = NSCacheUpdate(cache, task, Notification);
-            NS_VERTIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+            break;
+        }
+        case TASK_CONSUMER_PROVIDER_DISCOVERED:
+        {
+            NS_LOG(DEBUG, "Receive New Provider is discovdered.");
+            NSConsumerHandleProviderDiscovered((NSProvider_internal *)task->taskData);
+            break;
+        }
+        case TASK_RECV_SYNCINFO:
+        {
+            NS_LOG(DEBUG, "Receive SyncInfo.");
+            NSConsumerHandleRecvSyncInfo((NSSyncInfo *)task->taskData);
             break;
         }
         case TASK_RECV_READ:

@@ -24,6 +24,55 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
+#define NS_QUERY_CONSUMER_ID "consumerid"
+
+char ** NSGetConsumerId()
+{
+    static char * g_consumerId = NULL;
+    return & g_consumerId;
+}
+
+void NSSetConsumerId(char * cId)
+{
+    NS_VERTIFY_NOT_NULL_V(cId);
+    char ** consumerId = NSGetConsumerId();
+    NSOICFree(*consumerId);
+    *consumerId = (char *)OICMalloc(sizeof(char) * NS_DEVICE_ID_LENGTH);
+    NS_VERTIFY_NOT_NULL_V(*consumerId);
+
+    OICStrcpy(*consumerId, sizeof(char) * NS_DEVICE_ID_LENGTH, cId);
+}
+
+char * NSGetQuery(const char * uri)
+{
+    NS_VERTIFY_NOT_NULL(uri, NULL);
+
+    char * consumerId = OICStrdup(*NSGetConsumerId());
+    NS_VERTIFY_NOT_NULL(consumerId, NULL);
+
+    size_t uriLen = strlen(uri) + 1;
+    size_t qKeyLen = sizeof(NS_QUERY_CONSUMER_ID);
+    size_t queryLen = NS_DEVICE_ID_LENGTH + uriLen + qKeyLen + 2;
+
+    char * retQuery = (char *)OICMalloc(sizeof(char) * queryLen);
+    NS_VERTIFY_NOT_NULL(retQuery, NULL);
+
+    size_t index = 0;
+    OICStrcpy((retQuery + index), uriLen, uri);
+    index += uriLen - 1;
+    OICStrcpy((retQuery + index), 2, "?");
+    index += 1;
+    OICStrcpy((retQuery + index), qKeyLen, NS_QUERY_CONSUMER_ID);
+    index += qKeyLen - 1;
+    OICStrcpy((retQuery + index), 2, "=");
+    index += 1;
+    OICStrcpy((retQuery + index), NS_DEVICE_ID_LENGTH, consumerId);
+
+    NSOICFree(consumerId);
+
+    return retQuery;
+}
+
 bool * NSGetBoneIsStartedConsumer()
 {
     static bool g_isStartedConsumer = false;
@@ -108,21 +157,21 @@ void NSNotificationSync(NSProvider * provider, NSSyncInfo * sync)
     NS_VERTIFY_NOT_NULL_V(thread);
 }
 
-NSNotificationReceivedCallback  * NSGetBoneNotificationPostedCb()
+NSNotificationReceivedCallback  * NSGetBoneMessagePostedCb()
 {
     static NSNotificationReceivedCallback  g_postCb = NULL;
 
     return & g_postCb;
 }
 
-void NSSetNotificationPostedCb(NSNotificationReceivedCallback  cb)
+void NSSetMessagePostedCb(NSNotificationReceivedCallback  cb)
 {
-    * NSGetBoneNotificationPostedCb() = cb;
+    * NSGetBoneMessagePostedCb() = cb;
 }
 
-NSNotificationReceivedCallback  NSGetNotificationPostedCb()
+NSNotificationReceivedCallback  NSGetMessagePostedCb()
 {
-    return * NSGetBoneNotificationPostedCb();
+    return * NSGetBoneMessagePostedCb();
 }
 
 typedef struct
@@ -131,23 +180,23 @@ typedef struct
     NSMessage * msg;
 } NSMessageData;
 
-void * NSNotificationPostFunc(void * obj)
+void * NSMessagePostFunc(void * obj)
 {
     NSMessageData * msgData = (NSMessageData *) obj;
 
-    NSGetNotificationPostedCb()((NSProvider *) msgData->provider,
+    NSGetMessagePostedCb()((NSProvider *) msgData->provider,
             (NSMessage *) msgData->msg);
     return NULL;
 }
 
-void NSNotificationPost(NSProvider * provider, NSMessage * msg)
+void NSMessagePost(NSProvider * provider, NSMessage * msg)
 {
     NSMessageData * obj = (NSMessageData *)OICMalloc(sizeof(NSMessageData));
     NS_VERTIFY_NOT_NULL_V(obj);
     obj->provider = provider;
     obj->msg = msg;
 
-    NSConsumerThread * thread = NSThreadInit(NSNotificationPostFunc, (void *) obj);
+    NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) obj);
     NS_VERTIFY_NOT_NULL_V(thread);
 }
 
@@ -183,33 +232,13 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
 }
 void NSRemoveMessage(NSMessage_consumer * msg)
 {
-    if (msg->messageId)
-    {
-        msg->messageId = 0;
-    }
-    if (msg->title)
-    {
-        OICFree(msg->title);
-        msg->title = NULL;
-    }
-    if (msg->contentText)
-    {
-        OICFree(msg->contentText);
-        msg->contentText = NULL;
-    }
-    if (msg->sourceName)
-    {
-        OICFree(msg->sourceName);
-        msg->sourceName = NULL;
-    }
-    if (msg->addr)
-    {
-        OICFree(msg->addr);
-        msg->addr = NULL;
-    }
+    msg->messageId = 0;
+    NSOICFree(msg->title);
+    NSOICFree(msg->contentText);
+    NSOICFree(msg->sourceName);
+    NSOICFree(msg->addr);
 
-    OICFree(msg);
-    msg = NULL;
+    NSOICFree(msg);
 }
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,

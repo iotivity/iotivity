@@ -7,8 +7,9 @@
 
 void onNotificationPosted(NSProvider * provider, NSMessage * notification)
 {
-    printf("Notification from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
-            ((OCDevAddr *)provider->mUserData)->port);
+    (void) provider;
+//    printf("Notification from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
+//            ((OCDevAddr *)provider->mUserData)->port);
     printf("id : %ld\n", notification->messageId);
     printf("title : %s\n", notification->title);
     printf("content : %s\n", notification->contentText);
@@ -26,8 +27,9 @@ void onDiscoverNotification(NSProvider * provider)
 
 void onNotificationSync(NSProvider * provider, NSSyncInfo * sync)
 {
-    printf("Sync from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
-            ((OCDevAddr *)provider->mUserData)->port);
+    (void) provider;
+//    printf("Sync from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
+//            ((OCDevAddr *)provider->mUserData)->port);
     printf("Sync ID : %ld\n", sync->messageId);
     printf("Sync STATE : %d\n", sync->state);
 }

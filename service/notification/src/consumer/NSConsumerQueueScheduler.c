@@ -23,6 +23,8 @@
 #include <unistd.h>
 
 #include "oic_malloc.h"
+#include "oic_string.h"
+#include "ocrandom.h"
 
 #include "NSStructs.h"
 #include "NSConstants.h"
@@ -70,6 +72,13 @@ NSResult NSConsumerMessageHandlerInit()
 {
     NSConsumerThread * handle = NULL;
     NSConsumerQueue * queue = NULL;
+
+    uint8_t uuid[UUID_SIZE];
+    char uuidString[UUID_STRING_SIZE];
+    OCGenerateUuid(uuid);
+    OCConvertUuidToString(uuid, uuidString);
+    NSSetConsumerId(uuidString);
+    NS_LOG_V(DEBUG, "Consumer ID : %s", *NSGetConsumerId());
 
     NS_LOG(DEBUG, "listener init");
     NSResult ret = NSConsumerListenerInit();
@@ -203,14 +212,17 @@ void NSConsumerTaskProcessing(NSTask * task)
     case TASK_SEND_READ:
     case TASK_SEND_DISMISS:
     {
-        NSConsumerNotificationTaskProcessing(task);
+        NSConsumerCommunicationTaskProcessing(task);
         break;
     }
     case TASK_RECV_READ:
     case TASK_RECV_DISMISS:
+    case TASK_RECV_SYNCINFO:
     case TASK_CONSUMER_RECV_MESSAGE:
+    case TASK_CONSUMER_PROVIDER_DISCOVERED:
+    case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
     {
-        NSConsumerSubscriptionTaskProcessing(task);
+        NSConsumerInternalTaskProcessing(task);
         break;
     }
     default:

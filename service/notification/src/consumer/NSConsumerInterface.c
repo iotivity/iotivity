@@ -43,7 +43,7 @@ NSResult NSStartConsumer(
     NS_VERTIFY_NOT_NULL(syncCb, NS_ERROR);
 
     NSSetDiscoverProviderCb(discoverCb);
-    NSSetNotificationPostedCb(postCb);
+    NSSetMessagePostedCb(postCb);
     NSSetNotificationSyncCb(syncCb);
     NSSetIsStartedConsumer(true);
 
@@ -57,7 +57,7 @@ NSResult NSStartConsumer(
 NSResult NSStopConsumer()
 {
     NSSetDiscoverProviderCb(NULL);
-    NSSetNotificationPostedCb(NULL);
+    NSSetMessagePostedCb(NULL);
     NSSetNotificationSyncCb(NULL);
     NSSetIsStartedConsumer(false);
 
@@ -110,30 +110,11 @@ NSResult NSDropNSObject(NSMessage * obj)
 {
     NS_VERTIFY_NOT_NULL(obj, NS_ERROR);
 
-    if (obj->messageId)
-    {
-        obj->messageId = 0;
-    }
-
-    if (obj->title)
-    {
-        OICFree(obj->title);
-        obj->title = NULL;
-    }
-
-    if (obj->contentText)
-    {
-        OICFree(obj->contentText);
-        obj->contentText = NULL;
-    }
-
-    if (obj->sourceName)
-    {
-        OICFree(obj->sourceName);
-        obj->sourceName = NULL;
-    }
-
-    OICFree(obj);
+    obj->messageId = 0;
+    NSOICFree(obj->title);
+    NSOICFree(obj->contentText);
+    NSOICFree(obj->sourceName);
+    NSOICFree(obj);
 
     return NS_OK;
 }

@@ -26,11 +26,13 @@
 #include "NSConstants.h"
 #include "ocpayload.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
-#define NS_PAYLOAD_KEY_ACCEPTER "ACCEPTER"
 #define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
 #define NS_PRESENCE_SUBSCRIBE_QUERY "coap://224.0.1.187:5683/oic/ad?rt=oic.r.notification"
 #define NS_GET_INFORMATION_QUERY "/notification?if=oic.if.notification"
+
+NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 
 OCStackApplicationResult NSConsumerPresenceListener(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
@@ -64,6 +66,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
 
     else if (payload->trigger == OC_PRESENCE_TRIGGER_CREATE)
     {
+        NS_LOG(DEBUG, "started presence or resource is created.");
         NSInvokeRequest(NULL, OC_REST_DISCOVER, clientResponse->addr,
             NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL);
     }
@@ -78,6 +81,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
     (void) handle;
 
     NS_VERTIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERTIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
     NS_VERTIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG_V(DEBUG, "Discover income : %s:%d",
@@ -90,11 +94,6 @@ OCStackApplicationResult NSProviderDiscoverListener(
     if (!NSIsStartedConsumer())
     {
         return OC_STACK_DELETE_TRANSACTION;
-    }
-
-    if (!clientResponse->payload)
-    {
-        return OC_STACK_KEEP_TRANSACTION;
     }
 
     OCResourcePayload * resource = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
@@ -111,6 +110,18 @@ OCStackApplicationResult NSProviderDiscoverListener(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
+void NSRemoveProviderObj(NSProvider_internal * provider)
+{
+    NSOICFree(provider->messageUri);
+    NSOICFree(provider->syncUri);
+
+    provider->messageHandle = NULL;
+    provider->syncHandle = NULL;
+    NSOICFree(provider->addr);
+
+    NSOICFree(provider);
+}
+
 OCStackApplicationResult NSIntrospectProvider(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
@@ -119,10 +130,6 @@ OCStackApplicationResult NSIntrospectProvider(
 
     NS_VERTIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
     NS_VERTIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
-
-    int64_t accepter = 0;
-    char * messageUri = NULL;
-    char * syncUri = NULL;
 
     NS_LOG_V(DEBUG, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
@@ -138,7 +145,30 @@ OCStackApplicationResult NSIntrospectProvider(
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    NS_VERTIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
+    NSProvider_internal * newProvider = NSGetProvider(clientResponse);
+    NS_VERTIFY_NOT_NULL(newProvider, OC_STACK_KEEP_TRANSACTION);
+
+    NS_LOG(DEBUG, "build NSTask");
+    NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DISCOVERED, (void *) newProvider);
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProviderObj(newProvider));
+
+    NSConsumerPushEvent(task);
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+void NSGetProviderPostClean(char * pId, char * mUri, char * sUri, OCDevAddr * addr)
+{
+    NSOICFree(pId);
+    NSOICFree(mUri);
+    NSOICFree(sUri);
+    NSOICFree(addr);
+}
+
+NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
+{
+    NS_LOG(DEBUG, "create NSProvider");
+    NS_VERTIFY_NOT_NULL(clientResponse->payload, NULL);
 
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
     while (payload)
@@ -147,53 +177,52 @@ OCStackApplicationResult NSIntrospectProvider(
         payload = payload->next;
     }
 
-    NS_LOG(DEBUG, "getting information of accepter");
-    bool getResult = OCRepPayloadGetPropInt((OCRepPayload *)clientResponse->payload,
-                                            NS_PAYLOAD_KEY_ACCEPTER, & accepter);
-    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, OC_STACK_KEEP_TRANSACTION);
+    payload = (OCRepPayload *)clientResponse->payload;
 
-    NS_LOG(DEBUG, "getting message URI");
-    getResult = OCRepPayloadGetPropString(
-            (OCRepPayload *)clientResponse->payload,
-            "MESSAGE_URI", & messageUri);
-    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, OC_STACK_KEEP_TRANSACTION);
+    char * providerId = NULL;
+    char * messageUri = NULL;
+    char * syncUri = NULL;
+    int64_t accepter = 0;
+    OCDevAddr * addr = NULL;
 
-    NS_LOG(DEBUG, "getting sync URI");
-    getResult = OCRepPayloadGetPropString((OCRepPayload *)clientResponse->payload,
-                NS_ATTRIBUTE_SYNC, & syncUri);
-    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL,
-            OC_STACK_KEEP_TRANSACTION, OICFree(messageUri));
+    NS_LOG(DEBUG, "get information of accepter");
+    bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, & accepter);
+    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
-    NSProvider * newProvider = (NSProvider *)OICMalloc(sizeof(NSProvider));
-    NS_VERTIFY_NOT_NULL(newProvider, OC_STACK_KEEP_TRANSACTION);
+    NS_LOG(DEBUG, "get provider ID");
+    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, & providerId);
+    NS_VERTIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
-    // TODO set id
-    newProvider->mId = NULL;
+    NS_LOG(DEBUG, "get message URI");
+    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE, & messageUri);
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
+            NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
+
+    NS_LOG(DEBUG, "get sync URI");
+    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SYNC, & syncUri);
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
+            NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
+
+    NS_LOG(DEBUG, "get provider address");
+    addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(addr, NULL,
+           NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
+    memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
+
+    NSProvider_internal * newProvider
+        = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
+    NS_VERTIFY_NOT_NULL(newProvider, NULL);
+
+    OICStrcpy(newProvider->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
+    NSOICFree(providerId);
     newProvider->messageUri = messageUri;
     newProvider->syncUri = syncUri;
+    newProvider->accessPolicy = (NSAccessPolicy)accepter;
+    newProvider->addr = addr;
+    newProvider->messageHandle = NULL;
+    newProvider->syncHandle = NULL;
 
-    newProvider->mUserData = (void *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(newProvider->mUserData,
-                   OC_STACK_KEEP_TRANSACTION, OICFree(newProvider));
-    memcpy(newProvider->mUserData, clientResponse->addr, sizeof(OCDevAddr));
-
-    if (accepter == NS_ACCESS_DENY)
-    {
-        NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
-
-        NSDiscoveredProvider(newProvider);
-    }
-    else
-    {
-        NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
-
-        NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) newProvider);
-        NS_VERTIFY_NOT_NULL(task, OC_STACK_KEEP_TRANSACTION);
-
-        NSConsumerPushEvent(task);
-    }
-
-    return OC_STACK_KEEP_TRANSACTION;
+    return newProvider;
 }
 
 void NSConsumerDiscoveryTaskProcessing(NSTask * task)
@@ -211,4 +240,3 @@ void NSConsumerDiscoveryTaskProcessing(NSTask * task)
         NS_LOG(ERROR, "Unknown type message");
     }
 }
-

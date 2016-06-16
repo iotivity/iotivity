@@ -32,6 +32,7 @@ extern "C" {
 #include "NSStructs.h"
 #include "ocstack.h"
 
+
 #define NS_QOS OC_LOW_QOS
 #define NS_RESOURCE_TYPE "oic.r.notification"
 #define NS_RESOURCE_URI "/notification"
@@ -40,50 +41,76 @@ extern "C" {
 #define NS_RESOURCE_QUERY "/oic/res"
 
 #define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
+#define NS_DEVICE_ID_LENGTH 37
 
-#define NS_VERTIFY_NOT_NULL_V(obj) { if ((obj) == NULL) \
+#define NS_VERTIFY_NOT_NULL_V(obj) \
     { \
-        NS_LOG_V(ERROR, "%s : obj is null", __func__); \
-        return; \
-    }}
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : obj is null", __func__); \
+            return; \
+        } \
+    }
 
-#define NS_VERTIFY_NOT_NULL(obj, retVal) { if ((obj) == NULL) \
+#define NS_VERTIFY_NOT_NULL(obj, retVal) \
     { \
-        NS_LOG_V(ERROR, "%s : obj is null", __func__); \
-        return (retVal); \
-    }}
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : obj is null", __func__); \
+            return (retVal); \
+        } \
+    }
 
-#define NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(obj, retVal, func) { \
-    if ((obj) == NULL) \
+#define NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(obj, retVal, func) \
     { \
-        NS_LOG_V(ERROR, "%s : obj is null", __func__); \
-        NS_LOG(ERROR, "execute deletion"); \
-        (func); \
-        return (retVal); \
-    }}
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : obj is null", __func__); \
+            NS_LOG(ERROR, "execute deletion"); \
+            (func); \
+            return (retVal); \
+        } \
+    }
 
-#define NS_VERTIFY_STACK_OK_V(obj) { OCStackResult _ret = (obj); \
-    if ( _ret != OC_STACK_OK) \
+#define NS_VERTIFY_STACK_OK_V(obj) \
     { \
-        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
-        return; \
-    }}
+        OCStackResult _ret = (obj); \
+        if ( _ret != OC_STACK_OK) \
+        { \
+            NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
+            return; \
+        } \
+    }
 
-#define NS_VERTIFY_STACK_OK(obj, retVal) { OCStackResult _ret = (obj); \
-    if ( _ret != OC_STACK_OK) \
+#define NS_VERTIFY_STACK_OK(obj, retVal) \
     { \
-        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
-        return (retVal); \
-    }}
+        OCStackResult _ret = (obj); \
+        if ( _ret != OC_STACK_OK) \
+        { \
+            NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
+            return (retVal); \
+        } \
+    }
 
-#define NS_VERTIFY_STACK_OK_WITH_POST_CLEANING(obj, retVal, func) { \
-    OCStackResult _ret = (obj); \
-    if ( _ret != OC_STACK_OK) \
+#define NS_VERTIFY_STACK_OK_WITH_POST_CLEANING(obj, retVal, func) \
     { \
-        NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
-        (func); \
-        return (retVal); \
-    }}
+        OCStackResult _ret = (obj); \
+        if ( _ret != OC_STACK_OK) \
+        { \
+            NS_LOG_V(ERROR, "%s : obj is not OC_STACK_OK : %d", __func__, _ret); \
+            (func); \
+            return (retVal); \
+        } \
+    }
+
+#define NSOICFree(obj) \
+    { \
+        if ((obj)) \
+        { \
+            OICFree((obj)); \
+            (obj) = NULL; \
+        } \
+    }
 
 typedef enum
 {
@@ -94,10 +121,24 @@ typedef enum
 
 typedef struct
 {
+    char providerId[37];
+
+    char * messageUri;
+    char * syncUri;
+
+    OCDoHandle messageHandle;
+    OCDoHandle syncHandle;
+    OCDevAddr * addr;
+    NSAccessPolicy accessPolicy;
+
+} NSProvider_internal;
+
+typedef struct
+{
     // Mandatory
     uint64_t messageId;
     char * providerId;
-    
+
     //optional
     NSMessageType type;
     char * dateTime;
@@ -107,9 +148,7 @@ typedef struct
     char * sourceName;
     NSMediaContents mediaContents;
 
-    //Optional
     OCDevAddr * addr;
-    char * syncUri;
     NSConsumerMessageTypes messageTypes;
 } NSMessage_consumer;
 
@@ -119,11 +158,16 @@ void NSSetIsStartedConsumer(bool setValue);
 void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb);
 void NSDiscoveredProvider(NSProvider * handle);
 
-void NSSetNotificationPostedCb(NSNotificationReceivedCallback  cb);
-void NSNotificationPost(NSProvider * provider, NSMessage * obj);
+void NSSetMessagePostedCb(NSNotificationReceivedCallback  cb);
+void NSMessagePost(NSProvider * provider, NSMessage * obj);
 
 void NSSetNotificationSyncCb(NSSyncCallback cb);
 void NSNotificationSync(NSProvider * provider, NSSyncInfo * sync);
+
+char ** NSGetConsumerId();
+void NSSetConsumerId(char * cId);
+
+char * NSGetQuery(const char * uri);
 
 NSTask * NSMakeTask(NSTaskType, void *);
 
