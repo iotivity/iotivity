@@ -5,19 +5,6 @@
 #include "NSConsumerInterface.h"
 #include "ocstack.h"
 
-void onNotificationPosted(NSProvider * provider, NSMessage * notification)
-{
-    (void) provider;
-//    printf("Notification from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
-//            ((OCDevAddr *)provider->mUserData)->port);
-    printf("id : %ld\n", notification->messageId);
-    printf("title : %s\n", notification->title);
-    printf("content : %s\n", notification->contentText);
-    printf("source : %s\n", notification->sourceName);
-//    NSDropNSObject(notification);
-    NSConsumerReadCheck(notification);
-}
-
 void onDiscoverNotification(NSProvider * provider)
 {
     printf("notification resource discovered\n");
@@ -25,11 +12,23 @@ void onDiscoverNotification(NSProvider * provider)
     printf("startSubscribing\n");
 }
 
-void onNotificationSync(NSProvider * provider, NSSyncInfo * sync)
+void onSubscriptionAccepted(NSProvider * provider)
 {
-    (void) provider;
-//    printf("Sync from : %s:%d\n", ((OCDevAddr *)provider->mUserData)->addr,
-//            ((OCDevAddr *)provider->mUserData)->port);
+    printf("Subscription accepted\n");
+    printf("subscribed provider Id : %s\n", provider->providerId);
+}
+
+void onNotificationPosted(NSMessage * notification)
+{
+    printf("id : %ld\n", notification->messageId);
+    printf("title : %s\n", notification->title);
+    printf("content : %s\n", notification->contentText);
+    printf("source : %s\n", notification->sourceName);
+    NSConsumerSendSyncInfo(notification->providerId, notification->messageId, NS_SYNC_READ);
+}
+
+void onNotificationSync(NSSyncInfo * sync)
+{
     printf("Sync ID : %ld\n", sync->messageId);
     printf("Sync STATE : %d\n", sync->state);
 }
@@ -44,13 +43,15 @@ int main(void)
         return 0;
     }
 
+    NSConsumerConfig cfg;
+    cfg.discoverCb = onDiscoverNotification;
+    cfg.acceptedCb = onSubscriptionAccepted;
+    cfg.messageCb = onNotificationPosted;
+    cfg.syncInfoCb = onNotificationSync;
 
 
     printf("start notification consumer service\n");
-    NSResult ret = NSStartConsumer(
-            onDiscoverNotification,
-            onNotificationPosted,
-            onNotificationSync);
+    NSResult ret = NSStartConsumer(cfg);
     if(ret != NS_OK)
     {
         printf("error discoverNoti %d\n", ret);

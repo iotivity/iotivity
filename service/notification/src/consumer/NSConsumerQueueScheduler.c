@@ -82,20 +82,20 @@ NSResult NSConsumerMessageHandlerInit()
 
     NS_LOG(DEBUG, "listener init");
     NSResult ret = NSConsumerListenerInit();
-    NS_VERTIFY_NOT_NULL(ret == NS_OK ? (void *) 1 : NULL, NS_ERROR);
+    NS_VERIFY_NOT_NULL(ret == NS_OK ? (void *) 1 : NULL, NS_ERROR);
 
     NS_LOG(DEBUG, "system init");
     ret = NSConsumerSystemInit();
-    NS_VERTIFY_NOT_NULL(ret == NS_OK ? (void *) 1 : NULL, NS_ERROR);
+    NS_VERIFY_NOT_NULL(ret == NS_OK ? (void *) 1 : NULL, NS_ERROR);
 
     NS_LOG(DEBUG, "queue thread init");
     handle = NSThreadInit(NSConsumerMsgHandleThreadFunc, NULL);
-    NS_VERTIFY_NOT_NULL(handle, NS_ERROR);
+    NS_VERIFY_NOT_NULL(handle, NS_ERROR);
     NSSetMsgHandleThreadHandle(handle);
 
     NS_LOG(DEBUG, "create queue");
     queue = NSCreateQueue();
-    NS_VERTIFY_NOT_NULL(queue, NS_ERROR);
+    NS_VERIFY_NOT_NULL(queue, NS_ERROR);
     NSSetMsgHandleQueue(queue);
 
     return NS_OK;
@@ -104,7 +104,7 @@ NSResult NSConsumerMessageHandlerInit()
 NSResult NSConsumerPushEvent(NSTask * task)
 {
     NSConsumerThread * thread = NSThreadInit(NSConsumerMsgPushThreadFunc, (void *) task);
-    NS_VERTIFY_NOT_NULL(thread, NS_ERROR);
+    NS_VERIFY_NOT_NULL(thread, NS_ERROR);
 
     return NS_OK;
 }
@@ -124,7 +124,7 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 
     NS_LOG(DEBUG, "create thread for consumer message handle");
     NSConsumerThread * queueHandleThread = (NSConsumerThread *) threadHandle;
-    NS_VERTIFY_NOT_NULL(queueHandleThread, NULL);
+    NS_VERIFY_NOT_NULL(queueHandleThread, NULL);
 
     while (true)
     {
@@ -169,11 +169,11 @@ void * NSConsumerMsgPushThreadFunc(void * data)
 
     NS_LOG(DEBUG, "get queueThread handle");
     NSConsumerThread * msgHandleThread = *(NSGetMsgHandleThreadHandle());
-    NS_VERTIFY_NOT_NULL(msgHandleThread, NULL);
+    NS_VERIFY_NOT_NULL(msgHandleThread, NULL);
 
     NS_LOG(DEBUG, "create queue object");
     obj = (NSConsumerQueueObject *)OICMalloc(sizeof(NSConsumerQueueObject));
-    NS_VERTIFY_NOT_NULL(obj, NULL);
+    NS_VERIFY_NOT_NULL(obj, NULL);
 
     obj->data = data;
     obj->next = NULL;
@@ -209,6 +209,7 @@ void NSConsumerTaskProcessing(NSTask * task)
     }
     case TASK_CONSUMER_REQ_SUBSCRIBE:
     case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
+    case TASK_SEND_SYNCINFO:
     case TASK_SEND_READ:
     case TASK_SEND_DISMISS:
     {

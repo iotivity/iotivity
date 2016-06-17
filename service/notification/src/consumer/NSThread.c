@@ -32,23 +32,23 @@ void NSDestroyThreadHandle(NSConsumerThread *);
 
 NSConsumerThread * NSThreadInit(NSThreadFunc func, void * data)
 {
-    NS_VERTIFY_NOT_NULL(func, NULL);
+    NS_VERIFY_NOT_NULL(func, NULL);
 
     pthread_mutex_init(&g_create_mutex, NULL);
 
     NSConsumerThread * handle = (NSConsumerThread *)OICMalloc(sizeof(NSConsumerThread));
-    NS_VERTIFY_NOT_NULL(handle, NULL);
+    NS_VERIFY_NOT_NULL(handle, NULL);
 
     memset(handle, 0, sizeof(NSConsumerThread));
 
     pthread_mutexattr_init(&(handle->mutex_attr));
 
     int pthreadResult = pthread_mutexattr_settype(&(handle->mutex_attr), PTHREAD_MUTEX_RECURSIVE);
-    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(pthreadResult == 0 ? (void *)1 : NULL,
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(pthreadResult == 0 ? (void *)1 : NULL,
             NULL, NSDestroyThreadHandle(handle));
 
     pthreadResult = pthread_mutex_init(&(handle->mutex), &(handle->mutex_attr));
-    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(pthreadResult == 0 ? (void *)1 : NULL,
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(pthreadResult == 0 ? (void *)1 : NULL,
             NULL, NSDestroyThreadHandle(handle));
 
     pthread_mutex_lock(&g_create_mutex);
@@ -57,7 +57,7 @@ NSConsumerThread * NSThreadInit(NSThreadFunc func, void * data)
 
     pthreadResult = pthread_create(&(handle->thread_id), NULL, func,
                            (data == NULL) ? (void *) handle : (void *)data);
-    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(pthreadResult == 0 ? (void *)1 : NULL,
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(pthreadResult == 0 ? (void *)1 : NULL,
             NULL, NSDestroyThreadHandle(handle));
 
     pthread_mutex_unlock(&g_create_mutex);

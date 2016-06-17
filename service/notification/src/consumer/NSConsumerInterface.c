@@ -28,27 +28,27 @@
 #include "NSConstants.h"
 #include "NSConsumerQueueScheduler.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 // Public APIs
-NSResult NSStartConsumer(
-        NSProviderDiscoveredCallback discoverCb,
-        NSNotificationReceivedCallback  postCb,
-        NSSyncCallback syncCb)
+NSResult NSStartConsumer(NSConsumerConfig config)
 {
     bool isStartedConsumer = NSIsStartedConsumer();
-    NS_VERTIFY_NOT_NULL(isStartedConsumer == false ? (void *) 1 : NULL, NS_OK);
+    NS_VERIFY_NOT_NULL(isStartedConsumer == false ? (void *) 1 : NULL, NS_OK);
 
-    NS_VERTIFY_NOT_NULL(discoverCb, NS_ERROR);
-    NS_VERTIFY_NOT_NULL(postCb, NS_ERROR);
-    NS_VERTIFY_NOT_NULL(syncCb, NS_ERROR);
+    NS_VERIFY_NOT_NULL(config.discoverCb, NS_ERROR);
+    NS_VERIFY_NOT_NULL(config.messageCb, NS_ERROR);
+    NS_VERIFY_NOT_NULL(config.syncInfoCb, NS_ERROR);
+    NS_VERIFY_NOT_NULL(config.acceptedCb, NS_ERROR);
 
-    NSSetDiscoverProviderCb(discoverCb);
-    NSSetMessagePostedCb(postCb);
-    NSSetNotificationSyncCb(syncCb);
+    NSSetDiscoverProviderCb(config.discoverCb);
+    NSSetMessagePostedCb(config.messageCb);
+    NSSetNotificationSyncCb(config.syncInfoCb);
+    NSSetSubscriptionAcceptedCb(config.acceptedCb);
     NSSetIsStartedConsumer(true);
 
     NSResult ret = NSConsumerMessageHandlerInit();
-    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
             NS_ERROR, NSStopConsumer());
 
     return NS_OK;
@@ -59,6 +59,7 @@ NSResult NSStopConsumer()
     NSSetDiscoverProviderCb(NULL);
     NSSetMessagePostedCb(NULL);
     NSSetNotificationSyncCb(NULL);
+    NSSetSubscriptionAcceptedCb(NULL);
     NSSetIsStartedConsumer(false);
 
     NSConsumerMessageHandlerExit();
@@ -69,7 +70,7 @@ NSResult NSStopConsumer()
 NSResult NSSubscribe(NSProvider * provider)
 {
     NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
-    NS_VERTIFY_NOT_NULL(subscribeTask, NS_ERROR);
+    NS_VERIFY_NOT_NULL(subscribeTask, NS_ERROR);
 
     return NSConsumerPushEvent(subscribeTask);
 }
@@ -77,38 +78,37 @@ NSResult NSSubscribe(NSProvider * provider)
 NSResult NSUnsubscribe(NSProvider * provider)
 {
     NSTask * unsubscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) provider);
-    NS_VERTIFY_NOT_NULL(unsubscribeTask, NS_ERROR);
+    NS_VERIFY_NOT_NULL(unsubscribeTask, NS_ERROR);
 
     return NSConsumerPushEvent(unsubscribeTask);
+}
+
+NSResult NSConsumerSendSyncInfo(const char * providerId, uint64_t messageId, NSSyncType type)
+{
+    NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+    NS_VERIFY_NOT_NULL(syncInfo, NS_ERROR);
+
+    OICStrcpy(syncInfo->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
+    syncInfo->messageId = messageId;
+    syncInfo->state = type;
+
+    NSTask * syncTask = NSMakeTask(TASK_SEND_SYNCINFO, (void *) syncInfo);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(syncTask, NS_ERROR, NSOICFree(syncInfo));
+
+    return NSConsumerPushEvent(syncTask);
 }
 
 NSResult NSRescanProvider()
 {
     NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, NULL);
-    NS_VERTIFY_NOT_NULL(discoverTask, NS_ERROR);
+    NS_VERIFY_NOT_NULL(discoverTask, NS_ERROR);
 
     return NSConsumerPushEvent(discoverTask);
 }
 
-NSResult NSConsumerReadCheck(NSMessage * obj)
+NSResult NSDropNSMessage(NSMessage * obj)
 {
-    NSTask * readTask = NSMakeTask(TASK_SEND_READ, (void *) obj);
-    NS_VERTIFY_NOT_NULL(readTask, NS_ERROR);
-
-    return NSConsumerPushEvent(readTask);
-}
-
-NSResult NSConsumerDismissCheck(NSMessage * obj)
-{
-    NSTask * dismissTask = NSMakeTask(TASK_SEND_DISMISS, (void *) obj);
-    NS_VERTIFY_NOT_NULL(dismissTask, NS_ERROR);
-
-    return NSConsumerPushEvent(dismissTask);
-}
-
-NSResult NSDropNSObject(NSMessage * obj)
-{
-    NS_VERTIFY_NOT_NULL(obj, NS_ERROR);
+    NS_VERIFY_NOT_NULL(obj, NS_ERROR);
 
     obj->messageId = 0;
     NSOICFree(obj->title);

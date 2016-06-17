@@ -35,18 +35,12 @@ extern "C"
 #include "NSCommon.h"
 
 /**
- * Provider and consumer use this callback function to receive the status of the message
- * synchronization
- * @param[in] provider    Provider who requests synchronization with the status
- * @param[in] sync        Synchronization information of the notification message
- */
-typedef void (*NSSyncCallback)(NSProvider *, NSSyncInfo *);
-
-/**
  * Consumer uses this callback function to receive the discovered providers
  * @param[in] provider        Provider who has the notification resource
  */
-typedef void (*NSProviderDiscoveredCallback)(NSProvider *);
+typedef void (* NSProviderDiscoveredCallback)(NSProvider *);
+
+typedef void (* NSSubscriptionAcceptedCallback)(NSProvider *);
 
 /**
  * Consumer use this callback function to receive notification message from provider
@@ -54,7 +48,24 @@ typedef void (*NSProviderDiscoveredCallback)(NSProvider *);
  * @param[in] provider    Provider who sends notification message
  * @param[in] message     Notification message
  */
-typedef void (*NSNotificationReceivedCallback)(NSProvider *, NSMessage *);
+typedef void (* NSMessageReceivedCallback)(NSMessage *);
+
+/**
+ * Provider and consumer use this callback function to receive the status of the message
+ * synchronization
+ * @param[in] provider    Provider who requests synchronization with the status
+ * @param[in] sync        Synchronization information of the notification message
+ */
+typedef void (* NSSyncInfoReceivedCallback)(NSSyncInfo *);
+
+typedef struct
+{
+    NSProviderDiscoveredCallback discoverCb;
+    NSSubscriptionAcceptedCallback acceptedCb;
+    NSMessageReceivedCallback messageCb;
+    NSSyncInfoReceivedCallback syncInfoCb;
+
+} NSConsumerConfig;
 
 /**
  * Initialize notification service for consumer
@@ -63,8 +74,7 @@ typedef void (*NSNotificationReceivedCallback)(NSProvider *, NSMessage *);
  * @param[in]  syncCallback   Callback function to receive synchronization status of notification
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSStartConsumer(NSProviderDiscoveredCallback discoverCb,
-        NSNotificationReceivedCallback postCb, NSSyncCallback syncCb);
+NSResult NSStartConsumer(NSConsumerConfig config);
 
 /**
  * Terminate notification service for consumer
@@ -92,13 +102,8 @@ NSResult NSSubscribe(NSProvider *provider);
  */
 NSResult NSUnsubscribe(NSProvider *provider);
 
-NSResult NSConsumerReadCheck(NSMessage *);
-
-NSResult NSConsumerDismissCheck(NSMessage *);
-
-//** Remove below functions **//
-NSResult NSDropNSObject(NSMessage *);
-//** end of functions to be removed **//
+NSResult NSConsumerSendSyncInfo(
+        const char * providerId, uint64_t messageId, NSSyncType type);
 
 #ifdef __cplusplus
 }

@@ -34,28 +34,28 @@ char ** NSGetConsumerId()
 
 void NSSetConsumerId(char * cId)
 {
-    NS_VERTIFY_NOT_NULL_V(cId);
+    NS_VERIFY_NOT_NULL_V(cId);
     char ** consumerId = NSGetConsumerId();
     NSOICFree(*consumerId);
     *consumerId = (char *)OICMalloc(sizeof(char) * NS_DEVICE_ID_LENGTH);
-    NS_VERTIFY_NOT_NULL_V(*consumerId);
+    NS_VERIFY_NOT_NULL_V(*consumerId);
 
     OICStrcpy(*consumerId, sizeof(char) * NS_DEVICE_ID_LENGTH, cId);
 }
 
-char * NSGetQuery(const char * uri)
+char * NSMakeRequestUriWithConsumerId(const char * uri)
 {
-    NS_VERTIFY_NOT_NULL(uri, NULL);
+    NS_VERIFY_NOT_NULL(uri, NULL);
 
     char * consumerId = OICStrdup(*NSGetConsumerId());
-    NS_VERTIFY_NOT_NULL(consumerId, NULL);
+    NS_VERIFY_NOT_NULL(consumerId, NULL);
 
     size_t uriLen = strlen(uri) + 1;
     size_t qKeyLen = sizeof(NS_QUERY_CONSUMER_ID);
     size_t queryLen = NS_DEVICE_ID_LENGTH + uriLen + qKeyLen + 2;
 
     char * retQuery = (char *)OICMalloc(sizeof(char) * queryLen);
-    NS_VERTIFY_NOT_NULL(retQuery, NULL);
+    NS_VERIFY_NOT_NULL(retQuery, NULL);
 
     size_t index = 0;
     OICStrcpy((retQuery + index), uriLen, uri);
@@ -117,93 +117,85 @@ void * NSDiscoveredProviderFunc(void * provider)
 void NSDiscoveredProvider(NSProvider * provider)
 {
     NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
-    NS_VERTIFY_NOT_NULL_V(thread);
+    NS_VERIFY_NOT_NULL_V(thread);
 }
 
-NSSyncCallback * NSGetBoneNotificationSyncCb()
+NSSubscriptionAcceptedCallback * NSGetSubscriptionAcceptedCb()
 {
-    static NSSyncCallback g_syncCb = NULL;
+    static NSSubscriptionAcceptedCallback g_acceptCb = NULL;
+
+    return & g_acceptCb;
+}
+
+void NSSetSubscriptionAcceptedCb(NSSubscriptionAcceptedCallback cb)
+{
+    *(NSGetSubscriptionAcceptedCb()) = cb;
+}
+
+void NSSubscriptionAccepted(NSProvider * provider)
+{
+    (*(NSGetSubscriptionAcceptedCb()))(provider);
+}
+
+NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
+{
+    static NSSyncInfoReceivedCallback g_syncCb = NULL;
 
     return & g_syncCb;
 }
 
-void NSSetNotificationSyncCb(NSSyncCallback cb)
+void NSSetNotificationSyncCb(NSSyncInfoReceivedCallback cb)
 {
     * NSGetBoneNotificationSyncCb() = cb;
 }
 
-typedef struct
-{
-    NSProvider * provider;
-    NSSyncInfo * sync;
-} NSSyncData;
-
 void * NSNotificationSyncFunc(void * obj)
 {
-    NSProvider * provider = ((NSSyncData *) obj)->provider;
-    NSSyncInfo * syncData = ((NSSyncData *) obj)->sync;
-    (* NSGetBoneNotificationSyncCb())(provider, syncData);
+    (* NSGetBoneNotificationSyncCb())((NSSyncInfo *) obj);
     return NULL;
 }
 
-void NSNotificationSync(NSProvider * provider, NSSyncInfo * sync)
+void NSNotificationSync(NSSyncInfo * sync)
 {
-    NSSyncData * obj = (NSSyncData *)OICMalloc(sizeof(NSSyncData));
-    NS_VERTIFY_NOT_NULL_V(obj);
-    obj->provider = provider;
-    obj->sync = sync;
-
-    NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) obj);
-    NS_VERTIFY_NOT_NULL_V(thread);
+    NS_VERIFY_NOT_NULL_V(sync);
+    NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) sync);
+    NS_VERIFY_NOT_NULL_V(thread);
 }
 
-NSNotificationReceivedCallback  * NSGetBoneMessagePostedCb()
+NSMessageReceivedCallback  * NSGetBoneMessagePostedCb()
 {
-    static NSNotificationReceivedCallback  g_postCb = NULL;
+    static NSMessageReceivedCallback  g_postCb = NULL;
 
     return & g_postCb;
 }
 
-void NSSetMessagePostedCb(NSNotificationReceivedCallback  cb)
+void NSSetMessagePostedCb(NSMessageReceivedCallback  cb)
 {
     * NSGetBoneMessagePostedCb() = cb;
 }
 
-NSNotificationReceivedCallback  NSGetMessagePostedCb()
+NSMessageReceivedCallback  NSGetMessagePostedCb()
 {
     return * NSGetBoneMessagePostedCb();
 }
 
-typedef struct
-{
-    NSProvider * provider;
-    NSMessage * msg;
-} NSMessageData;
-
 void * NSMessagePostFunc(void * obj)
 {
-    NSMessageData * msgData = (NSMessageData *) obj;
-
-    NSGetMessagePostedCb()((NSProvider *) msgData->provider,
-            (NSMessage *) msgData->msg);
+    NSGetMessagePostedCb()((NSMessage *) obj);
     return NULL;
 }
 
-void NSMessagePost(NSProvider * provider, NSMessage * msg)
+void NSMessagePost(NSMessage * msg)
 {
-    NSMessageData * obj = (NSMessageData *)OICMalloc(sizeof(NSMessageData));
-    NS_VERTIFY_NOT_NULL_V(obj);
-    obj->provider = provider;
-    obj->msg = msg;
-
-    NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) obj);
-    NS_VERTIFY_NOT_NULL_V(thread);
+    NS_VERIFY_NOT_NULL_V(msg);
+    NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) msg);
+    NS_VERIFY_NOT_NULL_V(thread);
 }
 
 NSTask * NSMakeTask(NSTaskType type, void * data)
 {
     NSTask * retTask = OICMalloc(sizeof(NSTask));
-    NS_VERTIFY_NOT_NULL(retTask, NULL);
+    NS_VERIFY_NOT_NULL(retTask, NULL);
 
     retTask->taskType = type;
     retTask->taskData = data;
@@ -214,13 +206,13 @@ NSTask * NSMakeTask(NSTaskType type, void * data)
 
 NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
 {
-    NS_VERTIFY_NOT_NULL(msg, NULL);
+    NS_VERIFY_NOT_NULL(msg, NULL);
 
     NSMessage_consumer * newMsg = (NSMessage_consumer *)OICMalloc(sizeof(NSMessage_consumer));
-    NS_VERTIFY_NOT_NULL(newMsg, NULL);
+    NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     newMsg->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERTIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, OICFree(newMsg));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, OICFree(newMsg));
     memcpy(newMsg->addr, msg->addr, sizeof(OCDevAddr));
 
     newMsg->messageId = msg->messageId;
