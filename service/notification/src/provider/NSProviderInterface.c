@@ -205,13 +205,12 @@ NSResult NSAccept(NSConsumer *consumer, bool accepted)
 NSMessage * NSCreateMessage()
 {
     NS_LOG(DEBUG, "NSCreateMessage - IN");
-
     pthread_mutex_lock(&nsInitMutex);
-    NSMessage * msg = NSInitializeMessage();
-    msg->messageId = OICGetCurrentTime(TIME_IN_MS);
-    OICStrcpy(msg->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
-    pthread_mutex_unlock(&nsInitMutex);
 
+    NSMessage * msg = NSInitializeMessage();
+    OICStrcpy(msg->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
+
+    pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSCreateMessage - OUT");
     return msg;
 }
@@ -242,18 +241,15 @@ void * NSInterfaceSchedule(void * ptr)
                     OCEntityHandlerRequest * request = (OCEntityHandlerRequest*)node->taskData;
                     NSConsumer * consumer = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
 
-                    char * consumerId = NSGetValueFromQuery(request->query, NS_QUERY_CONSUMER_ID);
-                    if(!consumerId)
+                    char * consumerId = NSGetValueFromQuery(OICStrdup(request->query),
+                            NS_QUERY_CONSUMER_ID);
+
+                    if(consumerId)
                     {
-                        NSFreeConsumer(consumer);
-                        NS_LOG(ERROR, "Consumer ID NULL");
-                        break;
+                        OICStrcpy(consumer->consumerId, UUID_STRING_SIZE, consumerId);
+                        NSSubscribeRequestCb(consumer);
                     }
 
-                    OICStrcpy(consumer->consumerId, UUID_STRING_SIZE, consumerId);
-                    OICFree(consumerId);
-
-                    NSSubscribeRequestCb(consumer);
                     NSFreeConsumer(consumer);
                     NSFreeOCEntityHandlerRequest(request);
 

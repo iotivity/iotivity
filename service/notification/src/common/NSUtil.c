@@ -296,19 +296,18 @@ NSResult NSGenerateUUIDStr(char uuidStr[UUID_STRING_SIZE])
 
 char * NSGetValueFromQuery(char *query, char * compareKey)
 {
-
     char *key = NULL;
     char *value = NULL;
     char *restOfQuery = NULL;
     int numKeyValuePairsParsed = 0;
 
-    if(!query || query[0] != '\0' || !strlen(query))
+    NS_LOG_V(INFO, "NS Query Params = %s", query);
+
+    if(!query || query[0] == '\0' || !strlen(query))
     {
         NS_LOG(ERROR, "query is null or \\0 or size is 0");
         return NULL;
     }
-
-    NS_LOG_V(INFO, "NS Query Params = %s", query);
 
     char *keyValuePair = strtok_r (query, NS_QUERY_SEPARATOR, &restOfQuery);
 
