@@ -51,9 +51,10 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
     NS_VERTIFY_NOT_NULL(query, NS_ERROR);
 
     NS_LOG(DEBUG, "subscribe message");
+    NS_LOG_V(DEBUG, "subscribe query : %s", query);
     OCStackResult ret = NSInvokeRequest(&(provider_internal->messageHandle),
                           OC_REST_OBSERVE, provider_internal->addr,
-                          provider_internal->messageUri, NULL, NSConsumerMessageListener, NULL);
+                          query, NULL, NSConsumerMessageListener, NULL);
     NS_VERTIFY_STACK_OK(ret, NS_ERROR);
     NSOICFree(query);
 
@@ -62,9 +63,10 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
     NS_VERTIFY_NOT_NULL(query, NS_ERROR);
 
     NS_LOG(DEBUG, "subscribe sync");
+    NS_LOG_V(DEBUG, "subscribe query : %s", query);
     ret = NSInvokeRequest(&(provider_internal->syncHandle),
                           OC_REST_OBSERVE, provider_internal->addr,
-                          provider_internal->syncUri, NULL, NSConsumerSyncInfoListener, NULL);
+                          query, NULL, NSConsumerSyncInfoListener, NULL);
     NS_VERTIFY_STACK_OK(ret, NS_ERROR);
     NSOICFree(query);
 
