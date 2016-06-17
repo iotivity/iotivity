@@ -49,7 +49,7 @@ std::string systemTime = "mySystemTime";
 //Set of strings for each of device info fields
 std::string deviceName = "Bill's Battlestar";
 std::string specVersion = "myDeviceSpecVersion";
-std::string dataModleVersion = "myDeviceModleVersion";
+std::string dataModelVersion = "myDeviceModelVersion";
 
 //OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
@@ -77,7 +77,7 @@ void DeleteDeviceInfo()
 {
     delete[] deviceInfo.deviceName;
     delete[] deviceInfo.specVersion;
-    delete[] deviceInfo.dataModleVersion;
+    delete[] deviceInfo.dataModelVersion;
 }
 
 void DuplicateString(char ** targetString, std::string sourceString)
@@ -106,15 +106,15 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
 }
 
 
-OCStackResult SetDeviceInfo(std::string deviceName, std::string specVersion, std::string dataModleVersion)
+OCStackResult SetDeviceInfo(std::string deviceName, std::string specVersion, std::string dataModelVersion)
 {
     DuplicateString(&deviceInfo.deviceName, deviceName);
 
     if (!specVersion.empty())
         DuplicateString(&deviceInfo.specVersion, specVersion);
 
-    if (!dataModleVersion.empty())
-        DuplicateString(&deviceInfo.dataModleVersion, dataModleVersion);
+    if (!dataModelVersion.empty())
+        DuplicateString(&deviceInfo.dataModelVersion, dataModelVersion);
 
     return OC_STACK_OK;
 }
@@ -148,7 +148,7 @@ int main()
     }
 
 
-    result = SetDeviceInfo(deviceName, specVersion, dataModleVersion);
+    result = SetDeviceInfo(deviceName, specVersion, dataModelVersion);
     OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
     OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
 

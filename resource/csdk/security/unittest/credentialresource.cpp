@@ -169,7 +169,8 @@ TEST(CredResourceTest, CredEntityHandlerDeleteTest)
     ASSERT_TRUE(NULL != cred);
     uint8_t *payload = NULL;
     size_t size = 0;
-    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred, &payload, &size));
+    int secureFlag = 0;
+    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred, &payload, &size, secureFlag));
     if (!payload)
     {
         DeleteCredList(cred);
@@ -219,8 +220,9 @@ TEST(CredResourceTest, CredEntityHandlerDeleteTest)
 
 TEST(CredResourceTest, CredToCBORPayloadNULL)
 {
+    int secureFlag = 0;
     OicSecCred_t *cred = getCredList();
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(NULL, NULL, 0));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(NULL, NULL, 0, secureFlag));
     size_t size = 0;
     uint8_t *cborPayload = (uint8_t *) OICCalloc(1, 10);
     if (!cborPayload)
@@ -228,12 +230,12 @@ TEST(CredResourceTest, CredToCBORPayloadNULL)
         DeleteCredList(cred);
     }
     ASSERT_TRUE(NULL != cborPayload);
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, &cborPayload, &size));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, &cborPayload, &size, secureFlag));
     OICFree(cborPayload);
     cborPayload = NULL;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(NULL, &cborPayload, &size));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, &cborPayload, 0));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, NULL, &size));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(NULL, &cborPayload, &size,secureFlag));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, &cborPayload, 0, secureFlag));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, NULL, &size, secureFlag));
     DeleteCredList(cred);
 }
 
@@ -241,9 +243,10 @@ TEST(CredResourceTest, CredToCBORPayloadVALID)
 {
     uint8_t* payload = NULL;
     size_t size = 0;
+    int secureFlag = 0;
     OicSecCred_t *cred = getCredList();
 
-    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred, &payload, &size, secureFlag));
     if (!payload)
     {
         DeleteCredList(cred);
@@ -260,7 +263,8 @@ TEST(CredResourceTest, CBORPayloadToCredVALID)
 
     uint8_t *payload = NULL;
     size_t size = 0;
-    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred1, &payload, &size));
+    int secureFlag = 0;
+    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred1, &payload, &size, secureFlag));
     DeleteCredList(cred1);
     ASSERT_TRUE(NULL != payload);
 
@@ -268,6 +272,33 @@ TEST(CredResourceTest, CBORPayloadToCredVALID)
     EXPECT_EQ(OC_STACK_OK, CBORPayloadToCred(payload, size, &cred2));
     OICFree(payload);
     ASSERT_TRUE(cred2 != NULL);
+    DeleteCredList(cred2);
+}
+
+TEST(CredResourceTest, CBORPayloadToCredSecureVALID)
+{
+    OicSecCred_t *cred1 = getCredList();
+    ASSERT_TRUE(NULL != cred1);
+    cred1->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
+    ASSERT_TRUE(NULL != cred1->privateData.data);
+    cred1->privateData.len = OWNER_PSK_LENGTH_128;
+
+    uint8_t *payload = NULL;
+    size_t size = 0;
+    int secureFlag = 1;
+    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(cred1, &payload, &size, secureFlag));
+
+    ASSERT_TRUE(NULL != payload);
+
+    OicSecCred_t *cred2 = NULL;
+    EXPECT_EQ(OC_STACK_OK, CBORPayloadToCred(payload, size, &cred2));
+    ASSERT_TRUE(cred2 != NULL);
+    ASSERT_TRUE(NULL == cred2->privateData.data);
+    ASSERT_TRUE(0 == cred2->privateData.len);
+
+    OICFree(payload);
+
+    DeleteCredList(cred1);
     DeleteCredList(cred2);
 }
 

@@ -222,8 +222,13 @@ OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
+#ifndef TCP_ADAPTER
+void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
+                                   uint16_t securePort);
+#else
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort);
+#endif
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
 bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 

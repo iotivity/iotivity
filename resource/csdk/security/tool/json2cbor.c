@@ -201,11 +201,12 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
     //printf("CRED json : \n%s\n", cJSON_PrintUnformatted(value));
     size_t credCborSize = 0;
+    int secureFlag = 0;
     if (NULL != value)
     {
         OicSecCred_t *cred = JSONToCredBin(jsonStr);
         VERIFY_NON_NULL(TAG, cred, FATAL);
-        ret = CredToCBORPayload(cred, &credCbor, &credCborSize);
+        ret = CredToCBORPayload(cred, &credCbor, &credCborSize, secureFlag);
         if(OC_STACK_OK != ret)
         {
             OIC_LOG (ERROR, TAG, "Failed converting Cred to Cbor Payload");
