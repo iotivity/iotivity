@@ -602,8 +602,11 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                         // Permissions -- Mandatory
                                         if (strcmp(name, OIC_JSON_PERMISSION_NAME) == 0)
                                         {
-                                            cborFindResult = cbor_value_get_uint64(&aclMap, (uint64_t *) &acl->permission);
+                                            uint64_t tmp64;
+
+                                            cborFindResult = cbor_value_get_uint64(&aclMap, &tmp64);
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a PERM Value.");
+                                            acl->permission = tmp64;
                                         }
 
                                         // Period -- Not mandatory
