@@ -80,12 +80,12 @@ if env.get('SECURED') == '1':
 	     mediator_rich_test_env.PrependUnique(LIBS = ['tinydtls','ocprovision', 'ocpmapi'])
 
 mediator_rich_test_env.PrependUnique(LIBS = [
-    'oc',
-    'octbstack',
+    'coap',
+    'connectivity_abstraction',
     'oc_logger',
     'oc_logger_core',
-    'connectivity_abstraction',
-    'coap',
+    'octbstack',
+    'oc',
     'ESMediatorRich',
     gtest,
     gtest_main])

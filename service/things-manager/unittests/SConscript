@@ -77,11 +77,12 @@ if target_os not in ['windows', 'winrt']:
 
 ThingsManager_gtest_env.PrependUnique(LIBS = [
     'libTGMSDKLibrary',
-    'oc',
-    'octbstack',
+    'coap',
+    'connectivity_abstraction',
     'oc_logger',
     'oc_logger_core',
-    'connectivity_abstraction',
+    'oc',
+    'octbstack',
     gtest,
     gtest_main])
 

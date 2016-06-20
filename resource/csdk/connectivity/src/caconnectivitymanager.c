@@ -553,9 +553,8 @@ CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint)
 #endif /* __WITH_DTLS__ */
 
 #ifdef TCP_ADAPTER
-void CARegisterKeepAliveHandler(CAKeepAliveConnectedCallback ConnHandler,
-                                CAKeepAliveDisconnectedCallback DisconnHandler)
+void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
 {
-    CATCPSetKeepAliveCallbacks(ConnHandler, DisconnHandler);
+    CATCPSetKeepAliveCallbacks(ConnHandler);
 }
 #endif

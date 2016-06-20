@@ -85,13 +85,7 @@ OCStackResult HandleKeepAliveRequest(const CAEndpoint_t* endPoint,
  * API to handle the connected device for KeepAlive.
  * @return  Current Time.
  */
-void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint);
-
-/**
- * API to handle the disconnected device for KeepAlive.
- * @return  Current Time.
- */
-void HandleKeepAliveDisconnCB(const CAEndpoint_t *endpoint);
+void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected);
 
 #ifdef __cplusplus
 } // extern "C"

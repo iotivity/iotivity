@@ -71,9 +71,14 @@ static CAQueueingThread_t *g_sendQueueHandle = NULL;
 static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 
 /**
- * Network Changed Callback to CA.
+ * Adapter Changed Callback to CA.
  */
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
+static CAAdapterChangeCallback g_networkChangeCallback = NULL;
+
+/**
+ * Connection Changed Callback to CA.
+ */
+static CAConnectionChangeCallback g_connectionChangeCallback = NULL;
 
 /**
  * error Callback to CA adapter.
@@ -84,14 +89,9 @@ static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
                                   const void *data, uint32_t dataLength);
 
 /**
- * KeepAlive Connected Callback to CA adapter.
+ * KeepAlive Connected or Disconnected Callback to CA adapter.
  */
-static CAKeepAliveConnectedCallback g_connCallback = NULL;
-
-/**
- * KeepAlive Disconnected Callback to CA adapter.
- */
-static CAKeepAliveDisconnectedCallback g_disconnCallback = NULL;
+static CAKeepAliveConnectionCallback g_connKeepAliveCallback = NULL;
 
 static CAResult_t CATCPInitializeQueueHandles();
 
@@ -175,29 +175,28 @@ void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
     }
 }
 
-static void CATCPKeepAliveHandler(const char *addr, uint16_t port, bool isConnected)
+static void CATCPConnectionHandler(const char *addr, uint16_t port, bool isConnected)
 {
     CAEndpoint_t endpoint = { .adapter =  CA_ADAPTER_TCP,
                               .port = port };
     OICStrcpy(endpoint.addr, sizeof(endpoint.addr), addr);
 
-    if (isConnected)
+    // Pass the changed connection status to RI Layer for keepalive.
+    if (g_connKeepAliveCallback)
     {
-        g_connCallback(&endpoint);
+        g_connKeepAliveCallback(&endpoint, isConnected);
     }
-    else
+
+    // Pass the changed connection status to CAUtil.
+    if (g_connectionChangeCallback)
     {
-        g_disconnCallback(&endpoint);
+        g_connectionChangeCallback(&endpoint, isConnected);
     }
 }
 
-void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectedCallback ConnHandler,
-                                CAKeepAliveDisconnectedCallback DisconnHandler)
+void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler)
 {
-    g_connCallback = ConnHandler;
-    g_disconnCallback = DisconnHandler;
-
-    CATCPSetKeepAliveCallback(CATCPKeepAliveHandler);
+    g_connKeepAliveCallback = ConnHandler;
 }
 
 static void CAInitializeTCPGlobals()
@@ -226,7 +225,8 @@ static void CAInitializeTCPGlobals()
 
 CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback networkPacketCallback,
-                           CANetworkChangeCallback netCallback,
+                           CAAdapterChangeCallback netCallback,
+                           CAConnectionChangeCallback connCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -236,12 +236,14 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
 
     g_networkChangeCallback = netCallback;
+    g_connectionChangeCallback = connCallback;
     g_networkPacketCallback = networkPacketCallback;
     g_errorCallback = errorCallback;
 
     CAInitializeTCPGlobals();
     caglobals.tcp.threadpool = handle;
 
+    CATCPSetConnectionChangedCallback(CATCPConnectionHandler);
     CATCPSetPacketReceiveCallback(CATCPPacketReceivedCB);
     CATCPSetErrorHandler(CATCPErrorHandler);
 

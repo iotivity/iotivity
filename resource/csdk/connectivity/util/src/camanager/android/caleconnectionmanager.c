@@ -32,9 +32,6 @@
 
 #define TAG "OIC_CA_MANAGER_LE"
 
-static CAAdapterStateChangedCB g_adapterStateCB = NULL;
-static CAConnectionStateChangedCB g_connStateCB = NULL;
-
 static const jint SUPPORT_ADNROID_API_LEVEL = 18;
 static const jint AUTH_FAIL = 5;
 static const jint LINK_LOSS = 8;
@@ -47,14 +44,6 @@ static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;
 static jobject g_connectedDeviceSet = NULL;
 
-void CASetLENetworkMonitorCallbacks(CAAdapterStateChangedCB adapterStateCB,
-                                    CAConnectionStateChangedCB connStateCB)
-{
-    OIC_LOG(DEBUG, TAG, "CASetLENetworkMonitorCallbacks");
-
-    g_adapterStateCB = adapterStateCB;
-    g_connStateCB = connStateCB;
-}
 
 CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char* address)
 {
@@ -296,10 +285,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
     if (state_on == state)
     {
         OIC_LOG(DEBUG, TAG, "AdapterStateChangedCallback : state_on");
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(CA_ADAPTER_GATT_BTLE, true);
-        }
 
         // when BT state is on. recovery flag has to be reset.
         CAManagerSetBTRecovery(false);
@@ -324,10 +309,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
     else if (state_off == state)
     {
         OIC_LOG(DEBUG, TAG, "AdapterStateChangedCallback : state_off");
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(CA_ADAPTER_GATT_BTLE, false);
-        }
 
         // reset autoconnect flag for all target devices
         size_t length = CAManagerGetACDataLength();
@@ -451,13 +432,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
         if (LINK_LOSS == status || REMOTE_DISCONNECT == status)
         {
             OIC_LOG(DEBUG, TAG, "LE is disconnected");
-
-            if (g_connStateCB)
-            {
-                OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
-                g_connStateCB(CA_ADAPTER_GATT_BTLE, address, false);
-                OIC_LOG(DEBUG, TAG, "LE Disconnected state callback is called");
-            }
 
             if (!CAManagerIsMatchedACData(env, jni_address))
             {
@@ -644,12 +618,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
 
             (*env)->ReleaseStringUTFChars(env, jni_str_entry, foundAddress);
             (*env)->DeleteLocalRef(env, jni_str_entry);
-        }
-
-        if (g_connStateCB)
-        {
-            g_connStateCB(CA_ADAPTER_GATT_BTLE, address, true);
-            OIC_LOG(DEBUG, TAG, "LE Connected callback is called");
         }
 
         (*env)->DeleteLocalRef(env, jni_cls_iterator);

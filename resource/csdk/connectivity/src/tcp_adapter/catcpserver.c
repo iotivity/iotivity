@@ -83,7 +83,7 @@ static CATCPErrorHandleCallback g_TCPErrorHandler = NULL;
 /**
  * Connected Callback to pass the connection information to RI.
  */
-static CATCPKeepAliveHandleCallback g_keepaliveCallback = NULL;
+static CATCPConnectionHandleCallback g_connectionCallback = NULL;
 
 static CAResult_t CATCPCreateMutex();
 static void CATCPDestroyMutex();
@@ -720,9 +720,9 @@ void CATCPSetPacketReceiveCallback(CATCPPacketReceivedCallback callback)
     g_packetReceivedCallback = callback;
 }
 
-void CATCPSetKeepAliveCallback(CATCPKeepAliveHandleCallback keepaliveHandler)
+void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler)
 {
-    g_keepaliveCallback = keepaliveHandler;
+    g_connectionCallback = connHandler;
 }
 
 static size_t CACheckPayloadLength(const void *data, size_t dlen)
@@ -892,10 +892,10 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
 
     CHECKFD(fd);
 
-    // pass the connection information to RI for keepalive.
-    if (g_keepaliveCallback)
+    // pass the connection information to CA Common Layer.
+    if (g_connectionCallback)
     {
-        g_keepaliveCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, true);
+        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, true);
     }
 
     return svritem;
@@ -917,10 +917,10 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     OICFree(svritem);
     ca_mutex_unlock(g_mutexObjectList);
 
-    // pass the connection information to RI for keepalive.
-    if (g_keepaliveCallback)
+    // pass the connection information to CA Common Layer.
+    if (g_connectionCallback)
     {
-        g_keepaliveCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, false);
+        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, false);
     }
 
     return CA_STATUS_OK;

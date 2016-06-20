@@ -716,31 +716,31 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
     return OC_STACK_OK;
 }
 
-void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint)
+void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
 {
     VERIFY_NON_NULL_NR(endpoint, FATAL);
 
-    OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
-
-    // Send discover message to find ping resource
-    OCCallbackData pingData = { .cb = PingRequestCallback };
-    OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
-    CopyEndpointToDevAddr(endpoint, &devAddr);
-
-    OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
-                 OC_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
-}
-
-void HandleKeepAliveDisconnCB(const CAEndpoint_t *endpoint)
-{
-    VERIFY_NON_NULL_NR(endpoint, FATAL);
-
-    OIC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
-
-    OCStackResult result = RemoveKeepAliveEntry(endpoint);
-    if(result != OC_STACK_OK)
+    if (isConnected)
     {
-        OIC_LOG(ERROR, TAG, "Failed to remove entry");
-        return;
+        OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
+
+        // Send discover message to find ping resource
+        OCCallbackData pingData = { .cb = PingRequestCallback };
+        OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
+        CopyEndpointToDevAddr(endpoint, &devAddr);
+
+        OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
+                     OC_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
+
+        OCStackResult result = RemoveKeepAliveEntry(endpoint);
+        if(result != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to remove entry");
+            return;
+        }
     }
 }
