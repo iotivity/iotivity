@@ -464,6 +464,17 @@ CAResult_t CAInitGattServerMutexVariables()
             return CA_STATUS_FAILED;
         }
     }
+
+    if (NULL == g_leServerThreadPoolMutex)
+    {
+        g_leServerThreadPoolMutex = ca_mutex_new();
+        if (NULL == g_leServerThreadPoolMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     if (NULL == g_LEClientListMutex)
     {
         g_LEClientListMutex = ca_mutex_new();
@@ -473,6 +484,7 @@ CAResult_t CAInitGattServerMutexVariables()
             return CA_STATUS_FAILED;
         }
     }
+
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;

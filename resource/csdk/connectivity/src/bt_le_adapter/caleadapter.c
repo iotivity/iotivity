@@ -1917,6 +1917,7 @@ static CAResult_t CAStartLEListeningServer()
             OIC_LOG(DEBUG,
                     CALEADAPTER_TAG,
                     "Listen Server will be started once BT Adapter is enabled");
+            result = CA_STATUS_OK;
         }
     }
     else
@@ -1973,6 +1974,7 @@ static CAResult_t CAStartLEDiscoveryServer()
             OIC_LOG(DEBUG,
                     CALEADAPTER_TAG,
                     "Discovery Server will be started once BT Adapter is enabled");
+            result = CA_STATUS_OK;
         }
     }
     else
