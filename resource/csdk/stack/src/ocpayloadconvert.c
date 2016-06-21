@@ -229,7 +229,7 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         [                                                       // rootArray
             {                                                   // rootMap
                 "di" : UUID,                                    // device ID
-                "rt": "oic.wk.res"
+                "rt": ["oic.wk.res"]
                 "n":"MyDevice"
                 "if":"oic.if.ll oic.if.baseline"
                 "di": "0685B960-736F-46F7-BEC0-9E6CBD61ADC1",
