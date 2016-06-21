@@ -119,7 +119,7 @@ static OCResourceHandle platformResource = {0};
 static OCResourceHandle deviceResource = {0};
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
-static PresenceResource presenceResource;
+static PresenceResource presenceResource = {0};
 static uint8_t PresenceTimeOutSize = 0;
 static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
@@ -4128,6 +4128,8 @@ void deleteAllResources()
 #endif // WITH_PRESENCE
         pointer = temp;
     }
+    memset(&platformResource, 0, sizeof(platformResource));
+    memset(&deviceResource, 0, sizeof(deviceResource));
 
     SRMDeInitSecureResources();
 
@@ -4135,6 +4137,7 @@ void deleteAllResources()
     // Ensure that the last resource to be deleted is the presence resource. This allows for all
     // presence notification attributed to their deletion to be processed.
     deleteResource((OCResource *) presenceResource.handle);
+    memset(&presenceResource, 0, sizeof(presenceResource));
 #endif // WITH_PRESENCE
 }
 
