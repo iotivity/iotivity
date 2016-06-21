@@ -552,7 +552,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
     responseInfo.info.tokenLength = serverRequest->tokenLength;
 
-    if(serverRequest->observeResult == OC_STACK_OK)
+    // De-register observe option should not be included in the response header
+    if((serverRequest->observeResult == OC_STACK_OK) && (serverRequest->observationOption != OC_OBSERVE_DEREGISTER))
     {
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
     }

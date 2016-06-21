@@ -1100,13 +1100,13 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
         else
         {
+            result = OC_STACK_OK;
+
             // The error in observeResult for the request will be used when responding to this
             // request by omitting the observation option/sequence number.
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Addition failed");
             ehFlag = OC_REQUEST_FLAG;
-            FindAndDeleteServerRequest(request);
-            goto exit;
         }
 
     }
@@ -1136,10 +1136,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
         else
         {
+            result = OC_STACK_OK;
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Removal failed");
-            FindAndDeleteServerRequest(request);
-            goto exit;
         }
     }
     else
