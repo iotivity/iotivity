@@ -24,22 +24,14 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_WINDOWS_H
-#include <windows.h>
-#endif
 #ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-#ifdef HAVE_TIME_H
-#include <time.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
 #endif
 
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "oic_time.h"
 #include "logger.h"
 #include "cJSON.h"
 #include "utlist.h"
@@ -353,66 +345,15 @@ exit:
 OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 {
     OCStackResult res = OC_STACK_OK;
-#if defined(HAVE_GETSYSTEMTIMEASFILETIME)
-    FILETIME startTime = {0};
-    FILETIME currTime = {0};
+    uint64_t startTime;
+    uint64_t currTime;
 
-    GetSystemTimeAsFileTime(&startTime);
-#elif defined(HAVE_CLOCK_GETTIME)
-    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
-    struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
-
-# if defined(_POSIX_MONOTONIC_CLOCK)
-    int clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
-# else
-    int clock_res = clock_gettime(CLOCK_REALTIME, &startTime);
-# endif // defined(_POSIX_MONOTONIC_CLOCK)
-    if (0 != clock_res)
-    {
-        return OC_STACK_ERROR;
-    }
-
-#else
-    ERROR Need PMTimeout implementation
-    return OC_STACK_ERROR;
-#endif
-
+    startTime = OICGetCurrentTime(TIME_IN_MS);
     while (OC_STACK_OK == res)
     {
-#if defined(HAVE_GETSYSTEMTIMEASFILETIME)
-        GetSystemTimeAsFileTime(&currTime);
-#elif defined(HAVE_CLOCK_GETTIME)
+        currTime = OICGetCurrentTime(TIME_IN_MS);
 
-# if defined(_POSIX_MONOTONIC_CLOCK)
-        clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
-# else
-        clock_res = clock_gettime(CLOCK_REALTIME, &currTime);
-# endif
-        if (0 != clock_res)
-        {
-            return OC_STACK_TIMEOUT;
-        }
-#else
-        ERROR Need PMTimeout implementation
-#endif
-
-#if defined(HAVE_GETSYSTEMTIMEASFILETIME)
-#define HNS_TO_S(VAL)  ((VAL)/(10*1000*1000))
-        ULARGE_INTEGER currTimeInt;
-        ULARGE_INTEGER startTimeInt;
-
-        currTimeInt.LowPart  = currTime.dwLowDateTime;
-        currTimeInt.HighPart = currTime.dwHighDateTime;
-
-        startTimeInt.LowPart  = startTime.dwLowDateTime;
-        startTimeInt.HighPart = startTime.dwHighDateTime;
-
-        long elapsed = (long)HNS_TO_S(currTimeInt.QuadPart - startTimeInt.QuadPart);
-#elif defined(HAVE_CLOCK_GETTIME)
-        long elapsed = (currTime.tv_sec - startTime.tv_sec);
-#else
-        ERROR Need PMTimeout implementation
-#endif
+        long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
         if (elapsed > waittime)
         {
             return OC_STACK_OK;
