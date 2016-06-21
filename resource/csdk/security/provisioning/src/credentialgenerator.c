@@ -44,8 +44,8 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
         const OicUuid_t *ptDeviceId, const OicUuid_t *firstDeviceId,
         const OicUuid_t *secondDeviceId, OicSecCred_t **firstCred, OicSecCred_t **secondCred)
 {
-    if (NULL == ptDeviceId || NULL == firstDeviceId || NULL != *firstCred || \
-        NULL == secondDeviceId || NULL != *secondCred)
+    if (NULL == ptDeviceId || NULL == firstDeviceId || NULL == firstCred || NULL != *firstCred || \
+        NULL == secondDeviceId || NULL == secondCred || NULL != *secondCred)
     {
         OIC_LOG(INFO, TAG, "Invalid params");
         return OC_STACK_INVALID_PARAM;
@@ -217,7 +217,7 @@ static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, OicSe
 OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
         const OicUuid_t *deviceId, OicSecCred_t **const cred)
 {
-    if (NULL == ptDeviceId || NULL == deviceId || NULL == cred)
+    if (NULL == ptDeviceId || NULL == deviceId || NULL == cred || NULL != *cred)
     {
         return OC_STACK_INVALID_PARAM;
     }
