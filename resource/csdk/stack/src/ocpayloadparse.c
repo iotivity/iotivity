@@ -1190,17 +1190,21 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
     if (cbor_value_is_map(rootValue))
     {
         CborValue curVal;
+        uint64_t temp = 0;
 
         // Sequence Number
         CborError err = cbor_value_map_find_value(rootValue, OC_RSRVD_NONCE, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce tag");
-        err = cbor_value_get_uint64(&curVal, (uint64_t *)&payload->sequenceNumber);
+        err = cbor_value_get_uint64(&curVal, &temp);
+        payload->sequenceNumber = (uint32_t)temp;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce value");
 
         // Max Age
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TTL, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl tag");
-        err = cbor_value_get_uint64(&curVal, (uint64_t *)&payload->maxAge);
+        temp = 0;
+        err = cbor_value_get_uint64(&curVal, &temp);
+        payload->maxAge = (uint32_t)temp;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl value");
 
         // Trigger
