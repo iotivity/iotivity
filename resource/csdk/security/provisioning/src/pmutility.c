@@ -584,6 +584,25 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             uint16_t securePort = 0;
             OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
+            // Use seure port of doxm for OTM and Provision.
+            while (resPayload)
+            {
+                if (0 == strncmp(resPayload->uri, OIC_RSRC_DOXM_URI, sizeof(OIC_RSRC_DOXM_URI)))
+                {
+                    OIC_LOG_V(INFO,TAG,"resPaylod->uri:%s",resPayload->uri);
+                    OIC_LOG(INFO, TAG, "Found doxm resource.");
+                    break;
+                }
+                else
+                {
+                    resPayload = resPayload->next;
+                }
+            }
+            if (NULL == resPayload)
+            {
+                OIC_LOG(ERROR, TAG, "Can not find doxm resource.");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
             if (resPayload && resPayload->secure)
             {
                 securePort = resPayload->port;
@@ -812,19 +831,13 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     }
 
     char rsrc_uri[MAX_URI_LENGTH+1] = {0};
-    int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
-              OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DOXM);
-    if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
-    {
-        OIC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
-        return OC_STACK_ERROR;
-    }
+
     //Try to the unicast discovery to getting secure port
     char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
     if(!PMGenerateQuery(false,
                         clientResponse->devAddr.addr, clientResponse->devAddr.port,
                         clientResponse->connType,
-                        query, sizeof(query), rsrc_uri))
+                        query, sizeof(query), OC_RSRVD_WELL_KNOWN_URI))
     {
         OIC_LOG(ERROR, TAG, "SecurePortDiscovery : Failed to generate query");
         return OC_STACK_ERROR;
