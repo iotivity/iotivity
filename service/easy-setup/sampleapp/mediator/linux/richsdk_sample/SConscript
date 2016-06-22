@@ -40,7 +40,7 @@ if env.get('LOGGING'):
 
 env.AppendUnique(CPPDEFINES = ['CPP_MEDIATOR'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     mediator_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 
 mediator_env.PrependUnique(CPPPATH = [

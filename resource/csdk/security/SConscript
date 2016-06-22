@@ -57,7 +57,7 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../security/provisioning/include'
 		])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows']:
 	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	libocsrm_env.AppendUnique(CFLAGS = ['-std=c99', '-Wall'])
 

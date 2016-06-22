@@ -62,7 +62,7 @@ cache_test_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-
 cache_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', gtest, gtest_main])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     cache_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':

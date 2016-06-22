@@ -49,7 +49,7 @@ env.AppendUnique(CPPPATH = [ os.path.join(pi_path, 'include'),
                              os.path.join(pi_path, 'include', 'internal')
                            ])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
 
 if target_os in ['darwin','ios']:

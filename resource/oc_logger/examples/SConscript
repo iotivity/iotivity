@@ -45,7 +45,7 @@ if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	examples_env.AppendUnique(LIBS = ['gnustl_shared'])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows']:
 	examples_env.AppendUnique(CFLAGS = Split('-Wall -std=c99 -Werror'))
 	examples_env.AppendUnique(CXXFLAGS = Split('-Wall -std=c++0x'))
 

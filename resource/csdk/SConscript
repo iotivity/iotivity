@@ -58,7 +58,7 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'security/provisioning/include',
 		])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
@@ -67,7 +67,7 @@ if liboctbstack_env.get('ROUTING') == 'GW':
 elif liboctbstack_env.get('ROUTING') == 'EP':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
@@ -91,7 +91,7 @@ else:
 if target_os in ['tizen', 'linux']:
 	liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
 
-if target_os not in ['android', 'arduino', 'windows', 'winrt', 'msys_nt']:
+if target_os not in ['android', 'arduino', 'windows', 'msys_nt']:
 	liboctbstack_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'arduino':

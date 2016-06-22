@@ -39,7 +39,7 @@ rd_env.AppendUnique(CPPPATH = ['src/internal'])
 rd_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
 rd_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     rd_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
 
 if target_os == 'linux':

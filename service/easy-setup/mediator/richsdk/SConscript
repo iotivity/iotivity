@@ -59,7 +59,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 easy_setup_env.AppendUnique(CPPPATH = ['inc', 'src', '../../inc'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     easy_setup_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 
 if target_os in ['linux']:

@@ -72,7 +72,7 @@ broker_test_env.AppendUnique(LIBS = ['rcs_common'])
 broker_test_env.AppendUnique(LIBS = [gtest])
 broker_test_env.AppendUnique(LIBS = [gtest_main])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     broker_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':
