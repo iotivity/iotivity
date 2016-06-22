@@ -92,7 +92,7 @@ NSResult NSConsumerSendSyncInfo(const char * providerId, uint64_t messageId, NSS
     syncInfo->messageId = messageId;
     syncInfo->state = type;
 
-    NSTask * syncTask = NSMakeTask(TASK_SEND_SYNCINFO, (void *) syncInfo);
+    NSTask * syncTask = NSMakeTask(TASK_MAKE_SYNCINFO, (void *) syncInfo);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(syncTask, NS_ERROR, NSOICFree(syncInfo));
 
     return NSConsumerPushEvent(syncTask);

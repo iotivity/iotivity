@@ -211,9 +211,10 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
     NSMessage_consumer * newMsg = (NSMessage_consumer *)OICMalloc(sizeof(NSMessage_consumer));
     NS_VERIFY_NOT_NULL(newMsg, NULL);
 
-    newMsg->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+    OICStrcpy(newMsg->providerId, NS_DEVICE_ID_LENGTH, msg->providerId);
+    newMsg->_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, OICFree(newMsg));
-    memcpy(newMsg->addr, msg->addr, sizeof(OCDevAddr));
+    memcpy(newMsg->_addr, msg->_addr, sizeof(OCDevAddr));
 
     newMsg->messageId = msg->messageId;
     newMsg->title = OICStrdup(msg->title);
@@ -228,9 +229,40 @@ void NSRemoveMessage(NSMessage_consumer * msg)
     NSOICFree(msg->title);
     NSOICFree(msg->contentText);
     NSOICFree(msg->sourceName);
-    NSOICFree(msg->addr);
+    NSOICFree(msg->_addr);
 
     NSOICFree(msg);
+}
+
+NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
+{
+    NS_VERIFY_NOT_NULL(prov, NULL);
+
+    NSProvider_internal * newProv = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
+    NS_VERIFY_NOT_NULL(newProv, NULL);
+
+    OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
+    newProv->_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProv, NULL, OICFree(newProv));
+    memcpy(newProv->_addr, prov->_addr, sizeof(OCDevAddr));
+
+    newProv->messageUri = OICStrdup(prov->messageUri);
+    newProv->syncUri = OICStrdup(prov->syncUri);
+    newProv->messageHandle = prov->messageHandle;
+    newProv->syncHandle = prov->syncHandle;
+    newProv->accessPolicy = prov->accessPolicy;
+
+    return newProv;
+}
+void NSRemoveProvider(NSProvider_internal * prov)
+{
+    NSOICFree(prov->messageUri);
+    NSOICFree(prov->syncUri);
+    NSOICFree(prov->messageHandle);
+    NSOICFree(prov->syncHandle);
+    NSOICFree(prov->_addr);
+
+    NSOICFree(prov);
 }
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,

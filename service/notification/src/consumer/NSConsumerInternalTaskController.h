@@ -29,7 +29,9 @@ extern "C" {
 #include "NSStorageAdapter.h"
 #include "NSConsumerCommunication.h"
 
-void NSDestroyCacheList();
+void NSDestroyMessageCacheList();
+
+void NSDestroyProviderCacheList();
 
 void NSConsumerInternalTaskProcessing(NSTask *);
 

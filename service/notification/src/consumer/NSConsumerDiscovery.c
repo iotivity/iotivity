@@ -117,7 +117,7 @@ void NSRemoveProviderObj(NSProvider_internal * provider)
 
     provider->messageHandle = NULL;
     provider->syncHandle = NULL;
-    NSOICFree(provider->addr);
+    NSOICFree(provider->_addr);
 
     NSOICFree(provider);
 }
@@ -207,6 +207,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(addr, NULL,
            NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
+
     memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
 
     NSProvider_internal * newProvider
@@ -218,7 +219,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     newProvider->messageUri = messageUri;
     newProvider->syncUri = syncUri;
     newProvider->accessPolicy = (NSAccessPolicy)accepter;
-    newProvider->addr = addr;
+    newProvider->_addr = addr;
     newProvider->messageHandle = NULL;
     newProvider->syncHandle = NULL;
 

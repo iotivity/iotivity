@@ -82,10 +82,10 @@ void NSThreadStop(NSConsumerThread * handle)
 
 void NSThreadJoin(NSConsumerThread * handle)
 {
-	if (handle->thread_id)
-	{
-		pthread_join(handle->thread_id, NULL);
-	}
+    if (handle->thread_id)
+    {
+        pthread_join(handle->thread_id, NULL);
+    }
 }
 
 void NSDestroyThreadHandle(NSConsumerThread * handle)

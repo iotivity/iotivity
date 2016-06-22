@@ -111,7 +111,7 @@ NSResult NSConsumerPushEvent(NSTask * task)
 
 void NSConsumerMessageHandlerExit()
 {
-    NSDestroyCacheList();
+    NSDestroyMessageCacheList();
     NSConsumerListenerTermiate();
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
@@ -222,6 +222,7 @@ void NSConsumerTaskProcessing(NSTask * task)
     case TASK_CONSUMER_RECV_MESSAGE:
     case TASK_CONSUMER_PROVIDER_DISCOVERED:
     case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+    case TASK_MAKE_SYNCINFO:
     {
         NSConsumerInternalTaskProcessing(task);
         break;

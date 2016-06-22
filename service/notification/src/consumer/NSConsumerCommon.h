@@ -32,7 +32,6 @@ extern "C" {
 #include "NSStructs.h"
 #include "ocstack.h"
 
-
 #define NS_QOS OC_LOW_QOS
 #define NS_RESOURCE_TYPE "oic.r.notification"
 #define NS_RESOURCE_URI "/notification"
@@ -58,6 +57,17 @@ extern "C" {
         { \
             NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
             return (retVal); \
+        } \
+    }
+
+#define NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(obj, func) \
+    { \
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            NS_LOG(ERROR, "execute deletion"); \
+            (func); \
+            return; \
         } \
     }
 
@@ -113,32 +123,34 @@ extern "C" {
         } \
     }
 
-typedef enum
-{
-    Read,
-    Dismiss,
-    Notification,
-} NSConsumerMessageTypes;
-
 typedef struct
 {
-    char providerId[37];
+    char providerId[NS_DEVICE_ID_LENGTH];
 
     char * messageUri;
     char * syncUri;
 
     OCDoHandle messageHandle;
     OCDoHandle syncHandle;
-    OCDevAddr * addr;
+    OCDevAddr * _addr;
     NSAccessPolicy accessPolicy;
 
 } NSProvider_internal;
 
 typedef struct
 {
+    uint64_t messageId;
+    char providerId[NS_DEVICE_ID_LENGTH];
+    NSSyncType state;
+
+    OCDevAddr * _addr;
+} NSSyncInfo_internal;
+
+typedef struct
+{
     // Mandatory
     uint64_t messageId;
-    char providerId[37];
+    char providerId[NS_DEVICE_ID_LENGTH];
 
     //optional
     NSMessageType type;
@@ -149,8 +161,9 @@ typedef struct
     char * sourceName;
     NSMediaContents mediaContents;
 
-    OCDevAddr * addr;
-    NSConsumerMessageTypes messageTypes;
+    OCDevAddr * _addr;
+    //NSConsumerMessageTypes messageTypes;
+    NSSyncType _messageTypes;
 } NSMessage_consumer;
 
 bool NSIsStartedConsumer();
@@ -179,6 +192,9 @@ NSResult NSConsumerPushEvent(NSTask *);
 
 NSMessage_consumer * NSCopyMessage(NSMessage_consumer *);
 void NSRemoveMessage(NSMessage_consumer *);
+
+NSProvider_internal * NSCopyProvider(NSProvider_internal *);
+void NSRemoveProvider(NSProvider_internal *);
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,

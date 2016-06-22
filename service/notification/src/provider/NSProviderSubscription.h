@@ -29,6 +29,7 @@
 #include "NSProviderScheduler.h"
 #include "NSProviderResource.h"
 #include "NSProviderMemoryCache.h"
+#include "NSProviderSystem.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 

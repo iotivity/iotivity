@@ -34,6 +34,7 @@ extern "C" {
 
 bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id);
 NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj);
+NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newObj);
 
 #ifdef __cplusplus
 }

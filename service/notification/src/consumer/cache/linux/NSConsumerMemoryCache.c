@@ -35,11 +35,10 @@ void NSSetCacheMutex(pthread_mutex_t mutex)
 
 NSCacheList * NSStorageCreate()
 {
-    pthread_mutex_t * mutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_t * mutex = (pthread_mutex_t *) OICMalloc(sizeof(pthread_mutex_t));
     pthread_mutex_init(mutex, NULL);
     NSSetCacheMutex(*mutex);
     mutex = NSGetCacheMutex();
-
 
     pthread_mutex_lock(mutex);
 
@@ -110,6 +109,12 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 
         return NSConsumerCacheWriteMessage(list, newObj);
     }
+    else if (type == NS_CONSUMER_CACHE_PROVIDER)
+    {
+        pthread_mutex_unlock(mutex);
+
+        return NSConsumerCacheWriteProvider(list, newObj);
+    }
 
     NS_LOG (ERROR, "Not Supported Type");
     pthread_mutex_unlock(mutex);
@@ -123,6 +128,8 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 
     pthread_mutex_lock(mutex);
 
+    NSCacheType type = list->cacheType;
+
     if (!delId)
     {
         pthread_mutex_unlock(mutex);
@@ -133,8 +140,6 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
     NSCacheElement * prev = list->head;
     NSCacheElement * del = list->head;
 
-    NSCacheType type = list->cacheType;
-
     if (NSConsumerCompareIdCacheData(type, del->data, delId))
     {
         if (del == list->head)
@@ -143,8 +148,15 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
                 list->tail = del->next;
             list->head = del->next;
 
-            NSRemoveMessage((NSMessage_consumer *) del->data);
-            OICFree(del);
+            if (type == NS_CONSUMER_CACHE_MESSAGE)
+            {
+                NSRemoveMessage((NSMessage_consumer *) del->data);
+            }
+            else if (type == NS_CONSUMER_CACHE_PROVIDER)
+            {
+                NSRemoveProvider((NSProvider_internal *) del->data);
+            }
+            NSOICFree(del);
             pthread_mutex_unlock(mutex);
 
             return NS_OK;
@@ -160,8 +172,15 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
                 list->tail = prev;
 
             prev->next = del->next;
-            NSRemoveMessage((NSMessage_consumer *) del->data);
-            OICFree(del);
+            if (type == NS_CONSUMER_CACHE_MESSAGE)
+            {
+                NSRemoveMessage((NSMessage_consumer *) del->data);
+            }
+            else if (type == NS_CONSUMER_CACHE_PROVIDER)
+            {
+                NSRemoveProvider((NSProvider_internal *) del->data);
+            }
+            NSOICFree(del);
             pthread_mutex_unlock(mutex);
 
             return NS_OK;
@@ -190,8 +209,8 @@ NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj
     NSMessage_consumer * newMsgObj = (NSMessage_consumer *) newObj->data;
 
     pthread_mutex_unlock(mutex);
-    char msgId[] = {0, };
-    sprintf(msgId, "%ld", newMsgObj->messageId);
+    char msgId[NS_DEVICE_ID_LENGTH] = {0, };
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%ld", newMsgObj->messageId);
     NSCacheElement * it = NSStorageRead(list, msgId);
     pthread_mutex_lock(mutex);
 
@@ -247,6 +266,99 @@ NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj
     return NS_OK;
 }
 
+NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newObj)
+{
+    pthread_mutex_t * mutex = NSGetCacheMutex();
+
+    pthread_mutex_lock(mutex);
+
+    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+    NSProvider_internal * prov = (NSProvider_internal *)newObj->data;
+    NS_LOG_V (DEBUG, "%s", prov->providerId);
+    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+
+    if (!newObj)
+    {
+        pthread_mutex_unlock(mutex);
+        NS_LOG (ERROR, "Failed to Write Provider Cache");
+        return NS_ERROR;
+    }
+
+    NSProvider_internal * newProvObj = (NSProvider_internal *) newObj->data;
+
+    pthread_mutex_unlock(mutex);
+    NSCacheElement * it = NSStorageRead(list, newProvObj->providerId);
+    pthread_mutex_lock(mutex);
+
+    if (it)
+    {
+        NSProvider_internal * provObj = (NSProvider_internal *) it->data;
+        it->data = (void *) NSCopyProvider(newProvObj);
+        if (!it->data)
+        {
+            NS_LOG (ERROR, "Failed to CopyProvider");
+            it->data = (void *) provObj;
+            pthread_mutex_unlock(mutex);
+
+            return NS_ERROR;
+        }
+        NSRemoveProvider(provObj);
+        pthread_mutex_unlock(mutex);
+
+        return NS_OK;
+    }
+
+    NSCacheElement * obj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+    if (!obj)
+    {
+        NS_LOG(ERROR, "Fail to Create New Object");
+        pthread_mutex_unlock(mutex);
+
+        return NS_ERROR;
+    }
+    obj->data = (void *) NSCopyProvider(newProvObj);
+
+    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!2");
+    prov = (NSProvider_internal *)obj->data;
+    NS_LOG_V (DEBUG, "%s", prov->providerId);
+    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!2");
+
+    if (!obj->data)
+    {
+        NS_LOG (ERROR, "Failed to CopyProvider");
+        pthread_mutex_unlock(mutex);
+
+        return NS_ERROR;
+    }
+    obj->next = NULL;
+
+    if (!list->head)
+    {
+        list->head = obj;
+        list->tail = obj;
+        pthread_mutex_unlock(mutex);
+
+        NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3");
+        prov = (NSProvider_internal *)list->tail->data;
+        NS_LOG_V (DEBUG, "%s", prov->providerId);
+        NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3");
+
+        return NS_OK;
+    }
+
+    (list->tail)->next = obj;
+    list->tail = obj;
+
+    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!4");
+    prov = (NSProvider_internal *)list->tail->data;
+    NS_LOG_V (DEBUG, "%s", prov->providerId);
+    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!4");
+
+    pthread_mutex_unlock(mutex);
+
+    return NS_OK;
+}
+
 NSResult NSStorageDestroy(NSCacheList * list)
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
@@ -260,18 +372,31 @@ NSResult NSStorageDestroy(NSCacheList * list)
 
     if (type == NS_CONSUMER_CACHE_MESSAGE)
     {
-
         while (iter)
         {
             next = (NSCacheElement *) iter->next;
 
             NSRemoveMessage((NSMessage_consumer *) iter->data);
-            OICFree(iter);
+            NSOICFree(iter);
 
             iter = next;
         }
 
-        OICFree(list);
+        NSOICFree(list);
+    }
+    else if (type == NS_CONSUMER_CACHE_PROVIDER)
+    {
+        while (iter)
+        {
+            next = (NSCacheElement *) iter->next;
+
+            NSRemoveProvider((NSProvider_internal *) iter->data);
+            NSOICFree(iter);
+
+            iter = next;
+        }
+
+        NSOICFree(list);
     }
 
     pthread_mutex_unlock(mutex);
@@ -290,9 +415,20 @@ bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id
     {
         NSMessage_consumer * msg = (NSMessage_consumer *) data;
 
-        char msgId[] = {0, };
-        sprintf(msgId, "%ld", msg->messageId);
+        char msgId[NS_DEVICE_ID_LENGTH] = {0, };
+        snprintf(msgId, NS_DEVICE_ID_LENGTH, "%ld", msg->messageId);
         if (!strcmp(msgId, id))
+        {
+            return true;
+        }
+
+        return false;
+    }
+    else if (type == NS_CONSUMER_CACHE_PROVIDER)
+    {
+        NSProvider_internal * prov = (NSProvider_internal *) data;
+
+        if (!strcmp(prov->providerId, id))
         {
             return true;
         }
