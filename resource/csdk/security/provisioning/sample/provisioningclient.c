@@ -51,6 +51,7 @@ extern "C"
 #define _40_UNLINK_PAIR_DEVS_   40
 #define _50_REMOVE_SELEC_DEV_   50
 #define _60_GET_CRED_  60
+#define _61_GET_ACL_            61
 #define _99_EXIT_PRVN_CLT_      99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -159,6 +160,20 @@ static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasE
     else
     {
         OIC_LOG_V(ERROR, TAG, "getCredCB FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "getAclCB SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getAclCB FAILED - ctx: %s", (char*) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
     g_doneCB = true;
@@ -851,6 +866,66 @@ PVACL_ERROR:
     return -1;
 }
 
+static int getAcl(void)
+{
+    // check |own_list| for checking selected link status on PRVN DB
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Check Linked Status on PRVN DB, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for checking selected link status on PRVN DB
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for Checking Linked Status on PRVN DB: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |getDevInst| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        goto PVACL_ERROR;
+    }
+    OCStackResult rst = OCGetACLResource((void*) g_ctx, dev, getAclCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetACLResource API error: %d", rst);
+
+        goto PVACL_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetACLResource callback error");
+        goto PVACL_ERROR;
+    }
+
+    // display the result of get credential
+    printf("   > Get ACL SUCCEEDED\n");
+
+    return 0;
+
+PVACL_ERROR:
+    return -1;
+}
+
 static int unlinkPairwise(void)
 {
     // check |own_list| for unlinking pairwise devices
@@ -1351,6 +1426,7 @@ static void printMenu(void)
 
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n\n");
+    printf("** 61. Get the ACL resources of the Selected Device\n\n");
 
     printf("** [F] EXIT PROVISIONING CLIENT\n");
     printf("** 99. Exit Provisionong Client\n\n");
@@ -1474,6 +1550,12 @@ int main()
             if(getCred())
             {
                 OIC_LOG(ERROR, TAG, "_60_GET_CRED_: error");
+            }
+            break;
+        case _61_GET_ACL_:
+            if(getAcl())
+            {
+                OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
             }
             break;
         case _99_EXIT_PRVN_CLT_:

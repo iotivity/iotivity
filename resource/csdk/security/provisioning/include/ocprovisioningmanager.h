@@ -127,6 +127,18 @@ OCStackResult OCProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceIn
  */
 OCStackResult OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
                              OCProvisionResultCB resultCallback);
+/**
+ * this function requests ACL information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                             OCProvisionResultCB resultCallback);
+
 
 /**
  * this function sends Direct-Pairing Configuration to a device.
