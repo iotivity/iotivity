@@ -137,7 +137,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(time1, platform->info.systemTime);
         EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, platform->interfaces->value);
         EXPECT_STREQ(OC_RSRVD_INTERFACE_READ, platform->interfaces->next->value);
-        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_PLATFORM, platform->rt);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_PLATFORM, platform->rt->value);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -161,7 +161,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(platform->info.supportUrl, platform->info.supportUrl);
         EXPECT_STREQ(platform->info.systemTime, platform2->info.systemTime);
         EXPECT_STREQ(platform->interfaces->value, platform2->interfaces->value);
-        EXPECT_STREQ(platform->rt, platform2->rt);
+        EXPECT_STREQ(platform->rt->value, platform2->rt->value);
 
         OCPayloadDestroy((OCPayload*)platform);
 

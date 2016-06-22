@@ -466,7 +466,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
     OCStackResult ret = OC_STACK_INVALID_PARAM;
     CborError err = CborNoError;
     OCPlatformInfo info = {0};
-    char* rt = NULL;
+    OCStringLL* rt = NULL;
     OCStringLL* interfaces = NULL;
     OCPlatformPayload* out = NULL;
 
@@ -572,7 +572,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type tag");
         if(cbor_value_is_valid(&repVal))
         {
-            err = cbor_value_dup_text_string(&repVal, &rt, &len, NULL);
+            err = OCParseStringLL(rootValue, OC_RSRVD_RESOURCE_TYPE, &rt);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find resource type in the platform payload");
         }
 

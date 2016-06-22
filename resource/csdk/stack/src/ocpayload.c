@@ -1694,7 +1694,7 @@ OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
     OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
     OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
 
-    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+    OCResourcePayloadAddStringLL(&payload->rt, OC_RSRVD_RESOURCE_TYPE_PLATFORM);
     OCCopyPlatformInfo(platformInfo, payload);
 
     return payload;
@@ -1723,7 +1723,7 @@ void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
     }
     OICFree(payload->uri);
     OCPlatformInfoDestroy(&payload->info);
-    OICFree(payload->rt);
+    OCFreeOCStringLL(payload->rt);
     OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }
