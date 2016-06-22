@@ -500,7 +500,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     if (privname)
                                     {
                                         // PrivateData::privdata -- Mandatory
-                                        if (strcmp(privname, OIC_JSON_DATA_NAME) == 0 && cbor_value_is_byte_string(&privateMap))
+                                        if (strcmp(privname, OIC_JSON_DATA_NAME) == 0)
                                         {
                                             if(cbor_value_is_byte_string(&privateMap))
                                             {
