@@ -23,9 +23,11 @@ JavaVM *g_jvm = NULL;
 
 jclass g_cls_RemoteEnrollee = NULL;
 jclass g_cls_ESException = NULL;
+jclass g_cls_CloudProvisioningStatus = NULL;
 
 jmethodID g_mid_RemoteEnrollee_ctor = NULL;
 jmethodID g_mid_ESException_ctor = NULL;
+jmethodID g_mid_CloudProvisioningStatus_ctor = NULL;
 
 // JNI OnLoad
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
@@ -42,7 +44,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 
     jclass clazz = nullptr;
 
-    //Remote Enrollee
+    // Remote Enrollee
     clazz = env->FindClass("org/iotivity/service/easysetup/mediator/RemoteEnrollee");
     if (!clazz) return JNI_ERR;
     g_cls_RemoteEnrollee = (jclass)env->NewGlobalRef(clazz);
@@ -52,7 +54,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
                                 "(J)V");
     if (!g_mid_RemoteEnrollee_ctor) return JNI_ERR;
 
-    //ESException
+    // ESException
     clazz = env->FindClass("org/iotivity/service/easysetup/mediator/ESException");
     if (!clazz) return JNI_ERR;
     g_cls_ESException = (jclass)env->NewGlobalRef(clazz);
@@ -60,6 +62,16 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 
     g_mid_ESException_ctor = env->GetMethodID(g_cls_ESException, "<init>", "(Ljava/lang/String;)V");
     if (!g_mid_ESException_ctor) return JNI_ERR;
+
+    // CloudProvisioningStatus
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/CloudProvisioningStatus");
+    if (!clazz) return JNI_ERR;
+    g_cls_CloudProvisioningStatus = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_CloudProvisioningStatus_ctor = env->GetMethodID(g_cls_CloudProvisioningStatus, "<init>",
+                                "(II)V");
+    if (!g_mid_CloudProvisioningStatus_ctor) return JNI_ERR;
 
     return JNI_CURRENT_VERSION;
 }

@@ -35,7 +35,6 @@ JniRemoteEnrollee::~JniRemoteEnrollee()
     if (NULL == env) return;
 
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
-
 }
 
 JniRemoteEnrollee *JniRemoteEnrollee::getJniRemoteEnrollee(JNIEnv *env, jobject thiz)
@@ -51,109 +50,74 @@ JniRemoteEnrollee *JniRemoteEnrollee::getJniRemoteEnrollee(JNIEnv *env, jobject 
     }
     return remoteEnrollee;
 }
-/*
-void JniRemoteEnrollee::startProvisioning(JNIEnv *env)
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetCloudProvInfo
+(JNIEnv *env, jobject jClass, jstring jauthCode, jstring jauthProvider, jstring jciServer)
 {
+    LOGD("nativeSetCloudProvInfo Enter");
+
+    // TODO
+    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
+    remoteEnrollee->setCloudProvInfo(env, jauthCode, jauthProvider, jciServer);
+
+    LOGD("nativeSetCloudProvInfo Exit");
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartCloudProvisioning
+(JNIEnv *env, jobject jClass, jobject jListener)
+{
+    LOGD("nativeStartCloudProvisioning Enter");
+
+    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
+    remoteEnrollee->startCloudProvisioning(env, jListener);
+
+    LOGD("nativeStartCloudProvisioning Exit");
+}
+
+void JniRemoteEnrollee::setCloudProvInfo(JNIEnv *env, jstring jauthCode, jstring jauthProvider, jstring jciServer)
+{
+    CloudProvInfo info;
+    info.authCode = env->GetStringUTFChars(jauthCode, NULL);
+    info.authProvider = env->GetStringUTFChars(jauthProvider, NULL);
+    info.ciServer = env->GetStringUTFChars(jciServer, NULL);
+
+    m_sharedResource->setCloudProvInfo(info);
+}
+
+void JniRemoteEnrollee::startCloudProvisioning(JNIEnv *env, jobject jListener)
+{
+    JniCloudProvisioningStatusListener *onCloudProvisioningStatusReceived = addCloudProvisioningStatusListener(env,
+            jListener);
+
+    CloudProvStatusCb provisionStatusCallback = [onCloudProvisioningStatusReceived]
+            (std::shared_ptr< OIC::Service::CloudProvisioningStatus > cloudProvisioningStatus)
+
+    {
+        onCloudProvisioningStatusReceived->onCloudProvisioningStatus(cloudProvisioningStatus);
+    };
+
     try
     {
-        m_sharedResource->startProvisioning();
+        m_sharedResource->startCloudProvisioning(provisionStatusCallback);
     }
     catch (ESBadRequestException exception)
     {
         LOGE("JNI startProvisioning :: Exception occured");
         //throw the exception to java
-        throwESException( env,  exception.what());
-    }
-}
-void JniRemoteEnrollee::stopProvisioning(JNIEnv *env)
-{
-    try
-    {
-        m_sharedResource->stopProvisioning();
-    }
-    catch (ESBadRequestException exception)
-    {
-        LOGE("JNI stopProvisioning :: Exception occured");
-        //throw the exception to java
-        throwESException( env,  exception.what());
+        throwESException(env, exception.what());
     }
 }
 
-void JniRemoteEnrollee::registerProvisioningHandler(JNIEnv *env, jobject jListener)
-{
-    JniProvisioningStatusListener *onProvisioningStatusReceived = addProvisioningStatusListener(env,
-            jListener);
-
-    RemoteEnrollee::EasySetupStatusCB provisionStatusCallback = [onProvisioningStatusReceived]
-            (std::shared_ptr< OIC::Service::EasySetupStatus > easySetupStatus)
-
-    {
-        onProvisioningStatusReceived->provisionStatusCallback(easySetupStatus);
-    };
-
-    try
-    {
-        m_sharedResource->registerEasySetupStatusHandler(provisionStatusCallback);
-    }
-    catch (ESException exception)
-    {
-        LOGE("JNI stopProvisioning :: Exception occured");
-        //throw the exception to java
-        throwESException( env,  exception.what());
-    }
-
-}
-
-JniProvisioningStatusListener *JniRemoteEnrollee::addProvisioningStatusListener(JNIEnv *env,
+JniCloudProvisioningStatusListener *JniRemoteEnrollee::addCloudProvisioningStatusListener(JNIEnv *env,
         jobject jListener)
 {
-    return this->m_provisioingStatus.addListener(env, jListener, this);
+    return this->m_cloudProvisioningStatus.addListener(env, jListener, this);
 }
 
-void JniRemoteEnrollee::removeProvisioningStatusListener(JNIEnv *env, jobject jListener)
+void JniRemoteEnrollee::removeCloudProvisioningStatusListener(JNIEnv *env, jobject jListener)
 {
-    this->m_provisioingStatus.removeListener(env, jListener);
+    this->m_cloudProvisioningStatus.removeListener(env, jListener);
 }
 
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartProvision
-(JNIEnv *env, jobject jClass)
-{
-    LOGD("nativeStartProvision Enter");
-
-    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->startProvisioning(env);
-
-    LOGD("nativeStartProvision Exit");
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStopProvision
-(JNIEnv *env, jobject jClass)
-{
-
-    LOGD("nativeStopProvision Enter");
-
-    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->stopProvisioning(env);
-
-    LOGD("nativeStopProvision Exit");
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRegisterProvisioningHandler
-(JNIEnv *env, jobject jClass, jobject provisiongListener)
-{
-    LOGD("nativeRegisterProvisioningHandler Enter");
-
-    if (!provisiongListener)
-    {
-        LOGE("nativeRegisterProvisioningHandler : listener is NULL");
-        return;
-    }
-    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->registerProvisioningHandler(env, provisiongListener);
-
-    LOGD("nativeRegisterProvisioningHandler Exit");
-}
-*/

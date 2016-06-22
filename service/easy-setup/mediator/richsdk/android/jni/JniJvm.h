@@ -29,7 +29,7 @@
 #define __JNI_ES_JVM_H
 
 #include <jni.h>
-#include<string>
+#include <string>
 #include <android/log.h>
 
 #define ESTAG "ES-JNI"
@@ -43,9 +43,11 @@ extern JavaVM *g_jvm;
 
 extern jclass g_cls_RemoteEnrollee;
 extern jclass g_cls_ESException;
+extern jclass g_cls_CloudProvisioningStatus;
 
-extern jmethodID g_mid_RemoteEnrollee_ctor ;
+extern jmethodID g_mid_RemoteEnrollee_ctor;
 extern jmethodID g_mid_ESException_ctor;
+extern jmethodID g_mid_CloudProvisioningStatus_ctor;
 
 typedef void(*RemoveListenerCallback)(JNIEnv *env, jobject jListener);
 

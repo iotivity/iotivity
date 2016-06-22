@@ -47,9 +47,4 @@ void throwESException(JNIEnv *env, std::string reason);
 */
 OCConnectivityType  getOCConnectivityTypeFromInt(int connectivityType);
 
-/**
-* @brief Convert EasySetupState Enum Value to int
-*/
-//int convertNativeProvisionStateToInt(EasySetupState nativeState);
-
 #endif //__JNI_ES_UTILS_H_

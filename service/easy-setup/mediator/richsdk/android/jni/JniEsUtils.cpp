@@ -44,20 +44,3 @@ OCConnectivityType  getOCConnectivityTypeFromInt(int connectivityType)
     }
     return CT_DEFAULT;
 }
-/*
-int convertNativeProvisionStateToInt(EasySetupState nativeState)
-{
-    switch (nativeState)
-    {
-        case EasySetupState::DEVICE_PROVISIONED:
-            return 0;
-        case EasySetupState::DEVICE_NOT_PROVISIONED:
-            return 1;
-        case EasySetupState::DEVICE_OWNED:
-            return 2;
-        case EasySetupState::DEVICE_NOT_OWNED:
-            return 3;
-    }
-    return -1;
-}
-*/

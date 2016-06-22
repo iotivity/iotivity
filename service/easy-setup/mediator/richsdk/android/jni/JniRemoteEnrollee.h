@@ -34,6 +34,7 @@
 #include "JniJvm.h"
 #include "JniEsUtils.h"
 #include "JniProvisioningStatusListener.h"
+#include "JniCloudProvisioningStatusListener.h"
 #include "JniEsListenerManager.h"
 
 using namespace OIC::Service;
@@ -60,17 +61,18 @@ class JniRemoteEnrollee
 
         // ***** JNI APIs internally call the APIs of this class ***** //
 
-        //void startProvisioning(JNIEnv *env);
-        //void stopProvisioning(JNIEnv *env);
-        //void registerProvisioningHandler(JNIEnv *env, jobject jListener);
+        void setCloudProvInfo(JNIEnv *env, jstring authCode, jstring authProvider, jstring ciServer);
 
-        //JniProvisioningStatusListener *addProvisioningStatusListener(JNIEnv *env, jobject jListener);
-        //void removeProvisioningStatusListener(JNIEnv *env, jobject jListener);
+        void startCloudProvisioning(JNIEnv *env, jobject jListener);
 
         static JniRemoteEnrollee *getJniRemoteEnrollee(JNIEnv *env, jobject thiz);
 
+        JniCloudProvisioningStatusListener *addCloudProvisioningStatusListener(JNIEnv *env, jobject jListener);
+        void removeCloudProvisioningStatusListener(JNIEnv *env, jobject jListener);
+
     private:
-        //JniEsListenerManager<JniProvisioningStatusListener> m_provisioingStatus;
+        void registerCloudProvisioningHandler(JNIEnv *env, jobject jListener);
+        JniEsListenerManager<JniCloudProvisioningStatusListener> m_cloudProvisioningStatus;
         std::shared_ptr<RemoteEnrollee> m_sharedResource;
 
 };
@@ -79,6 +81,20 @@ class JniRemoteEnrollee
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * API for setting cloud provisioning information.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetCloudProvInfo
+(JNIEnv *env, jobject jClass, jstring jauthCode, jstring jauthProvider, jstring jciServer);
+
+/**
+ * API for starting the cloud provisioning process.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartCloudProvisioning
+(JNIEnv *env, jobject jClass, jobject jListener);
 
 /**
  * API for starting the provisioning process.

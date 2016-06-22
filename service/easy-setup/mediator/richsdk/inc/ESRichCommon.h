@@ -186,8 +186,8 @@ namespace OIC
         {
             ES_CLOUD_PROVISIONING_ERROR = -1,
             ES_CLOUD_PROVISIONING_SUCCESS,
-            ES_ENROLLEE_FOUND,
-            ES_ENROLLEE_NOT_FOUND
+            ES_CLOUD_ENROLLEE_FOUND,
+            ES_CLOUD_ENROLLEE_NOT_FOUND
         }ESCloudProvState;
 
         typedef enum

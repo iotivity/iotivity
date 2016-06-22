@@ -422,7 +422,8 @@ namespace OIC
                     m_cloudResource = std::make_shared<CloudResource>(std::move(m_ocResource));
 
                     std::shared_ptr< CloudProvisioningStatus > provStatus = std::make_shared<
-                        CloudProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_ENROLLEE_FOUND);
+                        CloudProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
+
                     m_cloudProvStatusCb(provStatus);
                 }
                 else
@@ -457,7 +458,7 @@ namespace OIC
                     "Exception caught in startCloudProvisioning = %s", e.what());
 
                 std::shared_ptr< CloudProvisioningStatus > provStatus = std::make_shared<
-                        CloudProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_ENROLLEE_NOT_FOUND);
+                        CloudProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_CLOUD_ENROLLEE_NOT_FOUND);
                 m_cloudProvStatusCb(provStatus);
             }
 

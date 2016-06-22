@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
+ * <To be modified>
  * This is facade class, a single point of contact for Application.
  * It contains set of APIs to do easy setup of the enrolling device.
  * ON-BOARDING - This is a step to establish connectivity between the device & Mediator device.
@@ -41,19 +42,13 @@ public class EasySetup {
 
     private static EasySetup sInstance;
 
-    //private final EasySetupStatus mCallback;
-
-    //private ArrayList<EnrolleeDevice> mEnrolleeDeviceList;
-
-    //private final ProvisioningCallback mProvisioningCallback;
-
     private static Context mContext;
 
-	private ArrayList<RemoteEnrollee> mRemoteEnrolleeList;
+    private ArrayList<RemoteEnrollee> mRemoteEnrolleeList;
 
     protected RemoteEnrollee mRemoteEnrollee;
 
-    //function to call the native createEnrolleeDevice
+    //function to call the native nativeCreateRemoteEnrollee
     private native RemoteEnrollee nativeCreateRemoteEnrollee();
 
     static {
@@ -63,19 +58,13 @@ public class EasySetup {
     }
 
     private EasySetup() {
-        //mCallback = callback;
-        //mProvisioningCallback = new ProvisioningCallbackImpl(mCallback);
-        //mEnrolleeDeviceList = new ArrayList<EnrolleeDevice>();
+        mRemoteEnrolleeList = new ArrayList<RemoteEnrollee>();
         mContext = null;
     }
 
     /**
-     * Gives a singleton instance of Easy setup service and initialize the service
-     *
-     * @param callback Application needs to provide this callback to receive the status of easy
-     *                 setup process.
+     * Gives a singleton instance of Easy setup and initialize the easy setup
      */
-
     public synchronized static EasySetup getInstance(Context context) {
         if (sInstance == null) {
             sInstance = new EasySetup();
@@ -84,24 +73,23 @@ public class EasySetup {
         return sInstance;
     }
 
-	public synchronized RemoteEnrollee createRemoteEnrollee()
-	{
-		// native call
-		mRemoteEnrollee = nativeCreateRemoteEnrollee();
-
-		mRemoteEnrolleeList.add(mRemoteEnrollee);
-
+    /**
+     * API to create a new RemoteEnrollee instance
+     */
+    public synchronized RemoteEnrollee createRemoteEnrollee()
+    {
+        // native call
+        mRemoteEnrollee = nativeCreateRemoteEnrollee();
+        mRemoteEnrolleeList.add(mRemoteEnrollee);
         return mRemoteEnrollee;
-	}
+    }
 
     /**
-     * Reset the Easy setup Service
+     * Reset the Easy setup
      */
-
     public void finish() {
-            //Call the stop Provisioning
-            //for (EnrolleeDevice enrolleeDevice : mEnrolleeDeviceList) {
-            //    enrolleeDevice.stopProvisioningProcess();
-        //}
-    }   
+        //Call the stop Provisioning
+        //for (RemoteEnrollee remoteEnrollee : mRemoteEnrolleeList)
+        //    remoteEnrollee.stopProvisioningProcess();
+        }
 }

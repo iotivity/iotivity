@@ -30,30 +30,26 @@ public class RemoteEnrollee{
     public static final String TAG = RemoteEnrollee.class.getName();
     private long m_nativeHandle;
 
-    //private native void nativeStartProvision();
-    //private native void nativeStopProvision();
-    //private native void nativeRegisterProvisioningHandler(IProvisionStatusNativeHandler listener);
+    private native void nativeSetCloudProvInfo(String authCode, String autoProvider, String ciServer);
+    private native void nativeStartCloudProvisioning(CloudProvisioningCallback callback);
 
     /* constructor will be invoked from the native layer */
     private RemoteEnrollee(long nativeHandle){
         this.m_nativeHandle = nativeHandle;
     }
 
-    /* Register native Listener for the Provisioning state */
-    //public void registerProvisioningHandler( IProvisionStatusNativeHandler provisioningListener) throws ESException{
-    //   // this.provisioningListener = provisioningListener;
-    //    nativeRegisterProvisioningHandler(provisioningListener);
-    //    Log.i(TAG, "JNI Callback is registered for getting provisioning status");
-    //}
+	/* native setCloudProvInfo */
+    public void setCloudProvInfo(CloudProvInfo cloudInfo) throws ESException{
+    	nativeSetCloudProvInfo(cloudInfo.getAuthCode(), cloudInfo.getAuthProvider(), cloudInfo.getCiServer());
+	}
 
-    ///* native StartProvision */
-    //public void startProvision() throws ESException{
-    //nativeStartProvision();
-	//}
-
-    /* native stopProvision */
-    //public void stopProvision() throws  ESException{
-    //nativeStopProvision();
-	//}
-
+    /* native startCloudProvisioning */
+    public void startCloudProvisioning(CloudProvisioningCallback callback) throws ESException{
+        if(callback != null)
+        {
+            nativeStartCloudProvisioning(callback);
+            return;
+        }
+        Log.d(TAG, "CloudProvisioningCallback is null ");
+    }
 }

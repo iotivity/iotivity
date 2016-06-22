@@ -26,7 +26,7 @@ using namespace OIC::Service;
 extern "C" {
 #endif
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateRemoteEnrollee
+Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrollee
 (JNIEnv *env, jobject interfaceClass)
 {
 
