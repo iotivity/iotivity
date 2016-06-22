@@ -394,8 +394,11 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         int i = 0;
         while (cbor_value_is_valid(&oxm) && cbor_value_is_integer(&oxm))
         {
-            cborFindResult = cbor_value_get_int(&oxm, (int *) &doxm->oxm[i++]);
+            int tmp;
+
+            cborFindResult = cbor_value_get_int(&oxm, &tmp);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmName Value")
+            doxm->oxm[i++] = (OicSecOxm_t)tmp;
             cborFindResult = cbor_value_advance(&oxm);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmName.")
         }
@@ -421,8 +424,11 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_SEL_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
     {
-        cborFindResult = cbor_value_get_int(&doxmMap, (int *) &doxm->oxmSel);
+        int oxmSel;
+
+        cborFindResult = cbor_value_get_int(&doxmMap, &oxmSel);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sel Name Value.")
+        doxm->oxmSel = (OicSecOxm_t)oxmSel;
     }
     else // PUT/POST JSON may not have oxmsel so set it to the gDoxm->oxmSel
     {
@@ -433,9 +439,11 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_SUPPORTED_CRED_TYPE_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
     {
-        cborFindResult = cbor_value_get_int(&doxmMap, (int *) &doxm->sct);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sct Name Value.")
+        int sct;
 
+        cborFindResult = cbor_value_get_int(&doxmMap, &sct);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sct Name Value.")
+        doxm->sct = (OicSecCredType_t)sct;
         if (roParsed)
         {
             *roParsed = true;

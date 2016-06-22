@@ -287,6 +287,8 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
 
         while (cbor_value_is_map(&resourceMap))
         {
+            int bitmap;
+
             resource = (OCResourcePayload *)OICCalloc(1, sizeof(OCResourcePayload));
             VERIFY_PARAM_NON_NULL(TAG, resource, "Failed allocating resource payload");
 
@@ -319,8 +321,9 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
             // Bitmap
             err = cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &curVal);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
-            err = cbor_value_get_int(&curVal, (int *)&resource->bitmap);
+            err = cbor_value_get_int(&curVal, &bitmap);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap value");
+            resource->bitmap = (uint8_t)bitmap;
 
             // Secure Flag
             err = cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &curVal);
@@ -336,8 +339,11 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
             VERIFY_CBOR_SUCCESS(TAG, err, "to find port tag");
             if (cbor_value_is_valid(&curVal))
             {
-                err = cbor_value_get_int(&curVal, (int *)&resource->port);
+                int port;
+
+                err = cbor_value_get_int(&curVal, &port);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find port value");
+                resource->port = (uint16_t)port;
             }
 
 #ifdef TCP_ADAPTER
@@ -345,8 +351,11 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
             err = cbor_value_map_find_value(&policyMap, OC_RSRVD_TCP_PORT, &curVal);
             if (cbor_value_is_valid(&curVal))
             {
-                err = cbor_value_get_int(&curVal, (int *)&resource->tcpPort);
+                int tcpPort;
+
+                err = cbor_value_get_int(&curVal, &tcpPort);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find tcp port value");
+                resource->tcpPort = (uint16_t)tcpPort;
             }
 #endif
 
@@ -1184,6 +1193,7 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
     {
         CborValue curVal;
         uint64_t temp = 0;
+        uint8_t trigger;
 
         // Sequence Number
         CborError err = cbor_value_map_find_value(rootValue, OC_RSRVD_NONCE, &curVal);
@@ -1203,8 +1213,9 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
         // Trigger
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TRIGGER, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger tag");
-        err = cbor_value_get_simple_type(&curVal, (uint8_t *)&payload->trigger);
+        err = cbor_value_get_simple_type(&curVal, &trigger);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger value");
+        payload->trigger = (OCPresenceTrigger)trigger;
 
         // Resource type name
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);

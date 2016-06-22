@@ -507,8 +507,11 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
 
                 while (cbor_value_is_valid(&prm) && cbor_value_is_integer(&prm))
                 {
-                    cborFindResult = cbor_value_get_int(&prm, (int *)&pconf->prm[i++]);
+                    int prm_val;
+
+                    cborFindResult = cbor_value_get_int(&prm, &prm_val);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
+                    pconf->prm[i++] = (OicSecPrm_t)prm_val;
                     cborFindResult = cbor_value_advance(&prm);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance value");
                 }

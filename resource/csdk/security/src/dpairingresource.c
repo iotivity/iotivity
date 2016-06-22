@@ -310,8 +310,11 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
         type = cbor_value_get_type(&dpairMap);
         if (0 == strcmp(OIC_JSON_SPM_NAME, name) && cbor_value_is_integer(&dpairMap))
         {
-            cborFindResult = cbor_value_get_int(&dpairMap, (int *) &dpair->spm);
+            int spm;
+
+            cborFindResult = cbor_value_get_int(&dpairMap, &spm);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SPM Value");
+            dpair->spm = (OicSecPrm_t)spm;
         }
 
         if (0 == strcmp(OIC_JSON_PDEVICE_ID_NAME, name))

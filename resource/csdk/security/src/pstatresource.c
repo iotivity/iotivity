@@ -314,8 +314,11 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_CM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
-        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->cm);
+        int cm;
+
+        cborFindResult = cbor_value_get_int(&pstatMap, &cm);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CM.");
+        pstat->cm = (OicSecDpm_t)cm;
     }
     else
     {
@@ -326,8 +329,11 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_TM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
-        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->tm);
+        int tm;
+
+        cborFindResult = cbor_value_get_int(&pstatMap, &tm);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding TM.");
+        pstat->tm = (OicSecDpm_t)tm;
     }
     else
     {
@@ -338,8 +344,11 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_OM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
-        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->om);
+        int om;
+
+        cborFindResult = cbor_value_get_int(&pstatMap, &om);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding OM.");
+        pstat->om = (OicSecDpom_t)om;
     }
     else
     {
@@ -350,10 +359,13 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_SM_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
     {
+        int sm;
+
         pstat->smLen = 1;
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
-        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->sm[0]);
+        cborFindResult = cbor_value_get_int(&pstatMap, &sm);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM.");
+        pstat->sm[0] = (OicSecDpom_t)sm;
 
         if (roParsed)
         {
