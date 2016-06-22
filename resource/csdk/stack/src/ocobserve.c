@@ -376,7 +376,7 @@ OCStackResult AddObserver (const char         *resUri,
         return OC_STACK_RESOURCE_ERROR;
     }
 
-    if (!resUri || !token || !*token)
+    if (!resUri || !token)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -446,7 +446,7 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
 {
     ResourceObserver *out = NULL;
 
-    if (token && *token)
+    if (token)
     {
         OIC_LOG(INFO, TAG, "Looking for token");
         OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
@@ -472,7 +472,7 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
 
 OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength)
 {
-    if (!token || !*token)
+    if (!token)
     {
         return OC_STACK_INVALID_PARAM;
     }
