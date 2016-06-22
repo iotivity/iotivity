@@ -658,8 +658,12 @@ typedef enum
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
 
+#ifdef __WITH_DTLS__
     /** When this bit is set, the resource is a secure resource.*/
     OC_SECURE        = (1 << 4),
+#else
+    OC_SECURE        = (0),
+#endif
 
     /** When this bit is set, the resource is allowed to be discovered only
      *  if discovery request contains an explicit querystring.
