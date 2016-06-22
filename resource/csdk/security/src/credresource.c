@@ -460,8 +460,10 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             //credid
                             if (strcmp(name, OIC_JSON_CREDID_NAME)  == 0)
                             {
-                                cborFindResult = cbor_value_get_uint64(&credMap, (uint64_t *) &cred->credId);
+                                uint64_t credId = 0;
+                                cborFindResult = cbor_value_get_uint64(&credMap, &credId);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredId.");
+                                cred->credId = (uint16_t)credId;
                             }
                             // subjectid
                             if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0)
@@ -476,8 +478,10 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             // credtype
                             if (strcmp(name, OIC_JSON_CREDTYPE_NAME)  == 0)
                             {
-                                cborFindResult = cbor_value_get_uint64(&credMap, (uint64_t *) &cred->credType);
+                                uint64_t credType = 0;
+                                cborFindResult = cbor_value_get_uint64(&credMap, &credType);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredType.");
+                                cred->credType = (OicSecCredType_t)credType;
                             }
                             // privatedata
                             if (strcmp(name, OIC_JSON_PRIVATEDATA_NAME)  == 0)
