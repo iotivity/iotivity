@@ -579,9 +579,9 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     return ehRet;
 }
 
-static OCEntityHandlerResult HandleDoxmPutRequest(const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest * ehRequest)
 {
-    OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing PUT request");
+    OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0} };
 
@@ -845,8 +845,8 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
                 ehRet = HandleDoxmGetRequest(ehRequest);
                 break;
 
-            case OC_REST_PUT:
-                ehRet = HandleDoxmPutRequest(ehRequest);
+            case OC_REST_POST:
+                ehRet = HandleDoxmPostRequest(ehRequest);
                 break;
 
             default:
