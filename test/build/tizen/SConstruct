@@ -1,0 +1,548 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+# #
+# Build script for Tizen
+#
+# #
+
+print '\n---------------Started Building IotivitySecTest PPM for Tizen---------------\n'
+
+
+env = Environment(CC='g++')
+env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = 1
+
+# Initializing Home Dir
+######################################################################
+
+ENV_HOME = '.'
+PROJECT_HOME = 'IotivitySECTest'
+EXT_LIB_HOME = 'IotivitySECTestExtLibs'
+ORG_SRC_HOME = 'IotivityOrgSource/target/iotivity'
+SRC_HOME = ''
+
+######################################################################
+
+# Initializing PPM Dir
+######################################################################
+
+PPM_DIR = ORG_SRC_HOME + '/service/protocol-plugin'
+PPM_INCLUDE = PPM_DIR + '/plugin-manager/src'
+PPM_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+PPM_SAMPLE_PLUGIN_PATH = PROJECT_HOME + '/src/test_app/ppm/plugin/sample_plugins/c_cpp'
+PPM_SAMPLE_PLUGIN_BUILD_DIR = PPM_SAMPLE_PLUGIN_PATH + '/sample_plugin_normal/build/linux'
+CPLUFF_INCLUDE = PPM_DIR + '/lib/cpluff/libcpluff'
+
+RAPIDXML_INCLUDE = ORG_SRC_HOME + '/extlibs/rapidxml'
+RAPIDXML_SUB_INCLUDE = ORG_SRC_HOME + '/extlibs/'
+BOOST_INCLUDE = '/usr/local/include/boost'
+
+PPM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+PPM_RESOURCE_INCLUDE = PPM_RESOURCE_DIR + '/include'
+PPM_RESOURCE_LIB_DIR = PPM_LIB
+PPM_RESOURCE_CSDK_LIB = PPM_LIB
+PPM_RESOURCE_STACK = PPM_RESOURCE_DIR + '/csdk/stack/include'
+PPM_RESOURCE_SOCKET = PPM_RESOURCE_DIR + '/csdk/ocsocket/include'
+PPM_RESOURCE_RANDOM = PPM_RESOURCE_DIR + '/csdk/ocrandom/include'
+PPM_RESOURCE_LOGGER = PPM_RESOURCE_DIR + '/csdk/logger/include'
+PPM_RESOURCE_OC_LOGGER = PPM_RESOURCE_DIR + '/oc_logger/include'
+PPM_RESOURCE_OC_LOGGER_LIB = PPM_LIB
+
+######################################################################
+
+# Initializing SSM Dir
+######################################################################
+
+SSM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+SSM_RESOURCE_INCLUDE = SSM_RESOURCE_DIR + '/include'
+SSM_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+SSM_RESOURCE_CSDK_LIB = SSM_RESOURCE_LIB
+SSM_RESOURCE_STACK = SSM_RESOURCE_DIR + '/csdk/stack/include'
+SSM_RESOURCE_SOCKET = SSM_RESOURCE_DIR + '/csdk/ocsocket/include'
+SSM_RESOURCE_RANDOM = SSM_RESOURCE_DIR + '/csdk/ocrandom/include'
+SSM_RESOURCE_LOGGER = SSM_RESOURCE_DIR + '/csdk/logger/include'
+SSM_RESOURCE_OC_LOGGER =  SSM_RESOURCE_DIR + '/oc_logger/include'
+SSM_RESOURCE_OC_LOGGER_LIB = SSM_RESOURCE_LIB
+SSM_DIR = ORG_SRC_HOME + '/service/soft-sensor-manager'
+SSM_INCLUDE = SSM_DIR + '/SSMCore/include'
+SSM_INTERFACE_INCLUDE = SSM_DIR + '/SSMCore/src/SSMInterface'
+SSM_LIB = SSM_RESOURCE_LIB
+BOOST_INCLUDE = '/usr/local/include/boost'
+
+######################################################################
+
+# Initializing NM Dir
+######################################################################
+
+NM_DIR = ORG_SRC_HOME + '/service/notification-manager'
+NM_INCLUDE = NM_DIR + '/NotificationManager/include'
+NM_JSON_INCLUDE = ORG_SRC_HOME + '/extlibs/cjson'
+NM_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+
+NM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+NM_RESOURCE_INCLUDE = NM_RESOURCE_DIR + '/include'
+NM_RESOURCE_LIB_DIR = NM_LIB
+NM_RESOURCE_CSDK_LIB = NM_LIB
+NM_RESOURCE_STACK = NM_RESOURCE_DIR + '/csdk/stack/include'
+NM_RESOURCE_SOCKET = NM_RESOURCE_DIR + '/csdk/ocsocket/include'
+NM_RESOURCE_RANDOM = NM_RESOURCE_DIR + '/csdk/ocrandom/include'
+NM_RESOURCE_LOGGER = NM_RESOURCE_DIR + '/csdk/logger/include'
+NM_RESOURCE_OC_LOGGER = NM_RESOURCE_DIR + '/oc_logger/include'
+NM_RESOURCE_OC_LOGGER_LIB = NM_LIB
+
+######################################################################
+
+# Initializing TM Dir
+######################################################################
+
+TM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+TM_RESOURCE_INCLUDE = TM_RESOURCE_DIR + '/include'
+TM_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+TM_RESOURCE_CSDK_LIB = TM_RESOURCE_LIB
+TM_RESOURCE_STACK = TM_RESOURCE_DIR + '/csdk/stack/include'
+TM_RESOURCE_SOCKET = TM_RESOURCE_DIR + '/csdk/ocsocket/include'
+TM_RESOURCE_RANDOM = TM_RESOURCE_DIR + '/csdk/ocrandom/include'
+TM_RESOURCE_LOGGER = TM_RESOURCE_DIR + '/csdk/logger/include'
+TM_RESOURCE_OC_LOGGER = TM_RESOURCE_DIR + '/oc_logger/include'
+TM_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+TM_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+TM_RESOURCE_OC_LOGGER_LIB = TM_RESOURCE_LIB
+TM_DIR = ORG_SRC_HOME + '/service/things-manager'
+TM_INCLUDE = TM_DIR + '/sdk/inc'
+TM_SDK_INCLUDE = TM_DIR + '/sdk/src'
+TM_LIB = TM_RESOURCE_LIB
+TM_LIB_TIMER = TM_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+
+# Initializing RE Dir
+######################################################################
+
+RE_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+RE_RESOURCE_INCLUDE = RE_RESOURCE_DIR + '/include'
+RE_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+RE_RESOURCE_CSDK_LIB = RE_RESOURCE_LIB
+RE_RESOURCE_STACK = RE_RESOURCE_DIR + '/csdk/stack/include'
+RE_RESOURCE_SOCKET = RE_RESOURCE_DIR + '/csdk/ocsocket/include'
+RE_RESOURCE_RANDOM = RE_RESOURCE_DIR + '/csdk/ocrandom/include'
+RE_RESOURCE_LOGGER = RE_RESOURCE_DIR + '/csdk/logger/include'
+RE_RESOURCE_OC_LOGGER = RE_RESOURCE_DIR + '/oc_logger/include'
+RE_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+RE_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+RE_RESOURCE_OC_LOGGER_LIB = RE_RESOURCE_LIB
+RE_DIR = ORG_SRC_HOME + '/service/resource-encapsulation'
+RE_MODULES_DIR = RE_DIR + '/src'
+RE_INCLUDE = RE_DIR + '/include/'
+RE_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
+RE_COMMON_INCLUDE = RE_MODULES_DIR + '/common/primitiveResource/include/'
+RE_COMMON_TIMER_INCLUDE = RE_MODULES_DIR + '/common/expiryTimer/include/'
+RE_COMMON_INTERNAL_INCLUDE = RE_MODULES_DIR + '/common/primitiveResource/include/internal/'
+RE_BROKER_INCLUDE = RE_MODULES_DIR + '/resourceBroker/include/'
+RE_CACHE_INCLUDE = RE_MODULES_DIR + '/resourceCache/include/'
+RE_CONTAINER_INCLUDE = RE_MODULES_DIR + '/resourceContainer/include/'
+RE_CONTAINER_BUNDLE_INCLUDE = RE_MODULES_DIR + '/resourceContainer/bundle-api/include/'
+RE_SERVER_BUILDER_INCLUDE = RE_MODULES_DIR + '/serverBuilder/include/'
+RE_LIB = RE_RESOURCE_LIB
+RE_LIB_TIMER = RE_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+
+# Initializing PM Dir
+######################################################################
+
+PM_DIR = ORG_SRC_HOME + '/resource/csdk'
+PM_INCLUDE = PM_DIR + '/security/include'
+PM_PROVISION_INCLUDE = PM_DIR + '/security/provisioning/include'
+PM_PROVISION_INCLUDE_INTERNAL = PM_DIR + '/security/provisioning/include/internal'
+PM_PROVISION_INCLUDE_OXM = PM_DIR + '/security/provisioning/include/oxm'
+PM_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+
+PM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+PM_RESOURCE_INCLUDE = PM_RESOURCE_DIR + '/include'
+PM_RESOURCE_LIB_DIR = PM_LIB
+PM_RESOURCE_STACK = PM_RESOURCE_DIR + '/csdk/stack/include'
+PM_RESOURCE_SOCKET = PM_RESOURCE_DIR + '/csdk/ocsocket/include'
+PM_RESOURCE_RANDOM = PM_RESOURCE_DIR + '/csdk/ocrandom/include'
+PM_RESOURCE_LOGGER = PM_RESOURCE_DIR + '/csdk/logger/include'
+PM_RESOURCE_OC_LOGGER = PM_RESOURCE_DIR + '/oc_logger/include'
+PM_TINY_DTLS = ORG_SRC_HOME + '/extlibs/tinydtls'
+PM_CJSON = ORG_SRC_HOME + '/extlibs/cjson'
+PM_BASE_64 = ORG_SRC_HOME + '/extlibs/base64'
+PM_CONNECTIVITY_INC = PM_DIR + '/connectivity/inc'
+PM_CONNECTIVITY_COMMON_INC = PM_DIR + '/connectivity/common/inc'
+PM_CONNECTIVITY_COAP = PM_DIR + '/connectivity/lib/libcoap-4.1.1'
+PM_CONNECTIVITY_API = PM_DIR + '/connectivity/api'
+PM_CONNECTIVITY_MALLOC = ORG_SRC_HOME + '/resource/c_common/oic_malloc/include'
+PM_CONNECTIVITY_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
+PM_CONNECTIVITY_STRING = ORG_SRC_HOME + '/resource/c_common/oic_string/include'
+
+######################################################################
+
+
+######################################################################
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/tizen'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = PPM_LIB
+
+TC_DIR = PROJECT_HOME + '/src/tc'
+ITC_DIR = TC_DIR + '/itc'
+UTC_DIR = TC_DIR + '/utc'
+TESTAPP_DIR = PROJECT_HOME + '/src/test_app'
+TESTAPP_CINCOUDE = PROJECT_HOME + '/include/testapp'
+
+COMMON_DIR = PROJECT_HOME + '/src/common'
+COMMON_UTIL_DIR = PROJECT_HOME + '/src/common/commonutil/c_cpp'
+
+
+INCLUDE_DIR = PROJECT_HOME + '/include'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
+COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
+
+PPM_COMMON_DIR = COMMON_DIR + '/testcase/PPM/gtest'
+PPM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/PPM'
+
+NM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/NM'
+
+PM_COMMON_DIR = COMMON_DIR + '/testcase/PM/gtest'
+PM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/PM'
+
+SSM_SAMPLE_DIR = TESTAPP_DIR + '/ssm'
+SSM_SAMPLE_CINCLUDE = TESTAPP_CINCOUDE + '/ssm'
+SSM_SAMPLE_PLUGIN = SSM_SAMPLE_CINCLUDE + '/plugin'
+SSM_SAMPLE_RESOURCE = SSM_SAMPLE_CINCLUDE + '/resource'
+SSM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/SSM'
+
+TM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/TM'
+
+RE_INCLUDE_DIR = INCLUDE_DIR + '/testcase/RE'
+
+TARGET = '/usr/bin/'
+# TARGET = env['VARIANT_DIR'] 
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__')
+
+PPM_CFLAGS = [COMMON_FLAGS]
+NM_CFLAGS = [COMMON_FLAGS]
+SSM_CFLAGS = [COMMON_FLAGS]
+TM_CFLAGS = [COMMON_FLAGS]
+RE_CFLAGS = [COMMON_FLAGS]
+PM_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+
+PPM_CINCLUDE = [COMMON_CINCLUDE, PPM_INCLUDE, CPLUFF_INCLUDE, BOOST_INCLUDE, RAPIDXML_INCLUDE, PPM_RESOURCE_INCLUDE, PPM_RESOURCE_STACK, PPM_RESOURCE_SOCKET, PPM_RESOURCE_RANDOM, PPM_RESOURCE_LOGGER, PPM_RESOURCE_OC_LOGGER, GTEST_INCLUDE, INCLUDE_DIR, PPM_INCLUDE_DIR]
+
+NM_CINCLUDE = [COMMON_CINCLUDE, NM_INCLUDE, NM_INCLUDE_DIR, NM_JSON_INCLUDE, NM_RESOURCE_INCLUDE, NM_RESOURCE_STACK, NM_RESOURCE_SOCKET, NM_RESOURCE_RANDOM, NM_RESOURCE_LOGGER, NM_RESOURCE_OC_LOGGER]
+
+SSM_CINCLUDE = [COMMON_CINCLUDE, SSM_INCLUDE, BOOST_INCLUDE, SSM_RESOURCE_INCLUDE, SSM_RESOURCE_STACK, SSM_RESOURCE_SOCKET, SSM_RESOURCE_RANDOM, SSM_RESOURCE_LOGGER, SSM_RESOURCE_OC_LOGGER, SSM_INCLUDE_DIR, SSM_SAMPLE_PLUGIN, SSM_SAMPLE_RESOURCE, SSM_INTERFACE_INCLUDE]
+
+TM_CINCLUDE = [COMMON_CINCLUDE, TM_RESOURCE_INCLUDE, TM_RESOURCE_STACK, TM_RESOURCE_SOCKET, TM_RESOURCE_RANDOM, TM_RESOURCE_OC_LOGGER, TM_INCLUDE, TM_RESOURCE_CEREAL, TM_RESOURCE_TIMER, TM_LIB_TIMER, TM_SDK_INCLUDE, TM_INCLUDE_DIR]
+
+RE_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RE_C_COMMON, COMMON_CINCLUDE, RE_RESOURCE_INCLUDE, RE_RESOURCE_STACK, RE_RESOURCE_SOCKET, RE_RESOURCE_RANDOM, RE_RESOURCE_OC_LOGGER, RE_RESOURCE_CEREAL, RE_RESOURCE_TIMER, RE_LIB_TIMER, RE_INCLUDE, RE_COMMON_INCLUDE, RE_COMMON_TIMER_INCLUDE, RE_COMMON_INTERNAL_INCLUDE, RE_BROKER_INCLUDE, RE_CACHE_INCLUDE, RE_CONTAINER_INCLUDE, RE_CONTAINER_BUNDLE_INCLUDE, RE_SERVER_BUILDER_INCLUDE, RE_INCLUDE_DIR]
+
+PM_CINCLUDE = [COMMON_CINCLUDE, PM_INCLUDE, PM_INCLUDE_DIR, PM_PROVISION_INCLUDE, PM_RESOURCE_INCLUDE, PM_RESOURCE_STACK, PM_RESOURCE_RANDOM, PM_RESOURCE_LOGGER, PM_RESOURCE_LOGGER, PM_RESOURCE_OC_LOGGER, PM_TINY_DTLS, PM_CJSON, PM_BASE_64, PM_CONNECTIVITY_INC, PM_CONNECTIVITY_COMMON_INC, PM_CONNECTIVITY_COAP, PM_CONNECTIVITY_API, PM_CONNECTIVITY_C_COMMON, PM_CONNECTIVITY_MALLOC, PM_CONNECTIVITY_STRING, PM_PROVISION_INCLUDE_INTERNAL, PM_PROVISION_INCLUDE_OXM]
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR]
+PPM_LIB_LOCATION = COMMON_LIB_LOCATION
+NM_LIB_LOCATION = [COMMON_LIB_LOCATION]
+SSM_LIB_LOCATION = [COMMON_LIB_LOCATION, SSM_RESOURCE_LIB, SSM_RESOURCE_CSDK_LIB, SSM_RESOURCE_OC_LOGGER_LIB]
+TM_LIB_LOCATION = [COMMON_LIB_LOCATION, TM_RESOURCE_LIB, TM_RESOURCE_CSDK_LIB, TM_RESOURCE_OC_LOGGER_LIB, TM_LIB]
+RE_LIB_LOCATION = [COMMON_LIB_LOCATION, RE_RESOURCE_LIB, RE_RESOURCE_CSDK_LIB, RE_RESOURCE_OC_LOGGER_LIB, RE_LIB]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog libcapi-appfw-app-common')
+
+# libcoap liboc_logger_core 
+
+PPM_SHARED_LIBS = Split('libppm libpmimpl')
+PPM_STATIC_RESOURCE_LIBS = []
+PPM_LIBS = [COMMON_SHARED_LIBS, PPM_SHARED_LIBS]
+
+NM_STATIC_LIBS = []
+NM_SHARED_LIBS = ['libNotificationManager', 'libpthread', 'libconnectivity_abstraction']
+NM_LIBS = [COMMON_SHARED_LIBS, NM_SHARED_LIBS]
+
+SSM_STATIC_LIBS = []
+SSM_STATIC_RESOURCE_LIBS = []
+SSM_SHARED_LIBS = Split('libSSMSDK libSSMCore')
+SSM_LIBS = [COMMON_SHARED_LIBS, SSM_SHARED_LIBS]
+
+TM_STATIC_LIBS = []
+TM_STATIC_RESOURCE_LIBS = []
+TM_SHARED_LIBS = Split('libTGMSDKLibrary')
+TM_LIBS = [COMMON_SHARED_LIBS, TM_SHARED_LIBS]
+
+#RE_STATIC_LIBS = [RE_LIB + '/librcs_client.a', RE_LIB + '/librcs_common.a', RE_LIB + '/librcs_container.a', RE_LIB + '/librcs_server.a', RE_LIB + '/libocsrm.a']
+RE_STATIC_RESOURCE_LIBS = []
+RE_STATIC_LIBS = []
+RE_SHARED_LIBS = Split('-lHueBundle -lDISensorBundle -lBMISensorBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
+RE_LIBS = [COMMON_SHARED_LIBS, RE_SHARED_LIBS]
+
+#libocprovision
+PM_SHARED_LIBS = []
+PM_STATIC_LIBS = [PM_LIB + '/libocpmapi.a', PM_LIB + './libcoap.a', PM_LIB + 'libocsrm.a', PM_LIB + 'libtinydtls.a', PM_LIB + 'libc_common.a']
+PM_LIBS = [PM_SHARED_LIBS, COMMON_SHARED_LIBS]
+
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+PM_ITC_BIN = 'iotivity_pm_itc'
+PM_UTC_BIN = 'iotivity_pm_utc'
+
+PPM_ITC_BIN = 'iotivity_ppm_itc'
+PPM_UTC_BIN = 'iotivity_ppm_utc'
+PLUGIN_LIB_BIN = 'Normal_SamplePlugin.so'
+
+NM_MANAGER_BIN = 'nm_manager'
+NM_CONSUMER_BIN = 'nm_consumer'
+NM_PROVIDER_BIN = 'nm_provider'
+NM_PROVIDER2_BIN = 'nm_provider2'
+NM_NONHOSTABLE_PROVIDER_BIN = 'nm_non_hostable_provider'
+NM_ITC_BIN = 'iotivity_nm_itc'
+NM_UTC_BIN = 'iotivity_nm_utc'
+
+SSM_ITC_BIN = 'iotivity_ssm_itc'
+SSM_UTC_BIN = 'iotivity_ssm_utc'
+SSM_SENSOR_BIN = 'SSMTestSensor'
+SSM_PLUGIN_BIN = 'libSSMTestPlugin.so'
+
+TM_ITC_BIN = 'iotivity_tm_itc'
+TM_UTC_BIN = 'iotivity_tm_utc'
+TEST_SERVER_BIN = 'testserver'
+OLD_TEST_SERVER_BIN = 'oldtestserver'
+UNSUPPORTIVE_SERVER_BIN = 'unsupportivetestserver'
+BOOTSTRAP_SERVER_BIN = 'bootstrapserver'
+TEST_COLLECTION_BIN = 'testcollection'
+
+RE_ITC_BIN = 'iotivity_re_itc'
+RE_UTC_BIN = 'iotivity_re_utc'
+
+RE_TEST_SERVER_BIN = 'retestserver'
+
+RE_HELPER_BIN = 're_helper.o'
+
+PM_HELPER_BIN = 'pm_helper.o'
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+RESOURCE_CLIENT_CPP = COMMON_UTIL_DIR + '/ResourceClient.cpp'
+RESOURCE_SERVER_CPP = COMMON_UTIL_DIR + '/ResourceServer.cpp'
+SAMPLE_RESOURCE_CPP = COMMON_UTIL_DIR + '/SampleResource.cpp'
+UNSUPPORTIVE_RESOURCE_CPP = COMMON_UTIL_DIR + '/UnsupportiveResource.cpp'
+TEST_MAIN = [TC_DIR + '/IotivitySECTestMain.cpp']
+
+PPM_HELPER_CPP = Glob(COMMON_DIR + '/testcase/PPM/gtest/*.cpp')
+PPM_ITC_CPP = Glob(ITC_DIR + '/ppm/gtest/*.cpp')
+PPM_UTC_CPP = Glob(UTC_DIR + '/ppm/gtest/*.cpp')
+PLUGIN_CPP = PPM_SAMPLE_PLUGIN_PATH + '/sample_plugin_normal/src/SamplePlugin.cpp'
+PPM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, PPM_HELPER_CPP]
+PPM_ITC_SRC = [PPM_CPP, PPM_ITC_CPP, COMMON_STATIC_LIBS, PPM_STATIC_RESOURCE_LIBS]
+PPM_UTC_SRC = [PPM_CPP, PPM_UTC_CPP, COMMON_STATIC_LIBS, PPM_STATIC_RESOURCE_LIBS]
+PLUGIN_SRC = [PLUGIN_CPP, PPM_STATIC_RESOURCE_LIBS]
+
+NM_HELPER_CPP = Glob(COMMON_DIR + '/testcase/NM/gtest/*.cpp')
+NM_MANAGER_CPP = Glob(TESTAPP_DIR + '/nm/c_cpp/manager/*.c')
+NM_CONSUMER_CPP = Glob(TESTAPP_DIR + '/nm/c_cpp/consumer/*.cpp')
+NM_PROVIDER_CPP = Glob(TESTAPP_DIR + '/nm/c_cpp/provider/*.cpp')
+NM_PROVIDER2_CPP = Glob(TESTAPP_DIR + '/nm/c_cpp/provider2/*.cpp')
+NM_NONHOSTABLE_PROVIDER_CPP = Glob(TESTAPP_DIR + '/nm/c_cpp/nonHostableProvider/*.cpp')
+NM_ITC_CPP = Glob(ITC_DIR + '/nm/gtest/*.cpp')
+NM_UTC_CPP = Glob(UTC_DIR + '/nm/gtest/*.cpp')
+NM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, NM_HELPER_CPP]
+NM_MANAGER_SRC = [NM_MANAGER_CPP, COMMON_STATIC_LIBS, NM_STATIC_LIBS]
+NM_CONSUMER_SRC = [NM_CONSUMER_CPP, COMMON_STATIC_LIBS, NM_STATIC_LIBS]
+NM_PROVIDER_SRC = [NM_PROVIDER_CPP, COMMON_STATIC_LIBS, NM_STATIC_LIBS]
+NM_PROVIDER2_SRC = [NM_PROVIDER2_CPP, COMMON_STATIC_LIBS, NM_STATIC_LIBS]
+NM_NONHOSTABLE_PROVIDER_SRC = [NM_NONHOSTABLE_PROVIDER_CPP, COMMON_STATIC_LIBS, NM_STATIC_LIBS]
+NM_ITC_SRC = [NM_CPP, NM_ITC_CPP, COMMON_STATIC_LIBS, NM_STATIC_LIBS]
+NM_UTC_SRC = [NM_CPP, NM_UTC_CPP, COMMON_STATIC_LIBS, NM_STATIC_LIBS]
+
+
+SSM_HELPER_CPP = Glob(COMMON_DIR + '/testcase/SSM/gtest/*.cpp')
+SSM_SENSOR_CPP = Glob(SSM_SAMPLE_DIR + '/resource/c_cpp/*.cpp')
+SSM_PLUGIN_CPP = Glob(SSM_SAMPLE_DIR + '/plugin/c_cpp/*.cpp')
+SSM_ITC_CPP = Glob(ITC_DIR + '/ssm/gtest/*.cpp')
+SSM_UTC_CPP = Glob(UTC_DIR + '/ssm/gtest/*.cpp')
+SSM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, SSM_HELPER_CPP]
+SSM_UTC_SRC = [SSM_CPP, SSM_UTC_CPP, COMMON_STATIC_LIBS, SSM_STATIC_LIBS, SSM_STATIC_RESOURCE_LIBS]
+SSM_ITC_SRC = [SSM_CPP, SSM_ITC_CPP, COMMON_STATIC_LIBS, SSM_STATIC_LIBS, SSM_STATIC_RESOURCE_LIBS]
+SSM_SENSOR_SRC = [SSM_SENSOR_CPP, COMMON_UTIL_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, SSM_STATIC_LIBS, SSM_STATIC_RESOURCE_LIBS]
+SSM_PLUGIN_SRC = [SSM_PLUGIN_CPP, COMMON_UTIL_CPP]
+
+TM_HELPER_CPP = Glob(COMMON_DIR + '/testcase/TM/gtest/*.cpp')
+TEST_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/TestServers.cpp'
+OLD_TEST_SERVER_CPP = [TESTAPP_DIR + '/tm/c_cpp/OldTestServers.cpp', COMMON_UTIL_DIR + '/OldSampleResource.cpp']
+UNSUPPORTIVE_TEST_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/UnsupportiveTestServers.cpp'
+BOOTSTRAP_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/BootstrapServer.cpp'
+TEST_COLLECTION_CPP = TESTAPP_DIR + '/tm/c_cpp/TestCollections.cpp'
+TM_ITC_CPP = Glob(ITC_DIR + '/tm/gtest/*.cpp')
+TM_UTC_CPP = Glob(UTC_DIR + '/tm/gtest/*.cpp')
+TM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, TM_HELPER_CPP]
+TM_ITC_SRC = [TM_CPP, TM_ITC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+TM_UTC_SRC = [TM_CPP, TM_UTC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+OLD_TEST_SERVER_SRC = [OLD_TEST_SERVER_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+UNSUPPORTIVE_SERVER_SRC = [UNSUPPORTIVE_TEST_SERVER_CPP, COMMON_UTIL_CPP, UNSUPPORTIVE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+BOOTSTRAP_SERVER_SRC = [BOOTSTRAP_SERVER_CPP, COMMON_UTIL_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+TEST_COLLECTION_SRC = [TEST_COLLECTION_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+
+RE_HELPER_CPP = Glob(COMMON_DIR + '/testcase/RE/gtest/*.cpp')
+RE_ITC_CPP = Glob(ITC_DIR + '/re/gtest/*.cpp')
+RE_UTC_CPP = Glob(UTC_DIR + '/re/gtest/*.cpp')
+RE_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RE_HELPER_CPP, CALL_GRAPH_CPP]
+RE_ITC_SRC = [RE_CPP, RE_ITC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
+RE_UTC_SRC = [RE_CPP, RE_UTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
+RE_TEST_SERVER_SRC = [RE_TEST_SERVER_CPP, COMMON_UTIL_CPP, RE_HELPER_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
+
+
+PM_HELPER_CPP = Glob(COMMON_DIR + '/testcase/PM/gtest/*.cpp')
+PM_ITC_CPP = Glob(ITC_DIR + '/pm/gtest/*.cpp')
+PM_UTC_CPP = Glob(UTC_DIR + '/pm/gtest/*.cpp')
+PM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, PM_HELPER_CPP, CALL_GRAPH_CPP]
+PM_ITC_SRC = [PM_CPP, PM_ITC_CPP, COMMON_STATIC_LIBS, PM_STATIC_LIBS]
+PM_UTC_SRC = [PM_CPP, PM_UTC_CPP, COMMON_STATIC_LIBS, PM_STATIC_LIBS]
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+create_target_dir = env.Command('target.out', [], Mkdir(TARGET))
+
+ppm_itc = env.Program(source=PPM_ITC_SRC, target=PPM_ITC_BIN, CPPPATH=PPM_CINCLUDE, LIBS=PPM_LIBS, LIBPATH=PPM_LIB_LOCATION, CPPFLAGS=PPM_CFLAGS)
+
+ppm_utc = env.Program(source=PPM_UTC_SRC, target=PPM_UTC_BIN, CPPPATH=PPM_CINCLUDE, LIBS=PPM_LIBS, LIBPATH=PPM_LIB_LOCATION, CPPFLAGS=PPM_CFLAGS)
+
+plugin_lib = env.SharedLibrary(source=PLUGIN_SRC, target=PLUGIN_LIB_BIN, CPPPATH=CPLUFF_INCLUDE, CPPFLAGS=PPM_CFLAGS, SHLIBPREFIX='')
+
+nm_manager = env.Program(source = NM_MANAGER_SRC, target = NM_MANAGER_BIN, CPPPATH = NM_CINCLUDE, LIBS = NM_LIBS, LIBPATH = NM_LIB_LOCATION, CPPFLAGS = NM_CFLAGS)
+
+nm_consumer = env.Program(source = NM_CONSUMER_SRC, target = NM_CONSUMER_BIN, CPPPATH = NM_CINCLUDE, LIBS = NM_LIBS, LIBPATH = NM_LIB_LOCATION, CPPFLAGS = NM_CFLAGS)
+
+nm_provider = env.Program(source = NM_PROVIDER_SRC, target = NM_PROVIDER_BIN, CPPPATH = NM_CINCLUDE, LIBS = NM_LIBS, LIBPATH = NM_LIB_LOCATION, CPPFLAGS = NM_CFLAGS)
+
+nm_provider2 = env.Program(source = NM_PROVIDER2_SRC, target = NM_PROVIDER2_BIN, CPPPATH = NM_CINCLUDE, LIBS = NM_LIBS, LIBPATH = NM_LIB_LOCATION, CPPFLAGS = NM_CFLAGS)
+
+nm_non_hostable_provider = env.Program(source = NM_NONHOSTABLE_PROVIDER_SRC, target = NM_NONHOSTABLE_PROVIDER_BIN, CPPPATH = NM_CINCLUDE, LIBS = NM_LIBS, LIBPATH = NM_LIB_LOCATION, CPPFLAGS = NM_CFLAGS)
+
+nm_itc = env.Program(source = NM_ITC_SRC, target = NM_ITC_BIN, CPPPATH = NM_CINCLUDE, LIBS = NM_LIBS, LIBPATH = NM_LIB_LOCATION, CPPFLAGS = NM_CFLAGS)
+
+nm_utc = env.Program(source = NM_UTC_SRC, target = NM_UTC_BIN, CPPPATH = NM_CINCLUDE, LIBS = NM_LIBS, LIBPATH = NM_LIB_LOCATION, CPPFLAGS = NM_CFLAGS)
+
+ssm_utc = env.Program(source = SSM_UTC_SRC, target = SSM_UTC_BIN, CPPPATH = SSM_CINCLUDE, LIBS = SSM_LIBS, LIBPATH = SSM_LIB_LOCATION, CPPFLAGS = SSM_CFLAGS)
+
+ssm_itc = env.Program(source = SSM_ITC_SRC, target = SSM_ITC_BIN, CPPPATH = SSM_CINCLUDE, LIBS = SSM_LIBS, LIBPATH = SSM_LIB_LOCATION, CPPFLAGS = SSM_CFLAGS)
+
+ssm_sensor = env.Program(source = SSM_SENSOR_SRC, target = SSM_SENSOR_BIN, CPPPATH = SSM_CINCLUDE, LIBS = SSM_LIBS, LIBPATH = SSM_LIB_LOCATION, CPPFLAGS = SSM_CFLAGS)
+
+ssm_plugin = env.SharedLibrary(source = SSM_PLUGIN_SRC, target = SSM_PLUGIN_BIN, CPPPATH = SSM_CINCLUDE, LIBS = SSM_LIBS, LIBPATH = SSM_LIB_LOCATION, CPPFLAGS = SSM_CFLAGS)
+
+tm_itc = env.Program(source = TM_ITC_SRC, target = TM_ITC_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+tm_utc = env.Program(source = TM_UTC_SRC, target = TM_UTC_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+test_server = env.Program(source = TEST_SERVER_SRC, target = TEST_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+#old_test_server = env.Program(source = OLD_TEST_SERVER_SRC, target = OLD_TEST_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+unsupportive_server = env.Program(source = UNSUPPORTIVE_SERVER_SRC, target = UNSUPPORTIVE_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+bootstrap_server = env.Program(source = BOOTSTRAP_SERVER_SRC, target = BOOTSTRAP_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+test_collection = env.Program(source = TEST_COLLECTION_SRC, target = TEST_COLLECTION_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+re_itc = env.Program(source = RE_ITC_SRC, target = RE_ITC_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+
+re_utc = env.Program(source = RE_UTC_SRC, target = RE_UTC_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+
+re_test_server = env.Program(source = RE_TEST_SERVER_SRC, target = RE_TEST_SERVER_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+
+PM_itc = env_linux.Program(source = PM_ITC_SRC, target = PM_ITC_BIN, CPPPATH = PM_CINCLUDE, LIBS = PM_LIBS, LIBPATH = PM_LIB_LOCATION, CPPFLAGS = PM_CFLAGS)
+
+PM_utc = env_linux.Program(source = PM_UTC_SRC, target = PM_UTC_BIN, CPPPATH = PM_CINCLUDE, LIBS = PM_LIBS, LIBPATH = PM_LIB_LOCATION, CPPFLAGS = PM_CFLAGS)
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+default_targets = []
+
+default_targets += [plugin_lib, ppm_itc, ppm_utc]
+
+default_targets += [nm_manager]
+default_targets += [nm_consumer]
+default_targets += [nm_provider]
+default_targets += [nm_provider2]
+default_targets += [nm_non_hostable_provider]
+default_targets += [nm_itc]
+default_targets += [nm_utc]
+
+default_targets += [ssm_utc]
+default_targets += [ssm_itc]
+default_targets += [ssm_sensor]
+default_targets += [ssm_plugin]
+
+default_targets += [test_server, unsupportive_server, bootstrap_server, test_collection, tm_itc, tm_utc]
+
+#default_targets += [re_test_server]
+default_targets += [re_itc, re_utc]
+
+default_targets += [PM_itc, PM_utc]
+
+env.Default(default_targets)
+

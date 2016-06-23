@@ -1,0 +1,104 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# The build script for Tizen
+#
+##
+
+import os
+import os.path
+
+print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
+
+Import('env_tizen')
+
+target_arch = env_tizen.get('TARGET_ARCH')
+target_source = env_tizen.get('TARGET_SOURCE')
+target_service = env_tizen.get('TARGET_SERVICE')
+tc_type = env_tizen.get('TARGET_TC')
+variant_dir = env_tizen.get('VARIANT_DIR')
+rpm_path = env_tizen.get('RPMS_DIR')
+is_prevent_enabled = env_tizen.get('PREVENT')
+target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
+target_secured = env_tizen.get('SECURED')
+
+print "Value of Prevent : " + is_prevent_enabled
+print 'target_secured: ' + target_secured
+
+warning_msg = """
+########################################################################################
+#   ERROR... GBS RPM Path is not defined of not a valid directory. To Set the Path:    #
+#   RPMS_DIR=<your RPMS path> or provide the path in the configuration.scons           #
+#   [NB: without Path, it can not Install the RPM package in the target dir            #  
+########################################################################################
+
+"""
+
+
+if 'PATH_NOT_DEFINED' in rpm_path or not os.path.isdir(rpm_path):
+    print warning_msg
+    exit(1)
+    
+    
+######################################################################
+
+# Initializing Build
+######################################################################
+
+default_targets = []
+
+
+if os.path.isfile("../../extlibs/gtest-1.7.0/bin/tizen/libgtest.a"):
+    print "Gtest library exists"
+else:
+    print "GTest library for Tizen does not exists, starts building for tizen"
+    gbs_script_gtest = "sh extlibs/gtest-1.7.0/gbsbuild.sh %s" % (rpm_path)
+    default_targets += [gbs_script_gtest]
+
+if 'tm' in target_service or 'all' in target_service:
+    gbs_script_tm = "sh build/tizen/tm/gbsbuild_tm.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
+    default_targets += [gbs_script_tm]
+        
+        
+if 'ca' in target_service or 'all' in target_service:
+    gbs_script_ca = "sh build/tizen/ca/gbsbuild_ca.sh %s %s %s %s %s %s %s" % (target_arch, target_transport, target_secured, rpm_path, variant_dir, target_source, is_prevent_enabled)
+    default_targets += [gbs_script_ca]
+
+if 'rh' in target_service or 'all' in target_service:
+    gbs_script_rh = "sh build/tizen/rh/gbsbuild_rh.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
+    default_targets += [gbs_script_rh]
+
+if 're' in target_service or 'all' in target_service:
+    gbs_script_re = "sh build/tizen/re/gbsbuild_re.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
+    default_targets += [gbs_script_re]
+
+if 'rc' in target_service or 'all' in target_service:
+    gbs_script_rc = "sh build/tizen/rc/gbsbuild_rc.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
+    default_targets += [gbs_script_rc]
+
+    
+
+    
+    
+gbs_build = env_tizen.Command('gbs_build', None, default_targets)
+
+env_tizen.Default(gbs_build)

@@ -1,0 +1,162 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building IotivitySecTest for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+iotivity_directory = env_linux.get('IOTIVITY_DIR')
+
+print "target source is --------------------------------" + target_source
+print "iotivity root is --------------------------------" + iotivity_directory
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+#ORG_SRC = '/IotivityOrgSource/' + target_source + '/' + iotivity_directory
+ORG_SRC = '../../../'
+ORG_SRC_HOME = ENV_HOME + ORG_SRC
+
+
+if not target_source:
+	print "########NOT############################################"
+	env_linux['ORG_SRC'] = '../../../'
+	env_linux['ORG_SRC_HOME'] = ORG_SRC
+else:
+	print "########YES############################################"
+	env_linux['ORG_SRC'] = ORG_SRC + 'IotivityOrgSource/' + target_source + '/' + iotivity_directory
+	env_linux['ORG_SRC_HOME'] = ORG_SRC + 'IotivityOrgSource/' + target_source + '/' + iotivity_directory
+
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+######################################################################
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+######################################################################
+
+# Initializing Build
+######################################################################
+
+env_linux.ParseConfig("pkg-config --cflags --libs uuid")
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+#test_main = env_linux.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+
+pre_job = [create_target_dir]
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_tc = env_linux.get('TARGET_TC')
+default_targets = [pre_job]
+install_targets = []
+
+print "target_service = " + target_service
+print "target_tc = " + target_tc
+print "target_transport = " + target_transport
+
+SConscript(GTEST + '/SConscript')
+
+#SConscript('SConscriptCommon' , exports = 'env_linux')
+
+print "---------------service--------------" + target_service + target_tc
+
+
+if 're' in target_service or 'all' in target_service:
+    SConscript('SConscriptRE', exports = 'env_linux')
+
+if 'rc' in target_service or 'all' in target_service:
+    SConscript('SConscriptRC', exports = 'env_linux')
+
+if 'tm' in target_service or 'all' in target_service:
+    SConscript('SConscriptTM', exports = 'env_linux')
+
+if 'ca' in target_service or 'all' in target_service:
+    SConscript('SConscriptCA', exports = 'env_linux')
+
+if 'rh' in target_service or 'all' in target_service:
+    SConscript('SConscriptRH', exports = 'env_linux')
+        
+if 'pmcpp' in target_service or 'all' in target_service:
+    SConscript('SConscriptPMCPP', exports = 'env_linux')
+
+if 'pmc' in target_service or 'all' in target_service:
+    SConscript('SConscriptPMC', exports = 'env_linux')
+
+if 'rd' in target_service or 'all' in target_service:
+    SConscript('SConscriptRD', exports = 'env_linux')
+
+if 'phy' in target_service or 'all' in target_service:
+    SConscript('SConscriptPHY', exports = 'env_linux')
+
+if 'sm' in target_service or 'all' in target_service:
+    SConscript('SConscriptSM', exports = 'env_linux')
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install
+
+env_linux.Default(default_targets)

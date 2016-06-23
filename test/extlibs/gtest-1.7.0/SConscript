@@ -1,0 +1,15 @@
+#-----------------------------------------------------
+# build script for gtest
+#-----------------------------------------------------
+
+env_gtest = Environment(CC = 'g++')
+
+build_dir = 'bin/linux/'
+
+env_gtest.VariantDir(build_dir, 'src', duplicate=0)
+env_gtest.AppendUnique(CPPFLAGS = Split('-isystem -pthread -march=native'))
+env_gtest.AppendUnique(CPPPATH = ['../../include', '../../'])
+
+SConscript(build_dir + 'SConscript', exports = 'env_gtest')
+
+

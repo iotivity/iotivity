@@ -1,0 +1,137 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# The main build script
+#
+##
+
+import os
+import platform
+
+print '---------------Started Building IotivitySecTest---------------'
+
+# Load common build config
+SConscript('build/SConscript')
+SConscript('build/configuration.scons')
+SConscript('extlibs/SConstruct')
+
+Import('env')
+
+
+target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
+service = env.get('TARGET_SERVICE')
+tc_type = env.get('TARGET_TC')
+target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
+shield = ARGUMENTS.get('SHIELD')
+
+print '---------------Target OS : ' + target_os + '---------------'
+print '---------------Target Architecture : ' + target_arch + '---------------'
+print '---------------Target Service : ' + service + '---------------'
+print '---------------Target TC : ' + tc_type + '---------------'
+
+env_linux = env.Clone()
+env_tizen = env.Clone()
+env_android = env.Clone()
+env_windows = env.Clone()
+
+
+
+def build_linux():
+    build_dir = 'bin/linux/'
+    env_linux.Append(VARIANT_DIR = build_dir)
+    env_linux.VariantDir(build_dir, 'src', duplicate=0)
+
+    if target_os == 'all':
+        env_linux.Replace(TARGET_ARCH = 'x86')
+        print "Target_Arch " + env.get('TARGET_ARCH')
+        
+        env_linux.Replace(TARGET_OS = 'linux')
+        
+    SConscript('build/linux/SConscript', exports = 'env_linux')
+
+
+def build_tizen():
+    build_dir = 'bin/tizen/'
+    env_tizen.Append(VARIANT_DIR = build_dir)
+    env_tizen.VariantDir(build_dir, 'src', duplicate=0)
+    
+    if target_os == 'all':
+        env_tizen.Replace(TARGET_ARCH = 'armv7l')
+        env_tizen.Replace(TARGET_OS = 'tizen')
+            
+    SConscript('build/tizen/SConscript', exports = 'env_tizen')
+
+def build_windows():
+    print "Windows is not supported yet "
+
+
+def build_android():
+    SConscript('build/android/SConscript', exports = 'env_android')
+
+def build_arduino():
+    build_dir = 'bin/arduino/'
+    env.Append(VARIANT_DIR = build_dir)
+    env.Append(BUILD_DIR = build_dir)
+    env.VariantDir(build_dir, 'src', duplicate=0)
+
+    if target_os == 'all':
+        env.Replace(TARGET_ARCH = 'avr')
+        env.Replace(TARGET_OS = 'arduino')
+    
+    if 'IP' in target_transport:
+        
+        env.Replace(TARGET_TRANSPORT = 'IP')
+        
+        if 'ETH' in shield:
+            env.Replace(SHIELD = 'ETH')
+            SConscript('build/src_build.scons')
+            SConscript('build/arduino/SConscript')
+            
+        if 'WIFI' in shield:
+            env.Replace(SHIELD = 'WIFI')
+            SConscript('build/src_build.scons')
+            SConscript('build/arduino/SConscript')
+
+    if 'BLE' in target_transport:
+        env.Replace(TARGET_TRANSPORT = 'BLE')
+        env.Replace(SHIELD = 'RBL_NRF8001')
+        SConscript('build/src_build.scons')
+        SConscript('build/arduino/SConscript')
+
+
+def build_module(self, module_name):
+    print "Build module called"
+    modules = {
+        'linux' : build_linux,
+        'tizen' : build_tizen,
+        'arduino' : build_arduino,
+        'android' : build_android,
+        'windows' : build_windows
+    }
+    modules.get(module_name,"")()
+
+
+env.AddMethod(build_module, 'BuildModule')
+
+env.BuildModule(target_os)
+

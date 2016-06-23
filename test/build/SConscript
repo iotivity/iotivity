@@ -1,0 +1,150 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+
+##
+# This script includes generic build options:
+#    target os, target arch, cross toolchain, build environment etc
+##
+import os
+import platform
+
+print '---------------Loading Common Config---------------'
+
+# Map of host os and allowed target os (host: allowed target os)
+host_target_map = {
+		'linux': ['linux', 'android', 'arduino', 'tizen', 'all'],
+		'windows': ['windows', 'winrt', 'android', 'arduino', 'all'],
+		'darwin': ['darwin', 'ios', 'android', 'arduino', 'all'],
+		}
+
+# Map of os and allowed archs (os: allowed archs)
+os_arch_map = {
+		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
+		'tizen': ['armv7l', 'x86', 'x86_64', 'arm', 'arm64'],
+		'android': ['armeabi', 'x86', 'x86_64', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
+		'windows': ['x86', 'amd64', 'arm'],
+		'winrt': ['arm'],
+		'darwin': ['i386', 'x86_64'],
+		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
+		'arduino': ['avr', 'arm'],
+		'yocto': ['x86', 'x86_64'],
+		'all': ['all']
+		}
+
+host = platform.system().lower()
+print '---------------Host OS : ' + host + '---------------'
+
+if not host_target_map.has_key(host):
+	print "\nError: Current system (%s) isn't supported\n" % host
+	Exit(1)
+	
+
+######################################################################
+# Get build options (the optins from command line)
+######################################################################
+target_os = ARGUMENTS.get('TARGET_OS', host).lower() # target os
+
+if target_os not in host_target_map[host] and target_os != 'all':
+	print "\nError: Unknown target os: %s (Allow values: %s)\n" % (target_os, host_target_map[host])
+	Exit(1)
+
+default_arch = platform.machine()
+
+if default_arch not in os_arch_map[target_os]:
+	default_arch = os_arch_map[target_os][0].lower()
+
+error_msg =  """
+
+#################################################################################################
+#   ERROR... If you Set TARGET_OS=all, You to have Set TARGET_ARCH=all or you can just          #
+#   avoid this Argument. In this case it will automatically assign TARGET_ARCH like following   #
+#                           linux = x86/x86_64(depending on host)                               #
+#                                   tizen = armv7l                                              # 
+#                                  android = armeabi                                            #
+#                                    arduino = avr                                              #
+#                                    windows = x86                                              #  
+#################################################################################################
+
+"""
+
+target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
+
+if target_os == 'all' and target_arch != 'all':
+    print error_msg
+    exit(1)
+
+
+# True if binary needs to be installed on board. (Might need root permissions)
+# set to 'no', 'false' or 0 for only compilation
+require_upload = ARGUMENTS.get('UPLOAD', True)
+
+######################################################################
+# Common build options (target os, target arch, target service, tc type)
+######################################################################
+help_vars = Variables()
+help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
+help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', False))
+help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
+help_vars.Add(EnumVariable('TARGET_TRANSPORT', 'Target transport', 'NONE', ['ALL', 'BT', 'BLE', 'IP', 'ETH', 'WIFI', 'TCP', 'NONE']))
+help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
+help_vars.Add(EnumVariable('TARGET_SERVICE', 'Target Service', 'all', allowed_values=('all', 'ca', 're', 'tm', 'pm', 'pmc', 'pmcpp', 'rd', 'phy', 'is', 'cert', 'rc', 'rh','ps', 'sm')))
+help_vars.Add(EnumVariable('TARGET_TC', 'Target TC Type', 'all', allowed_values=('all', 'itc', 'utc')))
+#help_vars.Add(EnumVariable('TARGET_SOURCE', 'Target SOURCE Type', 'target', allowed_values=('target', 'last', 'target_re', 'target_ca')))
+help_vars.Add('TARGET_SOURCE', 'TARGET SOURCE Type', '')
+help_vars.Add('IOTIVITY_DIR', 'Iotivity Directory Name', 'iotivity')
+help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '1', allowed_values=('0', '1')))
+help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
+help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
+help_vars.Add(EnumVariable('PREVENT', 'Build with sample', 'OFF', allowed_values=('ON', 'OFF')))
+help_vars.Add(BoolVariable('SRC_BUILD', 'Enable Dev Source Building?', False))
+help_vars.Add(BoolVariable('SRC_UPDATE', 'Enable Dev Source Updating?', False))
+help_vars.Add('RPMS_DIR', 'GBS RPMS Full Directory to copy the rpm to bin folder', 'PATH_NOT_DEFINED')
+help_vars.Add('TARGET_PORT', 'insert Arduino Port Number', '/dev/ttyACM0')
+help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device', 'OIC-DEVICE', None, None),)
+
+######################################################################
+# Platform(build target) specific options: SDK/NDK & toolchain
+######################################################################
+
+targets_support_cc = ['linux', 'arduino', 'tizen', 'android']
+
+if target_os in targets_support_cc:
+	# Set cross compile toolchain
+	help_vars.Add('TC_PREFIX', "Toolchain prefix (Generally only be required for cross-compiling)", os.environ.get('TC_PREFIX'))
+
+if target_os in ['android', 'arduino']: # Android/Arduino always uses GNU compiler regardless of the host
+	env = Environment(variables = help_vars,
+			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as']
+			)
+else:
+	env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os)
+
+Help(help_vars.GenerateHelpText(env))
+
+# Get the device name and set it to __OIC_DEVICE_NAME__
+device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
+#print device_name
+env.AppendUnique(CPPDEFINES = ['-D__OIC_DEVICE_NAME__=' + "\'\"" + device_name + "\"\'"])
+
+Export('env')
+
+print '---------------Finished Loading Common Config---------------'

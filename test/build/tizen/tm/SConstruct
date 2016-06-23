@@ -1,0 +1,234 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Tizen
+#
+##
+
+print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
+
+env = Environment(CC='g++')
+
+# Initializing Home Dir
+######################################################################
+
+ENV_HOME = ''
+PROJECT_HOME = 'test'
+EXT_LIB_HOME = 'test/extlibs'
+ORG_SRC_HOME = 'iotivity'
+SRC_HOME = ''
+
+######################################################################
+
+# Initializing TM Dir
+######################################################################
+
+TM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+TM_C_COMMON_DIR = TM_RESOURCE_DIR + '/c_common'
+TM_RESOURCE_INCLUDE = TM_RESOURCE_DIR + '/include'
+TM_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+TM_RESOURCE_CSDK_LIB = TM_RESOURCE_LIB
+TM_RESOURCE_STACK = TM_RESOURCE_DIR + '/csdk/stack/include'
+TM_RESOURCE_SOCKET = TM_RESOURCE_DIR + '/csdk/ocsocket/include'
+TM_RESOURCE_RANDOM = TM_RESOURCE_DIR + '/csdk/ocrandom/include'
+TM_RESOURCE_LOGGER = TM_RESOURCE_DIR + '/csdk/logger/include'
+TM_RESOURCE_OC_LOGGER = TM_RESOURCE_DIR + '/oc_logger/include'
+TM_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+TM_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+TM_RESOURCE_OC_LOGGER_LIB = TM_RESOURCE_LIB
+TM_DIR = ORG_SRC_HOME + '/service/things-manager'
+TM_INCLUDE = TM_DIR + '/sdk/inc'
+TM_SDK_INCLUDE = TM_DIR + '/sdk/src'
+TM_LIB = TM_RESOURCE_LIB
+TM_LIB_TIMER = TM_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/tizen'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+
+TC_DIR = PROJECT_HOME + '/src/tc'
+ITC_DIR = TC_DIR + '/tm/gtest/src/stc'
+UTC_DIR = TC_DIR + '/tm/gtest/src/btc'
+TESTAPP_DIR = PROJECT_HOME + '/src/testapp'
+TESTAPP_CINCOUDE = PROJECT_HOME + '/include/testapp'
+
+COMMON_DIR = PROJECT_HOME + '/src/common'
+COMMON_UTIL_DIR = PROJECT_HOME + '/src/common/commonutil/c_cpp'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+TM_COMMON_DIR = TC_DIR + '/tm/gtest/src/helper'
+TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + '/include'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
+TM_INCLUDE_DIR = TC_DIR + '/tm/gtest/include'
+COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
+
+TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
+TESTAPP_CA_DIR = TESTAPP_DIR + '/ca/c_cpp'
+
+TARGET = PROJECT_HOME + '/bin'
+#TARGET = env['VARIANT_DIR'] 
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__ -finstrument-functions')
+
+TM_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+
+TM_CINCLUDE = [COMMON_CINCLUDE, TM_RESOURCE_INCLUDE, TM_RESOURCE_STACK, TM_RESOURCE_SOCKET, TM_RESOURCE_RANDOM, TM_RESOURCE_OC_LOGGER, TM_INCLUDE, TM_RESOURCE_CEREAL, TM_RESOURCE_TIMER, TM_LIB_TIMER, TM_SDK_INCLUDE, TM_INCLUDE_DIR, TM_C_COMMON_DIR]
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR]
+TM_LIB_LOCATION = [COMMON_LIB_LOCATION, TM_RESOURCE_LIB, TM_RESOURCE_CSDK_LIB, TM_RESOURCE_OC_LOGGER_LIB, TM_LIB]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog')
+
+# liboc_logger_core  libcoap
+
+#TM_STATIC_LIBS = [TM_LIB + '/libTGMSDKLibrary.a']
+#TM_STATIC_RESOURCE_LIBS = [TM_RESOURCE_LIB + '/liboc.a', TM_RESOURCE_CSDK_LIB + '/liboctbstack.a', TM_RESOURCE_OC_LOGGER_LIB + '/liboc_logger.a', TM_RESOURCE_OC_LOGGER_LIB + '/libcoap.a']
+
+TM_STATIC_LIBS = []
+TM_STATIC_RESOURCE_LIBS = []
+
+TM_SHARED_LIBS = Split('libTGMSDKLibrary')
+TM_LIBS = [COMMON_SHARED_LIBS, TM_SHARED_LIBS]
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+TM_ITC_BIN = 'iotivity_tm_test'
+TM_UTC_BIN = 'iotivity_tm_utc'
+TEST_SERVER_BIN = 'testserver'
+BOOTSTRAP_SERVER_BIN = 'bootstrapserver'
+TEST_COLLECTION_BIN = 'testcollection'
+UNSUPPORTIVE_SERVER_BIN = 'unsupportivetestserver'
+
+TEST_MAIN_BIN = 'test_main.o'
+COMMON_UTIL_BIN = 'common_util.o'
+TM_HELPER_BIN = 'tm_helper.o'
+
+TC_BINS = [TM_ITC_BIN, TM_UTC_BIN, TEST_SERVER_BIN, UNSUPPORTIVE_SERVER_BIN, BOOTSTRAP_SERVER_BIN, TEST_COLLECTION_BIN]
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+
+TM_HELPER_CPP = Glob(TM_COMMON_DIR + '/*.cpp')
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+RESOURCE_CLIENT_CPP = COMMON_UTIL_DIR + '/ResourceClient.cpp'
+RESOURCE_SERVER_CPP = COMMON_UTIL_DIR + '/ResourceServer.cpp'
+SAMPLE_RESOURCE_CPP = COMMON_UTIL_DIR + '/SampleResource.cpp'
+UNSUPPORTIVE_RESOURCE_CPP = COMMON_UTIL_DIR + '/UnsupportiveResource.cpp'
+
+TEST_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/src/testservers.cpp'
+UNSUPPORTIVE_TEST_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/src/unsupportivetestservers.cpp'
+BOOTSTRAP_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/src/bootstrapserver.cpp'
+TEST_COLLECTION_CPP = TESTAPP_DIR + '/tm/c_cpp/src/testcollections.cpp'
+
+TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp'] 
+
+TM_ITC_CPP = Glob(ITC_DIR + '/*.cpp')
+TM_UTC_CPP = Glob(UTC_DIR + '/*.cpp')
+
+TM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, TM_HELPER_CPP]
+
+TM_ITC_SRC = [TM_CPP, TM_ITC_CPP, TM_UTC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+TM_UTC_SRC = [TM_CPP, TM_UTC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+
+TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+UNSUPPORTIVE_SERVER_SRC = [UNSUPPORTIVE_TEST_SERVER_CPP, COMMON_UTIL_CPP, UNSUPPORTIVE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+BOOTSTRAP_SERVER_SRC = [BOOTSTRAP_SERVER_CPP, COMMON_UTIL_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+TEST_COLLECTION_SRC = [TEST_COLLECTION_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+create_target_dir = env.Command('target.out', [], Mkdir(TARGET))
+
+test_main = env.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+
+tm_itc = env.Program(source = TM_ITC_SRC, target = TM_ITC_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+tm_utc = env.Program(source = TM_UTC_SRC, target = TM_UTC_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+test_server = env.Program(source = TEST_SERVER_SRC, target = TEST_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+unsupportive_server = env.Program(source = UNSUPPORTIVE_SERVER_SRC, target = UNSUPPORTIVE_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+bootstrap_server = env.Program(source = BOOTSTRAP_SERVER_SRC, target = BOOTSTRAP_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+test_collection = env.Program(source = TEST_COLLECTION_SRC, target = TEST_COLLECTION_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+
+pre_job = [create_target_dir]
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env.get('TARGET_SERVICE')
+target_tc = env.get('TARGET_TC')
+default_targets = []
+
+default_targets += [test_server, unsupportive_server, bootstrap_server, test_collection, tm_itc]
+
+env.Default(default_targets)

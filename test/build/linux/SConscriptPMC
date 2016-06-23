@@ -1,0 +1,336 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+print '\n---------------Started Building Provisioning Manager Module for Linux---------------\n'
+Import('env_linux')
+import os
+
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+
+print "target source is --------------------------------" + target_source
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/pm/gtest/pmcsdk/src'
+STC_DIR = TC_DIR + '/stc'
+BTC_DIR = TC_DIR + '/btc'
+TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp/pm'
+TESTAPP_CINCLUDE = TESTAPP_DIR + '/include'
+
+
+COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+
+
+TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/pm/gtest/pmcsdk/include'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
+
+COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
+TESTAPP_PM_DIR = TESTAPP_DIR + '/ca/c_cpp'
+
+#TARGET = PROJECT_HOME + '/bin'
+TARGET = env_linux['VARIANT_DIR'] 
+
+######################################################################
+
+
+######################################################################
+
+# Initializing CA Dir
+######################################################################
+CA_IOT = ENV_HOME + ORG_SRC
+CA_DIR = CA_IOT + '/resource/csdk/connectivity'
+CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+
+# Initializing PM Dir
+######################################################################
+
+PM_DIR = ORG_SRC_HOME + '/resource/csdk'
+PM_INCLUDE = PM_DIR + '/security/include'
+PM_PROVISION_INCLUDE = PM_DIR + '/security/provisioning/include'
+PM_PROVISION_INCLUDE_INTERNAL = PM_DIR + '/security/provisioning/include/internal'
+PM_PROVISION_INCLUDE_OXM = PM_DIR + '/security/provisioning/include/oxm'
+PM_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+PM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+PM_RESOURCE_INCLUDE = PM_RESOURCE_DIR + '/include'
+PM_RESOURCE_LIB_DIR = PM_LIB
+PM_RESOURCE_STACK = PM_RESOURCE_DIR + '/csdk/stack/include'
+PM_RESOURCE_SOCKET = PM_RESOURCE_DIR + '/csdk/ocsocket/include'
+PM_RESOURCE_RANDOM = PM_RESOURCE_DIR + '/csdk/ocrandom/include'
+PM_RESOURCE_LOGGER = PM_RESOURCE_DIR + '/csdk/logger/include'
+PM_RESOURCE_OC_LOGGER = PM_RESOURCE_DIR + '/oc_logger/include'
+PM_TINY_DTLS = ORG_SRC_HOME + '/extlibs/tinydtls'
+PM_CJSON = ORG_SRC_HOME + '/extlibs/cjson'
+PM_BASE_64 = ORG_SRC_HOME + '/extlibs/base64'
+PM_CONNECTIVITY_INC = PM_DIR + '/connectivity/inc'
+PM_CONNECTIVITY_COMMON_INC = PM_DIR + '/connectivity/common/inc'
+PM_CONNECTIVITY_COAP = PM_DIR + '/connectivity/lib/libcoap-4.1.1'
+PM_CONNECTIVITY_API = PM_DIR + '/connectivity/api'
+PM_CONNECTIVITY_MALLOC = ORG_SRC_HOME + '/resource/c_common/oic_malloc/include'
+PM_CONNECTIVITY_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
+PM_CONNECTIVITY_STRING = ORG_SRC_HOME + '/resource/c_common/oic_string/include'
+
+######################################################################
+
+# Initializing PM Cert Dir
+######################################################################
+
+PM_CERT_INCLUDE = PM_DIR + '/security/provisioning/ck_manager/include'
+PM_CERT_PROVISIONING_INCLUDE = PM_DIR + '/security/provisioning/include'
+PM_CERT_PROVISIONING_INCLUDE_INTERNAL = PM_DIR + '/security/provisioning/include/internal'
+PM_CERT_SECURITY_INCLUDE = PM_DIR + '/security/include'
+PM_CERT_SECURITY_INCLUDE_INTERNAL = PM_DIR + '/security/include/internal'
+PM_CERT_CONNECTIVITY_PKIX = PM_CONNECTIVITY_INC + '/pkix'
+PM_CERT_CONNECTIVITY_INC = PM_CONNECTIVITY_INC
+PM_CERT_CONNECTIVITY_API = PM_CONNECTIVITY_API
+PM_CERT_LOGGER = PM_RESOURCE_LOGGER
+PM_CERT_STACK = PM_RESOURCE_STACK
+PM_CERT_OCLOGGER = PM_RESOURCE_OC_LOGGER
+PM_CERT_EXT_INCLUDE = ORG_SRC_HOME + '/extlibs/asn1cert'
+PM_CERT_TINY_DTLS = ORG_SRC_HOME + '/extlibs/tinydtls'
+PM_CERT_TINY_DTLS_ECC = ORG_SRC_HOME + '/extlibs/tinydtls/ecc'
+PM_CERT_TINY_DTLS_SHA2 = ORG_SRC_HOME + '/extlibs/tinydtls/sha2'
+
+
+######################################################################
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+
+arch_flag = ''
+
+target_arch = env_linux.get('TARGET_ARCH')
+if target_arch in ['x86']:
+	env_linux.AppendUnique(CCFLAGS = ['-m32'])
+	env_linux.AppendUnique(LINKFLAGS = ['-m32'])
+	arch_flag = '-m32'
+elif target_arch in ['x86_64']:
+	env_linux.AppendUnique(CCFLAGS = ['-m64'])
+	env_linux.AppendUnique(LINKFLAGS = ['-m64'])
+	arch_flag = '-m64'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__ -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs  -ftest-coverage -fprofile-arcs')
+
+PM_CXXFLAGS = ['-std=c++11','-c','-std=gnu99','-D__WITH_DTLS__','-std=c99','-Os','-Wall','-Wextra','-fPIC', arch_flag,'-pthread','-DNDEBUG','-DWITH_POSIX','-D__linux__','-DIP_ADAPTER','-DNO_EDR_ADAPTER','-DLE_ADAPTER','-DHAVE_SYS_TIME_H','-DDTLSV12','-DWITH_SHA256','-DDTLS_CHECK_CONTENTTYPE','-DSHA2_USE_INTTYPES_H','-DROUTING_EP','-DWITH_BWT','-D__WITH_DTLS__','-DCA_DBUS_GATT_SERVICE_NAME="org.iotivity.gatt.service"','-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32','-DTB_LOG', '-ftest-coverage' , '-fprofile-arcs']
+
+PM_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+
+PM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/pm'
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+
+
+PM_CINCLUDE = [COMMON_CINCLUDE, PM_INCLUDE, PM_INCLUDE_DIR, PM_PROVISION_INCLUDE, PM_RESOURCE_INCLUDE, PM_RESOURCE_STACK, PM_RESOURCE_RANDOM, PM_RESOURCE_LOGGER, PM_RESOURCE_LOGGER, PM_RESOURCE_OC_LOGGER, PM_TINY_DTLS, PM_CJSON, PM_BASE_64, PM_CONNECTIVITY_INC, PM_CONNECTIVITY_COMMON_INC, PM_CONNECTIVITY_COAP, PM_CONNECTIVITY_API, PM_CONNECTIVITY_C_COMMON, PM_CONNECTIVITY_MALLOC, PM_CONNECTIVITY_STRING, PM_PROVISION_INCLUDE_INTERNAL, PM_PROVISION_INCLUDE_OXM, PM_INCLUDE_DIR]
+
+PM_CERT_CINCLUDE = [COMMON_CINCLUDE, PM_CERT_INCLUDE, PM_CERT_PROVISIONING_INCLUDE, PM_CERT_PROVISIONING_INCLUDE_INTERNAL, PM_CERT_SECURITY_INCLUDE, PM_CERT_SECURITY_INCLUDE_INTERNAL, PM_CERT_CONNECTIVITY_INC, PM_CERT_CONNECTIVITY_API, PM_CERT_LOGGER, PM_CERT_STACK, PM_CERT_OCLOGGER, PM_CERT_EXT_INCLUDE, PM_CERT_TINY_DTLS, PM_CERT_TINY_DTLS_ECC, PM_CERT_TINY_DTLS_SHA2, PM_CONNECTIVITY_MALLOC, PM_CERT_CONNECTIVITY_PKIX, PM_CONNECTIVITY_C_COMMON]
+
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/']
+
+PM_LIB_LOCATION = [COMMON_LIB_LOCATION]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov uuid')
+
+
+PM_SHARED_LIBS = Split('libocprovision libocpmapi libocsrm libm libc_common libtinydtls -lstdc++')
+PM_STATIC_LIBS = []
+PM_LIBS = [PM_SHARED_LIBS, COMMON_SHARED_LIBS]
+
+PM_PKIX = PM_LIB + '/resource/csdk/connectivity/src/adapter_util/pkix'
+PM_RES = PM_LIB + '/resource/csdk/security/src/crlresource.o'
+PM_CERT_SHARED_LIBS = Split('libocprovision libocsrm libm libc_common libtinydtls liboctbstack')
+PM_CERT_STATIC_LIBS = [PM_LIB + '/resource/csdk/security/provisioning/ck_manager/libCKManager.a', PM_PKIX + '/pki.o', PM_LIB + '/libasn1.a', PM_PKIX + '/crl.o', PM_PKIX + '/sn_store.o', PM_PKIX + '/cert.o', PM_PKIX + '/der_const.o', PM_PKIX + '/der_dec.o', PM_RES]
+PM_CERT_LIBS = [PM_CERT_SHARED_LIBS]
+
+
+PM_STC_BIN_C = 'iotivity_pmc_test'
+
+PM_SAMPLE_SERVER_JUST = 'sampleserver_justworks'
+PM_SAMPLE_SERVER_RANDOM = 'sampleserver_randompin'
+
+TEST_MAIN_BIN = 'test_main_pm.o'
+COMMON_UTIL_BIN = 'common_util_pm.o'
+CALL_GRAPH_BIN = 'call_graph_pm.o'
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+#COMMON_UTIL_CPP = [COMMON_UTIL_DIR + '/CommonUtil.cpp']
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp']
+
+
+PM_HELPER_CPP = Glob(COMMON_DIR + '/testcase/pm/gtest/PMHelper.cpp')
+
+PM_HELPER_C = Glob(TC_DIR + '/helper/*.cpp')
+
+
+PM_STC_C_CPP = Glob(STC_DIR + '/*.cpp')
+PM_BTC_C_CPP = Glob(BTC_DIR + '/*.cpp')
+
+PM_BTC_SRC_C = [ PM_HELPER_C, PM_BTC_C_CPP, PM_STC_C_CPP, COMMON_STATIC_LIBS, PM_STATIC_LIBS]
+
+TEST_MAIN_SRC = Glob(PROJECT_HOME +  TARGET + 'tc' + '/IotivitySECTestMain.cpp')
+COMMON_UTIL_CPP = Glob(COMMON_UTIL_DIR + '/CommonUtil.cpp')
+
+SAMPLE_SERVER_JUSTWORKS_CPP = [TESTAPP_DIR + '/justworks_simulator.cpp']
+SAMPLE_SERVER_RANDOMPIN_CPP = [TESTAPP_DIR + '/randompin_simulator.cpp']
+
+##############Creating object files###############
+obj = []
+index = 0
+
+
+test_main = env_linux.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = PM_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+common_util = env_linux.Object(source = COMMON_UTIL_CPP, target = COMMON_UTIL_BIN, CPPPATH = PM_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+call_graph = env_linux.Object(source = CALL_GRAPH_CPP, target = CALL_GRAPH_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+
+obj.append(test_main )
+obj.append(common_util )
+obj.append(call_graph )
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+#create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+
+PM_itc_c = env_linux.Program(source =[PM_BTC_SRC_C, obj, PM_CERT_STATIC_LIBS], target = PM_STC_BIN_C, CPPPATH = [PM_CINCLUDE,PM_CERT_CINCLUDE], LIBS = [PM_LIBS, PM_CERT_LIBS], LIBPATH = PM_LIB_LOCATION, CXXFLAGS = PM_CXXFLAGS, CPPFLAGS = PM_CFLAGS)
+
+PM_Sample_Server_JustWorks = env_linux.Program(source =[SAMPLE_SERVER_JUSTWORKS_CPP], target = PM_SAMPLE_SERVER_JUST, CPPPATH = [PM_CINCLUDE,PM_CERT_CINCLUDE], LIBS = [PM_LIBS, PM_CERT_LIBS], LIBPATH = PM_LIB_LOCATION, CXXFLAGS = PM_CXXFLAGS, CPPFLAGS = PM_CFLAGS)
+
+PM_Sample_Server_Randompin = env_linux.Program(source =[SAMPLE_SERVER_RANDOMPIN_CPP], target = PM_SAMPLE_SERVER_RANDOM, CPPPATH = [PM_CINCLUDE,PM_CERT_CINCLUDE], LIBS = [PM_LIBS, PM_CERT_LIBS], LIBPATH = PM_LIB_LOCATION, CXXFLAGS = PM_CXXFLAGS, CPPFLAGS = PM_CFLAGS)
+
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+pre_job = [create_target_dir]
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_tc = env_linux.get('TARGET_TC')
+default_targets = []
+install_targets = []
+
+print "target_service = " + target_service
+print "target_tc = " + target_tc
+print "target_transport = " + target_transport
+
+#SConscript(GTEST + '/SConscript')
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+if 'pmc' in target_service or 'all' in target_service:
+        install_targets += [PM_itc_c, PM_Sample_Server_JustWorks, PM_Sample_Server_Randompin]
+        cert_lib_path = 'res/cert_data'
+        copy_cert_der1 = env_linux.Command('copy_cert_der1', [], Copy(TARGET, cert_lib_path + '/01.der'))
+        copy_cert_der2 = env_linux.Command('copy_cert_der2', [], Copy(TARGET, cert_lib_path + '/CKMInfo.json'))
+        copy_cert_der3 = env_linux.Command('copy_cert_der3', [], Copy(TARGET, cert_lib_path + '/cacert.der'))
+        copy_cert_der4 = env_linux.Command('copy_cert_der4', [], Copy(TARGET, cert_lib_path + '/capub.der'))
+        copy_cert_der5 = env_linux.Command('copy_cert_der5', [], Copy(TARGET, cert_lib_path + '/cert_chain.dat'))
+        copy_cert_der6 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, cert_lib_path + '/chain.der'))
+        default_targets += [create_target_dir, copy_cert_der1, copy_cert_der2, copy_cert_der3, copy_cert_der4, copy_cert_der5, copy_cert_der6]
+
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)

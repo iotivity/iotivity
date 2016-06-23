@@ -1,0 +1,348 @@
+##
+# The build script for Arduino
+#
+## 
+
+print '\n---------------Started Building IotivitySecTest for Arduino---------------\n'
+
+SConscript('config.scons')
+SConscript('arduino.scons')
+
+Import('env')
+
+target_arch = env.get('TARGET_ARCH')
+target_service = env.get('TARGET_SERVICE')
+tc_type = env.get('TARGET_TC')
+target_transport = env.get('TARGET_TRANSPORT')
+target_secured = env.get('SECURED')
+target_upload = env.get('UPLOAD')
+variant_dir = env.get('VARIANT_DIR')
+target_port = env.get('TARGET_PORT')
+target_source = env.get('TARGET_SOURCE')
+
+if target_source == None:
+	print "No TARGET SOURCE Found"
+else:	
+	print "target source is --------------------------------" + target_source
+
+if env.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+# Initializing Home Dir
+######################################################################
+
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + 'extlibs'
+#EXT_LIB_HOME = ENV_HOME + '/IotivitySECTestExtLibs'
+
+if target_source == '':
+	ORG_SRC_HOME = ENV_HOME
+else:
+	ORG_SRC_HOME = ENV_HOME + '/IotivityOrgSource/' + target_source + '/iotivity'
+		
+#ORG_SRC_HOME = ENV_HOME + '/IotivityOrgSource/' + target_source + '/iotivity'
+
+######################################################################
+
+# Initializing COMMON Dir
+######################################################################
+RESOURCE_OC_LOGGER_INCLUDE_DIR = ORG_SRC_HOME + '/resource/oc_logger/include'
+RESOURCE_LOGGER_INCLUDE_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
+EXTLIB_CJSON_DIR = ORG_SRC_HOME + '/extlibs/cjson'
+RESOURCE_OC_STACK_INCLUDE = ORG_SRC_HOME + '/resource/csdk/stack/include'
+RESOURCE_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
+
+
+######################################################################
+
+# Initializing CA Arduino Dir
+######################################################################
+
+CA_ARDUINO_DIR = ORG_SRC_HOME + '/resource/csdk/connectivity'
+CA_ARDUINO_LIB = ORG_SRC_HOME + '/out/arduino/avr/' + target_release
+
+CA_ARDUINO_INCLUDE = CA_ARDUINO_DIR + '/inc'
+CA_ARDUINO_API_INCLUDE = CA_ARDUINO_DIR + '/api'
+CA_ARDUINO_COAP_INCLUDE = CA_ARDUINO_DIR + '/lib/libcoap-4.1.1/'
+CA_ARDUINO_COMMON_INCLUDE = CA_ARDUINO_DIR + '/common/inc/'
+#CA_ARDUINO_SAMPLE_INCLUDE = CA_ARDUINO_DIR + '/samples/arduino/cahelper/'
+CA_ARDUINOUNIT_INCLUDE = EXT_LIB_HOME + '/ArduinoUnit'
+
+######################################################################
+
+# Initializing PHY Arduino Dir
+######################################################################
+print "Initializing PHY Arduino Dir "
+
+PHY_ARDUINO_RESOURCE_DIR = ORG_SRC_HOME + '/resource/csdk/connectivity'
+PHY_DIR = ORG_SRC_HOME + '/service/easy-setup'
+PHY_ARDUINO_LIB = ORG_SRC_HOME + '/out/arduino/avr/' + target_release
+
+PHY_SDK_COMMON = PHY_DIR + '/sdk/common'
+PHY_SDK_ENROLLEE_COMMON_INCLUDE = PHY_DIR + '/sdk/enrollee/common/inc'
+PHY_SDK_ENROLLEE_COMMON_SOURCE = PHY_DIR + '/sdk/enrollee/common/src'
+PHY_SDK_ENROLLEE_WIFI = PHY_DIR + '/sdk/enrollee/arduino/wifi'
+PHY_SDK_ENROLLEE_API = PHY_DIR + '/sdk/enrollee/api'
+
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+TC_DIR = PROJECT_HOME +  variant_dir + 'tc' + '/ca/arduinounit/src'
+TESTAPP_DIR = PROJECT_HOME +  variant_dir + 'testapp' + '/ca/c_cpp'
+ITC_DIR = TC_DIR + '/stc'
+UTC_DIR = TC_DIR + '/btc'
+SECTEST_DIR = ENV_HOME + '/IotivitySECTest'
+
+COMMON_DIR = PROJECT_HOME + variant_dir + 'common'
+COMMON_UTIL_DIR = PROJECT_HOME + variant_dir + 'common/commonutil/c_cpp'
+CA_ARDUINO_COMMON_DIR = TC_DIR + '/helper'
+TEST_APP_DIR = PROJECT_HOME + variant_dir + 'test_app'
+CA_ARDUINO_TEST_APP_DIR = TEST_APP_DIR + '/ca/arduino' 
+
+INCLUDE_DIR = PROJECT_HOME + '/include'
+TC_INCLUDE_DIR = PROJECT_HOME +  variant_dir + 'tc' + '/ca/arduinounit/include'
+CA_ARDUINO_INCLUDE_DIR = TC_INCLUDE_DIR + '/ca/arduinounit'
+COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
+CA_SIMULATOR_INCLUDE_DIR = TESTAPP_DIR + '/include' 
+OIC_MALLOC_INCLUDE = ORG_SRC_HOME + '/resource/c_common/oic_malloc/include'
+OIC_STRING_INCLUDE = ORG_SRC_HOME + '/resource/c_common/oic_string/include'
+CA_COMMON_LIBC = CA_ARDUINO_LIB + '/resource/c_common'
+PHY_INCLUDE = TC_INCLUDE_DIR + '/PHY/arduinounit'
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+print "Initializing Includes"
+
+COMMON_CINCLUDE = [COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, CA_ARDUINO_INCLUDE_DIR, OIC_MALLOC_INCLUDE, OIC_STRING_INCLUDE, RESOURCE_OC_STACK_INCLUDE, RESOURCE_C_COMMON]
+
+CA_ARDUINO_CINCLUDE = [COMMON_CINCLUDE, CA_ARDUINO_INCLUDE, CA_ARDUINO_API_INCLUDE, CA_ARDUINO_COAP_INCLUDE, CA_ARDUINO_COMMON_INCLUDE, CA_ARDUINOUNIT_INCLUDE, CA_SIMULATOR_INCLUDE_DIR]
+
+PHY_ARDUINO_CINCLUDE = [COMMON_CINCLUDE, RESOURCE_OC_LOGGER_INCLUDE_DIR, RESOURCE_LOGGER_INCLUDE_DIR, EXTLIB_CJSON_DIR, PHY_SDK_COMMON, PHY_SDK_ENROLLEE_COMMON_INCLUDE, PHY_SDK_ENROLLEE_COMMON_SOURCE, PHY_SDK_ENROLLEE_WIFI, PHY_INCLUDE, PHY_SDK_ENROLLEE_API]
+
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [CA_ARDUINO_LIB, CA_COMMON_LIBC]
+CA_ARDUINO_LIB_LOCATION = COMMON_LIB_LOCATION
+PHY_ARDUINO_LIB_LOCATION = [ORG_SRC_HOME+'/out/arduino/avr/' + target_release, ORG_SRC_HOME+'/out/arduino/avr/' + target_release + '/resource/c_common', ORG_SRC_HOME+'/out/arduino/avr/' + target_release + '/resource/csdk/routing']
+
+COMMON_STATIC_LIBS = []
+COMMON_SHARED_LIBS = ['libc_common']
+
+CA_ARDUINO_STATIC_LIBS = ['connectivity_abstraction', 'coap', 'c_common']
+CA_ARDUINO_LIBS = [COMMON_SHARED_LIBS, CA_ARDUINO_STATIC_LIBS]
+
+PHY_ARDUINO_SHARED_LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary', 'routingmanager', 'libc_common']
+PHY_ARDUINO_STATIC_RESOURCE_LIBS = []
+PHY_ARDUINO_LIBS = [COMMON_SHARED_LIBS, PHY_ARDUINO_SHARED_LIBS]
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+print "Initializing Targets"
+
+
+CA_ARDUINO_UTC_BIN = 'CATest'
+CA_ARDUINO_UTC_HEX = CA_ARDUINO_UTC_BIN + '.hex'
+
+CA_ARDUINO_ITC_COMMON_BIN = 'CACommonTest'
+CA_ARDUINO_ITC_COMMON_HEX = CA_ARDUINO_ITC_COMMON_BIN + '.hex'
+
+CA_ARDUINO_ITC_CLIENT_BIN = 'CAClientTest'
+CA_ARDUINO_ITC_CLIENT_HEX = CA_ARDUINO_ITC_CLIENT_BIN + '.hex'
+
+CA_ARDUINO_ITC_MULTICAST_BIN = 'CAMulticastTest'
+CA_ARDUINO_ITC_MULTICAST_HEX = CA_ARDUINO_ITC_MULTICAST_BIN + '.hex'
+
+CA_ARDUINO_SIMULATOR_BIN = 'CASimulator'
+CA_ARDUINO_SIMULATOR_HEX = CA_ARDUINO_SIMULATOR_BIN + '.hex'
+
+PHY_ARDUINO_WIFI_UTC_BIN = 'PhyWifiTest'
+PHY_ARDUINO_WIFI_UTC_HEX = PHY_ARDUINO_WIFI_UTC_BIN + '.hex'
+
+PHY_ARDUINO_WIFI_ITC_BIN = 'PhyWifiComplexTest'
+PHY_ARDUINO_WIFI_ITC_HEX = PHY_ARDUINO_WIFI_ITC_BIN + '.hex'
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+CA_ARDUINO_HELPER_CPP = Glob(CA_ARDUINO_COMMON_DIR + '/*.cpp')
+
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+TEST_MAIN = [TC_DIR + '/IotivitySECTestMain.cpp']
+
+CA_ARDUINO_UTC_CPP = UTC_DIR + '/CATest.cpp'
+CA_ARDUINO_ITC_COMMON_CPP = Glob(ITC_DIR + '/CACommonTest.cpp')
+CA_ARDUINO_ITC_CLIENT_CPP = Glob(ITC_DIR + '/CAClientTest.cpp')
+CA_ARDUINO_ITC_MULTICAST_CPP = Glob(ITC_DIR + '/CAMulticastTest.cpp')
+CA_ARDUINO_SIMULATOR_CPP = Glob(TESTAPP_DIR + '/src/ca_simulator.c')
+CA_ARDUINO_ARDUINOUNIT_CPP = Glob(CA_ARDUINOUNIT_INCLUDE + '/utility/*.cpp')
+
+TEMP_OIC_STRING = [CA_ARDUINO_LIB + '/resource/c_common/oic_string/src/oic_string.o']
+TEMP_OC_RANDOM = [CA_ARDUINO_LIB + '/resource/c_common/ocrandom/src/ocrandom.o']
+
+PHY_ARDUINO_WIFI_UTC_CPP = Glob(UTC_DIR + '/phy/arduinounit/*.cpp')
+PHY_ARDUINO_WIFI_ITC_CPP = Glob(ITC_DIR + '/phy/arduinounit/*.cpp')
+PHY_ARDUINO_HELPER_CPP = Glob(COMMON_DIR + '/testcase/PHY/arduinounit/*.cpp')
+
+
+CA_ARDUINO_UTC_SRC = [CA_ARDUINO_UTC_CPP, CA_ARDUINO_HELPER_CPP, CA_ARDUINO_ARDUINOUNIT_CPP]
+CA_ARDUINO_ITC_COMMON_SRC = [CA_ARDUINO_ITC_COMMON_CPP, CA_ARDUINO_HELPER_CPP, CA_ARDUINO_ARDUINOUNIT_CPP]
+CA_ARDUINO_ITC_CLIENT_SRC = [CA_ARDUINO_ITC_CLIENT_CPP, CA_ARDUINO_HELPER_CPP, CA_ARDUINO_ARDUINOUNIT_CPP]
+CA_ARDUINO_ITC_MULTICAST_SRC = [CA_ARDUINO_ITC_MULTICAST_CPP, CA_ARDUINO_HELPER_CPP, CA_ARDUINO_ARDUINOUNIT_CPP]
+CA_ARDUINO_SIMULATOR_SRC = [CA_ARDUINO_SIMULATOR_CPP]
+
+PHY_ARDUINO_WIFI_UTC_SRC = [PHY_ARDUINO_WIFI_UTC_CPP, PHY_ARDUINO_HELPER_CPP, CA_ARDUINO_ARDUINOUNIT_CPP, ORG_SRC_HOME+'/out/arduino/avr/' + target_release + '/resource/c_common/oic_malloc/src/oic_malloc.o', ORG_SRC_HOME+'/out/arduino/avr/' + target_release + '/resource/c_common/oic_string/src/oic_string.o']
+
+PHY_ARDUINO_WIFI_ITC_SRC = [PHY_ARDUINO_WIFI_ITC_CPP, PHY_ARDUINO_HELPER_CPP, CA_ARDUINO_ARDUINOUNIT_CPP, ORG_SRC_HOME+'/out/arduino/avr/' + target_release + '/resource/c_common/oic_malloc/src/oic_malloc.o', ORG_SRC_HOME+'/out/arduino/avr/' + target_release + '/resource/c_common/oic_string/src/oic_string.o']
+
+######################################################################
+
+# Initializing CPP Defines
+######################################################################
+
+transport = env.get('TARGET_TRANSPORT')
+
+env.AppendUnique(CPPDEFINES = ['__TC_PLATFORM_ARDUINO__'])
+
+if 'ALL' in transport:
+	print "All transports are not supported simultaneously in Arduino"
+	exit(1)
+else:
+	if 'BT' in transport:
+		env.AppendUnique(CPPDEFINES = ['EDR_ADAPTER'])
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_EDR_ADAPTER'])
+
+	if 'BLE' in transport:
+		env.AppendUnique(CPPDEFINES = ['LE_ADAPTER'])
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_LE_ADAPTER'])
+
+	if 'IP' in transport:
+		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER'])
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
+
+if env.get('SHIELD') == 'WIFI':
+	env.AppendUnique(CPPDEFINES = ['ARDUINOWIFI', 'ESWIFI'])
+elif env.get('SHIELD') == 'ETH':
+	env.AppendUnique(CPPDEFINES = ['ARDUINOETH'])
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+if target_service == 'ca':
+	env.AppendUnique(LIBPATH = [CA_ARDUINO_LIB_LOCATION])
+	env.PrependUnique(LIBS = [CA_ARDUINO_LIBS])
+	env.PrependUnique(CPPPATH = [CA_ARDUINO_CINCLUDE, PHY_ARDUINO_CINCLUDE])
+	env.PrependUnique(CPPFLAGS = ["-fpermissive"])
+
+if target_service == 'phy':
+	env.AppendUnique(LIBPATH = [PHY_ARDUINO_LIB_LOCATION])
+	env.PrependUnique(LIBS = [PHY_ARDUINO_LIBS])
+	env.PrependUnique(CPPPATH = [CA_ARDUINO_CINCLUDE, PHY_ARDUINO_CINCLUDE])
+	env.PrependUnique(CPPFLAGS = ["-fpermissive", "-g", "-mmcu=atmega2560", "-DF_CPU=16000000L", "-DARDUINO=158", "-DARDUINO_AVR_MEGA2560", "-DARDUINO_ARCH_AVR"])
+	env.PrependUnique(CPPDEFINES = ['ARDUINOWIFI', 'WITH_ARDUINO', '__ARDUINO__', '-D__OIC_DEVICE_NAME__=\'"OIC-DEVICE"\'', 'TB_LOG', 'NO_EDR_ADAPTER', 'NO_LE_ADAPTER', 'IP_ADAPTER', 'NO_TCP_ADAPTER', 'ROUTING_EP', 'SINGLE_THREAD', 'EASY_SETUP_CA_INIT'])
+
+
+if target_service == 'ca':
+	ca_arduino_utc = env.Program(target = CA_ARDUINO_UTC_BIN, source = CA_ARDUINO_UTC_SRC)
+	env.CreateBin(CA_ARDUINO_UTC_BIN)
+
+	ca_arduino_itc_common = env.Program(target = CA_ARDUINO_ITC_COMMON_BIN, source = CA_ARDUINO_ITC_COMMON_SRC)
+	env.CreateBin(CA_ARDUINO_ITC_COMMON_BIN)
+
+	ca_arduino_itc_client = env.Program(target = CA_ARDUINO_ITC_CLIENT_BIN, source = CA_ARDUINO_ITC_CLIENT_SRC)
+	env.CreateBin(CA_ARDUINO_ITC_CLIENT_BIN)
+
+	ca_arduino_itc_multicast = env.Program(target = CA_ARDUINO_ITC_MULTICAST_BIN, source = CA_ARDUINO_ITC_MULTICAST_SRC)
+	env.CreateBin(CA_ARDUINO_ITC_MULTICAST_BIN)
+	
+	ca_simulator_env = env.Clone()
+	
+	ca_simulator_env.Replace(CC = 'avr-g++')
+	ca_simulator_env.Replace(CXX = 'avr-g++')
+	ca_simulator_env.Replace(LINK = 'avr-g++')
+	
+	ca_arduino_simulator = ca_simulator_env.Program(target = CA_ARDUINO_SIMULATOR_BIN, source = CA_ARDUINO_SIMULATOR_SRC)
+	ca_simulator_env.CreateBin(CA_ARDUINO_SIMULATOR_BIN)
+
+if target_service == 'phy':
+	phy_arduino_wifi_utc = env.Program(target = PHY_ARDUINO_WIFI_UTC_BIN, source = PHY_ARDUINO_WIFI_UTC_SRC)
+	env.CreateBin(PHY_ARDUINO_WIFI_UTC_BIN)
+	phy_arduino_wifi_itc = env.Program(target = PHY_ARDUINO_WIFI_ITC_BIN, source = PHY_ARDUINO_WIFI_ITC_SRC)
+	env.CreateBin(PHY_ARDUINO_WIFI_ITC_BIN)
+
+if target_service == 'ps':
+	SConscript('SCons_phy_sim', exports = 'env')
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env.get('TARGET_SERVICE')
+target_transport = env.get('TARGET_TRANSPORT')
+target_tc = env.get('TARGET_TC')
+default_targets = []
+install_targets = []
+
+print "---------------service--------------" + target_service + " : " + target_tc
+
+if 'ca' in target_service or 'all' in target_service:
+	print "CA is Selected"
+	default_targets += [CA_ARDUINO_UTC_HEX, CA_ARDUINO_ITC_COMMON_HEX, CA_ARDUINO_ITC_CLIENT_HEX, CA_ARDUINO_ITC_MULTICAST_HEX, CA_ARDUINO_SIMULATOR_HEX]
+	install_targets += [CA_ARDUINO_UTC_BIN, CA_ARDUINO_ITC_COMMON_BIN, CA_ARDUINO_ITC_CLIENT_BIN, CA_ARDUINO_ITC_MULTICAST_BIN, CA_ARDUINO_SIMULATOR_BIN]
+
+if 'phy' in target_service or 'all' in target_service:
+	default_targets += [PHY_ARDUINO_WIFI_UTC_HEX,PHY_ARDUINO_WIFI_ITC_HEX]
+	install_targets += [PHY_ARDUINO_WIFI_UTC_BIN,PHY_ARDUINO_WIFI_ITC_BIN]
+	
+install = env.Install(PROJECT_HOME + variant_dir, [install_targets, default_targets])
+delete_targets = install_targets + default_targets + ['bin']
+
+delete_bin = []
+i = 0
+for delete_target in delete_targets:
+    delete_bin += '0'
+    delete_target = "build/arduino/" + delete_target
+    delete_bin[i] = env.Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install + delete_bin
+
+env.Default(default_targets)
+
+######################################################################
+
+# Upload Targets
+######################################################################
+
+if(env['UPLOAD'] == True):
+	print "Uploading..."
+	#env.Upload(variant_dir + CA_ARDUINO_UTC_HEX,target_port)
+	#env.Upload(variant_dir + CA_ARDUINO_ITC_COMMON_HEX,target_port)
+	#env.Upload(variant_dir + CA_ARDUINO_ITC_CLIENT_HEX,target_port)
+	#env.Upload(variant_dir + CA_ARDUINO_ITC_SERVER_HEX,target_port)
+	#env.Upload(variant_dir + CA_ARDUINO_ITC_MULTICAST_HEX,target_port)
+	#env.Upload(variant_dir + CA_ARDUINO_SIMULATOR_HEX,target_port)
+	#env.Upload(variant_dir + PHY_ARDUINO_WIFI_UTC_HEX,target_port)
+	#env.Upload(variant_dir + PHY_ARDUINO_WIFI_ITC_HEX,target_port)

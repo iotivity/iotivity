@@ -1,0 +1,64 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+
+##
+# Configuratoin file for IotivitySecTest [Please do not keep any field EMPTY]
+#
+##
+
+Import('env')
+
+#----------------------------------------------------------------------
+# Build Tools
+#----------------------------------------------------------------------
+
+env.Replace(ANDROID_HOME = 'NOT_DEFINED')
+env.Replace(ANDROID_NDK = 'NOT_DEFINED')
+env.Replace(ARDUINO_HOME = '/root/arduino-1.5.8')
+
+#----------------------------------------------------------------------
+# Tizen dirs
+#----------------------------------------------------------------------
+
+env.Replace(RPMS_DIR = '/home/mushfiqul/GBS-ROOT/local/repos/tizen/armv7l/RPMS')
+
+env.Replace(SRC_RPM_NAME = 'iotivityTest-1.0.0-0.armv7l.rpm')
+#----------------------------------------------------------------------
+# Target Dirs
+#----------------------------------------------------------------------
+
+env.Replace(LINUX_TARGET = 'bin/linux/')
+env.Replace(TIZEN_TARGET = 'bin/tizen/')
+env.Replace(ANDROID_TARGET = 'bin/android/')
+env.Replace(ARDUINO_TARGET = 'bin/arduino/')
+env.Replace(WINDOWS_TARGET = 'bin/windows/')
+
+#----------------------------------------------------------------------
+# Source Dirs
+#----------------------------------------------------------------------
+
+env.Replace(ENV_HOME = '../../..')
+env.Replace(PROJECT_HOME = '../../')
+env.Replace(EXT_LIB_HOME = env.get('ENV_HOME') + '/IotivitySECTestExtLibs')
+env.Replace(DEV_SRC_HOME = env.get('ENV_HOME') + '/IotivitySECDevSource')
+env.Replace(ORG_SRC_TARGET = '/IotivityOrgSource/target/iotivity')
+env.Replace(ORG_SRC_LAST = '/IotivityOrgSource/last/iotivity')
