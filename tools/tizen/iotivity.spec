@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 1.1.0
+Version: 1.1.1
 Release: 0
 Summary: IoT Connectivity sponsored by the OIC
 Group: Network & Connectivity/Other
