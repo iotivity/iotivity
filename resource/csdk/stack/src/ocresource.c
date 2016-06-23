@@ -772,8 +772,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                             discPayload->name = OICStrdup(savedDeviceInfo.deviceName);
                             VERIFY_NON_NULL(discPayload->name, ERROR, OC_STACK_NO_MEMORY);
                         }
-                        discPayload->type = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
+                        discPayload->type = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
                         VERIFY_NON_NULL(discPayload->type, ERROR, OC_STACK_NO_MEMORY);
+                        discPayload->type->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
+                        VERIFY_NON_NULL(discPayload->type->value, ERROR, OC_STACK_NO_MEMORY);
                         OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_LL);
                         OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_DEFAULT);
                         VERIFY_NON_NULL(discPayload->interface, ERROR, OC_STACK_NO_MEMORY);

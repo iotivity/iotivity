@@ -189,7 +189,10 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
     }
     if (payload->type)
     {
-        OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", payload->type);
+        for (OCStringLL *strll = payload->type; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", strll->value);
+        }
     }
     OIC_LOG(level, PL_TAG, "\tInterface:");
     for (OCStringLL *itf = payload->interface; itf; itf = itf->next)
