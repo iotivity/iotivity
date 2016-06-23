@@ -42,27 +42,28 @@ extern "C" {
  */
 typedef void (*ESEnrolleeEventCallback)(ESResult esResult, ESEnrolleeState enrolleeState);
 
+
+
+typedef struct
+{
+    void (*WiFiProvCb) (ESWiFiProvData *);
+    void (*DevConfProvCb) (ESDevConfProvData *);
+    void (*CloudDataProvCb) (ESCloudProvData *);
+} ESProvisioningCallbacks;
+
 /**
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API
  *
- * @param networkType       NetworkType on which OnBoarding has to be performed.
- * @param ssid              SSID of the target SoftAP network to which the Enrollee is connecting.
- * @param passwd            Password of the target SoftAP network to which the Enrollee is
- *                          connecting
  * @param isSecured         True if the Enrollee is operating in secured mode.
- * @param eventCallback     ESEnrolleeEventCallback for for updating the Enrollee OnBoarding status
- *                          result to the application
+ * @param resourceMask      Provisining Resource Type which application wants to make
+ *                          ES_WIFI_RESOURCE = 0x01,
+ *                          ES_CLOUD_RESOURCE = 0x02,
+ *                          ES_DEVCONF_RESOURCE = 0x04
+ * @param callbacks         ESProvisioningCallbacks for updating Provisioning Resources' data to the application
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult ESInitEnrollee(OCConnectivityType networkType, const char *ssid, const char *passwd,
-                                bool isSecured, ESEnrolleeEventCallback eventCallback);
+ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
 
-/**
- * This function performs initialization of Provisioning and Network resources needed for EasySetup
- * process.
- * @return ::ES_OK on success, some other value upon failure.
- */
-ESResult ESInitProvisioning();
 
 /**
  * This function performs termination of Provisioning and Network resources.

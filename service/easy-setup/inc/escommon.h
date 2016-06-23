@@ -149,6 +149,36 @@ typedef enum
 
 typedef enum
 {
+    ES_WIFI_RESOURCE = 0x01,
+    ES_CLOUD_RESOURCE = 0x02,
+    ES_DEVCONF_RESOURCE = 0x04
+} ESResourceMask;
+
+typedef struct
+{
+    char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
+    char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
+    WIFI_AUTHTYPE authtype; /**< auth type of the Enroller**/
+    WIFI_ENCTYPE enctype; /**< encryption type of the Enroller**/
+} ESWiFiProvData;
+
+typedef struct
+{
+    char language[OIC_STRING_MAX_VALUE];
+    char country[OIC_STRING_MAX_VALUE];
+} ESDevConfProvData;
+
+typedef struct
+{
+    char authCode[OIC_STRING_MAX_VALUE];
+    char authProvider[OIC_STRING_MAX_VALUE];
+    char ciServer[OIC_STRING_MAX_VALUE];
+} ESCloudProvData;
+
+
+// TODO : Need to be erased
+typedef enum
+{
     /**
      * Default state of the device
      */
@@ -297,5 +327,6 @@ typedef struct {
    char ipAddress[IPV4_ADDR_SIZE]; /**< IP Address of the Enrollee **/
    bool isSecured;                 /**< Secure connection**/
 }WiFiOnboadingConnection;
+
 
 #endif //ES_COMMON_H_

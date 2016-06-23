@@ -25,8 +25,6 @@
  */
 
 #include "easysetup.h"
-//#include "softap.h"
-//#include "onboarding.h"
 #include "logger.h"
 #include "resourcehandler.h"
 #include "easysetupcallbacks.h"
@@ -40,117 +38,126 @@
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
-
-/**
- * @var gTargetSsid
- * @brief Target SSID of the Soft Access point to which the device has to connect
- */
-static char gTargetSsid[MAXSSIDLEN];
-
-/**
- * @var gTargetPass
- * @brief Password of the target access point to which the device has to connect
- */
-static char gTargetPass[MAXNETCREDLEN];
-
-/**
- * @var gEnrolleeStatusCb
- * @brief Fucntion pointer holding the callback for intimation of EasySetup Enrollee status callback
- */
-static ESEnrolleeEventCallback gEnrolleeStatusCb = NULL;
-
-/**
- * @var gIsSecured
- * @brief Variable to check if secure mode is enabled or not.
- */
 static bool gIsSecured = false;
 
-void ESOnboardingCallback(ESResult esResult)
-{
-        OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESOnboardingCallback with  result = %d", esResult);
-        if(esResult == ES_OK)
-        {
-            gEnrolleeStatusCb(esResult, ES_ON_BOARDED_STATE);
-        }
-        else
-        {
-            OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG,
-                        "Onboarding is failed callback result is = %d", esResult);
-            gEnrolleeStatusCb(esResult, ES_INIT_STATE);
-        }
-}
+static ESProvisioningCallbacks gESProvisioningCb;
 
-void ESProvisioningCallback(ESResult esResult)
+void ESWiFiRsrcCallback(ESResult esResult, ESWiFiProvData *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESProvisioningCallback with  result = %d", esResult);
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESWiFiRsrcCallback IN");
 
-    if (esResult == ES_RECVTRIGGEROFPROVRES)
+    if(esResult != ES_OK)
     {
-        GetTargetNetworkInfoFromProvResource(gTargetSsid, gTargetPass);
-        gEnrolleeStatusCb(ES_OK, ES_PROVISIONED_STATE);
-        OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting with target network");
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESWiFiRsrcCallback Error Occured");
+        return;
+    }
 
-        // Connecting/onboarding to target network
-        //ConnectToWiFiNetwork(gTargetSsid, gTargetPass, ESOnboardingCallbackTargetNet);
+    // deliver data to ESProvisioningCallbacks
+    if(gESProvisioningCb.WiFiProvCb != NULL)
+    {
+        gESProvisioningCb.WiFiProvCb(eventData);
     }
     else
     {
-       OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Provisioning is failed callback result is = %d", esResult);
-       // Resetting Enrollee to ONBOARDED_STATE as Enrollee is alreday onboarded in previous step
-       gEnrolleeStatusCb(ES_OK, ES_ON_BOARDED_STATE);
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "WiFiProvCb is NULL");
+        return;
     }
 }
 
-void ESOnboardingCallbackTargetNet(ESResult esResult)
+void ESCloudRsrcCallback(ESResult esResult, ESCloudProvData *eventData)
 {
-    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESOnboardingCallback on target network with result = %d",
-                                                                                        esResult);
-    if(esResult == ES_OK)
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESCloudRsrcCallback IN");
+
+    if(esResult != ES_OK)
     {
-        gEnrolleeStatusCb(esResult, ES_ON_BOARDED_TARGET_NETWORK_STATE);
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESCloudRsrcCallback Error Occured");
+        return;
+    }
+
+    if(gESProvisioningCb.CloudDataProvCb != NULL)
+    {
+        gESProvisioningCb.CloudDataProvCb(eventData);
     }
     else
     {
-        OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG,
-                    "Onboarding is failed on target network and callback result is = %d", esResult);
-        // Resetting Enrollee state to the ES_PROVISIONED_STATE
-        // as device is already being provisioned with target network creds.
-        gEnrolleeStatusCb(esResult, ES_PROVISIONED_STATE);
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "CloudDataProvCb is NULL");
+        return;
     }
 }
 
-ESResult ESInitEnrollee(OCConnectivityType networkType, const char *ssid, const char *passwd,
-        bool isSecured,
-        ESEnrolleeEventCallback cb)
+void ESDevconfRsrcallback(ESResult esResult, ESDevConfProvData *eventData)
+{
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ESDevconfRsrcallback IN");
+
+    if(esResult != ES_OK)
+    {
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "ESDevconfRsrcallback Error Occured");
+        return;
+    }
+
+    if(gESProvisioningCb.DevConfProvCb != NULL)
+    {
+        gESProvisioningCb.DevConfProvCb(eventData);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "DevConfProvCb is NULL");
+        return;
+    }
+}
+
+ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitEnrollee IN");
-    if(!ESEnrolleeValidateParam(networkType,ssid,passwd,cb))
-    {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG,
-                            "ESInitEnrollee::Stopping Easy setup due to invalid parameters");
-        return ES_ERROR;
-    }
-
-    //Init callback
-    gEnrolleeStatusCb = cb;
 
     gIsSecured = isSecured;
 
-    // TODO : This onboarding state has to be set by lower layer, as they better
-    // knows when actually on-boarding started.
-    cb(ES_ERROR,ES_ON_BOARDING_STATE);
-
-    /*
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "received callback");
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "onboarding now..");
-
-    if(!ESOnboard(ssid, passwd, ESOnboardingCallback))
+    if((resourceMask & ES_WIFI_RESOURCE) == ES_WIFI_RESOURCE)
     {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESInitEnrollee::On-boarding failed");
-        cb(ES_ERROR, ES_INIT_STATE);
+        if(callbacks.WiFiProvCb != NULL)
+        {
+            gESProvisioningCb.WiFiProvCb = callbacks.WiFiProvCb;
+            RegisterWifiRsrcEventCallBack(ESWiFiRsrcCallback);
+        }
+        else
+        {
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "WiFiProvCb NULL");
+            return ES_ERROR;
+        }
+    }
+    if((resourceMask & ES_DEVCONF_RESOURCE) == ES_DEVCONF_RESOURCE)
+    {
+        if(callbacks.DevConfProvCb != NULL)
+        {
+            gESProvisioningCb.DevConfProvCb = callbacks.DevConfProvCb;
+            RegisterDevConfRsrcEventCallBack(ESDevconfRsrcallback);
+        }
+        else
+        {
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "DevConfProvCb NULL");
+            return ES_ERROR;
+        }
+    }
+    if((resourceMask & ES_CLOUD_RESOURCE) == ES_CLOUD_RESOURCE)
+    {
+        if(callbacks.DevConfProvCb != NULL)
+        {
+            gESProvisioningCb.CloudDataProvCb = callbacks.CloudDataProvCb;
+            RegisterCloudRsrcEventCallBack(ESCloudRsrcCallback);
+        }
+        else
+        {
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CloudDataProvCb NULL");
+            return ES_ERROR;
+        }
+    }
+
+    if(CreateEasySetupResources(gIsSecured, resourceMask) != OC_STACK_OK)
+    {
+        // TODO : Error Handling
         return ES_ERROR;
     }
-    */
+
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitEnrollee OUT");
     return ES_OK;
@@ -169,22 +176,6 @@ ESResult ESTerminateEnrollee()
 
     OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESTerminateEnrollee success");
     return ES_OK;
-}
-
-ESResult ESInitProvisioning()
-{
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitProvisioning <<IN>>");
-
-    if (CreateEasySetupResources(gIsSecured) != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CreateProvisioningResource error");
-        return ES_ERROR;
-    }
-
-    RegisterResourceEventCallBack(ESProvisioningCallback);
-
-    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESInitProvisioning <<OUT>>");
-    return ES_RESOURCECREATED;
 }
 
 static bool ESEnrolleeValidateParam(OCConnectivityType networkType, const char *ssid,

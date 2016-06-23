@@ -26,21 +26,10 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#define TAG "TS"
+#define TAG "ENROLLEE_SAMPLE"
 
 void *listeningFunc(void *);
 
-/**
- * @var ssid
- * @brief Target SSID of the Soft Access point to which the device has to connect
- */
-static char ssid[] = "EasySetup123";
-
-/**
- * @var passwd
- * @brief Password of the Soft Access point to which the device has to connect
- */
-static char passwd[] = "EasySetup123";
 
 /**
  * Secure Virtual Resource database for Iotivity Server
@@ -62,43 +51,138 @@ void PrintMenu()
 {
     printf("============\n");
     printf("S: Enabled Security\n");
-    printf("I: Init easy setup\n");
-    printf("P: start provisioning resources\n");
-    printf("T: terminate\n");
-    printf("Q: quit\n");
+    printf("I: Init & Start EasySetup\n");
+    printf("D: Set DeviceInfo\n");
+    printf("T: Terminate\n");
+    printf("Q: Quit\n");
     printf("============\n");
 }
 
-void EventCallbackInApp(ESResult esResult, ESEnrolleeState enrolleeState)
+void WiFiProvCbInApp(ESWiFiProvData *eventData)
 {
-    printf("Easy setup event callback\n");
+    printf("WiFiProvCbInApp IN\n");
 
-    if(esResult == ES_OK)
+    if(eventData->ssid != NULL)
     {
-        if(enrolleeState == ES_ON_BOARDED_STATE)
-        {
-            printf("Device is successfully OnBoared on Adhoc network\n");
-        }
-        else if (enrolleeState == ES_PROVISIONED_STATE)
-        {
-            printf("Device is provisioned with target network's credentials\n");
-        }
-        else if (enrolleeState == ES_ON_BOARDED_TARGET_NETWORK_STATE)
-        {
-            printf("Device is onboarded/connected with target network\n");
-        }
-        else
-        {
-            printf("Wrong state !! Easy setup is failed at Enrollee state = %d\n",enrolleeState);
-        }
+        printf("SSID : %s\n", eventData->ssid);
     }
     else
     {
-        printf("Easy stup is failed at Enrollee state = %d\n",enrolleeState);;
+        printf("ERROR! SSID IS NULL\n");
+        return;
     }
+
+    if(eventData->pwd != NULL)
+    {
+        printf("Password : %s\n", eventData->pwd);
+    }
+    else
+    {
+        printf("ERROR! Password IS NULL\n");
+        return;
+    }
+
+    if(eventData->authtype == NONE_AUTH || eventData->authtype == WEP || \
+        eventData->authtype == WPA_PSK || eventData->authtype == WPA2_PSK)
+    {
+        printf("AuthType : %d\n", eventData->authtype);
+    }
+    else
+    {
+        printf("ERROR! AuthType IS NULL\n");
+        return;
+    }
+
+    if(eventData->enctype == NONE_ENC || eventData->enctype == WEP_64 || \
+        eventData->enctype == WEP_128 || eventData->enctype == TKIP || \
+        eventData->enctype == AES || eventData->enctype == TKIP_AES)
+    {
+        printf("EncType : %d\n", eventData->enctype);
+    }
+    else
+    {
+        printf("ERROR! EncType IS NULL\n");
+        return;
+    }
+
+    printf("WiFiProvCbInApp OUT\n");
 
     PrintMenu();
 }
+
+void DevConfProvCbInApp(ESDevConfProvData *eventData)
+{
+    printf("DevConfProvCbInApp IN\n");
+
+    if(eventData->language != NULL)
+    {
+        printf("Language : %s\n", eventData->language);
+    }
+    else
+    {
+        printf("ERROR! Language IS NULL\n");
+        return;
+    }
+
+    if(eventData->country != NULL)
+    {
+        printf("Country : %s\n", eventData->country);
+    }
+    else
+    {
+        printf("ERROR! Country IS NULL\n");
+        return;
+    }
+
+    printf("DevConfProvCbInApp OUT\n");
+
+    PrintMenu();
+}
+
+void CloudDataProvCbInApp(ESCloudProvData *eventData)
+{
+    printf("CloudDataProvCbInApp IN\n");
+
+    if(eventData->authCode != NULL)
+    {
+        printf("AuthCode : %s\n", eventData->authCode);
+    }
+    else
+    {
+        printf("ERROR! AuthCode IS NULL\n");
+        return;
+    }
+
+    if(eventData->authProvider != NULL)
+    {
+        printf("AuthProvider : %s\n", eventData->authProvider);
+    }
+    else
+    {
+        printf("ERROR! AuthProvider IS NULL\n");
+        return;
+    }
+
+    if(eventData->ciServer != NULL)
+    {
+        printf("CI Server : %s\n", eventData->ciServer);
+    }
+    else
+    {
+        printf("ERROR! CI Server IS NULL\n");
+        return;
+    }
+
+    printf("CloudDataProvCbInApp OUT\n");
+
+    PrintMenu();
+}
+
+ESProvisioningCallbacks gCallbacks = {
+    .WiFiProvCb = &WiFiProvCbInApp,
+    .DevConfProvCb = &DevConfProvCbInApp,
+    .CloudDataProvCb = &CloudDataProvCbInApp
+};
 
 FILE* server_fopen(const char *path, const char *mode)
 {
@@ -119,31 +203,21 @@ void EnableSecurity()
 
 void StartEasySetup()
 {
-    printf("StartEasySetup and onboarding started..\n");
+    printf("StartEasySetup IN\n");
 
-    if(ESInitEnrollee(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
-    {
-        printf("StartEasySetup and onboarding Fail!!\n");
-        return;
-    }
-}
-
-void ESInitResources()
-{
-    printf("Starting Enrollee Provisioning\n");
-
-    // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
         printf("OCStack init error!!\n");
         return;
     }
 
-    if (ESInitProvisioning() == ES_ERROR)
+    ESResourceMask resourcemMask = ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE;
+    if(ESInitEnrollee(gIsSecured, resourcemMask, gCallbacks) != ES_OK)
     {
-        printf("Init Provisioning Failed!!\n");
+        printf("OCStack init error!!\n");
         return;
     }
+    printf("ESInitEnrollee Success\n");
 
     pthread_t thread_handle;
     if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
@@ -151,7 +225,7 @@ void ESInitResources()
         printf("Thread creation failed\n");
     }
 
-    printf("ESInitProvisioning Success\n");
+    printf("StartEasySetup OUT\n");
 }
 
 void StopEasySetup()
@@ -184,10 +258,14 @@ int main()
 
     while(true)
     {
-        scanf("%c",&option);
+        if(scanf("%c", &option) != 1)
+        {
+            printf("Failed to read input data\n");
+            continue;
+        }
 
-       if(option!= '\n')
-      {
+        if(option!= '\n')
+        {
             switch (option)
             {
                 case 'H': // help
@@ -210,10 +288,9 @@ int main()
                     StartEasySetup();
                     break;
 
-                case 'P': // start provisioning
-                case 'p':
-                    ESInitResources();
-                    break;
+                case 'D': // Set Device Info
+                case 'd':
+                    // TODO
 
                 case 'T': // stop easy setup
                 case 't':
@@ -230,7 +307,7 @@ int main()
     return 0;
 }
 
-void *listeningFunc(void * a)
+void *listeningFunc(void * data)
 {
     OCStackResult result;
 

@@ -24,7 +24,6 @@
 #include "logger.h"
 #include "ocstack.h"
 #include "escommon.h"
-//#include "networkhandler.h"
 #include "octypes.h"
 
 #ifndef ES_RESOURCE_HANDLER_H_
@@ -34,7 +33,9 @@
 extern "C" {
 #endif
 
-typedef void (*ESEnrolleeResourceEventCallback)(ESResult);
+typedef void (*ESWiFiCB) (ESResult, ESWiFiProvData *);
+typedef void (*ESCloudCB) (ESResult, ESCloudProvData *);
+typedef void (*ESDevConfCB) (ESResult, ESDevConfProvData *);
 
 /* Structure to represent a Light resource */
 typedef struct PROVRESOURCE
@@ -48,13 +49,13 @@ typedef struct PROVRESOURCE
 typedef struct
 {
     OCResourceHandle handle;
-    int64_t supportedMode[NUM_WIFIMODE];
+    WIFI_MODE supportedMode[NUM_WIFIMODE];
     uint8_t numMode;
-    int64_t supportedFreq;
+    WIFI_FREQ supportedFreq;
     char ssid[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
     char cred[MAXNETCREDLEN]; // credential information.
-    int64_t authType;
-    int64_t encType;
+    WIFI_AUTHTYPE authType;
+    WIFI_ENCTYPE encType;
 } WiFiResource;
 
 typedef struct
@@ -74,14 +75,14 @@ typedef struct
 } DevConfResource;
 
 
-OCStackResult CreateProvisioningResource(bool isSecured);
-OCStackResult CreateEasySetupResources(bool isSecured);
-OCStackResult DeleteProvisioningResource();
+OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
 OCStackResult DeleteEasySetupResources();
 
 
 void GetTargetNetworkInfoFromProvResource(char *, char *);
-void RegisterResourceEventCallBack(ESEnrolleeResourceEventCallback);
+void RegisterWifiRsrcEventCallBack(ESWiFiCB);
+void RegisterCloudRsrcEventCallBack(ESCloudCB);
+void RegisterDevConfRsrcEventCallBack(ESDevConfCB);
 void UnRegisterResourceEventCallBack(void);
 
 #ifdef __cplusplus
