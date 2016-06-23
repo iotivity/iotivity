@@ -38,6 +38,8 @@ namespace OC {
 static const char COAP[] = "coap://";
 static const char COAPS[] = "coaps://";
 static const char COAP_TCP[] = "coap+tcp://";
+static const char COAP_GATT[] = "coap+gatt://";
+static const char COAP_RFCOMM[] = "coap+rfcomm://";
 
 using OC::nil_guard;
 using OC::result_guard;
@@ -136,13 +138,21 @@ void OCResource::setHost(const std::string& host)
     {
         prefix_len = sizeof(COAP_TCP) - 1;
     }
+    else if (host.compare(0, sizeof(COAP_GATT) - 1, COAP_GATT) == 0)
+    {
+        prefix_len = sizeof(COAP_GATT) - 1;
+    }
+    else if (host.compare(0, sizeof(COAP_RFCOMM) - 1, COAP_RFCOMM) == 0)
+    {
+        prefix_len = sizeof(COAP_RFCOMM) - 1;
+    }
     else
     {
         throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
-    // remove 'coap://' or 'coaps://' or 'coap+tcp://'
+    // remove 'coap://' or 'coaps://' or 'coap+tcp://' or 'coap+gatt://' or 'coap+rfcomm://'
     std::string host_token = host.substr(prefix_len);
 
     if(host_token[0] == '[') // IPv6
@@ -487,20 +497,31 @@ void OCResource::unsetHeaderOptions()
 std::string OCResource::host() const
 {
     std::ostringstream ss;
-    if (m_devAddr.flags & OC_SECURE)
-    {
-        ss << COAPS;
-    }
-    else if ((m_devAddr.adapter & OC_ADAPTER_TCP)
-            || (m_devAddr.adapter & OC_ADAPTER_GATT_BTLE)
-            || (m_devAddr.adapter & OC_ADAPTER_RFCOMM_BTEDR))
+
+    if (m_devAddr.adapter & OC_ADAPTER_TCP)
     {
         ss << COAP_TCP;
     }
+    else if (m_devAddr.adapter & OC_ADAPTER_GATT_BTLE)
+    {
+        ss << COAP_GATT;
+    }
+    else if (m_devAddr.adapter & OC_ADAPTER_RFCOMM_BTEDR)
+    {
+        ss << COAP_RFCOMM;
+    }
     else
     {
-        ss << COAP;
+        if (m_devAddr.flags & OC_SECURE)
+        {
+            ss << COAPS;
+        }
+        else
+        {
+            ss << COAP;
+        }
     }
+
     if (m_devAddr.flags & OC_IP_USE_V6)
     {
         ss << '[' << m_devAddr.addr << ']';
