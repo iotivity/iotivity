@@ -248,7 +248,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
         err = cbor_value_map_find_value(&rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
         if (cbor_value_is_valid(&curVal))
         {
-            err = cbor_value_dup_text_string(&curVal, &(out->type), &len, NULL);
+            err = OCParseStringLL(&rootMap, OC_RSRVD_RESOURCE_TYPE, &out->type);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
         }
 

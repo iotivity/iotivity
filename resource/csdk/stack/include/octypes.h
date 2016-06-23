@@ -1198,7 +1198,7 @@ typedef struct
     char *uri;
 
     /** Resource Type */
-    char *type;
+    OCStringLL *type;
 
     /** Interface */
     OCStringLL *interface;
