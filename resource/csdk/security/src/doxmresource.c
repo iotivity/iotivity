@@ -584,6 +584,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
     OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0} };
+    static uint16_t previousMsgId = 0;
 
     /*
      * Convert CBOR Doxm data into binary. This will also validate
@@ -683,25 +684,29 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                         caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 
-                        char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
-                        if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                        if(previousMsgId != ehRequest->messageID)
                         {
-                            //Set the device id to derive temporal PSK
-                            SetUuidForRandomPinOxm(&gDoxm->deviceID);
+                            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
+                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                            {
+                                //Set the device id to derive temporal PSK
+                                SetUuidForRandomPinOxm(&gDoxm->deviceID);
 
-                            /**
-                             * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
-                             * Credential should not be saved into SVR.
-                             * For this reason, use a temporary get_psk_info callback to random PIN OxM.
-                             */
-                            caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
-                            VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
-                            ehRet = OC_EH_ERROR;
+                                /**
+                                 * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
+                                 * Credential should not be saved into SVR.
+                                 * For this reason, use a temporary get_psk_info callback to random PIN OxM.
+                                 */
+                                caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
+                                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                                ehRet = OC_EH_OK;
+                            }
+                            else
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
+                                ehRet = OC_EH_ERROR;
+                            }
+                            previousMsgId = ehRequest->messageID;
                         }
 #endif //__WITH_DTLS__
                     }
