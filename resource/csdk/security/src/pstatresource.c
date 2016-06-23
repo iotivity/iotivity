@@ -448,7 +448,12 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
         VERIFY_NON_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
-            if (false == (pstat->cm & TAKE_OWNER) && false == pstat->isOp)
+            if (true == (pstat->cm & RESET) && false == pstat->isOp)
+            {
+                gPstat->cm = pstat->cm;
+                OIC_LOG(INFO, TAG, "State changed to Ready for Reset");
+            }
+            else if (false == (pstat->cm & TAKE_OWNER) && false == pstat->isOp)
             {
                 gPstat->cm = pstat->cm;
                 OIC_LOG (INFO, TAG, "State changed to Ready for Provisioning");
@@ -481,6 +486,23 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             if (UpdatePersistentStorage(gPstat))
             {
                 ehRet = OC_EH_OK;
+            }
+            if (true == (pstat->cm & RESET))
+            {
+                if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+                {
+                    ehRet = OC_EH_ERROR;
+                    OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
+                    DeletePstatBinData(pstat);
+                    return ehRet;
+                }
+                ret = ResetSecureResourceInPS();
+                if (OC_STACK_OK == ret)
+                {
+                    ehRet = OC_EH_OK;
+                }
+                DeletePstatBinData(pstat);
+                return ehRet;
             }
         }
     }
