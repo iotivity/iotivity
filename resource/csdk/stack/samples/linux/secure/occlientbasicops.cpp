@@ -91,8 +91,8 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
     OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
-    OIC_LOG(INFO, TAG, "-d 0 : Client as Device Owner");
-    OIC_LOG(INFO, TAG, "-d 1 : Client as Non Device Owner");
+    OIC_LOG(INFO, TAG, "-d 0 : Client as Non Device Owner");
+    OIC_LOG(INFO, TAG, "-d 1 : Client as Device Owner");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
