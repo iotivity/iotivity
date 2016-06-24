@@ -554,14 +554,14 @@ static int32_t CAHandleSecureEvent(dtls_context_t *context,
             g_dtlsHandshakeCallback(&endpoint, &errorInfo);
         }
     }
-    else if(DTLS_ALERT_LEVEL_FATAL == level && DTLS_ALERT_CLOSE_NOTIFY == code)
-    {
-        OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
-        CARemovePeerFromPeerInfoList(peerAddr, port);
-    }
     else if(DTLS_ALERT_LEVEL_FATAL == level && DTLS_ALERT_HANDSHAKE_FAILURE == code)
     {
         OIC_LOG(INFO, NET_DTLS_TAG, "Failed to DTLS handshake, the peer will be removed.");
+        CARemovePeerFromPeerInfoList(peerAddr, port);
+    }
+    else if(DTLS_ALERT_LEVEL_FATAL == level || DTLS_ALERT_CLOSE_NOTIFY == code)
+    {
+        OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
         CARemovePeerFromPeerInfoList(peerAddr, port);
     }
 
