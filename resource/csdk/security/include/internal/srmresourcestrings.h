@@ -25,7 +25,6 @@
 
 extern const char * SVR_DB_FILE_NAME;
 extern const char * SVR_DB_DAT_FILE_NAME;
-extern const char * OIC_MI_DEF;
 
 //AMACL
 extern const char * OIC_RSRC_TYPE_SEC_AMACL;

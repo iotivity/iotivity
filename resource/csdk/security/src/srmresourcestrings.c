@@ -23,7 +23,6 @@
 
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * SVR_DB_DAT_FILE_NAME = "oic_svr_db.dat";
-const char * OIC_MI_DEF = "oic.mi.def";
 
 //AMACL
 const char * OIC_RSRC_TYPE_SEC_AMACL = "oic.r.amacl";

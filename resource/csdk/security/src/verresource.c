@@ -281,7 +281,7 @@ OCStackResult CreateVerResource()
 {
     OCStackResult ret = OCCreateResource(&gVerHandle,
                                          OIC_RSRC_TYPE_SEC_VER,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_VER_URI,
                                          VerEntityHandler,
                                          NULL,

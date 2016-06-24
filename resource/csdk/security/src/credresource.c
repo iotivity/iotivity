@@ -1254,11 +1254,11 @@ OCStackResult CreateCredResource()
 {
     OCStackResult ret = OCCreateResource(&gCredHandle,
                                          OIC_RSRC_TYPE_SEC_CRED,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_CRED_URI,
                                          CredEntityHandler,
                                          NULL,
-                                         OC_RES_PROP_NONE);
+                                         OC_SECURE);
 
     if (OC_STACK_OK != ret)
     {

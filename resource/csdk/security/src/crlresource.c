@@ -373,7 +373,7 @@ static OCStackResult CreateCRLResource()
 {
     OCStackResult ret = OCCreateResource(&gCrlHandle,
                                          OIC_RSRC_TYPE_SEC_CRL,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_CRL_URI,
                                          CRLEntityHandler,
                                          NULL,

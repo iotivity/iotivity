@@ -1096,7 +1096,7 @@ static OCStackResult CreateACLResource()
 
     ret = OCCreateResource(&gAclHandle,
                            OIC_RSRC_TYPE_SEC_ACL,
-                           OIC_MI_DEF,
+                           OC_RSRVD_INTERFACE_DEFAULT,
                            OIC_RSRC_ACL_URI,
                            ACLEntityHandler,
                            NULL,

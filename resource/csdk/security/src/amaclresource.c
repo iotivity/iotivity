@@ -541,7 +541,7 @@ static OCStackResult CreateAmaclResource()
 {
     OCStackResult ret = OCCreateResource(&gAmaclHandle,
                                          OIC_RSRC_TYPE_SEC_AMACL,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_AMACL_URI,
                                          AmaclEntityHandler,
                                          NULL,
