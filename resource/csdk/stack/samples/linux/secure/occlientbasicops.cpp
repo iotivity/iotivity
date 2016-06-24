@@ -51,6 +51,7 @@ static OCConnectivityType ocConnType;
 //of other devices which the client trusts
 static char CRED_FILE[] = "oic_svr_db_client.dat";
 const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
+const char * OIC_RSRC_PSTAT_URI = "/oic/sec/pstat";
 
 int gQuitFlag = 0;
 
@@ -403,6 +404,12 @@ int parseClientResponse(OCClientResponse * clientResponse)
         if (0 == strcmp(coapServerResource.c_str(),OIC_RSRC_DOXM_URI))
         {
             OIC_LOG(INFO,TAG,"Skip: doxm is secure virtual resource");
+            res = res->next;
+            continue;
+        }
+        if (0 == strcmp(coapServerResource.c_str(),OIC_RSRC_PSTAT_URI))
+        {
+            OIC_LOG(INFO,TAG,"Skip: pstat is secure virtual resource");
             res = res->next;
             continue;
         }

@@ -414,7 +414,7 @@ static OCStackResult CreateSVCResource()
 {
     OCStackResult ret = OCCreateResource(&gSvcHandle,
                                          OIC_RSRC_TYPE_SEC_SVC,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_SVC_URI,
                                          SVCEntityHandler,
                                          NULL,

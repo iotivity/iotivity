@@ -1011,7 +1011,7 @@ OCStackResult CreatePconfResource()
 
     ret = OCCreateResource(&gPconfHandle,
                            OIC_RSRC_TYPE_SEC_PCONF,
-                           OIC_MI_DEF,
+                           OC_RSRVD_INTERFACE_DEFAULT,
                            OIC_RSRC_PCONF_URI,
                            PconfEntityHandler,
                            NULL,

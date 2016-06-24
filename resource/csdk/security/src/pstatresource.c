@@ -460,11 +460,12 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
 {
     OCStackResult ret = OCCreateResource(&gPstatHandle,
                                          OIC_RSRC_TYPE_SEC_PSTAT,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_PSTAT_URI,
                                          PstatEntityHandler,
                                          NULL,
-                                         OC_RES_PROP_NONE);
+                                         OC_SECURE |
+                                         OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {

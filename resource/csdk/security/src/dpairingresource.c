@@ -657,7 +657,7 @@ OCStackResult CreateDpairingResource()
 
     ret = OCCreateResource(&gDpairHandle,
                            OIC_RSRC_TYPE_SEC_DPAIRING,
-                           OIC_MI_DEF,
+                           OC_RSRVD_INTERFACE_DEFAULT,
                            OIC_RSRC_DPAIRING_URI,
                            DpairingEntityHandler,
                            NULL,

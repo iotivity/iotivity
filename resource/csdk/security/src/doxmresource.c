@@ -863,11 +863,11 @@ OCStackResult CreateDoxmResource()
 {
     OCStackResult ret = OCCreateResource(&gDoxmHandle,
                                          OIC_RSRC_TYPE_SEC_DOXM,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_DOXM_URI,
                                          DoxmEntityHandler,
                                          NULL,
-                                         OC_OBSERVABLE | OC_SECURE |
+                                         OC_SECURE |
                                          OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
