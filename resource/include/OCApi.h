@@ -294,6 +294,10 @@ namespace OC
 
     typedef std::function<void(const PairedDevices&)> GetDirectPairedCallback;
 
+    typedef std::function<void(const HeaderOptions&,
+                               const OCRepresentation&, const int,
+                               std::shared_ptr<OCResource>)> MQCreateTopicCallback;
+
 } // namespace OC
 
 #endif

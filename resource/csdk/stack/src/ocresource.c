@@ -231,6 +231,13 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
         return OC_PRESENCE;
     }
 #endif //WITH_PRESENCE
+
+#ifdef MQ_BROKER
+    else if (0 == strcmp(uriInRequest, OC_RSRVD_WELL_KNOWN_MQ_URI))
+    {
+        return OC_MQ_BROKER_URI;
+    }
+#endif //MQ_BROKER
     return OC_UNKNOWN_URI;
 }
 
@@ -721,7 +728,11 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     OCVirtualResources virtualUriInRequest = GetTypeOfVirtualURI (request->resourceUrl);
 
     // Step 1: Generate the response to discovery request
-    if (virtualUriInRequest == OC_WELL_KNOWN_URI)
+    if (virtualUriInRequest == OC_WELL_KNOWN_URI
+#ifdef MQ_BROKER
+            || virtualUriInRequest == OC_MQ_BROKER_URI
+#endif
+            )
     {
         if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
         {
@@ -759,10 +770,19 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
                 if (!resourceTypeQuery && interfaceQuery && (0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
                 {
+                    OCResourceProperty prop = OC_DISCOVERABLE;
+#ifdef MQ_BROKER
+                    if (OC_MQ_BROKER_URI == virtualUriInRequest)
+                    {
+                        prop = OC_MQ_BROKER;
+                    }
+#endif
+
                     for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
                         bool result = false;
-                        if (resource->resourceProperties & OC_DISCOVERABLE)
+
+                        if (resource->resourceProperties & prop)
                         {
                             result = true;
                         }

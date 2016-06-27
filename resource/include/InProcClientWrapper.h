@@ -99,6 +99,16 @@ namespace OC
             DirectPairingContext(DirectPairingCallback cb) : callback(cb){}
 
         };
+
+#ifdef WITH_MQ
+        struct CreateMQTopicContext
+        {
+            MQCreateTopicCallback callback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+            CreateMQTopicContext(MQCreateTopicCallback cb, std::weak_ptr<IClientWrapper> cw)
+                : callback(cb), clientWrapper(cw){}
+        };
+#endif
     }
 
     class InProcClientWrapper : public IClientWrapper
@@ -184,6 +194,21 @@ namespace OC
 
         virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> peer, const OCPrm_t& pmSel,
                 const std::string& pinNumber, DirectPairingCallback& resultCallback);
+
+#ifdef WITH_MQ
+        virtual OCStackResult ListenForMQTopic(
+            const OCDevAddr& devAddr,
+            const std::string& resourceUri,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            FindCallback& callback, QualityOfService QoS);
+
+        virtual OCStackResult PutMQTopicRepresentation(
+            const OCDevAddr& devAddr,
+            const std::string& uri,
+            const OCRepresentation& rep,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            MQCreateTopicCallback& callback, QualityOfService QoS);
+#endif
 
     private:
         void listeningFunc();

@@ -63,7 +63,7 @@
  *  Maximum number of vendor specific header options an application can set or receive
  *  in PDU
  */
-#define MAX_HEADER_OPTIONS (2)
+#define MAX_HEADER_OPTIONS (100)
 
 /**
  *  Maximum Length of the vendor specific header option

@@ -580,6 +580,69 @@ std::string OCResource::sid() const
     return this->uniqueIdentifier().m_representation;
 }
 
+#ifdef WITH_MQ
+OCStackResult OCResource::discoveryMQTopics(const QueryParamsMap& queryParametersMap,
+                                            FindCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return checked_guard(m_clientWrapper.lock(),
+                            &IClientWrapper::ListenForMQTopic,
+                            m_devAddr, m_uri,
+                            queryParametersMap, m_headerOptions,
+                            attributeHandler, defaultQos);
+}
+
+OCStackResult OCResource::createMQTopic(const OCRepresentation& rep,
+                                        const std::string& topicUri,
+                                        const QueryParamsMap& queryParametersMap,
+                                        MQCreateTopicCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutMQTopicRepresentation,
+                         m_devAddr, topicUri, rep, queryParametersMap,
+                         m_headerOptions, attributeHandler, defaultQos);
+}
+#endif
+#ifdef MQ_SUBSCRIBER
+OCStackResult OCResource::subscribeMQTopic(ObserveType observeType,
+        const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+
+    return result_guard(observe(observeType, queryParametersMap, observeHandler, defaultQoS));
+}
+
+OCStackResult OCResource::unsubscribeMQTopic()
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+    return result_guard(cancelObserve(defaultQoS));
+}
+
+OCStackResult OCResource::requestMQPublish(const QueryParamsMap& queryParametersMap,
+                                           PostCallback attributeHandler)
+{
+    OCRepresentation rep;
+    rep.setValue(std::string("req_pub"), std::string("true"));
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return result_guard(post(rep, queryParametersMap, attributeHandler, defaultQos));
+}
+#endif
+#ifdef MQ_PUBLISHER
+OCStackResult OCResource::publishMQTopic(const OCRepresentation& rep,
+                                         const QueryParamsMap& queryParametersMap,
+                                         PostCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return result_guard(post(rep, queryParametersMap, attributeHandler, defaultQos));
+}
+#endif
+
 bool OCResource::operator==(const OCResource &other) const
 {
     return m_resourceId == other.m_resourceId;

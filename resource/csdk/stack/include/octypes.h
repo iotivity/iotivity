@@ -68,6 +68,12 @@ extern "C" {
 /** Gateway URI.*/
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
 #endif
+
+#ifdef WITH_MQ
+/** MQ Broker URI.*/
+#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/.well-known/ocf/ps"
+#endif
+
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
@@ -148,6 +154,14 @@ extern "C" {
 
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES    "oic.wk.res"
+
+#ifdef WITH_MQ
+/** To represent content type with MQ Broker.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER     "ocf.wk.ps"
+
+/** To represent content type with MQ Topic.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC      "ocf.wk.ps.topic"
+#endif
 
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
@@ -718,16 +732,16 @@ typedef enum
     /** When this bit is set, the resource is allowed to be discovered only
      *  if discovery request contains an explicit querystring.
      *  Ex: GET /oic/res?rt=oic.sec.acl */
-    OC_EXPLICIT_DISCOVERABLE   = (1 << 5),
+    OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
 
 #ifdef WITH_MQ
     /** When this bit is set, the resource is allowed to be published */
-    OC_MQ_PUBLISHER     = (1 << 6),
+    ,OC_MQ_PUBLISHER     = (1 << 6)
 #endif
 
 #ifdef MQ_BROKER
     /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
-    OC_MQ_BROKER        = (1 << 7),
+    ,OC_MQ_BROKER        = (1 << 7)
 #endif
 } OCResourceProperty;
 
@@ -855,7 +869,14 @@ typedef enum
     OC_OBSERVE_DEREGISTER = 1,
 
     /** Others. */
-    OC_OBSERVE_NO_OPTION = 2
+    OC_OBSERVE_NO_OPTION = 2,
+
+//#ifdef WITH_MQ
+    OC_MQ_SUBSCRIBER = 3,
+
+    OC_MQ_UNSUBSCRIBER = 4,
+//#endif
+
 } OCObserveAction;
 
 

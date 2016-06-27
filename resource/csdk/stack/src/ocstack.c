@@ -119,6 +119,10 @@ OCResource *headResource = NULL;
 static OCResource *tailResource = NULL;
 static OCResourceHandle platformResource = {0};
 static OCResourceHandle deviceResource = {0};
+#ifdef MQ_BROKER
+static OCResourceHandle brokerResource = {0};
+#endif
+
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
 static PresenceResource presenceResource = {0};
@@ -635,7 +639,6 @@ static OCStackResult CAResultToOCStackResult(CAResult_t caResult)
 OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
 {
     OCStackResult ret = OC_STACK_ERROR;
-
     switch(caCode)
     {
         case CA_CREATED:
@@ -1284,6 +1287,12 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         type = PAYLOAD_TYPE_DISCOVERY;
                     }
+#ifdef WITH_MQ
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_WELL_KNOWN_MQ_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DISCOVERY;
+                    }
+#endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_DEVICE_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_DEVICE;
@@ -1380,7 +1389,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                             (observationOption << 8) | optionData[i];
                     }
                     response.sequenceNumber = observationOption;
-
                     response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
                     start = 1;
                 }
@@ -3222,7 +3230,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(!resourceInterfaceName || strlen(resourceInterfaceName) == 0)
+    if (!resourceInterfaceName || strlen(resourceInterfaceName) == 0)
     {
         resourceInterfaceName = OC_RSRVD_INTERFACE_DEFAULT;
     }
@@ -4245,6 +4253,9 @@ void deleteAllResources()
     }
     memset(&platformResource, 0, sizeof(platformResource));
     memset(&deviceResource, 0, sizeof(deviceResource));
+#ifdef MQ_BROKER
+    memset(&brokerResource, 0, sizeof(brokerResource));
+#endif
 
     SRMDeInitSecureResources();
 

@@ -57,8 +57,9 @@ namespace OC
 
                         if (res->port != 0)
                         {
-                             m_devAddr.port = res->port;
+                            m_devAddr.port = res->port;
                         }
+
                         if (payload->baseURI)
                         {
                             OCDevAddr rdPubAddr = m_devAddr;
@@ -106,6 +107,44 @@ namespace OC
                     payload = payload->next;
                 }
             }
+
+#ifdef WITH_MQ
+            ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
+                                OCDevAddr& devAddr, OCRepPayload* payload)
+                                : m_clientWrapper(cw), m_devAddr(devAddr)
+            {
+                if (payload)
+                {
+                    char**topicList = nullptr;
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0};
+                    OCRepPayloadGetStringArray(payload, "topiclist", &topicList, dimensions);
+
+                    for(size_t idx = 0; idx < dimensions[0]; idx++)
+                    {
+                        m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                new OC::OCResource(m_clientWrapper, m_devAddr,
+                                                   std::string(topicList[idx]),
+                                                   "",
+                                                   OC_OBSERVABLE,
+                                                   {OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC},
+                                                   {DEFAULT_INTERFACE})));
+                    }
+                }
+            }
+
+            ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
+                              OCDevAddr& devAddr, const std::string& topicUri)
+                              : m_clientWrapper(cw), m_devAddr(devAddr)
+            {
+                    m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                            new OC::OCResource(m_clientWrapper, m_devAddr,
+                                               topicUri,
+                                               "",
+                                               OC_OBSERVABLE,
+                                               {OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC},
+                                               {DEFAULT_INTERFACE})));
+            }
+#endif
 
             const std::vector<std::shared_ptr<OCResource>>& Resources() const
             {

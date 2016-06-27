@@ -464,7 +464,7 @@ TEST(StackResource, CreateResourceBadParams)
                                             "/a/led",
                                             0,
                                             NULL,
-                                            128));// invalid bitmask for OCResourceProperty
+                                            255));// invalid bitmask for OCResourceProperty
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }

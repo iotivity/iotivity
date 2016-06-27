@@ -543,6 +543,92 @@ namespace OC
         */
         std::string sid() const;
 
+#ifdef WITH_MQ
+        /**
+        * Function to discovery Topics from MQ Broker.
+        *
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult discoveryMQTopics(const QueryParamsMap& queryParametersMap,
+                                        FindCallback attributeHandler);
+        /**
+        * Function to create Topic into MQ Broker.
+        * SubTopic is also created through this method.
+        *
+        * @param rep representation of the topic
+        * @param topicUri new uri of the topic which want to create
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult createMQTopic(const OCRepresentation& rep,
+                                    const std::string& topicUri,
+                                    const QueryParamsMap& queryParametersMap,
+                                    MQCreateTopicCallback attributeHandler);
+#endif
+#ifdef MQ_SUBSCRIBER
+        /**
+        * Function to subscribe Topic to MQ Broker.
+        *
+        * @param observeType allows the client to specify how it wants to observe.
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param observeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult subscribeMQTopic(ObserveType observeType,
+                                       const QueryParamsMap& queryParametersMap,
+                                       ObserveCallback observeHandler);
+
+        /**
+        * Function to unsubscribe Topic to MQ Broker.
+        *
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult unsubscribeMQTopic();
+
+        /**
+        * Function to request publish to MQ publisher.
+        * Publisher can confirm the request message as key:"req_pub" and value:"true".
+        *
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult requestMQPublish(const QueryParamsMap& queryParametersMap,
+                                       PostCallback attributeHandler);
+#endif
+#ifdef MQ_PUBLISHER
+        /**
+        * Function to publish Topic information into MQ Broker.
+        *
+        * @param rep representation of the topic
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult publishMQTopic(const OCRepresentation& rep,
+                                     const QueryParamsMap& queryParametersMap,
+                                     PostCallback attributeHandler);
+#endif
         // overloaded operators allow for putting into a 'set'
         // the uniqueidentifier allows for putting into a hash
         bool operator==(const OCResource &other) const;
