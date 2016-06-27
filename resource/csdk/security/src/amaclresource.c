@@ -72,16 +72,6 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
     }
 }
 
-static size_t OicSecAmaclCount(const OicSecAmacl_t *secAmacl)
-{
-    size_t size = 0;
-    for (const OicSecAmacl_t *amacl = secAmacl; amacl; amacl = amacl->next)
-    {
-        size++;
-    }
-    return size;
-}
-
 OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayload,
                                  size_t *cborSize)
 {

@@ -226,12 +226,9 @@ OCStackResult SendAclReq(PEContext_t *context, OCDevAddr *devAddr, OCConnectivit
 {
     OCStackResult ret = OC_STACK_ERROR;
     const char GET_ACE_QUERY_FMT[] = "%s?%s=%s;%s=%s";
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-    uint32_t outLen = 0;
     char uri[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {};
     OCCallbackData cbData = {.context=NULL};
     OCDevAddr destAddr = {.adapter = OC_ADAPTER_IP};
-    B64Result b64Ret;
     char *subID = NULL;
 
     VERIFY_NON_NULL(TAG, context, ERROR);
