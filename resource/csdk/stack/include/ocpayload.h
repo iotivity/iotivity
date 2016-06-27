@@ -263,7 +263,7 @@ void OCFreeOCStringLL(OCStringLL* ll);
  * This function creates a list from a string (with separated contents if several)
  * @param text         single string or CSV text fields
  * @return newly allocated linked list
- * @note separator is ',' (according to rfc4180) or ';'
+ * @note separator is ',' (according to rfc4180, ';' is not valid)
  **/
 OCStringLL* OCCreateOCStringLL(const char* text);
 

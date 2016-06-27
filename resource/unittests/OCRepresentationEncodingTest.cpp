@@ -52,7 +52,7 @@ namespace OCRepresentationEncodingTest
     static const char sid1[] = "646F6F72-4465-7669-6365-555549443030";
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
-    static const char dmver1[] = "one-1,two-2";
+    static const char dmver1[] = "res.1.1.0,sh.1.1.0";
     static OCStringLL *types = NULL;
     // Device Payloads
     TEST(DeviceDiscoveryEncoding, Normal)
@@ -71,9 +71,9 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(devicename1, device->deviceName);
         EXPECT_STREQ(specver1, device->specVersion);
         EXPECT_TRUE(device->dataModelVersions);
-        EXPECT_STREQ("one-1", device->dataModelVersions->value);
+        EXPECT_STREQ("res.1.1.0", device->dataModelVersions->value);
         EXPECT_TRUE(device->dataModelVersions->next);
-        EXPECT_STREQ("two-2", device->dataModelVersions->next->value);
+        EXPECT_STREQ("sh.1.1.0", device->dataModelVersions->next->value);
         EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload*)device)->type);
         EXPECT_STREQ("oic.wk.d", device->types->value);
         EXPECT_STREQ("oic.d.tv", device->types->next->value);
@@ -103,8 +103,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(sid1, r.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
         EXPECT_STREQ(devicename1, r.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
         EXPECT_STREQ(specver1, r.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
-        EXPECT_STREQ("one-1", r.getDataModelVersions()[0].c_str());
-        EXPECT_STREQ("two-2", r.getDataModelVersions()[1].c_str());
+        EXPECT_STREQ("res.1.1.0", r.getDataModelVersions()[0].c_str());
+        EXPECT_STREQ("sh.1.1.0", r.getDataModelVersions()[1].c_str());
 
         OCPayloadDestroy(parsedDevice);
     }
