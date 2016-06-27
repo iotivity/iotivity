@@ -38,6 +38,9 @@
 // Discovery Links Map Length.
 #define LINKS_MAP_LEN 4
 
+// Default data model versions in CVS form
+#define DEFAULT_DATA_MODEL_VERSIONS "res.1.1.0,sh.1.1.0"
+
 // Functions all return either a CborError, or a negative version of the OC_STACK return values
 static int64_t OCConvertPayloadHelper(OCPayload *payload, uint8_t *outPayload, size_t *size);
 static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *outPayload,
@@ -390,6 +393,7 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
     }
     int64_t err = CborNoError;
     CborEncoder encoder;
+    char *dataModelVersions = 0;
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder repMap;
@@ -428,13 +432,17 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
     // Device data Model Versions
     if (payload->dataModelVersions)
     {
-        OIC_LOG(INFO, TAG, "Payload has data models versions");
-        char *str = OCCreateString(payload->dataModelVersions);
-        err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
-                sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1, str);
-        OICFree(str);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data model version");
+        OIC_LOG(INFO, TAG, "Payload has data model versions");
+        dataModelVersions = OCCreateString(payload->dataModelVersions);
     }
+    else
+    {
+        dataModelVersions = OICStrdup(DEFAULT_DATA_MODEL_VERSIONS);
+    }
+    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
+        sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1, dataModelVersions);
+    OICFree(dataModelVersions);
+    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data model versions");
 
     err |= cbor_encoder_close_container(&encoder, &repMap);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing device map");

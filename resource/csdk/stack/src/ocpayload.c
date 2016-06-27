@@ -34,7 +34,6 @@
 
 #define TAG "OIC_RI_PAYLOAD"
 #define CSV_SEPARATOR ','
-#define CSV_SEPARATORS ",;"
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
 
@@ -1287,13 +1286,15 @@ OCStringLL* OCCreateOCStringLL(const char* text)
     OCStringLL* result = NULL;
     OCStringLL* iter = NULL;
     OCStringLL* prev = NULL;
+    static const char delim[] = { CSV_SEPARATOR, '\0' };
 
     VERIFY_PARAM_NON_NULL(TAG, text, "Invalid parameter");
     backup = OICStrdup(text);
     VERIFY_PARAM_NON_NULL(TAG, backup, "Failed allocating memory");
+
     for (head = backup; ; head = NULL)
     {
-        token = (char *) strtok_r(head, CSV_SEPARATORS, &tail);
+        token = (char *) strtok_r(head, delim, &tail);
         if (!token) break;
         iter = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
         VERIFY_PARAM_NON_NULL(TAG, iter, "Failed allocating memory");
