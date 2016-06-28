@@ -334,15 +334,14 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
             err |= cbor_encode_uint(&policyMap, resource->bitmap);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding bitmap value to policy map");
 
-            if (resource->secure)
-            {
-                err |= cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
-                        sizeof(OC_RSRVD_SECURE) - 1);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure tag to policy map");
-                err |= cbor_encode_boolean(&policyMap, OC_RESOURCE_SECURE);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure value to policy map");
-            }
-            if ((resource->secure && resource->port != 0) || payload->baseURI)
+            // Secure
+            err |= cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
+                    sizeof(OC_RSRVD_SECURE) - 1);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure tag to policy map");
+            err |= cbor_encode_boolean(&policyMap, resource->secure);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure value to policy map");
+
+            if (resource->secure || payload->baseURI)
             {
                 err |= cbor_encode_text_string(&policyMap, OC_RSRVD_HOSTING_PORT,
                         sizeof(OC_RSRVD_HOSTING_PORT) - 1);
