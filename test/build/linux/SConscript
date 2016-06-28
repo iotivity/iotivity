@@ -148,6 +148,9 @@ if 'phy' in target_service or 'all' in target_service:
 if 'sm' in target_service or 'all' in target_service:
     SConscript('SConscriptSM', exports = 'env_linux')
 
+if 'cta' in target_service or 'all' in target_service:
+    SConscript('SConscriptCTA', exports = 'env_linux')
+
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 
 delete_bin = []

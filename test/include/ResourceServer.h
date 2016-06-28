@@ -18,6 +18,7 @@
 *
 ******************************************************************/
 
+/// @file ResourceServer.h
 /// @brief  This file contains the declaration of the resource server
 ///         class and its members.
 #ifndef _RESOURCE_SERVER_H_
@@ -25,17 +26,17 @@
 
 #include <chrono>
 #include <iostream>
+#include <sstream>
 #include <pthread.h>
+#include <ResourceHelper.h>
 #include <stdexcept>
 #include <memory>
 #include <string>
 #include <memory>
 #include <unistd.h>
-
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "ocstack.h"
-#include "IotivityTest_Logger.h"
 
 using namespace OC;
 
@@ -49,26 +50,41 @@ protected:
     OCRepresentation m_representation;
     std::string m_resourceURI;
     std::string m_resourceTypeName;
+    std::vector<std::string> m_resourceTypeNames;
     std::string m_resourceInterface;
+    std::vector<std::string> m_resourceInterfaces;
+    bool m_observeStatus;
+    bool m_discoverStatus;
     OCResourceHandle m_resourceHandle;
     PlatformConfig m_platformConfig;
     bool m_isServerRunning;
+    bool m_isSlowResource;
     static bool m_isServerConstructed;
+    static OCPlatformInfo m_platformInfo;
+    static OCDeviceInfo m_deviceInfo;
+    static ResourceHelper* p_resourceHelper;
 
 public:
 
     /**
      * Constructor for ResourceServer. Initializes server variables
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      */
     ResourceServer(void);
 
     /**
      * virtual destructor for Resource Server.
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
      */
     virtual ~ResourceServer(void);
 
     /**
      * API for constructing the server with a PlatformConfig object.
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
      *
      * @param cfg - PlatformConfig object containing platform settings
      *
@@ -78,10 +94,12 @@ public:
      * NOTE: This API is for already available PlatformConfig
      * NOTE: PlatformConfig is defined in OCApi.h.
      */
-    static OCStackResult constructServer(PlatformConfig& cfg);
+    static OCStackResult constructServer(PlatformConfig &cfg);
 
     /**
      * API for constructing the server with a client IP & port.
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
      *
      * @param ip - IP address of the server
      * @param port - port of the server
@@ -95,6 +113,8 @@ public:
 
     /**
      * API to set the basic properties of the resource
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
      *
      * @param resourceURI - uri of the resource
      * @param resourceTypeName - resource type name of the resource
@@ -111,6 +131,8 @@ public:
     /**
      * API to get the resource handle of the resource
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @return OCResourceHandle - returns the resource handle to the resource
      *
      * NOTE: available interfaces are defined in OCApi.h
@@ -120,20 +142,20 @@ public:
     /**
      * API to handle and response to the incoming request
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param request - pointer to the OCResourceRequest type incoming request
      * @param response - pointer to the OCResourceResponse type outgoing response
      *
      * NOTE: available interfaces are defined in OCApi.h
      */
-//    virtual OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request,
-//            std::shared_ptr< OCResourceResponse > response);
+
     virtual OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request);
 
     /**
      * API to get the representation model of the resource
      *
-     * @param request - pointer to the OCResourceRequest type incoming request
-     * @param response - pointer to the OCResourceResponse type outgoing response
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
      *
      * @return OCRepresentation, the representation class of the resource server
      *
@@ -144,6 +166,26 @@ public:
     /**
      * API to get the representation model of the resource
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @return vector<string>, list of resource interfaces
+     */
+    std::vector<std::string> getResourceInterfaces(void);
+
+    /**
+     * API to get the representation model of the resource
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @return vector<string>, list of resource types
+     */
+    std::vector<std::string> getResourceTypes(void);
+
+    /**
+     * API to get the representation model of the resource
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param OCRepresentation - the representation to set
      *
      * NOTE: OCRepresentation is defined in OCApi.h
@@ -153,6 +195,8 @@ public:
     /**
      * API to stop the server
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @return OCStackResult - returns OC_STACK_OK if successful to stop server,
      *                          else OC_STACK_ERROR
      */
@@ -161,23 +205,93 @@ public:
     /**
      * API for starting the server.
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @return OCStackResult - returns OC_STACK_OK if successful to start server,
      *                          else OC_STACK_ERROR
      *
      * NOTE: The server will stop when the main program exits
      */
-    OCStackResult startServer(uint8_t resourceProperty = (uint8_t) OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE);
+    OCStackResult startServer(
+            uint8_t resourceProperty = (uint8_t) OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE);
 
     /**
      * API for getting the uri of the resource
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @return string - returns the uri of the resource
      *
      */
-    string getUri(void);
+    std::string getUri(void);
+
+    /**
+     * API for setting the resource response as slow
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     */
+    void setAsSlowResource(void);
+
+    /**
+     * API for setting the resource response as normal
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     */
+    void setAsNormalResource(void);
+
+    /**
+     * API for handling normal response
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @param[in] request - OCResourceRequest variable, the request from client
+     *
+     */
+    void handleResponse(std::shared_ptr< OCResourceRequest > request);
+
+    /**
+     * API for handling slow response
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @param[in] request - OCResourceRequest variable, the request from client
+     *
+     */
+    void handleSlowResponse(std::shared_ptr< OCResourceRequest > request);
+
+    /**
+     * API to know whether the resource is observable or not
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @return bool - if resource is observable. true is returned, else  false
+     *
+     */
+    bool isObservableResource(void);
+
+    /**
+     * API to know whether the resource is discoverable or not
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @return bool - if resource is discoverable. true is returned, else  false
+     *
+     */
+    bool isDiscoverableResource(void);
+
+    static OCStackResult setPlatformInfo(string platformID, string manufacturerName,
+            string manufacturerUrl, string modelNumber, string dateOfManufacture,
+            string platformVersion, string operatingSystemVersion, string hardwareVersion,
+            string firmwareVersion, string supportUrl, string systemTime);
+
+    static OCStackResult setDeviceInfo(string deviceName, string deviceType = "");
 
     /***
      * API to perform additional task for child
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
      *
      * @param[out] isRegisteredForPresence - Boolean variable to register for presence,
      *             default value is false, to register for presence, set it to true
@@ -186,85 +300,102 @@ public:
      *
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
-    virtual void onResourceServerStarted(bool& isRegisteredForPresence, int& presenceInterval) = 0;
+    virtual void onResourceServerStarted(bool &isRegisteredForPresence, int &presenceInterval) = 0;
 
     /***
      * API to handle OBSERVE request
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
      *
      * @param[in] queryParamsMap - A map containing all query parameters
      * @param[out] response - response to the incoming request
      *
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
-    virtual void handleObserveRequest(QueryParamsMap& queryParamsMap, std::shared_ptr< OCResourceRequest > request,
+    virtual void handleObserveRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
      * API to handle DELETE request
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param[in] queryParamsMap - A map containing all query parameters
      * @param[out] response - response to the incoming request
      *
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
-    virtual void handleDeleteRequest(QueryParamsMap& queryParamsMap,
-            OCRepresentation incomingRepresentation,
+    virtual void handleDeleteRequest(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
      * API to handle POST request
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param[in] queryParamsMap - A map containing all query parameters
      * @param[out] response - response to the incoming request
      *
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
-    virtual void handlePostRequest(QueryParamsMap& queryParamsMap,
-            OCRepresentation incomingRepresentation,
+    virtual void handlePostRequest(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
      * API to handle GET request
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param[in] queryParamsMap - A map containing all query parameters
      * @param[out] response - response to the incoming request
      *
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
-    virtual void handleGetRequest(QueryParamsMap& queryParamsMap,
+    virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
      * API to handle PUT request
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param[in] queryParamsMap - A map containing all query parameters
      * @param[out] response - response to the incoming request
      *
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
-    virtual void handlePutRequest(QueryParamsMap& queryParamsMap,
-            OCRepresentation incomingRepresentation,
+    virtual void handlePutRequest(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
      * API to handle INIT request
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param[in] queryParamsMap - A map containing all query parameters
      * @param[out] response - response to the incoming request
      *
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
-    virtual void handleInitRequest(QueryParamsMap& queryParamsMap,
+    virtual void handleInitRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
      * API to get the attribute list of the resource server
      *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
      * @param[in] temp - epresentation of the resource server
      *
      * @return OCRepresentation - representation of the resource server
      */
-    virtual OCRepresentation getResourceRepresentation(OCRepresentation& temp)=0;
+    virtual OCRepresentation getResourceRepresentation(OCRepresentation &temp) = 0;
 };
 
 #endif // _RESOURCE_SERVER_H_ end

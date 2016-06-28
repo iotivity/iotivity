@@ -21,14 +21,8 @@
 #ifndef COMMON_TESTCASE_SAMPLERESOURCE_H_
 #define COMMON_TESTCASE_SAMPLERESOURCE_H_
 
+#include <ResourceHelper.h>
 #include "ResourceServer.h"
-
-#define DEFAULT_POWER_STATE "off"
-#define DEFAULT_INTENSITY "10"
-#define DEFAULT_MANUFACTURER "samsung"
-#define DEFAULT_REGION "Dhaka, Bangladesh"
-#define DEFAULT_FACTORY_RESET_STATE "false"
-#define DEFAULT_REBOOT_STATE "false"
 
 using namespace std;
 namespace PH = std::placeholders;
@@ -43,50 +37,63 @@ private:
     ObservationIds m_listOfObservers;
     shared_ptr< OCResourceResponse > m_pResponse;
     vector< string > m_resourceList;
-    void printIncomingRepresentation(OCRepresentation rep);
+    map< string, string > m_accessmodifier;
+
 public:
     SampleResource(void);
 
     ~SampleResource(void);
 
-    virtual void onResourceServerStarted(bool& isRegisteredForPresence, int& presenceInterval);
+    void setAsReadOnly(string key);
 
-    virtual void handleObserveRequest(QueryParamsMap& queryParamsMap,
+    bool isReadonly(string key);
+
+    virtual void onResourceServerStarted(bool &isRegisteredForPresence, int &presenceInterval);
+
+    virtual void handleObserveRequest(QueryParamsMap &queryParamsMap,
             std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
-    virtual void handleDeleteRequest(QueryParamsMap& queryParamsMap,
-            OCRepresentation incomingRepresentation,
+    virtual void handleDeleteRequest(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
-    virtual void handlePostRequest(QueryParamsMap& queryParamsMap,
-            OCRepresentation incomingRepresentation,
+    virtual void handlePostRequest(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
-    virtual void handleGetRequest(QueryParamsMap& queryParamsMap,
+    virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
-    virtual void handlePutRequest(QueryParamsMap& queryParamsMap,
-            OCRepresentation incomingRepresentation,
+    virtual void handlePutRequest(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
-    virtual void handleInitRequest(QueryParamsMap& queryParamsMap,
+    virtual void handleInitRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
-//    virtual AttributeMap getAttributeMap(void);
-    virtual OCRepresentation getResourceRepresentation(OCRepresentation& resourceRep);
+    virtual OCRepresentation getResourceRepresentation(OCRepresentation &resourceRep);
+
+    OCStackResult addArrayAttribute(string key, OCRepresentation arrayRep);
+
+    void notifyObservers(void *param);
 
 private:
     void handleRecursiveActionSet();
 
     void handleScheduledActionSet();
 
-    void notifyObservers(void *param);
-
     bool updateRepresentation(string key, OCRepresentation incomingRep,
             shared_ptr< OCResourceResponse > response);
+
     void createResource(string initialUri, OCRepresentation incomingRepresentation,
             shared_ptr< OCResourceResponse > response);
+
+    void supportCreateAndOthersForPUT(QueryParamsMap &queryParamsMap,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
+            std::shared_ptr< OCResourceResponse > response);
 };
 
 #endif /* COMMON_TESTCASE_SAMPLERESOURCE_H_ */

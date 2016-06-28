@@ -19,10 +19,15 @@
 ******************************************************************/
 
 #include "ResourceServer.h"
+#include "ocstack.h"
+#include "ocpayload.h"
 
 namespace PH = std::placeholders;
 
-bool  ResourceServer :: m_isServerConstructed = false;
+bool ResourceServer::m_isServerConstructed = false;
+OCPlatformInfo ResourceServer::m_platformInfo;
+OCDeviceInfo ResourceServer::m_deviceInfo;
+ResourceHelper* ResourceServer::p_resourceHelper = ResourceHelper::getInstance();
 
 ResourceServer::ResourceServer(void) :
         m_resourceHandle(NULL), m_platformConfig(
@@ -34,6 +39,11 @@ ResourceServer::ResourceServer(void) :
     m_resourceInterface = DEFAULT_INTERFACE;
     m_isServerRunning = false;
     m_isServerConstructed = false;
+    m_isSlowResource = false;
+    m_observeStatus = false;
+    m_discoverStatus = false;
+    m_resourceTypeNames.clear();
+    m_resourceInterfaces.clear();
 }
 
 ResourceServer::~ResourceServer(void)
@@ -44,21 +54,33 @@ ResourceServer::~ResourceServer(void)
     }
 }
 
-OCStackResult ResourceServer::constructServer(PlatformConfig& cfg)
+OCStackResult ResourceServer::constructServer(PlatformConfig &cfg)
 {
     OCStackResult result = OC_STACK_OK;
     try
     {
-//        m_platformConfig = cfg;
         OCPlatform::Configure(cfg);
         m_isServerConstructed = true;
 
-        IOTIVITYTEST_LOG(INFO, "Server Created...");
+        setPlatformInfo(PLATFORM_ID, MANUFACTURER_NAME, MANUFACTURER_URL, MODEL_NUMBER,
+        DATE_OF_MANUFACTURE, PLATFORM_VERSION, OPERATING_SYSTEM_VERSION,
+        HARDWARE_VERSION, FIRMWARE_VERSION, SUPPORT_URL, SYSTEM_TIME);
+
+        OCResourcePayloadAddStringLL(&m_deviceInfo.types, "oic.wk.d");
+        OCSetDeviceInfo(m_deviceInfo);
+
+        setDeviceInfo(DEVICE_NAME);
+
+        result = OCPlatform::registerPlatformInfo(m_platformInfo);
+
+        result = OCPlatform::registerDeviceInfo(m_deviceInfo);
+
+        cout << "Server Created..." << endl;
     }
-    catch (OCException& e)
+    catch (OCException &e)
     {
         result = OC_STACK_ERROR;
-        IOTIVITYTEST_LOG(ERROR, "Error occurred while creating server, error code: %s", e.what());
+        cerr << "Error occurred while creating server, error code: " << e.what() << endl;
     }
 
     return result;
@@ -69,10 +91,8 @@ OCStackResult ResourceServer::constructServer(std::string ip, int port)
     OCStackResult result = OC_STACK_OK;
 
     PlatformConfig cfg
-    { OC::ServiceType::InProc, OC::ModeType::Both, ip, (uint16_t) port,
-            OC::QualityOfService::LowQos };
+    { OC::ServiceType::InProc, OC::ModeType::Both, ip, (uint16_t) port, OC::QualityOfService::LowQos };
 
-//    m_platformConfig = cfg;
     result = constructServer(cfg);
 
     return result;
@@ -81,95 +101,27 @@ OCStackResult ResourceServer::constructServer(std::string ip, int port)
 OCEntityHandlerResult ResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > request)
 {
 
-    auto pResponse = std::make_shared< OC::OCResourceResponse >();
     OCEntityHandlerResult result = OC_EH_OK;
 
-    IOTIVITYTEST_LOG(DEBUG, "\tIn Server entity handler:\n");
+    cout << "\tIn Server entity handler:\n";
 
     if (request)
     {
-        pResponse->setRequestHandle(request->getRequestHandle());
-        pResponse->setResourceHandle(request->getResourceHandle());
-
-        // Get the request type and request flag
-        std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
-
-//        if (requestFlag == RequestHandlerFlag::InitFlag)
-//        {
-//            IOTIVITYTEST_LOG(INFO, "\t\trequestFlag : Init\n");
-//            // entity handler to perform resource initialization operations
-//
-//            // Check for query params (if any)
-//            QueryParamsMap queryParamsMap = request->getQueryParameters();
-//
-//            handleInitRequest(queryParamsMap, pResponse); // Process query params and do required operations ..
-//        }
-//        else
-        if (requestFlag == RequestHandlerFlag::RequestFlag)
+        if (m_isSlowResource)
         {
-            IOTIVITYTEST_LOG(INFO, "\t\trequestFlag : Request\n");
-
-            // If the request type is GET
-            if (requestType == "GET")
-            {
-                IOTIVITYTEST_LOG(INFO, "\t\t\trequestType : GET\n");
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handleGetRequest(queryParamsMap, pResponse); // Process query params and do required operations ..
-
-            }
-            else if (requestType == "PUT")
-            {
-                IOTIVITYTEST_LOG(INFO, "\t\t\trequestType : PUT\n");
-
-                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handlePutRequest(queryParamsMap, incomingRepresentation, pResponse); // Process query params and do required operations ..
-            }
-            else if (requestType == "POST")
-            {
-                // POST request operations
-                IOTIVITYTEST_LOG(INFO, "\t\t\trequestType : POST\n");
-
-                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handlePostRequest(queryParamsMap, incomingRepresentation, pResponse); // Process query params and do required operations ..
-            }
-            else if (requestType == "DELETE")
-            {
-                // DELETE request operations
-                IOTIVITYTEST_LOG(INFO, "\t\t\trequestType : Delete\n");
-
-                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handleDeleteRequest(queryParamsMap, incomingRepresentation, pResponse); // Process query params and do required operations ..
-            }
+            std::thread t(bind(&ResourceServer::handleSlowResponse, this, PH::_1), request);
+            t.detach();
+            result = OC_EH_SLOW;
         }
-        else if (requestFlag & RequestHandlerFlag::ObserverFlag)
+        else
         {
-            // OBSERVE flag operations
-            IOTIVITYTEST_LOG(INFO, "\t\t\trequestType : Observe\n");
-
-            // Check for query params (if any)
-            QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-            handleObserveRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
+            handleResponse(request);
+            result = OC_EH_OK;
         }
     }
     else
     {
-        IOTIVITYTEST_LOG(WARNING, "Request invalid");
+        cerr << "Request invalid" << endl;
     }
 
     return result;
@@ -207,22 +159,82 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
 {
     OCStackResult result = OC_STACK_OK;
 
+    if (resourceProperty & OC_OBSERVABLE)
+    {
+        cout << "This resource is Observable" << endl;
+        m_observeStatus = true;
+    }
+    if (resourceProperty & OC_DISCOVERABLE)
+    {
+        cout << "This resource is Discoverable" << endl;
+        m_discoverStatus = true;
+    }
+    if (resourceProperty & OC_SECURE)
+    {
+        cout << "This resource is Secured" << endl;
+        m_discoverStatus = true;
+    }
+
+    if (m_resourceTypeName.find(" ") != string::npos)
+    {
+        stringstream typeStream(m_resourceTypeName);
+        string currentType = "";
+        while (typeStream >> currentType)
+        {
+            m_resourceTypeNames.push_back(currentType);
+        }
+        m_resourceTypeName = m_resourceTypeNames.at(0);
+    }
+    else
+    {
+        m_resourceTypeNames.push_back(m_resourceTypeName);
+    }
+
+    if (m_resourceInterface.find(" ") != string::npos)
+    {
+        stringstream interfaceStream(m_resourceInterface);
+        string currentInterface = "";
+        while (interfaceStream >> currentInterface)
+        {
+            m_resourceInterfaces.push_back(currentInterface);
+        }
+        m_resourceInterface = m_resourceInterfaces.at(0);
+    }
+    else
+    {
+        m_resourceInterfaces.push_back(m_resourceInterface);
+    }
+
     // This will internally create and register the resource.
     result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, std::bind(&ResourceServer::entityHandler, this, PH::_1),
             resourceProperty);
+    if (m_resourceTypeNames.size() > 1)
+    {
+        for (unsigned int i = 1; i < m_resourceTypeNames.size(); i++)
+        {
+            OCPlatform::bindTypeToResource(m_resourceHandle, m_resourceTypeNames.at(i));
+        }
+    }
+
+    if (m_resourceInterfaces.size() > 1)
+    {
+        for (unsigned int i = 1; i < m_resourceInterfaces.size(); i++)
+        {
+            OCPlatform::bindInterfaceToResource(m_resourceHandle, m_resourceInterfaces.at(i));
+        }
+    }
 
     if (result != OC_STACK_OK)
     {
-        IOTIVITYTEST_LOG(ERROR, "Device Resource failed to start, result code =  %s",
-                std::to_string(result).c_str());
+        cerr << "Device Resource failed to start, result code =  " << result << endl;
         throw std::runtime_error(
                 std::string("Device Resource failed to start") + std::to_string(result));
     }
     else
     {
         m_isServerRunning = true;
-        IOTIVITYTEST_LOG(INFO, "Server Started");
+        cout << "Server Started" << endl;
 
         bool isRegisteredForPresence = false;
         int presenceInterval = 0;
@@ -235,13 +247,6 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
 
         m_representation.setUri(m_resourceURI);
 
-        std::vector< std::string > interfaces;
-        interfaces.push_back(m_resourceInterface);
-        m_representation.setResourceInterfaces(interfaces);
-
-        std::vector< std::string > types;
-        types.push_back(m_resourceTypeName);
-        m_representation.setResourceTypes(types);
     }
 
     return result;
@@ -255,7 +260,7 @@ OCStackResult ResourceServer::stopServer(void)
     if (m_isServerRunning == false)
     {
         result = OC_STACK_ERROR;
-        IOTIVITYTEST_LOG(ERROR, "Resource server is not started; Please start it before stopping ");
+        cerr << "Resource server is not started; Please start it before stopping " << endl;
 
         return result;
     }
@@ -272,18 +277,151 @@ OCStackResult ResourceServer::stopServer(void)
     }
     else
     {
-        IOTIVITYTEST_LOG(ERROR, "Unable to stop server");
+        cerr << "Unable to stop server" << endl;
     }
 
     return result;
 }
 
-void ResourceServer::setResourceRepresentation(OCRepresentation oCRepresentation)
+void ResourceServer::setResourceRepresentation(OCRepresentation ocRepresentation)
 {
-    m_representation = oCRepresentation;
+    m_representation = ocRepresentation;
 }
 
 string ResourceServer::getUri(void)
 {
     return m_resourceURI;
+}
+
+OCStackResult ResourceServer::setPlatformInfo(string platformID, string manufacturerName,
+        string manufacturerUrl, string modelNumber, string dateOfManufacture,
+        string platformVersion, string operatingSystemVersion, string hardwareVersion,
+        string firmwareVersion, string supportUrl, string systemTime)
+{
+    p_resourceHelper->duplicateString(&m_platformInfo.platformID, platformID);
+    p_resourceHelper->duplicateString(&m_platformInfo.manufacturerName, manufacturerName);
+    p_resourceHelper->duplicateString(&m_platformInfo.manufacturerUrl, manufacturerUrl);
+    p_resourceHelper->duplicateString(&m_platformInfo.modelNumber, modelNumber);
+    p_resourceHelper->duplicateString(&m_platformInfo.dateOfManufacture, dateOfManufacture);
+    p_resourceHelper->duplicateString(&m_platformInfo.platformVersion, platformVersion);
+    p_resourceHelper->duplicateString(&m_platformInfo.operatingSystemVersion,
+            operatingSystemVersion);
+    p_resourceHelper->duplicateString(&m_platformInfo.hardwareVersion, hardwareVersion);
+    p_resourceHelper->duplicateString(&m_platformInfo.firmwareVersion, firmwareVersion);
+    p_resourceHelper->duplicateString(&m_platformInfo.supportUrl, supportUrl);
+    p_resourceHelper->duplicateString(&m_platformInfo.systemTime, systemTime);
+    return OC_STACK_OK;
+}
+
+void ResourceServer::setAsSlowResource()
+{
+    m_isSlowResource = true;
+}
+
+void ResourceServer::setAsNormalResource()
+{
+    m_isSlowResource = false;
+}
+
+OCStackResult ResourceServer::setDeviceInfo(string deviceName, string deviceType)
+{
+    p_resourceHelper->duplicateString(&m_deviceInfo.deviceName, deviceName);
+    if (deviceType.compare("") != 0)
+    {
+        OCResourcePayloadAddStringLL(&m_deviceInfo.types, deviceType.c_str());
+    }
+
+    OCSetDeviceInfo(m_deviceInfo);
+    return OC_STACK_OK;
+}
+
+void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request)
+{
+    auto pResponse = std::make_shared< OC::OCResourceResponse >();
+    pResponse->setRequestHandle(request->getRequestHandle());
+    pResponse->setResourceHandle(request->getResourceHandle());
+
+    // Get the request type and request flag
+    std::string requestType = request->getRequestType();
+    RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
+
+    if (requestFlag == RequestHandlerFlag::RequestFlag)
+    {
+        cout << "\t\trequestFlag : Request\n";
+        cout << "\t\t\trequestType : " << requestType << endl;
+
+        // If the request type is GET
+        if (requestType == "GET")
+        {
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handleGetRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
+
+        }
+        else if (requestType == "PUT")
+        {
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handlePutRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+        }
+        else if (requestType == "POST")
+        {
+            // POST request operations
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handlePostRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+        }
+        else if (requestType == "DELETE")
+        {
+            // DELETE request operations
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handleDeleteRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+        }
+    }
+    else if (requestFlag & RequestHandlerFlag::ObserverFlag)
+    {
+        // Check for query params (if any)
+        QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+        handleObserveRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
+    }
+}
+
+void ResourceServer::handleSlowResponse(std::shared_ptr< OCResourceRequest > request)
+{
+    cout << "Acting as Slow Resource...." << endl;
+    p_resourceHelper->waitInSecond(CALLBACK_WAIT_MAX);
+    cout << "Slow working period is over" << endl;
+
+    handleResponse(request);
+}
+
+bool ResourceServer::isObservableResource(void)
+{
+    return m_observeStatus;
+}
+
+bool ResourceServer::isDiscoverableResource(void)
+{
+    return m_discoverStatus;
+}
+
+std::vector< std::string > ResourceServer::getResourceInterfaces(void)
+{
+    return m_resourceInterfaces;
+}
+
+std::vector< std::string > ResourceServer::getResourceTypes(void)
+{
+    return m_resourceTypeNames;
 }
