@@ -59,6 +59,7 @@
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "oic_malloc.h"
+#include "ocrandom.h"
 #include "logger.h"
 
 #define TAG "OIC_CA_RETRANS"
@@ -94,8 +95,13 @@ uint64_t getCurrentTimeInMicroSeconds();
  */
 static uint64_t CAGetTimeoutValue()
 {
-    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * (random() & 0xFF)) >> 8)) *
+#ifdef HAVE_SRANDOM
+    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * OCGetRandomByte()) >> 8)) *
             (uint64_t) 1000;
+#else
+    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * OCGetRandomByte()) >> 8)) *
+            (uint64_t) 1000;
+#endif
 }
 
 CAResult_t CARetransmissionStart(CARetransmission_t *context)

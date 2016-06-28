@@ -1049,7 +1049,9 @@ uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
         // should remain that way so a 0 byte of length 1 is inserted.
         len = 1;
         option[0]=0;
-    } else {
+    }
+    else
+    {
         memcpy(option, data, len);
         option[len] = '\0';
     }

@@ -92,7 +92,7 @@ static void CATCPDestroyCond();
 static int CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
 static void CAFindReadyMessage();
-static void CASelectReturned(fd_set *readFds, int ret);
+static void CASelectReturned(fd_set *readFds);
 static void CAReceiveMessage(int fd);
 static void CAReceiveHandler(void *data);
 static int CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo);
@@ -216,10 +216,10 @@ static void CAFindReadyMessage()
         return;
     }
 
-    CASelectReturned(&readFds, ret);
+    CASelectReturned(&readFds);
 }
 
-static void CASelectReturned(fd_set *readFds, int ret)
+static void CASelectReturned(fd_set *readFds)
 {
     VERIFY_NON_NULL_VOID(readFds, TAG, "readFds is NULL");
 

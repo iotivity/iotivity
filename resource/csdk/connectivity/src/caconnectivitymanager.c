@@ -100,7 +100,7 @@ CAResult_t CAStartListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartListeningServer");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -112,7 +112,7 @@ CAResult_t CAStopListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStopListeningServer");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -124,7 +124,7 @@ CAResult_t CAStartDiscoveryServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartDiscoveryServer");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -137,7 +137,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 {
     OIC_LOG(DEBUG, TAG, "CARegisterHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         OIC_LOG(DEBUG, TAG, "CA is not initialized");
         return;
@@ -151,7 +151,7 @@ CAResult_t CARegisterDTLSHandshakeCallback(CAErrorCallback dtlsHandshakeCallback
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSHandshakeCallback");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -165,7 +165,7 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDT
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -180,7 +180,7 @@ CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler 
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSX509CredentialsHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -193,7 +193,7 @@ CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetDTLSCrlHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCrlHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -251,7 +251,7 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetNetworkInformation");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -306,7 +306,7 @@ CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requ
 {
     OIC_LOG(DEBUG, TAG, "CASendRequest");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -326,7 +326,7 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
 {
     OIC_LOG(DEBUG, TAG, "CASendResponse");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -346,7 +346,7 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "Selected network : %d", interestedNetwork);
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -402,7 +402,7 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "unselected network : %d", nonInterestedNetwork);
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
