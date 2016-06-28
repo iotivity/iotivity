@@ -32,7 +32,9 @@ public class CaEdrInterface {
     private static Context mContext;
 
     private CaEdrInterface(Context context) {
-        mContext = context;
+        synchronized(CaEdrInterface.class) {
+            mContext = context;
+        }
         registerIntentFilter();
     }
 

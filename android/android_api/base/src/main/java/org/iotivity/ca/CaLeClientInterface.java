@@ -47,9 +47,13 @@ public class CaLeClientInterface {
     private CaLeClientInterface(Context context) {
         caLeRegisterLeScanCallback(mLeScanCallback);
         caLeRegisterGattCallback(mGattCallback);
-        mContext = context;
+        synchronized(CaLeClientInterface.class) {
+            mContext = context;
+        }
         registerIntentFilter();
     }
+
+
 
     public static void getLeScanCallback() {
         caLeRegisterLeScanCallback(mLeScanCallback);
