@@ -421,48 +421,63 @@ void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
 
 CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMethod method)
 {
-    CAResponseResult_t caResult;
+    CAResponseResult_t caResult = CA_BAD_REQ;
 
     switch (result)
     {
-        case OC_EH_OK:
-           switch (method)
-           {
-               case OC_REST_PUT:
-               case OC_REST_POST:
-                   // This Response Code is like HTTP 204 "No Content" but only used in
-                   // response to POST and PUT requests.
-                   caResult = CA_CHANGED;
-                   break;
-               case OC_REST_GET:
-                   // This Response Code is like HTTP 200 "OK" but only used in response to
-                   // GET requests.
-                   caResult = CA_CONTENT;
-                   break;
-               default:
-                   // This should not happen but,
-                   // give it a value just in case but output an error
-                   caResult = CA_CONTENT;
-                   OIC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [%d].", method);
-           }
+        // Successful Client Request
+        case OC_EH_RESOURCE_CREATED: // 2.01
+            if (method == OC_REST_POST || method == OC_REST_PUT)
+            {
+                caResult = CA_CREATED;
+            }
             break;
-        case OC_EH_ERROR:
-            caResult = CA_BAD_REQ;
+        case OC_EH_RESOURCE_DELETED: // 2.02
+            if (method == OC_REST_POST || method == OC_REST_DELETE)
+            {
+                caResult = CA_DELETED;
+            }
             break;
-        case OC_EH_RESOURCE_CREATED:
-            caResult = CA_CREATED;
-            break;
-        case OC_EH_RESOURCE_DELETED:
-            caResult = CA_DELETED;
-            break;
-        case OC_EH_SLOW:
+        case OC_EH_SLOW: // 2.05
             caResult = CA_CONTENT;
             break;
-        case OC_EH_FORBIDDEN:
+        case OC_EH_OK: // 2.04/2.05
+            if (method == OC_REST_POST || method == OC_REST_PUT)
+            {
+                caResult = CA_CHANGED;
+            }
+            else if (method == OC_REST_GET)
+            {
+                caResult = CA_CONTENT;
+            }
+            break;
+        case OC_EH_VALID: // 2.03
+            caResult = CA_VALID;
+            break;
+        case OC_EH_CHANGED: // 2.04
+            caResult = CA_CHANGED;
+            break;
+        // Unsuccessful Client Request
+        case OC_EH_UNAUTHORIZED_REQ: // 4.01
             caResult = CA_UNAUTHORIZED_REQ;
             break;
-        case OC_EH_RESOURCE_NOT_FOUND:
+        case OC_EH_BAD_OPT: // 4.02
+            caResult = CA_BAD_OPT;
+            break;
+        case OC_EH_FORBIDDEN: // 4.03
+            caResult = CA_FORBIDDEN_REQ;
+            break;
+        case OC_EH_RESOURCE_NOT_FOUND: // 4.04
             caResult = CA_NOT_FOUND;
+            break;
+        case OC_EH_NOT_ACCEPTABLE: // 4.06
+            caResult = CA_NOT_ACCEPTABLE;
+            break;
+        case OC_EH_INTERNAL_SERVER_ERROR: // 5.00
+            caResult = CA_INTERNAL_SERVER_ERROR;
+            break;
+        case OC_EH_RETRANSMIT_TIMEOUT: // 5.04
+            caResult = CA_RETRANSMIT_TIMEOUT;
             break;
         default:
             caResult = CA_BAD_REQ;
@@ -756,7 +771,6 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
                     (OCRepPayload*)newPayload);
         }
 
-
         (serverRequest->numResponses)--;
 
         if(serverRequest->numResponses == 0)
@@ -777,4 +791,3 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 exit:
     return stackRet;
 }
-
