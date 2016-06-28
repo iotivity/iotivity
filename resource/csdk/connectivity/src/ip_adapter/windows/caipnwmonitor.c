@@ -35,7 +35,8 @@
 
 #define TAG "IP_MONITOR"
 
-/** @todo Implement network interface monitoring in case the IP changes.
+/**
+ * @todo Implement network interface monitoring in case the IP changes.
  * Not critical for win32 bring-up.
  */
 CAResult_t CAIPStartNetworkMonitor()
@@ -43,7 +44,8 @@ CAResult_t CAIPStartNetworkMonitor()
     return CA_STATUS_OK;
 }
 
-/** @todo Implement network interface monitoring in case the IP changes.
+/**
+ * @todo Implement network interface monitoring in case the IP changes.
  * Not critical for win32 bring-up.
  */
 CAResult_t CAIPStopNetworkMonitor()
@@ -51,18 +53,20 @@ CAResult_t CAIPStopNetworkMonitor()
     return CA_STATUS_OK;
 }
 
-/** @todo Implement network interface monitoring.
- *  Not used in win32, but caipserver currently requires this function
- *  be defined. not critical.
+/**
+ * @todo Implement network interface monitoring.
+ * Not used in win32, but caipserver currently requires this function
+ * be defined. not critical.
  */
 int CAGetPollingInterval(int interval)
 {
     return interval;
 }
 
-/** @todo Implement network interface monitoring.
- *  Not used in win32, but caipserver currently requires this function
- *  be defined. not critical.
+/**
+ * @todo Implement network interface monitoring.
+ * Not used in win32, but caipserver currently requires this function
+ * be defined. not critical.
  */
 CAInterface_t *CAFindInterfaceChange()
 {
@@ -70,7 +74,8 @@ CAInterface_t *CAFindInterfaceChange()
     return foundNewInterface;
 }
 
-/** @todo Implement network interface monitoring.
+/**
+ * @todo Implement network interface monitoring.
  * Not critical for win32 bring-up.
  */
 void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)

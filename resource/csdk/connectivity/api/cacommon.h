@@ -133,7 +133,7 @@ typedef char *CAURI_t;
  */
 typedef char *CAToken_t;
 
-/**
+/*
  * Socket types and error definitions
  */
 #ifdef HAVE_WINSOCK2_H
@@ -146,14 +146,16 @@ typedef HANDLE CASocketFd_t;
 typedef int    CASocketFd_t;
 #endif
 
-/** The following flags are the same as the equivalent OIC values in
+/*
+ * The following flags are the same as the equivalent OIC values in
  * octypes.h, allowing direct copying with slight fixup.
  * The CA layer should used the OC types when build allows that.
  */
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE_CA (256)
 #else
-/** Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+/*
+ * Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
  * Which is 64, +1 for null terminator => 65
  * OCDevAddr (defined in OCTypes.h) must be the same
  * as CAEndpoint_t (defined here)

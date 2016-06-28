@@ -79,7 +79,7 @@
 
 #elif defined(HAVE_WINDOWS_H)
 
- #include <Windows.h>
+ #include <windows.h>
  CRITICAL_SECTION lock;
  #define MUTEX_LOCK(ARG_NAME)   { EnterCriticalSection(ARG_NAME); }
  #define MUTEX_UNLOCK(ARG_NAME) { LeaveCriticalSection(ARG_NAME); }

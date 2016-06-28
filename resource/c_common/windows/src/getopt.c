@@ -3,10 +3,6 @@
 #include "getopt.h"
 #include <windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 char* optarg = NULL;
 int optind = 1;
 
@@ -20,12 +16,15 @@ int getopt(int argc, char *const argv[], const char *optstring)
     int opt = argv[optind][1];
     const char *p = strchr(optstring, opt);
 
-    if (p == NULL) {
+    if (p == NULL)
+    {
         return '?';
     }
-    if (p[1] == ':') {
+    if (p[1] == ':')
+    {
         optind++;
-        if (optind >= argc) {
+        if (optind >= argc)
+        {
             return '?';
         }
         optarg = argv[optind];
@@ -33,8 +32,4 @@ int getopt(int argc, char *const argv[], const char *optstring)
     }
     return opt;
 }
-
-#ifdef __cplusplus
-}
-#endif
 

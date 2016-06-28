@@ -28,10 +28,6 @@
 #ifndef OC_REPRESENTATION_H_
 #define OC_REPRESENTATION_H_
 
-#define GCC_VERSION (__GNUC__ * 10000 \
-                   + __GNUC_MINOR__ * 100 \
-                   + __GNUC_PATCHLEVEL__)
-
 #include <string>
 #include <sstream>
 #include <vector>
@@ -324,7 +320,7 @@ namespace OC
                     // Enable-if required to prevent conversions to alternate types.  This prevents
                     // ambigious conversions in the case where conversions can include a number of
                     // types, such as the string constructor.
-#if (defined(_MSC_VER) ) || (defined(__GNUC__) && (GCC_VERSION <= 50000))
+#if (defined(_MSC_VER) ) || (defined(__GNUC__) && (__GNUC__ <= 5))
                     template<typename T, typename std::enable_if<
                      std::is_same<T, int>::value ||
                      std::is_same<T, double>::value ||

@@ -29,9 +29,6 @@
 #include <iterator>
 #if defined(_MSC_VER)
 #include <functional>
-//Squelch "decorated name length exceeded, name was truncated"
-// This compensates for templates full of templates
-#pragma warning(disable : 4503)
 #endif
 
 #include "octypes.h"

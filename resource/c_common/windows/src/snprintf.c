@@ -23,12 +23,11 @@
 
 int vs12_snprintf(char *buffer, size_t count, const char *format, ...)
 {
-    int length;
     va_list args;
 
     va_start(args, format);
 
-    length = _vsnprintf(buffer, count, format, args);
+    int length = _vsnprintf(buffer, count, format, args);
 
     va_end(args);
 

@@ -19,26 +19,43 @@
 
 #include <assert.h>
 #include <windows.h>
+#include <errno.h>
 #include "win_sleep.h"
+
+#include "logger.h"
+#define TAG  "WIN_SLEEP"
 
 #define NS_PER_MS  (1000000)
 #define US_PER_MS  (1000)
 
+#define ASSERT_AND_FAIL(EXPRESSION) {    \
+    assert((EXPRESSION));                \
+    if (!(EXPRESSION))                   \
+    {                                    \
+        errno = EINVAL;                  \
+        return -1;                       \
+    }                                    \
+}
+
 int usleep(unsigned int usec)
 {
     assert((usec % US_PER_MS) == 0); // granularity check
-    Sleep(usec / US_PER_MS);
+    Sleep((usec + US_PER_MS - 1) / US_PER_MS);
     return 0;
 }
 
 int nanosleep(const struct timespec *req, struct timespec *rem)
 {
-    assert(req != NULL);
-    assert(rem == NULL);
-    assert(req->tv_sec == 0);
+    if (req == NULL)
+    {
+        OIC_LOG(DEBUG, TAG, "nanosleep: req param should not be null");
+    }
+    ASSERT_AND_FAIL(req != NULL);
+    ASSERT_AND_FAIL(rem == NULL);
+    ASSERT_AND_FAIL(req->tv_sec == 0);
     assert((req->tv_nsec % NS_PER_MS) == 0); // granularity check
 
-    Sleep(req->tv_nsec / NS_PER_MS);
+    Sleep((req->tv_nsec + NS_PER_MS - 1) / NS_PER_MS);
 
     return 0;
 }

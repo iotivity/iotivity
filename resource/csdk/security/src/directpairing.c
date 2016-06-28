@@ -982,7 +982,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
 
     int clock_res = -1;
 #if defined(_MSC_VER)
-    time_t startTime;
+    time_t startTime = NULL;
     clock_res = (time(&startTime) == -1);
 #else
     struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
@@ -1003,7 +1003,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     while (1)
     {
 #if defined(_MSC_VER)
-        time_t currTime;
+        time_t currTime = NULL;
         clock_res = (time(&currTime) == -1);
 #else
         struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};

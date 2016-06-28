@@ -31,19 +31,19 @@
 
 
 #if (__cplusplus >=201103L) || defined(__GXX_EXPERIMENTAL_CXX0X__)
-    #define SUPPORTS_DEFAULT_CTOR
+#  define SUPPORTS_DEFAULT_CTOR
 #endif
 
 #if (__STDC_VERSION__ >= 201112L)
-    #include <assert.h>
-    #define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
+#  include <assert.h>
+#  define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
 #elif defined(_WIN32)
-    #if defined(__msys_nt__) && !defined(__cplusplus)
-        #define static_assert _Static_assert
-    #endif
-    #define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
+#  if defined(__msys_nt__) && !defined(__cplusplus)
+#    define static_assert _Static_assert
+#  endif
+#  define OC_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
 #else
-    #define OC_STATIC_ASSERT(condition, msg) ((void)sizeof(char[2*!!(condition) - 1]))
+#  define OC_STATIC_ASSERT(condition, msg) ((void)sizeof(char[2*!!(condition) - 1]))
 #endif
 
 #ifndef INLINE_API

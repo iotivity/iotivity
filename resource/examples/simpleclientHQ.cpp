@@ -29,10 +29,10 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
-#if defined(__msys_nt__)
-#include <Windows.h>
-#define sleep(x) Sleep(1000*x)
+#if defined(HAVE_WINDOWS_H)
+#include <windows.h>
 #endif
+#include "platform_features.h"
 
 using namespace OC;
 

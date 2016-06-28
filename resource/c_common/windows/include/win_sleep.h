@@ -17,8 +17,8 @@
 *
 ******************************************************************/
 
-#ifndef __WIN_SLEEP_H__
-#define __WIN_SLEEP_H__
+#ifndef WIN_SLEEP_H__
+#define WIN_SLEEP_H__
 
 #include <time.h>
 

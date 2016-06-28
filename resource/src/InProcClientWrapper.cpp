@@ -253,7 +253,7 @@ namespace OC
         ClientCallbackContext::ListenContext* context =
             new ClientCallbackContext::ListenContext(callback, shared_from_this());
         OCCallbackData cbdata;
-        cbdata.context = (void*)context;
+        cbdata.context = static_cast<void*>(context),
         cbdata.cb      = listenCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::ListenContext*)c;};
 
@@ -366,7 +366,7 @@ namespace OC
             new ClientCallbackContext::DeviceListenContext(callback, shared_from_this());
         OCCallbackData cbdata;
 
-        cbdata.context = (void*)context;
+        cbdata.context = static_cast<void*>(context),
         cbdata.cb      = listenDeviceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::DeviceListenContext*)c;};
 
@@ -457,7 +457,7 @@ namespace OC
         ClientCallbackContext::GetContext* ctx =
             new ClientCallbackContext::GetContext(callback);
         OCCallbackData cbdata;
-        cbdata.context = (void*)ctx;
+        cbdata.context = static_cast<void*>(ctx),
         cbdata.cb      = getResourceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::GetContext*)c;};
 
@@ -525,9 +525,9 @@ namespace OC
     {
         if (!uri.empty())
         {
-            if(uri.back() == '/')
+            if (uri.back() == '/')
             {
-                uri.resize(uri.size()-1);
+                uri.resize(uri.size() - 1);
             }
         }
 
@@ -537,14 +537,14 @@ namespace OC
             paramsList << '?';
         }
 
-        for(auto& param : queryParams)
+        for (auto& param : queryParams)
         {
             paramsList << param.first <<'='<<param.second<<';';
         }
 
         std::string queryString = paramsList.str();
 
-        if(queryString.empty())
+        if (queryString.empty())
         {
             return uri;
         }
@@ -584,7 +584,7 @@ namespace OC
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
         OCCallbackData cbdata;
-        cbdata.context = (void*)ctx;
+        cbdata.context = static_cast<void*>(ctx),
         cbdata.cb      = setResourceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::SetContext*)c;};
 
@@ -630,7 +630,7 @@ namespace OC
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
         OCCallbackData cbdata;
-        cbdata.context = (void*)ctx;
+        cbdata.context = static_cast<void*>(ctx),
         cbdata.cb      = setResourceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::SetContext*)c;};
 
@@ -695,7 +695,7 @@ namespace OC
         ClientCallbackContext::DeleteContext* ctx =
             new ClientCallbackContext::DeleteContext(callback);
         OCCallbackData cbdata;
-        cbdata.context = (void*)ctx;
+        cbdata.context = static_cast<void*>(ctx),
         cbdata.cb      = deleteResourceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::DeleteContext*)c;};
 
@@ -773,7 +773,7 @@ namespace OC
         ClientCallbackContext::ObserveContext* ctx =
             new ClientCallbackContext::ObserveContext(callback);
         OCCallbackData cbdata;
-        cbdata.context = (void*)ctx;
+        cbdata.context = static_cast<void*>(ctx),
         cbdata.cb      = observeResourceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::ObserveContext*)c;};
 
@@ -879,7 +879,7 @@ namespace OC
         ClientCallbackContext::SubscribePresenceContext* ctx =
             new ClientCallbackContext::SubscribePresenceContext(presenceHandler);
         OCCallbackData cbdata;
-        cbdata.context = (void*)ctx;
+        cbdata.context = static_cast<void*>(ctx),
         cbdata.cb      = subscribePresenceCallback;
         cbdata.cd      = [](void* c){delete (ClientCallbackContext::SubscribePresenceContext*)c;};
 

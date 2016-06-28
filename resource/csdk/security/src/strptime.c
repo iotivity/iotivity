@@ -24,8 +24,14 @@ bool is_leap_year(int yy)
 
 char * strptime(const char *buf, const char *fmt, struct tm *tm)
 {
-    char c;
     int temp = 0;
+    char c = '\0';
+
+    //check params
+    if ((fmt == NULL) || (tm == NULL))
+    {
+        return NULL;
+    }
 
     //initialize the tm struct values
     memset(tm, 0, sizeof(struct tm));

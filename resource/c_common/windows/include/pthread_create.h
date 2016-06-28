@@ -1,7 +1,7 @@
 /** @todo: Add Microsoft license information */
 
-#ifndef __PTHREAD_CREATE_H__
-#define __PTHREAD_CREATE_H__
+#ifndef PTHREAD_CREATE_H__
+#define PTHREAD_CREATE_H__
 #ifndef WIN_PTHREADS_H
 
 #ifdef __cplusplus

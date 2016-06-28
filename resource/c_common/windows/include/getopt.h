@@ -1,7 +1,7 @@
 /** @todo: Add Microsoft license information */
 
-#ifndef __GETOPT_H__
-#define __GETOPT_H__
+#ifndef GETOPT_H__
+#define GETOPT_H__
 
 #ifdef __cplusplus
 extern "C" {

@@ -54,15 +54,14 @@ uint64_t OICGetCurrentTime(OICTimePrecision precision)
     currentTime = (TIME_IN_MS == precision) ? millis() : micros();
 #elif defined(_WIN32)
     FILETIME fileTime;
-    ULARGE_INTEGER time;
 
     GetSystemTimePreciseAsFileTime(&fileTime);
 
     // fileTime should now be a QWORD hundred-nanoseconds time since 1601
 
     // MSDN recommends using ULARGE_INTEGER as an intermediate representation for math.
-    time.LowPart = fileTime.dwLowDateTime;
-    time.HighPart = fileTime.dwHighDateTime;
+    ULARGE_INTEGER time = { .LowPart  = fileTime.dwLowDateTime,
+                            .HighPart = fileTime.dwHighDateTime };
 
     currentTime =
     (TIME_IN_MS == precision)

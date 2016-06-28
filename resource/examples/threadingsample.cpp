@@ -35,7 +35,7 @@
 #include "OCApi.h"
 
 #ifdef HAVE_WINDOWS_H
-#include <Windows.h>
+#include <windows.h>
 #endif
 #include "platform_features.h"
 

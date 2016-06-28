@@ -381,8 +381,8 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
             }
 
 #if defined(_WIN32)
-            DWORD threadId;
-            HANDLE threadHandle;
+            DWORD threadId = 0;
+            HANDLE threadHandle = INVALID_HANDLE_VALUE;
 #else
             pthread_t threadId;
 #endif

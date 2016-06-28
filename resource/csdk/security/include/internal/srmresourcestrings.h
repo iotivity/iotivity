@@ -21,11 +21,11 @@
 #ifndef IOTVT_SRM_RSRC_STRINGS_H
 #define IOTVT_SRM_RSRC_STRINGS_H
 
+#include "securevirtualresourcetypes.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "securevirtualresourcetypes.h"
 
 extern const char * SVR_DB_FILE_NAME;
 extern const char * SVR_DB_DAT_FILE_NAME;

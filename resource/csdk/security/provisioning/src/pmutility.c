@@ -345,13 +345,11 @@ exit:
 OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 {
     OCStackResult res = OC_STACK_OK;
-    uint64_t startTime;
-    uint64_t currTime;
 
-    startTime = OICGetCurrentTime(TIME_IN_MS);
+    uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
     while (OC_STACK_OK == res)
     {
-        currTime = OICGetCurrentTime(TIME_IN_MS);
+        uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
 
         long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
         if (elapsed > waittime)

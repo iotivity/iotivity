@@ -266,9 +266,7 @@ void *loop(void *threadid)
 
 int initThread()
 {
-    int res;
-
-    res = pthread_create(&thread_id, NULL, loop, NULL);
+    int res = pthread_create(&thread_id, NULL, loop, NULL);
 
     if (res)
     {

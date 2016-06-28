@@ -17,14 +17,14 @@
 *
 ******************************************************************/
 
-#ifndef __VS12_SNPRINTF_H__
-#define __VS12_SNPRINTF_H__
+#ifndef VS12_SNPRINTF_H__
+#define VS12_SNPRINTF_H__
+
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdlib.h>
 
 int vs12_snprintf(char *buffer, size_t count, const char *format, ...);
 

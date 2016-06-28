@@ -424,11 +424,11 @@ namespace OC
                     break;
                 case AttributeType::String:
                     OCRepPayloadSetPropString(root, val.attrname().c_str(),
-                            (static_cast<std::string>(val)).c_str());
+                            static_cast<std::string>(val).c_str());
                     break;
                 case AttributeType::OCRepresentation:
                     OCRepPayloadSetPropObjectAsOwner(root, val.attrname().c_str(),
-                            (static_cast<OCRepresentation>(val)).getPayload());
+                            static_cast<OCRepresentation>(val).getPayload());
                     break;
                 case AttributeType::Vector:
                     getPayloadArray(root, val);
