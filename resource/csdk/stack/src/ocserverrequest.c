@@ -497,6 +497,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     CopyDevAddrToEndpoint(&serverRequest->devAddr, &responseEndpoint);
 
+    responseInfo.info.messageId = serverRequest->coapID;
     responseInfo.info.resourceUri = serverRequest->resourceUrl;
     responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult, serverRequest->method);
 
@@ -516,6 +517,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     else if(!serverRequest->notificationFlag && serverRequest->slowFlag &&
             serverRequest->qos == OC_HIGH_QOS)
     {
+        // To assign new messageId in CA.
+        responseInfo.info.messageId = 0;
         responseInfo.info.type = CA_MSG_CONFIRM;
     }
     else if(!serverRequest->notificationFlag)
@@ -529,7 +532,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     char rspToken[CA_MAX_TOKEN_LEN + 1] = {};
-    responseInfo.info.messageId = serverRequest->coapID;
     responseInfo.info.token = (CAToken_t)rspToken;
 
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
