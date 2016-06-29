@@ -45,7 +45,6 @@
 
 #define TAG "OIC_CA_PRTCL_MSG"
 
-#define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)
 #define CA_ENCODE_BUFFER_SIZE (4)
 
@@ -447,7 +446,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
     }
     else if (str && length)
     {
-        unsigned char uriBuffer[CA_BUFSIZE] = { 0 };
+        unsigned char uriBuffer[CA_MAX_URI_LENGTH] = { 0 };
         unsigned char *pBuf = uriBuffer;
         size_t buflen = sizeof(uriBuffer);
         int res = (target == COAP_OPTION_URI_PATH) ? coap_split_path(str, length, pBuf, &buflen) :
