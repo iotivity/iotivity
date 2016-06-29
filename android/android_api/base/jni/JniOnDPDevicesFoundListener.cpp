@@ -77,12 +77,18 @@ JniOnDPDevicesFoundListener::~JniOnDPDevicesFoundListener()
     LOGI("~JniOnDPDevicesFoundListener()");
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (nullptr == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
@@ -90,13 +96,19 @@ void JniOnDPDevicesFoundListener::directPairingDevicesCallback(PairedDevices par
 {
     jint ret;
     JNIEnv *env = GetJNIEnv(ret);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -105,7 +117,10 @@ void JniOnDPDevicesFoundListener::directPairingDevicesCallback(PairedDevices par
     if (!clsL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -122,10 +137,14 @@ void JniOnDPDevicesFoundListener::directPairingDevicesCallback(PairedDevices par
             {
                 calledFunc = "onGetDirectPairedListener";
             }
+            break;
         default:
             {
                 checkExAndRemoveListener(env);
-                if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+                if (JNI_EDETACHED == ret)
+                {
+                    g_jvm->DetachCurrentThread();
+                }
             }
             return;
     }
@@ -135,7 +154,10 @@ void JniOnDPDevicesFoundListener::directPairingDevicesCallback(PairedDevices par
     if (!midL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -146,7 +168,10 @@ void JniOnDPDevicesFoundListener::directPairingDevicesCallback(PairedDevices par
     }
 
     checkExAndRemoveListener(env);
-    if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniOnDPDevicesFoundListener::checkExAndRemoveListener(JNIEnv* env)

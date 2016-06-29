@@ -28,7 +28,8 @@ namespace PH = std::placeholders;
 
 JniOcDirectPairDevice::JniOcDirectPairDevice(std::shared_ptr<OC::OCDirectPairing> directPairingDevice)
     : m_sharedDirectPairDevice(directPairingDevice)
-{}
+{
+}
 
 JniOcDirectPairDevice::~JniOcDirectPairDevice()
 {
@@ -77,7 +78,10 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcDirectPairDevice_getHost
     LOGD("OcDirectPairing_getHost");
 
     JniOcDirectPairDevice* device = JniOcDirectPairDevice::getJniOcDirectPairDevicePtr(env,thiz);
-    if (!device) return nullptr;
+    if (!device)
+    {
+        return nullptr;
+    }
 
     std::string dev  = device->getHost();
     return env->NewStringUTF(dev.c_str());
@@ -91,7 +95,10 @@ JNIEXPORT jintArray JNICALL Java_org_iotivity_base_OcDirectPairDevice_getPairing
 
     std::vector<jint> pairingMethodList;
     JniOcDirectPairDevice* device = JniOcDirectPairDevice::getJniOcDirectPairDevicePtr(env,thiz);
-    if (!device) return nullptr;
+    if (!device)
+    {
+        return nullptr;
+    }
 
     std::vector<OCPrm_t> pairingMethods = device->getPairingMethods();
     return JniOcDirectPairDevice::JconvertIntVectorToJavaList(env,pairingMethods);
@@ -104,7 +111,10 @@ jintArray JniOcDirectPairDevice::JconvertIntVectorToJavaList(JNIEnv *env, std::v
     jsize len = static_cast<jsize>(vector.size());
 
     jintArray intArray = env->NewIntArray(len);
-    if (!intArray) return nullptr;
+    if (!intArray)
+    {
+        return nullptr;
+    }
 
     env->SetIntArrayRegion(intArray, (jsize)0, len, (const jint*)&vector[0]);
 
@@ -125,7 +135,10 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcDirectPairDevice_getConnectivity
 {
     LOGD("OcDirectPairDevice_getConnectivityType");
     JniOcDirectPairDevice* device = JniOcDirectPairDevice::getJniOcDirectPairDevicePtr(env,thiz);
-    if (!device) return -1;
+    if (!device)
+    {
+        return -1;
+    }
 
     OCConnectivityType connectivityType = device->connectivityType();
     return static_cast<jint>(connectivityType);

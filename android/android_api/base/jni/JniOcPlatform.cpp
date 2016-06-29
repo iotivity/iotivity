@@ -520,7 +520,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers0
 
     JniOcResourceHandle* jniOcResourceHandle = JniOcResourceHandle::getJniOcResourceHandlePtr(
         env, jResourceHandle);
-    if (!jniOcResourceHandle) return;
+    if (!jniOcResourceHandle)
+    {
+        return;
+    }
 
     try
     {
@@ -563,7 +566,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers1
         return;
     }
 
-    try{
+    try {
         OCStackResult result = OCPlatform::notifyAllObservers(
             jniOcResourceHandle->getOCResourceHandle(),
             JniUtils::getQOS(env, static_cast<int>(jQoS)));
@@ -1232,7 +1235,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0(
         return nullptr;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, jResource);
-    if (!resource) return nullptr;
+    if (!resource)
+    {
+        return nullptr;
+    }
 
     OCResourceHandle resourceHandle;
     try
@@ -1382,12 +1388,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
             jstring jStr = (jstring)env->GetObjectArrayElement(jDeviceTypes, i);
             if (!jStr)
             {
+                delete deviceInfo.deviceName;
                 ThrowOcException(OC_STACK_INVALID_PARAM, "device type cannot be null");
                 return;
             }
 
             OCResourcePayloadAddStringLL(&deviceInfo.types, env->GetStringUTFChars(jStr, nullptr));
-            if (env->ExceptionCheck()) return;
+            if (env->ExceptionCheck())
+            {
+                delete deviceInfo.deviceName;
+                return;
+            }
 
             env->DeleteLocalRef(jStr);
         }
@@ -1606,7 +1617,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource0
     }
     JniOcResourceHandle* jniOcResourceCollectionHandle =
         JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceCollectionHandle);
-    if (!jniOcResourceCollectionHandle) return;
+    if (!jniOcResourceCollectionHandle)
+    {
+        return;
+    }
 
     JniOcResourceHandle* jniOcResourceHandle = JniOcResourceHandle::getJniOcResourceHandlePtr(
         env, jResourceHandle);
@@ -1857,7 +1871,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0(
 
     JniOcResourceHandle* jniOcResourceHandle =
         JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceHandle);
-    if (!jniOcResourceHandle) return;
+    if (!jniOcResourceHandle)
+    {
+        return;
+    }
 
     try
     {
@@ -2257,7 +2274,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0(
 
     JniOcResourceResponse *jniResponse =
         JniOcResourceResponse::getJniOcResourceResponsePtr(env, jResourceResponse);
-    if (!jniResponse) return;
+    if (!jniResponse)
+    {
+        return;
+    }
 
     try
     {

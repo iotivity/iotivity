@@ -38,56 +38,79 @@ JniOnDirectPairingListener::~JniOnDirectPairingListener()
     LOGI("~JniOnDirectPairingListener()");
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (nullptr == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniOnDirectPairingListener::doDirectPairingCB(std::shared_ptr<OC::OCDirectPairing> dpDev,
                                                                     OCStackResult result)
 {
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
     jclass clsL = env->GetObjectClass(jListener);
-
     if (!clsL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
     JniOcDirectPairDevice *device = new JniOcDirectPairDevice(dpDev);
-    if (!device) return;
+    if (!device)
+    {
+        return;
+    }
 
     jstring jStr = env->NewStringUTF((dpDev->getDeviceID()).c_str());
     if (!jStr)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return ;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
     }
 
     jobject jresult = env->NewObject(g_cls_OcDirectPairDevice, g_mid_OcDirectPairDevice_ctor);
     if (!jresult)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return ;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
     }
 
     SetHandle<JniOcDirectPairDevice>(env, jresult, device);
@@ -99,7 +122,10 @@ void JniOnDirectPairingListener::doDirectPairingCB(std::shared_ptr<OC::OCDirectP
     if (!midL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -110,7 +136,11 @@ void JniOnDirectPairingListener::doDirectPairingCB(std::shared_ptr<OC::OCDirectP
     }
 
     checkExAndRemoveListener(env);
-    if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniOnDirectPairingListener::checkExAndRemoveListener(JNIEnv* env)

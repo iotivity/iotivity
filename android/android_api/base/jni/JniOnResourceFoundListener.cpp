@@ -34,35 +34,48 @@ JniOnResourceFoundListener::~JniOnResourceFoundListener()
     LOGI("~JniOnResourceFoundListener()");
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (nullptr == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCResource> resource)
 {
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 
     jobject jResource = env->NewObject(g_cls_OcResource, g_mid_OcResource_ctor);
     if (!jResource)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 
     JniOcResource *jniOcResource = new JniOcResource(resource);
@@ -71,24 +84,30 @@ void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCRes
     {
         delete jniOcResource;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
     jclass clsL = env->GetObjectClass(jListener);
     if (!clsL)
     {
         delete jniOcResource;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
     jmethodID midL = env->GetMethodID(clsL, "onResourceFound", "(Lorg/iotivity/base/OcResource;)V");
     if (!midL)
     {
         delete jniOcResource;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
     env->CallVoidMethod(jListener, midL, jResource);
     if (env->ExceptionCheck())
@@ -96,11 +115,16 @@ void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCRes
         LOGE("Java exception is thrown");
         delete jniOcResource;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 
-    if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniOnResourceFoundListener::checkExAndRemoveListener(JNIEnv* env)

@@ -27,7 +27,8 @@ namespace PH = std::placeholders;
 
 JniOcSecureResource::JniOcSecureResource(std::shared_ptr<OCSecureResource> device)
     : m_sharedSecureResource(device)
-{}
+{
+}
 
 JniOcSecureResource::~JniOcSecureResource()
 {

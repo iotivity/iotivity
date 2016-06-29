@@ -2642,12 +2642,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         requestInfo.info.payloadFormat = CA_FORMAT_UNDEFINED;
     }
 
-    if (result != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, TAG, "CACreateEndpoint error");
-        goto exit;
-    }
-
     // prepare for response
 #ifdef WITH_PRESENCE
     if (method == OC_REST_PRESENCE)
@@ -4405,7 +4399,11 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
             previous = pointer;
             pointer = pointer->next;
         }
-        previous->next = newInterface;
+
+        if (previous)
+        {
+            previous->next = newInterface;
+        }
     }
 }
 

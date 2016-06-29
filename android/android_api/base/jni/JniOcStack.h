@@ -161,26 +161,29 @@ static JNIEnv* GetJNIEnv(jint& ret)
     JNIEnv *env = nullptr;
 
     ret = g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION);
-    switch (ret) {
-    case JNI_OK:
-        return env;
-    case JNI_EDETACHED:
-        if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
-        {
+    switch (ret)
+    {
+        case JNI_OK:
+            return env;
+        case JNI_EDETACHED:
+            if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
+            {
+                LOGE("Failed to get the environment");
+                return nullptr;
+            }
+            else
+            {
+                return env;
+            }
+
+        case JNI_EVERSION:
+            LOGE("JNI version not supported");
+            break;
+        default:
             LOGE("Failed to get the environment");
             return nullptr;
-        }
-        else
-        {
-            return env;
-        }
-
-    case JNI_EVERSION:
-        LOGE("JNI version not supported");
-    default:
-        LOGE("Failed to get the environment");
-        return nullptr;
     }
+    return nullptr;
 }
 
 static void DuplicateString(char ** targetString, std::string sourceString)

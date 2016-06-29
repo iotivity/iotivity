@@ -51,6 +51,7 @@ public:
                 break;
             }
         }
+
         if (!onEventListener)
         {
             onEventListener = new T(env, jListener, owner);
@@ -66,9 +67,11 @@ public:
             {
                 LOGD("OnEventListener: Failed to create global listener ref.");
                 delete onEventListener;
+                return nullptr;
             }
             LOGD("OnEventListener: new listener");
         }
+
         m_mapMutex.unlock();
         return onEventListener;
     }
