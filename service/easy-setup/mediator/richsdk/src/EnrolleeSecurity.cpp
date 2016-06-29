@@ -54,11 +54,11 @@ namespace OIC
             m_EnrolleeResource = EnrolleeResource;
         }
 
-        ESResult EnrolleeSecurity::registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
+        ESResult EnrolleeSecurity::registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
                 SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb)
 
         {
-            m_enrolleeSecStatusCb = enrolleeSecStatusCb;
+            m_securityProvStatusCb = securityProvStatusCb;
             m_securityPinCb = securityPinCb;
             m_secProvisioningDbPathCb = secProvisioningDbPathCb;
 
@@ -114,7 +114,7 @@ namespace OIC
                 securityProvisioningStatus = std::make_shared< SecProvisioningStatus >(uuid,
                         ES_ERROR);
 
-                m_enrolleeSecStatusCb(securityProvisioningStatus);
+                m_securityProvStatusCb(securityProvisioningStatus);
                 return;
             }
             else
@@ -131,7 +131,7 @@ namespace OIC
                     securityProvisioningStatus = std::make_shared< SecProvisioningStatus >(uuid,
                             ES_OK);
 
-                    m_enrolleeSecStatusCb(securityProvisioningStatus);
+                    m_securityProvStatusCb(securityProvisioningStatus);
                     return;
                 }
 

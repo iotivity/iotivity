@@ -50,7 +50,7 @@ namespace OIC
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "checkProvInformationCb : Provisioning is failed ");
                 std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                        DataProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
+                        DataProvisioningStatus >(ESResult::ES_ERROR, ESDataProvState::ES_PROVISIONING_ERROR);
                 m_dataProvStatusCb(provStatus);
                 return;
             }
@@ -63,7 +63,7 @@ namespace OIC
                     "Now trigger network connection ");
 
             std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                    DataProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
+                    DataProvisioningStatus >(ESResult::ES_OK, ESDataProvState::ES_PROVISIONING_SUCCESS);
             m_dataProvStatusCb(provStatus);
         }
 
@@ -122,7 +122,7 @@ namespace OIC
                     result = ESResult::ES_UNAUTHORIZED;
                 }
                 std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                        DataProvisioningStatus >(result, ESState::ES_PROVISIONING_ERROR);
+                        DataProvisioningStatus >(result, ESDataProvState::ES_PROVISIONING_ERROR);
                 m_dataProvStatusCb(provStatus);
 
                 return;
@@ -174,7 +174,7 @@ namespace OIC
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "getProvStatusResponse : Provisioning is successful");
                 std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                        DataProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONED_ALREADY);
+                        DataProvisioningStatus >(ESResult::ES_OK, ESDataProvState::ES_PROVISIONED_ALREADY);
                 m_dataProvStatusCb(provStatus);
             }
         }
@@ -249,7 +249,7 @@ namespace OIC
             if (result != OCStackResult::OC_STACK_OK)
             {
                 std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                        DataProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
+                        DataProvisioningStatus >(ESResult::ES_ERROR, ESDataProvState::ES_PROVISIONING_ERROR);
                 m_dataProvStatusCb(provStatus);
                 return;
             }

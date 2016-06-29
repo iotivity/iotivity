@@ -17,13 +17,9 @@
  * limitations under the License.
  *
  ******************************************************************/
-/** @file   JniProvisioningStatusListener.h
- *
- *   @brief  This file contains JNI Provisioing status Listener class
- */
 
-#ifndef __JNI_ES_PROVISIONING_STATUS_LISTENER_H_
-#define __JNI_ES_PROVISIONING_STATUS_LISTENER_H_
+#ifndef __JNI_ES_DATA_PROVISIONING_STATUS_LISTENER_H_
+#define __JNI_ES_DATA_PROVISIONING_STATUS_LISTENER_H_
 
 #include <jni.h>
 
@@ -36,28 +32,23 @@ class JniRemoteEnrollee;
 
 using namespace OIC::Service;
 
-/**
- * @class   JniProvisioningStatusListener
- * @brief   This class provides functions for handling the provisioning status callback between the Java and native layer
- *
- */
-class JniProvisioningStatusListener
+class JniDataProvisioningStatusListener
 {
     public:
         /**
          * @brief constructor
          */
-        JniProvisioningStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
+        JniDataProvisioningStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
 
         /**
          * @brief destructor
         */
-        ~JniProvisioningStatusListener();
+        ~JniDataProvisioningStatusListener();
 
         /**
          * @brief callback function that will be passed to Native layer
         */
-        //void provisionStatusCallback (std::shared_ptr<EasySetupStatus> easySetupStatus);
+        void dataProvisionStatusCallback (std::shared_ptr<DataProvisioningStatus> dataProvisioningStatus);
 
     private:
         jweak m_jwListener;
@@ -65,4 +56,4 @@ class JniProvisioningStatusListener
         void checkExAndRemoveListener(JNIEnv *env);
 };
 
-#endif //__JNI_ES_PROVISIONING_STATUS_LISTENER_H_
+#endif //__JNI_ES_DATA_PROVISIONING_STATUS_LISTENER_H_

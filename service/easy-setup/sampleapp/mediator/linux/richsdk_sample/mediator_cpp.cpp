@@ -67,7 +67,7 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
 void printPropertyData(PropertyData propData)
 {
     cout << "===========================================" << endl;
-    DeviceConfig devConfig = propData.getDevInfo();
+    DeviceConfig devConfig = propData.getDevConf();
     NetworkInfo netInfo = propData.getNetInfo();
     bool cloudable = propData.isCloudable();
 
@@ -112,7 +112,7 @@ void dataProvisioningStatusCallback(std::shared_ptr< DataProvisioningStatus > pr
     else
     {
       cout << "dataProvisioningStatusCallback is success." << endl;
-      cout << "ESState : " << provStatus->getESState() << endl;
+      cout << "ESDataProvState : " << provStatus->getESDataProvState() << endl;
     }
 }
 

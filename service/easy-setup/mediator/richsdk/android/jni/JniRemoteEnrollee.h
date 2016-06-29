@@ -33,7 +33,9 @@
 
 #include "JniJvm.h"
 #include "JniEsUtils.h"
-#include "JniProvisioningStatusListener.h"
+#include "JniRequestPropertyDataStatusListener.h"
+#include "JniSecurityStatusListener.h"
+#include "JniDataProvisioningStatusListener.h"
 #include "JniCloudProvisioningStatusListener.h"
 #include "JniEsListenerManager.h"
 
@@ -60,19 +62,30 @@ class JniRemoteEnrollee
         ~JniRemoteEnrollee();
 
         // ***** JNI APIs internally call the APIs of this class ***** //
-
-        void setCloudProvInfo(JNIEnv *env, jstring authCode, jstring authProvider, jstring ciServer);
-
+        void initRemoteEnrollee(JNIEnv *env);
+        void requestPropertyData(JNIEnv *env, jobject jListener);
+        void startSecurityProvisioning(JNIEnv *env, jobject jListener);
+        void startDataProvisioning(JNIEnv *env, jobject jListener);
         void startCloudProvisioning(JNIEnv *env, jobject jListener);
+        void setDataProvInfo(JNIEnv *env, jstring jssid, jstring jpwd, jint jauthType,
+                                            jint jencType, jstring jlanguage, jstring jcountry);
+        void setCloudProvInfo(JNIEnv *env, jstring authCode, jstring authProvider, jstring ciServer);
 
         static JniRemoteEnrollee *getJniRemoteEnrollee(JNIEnv *env, jobject thiz);
 
-        JniCloudProvisioningStatusListener *addCloudProvisioningStatusListener(JNIEnv *env, jobject jListener);
-        void removeCloudProvisioningStatusListener(JNIEnv *env, jobject jListener);
+        template <class T>
+        T *addStatusListener(JNIEnv *env, jobject jListener)
+        {
+            return JniEsListenerManager<T>().addListener(env, jListener, this);
+        };
+
+        template <class T>
+        void removeStatusListener(JNIEnv *env, jobject jListener)
+        {
+            JniEsListenerManager<T>().removeListener(env, jListener);
+        };
 
     private:
-        void registerCloudProvisioningHandler(JNIEnv *env, jobject jListener);
-        JniEsListenerManager<JniCloudProvisioningStatusListener> m_cloudProvisioningStatus;
         std::shared_ptr<RemoteEnrollee> m_sharedResource;
 
 };
@@ -81,6 +94,42 @@ class JniRemoteEnrollee
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * API for starting the initRemoteEnrollee process.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeInitRemoteEnrollee
+(JNIEnv *env, jobject jClass);
+
+/**
+ * API for starting the Request PropertyData process.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRequestPropertyData
+(JNIEnv *env, jobject jClass, jobject jListener);
+
+/**
+ * API for starting the Sequrity provisioning process.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartSecurityProvision
+(JNIEnv *env, jobject jClass, jobject jListener);
+
+/**
+ * API for starting the Data provisioning process.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartDataProvision
+(JNIEnv *env, jobject jClass);
+
+/**
+ * API for setting data provisioning information.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetDataProvInfo
+(JNIEnv *env, jobject jClass, jstring jssid, jstring jpwd, jint jauthType, jint jencType,
+    jstring jlanguage, jstring jcountry);
 
 /**
  * API for setting cloud provisioning information.
@@ -95,29 +144,6 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetCloudProvIn
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartCloudProvisioning
 (JNIEnv *env, jobject jClass, jobject jListener);
-
-/**
- * API for starting the provisioning process.
- */
-//JNIEXPORT void JNICALL
-//Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartProvision
-//(JNIEnv *env, jobject jClass);
-
-/**
- * API for stopping the provisioning process.
- */
-//JNIEXPORT void JNICALL
-//Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStopProvision
-//(JNIEnv *env, jobject jClass);
-
-/**
- * API for setting the lisener for recieiving provisioning status.
- *
- * @param provisiongListener - Provisioning listener [callback from native layer will be passing to this listener]
- */
-//JNIEXPORT void JNICALL
-//Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRegisterProvisioningHandler
-//(JNIEnv *env, jobject jClass, jobject provisiongListener);
 
 #ifdef __cplusplus
 }

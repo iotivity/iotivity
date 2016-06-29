@@ -18,21 +18,21 @@
  *
  ******************************************************************/
 
-#include "JniProvisioningStatusListener.h"
+#include "JniDataProvisioningStatusListener.h"
 #include "JniRemoteEnrollee.h"
 
 using namespace OIC::Service;
 
-JniProvisioningStatusListener::JniProvisioningStatusListener(JNIEnv *env, jobject jListener,
+JniDataProvisioningStatusListener::JniDataProvisioningStatusListener(JNIEnv *env, jobject jListener,
         JniRemoteEnrollee *owner)
     : m_ownerResource(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
 }
 
-JniProvisioningStatusListener::~JniProvisioningStatusListener()
+JniDataProvisioningStatusListener::~JniDataProvisioningStatusListener()
 {
-    LOGI("~JniProvisioningStatusListener()");
+    LOGI("~JniDataProvisioningStatusListener()");
     if (m_jwListener)
     {
         jint ret;
@@ -42,12 +42,12 @@ JniProvisioningStatusListener::~JniProvisioningStatusListener()
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
-/*
-void JniProvisioningStatusListener::provisionStatusCallback (std::shared_ptr<EasySetupStatus>
-        easySetupStatus)
+
+void JniDataProvisioningStatusListener::dataProvisionStatusCallback (std::shared_ptr<DataProvisioningStatus>
+        dataProvStatusCb)
 {
 
-    LOGI("JniProvisioningStatusListener::provisioiningStatusCallback enter");
+    LOGI("JniDataProvisioningStatusListener::provisioiningStatusCallback enter");
 
     jint ret;
     JNIEnv *env = GetESJNIEnv(ret);
@@ -67,9 +67,12 @@ void JniProvisioningStatusListener::provisionStatusCallback (std::shared_ptr<Eas
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;
     }
+    //TODO:
+    jmethodID midL = env->GetMethodID(clsL, "onProgress",
+                                      "(Lorg/iotivity/service/easysetup/mediator/"
+                                      "DataProvisioningCallback;"
+                                      ")V");
 
-    jmethodID midL = env->GetMethodID(clsL, "onStatusRecieved",
-                                      "(I)V");
     if (!midL)
     {
         checkExAndRemoveListener(env);
@@ -77,9 +80,24 @@ void JniProvisioningStatusListener::provisionStatusCallback (std::shared_ptr<Eas
         return;
     }
 
-    EasySetupState nativeProvisioningState = easySetupStatus->getEasySetupState();
-    int provisionState = convertNativeProvisionStateToInt(nativeProvisioningState);
-    env->CallVoidMethod(jListener, midL, provisionState);
+    int nativeESResult = convertNativeDataProvResultToInt(dataProvStatusCb->getESResult());
+    int nativeESDataProvState = convertNativeDataProvStateToInt(dataProvStatusCb->getESDataProvState());
+
+    jobject jDataProvisioningStatus = NULL;
+    jDataProvisioningStatus = env->NewObject(g_cls_DataProvisioningStatus,
+                                                g_mid_DataProvisioningStatus_ctor,
+                                                (jint)nativeESResult,
+                                                (jint)nativeESDataProvState);
+
+    LOGI("JniDataProvisioningStatus::onDataProvisioningStatus - %d, %d", nativeESResult, nativeESDataProvState);
+    if (!jDataProvisioningStatus)
+    {
+        LOGE("JniDataProvisioningStatus::onDataProvisioningStatus Unable to create the java object");
+        return ;
+    }
+
+    env->CallVoidMethod(jListener, midL, jDataProvisioningStatus);
+
     if (env->ExceptionCheck())
     {
         LOGE("Java exception is thrown");
@@ -91,18 +109,17 @@ void JniProvisioningStatusListener::provisionStatusCallback (std::shared_ptr<Eas
     if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
 }
 
-void JniProvisioningStatusListener::checkExAndRemoveListener(JNIEnv *env)
+void JniDataProvisioningStatusListener::checkExAndRemoveListener(JNIEnv *env)
 {
     if (env->ExceptionCheck())
     {
         jthrowable ex = env->ExceptionOccurred();
         env->ExceptionClear();
-        m_ownerResource->removeProvisioningStatusListener(env, m_jwListener);
+        m_ownerResource->removeStatusListener<JniDataProvisioningStatusListener>(env, m_jwListener);
         env->Throw((jthrowable)ex);
     }
     else
     {
-        m_ownerResource->removeProvisioningStatusListener(env, m_jwListener);
+        m_ownerResource->removeStatusListener<JniDataProvisioningStatusListener>(env, m_jwListener);
     }
 }
-*/

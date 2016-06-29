@@ -18,39 +18,42 @@
  *
  ******************************************************************/
 
-/**
-  * @file   JniESUtils.h
-  *
-  * @brief  This file contains the utility functions for JNI layer
-  */
-
-#ifndef __JNI_ES_UTILS_H_
-#define __JNI_ES_UTILS_H_
+#ifndef __JNI_ES_SECURITY_PROVISIONING_STATUS_LISTENER_H_
+#define __JNI_ES_SECURITY_PROVISIONING_STATUS_LISTENER_H_
 
 #include <jni.h>
-#include <string>
 
+#include "RemoteEnrollee.h"
 #include "ESRichCommon.h"
-#include "octypes.h"
 
 #include "JniJvm.h"
 
+class JniRemoteEnrollee;
+
 using namespace OIC::Service;
 
-/**
- * @brief Throw the Exception to the java layer
- */
-void throwESException(JNIEnv *env, std::string reason);
+class JniSecurityStatusListener
+{
+    public:
+        /**
+         * @brief constructor
+         */
+        JniSecurityStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
 
-/**
-* @brief Convert integer to OCconnectivity Enum
-*/
-OCConnectivityType  getOCConnectivityTypeFromInt(int connectivityType);
+        /**
+         * @brief destructor
+        */
+        ~JniSecurityStatusListener();
 
-WIFI_AUTHTYPE getWifiAuthTypeFromInt(int authType);
-WIFI_ENCTYPE getWifiEncTypeFromInt(int encType);
-int convertNativeWifiFreqToInt(WIFI_FREQ wifiFreq);
-int convertNativeWifiModeToInt(WIFI_MODE wifiMode);
-int convertNativeDataProvStateToInt(ESDataProvState nativeState);
-int convertNativeDataProvResultToInt(ESResult nativeResult);
-#endif //__JNI_ES_UTILS_H_
+        /**
+         * @brief callback function that will be passed to Native layer
+        */
+        void secProvisionStatusCallback (std::shared_ptr<SecProvisioningStatus> secProvisioningStatus);
+
+    private:
+        jweak m_jwListener;
+        JniRemoteEnrollee *m_ownerResource;
+        void checkExAndRemoveListener(JNIEnv *env);
+};
+
+#endif //__JNI_ES_SECURITY_PROVISIONING_STATUS_LISTENER_H_

@@ -45,13 +45,13 @@ namespace OIC
         public:
             EnrolleeSecurity(std::shared_ptr< EnrolleeResource > EnrolleeResource,
             std::string secDbPath);
-            ESResult registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
+            ESResult registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
             bool performOwnershipTransfer();
 
         private:
             std::shared_ptr< EnrolleeResource > m_EnrolleeResource;
-            EnrolleeSecStatusCb m_enrolleeSecStatusCb;
+            SecurityProvStatusCb m_securityProvStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
             std::shared_ptr< OC::OCSecureResource > m_unownedDevice;

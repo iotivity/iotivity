@@ -39,8 +39,8 @@ namespace OIC
 
         RemoteEnrollee::RemoteEnrollee()
         {
-            m_enrolleeSecStatusCb = nullptr;
-            m_RequestPropertyDataStatusCb = nullptr;
+            m_securityProvStatusCb = nullptr;
+            m_requestPropertyDataStatusCb = nullptr;
             m_securityPinCb = nullptr;
             m_secProvisioningDbPathCb = nullptr;
             m_dataProvStatusCb = nullptr;
@@ -64,27 +64,27 @@ namespace OIC
         }
 #endif //__WITH_DTLS__
 
-        void RemoteEnrollee::easySetupSecurityStatusCallback(
+        void RemoteEnrollee::securityStatusHandler(
                         std::shared_ptr< SecProvisioningStatus > status)
         {
             OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "easySetupStatusCallback status is, UUID = %s, "
                     "Status = %d", status->getDeviceUUID().c_str(),
-                    status->getResult());
+                    status->getESResult());
 
-            if(status->getResult() == ES_OK)
+            if(status->getESResult() == ES_OK)
             {
                 OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Ownership and ACL are successful. "
                         "Continue with Network information provisioning");
 
                 OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before ProvisionEnrollee");
 
-                m_enrolleeSecStatusCb(status);
+                m_securityProvStatusCb(status);
             }
             else
             {
                 OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Ownership and ACL are fail");
 
-                m_enrolleeSecStatusCb(status);
+                m_securityProvStatusCb(status);
             }
         }
 
@@ -100,7 +100,7 @@ namespace OIC
                 m_propertyData = status->getPropertyData();
             }
 
-            m_RequestPropertyDataStatusCb(status);
+            m_requestPropertyDataStatusCb(status);
         }
 
         void RemoteEnrollee::dataProvisioningStatusHandler(
@@ -112,7 +112,7 @@ namespace OIC
 
             if (status->getESResult() == ES_OK)
             {
-                if (status->getESState() >= ESState::ES_PROVISIONED_ALREADY)
+                if (status->getESDataProvState() >= ESDataProvState::ES_PROVISIONED_ALREADY)
                 {
                     OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"ProvStatus = %d", status->getESResult());
                 }
@@ -305,14 +305,14 @@ namespace OIC
             }
         }
 
-        void RemoteEnrollee::startSecurityProvisioning(EnrolleeSecStatusCb callback)
+        void RemoteEnrollee::startSecurityProvisioning(SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
 
-            m_enrolleeSecStatusCb = callback;
+            m_securityProvStatusCb = callback;
 
-            EnrolleeSecStatusCb securityProvStatusCb = std::bind(
-                    &RemoteEnrollee::easySetupSecurityStatusCallback,
+            SecurityProvStatusCb securityProvStatusCb = std::bind(
+                    &RemoteEnrollee::securityStatusHandler,
                     this,
                     std::placeholders::_1);
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
@@ -328,7 +328,7 @@ namespace OIC
                     OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Fail performOwnershipTransfer");
                     std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                             std::make_shared< SecProvisioningStatus >(nullptr, ES_ERROR);
-                    m_enrolleeSecStatusCb(securityProvisioningStatus);
+                    m_securityProvStatusCb(securityProvisioningStatus);
                     return;
                 }
             }
@@ -343,7 +343,7 @@ namespace OIC
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                      std::make_shared< SecProvisioningStatus >(nullptr, ES_ERROR);
-            m_enrolleeSecStatusCb(securityProvisioningStatus);
+            m_securityProvStatusCb(securityProvisioningStatus);
 #endif
         }
 
@@ -354,7 +354,7 @@ namespace OIC
                 throw ESInvalidParameterException("Callback is empty");
             }
 
-            m_RequestPropertyDataStatusCb = callback;
+            m_requestPropertyDataStatusCb = callback;
 
             if (m_enrolleeResource == nullptr)
             {

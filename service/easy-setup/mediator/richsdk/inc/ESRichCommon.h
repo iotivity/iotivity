@@ -129,11 +129,11 @@ namespace OIC
 
         typedef enum
         {
-            WiFi_11A = 0,
-            WiFi_11B,
-            WiFi_11G,
-            WiFi_11N,
-            WiFi_11AC
+            WIFI_11A = 0,
+            WIFI_11B,
+            WIFI_11G,
+            WIFI_11N,
+            WIFI_11AC
         } WIFI_MODE;
 
         typedef struct
@@ -180,7 +180,7 @@ namespace OIC
             ES_NEED_PROVISIONING,
             ES_PROVISIONED_ALREADY,
             ES_PROVISIONING_SUCCESS
-        } ESState;
+        } ESDataProvState;
 
         typedef enum
         {
@@ -214,7 +214,7 @@ namespace OIC
                 return m_devUUID;
             }
 
-            ESResult getResult()
+            ESResult getESResult()
             {
                 return m_result;
             }
@@ -235,17 +235,17 @@ namespace OIC
             {
             }
 
-            const DeviceConfig getDevInfo()
+            const DeviceConfig& getDevConf() const
             {
                 return m_devConfig;
             }
 
-            const NetworkInfo getNetInfo()
+            const NetworkInfo& getNetInfo() const
             {
                 return m_netInfo;
             }
 
-            bool isCloudable()
+            const bool isCloudable() const
             {
                 return m_cloudable;
             }
@@ -260,7 +260,7 @@ namespace OIC
         {
         public:
             RequestPropertyDataStatus(ESResult result, const PropertyData& data) :
-                    m_result(result), m_PropertyData(data)
+                    m_result(result), m_propertyData(data)
             {
             }
 
@@ -269,21 +269,21 @@ namespace OIC
                 return m_result;
             }
 
-            const PropertyData getPropertyData()
+            const PropertyData& getPropertyData()
             {
-                return m_PropertyData;
+                return m_propertyData;
             }
 
         private:
             ESResult m_result;
-            PropertyData m_PropertyData;
+            PropertyData m_propertyData;
         };
 
         class DataProvisioningStatus
         {
         public:
-            DataProvisioningStatus(ESResult result, ESState esState) :
-                    m_result(result), m_esState(esState)
+            DataProvisioningStatus(ESResult result, ESDataProvState dataProvState) :
+                    m_result(result), m_state(dataProvState)
             {
             }
 
@@ -292,14 +292,14 @@ namespace OIC
                 return m_result;
             }
 
-            ESState getESState()
+            ESDataProvState getESDataProvState()
             {
-                return m_esState;
+                return m_state;
             }
 
         private:
             ESResult m_result;
-            ESState m_esState;
+            ESDataProvState m_state;
         };
 
         class CloudProvisioningStatus
@@ -343,7 +343,7 @@ namespace OIC
         /**
          * Callback function definition for providing Enrollee security status .
          */
-        typedef function< void(shared_ptr<SecProvisioningStatus>) > EnrolleeSecStatusCb;
+        typedef function< void(shared_ptr<SecProvisioningStatus>) > SecurityProvStatusCb;
 
         /**
          * Callback definition to be invoked when the security stack expects a pin from application.

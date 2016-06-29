@@ -89,7 +89,7 @@ namespace OIC
              *
              * @see RemoteEnrollee
              */
-            void startSecurityProvisioning(EnrolleeSecStatusCb callback);
+            void startSecurityProvisioning(SecurityProvStatusCb callback);
 
             /**
              * Start provisioning of target Enrollers information to the Enrollee.
@@ -130,7 +130,7 @@ namespace OIC
             void RequestPropertyDataStatusHandler (std::shared_ptr< RequestPropertyDataStatus > status);
             void dataProvisioningStatusHandler (std::shared_ptr< DataProvisioningStatus > status);
             void cloudProvisioningStatusHandler (std::shared_ptr< CloudProvisioningStatus > status);
-            void easySetupSecurityStatusCallback(std::shared_ptr< SecProvisioningStatus > status);
+            void securityStatusHandler(std::shared_ptr< SecProvisioningStatus > status);
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
@@ -141,8 +141,8 @@ namespace OIC
             std::string  m_deviceId;
             bool m_discoveryResponse;
 
-            EnrolleeSecStatusCb m_enrolleeSecStatusCb;
-            RequestPropertyDataStatusCb m_RequestPropertyDataStatusCb;
+            SecurityProvStatusCb m_securityProvStatusCb;
+            RequestPropertyDataStatusCb m_requestPropertyDataStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
             DataProvStatusCb m_dataProvStatusCb;
