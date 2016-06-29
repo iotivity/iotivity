@@ -484,7 +484,7 @@ FILE* server_fopen(const char *path, const char *mode)
     char cwd[1024] = {0};
     char cred_path[1024] = {0};
     GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    sprintf(cred_path, "%s%s", cwd, CRED_FILE);
+    snprintf(cred_path, sizeof(cred_path), "%s%s", cwd, CRED_FILE);
     return fopen(cred_path, mode);
 }
 
@@ -498,11 +498,11 @@ int main()
     char del_cmd[1024] = {0};
     FILE* fp = NULL;
     GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    sprintf(del_cmd, "rm -rf %s%s", cwd, CRED_FILE);
+    snprintf(del_cmd, sizeof(del_cmd), "rm -rf %s%s", cwd, CRED_FILE);
     system(del_cmd);
 
     //Generate default SVR DB.
-    sprintf(cred_path, "%s%s", cwd, CRED_FILE);
+    snprintf(cred_path, sizeof(cred_path), "%s%s", cwd, CRED_FILE);
     fp = fopen(cred_path, "w");
     if(NULL != fp)
     {

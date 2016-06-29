@@ -587,7 +587,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             // Use seure port of doxm for OTM and Provision.
             while (resPayload)
             {
-                if (0 == strncmp(resPayload->uri, OIC_RSRC_DOXM_URI, sizeof(OIC_RSRC_DOXM_URI)))
+                if (0 == strncmp(resPayload->uri, OIC_RSRC_DOXM_URI, strlen(OIC_RSRC_DOXM_URI)))
                 {
                     OIC_LOG_V(INFO,TAG,"resPaylod->uri:%s",resPayload->uri);
                     OIC_LOG(INFO, TAG, "Found doxm resource.");

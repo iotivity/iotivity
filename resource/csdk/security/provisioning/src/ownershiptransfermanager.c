@@ -434,7 +434,8 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
 
-        strcpy(cred->privateData.data, b64Buf);
+        strncpy(cred->privateData.data, b64Buf, outSize);
+        cred->privateData.data[outSize] = '\0';
         cred->privateData.encoding = OIC_ENCODING_BASE64;
         cred->privateData.len = outSize;
         OICFree(b64Buf);

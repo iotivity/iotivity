@@ -950,7 +950,8 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
         receviedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
         VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
         receviedCred->privateData.len = b64OutSize;
-        strcpy((char*)receviedCred->privateData.data, b64Buf);
+        strncpy((char*)receviedCred->privateData.data, b64Buf, b64OutSize);
+        receviedCred->privateData.data[b64OutSize] = '\0';
     }
     else
     {
@@ -1403,6 +1404,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             {
                                 result_length = -1;
                                 OIC_LOG (ERROR, TAG, "Failed to memoray allocation.");
+                                return ret;
                             }
 
                             if(B64_OK == b64Decode((char*)cred->privateData.data, cred->privateData.len, outKey, outBufSize, &outKeySize))
