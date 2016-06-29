@@ -37,6 +37,7 @@
 
 #define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
+#define MAX_ACL_LENGTH 100
 #define CREATE (1)
 #define READ (2)
 #define UPDATE (4)
@@ -71,7 +72,7 @@ typedef enum
  */
 static void deleteACL(OicSecAcl_t *acl)
 {
-    if (acl)
+    if (acl && MAX_ACL_LENGTH > acl->resourcesLen)
     {
         /* Clean Resources */
         for (size_t i = 0; i < (acl)->resourcesLen; i++)
@@ -214,7 +215,7 @@ static int InputACL(OicSecAcl_t *acl)
     //Set Resource.
     printf("Num. of Resource : \n");
     ret = scanf("%zu", &acl->resourcesLen);
-    if(-1 == ret)
+    if(-1 == ret || MAX_ACL_LENGTH < acl->resourcesLen)
     {
         printf("Error while input\n");
         return -1;

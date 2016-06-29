@@ -19,7 +19,6 @@
 
  ******************************************************************/
 
-#include <oic_malloc.h>
 #include <gtest/gtest.h>
 #include "ckm_info.h"
 
@@ -153,13 +152,13 @@ TEST(CKMInfoTest, SetGetCAPrivateKey)
     ASSERT_EQ(PKI_SUCCESS, SetCAPrivateKey(&CKMInfoTest::privateKey));
 
     ByteArray privateKey = {0,0};
-    privateKey.data = (uint8_t*)OICMalloc(PRIVATE_KEY_SIZE);
+    uint8_t caPrivKey[PRIVATE_KEY_SIZE] = {0};
+
+    privateKey.data = caPrivKey;
     privateKey.len = PRIVATE_KEY_SIZE;
-    EXPECT_TRUE(NULL != privateKey.data);
 
     EXPECT_EQ(PKI_SUCCESS, GetCAPrivateKey(&privateKey));
     EXPECT_TRUE(0 == memcmp(CKMInfoTest::privateKey.data, privateKey.data, PRIVATE_KEY_SIZE));
-    OICFree(privateKey.data);
 }
 
 //SetGetCAPublicKey test
@@ -168,13 +167,13 @@ TEST(CKMInfoTest, SetGetCAPublicKey)
     ASSERT_EQ(PKI_SUCCESS, SetCAPublicKey(&CKMInfoTest::publicKey));
 
     ByteArray publicKey = {0,0};
-    publicKey.data = (uint8_t*)OICMalloc(PUBLIC_KEY_SIZE);
+    uint8_t caPubKey[PUBLIC_KEY_SIZE] = {0};
+
+    publicKey.data = caPubKey;
     publicKey.len = PUBLIC_KEY_SIZE;
-    EXPECT_TRUE(NULL != publicKey.data);
 
     EXPECT_EQ(PKI_SUCCESS, GetCAPublicKey(&publicKey));
     EXPECT_TRUE(0 == memcmp(CKMInfoTest::publicKey.data, publicKey.data, PUBLIC_KEY_SIZE));
-    OICFree(publicKey.data);
 }
 
 //SetGetCAName test
@@ -183,13 +182,13 @@ TEST(CKMInfoTest, SetGetCAName)
     ASSERT_EQ(PKI_SUCCESS, SetCAName(&CKMInfoTest::caName));
 
     ByteArray caName = {0,0};
-    caName.data = (uint8_t*)OICMalloc(ISSUER_NAME_SIZE);
+    uint8_t caIssName[PUBLIC_KEY_SIZE] = {0};
+
+    caName.data = caIssName;
     caName.len = ISSUER_NAME_SIZE;
-    EXPECT_TRUE(NULL != caName.data);
 
     EXPECT_EQ(PKI_SUCCESS, GetCAName(&caName));
     EXPECT_TRUE(0 == memcmp(CKMInfoTest::caName.data, caName.data, ISSUER_NAME_SIZE));
-    OICFree(caName.data);
 }
 
 //SetGetCKMInfo test
@@ -202,19 +201,20 @@ TEST(CKMInfoTest, SetGetCKMInfo)
     long serialNum = 0;
 
     ByteArray publicKey = {0,0};
-    publicKey.data = (uint8_t*)OICMalloc(PUBLIC_KEY_SIZE);
+    uint8_t caIssName[ISSUER_MAX_CERT_SIZE] = {0};
+    uint8_t caPubKey[PUBLIC_KEY_SIZE] = {0};
+    uint8_t caPrivKey[PRIVATE_KEY_SIZE] = {0};
+
+    publicKey.data = caPubKey;
     publicKey.len = PUBLIC_KEY_SIZE;
-    EXPECT_TRUE(NULL != publicKey.data);
 
     ByteArray privateKey = {0,0};
-    privateKey.data = (uint8_t*)OICMalloc(PRIVATE_KEY_SIZE);
+    privateKey.data = caPrivKey;
     privateKey.len = PRIVATE_KEY_SIZE;
-    EXPECT_TRUE(NULL != privateKey.data);
 
     ByteArray caName = {0,0};
-    caName.data = (uint8_t*)OICMalloc(ISSUER_NAME_SIZE);
+    caName.data = caIssName;
     caName.len = ISSUER_NAME_SIZE;
-    EXPECT_TRUE(NULL != caName.data);
 
     EXPECT_EQ(PKI_SUCCESS, GetCKMInfo(&nSn, &serialNum,
             &privateKey, &publicKey, &caName));
@@ -224,10 +224,6 @@ TEST(CKMInfoTest, SetGetCKMInfo)
     EXPECT_TRUE(0 == memcmp(CKMInfoTest::privateKey.data, privateKey.data, PRIVATE_KEY_SIZE));
     EXPECT_TRUE(0 == memcmp(CKMInfoTest::publicKey.data, publicKey.data, PUBLIC_KEY_SIZE));
     EXPECT_TRUE(0 == memcmp(CKMInfoTest::caName.data, caName.data, ISSUER_NAME_SIZE));
-
-    OICFree(publicKey.data);
-    OICFree(privateKey.data);
-    OICFree(caName.data);
 }
 
 //SetGetCACertificate test
@@ -236,13 +232,12 @@ TEST(CKMInfoTest, SetGetCACertificate)
     ASSERT_EQ(PKI_SUCCESS, SetCACertificate(&CKMInfoTest::derCode));
 
     ByteArray der = {0,0};
-    der.data = (uint8_t*)OICMalloc(CERT_LEN);
+    uint8_t caCert[CERT_LEN] = {0};
+    der.data = caCert;
     der.len = CERT_LEN;
     EXPECT_TRUE(NULL != der.data);
     EXPECT_EQ(PKI_SUCCESS, GetCACertificate(&der));
     EXPECT_TRUE(0 == memcmp(CKMInfoTest::derCode.data, der.data, CERT_LEN));
-
-    OICFree(der.data);
 }
 
 //SetGetCRLSerialNumber test
