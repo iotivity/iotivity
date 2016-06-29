@@ -217,7 +217,7 @@ static FILE* fopen_prvnMng(const char* path, const char* mode)
     char cwd[1024] = {0};
     char svr_db_path[1024] = {0};
     GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    sprintf(svr_db_path, "%s%s", cwd, SVR_DB_PATH);
+    snprintf(svr_db_path, sizeof(svr_db_path), "%s%s", cwd, SVR_DB_PATH);
     return fopen(svr_db_path, mode);
 }
 
@@ -311,21 +311,21 @@ TEST(InitForOTM, NullParam)
 
     //Delete previous PDB, if exist.
     GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    sprintf(del_cmd, "rm -rf %stest.db", cwd);
+    snprintf(del_cmd, sizeof(del_cmd), "rm -rf %stest.db", cwd);
     system(del_cmd);
 
     //Delete previous SVR DB, if exist.
-    sprintf(del_cmd, "rm -rf %s%s", cwd, SVR_DB_PATH);
+    snprintf(del_cmd, sizeof(del_cmd), "rm -rf %s%s", cwd, SVR_DB_PATH);
     system(del_cmd);
 
     //Generate default SVR DB.
-    sprintf(svrdb_path, "%s%s", cwd, SVR_DB_PATH);
+    snprintf(svrdb_path, sizeof(svrdb_path), "%s%s", cwd, SVR_DB_PATH);
     fp = fopen(svrdb_path, "w");
     if(NULL != fp)
     {
         size_t numberItems = fwrite(DEFAULT_SVR_DB, 1, sizeof(DEFAULT_SVR_DB), fp);
-        ASSERT_TRUE(sizeof(DEFAULT_SVR_DB) == numberItems);
         fclose(fp);
+        ASSERT_TRUE(sizeof(DEFAULT_SVR_DB) == numberItems);
     }
 
     //Execute sample server to perform ownership transfer
@@ -333,13 +333,13 @@ TEST(InitForOTM, NullParam)
     int status2 = 0;
     if(0 == (g_myPID1 = fork()))
     {
-        sprintf(server1_path, "%ssample_server1", cwd);
+        snprintf(server1_path, sizeof(server1_path), "%ssample_server1", cwd);
         status1 = system(server1_path);
         (void)status1;
     }
     if(0 == (g_myPID2 = fork()))
     {
-        sprintf(server2_path, "%ssample_server2", cwd);
+        snprintf(server2_path, sizeof(server2_path), "%ssample_server2", cwd);
         status2= system(server2_path);
         (void)status2;
     }
@@ -354,7 +354,7 @@ TEST(InitForOTM, NullParam)
 
     //initialize Provisioning DB Manager
 
-    sprintf(pdb_path, "%stest.db", cwd);
+    snprintf(pdb_path, sizeof(pdb_path), "%stest.db", cwd);
     result = OCInitPM(pdb_path);
     EXPECT_EQ(OC_STACK_OK, result);
 
@@ -421,7 +421,7 @@ TEST(PerformOwnedDeviceDiscovery, NullParam)
         tempDev = tempDev->next;
     }
 
-    EXPECT_EQ(2/*Server*/ + 1/*PT*/, NumOfOwnDevice);
+    EXPECT_EQ(2/*Server*/ , NumOfOwnDevice);
 }
 
 TEST(PerformLinkDevices, NullParam)
