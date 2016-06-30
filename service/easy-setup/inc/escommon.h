@@ -28,8 +28,6 @@
 #define OIC_STRING_MAX_VALUE    100
 #define IPV4_ADDR_SIZE          16
 #define IP_PORT                 55555
-#define NET_WIFI_SSID_SIZE      100
-#define NET_WIFI_PWD_SIZE       100
 
 /**
  * @brief Mac address length for BT port
@@ -40,7 +38,9 @@
  * Attributes used to form a proper easysetup conforming JSON message.
  */
 #define OC_RSRVD_ES_PROVSTATUS             "ps"
-#define OC_RSRVD_ES_ERRORCODE              "ec"
+#define OC_RSRVD_ES_LAST_ERRORCODE         "lec"
+#define OC_RSRVD_ES_ERRORMESSAGE           "em"
+#define OC_RSRVD_ES_LINKS                  "links"
 #define OC_RSRVD_ES_TRIGGER                "tr"
 #define OC_RSRVD_ES_SUPPORTEDWIFIMODE      "swmt"
 #define OC_RSRVD_ES_SUPPORTEDWIFIFREQ      "swf"
@@ -67,11 +67,13 @@
 #define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.r.devconf"
 #define OC_RSRVD_ES_URI_DEVCONF           "/.well-known/ocf/prov/devconf"
 
-#define OC_RSRVD_ES_URI_NET               "/oic/net"
-
 #define NUM_WIFIMODE    10
-#define MAXSSIDLEN 33
-#define MAXNETCREDLEN 20
+#define MAX_SSIDLEN 33
+#define MAX_CREDLEN 20
+
+#define MAX_DEVICELEN 100
+#define MAX_ERRMSGLEN 100
+#define MAX_WEBLINKLEN 100
 
 typedef enum
 {
@@ -86,7 +88,8 @@ typedef enum
     WiFi_11B,
     WiFi_11G,
     WiFi_11N,
-    WiFi_11AC
+    WiFi_11AC,
+    WiFi_EOF = 999,
 } WIFI_MODE;
 
 typedef enum
@@ -145,6 +148,7 @@ typedef enum
     ES_RECVREQOFNETRES,
     ES_RECVUPDATEOFPROVRES,
     ES_RECVTRIGGEROFPROVRES,
+    ES_UNAUTHORIZED = 31
 } ESResult;
 
 typedef enum
@@ -156,8 +160,8 @@ typedef enum
 
 typedef struct
 {
-    char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
-    char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
+    char ssid[MAX_SSIDLEN]; /**< ssid of the Enroller**/
+    char pwd[MAX_CREDLEN]; /**< pwd of the Enroller**/
     WIFI_AUTHTYPE authtype; /**< auth type of the Enroller**/
     WIFI_ENCTYPE enctype; /**< encryption type of the Enroller**/
 } ESWiFiProvData;
@@ -175,62 +179,85 @@ typedef struct
     char ciServer[OIC_STRING_MAX_VALUE];
 } ESCloudProvData;
 
+typedef struct
+{
+    struct
+    {
+        WIFI_MODE mode[NUM_WIFIMODE];
+        WIFI_FREQ freq;
+    } WiFi;
+    struct
+    {
+        char deviceName[MAX_DEVICELEN];
+    } DevConf;
+} ESDeviceProperty;
 
-// TODO : Need to be erased
 typedef enum
 {
     /**
      * Default state of the device
      */
-    ES_INIT_STATE,
+    ES_STATE_INIT = 1,
 
     /**
-     * Device will move to this state once the on boarding begins
-     */
-    ES_ON_BOARDING_STATE,
+    * Status indicating successful cnnection to target network
+    */
+    ES_STATE_CONNECTED_TO_ENROLLER,
 
     /**
-     * Device will move to this state after successful on-boarding of the device
-     */
-    ES_ON_BOARDED_STATE,
+    * Status indicating failure connection to target network
+    */
+    ES_STATE_CONNECTED_FAIL_TO_ENROLLER,
 
     /**
-     * Device will move to this state once the on boarding is done
-     */
-    ES_PROVISIONING_STATE,
+    * Status indicating successful registration to cloud
+    */
+    ES_STATE_REGISTERED_TO_CLOUD,
 
     /**
-     * Easy setup process is successful.
-     */
-    ES_PROVISIONED_STATE,
+    * Status indicating failure registeration to cloud
+    */
+    ES_STATE_REGISTRRED_FAIL_TO_CLOUD
+} ESEnrolleeState;
+
+typedef enum
+{
+    /**
+    * Error Code that given WiFi's SSID is not found
+    */
+    ES_ERRCODE_SSID_NOTFOUND = 1,
 
     /**
-     * This state is arbitrary one, any time device can come into this state
-     * Device will move to this state if the ownership transfer initiated  by the Application
-     */
-    ES_OWNERSHIP_TRANSFERRING_STATE,
+    * Error Code that given WiFi's Password is wrong
+    */
+    ES_ERRCODE_PW_WRONG,
 
     /**
-     * This state is arbitrary one, any time device can come into this state
-     * Device will move to this state if the ownership transfer is completed
-     */
-    ES_OWNERSHIP_TRANSFERRED_STATE,
+    * Error Code that IP address is not allocated
+    */
+    ES_ERRCODE_IP_NOTALLOCATED,
 
     /**
-     * This state is arbitrary one, any time device can come into this state
-     * Device will move to this state once the Application factory reset the device
-     */
-    ES_FACTORY_RESET_STATE,
+    * Error Code that there is no Internet connection
+    */
+    ES_ERRCODE_NO_INTERNETCONNECTION,
 
     /**
-     * Enrollee moves to this state after connecting to target network
-     */
-    ES_ON_BOARDED_TARGET_NETWORK_STATE,
-}ESEnrolleeState;
+    * Error Code that Timeout occured
+    */
+    ES_ERRCODE_TIMEOUT,
 
-/**
- * Provisioning Device Status
- */
+    /**
+    * Error Code that Unknown error occured
+    */
+    ES_ERRCODE_UNKNOWN,
+
+    /**
+    * No Error Occured
+    */
+    ES_ERRCODE_NONE = 999
+} ESLastErrCode;
+
 typedef struct
 {
     // Address of remote server
@@ -244,10 +271,11 @@ typedef struct
  */
 typedef enum
 {
-    DEVICE_PROVISIONED = 0,
-    DEVICE_NOT_PROVISIONED,
-    DEVICE_OWNED,
-    DEVICE_NOT_OWNED
+    ES_NEED_PROVISION = 1,
+    ES_CONNECTED_TO_ENROLLER,
+    ES_CONNECTED_FAIL_TO_ENROLLER,
+    ES_REGISTERED_TO_CLOUD,
+    ES_REGISTERED_FAIL_TO_CLOUD
 } EasySetupState, ProvStatus;
 
 /**
@@ -287,8 +315,8 @@ typedef union
      */
     struct
     {
-        char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
-        char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
+        char ssid[MAX_SSIDLEN]; /**< ssid of the Enroller**/
+        char pwd[MAX_CREDLEN]; /**< pwd of the Enroller**/
     } WIFI;
 } ProvData;
 
@@ -313,8 +341,8 @@ typedef void (*OCProvisioningStatusCB)(EasySetupInfo *easySetupInfo);
 
 // Note : Below structure is not currently used but added for future purpose.
 typedef struct {
-    char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the onboarding Adhoc Wifi network**/
-    char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the onboarding Adhoc wifi network**/
+    char ssid[MAX_SSIDLEN]; /**< ssid of the onboarding Adhoc Wifi network**/
+    char pwd[MAX_CREDLEN]; /**< pwd of the onboarding Adhoc wifi network**/
     bool isSecured;                 /**< Secure connection**/
 }WiFiOnboardingConfig;
 

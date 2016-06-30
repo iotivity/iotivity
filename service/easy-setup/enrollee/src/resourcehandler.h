@@ -41,19 +41,21 @@ typedef void (*ESDevConfCB) (ESResult, ESDevConfProvData *);
 typedef struct PROVRESOURCE
 {
     OCResourceHandle handle;
-    int64_t status; // provisiong status, 1 : need to provisioning, 2 : Connected to Enroller.
+    ProvStatus status; // provisiong status
     bool trigger; // Trigger network connection, 0 : Init value, 1 : Connected to the target network.
-    int64_t errorCode;
+    ESLastErrCode lastErrCode;
+    char errorMessage[MAX_ERRMSGLEN];
+    char ocfWebLinks[MAX_WEBLINKLEN];
 } ProvResource;
 
 typedef struct
 {
     OCResourceHandle handle;
     WIFI_MODE supportedMode[NUM_WIFIMODE];
-    uint8_t numMode;
+    uint8_t numMode;        // the number of device's supported wifi modes
     WIFI_FREQ supportedFreq;
-    char ssid[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
-    char cred[MAXNETCREDLEN]; // credential information.
+    char ssid[MAX_SSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
+    char cred[MAX_CREDLEN]; // credential information.
     WIFI_AUTHTYPE authType;
     WIFI_ENCTYPE encType;
 } WiFiResource;
@@ -69,7 +71,7 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char devName[OIC_STRING_MAX_VALUE];
+    char devName[MAX_DEVICELEN];
     char language[OIC_STRING_MAX_VALUE];
     char country[OIC_STRING_MAX_VALUE];
 } DevConfResource;
@@ -77,6 +79,8 @@ typedef struct
 
 OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
 OCStackResult DeleteEasySetupResources();
+
+OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty);
 
 
 void GetTargetNetworkInfoFromProvResource(char *, char *);

@@ -55,7 +55,7 @@ typedef struct
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API
  *
  * @param isSecured         True if the Enrollee is operating in secured mode.
- * @param resourceMask      Provisining Resource Type which application wants to make
+ * @param resourceMask      Provisining Resource Type which application wants to make.
  *                          ES_WIFI_RESOURCE = 0x01,
  *                          ES_CLOUD_RESOURCE = 0x02,
  *                          ES_DEVCONF_RESOURCE = 0x04
@@ -64,6 +64,14 @@ typedef struct
  */
 ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
 
+
+/**
+ * This function Sets Device Information.
+ *
+ * @param deviceProperty   Contains device information composed of WiFi Structure & DevConf Structure
+ * @return ::ES_OK on success, some other value upon failure.
+ */
+ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty);
 
 /**
  * This function performs termination of Provisioning and Network resources.

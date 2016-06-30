@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <oic_string.h>
 
 #define TAG "ENROLLEE_SAMPLE"
 
@@ -106,8 +107,6 @@ void WiFiProvCbInApp(ESWiFiProvData *eventData)
     }
 
     printf("WiFiProvCbInApp OUT\n");
-
-    PrintMenu();
 }
 
 void DevConfProvCbInApp(ESDevConfProvData *eventData)
@@ -135,8 +134,6 @@ void DevConfProvCbInApp(ESDevConfProvData *eventData)
     }
 
     printf("DevConfProvCbInApp OUT\n");
-
-    PrintMenu();
 }
 
 void CloudDataProvCbInApp(ESCloudProvData *eventData)
@@ -174,8 +171,6 @@ void CloudDataProvCbInApp(ESCloudProvData *eventData)
     }
 
     printf("CloudDataProvCbInApp OUT\n");
-
-    PrintMenu();
 }
 
 ESProvisioningCallbacks gCallbacks = {
@@ -228,6 +223,20 @@ void StartEasySetup()
     printf("StartEasySetup OUT\n");
 }
 
+void SetDeviceInfo()
+{
+    printf("SetDeviceInfo IN\n");
+
+    ESDeviceProperty deviceProperty = {
+        {{WiFi_11G, WiFi_11N, WiFi_11AC, WiFi_EOF}, WiFi_5G}, {"Test Device"}
+    } ;
+
+    if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
+        printf("ESSetDeviceProperty Error\n");
+
+    printf("SetDeviceInfo OUT\n");
+}
+
 void StopEasySetup()
 {
     printf("StopEasySetup IN\n");
@@ -254,7 +263,7 @@ int main()
     printf("EasySetup Enrollee SAMPLE\n");
     printf("#########################\n");
     PrintMenu();
-    char option = 'T';
+    char option;
 
     while(true)
     {
@@ -281,24 +290,29 @@ int main()
                 case 'S': // Enable Security
                 case 's':
                     EnableSecurity();
+                    PrintMenu();
                     break;
 
                 case 'I': // Init EasySetup
                 case 'i':
                     StartEasySetup();
+                    PrintMenu();
                     break;
 
                 case 'D': // Set Device Info
                 case 'd':
-                    // TODO
-
+                    SetDeviceInfo();
+                    PrintMenu();
+                    break;
                 case 'T': // stop easy setup
                 case 't':
                     StopEasySetup();
+                    PrintMenu();
                     break;
 
                 default:
                     printf("wrong option\n");
+                    PrintMenu();
                     break;
             }
             if (option == 'Q' || option == 'q') break;

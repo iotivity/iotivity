@@ -27,7 +27,7 @@
 #include "easysetup.h"
 #include "logger.h"
 #include "resourcehandler.h"
-#include "easysetupcallbacks.h"
+#include "oic_string.h"
 
 /**
  * @var ES_ENROLLEE_TAG
@@ -38,9 +38,33 @@
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
+
+/**
+ * @var gTargetSsid
+ * @brief Target SSID of the Soft Access point to which the device has to connect
+ */
+// static char gTargetSsid[MAXSSIDLEN];
+
+/**
+ * @var gTargetPass
+ * @brief Password of the target access point to which the device has to connect
+ */
+// static char gTargetPass[MAXNETCREDLEN];
+
+/**
+ * @var gEnrolleeStatusCb
+ * @brief Fucntion pointer holding the callback for intimation of EasySetup Enrollee status callback
+ */
+// static ESEnrolleeEventCallback gEnrolleeStatusCb = NULL;
+
+/**
+ * @var gIsSecured
+ * @brief Variable to check if secure mode is enabled or not.
+ */
 static bool gIsSecured = false;
 
 static ESProvisioningCallbacks gESProvisioningCb;
+static ESDeviceProperty gESDeviceProperty;
 
 void ESWiFiRsrcCallback(ESResult esResult, ESWiFiProvData *eventData)
 {
@@ -163,6 +187,33 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
     return ES_OK;
 }
 
+ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
+{
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetDeviceProperty IN");
+
+    if(SetDeviceProperty(deviceProperty) != OC_STACK_OK)
+    {
+        return ES_ERROR;
+    }
+
+    int modeIdx = 0;
+    while((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
+    {
+        (gESDeviceProperty.WiFi).mode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
+        OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "WiFi Mode : %d", (gESDeviceProperty.WiFi).mode[modeIdx]);
+        modeIdx ++;
+    }
+    (gESDeviceProperty.WiFi).freq = (deviceProperty->WiFi).freq;
+    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "WiFi Freq : %d", (gESDeviceProperty.WiFi).freq);
+
+    OICStrcpy((gESDeviceProperty.DevConf).deviceName, MAX_DEVICELEN, (deviceProperty->DevConf).deviceName);
+    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
+
+
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetDeviceProperty OUT");
+    return ES_OK;
+}
+
 ESResult ESTerminateEnrollee()
 {
     UnRegisterResourceEventCallBack();
@@ -177,15 +228,3 @@ ESResult ESTerminateEnrollee()
     OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESTerminateEnrollee success");
     return ES_OK;
 }
-
-static bool ESEnrolleeValidateParam(OCConnectivityType networkType, const char *ssid,
-                                                const char *passwd, ESEnrolleeEventCallback cb)
-{
-    if (!ssid || !passwd || !cb)
-    {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESEnrolleeValidateParam - Invalid parameters");
-        return false;
-    }
-    return true;
-}
-

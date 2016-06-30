@@ -119,8 +119,8 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 {
     if (name != NULL && pass != NULL)
     {
-        OICStrcpy(name, MAXSSIDLEN, gWiFiResource.ssid);
-        OICStrcpy(pass, MAXNETCREDLEN, gWiFiResource.cred);
+        OICStrcpy(name, MAX_SSIDLEN, gWiFiResource.ssid);
+        OICStrcpy(pass, MAX_CREDLEN, gWiFiResource.cred);
     }
 }
 
@@ -128,6 +128,9 @@ OCStackResult initProvResource(bool isSecured)
 {
     gProvResource.status = NO_PROVISION;
     gProvResource.trigger = false;
+    gProvResource.lastErrCode = ES_ERRCODE_NONE;
+    OICStrcpy(gProvResource.errorMessage, MAX_ERRMSGLEN, "");
+    OICStrcpy(gProvResource.ocfWebLinks, MAX_WEBLINKLEN, "");
 
     OCStackResult res = OC_STACK_ERROR;
     if (isSecured)
@@ -256,7 +259,7 @@ OCStackResult initDevConfResource(bool isSecured)
 
 void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 {
-    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.status %lld", gProvResource.status);
+    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.status %d", gProvResource.status);
 
     if(ehRequest->query)
     {
@@ -472,6 +475,9 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
     OCRepPayloadSetPropBool(payload, OC_RSRVD_ES_TRIGGER, gProvResource.trigger);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ERRORMESSAGE, gProvResource.errorMessage);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LINKS, gProvResource.ocfWebLinks);
 
     if(ehRequest->query)
     {
@@ -824,6 +830,29 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     }
 
     return ehRet;
+}
+
+OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
+{
+    OIC_LOG(INFO, ES_RH_TAG, "SetDeviceProperty IN");
+
+    gWiFiResource.supportedFreq = (deviceProperty->WiFi).freq;
+    OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Freq : %d", gWiFiResource.supportedFreq);
+
+    int modeIdx = 0;
+    while((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
+    {
+        gWiFiResource.supportedMode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
+        OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Mode : %d", gWiFiResource.supportedMode[modeIdx]);
+        modeIdx ++;
+    }
+    gWiFiResource.numMode = modeIdx;
+
+    OICStrcpy(gDevConfResource.devName, MAX_DEVICELEN, (deviceProperty->DevConf).deviceName);
+    OIC_LOG_V(INFO, ES_RH_TAG, "Device Name : %s", gDevConfResource.devName);
+
+    OIC_LOG(INFO, ES_RH_TAG, "SetDeviceProperty OUT");
+    return OC_EH_OK;
 }
 
 const char *getResult(OCStackResult result)
