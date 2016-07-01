@@ -383,8 +383,8 @@ typedef enum
     /** IP & TCP adapter only.*/
     OC_IP_USE_V4       = (1 << 6),
 
-    /** internal use only.*/
-    OC_RESERVED1       = (1 << 7),   // internal use only
+    /** Multicast only.*/
+    OC_MULTICAST       = (1 << 7),
 
     /** Link-Local multicast is the default multicast scope for IPv6.
      *  These are placed here to correspond to the IPv6 multicast address bits.*/

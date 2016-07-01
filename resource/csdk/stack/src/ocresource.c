@@ -700,8 +700,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
 
     OCStackResult discoveryResult = OC_STACK_ERROR;
-
-    bool bMulticast    = false;     // Was the discovery request a multicast request?
     OCPayload* payload = NULL;
 
     OIC_LOG(INFO, TAG, "Entering HandleVirtualResource");
@@ -942,19 +940,19 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
-        else if(bMulticast == false && (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
-               (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
+        else if(((request->devAddr.flags &  OC_MULTICAST) == false) &&
+            (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+            (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
         {
-            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
-                discovery request", discoveryResult, virtualUriInRequest);
+            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
+                discoveryResult, virtualUriInRequest);
             SendNonPersistantDiscoveryResponse(request, resource, NULL,
                 (discoveryResult == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
         }
         else
         {
             // Ignoring the discovery request as per RFC 7252, Section #8.2
-            OIC_LOG(INFO, TAG, "Silently ignoring the request since device does not have \
-                any useful data to send");
+            OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send. ");
         }
     }
 
