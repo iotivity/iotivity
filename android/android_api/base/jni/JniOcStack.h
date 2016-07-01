@@ -48,6 +48,9 @@ void throwOcException(JNIEnv* env, jobject ex);
 
 extern JavaVM* g_jvm;
 
+extern jclass g_cls_byte1DArray;
+extern jclass g_cls_byte2DArray;
+extern jclass g_cls_byte3DArray;
 extern jclass g_cls_Integer;
 extern jclass g_cls_int1DArray;
 extern jclass g_cls_int2DArray;

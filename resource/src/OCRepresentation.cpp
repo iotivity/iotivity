@@ -30,6 +30,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
+#include <iomanip>
 #include "ocpayload.h"
 #include "ocrandom.h"
 #include "oic_malloc.h"
@@ -369,6 +370,24 @@ namespace OC
     }
 
     template<>
+    void get_payload_array::copy_to_array(OCByteString item, void *array, size_t pos)
+    {
+        ((OCByteString *)array)[pos] = item;
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(OCByteString &item, void *array, size_t pos)
+    {
+        ((OCByteString *)array)[pos] = item;
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(const OCByteString &item, void *array, size_t pos)
+    {
+        ((OCByteString *)array)[pos] = item;
+    }
+
+    template<>
     void get_payload_array::copy_to_array(OC::OCRepresentation item, void* array, size_t pos)
     {
         ((OCRepPayload**)array)[pos] = item.getPayload();
@@ -402,6 +421,10 @@ namespace OC
                 OCRepPayloadSetStringArrayAsOwner(payload, item.attrname().c_str(),
                         (char**)vis.array,
                         vis.dimensions);
+                break;
+            case AttributeType::OCByteString:
+                OCRepPayloadSetByteStringArrayAsOwner(payload, item.attrname().c_str(),
+                                                      (OCByteString *)vis.array, vis.dimensions);
                 break;
             case AttributeType::OCRepresentation:
                 OCRepPayloadSetPropObjectArrayAsOwner(payload, item.attrname().c_str(),
@@ -453,6 +476,9 @@ namespace OC
                 case AttributeType::String:
                     OCRepPayloadSetPropString(root, val.attrname().c_str(),
                             static_cast<std::string>(val).c_str());
+                    break;
+                case AttributeType::OCByteString:
+                    OCRepPayloadSetPropByteString(root, val.attrname().c_str(), val.getValue<OCByteString>());
                     break;
                 case AttributeType::OCRepresentation:
                     OCRepPayloadSetPropObjectAsOwner(root, val.attrname().c_str(),
@@ -529,6 +555,19 @@ namespace OC
             return std::string{};
         }
     }
+
+    template<>
+    OCByteString OCRepresentation::payload_array_helper_copy<OCByteString>(
+        size_t index, const OCRepPayloadValue *pl)
+    {
+        OCByteString result {NULL, 0};
+        if (pl->arr.ocByteStrArray[index].len)
+        {
+            result = (pl->arr.ocByteStrArray[index]);
+        }
+        return result;
+    }
+
     template<>
     OCRepresentation OCRepresentation::payload_array_helper_copy<OCRepresentation>(
             size_t index, const OCRepPayloadValue* pl)
@@ -611,6 +650,9 @@ namespace OC
                 break;
             case OCREP_PROP_STRING:
                 payload_array_helper<std::string>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_BYTE_STRING:
+                payload_array_helper<OCByteString>(pl, calcArrayDepth(pl->arr.dimensions));
                 break;
             case OCREP_PROP_OBJECT:
                 payload_array_helper<OCRepresentation>(pl, calcArrayDepth(pl->arr.dimensions));
@@ -923,6 +965,9 @@ namespace OC
             case AttributeType::String:
                 os << "String";
                 break;
+            case AttributeType::OCByteString:
+                os << "OCByteString";
+                break;
             case AttributeType::OCRepresentation:
                 os << "OCRepresentation";
                 break;
@@ -1214,6 +1259,24 @@ namespace OC
     void to_string_visitor::operator()(NullType const& /*item*/)
     {
         str = "(null)";
+    }
+
+    template <>
+    void to_string_visitor::operator()(std::vector<uint8_t> const &item)
+    {
+        std::ostringstream stream;
+        for (size_t i = 0; i < item.size(); i++ )
+        {
+            stream << "\\x" << std::hex << (int) item[i];
+        }
+        str = stream.str();
+    }
+
+    template<>
+    void to_string_visitor::operator()(OCByteString const &item)
+    {
+        std::vector<uint8_t> v(item.bytes, item.bytes + item.len);
+        operator()(v);
     }
 
     template<>

@@ -590,7 +590,7 @@ static int64_t OCConvertArrayItem(CborEncoder *array, const OCRepPayloadValueArr
             }
             break;
         case OCREP_PROP_BYTE_STRING:
-            if (!valArray->strArray[index])
+            if (!valArray->ocByteStrArray[index].len)
             {
                 err |= cbor_encode_null(array);
             }

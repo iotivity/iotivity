@@ -333,6 +333,7 @@ namespace OC
                      std::is_same<T, bool>::value ||
                      std::is_same<T, std::string>::value ||
                      std::is_same<T, OCRepresentation>::value ||
+                     std::is_same<T, OCByteString>::value ||
                      std::is_same<T, std::vector<int>>::value ||
                      std::is_same<T, std::vector<std::vector<int>>>::value ||
                      std::is_same<T, std::vector<std::vector<std::vector<int>>>>::value ||
@@ -347,7 +348,10 @@ namespace OC
                      std::is_same<T, std::vector<std::vector<std::vector<std::string>>>>::value ||
                      std::is_same<T, std::vector<OCRepresentation>>::value ||
                      std::is_same<T, std::vector<std::vector<OCRepresentation>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<OCRepresentation>>>>::value
+                     std::is_same<T, std::vector<std::vector<std::vector<OCRepresentation>>>>::value ||
+                     std::is_same<T, std::vector<OCByteString>>::value ||
+                     std::is_same<T, std::vector<std::vector<OCByteString>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<OCByteString>>>>::value
                      , int>::type = 0// enable_if
                     >
 #else
