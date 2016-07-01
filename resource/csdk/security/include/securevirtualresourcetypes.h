@@ -47,6 +47,8 @@
 #include "byte_array.h"
 #endif /* __WITH_X509__ */
 
+#include "platform_features.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -139,7 +141,7 @@ typedef enum
 /**
  * Extract Reason Code from Access Response.
  */
-static inline SRMAccessResponseReasonCode_t GetReasonCode(
+INLINE_API SRMAccessResponseReasonCode_t GetReasonCode(
     SRMAccessResponse_t response)
 {
     SRMAccessResponseReasonCode_t reason =
@@ -150,7 +152,7 @@ static inline SRMAccessResponseReasonCode_t GetReasonCode(
 /**
  * Returns 'true' iff request should be passed on to RI layer.
  */
-static inline bool IsAccessGranted(SRMAccessResponse_t response)
+INLINE_API bool IsAccessGranted(SRMAccessResponse_t response)
 {
     if(ACCESS_GRANTED == (response & ACCESS_GRANTED))
     {
@@ -439,6 +441,9 @@ struct OicSecSacl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     //TODO fill in from OIC Security Spec
+#if defined(_MSC_VER)
+    uint8_t unused; // VS doesn't like empty structs
+#endif
 };
 
 /**

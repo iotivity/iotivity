@@ -26,9 +26,10 @@
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
 
-#ifdef WITH_ARDUINO
+#ifdef WITH_STRING_H
 #include <string.h>
-#else
+#endif
+#ifdef WITH_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -63,6 +64,8 @@
 
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \
              TAG, #arg " is NULL"); return (retVal); } }
+
+#include "platform_features.h"
 
 extern OCResource *headResource;
 static OCPlatformInfo savedPlatformInfo = {0};
@@ -328,8 +331,8 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
         securePort = devAddr->port;
     }
 
-#ifdef TCP_ADAPTER
     uint16_t tcpPort = 0;
+#ifdef TCP_ADAPTER
     if (GetTCPPortInfo(devAddr, &tcpPort) != OC_STACK_OK)
     {
         tcpPort = 0;
@@ -779,9 +782,9 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                         VERIFY_NON_NULL(discPayload->type, ERROR, OC_STACK_NO_MEMORY);
                         discPayload->type->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
                         VERIFY_NON_NULL(discPayload->type->value, ERROR, OC_STACK_NO_MEMORY);
-                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_LL);
-                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_DEFAULT);
-                        VERIFY_NON_NULL(discPayload->interface, ERROR, OC_STACK_NO_MEMORY);
+                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_LL);
+                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_DEFAULT);
+                        VERIFY_NON_NULL(discPayload->iface, ERROR, OC_STACK_NO_MEMORY);
                     }
                     bool foundResourceAtRD = false;
                     for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
@@ -1103,13 +1106,13 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
         else
         {
-            result = OC_STACK_OK;
-
             // The error in observeResult for the request will be used when responding to this
             // request by omitting the observation option/sequence number.
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Addition failed");
             ehFlag = OC_REQUEST_FLAG;
+            FindAndDeleteServerRequest(request);
+            goto exit;
         }
 
     }
@@ -1139,9 +1142,10 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
         else
         {
-            result = OC_STACK_OK;
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Removal failed");
+            FindAndDeleteServerRequest(request);
+            goto exit;
         }
     }
     else

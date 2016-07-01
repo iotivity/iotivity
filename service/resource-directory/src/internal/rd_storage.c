@@ -19,7 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "rd_storage.h"
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <string.h>
 
 #include "payload_logging.h"
@@ -30,8 +35,30 @@
 
 #define TAG  PCF("RDStorage")
 
-pthread_mutex_t storageMutex = PTHREAD_MUTEX_INITIALIZER;
-// This variable holds the published resources on the RD.
+// Mutex implementation macros
+#if defined(HAVE_PTHREAD_H)
+
+#include <pthread.h>
+pthread_mutex_t storageMutex;
+#define MUTEX_LOCK(ARG_NAME)    { pthread_mutex_lock(ARG_NAME); }
+#define MUTEX_UNLOCK(ARG_NAME)  { pthread_mutex_unlock(ARG_NAME); }
+
+#elif defined(HAVE_WINDOWS_H)
+
+#include <windows.h>
+CRITICAL_SECTION storageMutex;
+#define MUTEX_LOCK(ARG_NAME)   { EnterCriticalSection(ARG_NAME); }
+#define MUTEX_UNLOCK(ARG_NAME) { LeaveCriticalSection(ARG_NAME); }
+
+#else
+
+ERROR Need mutex implementation for this platform
+#define MUTEX_LOCK(ARG_NAME)   {  }
+#define MUTEX_UNLOCK(ARG_NAME) {  }
+
+#endif
+
+
 static OCRDStorePublishResources *g_rdStorage = NULL;
 
 static void printStoragedResources(OCRDStorePublishResources *payload)
@@ -109,7 +136,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
     resources->publishedResource = storeResource;
     resources->devAddr = *address;
 
-    pthread_mutex_lock(&storageMutex);
+    MUTEX_LOCK(&storageMutex);
     if (g_rdStorage)
     {
         OCRDStorePublishResources *temp = g_rdStorage;
@@ -123,7 +150,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
     {
         g_rdStorage = resources;
     }
-    pthread_mutex_unlock(&storageMutex);
+    MUTEX_UNLOCK(&storageMutex);
 
     printStoragedResources(g_rdStorage);
     return OC_STACK_OK;

@@ -20,12 +20,18 @@
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200112L
 #endif
-#ifndef WITH_ARDUINO
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
 
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -953,9 +959,6 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     }
 
     OCStackResult ret;
-    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
-    struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
-    struct timespec timeout;
 
     const char DP_DISCOVERY_QUERY[] = "/oic/sec/pconf";
 
@@ -976,12 +979,16 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     }
 
     // wait..
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
 
     int clock_res = -1;
+#if defined(_MSC_VER)
+    time_t startTime = NULL;
+    clock_res = (time(&startTime) == -1);
+#else
+    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
     clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
+#endif
 #endif
     if (0 != clock_res)
     {
@@ -995,8 +1002,14 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
 
     while (1)
     {
+#if defined(_MSC_VER)
+        time_t currTime = NULL;
+        clock_res = (time(&currTime) == -1);
+#else
+        struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
         clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
+#endif
 #endif
         if (0 != clock_res)
         {
@@ -1004,19 +1017,24 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
             ret = OC_STACK_ERROR;
             break;
         }
+#if defined(_MSC_VER)
+        long elapsed = currTime - startTime;
+#else
         long elapsed = (currTime.tv_sec - startTime.tv_sec);
+#endif
         if (elapsed > waittime)
         {
             break;
         }
         else
         {
+            struct timespec timeout = {.tv_sec=0, .tv_nsec=100000000L};
             OCProcess();
             nanosleep(&timeout, NULL);
         }
     }
 
-    //Waiting for each response.
+    // Waiting for each response.
     ret = OCCancel(handle, OC_LOW_QOS, NULL, 0);
     if (OC_STACK_OK != ret)
     {

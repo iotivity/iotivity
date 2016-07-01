@@ -35,6 +35,7 @@
 #include "ocstackinternal.h"
 #include "payload_logging.h"
 #include "rdpayload.h"
+#include "platform_features.h"
 
 #define TAG "OIC_RI_PAYLOADPARSE"
 
@@ -256,11 +257,11 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
         err = cbor_value_map_find_value(&rootMap, OC_RSRVD_INTERFACE, &curVal);
         if (cbor_value_is_valid(&curVal))
         {
-            err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &out->interface);
+            err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &out->iface);
         }
-        if (!out->interface)
+        if (!out->iface)
         {
-            if (!OCResourcePayloadAddStringLL(&out->interface, OC_RSRVD_INTERFACE_LL))
+            if (!OCResourcePayloadAddStringLL(&out->iface, OC_RSRVD_INTERFACE_LL))
             {
                 err = CborErrorOutOfMemory;
             }

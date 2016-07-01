@@ -28,6 +28,7 @@
 #define US_PER_MS   (1000)
 #define NS_PER_US   (1000)
 #define NS_PER_MS   (1000000)
+#define HNS_PER_US  (10)
 
 
 #ifdef __cplusplus

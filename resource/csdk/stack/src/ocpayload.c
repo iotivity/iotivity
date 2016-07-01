@@ -428,14 +428,14 @@ bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceTyp
     }
 }
 
-bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* interface)
+bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface)
 {
-    return OCRepPayloadAddInterfaceAsOwner(payload, OICStrdup(interface));
+    return OCRepPayloadAddInterfaceAsOwner(payload, OICStrdup(iface));
 }
 
-bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
+bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface)
 {
-    if (!payload || !interface)
+    if (!payload || !iface)
     {
         return false;
     }
@@ -453,7 +453,7 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
         {
             return false;
         }
-        cur->next->value = interface;
+        cur->next->value = iface;
         return true;
     }
     else
@@ -463,7 +463,7 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
         {
             return false;
         }
-        payload->interfaces->value = interface;
+        payload->interfaces->value = iface;
         return true;
     }
 }
@@ -753,7 +753,7 @@ bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
 {
     if (!array)
     {
-        return NULL;
+        return false;
     }
 
     size_t dimTotal = calcDimTotal(dimensions);
@@ -1674,7 +1674,7 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     OICFree(payload->uri);
     OCFreeOCStringLL(payload->type);
     OICFree(payload->name);
-    OCFreeOCStringLL(payload->interface);
+    OCFreeOCStringLL(payload->iface);
     OCDiscoveryResourceDestroy(payload->resources);
     OICFree(payload);
 }

@@ -43,11 +43,9 @@ stacktest_env.PrependUnique(CPPPATH = [
 		])
 
 stacktest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-stacktest_env.AppendUnique(LIBS = ['-lpthread'])
 stacktest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 stacktest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
-stacktest_env.PrependUnique(LIBS = ['m',
-                                    'octbstack',
+stacktest_env.PrependUnique(LIBS = ['octbstack',
                                     'ocsrm',
                                     'connectivity_abstraction',
                                     'coap',
@@ -65,6 +63,12 @@ if env.get('SECURED') == '1':
 if env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if target_os in ['msys_nt', 'windows']:
+	stacktest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
+	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32'])
+else:
+	stacktest_env.PrependUnique(LIBS = ['m', 'pthread'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -75,8 +79,9 @@ Alias("test", [stacktests, cbortests])
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
+	if target_os in ['windows']:
+		stacktest_env.AppendENVPath('PATH', [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
+	if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(stacktest_env,
                          'resource_csdk_stack_test.memcheck',

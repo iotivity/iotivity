@@ -69,7 +69,7 @@ mediator_csdk_test_env.AppendUnique(
                 '../../../inc',
         ])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
         mediator_csdk_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
         if target_os != 'android':
                 mediator_csdk_test_env.AppendUnique(CXXFLAGS = ['-pthread'])

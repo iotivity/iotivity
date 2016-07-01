@@ -72,16 +72,17 @@
 #include "directpairing.h"
 //#endif
 
-#ifdef WITH_ARDUINO
+#ifdef HAVE_ARDUINO_TIME_H
 #include "Time.h"
-#else
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include "coap_time.h"
 #include "utlist.h"
 #include "pdu.h"
 
-#ifndef ARDUINO
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
 
@@ -437,7 +438,7 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     out->flags = CAToOCTransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
-    out->interface = in->interface;
+    out->ifindex = in->ifindex;
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     memcpy(out->routeData, in->routeData, sizeof(out->routeData));
 #endif
@@ -455,7 +456,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     memcpy(out->routeData, in->routeData, sizeof(out->routeData));
 #endif
     out->port = in->port;
-    out->interface = in->interface;
+    out->ifindex = in->ifindex;
 }
 
 void FixUpClientResponse(OCClientResponse *cr)

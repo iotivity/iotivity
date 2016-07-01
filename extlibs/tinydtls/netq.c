@@ -24,12 +24,12 @@
 #ifndef WITH_CONTIKI
 #include <stdlib.h>
 
-static inline netq_t *
+INLINE_API netq_t *
 netq_malloc_node(size_t size) {
   return (netq_t *)malloc(sizeof(netq_t) + size);
 }
 
-static inline void
+INLINE_API void
 netq_free_node(netq_t *node) {
   free(node);
 }
@@ -41,12 +41,12 @@ netq_free_node(netq_t *node) {
 
 MEMB(netq_storage, netq_t, NETQ_MAXCNT);
 
-static inline netq_t *
+INLINE_API netq_t *
 netq_malloc_node(size_t size) {
   return (netq_t *)memb_alloc(&netq_storage);
 }
 
-static inline void
+INLINE_API void
 netq_free_node(netq_t *node) {
   memb_free(&netq_storage, node);
 }

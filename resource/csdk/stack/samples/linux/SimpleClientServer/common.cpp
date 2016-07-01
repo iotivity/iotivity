@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ocstack.h>
+#include <getopt.h>
 
 const char *getResult(OCStackResult result)
 {

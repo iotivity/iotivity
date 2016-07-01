@@ -42,9 +42,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include <stdlib.h>
-#ifdef WITH_ARDUINO
-#include <string.h>
-#else
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 

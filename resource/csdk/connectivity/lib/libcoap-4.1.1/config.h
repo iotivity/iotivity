@@ -4,11 +4,6 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-/* Define to 1 if you have the <arpa/inet.h> header file. */
-#ifndef WITH_ARDUINO
-#define HAVE_ARPA_INET_H 1
-#endif
-
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
 
@@ -34,11 +29,8 @@
 /* Define to 1 if you have the `memset' function. */
 #define HAVE_MEMSET 1
 
-/* Define to 1 if you have the <netdb.h> header file. */
-#define HAVE_NETDB_H 1
-
 /* Define to 1 if you have the <netinet/in.h> header file. */
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO) && !defined(_WIN32)
 #define HAVE_NETINET_IN_H 1
 #endif
 
@@ -70,31 +62,31 @@
 #define HAVE_STRRCHR 1
 
 /* Define to 1 if you have the <syslog.h> header file. */
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO) && !defined(_WIN32)
 #define HAVE_SYSLOG_H 1
-#endif
-
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#ifndef WITH_ARDUINO
-#define HAVE_SYS_SOCKET_H 1
 #endif
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
-/* Define to 1 if you have the <sys/time.h> header file. */
-#ifndef WITH_ARDUINO
-#define HAVE_SYS_TIME_H 1
-#endif
-
-/* Define to 1 if you have the <sys/types.h> header file. */
-#ifndef WITH_ARDUINO
-#define HAVE_SYS_TYPES_H 1
-#endif
-
 /* Define to 1 if you have the <sys/unistd.h> header file. */
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO) && !defined(_WIN32)
 #define HAVE_SYS_UNISTD_H 1
+#endif
+
+/* Define to 1 if you have <Ws2tcpip.h> header file. */
+#if defined(_WIN32)
+#define HAVE_WS2TCPIP_H 1
+#endif
+
+/* Define to 1 if you have <Winsock2.h> header file. */
+#if defined(_WIN32)
+#define HAVE_WINSOCK2_H 1
+#endif
+
+/* Define to 1 if you have <Windows.h> header file. */
+#if defined(_WIN32)
+#define HAVE_WINDOWS_H 1
 #endif
 
 /* Define to 1 if you have the <time.h> header file. */
@@ -103,7 +95,7 @@
 #endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO) && !defined(_WIN32)
 #define HAVE_UNISTD_H 1
 #endif
 
@@ -138,6 +130,18 @@
 # if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 #  define WORDS_BIGENDIAN 1
 # endif
+#endif
+
+#ifndef INLINE_API
+#  if defined(__cplusplus)
+#    define INLINE_API inline
+#  else
+#    ifdef _MSC_VER
+#      define INLINE_API static __inline
+#    else
+#      define INLINE_API static inline
+#    endif
+#  endif
 #endif
 
 /* Define to rpl_malloc if the replacement function should be used. */

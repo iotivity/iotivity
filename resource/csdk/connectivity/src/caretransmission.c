@@ -46,9 +46,18 @@
 #include <string.h>
 
 #ifndef SINGLE_THREAD
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#if HAVE_SYS_TIMEB_H
+#include <sys/timeb.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #endif
 
 #if defined(__ANDROID__)
@@ -78,6 +87,7 @@ typedef struct
 } CARetransmissionData_t;
 
 static const uint64_t USECS_PER_SEC = 1000000;
+static const uint64_t MSECS_PER_SEC = 1000;
 
 /**
  * @brief   getCurrent monotonic time
@@ -652,6 +662,10 @@ uint64_t getCurrentTimeInMicroSeconds()
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     currentTime = ts.tv_sec * USECS_PER_SEC + ts.tv_nsec / 1000;
+#elif defined(_WIN32)
+    struct __timeb64 tb;
+    _ftime64_s(&tb);
+    currentTime = tb.time * USECS_PER_SEC + tb.millitm * MSECS_PER_SEC;
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);

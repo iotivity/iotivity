@@ -281,8 +281,11 @@ extern "C" {
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE (256)
 #else
-/** Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx]:xxxxx" */
-#define MAX_ADDR_STR_SIZE (59)
+/** Max Address could be
+ * "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * +1 for null terminator.
+ */
+#define MAX_ADDR_STR_SIZE (65)
 #endif
 
 /** Length of MAC address */
@@ -477,7 +480,7 @@ typedef struct
     char                    addr[MAX_ADDR_STR_SIZE];
 
     /** usually zero for default interface.*/
-    uint32_t                interface;
+    uint32_t                ifindex;
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE]; //destination GatewayID:ClientId
 #endif
@@ -1211,7 +1214,7 @@ typedef struct
     OCStringLL *type;
 
     /** Interface */
-    OCStringLL *interface;
+    OCStringLL *iface;
 
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;

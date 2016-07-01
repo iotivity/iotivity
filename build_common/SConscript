@@ -8,8 +8,9 @@ import platform
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
 		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-		'windows': ['windows', 'winrt', 'android', 'arduino'],
+		'windows': ['windows', 'android', 'arduino'],
 		'darwin': ['darwin', 'ios', 'android', 'arduino'],
+		'msys_nt' :['msys_nt'],
 		}
 
 # Map of os and allowed archs (os: allowed archs)
@@ -18,7 +19,7 @@ os_arch_map = {
 		'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
-		'winrt': ['arm'],
+		'msys_nt':['x86', 'x86_64'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
@@ -26,6 +27,11 @@ os_arch_map = {
 		}
 
 host = platform.system().lower()
+
+# the host string contains version of windows. 6.3, 6.4, 10.0 which is 8.0, 8.1, and 10 respectively.
+# Let's canonicalize the msys_nt-XX.X system name  by stripping version off.
+if 'msys_nt' in host:
+	host = 'msys_nt'
 
 if not host_target_map.has_key(host):
 	print "\nError: Current system (%s) isn't supported\n" % host
@@ -238,6 +244,9 @@ def __installlib(ienv, targets, name):
 		else:
 			i_n = ienv.Install(user_prefix + '/lib', targets)
 		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
+	ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
@@ -249,7 +258,9 @@ def __installheader(ienv, targets, dir, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
 		i_n = ienv.Install(user_prefix + '/include/' + dir ,targets)
-		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(os.path.join(env.get('BUILD_DIR'), 'include', dir), targets)
+	ienv.Alias("install", i_n)
 
 def __installpcfile(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
@@ -259,7 +270,9 @@ def __installpcfile(ienv, targets, name):
 			i_n = ienv.Install(user_lib + '/pkgconfig', targets)
 		else:
 			i_n = ienv.Install(user_prefix + '/lib/pkgconfig', targets)
-		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR') + 'lib/pkgconfig', targets)
+	ienv.Alias("install", i_n)
 
 def __append_target(ienv, name, targets = None):
 	if targets:
@@ -316,8 +329,8 @@ if user_prefix:
 				'\@ROUTING_DEFINE\@': routing_define
 				}
 else:
-	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR'),
-				'\@EXEC_PREFIX\@': env.get('BUILD_DIR'),
+	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
+				'\@EXEC_PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
 				'\@VERSION\@': '1.0.1',
 				'\@LIB_INSTALL_DIR\@': user_lib,
 				'\@ROUTING_DEFINE\@': routing_define
@@ -420,6 +433,52 @@ conf = Configure(env,
 # threading and mutexes.  This will set the environment variable
 # POSIX_SUPPORTED, 1 if it is supported, 0 otherwise
 conf.CheckPThreadsSupport()
+
+######################################################################
+# Generate macros for presence of headers
+######################################################################
+cxx_headers = ['arpa/inet.h',
+               'fcntl.h',
+               'grp.h',
+               'in6addr.h',
+               'linux/limits.h',
+               'memory.h',
+               'netdb.h',
+               'netinet/in.h',
+               'pthread.h',
+               'pwd.h',
+               'stdlib.h',
+               'string.h',
+               'strings.h',
+               'sys/socket.h',
+               'sys/stat.h',
+               'sys/time.h',
+               'sys/timeb.h',
+               'sys/types.h',
+               'sys/unistd.h',
+               'syslog.h',
+               'time.h',
+               'unistd.h',
+               'uuid/uuid.h',
+               'windows.h',
+               'winsock2.h',
+               'ws2tcpip.h']
+
+if target_os == 'arduino':
+	# Detection of headers on the Arduino platform is currently broken.
+	cxx_headers = []
+
+if target_os == 'msys_nt':
+	# WinPThread provides a pthread.h, but we want to use native threads.
+	cxx_headers.remove('pthread.h')
+
+def get_define_from_header_file(header_file):
+	header_file_converted = header_file.replace("/","_").replace(".","_").upper()
+	return "HAVE_" + header_file_converted
+
+for header_file_name in cxx_headers:
+	if conf.CheckCXXHeader(header_file_name):
+		conf.env.AppendUnique(CPPDEFINES = [get_define_from_header_file(header_file_name)])
 
 env = conf.Finish()
 ######################################################################

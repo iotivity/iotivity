@@ -25,10 +25,11 @@
 #include "oic_malloc.h"
 #include <string.h>
 
-#ifdef WITH_ARDUINO
-#include "Time.h"
-#else
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_ARDUINO_TIME_H
+#include "Time.h"
 #endif
 #include "coap_time.h"
 

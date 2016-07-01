@@ -32,7 +32,7 @@ void peer_init()
 {
 }
 
-static inline dtls_peer_t *
+INLINE_API dtls_peer_t *
 dtls_malloc_peer() {
   return (dtls_peer_t *)malloc(sizeof(dtls_peer_t));
 }
@@ -54,7 +54,7 @@ peer_init() {
   memb_init(&peer_storage);
 }
 
-static inline dtls_peer_t *
+INLINE_API dtls_peer_t *
 dtls_malloc_peer() {
   return memb_alloc(&peer_storage);
 }

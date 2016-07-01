@@ -22,9 +22,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
+#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"

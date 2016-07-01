@@ -60,8 +60,36 @@ namespace OC
         {
         }
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+        OCResourceRequest(OCResourceRequest&& o):
+            m_requestType(std::move(o.m_requestType)),
+            m_resourceUri(std::move(o.m_resourceUri)),
+            m_queryParameters(std::move(o.m_queryParameters)),
+            m_requestHandlerFlag(o.m_requestHandlerFlag),
+            m_representation(std::move(o.m_representation)),
+            m_observationInfo(std::move(o.m_observationInfo)),
+            m_headerOptions(std::move(o.m_headerOptions)),
+            m_requestHandle(std::move(o.m_requestHandle)),
+            m_resourceHandle(std::move(o.m_resourceHandle))
+        {
+        }
+        OCResourceRequest& operator=(OCResourceRequest&& o)
+        {
+            m_requestType = std::move(o.m_requestType);
+            m_resourceUri = std::move(o.m_resourceUri);
+            m_queryParameters = std::move(o.m_queryParameters);
+            m_requestHandlerFlag = o.m_requestHandlerFlag;
+            m_representation = std::move(o.m_representation);
+            m_observationInfo = std::move(o.m_observationInfo);
+            m_headerOptions = std::move(o.m_headerOptions);
+            m_requestHandle = std::move(o.m_requestHandle);
+            m_resourceHandle = std::move(o.m_resourceHandle);
+        }
+#else
         OCResourceRequest(OCResourceRequest&&) = default;
         OCResourceRequest& operator=(OCResourceRequest&&) = default;
+#endif
+
         /**
         *  Virtual destructor
         */

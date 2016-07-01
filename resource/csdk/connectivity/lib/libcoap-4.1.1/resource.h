@@ -220,7 +220,7 @@ coap_print_status_t coap_print_link(const coap_resource_t *resource, unsigned ch
  * @param method   The CoAP request method to handle.
  * @param handler  The handler to register with @p resource.
  */
-static inline void coap_register_handler(coap_resource_t *resource, unsigned char method,
+INLINE_API void coap_register_handler(coap_resource_t *resource, unsigned char method,
         coap_method_handler_t handler)
 {
     assert(resource);

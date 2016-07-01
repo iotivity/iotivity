@@ -28,7 +28,6 @@
 #ifndef OC_REPRESENTATION_H_
 #define OC_REPRESENTATION_H_
 
-
 #include <string>
 #include <sstream>
 #include <vector>
@@ -99,13 +98,28 @@ namespace OC
             // this fix will work in the meantime.
             OCRepresentation(): m_interfaceType(InterfaceType::None){}
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCRepresentation(OCRepresentation&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+            }
+#else
             OCRepresentation(OCRepresentation&&) = default;
+#endif
 
             OCRepresentation(const OCRepresentation&) = default;
 
             OCRepresentation& operator=(const OCRepresentation&) = default;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCRepresentation& operator=(OCRepresentation&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+                return *this;
+            }
+#else
             OCRepresentation& operator=(OCRepresentation&&) = default;
+#endif
 
             virtual ~OCRepresentation(){}
 
@@ -310,12 +324,38 @@ namespace OC
                     // Enable-if required to prevent conversions to alternate types.  This prevents
                     // ambigious conversions in the case where conversions can include a number of
                     // types, such as the string constructor.
+#if (defined(_MSC_VER) ) || (defined(__GNUC__) && (__GNUC__ <= 5))
+                    template<typename T, typename std::enable_if<
+                     std::is_same<T, int>::value ||
+                     std::is_same<T, double>::value ||
+                     std::is_same<T, bool>::value ||
+                     std::is_same<T, std::string>::value ||
+                     std::is_same<T, OCRepresentation>::value ||
+                     std::is_same<T, std::vector<int>>::value ||
+                     std::is_same<T, std::vector<std::vector<int>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<int>>>>::value ||
+                     std::is_same<T, std::vector<double>>::value ||
+                     std::is_same<T, std::vector<std::vector<double>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<double>>>>::value ||
+                     std::is_same<T, std::vector<bool>>::value ||
+                     std::is_same<T, std::vector<std::vector<bool>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<bool>>>>::value ||
+                     std::is_same<T, std::vector<std::string>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::string>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<std::string>>>>::value ||
+                     std::is_same<T, std::vector<OCRepresentation>>::value ||
+                     std::is_same<T, std::vector<std::vector<OCRepresentation>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<OCRepresentation>>>>::value
+                     , int>::type = 0// enable_if
+                    >
+#else
                     template<typename T, typename std::enable_if<
                         is_component<T,
                             remove_first<AttributeValue>::type
                             >::value
                         , int>::type = 0
                     >
+#endif
                     operator T() const
                     {
                         return this->getValue<T>();

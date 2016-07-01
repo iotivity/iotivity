@@ -20,10 +20,18 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <Windows.h>
+#endif
 #include <string>
 #include <map>
 #include <cstdlib>
-#include <pthread.h>
 #include <mutex>
 #include <condition_variable>
 #include "OCPlatform.h"

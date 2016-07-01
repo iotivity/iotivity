@@ -138,23 +138,23 @@ PROCESS(dtls_retransmit_process, "DTLS retransmit process");
 
 static dtls_context_t the_dtls_context;
 
-static inline dtls_context_t *
+INLINE_API dtls_context_t *
 malloc_context() {
   return &the_dtls_context;
 }
 
-static inline void
+INLINE_API void
 free_context(dtls_context_t *context) {
 }
 
 #else /* WITH_CONTIKI */
 
-static inline dtls_context_t *
+INLINE_API dtls_context_t *
 malloc_context() {
   return (dtls_context_t *)malloc(sizeof(dtls_context_t));
 }
 
-static inline void
+INLINE_API void
 free_context(dtls_context_t *context) {
   free(context);
 }
@@ -415,7 +415,7 @@ is_record(uint8 *msg, size_t msglen) {
  * \return pointer to the next byte after the written header.
  * The length will be set to 0 and has to be changed before sending.
  */ 
-static inline uint8 *
+INLINE_API uint8 *
 dtls_set_record_header(uint8 type, dtls_security_parameters_t *security,
 		       uint8 *buf) {
   
@@ -449,7 +449,7 @@ dtls_set_record_header(uint8 type, dtls_security_parameters_t *security,
  * bytes. Increments message sequence number counter of \p peer.
  * \return pointer to the next byte after \p buf
  */ 
-static inline uint8 *
+INLINE_API uint8 *
 dtls_set_handshake_header(uint8 type, dtls_peer_t *peer, 
 			  int length, 
 			  int frag_offset, int frag_length, 
@@ -487,7 +487,7 @@ static uint8 compression_methods[] = {
 };
 
 /** returns true if the cipher matches TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 */
-static inline int is_tls_ecdhe_ecdsa_with_aes_128_ccm_8(dtls_cipher_t cipher)
+INLINE_API int is_tls_ecdhe_ecdsa_with_aes_128_ccm_8(dtls_cipher_t cipher)
 {
 #if defined(DTLS_ECC) || defined(DTLS_X509)
   return cipher == TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
@@ -497,7 +497,7 @@ static inline int is_tls_ecdhe_ecdsa_with_aes_128_ccm_8(dtls_cipher_t cipher)
 }
 
 /** returns true if the cipher matches TLS_PSK_WITH_AES_128_CCM_8 */
-static inline int is_tls_psk_with_aes_128_ccm_8(dtls_cipher_t cipher)
+INLINE_API int is_tls_psk_with_aes_128_ccm_8(dtls_cipher_t cipher)
 {
 #ifdef DTLS_PSK
   return cipher == TLS_PSK_WITH_AES_128_CCM_8;
@@ -507,7 +507,7 @@ static inline int is_tls_psk_with_aes_128_ccm_8(dtls_cipher_t cipher)
 }
 
 /** returns true if the cipher matches TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 */
-static inline int is_tls_ecdh_anon_with_aes_128_cbc_sha_256(dtls_cipher_t cipher)
+INLINE_API int is_tls_ecdh_anon_with_aes_128_cbc_sha_256(dtls_cipher_t cipher)
 {
 #ifdef DTLS_ECC
     return cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256;
@@ -517,7 +517,7 @@ static inline int is_tls_ecdh_anon_with_aes_128_cbc_sha_256(dtls_cipher_t cipher
 }
 
 /** returns true if the cipher matches TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 */
-static inline int is_tls_ecdhe_psk_with_aes_128_cbc_sha_256(dtls_cipher_t cipher)
+INLINE_API int is_tls_ecdhe_psk_with_aes_128_cbc_sha_256(dtls_cipher_t cipher)
 {
 #if defined(DTLS_ECC) && defined(DTLS_PSK)
   return cipher == TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256;
@@ -529,7 +529,7 @@ static inline int is_tls_ecdhe_psk_with_aes_128_cbc_sha_256(dtls_cipher_t cipher
 
 
 /** returns true if the application is configured for psk */
-static inline int is_psk_supported(dtls_context_t *ctx)
+INLINE_API int is_psk_supported(dtls_context_t *ctx)
 {
 #ifdef DTLS_PSK
   return ctx && ctx->h && ctx->h->get_psk_info;
@@ -539,7 +539,7 @@ static inline int is_psk_supported(dtls_context_t *ctx)
 }
 
 /** returns true if the application is configured for ecdhe_ecdsa */
-static inline int is_ecdsa_supported(dtls_context_t *ctx, int is_client)
+INLINE_API int is_ecdsa_supported(dtls_context_t *ctx, int is_client)
 {
 #ifdef DTLS_ECC
   return ctx && ctx->h && ((!is_client && ctx->h->get_ecdsa_key) ||
@@ -550,7 +550,7 @@ static inline int is_ecdsa_supported(dtls_context_t *ctx, int is_client)
 }
 
 /** returns true if the application is configured for x509 */
-static inline int is_x509_supported(dtls_context_t *ctx, int is_client)
+INLINE_API int is_x509_supported(dtls_context_t *ctx, int is_client)
 {
 #ifdef DTLS_X509
   return ctx && ctx->h && ((!is_client && ctx->h->get_x509_cert) ||
@@ -562,7 +562,7 @@ static inline int is_x509_supported(dtls_context_t *ctx, int is_client)
 
 /** Returns true if the application is configured for ecdhe_ecdsa with
   * client authentication */
-static inline int is_ecdsa_client_auth_supported(dtls_context_t *ctx)
+INLINE_API int is_ecdsa_client_auth_supported(dtls_context_t *ctx)
 {
 #ifdef DTLS_ECC
   return ctx && ctx->h && ctx->h->get_ecdsa_key && ctx->h->verify_ecdsa_key;
@@ -573,7 +573,7 @@ static inline int is_ecdsa_client_auth_supported(dtls_context_t *ctx)
 
 /** Returns true if the application is configured for x509 with
   * client authentication */
-static inline int is_x509_client_auth_supported(dtls_context_t *ctx)
+INLINE_API int is_x509_client_auth_supported(dtls_context_t *ctx)
 {
 #ifdef DTLS_X509
   return ctx && ctx->h && ctx->h->get_x509_cert && ctx->h->verify_x509_cert;
@@ -583,7 +583,7 @@ static inline int is_x509_client_auth_supported(dtls_context_t *ctx)
 }
 
 /** returns true if ecdh_anon_with_aes_128_cbc_sha is supported */
-static inline int is_ecdh_anon_supported(dtls_context_t *ctx)
+INLINE_API int is_ecdh_anon_supported(dtls_context_t *ctx)
 {
 #ifdef DTLS_ECC
     return ctx &&  (ctx->is_anon_ecdh_eabled == DTLS_CIPHER_ENABLE);
@@ -593,7 +593,7 @@ static inline int is_ecdh_anon_supported(dtls_context_t *ctx)
 }
 
 /** returns true if ecdhe_psk_with_aes_128_cbc_sha_256 is supported */
-static inline int is_ecdhe_psk_supported(dtls_context_t *ctx)
+INLINE_API int is_ecdhe_psk_supported(dtls_context_t *ctx)
 {
 #if defined(DTLS_ECC) && defined(DTLS_PSK)
     return is_psk_supported(ctx);
@@ -1183,7 +1183,7 @@ error:
  * Parse the ClientKeyExchange and update the internal handshake state with
  * the new data.
  */
-static inline int
+INLINE_API int
 check_client_keyexchange(dtls_context_t *ctx, 
 			 dtls_handshake_parameters_t *handshake,
 			 uint8 *data, size_t length) {
@@ -1299,7 +1299,7 @@ check_client_keyexchange(dtls_context_t *ctx,
   return 0;
 }
 
-static inline void
+INLINE_API void
 update_hs_hash(dtls_peer_t *peer, uint8 *data, size_t length) {
   dtls_debug_dump("add MAC data", data, length);
   dtls_hash_update(&peer->handshake_params->hs_state.hs_hash, data, length);
@@ -1311,12 +1311,12 @@ copy_hs_hash(dtls_peer_t *peer, dtls_hash_ctx *hs_hash) {
 	 sizeof(peer->handshake_params->hs_state.hs_hash));
 }
 
-static inline size_t
+INLINE_API size_t
 finalize_hs_hash(dtls_peer_t *peer, uint8 *buf) {
   return dtls_hash_finalize(buf, &peer->handshake_params->hs_state.hs_hash);
 }
 
-static inline void
+INLINE_API void
 clear_hs_hash(dtls_peer_t *peer) {
   assert(peer);
   dtls_debug("clear MAC\n");
@@ -1765,7 +1765,7 @@ dtls_send_multi(dtls_context_t *ctx, dtls_peer_t *peer,
   return res <= 0 ? res : overall_len - (len - res);
 }
 
-static inline int
+INLINE_API int
 dtls_send_alert(dtls_context_t *ctx, dtls_peer_t *peer, dtls_alert_level_t level,
 		dtls_alert_t description) {
   uint8_t msg[] = { level, description };
@@ -2616,7 +2616,7 @@ dtls_send_server_hello_msgs(dtls_context_t *ctx, dtls_peer_t *peer)
   return 0;
 }
 
-static inline int 
+INLINE_API int 
 dtls_send_ccs(dtls_context_t *ctx, dtls_peer_t *peer) {
   uint8 buf[1] = {1};
 
@@ -4621,7 +4621,11 @@ dtls_context_t *
 dtls_new_context(void *app_data) {
   dtls_context_t *c;
   dtls_tick_t now;
-#ifndef WITH_CONTIKI
+#if defined(_WIN32)
+  unsigned int randValue;
+  errno_t err;
+#endif
+#if !defined(WITH_CONTIKI) && !defined(_WIN32)
   FILE *urandom = fopen("/dev/urandom", "r");
   unsigned char buf[sizeof(unsigned long)];
 #endif /* WITH_CONTIKI */
@@ -4630,6 +4634,14 @@ dtls_new_context(void *app_data) {
 #ifdef WITH_CONTIKI
   /* FIXME: need something better to init PRNG here */
   dtls_prng_init(now);
+#elif defined(_WIN32)
+  err = rand_s(&randValue);
+  if (err != 0)
+  {
+    dtls_emerg("cannot initialize PRNG\n");
+    return NULL;
+  }
+  dtls_prng_init(randValue);
 #else /* WITH_CONTIKI */
   if (!urandom) {
     dtls_emerg("cannot initialize PRNG\n");

@@ -68,7 +68,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
     // TinyCbor Version 47a78569c0 or better on master is required for the re-allocation
     // strategy to work.  If you receive the following assertion error, please do a git-pull
     // from the extlibs/tinycbor/tinycbor directory
-    #define CborNeedsUpdating  (CborErrorOutOfMemory < CborErrorDataTooLarge)
+    #define CborNeedsUpdating  (((unsigned int)CborErrorOutOfMemory) < ((unsigned int)CborErrorDataTooLarge))
     OC_STATIC_ASSERT(!CborNeedsUpdating, "tinycbor needs to be updated to at least 47a78569c0");
     #undef CborNeedsUpdating
 
@@ -276,9 +276,9 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting RT");
 
         // Insert interfaces
-        if (payload->interface)
+        if (payload->iface)
         {
-            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->interface);
+            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->iface);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interface types tag/value");
         }
 

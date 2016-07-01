@@ -60,7 +60,7 @@ if target_os == 'linux':
 		SConscript('csdk/security/provisioning/unittest/SConscript')
 		SConscript('provisioning/unittests/SConscript')
 
-elif target_os == 'darwin':
+elif target_os == 'windows' and env.get('TEST') == '1':
 	# Verify that 'google unit test' library is installed.  If not,
 	# get it and install it
 	SConscript(src_dir + '/extlibs/gtest/SConscript')
@@ -69,4 +69,18 @@ elif target_os == 'darwin':
 	SConscript('csdk/stack/test/SConscript')
 	SConscript('csdk/connectivity/test/SConscript')
 
+	# Build Security Resource Manager unit tests
+	SConscript('csdk/security/unittest/SConscript')
 
+	# Build Provisioning API unit test
+	if env.get('SECURED') == '1':
+		SConscript('csdk/security/provisioning/unittest/SConscript')
+
+elif target_os in ['darwin', 'msys_nt']:
+	# Verify that 'google unit test' library is installed.  If not,
+	# get it and install it
+	SConscript(src_dir + '/extlibs/gtest/SConscript')
+
+	# Build C stack's unit tests.
+	SConscript('csdk/stack/test/SConscript')
+	SConscript('csdk/connectivity/test/SConscript')

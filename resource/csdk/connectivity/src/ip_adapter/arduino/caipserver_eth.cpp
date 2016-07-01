@@ -367,7 +367,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 
         eps[j].flags = CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
-        eps[j].interface = 0;
+        eps[j].ifindex = 0;
         eps[j].port = caglobals.ip.u4.port;
         j++;
     }

@@ -24,6 +24,7 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "payload_logging.h"
+#include "platform_features.h"
 
 #include "rdpayload.h"
 #include "ocpayload.h"
@@ -62,9 +63,9 @@ static OCStackResult sendRequest(OCMethod method, char *uri, OCDevAddr *addr,
     return result;
 }
 
-static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx,
-        __attribute__((unused)) OCDoHandle handle,
-        __attribute__((unused)) OCClientResponse *clientResponse)
+static OCStackApplicationResult handlePublishCB(OC_ANNOTATE_UNUSED void *ctx,
+        OC_ANNOTATE_UNUSED OCDoHandle handle,
+        OC_ANNOTATE_UNUSED OCClientResponse *clientResponse)
 {
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
     OIC_LOG(DEBUG, TAG, "Successfully published resources.");
@@ -99,7 +100,7 @@ static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB
 }
 
 static OCStackApplicationResult handleDiscoverCB(void *ctx,
-        __attribute__((unused)) OCDoHandle handle, OCClientResponse *clientResponse)
+        OC_ANNOTATE_UNUSED OCDoHandle handle, OCClientResponse *clientResponse)
 {
     OIC_LOG(DEBUG, TAG, "Found Resource Directory");
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;

@@ -20,7 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "ocprovisioningmanager.h"
 #include "secureresourceprovider.h"

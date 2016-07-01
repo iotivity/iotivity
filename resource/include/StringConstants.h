@@ -25,6 +25,17 @@
 
 namespace OC
 {
+
+#if defined(_WIN32)
+/** @todo: Remove temporary hacks to solve error C2059: syntax error: 'constant'*/
+#ifdef NO_ERROR
+#undef NO_ERROR
+#endif
+#ifdef DELETE
+#undef DELETE
+#endif
+#endif
+
     namespace InitException
     {
         static const char NO_ERROR[]                   = "No Error";

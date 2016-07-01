@@ -75,7 +75,7 @@ namespace OC
             return m_missingInterface;
         }
 
-        virtual const char* what() const noexcept
+        virtual const char* what() const BOOST_NOEXCEPT
         {
             std::string ret;
 

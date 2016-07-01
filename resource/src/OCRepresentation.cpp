@@ -315,11 +315,13 @@ namespace OC
         ((int64_t*)array)[pos] = item;
     }
 
+#if !defined(_MSC_VER)
     template<>
     void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
     {
         ((bool*)array)[pos] = static_cast<bool>(br);
     }
+#endif
 
     template<>
     void get_payload_array::copy_to_array(std::string item, void* array, size_t pos)
@@ -903,13 +905,13 @@ namespace OC
         // contains the inner most vector-type
         typedef T base_type;
         // contains the AttributeType for this item
-        constexpr static AttributeType enum_type =
+        BOOST_STATIC_CONSTEXPR AttributeType enum_type =
             AttributeTypeConvert<T>::type;
         // contains the AttributeType for this base-type
-        constexpr static AttributeType enum_base_type =
+        BOOST_STATIC_CONSTEXPR AttributeType enum_base_type =
             AttributeTypeConvert<T>::type;
         // depth of the vector
-        constexpr static size_t depth = 0;
+        BOOST_STATIC_CONSTEXPR size_t depth = 0;
     };
 
     template<typename T>
@@ -923,10 +925,10 @@ namespace OC
     {
         typedef T type;
         typedef typename type_info<typename T::value_type>::base_type base_type;
-        constexpr static AttributeType enum_type = AttributeType::Vector;
-        constexpr static AttributeType enum_base_type =
+        BOOST_STATIC_CONSTEXPR AttributeType enum_type = AttributeType::Vector;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_base_type =
             type_info<typename T::value_type>::enum_base_type;
-        constexpr static size_t depth = 1 +
+        BOOST_STATIC_CONSTEXPR size_t depth = 1 +
             type_info<typename T::value_type>::depth;
     };
 
@@ -936,9 +938,9 @@ namespace OC
     {
         typedef std::vector<uint8_t> type;
         typedef std::vector<uint8_t> base_type;
-        constexpr static AttributeType enum_type = AttributeType::Binary;
-        constexpr static AttributeType enum_base_type = AttributeType::Binary;
-        constexpr static size_t depth = 0;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_base_type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR size_t depth = 0;
     };
 
 

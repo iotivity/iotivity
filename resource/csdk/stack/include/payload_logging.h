@@ -46,10 +46,10 @@ extern "C"
 #ifdef TB_LOG
     #define OIC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
-static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
+INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 {
     OIC_LOG(level, (PL_TAG), "Payload Type: Representation");
     OCRepPayload* rep = payload;
@@ -164,7 +164,7 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 
 }
 
-static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
+INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Discovery");
     int i = 1;
@@ -195,7 +195,7 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         }
     }
     OIC_LOG(level, PL_TAG, "\tInterface:");
-    for (OCStringLL *itf = payload->interface; itf; itf = itf->next)
+    for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
     {
         OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
     }
@@ -230,7 +230,7 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
     }
 }
 
-static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
+INLINE_API void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Device");
     OIC_LOG_V(level, PL_TAG, "\tSID:%s", payload->sid);
@@ -262,7 +262,7 @@ static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
     }
 }
 
-static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)
+INLINE_API void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Platform");
     OIC_LOG_V(level, PL_TAG, "\tURI:%s", payload->uri);
@@ -296,7 +296,7 @@ static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* paylo
     }
 }
 
-static inline void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)
+INLINE_API void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Presence");
     OIC_LOG_V(level, PL_TAG, "\tSequence Number:%u", payload->sequenceNumber);
@@ -305,13 +305,13 @@ static inline void OCPayloadLogPresence(LogLevel level, OCPresencePayload* paylo
     OIC_LOG_V(level, PL_TAG, "\tResource Type:%s", payload->resourceType);
 }
 
-static inline void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
+INLINE_API void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Security");
     OIC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", payload->securityData);
 }
 
-static inline void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
+INLINE_API void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
 {
     if (!payload)
     {
@@ -334,7 +334,7 @@ static inline void OCRDPayloadLog(const LogLevel level, const OCRDPayload *paylo
     }
 }
 
-static inline void OCPayloadLog(LogLevel level, OCPayload* payload)
+INLINE_API void OCPayloadLog(LogLevel level, OCPayload* payload)
 {
     if(!payload)
     {

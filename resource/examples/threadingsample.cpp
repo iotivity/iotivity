@@ -33,6 +33,12 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+#include "platform_features.h"
+
 using namespace OC;
 
 static std::ostringstream requestURI;
