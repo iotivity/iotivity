@@ -1334,15 +1334,17 @@ char* OCCreateString(const OCStringLL* ll)
     {
         len += strlen(it->value) + 1;
     }
+    len--; // renove trailing separator (just added above)
     str = (char*) malloc(len + 1);
     if (!str)
         return NULL;
 
     pos = str;
-    for (const OCStringLL *it = ll; it ; it = it->next )
+    const OCStringLL *it = ll;
+    while (it)
     {
-        sublen = strlen(it->value) + 1;
-        count = snprintf(pos, len + 1, "%s%c", it->value, CSV_SEPARATOR);
+        sublen = strlen(it->value);
+        count = snprintf(pos, len + 1, "%s", it->value);
         if (count<sublen)
         {
             free(str);
@@ -1350,6 +1352,14 @@ char* OCCreateString(const OCStringLL* ll)
         }
         len-=sublen;
         pos+=count;
+
+        it = it->next;
+        if (it)
+        {
+            *pos = CSV_SEPARATOR;
+            len--;
+            *(++pos) = '\0';
+       }
     }
 
     return str;
