@@ -1387,7 +1387,6 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             if(IOTVTICAL_VALID_ACCESS != IsRequestWithinValidTime(cred->period, NULL))
                             {
                                 OIC_LOG (INFO, TAG, "Credentials are expired.");
-                                ret = -1;
                                 return ret;
                             }
                         }
@@ -1406,7 +1405,6 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             uint32_t outKeySize;
                             if(NULL == outKey)
                             {
-                                result_length = -1;
                                 OIC_LOG (ERROR, TAG, "Failed to memoray allocation.");
                                 return ret;
                             }
@@ -1414,18 +1412,17 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             if(B64_OK == b64Decode((char*)cred->privateData.data, cred->privateData.len, outKey, outBufSize, &outKeySize))
                             {
                                 memcpy(result, outKey, outKeySize);
-                                result_length = outKeySize;
+                                ret = outKeySize;
                             }
                             else
                             {
-                                result_length = -1;
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                             }
 
                             OICFree(outKey);
                         }
 
-                        return result_length;
+                        return ret;
                     }
                 }
             }
@@ -1434,7 +1431,6 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
         default:
             {
                 OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
-                ret = -1;
             }
             break;
     }
