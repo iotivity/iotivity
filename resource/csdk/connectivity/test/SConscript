@@ -83,15 +83,18 @@ if (('IP' in target_transport) or ('ALL' in target_transport)):
 		                                         'cablocktransfertest.cpp',
 		                                         'ca_api_unittest.cpp',
 		                                         'camutex_tests.cpp',
-		                                         'uarraylist_test.cpp'
+		                                         'uarraylist_test.cpp',
+		                                         'ulinklist_test.cpp'
 		                                               ])
 else:
-	catests = catest_env.Program('catests', ['catests.cpp',
-	                                         'caprotocolmessagetest.cpp',
-	                                         'ca_api_unittest.cpp',
-	                                         'camutex_tests.cpp',
-	                                         'uarraylist_test.cpp'
-	                                               ])
+	# Include all unit test files
+		catests = catest_env.Program('catests', ['catests.cpp',
+		                                         'caprotocolmessagetest.cpp',
+		                                         'ca_api_unittest.cpp',
+		                                         'camutex_tests.cpp',
+		                                         'uarraylist_test.cpp',
+		                                         'ulinklist_test.cpp'
+		                                               ])
 
 Alias("test", [catests])
 
