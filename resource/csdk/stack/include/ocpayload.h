@@ -284,6 +284,14 @@ OCStringLL* OCCreateOCStringLL(const char* text);
  **/
 char* OCCreateString(const OCStringLL* ll);
 
+/**
+ * This function copies contents (and allocates if necessary)
+ * @param dest existing bytestring (or null to allocate here)
+ * @param source existing bytestring
+ * @return true of success false on any errors
+ **/
+bool OCByteStringCopy(OCByteString *dest, const OCByteString *source);
+
 #ifdef __cplusplus
 }
 #endif

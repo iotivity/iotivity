@@ -74,6 +74,7 @@ OCRepPayloadClone
 OCRepPayloadCreate
 OCRepPayloadDestroy
 OCRepPayloadGetByteStringArray
+OCRepPayloadSetByteStringArrayAsOwner
 OCRepPayloadGetPropBool
 OCRepPayloadGetPropByteString
 OCRepPayloadGetPropInt

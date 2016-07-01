@@ -175,6 +175,15 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
                 dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
             }
             break;
+        case OCREP_PROP_BYTE_STRING:
+            dest->arr.ocByteStrArray = (OCByteString*)OICMalloc(dimTotal * sizeof(OCByteString));
+            VERIFY_PARAM_NON_NULL(TAG, dest->arr.ocByteStrArray, "Failed allocating memory");
+            for (size_t i = 0; i < dimTotal; ++i)
+            {
+                OCByteStringCopy(&dest->arr.ocByteStrArray[i], &source->arr.ocByteStrArray[i]);
+                VERIFY_PARAM_NON_NULL(TAG, dest->arr.ocByteStrArray[i].bytes, "Failed allocating memory");
+            }
+            break;
         default:
             OIC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
             break;
@@ -247,16 +256,19 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                 OICFree(val->arr.iArray);
                 break;
             case OCREP_PROP_STRING:
-                for(size_t i = 0; i< dimTotal; ++i)
+                for(size_t i = 0; i < dimTotal; ++i)
                 {
                     OICFree(val->arr.strArray[i]);
                 }
                 OICFree(val->arr.strArray);
                 break;
             case OCREP_PROP_BYTE_STRING:
-                for (size_t i = 0; i< dimTotal; ++i)
+                for (size_t i = 0; i < dimTotal; ++i)
                 {
-                    OICFree(val->arr.ocByteStrArray[i].bytes);
+                    if (val->arr.ocByteStrArray[i].bytes)
+                    {
+                        OICFree(val->arr.ocByteStrArray[i].bytes);
+                    }
                 }
                 OICFree(val->arr.ocByteStrArray);
                 break;
@@ -521,6 +533,7 @@ static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
                return val->str != NULL;
         case OCREP_PROP_BYTE_STRING:
                val->ocByteStr = *(OCByteString*)value;
+               return val->ocByteStr.bytes != NULL;
                break;
         case OCREP_PROP_NULL:
                return val != NULL;
@@ -620,18 +633,13 @@ bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCBy
         return false;
     }
 
-    OCByteString ocByteStr = {
-                    .bytes = (uint8_t*)OICMalloc(value.len * sizeof(uint8_t)),
-                    .len = value.len };
+    OCByteString ocByteStr = {NULL, 0};
+    bool b = OCByteStringCopy(&ocByteStr, &value);
 
-    if (!ocByteStr.bytes)
+    if (b)
     {
-        return false;
+        b = OCRepPayloadSetPropByteStringAsOwner(payload, name, &ocByteStr);
     }
-    memcpy(ocByteStr.bytes, value.bytes, ocByteStr.len);
-
-    bool b = OCRepPayloadSetPropByteStringAsOwner(payload, name, &ocByteStr);
-
     if (!b)
     {
         OICFree(ocByteStr.bytes);
@@ -1453,16 +1461,19 @@ OCStringLL* OCCreateOCStringLL(const char* text)
     for (head = backup; ; head = NULL)
     {
         token = (char *) strtok_r(head, delim, &tail);
-        if (!token) break;
+        if (!token)
+        {
+            break;
+        }
         iter = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
         VERIFY_PARAM_NON_NULL(TAG, iter, "Failed allocating memory");
         if (!result)
         {
-             result = iter;
+            result = iter;
         }
         else
         {
-             prev->next = iter;
+            prev->next = iter;
         }
         iter->value = OICStrdup(token);
         VERIFY_PARAM_NON_NULL(TAG, iter->value, "Failed allocating memory");
@@ -1495,7 +1506,7 @@ char* OCCreateString(const OCStringLL* ll)
     {
         len += strlen(it->value) + 1;
     }
-    len--; // renove trailing separator (just added above)
+    len--; // remove trailing separator (just added above)
     str = (char*) malloc(len + 1);
     if (!str)
     {
@@ -1526,6 +1537,36 @@ char* OCCreateString(const OCStringLL* ll)
     }
 
     return str;
+}
+
+bool OCByteStringCopy(OCByteString* dest, const OCByteString* source)
+{
+    VERIFY_PARAM_NON_NULL(TAG, source, "Bad input");
+
+    if (!dest)
+    {
+        dest = (OCByteString *)OICMalloc(sizeof(OCByteString));
+        VERIFY_PARAM_NON_NULL(TAG, dest, "Failed allocating memory");
+    }
+    if (dest->bytes)
+    {
+        OICFree(dest->bytes);
+    }
+    dest->bytes = (uint8_t*)OICMalloc(source->len * sizeof(uint8_t));
+    VERIFY_PARAM_NON_NULL(TAG, dest->bytes, "Failed allocating memory");
+    memcpy(dest->bytes, source->bytes, source->len * sizeof(uint8_t));
+    dest->len = source->len;
+    return true;
+
+exit:
+    if (dest)
+    {
+        dest->len = 0;
+        OICFree(dest->bytes);
+        dest->bytes = NULL;
+    }
+
+    return false;
 }
 
 OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)
