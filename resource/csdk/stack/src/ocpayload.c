@@ -983,7 +983,7 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
         return false;
     }
 
-    if (val->arr.type != OCREP_PROP_DOUBLE)
+    if (val->arr.type == OCREP_PROP_DOUBLE)
     {
         memcpy(*array, val->arr.dArray, dimTotal * sizeof(double));
     }
