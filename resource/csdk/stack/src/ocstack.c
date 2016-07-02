@@ -3058,8 +3058,6 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
         {
             return OC_STACK_INVALID_PARAM;
         }
-        deleteResourceType(resource->rsrcType);
-        resource->rsrcType = NULL;
 
         while (type)
         {
