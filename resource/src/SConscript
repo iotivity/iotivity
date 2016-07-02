@@ -27,7 +27,7 @@ import os
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 oclib_env = lib_env.Clone()
 secured = lib_env.get('SECURED')
@@ -50,7 +50,7 @@ oclib_env.AppendUnique(LIBS = ['oc_logger'])
 oclib_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'ocsrm'])
 
 target_os = env.get('TARGET_OS')
-if target_os == 'linux':
+if target_os in ['linux']:
 	oclib_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os not in ['windows']:

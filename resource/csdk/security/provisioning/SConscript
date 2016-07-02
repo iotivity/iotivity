@@ -62,11 +62,10 @@ if target_os not in ['windows']:
 	provisioning_env.AppendUnique(CFLAGS = ['-std=c99'])
 if target_os not in ['windows', 'msys_nt']:
 	provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-
-	# Note: 'pthread' is in libc for android. On other platform, if use
-	# new gcc(>4.9?) it isn't required, otherwise, it's required
+	# Note: 'pthread' is in libc for android.
+	# On other platforms, if use new gcc(>4.9?) it isn't required, otherwise, it's required
 	if target_os != 'android':
-		provisioning_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
+		provisioning_env.AppendUnique(LIBS = ['dl', 'pthread'])
 
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
@@ -113,6 +112,7 @@ if target_os != 'tizen':
 
 if target_os == 'windows':
 	# TODO: Add OC_EXPORT annotations and enable generation of Windows DLL
+	# https://jira.iotivity.org/browse/IOT-1188
 	provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 else:
 	provisioningserver = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)

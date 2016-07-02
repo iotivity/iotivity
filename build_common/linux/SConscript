@@ -19,8 +19,8 @@ if env.get('LOGGING'):
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
 env.AppendUnique(CFLAGS = ['-std=gnu99'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
+env.AppendUnique(LIBS = ['dl', 'pthread'])
 env.AppendUnique(LIBS = ['uuid'])
-env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 
 # Set arch flags that match best TARGET_ARCH variable
 target_arch = env.get('TARGET_ARCH')
