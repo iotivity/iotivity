@@ -41,7 +41,7 @@ extern "C" {
  * @return ::CborNoError returns if successful and other Cbor error in  case of error.
  * failed in creating CBOR.
  */
-CborError OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, size_t *size);
+int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, size_t *size);
 
 /**
  * Converts CBOR to OCRDPayload.
