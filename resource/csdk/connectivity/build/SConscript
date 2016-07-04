@@ -174,8 +174,11 @@ def __install(ienv, targets, name):
 def __installlib(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
-		i_n = ienv.Install(user_prefix + '/lib', targets)
-		ienv.Alias("install", i_n)
+		install_lib_dir = os.path.join(user_prefix, 'lib')
+	else:
+		install_lib_dir = os.path.join(env.get('BUILD_DIR'), 'lib')
+	i_n = ienv.Install(install_lib_dir, targets)
+	ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
@@ -269,7 +272,8 @@ if target_os == "yocto":
     env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
     env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
-    env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
+    if target_os in ['linux']:
+        env.AppendUnique(LIBS = ['dl', 'pthread'])
     Export('env')
 else:
     '''

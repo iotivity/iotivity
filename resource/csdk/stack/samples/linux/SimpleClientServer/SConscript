@@ -33,16 +33,21 @@ samples_env.PrependUnique(CPPPATH = [
 		'../../../../../connectivity/lib/libcoap-4.1.1'
 		])
 
-samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+compiler = env.get('CXX')
+if 'g++' in compiler:
+	samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+	samples_env.AppendUnique(LIBS=['pthread'])
 samples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-samples_env.AppendUnique(LIBS = ['-lpthread' ])
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if target_os in ['darwin', 'ios']:
-	samples_env.PrependUnique(LIBS = ['m','octbstack', 'ocsrm', 'connectivity_abstraction','coap' ])
+	samples_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction','coap' ])
 elif target_os not in ['arduino']:
-	samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
+	samples_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
 	samples_env.AppendUnique(LIBS = ['rt'])
+
+if target_os not in ['windows']:
+	samples_env.PrependUnique(LIBS = ['m'])
 
 if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])

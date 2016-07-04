@@ -18,34 +18,32 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+import os
+
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
+
 ##
 # Mediator[RichSDK] Unit Test build script
 ##
-import os
-Import('env')
-
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if lib_env.get('LOGGING'):
+    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 # Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript(lib_env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
-target_os = env.get('TARGET_OS')
+target_os = lib_env.get('TARGET_OS')
 if target_os == 'linux':
-    # Verify that 'google unit test' library is installed.  If not,
-    # get it and install it
-    SConscript(env.get('SRC_DIR') + '/extlibs/gtest/SConscript')
-
     # Verify that 'hippomocks' mocking code is installed.  If not,
     # get it and install it
-    SConscript(env.get('SRC_DIR') + '/extlibs/hippomocks.scons')
+    SConscript(lib_env.get('SRC_DIR') + '/extlibs/hippomocks.scons')
 
 mediator_rich_test_env = lib_env.Clone()
 
@@ -53,18 +51,14 @@ mediator_rich_test_env = lib_env.Clone()
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
 
 ######################################################################
 # Build flags
 ######################################################################
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 mediator_rich_test_env.AppendUnique(
         CPPPATH = [
                 src_dir + '/extlibs/hippomocks-master',
-                src_dir + '/extlibs/gtest/gtest-1.7.0/include',
                 '../inc',
                 '../../../inc',
         ])
@@ -76,7 +70,7 @@ if target_os not in ['windows', 'winrt']:
                 mediator_rich_test_env.AppendUnique(LIBS = ['pthread'])
 
 
-if env.get('SECURED') == '1':
+if mediator_rich_test_env.get('SECURED') == '1':
 	     mediator_rich_test_env.PrependUnique(LIBS = ['tinydtls','ocprovision', 'ocpmapi'])
 
 mediator_rich_test_env.PrependUnique(LIBS = [
@@ -87,22 +81,21 @@ mediator_rich_test_env.PrependUnique(LIBS = [
     'octbstack',
     'oc',
     'ESMediatorRich',
-    gtest,
-    gtest_main])
+    'gtest',
+    'gtest_main'])
 
 mediator_rich_test_env.AppendUnique(LIBS = ['dl'])
 
 ######################################################################
 # Build Test
 ######################################################################
-mediator_richsdk_test_src = env.Glob('./*.cpp')
+mediator_richsdk_test_src = mediator_rich_test_env.Glob('./*.cpp')
 
 mediator_richsdk_test = mediator_rich_test_env.Program('mediator_richsdk_test', mediator_richsdk_test_src)
 Alias("mediator_richsdk_test", mediator_richsdk_test)
-env.AppendTarget('mediator_richsdk_test')
+mediator_rich_test_env.AppendTarget('mediator_richsdk_test')
 
-if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
+if mediator_rich_test_env.get('TEST') == '1':
     if target_os == 'linux':
         from tools.scons.RunTest import *
         run_test(mediator_rich_test_env, '', 'service/easy-setup/mediator/richsdk/unittests/mediator_richsdk_test')

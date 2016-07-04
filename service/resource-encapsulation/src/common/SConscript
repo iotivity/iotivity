@@ -22,26 +22,25 @@
 # rcs_common (primitiveResource and expiryTimer) build script
 ##
 import os
-Import('env')
+
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
+
+
 
 # Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
-
-src_dir = lib_env.get('SRC_DIR')
-
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
-
+SConscript(lib_env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
 rcs_common_env = lib_env.Clone()
-target_os = env.get('TARGET_OS')
-
-release = env.get('RELEASE')
+target_os = rcs_common_env.get('TARGET_OS')
+release = rcs_common_env.get('RELEASE')
+src_dir = rcs_common_env.get('SRC_DIR')
 
 ######################################################################
 # Build flags
 ######################################################################
 rcs_common_env.AppendUnique(CPPPATH = [
-    env.get('SRC_DIR')+'/extlibs',
+    rcs_common_env.get('SRC_DIR')+'/extlibs',
     '../../include',
     'primitiveResource/include'])
 
@@ -49,7 +48,7 @@ rcs_common_env.AppendUnique(CPPPATH = [
     'expiryTimer/include',
     'expiryTimer/src'])
 
-rcs_common_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+rcs_common_env.AppendUnique(LIBPATH = [rcs_common_env.get('BUILD_DIR')])
 
 if target_os not in ['windows', 'winrt']:
     rcs_common_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -98,13 +97,9 @@ if target_os == 'linux':
 	rcs_common_test_env = rcs_common_env.Clone();
 
 	rcs_common_test_env.PrependUnique(CPPPATH = [
-		env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-		gtest_dir + '/include',
+		rcs_common_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master',
 		'utils/include'
 		])
-
-	gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-	gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 	rcs_common_test_env.PrependUnique(LIBS = [
 		'octbstack',
@@ -112,21 +107,21 @@ if target_os == 'linux':
 		'connectivity_abstraction',
 		'coap',
 		'rcs_common',
-		gtest,
-		gtest_main,
+		'gtest',
+		'gtest_main',
 		'pthread'
 		])
 
 	rcs_common_test_src = [
-		env.Glob('primitiveResource/unittests/*.cpp'),
+		rcs_common_test_env.Glob('primitiveResource/unittests/*.cpp'),
 		'expiryTimer/unittests/ExpiryTimerTest.cpp'
 		]
 
 	rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
 	Alias("rcs_common_test", rcs_common_test)
-	env.AppendTarget('rcs_common_test')
+	rcs_common_test_env.AppendTarget('rcs_common_test')
 
-	if env.get('TEST') == '1':
+	if rcs_common_test_env.get('TEST') == '1':
 		from tools.scons.RunTest import *
 		run_test(rcs_common_test_env, '',
 			'service/resource-encapsulation/src/common/rcs_common_test')

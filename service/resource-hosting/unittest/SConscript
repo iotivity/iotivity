@@ -21,52 +21,48 @@
 ##
 # ResourceHosting Unit Test build script
 ##
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
 
-Import('env')
-
-if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-	env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
-if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if lib_env.get('LOGGING'):
+    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 ######################################################################
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
 
 hosting_test_env = lib_env.Clone()
-target_os = env.get('TARGET_OS')
+target_os = hosting_test_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
-GTest = File(gtest_dir + '/lib/.libs/libgtest.a')
-GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-#hosting_test_env.AppendUnique(LIBPATH = [gtest_dir + '/lib/.libs'])
-hosting_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
+hosting_test_env.AppendUnique(LIBPATH = [hosting_test_env.get('BUILD_DIR')])
 hosting_test_env.AppendUnique(LIBS = [
 	'resource_hosting', 'rcs_server', 'rcs_client','rcs_common',
 	'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap',
-	GTest_Main, GTest])
+	'gtest_main', 'gtest'])
 
 if target_os not in ['windows', 'winrt']:
     hosting_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-if target_os == 'linux':
-	hosting_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-	hosting_test_env.AppendUnique(LIBS = ['pthread'])
+if target_os in ['linux']:
+   hosting_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
+   hosting_test_env.AppendUnique(LIBS = ['pthread'])
 
-hosting_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master',
-                             gtest_dir + '/include'])
+hosting_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master'])
 hosting_test_env.AppendUnique(CPPPATH = ['../src'])
 hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/include'])
 hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/primitiveResource/include'])
@@ -75,13 +71,14 @@ hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/commo
 # Build Test
 ######################################################################
 
-hosting_test_src = env.Glob('./*.cpp')
+hosting_test_src = hosting_test_env.Glob('./*.cpp')
 hosting_test = hosting_test_env.Program('hosting_test', hosting_test_src)
 Alias("hosting_test", hosting_test)
-env.AppendTarget('hosting_test')
+hosting_test_env.AppendTarget('hosting_test')
 
-if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
-    if target_os == 'linux':
+if hosting_test_env.get('TEST') == '1':
+    target_os = hosting_test_env.get('TARGET_OS')
+    if target_os in ['linux']:
             from tools.scons.RunTest import *
             run_test(hosting_test_env, '', 'service/resource-hosting/unittest/hosting_test')
+

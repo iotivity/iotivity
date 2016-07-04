@@ -65,7 +65,7 @@ if target_os not in ['windows', 'winrt']:
 	# Note: 'pthread' is in libc for android. On other platform, if use
 	# new gcc(>4.9?) it isn't required, otherwise, it's required
 	if target_os != 'android':
-		provisioning_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
+		provisioning_env.AppendUnique(LIBS = ['dl', 'pthread'])
 
 
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])

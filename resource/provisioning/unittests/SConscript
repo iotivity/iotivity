@@ -18,14 +18,17 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
 import os
 import os.path
-provisiontests_env = env.Clone()
 
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+provisiontests_env = gtest_env.Clone()
 src_dir = provisiontests_env.get('SRC_DIR')
-with_ra = env.get('WITH_RA')
-with_ra_ibb = env.get('WITH_RA_IBB')
+target_os = provisiontests_env.get('TARGET_OS')
+with_ra = provisiontests_env.get('WITH_RA')
+with_ra_ibb = provisiontests_env.get('WITH_RA_IBB')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -43,15 +46,15 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../csdk/ocsocket/include',
 		'../../csdk/ocrandom/include',
 		'../../csdk/logger/include',
-		'../../../extlibs/gtest/gtest-1.7.0/include',
 		'../../../extlibs/hippomocks-master/HippoMocks',
 		'../../../extlibs/hippomocks-master/HippoMocksTest'
 		])
 
-provisiontests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-provisiontests_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
-provisiontests_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-provisiontests_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+if target_os not in ['windows']:
+	provisiontests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+	provisiontests_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
+
+provisiontests_env.AppendUnique(LIBPATH = [provisiontests_env.get('BUILD_DIR')])
 provisiontests_env.PrependUnique(LIBS = [
         'ocprovision',
 		'oc',
@@ -73,15 +76,15 @@ else :
 	if with_ra:
 		provisiontests_env.AppendUnique(LIBS = ['ra_xmpp'])
 
-if env.get('SECURED') == '1':
+if provisiontests_env.get('SECURED') == '1':
     provisiontests_env.AppendUnique(LIBS = ['tinydtls'])
     provisiontests_env.AppendUnique(LIBS = ['timer'])
-if env.get('DTLS_WITH_X509') == '1':
+if provisiontests_env.get('DTLS_WITH_X509') == '1':
 	provisiontests_env.AppendUnique(LIBS = ['CKManager'])
 	provisiontests_env.AppendUnique(LIBS = ['asn1'])
 
 
-if env.get('LOGGING'):
+if provisiontests_env.get('LOGGING'):
 	provisiontests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################
@@ -91,22 +94,20 @@ unittests = provisiontests_env.Program('provisiontests', ['OCProvisioningTest.cp
 
 Alias("provisiontests", [unittests])
 
-env.AppendTarget('provisiontests')
-if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
-		out_dir = env.get('BUILD_DIR')
-		result_dir = env.get('BUILD_DIR') + '/test_out/'
+provisiontests_env.AppendTarget('provisiontests')
+if provisiontests_env.get('TEST') == '1':
+	if target_os in ['linux']:
+		out_dir = provisiontests_env.get('BUILD_DIR')
+		result_dir = os.path.join(provisiontests_env.get('BUILD_DIR'), 'test_out') + os.sep
 		if not os.path.isdir(result_dir):
 			os.makedirs(result_dir)
 		provisiontests_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		provisiontests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		provisiontests_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
 		ut = provisiontests_env.Command ('ut', None, out_dir + 'resource/provisioning/unittests/provisiontests')
 		AlwaysBuild ('ut')
 
 src_dir = provisiontests_env.get('SRC_DIR')
 svr_db_src_dir = src_dir + '/resource/provisioning/examples/'
-svr_db_build_dir = env.get('BUILD_DIR') +'/resource/provisioning/unittests/'
+svr_db_build_dir = os.path.join(provisiontests_env.get('BUILD_DIR'), 'resource', 'provisioning', 'unittests')
 provisiontests_env.Alias("install", provisiontests_env.Install( svr_db_build_dir,
                                 svr_db_src_dir + 'oic_svr_db_client.json'))

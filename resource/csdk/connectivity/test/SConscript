@@ -18,12 +18,16 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
 import os
 import os.path
-catest_env = env.Clone()
+
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+catest_env = gtest_env.Clone()
 
 src_dir = catest_env.get('SRC_DIR')
+target_os = catest_env.get('TARGET_OS')
+target_transport = catest_env.get('TARGET_TRANSPORT')
 
 ######################################################################
 # Build flags
@@ -34,7 +38,6 @@ catest_env.PrependUnique(CPPPATH = [
                 '../../stack/include',
                 '../../extlibs/cjson',
                 '../../../oc_logger/include',
-                '../../../../extlibs/gtest/gtest-1.7.0/include'
                ])
 
 tmplist = catest_env['LINKFLAGS'][:]
@@ -42,27 +45,26 @@ if '-lpthread' in tmplist:
     tmplist.remove('-lpthread')
     catest_env.Replace(LINKFLAGS = tmplist)
 
-catest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-catest_env.AppendUnique(LIBS = ['pthread'])
-catest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-catest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
-catest_env.PrependUnique(LIBS = ['m',
-                                    'octbstack',
+if target_os not in ['windows']:
+	catest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
+catest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
+catest_env.PrependUnique(LIBS = ['octbstack',
                                     'connectivity_abstraction',
-                                    'coap',
-                                    'gtest',
-                                    'gtest_main'])
-
-target_os = env.get('TARGET_OS')
+                                    'coap'])
 
 if target_os not in ['arduino', 'darwin', 'ios']:
 	catest_env.AppendUnique(LIBS=['rt'])
 
-if env.get('SECURED') == '1':
-    catest_env.AppendUnique(LIBS = ['tinydtls'])
+if catest_env.get('SECURED') == '1':
+	catest_env.AppendUnique(LIBS = ['tinydtls'])
 
-if env.get('LOGGING'):
+if catest_env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os not in ['msys_nt', 'windows']:
+	catest_env.AppendUnique(LIBS = ['m'])
+	catest_env.PrependUnique(LIBS = ['pthread'])
 
 ######################################################################
 # Source files and Targets
@@ -76,10 +78,10 @@ catests = catest_env.Program('catests', ['catests.cpp',
 
 Alias("test", [catests])
 
-env.AppendTarget('test')
-if env.get('TEST') == '1':
-        target_os = env.get('TARGET_OS')
-        if target_os == 'linux':
+catest_env.AppendTarget('test')
+if catest_env.get('TEST') == '1':
+        if target_os in ['linux']:
+                catest_env.AppendENVPath('PATH', catest_env.get('BUILD_DIR'))
                 from tools.scons.RunTest import *
                 run_test(catest_env,
                          'resource_csdk_connectivity_test.memcheck',

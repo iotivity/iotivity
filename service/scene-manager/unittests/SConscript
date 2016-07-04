@@ -18,45 +18,41 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
+
 ##
 # SceneManager Unit Test build script
 ##
-
-Import('env')
-
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if lib_env.get('LOGGING'):
+    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript(lib_env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
 ######################################################################
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
 
 scene_test_env = lib_env.Clone()
-target_os = env.get('TARGET_OS')
+target_os = scene_test_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
-GTest = File(gtest_dir + '/lib/.libs/libgtest.a')
-GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-#scene_test_env.AppendUnique(LIBPATH = [gtest_dir + '/lib/.libs'])
 scene_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 scene_test_env.AppendUnique(LIBS = [
     'scene_manager', 'rcs_server', 'rcs_client','rcs_common',
     'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap',
-    GTest_Main, GTest])
+    'gtest_main',  'gtest'])
 
 if target_os not in ['windows', 'winrt']:
     scene_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
@@ -65,12 +61,11 @@ if target_os == 'linux':
     scene_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
     scene_test_env.AppendUnique(LIBS = ['pthread'])
 
-if not env.get('RELEASE'):
+if not scene_test_env.get('RELEASE'):
     scene_test_env.PrependUnique(LIBS = ['gcov'])
     scene_test_env.AppendUnique(CXXFLAGS = ['--coverage'])
 
-scene_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master',
-                             gtest_dir + '/include'])
+scene_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master'])
 scene_test_env.AppendUnique(CPPPATH = ['../include'])
 scene_test_env.AppendUnique(CPPPATH = ['../src'])
 scene_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/include'])
@@ -80,51 +75,51 @@ scene_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/
 # Build Test
 ######################################################################
 
-scene_list_test_src = env.Glob('./SceneListTest.cpp')
+scene_list_test_src = scene_test_env.Glob('./SceneListTest.cpp')
 scene_list_test = scene_test_env.Program('scene_list_test', scene_list_test_src)
 Alias("scene_list_test", scene_list_test)
-env.AppendTarget('scene_list_test')
+scene_test_env.AppendTarget('scene_list_test')
 scene_test_env.InstallTarget(scene_list_test, 'scene_list_test')
 
-scene_collection_test_src = env.Glob('./SceneCollectionTest.cpp')
+scene_collection_test_src = scene_test_env.Glob('./SceneCollectionTest.cpp')
 scene_collection_test = scene_test_env.Program('scene_collection_test', scene_collection_test_src)
 Alias("scene_collection_test", scene_collection_test)
-env.AppendTarget('scene_collection_test')
+scene_test_env.AppendTarget('scene_collection_test')
 scene_test_env.InstallTarget(scene_collection_test, 'scene_collection_test')
 
-scene_test_src = env.Glob('./SceneTest.cpp')
+scene_test_src = scene_test_env.Glob('./SceneTest.cpp')
 scene_test = scene_test_env.Program('scene_test', scene_test_src)
 Alias("scene_test", scene_test)
-env.AppendTarget('scene_test')
+scene_test_env.AppendTarget('scene_test')
 scene_test_env.InstallTarget(scene_test, 'scene_test')
 
-scene_action_test_src = env.Glob('./SceneActionTest.cpp')
+scene_action_test_src = scene_test_env.Glob('./SceneActionTest.cpp')
 scene_action_test = scene_test_env.Program('scene_action_test', scene_action_test_src)
 Alias("scene_action_test", scene_action_test)
-env.AppendTarget('scene_action_test')
+scene_test_env.AppendTarget('scene_action_test')
 scene_test_env.InstallTarget(scene_action_test, 'scene_action_test')
 
-remote_scene_list_test_src = env.Glob('./RemoteSceneListTest.cpp')
+remote_scene_list_test_src = scene_test_env.Glob('./RemoteSceneListTest.cpp')
 remote_scene_list_test = scene_test_env.Program('remote_scene_list_test', remote_scene_list_test_src)
 Alias("remote_scene_list_test", remote_scene_list_test)
-env.AppendTarget('remote_scene_list_test')
+scene_test_env.AppendTarget('remote_scene_list_test')
 
-remote_scene_col_test_src = env.Glob('./RemoteSceneCollectionTest.cpp')
+remote_scene_col_test_src = scene_test_env.Glob('./RemoteSceneCollectionTest.cpp')
 remote_scene_col_test = scene_test_env.Program('remote_scene_col_test', remote_scene_col_test_src)
 Alias("remote_scene_col_test", remote_scene_col_test)
-env.AppendTarget('remote_scene_col_test')
+scene_test_env.AppendTarget('remote_scene_col_test')
 
-remote_scene_test_src = env.Glob('./RemoteSceneTest.cpp')
+remote_scene_test_src = scene_test_env.Glob('./RemoteSceneTest.cpp')
 remote_scene_test = scene_test_env.Program('remote_scene_test', remote_scene_test_src)
 Alias("remote_scene_test", remote_scene_test)
-env.AppendTarget('remote_scene_test')
+scene_test_env.AppendTarget('remote_scene_test')
 
-remote_scene_action_test_src = env.Glob('./RemoteSceneActionTest.cpp')
+remote_scene_action_test_src = scene_test_env.Glob('./RemoteSceneActionTest.cpp')
 remote_scene_action_test = scene_test_env.Program('remote_scene_action_test', remote_scene_action_test_src)
 Alias("remote_scene_action_test", remote_scene_action_test)
-env.AppendTarget('remote_scene_action_test')
+scene_test_env.AppendTarget('remote_scene_action_test')
 
-#target_os = env.get('TARGET_OS')
+#target_os = scene_test_env.get('TARGET_OS')
 #if target_os == 'linux':
 #        from tools.scons.RunTest import *
 #        run_test(scene_test_env,

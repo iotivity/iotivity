@@ -38,7 +38,8 @@ if target_os not in ['windows', 'winrt']:
 
 	# Note: 'pthread' is in libc for android.
 	if target_os != 'android':
-		samples_env.AppendUnique(LIBS = ['-lpthread'])
+		samples_env.AppendUnique(LIBS = ['pthread'])
+	samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 samples_env.PrependUnique(LIBS = ['octbstack', 'm', 'connectivity_abstraction', 'coap'])

@@ -22,34 +22,31 @@
 # ResourceCache Unit Test build script
 ##
 
-Import('env')
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if lib_env.get('LOGGING'):
+    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript(lib_env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
 ######################################################################
 # unit test setting
 ######################################################################
-src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
-
 cache_test_env = lib_env.Clone()
-target_os = env.get('TARGET_OS')
+target_os = cache_test_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 cache_test_env.AppendUnique(CPPPATH = ['../include'])
 cache_test_env.AppendUnique(CPPPATH = ['../../../include'])
@@ -57,10 +54,9 @@ cache_test_env.AppendUnique(CPPPATH = ['../../common/primitiveResource/include']
 cache_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/include'])
 cache_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
 cache_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
-cache_test_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-                             gtest_dir + '/include'])
-cache_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', gtest, gtest_main])
+cache_test_env.PrependUnique(CPPPATH = [cache_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
+cache_test_env.AppendUnique(LIBPATH = [cache_test_env.get('BUILD_DIR')])
+cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'gtest', 'gtest_main'])
 
 if target_os not in ['windows', 'winrt']:
     cache_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
@@ -71,13 +67,12 @@ if target_os == 'linux':
 ######################################################################
 # Build Test
 ######################################################################
-cache_test_src = env.Glob('./*.cpp')
+cache_test_src = cache_test_env.Glob('./*.cpp')
 cache_test = cache_test_env.Program('cache_test', cache_test_src)
 Alias("cache_test", cache_test)
-env.AppendTarget('cache_test')
+cache_test_env.AppendTarget('cache_test')
 
-if env.get('TEST') == '1':
-        target_os = env.get('TARGET_OS')
+if cache_test_env.get('TEST') == '1':
         if target_os == 'linux':
                 from tools.scons.RunTest import *
                 run_test(cache_test_env,

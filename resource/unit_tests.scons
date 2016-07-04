@@ -32,7 +32,7 @@ build_dir = env.get('BUILD_DIR')
 if target_os == 'linux':
 	# Verify that 'google unit test' library is installed.  If not,
 	# get it and install it
-	SConscript(src_dir + '/extlibs/gtest/SConscript')
+	SConscript('#extlibs/gtest/SConscript')
 
 	# Verify that 'hippomocks' mocking code is installed.  If not,
 	# get it and install it
@@ -63,7 +63,7 @@ if target_os == 'linux':
 elif target_os == 'darwin':
 	# Verify that 'google unit test' library is installed.  If not,
 	# get it and install it
-	SConscript(src_dir + '/extlibs/gtest/SConscript')
+	SConscript('#extlibs/gtest/SConscript')
 
 	# Build C stack's unit tests.
 	SConscript('csdk/stack/test/SConscript')

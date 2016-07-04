@@ -22,9 +22,13 @@
 # ResourceContainer (rcs_container) Unit Test build script
 ##
 import os
-Import('env')
-
 import os.path
+
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
+target_os = lib_env.get('TARGET_OS')
+src_dir = lib_env.get('SRC_DIR')
 
 containerJavaSupport = ARGUMENTS.get('containerJavaSupport',0)
 
@@ -32,25 +36,24 @@ def filtered_glob(env, pattern, omit=[],
   ondisk=True, source=False, strings=False):
     return filter(
       lambda f: os.path.basename(f.path) not in omit,
-      env.Glob(pattern))
+      lib_env.Glob(pattern))
 
-env.AddMethod(filtered_glob, "FilteredGlob");
+lib_env.AddMethod(filtered_glob, "FilteredGlob");
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if lib_env.get('LOGGING'):
+    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 
 
 
 # Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
 
 container_gtest_env = lib_env.Clone()
 
@@ -72,23 +75,17 @@ if int(containerJavaSupport):
         container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST':0})
 
 
-target_os = env.get('TARGET_OS')
 
 ######################### unit test setting ##########################
-src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
 ######################################################################
 
 
 ######################################################################
 # Build flags
 ######################################################################
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
-
 container_gtest_env.AppendUnique(
     CPPPATH = [
-        env.get('SRC_DIR')+'/extlibs',
+        src_dir + '/extlibs',
         '../include',
         '../../resource-encapsulation/include',
         '../../resource-encapsulation/src/common/utils/include',
@@ -107,17 +104,18 @@ if int(containerJavaSupport):
         print ''
 
 if target_os not in ['windows', 'winrt']:
+    container_gtest_env.AppendUnique(LIBS = ['dl'])
     container_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+    container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])
     if target_os != 'android':
         container_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
         container_gtest_env.AppendUnique(LIBS = ['pthread'])
 
-if target_os == 'android':
+if target_os in ['android']:
     container_gtest_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     container_gtest_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
-container_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-                             gtest_dir + '/include'])
+container_gtest_env.PrependUnique(CPPPATH = [src_dir + '/extlibs/hippomocks-master'])
 
 if int(containerJavaSupport):
     try:
@@ -125,11 +123,7 @@ if int(containerJavaSupport):
     except KeyError:
         print ''
 
-container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])
-
-container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_client', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
-
-container_gtest_env.AppendUnique(LIBS = ['dl'])
+container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_client', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', 'gtest', 'gtest_main'])
 
 if int(containerJavaSupport):
     try:
@@ -161,11 +155,11 @@ test_bundle_env.InstallTarget(TestBundle, 'libTestBundle')
 ######################################################################
 # Build Test
 ######################################################################
-container_gtest_src = env.Glob('./*.cpp')
+container_gtest_src = container_gtest_env.Glob('./*.cpp')
 
 container_test = container_gtest_env.Program('container_test', container_gtest_src)
 Alias("container_test", container_test)
-env.AppendTarget('container_test')
+container_gtest_env.AppendTarget('container_test')
 
 # Copy test configuration
 Command("./ResourceContainerTestConfig.xml","./ResourceContainerTestConfig.xml", Copy("$TARGET", "$SOURCE"))
@@ -175,9 +169,8 @@ Ignore("./ResourceContainerInvalidConfig.xml", "./ResourceContainerInvalidConfig
 Command("./TestBundleJava/hue-0.1-jar-with-dependencies.jar","./TestBundleJava/hue-0.1-jar-with-dependencies.jar", Copy("$TARGET", "$SOURCE"))
 Ignore("./TestBundleJava/hue-0.1-jar-with-dependencies.jar", "./TestBundleJava/hue-0.1-jar-with-dependencies.jar")
 
-if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
-    if target_os == 'linux':
+if container_gtest_env.get('TEST') == '1':
+    if target_os in ['linux']:
         from tools.scons.RunTest import *
         run_test(container_gtest_env,
             '',
