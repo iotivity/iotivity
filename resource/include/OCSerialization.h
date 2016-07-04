@@ -68,7 +68,7 @@ namespace OC
                                         new OC::OCResource(m_clientWrapper, rdPubAddr,
                                             std::string(res->uri),
                                             std::string(payload->sid),
-                                            (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                            res->bitmap,
                                             StringLLToVector(res->types),
                                             StringLLToVector(res->interfaces)
                                             )));
@@ -79,7 +79,7 @@ namespace OC
                                     new OC::OCResource(m_clientWrapper, m_devAddr,
                                         std::string(res->uri),
                                         std::string(payload->sid),
-                                        (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                        res->bitmap,
                                         StringLLToVector(res->types),
                                         StringLLToVector(res->interfaces)
                                         )));
@@ -94,7 +94,7 @@ namespace OC
                                             new OC::OCResource(m_clientWrapper, tcpDevAddr,
                                                 std::string(res->uri),
                                                 std::string(payload->sid),
-                                                (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                                res->bitmap,
                                                 StringLLToVector(res->types),
                                                 StringLLToVector(res->interfaces)
                                                 )));

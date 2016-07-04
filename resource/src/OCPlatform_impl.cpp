@@ -156,10 +156,15 @@ namespace OC
             return std::shared_ptr<OCResource>();
         }
 
+        uint8_t resourceProperty = 0;
+        if (isObservable)
+        {
+            resourceProperty = (resourceProperty | OC_OBSERVABLE);
+        }
         return std::shared_ptr<OCResource>(new OCResource(m_client,
                                             host,
                                             uri, "", connectivityType,
-                                            isObservable,
+                                            resourceProperty,
                                             resourceTypes,
                                             interfaces));
     }

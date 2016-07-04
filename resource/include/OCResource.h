@@ -118,7 +118,7 @@ namespace OC
             m_resourceId(std::move(o.m_resourceId)),
             m_devAddr(std::move(o.m_devAddr)),
             m_useHostString(o.m_useHostString),
-            m_isObservable(o.m_isObservable),
+            m_property(o.m_property),
             m_isCollection(o.m_isCollection),
             m_resourceTypes(std::move(o.m_resourceTypes)),
             m_interfaces(std::move(o.m_interfaces)),
@@ -503,6 +503,15 @@ namespace OC
         */
         bool isObservable() const;
 
+#ifdef WITH_MQ
+        /**
+        * Function to provide ability to check if this resource is publisher or not
+        * @return bool true indicates resource is publisher; false indicates resource is
+        *         not publisher.
+        */
+        bool isPublish() const;
+#endif
+
         /**
         * Function to get the list of resource types
         * @return vector of resource types
@@ -555,8 +564,8 @@ namespace OC
         OCResourceIdentifier m_resourceId;
         OCDevAddr m_devAddr;
         bool m_useHostString;
-        bool m_isObservable;
         bool m_isCollection;
+        uint8_t m_property;
         std::vector<std::string> m_resourceTypes;
         std::vector<std::string> m_interfaces;
         std::vector<std::string> m_children;
@@ -566,14 +575,14 @@ namespace OC
     private:
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                     const OCDevAddr& devAddr, const std::string& uri,
-                    const std::string& serverId, bool observable,
+                    const std::string& serverId, uint8_t property,
                     const std::vector<std::string>& resourceTypes,
                     const std::vector<std::string>& interfaces);
 
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                     const std::string& host, const std::string& uri,
                     const std::string& serverId,
-                    OCConnectivityType connectivityType, bool observable,
+                    OCConnectivityType connectivityType, uint8_t property,
                     const std::vector<std::string>& resourceTypes,
                     const std::vector<std::string>& interfaces);
     };

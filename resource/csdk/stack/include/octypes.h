@@ -683,7 +683,17 @@ typedef enum
     /** When this bit is set, the resource is allowed to be discovered only
      *  if discovery request contains an explicit querystring.
      *  Ex: GET /oic/res?rt=oic.sec.acl */
-    OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
+    OC_EXPLICIT_DISCOVERABLE   = (1 << 5),
+
+#ifdef WITH_MQ
+    /** When this bit is set, the resource is allowed to be published */
+    OC_MQ_PUBLISHER     = (1 << 6),
+#endif
+
+#ifdef MQ_BROKER
+    /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
+    OC_MQ_BROKER        = (1 << 7),
+#endif
 } OCResourceProperty;
 
 /**

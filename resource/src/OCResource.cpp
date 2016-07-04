@@ -47,12 +47,12 @@ using OC::checked_guard;
 
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const OCDevAddr& devAddr, const std::string& uri,
-                        const std::string& serverId, bool observable,
+                        const std::string& serverId, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri), m_devAddr(devAddr),
-    m_isObservable(observable), m_isCollection(false),
+    m_property(property), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
@@ -72,12 +72,12 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::string& host, const std::string& uri,
                         const std::string& serverId,
-                        OCConnectivityType connectivityType, bool observable,
+                        OCConnectivityType connectivityType, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_isObservable(observable), m_isCollection(false),
+    m_property(property), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
@@ -550,8 +550,15 @@ OCConnectivityType OCResource::connectivityType() const
 
 bool OCResource::isObservable() const
 {
-    return m_isObservable;
+    return (m_property & OC_OBSERVABLE) == OC_OBSERVABLE;
 }
+
+#ifdef WITH_MQ
+bool OCResource::isPublish() const
+{
+    return (m_property & OC_MQ_PUBLISHER) == OC_MQ_PUBLISHER;
+}
+#endif
 
 std::vector<std::string> OCResource::getResourceTypes() const
 {

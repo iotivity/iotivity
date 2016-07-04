@@ -3227,10 +3227,20 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         resourceInterfaceName = OC_RSRVD_INTERFACE_DEFAULT;
     }
 
+#ifdef MQ_PUBLISHER
+    resourceProperties = resourceProperties | OC_MQ_PUBLISHER;
+#endif
     // Make sure resourceProperties bitmask has allowed properties specified
     if (resourceProperties
             > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_SECURE |
-               OC_EXPLICIT_DISCOVERABLE))
+               OC_EXPLICIT_DISCOVERABLE
+#ifdef MQ_PUBLISHER
+               | OC_MQ_PUBLISHER
+#endif
+#ifdef MQ_BROKER
+               | OC_MQ_BROKER
+#endif
+               ))
     {
         OIC_LOG(ERROR, TAG, "Invalid property");
         return OC_STACK_INVALID_PARAM;
