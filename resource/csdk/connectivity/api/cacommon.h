@@ -26,8 +26,10 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#ifndef WITH_ARDUINO
 #ifdef TCP_ADAPTER
 #define HAVE_SYS_POLL_H
+#endif
 #endif
 
 #include <stdint.h>
@@ -36,6 +38,11 @@
 
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
+#endif
+
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#include <mswsock.h>
 #endif
 
 #ifdef __cplusplus
@@ -126,13 +133,34 @@ typedef char *CAURI_t;
  */
 typedef char *CAToken_t;
 
-// The following flags are the same as the equivalent OIC values in
-// octypes.h, allowing direct copying with slight fixup.
-// The CA layer should used the OC types when build allows that.
+/*
+ * Socket types and error definitions
+ */
+#ifdef HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      SOCKET_ERROR
+# define OC_INVALID_SOCKET    INVALID_SOCKET
+typedef HANDLE CASocketFd_t;
+#else // HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      (-1)
+# define OC_INVALID_SOCKET    (-1)
+typedef int    CASocketFd_t;
+#endif
+
+/*
+ * The following flags are the same as the equivalent OIC values in
+ * octypes.h, allowing direct copying with slight fixup.
+ * The CA layer should used the OC types when build allows that.
+ */
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE_CA (256)
 #else
-#define MAX_ADDR_STR_SIZE_CA (40)
+/*
+ * Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * Which is 64, +1 for null terminator => 65
+ * OCDevAddr (defined in OCTypes.h) must be the same
+ * as CAEndpoint_t (defined here)
+ */
+#define MAX_ADDR_STR_SIZE_CA (65)
 #endif
 
 typedef enum
@@ -248,7 +276,7 @@ typedef struct
     CATransportFlags_t      flags;      // transport modifiers
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
-    uint32_t                interface;  // usually zero for default interface
+    uint32_t                ifindex;    // usually zero for default interface
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/
@@ -275,7 +303,7 @@ typedef enum
     CA_STATUS_INVALID_PARAM,        /**< Invalid Parameter */
     CA_ADAPTER_NOT_ENABLED,         /**< Adapter is not enabled */
     CA_SERVER_STARTED_ALREADY,      /**< Server is started already */
-    CA_SERVER_NOT_STARTED,          /**< Server is not started*/
+    CA_SERVER_NOT_STARTED,          /**< Server is not started */
     CA_DESTINATION_NOT_REACHABLE,   /**< Destination is not reachable */
     CA_SOCKET_OPERATION_FAILED,     /**< Socket operation failed */
     CA_SEND_FAILED,                 /**< Send request failed */
@@ -297,23 +325,24 @@ typedef enum
 typedef enum
 {
     /* Response status code - START HERE */
-    CA_EMPTY = 0,                    /**< Empty */
-    CA_CREATED = 201,                /**< Created */
-    CA_DELETED = 202,                /**< Deleted */
-    CA_VALID = 203,                  /**< Valid */
-    CA_CHANGED = 204,                /**< Changed */
-    CA_CONTENT = 205,                /**< Content */
-    CA_CONTINUE = 231,               /**< Continue */
-    CA_BAD_REQ = 400,                /**< Bad Request */
-    CA_UNAUTHORIZED_REQ = 401,       /**< Unauthorized Request */
-    CA_BAD_OPT = 402,                /**< Bad Option */
-    CA_FORBIDDEN_REQ = 403,          /**< Forbidden Request */
-    CA_NOT_FOUND = 404,              /**< Not found */
-    CA_NOT_ACCEPTABLE = 406,         /**< Not Acceptable */
-    CA_REQUEST_ENTITY_INCOMPLETE = 408, /**< Request Entity Incomplete */
-    CA_REQUEST_ENTITY_TOO_LARGE = 413,  /**< Request Entity Too Large */
-    CA_INTERNAL_SERVER_ERROR = 500,  /**< Internal Server Error */
-    CA_RETRANSMIT_TIMEOUT = 504      /**< Retransmit timeout */
+    CA_EMPTY = 0,                           /**< Empty */
+    CA_CREATED = 201,                       /**< Created */
+    CA_DELETED = 202,                       /**< Deleted */
+    CA_VALID = 203,                         /**< Valid */
+    CA_CHANGED = 204,                       /**< Changed */
+    CA_CONTENT = 205,                       /**< Content */
+    CA_CONTINUE = 231,                      /**< Continue */
+    CA_BAD_REQ = 400,                       /**< Bad Request */
+    CA_UNAUTHORIZED_REQ = 401,              /**< Unauthorized Request */
+    CA_BAD_OPT = 402,                       /**< Bad Option */
+    CA_FORBIDDEN_REQ = 403,                 /**< Forbidden Request */
+    CA_NOT_FOUND = 404,                     /**< Not found */
+    CA_METHOD_NOT_ALLOWED = 405,            /**< Method Not Allowed */
+    CA_NOT_ACCEPTABLE = 406,                /**< Not Acceptable */
+    CA_REQUEST_ENTITY_INCOMPLETE = 408,     /**< Request Entity Incomplete */
+    CA_REQUEST_ENTITY_TOO_LARGE = 413,      /**< Request Entity Too Large */
+    CA_INTERNAL_SERVER_ERROR = 500,         /**< Internal Server Error */
+    CA_RETRANSMIT_TIMEOUT = 504             /**< Retransmit timeout */
     /* Response status code - END HERE */
 } CAResponseResult_t;
 
@@ -375,7 +404,6 @@ typedef struct
  */
 typedef struct
 {
-
     CAMessageType_t type;       /**< Qos for the request */
 #ifdef ROUTING_GATEWAY
     bool skipRetransmission;    /**< Will not attempt retransmission even if type is CONFIRM.
@@ -385,7 +413,7 @@ typedef struct
                                  * if message id is zero, it will generated by CA inside.
                                  * otherwise, you can use it */
     CAToken_t token;            /**< Token for CA */
-    uint8_t tokenLength;        /**< token length*/
+    uint8_t tokenLength;        /**< token length */
     CAHeaderOption_t *options;  /** Header Options for the request */
     uint8_t numOptions;         /**< Number of Header options */
     CAPayload_t payload;        /**< payload of the request  */
@@ -438,8 +466,8 @@ typedef struct
  */
 typedef struct
 {
-    int fd;        /**< socket fd */
-    uint16_t port; /**< socket port */
+    CASocketFd_t fd;    /**< socket fd */
+    uint16_t port;      /**< socket port */
 } CASocket_t;
 
 #define HISTORYSIZE (4)
@@ -466,6 +494,28 @@ typedef struct
     int32_t ifIndex; /**< network interface index */
 } CAIfItem_t;
 
+/**
+ * Hold the port number assigned from application.
+ * It will be used when creating a socket.
+ */
+typedef struct
+{
+    struct udpports
+    {
+        uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
+        uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv4 socket secure port */
+    } udp;
+#ifdef TCP_ADAPTER
+    struct tcpports
+    {
+        uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u6;    /**< unicast IPv6 socket port */
+    } tcp;
+#endif
+} CAPorts_t;
+
 typedef struct
 {
     CATransportFlags_t clientFlags; /**< flag for client */
@@ -473,26 +523,35 @@ typedef struct
     bool client; /**< client mode */
     bool server; /**< server mode */
 
+    CAPorts_t ports;
+
     struct sockets
     {
-        void *threadpool;   /**< threadpool between Initialize and Start */
-        CASocket_t u6;      /**< unicast   IPv6 */
-        CASocket_t u6s;     /**< unicast   IPv6 secure */
-        CASocket_t u4;      /**< unicast   IPv4 */
-        CASocket_t u4s;     /**< unicast   IPv4 secure */
-        CASocket_t m6;      /**< multicast IPv6 */
-        CASocket_t m6s;     /**< multicast IPv6 secure */
-        CASocket_t m4;      /**< multicast IPv4 */
-        CASocket_t m4s;     /**< multicast IPv4 secure */
-        int netlinkFd;      /**< netlink */
-        int shutdownFds[2]; /**< shutdown pipe */
-        int selectTimeout;  /**< in seconds */
-        int maxfd;          /**< highest fd (for select) */
-        bool started;       /**< the IP adapter has started */
-        bool terminate;     /**< the IP adapter needs to stop */
-        bool ipv6enabled;   /**< IPv6 enabled by OCInit flags */
-        bool ipv4enabled;   /**< IPv4 enabled by OCInit flags */
-        bool dualstack;     /**< IPv6 and IPv4 enabled */
+        void *threadpool;           /**< threadpool between Initialize and Start */
+        CASocket_t u6;              /**< unicast   IPv6 */
+        CASocket_t u6s;             /**< unicast   IPv6 secure */
+        CASocket_t u4;              /**< unicast   IPv4 */
+        CASocket_t u4s;             /**< unicast   IPv4 secure */
+        CASocket_t m6;              /**< multicast IPv6 */
+        CASocket_t m6s;             /**< multicast IPv6 secure */
+        CASocket_t m4;              /**< multicast IPv4 */
+        CASocket_t m4s;             /**< multicast IPv4 secure */
+        CASocketFd_t netlinkFd;     /**< netlink */
+#if defined(_WIN32)
+        WSAEVENT shutdownEvent;     /**< Event used to signal threads to stop */
+#else
+        int shutdownFds[2];         /**< fds used to signal threads to stop */
+#endif
+        int selectTimeout;          /**< in seconds */
+        int maxfd;                  /**< highest fd (for select) */
+        bool started;               /**< the IP adapter has started */
+        bool terminate;             /**< the IP adapter needs to stop */
+        bool ipv6enabled;           /**< IPv6 enabled by OCInit flags */
+        bool ipv4enabled;           /**< IPv4 enabled by OCInit flags */
+        bool dualstack;             /**< IPv6 and IPv4 enabled */
+#if defined (_WIN32)
+        LPFN_WSARECVMSG wsaRecvMsg; /**< Win32 function pointer to WSARecvMsg() */
+#endif
 
         struct networkmonitors
         {
@@ -514,14 +573,18 @@ typedef struct
     struct tcpsockets
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
+        CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv6;        /**< IPv6 accept socket */
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
         int shutdownFds[2];     /**< shutdown pipe */
+        int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
+        bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
 #endif
 } CAGlobals_t;

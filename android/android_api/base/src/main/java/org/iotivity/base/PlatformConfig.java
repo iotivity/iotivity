@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
 package org.iotivity.base;
@@ -105,7 +105,7 @@ public class PlatformConfig {
      *                         specify port
      * @param qualityOfService quality of service
      */
-    //Avoid breaking building java samples due to persistent storage SVR DB changes.
+    // Avoid breaking building java samples due to persistent storage SVR DB changes.
     public PlatformConfig(Context context,
                           ServiceType serviceType,
                           ModeType modeType,
@@ -128,9 +128,9 @@ public class PlatformConfig {
      *                         specify port
      * @param qualityOfService quality of service
      */
-    //Avoid breaking building java samples due to persistent storage SVR DB changes.
+    // Avoid breaking building java samples due to persistent storage SVR DB changes.
     public PlatformConfig(Activity activity,
-    			     Context context,
+                          Context context,
                           ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,

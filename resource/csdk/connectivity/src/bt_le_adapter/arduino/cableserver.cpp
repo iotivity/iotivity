@@ -33,7 +33,6 @@
 #include "caleinterface.h"
 #include "oic_malloc.h"
 #include "caadapterutils.h"
-#include "cafragmentation.h"
 
 #define TAG "LES"
 /**

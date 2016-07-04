@@ -51,7 +51,8 @@ namespace OIC
 
             /**
              * This API is used for creating a remote Enrollee device instance.
-             * @param enrolleeNWProvIndo Provisioning information for configuring the Enrollee.
+             * @param ProvConfig Provisioning information for configuring the Enrollee.
+             * @param WiFiOnboadingConnection Onboarding connection information for configuring the Enrollee.
              *
              * @throws ESBadRequestException If createEnrolleeDevice is invoked with the same
              *         provisioning information.

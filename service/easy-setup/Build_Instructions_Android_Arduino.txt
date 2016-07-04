@@ -58,6 +58,12 @@ Steps to build and deploy Easysetup Mediator in Android platform
     e) Step (d) will generate cross compiled Easysetup JNI .so files in the following folder
 	<iotivity>/service/easy-setup/mediator/richsdk/android/libs/armeabi
 
+NOTE: If you are going to use the SECURITY feature :
+
+      (a) please remove the "oic_svr_db_client.dat" file from the application (EasySetup/app/src/main/assets/)
+
+      (b) Copy the same file in the same folder from : <iotivity>/resource/csdk/security/provisioning/sample/oic_svr_db_client.dat
+
 2) Compilation using Android Studio
 
     0) Prerequisite for running the Android application

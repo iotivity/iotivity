@@ -54,36 +54,6 @@ static JavaVM *g_jvm;
 static jobject g_context;
 
 /**
- * @var g_mutexUnicastServer
- * @brief Mutex to synchronize unicast server
- */
-static ca_mutex g_mutexUnicastServer = NULL;
-
-/**
- * @var g_stopUnicast
- * @brief Flag to control the Receive Unicast Data Thread
- */
-static bool g_stopUnicast = false;
-
-/**
- * @var g_mutexMulticastServer
- * @brief Mutex to synchronize secure multicast server
- */
-static ca_mutex g_mutexMulticastServer = NULL;
-
-/**
- * @var g_stopMulticast
- * @brief Flag to control the Receive Multicast Data Thread
- */
-static bool g_stopMulticast = false;
-
-/**
- * @var g_stopAccept
- * @brief Flag to control the Accept Thread
- */
-static bool g_stopAccept = false;
-
-/**
  * @var g_mutexStateList
  * @brief Mutex to synchronize device state list
  */
@@ -240,7 +210,7 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
         return CA_STATUS_INVALID_PARAM;
     }
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -279,7 +249,7 @@ void CAEDRJniInitContext()
 
 CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
 {
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     OIC_LOG(DEBUG, TAG, "CAEDRCreateJNIInterfaceObject");
 
     if ((*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
@@ -288,20 +258,21 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
         return CA_STATUS_FAILED;
     }
 
-    //getApplicationContext
-    jclass contextClass = (*env)->FindClass(env, CLASSPATH_CONTEXT);
-    if (!contextClass)
+
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, CLASSPATH_CONTEXT,
+                                                           "getApplicationContext",
+                                                           METHODID_CONTEXTNONPARAM);
+    if (!mid_getApplicationContext)
     {
-        OIC_LOG(ERROR, TAG, "Could not get context object class");
+        OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
         return CA_STATUS_FAILED;
     }
 
-    jmethodID getApplicationContextMethod = (*env)->GetMethodID(env, contextClass,
-                                                                "getApplicationContext",
-                                                                METHODID_CONTEXTNONPARAM);
-    if (!getApplicationContextMethod)
+    jobject jApplicationContext = (*env)->CallObjectMethod(env, context,
+                                                           mid_getApplicationContext);
+    if (!jApplicationContext)
     {
-        OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
+        OIC_LOG(ERROR, TAG, "Could not get application context");
         return CA_STATUS_FAILED;
     }
 
@@ -321,7 +292,7 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
         return CA_STATUS_FAILED;
     }
 
-    (*env)->NewObject(env, EDRJniInterface, EDRInterfaceConstructorMethod, context);
+    (*env)->NewObject(env, EDRJniInterface, EDRInterfaceConstructorMethod, jApplicationContext);
     OIC_LOG(DEBUG, TAG, "NewObject Success");
 
     return CA_STATUS_OK;
@@ -329,18 +300,6 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
 
 static void CAEDRDestroyMutex()
 {
-    if (g_mutexUnicastServer)
-    {
-        ca_mutex_free(g_mutexUnicastServer);
-        g_mutexUnicastServer = NULL;
-    }
-
-    if (g_mutexMulticastServer)
-    {
-        ca_mutex_free(g_mutexMulticastServer);
-        g_mutexMulticastServer = NULL;
-    }
-
     if (g_mutexStateList)
     {
         ca_mutex_free(g_mutexStateList);
@@ -356,22 +315,6 @@ static void CAEDRDestroyMutex()
 
 static CAResult_t CAEDRCreateMutex()
 {
-    g_mutexUnicastServer = ca_mutex_new();
-    if (!g_mutexUnicastServer)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to created mutex!");
-        return CA_STATUS_FAILED;
-    }
-
-    g_mutexMulticastServer = ca_mutex_new();
-    if (!g_mutexMulticastServer)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to created mutex!");
-
-        CAEDRDestroyMutex();
-        return CA_STATUS_FAILED;
-    }
-
     g_mutexStateList = ca_mutex_new();
     if (!g_mutexStateList)
     {
@@ -410,7 +353,7 @@ CAResult_t CAEDRInitialize()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -461,7 +404,7 @@ void CAEDRTerminate()
     OIC_LOG(DEBUG, TAG, "CAEDRTerminate");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -476,10 +419,6 @@ void CAEDRTerminate()
         isAttached = true;
     }
 
-    g_stopAccept = true;
-    g_stopMulticast = true;
-    g_stopUnicast = true;
-
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -488,6 +427,7 @@ void CAEDRTerminate()
     if (g_context)
     {
         (*env)->DeleteGlobalRef(env, g_context);
+        g_context = NULL;
     }
 
     CAEDRNativeSocketCloseToAll(env);
@@ -511,7 +451,7 @@ CAResult_t CAEDRDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -591,7 +531,7 @@ CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -613,8 +553,6 @@ CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
         return result;
     }
 
-    OIC_LOG(DEBUG, TAG, "sent data");
-
     if (isAttached)
     {
         OIC_LOG(DEBUG, TAG, "DetachCurrentThread");
@@ -634,7 +572,7 @@ CAResult_t CAEDRGetInterfaceInfo(char **address)
 void CAEDRGetLocalAddress(char **address)
 {
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -681,7 +619,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -852,7 +790,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
     if (STATE_DISCONNECTED == CAEDRIsConnectedDevice(address))
     {
         // connect before send data
-        OIC_LOG(DEBUG, TAG, "connect before send data");
+        OIC_LOG_V(DEBUG, TAG, "try to connect with [%s] before sending data", address);
 
         CAResult_t res = CAEDRNativeConnect(env, address);
         if (CA_STATUS_OK != res)
@@ -964,7 +902,6 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
 CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
 {
     VERIFY_NON_NULL(address, TAG, "address is null");
-    OIC_LOG(DEBUG, TAG, "btConnect..");
 
     if (!CAEDRNativeIsEnableBTAdapter(env))
     {
@@ -1138,7 +1075,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     CAEDRUpdateDeviceState(STATE_CONNECTED, address);
     ca_mutex_unlock(g_mutexStateList);
 
-    OIC_LOG(DEBUG, TAG, "connected");
+    OIC_LOG(DEBUG, TAG, "successfully connected");
 
     return CA_STATUS_OK;
 }
@@ -1186,7 +1123,7 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
     CAEDRUpdateDeviceState(STATE_DISCONNECTED, address);
     ca_mutex_unlock(g_mutexStateList);
 
-    OIC_LOG(DEBUG, TAG, "disconnected");
+    OIC_LOG_V(DEBUG, TAG, "disconnected with [%s]", address);
 }
 
 CAResult_t CAEDRClientInitialize()

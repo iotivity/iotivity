@@ -19,10 +19,10 @@ package oic.simulator.logger;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.oic.simulator.ILogger;
+
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
-
-import org.oic.simulator.ILogger;
 
 /**
  * Class which provides a callback method to receive log from native layer.

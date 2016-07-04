@@ -21,16 +21,8 @@
 #ifndef ES_COMMON_H_
 #define ES_COMMON_H_
 
-#include <iostream>
-#include <string>
-#ifndef WITH_ARDUINO
-#include <memory>
-#endif
-
 #include "ocstack.h"
 #include "octypes.h"
-
-using namespace std;
 
 // Defines
 #define OIC_STRING_MAX_VALUE    100
@@ -152,7 +144,7 @@ typedef enum
      * Enrollee moves to this state after connecting to target network
      */
     ES_ON_BOARDED_TARGET_NETWORK_STATE,
-}EnrolleeState;
+}ESEnrolleeState;
 
 /**
  * Provisioning Device Status

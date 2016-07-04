@@ -22,14 +22,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
+#include "common.h"
+#include "platform_features.h"
 
 #ifdef ROUTING_GATEWAY
 /**
@@ -57,8 +65,6 @@ static OCConnectivityType ConnType = CT_ADAPTER_IP;
 static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
-
-void StripNewLineChar(char* str);
 
 #ifdef WITH_PRESENCE
 // The handle for observe registration
@@ -396,12 +402,22 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         }
 
         OCResourcePayload *resource = (OCResourcePayload*) payload->resources;
-        if (!resource)
+        int found = 0;
+        while (resource)
         {
-            OIC_LOG_V (INFO, TAG, "No resources in payload");
-            return OC_STACK_DELETE_TRANSACTION;
+            if(resource->uri && strcmp(resource->uri, coapServerResource.c_str()) == 0)
+            {
+                found = 1;
+                break;
+            }
+            resource = resource->next;
         }
-        coapServerResource =  resource->uri;
+
+        if(!found)
+        {
+            OIC_LOG_V (INFO, TAG, "No /a/light in payload");
+            return OC_STACK_KEEP_TRANSACTION;
+        }
 
         switch(TestCase)
         {

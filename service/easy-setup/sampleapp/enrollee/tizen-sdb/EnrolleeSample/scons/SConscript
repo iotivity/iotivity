@@ -45,7 +45,6 @@ env.Append(LIBS=['octbstack','connectivity_abstraction','coap', 'libESEnrolleeSD
 if secured == '1':
 	env.PrependUnique(CPPPATH = [root_dir + '/external/inc/'])
 	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-	env.Append(LIBS=['-ltinydtls'])
 
 env.Program('enrollee_wifi', [sample_dir + 'enrolleewifi.cpp'])
 

@@ -53,12 +53,14 @@ public class EnrolleeDeviceFactory {
      * @return Instance of the Enrollee device created natively.
      */
 
-    public EnrolleeDevice newEnrolleeDevice(ProvisioningConfig provConfig, OnBoardingConfig onboardingConfig) {
+    public EnrolleeDevice newEnrolleeDevice(ProvisioningConfig provConfig, OnBoardingConfig onboardingConfig) throws IllegalArgumentException {
 
-        if (onboardingConfig.getConnType() != OnBoardingConfig.ConnType.WiFi) {
+        if (null == provConfig  || null == onboardingConfig) {
+            throw new IllegalArgumentException("provConfig/onboardingConfig is NULL");
+        }
+        else if (onboardingConfig.getConnType() != OnBoardingConfig.ConnType.WiFi) {
             throw new IllegalArgumentException("OnBoarding configuration is not supported");
         }
-
         return new EnrolleeDeviceWiFiOnboarding(mContext, onboardingConfig, provConfig);
     }
 
@@ -69,8 +71,11 @@ public class EnrolleeDeviceFactory {
      * @param provConfig       Contains details about the network to which Enrollee device is going to connect.
      * @return Instance of the Enrollee device created natively.
      */
-    public EnrolleeDevice newEnrolleeDevice(ProvisioningConfig provConfig){
+    public EnrolleeDevice newEnrolleeDevice(ProvisioningConfig provConfig) throws IllegalArgumentException {
+
+        if (null == provConfig) {
+            throw new IllegalArgumentException("provConfig is NULL");
+        }
         return new EnrolleeDeviceWiFiOnboarding(mContext, new IpOnBoardingConnection(true), provConfig);
     }
-
 }

@@ -66,8 +66,8 @@ extern void* defaultDeviceHandlerCallbackParameter;
 /** The coap scheme */
 #define OC_COAP_SCHEME "coap://"
 
-/** the first outgoing sequence number will be 5*/
-#define OC_OFFSET_SEQUENCE_NUMBER (4)
+/** the first outgoing sequence number will be 2*/
+#define OC_OFFSET_SEQUENCE_NUMBER (1)
 
 /**
  * This structure will be created in occoap and passed up the stack on the server side.
@@ -266,19 +266,6 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 OCStackResult CAResultToOCResult(CAResult_t caResult);
 
 /**
- * Get a byte representation of the server instance ID.
- * The memory is managed internal to this function, so freeing it externally will
- * result in a runtime error.
- *
- * Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
- * This is done automatically during the OCInit process,
- * so ensure that this call is done after that.
- *
- * @return A uint8_t representation the server instance ID.
- */
-const OicUuid_t* OCGetServerInstanceID(void);
-
-/**
  * Map OCQualityOfService to CAMessageType.
  *
  * @param qos Input qos.
@@ -302,9 +289,9 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 

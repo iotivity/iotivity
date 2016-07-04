@@ -47,7 +47,7 @@ OCStackResult OCInitPM(const char* dbPath);
  * OCMode.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
+ *                    server before returning the list of devices.
  * @param[out] ppList List of candidate devices to be provisioned
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
@@ -79,7 +79,7 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
  * all the device in subnet which are owned by calling provisioning client.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
+ *                    server before returning the list of devices.
  * @param[out] ppList List of device owned by provisioning tool.
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
@@ -114,6 +114,43 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
+                             OCProvisionResultCB resultCallback);
+
+/**
+ * this function requests CRED information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                             OCProvisionResultCB resultCallback);
+
+/**
+ * this function requests ACL information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                             OCProvisionResultCB resultCallback);
+
+/**
+ * this function sends Direct-Pairing Configuration to a device.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] pconf PCONF pointer.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf,
                              OCProvisionResultCB resultCallback);
 
 /**
@@ -176,7 +213,8 @@ OCStackResult OCRemoveDevice(void* ctx,
  * variables pOwnedDevList and pUnownedDevList.
  *
  * @param[in] waitime Wait time for the API. The wait time will be divided by 2, and half of wait time
- * will be used for unowned discovery and remaining half for owned discovery.
+ * will be used for unowned discovery and remaining half for owned discovery. So the wait time should be
+ * equal to or more than 2.
  * @param[out] pOwnedDevList  list of owned devices.
  * @param[out] pUnownedDevList  list of unowned devices.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -216,6 +254,13 @@ void OCDeleteUuidList(OCUuidList_t* pList);
  * @param pAcl Pointer to OicSecAcl_t structure.
  */
 void OCDeleteACLList(OicSecAcl_t* pAcl);
+
+/**
+ * This function deletes PDACL data.
+ *
+ * @param pPdAcl Pointer to OicSecPdAcl_t structure.
+ */
+void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
 
 #ifdef __WITH_X509__
 /**

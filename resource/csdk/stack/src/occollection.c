@@ -49,6 +49,8 @@
 #define NUM_PARAM_IN_QUERY   2 // The expected number of parameters in a query
 #define NUM_FIELDS_IN_QUERY  2 // The expected number of fields in a query
 
+#include "platform_features.h"
+
 static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
 {
     if (!resource || !rtPtr)
@@ -287,7 +289,6 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
     }
 
     OCResource * collResource = (OCResource *) ehRequest->resource;
-    OCChildResource *tempChildResource = NULL;
 
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -310,8 +311,8 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if (stackRet == OC_STACK_OK)
     {
-        tempChildResource = collResource->rsrcChildResourcesHead;
-
+        OCChildResource *tempChildResource = (collResource) ? collResource->rsrcChildResourcesHead
+                                                              : NULL;
         while(tempChildResource)
         {
             OCResource* tempRsrcResource = tempChildResource->rsrcResource;
@@ -323,8 +324,8 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 // is ehRequest->resource
                 ehRequest->resource = (OCResourceHandle) tempRsrcResource;
 
-                OCEntityHandlerResult ehResult = tempRsrcResource->entityHandler(OC_REQUEST_FLAG, ehRequest,
-                                                        tempRsrcResource->entityHandlerCallbackParam);
+                OCEntityHandlerResult ehResult = tempRsrcResource->entityHandler(OC_REQUEST_FLAG,
+                                           ehRequest, tempRsrcResource->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
                 if (stackRet != OC_STACK_SLOW_RESOURCE)

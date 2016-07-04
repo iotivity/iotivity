@@ -51,6 +51,12 @@ typedef struct _LEServerInfoList
     struct _LEServerInfoList *next;
 }LEServerInfoList;
 
+typedef struct _LEClientInfoList
+{
+    char *remoteAddress;
+    struct _LEClientInfoList *next;
+} LEClientInfoList;
+
 /**
  * Different characteristics types.
  *
@@ -86,7 +92,7 @@ void CAResetRegisteredServiceCount();
 int32_t  CAGetRegisteredServiceCount();
 
 /**
- * @brief  Used to add the serverListInfo structure to the Client List.
+ * Used to add the serverListInfo structure to the Server List.
  *
  * @param[in] serverList     Pointer to the ble server list which holds the info of list of
  *                           servers registered by the client.
@@ -99,6 +105,16 @@ int32_t  CAGetRegisteredServiceCount();
  */
 CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
                                    LEServerInfo *leServerInfo);
+
+/**
+ * Used to remove the serverListInfo structure from the Server List.
+ *
+ * @param[in,out] serverList     Pointer to the ble server list which holds the info of list of
+ *                               servers registered by the client.
+ * @param[in]     remoteAddress  Remote address to be removed from the client list.
+ */
+void CARemoveLEServerInfoFromList(LEServerInfoList **serverList,
+                                        const char *remoteAddress);
 
 /**
  * Used to get the serviceInfo from the list.
@@ -145,6 +161,38 @@ void CAFreeLEServerList(LEServerInfoList *serverList);
  * @param[in] bleServerInfo Pointer to the structure which needs to be cleared.
  */
 void CAFreeLEServerInfo(LEServerInfo *bleServerInfo);
+
+/**
+ * Used to add the client address to the Client List.
+ *
+ * @param[in] clientList     Pointer to the ble client list which holds the info of list of
+ *                           clients connected to the server.
+ * @param[in] clientAddress  Client remote address.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAAddLEClientInfoToList(LEClientInfoList **clientList,
+                                   char *clientAddress);
+
+/**
+ * Used to remove the client address from the Client List.
+ *
+ * @param[in,out] clientList     Pointer to the ble client list which holds the info of list of
+ *                               clients connected by the server.
+ * @param[in]     clientAddress  Remote address to be removed from the client list.
+ */
+void CARemoveLEClientInfoFromList(LEClientInfoList **clientList,
+                                        const char *clientAddress);
+
+/**
+ * Used to disconnect all the clients connected to the server.
+ *
+ * @param[in,out] clientList     Pointer to the ble client list which holds the info of list of
+ *                               clients connected by the server.
+ */
+void CADisconnectAllClient(LEClientInfoList *clientList);
 
 /**
  * Used to get the Error message.

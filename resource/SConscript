@@ -23,18 +23,15 @@
 #
 ##
 
-import os
-
 Import('env')
 
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
-if target_os not in ['tizen']:
-	# Build liblogger
-	SConscript('csdk/logger/SConscript')
+# Build liblogger
+SConscript('csdk/logger/SConscript')
 
-if target_os not in ['arduino', 'darwin', 'ios', 'android']:
+if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows']:
 	env.AppendUnique(LIBS=['rt'])
 
 # Build libcoap
@@ -67,7 +64,7 @@ if target_os not in ['arduino','darwin','ios','android']:
 	# Build examples
 	SConscript('examples/SConscript')
 
-if target_os == 'linux':
+if target_os in ['linux', 'windows']:
 	# Build C Samples
 	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
 
@@ -87,3 +84,10 @@ elif target_os == 'darwin':
 
 elif target_os == 'arduino':
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')
+
+elif target_os == 'msys_nt':
+	# Build secure samples. Using linux samples for now.
+	SConscript('csdk/stack/samples/linux/secure/SConscript')
+
+	# Build C/C++ unit tests
+	SConscript('unit_tests.scons')

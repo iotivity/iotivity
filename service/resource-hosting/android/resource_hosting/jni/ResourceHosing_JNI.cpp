@@ -91,17 +91,16 @@ JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_OICCoor
 JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_ResourceHostingInit
 (JNIEnv *env, jobject obj,jstring j_addr)
 {
-    const char* addr = env->GetStringUTFChars(j_addr,NULL);
-
     if (NULL == j_addr)
-        return (jint)OCSTACK_ERROR;
-
-    if(OCInit(addr,USE_RANDOM_PORT,OC_CLIENT_SERVER)!=OC_STACK_OK)
     {
         return (jint)OCSTACK_ERROR;
     }
 
-    env->ReleaseStringUTFChars(j_addr,addr);
+    if(OCInit1(OC_CLIENT_SERVER, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS))
+    {
+        return (jint)OCSTACK_ERROR;
+    }
+
     return (jint)OCSTACK_OK;
 }
 
@@ -117,10 +116,6 @@ JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_Resourc
     {
         threadRun = false;
         ocProcessThread.join();
-    }
-    else
-    {
-        return (jint)HOSTING_THREAD_ERROR;
     }
 
     return (jint)OCSTACK_OK;

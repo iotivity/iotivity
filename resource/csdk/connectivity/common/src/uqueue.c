@@ -119,7 +119,7 @@ u_queue_message_t *u_queue_get_element(u_queue_t *queue)
 
     if (NULL == queue)
     {
-        OIC_LOG(DEBUG, TAG, "QueueAddElement FAIL, Invalid Queue");
+        OIC_LOG(DEBUG, TAG, "QueueGetElement FAIL, Invalid Queue");
         return NULL;
     }
 
@@ -130,7 +130,7 @@ u_queue_message_t *u_queue_get_element(u_queue_t *queue)
         return NULL;
     }
 
-    queue->element = element->next;;
+    queue->element = element->next;
     queue->count--;
 
     message = element->message;

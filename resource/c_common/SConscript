@@ -24,18 +24,22 @@ import os
 
 target_os = env.get('TARGET_OS')
 
+# Add platform-specific helper library
+if target_os in ['windows', 'msys_nt']:
+	SConscript('windows/SConscript')
+
 env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath),
-            os.path.join(Dir('.').abspath, 'oic_malloc/include'),
-            os.path.join(Dir('.').abspath, 'oic_string/include'),
-            os.path.join(Dir('.').abspath, 'oic_time/include'),
-            os.path.join(Dir('.').abspath, 'ocrandom/include')
+            os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
+            os.path.join(Dir('.').abspath, 'oic_string', 'include'),
+            os.path.join(Dir('.').abspath, 'oic_time', 'include'),
+            os.path.join(Dir('.').abspath, 'ocrandom', 'include')
         ])
 
 if target_os == 'tizen':
 	env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:
-	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/c_common')])
+	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common')])
 
 if target_os in ['tizen', 'linux']:
 	env.ParseConfig("pkg-config --cflags --libs uuid")
@@ -43,6 +47,7 @@ if target_os in ['tizen', 'linux']:
 env.PrependUnique(LIBS = ['c_common'])
 
 common_env = env.Clone()
+common_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource')])
 
 ######################################################################
 # Build flags

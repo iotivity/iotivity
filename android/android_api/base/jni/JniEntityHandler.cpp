@@ -33,7 +33,7 @@ JniEntityHandler::~JniEntityHandler()
     LOGD("~JniEntityHandler");
     if (m_jListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
         if (nullptr == env)
         {
@@ -54,7 +54,7 @@ OCEntityHandlerResult JniEntityHandler::handleEntity(
     const std::shared_ptr<OCResourceRequest> request)
 {
     LOGD("JniEntityHandler_handleEntity");
-    jint envRet;
+    jint envRet = JNI_ERR;
     JNIEnv *env = GetJNIEnv(envRet);
     if (nullptr == env)
     {
@@ -133,7 +133,10 @@ OCEntityHandlerResult JniEntityHandler::handleEntity(
     jmethodID getValue_ID = env->GetMethodID(clsResult, "getValue", "()I");
     if (!getValue_ID)
     {
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return OC_EH_ERROR;
     }
     jint jResult = env->CallIntMethod(entityHandlerResult, getValue_ID);

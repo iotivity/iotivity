@@ -21,6 +21,7 @@
 
 extern "C"
 {
+    #include "ocpayload.h"
     #include "ocstack.h"
     #include "ocstackinternal.h"
     #include "logger.h"
@@ -32,7 +33,9 @@ extern "C"
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 //-----------------------------------------------------------------------------
@@ -61,6 +64,9 @@ char gDeviceUUID[] = "myDeviceUUID";
 char gManufacturerName[] = "myName";
 char gTooLongManufacturerName[] = "extremelylongmanufacturername";
 char gManufacturerUrl[] = "www.foooooooooooooooo.baaaaaaaaaaaaar";
+static OCPrm_t pmSel;
+static char pinNumber;
+static OCDPDev_t peer;
 
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 
@@ -78,6 +84,47 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx,
         OIC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
     }
     OIC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+static void resultCallback(void *UNUSED1, OCDPDev_t *UNUSED2, OCStackResult UNUSED3)
+{
+    (void) (UNUSED1);
+    (void) (UNUSED2);
+    (void) (UNUSED3);
+}
+
+extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
+        OCDoHandle /*handle*/, OCClientResponse * clientResponse)
+{
+    OIC_LOG(INFO, TAG, "Entering asyncDoResourcesCallback");
+
+    EXPECT_EQ(OC_STACK_OK, clientResponse->result);
+
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OIC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
+    }
+
+    OIC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
+
+    OCDiscoveryPayload *discoveryPayload = ((OCDiscoveryPayload *) clientResponse->payload);
+    EXPECT_TRUE(discoveryPayload != NULL);
+    OCResourcePayload *res = discoveryPayload->resources;
+    size_t count = 0;
+    for (OCResourcePayload *res1 = discoveryPayload->resources; res1; res1 = res1->next)
+    {
+        count++;
+    }
+    EXPECT_EQ(3, count);
+    EXPECT_EQ("/a/led1", res->uri);
+    res = res->next;
+    EXPECT_EQ("/a/led2", res->uri);
+    res = res->next;
+    EXPECT_EQ("/a/led3", res->uri);
+    res = res->next;
+    EXPECT_TRUE(res == NULL);
 
     return OC_STACK_KEEP_TRANSACTION;
 }
@@ -410,7 +457,7 @@ TEST(StackResource, CreateResourceBadUri)
     OIC_LOG(INFO, TAG, "Starting CreateResourceBadUri test");
     InitStack(OC_SERVER);
 
-    const char *uri65 = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL";
+    const char *uri257 = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVW";
 
     OCResourceHandle handle;
 
@@ -433,7 +480,7 @@ TEST(StackResource, CreateResourceBadUri)
     EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
                                             "core.led",
                                             "core.rw",
-                                            uri65, //"/a/led",
+                                            uri257, //"/a/led",
                                             0,
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -688,12 +735,14 @@ TEST(StackResource, ResourceTypeInterface)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName1 = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, resourceInterfaceName1);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     // try getting resource interface names with an invalid index
-    resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
+    resourceInterfaceName = OCGetResourceInterfaceName(handle, 2);
     EXPECT_STREQ(NULL, resourceInterfaceName);
     // try getting resource interface names with an invalid index
     resourceInterfaceName = OCGetResourceInterfaceName(handle, 10);
@@ -789,7 +838,7 @@ TEST(StackResource, ResourceDuplicateNonDefaultInterfaces)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -811,7 +860,7 @@ TEST(StackResource, ResourceTypeInterfaceMethods)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -976,6 +1025,8 @@ TEST(StackBind, BindResourceTypeNameBad)
     EXPECT_STREQ("core.led", resourceTypeName);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, "core.nameBad"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, "core.name bad"));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1012,6 +1063,12 @@ TEST(StackBind, BindResourceTypeNameGood)
     EXPECT_EQ(3, numResourceTypes);
     resourceTypeName = OCGetResourceTypeName(handle, 2);
     EXPECT_STREQ("core.reallybrightled", resourceTypeName);
+
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "x.ReallyReallyBrightLED"));
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
+    EXPECT_EQ(4, numResourceTypes);
+    resourceTypeName = OCGetResourceTypeName(handle, 3);
+    EXPECT_STREQ("x.ReallyReallyBrightLED", resourceTypeName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1064,8 +1121,8 @@ TEST(StackBind, BindResourceInterfaceNameBad)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, NULL));
@@ -1090,15 +1147,15 @@ TEST(StackBind, BindResourceInterfaceNameGood)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(2, numResourceInterfaces);
-    resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
+    EXPECT_EQ(3, numResourceInterfaces);
+    resourceInterfaceName = OCGetResourceInterfaceName(handle, 2);
     EXPECT_STREQ("core.r", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1121,7 +1178,7 @@ TEST(StackBind, BindResourceInterfaceMethodsBad)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, 0));
 
@@ -1145,12 +1202,12 @@ TEST(StackBind, BindResourceInterfaceMethodsGood)
 
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
+    EXPECT_EQ(2, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
-    EXPECT_EQ(2, numResourceInterfaces);
+    EXPECT_EQ(3, numResourceInterfaces);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1616,13 +1673,15 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     // Make sure the resource elements are still correct
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle2, &numResourceInterfaces));
-    EXPECT_EQ(1, numResourceInterfaces);
-    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle2, 0);
+    EXPECT_EQ(2, numResourceInterfaces);
+    const char *resourceInterfaceName = OCGetResourceInterfaceName(handle2, 1);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+// Visual Studio versions earlier than 2015 have bugs in is_pod and report the wrong answer.
+#if !defined(_MSC_VER) || (_MSC_VER >= 1900)
 TEST(PODTests, OCHeaderOption)
 {
     EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
@@ -1630,5 +1689,100 @@ TEST(PODTests, OCHeaderOption)
 
 TEST(PODTests, OCCallbackData)
 {
-    EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
+    EXPECT_TRUE(std::is_pod<OCCallbackData>::value);
+}
+#endif
+
+TEST(OCDoDirectPairingTests, Nullpeer)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, NULL, pmSel, &pinNumber, &resultCallback));
+}
+
+TEST(OCDoDirectPairingTests, NullCallback)
+{
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(NULL, &peer, pmSel, &pinNumber, NULL));
+}
+
+TEST(OCDoDirectPairingTests, NullpinNumber)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, &peer, pmSel, NULL, &resultCallback));
+}
+
+TEST(StackResource, MultipleResourcesDiscovery)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting MultipleResourcesDiscovery test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle1;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led1",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    OCResourceHandle handle2;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led2",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+    OCResourceHandle handle3;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led3",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+    /* Start a discovery query*/
+    char szQueryUri[256] = "/oic/res?if=oic.if.ll";
+    OCCallbackData cbData;
+    cbData.cb = discoveryCallback;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    OCDoHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle,
+                                        OC_REST_DISCOVER,
+                                        szQueryUri,
+                                        0,
+                                        0,
+                                        CT_ADAPTER_IP,
+                                        OC_LOW_QOS,
+                                        &cbData,
+                                        NULL,
+                                        0));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackPayload, CloneByteString)
+{
+    uint8_t bytes[] = { 0, 1, 2, 3 };
+    OCByteString byteString;
+    byteString.bytes = bytes;
+    byteString.len = sizeof(bytes);
+
+    OCRepPayload *original = OCRepPayloadCreate();
+    ASSERT_TRUE(original != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropByteString(original, "name", byteString));
+
+    OCRepPayload *clone = OCRepPayloadClone(original);
+    ASSERT_TRUE(clone != NULL);
+
+    OCRepPayloadDestroy(original);
+
+    OCByteString cloneByteString;
+    EXPECT_TRUE(OCRepPayloadGetPropByteString(clone, "name", &cloneByteString));
+    ASSERT_TRUE(cloneByteString.bytes != NULL);
+    EXPECT_EQ(sizeof(bytes), cloneByteString.len);
+    EXPECT_TRUE(0 == memcmp(bytes, cloneByteString.bytes, sizeof(bytes)));
+    OICFree(cloneByteString.bytes);
+
+    OCRepPayloadDestroy(clone);
 }

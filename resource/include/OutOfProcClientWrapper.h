@@ -39,6 +39,14 @@ namespace OC
                                                 QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
+        virtual OCStackResult ListenErrorForResource(const std::string& /*servUrl*/,
+                                                     const std::string& /*rsrcType*/,
+                                                     OCConnectivityType /*connType*/,
+                                                     FindCallback& /*callback*/,
+                                                     FindErrorCallback& /*errorCallback*/,
+                                                     QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
         virtual OCStackResult ListenForDevice(const std::string& /*serviceUrl*/,
                                               const std::string& /*deviceURI*/,
                                               OCConnectivityType /*connType*/,
@@ -114,6 +122,18 @@ namespace OC
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetDefaultQos(QualityOfService& /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult FindDirectPairingDevices(unsigned short /*waittime*/,
+                       GetDirectPairedCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult GetDirectPairedDevices(GetDirectPairedCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> /*peer*/,
+                const OCPrm_t& /*pmSel*/,
+                const std::string& /*pinNumber*/, DirectPairingCallback& /*resultCallback*/)
             {return OC_STACK_NOTIMPL;}
     };
 }

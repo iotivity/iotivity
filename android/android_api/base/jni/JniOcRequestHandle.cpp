@@ -22,7 +22,8 @@
 #include "JniOcRequestHandle.h"
 
 JniOcRequestHandle::JniOcRequestHandle(OCRequestHandle requestHandle) : m_requestHandle(requestHandle)
-{}
+{
+}
 
 JniOcRequestHandle::~JniOcRequestHandle()
 {

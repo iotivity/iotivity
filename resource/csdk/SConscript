@@ -55,9 +55,10 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'connectivity/external/inc',
 		'security/include',
 		'security/include/internal',
+		'security/provisioning/include',
 		])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
@@ -66,12 +67,13 @@ if liboctbstack_env.get('ROUTING') == 'GW':
 elif liboctbstack_env.get('ROUTING') == 'EP':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-if target_os in ['android', 'linux', 'tizen']:
+liboctbstack_env.PrependUnique(LIBS = ['ocsrm', 'coap'])
+if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
 	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
 
 	if with_ra_ibb:
@@ -80,25 +82,30 @@ if target_os in ['android', 'linux', 'tizen']:
 		if with_ra:
 			liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
 
-liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
-liboctbstack_env.PrependUnique(LIBS = ['ocsrm'])
+if target_os in ['windows', 'msys_nt']:
+	liboctbstack_env.AppendUnique(CPPDEFINES  = ['OC_EXPORT_DLL'])
+	liboctbstack_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi'])
+else:
+	liboctbstack_env.AppendUnique(LIBS = ['m'])
 
 if target_os in ['tizen', 'linux']:
 	liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
 
-if target_os not in ['android', 'arduino', 'windows', 'winrt']:
+if target_os not in ['android', 'arduino', 'windows', 'msys_nt']:
 	liboctbstack_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
-elif target_os not in ['darwin','ios']:
+elif target_os not in ['darwin','ios', 'msys_nt', 'windows']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
 if target_os in ['darwin', 'ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-if target_os not in ['arduino']:
+if target_os not in ['arduino', 'windows']:
 	liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+if target_os == 'android':
+    liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,liboctbstack.so'])
 
 if env.get('SECURED') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
@@ -111,6 +118,7 @@ if env.get('DTLS_WITH_X509') == '1':
 
 if env.get('WITH_RD') == '1':
 	liboctbstack_env.PrependUnique(CPPPATH = ['../../service/resource-directory/include'])
+	liboctbstack_env.PrependUnique(LIBPATH = [env.get('BUILD_DIR') + 'service/resource-directory/include'])
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['-DWITH_RD'])
 	liboctbstack_env.AppendUnique(LIBS = ['resource_directory'])
 
@@ -144,18 +152,22 @@ if with_tcp == True:
 
 liboctbstack_src.extend(env['cbor_files'])
 
-if target_os in ['arduino','darwin','ios'] :
-	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
-	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')
-	liboctbstack_env.UserInstallTargetLib(static_liboctbstack, 'liboctbstack')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
-else:
-	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
+if target_os == 'windows':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['CBOR_API=__declspec(dllexport)',
+	                                            'CBOR_PRIVATE_API=__declspec(dllexport)'
+    ])
+
+static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
+octbstack_libs = Flatten(static_liboctbstack)
+
+if target_os not in ['arduino','darwin','ios'] :
 	shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
-	liboctbstack_env.InstallTarget([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
-	liboctbstack_env.UserInstallTargetLib([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
+	octbstack_libs += Flatten(shared_liboctbstack)
 	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstack.h', 'resource', 'ocstack.h')
 	liboctbstack_env.UserInstallTargetHeader('stack/include/ocpresence.h', 'resource', 'ocpresence.h')
+
+liboctbstack_env.InstallTarget(octbstack_libs, 'octbstack')
+liboctbstack_env.UserInstallTargetLib(octbstack_libs, 'octbstack')
+
+liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
+liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')

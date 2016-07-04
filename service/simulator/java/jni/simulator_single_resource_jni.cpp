@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "simulator_resource_model_jni.h"
+#include "simulator_resource_attribute_jni.h"
 #include "simulator_exceptions_jni.h"
 #include "simulator_utils_jni.h"
 #include "jni_sharedobject_holder.h"
@@ -28,30 +29,30 @@
 
 #include "simulator_single_resource.h"
 
-#define VALIDATE_OBJECT(ENV, OBJECT) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return;}
-#define VALIDATE_OBJECT_RET(ENV, OBJECT, RET) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return RET;}
+#define VALIDATE_OBJECT(ENV, OBJECT) if (!OBJECT){ThrowBadObjectException(ENV, "No corresponsing native object!"); return;}
+#define VALIDATE_OBJECT_RET(ENV, OBJECT, RET) if (!OBJECT){ThrowBadObjectException(ENV, "No corresponsing native object!"); return RET;}
 
-SimulatorSingleResourceSP simulatorSingleResourceToCpp(JNIEnv *env, jobject object)
+static SimulatorSingleResourceSP simulatorSingleResourceToCpp(JNIEnv *env, jobject object)
 {
     JniSharedObjectHolder<SimulatorSingleResource> *jniResource =
-        GetHandle<JniSharedObjectHolder<SimulatorSingleResource>>(env, object);
+        getHandle<JniSharedObjectHolder<SimulatorSingleResource>>(env, object);
     if (jniResource)
         return jniResource->get();
     return nullptr;
 }
 
-static AutomationType AutomationTypeToCpp(JNIEnv *env, jobject jType)
+static AutoUpdateType autoUpdateTypeToCpp(JNIEnv *env, jobject jType)
 {
     static jmethodID ordinalMID = env->GetMethodID(
-                                      gSimulatorClassRefs.automationTypeCls, "ordinal", "()I");
+                                      gSimulatorClassRefs.autoUpdateTypeCls, "ordinal", "()I");
 
     int ordinal = env->CallIntMethod(jType, ordinalMID);
-    return AutomationType(ordinal);
+    return AutoUpdateType(ordinal);
 }
 
 static void onAutoUpdationComplete(jobject listener, const std::string &uri, const int id)
 {
-    JNIEnv *env = getEnv();
+    JNIEnv *env = GetEnv();
     if (!env)
         return;
 
@@ -61,7 +62,7 @@ static void onAutoUpdationComplete(jobject listener, const std::string &uri, con
 
     jstring jUri = env->NewStringUTF(uri.c_str());
     env->CallVoidMethod(listener, listenerMethod, jUri, id);
-    releaseEnv();
+    ReleaseEnv();
 }
 
 #ifdef __cplusplus
@@ -69,163 +70,175 @@ extern "C" {
 #endif
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_getAttribute
-(JNIEnv *env, jobject object, jstring attrName)
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeGetAttribute
+(JNIEnv *env, jobject object, jstring jAttrName)
 {
-    VALIDATE_INPUT_RET(env, !attrName, "Attribute name is null!", nullptr)
+    VALIDATE_INPUT_RET(env, !jAttrName, "Attribute name is null!", nullptr)
 
     SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
     VALIDATE_OBJECT_RET(env, singleResource, nullptr)
 
-    JniString jniAttrName(env, attrName);
-    SimulatorResourceModel::Attribute attribute;
+    JniString jniAttrName(env, jAttrName);
+    SimulatorResourceAttribute attribute;
     if (singleResource->getAttribute(jniAttrName.get(), attribute))
-        return simulatorResourceAttributeToJava(env, attribute);
+        return SimulatorResourceAttributeToJava(env, attribute);
     return nullptr;
 }
 
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_addAttribute
-(JNIEnv *env, jobject object, jobject resAttribute)
+JNIEXPORT jobject JNICALL
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeGetAttributes
+(JNIEnv *env, jobject object)
 {
-    VALIDATE_INPUT(env, !resAttribute, "Resource attribute is null!")
+    SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
+    VALIDATE_OBJECT_RET(env, singleResource, nullptr)
+
+    return SimulatorResourceAttributesToJava(env, singleResource->getAttributes());
+}
+
+JNIEXPORT jboolean JNICALL
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeAddAttribute
+(JNIEnv *env, jobject object, jobject jResAttribute)
+{
+    VALIDATE_INPUT_RET(env, !jResAttribute, "Resource attribute is null!", false)
 
     SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
-    VALIDATE_OBJECT(env, singleResource)
+    VALIDATE_OBJECT_RET(env, singleResource, false)
 
     try
     {
-        SimulatorResourceModel::Attribute attribute;
-        if (!simulatorResourceAttributeToCpp(env, resAttribute, attribute))
+        SimulatorResourceAttribute attribute;
+        if (!SimulatorResourceAttributeToCpp(env, jResAttribute, attribute))
         {
-            throwSimulatorException(env, SIMULATOR_ERROR,
+            ThrowSimulatorException(env, SIMULATOR_ERROR,
                                     "Failed to covnert SimulatorResourceAttribute java object!");
-            return;
+            return false;
         }
-
-        singleResource->addAttribute(attribute);
+        return singleResource->addAttribute(attribute);
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
+
+    return false;
 }
 
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_updateAttribute
-(JNIEnv *env, jobject object, jstring attrName, jobject attrValue)
+JNIEXPORT jboolean JNICALL
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeUpdateAttribute
+(JNIEnv *env, jobject object, jstring jAttrName, jobject jAttrValue)
 {
-    VALIDATE_INPUT(env, !attrName, "Attribute name is null!")
-    VALIDATE_INPUT(env, !attrValue, "Attribute value is null!")
+    VALIDATE_INPUT_RET(env, !jAttrName, "Attribute name is null!", false)
+    VALIDATE_INPUT_RET(env, !jAttrValue, "Attribute value is null!", false)
 
     SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
-    VALIDATE_OBJECT(env, singleResource)
+    VALIDATE_OBJECT_RET(env, singleResource, false)
 
-    SimulatorResourceModel::ValueVariant value;
-    if (!AttributeValueToCpp(env, attrValue, value))
+    AttributeValueVariant value;
+    if (!AttributeValueToCpp(env, jAttrValue, value))
     {
-        throwSimulatorException(env, SIMULATOR_ERROR,
+        ThrowSimulatorException(env, SIMULATOR_ERROR,
                                 "Failed to covnert AttributeValue java object!");
-        return;
+        return false;
     }
 
-    SimulatorResourceModel::Attribute attribute(JniString(env, attrName).get());
+    SimulatorResourceAttribute attribute(JniString(env, jAttrName).get());
     attribute.setValue(value);
-    singleResource->updateAttributeValue(attribute);
+    return singleResource->updateAttributeValue(attribute);
 }
 
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_removeAttribute
-(JNIEnv *env, jobject object, jstring attrName)
+JNIEXPORT jboolean JNICALL
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeRemoveAttribute
+(JNIEnv *env, jobject object, jstring jAttrName)
 {
-    VALIDATE_INPUT(env, !attrName, "Attribute name is null!")
+    VALIDATE_INPUT_RET(env, !jAttrName, "Attribute name is null!", false)
 
     SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
-    VALIDATE_OBJECT(env, singleResource)
+    VALIDATE_OBJECT_RET(env, singleResource, false)
 
     try
     {
-        JniString jniAttrName(env, attrName);
-        singleResource->removeAttribute(jniAttrName.get());
+        JniString jniAttrName(env, jAttrName);
+        return singleResource->removeAttribute(jniAttrName.get());
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
+
+    return false;
 }
 
 JNIEXPORT jint JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_startResourceUpdation
-(JNIEnv *env, jobject object, jobject type, jint interval, jobject listener)
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeStartResourceUpdation
+(JNIEnv *env, jobject object, jobject jType, jint jInterval, jobject jListener)
 {
-    VALIDATE_CALLBACK_RET(env, listener, -1)
+    VALIDATE_CALLBACK_RET(env, jListener, -1)
 
     SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
     VALIDATE_OBJECT_RET(env, singleResource, -1)
 
-    jobject listenerRef = env->NewGlobalRef(listener);
-    updateCompleteCallback callback =  [listenerRef](const std::string & uri, const int id)
+    jobject listenerRef = env->NewGlobalRef(jListener);
+    SimulatorSingleResource::AutoUpdateCompleteCallback callback =  [listenerRef](
+                const std::string & uri, const int id)
     {
         onAutoUpdationComplete(listenerRef, uri, id);
     };
 
     try
     {
-        AutomationType automationType = AutomationTypeToCpp(env, type);
-        int id = singleResource->startResourceUpdation(automationType, interval, callback);
-        return id;
+        AutoUpdateType autoUpdateType = autoUpdateTypeToCpp(env, jType);
+        return singleResource->startResourceUpdation(autoUpdateType, jInterval, callback);
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 
     return -1;
 }
 
 JNIEXPORT jint JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_startAttributeUpdation
-(JNIEnv *env, jobject object, jstring attrName, jobject type, jint interval, jobject listener)
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeStartAttributeUpdation
+(JNIEnv *env, jobject object, jstring jAttrName, jobject jType, jint jInterval, jobject jListener)
 {
-    VALIDATE_INPUT_RET(env, !attrName, "Attribute name is null!", -1)
-    VALIDATE_CALLBACK_RET(env, listener, -1)
+    VALIDATE_INPUT_RET(env, !jAttrName, "Attribute name is null!", -1)
+    VALIDATE_CALLBACK_RET(env, jListener, -1)
 
     SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
     VALIDATE_OBJECT_RET(env, singleResource, -1)
 
-    jobject listenerRef = env->NewGlobalRef(listener);
-    updateCompleteCallback callback =  [listenerRef](const std::string & uri, const int id)
+    jobject listenerRef = env->NewGlobalRef(jListener);
+    SimulatorSingleResource::AutoUpdateCompleteCallback callback =
+        [listenerRef](const std::string & uri, const int id)
     {
         onAutoUpdationComplete(listenerRef, uri, id);
     };
 
-    JniString jniAttrName(env, attrName);
-    AutomationType automationType = AutomationTypeToCpp(env, type);
-
     try
     {
-        int id = singleResource->startAttributeUpdation(jniAttrName.get(), automationType,
-                 interval, callback);
-        return id;
+        JniString jniAttrName(env, jAttrName);
+        AutoUpdateType autoUpdateType = autoUpdateTypeToCpp(env, jType);
+        return singleResource->startAttributeUpdation(jniAttrName.get(), autoUpdateType,
+                jInterval, callback);
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 
     return -1;
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_stopUpdation
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeStopUpdation
 (JNIEnv *env, jobject object, jint id)
 {
     SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
@@ -235,11 +248,11 @@ Java_org_oic_simulator_server_SimulatorSingleResource_stopUpdation
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_dispose
+Java_org_oic_simulator_server_SimulatorSingleResource_nativeDispose
 (JNIEnv *env, jobject object)
 {
     JniSharedObjectHolder<SimulatorSingleResource> *resource =
-        GetHandle<JniSharedObjectHolder<SimulatorSingleResource>>(env, object);
+        getHandle<JniSharedObjectHolder<SimulatorSingleResource>>(env, object);
     delete resource;
 }
 

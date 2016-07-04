@@ -29,7 +29,10 @@
 #ifndef SINGLE_THREAD
 #include "caqueueingthread.h"
 #endif
-#include "cafragmentation.h"
+#if defined(__TIZEN__) || defined(__ANDROID__)
+#include "caleserver.h"
+#include "caleclient.h"
+#endif
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
@@ -38,7 +41,12 @@
 /**
  * Logging tag for module name.
  */
-#define CALEADAPTER_TAG "OIC_LE_ADAP"
+#define CALEADAPTER_TAG "OIC_CA_LE_ADAP"
+
+/**
+ * The MTU supported for BLE adapter
+ */
+#define CA_SUPPORTED_BLE_MTU_SIZE  20
 
 /**
  * Stores information of all the senders.
@@ -65,7 +73,12 @@ typedef enum
 /**
  * Callback to provide the status of the network change to CA layer.
  */
-static CANetworkChangeCallback g_networkCallback = NULL;
+static CAAdapterChangeCallback g_networkCallback = NULL;
+
+/**
+ * Callback to provide the status of the connection change to CA layer.
+ */
+static CAConnectionChangeCallback g_connectionCallback = NULL;
 
 /**
  * bleAddress of the local adapter. Value will be initialized to zero,
@@ -141,8 +154,10 @@ static CAErrorHandleCallback g_errorHandler = NULL;
 /**
  * Register network change notification callback.
  *
- * @param[in]  netCallback CANetworkChangeCallback callback which will
- *                         be set for the change in network.
+ * @param[in]  netCallback  CAAdapterChangeCallback callback which will
+ *                          be set for the change in adapter.
+ * @param[in]  connCallback CAConnectionChangeCallback callback which will
+ *                          be set for the change in connection.
  *
  * @return  0 on success otherwise a positive error value.
  * @retval  ::CA_STATUS_OK  Successful.
@@ -150,7 +165,8 @@ static CAErrorHandleCallback g_errorHandler = NULL;
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
+static CAResult_t CALERegisterNetworkNotifications(CAAdapterChangeCallback netCallback,
+                                                   CAConnectionChangeCallback connCallback);
 
 /**
  * Set the thread pool handle which is required for spawning new
@@ -385,6 +401,28 @@ static void CAFreeLEData(CALEData_t *bleData);
  * Free data.
  */
 static void CALEDataDestroyer(void *data, uint32_t size);
+
+#ifndef SINGLE_THREAD
+/**
+ * remove request or response data of send queue.
+ *
+ * @param[in] queueHandle    queue to process the outgoing packets.
+ * @param[in] mutex          mutex related to sender for client / server.
+ * @param[in] address        target address to remove data in queue.
+ */
+static void CALERemoveSendQueueData(CAQueueingThread_t *queueHandle,
+                                    ca_mutex mutex,
+                                    const char* address);
+
+/**
+ * remove all received data of data list from receive queue.
+ *
+ * @param[in] dataInfoList   received data list to remove for client / server.
+ * @param[in] address        target address to remove data in queue.
+ */
+static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList,
+                                       const char* address);
+#endif
 
 static CAResult_t CAInitLEServerQueues()
 {
@@ -1626,13 +1664,15 @@ static CAResult_t CALEAdapterGattServerStart()
 static CAResult_t CALEAdapterGattServerStop()
 {
 #ifndef SINGLE_THREAD
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattServerStop");
+
+    CAResult_t result = CAStopLEGattServer();
     ca_mutex_lock(g_bleServerSendDataMutex);
-    CAResult_t result = CAQueueingThreadStop(g_bleServerSendQueueHandle);
-    ca_mutex_unlock(g_bleServerSendDataMutex);
     if (CA_STATUS_OK == result)
     {
-        result = CAStopLEGattServer();
+        result = CAQueueingThreadStop(g_bleServerSendQueueHandle);
     }
+    ca_mutex_unlock(g_bleServerSendDataMutex);
 
     return result;
 #else
@@ -1672,13 +1712,12 @@ static CAResult_t CALEAdapterGattClientStart()
 static CAResult_t CALEAdapterGattClientStop()
 {
 #ifndef SINGLE_THREAD
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattClientStop");
+    CAStopLEGattClient();
+
     ca_mutex_lock(g_bleClientSendDataMutex);
     CAResult_t result = CAQueueingThreadStop(g_bleClientSendQueueHandle);
     ca_mutex_unlock(g_bleClientSendDataMutex);
-    if (CA_STATUS_OK == result)
-    {
-        CAStopLEGattClient();
-    }
 
     return result;
 #else
@@ -1690,7 +1729,8 @@ static CAResult_t CALEAdapterGattClientStop()
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
-                          CANetworkChangeCallback netCallback,
+                          CAAdapterChangeCallback netCallback,
+                          CAConnectionChangeCallback connCallback,
                           CAErrorHandleCallback errorCallback,
                           ca_thread_pool_t handle)
 {
@@ -1700,6 +1740,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(registerCallback, CALEADAPTER_TAG, "RegisterConnectivity callback is null");
     VERIFY_NON_NULL(reqRespCallback, CALEADAPTER_TAG, "PacketReceived Callback is null");
     VERIFY_NON_NULL(netCallback, CALEADAPTER_TAG, "NetworkChange Callback is null");
+    VERIFY_NON_NULL(connCallback, CALEADAPTER_TAG, "ConnectionChange Callback is null");
 
     CAResult_t result = CA_STATUS_OK;
     result = CAInitLEAdapterMutex();
@@ -1715,7 +1756,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLENetworkMonitor() failed");
         return CA_STATUS_FAILED;
     }
-    CAInitializeLEAdapter(handle);
+    CAInitializeLEAdapter();
 
     CASetLEClientThreadPoolHandle(handle);
 
@@ -1741,7 +1782,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     CASetBLEClientErrorHandleCallback(CALEErrorHandler);
     CASetBLEServerErrorHandleCallback(CALEErrorHandler);
-    CALERegisterNetworkNotifications(netCallback);
+    CALERegisterNetworkNotifications(netCallback, connCallback);
 
     g_errorHandler = errorCallback;
 
@@ -1810,7 +1851,7 @@ static void CATerminateLE()
 
     CASetLEReqRespServerCallback(NULL);
     CASetLEReqRespClientCallback(NULL);
-    CALERegisterNetworkNotifications(NULL);
+    CALERegisterNetworkNotifications(NULL, NULL);
     CASetLEReqRespAdapterCallback(NULL);
     CATerminateLENetworkMonitor();
 
@@ -1876,6 +1917,7 @@ static CAResult_t CAStartLEListeningServer()
             OIC_LOG(DEBUG,
                     CALEADAPTER_TAG,
                     "Listen Server will be started once BT Adapter is enabled");
+            result = CA_STATUS_OK;
         }
     }
     else
@@ -1932,6 +1974,7 @@ static CAResult_t CAStartLEDiscoveryServer()
             OIC_LOG(DEBUG,
                     CALEADAPTER_TAG,
                     "Discovery Server will be started once BT Adapter is enabled");
+            result = CA_STATUS_OK;
         }
     }
     else
@@ -2126,12 +2169,14 @@ static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *siz
     return CA_STATUS_OK;
 }
 
-static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
+static CAResult_t CALERegisterNetworkNotifications(CAAdapterChangeCallback netCallback,
+                                                   CAConnectionChangeCallback connCallback)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     ca_mutex_lock(g_bleNetworkCbMutex);
     g_networkCallback = netCallback;
+    g_connectionCallback = connCallback;
     ca_mutex_unlock(g_bleNetworkCbMutex);
     CAResult_t res = CA_STATUS_OK;
     if (netCallback)
@@ -2141,12 +2186,6 @@ static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCa
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLEAdapterStateChangedCb failed!");
         }
-
-        res = CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCb);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "CALEConnectionStateChangedCb failed!");
-        }
     }
     else
     {
@@ -2154,6 +2193,15 @@ static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCa
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLEAdapterStateChangedCb failed!");
+        }
+    }
+
+    if (g_connectionCallback)
+    {
+        res = CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCb);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLENWConnectionStateChangedCb failed!");
         }
     }
 
@@ -2194,47 +2242,40 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
 #ifndef SINGLE_THREAD
         if(g_bleClientSenderInfo)
         {
-            CABLESenderInfo_t *senderInfo = NULL;
-            uint32_t senderIndex = 0;
-
-            if(CA_STATUS_OK == CALEGetSenderInfo(address, g_bleClientSenderInfo, &senderInfo,
-                                                   &senderIndex))
-            {
-                u_arraylist_remove(g_bleClientSenderInfo, senderIndex);
-                OICFree(senderInfo->defragData);
-                OICFree(senderInfo->remoteEndpoint);
-                OICFree(senderInfo);
-
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo is removed for disconnection");
-            }
-            else
-            {
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo doesn't exist");
-            }
+            CALERemoveReceiveQueueData(g_bleClientSenderInfo, address);
         }
 
         if(g_bleServerSenderInfo)
         {
-            CABLESenderInfo_t *senderInfo = NULL;
-            uint32_t senderIndex = 0;
+            CALERemoveReceiveQueueData(g_bleServerSenderInfo, address);
+        }
 
-            if(CA_STATUS_OK == CALEGetSenderInfo(address, g_bleServerSenderInfo, &senderInfo,
-                                                   &senderIndex))
-            {
-                u_arraylist_remove(g_bleServerSenderInfo, senderIndex);
-                OICFree(senderInfo->defragData);
-                OICFree(senderInfo->remoteEndpoint);
-                OICFree(senderInfo);
+        // remove data of send queue.
+        if (g_bleClientSendQueueHandle)
+        {
+            CALERemoveSendQueueData(g_bleClientSendQueueHandle,
+                                    g_bleClientSendDataMutex,
+                                    address);
+        }
 
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo is removed for disconnection");
-            }
-            else
-            {
-                OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo doesn't exist");
-            }
+        if (g_bleServerSendQueueHandle)
+        {
+            CALERemoveSendQueueData(g_bleServerSendQueueHandle,
+                                    g_bleServerSendDataMutex,
+                                    address);
         }
 #endif
     }
+
+    CAEndpoint_t localEndpoint = { .adapter = CA_ADAPTER_GATT_BTLE };
+    OICStrcpy(localEndpoint.addr, sizeof(localEndpoint.addr), address);
+
+    ca_mutex_lock(g_bleNetworkCbMutex);
+    if (g_connectionCallback)
+    {
+        g_connectionCallback(&localEndpoint, isConnected);
+    }
+    ca_mutex_unlock(g_bleNetworkCbMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
@@ -2242,15 +2283,6 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
 static void CALEDeviceStateChangedCb(CAAdapterState_t adapter_state)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CALEDeviceStateChangedCb");
-
-    VERIFY_NON_NULL_VOID(g_localBLEAddress, CALEADAPTER_TAG, "g_localBLEAddress is null");
-    CAEndpoint_t localEndpoint = { .adapter = CA_ADAPTER_GATT_BTLE };
-
-    ca_mutex_lock(g_bleLocalAddressMutex);
-    OICStrcpy(localEndpoint.addr,
-              sizeof(localEndpoint.addr),
-              g_localBLEAddress);
-    ca_mutex_unlock(g_bleLocalAddressMutex);
 
     if (CA_ADAPTER_ENABLED == adapter_state)
     {
@@ -2296,7 +2328,7 @@ static void CALEDeviceStateChangedCb(CAAdapterState_t adapter_state)
     ca_mutex_lock(g_bleNetworkCbMutex);
     if (NULL != g_networkCallback)
     {
-        g_networkCallback(&localEndpoint, adapter_state);
+        g_networkCallback(CA_ADAPTER_GATT_BTLE, adapter_state);
     }
     else
     {
@@ -2581,3 +2613,69 @@ static void CALEErrorHandler(const char *remoteAddress,
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEErrorHandler OUT");
 }
+
+#ifndef SINGLE_THREAD
+static void CALERemoveSendQueueData(CAQueueingThread_t *queueHandle, ca_mutex mutex,
+                                    const char* address)
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALERemoveSendQueueData");
+
+    VERIFY_NON_NULL_VOID(queueHandle, CALEADAPTER_TAG, "queueHandle");
+    VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
+
+    ca_mutex_lock(mutex);
+    while (u_queue_get_size(queueHandle->dataQueue) > 0)
+    {
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "get data from queue");
+        u_queue_message_t *message = u_queue_get_element(queueHandle->dataQueue);
+        if (NULL != message)
+        {
+            CALEData_t *bleData = (CALEData_t *) message->msg;
+            if (bleData && bleData->remoteEndpoint)
+            {
+                if (!strcmp(bleData->remoteEndpoint->addr, address))
+                {
+                    OIC_LOG(DEBUG, CALEADAPTER_TAG, "found the message of disconnected device");
+                    if (NULL != queueHandle->destroy)
+                    {
+                        queueHandle->destroy(message->msg, message->size);
+                    }
+                    else
+                    {
+                        OICFree(message->msg);
+                    }
+
+                    OICFree(message);
+                }
+            }
+        }
+    }
+    ca_mutex_unlock(mutex);
+}
+
+static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList, const char* address)
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALERemoveReceiveQueueData");
+
+    VERIFY_NON_NULL_VOID(dataInfoList, CALEADAPTER_TAG, "dataInfoList");
+    VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
+
+    CABLESenderInfo_t *senderInfo = NULL;
+    uint32_t senderIndex = 0;
+
+    if(CA_STATUS_OK == CALEGetSenderInfo(address, dataInfoList, &senderInfo,
+                                         &senderIndex))
+    {
+        u_arraylist_remove(dataInfoList, senderIndex);
+        OICFree(senderInfo->defragData);
+        OICFree(senderInfo->remoteEndpoint);
+        OICFree(senderInfo);
+
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo is removed for disconnection");
+    }
+    else
+    {
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "SenderInfo doesn't exist");
+    }
+}
+#endif

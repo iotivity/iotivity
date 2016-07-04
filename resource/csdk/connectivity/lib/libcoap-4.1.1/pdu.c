@@ -15,8 +15,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
 #endif
 
 #include "debug.h"
@@ -136,7 +140,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
 #endif
 
     /* size must be large enough for hdr */
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     pdu = (coap_pdu_t *) coap_malloc(sizeof(coap_pdu_t) + size);
 #endif
 #ifdef WITH_CONTIKI
@@ -262,22 +266,24 @@ size_t coap_get_total_message_length(const unsigned char *data, size_t size)
 
 coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
 {
-    if (COAP_TCP_LENGTH_FIELD_8_BIT < size && COAP_TCP_LENGTH_FIELD_16_BIT >= size)
-    {
-        return coap_tcp_8bit;
-    }
-    else if (COAP_TCP_LENGTH_FIELD_16_BIT < size && COAP_TCP_LENGTH_FIELD_32_BIT >= size)
-    {
-        return coap_tcp_16bit;
-    }
-    else if (COAP_TCP_LENGTH_FIELD_32_BIT < size)
-    {
-        return coap_tcp_32bit;
-    }
-    else
+    if (size < COAP_TCP_LENGTH_FIELD_8_BIT)
     {
         return coap_tcp;
     }
+    else if (size < COAP_TCP_LENGTH_FIELD_16_BIT)
+    {
+        return coap_tcp_8bit;
+    }
+    else if (size < COAP_TCP_LENGTH_FIELD_32_BIT)
+    {
+        return coap_tcp_16bit;
+    }
+    else if (size - COAP_TCP_LENGTH_FIELD_32_BIT < ULONG_MAX)
+    {
+        return coap_tcp_32bit;
+    }
+
+    return -1;
 }
 
 coap_transport_type coap_get_tcp_header_type_from_initbyte(unsigned int length)
@@ -424,13 +430,13 @@ unsigned int coap_get_tcp_header_length_for_transport(coap_transport_type transp
         case coap_tcp:
             length = COAP_TCP_HEADER_NO_FIELD;
             break;
-        case coap_tcp_8bit:
+        case coap_tcp_8bit:   /* len(4bit) + TKL(4bit) + Len+bytes(1byte) + Code(1byte) */
             length = COAP_TCP_HEADER_8_BIT;
             break;
-        case coap_tcp_16bit:
+        case coap_tcp_16bit:  /* len(4bit) + TKL(4bit) + Len+bytes(2byte) + Code(1byte) */
             length = COAP_TCP_HEADER_16_BIT;
             break;
-        case coap_tcp_32bit:
+        case coap_tcp_32bit:  /* len(4bit) + TKL(4bit) + Len+bytes(4byte) + Code(1byte) */
             length = COAP_TCP_HEADER_32_BIT;
             break;
         default:

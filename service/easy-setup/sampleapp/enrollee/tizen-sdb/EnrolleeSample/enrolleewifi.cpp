@@ -21,6 +21,7 @@
 
 #include "easysetup.h"
 
+#include <unistd.h>
 #include <string.h>
 #include <iostream>
 #include <pthread.h>
@@ -48,7 +49,7 @@ static char passwd[] = "EasySetup123";
  * It contains Server's Identity and the PSK credentials
  * of other devices which the server trusts
  */
-static char CRED_FILE[] = "oic_svr_db_server.json";
+static char CRED_FILE[] = "oic_svr_db_server.dat";
 
 OCPersistentStorage ps ;
 
@@ -70,7 +71,7 @@ void PrintMenu()
     cout<<"============"<<endl;
 }
 
-void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
+void EventCallbackInApp(ESResult esResult, ESEnrolleeState enrolleeState)
 {
     cout<<"Easy setup event callback"<<endl;
 
@@ -122,14 +123,14 @@ void StartEasySetup()
 {
     cout<<"StartEasySetup and onboarding started.."<<endl;
 
-    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
+    if(ESInitEnrollee(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
     {
         cout<<"StartEasySetup and onboarding Fail!!"<<endl;
         return;
     }
 }
 
-void StartOICStackAndStartResources()
+void ESInitResources()
 {
     cout<<"Starting Enrollee Provisioning"<<endl;
 
@@ -140,7 +141,7 @@ void StartOICStackAndStartResources()
         return;
     }
 
-    if (InitProvisioning() == ES_ERROR)
+    if (ESInitProvisioning() == ES_ERROR)
     {
         cout<<"Init Provisioning Failed!!"<<endl;
         return;
@@ -152,16 +153,16 @@ void StartOICStackAndStartResources()
         cout<<"Thread creation failed"<<endl;
     }
 
-    cout<<"InitProvisioning Success"<<endl;
+    cout<<"ESInitProvisioning Success"<<endl;
 }
 
 void StopEasySetup()
 {
     cout<<"StopEasySetup IN"<<endl;
 
-    if (TerminateEasySetup() == ES_ERROR)
+    if (ESTerminateEnrollee() == ES_ERROR)
     {
-        cout<<"TerminateEasySetup Failed!!"<<endl;
+        cout<<"ESTerminateEnrollee Failed!!"<<endl;
         return;
     }
 
@@ -210,7 +211,7 @@ int main()
 
             case 'P': // start provisioning
             case 'p':
-                StartOICStackAndStartResources();
+                ESInitResources();
                 break;
 
             case 'T': // stop easy setup

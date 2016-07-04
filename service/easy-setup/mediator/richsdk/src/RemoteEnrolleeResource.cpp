@@ -39,8 +39,8 @@ namespace OIC
         static const char ES_PROV_RES_URI[] = "/oic/prov";
         static const char ES_PROV_RES_TYPE[] = "oic.r.prov";
 
-        RemoteEnrolleeResource::RemoteEnrolleeResource(ProvConfig provConfig,
-                                                  WiFiOnboadingConnection onboardingconn)
+        RemoteEnrolleeResource::RemoteEnrolleeResource(const ProvConfig &provConfig,
+                                                  const WiFiOnboadingConnection &onboardingconn)
         {
             m_ProvConfig = provConfig;
             m_wifiOnboardingconn = onboardingconn;
@@ -124,6 +124,12 @@ namespace OIC
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "checkProvInformationCb : Provisioning is success. "
                         "Now trigger network connection ");
+
+                #ifdef REMOTE_ARDUINO_ENROLEE
+                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
+                        ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
+                m_provStatusCb(provStatus);
+                #endif
 
                 triggerNetworkConnection();
                 return;
@@ -266,24 +272,14 @@ namespace OIC
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "Host address of the resource: %s", hostAddress.c_str());
 
-                    std::size_t foundIP =
-                        hostAddress.find(
-                                std::string(m_wifiOnboardingconn.ipAddress));
-
-                    if(resourceURI == ES_PROV_RES_URI && foundIP!=std::string::npos)
-                    {
-                        m_ocResource = resource;
-                        m_discoveryResponse = true;
-
-                        OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                                "Found the device with the resource");
-
-                        return;
-                    }
-                    else
-                    {
-                        OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG, "NOT the intended resource.");
-                    }
+                    /*
+                     * Easysetup is always performed with a single Enrollee device and
+                     * in a private network (SoftAP or BLE), so the assumption is that
+                     * only the intended device will respond for the discovery.
+                     * With the above assumption the below two statements are written.
+                     */
+                    m_ocResource = resource;
+                    m_discoveryResponse = true;
                 }
                 else
                 {

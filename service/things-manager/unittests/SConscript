@@ -69,7 +69,7 @@ ThingsManager_gtest_env.AppendUnique(
                 '../../../extlibs/timer'
         ])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
         ThingsManager_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
         if target_os != 'android':
                 ThingsManager_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
@@ -77,11 +77,12 @@ if target_os not in ['windows', 'winrt']:
 
 ThingsManager_gtest_env.PrependUnique(LIBS = [
     'libTGMSDKLibrary',
-    'oc',
-    'octbstack',
+    'coap',
+    'connectivity_abstraction',
     'oc_logger',
     'oc_logger_core',
-    'connectivity_abstraction',
+    'oc',
+    'octbstack',
     gtest,
     gtest_main])
 

@@ -86,7 +86,7 @@ find $OUTDIR/objs -name "*.o" | xargs rm
 echo "Framework: Copying includes..."
 cp -r  resource/csdk/stack/include/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/c_common/ocrandom/include/*.h  $FRAMEWORK_BUNDLE/Headers
-cp -r  resource/csdk/ocmalloc/include/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/c_common/oic_malloc/include/*.h  $FRAMEWORK_BUNDLE/Headers
 
 echo "Framework: Creating plist..."
 cat > $FRAMEWORK_BUNDLE/Resources/Info.plist <<EOF

@@ -54,9 +54,41 @@ typedef void (*CAAdapterStateChangedCB)(CATransportAdapter_t adapter, bool enabl
 CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
                                            CAConnectionStateChangedCB connStateCB);
 
+/**
+ * Set device to handle for auto connection.
+ * @param[in]   address         LE address to set.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED.
+ */
 CAResult_t CASetAutoConnectionDeviceInfo(const char* address);
 
+/**
+ * Unset device to handle for auto connection.
+ * @param[in]   address         LE address to unset.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED.
+ */
 CAResult_t CAUnsetAutoConnectionDeviceInfo(const char* address);
+
+/**
+ * Set the port number to assign .
+ * @param[in]   adapter     Transport adapter information.
+ * @param[in]   flag        Transport flag information.
+ * @param[in]   port        The port number to use.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED.
+ */
+CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
+                                   CATransportFlags_t flag, uint16_t port);
+
+/**
+ * Get the assigned port number currently.
+ * @param[in]   adapter     Transport adapter information.
+ * @param[in]   flag        Transport flag information.
+ *
+ * @return  assigned port number information.
+ */
+uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag);
 
 #ifdef __ANDROID__
 /**
@@ -103,6 +135,16 @@ CAResult_t CAUtilCreateBond(JNIEnv *env, jobject device);
  * @param[in]  listener         callback listener
  */
 void CAUtilSetFoundDeviceListener(jobject listener);
+
+/**
+ * set interval time and working count for LE scan.
+ * @param[in]  intervalTime         interval time(Seconds).
+ * @param[in]  workingCount         working cycle for selected interval time.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount);
+
 #endif
 
 #ifdef __cplusplus

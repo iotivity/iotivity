@@ -16,10 +16,12 @@
 
 package oic.simulator.clientcontroller.remoteresource;
 
-import oic.simulator.clientcontroller.utils.Constants;
+import java.util.Map;
 
 import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.client.SimulatorRemoteResource;
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
+import org.oic.simulator.client.SimulatorRequestModel;
 
 /**
  * This class represents a remote resource. It maintains all the necessary
@@ -27,24 +29,25 @@ import org.oic.simulator.client.SimulatorRemoteResource;
  */
 public class RemoteResource {
 
-    private boolean                 observed;
+    private boolean                                 observed;
 
     // Native object references
-    private SimulatorRemoteResource remoteResourceRef;
-    private SimulatorResourceModel  resourceModelRef;
-    private ResourceRepresentation  mResourceRepresentation;
+    private SimulatorRemoteResource                 remoteResourceRef;
+    private SimulatorResourceModel                  resourceModelRef;
+    private Map<RequestType, SimulatorRequestModel> requestModels;
+    private ResourceRepresentation                  mResourceRepresentation;
 
-    private boolean                 configUploaded;
+    private boolean                                 configUploaded;
 
-    private boolean                 getAutomtnInProgress;
-    private boolean                 putAutomtnInProgress;
-    private boolean                 postAutomtnInProgress;
+    private boolean                                 getAutomtnInProgress;
+    private boolean                                 putAutomtnInProgress;
+    private boolean                                 postAutomtnInProgress;
 
-    private int                     getAutomtnId;
-    private int                     putAutomtnId;
-    private int                     postAutomtnId;
+    private int                                     getAutomtnId;
+    private int                                     putAutomtnId;
+    private int                                     postAutomtnId;
 
-    private boolean                 isFavorite;
+    private boolean                                 isFavorite;
 
     public SimulatorResourceModel getResourceModelRef() {
         return resourceModelRef;
@@ -52,6 +55,15 @@ public class RemoteResource {
 
     public void setResourceModelRef(SimulatorResourceModel resourceModel) {
         this.resourceModelRef = resourceModel;
+    }
+
+    public Map<RequestType, SimulatorRequestModel> getRequestModels() {
+        return requestModels;
+    }
+
+    public void setRequestModels(
+            Map<RequestType, SimulatorRequestModel> requestModels) {
+        this.requestModels = requestModels;
     }
 
     public int getGetAutomtnId() {
@@ -126,13 +138,13 @@ public class RemoteResource {
         this.observed = observed;
     }
 
-    public int getAutomationtype(int autoId) {
+    public RequestType getAutomationtype(int autoId) {
         if (getAutomtnId == autoId) {
-            return Constants.GET_AUTOMATION_INDEX;
+            return RequestType.GET;
         } else if (putAutomtnId == autoId) {
-            return Constants.PUT_AUTOMATION_INDEX;
+            return RequestType.PUT;
         } else {
-            return Constants.POST_AUTOMATION_INDEX;
+            return RequestType.POST;
         }
     }
 
@@ -154,12 +166,8 @@ public class RemoteResource {
         this.isFavorite = isFavorite;
     }
 
-    public void setResourceRepresentation(SimulatorResourceModel resModel,
-            boolean ramlUploaded) {
-        if (mResourceRepresentation == null)
-            mResourceRepresentation = new ResourceRepresentation(resModel);
-        else
-            mResourceRepresentation.update(resModel, ramlUploaded);
+    public void setResourceRepresentation(SimulatorResourceModel resModel) {
+        mResourceRepresentation = new ResourceRepresentation(resModel);
     }
 
     public ResourceRepresentation getResourceRepresentation() {

@@ -50,20 +50,27 @@
 #define TAG  "provisioningclient"
 
 #define JSON_DB_PATH "./oic_svr_db_client.json"
+#define DAT_DB_PATH "./oic_svr_db_client.dat"
 #define DEV_STATUS_ON "DEV_STATUS_ON"
 #define DEV_STATUS_OFF "DEV_STATUS_OFF"
 
 #define DISCOVERY_TIMEOUT 5
 
+static const OicSecPrm_t  SUPPORTED_PRMS[1] =
+{
+    PRM_PRE_CONFIGURED,
+};
+
 using namespace OC;
 
 DeviceList_t pUnownedDevList, pOwnedDevList;
 static int transferDevIdx, ask = 1;
+static OicSecPconf_t g_pconf;
 
 static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
 {
     (void)UNUSED_PARAM;
-    return fopen(JSON_DB_PATH, mode);
+    return fopen(DAT_DB_PATH, mode);
 }
 
 void printMenu()
@@ -78,8 +85,9 @@ void printMenu()
     std::cout << "   7. Unlink Devices"<<std::endl;
     std::cout << "   8. Remove Device"<<std::endl;
     std::cout << "   9. Get Linked Devices"<<std::endl;
-    std::cout << "   10. Get Device Status"<<std::endl;
-    std::cout << "   11. Exit loop"<<std::endl;
+    std::cout << "  10. Get Device Status"<<std::endl;
+    std::cout << "  11. Provision Direct-Pairing Configuration"<<std::endl;
+    std::cout << "  12. Exit loop"<<std::endl;
 }
 
 void moveTransferredDevice()
@@ -271,9 +279,6 @@ static void deleteACL(OicSecAcl_t *acl)
         }
         OICFree((acl)->resources);
 
-        /* Clean Owners */
-        OICFree((acl)->owners);
-
         /* Clean ACL node itself */
         /* Required only if acl was created in heap */
         OICFree((acl));
@@ -382,6 +387,11 @@ static int InputACL(OicSecAcl_t *acl)
     //Set Resource.
     printf("Num. of Resource : ");
     ret = scanf("%zu", &acl->resourcesLen);
+    if ((1 != ret) || (acl->resourcesLen <= 0 || acl->resourcesLen > 50))
+    {
+        printf("Error while input\n");
+        return -1;
+    }
     printf("-URI of resource\n");
     printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
@@ -425,35 +435,26 @@ static int InputACL(OicSecAcl_t *acl)
     } while (0 != ret );
 
     // Set Rowner
-    printf("Num. of Rowner : ");
-    ret = scanf("%zu", &acl->ownersLen);
     printf("-URN identifying the rowner\n");
     printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
-    acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-    if (NULL == acl->owners)
+
+    printf("Rowner : ");
+    ret = scanf("%19ms", &temp_id);
+    if (1 != ret)
     {
-        OIC_LOG(ERROR, TAG, "Error while memory allocation");
+        printf("Error while input\n");
         return -1;
     }
-    for (size_t i = 0; i < acl->ownersLen; i++)
-    {
-        printf("[%zu]Rowner : ", i + 1);
-        ret = scanf("%19ms", &temp_id);
-        if (1 != ret)
-        {
-            printf("Error while input\n");
-            return -1;
-        }
 
-        for (int k = 0, j = 0; temp_id[k] != '\0'; k++)
+    for (int k = 0, j = 0; temp_id[k] != '\0'; k++)
+    {
+        if (DASH != temp_id[k])
         {
-            if (DASH != temp_id[k])
-            {
-                acl->owners[i].id[j++] = temp_id[k];
-            }
+            acl->rownerID.id[j++] = temp_id[k];
         }
-        OICFree(temp_id);
     }
+    OICFree(temp_id);
+
     return 0;
 }
 
@@ -508,6 +509,196 @@ static int InputCredentials(Credential &cred)
    }
 
    return 0;
+}
+
+static void deletePconf()
+{
+    OICFree(g_pconf.prm);
+    //free pdacl
+    OicSecPdAcl_t* acl = g_pconf.pdacls;
+    if (acl)
+    {
+        /* Clean Resources */
+        for (unsigned int i = 0; i < (acl)->resourcesLen; i++)
+        {
+            OICFree((acl)->resources[i]);
+        }
+        OICFree((acl)->resources);
+
+        /* Clean ACL node itself */
+        /* Required only if acl was created in heap */
+        OICFree((acl));
+    }
+    memset(&g_pconf, 0, sizeof(OicSecPconf_t));
+}
+
+static OicSecPdAcl_t* InputPdACL()
+{
+    int ret;
+    char *temp_rsc, *temp_pms;
+
+    printf("******************************************************************************\n");
+    printf("-Set ACL policy for target DP device\n");
+    printf("******************************************************************************\n");
+
+    OicSecPdAcl_t *acl = (OicSecPdAcl_t *)OICCalloc(1,sizeof(OicSecPdAcl_t));
+    if (NULL == acl)
+    {
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
+        return NULL;
+    }
+
+    //Set Resource.
+    printf("Num. of Resource : ");
+    ret = scanf("%zu", &acl->resourcesLen);
+    if ((1 != ret) || (acl->resourcesLen <= 0 || acl->resourcesLen > 50))
+    {
+        printf("Error while input\n");
+        OICFree(acl);
+        return NULL;
+    }
+    printf("-URI of resource\n");
+    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
+    acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
+    if (NULL == acl->resources)
+    {
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
+        OICFree(acl);
+        return NULL;
+    }
+    for (size_t i = 0; i < acl->resourcesLen; i++)
+    {
+        printf("[%zu]Resource : ", i + 1);
+        ret = scanf("%64ms", &temp_rsc);
+        if (1 != ret)
+        {
+            printf("Error while input\n");
+            OICFree(acl->resources);
+            OICFree(acl);
+            return NULL;
+        }
+
+        acl->resources[i] = OICStrdup(temp_rsc);
+        OICFree(temp_rsc);
+        if (NULL == acl->resources[i])
+        {
+            OIC_LOG(ERROR, TAG, "Error while memory allocation");
+            OICFree(acl->resources);
+            OICFree(acl);
+            return NULL;
+        }
+    }
+
+    // Set Permission
+    do
+    {
+        printf("-Set the permission(C,R,U,D,N)\n");
+        printf("ex) CRUDN, CRU_N,..(5 Charaters)\n");
+        printf("Permission : ");
+        ret = scanf("%5ms", &temp_pms);
+        if (1 != ret)
+        {
+            printf("Error while input\n");
+            OICFree(acl->resources);
+            OICFree(acl);
+            return NULL;
+        }
+        ret = CalculateAclPermission(temp_pms, &(acl->permission));
+        OICFree(temp_pms);
+    } while (0 != ret );
+
+    return acl;
+}
+
+void provisionDirectPairingCB(PMResultList_t *result, int hasError)
+{
+    if (hasError)
+    {
+        std::cout << "Error in provisioning operation!"<<std::endl;
+    }
+    else
+    {
+        std::cout<< "\nReceived provisioning results: Direct Pairing is successful ";
+        for (unsigned int i = 0; i < result->size(); i++)
+        {
+            std::cout << "Result is = " << result->at(i).res <<" for device ";
+            printUuid(result->at(i).deviceId);
+        }
+
+        delete result;
+    }
+    deletePconf();
+    printMenu();
+    ask = 1;
+}
+
+static void provisionDP(int dev_num)
+{
+    OCStackResult rst;
+    std::string pin("");
+
+    // set enable dp
+    g_pconf.edp = true;
+
+    // set default supported PRM types
+    g_pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
+    g_pconf.prm = (OicSecPrm_t *)OICCalloc(g_pconf.prmLen, sizeof(OicSecPrm_t));
+    if(g_pconf.prm)
+    {
+        for (size_t i=0; i < g_pconf.prmLen; i++)
+        {
+            g_pconf.prm[i] = SUPPORTED_PRMS[i];
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "create prm error return");
+        goto PVDP_ERROR;
+    }
+
+    std::cout << "Enter PIN to be configured: ";
+    while (1)
+    {
+        std::cin >> pin;
+        if (pin.length() == DP_PIN_LENGTH)
+        {
+            break;
+        }
+        else
+        {
+            std::cout << "PIN length should be 8, Enter again: ";
+        }
+    }
+
+    memcpy(g_pconf.pin.val, pin.c_str(), DP_PIN_LENGTH);
+
+    // set default pdacl
+
+    g_pconf.pdacls = InputPdACL();
+    if(!g_pconf.pdacls)
+    {
+        OIC_LOG(ERROR, TAG, "InputPdACL error return");
+        goto PVDP_ERROR;
+    }
+
+    // call |OCProvisionDirectPairing| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    rst = pOwnedDevList[dev_num-1]->provisionDirectPairing(&g_pconf, provisionDirectPairingCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionDirectPairing API error: %d", rst);
+        if (OC_STACK_UNAUTHORIZED_REQ == rst)
+        {
+            OIC_LOG(ERROR, TAG, "Target Server NOT Support Direct-Pairing !!! (DPC == false)");
+        }
+        goto PVDP_ERROR;
+    }
+    return;
+
+PVDP_ERROR:
+    deletePconf();  // after here |acl| points nothing
+    ask = 1;
 }
 
 int main(void)
@@ -649,7 +840,7 @@ int main(void)
                             OTMCallbackData_t pinBasedCBData;
                             pinBasedCBData.loadSecretCB = InputPinCodeCallback;
                             pinBasedCBData.createSecureSessionCB =
-                                CreateSecureSessionRandomPinCallbak;
+                                CreateSecureSessionRandomPinCallback;
                             pinBasedCBData.createSelectOxmPayloadCB =
                                 CreatePinBasedSelectOxmPayload;
                             pinBasedCBData.createOwnerTransferPayloadCB =
@@ -896,6 +1087,36 @@ int main(void)
                     }
 
                 case 11:
+                    {
+                        unsigned int devNum;
+
+                        if (!pOwnedDevList.size())
+                        {
+                            std::cout <<"There are no Owned devices yet,"
+                                " may need to discover"<<std::endl;
+                            break;
+                        }
+
+                        for (unsigned int i = 0; i < pOwnedDevList.size(); i++ )
+                        {
+                            std::cout << i+1 << ": "<< pOwnedDevList[i]->getDeviceID() <<" From IP:";
+                            std::cout << pOwnedDevList[i]->getDevAddr() <<std::endl;
+                        }
+
+                        std::cout <<"Select device number: "<<std::endl;
+                        std::cin >> devNum;
+                        if (devNum > pOwnedDevList.size())
+                        {
+                            std::cout <<"Invalid device number"<<std::endl;
+                            break;
+                        }
+
+                        ask = 0;
+                        provisionDP(devNum);
+
+                        break;
+                    }
+                case 12:
                 default:
                     out = 1;
                     break;

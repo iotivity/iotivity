@@ -87,16 +87,6 @@ public class RcsBundleInfo {
     }
 
     /**
-     * API for getting the library path for the bundle
-     *
-     * @return string - Library path in string form
-     *
-     */
-    public String getLibraryPath() {
-        return mLibraryPath;
-    }
-
-    /**
      * API for getting the version of the bundle
      *
      * @return string - version of the bundle

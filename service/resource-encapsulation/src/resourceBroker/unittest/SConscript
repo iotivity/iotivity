@@ -61,9 +61,18 @@ broker_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
 broker_test_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
 broker_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-broker_test_env.PrependUnique(LIBS = ['rcs_client','rcs_common', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', gtest, gtest_main])
 
-if target_os not in ['windows', 'winrt']:
+broker_test_env.PrependUnique(LIBS = ['coap'])
+broker_test_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+broker_test_env.AppendUnique(LIBS = ['oc_logger'])
+broker_test_env.AppendUnique(LIBS = ['octbstack'])
+broker_test_env.AppendUnique(LIBS = ['oc'])
+broker_test_env.AppendUnique(LIBS = ['rcs_client'])
+broker_test_env.AppendUnique(LIBS = ['rcs_common'])
+broker_test_env.AppendUnique(LIBS = [gtest])
+broker_test_env.AppendUnique(LIBS = [gtest_main])
+
+if target_os not in ['windows']:
     broker_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':

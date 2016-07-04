@@ -37,6 +37,7 @@
 #include "OCResourceRequest.h"
 #include "OCResourceResponse.h"
 #include "OCRepresentation.h"
+#include "OCDirectPairing.h"
 
 #include "oc_logger.hpp"
 
@@ -78,6 +79,14 @@ namespace OC
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler,
                     QualityOfService QoS);
+
+        OCStackResult findResource(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindCallback resourceHandler,
+                    FindErrorCallback errorHandler);
+
+        OCStackResult findResource(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindCallback resourceHandler,
+                    FindErrorCallback errorHandler, QualityOfService QoS);
 
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
@@ -223,6 +232,15 @@ namespace OC
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
 
         std::weak_ptr<std::recursive_mutex> csdkLock();
+
+        OCStackResult findDirectPairingDevices(unsigned short waittime,
+                                         GetDirectPairedCallback callback);
+
+        OCStackResult getDirectPairedDevices(GetDirectPairedCallback callback);
+
+        OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
+                                         const std::string& pinNumber,
+                                         DirectPairingCallback resultCallback);
 
     private:
         PlatformConfig m_cfg;

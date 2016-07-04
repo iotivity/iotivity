@@ -19,7 +19,6 @@
 #include "recv.h"
 
 #include "caremotehandler.h"
-#include "cafragmentation.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 

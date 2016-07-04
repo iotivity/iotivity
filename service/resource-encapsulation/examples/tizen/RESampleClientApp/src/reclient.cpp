@@ -538,27 +538,69 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
     const char *attributeString = elm_entry_entry_get(entry);
     // Remove white spaces(if any) at the beginning
     int beginning = 0;
+    int negative = 0;
+    int invalidFlag = 0;
+
     while (attributeString[beginning] == ' ')
     {
         (beginning)++;
     }
 
     int len = strlen(attributeString);
-    if (NULL == attributeString || 1 > len)
+
+    if((len >= 1) && ( '-' == attributeString[0]))
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL attribute Value");
-        string logMessage = g_attributeKey + " Cannot be NULL<br>";
+        negative = 1;
+    }
+
+    if(((len > 3) && negative) || (len > 2 && (!negative)) || (len==1 && negative))
+    {
+        invalidFlag = 1;
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Not in allowed Range [-99 to 99]");
+        string logMessage = g_attributeKey + " Not in allowed Range [-99 to 99]<br>";
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
-        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
+                                                            &logMessage);
     }
     else
+    {
+        if (NULL == attributeString || 1 > len)
+        {
+            invalidFlag = 1;
+            dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL attribute Value");
+            string logMessage = g_attributeKey + " Cannot be NULL<br>";
+            logMessage += "----------------------<br>";
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+            ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
+                                                             &logMessage);
+        }
+        else
+        {
+            int i = 0;
+            while(i < len)
+            {
+                if(attributeString[i] < '0' || attributeString[i] > '9')
+                {
+                    invalidFlag = 1;
+                    dlog_print(DLOG_INFO, LOG_TAG, "#### Read invalid attribute Value");
+                    string logMessage = g_attributeKey + " Invalid charaters in input<br>";
+                    logMessage += "----------------------<br>";
+                    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+                    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
+                                                              &logMessage);
+                }
+                i++;
+            }
+        }
+    }
+
+    if(invalidFlag != 1)
     {
         int attributeValue = atoi(attributeString);
         string attrString(attributeString);
         setAttributeToRemoteServer(attributeValue);
         dlog_print(DLOG_INFO, LOG_TAG, "#### Attribute to set : %d", attributeValue);
-
         string logMessage = g_attributeKey + " to set : " + attrString + "<br>";
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());

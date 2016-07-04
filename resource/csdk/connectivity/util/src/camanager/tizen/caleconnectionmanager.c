@@ -24,6 +24,7 @@
 
 #include "camanagerleinterface.h"
 #include "cacommon.h"
+#include "camessagehandler.h"
 #include "caleserver.h"
 #include "cagattservice.h"
 #include "logger.h"

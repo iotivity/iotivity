@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2016 Samsung Electronics All Rights Reserved.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.ciserver.resources;
 
@@ -69,13 +69,20 @@ public class KeepAliveResource extends Resource {
         this.sessionManager = sessionManager;
         connectPool = new HashMap<ChannelHandlerContext, Long>();
         timer = new Timer();
-        timer.schedule(new KeepAliveTask(), 30000, 60000);
         cbor = new Cbor<HashMap<String, Integer>>();
+    }
+
+    public void startSessionChecker() {
+        timer.schedule(new KeepAliveTask(), 30000, 60000);
+    }
+
+    public void stopSessionChecker() {
+        timer.cancel();
     }
 
     /**
      * API for receiving message(message to keepalive resource)
-     * 
+     *
      * @param ctx
      *            ChannelHandlerContext of request message
      * @param request
@@ -100,14 +107,17 @@ public class KeepAliveResource extends Resource {
             case PUT:
                 HashMap<String, Integer> payloadData = null;
                 payloadData = cbor.parsePayloadFromCbor(request.getPayload(),
-                        new HashMap<String, Integer>().getClass());
+                        HashMap.class);
 
                 Logger.d("Receive payloadData : " + payloadData);
-                Logger.d("interval : " + payloadData.get("in"));
+                if (payloadData != null) {
+                    if (payloadData.containsKey("in")) {
+                        Logger.d("interval : " + payloadData.get("in"));
 
-                connectPool.put(ctx, System.currentTimeMillis()
-                        + (payloadData.get("in") * (long) 60000));
-
+                        connectPool.put(ctx, System.currentTimeMillis()
+                                + (payloadData.get("in") * (long) 60000));
+                    }
+                }
                 response = makeResponse(request);
                 break;
 
@@ -123,7 +133,7 @@ public class KeepAliveResource extends Resource {
 
     /**
      * API for making response to Resource
-     * 
+     *
      * @param request
      *            ChannelHandlerContext of request message
      */
@@ -136,7 +146,7 @@ public class KeepAliveResource extends Resource {
 
     /**
      * API for making interval and first response to Resource
-     * 
+     *
      * @param request
      *            ChannelHandlerContext of request message
      */
@@ -174,12 +184,18 @@ public class KeepAliveResource extends Resource {
                 // check interval
                 while (iterator.hasNext()) {
                     ChannelHandlerContext key = iterator.next();
-                    Long lifeTime = (Long) map.get(key);
-                    Logger.d("KeepAliveTask Operating : "
-                            + key.channel().toString() + ", Time : "
-                            + (lifeTime - currentTime));
-                    if (lifeTime < currentTime) {
-                        deleteList.add(key);
+                    if (map.containsKey(key)) {
+                        if (map.get(key) != null) {
+                            Long lifeTime = (Long) map.get(key);
+                            if (lifeTime != null) {
+                                Logger.d("KeepAliveTask Operating : "
+                                        + key.channel().toString() + ", Time : "
+                                        + (lifeTime - currentTime));
+                                if (lifeTime < currentTime) {
+                                    deleteList.add(key);
+                                }
+                            }
+                        }
                     }
                 }
 

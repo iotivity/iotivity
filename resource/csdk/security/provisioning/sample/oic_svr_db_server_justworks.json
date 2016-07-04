@@ -1,46 +1,128 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/res/d",
-                "/oic/res/types/d",
-                "/oic/presence"
-			],
-			"perms": 2,
-			"ownrs" : [
-				"anVzdHdvcmtzRGV2VVVJRA=="
-			]
-		},
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/doxm",
-                "/oic/sec/pstat",
-                "/oic/sec/acl",
-                "/oic/sec/cred"
-             ],
-             "perms": 6,
-             "ownrs" : [
-                 "anVzdHdvcmtzRGV2VVVJRA=="
-             ]
-        }
-	],
-	"pstat":	{
-		"isop":	false,
-		"deviceid":	"anVzdHdvcmtzRGV2VVVJRA==",
-		"commithash": 0,
-		"cm":	0,
-		"tm":	0,
-		"om":	3,
-		"sm":	[3]
-	},
-	"doxm":	{
-		"oxm":	[0],
-		"oxmsel": 0,
-		"sct": 1,
-		"owned": false,
-		"deviceid":	"anVzdHdvcmtzRGV2VVVJRA=="
-	}
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },{
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },{
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/types/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/presence",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/cred",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 6
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/pconf",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/dpairing",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 6
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/ver",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        }
+                    ],
+                    "permission": 2
+                }
+            ]
+        },
+        "rowneruuid" : "6A757374-776F-726B-4465-765575696430"
+    },
+    "pstat": {
+        "isop": false,
+        "deviceuuid": "6A757374-776F-726B-4465-765575696430",
+        "rowneruuid": "6A757374-776F-726B-4465-765575696430",
+        "cm": 2,
+        "tm": 0,
+        "om": 3,
+        "sm": 3
+        },
+    "doxm": {
+        "oxms": [0],
+        "oxmsel": 0,
+        "sct": 1,
+        "owned": false,
+        "deviceuuid": "6A757374-776F-726B-4465-765575696430",
+        "devowneruuid": "",
+        "rowneruuid": "6A757374-776F-726B-4465-765575696430",
+        "dpc": true
+    }
 }

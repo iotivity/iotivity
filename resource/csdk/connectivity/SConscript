@@ -35,6 +35,8 @@ if 'ALL' in transport:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER', 'NFC_ADAPTER'])
 	elif target_os in['darwin','ios']:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
+	elif target_os in ['msys_nt', 'windows']:
+		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
 	else:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 	print "CA Transport is ALL"
@@ -62,7 +64,7 @@ else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
 
 	if with_tcp == True:
-		if target_os in ['linux', 'tizen', 'android']:
+		if target_os in ['linux', 'tizen', 'android', 'arduino']:
 			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER', 'WITH_TCP'])
 			print "CA Transport is TCP"
 		else:
@@ -82,19 +84,3 @@ else:
 		env.AppendUnique(CPPDEFINES = ['NO_NFC_ADAPTER'])
 
 env.SConscript('./src/SConscript')
-
-if build_sample == 'ON':
-	if target_os in ['linux', 'arduino', 'darwin']:
-		target_path = target_os
-
-		if target_os == 'darwin':
-			target_path = 'linux'
-		env.SConscript('./samples/' + target_path + '/SConscript')
-
-	elif target_os in ['android']:
-		env.SConscript('./samples/' + target_os + '/SConscript')
-
-		#to build sample apk, uncomment below line after ca libraries are built
-		#while building ca libraries comment the below line, to avoid build errors
-
-		#env.SConscript('./samples/' + target_os + '/casample/SConscript')

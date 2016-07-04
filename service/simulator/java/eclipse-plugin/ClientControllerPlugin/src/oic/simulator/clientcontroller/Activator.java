@@ -16,12 +16,12 @@
 
 package oic.simulator.clientcontroller;
 
+import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.osgi.framework.BundleContext;
+
 import oic.simulator.clientcontroller.manager.ImageManager;
 import oic.simulator.clientcontroller.manager.LogManager;
 import oic.simulator.clientcontroller.manager.ResourceManager;
-
-import org.eclipse.ui.plugin.AbstractUIPlugin;
-import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle.
@@ -39,10 +39,6 @@ public class Activator extends AbstractUIPlugin {
     private static LogManager      logManager;
 
     private static ImageManager    imageManager;
-
-    static {
-        System.loadLibrary("SimulatorManager");
-    }
 
     public Activator() {
     }

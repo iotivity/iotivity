@@ -55,36 +55,61 @@ static void printRecur(IotvtICalRecur_t *recur)
     OIC_LOG_V(INFO, TAG, "recur->until.tm_mon = %d", recur->until.tm_mon);
     OIC_LOG_V(INFO, TAG, "recur->until.tm_mday = %d", recur->until.tm_mday);
 
-    if(recur->byDay & SUNDAY)
+    if(0 != (recur->byDay & SUNDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Sunday");
     }
-    if(recur->byDay & MONDAY)
+    if(0 != (recur->byDay & MONDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Monday");
     }
-    if(recur->byDay & TUESDAY)
+    if(0 != (recur->byDay & TUESDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Tuesday");
     }
-    if(recur->byDay & WEDNESDAY)
+    if(0 != (recur->byDay & WEDNESDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Wednesday");
     }
-    if(recur->byDay & THURSDAY)
+    if(0 != (recur->byDay & THURSDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Thursday");
     }
-    if(recur->byDay & FRIDAY)
+    if(0 != (recur->byDay & FRIDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Friday");
     }
-    if(recur->byDay & SATURDAY)
+    if(0 != (recur->byDay & SATURDAY))
     {
         OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Saturday");
     }
 }
 
+#ifndef HAVE_LOCALTIME_R
+
+#define localtime_r localtime_r_compat
+
+/**
+ * @description An implementation of `localtime_r` for systems which only
+ * have a `localtime` implementation.
+ */
+static tm* localtime_r_compat(const time_t* timer, tm* result)
+{
+    if (NULL == result)
+    {
+        OIC_LOG(ERROR, TAG, "localtime_r received null results parameter");
+    }
+
+    if (NULL == timer)
+    {
+        OIC_LOG(WARNING, TAG, "localtime_r received null timer parameter");
+    }
+
+    tm* tempPtr = localtime(timer);
+    memcpy(result, tempPtr, sizeof(tm));
+    return result;
+}
+#endif
 
 static void checkValidityOfRequest(char *recurStr, char *periodStr,int startTime, int endTime,
                                     int byDay)

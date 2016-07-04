@@ -35,7 +35,7 @@ src_dir = env.get('SRC_DIR')
 if target_os == 'linux':
 	print '*** Checking for installation of hippomocks ***'
 
-	hippomocks_sha      = '2f40aa11e31499432283b67f9d3449a3cd7b9c4d'
+	hippomocks_sha      = '8e210c5808d490b26fff69151c801fa28d291fcb'
 	hippomocks_dir_src  = src_dir + '/extlibs/hippomocks-' + hippomocks_sha
 	hippomocks_dir_dest = src_dir + '/extlibs/hippomocks-master'
 	hippomocks_zip_file = src_dir + '/extlibs/hippomocks-' + hippomocks_sha + '.zip'

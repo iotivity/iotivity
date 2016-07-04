@@ -27,6 +27,9 @@
 #include <map>
 #include <memory>
 #include <iterator>
+#if defined(_MSC_VER)
+#include <functional>
+#endif
 
 #include "octypes.h"
 #include "OCHeaderOption.h"
@@ -41,10 +44,14 @@ namespace OC
     class OCResource;
     class OCResourceRequest;
     class OCResourceResponse;
+    class OCDirectPairing;
 } // namespace OC
 
 namespace OC
 {
+#if defined(_MSC_VER)
+    extern std::ostream& oclog();
+#else
     typedef boost::iostreams::stream<OC::oc_log_stream>     log_target_t;
 
     namespace detail
@@ -65,7 +72,7 @@ namespace OC
     {
         return detail::oclog_target();
     };
-
+#endif
 } // namespace OC
 
 namespace OC
@@ -249,8 +256,12 @@ namespace OC
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
     const std::string GROUP_INTERFACE = "oic.mi.grp";
 
+    //Typedef for list direct paired devices
+    typedef std::vector<std::shared_ptr<OCDirectPairing>> PairedDevices;
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
+
+    typedef std::function<void(const std::string&, const int)> FindErrorCallback;
 
     typedef std::function<void(const OCRepresentation&)> FindDeviceCallback;
 
@@ -275,6 +286,11 @@ namespace OC
 
     typedef std::function<void(const HeaderOptions&,
                                 const OCRepresentation&, const int, const int)> ObserveCallback;
+
+    typedef std::function<void(std::shared_ptr<OCDirectPairing>, OCStackResult)> DirectPairingCallback;
+
+    typedef std::function<void(const PairedDevices&)> GetDirectPairedCallback;
+
 } // namespace OC
 
 #endif

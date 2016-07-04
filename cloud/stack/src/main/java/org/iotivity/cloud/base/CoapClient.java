@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2016 Samsung Electronics All Rights Reserved.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.base;
 
@@ -28,6 +28,7 @@ import java.util.List;
 import org.iotivity.cloud.base.protocols.coap.CoapDecoder;
 import org.iotivity.cloud.base.protocols.coap.CoapEncoder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
+import org.iotivity.cloud.util.Logger;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -69,7 +70,9 @@ public class CoapClient {
         }
     }
 
-    private ChannelFuture channelFuture;
+    ChannelFuture channelFuture;
+
+    EventLoopGroup connectorGroup = new NioEventLoopGroup();
 
     CoAPClientInitializer initializer = new CoAPClientInitializer();
 
@@ -79,15 +82,10 @@ public class CoapClient {
 
     public void startClient(final InetSocketAddress inetSocketAddress)
             throws InterruptedException {
-        // Create bootstrap
-
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
-        // bossGroup = new
-        // EpollEventLoopGroup(Runtime.getRuntime().availableProcessors() * 2);
-
+                
         try {
             Bootstrap b = new Bootstrap();
-            b.group(bossGroup);
+            b.group(connectorGroup);
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.TCP_NODELAY, true);
             b.option(ChannelOption.SO_KEEPALIVE, true);
@@ -102,7 +100,7 @@ public class CoapClient {
                         @Override
                         public void operationComplete(ChannelFuture future)
                                 throws Exception {
-                            System.out.println(
+                            Logger.d(
                                     "Connection status of TCP CoAP CLIENT  : "
                                             + future.isSuccess());
                         }
@@ -119,26 +117,7 @@ public class CoapClient {
         channelFuture.channel().writeAndFlush(request);
     }
 
-    /**
-     * stop connection
-     */
-    public void stopClient() {
-
-        try {
-            if (channelFuture != null) {
-                channelFuture.channel().disconnect().sync().addListener(
-                        new GenericFutureListener<ChannelFuture>() {
-
-                            public void operationComplete(ChannelFuture future)
-                                    throws Exception {
-                                System.out.println(
-                                        "DisConnection status of TCP CoAP CLIENT : "
-                                                + future.isSuccess());
-                            }
-                        });
-            }
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
+    public void stopClient() throws Exception {
+        connectorGroup.shutdownGracefully().await();
     }
 }

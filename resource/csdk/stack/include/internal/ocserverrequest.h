@@ -252,7 +252,8 @@ OCStackResult FormOCEntityHandlerRequest(
         uint8_t numVendorOptions,
         OCHeaderOption * vendorOptions,
         OCObserveAction observeAction,
-        OCObservationId observeID);
+        OCObservationId observeID,
+        uint16_t messageID);
 
 /**
  * Find a server request in the server request list and delete

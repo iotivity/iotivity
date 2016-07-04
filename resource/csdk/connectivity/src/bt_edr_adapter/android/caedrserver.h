@@ -50,29 +50,17 @@ void CAEDRServerJniInit();
 CAResult_t CAEDRServerStartAcceptThread();
 
 /**
- * Start unicast server.
+ * Start receive thread.
  * @param[in]   isSecured       unicast server type.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStartUnicastServer(bool isSecured);
+CAResult_t CAEDRStartReceiveThread(bool isSecured);
 
 /**
- * Start multicast server.
+ * Stop receive thread.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStartMulticastServer();
-
-/**
- * Stop unicast server.
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAEDRStopUnicastServer();
-
-/**
- * Stop multicast server.
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAEDRStopMulticastServer();
+CAResult_t CAEDRStopReceiveThread();
 
 /**
  * This function will read the data from remote device.
@@ -94,14 +82,6 @@ void CANativeStartListenTask(JNIEnv *env);
  * @return server socket object or NULL.
  */
 jobject CAEDRNativeListen(JNIEnv *env);
-
-/**
- * This function will listen the connection from remote device.
- * @param[in]  env              JNI interface pointer.
- * @param[in]  socket           server socket object.
- * @return JNI_TRUE or JNI_FALSE.
- */
-jboolean CAEDRIsConnectedForSocket(JNIEnv *env, jobject socket);
 
 /**
  * This function will accept the connection from remote device.

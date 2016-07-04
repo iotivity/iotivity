@@ -18,19 +18,19 @@
  *
  ******************************************************************/
 
-#ifndef GET_REQUEST_GEN_H_
-#define GET_REQUEST_GEN_H_
+#ifndef SIMULATOR_GET_REQUEST_GEN_H_
+#define SIMULATOR_GET_REQUEST_GEN_H_
 
-#include "auto_request_gen.h"
+#include "request_generation.h"
 #include "query_param_generator.h"
+#include "request_sender.h"
 
-class GETRequestGenerator : public AutoRequestGeneration
+class RequestModel;
+class GETRequestGenerator : public RequestGeneration
 {
     public:
-        GETRequestGenerator(int id, RequestSenderSP &requestSender, ProgressStateCallback callback);
-
-        GETRequestGenerator(int id, RequestSenderSP &requestSender,
-                            const std::map<std::string, std::vector<std::string>> &queryParams,
+        GETRequestGenerator(int id, const std::shared_ptr<OC::OCResource> &ocResource,
+                            const std::shared_ptr<RequestModel> &requestSchema,
                             ProgressStateCallback callback);
 
         void startSending();
@@ -38,14 +38,14 @@ class GETRequestGenerator : public AutoRequestGeneration
 
     private:
         void SendAllRequests();
-        void onResponseReceived(SimulatorResult result, SimulatorResourceModelSP repModel);
+        void onResponseReceived(SimulatorResult result,
+                                const SimulatorResourceModel &repModel, const RequestInfo &reqInfo);
         void completed();
 
-        QPGenerator m_queryParamGen;
-        std::mutex m_statusLock;
-        bool m_status;
         bool m_stopRequested;
-        std::shared_ptr<std::thread> m_thread;
+        std::unique_ptr<std::thread> m_thread;
+        std::shared_ptr<RequestModel> m_requestSchema;
+        GETRequestSender m_requestSender;
 };
 
 typedef std::shared_ptr<GETRequestGenerator> GETRequestGeneratorSP;

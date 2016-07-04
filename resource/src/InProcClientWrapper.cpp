@@ -37,7 +37,7 @@ namespace OC
         // if the config type is server, we ought to never get called.  If the config type
         // is both, we count on the server to run the thread and do the initialize
 
-        if(m_cfg.mode == ModeType::Client)
+        if (m_cfg.mode == ModeType::Client)
         {
             OCTransportFlags serverFlags =
                             static_cast<OCTransportFlags>(m_cfg.serverConnectivity & CT_MASK_FLAGS);
@@ -45,7 +45,7 @@ namespace OC
                             static_cast<OCTransportFlags>(m_cfg.clientConnectivity & CT_MASK_FLAGS);
             OCStackResult result = OCInit1(OC_CLIENT, serverFlags, clientFlags);
 
-            if(OC_STACK_OK != result)
+            if (OC_STACK_OK != result)
             {
                 throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
             }
@@ -57,7 +57,7 @@ namespace OC
 
     InProcClientWrapper::~InProcClientWrapper()
     {
-        if(m_threadRun && m_listeningThread.joinable())
+        if (m_threadRun && m_listeningThread.joinable())
         {
             m_threadRun = false;
             m_listeningThread.join();
@@ -65,7 +65,7 @@ namespace OC
 
         // only stop if we are the ones who actually called 'init'.  We are counting
         // on the server to do the stop.
-        if(m_cfg.mode == ModeType::Client)
+        if (m_cfg.mode == ModeType::Client)
         {
             OCStop();
         }
@@ -77,7 +77,7 @@ namespace OC
         {
             OCStackResult result;
             auto cLock = m_csdkLock.lock();
-            if(cLock)
+            if (cLock)
             {
                 std::lock_guard<std::recursive_mutex> lock(*cLock);
                 result = OCProcess();
@@ -87,7 +87,7 @@ namespace OC
                 result = OC_STACK_ERROR;
             }
 
-            if(result != OC_STACK_OK)
+            if (result != OC_STACK_OK)
             {
                 // TODO: do something with result if failed?
             }
@@ -99,7 +99,7 @@ namespace OC
 
     OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
-        if(clientResponse->payload == nullptr ||
+        if (clientResponse->payload == nullptr ||
                 (
                     clientResponse->payload->type != PAYLOAD_TYPE_DEVICE &&
                     clientResponse->payload->type != PAYLOAD_TYPE_PLATFORM &&
@@ -116,7 +116,7 @@ namespace OC
         //OCPayloadDestroy(clientResponse->payload);
 
         std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
-        if(it == oc.representations().end())
+        if (it == oc.representations().end())
         {
             return OCRepresentation();
         }
@@ -140,7 +140,7 @@ namespace OC
         ClientCallbackContext::ListenContext* context =
             static_cast<ClientCallbackContext::ListenContext*>(ctx);
 
-        if(clientResponse->result != OC_STACK_OK)
+        if (clientResponse->result != OC_STACK_OK)
         {
             oclog() << "listenCallback(): failed to create resource. clientResponse: "
                     << clientResponse->result
@@ -149,7 +149,7 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
-        if(!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+        if (!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
         {
             oclog() << "listenCallback(): clientResponse payload was null or the wrong type"
                 << std::flush;
@@ -158,24 +158,81 @@ namespace OC
 
         auto clientWrapper = context->clientWrapper.lock();
 
-        if(!clientWrapper)
+        if (!clientWrapper)
         {
             oclog() << "listenCallback(): failed to get a shared_ptr to the client wrapper"
                     << std::flush;
             return OC_STACK_KEEP_TRANSACTION;
         }
 
-        ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
-        // loop to ensure valid construction of all resources
-        for(auto resource : container.Resources())
-        {
-            std::thread exec(context->callback, resource);
-            exec.detach();
+        try{
+            ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                    reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+            // loop to ensure valid construction of all resources
+            for(auto resource : container.Resources())
+            {
+                std::thread exec(context->callback, resource);
+                exec.detach();
+            }
+        }
+        catch (std::exception &e){
+            oclog() << "Exception in listCallback, ignoring response: "
+                    << e.what() << std::flush;
         }
 
 
         return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OCStackApplicationResult listenErrorCallback(void* ctx, OCDoHandle /*handle*/,
+        OCClientResponse* clientResponse)
+    {
+        if (!ctx || !clientResponse)
+        {
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        ClientCallbackContext::ListenErrorContext* context =
+            static_cast<ClientCallbackContext::ListenErrorContext*>(ctx);
+        if (!context)
+        {
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        OCStackResult result = clientResponse->result;
+        if (result == OC_STACK_OK)
+        {
+            if (!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+            {
+                oclog() << "listenCallback(): clientResponse payload was null or the wrong type"
+                    << std::flush;
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+
+            auto clientWrapper = context->clientWrapper.lock();
+
+            if (!clientWrapper)
+            {
+                oclog() << "listenCallback(): failed to get a shared_ptr to the client wrapper"
+                        << std::flush;
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+
+            ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                        reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+            // loop to ensure valid construction of all resources
+            for (auto resource : container.Resources())
+            {
+                std::thread exec(context->callback, resource);
+                exec.detach();
+            }
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        std::string resourceURI = clientResponse->resourceUri;
+        std::thread exec(context->errorCallback, resourceURI, result);
+        exec.detach();
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(
@@ -184,7 +241,7 @@ namespace OC
             OCConnectivityType connectivityType,
             FindCallback& callback, QualityOfService QoS)
     {
-        if(!callback)
+        if (!callback)
         {
             return OC_STACK_INVALID_PARAM;
         }
@@ -195,14 +252,62 @@ namespace OC
 
         ClientCallbackContext::ListenContext* context =
             new ClientCallbackContext::ListenContext(callback, shared_from_this());
-        OCCallbackData cbdata(
-                static_cast<void*>(context),
-                listenCallback,
-                [](void* c){delete static_cast<ClientCallbackContext::ListenContext*>(c);}
-            );
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(context),
+        cbdata.cb      = listenCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::ListenContext*)c;};
 
         auto cLock = m_csdkLock.lock();
-        if(cLock)
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDoResource(nullptr, OC_REST_DISCOVER,
+                                  resourceUri.str().c_str(),
+                                  nullptr, nullptr, connectivityType,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  nullptr, 0);
+        }
+        else
+        {
+            delete context;
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult InProcClientWrapper::ListenErrorForResource(
+            const std::string& serviceUrl,
+            const std::string& resourceType,
+            OCConnectivityType connectivityType,
+            FindCallback& callback, FindErrorCallback& errorCallback,
+            QualityOfService QoS)
+    {
+        if (!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        ostringstream resourceUri;
+        resourceUri << serviceUrl << resourceType;
+
+        ClientCallbackContext::ListenErrorContext* context =
+            new ClientCallbackContext::ListenErrorContext(callback, errorCallback,
+                                                          shared_from_this());
+        if (!context)
+        {
+            return OC_STACK_ERROR;
+        }
+
+        OCCallbackData cbdata(
+                static_cast<void*>(context),
+                listenErrorCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::ListenErrorContext*>(c);}
+            );
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(nullptr, OC_REST_DISCOVER,
@@ -249,7 +354,7 @@ namespace OC
             FindDeviceCallback& callback,
             QualityOfService QoS)
     {
-        if(!callback)
+        if (!callback)
         {
             return OC_STACK_INVALID_PARAM;
         }
@@ -259,14 +364,14 @@ namespace OC
 
         ClientCallbackContext::DeviceListenContext* context =
             new ClientCallbackContext::DeviceListenContext(callback, shared_from_this());
-        OCCallbackData cbdata(
-                static_cast<void*>(context),
-                listenDeviceCallback,
-                [](void* c){delete static_cast<ClientCallbackContext::DeviceListenContext*>(c);}
-                );
+        OCCallbackData cbdata;
+
+        cbdata.context = static_cast<void*>(context),
+        cbdata.cb      = listenDeviceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::DeviceListenContext*)c;};
 
         auto cLock = m_csdkLock.lock();
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(nullptr, OC_REST_DISCOVER,
@@ -287,7 +392,7 @@ namespace OC
     void parseServerHeaderOptions(OCClientResponse* clientResponse,
                     HeaderOptions& serverHeaderOptions)
     {
-        if(clientResponse)
+        if (clientResponse)
         {
             // Parse header options from server
             uint16_t optionID;
@@ -320,7 +425,7 @@ namespace OC
         OCRepresentation rep;
         HeaderOptions serverHeaderOptions;
         OCStackResult result = clientResponse->result;
-        if(result == OC_STACK_OK)
+        if (result == OC_STACK_OK)
         {
             parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             try
@@ -344,24 +449,24 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         GetCallback& callback, QualityOfService QoS)
     {
-        if(!callback)
+        if (!callback)
         {
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
         ClientCallbackContext::GetContext* ctx =
             new ClientCallbackContext::GetContext(callback);
-        OCCallbackData cbdata(
-                static_cast<void*>(ctx),
-                getResourceCallback,
-                [](void* c){delete static_cast<ClientCallbackContext::GetContext*>(c);}
-                );
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(ctx),
+        cbdata.cb      = getResourceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::GetContext*)c;};
+
 
         std::string uri = assembleSetResourceUri(resourceUri, queryParams);
 
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
@@ -418,24 +523,33 @@ namespace OC
     std::string InProcClientWrapper::assembleSetResourceUri(std::string uri,
         const QueryParamsMap& queryParams)
     {
-        if(uri.back() == '/')
+        if (!uri.empty())
         {
-            uri.resize(uri.size()-1);
+            if (uri.back() == '/')
+            {
+                uri.resize(uri.size() - 1);
+            }
         }
 
         ostringstream paramsList;
-        if(queryParams.size() > 0)
+        if (queryParams.size() > 0)
         {
             paramsList << '?';
         }
 
-        for(auto& param : queryParams)
+        for (auto& param : queryParams)
         {
             paramsList << param.first <<'='<<param.second<<';';
         }
 
         std::string queryString = paramsList.str();
-        if(queryString.back() == ';')
+
+        if (queryString.empty())
+        {
+            return uri;
+        }
+
+        if (queryString.back() == ';')
         {
             queryString.resize(queryString.size() - 1);
         }
@@ -448,6 +562,11 @@ namespace OC
     {
         MessageContainer ocInfo;
         ocInfo.addRepresentation(rep);
+        for(const OCRepresentation& r : rep.getChildren())
+        {
+            ocInfo.addRepresentation(r);
+        }
+
         return reinterpret_cast<OCPayload*>(ocInfo.getPayload());
     }
 
@@ -458,23 +577,23 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PostCallback& callback, QualityOfService QoS)
     {
-        if(!callback)
+        if (!callback)
         {
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
-        OCCallbackData cbdata(
-                static_cast<void*>(ctx),
-                setResourceCallback,
-                [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);}
-                );
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(ctx),
+        cbdata.cb      = setResourceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::SetContext*)c;};
+
 
         std::string url = assembleSetResourceUri(uri, queryParams);
 
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
@@ -504,23 +623,23 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PutCallback& callback, QualityOfService QoS)
     {
-        if(!callback)
+        if (!callback)
         {
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
         ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
-        OCCallbackData cbdata(
-                static_cast<void*>(ctx),
-                setResourceCallback,
-                [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);}
-                );
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(ctx),
+        cbdata.cb      = setResourceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::SetContext*)c;};
+
 
         std::string url = assembleSetResourceUri(uri, queryParams).c_str();
 
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCDoHandle handle;
@@ -552,7 +671,7 @@ namespace OC
             static_cast<ClientCallbackContext::DeleteContext*>(ctx);
         HeaderOptions serverHeaderOptions;
 
-        if(clientResponse->result == OC_STACK_OK)
+        if (clientResponse->result == OC_STACK_OK)
         {
             parseServerHeaderOptions(clientResponse, serverHeaderOptions);
         }
@@ -568,22 +687,22 @@ namespace OC
         DeleteCallback& callback,
         QualityOfService /*QoS*/)
     {
-        if(!callback)
+        if (!callback)
         {
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
         ClientCallbackContext::DeleteContext* ctx =
             new ClientCallbackContext::DeleteContext(callback);
-        OCCallbackData cbdata(
-                static_cast<void*>(ctx),
-                deleteResourceCallback,
-                [](void* c){delete static_cast<ClientCallbackContext::DeleteContext*>(c);}
-                );
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(ctx),
+        cbdata.cb      = deleteResourceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::DeleteContext*)c;};
+
 
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
@@ -617,7 +736,7 @@ namespace OC
         HeaderOptions serverHeaderOptions;
         uint32_t sequenceNumber = clientResponse->sequenceNumber;
         OCStackResult result = clientResponse->result;
-        if(clientResponse->result == OC_STACK_OK)
+        if (clientResponse->result == OC_STACK_OK)
         {
             parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             try
@@ -632,7 +751,7 @@ namespace OC
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     result, sequenceNumber);
         exec.detach();
-        if(sequenceNumber == OC_OBSERVE_DEREGISTER)
+        if (sequenceNumber == OC_OBSERVE_DEREGISTER)
         {
             return OC_STACK_DELETE_TRANSACTION;
         }
@@ -645,7 +764,7 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         ObserveCallback& callback, QualityOfService QoS)
     {
-        if(!callback)
+        if (!callback)
         {
             return OC_STACK_INVALID_PARAM;
         }
@@ -653,11 +772,11 @@ namespace OC
 
         ClientCallbackContext::ObserveContext* ctx =
             new ClientCallbackContext::ObserveContext(callback);
-        OCCallbackData cbdata(
-                static_cast<void*>(ctx),
-                observeResourceCallback,
-                [](void* c){delete static_cast<ClientCallbackContext::ObserveContext*>(c);}
-                );
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(ctx),
+        cbdata.cb      = observeResourceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::ObserveContext*)c;};
+
 
         OCMethod method;
         if (observeType == ObserveType::Observe)
@@ -677,7 +796,7 @@ namespace OC
 
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
@@ -710,7 +829,7 @@ namespace OC
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
@@ -752,31 +871,30 @@ namespace OC
         const std::string& host, const std::string& resourceType,
         OCConnectivityType connectivityType, SubscribeCallback& presenceHandler)
     {
-        if(!presenceHandler)
+        if (!presenceHandler)
         {
             return OC_STACK_INVALID_PARAM;
         }
 
         ClientCallbackContext::SubscribePresenceContext* ctx =
             new ClientCallbackContext::SubscribePresenceContext(presenceHandler);
-        OCCallbackData cbdata(
-                static_cast<void*>(ctx),
-                subscribePresenceCallback,
-                [](void* c)
-                {delete static_cast<ClientCallbackContext::SubscribePresenceContext*>(c);}
-                );
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(ctx),
+        cbdata.cb      = subscribePresenceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::SubscribePresenceContext*)c;};
+
 
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
         os << host << OC_RSRVD_PRESENCE_URI;
 
-        if(!resourceType.empty())
+        if (!resourceType.empty())
         {
             os << "?rt=" << resourceType;
         }
 
-        if(!cLock)
+        if (!cLock)
         {
             delete ctx;
             return OC_STACK_ERROR;
@@ -793,7 +911,7 @@ namespace OC
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
 
-        if(cLock)
+        if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCancel(handle, OC_LOW_QOS, NULL, 0);
@@ -817,20 +935,161 @@ namespace OC
     {
         int i = 0;
 
-        if( headerOptions.size() == 0)
+        if ( headerOptions.size() == 0)
         {
             return nullptr;
         }
 
         for (auto it=headerOptions.begin(); it != headerOptions.end(); ++it)
         {
-            options[i] = OCHeaderOption(OC_COAP_ID,
-                    it->getOptionID(),
-                    it->getOptionData().length() + 1,
-                    reinterpret_cast<const uint8_t*>(it->getOptionData().c_str()));
+            options[i] = OCHeaderOption();
+            options[i].protocolID = OC_COAP_ID;
+            options[i].optionID = it->getOptionID();
+            options[i].optionLength = it->getOptionData().length() + 1;
+            strcpy((char*)options[i].optionData, (it->getOptionData().c_str()));
             i++;
         }
 
         return options;
+    }
+
+    std::shared_ptr<OCDirectPairing> cloneDevice(const OCDPDev_t* dev)
+    {
+        if (!dev)
+        {
+            return nullptr;
+        }
+
+        OCDPDev_t* result = new OCDPDev_t(*dev);
+        result->prm = new OCPrm_t[dev->prmLen];
+        memcpy(result->prm, dev->prm, sizeof(OCPrm_t)*dev->prmLen);
+        return std::shared_ptr<OCDirectPairing>(new OCDirectPairing(result));
+    }
+
+    void InProcClientWrapper::convert(const OCDPDev_t *list, PairedDevices& dpList)
+    {
+        while(list)
+        {
+            dpList.push_back(cloneDevice(list));
+            list = list->next;
+        }
+    }
+
+    OCStackResult InProcClientWrapper::FindDirectPairingDevices(unsigned short waittime,
+            GetDirectPairedCallback& callback)
+    {
+        if (!callback || 0 == waittime)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result = OC_STACK_ERROR;
+        const OCDPDev_t *list = nullptr;
+        PairedDevices dpDeviceList;
+
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+
+            list = OCDiscoverDirectPairingDevices(waittime);
+            if (NULL == list)
+            {
+                result = OC_STACK_NO_RESOURCE;
+                oclog() << "findDirectPairingDevices(): No device found for direct pairing"
+                    << std::flush;
+            }
+            else {
+                convert(list, dpDeviceList);
+                std::thread exec(callback, dpDeviceList);
+                exec.detach();
+                result = OC_STACK_OK;
+            }
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult InProcClientWrapper::GetDirectPairedDevices(GetDirectPairedCallback& callback)
+    {
+        if (!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result = OC_STACK_ERROR;
+        const OCDPDev_t *list = nullptr;
+        PairedDevices dpDeviceList;
+
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+
+            list = OCGetDirectPairedDevices();
+            if (NULL == list)
+            {
+                result = OC_STACK_NO_RESOURCE;
+                oclog() << "findDirectPairingDevices(): No device found for direct pairing"
+                    << std::flush;
+            }
+            else {
+                convert(list, dpDeviceList);
+                std::thread exec(callback, dpDeviceList);
+                exec.detach();
+                result = OC_STACK_OK;
+            }
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    void directPairingCallback(void *ctx, OCDPDev_t *peer,
+            OCStackResult result)
+    {
+
+        ClientCallbackContext::DirectPairingContext* context =
+            static_cast<ClientCallbackContext::DirectPairingContext*>(ctx);
+
+        std::thread exec(context->callback, cloneDevice(peer), result);
+        exec.detach();
+    }
+
+    OCStackResult InProcClientWrapper::DoDirectPairing(std::shared_ptr<OCDirectPairing> peer,
+            const OCPrm_t& pmSel, const std::string& pinNumber, DirectPairingCallback& callback)
+    {
+        if (!peer || !callback)
+        {
+            oclog() << "Invalid parameters" << std::flush;
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result = OC_STACK_ERROR;
+        ClientCallbackContext::DirectPairingContext* context =
+            new ClientCallbackContext::DirectPairingContext(callback);
+
+        auto cLock = m_csdkLock.lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDoDirectPairing(static_cast<void*>(context), peer->getDev(),
+                    pmSel, const_cast<char*>(pinNumber.c_str()), directPairingCallback);
+        }
+        else
+        {
+            delete context;
+            result = OC_STACK_ERROR;
+        }
+        return result;
     }
 }

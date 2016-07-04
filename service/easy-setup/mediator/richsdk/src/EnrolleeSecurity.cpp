@@ -80,6 +80,8 @@ namespace OIC
                 // returned by the security layer.
                 return list[i];
             }
+            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! DeviceList_t is NULL");
+            return NULL;
         }
 
         void EnrolleeSecurity::convertUUIDToString(OicUuid_t uuid, std::string& uuidString)
@@ -184,7 +186,6 @@ namespace OIC
                 ownershipStatus = DEVICE_NOT_OWNED;
                 //Throw exception
                 throw ESPlatformException(result);
-                return ownershipStatus;
             }
             else if (pUnownedDevList.size())
             {

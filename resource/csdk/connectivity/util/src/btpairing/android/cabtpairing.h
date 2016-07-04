@@ -49,7 +49,7 @@ org_iotivity_ca_CaBtPairingInterface_oicEdrBondStateChangedCallback
 /*
  * Class:     org_iotivity_ca_OicBtUtilClientInterface
  * Method:    oicEdrFoundDeviceCallback
- * Signature: (BluetoothDevice)V
+ * Signature: (Landroid/bluetooth/BluetoothDevice;)V
  */
 JNIEXPORT void JNICALL
 org_iotivity_ca_CaBtPairingInterface_oicEdrFoundDeviceCallback

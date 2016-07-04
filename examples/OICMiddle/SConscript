@@ -40,7 +40,7 @@ examples_env.AppendUnique(CPPPATH = [
 		])
 
 target_os = env.get('TARGET_OS')
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 
 	# Note: 'pthread' is in libc for android. On other platform, if use
@@ -49,8 +49,13 @@ if target_os not in ['windows', 'winrt']:
 		examples_env.AppendUnique(LIBS = ['-lpthread'])
 
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction',
-        'coap', 'rt'])
+examples_env.PrependUnique(LIBS = ['coap'])
+examples_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+examples_env.AppendUnique(LIBS = ['oc_logger'])
+examples_env.AppendUnique(LIBS = ['octbstack'])
+examples_env.AppendUnique(LIBS = ['oc'])
+examples_env.AppendUnique(LIBS = ['rt'])
+
 if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
 

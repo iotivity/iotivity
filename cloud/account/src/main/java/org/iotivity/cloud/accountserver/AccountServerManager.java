@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2016 Samsung Electronics All Rights Reserved.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.accountserver;
 
@@ -30,12 +30,21 @@ import org.iotivity.cloud.util.Logger;
 
 /**
  *
- * This class provides a set of API to handle requests for registering account
- * information of authorized user, and publishing and finding resources.
+ * This class provides a set of APIs to handle requests about account
+ * information of authorized user.
  *
  */
 public class AccountServerManager {
 
+    /**
+     * API for requesting user account
+     *
+     * @param userId
+     *            user identifier
+     * @param deviceId
+     *            device identifier
+     * @return Boolean - true if registered, otherwise false
+     */
     public Boolean registerUserAccount(String userId, String deviceId) {
 
         Boolean ret = false;
@@ -47,6 +56,14 @@ public class AccountServerManager {
         return ret;
     }
 
+    /**
+     * API for requesting user account and getting session code for registered
+     * user.
+     *
+     * @param userId
+     *            user identifier
+     * @return String - session code for registered user
+     */
     public String registerUserAccount(String userId) {
 
         String sessionCode = null;
@@ -60,10 +77,11 @@ public class AccountServerManager {
     }
 
     /**
-     * API for requesting user identifier to interested authorization server
-     * 
-     * @param accessToeken
-     *            access token
+     * API for requesting user identifier corresponding with authorization
+     * information.
+     *
+     * @param authCode
+     *            authorization code
      * @param authServer
      *            authorization server
      * @return String - user identifier
@@ -78,6 +96,13 @@ public class AccountServerManager {
         return userId;
     }
 
+    /**
+     * API for requesting user identifier corresponding with session code.
+     *
+     * @param sessionCode
+     *            session code
+     * @return String - user identifier
+     */
     public String requestUserId(String sessionCode) {
 
         String userId = null;
@@ -89,10 +114,10 @@ public class AccountServerManager {
     }
 
     /**
-     * API for getting devices according to authorized user from database
-     * 
+     * API for getting devices corresponding with user identifier.
+     *
      * @param userId
-     *            identifier of authorized user
+     *            user identifier
      * @return ArrayList<String> - list of devices
      */
     public ArrayList<String> requestAccountDevices(String userId) {
@@ -105,20 +130,11 @@ public class AccountServerManager {
         return deviceList;
     }
 
-    /**
-     * API for requesting access token to interested authorization server
-     * 
-     * @param authServer
-     *            server name for authorization
-     * @param authCode
-     *            authorization code
-     * @return ArrayList<String> - array list of name of authorization servers
-     */
     private String getAccessToken(String authCode, String authServer) {
 
         String accessToken = null;
 
-        if (authServer.equals(Const.GITHUB)) {
+        if (authServer.equals(Constants.GITHUB)) {
 
             GitHub gitHub = new GitHub();
             accessToken = gitHub.requestAccessToken(authCode);
@@ -135,7 +151,7 @@ public class AccountServerManager {
 
         String userId = null;
 
-        if (authServer.equals(Const.GITHUB)) {
+        if (authServer.equals(Constants.GITHUB)) {
 
             GitHub gitHub = new GitHub();
             userId = gitHub.requestGetUserInfo(accessToken);
@@ -150,7 +166,7 @@ public class AccountServerManager {
 
     private String generateSessionCode() {
 
-        String sessionCode = "";
+        StringBuffer sessionCode = new StringBuffer();
 
         Random random = new Random();
         int randomNum = random.nextInt(122);
@@ -164,7 +180,7 @@ public class AccountServerManager {
                         || (randomNum >= 97 && randomNum <= 122)) {
 
                     code = (char) randomNum;
-                    sessionCode += code;
+                    sessionCode.append(code);
 
                     randomNum = random.nextInt(122);
                     break;
@@ -176,6 +192,6 @@ public class AccountServerManager {
             }
         }
 
-        return sessionCode;
+        return sessionCode.toString();
     }
 }

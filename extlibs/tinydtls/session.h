@@ -28,6 +28,7 @@
 
 #include <string.h>
 
+#include "dtls_config.h"
 #include "tinydtls.h"
 #include "global.h"
 
@@ -42,9 +43,22 @@ typedef struct {
 
 #else /* WITH_CONTIKI */
 
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#include <stdint.h>
 
 typedef struct {
   socklen_t size;		/**< size of addr */

@@ -21,8 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
@@ -39,7 +43,6 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
     if (NULL == thread)
     {
         OIC_LOG(ERROR, TAG, "thread data passing error!!");
-
         return;
     }
 
@@ -92,28 +95,6 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         OICFree(message);
     }
 
-    // remove all remained list data.
-    while (u_queue_get_size(thread->dataQueue) > 0)
-    {
-        // get data
-        u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
-
-        // free
-        if(NULL != message)
-        {
-            if (NULL != thread->destroy)
-            {
-                thread->destroy(message->msg, message->size);
-            }
-            else
-            {
-                OICFree(message->msg);
-            }
-
-            OICFree(message);
-        }
-    }
-
     ca_mutex_lock(thread->threadMutex);
     ca_cond_signal(thread->threadCond);
     ca_mutex_unlock(thread->threadMutex);
@@ -146,28 +127,30 @@ CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, ca_thread_pool
     thread->isStop = true;
     thread->threadTask = task;
     thread->destroy = destroy;
-    if(NULL == thread->dataQueue || NULL == thread->threadMutex || NULL == thread->threadCond)
+    if (NULL == thread->dataQueue || NULL == thread->threadMutex || NULL == thread->threadCond)
+    {
         goto ERROR_MEM_FAILURE;
+    }
 
     return CA_STATUS_OK;
-    ERROR_MEM_FAILURE:
-    if(thread->dataQueue)
+
+ERROR_MEM_FAILURE:
+    if (thread->dataQueue)
     {
         u_queue_delete(thread->dataQueue);
         thread->dataQueue = NULL;
     }
-    if(thread->threadMutex)
+    if (thread->threadMutex)
     {
         ca_mutex_free(thread->threadMutex);
         thread->threadMutex = NULL;
     }
-    if(thread->threadCond)
+    if (thread->threadCond)
     {
         ca_cond_free(thread->threadCond);
         thread->threadCond = NULL;
     }
     return CA_MEMORY_ALLOC_FAILED;
-
 }
 
 CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
@@ -261,6 +244,29 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
     ca_mutex_free(thread->threadMutex);
     thread->threadMutex = NULL;
     ca_cond_free(thread->threadCond);
+
+    // remove all remained list data.
+    while (u_queue_get_size(thread->dataQueue) > 0)
+    {
+        // get data
+        u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
+
+        // free
+        if (NULL != message)
+        {
+            if (NULL != thread->destroy)
+            {
+                thread->destroy(message->msg, message->size);
+            }
+            else
+            {
+                OICFree(message->msg);
+            }
+
+            OICFree(message);
+        }
+    }
+
     u_queue_delete(thread->dataQueue);
 
     return CA_STATUS_OK;

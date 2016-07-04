@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.base.examples;
 
@@ -40,6 +40,8 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
+import java.util.Arrays;
+
 /**
  * This sample demonstrates platform and device discovery feature.
  * The server sets the platform and device related info. which can be later retrieved by a client.
@@ -61,7 +63,11 @@ public class DeviceDiscoveryServer extends Activity {
         msg("Configuring platform.");
         OcPlatform.Configure(platformConfig);
 
-        OcDeviceInfo deviceInfo = new OcDeviceInfo("myDeviceName");
+        OcDeviceInfo deviceInfo = new OcDeviceInfo(
+                "myDeviceName",
+                Arrays.asList(new String[]{"oic.d.phone"})
+        );
+
         try {
             msg("Registering device info");
             OcPlatform.registerDeviceInfo(deviceInfo);

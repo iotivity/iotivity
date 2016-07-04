@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2016 Samsung Electronics All Rights Reserved.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.accountserver.resources;
 
@@ -25,32 +25,33 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.AccountServerManager;
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.util.CoapMessageBuilder;
-import org.iotivity.cloud.accountserver.util.JSONUtil;
 import org.iotivity.cloud.base.Resource;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
+import org.iotivity.cloud.util.JSONUtil;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
  *
- * This class provides a set of APIs to register account information of
- * authorized user.
+ * This class provides a set of APIs to manage user account with authorization
+ * process.
  *
  */
 public class AuthResource extends Resource {
 
     public AuthResource() {
-        setUri(Const.AUTH_URI);
+        setUri(Constants.AUTH_URI);
     }
 
     @Override
-    public void onRequestReceived(ChannelHandlerContext ctx, CoapRequest request) {
+    public void onRequestReceived(ChannelHandlerContext ctx,
+            CoapRequest request) {
 
         Logger.d("AuthResource IN");
 
@@ -77,30 +78,22 @@ public class AuthResource extends Resource {
         }
     }
 
-    /**
-     * API for handling POST message
-     * 
-     * @param ctx
-     *            ChannelHandlerContext of request message
-     * @param request
-     *            CoAP request message
-     * @throws Exception
-     */
     private void handlePostRequest(ChannelHandlerContext ctx,
             CoapRequest request) throws Exception {
 
-        String reqType = extractQuery(request, Const.REQ_TYPE);
+        String reqType = extractQuery(request, Constants.REQ_TYPE);
 
         if (reqType == null)
-            throw new IllegalArgumentException("request type is null in query!");
+            throw new IllegalArgumentException(
+                    "request type is null in query!");
 
-        CoapResponse response = null;
+        CoapResponse response;
 
         switch (reqType) {
-            case Const.TYPE_REGISTER:
+            case Constants.TYPE_REGISTER:
                 response = handleRegisterRequest(request);
                 break;
-            case Const.TYPE_LOGIN:
+            case Constants.TYPE_LOGIN:
                 response = handleLoginRequest(request);
                 break;
             default:
@@ -108,16 +101,23 @@ public class AuthResource extends Resource {
                         "request type is not supported");
         }
 
-        ctx.write(response);
+        ctx.writeAndFlush(response);
     }
 
+    /**
+     * API for handling request for login by user account
+     *
+     * @param request
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handleLoginRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();
 
-        JSONUtil util = new JSONUtil();
-        String sessionCode = util
-                .parseJSON(payload, Const.REQUEST_SESSION_CODE);
+        String sessionCode = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_SESSION_CODE);
 
         Logger.d("sessionCode: " + sessionCode);
 
@@ -126,7 +126,7 @@ public class AuthResource extends Resource {
         Logger.d("userId: " + userId);
 
         CoapMessageBuilder responseMessage = new CoapMessageBuilder();
-        CoapResponse coapResponse = null;
+        CoapResponse coapResponse;
 
         if (userId != null) {
 
@@ -136,56 +136,74 @@ public class AuthResource extends Resource {
             String responseJson = convertLoginResponseToJson(response);
             Logger.d("responseJson: " + responseJson);
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), responseJson, CoapStatus.CREATED);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    responseJson, CoapStatus.CREATED);
 
         } else {
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), CoapStatus.INTERNAL_SERVER_ERROR);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    CoapStatus.INTERNAL_SERVER_ERROR);
 
         }
 
         return coapResponse;
     }
 
+    /**
+     * API for handling request for registering user account
+     *
+     * @param request
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handleRegisterRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();
 
-        JSONUtil util = new JSONUtil();
-        String authCode = util.parseJSON(payload, Const.REQUEST_AUTH_CODE);
-        String authServer = util.parseJSON(payload, Const.REQUEST_AUTH_SERVER);
+        String authCode = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_AUTH_CODE);
+        String authServer = JSONUtil.parseJSON(payload,
+                Constants.REQUEST_AUTH_SERVER);
 
         Logger.d("authCode: " + authCode + ", authServer: " + authServer);
 
         AccountServerManager oauthServerManager = new AccountServerManager();
-
-        String userId = oauthServerManager.requestUserId(authCode, authServer);
-        String sessionCode = oauthServerManager.registerUserAccount(userId);
-
-        Logger.d("userId: " + userId + ", sessionCode: " + sessionCode);
-
+        String userId = null;
+        if (authCode != null && authServer != null) {
+            userId = oauthServerManager.requestUserId(authCode, authServer);
+        }
+        
         CoapMessageBuilder responseMessage = new CoapMessageBuilder();
-        CoapResponse coapResponse = null;
+        CoapResponse coapResponse;
 
-        if (userId != null && sessionCode != null) {
+        if (userId != null) {
+            
+            String sessionCode = oauthServerManager.registerUserAccount(userId);
 
-            ResponseObject response = new ResponseObject();
-            response.setSessionCode(sessionCode);
-            response.setUserId(userId);
+            Logger.d("userId: " + userId + ", sessionCode: " + sessionCode);
 
-            String responseJson = convertRegisterResponseToJson(response);
-            Logger.d("responseJson: " + responseJson);
+            if (sessionCode != null) {
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), responseJson, CoapStatus.CREATED);
+                ResponseObject response = new ResponseObject();
+                response.setSessionCode(sessionCode);
+                response.setUserId(userId);
+
+                String responseJson = convertRegisterResponseToJson(response);
+                Logger.d("responseJson: " + responseJson);
+
+                coapResponse = responseMessage.buildCoapResponse(
+                        request.getToken(), responseJson, CoapStatus.CREATED);
+            }
+            else  {
+                coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                        CoapStatus.UNAUTHORIZED);                
+            }
 
         } else {
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), CoapStatus.UNAUTHORIZED);
-
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    CoapStatus.UNAUTHORIZED);
         }
 
         return coapResponse;
@@ -199,13 +217,12 @@ public class AuthResource extends Resource {
         String userId = response.getUserId();
 
         if (userId != null)
-            responseMap.put(Const.RESPONSE_USER_ID, userId);
+            responseMap.put(Constants.RESPONSE_USER_ID, userId);
 
         if (sessionCode != null)
-            responseMap.put(Const.RESPONSE_SESSION_CODE, sessionCode);
+            responseMap.put(Constants.RESPONSE_SESSION_CODE, sessionCode);
 
-        JSONUtil jsonUtil = new JSONUtil();
-        String responseJson = jsonUtil.writeJSON(responseMap);
+        String responseJson = JSONUtil.writeJSON(responseMap);
 
         return responseJson;
     }
@@ -217,10 +234,9 @@ public class AuthResource extends Resource {
         String userId = response.getUserId();
 
         if (userId != null)
-            responseMap.put(Const.RESPONSE_USER_ID, userId);
+            responseMap.put(Constants.RESPONSE_USER_ID, userId);
 
-        JSONUtil jsonUtil = new JSONUtil();
-        String responseJson = jsonUtil.writeJSON(responseMap);
+        String responseJson = JSONUtil.writeJSON(responseMap);
 
         return responseJson;
     }
@@ -231,13 +247,15 @@ public class AuthResource extends Resource {
 
         List<String> Segments = request.getUriQuerySegments();
 
-        for (String s : Segments) {
+        if (Segments != null) {
+            for (String s : Segments) {
 
-            String pair[] = s.split("=");
+                String pair[] = s.split("=");
 
-            if (pair[0].equals(key)) {
+                if (pair[0].equals(key)) {
 
-                value = pair[1];
+                    value = pair[1];
+                }
             }
         }
 
@@ -246,9 +264,9 @@ public class AuthResource extends Resource {
 
     /*
      * private static String getPayloadString(byte[] payload) {
-     * 
+     *
      * if (payload == null) return "";
-     * 
+     *
      * return new String(payload, Charset.forName("UTF-8")); }
      */
 

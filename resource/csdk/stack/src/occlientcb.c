@@ -25,10 +25,11 @@
 #include "oic_malloc.h"
 #include <string.h>
 
-#ifdef WITH_ARDUINO
-#include "Time.h"
-#else
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_ARDUINO_TIME_H
+#include "Time.h"
 #endif
 #include "coap_time.h"
 
@@ -214,11 +215,11 @@ static void CheckAndDeleteTimedOutCB(ClientCB* cbNode)
 }
 
 ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
-        OCDoHandle handle, const char * requestUri)
+                      OCDoHandle handle, const char * requestUri)
 {
     ClientCB* out = NULL;
 
-    if (token && *token && tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
+    if (token && tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
     {
         OIC_LOG (INFO, TAG,  "Looking for token");
         OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);

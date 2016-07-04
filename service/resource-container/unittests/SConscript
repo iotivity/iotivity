@@ -106,7 +106,7 @@ if int(containerJavaSupport):
     except KeyError:
         print ''
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     container_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
     if target_os != 'android':
         container_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
@@ -144,7 +144,7 @@ if int(containerJavaSupport):
 test_bundle_env = container_gtest_env.Clone()
 test_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+if target_os not in ['darwin', 'ios', 'windows']:
     test_bundle_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 TEST_BUNDLE_DIR = 'TestBundle/'

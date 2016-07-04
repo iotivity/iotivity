@@ -24,11 +24,20 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef _WIN32
+#define ssize_t SSIZE_T
+#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
 #endif
 
 #ifdef WITH_LWIP
@@ -47,17 +56,17 @@
 #include "block.h"
 #include "net.h"
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
 
 time_t clock_offset=0;
 
-static inline coap_queue_t *
+INLINE_API coap_queue_t *
 coap_malloc_node()
 {
     return (coap_queue_t *)coap_malloc(sizeof(coap_queue_t));
 }
 
-static inline void
+INLINE_API void
 coap_free_node(coap_queue_t *node)
 {
     coap_free(node);
@@ -70,13 +79,13 @@ coap_free_node(coap_queue_t *node)
 static void coap_retransmittimer_execute(void *arg);
 static void coap_retransmittimer_restart(coap_context_t *ctx);
 
-static inline coap_queue_t *
+INLINE_API coap_queue_t *
 coap_malloc_node()
 {
     return (coap_queue_t *)memp_malloc(MEMP_COAP_NODE);
 }
 
-static inline void
+INLINE_API void
 coap_free_node(coap_queue_t *node)
 {
     memp_free(MEMP_COAP_NODE, node);
@@ -106,13 +115,13 @@ MEMB(node_storage, coap_queue_t, COAP_PDU_MAXCNT);
 
 PROCESS(coap_retransmit_process, "message retransmit process");
 
-static inline coap_queue_t *
+INLINE_API coap_queue_t *
 coap_malloc_node()
 {
     return (coap_queue_t *)memb_alloc(&node_storage);
 }
 
-static inline void
+INLINE_API void
 coap_free_node(coap_queue_t *node)
 {
     memb_free(&node_storage, node);
@@ -321,23 +330,26 @@ is_wkc(coap_key_t k)
 coap_context_t *
 coap_new_context(const coap_address_t *listen_addr)
 {
-#if defined(WITH_POSIX)
+#if defined(WITH_POSIX) || defined(_WIN32)
     coap_context_t *c = coap_malloc( sizeof( coap_context_t ) );
     int reuse = 1;
-#endif /* WITH_POSIX */
-#ifdef WITH_LWIP
-    coap_context_t *c = memp_malloc(MEMP_COAP_CONTEXT);
-#endif /* WITH_LWIP */
-#ifdef WITH_CONTIKI
-    coap_context_t *c;
-
+#elif WITH_CONTIKI
+    coap_context_t *c =NULL;
     if (initialized)
-    return NULL;
-#endif /* WITH_CONTIKI */
-
+    {
+        return NULL;
+    }
+#elif WITH_LWIP
+    coap_context_t *c = memp_malloc(MEMP_COAP_CONTEXT);
+#endif /* WITH_POSIX */
     if (!listen_addr)
     {
         coap_log(LOG_EMERG, "no listen address specified\n");
+#if defined(WITH_POSIX)
+        coap_free_context(c);
+#elif WITH_LWIP
+        memp_free(c);
+#endif
         return NULL;
     }
 
@@ -383,7 +395,7 @@ coap_new_context(const coap_address_t *listen_addr)
     coap_register_option(c, COAP_OPTION_BLOCK2);
     coap_register_option(c, COAP_OPTION_BLOCK1);
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     c->sockfd = socket(listen_addr->addr.sa.sa_family, SOCK_DGRAM, 0);
     if ( c->sockfd < 0 )
     {
@@ -393,7 +405,7 @@ coap_new_context(const coap_address_t *listen_addr)
         goto onerror;
     }
 
-    if ( setsockopt( c->sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse) ) < 0 )
+    if ( setsockopt( c->sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse) ) < 0 )
     {
 #ifndef NDEBUG
         coap_log(LOG_WARNING, "setsockopt SO_REUSEADDR\n");
@@ -448,7 +460,7 @@ coap_new_context(const coap_address_t *listen_addr)
 
 void coap_free_context(coap_context_t *context)
 {
-#if defined(WITH_POSIX) || defined(WITH_LWIP)
+#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(_WIN32)
     coap_resource_t *res;
 #ifndef COAP_RESOURCES_NOHASH
     coap_resource_t *rtmp;
@@ -465,7 +477,7 @@ void coap_free_context(coap_context_t *context)
     coap_retransmittimer_restart(context);
 #endif
 
-#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO) || defined(_WIN32)
 #ifdef COAP_RESOURCES_NOHASH
     LL_FOREACH(context->resources, res)
     {
@@ -477,7 +489,7 @@ void coap_free_context(coap_context_t *context)
         }
 #endif /* WITH_POSIX || WITH_LWIP */
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(_WIN32)
     /* coap_delete_list(context->subscriptions); */
     close( context->sockfd );
     coap_free( context );
@@ -535,7 +547,7 @@ void coap_transaction_id(const coap_address_t *peer, const coap_pdu_t *pdu, coap
     /* Compare the complete address structure in case of IPv4. For IPv6,
      * we need to look at the transport address only. */
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(_WIN32)
     switch (peer->addr.sa.sa_family)
     {
         case AF_INET:
@@ -595,7 +607,7 @@ coap_send_impl(coap_context_t *context,
 }
 #endif
 
-#if defined(WITH_POSIX)
+#if defined(WITH_POSIX) || defined(_WIN32)
 /* releases space allocated by PDU if free_pdu is set */
 coap_tid_t
 coap_send_impl(coap_context_t *context,
@@ -608,7 +620,7 @@ coap_send_impl(coap_context_t *context,
     if ( !context || !dst || !pdu )
     return id;
 
-    bytes_written = sendto( context->sockfd, pdu->hdr, pdu->length, 0,
+    bytes_written = sendto( context->sockfd, (char*)pdu->hdr, pdu->length, 0,
             &dst->addr.sa, dst->size);
 
     if (bytes_written >= 0)
@@ -876,7 +888,7 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node)
  * This function returns @c 1 on success, or @c 0 if the option @p opt
  * would exceed @p maxpos.
  */
-static inline int check_opt_size(coap_opt_t *opt, unsigned char *maxpos)
+INLINE_API int check_opt_size(coap_opt_t *opt, unsigned char *maxpos)
 {
     if (opt && opt < maxpos)
     {
@@ -889,7 +901,7 @@ static inline int check_opt_size(coap_opt_t *opt, unsigned char *maxpos)
 #ifndef WITH_ARDUINO
 int coap_read(coap_context_t *ctx)
 {
-#if defined(WITH_POSIX)
+#if defined(WITH_POSIX) || defined(_WIN32)
     static char buf[COAP_MAX_PDU_SIZE];
 #endif
 #if defined(WITH_LWIP) || defined(WITH_CONTIKI)
@@ -913,7 +925,7 @@ int coap_read(coap_context_t *ctx)
 
     coap_address_init(&src);
 
-#if defined(WITH_POSIX)
+#if defined(WITH_POSIX) || defined(_WIN32)
     bytes_read = recvfrom(ctx->sockfd, buf, sizeof(buf), 0, &src.addr.sa, &src.size);
 
 #endif /* WITH_POSIX || WITH_ARDUINO */
@@ -1064,7 +1076,7 @@ int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id, coap_queue_t **n
 
 }
 
-static inline int token_match(const unsigned char *a, size_t alen, const unsigned char *b,
+INLINE_API int token_match(const unsigned char *a, size_t alen, const unsigned char *b,
         size_t blen)
 {
     return alen == blen && (alen == 0 || memcmp(a, b, alen) == 0);
@@ -1226,7 +1238,7 @@ coap_new_error_response(coap_pdu_t *request, unsigned char code, coap_opt_filter
  * Quick hack to determine the size of the resource description for
  * .well-known/core.
  */
-static inline size_t get_wkc_len(coap_context_t *context, coap_opt_t *query_filter)
+INLINE_API size_t get_wkc_len(coap_context_t *context, coap_opt_t *query_filter)
 {
     unsigned char buf[1];
     size_t len = 0;
@@ -1501,7 +1513,7 @@ void handle_request(coap_context_t *context, coap_queue_t *node, const char* res
     }
 }
 
-static inline void handle_response(coap_context_t *context, coap_queue_t *sent, coap_queue_t *rcvd)
+INLINE_API void handle_response(coap_context_t *context, coap_queue_t *sent, coap_queue_t *rcvd)
 {
 
     /* Call application-specific reponse handler when available.  If
@@ -1519,7 +1531,7 @@ static inline void handle_response(coap_context_t *context, coap_queue_t *sent, 
     }
 }
 
-static inline int
+INLINE_API int
 #ifdef __GNUC__
 handle_locally(coap_context_t *context __attribute__ ((unused)),
         coap_queue_t *node __attribute__ ((unused)))

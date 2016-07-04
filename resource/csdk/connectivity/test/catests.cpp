@@ -20,6 +20,7 @@
 
 #include "gtest/gtest.h"
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 
 /**
@@ -41,6 +42,12 @@ void workaroundHook()
         pthread_key_delete(key);
     }
 }
+#else
+void workaroundHook()
+{
+    return;
+};
+#endif
 
 
 TEST(BaseTest, WorldIsSane)

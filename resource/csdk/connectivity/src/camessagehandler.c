@@ -34,6 +34,7 @@
 #include "caadapterutils.h"
 #include "cainterfacecontroller.h"
 #include "caretransmission.h"
+#include "oic_string.h"
 
 #ifdef WITH_BWT
 #include "cablockwisetransfer.h"
@@ -139,9 +140,8 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
     }
 
     OIC_LOG_V(DEBUG, TAG, "address : %s", ep->addr);
-    CAResult_t result;
 
-    if(CA_RESPONSE_DATA == dataType)
+    if (CA_RESPONSE_DATA == dataType)
     {
         CAResponseInfo_t* resInfo = (CAResponseInfo_t*)OICCalloc(1, sizeof(CAResponseInfo_t));
         if (!resInfo)
@@ -152,7 +152,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
             return NULL;
         }
 
-        result = CAGetResponseInfoFromPDU(data, resInfo, endpoint);
+        CAResult_t result = CAGetResponseInfoFromPDU(data, resInfo, endpoint);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetResponseInfoFromPDU Failed");
@@ -181,7 +181,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
             return NULL;
         }
 
-        result = CAGetRequestInfoFromPDU(data, endpoint, reqInfo);
+        CAResult_t result = CAGetRequestInfoFromPDU(data, endpoint, reqInfo);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetRequestInfoFromPDU failed");
@@ -297,6 +297,18 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     cadata->requestInfo = NULL;
     cadata->responseInfo = resInfo;
 
+#ifdef WITH_BWT
+    if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
+    {
+        res = CARemoveBlockDataFromListWithSeed(resInfo->info.token, resInfo->info.tokenLength,
+                                                endpoint->port);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CARemoveBlockDataFromListWithSeed failed");
+        }
+    }
+#endif // WITH_BWT
+
 #ifdef SINGLE_THREAD
     CAProcessReceivedData(cadata);
 #else
@@ -399,12 +411,11 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     VERIFY_NON_NULL(data, TAG, "data");
     VERIFY_NON_NULL(data->remoteEndpoint, TAG, "remoteEndpoint");
 
-    CAResult_t res = CA_STATUS_FAILED;
-
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
+    CAResult_t res = CA_SEND_FAILED;
     if (NULL != data->requestInfo)
     {
         OIC_LOG(DEBUG, TAG, "requestInfo is available..");
@@ -415,23 +426,14 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
         if (NULL != pdu)
         {
 #ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef WITH_TCP
-                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                    )
+            if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
             {
                 // Blockwise transfer
-                CAResult_t res = CAAddBlockOption(&pdu, info,
-                                                  data->remoteEndpoint,
-                                                  &options);
+                res = CAAddBlockOption(&pdu, info, data->remoteEndpoint, &options);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
-                    CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-                    coap_delete_list(options);
-                    coap_delete_pdu(pdu);
-                    return res;
+                    goto exit;
                 }
             }
 #endif // WITH_BWT
@@ -440,7 +442,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
         {
             OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
             CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
-            return CA_SEND_FAILED;
+            return res;
         }
     }
     else if (NULL != data->responseInfo)
@@ -454,25 +456,16 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
         if (NULL != pdu)
         {
 #ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef WITH_TCP
-                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                    )
+            if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
             {
                 // Blockwise transfer
                 if (NULL != info)
                 {
-                    CAResult_t res = CAAddBlockOption(&pdu, info,
-                                                      data->remoteEndpoint,
-                                                      &options);
+                    res = CAAddBlockOption(&pdu, info, data->remoteEndpoint, &options);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(INFO, TAG, "to write block option has failed");
-                        CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-                        coap_delete_list(options);
-                        coap_delete_pdu(pdu);
-                        return res;
+                        goto exit;
                     }
                 }
             }
@@ -482,13 +475,13 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
         {
             OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
             CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
-            return CA_SEND_FAILED;
+            return res;
         }
     }
     else
     {
         OIC_LOG(ERROR, TAG, "request or response info is empty");
-        return CA_SEND_FAILED;
+        return res;
     }
 
     CALogPDUInfo(pdu, data->remoteEndpoint);
@@ -500,15 +493,18 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
-        CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-        coap_delete_list(options);
-        coap_delete_pdu(pdu);
-        return res;
+        goto exit;
     }
 
     coap_delete_list(options);
     coap_delete_pdu(pdu);
-    return CA_STATUS_OK;
+    return res;
+
+exit:
+    CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
+    return res;
 }
 
 static CAResult_t CAProcessSendData(const CAData_t *data)
@@ -523,11 +519,12 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
 
     if (SEND_TYPE_UNICAST == type)
     {
         OIC_LOG(DEBUG,TAG,"Unicast message");
+
 #ifdef ROUTING_GATEWAY
         /*
          * When forwarding a packet, do not attempt retransmission as its the responsibility of
@@ -568,11 +565,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         if (NULL != pdu)
         {
 #ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef WITH_TCP
-                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                    )
+            if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
             {
                 // Blockwise transfer
                 if (NULL != info)
@@ -801,7 +794,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
             CARetransmissionReceivedData(&g_retransmissionContext, cadata->remoteEndpoint, pdu->hdr,
                                          pdu->length, &retransmissionPdu);
 
-#ifndef WITH_BWT
             // get token from saved data in retransmission list
             if (retransmissionPdu && CA_EMPTY == code)
             {
@@ -818,7 +810,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
                     }
                 }
             }
-#endif
             OICFree(retransmissionPdu);
         }
     }
@@ -829,16 +820,12 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     CAProcessReceivedData(cadata);
 #else
 #ifdef WITH_BWT
-    if (CA_ADAPTER_GATT_BTLE != sep->endpoint.adapter
-#ifdef WITH_TCP
-            && !CAIsSupportedCoAPOverTCP(sep->endpoint.adapter)
-#endif
-            )
+    if (CAIsSupportedBlockwiseTransfer(sep->endpoint.adapter))
     {
         CAResult_t res = CAReceiveBlockWiseData(pdu, &(sep->endpoint), cadata, dataLen);
         if (CA_NOT_SUPPORTED == res || CA_REQUEST_TIMEOUT == res)
         {
-            OIC_LOG(ERROR, TAG, "this message does not have block option");
+            OIC_LOG(DEBUG, TAG, "this message does not have block option");
             CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
         }
         else
@@ -854,17 +841,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 #endif // SINGLE_THREAD
 
     coap_delete_pdu(pdu);
-}
-
-static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t status)
-{
-    (void)info;
-    (void)status;
-
-    if (g_nwMonitorHandler)
-    {
-        g_nwMonitorHandler(info, status);
-    }
 }
 
 void CAHandleRequestResponseCallbacks()
@@ -927,22 +903,21 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         return NULL;
     }
 
-    if(CA_REQUEST_DATA == dataType)
+    if (CA_REQUEST_DATA == dataType)
     {
         // clone request info
         CARequestInfo_t *request = CACloneRequestInfo((CARequestInfo_t *)sendData);
 
-        if(!request)
+        if (!request)
         {
             OIC_LOG(ERROR, TAG, "CACloneRequestInfo failed");
-            OICFree(cadata);
-            return NULL;
+            goto exit;
         }
 
         cadata->type = request->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
         cadata->requestInfo =  request;
     }
-    else if(CA_RESPONSE_DATA == dataType)
+    else if (CA_RESPONSE_DATA == dataType)
     {
         // clone response info
         CAResponseInfo_t *response = CACloneResponseInfo((CAResponseInfo_t *)sendData);
@@ -950,8 +925,7 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         if(!response)
         {
             OIC_LOG(ERROR, TAG, "CACloneResponseInfo failed");
-            OICFree(cadata);
-            return NULL;
+            goto exit;
         }
 
         cadata->type = response->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
@@ -960,8 +934,7 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
     else
     {
         OIC_LOG(ERROR, TAG, "CAPrepareSendData unknown data type");
-        OICFree(cadata);
-        return NULL;
+        goto exit;
     }
 
     CAEndpoint_t* ep = CACloneEndpoint(endpoint);
@@ -975,6 +948,10 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
     cadata->remoteEndpoint = ep;
     cadata->dataType = dataType;
     return cadata;
+
+exit:
+    OICFree(cadata);
+    return NULL;
 }
 
 CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg,
@@ -1006,7 +983,7 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
 
 #ifdef SINGLE_THREAD
     CAResult_t result = CAProcessSendData(data);
-    if(CA_STATUS_OK != result)
+    if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, TAG, "CAProcessSendData failed");
         CADestroyData(data, sizeof(CAData_t));
@@ -1016,15 +993,11 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     CADestroyData(data, sizeof(CAData_t));
 #else
 #ifdef WITH_BWT
-    if (CA_ADAPTER_GATT_BTLE != endpoint->adapter
-#ifdef WITH_TCP
-            && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-            )
+    if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
     {
         // send block data
         CAResult_t res = CASendBlockWiseData(data);
-        if(CA_NOT_SUPPORTED == res)
+        if (CA_NOT_SUPPORTED == res)
         {
             OIC_LOG(DEBUG, TAG, "normal msg will be sent");
             CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
@@ -1046,18 +1019,6 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     return CA_STATUS_OK;
 }
 
-CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-                                      uint8_t tokenLength, const CAHeaderOption_t *options,
-                                      uint8_t numOptions)
-{
-    (void)resourceUri;
-    (void)token;
-    (void)tokenLength;
-    (void)options;
-    (void)numOptions;
-    return CA_NOT_SUPPORTED;
-}
-
 void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
                              CAErrorCallback errorHandler)
 {
@@ -1074,8 +1035,6 @@ void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler)
 CAResult_t CAInitializeMessageHandler()
 {
     CASetPacketReceivedCallback(CAReceivedPacketCallback);
-
-    CASetNetworkChangeCallback(CANetworkChangedCallback);
     CASetErrorHandleCallback(CAErrorHandler);
 
 #ifndef SINGLE_THREAD
@@ -1292,7 +1251,7 @@ void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
 
 static void CALogPayloadInfo(CAInfo_t *info)
 {
-    if(info)
+    if (info)
     {
         if (info->options)
         {

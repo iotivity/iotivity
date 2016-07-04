@@ -207,7 +207,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
  */
 static OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint);
 
-OCStackResult InitializeKeepAlive()
+OCStackResult InitializeKeepAlive(OCMode mode)
 {
     OIC_LOG(DEBUG, TAG, "InitializeKeepAlive IN");
     if (g_isKeepAliveInitialized)
@@ -216,12 +216,15 @@ OCStackResult InitializeKeepAlive()
         return OC_STACK_OK;
     }
 
-    // Create the KeepAlive Resource[/oic/ping].
-    OCStackResult result = CreateKeepAliveResource();
-    if (OC_STACK_OK != result)
+    if (OC_CLIENT != mode)
     {
-        OIC_LOG_V(ERROR, TAG, "CreateKeepAliveResource failed[%d]", result);
-        return result;
+        // Create the KeepAlive Resource[/oic/ping].
+        OCStackResult result = CreateKeepAliveResource();
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "CreateKeepAliveResource failed[%d]", result);
+            return result;
+        }
     }
 
     if (!g_keepAliveConnectionTable)
@@ -230,7 +233,7 @@ OCStackResult InitializeKeepAlive()
         if (NULL == g_keepAliveConnectionTable)
         {
             OIC_LOG(ERROR, TAG, "Creating KeepAlive Table failed");
-            TerminateKeepAlive();
+            TerminateKeepAlive(mode);
             return OC_STACK_ERROR;
         }
     }
@@ -241,7 +244,7 @@ OCStackResult InitializeKeepAlive()
     return OC_STACK_OK;
 }
 
-OCStackResult TerminateKeepAlive()
+OCStackResult TerminateKeepAlive(OCMode mode)
 {
     OIC_LOG(DEBUG, TAG, "TerminateKeepAlive IN");
     if (!g_isKeepAliveInitialized)
@@ -250,12 +253,15 @@ OCStackResult TerminateKeepAlive()
         return OC_STACK_ERROR;
     }
 
-    // Delete the KeepAlive Resource[/oic/ping].
-    OCStackResult result = DeleteKeepAliveResource();
-    if (OC_STACK_OK != result)
+    if (OC_CLIENT != mode)
     {
-        OIC_LOG_V(ERROR, TAG, "DeleteKeepAliveResource failed[%d]", result);
-        return result;
+        // Delete the KeepAlive Resource[/oic/ping].
+        OCStackResult result = DeleteKeepAliveResource();
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "DeleteKeepAliveResource failed[%d]", result);
+            return result;
+        }
     }
 
     if (NULL != g_keepAliveConnectionTable)
@@ -380,14 +386,14 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
                    requestInfo->info.payload, requestInfo->info.payloadSize);
     OCRepPayload *repPayload = (OCRepPayload *)ocPayload;
 
-    uint32_t interval = 0;
+    int64_t interval = 0;
     OCRepPayloadGetPropInt(repPayload, INTERVAL, &interval);
     entry->interval = interval;
     OIC_LOG_V(DEBUG, TAG, "Received interval is [%d]", entry->interval);
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
 
     // Send response message.
-    SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_VALID, requestInfo->info.type,
+    SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_CHANGED, requestInfo->info.type,
                             requestInfo->info.numOptions, requestInfo->info.options,
                             requestInfo->info.token, requestInfo->info.tokenLength,
                             requestInfo->info.resourceUri);
@@ -440,9 +446,11 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
             return SendPingMessage(entry);
         }
     }
-
-    // Set sentPingMsg values with false.
-    entry->sentPingMsg = false;
+    else
+    {
+        // Set sentPingMsg values with false.
+        entry->sentPingMsg = false;
+    }
 
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveResponse OUT");
     return OC_STACK_OK;
@@ -651,7 +659,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
     entry->remoteAddr.adapter = endpoint->adapter;
     entry->remoteAddr.flags = endpoint->flags;
-    entry->remoteAddr.interface = endpoint->interface;
+    entry->remoteAddr.ifindex = endpoint->ifindex;
     entry->remoteAddr.port = endpoint->port;
     strncpy(entry->remoteAddr.addr, endpoint->addr, sizeof(entry->remoteAddr.addr));
 
@@ -708,31 +716,31 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
     return OC_STACK_OK;
 }
 
-void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint)
+void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
 {
     VERIFY_NON_NULL_NR(endpoint, FATAL);
 
-    OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
-
-    // Send discover message to find ping resource
-    OCCallbackData pingData = { .cb = PingRequestCallback };
-    OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
-    CopyEndpointToDevAddr(endpoint, &devAddr);
-
-    OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
-                 OC_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
-}
-
-void HandleKeepAliveDisconnCB(const CAEndpoint_t *endpoint)
-{
-    VERIFY_NON_NULL_NR(endpoint, FATAL);
-
-    OIC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
-
-    OCStackResult result = RemoveKeepAliveEntry(endpoint);
-    if(result != OC_STACK_OK)
+    if (isConnected)
     {
-        OIC_LOG(ERROR, TAG, "Failed to remove entry");
-        return;
+        OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
+
+        // Send discover message to find ping resource
+        OCCallbackData pingData = { .cb = PingRequestCallback };
+        OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
+        CopyEndpointToDevAddr(endpoint, &devAddr);
+
+        OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
+                     OC_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
+
+        OCStackResult result = RemoveKeepAliveEntry(endpoint);
+        if(result != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to remove entry");
+            return;
+        }
     }
 }

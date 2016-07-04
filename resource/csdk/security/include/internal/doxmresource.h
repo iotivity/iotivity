@@ -30,75 +30,91 @@ extern "C" {
 /**
  * Initialize DOXM resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitDoxmResource();
 
 /**
  * Perform cleanup for DOXM resources.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult DeInitDoxmResource();
 
 /**
  * This method is used by SRM to retrieve DOXM resource data..
  *
- * @retval  reference to @ref OicSecDoxm_t, binary format of Doxm resource data
+ * @return reference to @ref OicSecDoxm_t, binary format of Doxm resource data.
  */
 const OicSecDoxm_t* GetDoxmResourceData();
 
 /**
- * This method converts JSON DOXM into binary DOXM.
- * The JSON DOXM can be from persistent database or
+ * This method converts CBOR DOXM into binary DOXM.
+ * The CBOR DOXM can be from persistent database or
  * or received as PUT/POST request.
  *
- * @param[in] jsonStr  doxm data in json string.
- * @return pointer to OicSecDoxm_t.
+ * @param cborPayload is a doxm data in cbor.
+ * @note Caller needs to invoke OCFree after done using the return pointer.
+ * @param doxm is the pointer to @ref OicSecDoxm_t.
+ * @param size of the cborPayload. In case value is 0, CBOR_SIZE value is assigned.
  *
- * @note Caller needs to invoke OCFree after done
- *       using the return pointer
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
+OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
+                                OicSecDoxm_t **doxm);
 
 /**
- * This method converts DOXM data into JSON format.
+ * This method converts DOXM data into CBOR format.
  * Caller needs to invoke 'free' when finished done using
- * return string
+ * return string.
  *
- * @param[in] doxm  Pointer to OicSecDoxm_t.
- * @return pointer to json string.
+ * @param doxm Pointer to @ref OicSecDoxm_t.
+ * @note Caller needs to invoke OCFree after done using the return pointer.
+ * @param cborPayload is the payload of the cbor.
+ * @param cborSize is the size of the cbor payload. Passed parameter should not be NULL.
  *
- * @note Caller needs to invoke OCFree after done
- *       using the return pointer
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
+OCStackResult DoxmToCBORPayload(const OicSecDoxm_t * doxm, uint8_t **cborPayload,
+                                size_t *cborSize);
 
 /**
  * This method returns the SRM device ID for this device.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
 /**
- * @brief Gets the OicUuid_t value for the owner of this device.
+ * Gets the OicUuid_t value for the owner of this device.
  *
- * @return OC_STACK_OK if devOwner is a valid UUID, otherwise OC_STACK_ERROR.
+ * @param devownerid a pointer to be assigned to the devownerid property
+ * @return ::OC_STACK_OK if devownerid is assigned correctly, else ::OC_STACK_ERROR.
  */
-OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner);
+OCStackResult GetDoxmDevOwnerId(OicUuid_t *devownerid);
+
+/**
+ * Gets the OicUuid_t value for the rowneruuid of the doxm resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid);
 
 /** This function deallocates the memory for OicSecDoxm_t .
  *
- * @param[in] doxm  Pointer to OicSecDoxm_t.
+ * @param doxm is the pointer to @ref OicSecDoxm_t.
  */
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
 
+/**
+ * Function to restore doxm resurce to initial status.
+ * This function will use in case of error while ownership transfer
+ */
+void RestoreDoxmToInitState();
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_DOXMR_H
-
-

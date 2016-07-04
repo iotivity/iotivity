@@ -30,6 +30,8 @@
 
 #include <octypes.h>
 
+#include "boost/config.hpp"
+
 namespace OIC
 {
     namespace Service
@@ -69,13 +71,13 @@ namespace OIC
              */
             explicit RCSException(std::string &&what);
 
-            virtual ~RCSException() noexcept;
+            virtual ~RCSException() BOOST_NOEXCEPT;
 
             /**
              * Returns the exception description.
              *
              */
-            virtual const char *what() const noexcept;
+            virtual const char *what() const BOOST_NOEXCEPT;
 
         private:
             /**

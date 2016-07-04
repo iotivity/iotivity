@@ -50,7 +50,8 @@ static IPAddress enrolleeIP;
 
 /**
  * @var g_retryCounter
- * @brief Retry counter for cancelling network retry. Currently network retry is limited to 5 attempts
+ * @brief Retry counter for cancelling network retry. Currently network retry is
+ *          limited to 5 attempts
  */
 static uint16_t g_retryCounter = 0;
 
@@ -68,7 +69,8 @@ void printEncryptionType(int thisType);
 // this server will NOT be listening on 224.0.1.187 multicast address.
 static const char ARDUINO_WIFI_SHIELD_UDP_FW_VER[] = "1.1.0";
 
-ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
+ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass,
+                                                            ESEnrolleeNetworkEventCallback cb)
 {
     char *fwVersion;
     int status = WL_IDLE_STATUS;
@@ -209,7 +211,7 @@ ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info)
     {
         info->type = CT_ADAPTER_IP;
         info->ipaddr = WiFi.localIP();
-        if(strlen(WiFi.SSID())<=MAXSSIDLEN)
+        if((sizeof(info->ssid) >= MAXSSIDLEN) && (strlen(WiFi.SSID()) <= MAXSSIDLEN))
         {
             strcpy(info->ssid, WiFi.SSID());
             return ES_OK;

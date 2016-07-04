@@ -26,9 +26,20 @@
 #include "oic_malloc.h"
 #include <errno.h>
 
-#ifndef WITH_ARDUINO
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
 
@@ -137,6 +148,7 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
                         NI_NUMERICHOST|NI_NUMERICSERV);
     if (r)
     {
+#if defined(EAI_SYSTEM)
         if (EAI_SYSTEM == r)
         {
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
@@ -147,6 +159,13 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getnameinfo failed: %s", gai_strerror(r));
         }
+#elif defined(_WIN32)
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getnameinfo failed: errno %i", WSAGetLastError());
+#else
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getnameinfo failed: %s", gai_strerror(r));
+#endif
         return;
     }
     *port = ntohs(((struct sockaddr_in *)sockAddr)->sin_port); // IPv4 and IPv6
@@ -165,6 +184,7 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
     int r = getaddrinfo(host, NULL, &hints, &addrs);
     if (r)
     {
+#if defined(EAI_SYSTEM)
         if (EAI_SYSTEM == r)
         {
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
@@ -175,6 +195,13 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getaddrinfo failed: %s", gai_strerror(r));
         }
+#elif defined(_WIN32)
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getaddrinfo failed: errno %i", WSAGetLastError());
+#else
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getaddrinfo failed: %s", gai_strerror(r));
+#endif
         return;
     }
     // assumption: in this case, getaddrinfo will only return one addrinfo
@@ -253,6 +280,34 @@ void CANativeSetActivity(JNIEnv *env, jobject activity)
 jobject *CANativeGetActivity()
 {
     return g_Activity;
+}
+
+jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
+                           const char* methodName,
+                           const char* methodFormat)
+{
+    VERIFY_NON_NULL_RET(env, CA_ADAPTER_UTILS_TAG, "env", NULL);
+    VERIFY_NON_NULL_RET(className, CA_ADAPTER_UTILS_TAG, "className", NULL);
+    VERIFY_NON_NULL_RET(methodName, CA_ADAPTER_UTILS_TAG, "methodName", NULL);
+    VERIFY_NON_NULL_RET(methodFormat, CA_ADAPTER_UTILS_TAG, "methodFormat", NULL);
+
+    jclass jni_cid = (*env)->FindClass(env, className);
+    if (!jni_cid)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_cid [%s] is null", className);
+        return NULL;
+    }
+
+    jmethodID jni_midID = (*env)->GetMethodID(env, jni_cid, methodName, methodFormat);
+    if (!jni_midID)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_midID [%s] is null", methodName);
+        (*env)->DeleteLocalRef(env, jni_cid);
+        return NULL;
+    }
+
+    (*env)->DeleteLocalRef(env, jni_cid);
+    return jni_midID;
 }
 
 void CADeleteGlobalReferences(JNIEnv *env)

@@ -1,12 +1,16 @@
 Import('env')
 import os
 
-env.AppendUnique(CPPPATH = [os.path.join(Dir('.').abspath, './include')])
+env.AppendUnique(CPPPATH = [os.path.join(Dir('.').abspath, 'include'),
+                            '../../c_common'
+    ])
 
+if env.get('TARGET_OS') in ['arduino']:
+	env.AppendUnique(CPPPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/c_common/oic_string/include')])
 if env.get('TARGET_OS') == 'tizen':
 	env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:
-	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/csdk/logger/')])
+	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'logger')])
 
 env.PrependUnique(LIBS = ['logger'])
 

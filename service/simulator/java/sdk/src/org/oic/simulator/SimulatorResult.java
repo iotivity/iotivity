@@ -29,11 +29,19 @@ public enum SimulatorResult {
     /** Simulator specific error codes - START */
     SIMULATOR_INVALID_TYPE, SIMULATOR_NOT_SUPPORTED, SIMULATOR_OPERATION_NOT_ALLOWED, SIMULATOR_OPERATION_IN_PROGRESS,
 
-    SIMULATOR_INVALID_RESPONSE_CODE, SIMULATOR_UKNOWN_PROPERTY, SIMULATOR_TYPE_MISMATCH, SIMULATOR_BAD_VALUE, SIMULATOR_BAD_OBJECT,
+    SIMULATOR_INVALID_RESPONSE_CODE, SIMULATOR_UKNOWN_PROPERTY, SIMULATOR_TYPE_MISMATCH, SIMULATOR_BAD_VALUE, SIMULATOR_BAD_OBJECT, SIMULATOR_BAD_SCHEMA,
     /** Simulator specific error codes - END */
 
     SIMULATOR_ERROR;
 
+    /**
+     * This method returns the {@link SimulatorResult} at the given
+     * position(ordinal).
+     *
+     * @param ordinal
+     *            Index of the constant.
+     * @return {@link SimulatorResult} constant at the given index.
+     */
     public static SimulatorResult get(int ordinal) {
 
         SimulatorResult result;

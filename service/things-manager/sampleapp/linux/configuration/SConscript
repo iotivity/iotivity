@@ -39,9 +39,15 @@ linux_sample_env.AppendUnique(CPPPATH = ['../../../sdk/src'])
 linux_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 linux_sample_env.AppendUnique(CPPDEFINES = ['LINUX'])
 linux_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-linux_sample_env.AppendUnique(LIBS = ['libTGMSDKLibrary', 'oc', 'octbstack',
-                                      'connectivity_abstraction',
-                                      'libcoap', 'liboc_logger', 'dl', 'pthread'])
+linux_sample_env.PrependUnique(LIBS = ['coap'])
+linux_sample_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+linux_sample_env.AppendUnique(LIBS = ['oc_logger'])
+linux_sample_env.AppendUnique(LIBS = ['octbstack'])
+linux_sample_env.AppendUnique(LIBS = ['oc'])
+linux_sample_env.AppendUnique(LIBS = ['libTGMSDKLibrary'])
+linux_sample_env.AppendUnique(LIBS = ['dl'])
+linux_sample_env.AppendUnique(LIBS = ['pthread'])
+
 if env.get('SECURED') == '1':
     linux_sample_env.AppendUnique(LIBS = ['tinydtls'])
 

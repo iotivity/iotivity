@@ -37,10 +37,16 @@
 
 typedef struct _tagMutexInfo_t
 {
+#if defined(_MSC_VER)
+    uint8_t unused; //VS doesnt like empty structs
+#endif
 } ca_mutex_internal;
 
 typedef struct _tagEventInfo_t
 {
+#if defined(_MSC_VER)
+    uint8_t unused; //VS doesnt like empty structs
+#endif
 } ca_cond_internal;
 
 /**
@@ -57,7 +63,7 @@ static ca_cond_internal g_condInfo = { 0 };
 
 ca_mutex ca_mutex_new(void)
 {
-    return &g_mutexInfo;
+    return (ca_mutex)&g_mutexInfo;
 }
 
 bool ca_mutex_free(ca_mutex mutex)
@@ -70,11 +76,6 @@ void ca_mutex_lock(ca_mutex mutex)
     return;
 }
 
-bool ca_mutex_trylock(ca_mutex mutex)
-{
-    return true;
-}
-
 void ca_mutex_unlock(ca_mutex mutex)
 {
     return;
@@ -82,7 +83,7 @@ void ca_mutex_unlock(ca_mutex mutex)
 
 ca_cond ca_cond_new(void)
 {
-    return &g_condInfo;
+    return (ca_cond)&g_condInfo;
 }
 
 void ca_cond_free(ca_cond cond)

@@ -18,9 +18,20 @@
  *
  ******************************************************************/
 
+/**
+ * @file simulator_uncopyable.h
+ *
+ * @brief This file provides a class which makes its derived classes uncopyable.
+ */
+
 #ifndef SIMULATOR_UNCOPYABLE_H_
 #define SIMULATOR_UNCOPYABLE_H_
 
+/**
+ * @class   UnCopyable
+ * @brief   This class removes copy constructor and copy assignment operator so that
+ * its derived classes can not be copied.
+ */
 class UnCopyable
 {
     public:

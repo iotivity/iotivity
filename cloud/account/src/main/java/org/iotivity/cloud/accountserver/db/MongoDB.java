@@ -1,30 +1,30 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2016 Samsung Electronics All Rights Reserved.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.accountserver.db;
 
 import java.util.ArrayList;
 
 import org.bson.Document;
-import org.iotivity.cloud.accountserver.Const;
+import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.util.Logger;
 
 import com.mongodb.MongoClient;
@@ -51,6 +51,7 @@ public class MongoDB {
      * @throws Exception
      */
     public MongoDB(String dbname) throws Exception {
+
         mongoClient = new MongoClient();
         mongoClient.dropDatabase(dbname);
         db = mongoClient.getDatabase(dbname);
@@ -63,6 +64,7 @@ public class MongoDB {
      *            collection name
      */
     public void createTable(String tableName) {
+
         db.createCollection(tableName);
     }
 
@@ -73,30 +75,34 @@ public class MongoDB {
      *            collection name
      */
     public void deleteTable(String tableName) {
+
         db.getCollection(tableName).drop();
     }
 
+    /**
+     * API getting database object
+     * 
+     */
     public MongoDatabase getMongoDatabase() {
+
         return db;
     }
 
     /**
-     * API for storing information of authorized users
+     * API for storing session information of user
      * 
-     * @param accountInfo
-     *            information of authorized users
-     * @param tablename
-     *            table name of mongoDB
+     * @param UserSession
+     *            session information of user
      */
     public void createResource(UserSession userSession) {
 
         Document doc = createDocument(userSession);
         MongoCollection<Document> collection = db
-                .getCollection(Const.SESSION_TABLE);
+                .getCollection(Constants.SESSION_TABLE);
 
         if (collection.findOneAndReplace(Filters.and(
-                Filters.eq(Const.USER_ID, doc.get(Const.USER_ID)),
-                Filters.eq(Const.SESSION_CODE, doc.get(Const.SESSION_CODE))),
+                Filters.eq(Constants.USER_ID, doc.get(Constants.USER_ID)),
+                Filters.eq(Constants.SESSION_CODE, doc.get(Constants.SESSION_CODE))),
                 doc) == null) {
 
             collection.insertOne(doc);
@@ -105,16 +111,21 @@ public class MongoDB {
         return;
     }
 
+    /**
+     * API for inserting device information of user
+     * 
+     * @param UserDevice
+     *            device information of user
+     */
     public void createResource(UserDevice userDevice) {
 
         Document doc = createDocument(userDevice);
         MongoCollection<Document> collection = db
-                .getCollection(Const.DEVICE_TABLE);
+                .getCollection(Constants.DEVICE_TABLE);
 
-        if (collection.findOneAndReplace(
-                Filters.and(Filters.eq(Const.USER_ID, doc.get(Const.USER_ID)),
-                        Filters.eq(Const.DEVICE_ID, doc.get(Const.DEVICE_ID))),
-                doc) == null) {
+        if (collection.findOneAndReplace(Filters.and(
+                Filters.eq(Constants.USER_ID, doc.get(Constants.USER_ID)),
+                Filters.eq(Constants.DEVICE_ID, doc.get(Constants.DEVICE_ID))), doc) == null) {
 
             collection.insertOne(doc);
         }
@@ -122,51 +133,23 @@ public class MongoDB {
         return;
     }
 
-    private Document createDocument(UserSession userSession) {
-
-        Document doc = new Document(Const.USER_ID, userSession.getUserId())
-                .append(Const.SESSION_CODE, userSession.getSessionCode());
-
-        return doc;
-    }
-
-    private Document createDocument(UserDevice userDevice) {
-
-        Document doc = new Document(Const.USER_ID, userDevice.getUserId())
-                .append(Const.DEVICE_ID, userDevice.getDeviceId());
-
-        return doc;
-    }
-
-    private UserSession convertSessionDocToResource(Document doc) {
-
-        UserSession userSession = new UserSession();
-
-        userSession.setUserId(doc.getString(Const.USER_ID));
-        userSession.setSessionCode(doc.getString(Const.SESSION_CODE));
-
-        return userSession;
-    }
-
-    private UserDevice convertDeviceDocToResource(Document doc) {
-
-        UserDevice userDevice = new UserDevice();
-
-        userDevice.setUserId(doc.getString(Const.USER_ID));
-        userDevice.setDeviceId(doc.getString(Const.DEVICE_ID));
-
-        return userDevice;
-    }
-
+    /**
+     * API for getting user identifier corresponding with session code from
+     * database
+     * 
+     * @param sessionCode
+     *            session code
+     * @return String - user identifier
+     */
     public String getUserId(String sessionCode) {
 
         String userId = null;
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.SESSION_TABLE);
+                .getCollection(Constants.SESSION_TABLE);
 
-        MongoCursor<Document> cursor = collection
-                .find(Filters.eq(Const.SESSION_CODE, sessionCode)).iterator();
+        MongoCursor<Document> cursor = collection.find(
+                Filters.eq(Constants.SESSION_CODE, sessionCode)).iterator();
 
         try {
 
@@ -188,22 +171,20 @@ public class MongoDB {
     }
 
     /**
-     * API for getting devices according to user from mongoDB
+     * API for getting devices corresponding with user identifier from database
      * 
      * @param userId
      *            user identifier
-     * @param tablename
-     *            table name of mongoDB
      */
     public ArrayList<String> getDevices(String userId) {
 
         ArrayList<String> deviceList = new ArrayList<String>();
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.DEVICE_TABLE);
+                .getCollection(Constants.DEVICE_TABLE);
 
-        MongoCursor<Document> cursor = collection
-                .find(Filters.eq(Const.USER_ID, userId)).iterator();
+        MongoCursor<Document> cursor = collection.find(
+                Filters.eq(Constants.USER_ID, userId)).iterator();
 
         try {
 
@@ -223,12 +204,77 @@ public class MongoDB {
         return deviceList;
     }
 
+    public void printResources() {
+
+        ArrayList<UserDevice> dlist = readDeviceResources();
+        int size = dlist.size();
+
+        Logger.i("*Table: " + Constants.DEVICE_TABLE);
+        for (int i = 0; i < size; i++) {
+
+            UserDevice item = dlist.get(i);
+
+            Logger.i("[" + i + "]" + item.getUserId() + ", "
+                    + item.getDeviceId());
+        }
+
+        ArrayList<UserSession> slist = readSessionResources();
+        size = slist.size();
+
+        Logger.i("*Table: " + Constants.SESSION_TABLE);
+
+        for (int i = 0; i < size; i++) {
+
+            UserSession item = slist.get(i);
+
+            Logger.i("[" + i + "]" + item.getUserId() + ", "
+                    + item.getSessionCode());
+
+        }
+    }
+
+    private Document createDocument(UserSession userSession) {
+
+        Document doc = new Document(Constants.USER_ID, userSession.getUserId())
+                .append(Constants.SESSION_CODE, userSession.getSessionCode());
+
+        return doc;
+    }
+
+    private Document createDocument(UserDevice userDevice) {
+
+        Document doc = new Document(Constants.USER_ID, userDevice.getUserId())
+                .append(Constants.DEVICE_ID, userDevice.getDeviceId());
+
+        return doc;
+    }
+
+    private UserSession convertSessionDocToResource(Document doc) {
+
+        UserSession userSession = new UserSession();
+
+        userSession.setUserId(doc.getString(Constants.USER_ID));
+        userSession.setSessionCode(doc.getString(Constants.SESSION_CODE));
+
+        return userSession;
+    }
+
+    private UserDevice convertDeviceDocToResource(Document doc) {
+
+        UserDevice userDevice = new UserDevice();
+
+        userDevice.setUserId(doc.getString(Constants.USER_ID));
+        userDevice.setDeviceId(doc.getString(Constants.DEVICE_ID));
+
+        return userDevice;
+    }
+
     private ArrayList<UserSession> readSessionResources() {
 
         ArrayList<UserSession> userSessionList = new ArrayList<UserSession>();
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.SESSION_TABLE);
+                .getCollection(Constants.SESSION_TABLE);
         MongoCursor<Document> cursor = collection.find().iterator();
 
         while (cursor.hasNext()) {
@@ -247,7 +293,7 @@ public class MongoDB {
         ArrayList<UserDevice> userDeviceList = new ArrayList<UserDevice>();
 
         MongoCollection<Document> collection = db
-                .getCollection(Const.DEVICE_TABLE);
+                .getCollection(Constants.DEVICE_TABLE);
         MongoCursor<Document> cursor = collection.find().iterator();
 
         while (cursor.hasNext()) {
@@ -259,35 +305,6 @@ public class MongoDB {
         cursor.close();
 
         return userDeviceList;
-    }
-
-    public void printResources() {
-
-        ArrayList<UserDevice> dlist = readDeviceResources();
-        int size = dlist.size();
-
-        Logger.i("*Table: " + Const.DEVICE_TABLE);
-        for (int i = 0; i < size; i++) {
-
-            UserDevice item = dlist.get(i);
-
-            Logger.i("[" + i + "]" + item.getUserId() + ", "
-                    + item.getDeviceId());
-        }
-
-        ArrayList<UserSession> slist = readSessionResources();
-        size = slist.size();
-
-        Logger.i("*Table: " + Const.SESSION_TABLE);
-
-        for (int i = 0; i < size; i++) {
-
-            UserSession item = slist.get(i);
-
-            Logger.i("[" + i + "]" + item.getUserId() + ", "
-                    + item.getSessionCode());
-
-        }
     }
 
 }

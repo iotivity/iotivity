@@ -69,21 +69,21 @@ rcs_test_env.AppendUnique(
                 '../src/common/utils/include',
         ])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
         rcs_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
         if target_os != 'android':
                 rcs_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
                 rcs_test_env.AppendUnique(LIBS = ['pthread'])
 
 rcs_test_env.PrependUnique(LIBS = [
+    'connectivity_abstraction',
+    'oc_logger',
+    'oc_logger_core',
+    'octbstack',
+    'oc',
     'rcs_client',
     'rcs_server',
     'rcs_common',
-    'oc',
-    'octbstack',
-    'oc_logger',
-    'oc_logger_core',
-    'connectivity_abstraction',
     gtest,
     gtest_main])
 

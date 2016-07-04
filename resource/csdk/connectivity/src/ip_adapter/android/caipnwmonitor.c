@@ -38,6 +38,8 @@
 
 #define TAG "OIC_CA_IP_MONITOR"
 
+static CAIPConnectionStateChangeCallback g_networkChangeCallback;
+
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          uint32_t addr, int flags);
 
@@ -67,6 +69,11 @@ CAResult_t CAIPStopNetworkMonitor()
 int CAGetPollingInterval(int interval)
 {
     return interval;
+}
+
+void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+{
+    g_networkChangeCallback = callback;
 }
 
 CAInterface_t *CAFindInterfaceChange()
@@ -206,7 +213,6 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     caglobals.ip.nm.numIfItems = 0;
     for (size_t i = 0; i < interfaces; i++)
     {
-        CAResult_t result = CA_STATUS_OK;
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
         struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
@@ -238,7 +244,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         }
 
         // Add IPv4 interface
-        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
+        CAResult_t result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
         if (CA_STATUS_OK != result)
         {
             goto exit;
@@ -314,23 +320,17 @@ CAResult_t CAIPJniInit()
         return CA_STATUS_FAILED;
     }
 
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     if ((*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
     {
         OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         return CA_STATUS_FAILED;
     }
 
-    jclass cls_Context = (*env)->FindClass(env, "android/content/Context");
-    if (!cls_Context)
-    {
-        OIC_LOG(ERROR, TAG, "Could not get context object class");
-        return CA_STATUS_FAILED;
-    }
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, "android/content/Context",
+                                                           "getApplicationContext",
+                                                           "()Landroid/content/Context;");
 
-    jmethodID mid_getApplicationContext = (*env)->GetMethodID(env, cls_Context,
-                                                                "getApplicationContext",
-                                                                "()Landroid/content/Context;");
     if (!mid_getApplicationContext)
     {
         OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
@@ -379,7 +379,7 @@ static CAResult_t CAIPDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -444,9 +444,9 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *env, jclass class)
 {
     (void)env;
     (void)class;
-    OIC_LOG(DEBUG, TAG, "caIpStateEnabled");
 
-    CAWakeUpForChange();
+    OIC_LOG(DEBUG, TAG, "Wifi is in Activated State");
+    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_UP);
 }
 
 JNIEXPORT void JNICALL
@@ -454,13 +454,7 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateDisabled(JNIEnv *env, jclass class)
 {
     (void)env;
     (void)class;
-    OIC_LOG(DEBUG, TAG, "caIpStateDisabled");
 
-    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
-    if (!iflist)
-    {
-        OIC_LOG_V(ERROR, TAG, "get interface info failed");
-        return;
-    }
-    u_arraylist_destroy(iflist);
+    OIC_LOG(DEBUG, TAG, "Wifi is in Deactivated State");
+    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_DOWN);
 }

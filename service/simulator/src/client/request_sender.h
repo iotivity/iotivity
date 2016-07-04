@@ -18,96 +18,85 @@
  *
  ******************************************************************/
 
-#ifndef REQUEST_SENDER_H_
-#define REQUEST_SENDER_H_
+#ifndef SIMULATOR_REQUEST_SENDER_H_
+#define SIMULATOR_REQUEST_SENDER_H_
 
-#include "request_list.h"
+#include "simulator_client_types.h"
 #include "simulator_resource_model.h"
-#include "request_model.h"
-#include "simulator_exceptions.h"
 #include "simulator_error_codes.h"
 
-struct RequestDetail;
-class RequestSender
+struct RequestInfo
+{
+    RequestType type;
+    std::map<std::string, std::string> queryParams;
+    SimulatorResourceModel payLoad;
+};
+
+class GETRequestSender
 {
     public:
-        typedef std::function<void (SimulatorResult, SimulatorResourceModelSP)> ResponseCallback;
+        typedef std::function<void (SimulatorResult result, const SimulatorResourceModel &resModel,
+                                    const RequestInfo &reqInfo)> ResponseCallback;
 
-        RequestSender(RequestType type, std::shared_ptr<OC::OCResource> &ocResource);
-        virtual ~RequestSender() {}
+        GETRequestSender(const std::shared_ptr<OC::OCResource> &ocResource);
 
-        void sendRequest(const std::map<std::string, std::string> &queryParam,
-                         ResponseCallback responseCb, bool verifyResponse = false);
+        SimulatorResult send(const ResponseCallback &callback);
 
-        void sendRequest(const std::string &interfaceType,
-                         const std::map<std::string, std::string> &queryParam,
-                         ResponseCallback responseCb, bool verifyResponse = false);
-
-        void sendRequest(const std::map<std::string, std::string> &queryParam,
-                         SimulatorResourceModelSP resourceModel,
-                         ResponseCallback responseCb, bool verifyResponse = false);
-
-        void sendRequest(const std::string &interfaceType,
-                         const std::map<std::string, std::string> &queryParam,
-                         SimulatorResourceModelSP resourceModel,
-                         ResponseCallback responseCb, bool verifyResponse = false);
-
-        void setRequestModel(const RequestModelSP &requestModel);
-
-    protected:
-        virtual OCStackResult send(OC::QueryParamsMap &queryParams,
-                                   SimulatorResourceModelSP &resourceModel, OC::GetCallback callback) = 0;
+        SimulatorResult send(const std::map<std::string, std::string> &queryParams,
+                             const ResponseCallback &callback);
 
         void onResponseReceived(const OC::HeaderOptions &headerOptions,
-                                const OC::OCRepresentation &rep, const int errorCode, int requestId);
+                                const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
+                                ResponseCallback callback);
 
-        RequestType m_type;
-        RequestList<std::shared_ptr<RequestDetail>> m_requestList;
-        RequestModelSP m_requestModel;
+    private:
         std::shared_ptr<OC::OCResource> m_ocResource;
 };
 
-struct RequestDetail
-{
-    RequestType type;
-    std::map<std::string, std::string> queryParam;
-    SimulatorResourceModelSP body;
-    bool verifyResponse;
-    RequestSender::ResponseCallback responseCb;
-};
-
-typedef std::shared_ptr<RequestDetail> RequestDetailSP;
-
-class GETRequestSender : public RequestSender
+class PUTRequestSender
 {
     public:
-        GETRequestSender(std::shared_ptr<OC::OCResource> &ocResource);
+        typedef std::function<void (SimulatorResult result, const SimulatorResourceModel &resModel,
+                                    const RequestInfo &reqInfo)> ResponseCallback;
 
-        OCStackResult send(OC::QueryParamsMap &queryParams,
-                           SimulatorResourceModelSP &resourceModel, OC::GetCallback callback);
+        PUTRequestSender(const std::shared_ptr<OC::OCResource> &ocResource);
+
+        SimulatorResult send(const SimulatorResourceModel &representation,
+                             const ResponseCallback &callback);
+
+        SimulatorResult send(const std::map<std::string, std::string> &queryParams,
+                             const SimulatorResourceModel &representation,
+                             const ResponseCallback &callback);
+
+        void onResponseReceived(const OC::HeaderOptions &headerOptions,
+                                const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
+                                ResponseCallback callback);
+
+    private:
+        std::shared_ptr<OC::OCResource> m_ocResource;
 };
 
-class PUTRequestSender : public RequestSender
+class POSTRequestSender
 {
     public:
-        PUTRequestSender(std::shared_ptr<OC::OCResource> &ocResource);
+        typedef std::function<void (SimulatorResult result, const SimulatorResourceModel &resModel,
+                                    const RequestInfo &reqInfo)> ResponseCallback;
 
-        OCStackResult send(OC::QueryParamsMap &queryParams,
-                           SimulatorResourceModelSP &resourceModel, OC::GetCallback callback);
+        POSTRequestSender(const std::shared_ptr<OC::OCResource> &ocResource);
+
+        SimulatorResult send(const SimulatorResourceModel &representation,
+                             const ResponseCallback &callback);
+
+        SimulatorResult send(const std::map<std::string, std::string> &queryParams,
+                             const SimulatorResourceModel &representation,
+                             const ResponseCallback &callback);
+
+        void onResponseReceived(const OC::HeaderOptions &headerOptions,
+                                const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
+                                ResponseCallback callback);
+
+    private:
+        std::shared_ptr<OC::OCResource> m_ocResource;
 };
-
-class POSTRequestSender : public RequestSender
-{
-    public:
-        POSTRequestSender(std::shared_ptr<OC::OCResource> &ocResource);
-
-        OCStackResult send(OC::QueryParamsMap &queryParams,
-                           SimulatorResourceModelSP &resourceModel, OC::GetCallback callback);
-};
-
-typedef std::shared_ptr<RequestSender> RequestSenderSP;
-typedef std::shared_ptr<GETRequestSender> GETRequestSenderSP;
-typedef std::shared_ptr<PUTRequestSender> PUTRequestSenderSP;
-typedef std::shared_ptr<POSTRequestSender> POSTRequestSenderSP;
 
 #endif

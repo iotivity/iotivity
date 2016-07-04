@@ -33,13 +33,12 @@ if(target_os) == 'arduino':
 root_dir = './'
 tinydtls_src_path = root_dir
 
-env.AppendUnique(CPPPATH = [root_dir])
-env.AppendUnique(CPPPATH = [root_dir+'aes/'])
-env.AppendUnique(CPPPATH = [root_dir+'ecc/'])
-env.AppendUnique(CPPPATH = [root_dir+'sha2/'])
+dtls_env = env.Clone()
 
-if target_os not in ['arduino', 'windows', 'winrt']:
-	env.AppendUnique(CPPDEFINES = ['HAVE_SYS_TIME_H'])
+dtls_env.PrependUnique(CPPPATH = [root_dir])
+dtls_env.AppendUnique(CPPPATH = [root_dir+'aes/'])
+dtls_env.AppendUnique(CPPPATH = [root_dir+'ecc/'])
+dtls_env.AppendUnique(CPPPATH = [root_dir+'sha2/'])
 
 ######################################################################
 # Source files and Target(s)
@@ -58,20 +57,18 @@ tinydtls_src = [
                 'sha2/sha2.c',
         ]
 
-env.AppendUnique(TINYDTLS_SRC = tinydtls_src)
-
-if not env.get('RELEASE'):
+if not dtls_env.get('RELEASE'):
 	if(target_os) not in ['arduino']:
-		env.AppendUnique(TINYDTLS_SRC = ['debug.c'])
+		tinydtls_src += ['debug.c']
 	else:
-		env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+		dtls_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+	dtls_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 
-env.AppendUnique(CPPDEFINES = ['DTLSV12',  'WITH_SHA256', 'DTLS_CHECK_CONTENTTYPE', 'SHA2_USE_INTTYPES_H'])
+dtls_env.AppendUnique(CPPDEFINES = ['DTLSV12',  'WITH_SHA256', 'DTLS_CHECK_CONTENTTYPE', 'SHA2_USE_INTTYPES_H'])
+env.AppendUnique(CPPDEFINES = ['SHA2_USE_INTTYPES_H'])
 
-
-libtinydtls = env.StaticLibrary('libtinydtls', env.get('TINYDTLS_SRC'), OBJPREFIX='libtinydtls_')
+libtinydtls = dtls_env.StaticLibrary('tinydtls', tinydtls_src, OBJPREFIX='libtinydtls_')
 
 ######################################################################
 # Generate tinydtls samples
@@ -82,9 +79,9 @@ libtinydtls = env.StaticLibrary('libtinydtls', env.get('TINYDTLS_SRC'), OBJPREFI
 # IOT-395
 ######################################################################
 if not env.get('RELEASE'):
-	samples_env = env.Clone()
+	samples_env = dtls_env.Clone()
 
-	if target_os not in ['arduino', 'windows', 'winrt']:
+	if target_os not in ['arduino', 'windows']:
 		samples_env.AppendUnique(CPPDEFINES = ['_GNU_SOURCE'])
 
 	dtlsserver = samples_env.Program('dtls-server', ['tests/dtls-server.c'])
@@ -93,9 +90,12 @@ if not env.get('RELEASE'):
 	samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	samples_env.PrependUnique(LIBS = ['tinydtls'])
 
+	if target_os in ['windows', 'msys_nt']:
+		samples_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'advapi32'])
+
 	Alias("samples", [dtlsserver, dtlsclient])
 
 	samples_env.AppendTarget('samples')
 
-env.InstallTarget(libtinydtls, 'libtinydtls');
+dtls_env.InstallTarget(libtinydtls, 'tinydtls');
 

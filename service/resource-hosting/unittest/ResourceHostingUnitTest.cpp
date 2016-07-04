@@ -106,7 +106,7 @@ TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
     waitForCondition();
 
     mocks.OnCallFunc(onDiscoveryResource).Do(
-            [this, &uri, &testObject](RCSRemoteResourceObject::Ptr ptr)
+            [this, &uri](RCSRemoteResourceObject::Ptr ptr)
             {
                 if(ptr->getUri() == testObject.getHostedServerUri())
                 {

@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2016 Samsung Electronics All Rights Reserved.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.testrdserver;
 
@@ -33,9 +33,9 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.JSONUtil;
 import org.iotivity.cloud.rdserver.resources.ResourceDirectoryResource;
 import org.iotivity.cloud.util.Cbor;
+import org.iotivity.cloud.util.JSONUtil;
 import org.junit.Test;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -78,6 +78,9 @@ public class RDServerTest {
         CoapClientHandler coapHandler = new CoapClientHandler();
         coapClient.addHandler(coapHandler);
         coapClient.startClient(new InetSocketAddress("127.0.0.1", 5683));
+        if (coapHandler.connectCtx == null) {
+                throw new IllegalArgumentException("connectCtx is null");
+        }
         return coapHandler.connectCtx;
     }
 
@@ -85,7 +88,7 @@ public class RDServerTest {
 
         CoapRequest request = new CoapRequest(CoapMethod.POST);
         request.setUriPath(Constants.RD_URI);
-        request.setUriQuery("rt=oic.wk.rdPub");
+        request.setUriQuery("rt=oic.wk.rdpub");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
 
         ArrayList<Object> payload = new ArrayList<Object>();
@@ -185,9 +188,13 @@ public class RDServerTest {
         ArrayList<String> didList = new ArrayList<String>();
         didList.add("98f7483c-5a31-4161-ba7e-9c13e0d");
         data.put("devices", didList);
-        JSONUtil util = new JSONUtil();
-        byte[] payload = util.writeJSON(data);
-        request.setPayload(payload);
+        String payload = JSONUtil.writeJSON(data);
+        if (payload != null) {
+            request.setPayload(payload.getBytes(StandardCharsets.UTF_8));
+        }
+        else {
+                throw new IllegalArgumentException("payload writeJson error");
+        }
 
         startServer();
         ChannelHandlerContext ctx = startClient();

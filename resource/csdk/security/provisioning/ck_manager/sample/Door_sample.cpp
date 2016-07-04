@@ -40,6 +40,7 @@
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define STATE "state"
 #define OPEN_DURATION "openDuration"
+#define OPEN_DURATION_TIME "10min"
 #define OPEN_ALARM "openAlarm"
 
 static const char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
@@ -59,7 +60,7 @@ static std::string address;
 
 static int coapSecureResource;
 
-static const char CRED_FILE[] = "oic_svr_db_door.json";
+static const char CRED_FILE[] = "oic_svr_db_door.dat";
 
 CAEndpoint_t endpoint = {CA_DEFAULT_ADAPTER, CA_DEFAULT_FLAGS, 0, {0}, 0};
 
@@ -336,8 +337,7 @@ int  createDoorResource (const char *uri, DoorResource *doorResource)
     }
 
     doorResource->state = STATE_CLOSED; //1:closed , 0: open
-    char str[] = "10min";
-    doorResource->openDuration = str;
+    doorResource->openDuration = OPEN_DURATION_TIME;
     doorResource->openAlarm = false;
     OCStackResult res = OCCreateResource(&(doorResource->handle),
                                          "core.door",
@@ -437,6 +437,9 @@ void SendGetRequest()
     OCStackResult ret;
     OIC_LOG(INFO, TAG, "Send Get REQ to Light server");
 
+    //select ciphersuite for certificates
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+
     initAddress();
 
     char szQueryUri[64] = { '\0'};
@@ -466,7 +469,7 @@ void *input_function(void * /*data*/)
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    strcpy(szQueryUri, MULTICAST_DISCOVERY_QUERY);
+    strncpy(szQueryUri, MULTICAST_DISCOVERY_QUERY, sizeof(szQueryUri));
 
     while (1)
     {
@@ -478,7 +481,11 @@ void *input_function(void * /*data*/)
                 if (isUpdated == false)
                 {
                     OIC_LOG(INFO, TAG, "isUpdated is false...");
-                    OCDoResource(&handle, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT, OC_LOW_QOS, &cbData, NULL, 0);
+                    if (OCDoResource(&handle, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
+                                     OC_LOW_QOS, &cbData, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "OCDoResource error");
+                    }
 
                 }
                 break;

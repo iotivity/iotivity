@@ -67,6 +67,12 @@ typedef enum {
     FATAL = DLOG_ERROR
 } LogLevel;
 #else
+
+/** @todo temporary work-around until better names with prefixes are used for the enum values. */
+#ifdef ERROR
+#undef ERROR
+#endif
+
 typedef enum {
     DEBUG = 0,
     INFO,
@@ -77,9 +83,19 @@ typedef enum {
 #endif
 
 #ifdef __TIZEN__
-#define OCLog(level,tag,mes)
-#define OCLogv(level,tag,fmt,args...)
-#elif defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
+/**
+ * Output the contents of the specified buffer (in hex) with the specified priority level.
+ *
+ * @param[in]    level      DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param[in]    tag        Module name
+ * @param[in]    buffer     pointer to buffer of bytes
+ * @param[in]    bufferSize max number of byte in buffer
+ */
+void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize);
+
+#define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
+#define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, (level),tag,fmt,##args)
+#elif !defined(ARDUINO)
     /**
      * Configure logger to use a context that defines a custom logger function
      *
@@ -183,9 +199,10 @@ typedef enum {
 
 #define OIC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
 #define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt, ##args)
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
+    OCLogBuffer((level), (tag), (buffer), (bufferSize))
 
-#else // These macros are defined for Linux, Android, and Arduino
+#else // These macros are defined for Linux, Android, Win32, and Arduino
 
 #define OIC_LOG_INIT()    OCLogInit()
 
@@ -206,7 +223,7 @@ typedef enum {
 #define OIC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OCLogShutdown()
 #define OIC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
-// Define variable argument log function for Linux and Android
+// Define variable argument log function for Linux, Android, and Win32
 #define OIC_LOG_V(level, tag, ...)  OCLogv((level), (tag), __VA_ARGS__)
 
 #endif //ARDUINO

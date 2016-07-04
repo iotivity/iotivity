@@ -66,9 +66,9 @@ typedef enum
  * @return The number of bytes written to @p result or a value
  *         less than zero on error.
  */
-typedef int (*CAGetDTLSPskCredentialsHandler)( CADtlsPskCredType_t type,
-		      const unsigned char *desc, size_t desc_len,
-		      unsigned char *result, size_t result_length);
+typedef int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type,
+		      const uint8_t *desc, size_t desc_len,
+		      uint8_t *result, size_t result_length);
 
 /**
  * Register callback to receive the result of DTLS handshake.
@@ -121,7 +121,7 @@ typedef int (*CAGetDTLSX509CredentialsHandler)(CADtlsX509Creds_t *credInfo);
  *                                  credInfo which is then freed by CA
  * @return  NONE
  */
-typedef void (*CAGetDTLSCrlHandler)(ByteArray crlInfo);
+typedef void (*CAGetDTLSCrlHandler)(ByteArray* crlInfo);
 
 /**
  * @brief   Register callback to get DTLS Cert credentials.

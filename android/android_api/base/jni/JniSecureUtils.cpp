@@ -22,6 +22,7 @@
 
 #include "JniSecureUtils.h"
 #include "JniOcSecureResource.h"
+#include "srmutility.h"
 #include "base64.h"
 
 jobject JniSecureUtils::convertProvisionresultVectorToJavaList(JNIEnv *env, const OC::PMResultList_t *result)
@@ -107,16 +108,6 @@ std::string JniSecureUtils::convertUUIDtoStr(OicUuid_t uuid)
     return deviceId.str();
 }
 
-void JniSecureUtils::convertStrToUUID(char *str, OicUuid_t &uuid)
-{
-    unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-    uint32_t outLen = 0;
-    B64Result b64Ret = B64_OK;
-
-    b64Ret = b64Decode(str, strlen(str), base64Buff, sizeof(base64Buff), &outLen);
-    memcpy(uuid.id, base64Buff, outLen);
-}
-
 jobject JniSecureUtils::convertUUIDVectorToJavaStrList(JNIEnv *env, UuidList_t &vector)
 {
     jobject jList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
@@ -153,8 +144,14 @@ OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, Oic
     }
 
     char *str = (char*) env->GetStringUTFChars(jData, 0);
-    convertStrToUUID(str, acl->subject);
-    env->ReleaseStringUTFChars(jData, str);
+    if (OC_STACK_OK == ConvertStrToUuid(str, &acl->subject))
+    {
+        env->ReleaseStringUTFChars(jData, str);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
 
     jint jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecAcl_get_resources_cnt);
     if (!jCount || env->ExceptionCheck())
@@ -216,31 +213,108 @@ OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, Oic
         acl->recurrences[i] = (char*) env->GetStringUTFChars(jData, 0);
     }
 
-    jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecAcl_get_owners_cnt);
-    if (!jCount ||  env->ExceptionCheck())
+    jData = (jstring) env->CallObjectMethod(in, g_mid_OcOicSecAcl_get_rownerID);
+    if (!jData || env->ExceptionCheck())
     {
         return OC_STACK_ERROR;
     }
 
-    acl->ownersLen = jCount;
-    acl->owners = new OicUuid_t[acl->ownersLen];
-    if (!acl->owners)
+    str = (char*) env->GetStringUTFChars(jData, 0);
+
+    if (OC_STACK_OK == ConvertStrToUuid(str, &acl->rownerID))
+    {
+        env->ReleaseStringUTFChars(jData, str);
+    }
+    else
     {
         return OC_STACK_ERROR;
     }
 
+    return OC_STACK_OK;
+}
+
+OCStackResult JniSecureUtils::convertJavaPdACLToOCAcl(JNIEnv *env, jobject in, OicSecPdAcl_t *pdacl)
+{
+    jstring jData;
+    jvalue args[1];
+
+    jint jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecPdAcl_get_resources_cnt);
+    if (!jCount || env->ExceptionCheck())
+    {
+        return OC_STACK_ERROR;
+    }
+
+    pdacl->resourcesLen = jCount;
+    pdacl->resources = new char*[jCount];
+
+    if (!pdacl->resources)
+    {
+        return OC_STACK_ERROR;
+    }
     for (jint i = 0; i < jCount; ++i)
     {
         args[0].i = i;
-        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecAcl_get_owners, args);
+        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecPdAcl_get_resources, args);
+        if (!jData || env->ExceptionCheck())
+        {
+            return OC_STACK_ERROR;
+        }
+
+        pdacl->resources[i] = (char*) env->GetStringUTFChars(jData, 0);
+    }
+
+    jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecPdAcl_get_permission);
+    if (env->ExceptionCheck())
+    {
+        return OC_STACK_ERROR;
+    }
+
+    pdacl->permission = jCount;
+    jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecPdAcl_get_periods_cnt);
+    if (env->ExceptionCheck())
+    {
+        return OC_STACK_ERROR;
+    }
+
+    pdacl->prdRecrLen = jCount;
+    if (jCount)
+    {
+        pdacl->periods = new char*[jCount];
+        if (!pdacl->periods)
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+    for (jint i = 0; i < jCount; ++i)
+    {
+        args[0].i = i;
+        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecPdAcl_get_periods, args);
+        if (!jData || env->ExceptionCheck())
+        {
+            return OC_STACK_ERROR;
+        }
+
+        pdacl->periods[i] = (char*) env->GetStringUTFChars(jData, 0);
+    }
+
+    if (jCount)
+    {
+        pdacl->recurrences = new char*[jCount];
+        if (!pdacl->recurrences)
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+    for (jint i = 0; i < jCount; ++i)
+    {
+        args[0].i = i;
+        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecPdAcl_get_recurrences, args);
         if (!jData ||  env->ExceptionCheck())
         {
             return OC_STACK_ERROR;
         }
 
-        str = (char*) env->GetStringUTFChars(jData, 0);
-        convertStrToUUID(str, acl->owners[i]);
-        env->ReleaseStringUTFChars(jData, str);
+        pdacl->recurrences[i] = (char*) env->GetStringUTFChars(jData, 0);
     }
     return OC_STACK_OK;
 }

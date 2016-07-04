@@ -30,6 +30,10 @@
 #include "crlresource.h"
 #include "crl_generator.h"
 
+#ifdef __unix__
+#include <sys/stat.h>
+#endif // __unix__
+
 //constants used in ckmInfo
 #define CKM_INFO_IS_NOT_LOADED                       (0)
 #define CKM_INFO_IS_LOADED                           (1)
@@ -84,6 +88,14 @@ PKIError InitCKMInfo(void)
         }
         else ////create new storage
         {
+#ifdef __unix__
+            struct stat st;
+            if (0 == lstat(CA_STORAGE_FILE, &st))
+            {
+                CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+                CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+            }
+#endif
             filePointer = fopen(CA_STORAGE_FILE, "wb");
             CHECK_NULL(filePointer, ISSUER_CA_STORAGE_FILE_WRITE_ERROR);
             objectsWrote = fwrite(&g_ckmInfo, sizeof(CKMInfo_t), count, filePointer);
@@ -108,8 +120,18 @@ PKIError SaveCKMInfo(void)
     FILE *filePointer = NULL;
     int count = 1;
     int objectsWrote = 0;
+#ifdef __unix__
+    struct stat st;
+#endif
 
     CHECK_COND(g_ckmInfo.CKMInfoIsLoaded, CKM_INFO_IS_NOT_INIT);
+#ifdef __unix__
+    if (0 == lstat(CA_STORAGE_FILE, &st))
+    {
+        CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+        CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    }
+#endif
     filePointer = fopen(CA_STORAGE_FILE, "wb");
     CHECK_NULL(filePointer, ISSUER_CA_STORAGE_FILE_WRITE_ERROR);
     objectsWrote = fwrite(&g_ckmInfo, sizeof(CKMInfo_t), count, filePointer);
@@ -237,7 +259,7 @@ PKIError SetCAName (const ByteArray *CAName)
     CHECK_NULL_BYTE_ARRAY_PTR(CAName, ISSUER_CA_STORAGE_NULL_PASSED);
     CHECK_LESS_EQUAL(CAName->len, ISSUER_MAX_NAME_SIZE, ISSUER_CA_STORAGE_WRONG_CA_NAME_LEN);
     memcpy(g_ckmInfo.CAName, CAName->data, CAName->len);
-    g_ckmInfo.CANameSize = CAName->len;
+    g_ckmInfo.CANameSize = (uint32_t)CAName->len;
 
     FUNCTION_CLEAR();
 }
@@ -297,7 +319,7 @@ PKIError InitCRT(void)
 
         for (int i = 0; i < g_ckmInfo.CAChainLength; i++)
         {
-            objectsRead = fread(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
+            objectsRead = (uint32_t)fread(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
             CHECK_EQUAL(objectsRead, CERT_LEN_PREFIX, ISSUER_CA_STORAGE_CRT_READ_ERROR);
             g_ckmInfo.CACertificateChain[i].len = ParseCertPrefix(prefix);
 
@@ -305,7 +327,7 @@ PKIError InitCRT(void)
                             (uint8_t *)OICMalloc(g_ckmInfo.CACertificateChain[i].len);
             CHECK_NULL(g_ckmInfo.CACertificateChain[i].data,
                        ISSUER_CA_STORAGE_MEMORY_ALLOC_FAILED);
-            objectsRead = fread(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
+            objectsRead = (uint32_t)fread(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
                                 g_ckmInfo.CACertificateChain[i].len, filePointer);
             CHECK_EQUAL(objectsRead, g_ckmInfo.CACertificateChain[i].len,
                         ISSUER_CA_STORAGE_CRT_READ_ERROR);
@@ -326,16 +348,23 @@ PKIError SaveCRT(void)
     FILE *filePointer = NULL;
     uint32_t objectsWrote = 0;
     uint8_t prefix[CERT_LEN_PREFIX] = {0};
-
+#ifdef __unix__
+    struct stat st;
+    if (0 == lstat(CA_STORAGE_CRT_FILE, &st))
+    {
+        CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+        CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    }
+#endif
     filePointer = fopen(CA_STORAGE_CRT_FILE, "wb");
     CHECK_NULL(filePointer, ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
 
     for (int i = 0; i < g_ckmInfo.CAChainLength; i++)
     {
         WriteCertPrefix(prefix, g_ckmInfo.CACertificateChain[i].len);
-        objectsWrote = fwrite(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
+        objectsWrote = (uint32_t)fwrite(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
         CHECK_EQUAL(objectsWrote, CERT_LEN_PREFIX, ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
-        objectsWrote = fwrite(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
+        objectsWrote = (uint32_t)fwrite(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
                               g_ckmInfo.CACertificateChain[i].len, filePointer);
         CHECK_EQUAL(objectsWrote, g_ckmInfo.CACertificateChain[i].len,
                     ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
@@ -502,6 +531,7 @@ PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList)
     CHECK_COND(g_crlInfo.CrlData.data, ISSUER_CA_STORAGE_CRL_UNDEFINED);
     CHECK_NULL_BYTE_ARRAY_PTR(certificateRevocationList, ISSUER_CA_STORAGE_NULL_PASSED);
     tmpCRL = (OicSecCrl_t *)GetCRLResource();
+    CHECK_NULL(tmpCRL, ISSUER_CA_STORAGE_NULL_PASSED);
     g_crlInfo.CrlId = tmpCRL->CrlId;
     g_crlInfo.CrlData = tmpCRL->CrlData;
     g_crlInfo.ThisUpdate = tmpCRL->ThisUpdate;

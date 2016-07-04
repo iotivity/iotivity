@@ -46,9 +46,18 @@
 #include <string.h>
 
 #ifndef SINGLE_THREAD
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#if HAVE_SYS_TIMEB_H
+#include <sys/timeb.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #endif
 
 #if defined(__ANDROID__)
@@ -59,6 +68,7 @@
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "oic_malloc.h"
+#include "ocrandom.h"
 #include "logger.h"
 
 #define TAG "OIC_CA_RETRANS"
@@ -77,6 +87,7 @@ typedef struct
 } CARetransmissionData_t;
 
 static const uint64_t USECS_PER_SEC = 1000000;
+static const uint64_t MSECS_PER_SEC = 1000;
 
 /**
  * @brief   getCurrent monotonic time
@@ -94,8 +105,13 @@ uint64_t getCurrentTimeInMicroSeconds();
  */
 static uint64_t CAGetTimeoutValue()
 {
-    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * (random() & 0xFF)) >> 8)) *
+#ifdef HAVE_SRANDOM
+    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * OCGetRandomByte()) >> 8)) *
             (uint64_t) 1000;
+#else
+    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * OCGetRandomByte()) >> 8)) *
+            (uint64_t) 1000;
+#endif
 }
 
 CAResult_t CARetransmissionStart(CARetransmission_t *context)
@@ -646,6 +662,10 @@ uint64_t getCurrentTimeInMicroSeconds()
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     currentTime = ts.tv_sec * USECS_PER_SEC + ts.tv_nsec / 1000;
+#elif defined(_WIN32)
+    struct __timeb64 tb;
+    _ftime64_s(&tb);
+    currentTime = tb.time * USECS_PER_SEC + tb.millitm * MSECS_PER_SEC;
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);

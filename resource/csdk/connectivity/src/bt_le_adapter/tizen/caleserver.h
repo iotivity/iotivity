@@ -31,19 +31,14 @@
 #ifndef TZ_BLE_SERVER_H_
 #define TZ_BLE_SERVER_H_
 
+#include <bluetooth.h>
+#include <bluetooth_type.h>
+#include <bluetooth_internal.h>
+
 #include "caadapterinterface.h"
 #include "logger.h"
 #include "cathreadpool.h"
 #include "caleinterface.h"
-
-/**
- * This is thread which will be used for creating ble service and advertise ble service.
- * 1. Create New OIC Service 2. Add read & write characteristics to service.
- * 3. Register Service       4. Advertise service.
- *
- * @param[in] data  Currently it will be NULL.
- */
-void CAStartLEGattServerThread(void *data);
 
 /**
  * Used to initialize gatt server.
@@ -153,15 +148,6 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
 void CALEGattRemoteCharacteristicWriteCb(char *remoteAddress, bt_gatt_server_h server,
                                          bt_gatt_h charPath, int offset, char *charValue,
                                          int charValueLen, void *userData);
-
-/**
- * This is the callback which will be called whenever there is change in gatt connection
- * with Client(Connected/Disconnected).
- *
- * @param[in]  connected      State of connection.
- * @param[in]  remoteAddress  Mac address of the remote device in which we made connection.
- */
-void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddress);
 
 /**
  * Setting the connection state changed callback.

@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2016 Samsung Electronics All Rights Reserved.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.accountserver.util;
 
@@ -32,18 +32,39 @@ import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
 
 /**
  * 
- * This class provides utility for making CoAP request and response.
+ * This class provides a set of APIs to build build data of CoAP request and
+ * response type.
  * 
  */
 public class CoapMessageBuilder {
 
     public static final int APPLICATION_JSON = 50;
 
+    /**
+     * API for building data of CoAP response type without payload.
+     * 
+     * @param token
+     *            token
+     * @param status
+     *            response status
+     * @return CoapResponse - data of CoAP response type
+     */
     public CoapResponse buildCoapResponse(byte[] token, CoapStatus status) {
 
         return buildCoapResponse(token, null, status);
     }
 
+    /**
+     * API for building data of CoAP response type with payload.
+     * 
+     * @param token
+     *            token
+     * @param jsonString
+     *            payload data
+     * @param status
+     *            response status
+     * @return CoapResponse - data of CoAP response type
+     */
     public CoapResponse buildCoapResponse(byte[] token, String jsonString,
             CoapStatus status) {
 
@@ -62,6 +83,15 @@ public class CoapMessageBuilder {
         return coapResponse;
     }
 
+    /**
+     * API for building data of CoAP requeset type with payload.
+     * 
+     * @param token
+     *            token
+     * @param jsonString
+     *            payload data
+     * @return CoapRequest - data of CoAP request type
+     */
     public CoapRequest buildCoapRequest(byte[] token, String jsonString) {
 
         CoapRequest coapRequest = new CoapRequest(CoapMethod.GET);

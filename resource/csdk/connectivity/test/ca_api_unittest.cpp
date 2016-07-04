@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "platform_features.h"
 #include "gtest/gtest.h"
 #include "cainterface.h"
 #include "cautilinterface.h"
@@ -68,17 +69,15 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo)
     return;
 }
 
-void adapter_handler(CATransportAdapter_t adapter,
-                     bool enabled)
+void adapter_handler(CATransportAdapter_t /*adapter*/,
+                     bool /*enabled*/)
 {
-
 }
 
-void connection_handler(CATransportAdapter_t adapter,
-                        const char *remote_address,
-                        bool connected)
+void connection_handler(CATransportAdapter_t /*adapter*/,
+                        const char * /*remote_address*/,
+                        bool /*connected*/)
 {
-
 }
 
 static char* addr = NULL;
@@ -160,12 +159,6 @@ int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
     return ret;
 }
 #endif  //__WITH_DTLS__
-
-int main(int argc, char **argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
 
 // CAInitialize TC
 // check return value
@@ -461,13 +454,8 @@ TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 // check return value
 TEST_F(CATests, RegisterNetworkMonitorHandler)
 {
-#ifdef LE_ADAPTER
     EXPECT_EQ(CA_STATUS_OK, CARegisterNetworkMonitorHandler(adapter_handler,
                                                             connection_handler));
-#else
-    EXPECT_EQ(CA_NOT_SUPPORTED, CARegisterNetworkMonitorHandler(adapter_handler,
-                                                                connection_handler));
-#endif
 }
 
 // CASetAutoConnectionDeviceInfo TC

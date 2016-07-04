@@ -74,7 +74,7 @@ void CAManagerConnectionStateChangedCB(CATransportAdapter_t adapter,
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -155,7 +155,7 @@ void CAManagerAdapterStateChangedCB(CATransportAdapter_t adapter, bool enabled)
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -239,6 +239,7 @@ Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
     if (g_listenerObject)
     {
         (*env)->DeleteGlobalRef(env, g_listenerObject);
+        g_listenerObject = NULL;
     }
 }
 
@@ -257,6 +258,8 @@ Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo(JNIEnv *en
     }
 
     CASetAutoConnectionDeviceInfo(address);
+
+    (*env)->ReleaseStringUTFChars(env, jaddress, address);
 }
 
 JNIEXPORT void JNICALL
@@ -274,6 +277,8 @@ Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *
     }
 
     CAUnsetAutoConnectionDeviceInfo(address);
+
+    (*env)->ReleaseStringUTFChars(env, jaddress, address);
 }
 
 JNIEXPORT void JNICALL
@@ -324,3 +329,14 @@ Java_org_iotivity_ca_CaInterface_caBtPairingCreateBond(JNIEnv *env, jclass clazz
     (void)clazz;
     CAUtilCreateBond(env, device);
 }
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_setLeScanIntervalTimeImpl(JNIEnv *env, jclass clazz,
+                                                           jint intervalTime, jint workignCount)
+{
+    LOGI("setLeScanIntervalTimeImpl");
+    (void)env;
+    (void)clazz;
+    CAUtilSetLEScanInterval(intervalTime, workignCount);
+}
+

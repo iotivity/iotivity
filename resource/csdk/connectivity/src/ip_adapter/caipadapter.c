@@ -68,7 +68,7 @@ static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 /**
  * Network Changed Callback to CA.
  */
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
+static CAAdapterChangeCallback g_networkChangeCallback = NULL;
 
 /**
  * error Callback to CA adapter.
@@ -137,10 +137,16 @@ void CAIPDeinitializeQueueHandles()
 
 #endif // SINGLE_THREAD
 
-void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
+void CAIPConnectionStateCB(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
-    (void)ipAddress;
-    (void)status;
+    if (g_networkChangeCallback)
+    {
+        g_networkChangeCallback(adapter, status);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "g_networkChangeCallback is NULL");
+    }
 }
 
 #ifdef __WITH_DTLS__
@@ -168,26 +174,15 @@ void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     }
 }
 
-void CAIPErrorHandler (const CAEndpoint_t *endpoint, const void *data,
-                       uint32_t dataLength, CAResult_t result)
+void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
+                      uint32_t dataLength, CAResult_t result)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
-    void *buf = (void*)OICMalloc(sizeof(char) * dataLength);
-    if (!buf)
-    {
-        OIC_LOG(ERROR, TAG, "Memory Allocation failed!");
-        return;
-    }
-    memcpy(buf, data, dataLength);
     if (g_errorCallback)
     {
-        g_errorCallback(endpoint, buf, dataLength, result);
-    }
-    else
-    {
-        OICFree(buf);
+        g_errorCallback(endpoint, data, dataLength, result);
     }
 }
 
@@ -226,7 +221,7 @@ static void CAInitializeIPGlobals()
 
 CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback networkPacketCallback,
-                          CANetworkChangeCallback netCallback,
+                          CAAdapterChangeCallback netCallback,
                           CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -244,7 +239,11 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     CAInitializeIPGlobals();
     caglobals.ip.threadpool = handle;
 
+    CAIPSetErrorHandler(CAIPErrorHandler);
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
+#ifndef SINGLE_THREAD
+    CAIPSetConnectionStateChangeCallback(CAIPConnectionStateCB);
+#endif
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsInit();
 
@@ -273,6 +272,12 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartIP()
 {
+    // Specific the port number received from application.
+    caglobals.ip.u6.port  = caglobals.ports.udp.u6;
+    caglobals.ip.u6s.port = caglobals.ports.udp.u6s;
+    caglobals.ip.u4.port  = caglobals.ports.udp.u4;
+    caglobals.ip.u4s.port = caglobals.ports.udp.u4s;
+
     CAIPStartNetworkMonitor();
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
@@ -420,6 +425,7 @@ void CATerminateIP()
     CAIPSetPacketReceiveCallback(NULL);
 
 #ifndef SINGLE_THREAD
+    CADeInitializeIPGlobals();
     CAIPDeinitializeQueueHandles();
 #endif
 }

@@ -46,10 +46,10 @@ extern "C"
 #ifdef TB_LOG
     #define OIC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
-static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
+INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 {
     OIC_LOG(level, (PL_TAG), "Payload Type: Representation");
     OCRepPayload* rep = payload;
@@ -164,7 +164,7 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 
 }
 
-static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
+INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Discovery");
     int i = 1;
@@ -174,8 +174,32 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         OIC_LOG(level, PL_TAG, "\tNO Resources");
         return;
     }
-    OIC_LOG(level, PL_TAG, "\tSID:");
-    OIC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
+    OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
+    if (payload->baseURI)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
+    }
+    if (payload->name)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
+    }
+    if (payload->uri)
+    {
+        OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
+    }
+    if (payload->type)
+    {
+        for (OCStringLL *strll = payload->type; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", strll->value);
+        }
+    }
+    OIC_LOG(level, PL_TAG, "\tInterface:");
+    for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
+    {
+        OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
+    }
+
     OCResourcePayload* res = payload->resources;
 
     while(res)
@@ -206,17 +230,39 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
     }
 }
 
-static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
+INLINE_API void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Device");
-    OIC_LOG(level, PL_TAG, "\tSID:");
-    OIC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
+    OIC_LOG_V(level, PL_TAG, "\tSID:%s", payload->sid);
     OIC_LOG_V(level, PL_TAG, "\tDevice Name:%s", payload->deviceName);
-    OIC_LOG_V(level, PL_TAG, "\tSpec Version%s", payload->specVersion);
-    OIC_LOG_V(level, PL_TAG, "\tData Model Version:%s", payload->dataModelVersion);
+    OIC_LOG_V(level, PL_TAG, "\tSpec Version:%s", payload->specVersion);
+    if (payload->dataModelVersions)
+    {
+        OIC_LOG(level, PL_TAG, "\tData Model Version:");
+        for (OCStringLL *strll = payload->dataModelVersions; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
+    if (payload->types)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Type:");
+        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
+    if (payload->interfaces)
+    {
+        OIC_LOG(level, PL_TAG, "\tInterface:");
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
 }
 
-static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)
+INLINE_API void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Platform");
     OIC_LOG_V(level, PL_TAG, "\tURI:%s", payload->uri);
@@ -231,9 +277,26 @@ static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* paylo
     OIC_LOG_V(level, PL_TAG, "\tFirmware Version:%s", payload->info.firmwareVersion);
     OIC_LOG_V(level, PL_TAG, "\tSupport URL:%s", payload->info.supportUrl);
     OIC_LOG_V(level, PL_TAG, "\tSystem Time:%s", payload->info.systemTime);
+
+    if (payload->rt)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Types:");
+        for (OCStringLL *strll = payload->rt; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
+    if (payload->interfaces)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Interfaces:");
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
 }
 
-static inline void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)
+INLINE_API void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Presence");
     OIC_LOG_V(level, PL_TAG, "\tSequence Number:%u", payload->sequenceNumber);
@@ -242,13 +305,13 @@ static inline void OCPayloadLogPresence(LogLevel level, OCPresencePayload* paylo
     OIC_LOG_V(level, PL_TAG, "\tResource Type:%s", payload->resourceType);
 }
 
-static inline void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
+INLINE_API void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Security");
     OIC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", payload->securityData);
 }
 
-static inline void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
+INLINE_API void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
 {
     if (!payload)
     {
@@ -271,7 +334,7 @@ static inline void OCRDPayloadLog(const LogLevel level, const OCRDPayload *paylo
     }
 }
 
-static inline void OCPayloadLog(LogLevel level, OCPayload* payload)
+INLINE_API void OCPayloadLog(LogLevel level, OCPayload* payload)
 {
     if(!payload)
     {

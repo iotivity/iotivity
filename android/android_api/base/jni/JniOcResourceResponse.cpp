@@ -30,10 +30,13 @@ using namespace OC;
 
 JniOcResourceResponse::JniOcResourceResponse
 (std::shared_ptr<OCResourceResponse> resourceResponse)
-: m_response(resourceResponse){}
+: m_response(resourceResponse)
+{
+}
 
 JniOcResourceResponse::~JniOcResourceResponse()
-{}
+{
+}
 
 void JniOcResourceResponse::setErrorCode(const int eCode)
 {
@@ -111,8 +114,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setErrorCode
 {
     LOGD("OcResourceResponse_setErrorCode");
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!response) return;
-
+    if (!response)
+    {
+        return;
+    }
     response->setErrorCode(static_cast<int>(eCode));
 }
 
@@ -126,8 +131,10 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResourceResponse_getNewResour
 {
     LOGD("OcResourceResponse_getNewResourceUri");
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!response) return nullptr;
-
+    if (!response)
+    {
+        return nullptr;
+    }
     return env->NewStringUTF(response->getNewResourceUri().c_str());
 }
 
@@ -141,8 +148,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setNewResourceU
 {
     LOGD("OcResourceResponse_setNewResourceUri");
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!response) return;
-
+    if (!response)
+    {
+        return;
+    }
     response->setNewResourceUri(env->GetStringUTFChars(jstr, 0));
 }
 
@@ -161,8 +170,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setHeaderOption
         return;
     }
     JniOcResourceResponse *jniResponse = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!jniResponse) return;
-
+    if (!jniResponse)
+    {
+        return;
+    }
     HeaderOptions headerOptions;
     JniUtils::convertJavaHeaderOptionsArrToVector(env, jHeaderOptions, headerOptions);
 
@@ -184,11 +195,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setRequestHandl
         return;
     }
     JniOcResourceResponse *jniResponse = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!jniResponse) return;
-
+    if (!jniResponse)
+    {
+        return;
+    }
     JniOcRequestHandle* jniOcRequestHandle = JniOcRequestHandle::getJniOcRequestHandlePtr(env, jRequestHandle);
-    if (!jniOcRequestHandle) return;
-
+    if (!jniOcRequestHandle)
+    {
+        return;
+    }
     jniResponse->setRequestHandle(jniOcRequestHandle->getOCRequestHandle());
 }
 
@@ -207,11 +222,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setResourceHand
         return;
     }
     JniOcResourceResponse *jniResponse = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!jniResponse) return;
-
+    if (!jniResponse)
+    {
+        return;
+    }
     JniOcResourceHandle* jniOcResourceHandle = JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceHandle);
-    if (!jniOcResourceHandle) return;
-
+    if (!jniOcResourceHandle)
+    {
+        return;
+    }
     jniResponse->setResourceHandle(jniOcResourceHandle->getOCResourceHandle());
 }
 
@@ -225,8 +244,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setResponseResu
 {
     LOGD("OcResourceResponse_setResponseResult");
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!response) return;
-
+    if (!response)
+    {
+        return;
+    }
     response->setResponseResult(JniUtils::getOCEntityHandlerResult(env, static_cast<int>(responseResult)));
 }
 
@@ -252,12 +273,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setResourceRepr
 
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env,
         thiz);
-    if (!response) return;
-
+    if (!response)
+    {
+        return;
+    }
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env,
         jRepresentation);
-    if (!representation) return;
-
+    if (!representation)
+    {
+        return;
+    }
     response->setResourceRepresentation(*representation, env->GetStringUTFChars(jstr, 0));
 }
 
@@ -276,8 +301,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setResourceRepr
         return;
     }
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!response) return;
-
+    if (!response)
+    {
+        return;
+    }
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env,
         jRepresentation);
 
