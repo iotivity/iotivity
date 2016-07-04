@@ -483,7 +483,7 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
         struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sa;
         if (!sock6->sin6_scope_id)
         {
-            sock6->sin6_scope_id = svritem->sep.endpoint.interface;
+            sock6->sin6_scope_id = svritem->sep.endpoint.ifindex;
         }
         socklen = sizeof(struct sockaddr_in6);
     }
@@ -893,7 +893,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
     svritem->sep.endpoint.adapter = endpoint->adapter;
     svritem->sep.endpoint.port = endpoint->port;
     svritem->sep.endpoint.flags = endpoint->flags;
-    svritem->sep.endpoint.interface = endpoint->interface;
+    svritem->sep.endpoint.ifindex = endpoint->ifindex;
 
     // #2. create the socket and connect to TCP server
     int family = (svritem->sep.endpoint.flags & CA_IPV6) ? AF_INET6 : AF_INET;
