@@ -141,6 +141,10 @@ NSResult NSUnRegisterResource()
         return NS_ERROR;
     }
 
+    NotificationResource.handle = NULL;
+    NotificationMessageResource.handle = NULL;
+    NotificationSyncResource.handle = NULL;
+
     NS_LOG(DEBUG, "NSUnRegisterResource - OUT");
     return NS_OK;
 }

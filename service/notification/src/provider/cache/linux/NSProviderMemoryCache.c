@@ -342,12 +342,8 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
     if (type == NS_PROVIDER_CACHE_SUBSCRIBER)
     {
         NSCacheSubData * subData = (NSCacheSubData *) data;
-        if (subData->id)
-        {
-            OICFree(subData->id);
-            subData->id = NULL;
-        }
 
+        (subData->id)[0] = '\0';
         OICFree(subData);
 
         return NS_OK;

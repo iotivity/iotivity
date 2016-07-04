@@ -52,7 +52,7 @@ typedef struct
 
 typedef struct
 {
-    char * id; // ip
+    char id[37]; // ip
     int syncObId;
     int messageObId;
     bool isWhite;
