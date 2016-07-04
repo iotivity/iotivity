@@ -1396,8 +1396,8 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         // TODO: Added as workaround. Will be replaced soon.
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
-                            result_length = cred->privateData.len;
-                            memcpy(result, cred->privateData.data, result_length);
+                            ret = cred->privateData.len;
+                            memcpy(result, cred->privateData.data, ret);
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
