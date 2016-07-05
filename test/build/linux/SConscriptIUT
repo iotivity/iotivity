@@ -1,0 +1,183 @@
+'''
+******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building Conformance Test App for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+iotivity_directory = env_linux.get('IOTIVITY_DIR')
+
+print "target source is --------------------------------" + target_source
+print "iotivity root is --------------------------------" + iotivity_directory
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+SERVER_JUST_WORKS_SECURITY_FILE_NAME = 'oic_svr_db_server_justworks.json'
+SERVER_SECURITY_FILE_NAME = 'oic_svr_db_server.json'
+CLIENT_SECURITY_FILE_NAME = 'oic_svr_db_client.json'
+
+######################################################################
+# Initializing Conformance Test App Directories
+######################################################################
+
+IUT_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+IUT_RESOURCE_INCLUDE = IUT_RESOURCE_DIR + '/include'
+IUT_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+IUT_RESOURCE_CSDK_LIB = IUT_RESOURCE_LIB
+IUT_RESOURCE_STACK = IUT_RESOURCE_DIR + '/csdk/stack/include'
+IUT_RESOURCE_SOCKET = IUT_RESOURCE_DIR + '/csdk/ocsocket/include'
+IUT_RESOURCE_RANDOM = IUT_RESOURCE_DIR + '/csdk/ocrandom/include'
+IUT_RESOURCE_LOGGER = IUT_RESOURCE_DIR + '/csdk/logger/include'
+IUT_RESOURCE_COMMON = IUT_RESOURCE_DIR + '/c_common/'
+IUT_RESOURCE_OC_LOGGER = IUT_RESOURCE_DIR + '/oc_logger/include'
+IUT_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+IUT_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+IUT_RESOURCE_OC_LOGGER_LIB = IUT_RESOURCE_LIB
+IUT_LIB = IUT_RESOURCE_LIB
+IUT_LIB_TIMER = IUT_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + '/include'
+IUT_SOURCE_DIR = PROJECT_HOME +  TARGET + 'testapp/ConformanceTestApp/c_cpp'
+JUST_WORKS_SECURITY_DB_SERVER = IUT_SOURCE_DIR + '/' + SERVER_JUST_WORKS_SECURITY_FILE_NAME
+SECURITY_DB_SERVER = IUT_SOURCE_DIR + '/' + SERVER_SECURITY_FILE_NAME
+SECURITY_DB_CLIENT = IUT_SOURCE_DIR + '/' + CLIENT_SECURITY_FILE_NAME
+
+######################################################################
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__LINUX__ -D __WITH_DTLS__ -finstrument-functions')
+
+IUT_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [INCLUDE_DIR]
+IUT_CINCLUDE = [COMMON_CINCLUDE, IUT_RESOURCE_INCLUDE, IUT_RESOURCE_STACK, IUT_RESOURCE_SOCKET, IUT_RESOURCE_RANDOM, IUT_RESOURCE_OC_LOGGER, IUT_LIB_TIMER, INCLUDE_DIR, IUT_RESOURCE_COMMON]
+
+######################################################################
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [RESOURCE_LIB_DIR]
+IUT_LIB_LOCATION = [COMMON_LIB_LOCATION, IUT_RESOURCE_LIB, IUT_RESOURCE_CSDK_LIB, IUT_RESOURCE_OC_LOGGER_LIB, IUT_LIB]
+
+COMMON_STATIC_LIBS = []
+COMMON_SHARED_LIBS = Split('libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
+
+
+#IUT_STATIC_RESOURCE_LIBS = [IUT_RESOURCE_LIB + '/liboc.a', IUT_RESOURCE_CSDK_LIB + '/liboctbstack.a', IUT_RESOURCE_OC_LOGGER_LIB + '/liboc_logger.a', IUT_RESOURCE_OC_LOGGER_LIB + '/libcoap.a']
+IUT_STATIC_RESOURCE_LIBS = []
+IUT_LIBS = COMMON_SHARED_LIBS
+
+######################################################################
+# Initializing Targets
+######################################################################
+
+IUT_APP_BIN = 'IUTSimulator'
+
+######################################################################
+# Initializing Sources
+######################################################################
+
+RESOURCE_SERVER_CPP = Glob(COMMON_UTIL_DIR + '/ResourceServer.cpp')
+SAMPLE_RESOURCE_CPP = Glob(COMMON_UTIL_DIR + '/SampleResource.cpp')
+RESOURCE_HELPER_CPP = Glob(COMMON_UTIL_DIR + '/ResourceHelper.cpp')
+SOURCE_CPP = Glob(IUT_SOURCE_DIR + '/IUTSimulator.cpp')
+IUT_APP_SRC = [SOURCE_CPP, RESOURCE_SERVER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_HELPER_CPP]
+
+######################################################################
+# Initializing Build
+######################################################################
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+IUT_APP = env_linux.Program(source = IUT_APP_SRC, target = IUT_APP_BIN, CPPPATH = IUT_CINCLUDE, LIBS = IUT_LIBS, LIBPATH = IUT_LIB_LOCATION, CPPFLAGS = COMMON_FLAGS)
+
+pre_job = [create_target_dir]
+
+######################################################################
+# Define Build Targets
+######################################################################
+
+default_targets = [pre_job]
+install_targets = []
+
+
+#IUT_APP
+install_targets += [IUT_APP]
+#install_targets += [JUST_WORKS_SECURITY_DB_SERVER]
+#install_targets += [SECURITY_DB_SERVER]
+#install_targets += [SECURITY_DB_CLIENT]
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)
+
