@@ -60,7 +60,7 @@ static const uint16_t CBOR_SIZE = 512;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 /** DOXM Map size - Number of mandatory items. */
-static const uint8_t DOXM_MAP_SIZE = 7;
+static const uint8_t DOXM_MAP_SIZE = 9;
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -237,6 +237,38 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Tag.");
     cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->dpc);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Value.");
+
+    //RT -- Mandatory
+    CborEncoder rtArray;
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_RT_NAME,
+            strlen(OIC_JSON_RT_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&doxmMap, &rtArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_DOXM,
+                strlen(OIC_RSRC_TYPE_SEC_DOXM));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&doxmMap, &rtArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+
+    //IF-- Mandatory
+     CborEncoder ifArray;
+     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_IF_NAME,
+             strlen(OIC_JSON_IF_NAME));
+     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+     cborEncoderResult = cbor_encoder_create_array(&doxmMap, &ifArray, 1);
+     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+                strlen(OC_RSRVD_INTERFACE_DEFAULT));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&doxmMap, &ifArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
 
     cborEncoderResult = cbor_encoder_close_container(&encoder, &doxmMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing DoxmMap.");
@@ -496,6 +528,8 @@ static bool ValidateQuery(const char * query)
     bool bOwnedMatch = false;       // does 'owned' query value matches with doxm.owned status?
     bool bDeviceIDQry = false;      // does querystring contains 'deviceid' query ?
     bool bDeviceIDMatch = false;    // does 'deviceid' query matches with doxm.deviceid ?
+    bool bInterfaceQry = false;      // does querystring contains 'if' query ?
+    bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
 
     OicParseQueryIter_t parseIter = {.attrPos = NULL};
 
@@ -529,6 +563,16 @@ static bool ValidateQuery(const char * query)
                 bDeviceIDMatch = true;
             }
         }
+
+        if (strncasecmp((char *)parseIter.attrPos, OC_RSRVD_INTERFACE, parseIter.attrLen) == 0)
+        {
+            bInterfaceQry = true;
+            if ((strncasecmp((char *)parseIter.valPos, OC_RSRVD_INTERFACE_DEFAULT, parseIter.valLen) == 0))
+            {
+                bInterfaceMatch = true;
+            }
+            return (bInterfaceQry ? bInterfaceMatch: true);
+        }
     }
 
     return ((bOwnedQry ? bOwnedMatch : true) && (bDeviceIDQry ? bDeviceIDMatch : true));
@@ -543,6 +587,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     //Checking if Get request is a query.
     if (ehRequest->query)
     {
+        OIC_LOG_V(DEBUG,TAG,"query:%s",ehRequest->query);
         OIC_LOG(DEBUG, TAG, "HandleDoxmGetRequest processing query");
         if (!ValidateQuery(ehRequest->query))
         {
@@ -563,7 +608,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     {
         if (OC_STACK_OK != DoxmToCBORPayload(gDoxm, &payload, &size))
         {
-            payload = NULL;
+            OIC_LOG(WARNING, TAG, "DoxmToCBORPayload failed in HandleDoxmGetRequest");
         }
     }
 
