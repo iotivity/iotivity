@@ -975,10 +975,10 @@ exit:
 
 #endif //__WITH_DTLS__
 
-static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
-    OIC_LOG(DEBUG, TAG, "HandleCREDPutRequest IN");
+    OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
     //Get binary representation of cbor
     OicSecCred_t *cred  = NULL;
@@ -1120,7 +1120,7 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
         }
         FreeCred(cred);
     }
-    OIC_LOG(DEBUG, TAG, "HandleCREDPutRequest OUT");
+    OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest OUT");
     return ret;
 }
 
@@ -1150,27 +1150,6 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     }
     OICFree(payload);
     return ehRet;
-}
-
-static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
-{
-    OCEntityHandlerResult ret = OC_EH_ERROR;
-
-    //Get binary representation of CBOR
-    OicSecCred_t *cred  = NULL;
-    uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData;
-    size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
-    OCStackResult res = CBORPayloadToCred(payload, size, &cred);
-    if ((OC_STACK_OK == res) && cred)
-    {
-        //If the Post request credential has credId, it will be
-        //discarded and the next available credId will be assigned
-        //to it before getting appended to the existing credential
-        //list and updating svr database.
-        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
-    }
-
-    return ret;
 }
 
 static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
@@ -1222,15 +1201,13 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         OIC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
-        //TODO :  Handle PUT/DEL methods
+        //TODO :  Remove Handle PUT methods once CTT have changed to POST on OTM
         switch (ehRequest->method)
         {
             case OC_REST_GET:
                 ret = HandleGetRequest(ehRequest);;
                 break;
             case OC_REST_PUT:
-                ret = HandlePutRequest(ehRequest);
-                break;
             case OC_REST_POST:
                 ret = HandlePostRequest(ehRequest);
                 break;
