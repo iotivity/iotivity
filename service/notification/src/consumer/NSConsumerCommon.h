@@ -130,9 +130,9 @@ typedef struct
     char * messageUri;
     char * syncUri;
 
-    OCDoHandle messageHandle;
-    OCDoHandle syncHandle;
-    OCDevAddr * _addr;
+    OCDoHandle i_messageHandle;
+    OCDoHandle i_syncHandle;
+    OCDevAddr * i_addr;
     NSAccessPolicy accessPolicy;
 
 } NSProvider_internal;
@@ -143,7 +143,7 @@ typedef struct
     char providerId[NS_DEVICE_ID_LENGTH];
     NSSyncType state;
 
-    OCDevAddr * _addr;
+    OCDevAddr * i_addr;
 } NSSyncInfo_internal;
 
 typedef struct
@@ -161,9 +161,8 @@ typedef struct
     char * sourceName;
     NSMediaContents mediaContents;
 
-    OCDevAddr * _addr;
-    //NSConsumerMessageTypes messageTypes;
-    NSSyncType _messageTypes;
+    OCDevAddr * i_addr;
+    NSSyncType i_messageTypes;
 } NSMessage_consumer;
 
 bool NSIsStartedConsumer();

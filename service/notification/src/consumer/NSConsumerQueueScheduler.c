@@ -210,14 +210,10 @@ void NSConsumerTaskProcessing(NSTask * task)
     case TASK_CONSUMER_REQ_SUBSCRIBE:
     case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
     case TASK_SEND_SYNCINFO:
-    case TASK_SEND_READ:
-    case TASK_SEND_DISMISS:
     {
         NSConsumerCommunicationTaskProcessing(task);
         break;
     }
-    case TASK_RECV_READ:
-    case TASK_RECV_DISMISS:
     case TASK_RECV_SYNCINFO:
     case TASK_CONSUMER_RECV_MESSAGE:
     case TASK_CONSUMER_PROVIDER_DISCOVERED:

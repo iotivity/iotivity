@@ -66,8 +66,60 @@ void NSDestroyProviderCacheList()
     }
 }
 
-NSResult NSMessageCacheUpdate(NSCacheList * cache, NSMessage_consumer * msg, NSSyncType type)
+NSMessage_consumer * NSMessageCacheFind(const char * messageId)
 {
+    NS_VERIFY_NOT_NULL(messageId, NULL);
+
+    NSCacheList * MessageCache = *(NSGetMessageCacheList());
+    if (!MessageCache)
+    {
+        NS_LOG(DEBUG, "Message Cache Init");
+        MessageCache = NSStorageCreate();
+        NS_VERIFY_NOT_NULL(MessageCache, NULL);
+
+        MessageCache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
+        NSSetMessageCacheList(MessageCache);
+    }
+
+    NSMessage_consumer * retMsg = NSStorageRead(MessageCache, messageId);
+
+    return retMsg;
+}
+
+NSProvider_internal * NSProviderCacheFind(const char * providerId)
+{
+    NS_VERIFY_NOT_NULL(providerId, NULL);
+
+    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
+    if (!ProviderCache)
+    {
+        NS_LOG(DEBUG, "Provider Cache Init");
+        ProviderCache = NSStorageCreate();
+        NS_VERIFY_NOT_NULL(ProviderCache, NULL);
+
+        ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
+        NSSetMessageCacheList(ProviderCache);
+    }
+
+    NSProvider_internal * retMsg = NSStorageRead(ProviderCache, providerId);
+
+    return retMsg;
+}
+
+
+NSResult NSMessageCacheUpdate(NSMessage_consumer * msg, NSSyncType type)
+{
+    NSCacheList * MessageCache = *(NSGetMessageCacheList());
+    if (!MessageCache)
+    {
+        NS_LOG(DEBUG, "Message Cache Init");
+        MessageCache = NSStorageCreate();
+        NS_VERIFY_NOT_NULL(MessageCache, NS_ERROR);
+
+        MessageCache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
+        NSSetMessageCacheList(MessageCache);
+    }
+
     NS_VERIFY_NOT_NULL(msg, NS_ERROR);
 
     msg->type = type;
@@ -79,18 +131,28 @@ NSResult NSMessageCacheUpdate(NSCacheList * cache, NSMessage_consumer * msg, NSS
     obj->next = NULL;
 
     NS_LOG(DEBUG, "try to write to storage");
-    NSResult ret = NSStorageWrite(cache, obj);
+    NSResult ret = NSStorageWrite(MessageCache, obj);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
             NS_ERROR, NSRemoveMessage(msg));
 
-    //NSRemoveMessage(msg);
     NSOICFree(obj);
 
     return NS_OK;
 }
 
-NSResult NSProviderCacheUpdate(NSCacheList * cache, NSProvider_internal * provider)
+NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
 {
+    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
+    if (!ProviderCache)
+    {
+        NS_LOG(DEBUG, "Provider Cache Init");
+        ProviderCache = NSStorageCreate();
+        NS_VERIFY_NOT_NULL(ProviderCache, NS_ERROR);
+
+        ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
+        NSSetProviderCacheList(ProviderCache);
+    }
+
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
 
     NSCacheElement * obj = (NSCacheElement *)OICMalloc(sizeof(NSCacheElement));
@@ -100,11 +162,10 @@ NSResult NSProviderCacheUpdate(NSCacheList * cache, NSProvider_internal * provid
     obj->next = NULL;
 
     NS_LOG(DEBUG, "try to write to storage");
-    NSResult ret = NSStorageWrite(cache, obj);
+    NSResult ret = NSStorageWrite(ProviderCache, obj);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
             NS_ERROR, NSRemoveProvider(provider));
 
-    //NSRemoveProvider(provider);
     NSOICFree(obj);
 
     return NS_OK;
@@ -112,22 +173,15 @@ NSResult NSProviderCacheUpdate(NSCacheList * cache, NSProvider_internal * provid
 
 void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
 {
-    // TODO need to check for discovered provider is new and store provider.[DONE]
     NS_VERIFY_NOT_NULL_V(provider);
 
-    NSCacheList * cache = *(NSGetProviderCacheList());
-    NSCacheElement * cacheElement = NSStorageRead(cache, provider->providerId);
-    if (cacheElement)
-    {
-        NS_LOG_V (ERROR, "Provider is already discovered - ProviderID[%s]", provider->providerId);
-        return ;
-    }
-    else
-    {
-        NS_LOG (ERROR, "New provider is discovered");
-        NSResult ret = NSProviderCacheUpdate(cache, provider);
-        NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
-    }
+    NSCacheElement * cacheElement = NSProviderCacheFind(provider->providerId);
+    NS_VERIFY_NOT_NULL_V(cacheElement);
+
+    NS_LOG (ERROR, "New provider is discovered");
+    NSResult ret = NSProviderCacheUpdate(provider);
+    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+
 
     if (provider->accessPolicy == NS_ACCESS_DENY)
     {
@@ -148,10 +202,8 @@ void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
-    // TODO change to find provider using pId. [DONE]
-    NSCacheList * cache = *(NSGetProviderCacheList());
-    NSCacheElement * cacheElement = NSStorageRead(cache, msg->providerId);
-    NS_VERIFY_NOT_NULL_V (cacheElement);
+    NSCacheElement * cacheElement = NSMessageCacheFind(msg->providerId);
+    NS_VERIFY_NOT_NULL_V(cacheElement);
 
     NSProvider * provider = (NSProvider *) cacheElement->data;
 
@@ -161,9 +213,8 @@ void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
 void NSConsumerHandleRecvMessage(NSMessage_consumer * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
-    // TODO store message to cache [DONE]
-    NSCacheList * cache = *(NSGetMessageCacheList());
-    NSResult ret = NSMessageCacheUpdate(cache, msg, NS_SYNC_UNREAD);
+
+    NSResult ret = NSMessageCacheUpdate(msg, NS_SYNC_UNREAD);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
 
     NSMessagePost((NSMessage *) msg);
@@ -173,21 +224,17 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
 {
     NS_VERIFY_NOT_NULL_V(sync);
 
-    // TODO need to check for provider is available. [DONE]
-    NSCacheList * providerCache = *(NSGetProviderCacheList());
-    NSCacheElement * providerCacheElement = NSStorageRead(providerCache, sync->providerId);
-    NS_VERIFY_NOT_NULL_V (providerCacheElement);
+    NSCacheElement * providerCacheElement = NSProviderCacheFind(sync->providerId);
+    NS_VERIFY_NOT_NULL_V(providerCacheElement);
 
-    // TODO need to update msg list. [DONE]
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%ld", sync->messageId);
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%llu", sync->messageId);
 
-    NSCacheList * messageCache = *(NSGetMessageCacheList());
-    NSCacheElement * messageCacheElement = NSStorageRead(messageCache, msgId);
+    NSCacheElement * messageCacheElement = NSMessageCacheFind(msgId);
     NS_VERIFY_NOT_NULL_V (messageCacheElement);
 
     NSMessage_consumer * msg = (NSMessage_consumer *) messageCacheElement->data;
-    NSResult ret = NSMessageCacheUpdate(messageCache, msg, sync->state);
+    NSResult ret = NSMessageCacheUpdate(msg, sync->state);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
 
     NSNotificationSync(sync);
@@ -197,9 +244,7 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
 {
     NS_VERIFY_NOT_NULL_V(sync);
 
-    // TODO need to check for provider is available. [DONE]
-    NSCacheList * providerCache = *(NSGetProviderCacheList());
-    NSCacheElement * providerCacheElement = NSStorageRead(providerCache, sync->providerId);
+    NSCacheElement * providerCacheElement = NSProviderCacheFind(sync->providerId);
     NS_VERIFY_NOT_NULL_V (providerCacheElement);
     NSProvider_internal * provider = (NSProvider_internal *) providerCacheElement->data;
     NS_VERIFY_NOT_NULL_V (provider);
@@ -210,9 +255,9 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
     OICStrcpy(syncInfo->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, sync->providerId);
     syncInfo->messageId = sync->messageId;
     syncInfo->state = sync->state;
-    syncInfo->_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(syncInfo->_addr, NSOICFree(syncInfo));
-    memcpy(syncInfo->_addr, provider->_addr, sizeof(OCDevAddr));
+    syncInfo->i_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(syncInfo->i_addr, NSOICFree(syncInfo));
+    memcpy(syncInfo->i_addr, provider->i_addr, sizeof(OCDevAddr));
 
     NSTask * syncTask = NSMakeTask(TASK_SEND_SYNCINFO, (void *) syncInfo);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(syncTask, NSOICFree(syncInfo));
@@ -225,28 +270,6 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
 void NSConsumerInternalTaskProcessing(NSTask * task)
 {
     NS_VERIFY_NOT_NULL_V(task);
-
-    NSCacheList * MessageCache = *(NSGetMessageCacheList());
-    if (!MessageCache)
-    {
-        NS_LOG(DEBUG, "Cache Init");
-        MessageCache = NSStorageCreate();
-        NS_VERIFY_NOT_NULL_V(MessageCache);
-
-        MessageCache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
-        NSSetMessageCacheList(MessageCache);
-    }
-
-    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
-    if (!ProviderCache)
-    {
-        NS_LOG(DEBUG, "Cache Init");
-        ProviderCache = NSStorageCreate();
-        NS_VERIFY_NOT_NULL_V(ProviderCache);
-
-        ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
-        NSSetProviderCacheList(ProviderCache);
-    }
 
     NSResult ret = NS_ERROR;
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
@@ -267,7 +290,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         }
         case TASK_CONSUMER_PROVIDER_DISCOVERED:
         {
-            NS_LOG(DEBUG, "Receive New Provider is discovdered.");
+            NS_LOG(DEBUG, "Receive New Provider is discovered.");
             NSConsumerHandleProviderDiscovered((NSProvider_internal *)task->taskData);
             break;
         }
@@ -283,22 +306,6 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
             NSConsumerHandleMakeSyncInfo((NSSyncInfo *)task->taskData);
             break;
         }
-       case TASK_RECV_READ:
-       {
-           NS_LOG(DEBUG, "Receive Read Notification");
-
-           ret = NSMessageCacheUpdate(MessageCache, task, NS_SYNC_READ);
-           NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
-           break;
-       }
-       case TASK_RECV_DISMISS:
-       {
-           NS_LOG(DEBUG, "Receive Dismiss Notification");
-
-           ret = NSMessageCacheUpdate(MessageCache, task, NS_SYNC_DELETED);
-           NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
-           break;
-       }
         default :
         {
             NS_LOG(ERROR, "Unknown TASK Type");

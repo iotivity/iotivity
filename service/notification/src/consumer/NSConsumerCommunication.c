@@ -52,8 +52,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 
     NS_LOG(DEBUG, "subscribe message");
     NS_LOG_V(DEBUG, "subscribe query : %s", query);
-    OCStackResult ret = NSInvokeRequest(&(provider_internal->messageHandle),
-                          OC_REST_OBSERVE, provider_internal->_addr,
+    OCStackResult ret = NSInvokeRequest(&(provider_internal->i_messageHandle),
+                          OC_REST_OBSERVE, provider_internal->i_addr,
                           query, NULL, NSConsumerMessageListener, NULL);
     NS_VERIFY_STACK_OK(ret, NS_ERROR);
     NSOICFree(query);
@@ -64,8 +64,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 
     NS_LOG(DEBUG, "subscribe sync");
     NS_LOG_V(DEBUG, "subscribe query : %s", query);
-    ret = NSInvokeRequest(&(provider_internal->syncHandle),
-                          OC_REST_OBSERVE, provider_internal->_addr,
+    ret = NSInvokeRequest(&(provider_internal->i_syncHandle),
+                          OC_REST_OBSERVE, provider_internal->i_addr,
                           query, NULL, NSConsumerSyncInfoListener, NULL);
     NS_VERIFY_STACK_OK(ret, NS_ERROR);
     NSOICFree(query);
@@ -196,8 +196,8 @@ NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retMsg, NULL, NSGetMessagePostClean(pId, addr));
     NSOICFree(pId);
 
-    retMsg->_addr = addr;
-    retMsg->_messageTypes = NS_SYNC_UNREAD;
+    retMsg->i_addr = addr;
+    retMsg->i_messageTypes = NS_SYNC_UNREAD;
 
     NS_LOG(DEBUG, "get msg optional field");
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retMsg->title);
@@ -208,14 +208,14 @@ NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_DATETIME, &retMsg->dateTime);
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retMsg->ttl);
 
-    NS_LOG_V(DEBUG, "Msg Address : %s", retMsg->_addr->addr);
-    NS_LOG_V(DEBUG, "Msg ID      : %ld", retMsg->messageId);
+    NS_LOG_V(DEBUG, "Msg Address : %s", retMsg->i_addr->addr);
+    NS_LOG_V(DEBUG, "Msg ID      : %llu", retMsg->messageId);
     NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
     NS_LOG_V(DEBUG, "Msg Content : %s", retMsg->contentText);
     NS_LOG_V(DEBUG, "Msg Source  : %s", retMsg->sourceName);
     NS_LOG_V(DEBUG, "Msg Type    : %d", retMsg->type);
     NS_LOG_V(DEBUG, "Msg Date    : %s", retMsg->dateTime);
-    NS_LOG_V(DEBUG, "Msg ttl     : %ld", retMsg->ttl);
+    NS_LOG_V(DEBUG, "Msg ttl     : %llu", retMsg->ttl);
 
     return retMsg;
 }
@@ -245,7 +245,7 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
     NSSyncInfo * retSync = NSCreateSyncInfo_consumer(id, pId, (NSSyncType)state);
     NS_VERIFY_NOT_NULL(retSync, NULL);
 
-    NS_LOG_V(DEBUG, "Sync ID : %ld", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync ID : %llu", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
     NS_LOG_V(DEBUG, "Sync Provider ID : %s", retSync->providerId);
 
@@ -265,7 +265,7 @@ NSMessage_consumer * NSCreateMessage_internal(uint64_t id, const char * provider
     retMsg->type = NS_MESSAGE_INFO;
     retMsg->dateTime = NULL;
     retMsg->ttl = 0;
-    retMsg->_addr = NULL;
+    retMsg->i_addr = NULL;
 
     return retMsg;
 }
@@ -311,19 +311,19 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
     {
         // TODO find target OCDevAddr using provider Id.
         NSSyncInfo_internal * syncInfo = (NSSyncInfo_internal *)task->taskData;
-        OCDevAddr * addr = syncInfo->_addr;
+        OCDevAddr * addr = syncInfo->i_addr;
         OCStackResult ret = NSSendSyncInfo((NSSyncInfo *)(task->taskData), addr);
         NS_VERIFY_STACK_OK_V(ret);
 
-        NSOICFree(syncInfo->_addr);
+        NSOICFree(syncInfo->i_addr);
         NSOICFree(syncInfo);
     }
     else if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL)
     {
         NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
 
-        OCCancel(provider->messageHandle, NS_QOS, NULL, 0);
-        OCCancel(provider->syncHandle, NS_QOS, NULL, 0);
+        OCCancel(provider->i_messageHandle, NS_QOS, NULL, 0);
+        OCCancel(provider->i_syncHandle, NS_QOS, NULL, 0);
     }
     else
     {

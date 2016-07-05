@@ -212,9 +212,9 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
     NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     OICStrcpy(newMsg->providerId, NS_DEVICE_ID_LENGTH, msg->providerId);
-    newMsg->_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+    newMsg->i_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, OICFree(newMsg));
-    memcpy(newMsg->_addr, msg->_addr, sizeof(OCDevAddr));
+    memcpy(newMsg->i_addr, msg->i_addr, sizeof(OCDevAddr));
 
     newMsg->messageId = msg->messageId;
     newMsg->title = OICStrdup(msg->title);
@@ -229,7 +229,7 @@ void NSRemoveMessage(NSMessage_consumer * msg)
     NSOICFree(msg->title);
     NSOICFree(msg->contentText);
     NSOICFree(msg->sourceName);
-    NSOICFree(msg->_addr);
+    NSOICFree(msg->i_addr);
 
     NSOICFree(msg);
 }
@@ -242,14 +242,14 @@ NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
     NS_VERIFY_NOT_NULL(newProv, NULL);
 
     OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
-    newProv->_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+    newProv->i_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProv, NULL, OICFree(newProv));
-    memcpy(newProv->_addr, prov->_addr, sizeof(OCDevAddr));
+    memcpy(newProv->i_addr, prov->i_addr, sizeof(OCDevAddr));
 
     newProv->messageUri = OICStrdup(prov->messageUri);
     newProv->syncUri = OICStrdup(prov->syncUri);
-    newProv->messageHandle = prov->messageHandle;
-    newProv->syncHandle = prov->syncHandle;
+    newProv->i_messageHandle = prov->i_messageHandle;
+    newProv->i_syncHandle = prov->i_syncHandle;
     newProv->accessPolicy = prov->accessPolicy;
 
     return newProv;
@@ -258,9 +258,9 @@ void NSRemoveProvider(NSProvider_internal * prov)
 {
     NSOICFree(prov->messageUri);
     NSOICFree(prov->syncUri);
-    NSOICFree(prov->messageHandle);
-    NSOICFree(prov->syncHandle);
-    NSOICFree(prov->_addr);
+    NSOICFree(prov->i_messageHandle);
+    NSOICFree(prov->i_syncHandle);
+    NSOICFree(prov->i_addr);
 
     NSOICFree(prov);
 }
