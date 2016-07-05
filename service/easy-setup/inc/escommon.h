@@ -225,7 +225,7 @@ typedef enum
     /**
     * Error Code that given WiFi's SSID is not found
     */
-    ES_ERRCODE_SSID_NOTFOUND = 1,
+    ES_ERRCODE_SSID_NOT_FOUND = 1,
 
     /**
     * Error Code that given WiFi's Password is wrong
@@ -235,7 +235,7 @@ typedef enum
     /**
     * Error Code that IP address is not allocated
     */
-    ES_ERRCODE_IP_NOTALLOCATED,
+    ES_ERRCODE_IP_NOT_ALLOCATED,
 
     /**
     * Error Code that there is no Internet connection
@@ -256,7 +256,7 @@ typedef enum
     * No Error Occured
     */
     ES_ERRCODE_NONE = 999
-} ESLastErrCode;
+} ESErrorCode;
 
 typedef struct
 {

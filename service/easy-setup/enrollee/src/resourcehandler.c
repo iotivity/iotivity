@@ -521,18 +521,14 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
         res = initWiFiResource(isSecured);
         if(res != OC_STACK_OK)
         {
-            // TODO: destroy logic will be added
             OIC_LOG_V(ERROR, ES_RH_TAG, "initWiFiResource result: %s", getResult(res));
-
             return res;
         }
 
         res = OCBindResource(gProvResource.handle, gWiFiResource.handle);
         if(res != OC_STACK_OK)
         {
-            // TODO : Error Handling
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind WiFiResource result: %s", getResult(res));
-
             return res;
         }
 
@@ -544,18 +540,14 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
         res = initCloudServerResource(isSecured);
         if(res != OC_STACK_OK)
         {
-            // TODO: destroy logic will be added
             OIC_LOG_V(ERROR, ES_RH_TAG, "initCloudResource result: %s", getResult(res));
-
             return res;
         }
 
         res = OCBindResource(gProvResource.handle, gCloudResource.handle);
         if(res != OC_STACK_OK)
         {
-            // TODO : Error Handling
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind CloudResource result: %s", getResult(res));
-
             return res;
         }
     }
@@ -566,18 +558,14 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
         res = initDevConfResource(isSecured);
         if(res != OC_STACK_OK)
         {
-            // TODO: destroy logic will be added
             OIC_LOG_V(ERROR, ES_RH_TAG, "initDevConf result: %s", getResult(res));
-
             return res;
         }
 
         res = OCBindResource(gProvResource.handle, gDevConfResource.handle);
         if(res != OC_STACK_OK)
         {
-            // TODO : Error Handling
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind DevConfResource result: %s", getResult(res));
-
             return res;
         }
     }
@@ -585,12 +573,13 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
 
     if(maskFlag == false)
     {
-        // TODO: destroy logic will be added
         OIC_LOG_V(ERROR, ES_RH_TAG, "Invalid ResourceMask");
         return OC_STACK_ERROR;
 
     }
+
     OIC_LOG_V(INFO, ES_RH_TAG, "Created all resources with result: %s", getResult(res));
+
     return res;
 }
 
@@ -607,25 +596,26 @@ OCStackResult DeleteProvisioningResource()
 
 OCStackResult DeleteEasySetupResources()
 {
-    OCStackResult res = OCDeleteResource(gProvResource.handle);
+    OCStackResult res = OCDeleteResource(gWiFiResource.handle);
     if (res != OC_STACK_OK)
     {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
-    }
-    res = OCDeleteResource(gWiFiResource.handle);
-    if (res != OC_STACK_OK)
-    {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting WiFi resource error with result: %s", getResult(res));
+        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting WiFi resource error with result: %s", getResult(res));
     }
     res = OCDeleteResource(gCloudResource.handle);
     if (res != OC_STACK_OK)
     {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting CloudServer resource error with result: %s", getResult(res));
+        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting CloudServer resource error with result: %s", getResult(res));
     }
     res = OCDeleteResource(gDevConfResource.handle);
     if (res != OC_STACK_OK)
     {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting DevConf resource error with result: %s", getResult(res));
+        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting DevConf resource error with result: %s", getResult(res));
+    }
+
+    res = OCDeleteResource(gProvResource.handle);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
     }
 
     return res;
@@ -852,9 +842,30 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
     OIC_LOG_V(INFO, ES_RH_TAG, "Device Name : %s", gDevConfResource.devName);
 
     OIC_LOG(INFO, ES_RH_TAG, "SetDeviceProperty OUT");
-    return OC_EH_OK;
+    return OC_STACK_OK;
 }
 
+OCStackResult SetEnrolleeState(ESEnrolleeState esState)
+{
+    OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeState IN");
+
+    gProvResource.status = esState;
+    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee Status : %d", gProvResource.status);
+
+    OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeState OUT");
+    return OC_STACK_OK;
+}
+
+OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode)
+{
+    OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeErrCode IN");
+
+    gProvResource.lastErrCode = esErrCode;
+    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee ErrorCode : %d", gProvResource.lastErrCode);
+
+    OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeErrCode OUT");
+    return OC_STACK_OK;
+}
 const char *getResult(OCStackResult result)
 {
     switch (result)

@@ -73,6 +73,24 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
  */
 ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty);
 
+
+/**
+ * This function Sets Enrollee's State.
+ *
+ * @param esState   Contains current enrollee's state.
+ * @return ::ES_OK on success, some other value upon failure.
+ */
+ESResult ESSetState(ESEnrolleeState esState);
+
+
+/**
+ * This function Sets Enrollee's Error Code.
+ *
+ * @param esErrCode   Contains enrollee's error code.
+ * @return ::ES_OK on success, some other value upon failure.
+ */
+ESResult ESSetErrorCode(ESErrorCode esErrCode);
+
 /**
  * This function performs termination of Provisioning and Network resources.
  * Also terminates the IoTivity core stack.

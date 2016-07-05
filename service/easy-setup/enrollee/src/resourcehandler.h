@@ -43,7 +43,7 @@ typedef struct PROVRESOURCE
     OCResourceHandle handle;
     ProvStatus status; // provisiong status
     bool trigger; // Trigger network connection, 0 : Init value, 1 : Connected to the target network.
-    ESLastErrCode lastErrCode;
+    ESErrorCode lastErrCode;
     char errorMessage[MAX_ERRMSGLEN];
     char ocfWebLinks[MAX_WEBLINKLEN];
 } ProvResource;
@@ -81,7 +81,8 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
 OCStackResult DeleteEasySetupResources();
 
 OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty);
-
+OCStackResult SetEnrolleeState(ESEnrolleeState esState);
+OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode);
 
 void GetTargetNetworkInfoFromProvResource(char *, char *);
 void RegisterWifiRsrcEventCallBack(ESWiFiCB);

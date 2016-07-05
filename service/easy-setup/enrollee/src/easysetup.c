@@ -178,7 +178,13 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
 
     if(CreateEasySetupResources(gIsSecured, resourceMask) != OC_STACK_OK)
     {
-        // TODO : Error Handling
+        UnRegisterResourceEventCallBack();
+
+        if (DeleteEasySetupResources() != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "Deleting prov resource error!!");
+        }
+
         return ES_ERROR;
     }
 
@@ -193,6 +199,7 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
 
     if(SetDeviceProperty(deviceProperty) != OC_STACK_OK)
     {
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetDeviceProperty Error");
         return ES_ERROR;
     }
 
@@ -209,13 +216,57 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
     OICStrcpy((gESDeviceProperty.DevConf).deviceName, MAX_DEVICELEN, (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
 
-
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetDeviceProperty OUT");
+    return ES_OK;
+}
+
+ESResult ESSetState(ESEnrolleeState esState)
+{
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetState IN");
+
+    if(esState <= 0 || esState >= 6)
+    {
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "Invalid ESEnrolleeState : %d", esState);
+        return ES_ERROR;
+    }
+
+    if(SetEnrolleeState(esState) != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetState Error");
+        return ES_ERROR;
+    }
+
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetState OUT");
+    return ES_OK;
+}
+
+ESResult ESSetErrorCode(ESErrorCode esErrCode)
+{
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetErrorCode IN");
+
+    if(esErrCode <= 0 || esErrCode >= 7)
+    {
+        if(esErrCode != 999)
+        {
+            OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "Invalid ESErrorCode : %d", esErrCode);
+            return ES_ERROR;
+        }
+    }
+
+    if(SetEnrolleeErrCode(esErrCode) != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetErrorCode Error");
+        return ES_ERROR;
+    }
+
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetErrorCode OUT");
     return ES_OK;
 }
 
 ESResult ESTerminateEnrollee()
 {
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESTerminateEnrollee IN");
+
     UnRegisterResourceEventCallBack();
 
     //Delete Prov resource
