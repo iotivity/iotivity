@@ -142,8 +142,16 @@ TEST_F(SceneTest, getAllSceneInstance)
 
     for(const auto &it : scenes)
     {
-        ASSERT_EQ(it.first, sceneNames.at(count++));
+        for (const auto &name : sceneNames)
+        {
+                if(it.first == name)
+                {
+                        count++;
+                        break;
+                }
+        }
     }
+    ASSERT_EQ(count, 2);
 }
 
 TEST_F(SceneTest, getSceneActionUsingRemoteResource)
