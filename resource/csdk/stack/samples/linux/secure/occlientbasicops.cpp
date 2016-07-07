@@ -443,7 +443,7 @@ int parseClientResponse(OCClientResponse * clientResponse)
         }
         if (res->secure)
         {
-        OIC_LOG_V(INFO,TAG,"SECUREPORT: %d",res->port);
+            OIC_LOG_V(INFO,TAG,"SECUREPORT: %d",res->port);
             endpoint.port = res->port;
             coapSecureResource = 1;
         }

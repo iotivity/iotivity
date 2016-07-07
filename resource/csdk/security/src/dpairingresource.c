@@ -571,13 +571,25 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             {
                 OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
                 VERIFY_NON_NULL(TAG, rsrc, ERROR);
-
-                size_t rsrcLen = strlen(pdAcl->resources[i]) + 1;
-                rsrc->href = (char*)OICMalloc(rsrcLen * sizeof(char));
-                VERIFY_NON_NULL(TAG, (rsrc->href), ERROR);
-
-                OICStrcpy(rsrc->href, rsrcLen, pdAcl->resources[i]);
                 LL_APPEND(ace->resources, rsrc);
+
+                //href
+                rsrc->href = OICStrdup(pdAcl->resources[i]);
+
+                // TODO: Append 'if' and 'rt' as workaround
+                // if
+                rsrc->interfaceLen = 1;
+                rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char));
+                VERIFY_NON_NULL(TAG, (rsrc->interfaces), ERROR);
+                rsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+                VERIFY_NON_NULL(TAG, (rsrc->interfaces[0]), ERROR);
+
+                //rt
+                rsrc->typeLen = 1;
+                rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char));
+                VERIFY_NON_NULL(TAG, (rsrc->types), ERROR);
+                rsrc->types[0] = OICStrdup("oic.core");
+                VERIFY_NON_NULL(TAG, (rsrc->types[0]), ERROR);
             }
 
             ace->permission = pdAcl->permission;

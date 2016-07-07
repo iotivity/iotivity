@@ -992,7 +992,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 #ifdef __WITH_DTLS__
         OicUuid_t emptyUuid = {.id={0}};
         const OicSecDoxm_t* doxm = GetDoxmResourceData();
-        if(false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
+        if(doxm && false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
         {
             //in case of owner PSK
             switch(cred->credType)

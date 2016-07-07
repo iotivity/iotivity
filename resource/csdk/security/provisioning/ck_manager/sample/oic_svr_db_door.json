@@ -80,6 +80,6 @@
         "owned": false,
         "deviceuuid": "646F6F72-4465-7669-6365-555549443030",
         "rowneruuid": "646F6F72-4465-7669-6365-555549443030",
-        "dpc": false
+        "x.com.samsung.dpc": false
     }
 }

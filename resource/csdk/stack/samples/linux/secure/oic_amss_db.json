@@ -83,7 +83,7 @@
         "deviceuuid": "31393139-3139-3139-3139-313931393139",
         "devowneruuid": "61646D69-6E44-6576-6963-655555494430",
         "rowneruuid": "31393139-3139-3139-3139-313931393139",
-        "dpc": false
+        "x.com.samsung.dpc": false
     },
     "cred": {
         "creds": [
@@ -93,7 +93,7 @@
                 "credtype": 1,
                 "privatedata": {
                     "data": "BBBBBBBBBBBBBBBB",
-                    "encoding": "oic.encoding.raw"
+                    "encoding": "oic.sec.encoding.raw"
                 }
             }
         ],
