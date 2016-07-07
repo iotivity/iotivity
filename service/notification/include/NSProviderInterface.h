@@ -67,6 +67,20 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
 NSResult NSStopProvider();
 
 /**
+ * Request to publish resource to cloud server
+ * @param[in]  server address combined with IP address and port number using delimiter :
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderEnableRemoteService(char *serverAddress);
+
+/**
+ * Request to cancel remote service using cloud server
+ * @param[in]  server address combined with IP address and port number using delimiter :
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderDisableRemoteService(char *serverAddress);
+
+/**
  * Send notification message to all subscribers
  * @param[in]  message  Notification message including id, title, contentText
  * @return ::NS_OK or result code of NSResult

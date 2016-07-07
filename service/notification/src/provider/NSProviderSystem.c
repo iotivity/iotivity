@@ -41,7 +41,10 @@ void NSInitProviderInfo()
     NS_LOG(DEBUG, "NSInitProviderInfo");
 
     providerInfo = (NSProviderInfo *) OICMalloc(sizeof(NSProviderInfo));
-    NSGenerateUUIDStr(providerInfo->providerId);
+    const char * generatedUuid = (char *)OCGetServerInstanceIDString();
+    NS_LOG_V(DEBUG, "Generate Provider ID: %s", generatedUuid);
+    OICStrcpy(providerInfo->providerId, strlen(generatedUuid), generatedUuid);
+
     providerInfo->providerName = NULL;
 }
 
@@ -67,7 +70,7 @@ void NSDeinitProviderInfo()
 
 NSProviderInfo * NSGetProviderInfo()
 {
-    NS_LOG(DEBUG, "Change Connection State");
+    NS_LOG_V(DEBUG, "ProviderInfo: %s", providerInfo->providerId);
 
     return providerInfo;
 }

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "NSCommon.h"
 #include "NSProviderInterface.h"
 #include "logger.h"
@@ -29,7 +30,7 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 
-#define TAG "notiProviderExample"
+#define TAG "NSProviderExample"
 
 extern char *strdup(const char *s);
 
@@ -68,12 +69,60 @@ void syncCallback(NSSyncInfo *sync)
     printf("NS_APP Sync State: %d\n", sync->state);
 }
 
+OCStackApplicationResult CloudLoginoutCallback(void *ctx,
+        OCDoHandle handle, OCClientResponse *clientResponse)
+{
+    int CtxValue = 0x99;
+    if (ctx != (void *)CtxValue)
+    {
+        OIC_LOG(INFO, TAG, "Invalid Cloud Login/out callback received");
+    }
+
+    OIC_LOG(INFO, TAG, "Login/out response received");
+
+    if (clientResponse->payload != NULL &&
+            clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
+    {
+        OIC_LOG(INFO, TAG, "PAYLOAD_TYPE_REPRESENTATION received");
+
+        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
+
+        OIC_LOG(INFO, TAG, "Get payload values");
+        while (val)
+        {
+            OIC_LOG_V(INFO, TAG, "key: %s / Value: %s", val->name, val->str);
+            val = val->next;
+        }
+
+        char *serverAddress = "coap+tcp://52.69.149.85:5683";
+        NSProviderEnableRemoteService(serverAddress);
+    }
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen("oic_ns_provider_db.dat", mode);
+}
+
 int main()
 {
     int num;
     pthread_t processThread;
 
+    // cloud host address
+    const char *host = "coap+tcp://52.69.149.85:5683";
+    // cloud auth session
+    const char *auth_session = "gZDRuDyYapZXIcrs";
+
+
     OIC_LOG(INFO, TAG, "NSStartProvider()");
+
+    // open oic_db
+    static OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
     {
@@ -81,7 +130,7 @@ int main()
         return 0;
     }
 
-    pthread_create(&processThread, NULL, OCProcessThread, NULL);
+    pthread_create(&processThread, NULL, OCProcessThread, unlink);
 
     while (!isExit)
     {
@@ -93,8 +142,8 @@ int main()
         printf("4. NSRead \n");
         printf("5. NSStopProvider() \n");
         printf("6. NSGetConsumerList \n");
-        //printf("7. startPresence \n");
-        //printf("8. stopPresence \n");
+        printf("11. NSCloudLogin \n");
+        printf("12. NSCloudLogout \n");
         printf("0. Exit() \n");
 
         printf("input : ");
@@ -156,13 +205,17 @@ int main()
             case 6:
                 OIC_LOG(INFO, TAG, "NSGetConsumerList");
                 break;
-            case 7:
-                OIC_LOG(INFO, TAG, "NSStartPresence - not working");
-                //NSTestStartPresence();
+            case 11:
+                OIC_LOG(INFO, TAG, "NSCloudLogin");
+
+                NSCloudLogin(host, auth_session, CloudLoginoutCallback);
+                OIC_LOG(INFO, TAG, "OCCloudLogin requested");
                 break;
-            case 8:
-                OIC_LOG(INFO, TAG, "NSStopPresence- not working");
-                //NSTestStopPresence();
+            case 12:
+                OIC_LOG(INFO, TAG, "NSCloudLogout");
+
+                NSCloudLogout(host, auth_session, CloudLoginoutCallback);
+                OIC_LOG(INFO, TAG, "OCCloudLogout requested");
                 break;
             case 0:
                 NSStopProvider();

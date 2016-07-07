@@ -398,7 +398,6 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
         bool connected)
 {
 
-    // should be implementation
     (void)adapter;
     (void)remote_address;
 
@@ -413,6 +412,24 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
 
         // Start Presence
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
+
+        if(adapter == CA_ADAPTER_TCP)
+        {
+            NS_LOG_V(DEBUG, "TCP Connected remote address: %s", remote_address);
+        }
+    }
+    else
+    {
+
+        NS_LOG(DEBUG, "DISCONNECTED");
+
+        // Set Connection State
+        NSSetProviderConnectionState(DISCONNECTED);
+
+        if(adapter == CA_ADAPTER_TCP)
+        {
+            NS_LOG_V(DEBUG, "TCP Disconnected remote address: %s", remote_address);
+        }
     }
 
     NS_LOG(DEBUG, "NSProviderConnectionStateListener - OUT");
@@ -420,7 +437,6 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
 
 void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
 {
-    // should be implementation
     (void)adapter;
 
     NS_LOG(DEBUG, "NSProviderAdapterStateListener - IN");
@@ -434,6 +450,14 @@ void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled)
 
         // Start Presence
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
+    }
+    else
+    {
+
+        NS_LOG(DEBUG, "DISCONNECTED");
+
+        // Set Connection State
+        NSSetProviderConnectionState(DISCONNECTED);
     }
 
     NS_LOG(DEBUG, "NSProviderAdapterStateListener - OUT");

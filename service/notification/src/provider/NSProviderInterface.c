@@ -140,6 +140,42 @@ NSResult NSStopProvider()
     return NS_OK;
 }
 
+NSResult NSProviderEnableRemoteService(char *serverAddress)
+{
+    NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
+    pthread_mutex_lock(&nsInitMutex);
+ 
+    if(!initProvider)
+    {
+        NS_LOG(DEBUG, "Provider service has not been started yet");
+        return NS_FAIL;
+    }
+
+    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+    NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
+
+    pthread_mutex_unlock(&nsInitMutex);
+    NS_LOG(DEBUG, "NSProviderEnableRemoteService - OUT");
+    return NS_OK;
+}
+
+NSResult NSProviderDisableRemoteService(char *serverAddress)
+{
+    NS_LOG(DEBUG, "NSProviderDisableRemoteService - IN");
+    pthread_mutex_lock(&nsInitMutex);
+
+    if(!initProvider)
+    {
+        NS_LOG(DEBUG, "Provider service has not been started yet");
+        return NS_FAIL;
+    }
+    NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+
+    pthread_mutex_unlock(&nsInitMutex);
+    NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
+    return NS_OK;
+}
+
 NSResult NSSendMessage(NSMessage *msg)
 {
     NS_LOG(DEBUG, "NSSendNotification - IN");

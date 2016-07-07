@@ -24,6 +24,37 @@ NSNotificationResource NotificationResource;
 NSMessageResource NotificationMessageResource;
 NSSyncResource NotificationSyncResource;
 
+OCStackApplicationResult NSHandlePublishCb(void *ctx, OCDoHandle handle,
+    OCClientResponse *clientResponse)
+{
+    if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
+    {
+        NS_LOG(DEBUG, "Invalid publish callback received");
+    }
+
+    NS_LOG_V(DEBUG, "Publish resource response received code: %d", clientResponse->result);
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+NSResult NSPublishResourceToCloud(char *serverAddress)
+{
+
+    NS_LOG(DEBUG, "NSPublishResourceToCloud - IN");
+    NS_LOG_V(DEBUG, "Cloud address: %s", serverAddress);
+
+    const char * publishQuery = "/oic/rd?rt=oic.wk.rdpub";
+
+    if (NSCloudPublish(serverAddress, publishQuery, &NSHandlePublishCb, 1,
+            NotificationResource.handle) != OC_STACK_OK)
+    {
+        NS_LOG(DEBUG, "Unable to publish resources to cloud");
+    }
+
+    NS_LOG(DEBUG, "NSPublishResourceToCloud - OUT");
+    return NS_OK;
+}
+
 NSResult NSCreateResource(char *uri)
 {
     NS_LOG(DEBUG, "NSCreateResource - IN");

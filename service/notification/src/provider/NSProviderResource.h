@@ -30,6 +30,8 @@
 
 NSResult NSCreateResource(char *uri);
 
+NSResult NSPublishResourceToCloud(char *host);
+
 NSResult NSRegisterResource();
 
 NSResult NSUnRegisterResource();

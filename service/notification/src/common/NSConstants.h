@@ -102,6 +102,7 @@ typedef enum eSchedulerType
 typedef enum eTaskType
 {
     TASK_REGISTER_RESOURCE = 1000,
+    TASK_PUBLISH_RESOURCE = 1001,
 
     TASK_START_PRESENCE = 2000,
     TASK_STOP_PRESENCE = 2001,
