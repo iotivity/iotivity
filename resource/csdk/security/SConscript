@@ -83,6 +83,7 @@ if not env.get('RELEASE'):
 if env.get('DTLS_WITH_X509') == '1':
 	libocsrm_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
 
+libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 # Source files and Targets
 ######################################################################

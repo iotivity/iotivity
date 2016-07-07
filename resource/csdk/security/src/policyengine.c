@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <string.h>
 
+#include "utlist.h"
 #include "oic_malloc.h"
 #include "policyengine.h"
 #include "amsmgr.h"
@@ -302,28 +303,32 @@ static void CopyParamsToContext(PEContext_t     *context,
  * @return true if access is within valid time period or if the period or recurrence is not present.
  * false if period and recurrence present and the access is not within valid time period.
  */
-static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
+static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
 {
 #ifndef WITH_ARDUINO //Period & Recurrence not supported on Arduino due
-                     //lack of absolute time
-    if (NULL== acl || NULL == acl->periods || 0 == acl->prdRecrLen)
+    //lack of absolute time
+    if (NULL== ace || NULL == ace->validities)
     {
         return true;
     }
 
     //periods & recurrences rules are paired.
-    if (NULL == acl->recurrences)
+    if (NULL == ace->validities->recurrences)
     {
         return false;
     }
 
-    for (size_t i = 0; i < acl->prdRecrLen; i++)
+    OicSecValidity_t* validity =  NULL;
+    LL_FOREACH(ace->validities, validity)
     {
-        if (IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(acl->periods[i],
-            acl->recurrences[i]))
+        for(size_t i = 0; i < validity->recurrenceLen; i++)
         {
-            OIC_LOG(INFO, TAG, "Access request is in allowed time period");
-            return true;
+            if (IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(validity->period,
+                validity->recurrences[i]))
+            {
+                OIC_LOG(INFO, TAG, "Access request is in allowed time period");
+                return true;
+            }
         }
     }
     OIC_LOG(ERROR, TAG, "Access request is in invalid time period");
@@ -335,24 +340,25 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
 }
 
 /**
- * Check whether 'resource' is in the passed ACL.
+ * Check whether 'resource' is in the passed ACE.
  *
  * @param resource is the resource being searched.
- * @param acl is the ACL to check.
+ * @param ace is the ACE to check.
  *
  * @return true if 'resource' found, otherwise false.
  */
- static bool IsResourceInAcl(const char *resource, const OicSecAcl_t *acl)
+ static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
 {
-    if (NULL== acl || NULL == resource)
+    if (NULL== ace || NULL == resource)
     {
         return false;
     }
 
-     for (size_t n = 0; n < acl->resourcesLen; n++)
-     {
-         if (0 == strcmp(resource, acl->resources[n]) || // TODO null terms?
-             0 == strcmp(WILDCARD_RESOURCE_URI, acl->resources[n]))
+    OicSecRsrc_t* rsrc = NULL;
+    LL_FOREACH(ace->resources, rsrc)
+    {
+         if (0 == strcmp(resource, rsrc->href) || // TODO null terms?
+             0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
          {
              return true;
          }
@@ -375,8 +381,8 @@ static void ProcessAccessRequest(PEContext_t *context)
     OIC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest()");
     if (NULL != context)
     {
-        const OicSecAcl_t *currentAcl = NULL;
-        OicSecAcl_t *savePtr = NULL;
+        const OicSecAce_t *currentAce = NULL;
+        OicSecAce_t *savePtr = NULL;
 
         // Start out assuming subject not found.
         context->retVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
@@ -385,28 +391,28 @@ static void ProcessAccessRequest(PEContext_t *context)
         // ACL for this request.
         do
         {
-            OIC_LOG_V(DEBUG, TAG, "%s: getting ACL..." ,__func__);
-            currentAcl = GetACLResourceData(&context->subject, &savePtr);
+            OIC_LOG_V(DEBUG, TAG, "%s: getting ACE..." ,__func__);
+            currentAce = GetACLResourceData(&context->subject, &savePtr);
 
-            if (NULL != currentAcl)
+            if (NULL != currentAce)
             {
                 // Found the subject, so how about resource?
-                OIC_LOG_V(DEBUG, TAG, "%s:found ACL matching subject" ,__func__);
+                OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject" ,__func__);
 
                 // Subject was found, so err changes to Rsrc not found for now.
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
                 OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
-                if (IsResourceInAcl(context->resource, currentAcl))
+                if (IsResourceInAce(context->resource, currentAce))
                 {
-                    OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACL" ,__func__);
+                    OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
                     context->matchingAclFound = true;
 
                     // Found the resource, so it's down to valid period & permission.
                     context->retVal = ACCESS_DENIED_INVALID_PERIOD;
-                    if (IsAccessWithinValidTime(currentAcl))
+                    if (IsAccessWithinValidTime(currentAce))
                     {
                         context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                        if (IsPermissionAllowingRequest(currentAcl->permission, context->permission))
+                        if (IsPermissionAllowingRequest(currentAce->permission, context->permission))
                         {
                             context->retVal = ACCESS_GRANTED;
                         }
@@ -417,7 +423,7 @@ static void ProcessAccessRequest(PEContext_t *context)
             {
                 OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",__func__, context->resource);
             }
-        } while ((NULL != currentAcl) && (false == context->matchingAclFound));
+        } while ((NULL != currentAce) && (false == context->matchingAclFound));
 
         if (IsAccessGranted(context->retVal))
         {
@@ -470,7 +476,7 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
         // Else request is a "normal" request that must be tested against ACL
         else
         {
-            OicUuid_t saveSubject = {.id={}};
+            OicUuid_t saveSubject = {.id={0}};
             bool isSubEmpty = IsRequestSubjectEmpty(context);
 
             ProcessAccessRequest(context);

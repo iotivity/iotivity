@@ -8,32 +8,18 @@
                         {
                             "href": "/oic/res",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
+                            "rt": ["oic.wk.res"],
+                            "if": ["oic.if.ll"]
+                        },{
                             "href": "/oic/d",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
+                            "rt": ["oic.wk.d"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        },{
                             "href": "/oic/p",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/res/types/d",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/ad",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.p"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
                         }
                     ],
                     "permission": 2
@@ -44,26 +30,26 @@
                         {
                             "href": "/oic/sec/doxm",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        } ,
+                            "rt": ["oic.r.doxm"],
+                            "if": ["oic.if.baseline"]
+                        },
                         {
                             "href": "/oic/sec/pstat",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.pstat"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/acl",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.acl"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/cred",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.cred"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 7
@@ -94,6 +80,6 @@
         "deviceuuid": "61646d69-6e44-6576-6963-655555494430",
         "devowneruuid": "61646d69-6e44-6576-6963-655555494430",
         "rowneruuid": "61646d69-6e44-6576-6963-655555494430",
-        "dpc": false
+        "x.com.samsung.dpc": false
     }
 }

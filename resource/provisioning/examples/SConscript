@@ -41,6 +41,7 @@ examples_env.AppendUnique(CPPPATH = [
         '../../oc_logger/include',
         '../../csdk/connectivity/api',
         '../../csdk/security/include',
+        '../../csdk/security/include/internal',
         '../../csdk/security/provisioning/include',
         '../../csdk/security/provisioning/include/oxm',
         '../../csdk/security/provisioning/include/internal'

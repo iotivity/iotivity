@@ -845,9 +845,6 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     {
         return OC_STACK_INVALID_PARAM;
     }
-
-    char rsrc_uri[MAX_URI_LENGTH+1] = {0};
-
     //Try to the unicast discovery to getting secure port
     char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
     if(!PMGenerateQuery(false,

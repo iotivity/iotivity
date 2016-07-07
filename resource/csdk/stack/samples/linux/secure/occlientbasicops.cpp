@@ -37,6 +37,7 @@
 static int UnicastDiscovery = 0;
 static int TestCase = 0;
 static int ConnType = 0;
+static int DevOwner = 0;
 
 static char DISCOVERY_QUERY[] = "%s/oic/res";
 OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
@@ -49,7 +50,8 @@ static OCConnectivityType ocConnType;
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-static char CRED_FILE[] = "oic_svr_db_client.dat";
+static char CRED_FILE_DEVOWNER[] = "oic_svr_db_client_devowner.dat";
+static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
 const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
 const char * OIC_RSRC_PSTAT_URI = "/oic/sec/pstat";
 
@@ -90,6 +92,8 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
     OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
+    OIC_LOG(INFO, TAG, "-d 0 : Client as Non Device Owner");
+    OIC_LOG(INFO, TAG, "-d 1 : Client as Device Owner");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -300,18 +304,24 @@ int InitDiscovery()
     return ret;
 }
 
-FILE* client_fopen(const char *path, const char *mode)
+FILE* client_fopen_devowner(const char *path, const char *mode)
 {
     (void)path;
-    return fopen(CRED_FILE, mode);
+    return fopen(CRED_FILE_DEVOWNER, mode);
 }
 
+FILE* client_fopen_nondevowner(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen(CRED_FILE_NONDEVOWNER, mode);
+}
 int main(int argc, char* argv[])
 {
     int opt;
     struct timespec timeout;
+    OCPersistentStorage ps;
 
-    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:d:")) != -1)
     {
         switch(opt)
         {
@@ -323,6 +333,9 @@ int main(int argc, char* argv[])
                 break;
             case 'c':
                 ConnType = atoi(optarg);
+                break;
+            case 'd':
+                DevOwner = atoi(optarg);
                 break;
             default:
                 PrintUsage();
@@ -351,7 +364,10 @@ int main(int argc, char* argv[])
 
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = { client_fopen, fread, fwrite, fclose, unlink };
+    if (DevOwner)
+        ps = { client_fopen_devowner, fread, fwrite, fclose, unlink };
+    else
+        ps = { client_fopen_nondevowner, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 
     /* Initialize OCStack*/

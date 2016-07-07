@@ -92,6 +92,7 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	provisioning_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
+provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 # Source files and Targets
 ######################################################################

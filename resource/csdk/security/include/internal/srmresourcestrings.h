@@ -23,6 +23,10 @@
 
 #include "securevirtualresourcetypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const char * SVR_DB_FILE_NAME;
 extern const char * SVR_DB_DAT_FILE_NAME;
 
@@ -109,6 +113,7 @@ extern const char * OIC_JSON_PUBDATA_NAME;
 extern const char * OIC_JSON_PRIVDATA_NAME;
 extern const char * OIC_JSON_OPTDATA_NAME;
 extern const char * OIC_JSON_CRMS_NAME;
+extern const char * OIC_JSON_VALIDITY_NAME;
 extern const char * OIC_JSON_PERIOD_NAME;
 extern const char * OIC_JSON_PERIODS_NAME;
 extern const char * OIC_JSON_RECURRENCES_NAME;
@@ -164,6 +169,10 @@ extern char OIC_SEC_REST_QUERY_DELIMETER;
 
 //Security Version
 extern const char * DEFAULT_SEC_VERSION;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IOTVT_SRM_RSRC_STRINGS_H
 

@@ -783,8 +783,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                 // Update new state in persistent storage
                 if (UpdatePersistentStorage(gDoxm))
                 {
-                    //Update default ACL of security resource to prevent anonymous user access.
-                    if(OC_STACK_OK == UpdateDefaultSecProvACL())
+                    //Update default ACE of security resource to prevent anonymous user access.
+                    if(OC_STACK_OK == UpdateDefaultSecProvACE())
                     {
                         ehRet = OC_EH_OK;
                     }
