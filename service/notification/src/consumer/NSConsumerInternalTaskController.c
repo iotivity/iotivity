@@ -81,9 +81,9 @@ NSMessage_consumer * NSMessageCacheFind(const char * messageId)
         NSSetMessageCacheList(MessageCache);
     }
 
-    NSMessage_consumer * retMsg = NSStorageRead(MessageCache, messageId);
+    NSCacheElement * cacheElement = NSStorageRead(MessageCache, messageId);
 
-    return retMsg;
+    return (NSMessage_consumer *) cacheElement->data;
 }
 
 NSProvider_internal * NSProviderCacheFind(const char * providerId)
@@ -101,9 +101,9 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
         NSSetMessageCacheList(ProviderCache);
     }
 
-    NSProvider_internal * retMsg = NSStorageRead(ProviderCache, providerId);
+    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, providerId);
 
-    return retMsg;
+    return (NSProvider_internal *) cacheElement->data;
 }
 
 
@@ -175,8 +175,8 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
 
-    NSCacheElement * cacheElement = NSProviderCacheFind(provider->providerId);
-    NS_VERIFY_NOT_NULL_V(cacheElement);
+    NSProvider_internal * providerCacheData = NSProviderCacheFind(provider->providerId);
+    NS_VERIFY_NOT_NULL_V(!providerCacheData);
 
     NS_LOG (ERROR, "New provider is discovered");
     NSResult ret = NSProviderCacheUpdate(provider);
@@ -202,12 +202,10 @@ void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
-    NSCacheElement * cacheElement = NSMessageCacheFind(msg->providerId);
-    NS_VERIFY_NOT_NULL_V(cacheElement);
+    NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
+    NS_VERIFY_NOT_NULL_V(provider);
 
-    NSProvider * provider = (NSProvider *) cacheElement->data;
-
-    NSSubscriptionAccepted(provider);
+    NSSubscriptionAccepted((NSProvider *) provider);
 }
 
 void NSConsumerHandleRecvMessage(NSMessage_consumer * msg)
@@ -224,16 +222,15 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
 {
     NS_VERIFY_NOT_NULL_V(sync);
 
-    NSCacheElement * providerCacheElement = NSProviderCacheFind(sync->providerId);
-    NS_VERIFY_NOT_NULL_V(providerCacheElement);
+    NSProvider_internal * provider = NSProviderCacheFind(sync->providerId);
+    NS_VERIFY_NOT_NULL_V(provider);
 
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%llu", sync->messageId);
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", sync->messageId);
 
-    NSCacheElement * messageCacheElement = NSMessageCacheFind(msgId);
-    NS_VERIFY_NOT_NULL_V (messageCacheElement);
+    NSMessage_consumer * msg = NSMessageCacheFind(msgId);
+    NS_VERIFY_NOT_NULL_V(msg);
 
-    NSMessage_consumer * msg = (NSMessage_consumer *) messageCacheElement->data;
     NSResult ret = NSMessageCacheUpdate(msg, sync->state);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
 
@@ -244,9 +241,7 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
 {
     NS_VERIFY_NOT_NULL_V(sync);
 
-    NSCacheElement * providerCacheElement = NSProviderCacheFind(sync->providerId);
-    NS_VERIFY_NOT_NULL_V (providerCacheElement);
-    NSProvider_internal * provider = (NSProvider_internal *) providerCacheElement->data;
+    NSProvider_internal * provider = NSProviderCacheFind(sync->providerId);
     NS_VERIFY_NOT_NULL_V (provider);
 
     NSSyncInfo_internal * syncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));

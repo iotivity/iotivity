@@ -31,12 +31,17 @@ extern "C" {
 #include "ocstack.h"
 #include "NSCommon.h"
 #include "NSStructs.h"
+#include "NSConsumerCommon.h"
 
 NSResult NSConsumerMessageHandlerInit();
 
 void NSConsumerMessageHandlerExit();
 
 extern NSResult NSConsumerPushEvent(NSTask *);
+
+NSMessage_consumer * NSConsumerFindNSMessage(const char *);
+
+NSProvider_internal * NSConsumerFindNSProvider(const char *);
 
 #ifdef __cplusplus
 }

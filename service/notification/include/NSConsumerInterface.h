@@ -105,6 +105,10 @@ NSResult NSUnsubscribe(NSProvider *provider);
 NSResult NSConsumerSendSyncInfo(
         const char * providerId, uint64_t messageId, NSSyncType type);
 
+NSProvider * NSConsumerGetProvider(const char * providerId);
+
+NSMessage * NSConsumerGetMessage(uint64_t messageId);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

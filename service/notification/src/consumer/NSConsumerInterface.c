@@ -26,7 +26,7 @@
 #include "NSCommon.h"
 #include "NSConsumerCommon.h"
 #include "NSConstants.h"
-#include "NSConsumerQueueScheduler.h"
+#include "NSConsumerScheduler.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -104,6 +104,21 @@ NSResult NSRescanProvider()
     NS_VERIFY_NOT_NULL(discoverTask, NS_ERROR);
 
     return NSConsumerPushEvent(discoverTask);
+}
+
+NSProvider * NSConsumerGetProvider(const char * providerId)
+{
+    NS_VERIFY_NOT_NULL(providerId, NULL);
+
+    return (NSProvider *) NSConsumerFindNSProvider(providerId);
+}
+
+NSMessage * NSConsumerGetMessage(uint64_t messageId)
+{
+    char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", messageId);
+
+    return (NSMessage *) NSConsumerFindNSMessage(msgId);
 }
 
 NSResult NSDropNSMessage(NSMessage * obj)

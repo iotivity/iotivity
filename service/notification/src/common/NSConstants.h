@@ -33,7 +33,7 @@
         ((level) == 0) ? "DEBUG" : \
         ((level) == 1) ? "INFO" : \
         ((level) == 2) ? "WARNING" : \
-	((level) == 3) ? "ERROR" : "FATAL")
+    ((level) == 3) ? "ERROR" : "FATAL")
 #define NS_LOG_V(level, format, ...) \
     { \
         printf("%s: %s ", NS_CONVERT_LEVEL(level), __NS_FILE__); \

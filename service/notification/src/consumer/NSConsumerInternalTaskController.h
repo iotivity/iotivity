@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _NS_CONSUMER_SUBSCRIPTION_H_
-#define _NS_CONSUMER_SUBSCRIPTION_H_
+#ifndef _NS_CONSUMER_INTERNAL_TASK_CONTROLLER_H_
+#define _NS_CONSUMER_INTERNAL_TASK_CONTROLLER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,9 +29,21 @@ extern "C" {
 #include "NSStorageAdapter.h"
 #include "NSConsumerCommunication.h"
 
+NSCacheList ** NSGetMessageCacheList();
+
+void NSSetMessageCacheList(NSCacheList *);
+
+NSCacheList ** NSGetProviderCacheList();
+
+void NSSetProviderCacheList(NSCacheList *);
+
 void NSDestroyMessageCacheList();
 
 void NSDestroyProviderCacheList();
+
+NSMessage_consumer * NSMessageCacheFind(const char *);
+
+NSProvider_internal * NSProviderCacheFind(const char *);
 
 void NSConsumerInternalTaskProcessing(NSTask *);
 
@@ -39,4 +51,4 @@ void NSConsumerInternalTaskProcessing(NSTask *);
 }
 #endif // __cplusplus
 
-#endif // _NS_CONSUMER_SUBSCRIPTION_H_
+#endif // _NS_CONSUMER_INTERNAL_TASK_CONTROLLER_H_

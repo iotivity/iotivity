@@ -18,6 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "NSConsumerScheduler.h"
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -37,7 +39,6 @@
 #include "NSConsumerDiscovery.h"
 #include "NSConsumerInternalTaskController.h"
 #include "NSConsumerNetworkEventListener.h"
-#include "NSConsumerQueueScheduler.h"
 #include "NSConsumerSystem.h"
 
 void * NSConsumerMsgHandleThreadFunc(void * handle);
@@ -112,6 +113,7 @@ NSResult NSConsumerPushEvent(NSTask * task)
 void NSConsumerMessageHandlerExit()
 {
     NSDestroyMessageCacheList();
+    NSDestroyProviderCacheList();
     NSConsumerListenerTermiate();
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
@@ -227,4 +229,18 @@ void NSConsumerTaskProcessing(NSTask * task)
         NS_LOG(ERROR, "Unknown type of task");
         break;
     }
+}
+
+NSMessage_consumer * NSConsumerFindNSMessage(const char* messageId)
+{
+    NS_VERIFY_NOT_NULL(messageId, NULL);
+
+    return NSMessageCacheFind(messageId);
+}
+
+NSProvider_internal * NSConsumerFindNSProvider(const char * providerId)
+{
+    NS_VERIFY_NOT_NULL(providerId, NULL);
+
+    return NSProviderCacheFind(providerId);
 }
