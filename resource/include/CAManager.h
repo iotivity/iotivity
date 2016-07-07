@@ -33,8 +33,8 @@ namespace OC
     namespace CAManager
     {
         // typedef to get adapter status changes from CA.
-        typedef std::function<void(OCTransportAdapter,
-                                   const std::string&, bool)> ConnectionChangedCallback;
+        typedef std::function<void(const std::string&, OCConnectivityType,
+                                   bool)> ConnectionChangedCallback;
 
         // typedef to get connection status changes from CA.
         typedef std::function<void(OCTransportAdapter, bool)> AdapterChangedCallback;

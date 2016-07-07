@@ -288,6 +288,10 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 
     struct sockaddr_storage clientaddr;
     socklen_t clientlen = sizeof (struct sockaddr_in);
+    if (flag & CA_IPV6)
+    {
+        clientlen = sizeof(struct sockaddr_in6);
+    }
 
     int sockfd = accept(sock->fd, (struct sockaddr *)&clientaddr, &clientlen);
     if (-1 != sockfd)
@@ -304,7 +308,7 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         svritem->fd = sockfd;
         svritem->sep.endpoint.flags = flag;
         CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
-                            (char *) &svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
+                            svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
         ca_mutex_lock(g_mutexObjectList);
         bool result = u_arraylist_add(caglobals.tcp.svrlist, svritem);
