@@ -1794,7 +1794,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
                                     CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
         }
     }
-    else if(requestResult != OC_STACK_OK)
+    else if(!OCResultToSuccess(requestResult))
     {
         OIC_LOG_V(ERROR, TAG, "HandleStackRequests failed. error: %d", requestResult);
 
@@ -4571,5 +4571,19 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_NOTIMPL;
         default:
             return OC_STACK_ERROR;
+    }
+}
+
+bool OCResultToSuccess(OCStackResult ocResult)
+{
+    switch (ocResult)
+    {
+        case OC_STACK_OK:
+        case OC_STACK_RESOURCE_CREATED:
+        case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_CONTINUE:
+            return true;
+        default:
+            return false;
     }
 }
