@@ -50,6 +50,8 @@ cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./resource/csdk/stack/samples/tizen/build/packaging/*.spec $sourcedir/tmp/packaging
 cp -R ./resource $sourcedir/tmp/
 cp -R ./build_common/external_libs.scons $sourcedir/tmp/
+mkdir -p $sourcedir/tmp/build_common/
+cp -a ./build_common/*.scons $sourcedir/tmp/build_common/
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm $sourcedir/tmp

@@ -21,13 +21,13 @@
 ##
 # Examples build script
 ##
-Import('env')
+thread_env = SConscript('#build_common/thread.scons')
+lib_env = thread_env.Clone()
+
 # Add third party libraries
-lib_env = env.Clone()
 SConscript('#resource/third_party_libs.scons', 'lib_env')
-
 examples_env = lib_env.Clone()
-
+target_os = examples_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
@@ -39,22 +39,17 @@ examples_env.AppendUnique(CPPPATH = [
 		'../oc_logger/include'
 		])
 
-target_os = env.get('TARGET_OS')
-if target_os not in ['windows']:
-	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-
-	# Note: 'pthread' is in libc for android. On other platform, if use
-	# new gcc(>4.9?) it isn't required, otherwise, it's required
-	if target_os != 'android':
-		examples_env.AppendUnique(LIBS = ['pthread'])
-
-examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-examples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
+examples_env.AppendUnique(LIBPATH = [examples_env.get('BUILD_DIR')])
+examples_env.AppendUnique(RPATH = [examples_env.get('BUILD_DIR')])
 examples_env.PrependUnique(LIBS = ['coap'])
 examples_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 examples_env.AppendUnique(LIBS = ['oc_logger'])
 examples_env.AppendUnique(LIBS = ['octbstack'])
 examples_env.AppendUnique(LIBS = ['oc'])
+
+compiler = examples_env.get('CXX')
+if 'g++' in compiler:
+	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
 
 if target_os in ['msys_nt', 'windows']:
 	examples_env.PrependUnique(LIBS = ['mswsock', 'ws2_32', 'iphlpapi', 'ole32'])

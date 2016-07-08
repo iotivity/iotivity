@@ -19,9 +19,8 @@
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
 
-Import('env')
-
-provisioning_env = env.Clone()
+provisioning_env = SConscript('#build_common/thread.scons')
+target_os = provisioning_env.get('TARGET_OS')
 root_dir = './../../../../'
 
 ######################################################################
@@ -52,27 +51,21 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../../extlibs/asn1cert',
 		'ck_manager/include'
 		])
-target_os = env.get('TARGET_OS')
 
-if target_os != 'tizen':
+if target_os not in ['tizen']:
 	provisioning_env.AppendUnique(CPPPATH = ['../../../../extlibs/sqlite3'])
 
 provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_DTLS__'])
-if target_os not in ['windows']:
-	provisioning_env.AppendUnique(CFLAGS = ['-std=c99'])
-if target_os not in ['windows', 'msys_nt']:
-	provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-	# Note: 'pthread' is in libc for android.
-	# On other platforms, if use new gcc(>4.9?) it isn't required, otherwise, it's required
-	if target_os != 'android':
-		provisioning_env.AppendUnique(LIBS = ['dl', 'pthread'])
 
-provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+if 'g++' in provisioning_env.get('CXX'):
+    provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
+
+provisioning_env.AppendUnique(LIBPATH = [provisioning_env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 
 provisioning_env.AppendUnique(LIBS = ['tinydtls'])
 
-if env.get('DTLS_WITH_X509') == '1':
+if provisioning_env.get('DTLS_WITH_X509') == '1':
 	provisioning_env.AppendUnique(LIBS = ['CKManager', 'asn1'])
 
 if target_os not in ['msys_nt', 'windows', 'android']:
@@ -81,14 +74,14 @@ if target_os not in ['msys_nt', 'windows', 'android']:
 if target_os in ['windows', 'msys_nt']:
 	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'timer'])
 
-if target_os == 'tizen':
+if target_os in ['tizen']:
 	provisioning_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
-if target_os == 'android':
+if target_os in ['android']:
 	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	provisioning_env.AppendUnique(LIBS = ['gnustl_static'])
 
-	if not env.get('RELEASE'):
+	if not provisioning_env.get('RELEASE'):
 		provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['darwin', 'ios']:
@@ -120,7 +113,7 @@ else:
 provisioning_env.InstallTarget(provisioningserver, 'ocpmapi')
 provisioning_env.UserInstallTargetLib(provisioningserver, 'ocpmapi')
 
-if env.get('DTLS_WITH_X509') == '1':
+if provisioning_env.get('DTLS_WITH_X509') == '1':
 	SConscript('ck_manager/SConscript')
 
 if target_os in ['linux', 'msys_nt', 'windows']:
