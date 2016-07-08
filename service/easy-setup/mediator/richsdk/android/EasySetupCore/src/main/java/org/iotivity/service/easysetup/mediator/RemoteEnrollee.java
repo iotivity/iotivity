@@ -30,7 +30,14 @@ public class RemoteEnrollee{
     public static final String TAG = RemoteEnrollee.class.getName();
     private long m_nativeHandle;
 
-    private native void nativeSetCloudProvInfo(String authCode, String autoProvider, String ciServer);
+    private native void nativeInitRemoteEnrollee();
+    private native void nativeRequestPropertyData(RequestPropertyDataCallback callback);
+    private native void nativeStartSecurityProvision(SecurityProvisioningCallback callback);
+    private native void nativeSetDataProvInfo(String ssid, String pwd, int authType, int encType,
+                                              String language, String country);
+    private native void nativeStartDataProvision(DataProvisioningCallback callback);
+    private native void nativeSetCloudProvInfo(String authCode, String autoProvider,
+                                               String ciServer);
     private native void nativeStartCloudProvisioning(CloudProvisioningCallback callback);
 
     /* constructor will be invoked from the native layer */
@@ -38,10 +45,53 @@ public class RemoteEnrollee{
         this.m_nativeHandle = nativeHandle;
     }
 
-	/* native setCloudProvInfo */
+    /* native setCloudProvInfo */
+    public void initRemoteEnrollee() throws ESException
+    {
+        nativeInitRemoteEnrollee();
+    }
+
+    public void requestPropertyData(RequestPropertyDataCallback callback) throws ESException
+    {
+        if(callback != null)
+        {
+            nativeRequestPropertyData(callback);
+            return;
+        }
+        Log.d(TAG, "RequestPropertyDataCallback is null ");
+    }
+
+    public void startSecurityProvisioning(SecurityProvisioningCallback callback) throws ESException
+    {
+        if(callback != null)
+        {
+            nativeStartSecurityProvision(callback);
+            return;
+        }
+        Log.d(TAG, "SecurityProvisioningCallback is null ");
+    }
+
+    public void setDataProvInfo(DataProvInfo dataInfo) throws ESException
+    {
+        nativeSetDataProvInfo(dataInfo.getSsid(), dataInfo.getPwd(),
+                              dataInfo.getAuthType().getValue(), dataInfo.getEncType().getValue(),
+                              dataInfo.getLanguage(), dataInfo.getCountry());
+    }
+
+    public void startDataProvisioning(DataProvisioningCallback callback) throws ESException
+    {
+        if(callback != null)
+        {
+            nativeStartDataProvision(callback);
+            return;
+        }
+        Log.d(TAG, "DataProvisioningCallback is null ");
+    }
+
     public void setCloudProvInfo(CloudProvInfo cloudInfo) throws ESException{
-    	nativeSetCloudProvInfo(cloudInfo.getAuthCode(), cloudInfo.getAuthProvider(), cloudInfo.getCiServer());
-	}
+        nativeSetCloudProvInfo(cloudInfo.getAuthCode(), cloudInfo.getAuthProvider(),
+                               cloudInfo.getCiServer());
+    }
 
     /* native startCloudProvisioning */
     public void startCloudProvisioning(CloudProvisioningCallback callback) throws ESException{

@@ -50,6 +50,7 @@ extern jclass g_cls_RequestPropertyDataStatus;
 extern jclass g_cls_SecurityProvisioningStatus;
 extern jclass g_cls_DataProvisioningStatus;
 extern jclass g_cls_CloudProvisioningStatus;
+extern jclass g_cls_Integer;
 
 extern jmethodID g_mid_RemoteEnrollee_ctor;
 extern jmethodID g_mid_ESException_ctor;
@@ -60,6 +61,7 @@ extern jmethodID g_mid_RequestPropertyDataStatus_ctor;
 extern jmethodID g_mid_SecurityProvisioningStatus_ctor;
 extern jmethodID g_mid_DataProvisioningStatus_ctor;
 extern jmethodID g_mid_CloudProvisioningStatus_ctor;
+extern jmethodID g_mid_Integer_ctor;
 
 typedef void(*RemoveListenerCallback)(JNIEnv *env, jobject jListener);
 

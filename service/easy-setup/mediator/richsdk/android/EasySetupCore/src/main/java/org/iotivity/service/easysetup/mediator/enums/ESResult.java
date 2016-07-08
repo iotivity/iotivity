@@ -18,33 +18,38 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.mediator;
-
-import org.iotivity.service.easysetup.mediator.enums.ESCloudProvState;
-import org.iotivity.service.easysetup.mediator.enums.ESResult;
+package org.iotivity.service.easysetup.mediator.enums;
 
 /**
- * This interface facilitates Application to get progress & result of Cloud provisioning
- * process in easy setup
+ * It defines an result during easy setup process, which is same as one in Easy Setup C++ SDK
  */
-public class CloudProvisioningStatus
-{
-    private ESResult m_result;
-    private ESCloudProvState m_esCloudState;
+public enum ESResult {
+    ES_ERROR(-1),
+    ES_OK(0),
+    ES_NETWORKFOUND(1),
+    ES_NETWORKCONNECTED(2),
+    ES_NETWORKNOTCONNECTED(3),
+    ES_RESOURCECREATED(11),
+    ES_RECVREQOFPROVRES(21),
+    ES_RECVREQOFNETRES(22),
+    ES_RECVUPDATEOFPROVRES(23),
+    ES_RECVTRIGGEROFPROVRES(24),
+    ES_UNAUTHORIZED(25);
 
-    public CloudProvisioningStatus(int result, int state)
-    {
-        m_result = ESResult.fromInt(result);
-        m_esCloudState = ESCloudProvState.fromInt(state);
+    private int value;
+
+    private ESResult(int value) {
+        this.value = value;
     }
 
-    public ESResult getESResult()
-    {
-        return m_result;
+	public int getValue() {
+        return value;
     }
 
-    public ESCloudProvState getESCloudState()
-    {
-        return m_esCloudState;
+	public static ESResult fromInt(int i) {
+        for (ESResult b : ESResult.values()) {
+            if (b.getValue() == i) { return b; }
+        }
+        return null;
     }
 };

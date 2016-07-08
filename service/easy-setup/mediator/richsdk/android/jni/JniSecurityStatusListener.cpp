@@ -20,6 +20,8 @@
 
 #include "JniSecurityStatusListener.h"
 #include "JniRemoteEnrollee.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 using namespace OIC::Service;
 
@@ -86,7 +88,9 @@ void JniSecurityStatusListener::secProvisionStatusCallback(
     jSecurityProvisioningStatus = env->NewObject(g_cls_SecurityProvisioningStatus,
                                                 g_mid_SecurityProvisioningStatus_ctor,
                                                 (jint)esResult,
-                                                (jstring)env->NewStringUTF(secProvisioningStatus->getDeviceUUID().c_str()));
+                                                env->NewStringUTF(secProvisioningStatus->getDeviceUUID().c_str()));
+
+    LOGE("JniSecurityStatusListener::onSecurityProvisioningStatus UUID : %s", secProvisioningStatus->getDeviceUUID().c_str());
 
     if (!jSecurityProvisioningStatus)
     {

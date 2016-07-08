@@ -20,36 +20,8 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-/**
- * It defines an result during easy setup process, which is same as one in Easy Setup C++ SDK
- */
-public enum ESResult {
-    ES_ERROR(-1),
-    ES_OK(0),
-    ES_NETWORKFOUND(1),
-    ES_NETWORKCONNECTED(2),
-    ES_NETWORKNOTCONNECTED(3),
-    ES_RESOURCECREATED(11),
-    ES_RECVREQOFPROVRES(21),
-    ES_RECVREQOFNETRES(22),
-    ES_RECVUPDATEOFPROVRES(23),
-    ES_RECVTRIGGEROFPROVRES(24),
-    ES_UNAUTHORIZED(25);
+import org.iotivity.service.easysetup.mediator.RequestPropertyDataCallback;
 
-    private int value;
-
-    private ESResult(int value) {
-        this.value = value;
-    }
-
-	public int getValue() {
-        return value;
-    }
-
-	public static ESResult fromInt(int i) {
-        for (ESResult b : ESResult.values()) {
-            if (b.getValue() == i) { return b; }
-        }
-        return null;
-    }
-};
+public abstract class RequestPropertyDataCallback {
+    public abstract void onProgress(RequestPropertyDataStatus status);
+}

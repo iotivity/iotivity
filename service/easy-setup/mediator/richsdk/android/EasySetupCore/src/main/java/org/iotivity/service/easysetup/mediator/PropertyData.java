@@ -20,31 +20,38 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.enums.ESCloudProvState;
-import org.iotivity.service.easysetup.mediator.enums.ESResult;
+import org.iotivity.service.easysetup.mediator.enums.WIFI_FREQ;
+import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
 
-/**
- * This interface facilitates Application to get progress & result of Cloud provisioning
- * process in easy setup
- */
-public class CloudProvisioningStatus
+import java.util.ArrayList;
+
+public class PropertyData
 {
-    private ESResult m_result;
-    private ESCloudProvState m_esCloudState;
+    private final DeviceConfig mDevConf;
+    private final NetworkInfo mNetInfo;
+    private final boolean mCloudable;
 
-    public CloudProvisioningStatus(int result, int state)
+    public PropertyData(DeviceConfig devConf, NetworkInfo netInfo, boolean cloudable)
     {
-        m_result = ESResult.fromInt(result);
-        m_esCloudState = ESCloudProvState.fromInt(state);
+        mDevConf = devConf;
+        mNetInfo = netInfo;
+        mCloudable = cloudable;
     }
 
-    public ESResult getESResult()
+    public DeviceConfig getDeviceConfig()
     {
-        return m_result;
+        return mDevConf;
     }
 
-    public ESCloudProvState getESCloudState()
+    public NetworkInfo getNetworkInfo()
     {
-        return m_esCloudState;
+        return mNetInfo;
     }
-};
+
+    public boolean isCloudable()
+    {
+        return mCloudable;
+    }
+}
+
+

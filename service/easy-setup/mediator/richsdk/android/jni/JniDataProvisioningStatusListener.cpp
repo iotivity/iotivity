@@ -70,7 +70,7 @@ void JniDataProvisioningStatusListener::dataProvisionStatusCallback (std::shared
     //TODO:
     jmethodID midL = env->GetMethodID(clsL, "onProgress",
                                       "(Lorg/iotivity/service/easysetup/mediator/"
-                                      "DataProvisioningCallback;"
+                                      "DataProvisioningStatus;"
                                       ")V");
 
     if (!midL)

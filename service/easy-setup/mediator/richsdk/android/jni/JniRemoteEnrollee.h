@@ -121,7 +121,7 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartSecurityP
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartDataProvision
-(JNIEnv *env, jobject jClass);
+(JNIEnv *env, jobject jClass, jobject jListener);
 
 /**
  * API for setting data provisioning information.

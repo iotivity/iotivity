@@ -97,7 +97,7 @@ namespace OIC
         } ESResult;
 
         /**
-         * @brief  WIFI Authentication type of the Enroller
+         * @brief  WIFI Authentication tlype of the Enroller
          */
         typedef enum
         {

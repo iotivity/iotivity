@@ -30,6 +30,7 @@ jclass g_cls_SecurityProvisioningStatus = NULL;
 jclass g_cls_DataProvisioningStatus = NULL;
 jclass g_cls_ESException = NULL;
 jclass g_cls_CloudProvisioningStatus = NULL;
+jclass g_cls_Integer = NULL;
 
 jmethodID g_mid_RemoteEnrollee_ctor = NULL;
 jmethodID g_mid_ESException_ctor = NULL;
@@ -40,6 +41,7 @@ jmethodID g_mid_RequestPropertyDataStatus_ctor = NULL;
 jmethodID g_mid_SecurityProvisioningStatus_ctor = NULL;
 jmethodID g_mid_DataProvisioningStatus_ctor = NULL;
 jmethodID g_mid_CloudProvisioningStatus_ctor = NULL;
+jmethodID g_mid_Integer_ctor = NULL;
 
 // JNI OnLoad
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
@@ -94,7 +96,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     env->DeleteLocalRef(clazz);
 
     g_mid_NetworkInfo_ctor = env->GetMethodID(g_cls_NetworkInfo, "<init>",
-                                "(Ljava.util.ArrayList;I)V");
+                                "(Ljava/util/ArrayList;I)V");
     if (!g_mid_NetworkInfo_ctor) return JNI_ERR;
 
     // PropertyData
@@ -105,11 +107,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     env->DeleteLocalRef(clazz);
 
     g_mid_PropertyData_ctor = env->GetMethodID(g_cls_PropertyData, "<init>",
-                                "(LDeviceConfig;LNetworkInfo;Z)V");
+                                "(Lorg/iotivity/service/easysetup/mediator/DeviceConfig;Lorg/iotivity/service/easysetup/mediator/NetworkInfo;Z)V");
     if (!g_mid_PropertyData_ctor) return JNI_ERR;
 
     // RequestPropertyDataStatus
-
     clazz = env->FindClass("org/iotivity/service/easysetup/mediator/RequestPropertyDataStatus");
     if (!clazz) return JNI_ERR;
 
@@ -117,7 +118,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     env->DeleteLocalRef(clazz);
 
     g_mid_RequestPropertyDataStatus_ctor = env->GetMethodID(g_cls_RequestPropertyDataStatus, "<init>",
-                                "(ILPropertyData;)V");
+                                "(ILorg/iotivity/service/easysetup/mediator/PropertyData;)V");
     if (!g_mid_RequestPropertyDataStatus_ctor) return JNI_ERR;
 
     // SecurityProvisioningStatus
@@ -151,6 +152,16 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_mid_CloudProvisioningStatus_ctor = env->GetMethodID(g_cls_CloudProvisioningStatus, "<init>",
                                 "(II)V");
     if (!g_mid_CloudProvisioningStatus_ctor) return JNI_ERR;
+
+    // Integer
+    clazz = env->FindClass("java/lang/Integer");
+    if (!clazz) return JNI_ERR;
+    g_cls_Integer = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_Integer_ctor = env->GetMethodID(g_cls_Integer, "<init>",
+                                "(I)V");
+    if (!g_mid_Integer_ctor) return JNI_ERR;
 
     return JNI_CURRENT_VERSION;
 }

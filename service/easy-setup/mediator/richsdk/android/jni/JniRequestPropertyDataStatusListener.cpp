@@ -90,21 +90,37 @@ void JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback (
                                                 (jstring)env->NewStringUTF(devConf.name.c_str()),
                                                 (jstring)env->NewStringUTF(devConf.language.c_str()),
                                                 (jstring)env->NewStringUTF(devConf.country.c_str()));
+    if (!jDevConf) {
+        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the jDevConf");
+        return ;
+    }
 
-    jclass clazz = (*env).FindClass("java/util/ArrayList");
-    jobject wifiModeTypes = (*env).NewObject(clazz, (*env).GetMethodID(clazz, "<init>", "()V"));
+    jclass clazz = env->FindClass("java/util/ArrayList");
+    jobject wifiModeTypes = env->NewObject(clazz, env->GetMethodID(clazz, "<init>", "()V"));
+    jmethodID arraylist_add = env->GetMethodID(clazz, "add", "(Ljava/lang/Object;)Z");
 
     for (int n=0; n<netInfo.types.size(); n++)
     {
-       (*env).CallBooleanMethod(wifiModeTypes, (*env).GetMethodID(clazz, "add", "(java/lang/Object;)Z"),
-                                             convertNativeWifiModeToInt(static_cast<WIFI_MODE>(netInfo.types[n])));
+        jobject value = env->NewObject(g_cls_Integer,
+                                                            g_mid_Integer_ctor,
+                                                            convertNativeWifiModeToInt(static_cast<WIFI_MODE>(netInfo.types[n])));
+       env->CallBooleanMethod(wifiModeTypes, arraylist_add, value);
     }
+    if (!wifiModeTypes) {
+        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the wifiModeTypes");
+        return ;
+    }
+
 
     jobject jNetInfo = NULL;
     jNetInfo = env->NewObject(g_cls_NetworkInfo,
                                                 g_mid_NetworkInfo_ctor,
                                                 (jobject)wifiModeTypes,
                                                 (jint)convertNativeWifiFreqToInt(netInfo.freq));
+    if (!jNetInfo) {
+        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the jNetInfo");
+        return ;
+    }
 
     jobject jPropertyData = NULL;
     jPropertyData = env->NewObject(g_cls_PropertyData,
@@ -112,13 +128,18 @@ void JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback (
                                                 (jobject)jDevConf,
                                                 (jobject)jNetInfo,
                                                 (jboolean)propertyData.isCloudable());
+    if (!jPropertyData) {
+        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the jPropertyData");
+        return ;
+    }
 
+    ESResult esResult = requestPropertyDataStatusCb->getESResult();
     jobject jRequestPropertyDataStatus = NULL;
     jRequestPropertyDataStatus = env->NewObject(g_cls_RequestPropertyDataStatus,
                                                 g_mid_RequestPropertyDataStatus_ctor,
-                                                convertNativeDataProvResultToInt(requestPropertyDataStatusCb->getESResult()),
+                                                (jint)esResult,
                                                 (jobject)jPropertyData);
-
+LOGI("4");
     if (!jRequestPropertyDataStatus)
     {
         LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the java object");

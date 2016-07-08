@@ -3,6 +3,8 @@
  *
  * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
+ *
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,48 +20,33 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.mediator;
+package org.iotivity.service.easysetup.mediator.enums;
 
-/**
- * It defines various states of the cloud provisioning during easy setup process
- */
-public enum ESCloudProvState {
-
-    /**
-     * Some error occurs during cloud data provisioning
-     */
-    ES_CLOUD_PROVISIONING_ERROR(-1),
-
-    /**
-     * Cloud data provisioning is successfully done
-     */
-    ES_CLOUD_PROVISIONING_SUCCESS(0),
-
-    /**
-     * Target enrollee which needs a cloud provisioning is found in a network
-     */
-    ES_CLOUD_ENROLLEE_FOUND(1),
-
-    /**
-     * Target enrollee which needs a cloud provisioning is NOT found in a network
-     */
-    ES_CLOUD_ENROLLEE_NOT_FOUND(2);
+public enum WIFI_FREQ
+{
+    WIFI_24G(0),
+    WIFI_5G(1),
+    WIFI_BOTH(2);
 
     private int value;
 
-    private ESCloudProvState(int value) {
+    private WIFI_FREQ(int value)
+    {
         this.value = value;
     }
 
-    public int getValue() {
+    public int getValue()
+    {
         return value;
     }
 
-    public static ESCloudProvState fromInt(int i) {
-        for (ESCloudProvState b : ESCloudProvState.values()) {
-            if (b.getValue() == i) { return b; }
+    public static WIFI_FREQ fromInt(int i)
+    {
+        for (WIFI_FREQ b : WIFI_FREQ.values())
+        {
+            if (b.getValue() == i)
+                return b;
         }
         return null;
     }
-};
-
+}

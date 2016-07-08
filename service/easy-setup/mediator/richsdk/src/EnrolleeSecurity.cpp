@@ -54,31 +54,31 @@ namespace OIC
             m_EnrolleeResource = EnrolleeResource;
         }
 
-        ESResult EnrolleeSecurity::registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
+        void EnrolleeSecurity::registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
                 SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb)
-
         {
             m_securityProvStatusCb = securityProvStatusCb;
             m_securityPinCb = securityPinCb;
             m_secProvisioningDbPathCb = secProvisioningDbPathCb;
-
-            return ES_ERROR;
         }
 
         std::shared_ptr< OC::OCSecureResource > EnrolleeSecurity::getEnrollee(DeviceList_t &list)
         {
             for (unsigned int i = 0; i < list.size(); i++)
             {
-                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Device %d ID %s ", i + 1,
-                        list[i]->getDeviceID().c_str());
-                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s", list[i]->getDevAddr().c_str());
-
+                if(m_deviceId == list[i]->getDeviceID().c_str())
+                {
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Device %d ID %s ", i + 1,
+                            list[i]->getDeviceID().c_str());
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s", list[i]->getDevAddr().c_str());
+                    return list[i];
+                }
                 //Always return the first element of the unOwned devices. This is considering that Mediator is
                 // always connected with only one Enrollee for which ownership transfer is being performed.
                 // Incase of multiple Enrollee devices connected to the Mediator via any OnBoarding method (SoftAp
                 // for example), the Enrollee devices will be provisioned in the first come first serve basis in the order
                 // returned by the security layer.
-                return list[i];
+
             }
             OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! DeviceList_t is NULL");
             return NULL;
@@ -108,12 +108,10 @@ namespace OIC
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! in OwnershipTransfer");
 
-                std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus = nullptr;
                 std::string uuid;
                 convertUUIDToString(result->at(0).deviceId, uuid);
-                securityProvisioningStatus = std::make_shared< SecProvisioningStatus >(uuid,
-                        ES_ERROR);
-
+                std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                        std::make_shared< SecProvisioningStatus >(uuid, ES_ERROR);
                 m_securityProvStatusCb(securityProvisioningStatus);
                 return;
             }
@@ -127,10 +125,8 @@ namespace OIC
                     convertUUIDToString(result->at(0).deviceId, uuid);
 
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "UUID : %s",uuid.c_str());
-                    std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus = nullptr;
-                    securityProvisioningStatus = std::make_shared< SecProvisioningStatus >(uuid,
-                            ES_OK);
-
+                    std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                            std::make_shared< SecProvisioningStatus >(uuid, ES_OK);
                     m_securityProvStatusCb(securityProvisioningStatus);
                     return;
                 }
@@ -139,7 +135,12 @@ namespace OIC
             }
         }
 
-        bool EnrolleeSecurity::performOwnershipTransfer()
+        void EnrolleeSecurity::setTargetDevID(const std::string devID)
+        {
+            m_deviceId = devID;
+        }
+
+        void EnrolleeSecurity::performOwnershipTransfer()
         {
             OC::DeviceList_t pUnownedDevList, pOwnedDevList;
 
@@ -147,36 +148,30 @@ namespace OIC
             pUnownedDevList.clear();
 
             OCStackResult result;
-
-            //Developer note : Always test the mediator and enrollee applications on different devices. Running
-            // Mediator and Enrollee in same device will result in returning the same device as already owned.
-            /*result = OCSecure::discoverOwnedDevices(ES_SEC_DISCOVERY_TIMEOUT,
+            /*
+            result = OCSecure::discoverOwnedDevices(ES_SEC_DISCOVERY_TIMEOUT,
                     pOwnedDevList);
             if (result != OC_STACK_OK)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Owned Discovery failed.");
-                ownershipStatus = DEVICE_NOT_OWNED;
                 //Throw exception
                 throw ESPlatformException(result);
-                return ownershipStatus;
             }
             else if (pOwnedDevList.size())
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
                         pOwnedDevList.size());
                 std::shared_ptr< OC::OCSecureResource > ownedDevice = getEnrollee(pOwnedDevList);
+
                 if (ownedDevice)
                 {
-                    ownershipStatus = DEVICE_OWNED;
-                    return ownershipStatus;
+                    std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                            std::make_shared< SecProvisioningStatus >(ownedDevice->getDeviceID(), ES_OK);
+                    m_securityProvStatusCb(securityProvisioningStatus);
+                    return;
                 }
             }
-            else
-            {
-                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No owned devices found.");
-                ownershipStatus = DEVICE_NOT_OWNED;
-            }*/
-
+            */
             result = OCSecure::discoverUnownedDevices(ES_SEC_DISCOVERY_TIMEOUT, pUnownedDevList);
             if (result != OC_STACK_OK)
             {
@@ -207,20 +202,19 @@ namespace OIC
                             &EnrolleeSecurity::ownershipTransferCb, this, std::placeholders::_1,
                             std::placeholders::_2);
 
-                    if (m_unownedDevice->doOwnershipTransfer(ownershipTransferCb) != OC_STACK_OK)
+                    result = m_unownedDevice->doOwnershipTransfer(ownershipTransferCb);
+                    if (result != OC_STACK_OK)
                     {
                         OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransferCallback is failed");
-                        return false;
+                        throw ESPlatformException(result);
                     }
                 }
             }
             else
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No unOwned devices found.");
-                return false;
+                throw ESException("No unOwned devices found.");
             }
-
-            return true;
         }
     }
 }

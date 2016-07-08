@@ -186,42 +186,46 @@ namespace OIC
             std::string resourceURI;
             std::string hostAddress;
             std::string hostDeviceID;
+
             try
             {
                 if(resource)
                 {
-                    // Get the resource URI
-                    resourceURI = resource->uri();
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG,
-                            "URI of the resource: %s", resourceURI.c_str());
-
-                    // Get the resource host address
-                    hostAddress = resource->host();
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG,
-                            "Host address of the resource: %s", hostAddress.c_str());
-
-                    hostDeviceID = resource->sid();
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG,
-                            "Host DeviceID of the resource: %s", hostDeviceID.c_str());
-
-                    if(m_deviceId .empty())
+                    if(!(resource->connectivityType() & CT_ADAPTER_TCP))
                     {
-                        /*
-                         * Easysetup is always performed with a single Enrollee device and
-                         * in a private network (SoftAP or BLE), so the assumption is that
-                         * only the intended device will respond for the discovery.
-                         * With the above assumption the below two statements are written.
-                         */
-                        m_ocResource = resource;
-                        m_deviceId = resource->sid();
-                        m_discoveryResponse = true;
-                    }
+                        // Get the resource URI
+                        resourceURI = resource->uri();
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG,
+                                "URI of the resource: %s", resourceURI.c_str());
 
-                    else if(!m_deviceId.empty() && m_deviceId == hostDeviceID)
-                    {
-                        OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_TAG, "Find matched CloudResource");
-                        m_ocResource = resource;
-                        m_discoveryResponse = true;
+                        // Get the resource host address
+                        hostAddress = resource->host();
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG,
+                                "Host address of the resource: %s", hostAddress.c_str());
+
+                        hostDeviceID = resource->sid();
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG,
+                                "Host DeviceID of the resource: %s", hostDeviceID.c_str());
+
+                        if(m_deviceId .empty())
+                        {
+                            /*
+                             * Easysetup is always performed with a single Enrollee device and
+                             * in a private network (SoftAP or BLE), so the assumption is that
+                             * only the intended device will respond for the discovery.
+                             * With the above assumption the below two statements are written.
+                             */
+                            m_ocResource = resource;
+                            m_deviceId = resource->sid();
+                            m_discoveryResponse = true;
+                        }
+
+                        else if(!m_deviceId.empty() && m_deviceId == hostDeviceID)
+                        {
+                            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_TAG, "Find matched CloudResource");
+                            m_ocResource = resource;
+                            m_discoveryResponse = true;
+                        }
                     }
                 }
             }
@@ -318,24 +322,22 @@ namespace OIC
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
             m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_enrolleeResource, "");
 
-            m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb,
-                    m_securityPinCb, m_secProvisioningDbPathCb);
+            m_enrolleeSecurity->setTargetDevID(m_deviceId);
+            m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb, m_securityPinCb, m_secProvisioningDbPathCb);
 
             try
             {
-                if (!m_enrolleeSecurity->performOwnershipTransfer())
-                {
-                    OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Fail performOwnershipTransfer");
-                    std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
-                            std::make_shared< SecProvisioningStatus >(nullptr, ES_ERROR);
-                    m_securityProvStatusCb(securityProvisioningStatus);
-                    return;
-                }
+                m_enrolleeSecurity->performOwnershipTransfer();
             }
             catch (OCException & e)
             {
                 OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
                         "Exception for performOwnershipTransfer : %s", e.reason().c_str());
+
+                OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Fail performOwnershipTransfer");
+                    std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                            std::make_shared< SecProvisioningStatus >(nullptr, ES_ERROR);
+                    m_securityProvStatusCb(securityProvisioningStatus);
                 return ;
             }
 #else
@@ -422,7 +424,7 @@ namespace OIC
                     m_cloudResource = std::make_shared<CloudResource>(std::move(m_ocResource));
 
                     std::shared_ptr< CloudProvisioningStatus > provStatus = std::make_shared<
-                        CloudProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
+                        CloudProvisioningStatus >(ESResult::ES_OK, ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
 
                     m_cloudProvStatusCb(provStatus);
                 }
