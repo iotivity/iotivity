@@ -167,66 +167,65 @@ INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Discovery");
-    int i = 1;
 
-    if(!payload->resources)
+    while(payload && payload->resources)
     {
-        OIC_LOG(level, PL_TAG, "\tNO Resources");
-        return;
-    }
-    OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
-    if (payload->baseURI)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
-    }
-    if (payload->name)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
-    }
-    if (payload->uri)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
-    }
-    if (payload->type)
-    {
-        for (OCStringLL *strll = payload->type; strll; strll = strll->next)
+        OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
+        if (payload->baseURI)
         {
-            OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", strll->value);
+            OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
         }
-    }
-    OIC_LOG(level, PL_TAG, "\tInterface:");
-    for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
-    {
-        OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
-    }
-
-    OCResourcePayload* res = payload->resources;
-
-    while(res)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
-        OIC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
-        OIC_LOG(level, PL_TAG, "\tResource Types:");
-        OCStringLL* strll =  res->types;
-        while(strll)
+        if (payload->name)
         {
-            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
-            strll = strll->next;
+            OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
         }
-        OIC_LOG(level, PL_TAG, "\tInterfaces:");
-        strll =  res->interfaces;
-        while(strll)
+        if (payload->uri)
         {
-            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
-            strll = strll->next;
+            OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
+        }
+        if (payload->type)
+        {
+            for (OCStringLL *strll = payload->type; strll; strll = strll->next)
+            {
+                OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", strll->value);
+            }
+        }
+        OIC_LOG(level, PL_TAG, "\tInterface:");
+        for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
         }
 
-        OIC_LOG_V(level, PL_TAG, "\tBitmap: %u", res->bitmap);
-        OIC_LOG_V(level, PL_TAG, "\tSecure?: %s", res->secure ? "true" : "false");
-        OIC_LOG_V(level, PL_TAG, "\tPort: %u", res->port);
-        OIC_LOG(level, PL_TAG, "");
-        res = res->next;
-        ++i;
+        OCResourcePayload* res = payload->resources;
+
+        int i = 1;
+        while(res)
+        {
+            OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
+            OIC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
+            OIC_LOG(level, PL_TAG, "\tResource Types:");
+            OCStringLL* strll =  res->types;
+            while(strll)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+                strll = strll->next;
+            }
+            OIC_LOG(level, PL_TAG, "\tInterfaces:");
+            strll =  res->interfaces;
+            while(strll)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+                strll = strll->next;
+            }
+
+            OIC_LOG_V(level, PL_TAG, "\tBitmap: %u", res->bitmap);
+            OIC_LOG_V(level, PL_TAG, "\tSecure?: %s", res->secure ? "true" : "false");
+            OIC_LOG_V(level, PL_TAG, "\tPort: %u", res->port);
+            OIC_LOG(level, PL_TAG, "");
+            res = res->next;
+            ++i;
+        }
+        payload = payload->next;
     }
 }
 

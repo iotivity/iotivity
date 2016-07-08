@@ -1199,7 +1199,7 @@ typedef struct OCResourceCollectionPayload
     struct OCResourceCollectionPayload *next;
 } OCResourceCollectionPayload;
 
-typedef struct
+typedef struct OCDiscoveryPayload
 {
     OCPayload base;
 
@@ -1223,6 +1223,9 @@ typedef struct
 
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;
+
+    /** Holding address of the next DiscoveryPayload. */
+    struct OCDiscoveryPayload *next;
 
 } OCDiscoveryPayload;
 

@@ -1686,6 +1686,7 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     OICFree(payload->name);
     OCFreeOCStringLL(payload->iface);
     OCDiscoveryResourceDestroy(payload->resources);
+    OCDiscoveryPayloadDestroy(payload->next);
     OICFree(payload);
 }
 
