@@ -6,7 +6,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -46,15 +46,15 @@
 #include <lwip/timers.h>
 #endif
 
-#include "debug.h"
-#include "mem.h"
-#include "str.h"
-#include "async.h"
-#include "resource.h"
-#include "option.h"
-#include "encode.h"
-#include "block.h"
-#include "net.h"
+#include "include/coap/debug.h"
+#include "include/coap/mem.h"
+#include "include/coap/str.h"
+#include "include/coap/async.h"
+#include "include/coap/resource.h"
+#include "include/coap/option.h"
+#include "include/coap/encode.h"
+#include "include/coap/block.h"
+#include "include/coap/net.h"
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
 

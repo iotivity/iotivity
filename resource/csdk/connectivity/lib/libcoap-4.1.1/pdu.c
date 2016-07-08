@@ -6,7 +6,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -23,10 +23,10 @@
 #include <winsock2.h>
 #endif
 
-#include "debug.h"
-#include "pdu.h"
-#include "option.h"
-#include "encode.h"
+#include "include/coap/debug.h"
+#include "include/coap/pdu.h"
+#include "include/coap/option.h"
+#include "include/coap/encode.h"
 
 #ifdef WITH_ARDUINO
 #include "util.h"
@@ -47,7 +47,7 @@ coap_pdu_resources_init()
     memb_init(&pdu_storage);
 }
 #else /* WITH_CONTIKI */
-#include "mem.h"
+#include "include/coap/mem.h"
 #endif /* WITH_CONTIKI */
 
 void coap_pdu_clear(coap_pdu_t *pdu, size_t size, coap_transport_type transport, unsigned int length)
@@ -283,7 +283,7 @@ coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
     {
         return coap_tcp_16bit;
     }
-    else //if (size - COAP_TCP_LENGTH_FIELD_32_BIT < ULONG_MAX) always true due to range of data types
+    else
     {
         return coap_tcp_32bit;
     }

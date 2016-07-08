@@ -36,6 +36,7 @@ cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
+cp -R ./extlibs/libcoap $sourcedir/tmp/extlibs
 cp -R ./resource $sourcedir/tmp
 cp -R ./service $sourcedir/tmp
 cp ./extra_options.scons $sourcedir/tmp

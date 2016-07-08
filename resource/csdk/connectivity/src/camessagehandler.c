@@ -28,7 +28,9 @@
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "logger.h"
-#include "config.h" /* for coap protocol */
+#ifndef WITH_UPSTREAM_LIBCOAP
+#include "coap/config.h"
+#endif
 #include "oic_malloc.h"
 #include "canetworkconfigurator.h"
 #include "caadapterutils.h"

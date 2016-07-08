@@ -16,12 +16,19 @@ routing = env.get('ROUTING')
 with_proxy = env.get('WITH_PROXY')
 with_tcp = env.get('WITH_TCP')
 
+with_upstream_libcoap = env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	env.AppendUnique(CPPPATH = ['../../../../connectivity/lib/libcoap-4.1.1'])
+
 env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
 		'../../../../stack/include',
 		'../../../../../../extlibs/cjson',
-		'../../../../../oc_logger/include',
-		'../../../../../connectivity/lib/libcoap-4.1.1'
+		'../../../../../oc_logger/include'
 		])
 
 env.AppendUnique(CPPDEFINES = ['TB_LOG'])

@@ -20,7 +20,7 @@
 
 #include "iotivity_config.h"
 #include "occlientcb.h"
-#include "utlist.h"
+#include <coap/utlist.h>
 #include "logger.h"
 #include "oic_malloc.h"
 #include <string.h>
@@ -31,7 +31,7 @@
 #ifdef HAVE_ARDUINO_TIME_H
 #include "Time.h"
 #endif
-#include "coap_time.h"
+#include <coap/coap_time.h>
 
 #include "cacommon.h"
 #include "cainterface.h"

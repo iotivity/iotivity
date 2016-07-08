@@ -27,7 +27,7 @@
 #define CA_MESSAGE_HANDLER_H_
 
 #include "cacommon.h"
-#include "coap.h"
+#include <coap/coap.h>
 
 #define CA_MEMORY_ALLOC_CHECK(arg) { if (NULL == arg) {OIC_LOG(ERROR, TAG, "Out of memory"); \
 goto memory_error_exit;} }

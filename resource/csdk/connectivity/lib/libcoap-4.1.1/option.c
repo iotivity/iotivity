@@ -7,7 +7,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -16,9 +16,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "option.h"
-#include "debug.h"
-#include "pdu.h"
+#include "include/coap/option.h"
+#include "include/coap/debug.h"
+#include "include/coap/pdu.h"
 
 coap_opt_t *
 options_start(coap_pdu_t *pdu, coap_transport_type transport)

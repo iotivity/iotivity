@@ -43,6 +43,14 @@ if target_os == 'arduino':
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = liboctbstack_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	liboctbstack_env.PrependUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	liboctbstack_env.PrependUnique(CPPPATH = ['connectivity/lib/libcoap-4.1.1/include'])
+
 liboctbstack_env.PrependUnique(CPPPATH = [
 		'../../extlibs/cjson/',
 		'../../extlibs/timer/',
@@ -50,7 +58,6 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'stack/include',
 		'stack/include/internal',
 		'../oc_logger/include',
-		'connectivity/lib/libcoap-4.1.1',
 		'connectivity/common/inc',
 		'connectivity/inc',
 		'connectivity/inc/pkix',

@@ -48,7 +48,7 @@
 
 #include "cacommon.h"
 #include "logger.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "uarraylist.h"
 #include "cacommonutil.h"
 
