@@ -204,6 +204,7 @@ void NSConsumerTaskProcessing(NSTask * task)
     switch (task->taskType)
     {
     case TASK_EVENT_CONNECTED:
+    case TASK_EVENT_CONNECTED_TCP:
     case TASK_CONSUMER_REQ_DISCOVER:
     {
         NSConsumerDiscoveryTaskProcessing(task);

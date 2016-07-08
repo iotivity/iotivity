@@ -272,7 +272,7 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     OICFree(providerId);
 
     NS_LOG_V(DEBUG, "Provider ID : %s", retSync->providerId);
-    NS_LOG_V(DEBUG, "Sync ID : %lld", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync ID : %lu", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
 
     NS_LOG(DEBUG, "NSGetSyncInfo - OUT");

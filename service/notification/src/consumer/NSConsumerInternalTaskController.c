@@ -176,7 +176,7 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     NS_VERIFY_NOT_NULL_V(provider);
 
     NSProvider_internal * providerCacheData = NSProviderCacheFind(provider->providerId);
-    NS_VERIFY_NOT_NULL_V(!providerCacheData);
+    NS_VERIFY_NOT_NULL_V(providerCacheData == NULL ? (void *)1 : NULL);
 
     NS_LOG (ERROR, "New provider is discovered");
     NSResult ret = NSProviderCacheUpdate(provider);
@@ -226,7 +226,7 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
     NS_VERIFY_NOT_NULL_V(provider);
 
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", sync->messageId);
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lu", sync->messageId);
 
     NSMessage_consumer * msg = NSMessageCacheFind(msgId);
     NS_VERIFY_NOT_NULL_V(msg);
@@ -266,7 +266,6 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
 {
     NS_VERIFY_NOT_NULL_V(task);
 
-    NSResult ret = NS_ERROR;
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     switch (task->taskType)
     {

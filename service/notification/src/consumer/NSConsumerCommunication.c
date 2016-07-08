@@ -35,12 +35,6 @@ NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, 
 NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse);
 NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse);
 
-OCRepPayload * NSGetofSyncInfoPayload(NSMessage_consumer * message, int type);
-OCStackResult NSSendSyncInfoUsingMessage(NSMessage_consumer * message, int type);
-
-// TODO it seem to not to be this file
-NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type);
-
 NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 {
     NSProvider_internal * provider_internal = (NSProvider_internal *) provider;
@@ -54,7 +48,7 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
     NS_LOG_V(DEBUG, "subscribe query : %s", query);
     OCStackResult ret = NSInvokeRequest(&(provider_internal->i_messageHandle),
                           OC_REST_OBSERVE, provider_internal->i_addr,
-                          query, NULL, NSConsumerMessageListener, NULL);
+                          query, NULL, NSConsumerMessageListener, NULL, CT_DEFAULT);
     NS_VERIFY_STACK_OK(ret, NS_ERROR);
     NSOICFree(query);
 
@@ -66,7 +60,7 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
     NS_LOG_V(DEBUG, "subscribe query : %s", query);
     ret = NSInvokeRequest(&(provider_internal->i_syncHandle),
                           OC_REST_OBSERVE, provider_internal->i_addr,
-                          query, NULL, NSConsumerSyncInfoListener, NULL);
+                          query, NULL, NSConsumerSyncInfoListener, NULL, CT_DEFAULT);
     NS_VERIFY_STACK_OK(ret, NS_ERROR);
     NSOICFree(query);
 
@@ -149,21 +143,6 @@ OCStackApplicationResult NSConsumerMessageListener(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-NSResult NSPushToCache(OCClientResponse * clientResponse, NSTaskType type)
-{
-    NSMessage_consumer * cachedNoti = NSGetMessage(clientResponse);
-    NS_LOG(DEBUG, "build NSMessage");
-    NS_VERIFY_NOT_NULL(cachedNoti, NS_ERROR);
-
-    NS_LOG(DEBUG, "build NSTask");
-    NSTask * task = NSMakeTask(type, (void *) cachedNoti);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveMessage(cachedNoti));
-
-    NSConsumerPushEvent(task);
-
-    return NS_OK;
-}
-
 void NSGetMessagePostClean(char * pId, OCDevAddr * addr)
 {
     NSOICFree(pId);
@@ -209,13 +188,13 @@ NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retMsg->ttl);
 
     NS_LOG_V(DEBUG, "Msg Address : %s", retMsg->i_addr->addr);
-    NS_LOG_V(DEBUG, "Msg ID      : %lld", retMsg->messageId);
+    NS_LOG_V(DEBUG, "Msg ID      : %lu", retMsg->messageId);
     NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
     NS_LOG_V(DEBUG, "Msg Content : %s", retMsg->contentText);
     NS_LOG_V(DEBUG, "Msg Source  : %s", retMsg->sourceName);
     NS_LOG_V(DEBUG, "Msg Type    : %d", retMsg->type);
     NS_LOG_V(DEBUG, "Msg Date    : %s", retMsg->dateTime);
-    NS_LOG_V(DEBUG, "Msg ttl     : %lld", retMsg->ttl);
+    NS_LOG_V(DEBUG, "Msg ttl     : %lu", retMsg->ttl);
 
     return retMsg;
 }
@@ -245,7 +224,7 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
     NSSyncInfo * retSync = NSCreateSyncInfo_consumer(id, pId, (NSSyncType)state);
     NS_VERIFY_NOT_NULL(retSync, NULL);
 
-    NS_LOG_V(DEBUG, "Sync ID : %lld", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync ID : %lu", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
     NS_LOG_V(DEBUG, "Sync Provider ID : %s", retSync->providerId);
 
@@ -293,7 +272,7 @@ OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
 
     return NSInvokeRequest(NULL, OC_REST_POST, addr,
                            NS_SYNC_URI, (OCPayload*)payload,
-                           NSConsumerCheckPostResult, NULL);
+                           NSConsumerCheckPostResult, NULL, addr->adapter);
 }
 
 void NSConsumerCommunicationTaskProcessing(NSTask * task)

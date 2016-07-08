@@ -24,6 +24,7 @@
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
 #include "cautilinterface.h"
+#include "oic_malloc.h"
 
 #include "NSConsumerDiscovery.h"
 #include "NSConsumerNetworkEventListener.h"
@@ -55,12 +56,14 @@ NSResult NSConsumerListenerInit()
 
     NS_LOG(DEBUG, "Request to subscribe presence");
     OCStackResult stackResult = NSInvokeRequest(getPresenceHandle(), OC_REST_PRESENCE, NULL,
-                        NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener, NULL);
+                        NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener,
+                        NULL, CT_DEFAULT);
     NS_VERIFY_STACK_OK(stackResult, NS_ERROR);
 
     NS_LOG(DEBUG, "Request to discover provider");
     stackResult = NSInvokeRequest(NULL, OC_REST_DISCOVER, NULL,
-                      NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL);
+                      NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener,
+                      NULL, CT_DEFAULT);
     NS_VERIFY_STACK_OK(stackResult, NS_ERROR);
 
     return NS_OK;
@@ -82,12 +85,26 @@ void NSConnectionStateListener(CATransportAdapter_t adapter,
     (void) adapter;
     (void) remote_address;
 
+    NSTaskType type = TASK_EVENT_CONNECTED;
+    OCDevAddr * addr = NULL;
     if (connected)
     {
-        NS_LOG(DEBUG, "try to discover notification provider.");
+        if (adapter == CA_ADAPTER_TCP)
+        {
+            type = TASK_EVENT_CONNECTED_TCP;
+            NS_LOG(DEBUG, "try to discover notification provider : TCP.");
+            // TODO convet to OCDevAddr;
+            // addr = .....
+        }
+        else if (adapter == CA_ADAPTER_IP)
+        {
+            NS_LOG(DEBUG, "try to discover notification provider.");
+            // TODO convet to OCDevAddr;
+            // addr = .....
+        }
 
-        NSTask * task = NSMakeTask(TASK_EVENT_CONNECTED, NULL);
-        NS_VERIFY_NOT_NULL_V(task);
+        NSTask * task = NSMakeTask(type, addr);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task, NSOICFree(addr));
 
         NSConsumerPushEvent(task);
     }

@@ -30,6 +30,7 @@
 
 #define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
 #define NS_PRESENCE_SUBSCRIBE_QUERY "coap://224.0.1.187:5683/oic/ad?rt=oic.r.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.r.notification"
 #define NS_GET_INFORMATION_QUERY "/notification?if=oic.if.notification"
 
 NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
@@ -68,7 +69,8 @@ OCStackApplicationResult NSConsumerPresenceListener(
     {
         NS_LOG(DEBUG, "started presence or resource is created.");
         NSInvokeRequest(NULL, OC_REST_DISCOVER, clientResponse->addr,
-            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL);
+            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL,
+            clientResponse->addr->adapter);
     }
 
     return OC_STACK_KEEP_TRANSACTION;
@@ -99,10 +101,11 @@ OCStackApplicationResult NSProviderDiscoverListener(
     OCResourcePayload * resource = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
     while (resource)
     {
-        if (!strcmp(resource->uri, NS_RESOURCE_URI))
+        if (strstr(resource->uri, NS_RESOURCE_URI))
         {
             NSInvokeRequest(NULL, OC_REST_GET, clientResponse->addr,
-                    NS_RESOURCE_URI, NULL, NSIntrospectProvider, NULL);
+                    resource->uri, NULL, NSIntrospectProvider, NULL,
+                    clientResponse->addr->adapter);
         }
         resource = resource->next;
     }
@@ -212,7 +215,8 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
 
     NSProvider_internal * newProvider
         = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
-    NS_VERIFY_NOT_NULL(newProvider, NULL);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProvider, NULL,
+          NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
 
     OICStrcpy(newProvider->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
     NSOICFree(providerId);
@@ -233,11 +237,31 @@ void NSConsumerDiscoveryTaskProcessing(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     if (task->taskType == TASK_EVENT_CONNECTED || task->taskType == TASK_CONSUMER_REQ_DISCOVER)
     {
-        NSInvokeRequest(NULL, OC_REST_DISCOVER, NULL, NS_DISCOVER_QUERY,
-                NULL, NSProviderDiscoverListener, NULL);
+        OCDevAddr * addr = (OCDevAddr *) task->taskData;
+
+        NS_LOG(DEBUG, "Request discover [UDP]");
+        NSInvokeRequest(NULL, OC_REST_DISCOVER, addr, NS_DISCOVER_QUERY,
+                NULL, NSProviderDiscoverListener, NULL, addr->adapter);
+    }
+    else if (task->taskType == TASK_EVENT_CONNECTED_TCP)
+    {
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task->taskData, NSOICFree(task));
+        OCDevAddr * addr = (OCDevAddr *) task->taskData;
+
+        NS_LOG(DEBUG, "Request discover [TCP]");
+        NSInvokeRequest(NULL, OC_REST_DISCOVER, addr, NS_DISCOVER_QUERY,
+                NULL, NSProviderDiscoverListener, NULL, addr->adapter);
+
+        NS_LOG(DEBUG, "Subscribe presence [TCP]");
+        NSInvokeRequest(NULL, OC_REST_PRESENCE, addr, NS_PRESENCE_SUBSCRIBE_QUERY_TCP,
+                NULL, NSConsumerPresenceListener, NULL, addr->adapter);
+
+        NSOICFree(task->taskData);
     }
     else
     {
         NS_LOG(ERROR, "Unknown type message");
     }
+
+    NSOICFree(task);
 }

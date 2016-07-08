@@ -198,7 +198,7 @@ void NSRemoveProvider(NSProvider_internal *);
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload,
-        void * callbackFunc, void * callbackData);
+        void * callbackFunc, void * callbackData, OCConnectivityType type);
 
 #ifdef __cplusplus
 }

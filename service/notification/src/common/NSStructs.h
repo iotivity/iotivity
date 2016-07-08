@@ -31,8 +31,8 @@
 typedef struct _nsTask
 {
     NSTaskType taskType;
-    void* taskData;
-    struct _nsTask* nextTask;
+    void * taskData;
+    struct _nsTask * nextTask;
 } NSTask;
 
 typedef void * NSCacheData;
@@ -69,8 +69,8 @@ typedef struct
 {
     OCResourceHandle handle;
     int accepter;
-    char* message_uri;
-    char* sync_uri;
+    char * message_uri;
+    char * sync_uri;
 } NSNotificationResource;
 
 typedef struct
@@ -93,8 +93,8 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char* id;
-    char* state;
+    char * id;
+    char * state;
 } NSSyncResource;
 
 typedef struct
