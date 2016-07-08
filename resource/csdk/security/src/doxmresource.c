@@ -613,11 +613,8 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     }
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmGetRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     OICFree(payload);
 
@@ -751,7 +748,6 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                 OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
                                 ehRet = OC_EH_ERROR;
                             }
-                            previousMsgId = ehRequest->messageID;
                         }
 #endif //__WITH_DTLS__
                     }
@@ -857,17 +853,22 @@ exit:
         /*
          * If some error is occured while ownership transfer,
          * ownership transfer related resource should be revert back to initial status.
-         */
-        RestoreDoxmToInitState();
-        RestorePstatToInitState();
+        */
+        if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
+        {
+            RestoreDoxmToInitState();
+            RestorePstatToInitState();
+        }
+    }
+    else
+    {
+        previousMsgId = ehRequest->messageID;
     }
 
     //Send payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmPostRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     DeleteDoxmBinData(newDoxm);
 
     return ehRet;
@@ -900,8 +901,8 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
                 break;
 
             default:
-                ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                               OC_EH_OK : OC_EH_ERROR;
                 break;
         }
     }
