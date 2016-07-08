@@ -90,20 +90,26 @@ if target_os in ['android','linux']:
 		env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
 		env.get('SRC_DIR') + '/resource/include',
 		env.get('SRC_DIR') + '/resource/csdk/logger/include',
-        	env.get('SRC_DIR') + '/resource/csdk/stack/include',
-        	env.get('SRC_DIR') + '/resource/csdk/logger/include',
+		env.get('SRC_DIR') + '/resource/csdk/stack/include',
+		env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		env.get('SRC_DIR') + '/resource/csdk/security/include',
 		env.get('SRC_DIR') + '/extlibs/cjson',
 		env.get('SRC_DIR') + '/extlibs/sqlite3',
 		env.get('SRC_DIR') + '/service/easy-setup/inc',
 		'inc'])
 	if env.get('SECURED') == '1':
+		with_upstream_libcoap = easy_setup_env.get('WITH_UPSTREAM_LIBCOAP')
+		if with_upstream_libcoap == '1':
+			# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+			easy_setup_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+		else:
+			# For bring up purposes only, the forked version will live here.
+			easy_setup_env.AppendUnique(CPPPATH = [env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 		easy_setup_env.AppendUnique(CPPPATH = [
-                        env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
-	                env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
+			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
 		if env.get('WITH_TCP') == True:
 			easy_setup_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])

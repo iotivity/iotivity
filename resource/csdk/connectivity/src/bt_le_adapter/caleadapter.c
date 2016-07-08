@@ -38,7 +38,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 
 /**
  * Logging tag for module name.

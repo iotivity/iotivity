@@ -57,7 +57,7 @@
 #include <linux/rtnetlink.h>
 #endif
 
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "caipinterface.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__

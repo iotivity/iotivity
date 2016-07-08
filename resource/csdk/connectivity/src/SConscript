@@ -1,7 +1,6 @@
 ##
 # CA build script
 ##
-
 import os.path
 
 Import('env')
@@ -23,8 +22,16 @@ ca_path = os.curdir
 print"Reading ca script %s"%ca_transport
 
 env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
+
+with_upstream_libcoap = env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	env.AppendUnique(CPPPATH = [os.path.join('#extlibs', 'libcoap', 'libcoap', 'include')])
+else:
+	# For bring up purposes only, the forked version will live here.
+	env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'lib', 'libcoap-4.1.1', 'include')])
+
 env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
-                             os.path.join(root_dir, 'lib', 'libcoap-4.1.1'),
                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
                              os.path.join(root_dir, 'common', 'inc'),
                              os.path.join(root_dir, 'util', 'inc') ])

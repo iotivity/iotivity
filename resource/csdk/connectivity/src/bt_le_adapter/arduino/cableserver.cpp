@@ -29,7 +29,7 @@
 #include <boards.h>
 #include <RBL_nRF8001.h>
 
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "caleinterface.h"
 #include "oic_malloc.h"
 #include "caadapterutils.h"

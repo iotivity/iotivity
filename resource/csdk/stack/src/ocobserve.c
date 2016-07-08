@@ -31,8 +31,8 @@
 #include "ocserverrequest.h"
 #include "logger.h"
 
-#include "utlist.h"
-#include "pdu.h"
+#include <coap/utlist.h>
+#include <coap/pdu.h>
 
 
 // Module Name

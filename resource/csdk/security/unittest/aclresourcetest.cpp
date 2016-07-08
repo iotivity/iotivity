@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "gtest/gtest.h"
-#include "utlist.h"
+#include <coap/utlist.h>
 #include <sys/stat.h>
 #include "ocstack.h"
 #include "psinterface.h"

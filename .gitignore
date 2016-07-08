@@ -95,6 +95,7 @@ platform
 iotivity.pc
 
 # Ignore downloaded dependencies
+extlibs/libcoap/libcoap
 extlibs/gtest/gtest-*
 extlibs/hippomocks-master/
 extlibs/master.zip

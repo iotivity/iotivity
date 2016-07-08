@@ -34,8 +34,8 @@ SConscript('csdk/logger/SConscript')
 if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows']:
 	env.AppendUnique(LIBS=['rt'])
 
-# Build libcoap
-SConscript('csdk/connectivity/lib/libcoap-4.1.1/SConscript')
+# Download (if not already present) & build libcoap
+SConscript('#extlibs/libcoap/SConscript')
 
 # Build C Common dependencies
 SConscript('c_common/SConscript')

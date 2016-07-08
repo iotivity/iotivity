@@ -6,7 +6,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #endif
 
-#include "debug.h"
-#include "block.h"
+#include "include/coap/debug.h"
+#include "include/coap/block.h"
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 

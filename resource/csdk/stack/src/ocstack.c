@@ -80,9 +80,9 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include "coap_time.h"
-#include "utlist.h"
-#include "pdu.h"
+#include <coap/coap_time.h>
+#include <coap/utlist.h>
+#include <coap/pdu.h>
 
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>

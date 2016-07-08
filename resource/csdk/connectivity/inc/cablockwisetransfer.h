@@ -28,7 +28,7 @@
 
 #include <stdint.h>
 
-#include "coap.h"
+#include <coap/coap.h>
 #include "cathreadpool.h"
 #include "camutex.h"
 #include "uarraylist.h"

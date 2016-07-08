@@ -27,6 +27,14 @@ root_dir = './../../../../'
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = provisioning_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	provisioning_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	provisioning_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
+
 provisioning_env.AppendUnique(CPPPATH = [
 		'../../stack/include',
 		'../../stack/include/internal',
@@ -45,7 +53,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../connectivity/inc/pkix',
 		'../../connectivity/external/inc',
 		'../../connectivity/common/inc',
-		'../../connectivity/lib/libcoap-4.1.1',
 		'../../connectivity/api',
 		'../include',
 		'../include/internal',

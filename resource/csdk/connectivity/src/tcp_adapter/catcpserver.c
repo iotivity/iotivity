@@ -38,7 +38,7 @@
 #endif
 
 #include "catcpinterface.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "caadapterutils.h"
 #include "camutex.h"
 #include "oic_malloc.h"

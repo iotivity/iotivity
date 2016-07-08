@@ -26,8 +26,10 @@
 #define CA_PROTOCOL_MESSAGE_H_
 
 #include "cacommon.h"
-#include "config.h"
-#include "coap.h"
+#ifndef WITH_UPSTREAM_LIBCOAP
+#include "coap/config.h"
+#endif
+#include <coap/coap.h>
 
 #ifdef __cplusplus
 extern "C"

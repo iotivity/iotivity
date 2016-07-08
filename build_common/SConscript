@@ -66,6 +66,8 @@ require_upload = ARGUMENTS.get('UPLOAD', False)
 # Get the device name. This name can be used as network display name wherever possible
 device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
 
+default_with_upstream_libcoap = 0
+
 if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
@@ -115,6 +117,7 @@ help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Ard
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
+help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
 
 if target_os == 'windows':
 	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.

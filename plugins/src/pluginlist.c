@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include "zigbee_wrapper.h"
-#include "utlist.h"
+#include <coap/utlist.h>
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocstack.h"

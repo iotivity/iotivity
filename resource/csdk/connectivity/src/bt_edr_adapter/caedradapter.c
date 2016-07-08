@@ -32,7 +32,7 @@
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 
 /**
  * Logging tag for module name.

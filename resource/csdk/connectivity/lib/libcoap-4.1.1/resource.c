@@ -6,19 +6,19 @@
  * README for terms of use.
  */
 
-#include "config.h"
-#include "net.h"
-#include "debug.h"
-#include "resource.h"
-#include "subscribe.h"
+#include "include/coap/config.h"
+#include "include/coap/net.h"
+#include "include/coap/debug.h"
+#include "include/coap/resource.h"
+#include "include/coap/subscribe.h"
 
 #ifdef WITH_LWIP
-#include "utlist.h"
+#include "include/coap/utlist.h"
 /* mem.h is only needed for the string free calls for
  * COAP_ATTR_FLAGS_RELEASE_NAME / COAP_ATTR_FLAGS_RELEASE_VALUE /
  * COAP_RESOURCE_FLAGS_RELEASE_URI. not sure what those lines should actually
  * do on lwip. */
-#include "mem.h"
+#include "include/coap/mem.h"
 
 #include <lwip/memp.h>
 
@@ -28,8 +28,8 @@
 
 #endif
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
-#include "utlist.h"
-#include "mem.h"
+#include "include/coap/utlist.h"
+#include "include/coap/mem.h"
 
 #define COAP_MALLOC_TYPE(Type) \
   ((coap_##Type##_t *)coap_malloc(sizeof(coap_##Type##_t)))
