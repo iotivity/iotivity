@@ -57,7 +57,7 @@ SampleResource *g_tvMediaSourceListResource;
 SampleResource *g_acSwitchResource;
 SampleResource *g_acAirFlowResource;
 SampleResource *g_acTemperatureResource;
-SampleResource *g_acClockResource;
+SampleResource *g_acTimerResource;
 
 bool g_hasCallbackArrived = false;
 bool g_isObservingResource = false;
@@ -781,34 +781,39 @@ void createAirConDevice(bool isSecured)
             cout << "Unable to create Air Conditioner AirFlow resource" << endl;
         }
 
-        g_acClockResource = new SampleResource();
+        resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
+        if (isSecured)
+        {
+            resourceProperty = resourceProperty | OC_SECURE;
+        }
+        g_acTimerResource = new SampleResource();
         setlocale(LC_ALL, "");
-        g_acClockResource->setResourceProperties(AC_CLOCK_URI, CLOCK_RESOURCE_TYPE,
-        CLOCK_RESOURCE_INTERFACE);
+        g_acTimerResource->setResourceProperties(AC_TIMER_URI, TIMER_RESOURCE_TYPE,
+        TIMER_RESOURCE_INTERFACE);
 
         OCRepresentation clockRep;
         int time = 10;
         value = "up";
-        clockRep.setValue("x.clock.hour", time);
+        clockRep.setValue("x.com.vendor.timer.hour", time);
         time = 30;
-        clockRep.setValue("x.clock.minute", time);
-        clockRep.setValue("x.clock.second", time);
-        clockRep.setValue("x.timer.reset", false);
+        clockRep.setValue("x.com.vendor.timer.minute", time);
+        clockRep.setValue("x.com.vendor.timer.second", time);
+        clockRep.setValue("x.com.vendor.timer.reset", false);
 
-        g_acClockResource->setResourceRepresentation(clockRep);
+        g_acTimerResource->setResourceRepresentation(clockRep);
 
-        result = g_acClockResource->startServer(OC_ACTIVE | OC_DISCOVERABLE);
-        g_acClockResource->setAsSlowResource();
+        result = g_acTimerResource->startServer(resourceProperty);
+        g_acTimerResource->setAsSlowResource();
 
         if (result == OC_STACK_OK)
         {
-            cout << "Air Conditioner Clock Resource created successfully" << endl;
-            g_createdResourceList.push_back(g_acClockResource);
+            cout << "Air Conditioner Timer Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acTimerResource);
             g_isAirConDeviceCreated = true;
         }
         else
         {
-            cout << "Unable to create Air Conditioner Clock resource" << endl;
+            cout << "Unable to create Air Conditioner Timer resource" << endl;
         }
     }
     else
@@ -2237,6 +2242,14 @@ void handleMenu()
                 g_foundResourceList.at(0)->post(collectionType, LINK_INTERFACE, linkRep,
                         QueryParamsMap(), onPost, g_qos);
 
+                break;
+
+            case 33:
+                updateGroup();
+                break;
+
+            case 34:
+                updateLocalResource();
                 break;
 
             case 35:

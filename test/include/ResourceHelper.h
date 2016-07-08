@@ -44,7 +44,7 @@ namespace PH = std::placeholders;
 #define AC_SWITCH_URI "/BinarySwitchResURI"
 #define AC_TEMPERATURE_URI "/TemperatureResURI"
 #define AC_AIR_FLOW_URI "/AirFlowResURI"
-#define AC_CLOCK_URI "/Vendor/AirConditioner/TimerClock"
+#define AC_TIMER_URI "/Vendor/AirConditioner/TimerClock"
 
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_AC "oic.d.airconditioner"
@@ -53,8 +53,7 @@ namespace PH = std::placeholders;
 #define MEDIA_SOURCE_LIST_RESOURCE_TYPE "oic.r.mediasourcelist"
 #define TEMPERATURE_RESOURCE_TYPE "oic.r.temperature"
 #define AIR_FLOW_RESOURCE_TYPE "oic.r.airflow"
-#define CLOCK_RESOURCE_TYPE "x.vendor.clock"
-
+#define TIMER_RESOURCE_TYPE "x.com.vendor.timer"
 
 #define TV_Device_INTERFACE "oic.if.a"
 #define AC_Device_INTERFACE "oic.if.a"
@@ -63,7 +62,7 @@ namespace PH = std::placeholders;
 #define MEDIA_SOURCE_LIST_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define TEMPERATURE_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define AIR_FLOW_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
-#define CLOCK_RESOURCE_INTERFACE "oic.if.a oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline"
+#define TIMER_RESOURCE_INTERFACE "oic.if.a oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline"
 
 #define ACTUATOR_INTERFACE "oic.if.a"
 #define LIGHT_1_URI "/device/light-1"
@@ -141,6 +140,10 @@ const int SUCCESS_RESPONSE = 0;
 #define SUPPORT_URL "support.default-vendor.com"
 #define SYSTEM_TIME "2016-06-20T10:10:10Z"
 #define DEVICE_NAME "IotivitySmartRoom"
+
+#define CORE_SPEC_VERSION "core.1.1.0"
+#define RESOURCE_TYPE_SPEC_VERSION "res.1.1.0"
+#define SMART_HOME_SPEC_VERSION "SH.1.1.0"
 
 #define COAP_RESPONSE_CODE_SUCCESS 205
 #define COAP_RESPONSE_CODE_CREATED 201

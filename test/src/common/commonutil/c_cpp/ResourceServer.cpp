@@ -329,6 +329,9 @@ OCStackResult ResourceServer::setDeviceInfo(string deviceName, string deviceType
     if (deviceType.compare("") != 0)
     {
         OCResourcePayloadAddStringLL(&m_deviceInfo.types, deviceType.c_str());
+        p_resourceHelper->duplicateString(&m_deviceInfo.specVersion, CORE_SPEC_VERSION);
+        OCResourcePayloadAddStringLL(&m_deviceInfo.dataModelVersions, RESOURCE_TYPE_SPEC_VERSION);
+        OCResourcePayloadAddStringLL(&m_deviceInfo.dataModelVersions, SMART_HOME_SPEC_VERSION);
     }
 
     OCSetDeviceInfo(m_deviceInfo);
@@ -337,12 +340,12 @@ OCStackResult ResourceServer::setDeviceInfo(string deviceName, string deviceType
 
 void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request)
 {
-    auto pResponse = std::make_shared< OC::OCResourceResponse >();
+    auto pResponse = make_shared< OC::OCResourceResponse >();
     pResponse->setRequestHandle(request->getRequestHandle());
     pResponse->setResourceHandle(request->getResourceHandle());
 
     // Get the request type and request flag
-    std::string requestType = request->getRequestType();
+    string requestType = request->getRequestType();
     RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
 
     if (requestFlag == RequestHandlerFlag::RequestFlag)
