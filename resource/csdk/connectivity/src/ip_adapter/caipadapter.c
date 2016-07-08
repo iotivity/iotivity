@@ -379,13 +379,17 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
 }
 
 int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint,
-                            const void *data, uint32_t dataLength)
+                            const void *data, uint32_t dataLength,
+                            CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueIPData(false, endpoint, data, dataLength);
 }
 
-int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                              CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueIPData(true, endpoint, data, dataLength);
 }
 

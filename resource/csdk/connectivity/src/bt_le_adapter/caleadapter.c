@@ -1490,7 +1490,8 @@ static CAResult_t CAStartLEDiscoveryServer();
  */
 static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
                                    const void *data,
-                                   uint32_t dataLen);
+                                   uint32_t dataLen,
+                                   CADataType_t dataType);
 
 /**
  * Send multicast data to the endpoint using the LE connectivity.
@@ -1506,7 +1507,8 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
  */
 static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
                                      const void *data,
-                                     uint32_t dataLen);
+                                     uint32_t dataLen,
+                                     CADataType_t dataType);
 
 /**
  * Get LE Connectivity network information.
@@ -1998,9 +2000,10 @@ static CAResult_t CAReadLEData()
 
 static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
                                    const void *data,
-                                   uint32_t dataLen)
+                                   uint32_t dataLen,
+                                   CADataType_t dataType)
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CASendLEUnicastData");
+    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "IN - CASendLEUnicastData : type(%d)", dataType);
 
     //Input validation
     VERIFY_NON_NULL_RET(endpoint, CALEADAPTER_TAG, "Remote endpoint is null", -1);
@@ -2015,7 +2018,8 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
     }
 
     ca_mutex_lock(g_bleIsServerMutex);
-    if (ADAPTER_SERVER == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
+    if (ADAPTER_SERVER == g_adapterType ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_DATA == dataType))
     {
         result = CALEAdapterServerSendData(endpoint, data, dataLen);
         if (CA_STATUS_OK != result)
@@ -2031,7 +2035,9 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
         }
     }
 
-    if (ADAPTER_CLIENT == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
+    if (ADAPTER_CLIENT == g_adapterType ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_REQUEST_DATA == dataType) ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_FOR_RES == dataType))
     {
         result = CALEAdapterClientSendData(endpoint, data, dataLen);
         if (CA_STATUS_OK != result)
@@ -2054,7 +2060,8 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
 
 static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
                                      const void *data,
-                                     uint32_t dataLen)
+                                     uint32_t dataLen,
+                                     CADataType_t dataType)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CASendLEMulticastData");
 
@@ -2076,7 +2083,8 @@ static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
     }
 
     ca_mutex_lock(g_bleIsServerMutex);
-    if (ADAPTER_SERVER == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
+    if (ADAPTER_SERVER == g_adapterType ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_DATA == dataType))
     {
         result = CALEAdapterServerSendData(NULL, data, dataLen);
         if (CA_STATUS_OK != result)
@@ -2093,7 +2101,9 @@ static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
         }
     }
 
-    if (ADAPTER_CLIENT == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
+    if (ADAPTER_CLIENT == g_adapterType ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_REQUEST_DATA == dataType) ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_FOR_RES == dataType))
     {
         result = CALEAdapterClientSendData(NULL, data, dataLen);
         if (CA_STATUS_OK != result)

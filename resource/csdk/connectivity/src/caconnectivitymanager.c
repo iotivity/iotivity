@@ -331,14 +331,19 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    if (responseInfo && responseInfo->isMulticast &&
+    if (!responseInfo || !object)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    if (responseInfo->isMulticast &&
             (object->adapter == CA_DEFAULT_ADAPTER || object->adapter == CA_ALL_ADAPTERS))
     {
-        return CASendMessageMultiAdapter(object, responseInfo, CA_RESPONSE_DATA);
+        return CASendMessageMultiAdapter(object, responseInfo, responseInfo->info.dataType);
     }
     else
     {
-        return CADetachSendMessage(object, responseInfo, CA_RESPONSE_DATA);
+        return CADetachSendMessage(object, responseInfo, responseInfo->info.dataType);
     }
 }
 

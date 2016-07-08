@@ -300,13 +300,17 @@ static int32_t CAQueueNFCData(const CAEndpoint_t *endpoint, const void *data,
 
 }
 
-int32_t CASendNFCUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendNFCUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                             CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueNFCData(endpoint, data, dataLength);
 }
 
-int32_t CASendNFCMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendNFCMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                               CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueNFCData(endpoint, data, dataLength);
 }
 
