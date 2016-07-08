@@ -642,7 +642,11 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     OICFree(responseInfo.info.options);
                     return result;
                 }
-                responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                //Add CONTENT_FORMAT OPT if payload exist
+                if (responseInfo.info.payloadSize > 0)
+                {
+                    responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                }
                 break;
             default:
                 responseInfo.result = CA_NOT_ACCEPTABLE;
