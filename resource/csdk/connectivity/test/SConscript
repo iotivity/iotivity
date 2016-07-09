@@ -37,13 +37,6 @@ catest_env.PrependUnique(CPPPATH = [
                 '../../../oc_logger/include',
                ])
 
-tmplist = catest_env['LINKFLAGS'][:]
-if '-lpthread' in tmplist:
-    tmplist.remove('-lpthread')
-    catest_env.Replace(LINKFLAGS = tmplist)
-
-if target_os not in ['windows']:
-	catest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
 catest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
 catest_env.PrependUnique(LIBS = ['octbstack',
@@ -70,7 +63,6 @@ if target_os in ['msys_nt', 'windows']:
                                         'iphlpapi'])
 else:
 	catest_env.AppendUnique(LIBS = ['m'])
-	catest_env.PrependUnique(LIBS = ['pthread'])
 
 ######################################################################
 # Source files and Targets

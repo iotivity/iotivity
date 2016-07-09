@@ -63,13 +63,6 @@ mediator_rich_test_env.AppendUnique(
                 '../../../inc',
         ])
 
-if target_os not in ['windows']:
-    mediator_rich_test_env.AppendUnique(LIBS = ['dl'])
-    mediator_rich_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-    if target_os not in ['android']:
-        mediator_rich_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-        mediator_rich_test_env.AppendUnique(LIBS = ['pthread'])
-
 if mediator_rich_test_env.get('SECURED') == '1':
 	     mediator_rich_test_env.PrependUnique(LIBS = ['tinydtls','ocprovision', 'ocpmapi', 'timer'])
 
@@ -77,9 +70,7 @@ mediator_rich_test_env.PrependUnique(LIBS = [
     'ESMediatorRich',
     'oc',
     'octbstack',
-    'oc_logger',
-    'gtest',
-    'gtest_main'])
+    'oc_logger'])
 
 ######################################################################
 # Build Test

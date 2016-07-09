@@ -52,15 +52,10 @@ target_os = hosting_test_env.get('TARGET_OS')
 hosting_test_env.AppendUnique(LIBPATH = [hosting_test_env.get('BUILD_DIR')])
 hosting_test_env.AppendUnique(LIBS = [
 	'resource_hosting', 'rcs_server', 'rcs_client','rcs_common',
-	'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap',
-	'gtest_main', 'gtest'])
+	'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 
 if target_os not in ['windows']:
-    hosting_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
-
-if target_os in ['linux']:
-   hosting_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-   hosting_test_env.AppendUnique(LIBS = ['pthread'])
+    hosting_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 hosting_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master'])
 hosting_test_env.AppendUnique(CPPPATH = ['../src'])

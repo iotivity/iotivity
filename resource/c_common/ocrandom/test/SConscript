@@ -35,15 +35,9 @@ randomtest_env.PrependUnique(CPPPATH = [
 		'../../../oc_logger/include',
 		])
 
-if target_os not in ['windows']:
-	randomtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-	randomtest_env.AppendUnique(LIBS = ['pthread'])
-
 randomtest_env.AppendUnique(LIBPATH = [randomtest_env.get('BUILD_DIR')])
 randomtest_env.PrependUnique(LIBS = ['octbstack',
-                                    'uuid',
-                                    'gtest',
-                                    'gtest_main'])
+                                    'uuid'])
 
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])

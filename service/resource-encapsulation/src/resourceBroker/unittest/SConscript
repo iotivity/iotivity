@@ -64,15 +64,10 @@ broker_test_env.AppendUnique(LIBS = ['octbstack'])
 broker_test_env.AppendUnique(LIBS = ['oc'])
 broker_test_env.AppendUnique(LIBS = ['rcs_client'])
 broker_test_env.AppendUnique(LIBS = ['rcs_common'])
-broker_test_env.AppendUnique(LIBS = ['gtest'])
-broker_test_env.AppendUnique(LIBS = ['gtest_main'])
 
 compiler = broker_test_env.get('CXX')
 if 'g++' in compiler:
     broker_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
-
-if target_os not in ['windows']:
-    broker_test_env.AppendUnique(LIBS = ['pthread'])
 
 ######################################################################
 # Build Test

@@ -49,17 +49,13 @@ enrollee_test_env.PrependUnique(CPPPATH = [
 		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
 		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
 
-if target_os not in ['windows']:
-	enrollee_test_env.PrependUnique(LIBS = ['m'])
-	enrollee_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-	enrollee_test_env.AppendUnique(LIBS = ['pthread'])
 enrollee_test_env.AppendUnique(LIBPATH = [enrollee_test_env.get('BUILD_DIR')])
 enrollee_test_env.PrependUnique(LIBS = [ 'octbstack',
                                     'ocsrm',
                                     'connectivity_abstraction',
-                                    'coap',
-                                    'gtest',
-                                    'gtest_main'])
+                                    'coap'])
+if target_os not in ['windows']:
+    enrollee_test_env.AppendUnique(LIBS = ['m'])
 
 if target_os != 'darwin':
     enrollee_test_env.PrependUnique(LIBS = ['oc_logger'])

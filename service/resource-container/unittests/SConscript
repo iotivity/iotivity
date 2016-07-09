@@ -105,11 +105,11 @@ if int(containerJavaSupport):
 
 if target_os not in ['windows']:
     container_gtest_env.AppendUnique(LIBS = ['dl'])
-    container_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
     container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])
-    if target_os != 'android':
-        container_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
-        container_gtest_env.AppendUnique(LIBS = ['pthread'])
+
+container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_client', 'rcs_server', 'rcs_common',
+  'oc','octbstack', 'oc_logger', 'oc_logger_core', 
+  'connectivity_abstraction'])
 
 if target_os in ['android']:
     container_gtest_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])

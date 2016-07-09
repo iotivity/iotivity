@@ -47,16 +47,12 @@ pki_test_env.PrependUnique(CPPPATH = ['../include/',
 				'../../../../../../extlibs/tinydtls/ecc',
 				'../../../../../../extlibs/tinydtls/sha2'
 		])
-if target_os not in ['windows']:
-    pki_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-    pki_test_env.AppendUnique(LIBS = ['pthread'])
+
 pki_test_env.AppendUnique(LIBPATH = [pki_test_env.get('BUILD_DIR')])
 
 pki_test_env.AppendUnique(LIBS = ['octbstack'])
 pki_test_env.AppendUnique(LIBS = ['CKManager'])
 pki_test_env.AppendUnique(LIBS = ['asn1'])
-pki_test_env.AppendUnique(LIBS = ['gtest'])
-pki_test_env.AppendUnique(LIBS = ['gtest_main'])
 
 if pki_test_env.get('SECURED') == '1':
     pki_test_env.AppendUnique(LIBS = ['tinydtls'])
