@@ -44,7 +44,7 @@
 
 #else /* WITH_CONTIKI */
 
-static inline int 
+INLINE_API int 
 _dtls_address_equals_impl(const session_t *a,
 			  const session_t *b) {
   if (a->ifindex != b->ifindex ||

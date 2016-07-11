@@ -20,12 +20,18 @@
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200112L
 #endif
-#ifndef WITH_ARDUINO
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
 
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -65,6 +71,7 @@ typedef struct DPairData
     OCDirectPairingDev_t        *peer;                         /**< Pointer to pairing target info.**/
     char                                  pin[DP_PIN_LENGTH];  /**< PIN **/
     OCDirectPairingResultCB    resultCallback;           /**< Pointer to result callback.**/
+    void *userCtx;                                      /** < user context to pass in callback **/
 } DPairData_t;
 
 static OCDirectPairingDev_t *g_dp_paired = NULL;
@@ -347,7 +354,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             if (OC_STACK_OK != GetDoxmDeviceID(&ptDeviceID))
             {
                 OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-                resultCallback(peer, OC_STACK_ERROR);
+                resultCallback(dpairData->userCtx, peer, OC_STACK_ERROR);
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
@@ -356,7 +363,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to PairingPSK generation");
-                resultCallback(peer, res);
+                resultCallback(dpairData->userCtx, peer, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
@@ -385,7 +392,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
                 OIC_LOG(ERROR, TAG, "Error while adding a device to paired list.");
             }
 
-            resultCallback(peer, OC_STACK_OK);
+            resultCallback(dpairData->userCtx, peer, OC_STACK_OK);
 
             return OC_STACK_DELETE_TRANSACTION;
         }
@@ -399,7 +406,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
         OIC_LOG(ERROR, TAG, "DirectPairingFinalizeHandler received Null clientResponse");
     }
 
-    resultCallback(peer, OC_STACK_ERROR);
+    resultCallback(dpairData->userCtx, peer, OC_STACK_ERROR);
     OICFree(dpairData);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -412,7 +419,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
+OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
                                                      OCDirectPairingResultCB resultCallback)
 {
     if(NULL == peer)
@@ -474,6 +481,7 @@ OCStackResult FinalizeDirectPairing(OCDirectPairingDev_t* peer,
     }
     dpairData->peer = peer;
     dpairData->resultCallback = resultCallback;
+    dpairData->userCtx = ctx;
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = DirectPairingFinalizeHandler;
@@ -525,17 +533,17 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
             {
                 OIC_LOG(INFO, TAG, "Now, finalize Direct-Pairing procedure.");
 
-                res = FinalizeDirectPairing(peer, resultCallback);
+                res = FinalizeDirectPairing(g_dp_proceed_ctx->userCtx, peer, resultCallback);
                 if(OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to finalize direct-pairing");
-                    resultCallback(peer, res);
+                    resultCallback(g_dp_proceed_ctx->userCtx, peer, res);
                 }
             }
             else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
             {
                 OIC_LOG(INFO, TAG, "DirectPairingDTLSHandshakeCB - Authentication failed");
-                resultCallback(peer, OC_STACK_AUTHENTICATION_FAILURE);
+                resultCallback(g_dp_proceed_ctx->userCtx, peer, OC_STACK_AUTHENTICATION_FAILURE);
             }
 
 #ifdef __WITH_DTLS__
@@ -653,7 +661,7 @@ exit:
             g_dp_proceed_ctx = NULL;
         }
 
-        resultCallback(dpairData->peer, res);
+        resultCallback(dpairData->userCtx, dpairData->peer, res);
     }
     OIC_LOG_V(INFO, TAG, "OUT DirectPairingHandler.");
     return OC_STACK_DELETE_TRANSACTION;
@@ -668,8 +676,8 @@ exit:
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, char *pinNumber,
-                                                     OCDirectPairingResultCB resultCallback)
+OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t pmSel,
+                                char *pinNumber, OCDirectPairingResultCB resultCallback)
 {
     if(NULL == peer || NULL == pinNumber)
     {
@@ -732,6 +740,7 @@ OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, cha
     dpairData->peer = peer;
     memcpy(dpairData->pin, pinNumber, DP_PIN_LENGTH);
     dpairData->resultCallback = resultCallback;
+    dpairData->userCtx = ctx;
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = DirectPairingHandler;
@@ -950,9 +959,6 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     }
 
     OCStackResult ret;
-    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
-    struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
-    struct timespec timeout;
 
     const char DP_DISCOVERY_QUERY[] = "/oic/sec/pconf";
 
@@ -973,12 +979,16 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     }
 
     // wait..
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
 
     int clock_res = -1;
+#if defined(_MSC_VER)
+    time_t startTime = NULL;
+    clock_res = (time(&startTime) == -1);
+#else
+    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
     clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
+#endif
 #endif
     if (0 != clock_res)
     {
@@ -992,8 +1002,14 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
 
     while (1)
     {
+#if defined(_MSC_VER)
+        time_t currTime = NULL;
+        clock_res = (time(&currTime) == -1);
+#else
+        struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
         clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
+#endif
 #endif
         if (0 != clock_res)
         {
@@ -1001,18 +1017,24 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
             ret = OC_STACK_ERROR;
             break;
         }
+#if defined(_MSC_VER)
+        long elapsed = currTime - startTime;
+#else
         long elapsed = (currTime.tv_sec - startTime.tv_sec);
+#endif
         if (elapsed > waittime)
         {
             break;
         }
         else
         {
+            struct timespec timeout = {.tv_sec=0, .tv_nsec=100000000L};
+            OCProcess();
             nanosleep(&timeout, NULL);
         }
     }
 
-    //Waiting for each response.
+    // Waiting for each response.
     ret = OCCancel(handle, OC_LOW_QOS, NULL, 0);
     if (OC_STACK_OK != ret)
     {

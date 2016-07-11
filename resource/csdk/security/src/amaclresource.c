@@ -72,16 +72,6 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
     }
 }
 
-static size_t OicSecAmaclCount(const OicSecAmacl_t *secAmacl)
-{
-    size_t size = 0;
-    for (const OicSecAmacl_t *amacl = secAmacl; amacl; amacl = amacl->next)
-    {
-        size++;
-    }
-    return size;
-}
-
 OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayload,
                                  size_t *cborSize)
 {
@@ -269,7 +259,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
     cborFindResult = cbor_value_enter_container(&amaclCbor, &amaclMap);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Amacl Map.");
 
-    while(cbor_value_is_valid(&amaclMap))
+    while(cbor_value_is_valid(&amaclMap) && cbor_value_is_text_string(&amaclMap))
     {
         char *name = NULL;
         size_t len = 0;
@@ -288,7 +278,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
             cborFindResult = cbor_value_enter_container(&amaclMap, &rsrcMap);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Resource Map");
 
-            while(cbor_value_is_valid(&rsrcMap))
+            while(cbor_value_is_valid(&rsrcMap) && cbor_value_is_text_string(&rsrcMap))
             {
                 // resource name
                 char *rsrcName = NULL;
@@ -323,7 +313,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
                         cborFindResult = cbor_value_enter_container(&rsrcArray, &rMap);
                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Rlist Map");
 
-                        while(cbor_value_is_valid(&rMap))
+                        while(cbor_value_is_valid(&rMap) && cbor_value_is_text_string(&rMap))
                         {
                             char *rMapName = NULL;
                             size_t rMapNameLen = 0;
@@ -398,7 +388,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering AMS Array Container.");
             headAmacl->amss = (OicUuid_t *)OICCalloc(headAmacl->amssLen, sizeof(*headAmacl->amss));
             VERIFY_NON_NULL(TAG, headAmacl->amss, ERROR);
-            while (cbor_value_is_valid(&amsArray))
+            while (cbor_value_is_valid(&amsArray) && cbor_value_is_text_string(&amsArray))
             {
                 char *amssId = NULL;
                 cborFindResult = cbor_value_dup_text_string(&amsArray, &amssId, &len, NULL);
@@ -411,7 +401,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
         }
 
         // Rowner -- Mandatory
-        if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name))
+        if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name) && cbor_value_is_text_string(&amaclMap))
         {
             char *stRowner = NULL;
             cborFindResult = cbor_value_dup_text_string(&amaclMap, &stRowner, &len, NULL);
@@ -551,7 +541,7 @@ static OCStackResult CreateAmaclResource()
 {
     OCStackResult ret = OCCreateResource(&gAmaclHandle,
                                          OIC_RSRC_TYPE_SEC_AMACL,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_AMACL_URI,
                                          AmaclEntityHandler,
                                          NULL,

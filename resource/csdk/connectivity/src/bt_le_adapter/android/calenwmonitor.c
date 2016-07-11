@@ -158,7 +158,7 @@ CAResult_t CAGetLEAdapterState()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -342,8 +342,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
         {
             OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
         }
-
-        CALEClientSetScanFlag(false);
 
         CANetworkStatus_t newStatus = CA_INTERFACE_DOWN;
         g_bleDeviceStateChangedCallback(newStatus);

@@ -100,43 +100,43 @@ namespace OC
     template<>
     struct AttributeTypeConvert<NullType>
     {
-        constexpr static AttributeType type = AttributeType::Null;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Null;
     };
 
     template<>
     struct AttributeTypeConvert<int>
     {
-        constexpr static AttributeType type = AttributeType::Integer;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Integer;
     };
 
     template<>
     struct AttributeTypeConvert<double>
     {
-        constexpr static AttributeType type = AttributeType::Double;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Double;
     };
 
     template<>
     struct AttributeTypeConvert<bool>
     {
-        constexpr static AttributeType type = AttributeType::Boolean;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Boolean;
     };
 
     template<>
     struct AttributeTypeConvert<std::string>
     {
-        constexpr static AttributeType type = AttributeType::String;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::String;
     };
 
     template<>
     struct AttributeTypeConvert<OCRepresentation>
     {
-        constexpr static AttributeType type = AttributeType::OCRepresentation;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::OCRepresentation;
     };
 
     template<>
     struct AttributeTypeConvert<std::vector<uint8_t>>
     {
-        constexpr static AttributeType type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Binary;
     };
 
     std::ostream& operator << (std::ostream& os, const AttributeType at);

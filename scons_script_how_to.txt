@@ -244,7 +244,7 @@ Below is an example:
 	# Update the new environment, usually include add header file paths,
 	# library path, libs to link and other compiler flags. This part is
 	# optional.
-	new_env.AppeneUnique(xxx = [ .... ])
+	new_env.AppendUnique(xxx = [ .... ])
 
 	# Specify the target(application, library, object or others) to build
 	ts = new_env.Program('progam_name', [source_list])

@@ -22,14 +22,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <ocstack.h>
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "logger.h"
-const char *getResult(OCStackResult result);
+#include "common.h"
 std::string getQueryStrForGetPut();
 
 #define TAG ("occlient")

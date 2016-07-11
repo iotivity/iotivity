@@ -55,6 +55,7 @@ class TestBundleResource : public BundleResource
         RCSResourceAttributes handleGetAttributesRequest(
             const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             return BundleResource::getAttributes();
         }
 
@@ -62,6 +63,7 @@ class TestBundleResource : public BundleResource
             const RCSResourceAttributes &value,
             const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             BundleResource::setAttributes(value);
         }
 };

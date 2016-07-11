@@ -34,29 +34,41 @@ JniOnPlatformInfoListener::~JniOnPlatformInfoListener()
     LOGI("~JniOnPlatformInfoListener");
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (nullptr == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
 
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
 
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniOnPlatformInfoListener::foundPlatformCallback(const OC::OCRepresentation& ocRepresentation)
 {
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         LOGI("Java onPlatformInfoListener object is already destroyed, quiting");
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -68,7 +80,10 @@ void JniOnPlatformInfoListener::foundPlatformCallback(const OC::OCRepresentation
     {
         delete rep;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -77,7 +92,10 @@ void JniOnPlatformInfoListener::foundPlatformCallback(const OC::OCRepresentation
     {
         delete rep;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
     jmethodID midL = env->GetMethodID(clsL, "onPlatformFound", "(Lorg/iotivity/base/OcRepresentation;)V");
@@ -85,7 +103,10 @@ void JniOnPlatformInfoListener::foundPlatformCallback(const OC::OCRepresentation
     {
         delete rep;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -97,7 +118,10 @@ void JniOnPlatformInfoListener::foundPlatformCallback(const OC::OCRepresentation
         checkExAndRemoveListener(env);
     }
 
-    if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniOnPlatformInfoListener::checkExAndRemoveListener(JNIEnv* env)

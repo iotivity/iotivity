@@ -25,7 +25,13 @@
 #include "oic_string.h"
 #include "global.h"
 #include "timer.h"
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 
 /* tinyDTLS library error code */
 #define TINY_DTLS_ERROR (-1)
@@ -71,10 +77,10 @@ static ca_mutex g_dtlsContextMutex = NULL;
 static CAGetDTLSPskCredentialsHandler g_getCredentialsCallback = NULL;
 
 /**
- * @var MAX_RETRANSMISSION_TIME
+ * @var RETRANSMISSION_TIME
  * @brief Maximum timeout value (in seconds) to start DTLS retransmission.
  */
-#define MAX_RETRANSMISSION_TIME 1
+#define RETRANSMISSION_TIME 1
 
 /**
  * @var g_dtlsHandshakeCallback
@@ -491,7 +497,7 @@ static int32_t CASendSecureData(dtls_context_t *context,
     endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
     endpoint.flags |= CA_SECURE;
     endpoint.adapter = CA_ADAPTER_IP;
-    endpoint.interface = session->ifindex;
+    endpoint.ifindex = session->ifindex;
     int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
@@ -554,14 +560,14 @@ static int32_t CAHandleSecureEvent(dtls_context_t *context,
             g_dtlsHandshakeCallback(&endpoint, &errorInfo);
         }
     }
-    else if(DTLS_ALERT_LEVEL_FATAL == level && DTLS_ALERT_CLOSE_NOTIFY == code)
-    {
-        OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
-        CARemovePeerFromPeerInfoList(peerAddr, port);
-    }
     else if(DTLS_ALERT_LEVEL_FATAL == level && DTLS_ALERT_HANDSHAKE_FAILURE == code)
     {
         OIC_LOG(INFO, NET_DTLS_TAG, "Failed to DTLS handshake, the peer will be removed.");
+        CARemovePeerFromPeerInfoList(peerAddr, port);
+    }
+    else if(DTLS_ALERT_LEVEL_FATAL == level || DTLS_ALERT_CLOSE_NOTIFY == code)
+    {
+        OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
         CARemovePeerFromPeerInfoList(peerAddr, port);
     }
 
@@ -838,7 +844,7 @@ int CAInitX509()
     {
         uint8_t crlData[CRL_MAX_LEN] = {0};
         ByteArray crlArray = {crlData, CRL_MAX_LEN};
-        g_getCrlCallback(crlArray);
+        g_getCrlCallback(&crlArray);
         if (crlArray.len > 0)
         {
             uint8_t keyData[PUBLIC_KEY_SIZE] = {0};
@@ -1013,10 +1019,6 @@ exit:
 static void CAStartRetransmit()
 {
     static int timerId = -1;
-    clock_time_t nextSchedule = MAX_RETRANSMISSION_TIME;
-
-    OIC_LOG(DEBUG, NET_DTLS_TAG, "CAStartRetransmit IN");
-
     if (timerId != -1)
     {
         //clear previous timer
@@ -1031,25 +1033,11 @@ static void CAStartRetransmit()
             ca_mutex_unlock(g_dtlsContextMutex);
             return;
         }
-
-        OIC_LOG(DEBUG, NET_DTLS_TAG, "Check retransmission");
-        dtls_check_retransmit(g_caDtlsContext->dtlsContext, &nextSchedule);
+        dtls_check_retransmit(g_caDtlsContext->dtlsContext, NULL);
         ca_mutex_unlock(g_dtlsContextMutex);
-
-        //re-transmission timeout should not be greater then max one
-        //this will cover case when several clients start dtls sessions
-        nextSchedule /= CLOCKS_PER_SEC;
-        if (nextSchedule > MAX_RETRANSMISSION_TIME)
-        {
-            nextSchedule = MAX_RETRANSMISSION_TIME;
-        }
     }
-
     //start new timer
-    OIC_LOG(DEBUG, NET_DTLS_TAG, "Start new timer");
-    registerTimer(nextSchedule, &timerId, CAStartRetransmit);
-
-    OIC_LOG(DEBUG, NET_DTLS_TAG, "CAStartRetransmit OUT");
+    registerTimer(RETRANSMISSION_TIME, &timerId, CAStartRetransmit);
 }
 
 CAResult_t CAAdapterNetDtlsInit()

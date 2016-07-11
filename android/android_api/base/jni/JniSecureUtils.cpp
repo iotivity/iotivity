@@ -232,3 +232,89 @@ OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, Oic
 
     return OC_STACK_OK;
 }
+
+OCStackResult JniSecureUtils::convertJavaPdACLToOCAcl(JNIEnv *env, jobject in, OicSecPdAcl_t *pdacl)
+{
+    jstring jData;
+    jvalue args[1];
+
+    jint jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecPdAcl_get_resources_cnt);
+    if (!jCount || env->ExceptionCheck())
+    {
+        return OC_STACK_ERROR;
+    }
+
+    pdacl->resourcesLen = jCount;
+    pdacl->resources = new char*[jCount];
+
+    if (!pdacl->resources)
+    {
+        return OC_STACK_ERROR;
+    }
+    for (jint i = 0; i < jCount; ++i)
+    {
+        args[0].i = i;
+        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecPdAcl_get_resources, args);
+        if (!jData || env->ExceptionCheck())
+        {
+            return OC_STACK_ERROR;
+        }
+
+        pdacl->resources[i] = (char*) env->GetStringUTFChars(jData, 0);
+    }
+
+    jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecPdAcl_get_permission);
+    if (env->ExceptionCheck())
+    {
+        return OC_STACK_ERROR;
+    }
+
+    pdacl->permission = jCount;
+    jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecPdAcl_get_periods_cnt);
+    if (env->ExceptionCheck())
+    {
+        return OC_STACK_ERROR;
+    }
+
+    pdacl->prdRecrLen = jCount;
+    if (jCount)
+    {
+        pdacl->periods = new char*[jCount];
+        if (!pdacl->periods)
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+    for (jint i = 0; i < jCount; ++i)
+    {
+        args[0].i = i;
+        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecPdAcl_get_periods, args);
+        if (!jData || env->ExceptionCheck())
+        {
+            return OC_STACK_ERROR;
+        }
+
+        pdacl->periods[i] = (char*) env->GetStringUTFChars(jData, 0);
+    }
+
+    if (jCount)
+    {
+        pdacl->recurrences = new char*[jCount];
+        if (!pdacl->recurrences)
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+    for (jint i = 0; i < jCount; ++i)
+    {
+        args[0].i = i;
+        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecPdAcl_get_recurrences, args);
+        if (!jData ||  env->ExceptionCheck())
+        {
+            return OC_STACK_ERROR;
+        }
+
+        pdacl->recurrences[i] = (char*) env->GetStringUTFChars(jData, 0);
+    }
+    return OC_STACK_OK;
+}

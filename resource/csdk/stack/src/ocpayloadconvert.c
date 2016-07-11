@@ -38,6 +38,9 @@
 // Discovery Links Map Length.
 #define LINKS_MAP_LEN 4
 
+// Default data model versions in CVS form
+#define DEFAULT_DATA_MODEL_VERSIONS "res.1.1.0,sh.1.1.0"
+
 // Functions all return either a CborError, or a negative version of the OC_STACK return values
 static int64_t OCConvertPayloadHelper(OCPayload *payload, uint8_t *outPayload, size_t *size);
 static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *outPayload,
@@ -65,7 +68,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
     // TinyCbor Version 47a78569c0 or better on master is required for the re-allocation
     // strategy to work.  If you receive the following assertion error, please do a git-pull
     // from the extlibs/tinycbor/tinycbor directory
-    #define CborNeedsUpdating  (CborErrorOutOfMemory < CborErrorDataTooLarge)
+    #define CborNeedsUpdating  (((unsigned int)CborErrorOutOfMemory) < ((unsigned int)CborErrorDataTooLarge))
     OC_STATIC_ASSERT(!CborNeedsUpdating, "tinycbor needs to be updated to at least 47a78569c0");
     #undef CborNeedsUpdating
 
@@ -229,8 +232,7 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         [                                                       // rootArray
             {                                                   // rootMap
                 "di" : UUID,                                    // device ID
-                "href": "/oic/res"
-                "rt": "oic.wk.res"
+                "rt": ["oic.wk.res"]
                 "n":"MyDevice"
                 "if":"oic.if.ll oic.if.baseline"
                 "di": "0685B960-736F-46F7-BEC0-9E6CBD61ADC1",
@@ -264,25 +266,19 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
                 sizeof(OC_RSRVD_DEVICE_NAME) - 1, payload->name);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting name");
 
-        // Insert URI
-        err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                payload->uri);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting href");
-
         // Insert Device ID into the root map
         err |= AddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1,
                 payload->sid);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting device id");
 
         // Insert Resource Type
-        err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_RESOURCE_TYPE,
-                sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, payload->type);
+        err |= OCStringLLJoin(&rootMap, OC_RSRVD_RESOURCE_TYPE, payload->type);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting RT");
 
         // Insert interfaces
-        if (payload->interface)
+        if (payload->iface)
         {
-            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->interface);
+            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->iface);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interface types tag/value");
         }
 
@@ -341,15 +337,14 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
             err |= cbor_encode_uint(&policyMap, resource->bitmap);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding bitmap value to policy map");
 
-            if (resource->secure)
-            {
-                err |= cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
-                        sizeof(OC_RSRVD_SECURE) - 1);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure tag to policy map");
-                err |= cbor_encode_boolean(&policyMap, OC_RESOURCE_SECURE);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure value to policy map");
-            }
-            if ((resource->secure && resource->port != 0) || payload->baseURI)
+            // Secure
+            err |= cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
+                    sizeof(OC_RSRVD_SECURE) - 1);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure tag to policy map");
+            err |= cbor_encode_boolean(&policyMap, resource->secure);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding secure value to policy map");
+
+            if (resource->secure || payload->baseURI)
             {
                 err |= cbor_encode_text_string(&policyMap, OC_RSRVD_HOSTING_PORT,
                         sizeof(OC_RSRVD_HOSTING_PORT) - 1);
@@ -397,6 +392,7 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
     }
     int64_t err = CborNoError;
     CborEncoder encoder;
+    char *dataModelVersions = 0;
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder repMap;
@@ -432,10 +428,20 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
             sizeof(OC_RSRVD_SPEC_VERSION) - 1, payload->specVersion);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data spec version");
 
-    // Device data Model Version
+    // Device data Model Versions
+    if (payload->dataModelVersions)
+    {
+        OIC_LOG(INFO, TAG, "Payload has data model versions");
+        dataModelVersions = OCCreateString(payload->dataModelVersions);
+    }
+    else
+    {
+        dataModelVersions = OICStrdup(DEFAULT_DATA_MODEL_VERSIONS);
+    }
     err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
-            sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1, payload->dataModelVersion);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data model version");
+        sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1, dataModelVersions);
+    OICFree(dataModelVersions);
+    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data model versions");
 
     err |= cbor_encoder_close_container(&encoder, &repMap);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing device map");
@@ -514,8 +520,7 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload *payload, uint8_t *out
     // Resource type
     if (payload->rt)
     {
-        err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_RESOURCE_TYPE,
-                sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, payload->rt);
+        err |= OCStringLLJoin(&repMap, OC_RSRVD_RESOURCE_TYPE, payload->rt);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type.");
     }
 

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textViewItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingLeft="50dp"
+        android:text="Paired Items"
+        android:textColor="#545454"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/textViewSource"
+        android:layout_below="@id/textViewItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingLeft="50dp"
+        android:text="Paired Source"
+        android:textColor="#545454"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/textViewStatus"
+        android:layout_below="@id/textViewSource"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingLeft="50dp"
+        android:text="Paired Status"
+        android:textColor="#545454"
+        android:textSize="15sp" />
+
+</RelativeLayout>

@@ -19,9 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "gtest/gtest.h"
-#include <pwd.h>
-#include <grp.h>
-#include <linux/limits.h>
+#include "utlist.h"
 #include <sys/stat.h>
 #include "ocstack.h"
 #include "psinterface.h"
@@ -47,47 +45,116 @@ using namespace std;
 #define TAG  "SRM-ACL-UT"
 
 // These paths match jenkins build configuration.
-const char* DEFAULT_ACL_FILE_NAME = "/oic_unittest_default_acl.dat";
-const char* ACL1_FILE_NAME = "/oic_unittest_acl1.dat";
+const char* DEFAULT_ACL_FILE_NAME = "oic_unittest_default_acl.dat";
+const char* ACL1_FILE_NAME = "oic_unittest_acl1.dat";
 
 #define NUM_ACE_FOR_WILDCARD_IN_ACL1_DAT (1)
 
+static bool AddResourceToACE(OicSecAce_t* ace, const char* rsrcName,
+                             const char* typeName, const char* interfaceName)
+{
+    OicSecRsrc_t* rsrc = NULL;
+
+    VERIFY_NON_NULL(TAG, ace, ERROR);
+    VERIFY_NON_NULL(TAG, rsrcName, ERROR);
+    VERIFY_NON_NULL(TAG, interfaceName, ERROR);
+    VERIFY_NON_NULL(TAG, typeName, ERROR);
+
+    rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    VERIFY_NON_NULL(TAG, rsrc, ERROR);
+    rsrc->href = OICStrdup(rsrcName);
+    VERIFY_NON_NULL(TAG, rsrc->href, ERROR);
+
+    rsrc->typeLen = 1;
+    rsrc->types = (char**)OICCalloc(1, sizeof(char*));
+    VERIFY_NON_NULL(TAG, rsrc->types, ERROR);
+    rsrc->types[0] = OICStrdup(typeName);
+    VERIFY_NON_NULL(TAG, rsrc->types[0], ERROR);
+
+    rsrc->interfaceLen = 1;
+    rsrc->interfaces = (char**)OICCalloc(1, sizeof(char*));
+    VERIFY_NON_NULL(TAG, rsrc->interfaces, ERROR);
+    rsrc->interfaces[0] = OICStrdup(interfaceName);
+    VERIFY_NON_NULL(TAG, rsrc->interfaces[0], ERROR);
+
+    LL_APPEND(ace->resources, rsrc);
+    return true;
+exit:
+    if(rsrc)
+    {
+        if(rsrc->href)
+        {
+            OICFree(rsrc->href);
+            OICFree(rsrc->types[0]);
+            OICFree(rsrc->types);
+            OICFree(rsrc->interfaces[0]);
+            OICFree(rsrc->interfaces);
+        }
+        OICFree(rsrc);
+    }
+    return false;
+}
+
+static int GetNumberOfResource(const OicSecAce_t* ace)
+{
+    int ret = 0;
+    OicSecRsrc_t* rsrc = NULL;
+    LL_FOREACH(ace->resources, rsrc)
+    {
+        ret++;
+    }
+
+    return ret;
+}
+
 TEST(ACLResourceTest, CBORDefaultACLConversion)
 {
-    OicSecAcl_t *defaultAcl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
-    ASSERT_TRUE(defaultAcl != NULL);
     uint8_t defaultAclSub[] = { 0x2a };
-    memcpy(defaultAcl->subject.id, defaultAclSub, sizeof(defaultAclSub));
-    defaultAcl->permission = 2;
-    const char *defaulAclRsrc[] = { "/oic/res", "/oic/d", "/oic/p", "/oic/res/types/d",
-            "/oic/ad", "/oic/sec/acl", "/oic/sec/doxm", "/oic/sec/pstat"};
-    defaultAcl->resourcesLen = 8;
-    defaultAcl->resources = (char **)OICCalloc(defaultAcl->resourcesLen, sizeof(char *));
-    ASSERT_TRUE(defaultAcl->resources != NULL);
-    for (size_t i = 0 ; i < defaultAcl->resourcesLen; i++)
-    {
-        defaultAcl->resources[i] = OICStrdup(defaulAclRsrc[i]);
-        ASSERT_TRUE(defaultAcl->resources[i] != NULL);
-    }
     uint8_t defaultAclOwnrs[] = {0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
         0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32};
+
+    OicSecAcl_t *defaultAcl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+    ASSERT_TRUE(NULL != defaultAcl);
+    OicSecAce_t *ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    ASSERT_TRUE(NULL != ace);
+    ace->permission = 2;
+    memcpy(ace->subjectuuid.id, defaultAclSub, sizeof(defaultAclSub));
+    LL_APPEND(defaultAcl->aces, ace);
+
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res", "oic.wk.res", "oic.if.ll"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/d", "oic.wk.d", "oic.if.r"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/p", "oic.wk.p", "oic.if.r"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res/types/d", "oic.wk.unknow", "oic.if.r"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/ad", "oic.wk.ad", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl", "oic.r.acl", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/doxm", "oic.r.doxm" ,"oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/pstat", "oic.r.pstat" ,"oic.if.baseline"));
+
     memcpy(defaultAcl->rownerID.id, defaultAclOwnrs, sizeof(defaultAclOwnrs));
 
     size_t defaultAclSize = 0;
     uint8_t *defaultPsStorage = NULL;
     OCStackResult convRet = AclToCBORPayload(defaultAcl, &defaultPsStorage, &defaultAclSize);
     EXPECT_EQ(OC_STACK_OK, convRet);
-    ASSERT_TRUE(defaultPsStorage != NULL);
+    ASSERT_TRUE(NULL != defaultPsStorage);
     EXPECT_NE(0, defaultAclSize);
 
     OicSecAcl_t* convertedAcl = CBORPayloadToAcl(defaultPsStorage, defaultAclSize);
-    ASSERT_TRUE(convertedAcl != NULL);
+    ASSERT_TRUE(NULL != convertedAcl);
 
-    EXPECT_EQ(defaultAcl->resourcesLen, convertedAcl->resourcesLen);
-    for(int i = 0; i < convertedAcl->resourcesLen; i++)
+    size_t rsrcCnt1 = 0;
+    size_t rsrcCnt2 = 0;
+    OicSecAce_t* tempAce = NULL;
+    LL_FOREACH(defaultAcl->aces, tempAce)
     {
-        EXPECT_EQ(0, strcmp(defaultAcl->resources[i], convertedAcl->resources[i]));
+        rsrcCnt1 += GetNumberOfResource(tempAce);
     }
+    tempAce = NULL;
+    LL_FOREACH(convertedAcl->aces, tempAce)
+    {
+        rsrcCnt2 += GetNumberOfResource(tempAce);
+    }
+    EXPECT_EQ(rsrcCnt1, rsrcCnt2);
 
     DeleteACLList(convertedAcl);
     DeleteACLList(defaultAcl);
@@ -96,79 +163,47 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
 
 TEST(ACLResourceTest, CBORACLConversion)
 {
+    uint8_t ownrs[] = {0x32, 0x32, 0x32, 0x32,
+                       0x32, 0x32, 0x32, 0x32,
+                       0x32, 0x32, 0x32, 0x32,
+                       0x32, 0x32, 0x32, 0x32};
+    const char* subjectUuid[3] = {"0000000000000000",
+                                  "1111111111111111",
+                                  "2222222222222222"};
+    const uint16_t permission[3] = {2, 6, 31};
+    const size_t numOfRsrc[3] = {6, 2, 2};
+
     OicSecAcl_t *secAcl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
     ASSERT_TRUE(secAcl != NULL);
-    uint8_t subjectBytes[] = { 0x2a };
-    memcpy(secAcl->subject.id, subjectBytes, sizeof(subjectBytes));
-    secAcl->permission = 2;
-    const char *rsrc[] = { "/oic/res", "/oic/d", "/oic/p", "/oic/res/types/d",
-                           "/oic/ad", "/oic/sec/acl"};
-    secAcl->resourcesLen = 6;
-    secAcl->resources = (char **)OICCalloc(secAcl->resourcesLen, sizeof(char *));
-    ASSERT_TRUE(secAcl->resources != NULL);
-    for (size_t i = 0 ; i < secAcl->resourcesLen; i++)
-    {
-        secAcl->resources[i] = OICStrdup(rsrc[i]);
-        ASSERT_TRUE(secAcl->resources[i] != NULL);
-
-    }
-
-    uint8_t ownrs[] = {0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
-        0x32, 0x32, 0x32, 0x32, 0x32, 0x32};
     memcpy(secAcl->rownerID.id, ownrs, sizeof(ownrs));
 
-    OicSecAcl_t *secAcl1 = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
-    ASSERT_TRUE(secAcl1 != NULL);
-    memcpy(secAcl1->subject.id, subjectBytes, sizeof(subjectBytes));
-    secAcl1->permission = 6;
-    const char *rsrc1[] = { "/oic/sec/doxm", "/oic/sec/pstat"};
-    secAcl1->resourcesLen = 2;
-    secAcl1->resources = (char **)OICCalloc(secAcl1->resourcesLen, sizeof(char *));
-    ASSERT_TRUE(secAcl1->resources != NULL);
-    for (size_t i = 0 ; i < secAcl1->resourcesLen; i++)
-    {
-        secAcl1->resources[i] = OICStrdup(rsrc1[i]);
-        ASSERT_TRUE(secAcl1->resources[i] != NULL);
-    }
-    memcpy(secAcl1->rownerID.id, ownrs, sizeof(ownrs));
-    secAcl->next = secAcl1;
+    OicSecAce_t *ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    ASSERT_TRUE(NULL != ace);
+    ace->permission = permission[0];
+    memcpy(ace->subjectuuid.id, subjectUuid[0], strlen(subjectUuid[0]));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res", "oic.wk.res", "oic.if.ll"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/d", "oic.wk.d", "oic.if.r"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/p", "oic.wk.p", "oic.if.r"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/res/types/d", "oic.wk.unknow", "oic.if.r"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/ad", "oic.wk.ad", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/oic/sec/acl", "oic.r.acl", "oic.if.baseline"));
+    LL_APPEND(secAcl->aces, ace);
 
-    OicSecAcl_t *secAcl2 = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
-    ASSERT_TRUE(secAcl2 != NULL);
-    uint8_t subjectBytes1[] = {0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
-        0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31};
-    memcpy(secAcl2->subject.id, subjectBytes1, sizeof(subjectBytes1));
-    secAcl2->permission = 255;
-    const char *rsrc2[] = {"/oic/light", "/oic/fan" };
-    secAcl2->resourcesLen = 2;
-    secAcl2->resources = (char **)OICCalloc(secAcl2->resourcesLen, sizeof(char *));
-    ASSERT_TRUE(secAcl2->resources != NULL);
-    for (size_t i = 0 ; i < secAcl2->resourcesLen; i++)
-    {
-        secAcl2->resources[i] = OICStrdup(rsrc2[i]);
-        ASSERT_TRUE(secAcl2->resources[i] != NULL);
-    }
-    memcpy(secAcl2->rownerID.id, ownrs, sizeof(ownrs));
-    secAcl1->next = secAcl2;
+    OicSecAce_t *ace1 = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    ASSERT_TRUE(NULL != ace1);
+    ace1->permission = permission[1];
+    memcpy(ace1->subjectuuid.id, subjectUuid[1], strlen(subjectUuid[1]));
+    EXPECT_EQ(true, AddResourceToACE(ace1, "/oic/sec/doxm", "oic.r.doxm" ,"oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace1, "/oic/sec/pstat", "oic.r.pstat" ,"oic.if.baseline"));
+    LL_APPEND(secAcl->aces, ace1);
 
-    OicSecAcl_t *secAcl3 = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
-    ASSERT_TRUE(secAcl3 != NULL);
-    uint8_t subjectBytes2[] = {0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
-                               0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33};
-    memcpy(secAcl3->subject.id, subjectBytes2, sizeof(subjectBytes2));
-    secAcl3->permission = 255;
-    const char *rsrc3[] = {"/oic/light", "/oic/garage" };
-    secAcl3->resourcesLen = 2;
-    secAcl3->resources = (char **)OICCalloc(secAcl3->resourcesLen, sizeof(char *));
-    ASSERT_TRUE(secAcl3->resources != NULL);
-    for (size_t i = 0 ; i < secAcl3->resourcesLen; i++)
-    {
-        secAcl3->resources[i] = OICStrdup(rsrc3[i]);
-        ASSERT_TRUE(secAcl3->resources[i] != NULL);
-    }
-    memcpy(secAcl3->rownerID.id, ownrs, sizeof(ownrs));
-    secAcl2->next = secAcl3;
-    secAcl3->next = NULL;
+    OicSecAce_t *ace2 = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    ASSERT_TRUE(NULL != ace2);
+    ace2->permission = permission[2];
+    memcpy(ace2->subjectuuid.id, subjectUuid[2], strlen(subjectUuid[2]));
+    EXPECT_EQ(true, AddResourceToACE(ace2, "/oic/light", "oic.core", "oic.if.baseline"));
+    EXPECT_EQ(true, AddResourceToACE(ace2, "/oic/garage", "oic.core", "oic.if.baseline"));
+    LL_APPEND(secAcl->aces, ace2);
 
     size_t size = 0;
     uint8_t *psStorage = NULL;
@@ -176,12 +211,35 @@ TEST(ACLResourceTest, CBORACLConversion)
     ASSERT_TRUE(NULL != psStorage);
     OicSecAcl_t *acl = CBORPayloadToAcl(psStorage, size);
     ASSERT_TRUE(NULL != acl);
-    EXPECT_EQ(2, acl->permission);
-    EXPECT_EQ(6 , acl->resourcesLen);
-    EXPECT_STREQ("/oic/res", acl->resources[0]);
+
+    size_t numberOfCheckedAce = 0;
+    OicSecAce_t* tempAce = NULL;
+    LL_FOREACH(acl->aces, tempAce)
+    {
+        if(memcmp(tempAce->subjectuuid.id, subjectUuid[0], strlen(subjectUuid[0])) == 0)
+        {
+            EXPECT_EQ(numOfRsrc[0], GetNumberOfResource(tempAce));
+            EXPECT_EQ(permission[0], tempAce->permission);
+            numberOfCheckedAce++;
+        }
+        if(memcmp(tempAce->subjectuuid.id, subjectUuid[1], strlen(subjectUuid[1])) == 0)
+        {
+            EXPECT_EQ(numOfRsrc[1], GetNumberOfResource(tempAce));
+            EXPECT_EQ(permission[1], tempAce->permission);
+            numberOfCheckedAce++;
+        }
+        if(memcmp(tempAce->subjectuuid.id, subjectUuid[2], strlen(subjectUuid[2])) == 0)
+        {
+            EXPECT_EQ(numOfRsrc[2], GetNumberOfResource(tempAce));
+            EXPECT_EQ(permission[2], tempAce->permission);
+            numberOfCheckedAce++;
+        }
+    }
+    EXPECT_EQ(3, numberOfCheckedAce);
+
     DeleteACLList(acl);
-    OICFree(psStorage);
     DeleteACLList(secAcl);
+    OICFree(psStorage);
 }
 
 //InitResource Tests
@@ -198,27 +256,29 @@ TEST(ACLResourceTest, GetDefaultACLTests)
     size_t size = 0;
 
     ASSERT_TRUE(ReadCBORFile(DEFAULT_ACL_FILE_NAME, OIC_JSON_ACL_NAME, &payload, &size));
-    ASSERT_TRUE(payload != NULL);
+    ASSERT_TRUE(NULL != payload);
 
     OicSecAcl_t *psAcl = CBORPayloadToAcl(payload, size);
-    ASSERT_TRUE(psAcl != NULL);
+    ASSERT_TRUE(NULL != psAcl);
 
     OicSecAcl_t *acl = NULL;
     EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&acl));
-    ASSERT_TRUE(acl != NULL);
+    ASSERT_TRUE(NULL != acl);
 
     // Verify if the SRM generated default ACL matches with unit test default
     if (acl && psAcl)
     {
-        EXPECT_TRUE(strcmp((char*)acl->subject.id, (char*)psAcl->subject.id) == 0);
-        EXPECT_EQ(acl->resourcesLen, psAcl->resourcesLen);
-        for (size_t i = 0; i < acl->resourcesLen; i++)
+        OicSecAce_t* tempAce1 = NULL;
+        OicSecAce_t* tempAce2 = NULL;
+
+        for(tempAce1 = acl->aces, tempAce2 = psAcl->aces;
+            tempAce1 && tempAce2; tempAce1 = tempAce1->next,
+            tempAce2 = tempAce2->next)
         {
-            EXPECT_EQ(strlen(acl->resources[i]), strlen(psAcl->resources[i]));
-            EXPECT_TRUE(memcmp(acl->resources[i], psAcl->resources[i],
-                            strlen(acl->resources[i])) == 0);
+            EXPECT_TRUE(memcmp(tempAce1->subjectuuid.id, tempAce2->subjectuuid.id, sizeof(tempAce1->subjectuuid.id)) == 0);
+            EXPECT_EQ(tempAce1->permission, tempAce2->permission);
+            EXPECT_EQ(GetNumberOfResource(tempAce1), GetNumberOfResource(tempAce2));
         }
-        EXPECT_EQ(acl->permission, psAcl->permission);
     }
 
     DeleteACLList(psAcl);
@@ -234,14 +294,19 @@ TEST(ACLResourceTest, ACLPostTest)
     uint8_t *payload = NULL;
     size_t size = 0;
 
+    static OCPersistentStorage ps = OCPersistentStorage();
+    SetPersistentHandler(&ps, true);
+
+    OicSecAcl_t *defaultAcl = NULL;
+    EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&defaultAcl));
+    ASSERT_TRUE(defaultAcl != NULL);
+    EXPECT_EQ(OC_STACK_OK, SetDefaultACL(defaultAcl));
+
     ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, OIC_JSON_ACL_NAME, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     OCSecurityPayload *securityPayload = OCSecurityPayloadCreate(payload, size);
     ASSERT_TRUE(NULL != securityPayload);
-
-    static OCPersistentStorage ps = OCPersistentStorage();
-    SetPersistentHandler(&ps, true);
 
     // Create Entity Handler POST request payload
     OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
@@ -254,8 +319,8 @@ TEST(ACLResourceTest, ACLPostTest)
     ASSERT_TRUE(NULL != acl);
 
     // Verify if SRM contains ACL for the subject
-    OicSecAcl_t *savePtr = NULL;
-    const OicSecAcl_t* subjectAcl = GetACLResourceData(&(acl->subject), &savePtr);
+    OicSecAce_t *savePtr = NULL;
+    const OicSecAce_t* subjectAcl = GetACLResourceData(&(acl->aces->subjectuuid), &savePtr);
     ASSERT_TRUE(NULL != subjectAcl);
 
     // Perform cleanup
@@ -263,6 +328,11 @@ TEST(ACLResourceTest, ACLPostTest)
     OCPayloadDestroy((OCPayload *) securityPayload);
     DeInitACLResource();
     DeleteACLList(acl);
+}
+
+extern "C" {
+    // gAcl is a pointer to the the global ACL used by SRM
+    extern OicSecAcl_t  *gAcl;
 }
 
 // GetACLResource tests
@@ -287,16 +357,16 @@ TEST(ACLResourceTest, GetACLResourceTests)
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(acl1));
 
     // Verify that ACL file contains 2 ACE entries for 'WILDCARD' subject
-    const OicSecAcl_t *acl = NULL;
-    OicSecAcl_t *savePtr = NULL;
+    const OicSecAce_t *ace = NULL;
+    OicSecAce_t *savePtr = NULL;
     OicUuid_t subject = WILDCARD_SUBJECT_ID;
     int count = 0;
 
     do
     {
-        acl = GetACLResourceData(&subject, &savePtr);
-        count = (NULL != acl) ? count + 1 : count;
-    } while (acl != NULL);
+        ace = GetACLResourceData(&subject, &savePtr);
+        count = (NULL != ace) ? count + 1 : count;
+    } while (ace != NULL);
 
     EXPECT_EQ(count, NUM_ACE_FOR_WILDCARD_IN_ACL1_DAT);
 
@@ -308,32 +378,40 @@ TEST(ACLResourceTest, GetACLResourceTests)
 
 static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
 {
-     OCStackResult ret = OC_STACK_ERROR;
-    memcpy(acl->subject.id, "2222222222222222", sizeof(acl->subject.id));
-    acl->resourcesLen = (size_t)numRsrc;
-    acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, acl->resources, ERROR);
-    acl->resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
-    VERIFY_NON_NULL(TAG, acl->resources[0], ERROR);
-    OICStrcpy(acl->resources[0], strlen("/a/led")+1, "/a/led");
-    if(numRsrc == 2)
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    VERIFY_NON_NULL(TAG, ace, ERROR);
+
+    memcpy(ace->subjectuuid.id, "2222222222222222", sizeof(ace->subjectuuid.id));
+    EXPECT_EQ(true, AddResourceToACE(ace, "/a/led", "oic.core", "oic.if.r"));
+    if(2 == numRsrc)
     {
-        acl->resources[1] = (char*)OICMalloc(strlen("/a/fan")+1);
-        VERIFY_NON_NULL(TAG, acl->resources[1], ERROR);
-        OICStrcpy(acl->resources[1], strlen("/a/fan")+1, "/a/fan");
+        EXPECT_EQ(true, AddResourceToACE(ace, "/a/fan", "oic.core", "oic.if.r"));
     }
-    acl->permission = 6;
+    ace->permission = 6;
+    LL_APPEND(acl->aces, ace);
+
     memcpy(acl->rownerID.id, "1111111111111111", sizeof(acl->rownerID.id));
 
     ret = OC_STACK_OK;
-exit:
-    return ret;
 
+    return ret;
+exit:
+    DeleteACLList(acl);
+    return ret;
 }
 
 //'DELETE' ACL test
 TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 {
+    static OCPersistentStorage ps = OCPersistentStorage();
+    SetPersistentHandler(&ps, true);
+
+    OicSecAcl_t *defaultAcl = NULL;
+    EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&defaultAcl));
+    ASSERT_TRUE(defaultAcl != NULL);
+    EXPECT_EQ(OC_STACK_OK, SetDefaultACL(defaultAcl));
+
     //Populate ACL
     OicSecAcl_t acl = OicSecAcl_t();
     EXPECT_EQ(OC_STACK_OK, populateAcl(&acl, 1));
@@ -348,9 +426,6 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     OCSecurityPayload *securityPayload = OCSecurityPayloadCreate(payload, size);
     ASSERT_TRUE(NULL != securityPayload);
 
-    static OCPersistentStorage ps = OCPersistentStorage();
-    SetPersistentHandler(&ps, true);
-
     // Create Entity Handler POST request payload
     OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
     ehReq.payload = (OCPayload *) securityPayload;
@@ -358,13 +433,13 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     ACLEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
 
     // Verify if SRM contains ACE for the subject
-    OicSecAcl_t* savePtr = NULL;
-    const OicSecAcl_t* subjectAcl1 = GetACLResourceData(&acl.subject, &savePtr);
-    ASSERT_TRUE(NULL != subjectAcl1);
+    OicSecAce_t* savePtr = NULL;
+    const OicSecAce_t* subjectAce1 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    ASSERT_TRUE(NULL != subjectAce1);
 
     // Create Entity Handler DELETE request
     ehReq.method = OC_REST_DELETE;
-    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
+    char query[] = "subjectuuid=32323232-3232-3232-3232-323232323232;resources=/a/led";
     ehReq.query = (char *)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL !=  ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);
@@ -372,8 +447,8 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
     // Verify if SRM has deleted ACE for the subject
     savePtr = NULL;
-    const OicSecAcl_t* subjectAcl2 = GetACLResourceData(&acl.subject, &savePtr);
-    ASSERT_TRUE(NULL == subjectAcl2);
+    const OicSecAce_t* subjectAce2 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    ASSERT_TRUE(NULL == subjectAce2);
 
     // Perform cleanup
     DeInitACLResource();
@@ -384,6 +459,14 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
 TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 {
+    static OCPersistentStorage ps = OCPersistentStorage();
+    SetPersistentHandler(&ps, true);
+
+    OicSecAcl_t *defaultAcl = NULL;
+    EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&defaultAcl));
+    ASSERT_TRUE(defaultAcl != NULL);
+    EXPECT_EQ(OC_STACK_OK, SetDefaultACL(defaultAcl));
+
     //Populate ACL
     OicSecAcl_t acl = OicSecAcl_t();
     EXPECT_EQ(OC_STACK_OK, populateAcl(&acl, 2));
@@ -398,9 +481,6 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     OCSecurityPayload *securityPayload = OCSecurityPayloadCreate(payload, size);
     ASSERT_TRUE(NULL!= securityPayload);
 
-    static OCPersistentStorage ps = OCPersistentStorage();
-    SetPersistentHandler(&ps, true);
-
     // Create Entity Handler POST request payload
     OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
     ehReq.method = OC_REST_POST;
@@ -408,14 +488,22 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     ACLEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
 
     // Verify if SRM contains ACE for the subject with two resources
-    OicSecAcl_t* savePtr = NULL;
-    const OicSecAcl_t* subjectAcl1 = GetACLResourceData(&acl.subject, &savePtr);
-    ASSERT_TRUE(NULL != subjectAcl1);
-    EXPECT_EQ(2, subjectAcl1->resourcesLen);
+    OicSecAce_t* savePtr = NULL;
+    const OicSecAce_t* subjectAce1 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    ASSERT_TRUE(NULL != subjectAce1);
+    EXPECT_EQ(2, GetNumberOfResource(subjectAce1));
+
+    printf("\n\n");
+    OicSecRsrc_t* rsrc = NULL;
+    LL_FOREACH(subjectAce1->resources, rsrc)
+    {
+        printf("%s\n", rsrc->href);
+    }
+    printf("\n\n");
 
     // Create Entity Handler DELETE request
     ehReq.method = OC_REST_DELETE;
-    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
+    char query[] = "subjectuuid=32323232-3232-3232-3232-323232323232;resources=/a/led";
     ehReq.query = (char *)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);
@@ -424,9 +512,9 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     // Verify if SRM contains ACL for the subject but only with one resource
     savePtr = NULL;
-    const OicSecAcl_t* subjectAcl2 = GetACLResourceData(&acl.subject, &savePtr);
-    ASSERT_TRUE(NULL != subjectAcl2);
-    EXPECT_EQ(1, subjectAcl2->resourcesLen);
+    const OicSecAce_t* subjectAce2 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    ASSERT_TRUE(NULL != subjectAce2);
+    EXPECT_EQ(1, GetNumberOfResource(subjectAce2));
 
     // Perform cleanup
     OCPayloadDestroy((OCPayload *)securityPayload);
@@ -438,6 +526,14 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 //'GET' with query ACL test
 TEST(ACLResourceTest, ACLGetWithQueryTest)
 {
+    static OCPersistentStorage ps = OCPersistentStorage();
+    SetPersistentHandler(&ps, true);
+
+    OicSecAcl_t *defaultAcl = NULL;
+    EXPECT_EQ(OC_STACK_OK, GetDefaultACL(&defaultAcl));
+    ASSERT_TRUE(defaultAcl != NULL);
+    EXPECT_EQ(OC_STACK_OK, SetDefaultACL(defaultAcl));
+
     //Populate ACL
     OicSecAcl_t acl = OicSecAcl_t();
     EXPECT_EQ(OC_STACK_OK, populateAcl(&acl, 1));
@@ -452,9 +548,6 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     OCSecurityPayload *securityPayload = OCSecurityPayloadCreate(payload, size);
     ASSERT_TRUE(NULL != securityPayload);
 
-    static OCPersistentStorage ps = OCPersistentStorage();
-    SetPersistentHandler(&ps, true);
-
     //Create Entity Handler POST request payload
     OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
     ehReq.method = OC_REST_POST;
@@ -463,7 +556,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
 
     //Create Entity Handler GET request wit query
     ehReq.method = OC_REST_GET;
-    char query[] = "subjectuuid=2222222222222222;resources=/a/led";
+    char query[] = "subjectuuid=32323232-3232-3232-3232-323232323232;resources=/a/led";
     ehReq.query = (char*)OICMalloc(strlen(query)+1);
     ASSERT_TRUE(NULL != ehReq.query);
     OICStrcpy(ehReq.query, strlen(query)+1, query);

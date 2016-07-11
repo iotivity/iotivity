@@ -4,8 +4,8 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ri
-Version:    0.1
-Release:    1
+Version:    1.1.1
+Release:    0
 Summary: Tizen oicri application
 URL: http://slp-source.sec.samsung.net
 Source: %{name}-%{version}.tar.gz
@@ -49,7 +49,7 @@ cp -f %{ROOTDIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %
 cp -f %{ROOTDIR}/resource/csdk/connectivity/lib/libcoap-4.1.1/libcoap.a %{buildroot}/%{_libdir}
 cp /usr/lib/libuuid.so.1 %{buildroot}%{_libdir}
 if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/out/tizen/*/*/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 fi
 
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
@@ -66,6 +66,7 @@ cp resource/oc_logger/include/targets/oc_ostream_logger.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/ocpresence.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/ocpayload.h %{DEST_INC_DIR}
 cp resource/c_common/platform_features.h %{DEST_INC_DIR}
+cp resource/c_common/*/include/*.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/payload_logging.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/rdpayload.h %{DEST_INC_DIR}
 cp extlibs/tinycbor/tinycbor/src/cbor.h %{DEST_INC_DIR}

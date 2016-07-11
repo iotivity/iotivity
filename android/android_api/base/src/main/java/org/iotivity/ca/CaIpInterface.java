@@ -53,7 +53,9 @@ public class CaIpInterface {
     }
 
     private CaIpInterface(Context context) {
-        mContext = context;
+        synchronized(CaIpInterface.class) {
+            mContext = context;
+        }
         registerIpStateReceiver();
     }
 

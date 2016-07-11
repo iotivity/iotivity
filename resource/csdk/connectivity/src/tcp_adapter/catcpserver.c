@@ -92,7 +92,7 @@ static void CATCPDestroyCond();
 static int CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
 static void CAFindReadyMessage();
-static void CASelectReturned(fd_set *readFds, int ret);
+static void CASelectReturned(fd_set *readFds);
 static void CAReceiveMessage(int fd);
 static void CAReceiveHandler(void *data);
 static int CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo);
@@ -216,10 +216,10 @@ static void CAFindReadyMessage()
         return;
     }
 
-    CASelectReturned(&readFds, ret);
+    CASelectReturned(&readFds);
 }
 
-static void CASelectReturned(fd_set *readFds, int ret)
+static void CASelectReturned(fd_set *readFds)
 {
     VERIFY_NON_NULL_VOID(readFds, TAG, "readFds is NULL");
 
@@ -483,7 +483,7 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
         struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sa;
         if (!sock6->sin6_scope_id)
         {
-            sock6->sin6_scope_id = svritem->sep.endpoint.interface;
+            sock6->sin6_scope_id = svritem->sep.endpoint.ifindex;
         }
         socklen = sizeof(struct sockaddr_in6);
     }
@@ -615,6 +615,15 @@ static void CAInitializePipe(int *fds)
     }
 }
 
+#define NEWSOCKET(FAMILY, NAME) \
+    caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
+    if (caglobals.tcp.NAME.fd == -1) \
+    { \
+        caglobals.tcp.NAME.port = 0; \
+        caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
+    } \
+    CHECKFD(caglobals.tcp.NAME.fd);
+
 CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 {
     if (caglobals.tcp.started)
@@ -651,11 +660,8 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 
     if (caglobals.server)
     {
-        caglobals.tcp.ipv4.fd = CACreateAcceptSocket(AF_INET, &caglobals.tcp.ipv4);
-        CHECKFD(caglobals.tcp.ipv4.fd);
-        caglobals.tcp.ipv6.fd = CACreateAcceptSocket(AF_INET6, &caglobals.tcp.ipv6);
-        CHECKFD(caglobals.tcp.ipv6.fd);
-
+        NEWSOCKET(AF_INET, ipv4);
+        NEWSOCKET(AF_INET6, ipv6);
         OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
                   caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 socket fd=%d, port=%d",
@@ -884,9 +890,10 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
         return NULL;
     }
     memcpy(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr));
+    svritem->sep.endpoint.adapter = endpoint->adapter;
     svritem->sep.endpoint.port = endpoint->port;
     svritem->sep.endpoint.flags = endpoint->flags;
-    svritem->sep.endpoint.interface = endpoint->interface;
+    svritem->sep.endpoint.ifindex = endpoint->ifindex;
 
     // #2. create the socket and connect to TCP server
     int family = (svritem->sep.endpoint.flags & CA_IPV6) ? AF_INET6 : AF_INET;
@@ -919,7 +926,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
     // pass the connection information to CA Common Layer.
     if (g_connectionCallback)
     {
-        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, true);
+        g_connectionCallback(&(svritem->sep.endpoint), true);
     }
 
     return svritem;
@@ -942,7 +949,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     // pass the connection information to CA Common Layer.
     if (g_connectionCallback)
     {
-        g_connectionCallback(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, false);
+        g_connectionCallback(&(svritem->sep.endpoint), false);
     }
 
     OICFree(svritem);

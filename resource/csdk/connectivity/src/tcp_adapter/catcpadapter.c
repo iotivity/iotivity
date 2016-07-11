@@ -175,22 +175,18 @@ void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
     }
 }
 
-static void CATCPConnectionHandler(const char *addr, uint16_t port, bool isConnected)
+static void CATCPConnectionHandler(const CAEndpoint_t *endpoint, bool isConnected)
 {
-    CAEndpoint_t endpoint = { .adapter =  CA_ADAPTER_TCP,
-                              .port = port };
-    OICStrcpy(endpoint.addr, sizeof(endpoint.addr), addr);
-
     // Pass the changed connection status to RI Layer for keepalive.
     if (g_connKeepAliveCallback)
     {
-        g_connKeepAliveCallback(&endpoint, isConnected);
+        g_connKeepAliveCallback(endpoint, isConnected);
     }
 
     // Pass the changed connection status to CAUtil.
     if (g_connectionChangeCallback)
     {
-        g_connectionChangeCallback(&endpoint, isConnected);
+        g_connectionChangeCallback(endpoint, isConnected);
     }
 }
 
@@ -202,9 +198,7 @@ void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler)
 static void CAInitializeTCPGlobals()
 {
     caglobals.tcp.ipv4.fd = -1;
-    caglobals.tcp.ipv4.port = 0;
     caglobals.tcp.ipv6.fd = -1;
-    caglobals.tcp.ipv6.port = 0;
     caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
     caglobals.tcp.svrlist = NULL;
@@ -273,6 +267,10 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
 CAResult_t CAStartTCP()
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
+    // Specific the port number received from application.
+    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
+    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
 
 #ifndef SINGLE_THREAD
     if (CA_STATUS_OK != CATCPInitializeQueueHandles())

@@ -22,9 +22,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
+#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"
@@ -52,7 +63,8 @@ static OCConnectivityType ocConnType;
 //of other devices which the client trusts
 static char CRED_FILE_DEVOWNER[] = "oic_svr_db_client_devowner.dat";
 static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
-
+const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
+const char * OIC_RSRC_PSTAT_URI = "/oic/sec/pstat";
 
 int gQuitFlag = 0;
 
@@ -91,8 +103,8 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
     OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
-    OIC_LOG(INFO, TAG, "-d 0 : Client as Device Owner");
-    OIC_LOG(INFO, TAG, "-d 1 : Client as Non Device Owner");
+    OIC_LOG(INFO, TAG, "-d 0 : Client as Non Device Owner");
+    OIC_LOG(INFO, TAG, "-d 1 : Client as Device Owner");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -417,9 +429,21 @@ int parseClientResponse(OCClientResponse * clientResponse)
     {
         coapServerResource.assign(res->uri);
         OIC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
-
+        if (0 == strcmp(coapServerResource.c_str(),OIC_RSRC_DOXM_URI))
+        {
+            OIC_LOG(INFO,TAG,"Skip: doxm is secure virtual resource");
+            res = res->next;
+            continue;
+        }
+        if (0 == strcmp(coapServerResource.c_str(),OIC_RSRC_PSTAT_URI))
+        {
+            OIC_LOG(INFO,TAG,"Skip: pstat is secure virtual resource");
+            res = res->next;
+            continue;
+        }
         if (res->secure)
         {
+            OIC_LOG_V(INFO,TAG,"SECUREPORT: %d",res->port);
             endpoint.port = res->port;
             coapSecureResource = 1;
         }

@@ -163,6 +163,36 @@ OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
 }
 
 /**
+ * this function requests CRED information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                             OCProvisionResultCB resultCallback)
+{
+    return SRPGetCredResource(ctx, selectedDeviceInfo, resultCallback);
+}
+
+/**
+ * this function requests ACL information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                             OCProvisionResultCB resultCallback)
+{
+    return SRPGetACLResource(ctx, selectedDeviceInfo, resultCallback);
+}
+
+/**
  * function to provision credential to devices.
  *
  * @param[in] ctx Application context would be returned in result callback.

@@ -373,7 +373,7 @@ static OCStackResult CreateCRLResource()
 {
     OCStackResult ret = OCCreateResource(&gCrlHandle,
                                          OIC_RSRC_TYPE_SEC_CRL,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_CRL_URI,
                                          CRLEntityHandler,
                                          NULL,
@@ -468,12 +468,13 @@ OCStackResult InitCRLResource()
 /**
  * Perform cleanup for ACL resources.
  */
-void DeInitCRLResource()
+OCStackResult DeInitCRLResource()
 {
-    OCDeleteResource(gCrlHandle);
+    OCStackResult result = OCDeleteResource(gCrlHandle);
     gCrlHandle = NULL;
     DeleteCrlBinData(gCrl);
     gCrl = NULL;
+    return result;
 }
 
 OicSecCrl_t *GetCRLResource()
@@ -516,17 +517,22 @@ uint8_t *GetCrl()
     return NULL;
 }
 
-void  GetDerCrl(ByteArray crlArray)
+void  GetDerCrl(ByteArray* crlArray)
 {
-    OicSecCrl_t * crlRes = GetCRLResource();
-    if (crlRes && crlRes->CrlData.len <= crlArray.len)
+    if(NULL == crlArray)
     {
-        memcpy(crlArray.data, crlRes->CrlData.data, crlRes->CrlData.len);
-        crlArray.len = crlRes->CrlData.len;
+        return;
+    }
+    OicSecCrl_t * crlRes = GetCRLResource();
+    if (NULL != crlArray->data && NULL != crlRes
+        && NULL !=crlRes->CrlData.data && crlRes->CrlData.len <= crlArray->len)
+    {
+        memcpy(crlArray->data, crlRes->CrlData.data, crlRes->CrlData.len);
+        crlArray->len = crlRes->CrlData.len;
     }
     else
     {
-        crlArray.len = 0;
+        crlArray->len = 0;
     }
     DeleteCrlBinData(crlRes);
 }

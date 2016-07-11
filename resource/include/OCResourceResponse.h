@@ -57,8 +57,33 @@ namespace OC
         {
         }
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+        OCResourceResponse(OCResourceResponse&& o):
+            m_newResourceUri(std::move(o.m_newResourceUri)),
+            m_errorCode(o.m_errorCode),
+            m_headerOptions(std::move(o.m_headerOptions)),
+            m_interface(std::move(o.m_interface)),
+            m_representation(std::move(o.m_representation)),
+            m_requestHandle(std::move(o.m_requestHandle)),
+            m_resourceHandle(std::move(o.m_resourceHandle)),
+            m_responseResult(std::move(o.m_responseResult))
+        {
+        }
+        OCResourceResponse& operator=(OCResourceResponse&& o)
+        {
+            m_newResourceUri = std::move(o.m_newResourceUri);
+            m_errorCode = o.m_errorCode;
+            m_headerOptions = std::move(o.m_headerOptions);
+            m_interface = std::move(o.m_interface);
+            m_representation = std::move(o.m_representation);
+            m_requestHandle = std::move(o.m_requestHandle);
+            m_resourceHandle = std::move(o.m_resourceHandle);
+            m_responseResult = std::move(o.m_responseResult);
+        }
+#else
         OCResourceResponse(OCResourceResponse&&) = default;
         OCResourceResponse& operator=(OCResourceResponse&&) = default;
+#endif
         virtual ~OCResourceResponse(void) {}
 
         /**
@@ -129,8 +154,8 @@ namespace OC
         *  @param rep reference to the resource's representation
         *  @param interface specifies the interface
         */
-        void setResourceRepresentation(OCRepresentation& rep, std::string interface) {
-            m_interface = interface;
+        void setResourceRepresentation(OCRepresentation& rep, std::string iface) {
+            m_interface = iface;
             m_representation = rep;
         }
 
@@ -139,8 +164,8 @@ namespace OC
         *  @param rep rvalue reference to the resource's representation
         *  @param interface specifies the interface
         */
-        void setResourceRepresentation(OCRepresentation&& rep, std::string interface) {
-            setResourceRepresentation(rep, interface);
+        void setResourceRepresentation(OCRepresentation&& rep, std::string iface) {
+            setResourceRepresentation(rep, iface);
         }
 
         /**

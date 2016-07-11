@@ -34,29 +34,41 @@ JniOnDeviceInfoListener::~JniOnDeviceInfoListener()
     LOGI("~JniOnDeviceInfoListener");
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (nullptr == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
 
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
 
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniOnDeviceInfoListener::foundDeviceCallback(const OC::OCRepresentation& ocRepresentation)
 {
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         LOGI("Java onDeviceInfoListener object is already destroyed, quiting");
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -68,7 +80,10 @@ void JniOnDeviceInfoListener::foundDeviceCallback(const OC::OCRepresentation& oc
     {
         delete rep;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -77,7 +92,10 @@ void JniOnDeviceInfoListener::foundDeviceCallback(const OC::OCRepresentation& oc
     {
         delete rep;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
     jmethodID midL = env->GetMethodID(clsL, "onDeviceFound", "(Lorg/iotivity/base/OcRepresentation;)V");
@@ -85,7 +103,10 @@ void JniOnDeviceInfoListener::foundDeviceCallback(const OC::OCRepresentation& oc
     {
         delete rep;
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -97,7 +118,10 @@ void JniOnDeviceInfoListener::foundDeviceCallback(const OC::OCRepresentation& oc
         checkExAndRemoveListener(env);
     }
 
-    if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniOnDeviceInfoListener::checkExAndRemoveListener(JNIEnv* env)

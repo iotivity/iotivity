@@ -92,7 +92,7 @@ OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
 
     do
     {
-        unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+        unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {0};
         uint32_t outLen = 0;
         B64Result b64Ret = B64_OK;
 

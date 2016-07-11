@@ -118,7 +118,7 @@ static void CAReceiveHandler(void *data)
     VERIFY_NON_NULL_VOID(data, TAG, "Invalid thread context");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -172,7 +172,7 @@ static void CAAcceptHandler(void *data)
     VERIFY_NON_NULL_VOID(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -282,7 +282,7 @@ CAResult_t CAEDRServerStop()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -413,7 +413,7 @@ CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle)
 CAResult_t CAEDRServerStartAcceptThread()
 {
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -477,7 +477,7 @@ void CAEDRServerTerminate()
         return;
     }
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {

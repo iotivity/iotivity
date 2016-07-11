@@ -52,7 +52,7 @@ namespace OCRepresentationEncodingTest
     static const char sid1[] = "646F6F72-4465-7669-6365-555549443030";
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
-    static const char dmver1[] = "data model version";
+    static const char dmver1[] = "res.1.1.0";
     static OCStringLL *types = NULL;
     // Device Payloads
     TEST(DeviceDiscoveryEncoding, Normal)
@@ -66,11 +66,14 @@ namespace OCRepresentationEncodingTest
                 types,
                 specver1,
                 dmver1);
+        EXPECT_TRUE(device);
         EXPECT_STREQ(sid1, device->sid);
         EXPECT_STREQ(devicename1, device->deviceName);
         EXPECT_STREQ(specver1, device->specVersion);
-        EXPECT_STREQ(dmver1, device->dataModelVersion);
-        EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload*)device)->type);
+        EXPECT_TRUE(device->dataModelVersions);
+        EXPECT_STREQ("res.1.1.0", device->dataModelVersions->value);
+        EXPECT_FALSE(device->dataModelVersions->next);
+        EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload *)device)->type);
         EXPECT_STREQ("oic.wk.d", device->types->value);
         EXPECT_STREQ("oic.d.tv", device->types->next->value);
 
@@ -85,21 +88,51 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(device->sid, ((OCDevicePayload*)parsedDevice)->sid);
         EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
         EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
-        EXPECT_STREQ(device->dataModelVersion, ((OCDevicePayload*)parsedDevice)->dataModelVersion);
+        EXPECT_STREQ(device->dataModelVersions->value, ((OCDevicePayload*)parsedDevice)->dataModelVersions->value);
         EXPECT_STREQ("oic.wk.d", ((OCDevicePayload*)parsedDevice)->types->value);
         EXPECT_STREQ("oic.d.tv", ((OCDevicePayload*)parsedDevice)->types->next->value);
         EXPECT_EQ(device->base.type, ((OCDevicePayload*)parsedDevice)->base.type);
 
         OCPayloadDestroy((OCPayload*)device);
 
-        OC::MessageContainer mc;
-        mc.setPayload(parsedDevice);
-        EXPECT_EQ(1u, mc.representations().size());
-        const OC::OCRepresentation& r = mc.representations()[0];
-        EXPECT_STREQ(sid1, r.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
-        EXPECT_STREQ(devicename1, r.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
-        EXPECT_STREQ(specver1, r.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
-        EXPECT_STREQ(dmver1, r.getValue<std::string>(OC_RSRVD_DATA_MODEL_VERSION).c_str());
+        OC::MessageContainer mc1;
+        mc1.setPayload(parsedDevice);
+        EXPECT_EQ(1u, mc1.representations().size());
+        const OC::OCRepresentation &r1 = mc1.representations()[0];
+        EXPECT_STREQ(sid1, r1.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
+        EXPECT_STREQ(devicename1, r1.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
+        EXPECT_STREQ(specver1, r1.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
+        EXPECT_STREQ("res.1.1.0", r1.getDataModelVersions()[0].c_str());
+
+        OCPayloadDestroy(parsedDevice);
+
+        static const char dmver2[] = "res.1.1.0,sh.1.1.0";
+        device = OCDevicePayloadCreate(
+                     sid1,
+                     devicename1,
+                     types,
+                     specver1,
+                     dmver2);
+
+        EXPECT_STREQ("res.1.1.0", device->dataModelVersions->value);
+        EXPECT_TRUE(device->dataModelVersions->next);
+        EXPECT_STREQ("sh.1.1.0", device->dataModelVersions->next->value);
+        EXPECT_FALSE(device->dataModelVersions->next->next);
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)device, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_DEVICE,
+                                              cborData, cborSize));
+        OICFree(cborData);
+        EXPECT_STREQ(device->dataModelVersions->value,
+                     ((OCDevicePayload *)parsedDevice)->dataModelVersions->value);
+        EXPECT_STREQ(device->dataModelVersions->next->value,
+                     ((OCDevicePayload *)parsedDevice)->dataModelVersions->next->value);
+        OCPayloadDestroy((OCPayload *)device);
+        OC::MessageContainer mc2;
+        mc2.setPayload(parsedDevice);
+        EXPECT_EQ(1u, mc2.representations().size());
+        const OC::OCRepresentation r2 = mc2.representations()[0];
+        EXPECT_STREQ("res.1.1.0", r2.getDataModelVersions()[0].c_str());
+        EXPECT_STREQ("sh.1.1.0", r2.getDataModelVersions()[1].c_str());
 
         OCPayloadDestroy(parsedDevice);
     }
@@ -137,7 +170,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(time1, platform->info.systemTime);
         EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, platform->interfaces->value);
         EXPECT_STREQ(OC_RSRVD_INTERFACE_READ, platform->interfaces->next->value);
-        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_PLATFORM, platform->rt);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_PLATFORM, platform->rt->value);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -161,7 +194,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(platform->info.supportUrl, platform->info.supportUrl);
         EXPECT_STREQ(platform->info.systemTime, platform2->info.systemTime);
         EXPECT_STREQ(platform->interfaces->value, platform2->interfaces->value);
-        EXPECT_STREQ(platform->rt, platform2->rt);
+        EXPECT_STREQ(platform->rt->value, platform2->rt->value);
 
         OCPayloadDestroy((OCPayload*)platform);
 

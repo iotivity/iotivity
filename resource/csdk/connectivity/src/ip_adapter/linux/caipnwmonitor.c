@@ -89,6 +89,7 @@ static CAResult_t CAIPInitializeNetworkMonitorList()
             return CA_STATUS_FAILED;
         }
     }
+    return CA_STATUS_OK;
 }
 
 static void CAIPDestroyNetworkMonitorList()
@@ -158,7 +159,7 @@ static void CARemoveNetworkMonitorList(int ifiindex)
     {
         CAInterface_t *removedifitem = (CAInterface_t *) u_arraylist_get(
                 g_netInterfaceList, list_index);
-        if (removedifitem && removedifitem->index == ifiindex)
+        if (removedifitem && ((int)removedifitem->index) == ifiindex)
         {
             if (u_arraylist_remove(g_netInterfaceList, list_index))
             {

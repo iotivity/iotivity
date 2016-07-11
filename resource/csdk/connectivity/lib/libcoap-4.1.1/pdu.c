@@ -19,6 +19,9 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
 
 #include "debug.h"
 #include "pdu.h"
@@ -137,7 +140,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
 #endif
 
     /* size must be large enough for hdr */
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     pdu = (coap_pdu_t *) coap_malloc(sizeof(coap_pdu_t) + size);
 #endif
 #ifdef WITH_CONTIKI
@@ -275,7 +278,7 @@ coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
     {
         return coap_tcp_16bit;
     }
-    else if (size < ULONG_MAX + COAP_TCP_LENGTH_FIELD_32_BIT)
+    else if (size - COAP_TCP_LENGTH_FIELD_32_BIT < ULONG_MAX)
     {
         return coap_tcp_32bit;
     }

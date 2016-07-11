@@ -295,6 +295,7 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return JNI_FALSE;
     }
 
@@ -303,6 +304,7 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     if (!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return JNI_FALSE;
     }
 
@@ -311,12 +313,16 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     if (!jni_mid_isEnable)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_isEnable is null");
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
         return JNI_FALSE;
     }
 
     jboolean jni_isEnable = (*env)->CallBooleanMethod(env, jni_obj_BTAdapter, jni_mid_isEnable);
     OIC_LOG_V(DEBUG, TAG, "adapter state is %d", jni_isEnable);
 
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
     return jni_isEnable;
 }
 

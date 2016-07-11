@@ -21,14 +21,17 @@
 #define _POSIX_C_SOURCE 200112L
 #endif
 
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
-#include <time.h>
-#include <sys/time.h>
+#endif
 
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "oic_time.h"
 #include "logger.h"
 #include "cJSON.h"
 #include "utlist.h"
@@ -341,31 +344,14 @@ exit:
  */
 OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 {
-    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
-    struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
-
     OCStackResult res = OC_STACK_OK;
-#ifdef _POSIX_MONOTONIC_CLOCK
-    int clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
-#else
-    int clock_res = clock_gettime(CLOCK_REALTIME, &startTime);
-#endif
-    if (0 != clock_res)
-    {
-        return OC_STACK_ERROR;
-    }
+
+    uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
     while (OC_STACK_OK == res)
     {
-#ifdef _POSIX_MONOTONIC_CLOCK
-        clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
-#else
-        clock_res = clock_gettime(CLOCK_REALTIME, &currTime);
-#endif
-        if (0 != clock_res)
-        {
-            return OC_STACK_TIMEOUT;
-        }
-        long elapsed = (currTime.tv_sec - startTime.tv_sec);
+        uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
+
+        long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
         if (elapsed > waittime)
         {
             return OC_STACK_OK;
@@ -428,8 +414,8 @@ uint16_t GetSecurePortFromJSON(char* jsonStr)
 }
 
 bool PMGenerateQuery(bool isSecure,
-                     const char* address, const uint16_t port,
-                     const OCConnectivityType connType,
+                     const char* address, uint16_t port,
+                     OCConnectivityType connType,
                      char* buffer, size_t bufferSize, const char* uri)
 {
     if(!address || !buffer || !uri)
@@ -584,6 +570,25 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             uint16_t securePort = 0;
             OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
+            // Use seure port of doxm for OTM and Provision.
+            while (resPayload)
+            {
+                if (0 == strncmp(resPayload->uri, OIC_RSRC_DOXM_URI, strlen(OIC_RSRC_DOXM_URI)))
+                {
+                    OIC_LOG_V(INFO,TAG,"resPaylod->uri:%s",resPayload->uri);
+                    OIC_LOG(INFO, TAG, "Found doxm resource.");
+                    break;
+                }
+                else
+                {
+                    resPayload = resPayload->next;
+                }
+            }
+            if (NULL == resPayload)
+            {
+                OIC_LOG(ERROR, TAG, "Can not find doxm resource.");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
             if (resPayload && resPayload->secure)
             {
                 securePort = resPayload->port;
@@ -691,6 +696,22 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
+                res = GetDoxmDeviceID(&myId);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                //if this is owned discovery and this is PT's reply, discard it
+                if((pDInfo->isOwnedDiscovery) &&
+                        (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
+                {
+                    OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
                 res = AddDevice(ppDevicesList, clientResponse->devAddr.addr,
                         clientResponse->devAddr.port,
                         clientResponse->devAddr.adapter,
@@ -768,7 +789,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
 
     OCDoHandle handle = NULL;
     res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
-                                     CT_DEFAULT, OC_LOW_QOS, &cbData, NULL, 0);
+                                     CT_DEFAULT, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -782,14 +803,14 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     {
         OIC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
         OICFree(pDInfo);
-        OCStackResult resCancel = OCCancel(handle, OC_LOW_QOS, NULL, 0);
+        OCStackResult resCancel = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
         if(OC_STACK_OK !=  resCancel)
         {
             OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
         }
         return res;
     }
-    res = OCCancel(handle,OC_LOW_QOS,NULL,0);
+    res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
@@ -810,21 +831,12 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     {
         return OC_STACK_INVALID_PARAM;
     }
-
-    char rsrc_uri[MAX_URI_LENGTH+1] = {0};
-    int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
-              OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DOXM);
-    if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
-    {
-        OIC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
-        return OC_STACK_ERROR;
-    }
     //Try to the unicast discovery to getting secure port
     char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
     if(!PMGenerateQuery(false,
                         clientResponse->devAddr.addr, clientResponse->devAddr.port,
                         clientResponse->connType,
-                        query, sizeof(query), rsrc_uri))
+                        query, sizeof(query), OC_RSRVD_WELL_KNOWN_URI))
     {
         OIC_LOG(ERROR, TAG, "SecurePortDiscovery : Failed to generate query");
         return OC_STACK_ERROR;
@@ -836,7 +848,7 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     cbData.context = (void*)discoveryInfo;
     cbData.cd = NULL;
     OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
-            clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            clientResponse->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
@@ -879,7 +891,7 @@ static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
     cbData.context = (void*)discoveryInfo;
     cbData.cd = NULL;
     OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
-            clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            clientResponse->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Failed to Security Version Discovery");

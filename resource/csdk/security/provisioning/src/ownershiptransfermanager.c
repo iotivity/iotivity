@@ -30,9 +30,15 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <stdbool.h>
 #include <string.h>
 
@@ -136,7 +142,7 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
  * @param[in]  otmCtx  Context value of ownership transfer.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx);
+static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx);
 
 /**
  * Function to send request to resource to get its pstat resource information.
@@ -154,7 +160,7 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx);
  * @param[in]  otmCtx  Context value of ownership transfer.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx);
+static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx);
 
 /**
  * Function to update the operation mode. As per the spec. Operation mode in client driven
@@ -163,7 +169,7 @@ static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx);
  * @param[in]  otmCtx  Context value of ownership transfer.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx);
+static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx);
 
 /**
  * Function to update the owner credential to new device
@@ -172,7 +178,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx);
  * @param[in] selectedOperationMode selected operation mode
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx);
+static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx);
 
 /**
  * Function to send ownerShip info.
@@ -181,7 +187,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx);
  * @param[in]  otmCtx  Context value of ownership transfer.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx);
+static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx);
 
 /**
  * Function to update pstat as Ready for provisioning.
@@ -191,7 +197,7 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx);
  * @param[in] selectedDevice   selected device information to performing provisioning.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx);
+static OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx);
 
 /**
  * Function to update pstat as Ready for Normal Operation.
@@ -201,7 +207,7 @@ static OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx);
  * @param[in] selectedDevice   selected device information to performing provisioning.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx);
+static OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx);
 
 static bool IsComplete(OTMContext_t* otmCtx)
 {
@@ -315,8 +321,8 @@ void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
                    false == newDevDoxm->owned &&
                    memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0)
                 {
-                    //Send request : PUT /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
-                    res = PutOwnerUuid(g_otmCtx);
+                    //Send request : POST /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
+                    res = PostOwnerUuid(g_otmCtx);
                     if(OC_STACK_OK != res)
                     {
                         OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
@@ -418,6 +424,28 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
                 &ownerKey, &ptDeviceID);
         VERIFY_NON_NULL(TAG, cred, ERROR);
+
+        // TODO: Added as workaround. Will be replaced soon.
+        cred->privateData.encoding = OIC_ENCODING_RAW;
+
+#if 1
+        // NOTE: Test codes to use BASE64 encoded owner PSK.
+        uint32_t outSize = 0;
+        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
+        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
+
+        OICFree( cred->privateData.data );
+        cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
+        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+
+        strncpy(cred->privateData.data, b64Buf, outSize);
+        cred->privateData.data[outSize] = '\0';
+        cred->privateData.encoding = OIC_ENCODING_BASE64;
+        cred->privateData.len = outSize;
+        OICFree(b64Buf);
+#endif //End of Test codes
 
         res = AddCredential(cred);
         if(res != OC_STACK_OK)
@@ -535,8 +563,8 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
         //Select operation mode (Currently supported SINGLE_SERVICE_CLIENT_DRIVEN only)
         SelectOperationMode(otmCtx->selectedDeviceInfo, &(otmCtx->selectedDeviceInfo->pstat->om));
 
-        //Send request : PUT /oic/sec/pstat [{"om":"bx11", .. }]
-        OCStackResult res = PutUpdateOperationMode(otmCtx);
+        //Send request : POST /oic/sec/pstat [{"om":"bx11", .. }]
+        OCStackResult res = PostUpdateOperationMode(otmCtx);
         if (OC_STACK_OK != res)
         {
             OIC_LOG(ERROR, TAG, "Error while updating operation mode.");
@@ -587,12 +615,12 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-            //PUT owner credential to new device according to security spec B.
-            res = PutOwnerCredential(otmCtx);
+            //POST owner credential to new device according to security spec B.
+            res = PostOwnerCredential(otmCtx);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG,
-                        "OwnerUuidUpdateHandler:Failed to send PUT request for onwer credential");
+                        "OwnerUuidUpdateHandler:Failed to send PosT request for onwer credential");
                 SetResult(otmCtx, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
@@ -738,11 +766,11 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
                 }
             }
 
-            //PUT /oic/sec/doxm [{ ..., "owned":"TRUE" }]
-            res = PutOwnershipInformation(otmCtx);
+            //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
+            res = PostOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "Failed to put ownership information to new device");
+                OIC_LOG(ERROR, TAG, "Failed to post ownership information to new device");
                 SetResult(otmCtx, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
@@ -789,7 +817,7 @@ static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandl
             OIC_LOG(INFO, TAG, "Ownership transfer was successfully completed.");
             OIC_LOG(INFO, TAG, "Set Ready for provisioning state .");
 
-            res = PutProvisioningStatus(otmCtx);
+            res = PostProvisioningStatus(otmCtx);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to update pstat");
@@ -837,7 +865,7 @@ static OCStackApplicationResult ProvisioningStatusHandler(void *ctx, OCDoHandle 
         {
             OIC_LOG(INFO, TAG, "Device state is in Ready for Provisionig.");
 
-            res = PutNormalOperationStatus(otmCtx);
+            res = PostNormalOperationStatus(otmCtx);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to update pstat");
@@ -904,9 +932,9 @@ exit:
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
+static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PutOwnerCredential");
+    OIC_LOG(DEBUG, TAG, "IN PostOwnerCredential");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -922,7 +950,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutOwnerCredential : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostOwnerCredential : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -953,15 +981,17 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         memcpy(&(newCredential.subject), &credSubjectId, sizeof(OicUuid_t));
 
         //Fill private data as empty string
-        newCredential.privateData.data = NULL;
+        newCredential.privateData.data = "";
         newCredential.privateData.len = 0;
+        newCredential.privateData.encoding = ownerCredential->privateData.encoding;
 #ifdef __WITH_X509__
         newCredential.publicData.data = NULL;
         newCredential.publicData.len = 0;
 #endif
-
-        //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
-        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData, &secPayload->payloadSize))
+        int secureFlag = 0;
+        //Send owner credential to new device : POST /oic/sec/cred [ owner credential ]
+        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData,
+                                        &secPayload->payloadSize, secureFlag))
         {
             OICFree(secPayload);
             OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");
@@ -974,9 +1004,9 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         cbData.cb = &OwnerCredentialHandler;
         cbData.context = (void *)otmCtx;
         cbData.cd = NULL;
-        OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query,
+        OCStackResult res = OCDoResource(NULL, OC_REST_POST, query,
                                          &deviceInfo->endpoint, (OCPayload*)secPayload,
-                                         deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                                         deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
         if (res != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -988,14 +1018,14 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         return OC_STACK_NO_RESOURCE;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PutOwnerCredential");
+    OIC_LOG(DEBUG, TAG, "OUT PostOwnerCredential");
 
     return OC_STACK_OK;
 }
 
-static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
+static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PutOwnerTransferModeToResource");
+    OIC_LOG(DEBUG, TAG, "IN PostOwnerTransferModeToResource");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -1012,7 +1042,7 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutOwnerTransferModeToResource : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostOwnerTransferModeToResource : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -1036,15 +1066,15 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
     cbData.cb = &OwnerTransferModeHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-    res = OCDoResource(NULL, OC_REST_PUT, query,
+    res = OCDoResource(NULL, OC_REST_POST, query,
                        &deviceInfo->endpoint, (OCPayload *)secPayload,
-                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                       deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PutOwnerTransferModeToResource");
+    OIC_LOG(DEBUG, TAG, "OUT PostOwnerTransferModeToResource");
 
     return res;
 }
@@ -1076,7 +1106,7 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
     OCStackResult res = OCDoResource(NULL, OC_REST_GET, query, NULL, NULL,
-                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+                                     deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1087,9 +1117,9 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
     return res;
 }
 
-static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx)
+static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PutOwnerUuid");
+    OIC_LOG(DEBUG, TAG, "IN PostOwnerUuid");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -1104,12 +1134,12 @@ static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutOwnershipInformation : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostOwnerUuid : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    //PUT PT's uuid to new device
+    //Post PT's uuid to new device
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
@@ -1132,21 +1162,21 @@ static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx)
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
 
-    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload *)secPayload,
-            deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    res = OCDoResource(NULL, OC_REST_POST, query, 0, (OCPayload *)secPayload,
+            deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PutOwnerUuid");
+    OIC_LOG(DEBUG, TAG, "OUT PostOwnerUuid");
 
     return res;
 }
 
-static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
+static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PutOwnershipInformation");
+    OIC_LOG(DEBUG, TAG, "IN PostOwnershipInformation");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -1161,7 +1191,7 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutOwnershipInformation : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostOwnershipInformation : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -1191,21 +1221,21 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
 
-    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    res = OCDoResource(NULL, OC_REST_POST, query, 0, (OCPayload*)secPayload,
+                       deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PutOwnershipInformation");
+    OIC_LOG(DEBUG, TAG, "OUT PostOwnershipInformation");
 
     return res;
 }
 
-static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
+static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PutUpdateOperationMode");
+    OIC_LOG(DEBUG, TAG, "IN PostUpdateOperationMode");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -1219,7 +1249,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutUpdateOperationMode : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostUpdateOperationMode : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -1244,14 +1274,14 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
     cbData.cb = &OperationModeUpdateHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload *)secPayload,
-                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    res = OCDoResource(NULL, OC_REST_POST, query, 0, (OCPayload *)secPayload,
+                       deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PutUpdateOperationMode");
+    OIC_LOG(DEBUG, TAG, "OUT PostUpdateOperationMode");
 
     return res;
 }
@@ -1274,8 +1304,8 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     }
     OIC_LOG_V(DEBUG, TAG, "Selected provisoning method = %d", selectedDevice->doxm->oxmSel);
 
-    //Send Req: PUT /oic/sec/doxm [{..."OxmSel" :g_OTMDatas[Index of Selected OxM].OXMString,...}]
-    res = PutOwnerTransferModeToResource(otmCtx);
+    //Send Req: POST /oic/sec/doxm [{..."OxmSel" :g_OTMDatas[Index of Selected OxM].OXMString,...}]
+    res = PostOwnerTransferModeToResource(otmCtx);
     if(OC_STACK_OK != res)
     {
         OIC_LOG(WARNING, TAG, "Failed to select the provisioning method");
@@ -1402,9 +1432,9 @@ error:
     return res;
 }
 
-OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
+OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
 {
-    OIC_LOG(INFO, TAG, "IN PutProvisioningStatus");
+    OIC_LOG(INFO, TAG, "IN PostProvisioningStatus");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -1438,7 +1468,7 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
                         otmCtx->selectedDeviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutProvisioningStatus : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostProvisioningStatus : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -1447,7 +1477,7 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
     cbData.cb = &ProvisioningStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+    OCStackResult ret = OCDoResource(NULL, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
     if (ret != OC_STACK_OK)
@@ -1455,14 +1485,14 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(INFO, TAG, "OUT PutProvisioningStatus");
+    OIC_LOG(INFO, TAG, "OUT PostProvisioningStatus");
 
     return ret;
 }
 
-OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx)
+OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
 {
-    OIC_LOG(INFO, TAG, "IN PutNormalOperationStatus");
+    OIC_LOG(INFO, TAG, "IN PostNormalOperationStatus");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -1496,7 +1526,7 @@ OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx)
                         otmCtx->selectedDeviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutNormalOperationStatus : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostNormalOperationStatus : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -1505,7 +1535,7 @@ OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx)
     cbData.cb = &ReadyForNomalStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+    OCStackResult ret = OCDoResource(NULL, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
     if (ret != OC_STACK_OK)
@@ -1513,7 +1543,7 @@ OCStackResult PutNormalOperationStatus(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
-    OIC_LOG(INFO, TAG, "OUT PutNormalOperationStatus");
+    OIC_LOG(INFO, TAG, "OUT PostNormalOperationStatus");
 
     return ret;
 }

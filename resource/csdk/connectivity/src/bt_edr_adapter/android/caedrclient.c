@@ -210,7 +210,7 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
         return CA_STATUS_INVALID_PARAM;
     }
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -249,7 +249,7 @@ void CAEDRJniInitContext()
 
 CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
 {
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     OIC_LOG(DEBUG, TAG, "CAEDRCreateJNIInterfaceObject");
 
     if ((*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
@@ -353,7 +353,7 @@ CAResult_t CAEDRInitialize()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -404,7 +404,7 @@ void CAEDRTerminate()
     OIC_LOG(DEBUG, TAG, "CAEDRTerminate");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -451,7 +451,7 @@ CAResult_t CAEDRDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -531,7 +531,7 @@ CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -572,7 +572,7 @@ CAResult_t CAEDRGetInterfaceInfo(char **address)
 void CAEDRGetLocalAddress(char **address)
 {
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -619,7 +619,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {

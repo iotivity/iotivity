@@ -21,6 +21,7 @@
 
 extern "C"
 {
+    #include "ocpayload.h"
     #include "ocstack.h"
     #include "ocstackinternal.h"
     #include "logger.h"
@@ -32,7 +33,9 @@ extern "C"
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 //-----------------------------------------------------------------------------
@@ -85,10 +88,11 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-static void resultCallback(OCDPDev_t *UNUSED1, OCStackResult UNUSED2)
+static void resultCallback(void *UNUSED1, OCDPDev_t *UNUSED2, OCStackResult UNUSED3)
 {
     (void) (UNUSED1);
     (void) (UNUSED2);
+    (void) (UNUSED3);
 }
 
 extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
@@ -221,6 +225,24 @@ TEST(StackStart, StackStartSuccessClientServer)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, StackStartSuccessServerThenClient)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, StackStartSuccessClientThenServer)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
@@ -1676,6 +1698,8 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+// Visual Studio versions earlier than 2015 have bugs in is_pod and report the wrong answer.
+#if !defined(_MSC_VER) || (_MSC_VER >= 1900)
 TEST(PODTests, OCHeaderOption)
 {
     EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
@@ -1683,22 +1707,23 @@ TEST(PODTests, OCHeaderOption)
 
 TEST(PODTests, OCCallbackData)
 {
-    EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
+    EXPECT_TRUE(std::is_pod<OCCallbackData>::value);
 }
+#endif
 
 TEST(OCDoDirectPairingTests, Nullpeer)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, pmSel, &pinNumber, &resultCallback));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, NULL, pmSel, &pinNumber, &resultCallback));
 }
 
 TEST(OCDoDirectPairingTests, NullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(&peer, pmSel, &pinNumber, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(NULL, &peer, pmSel, &pinNumber, NULL));
 }
 
 TEST(OCDoDirectPairingTests, NullpinNumber)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(&peer, pmSel, NULL, &resultCallback));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, &peer, pmSel, NULL, &resultCallback));
 }
 
 TEST(StackResource, MultipleResourcesDiscovery)
@@ -1752,4 +1777,30 @@ TEST(StackResource, MultipleResourcesDiscovery)
                                         0));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackPayload, CloneByteString)
+{
+    uint8_t bytes[] = { 0, 1, 2, 3 };
+    OCByteString byteString;
+    byteString.bytes = bytes;
+    byteString.len = sizeof(bytes);
+
+    OCRepPayload *original = OCRepPayloadCreate();
+    ASSERT_TRUE(original != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropByteString(original, "name", byteString));
+
+    OCRepPayload *clone = OCRepPayloadClone(original);
+    ASSERT_TRUE(clone != NULL);
+
+    OCRepPayloadDestroy(original);
+
+    OCByteString cloneByteString;
+    EXPECT_TRUE(OCRepPayloadGetPropByteString(clone, "name", &cloneByteString));
+    ASSERT_TRUE(cloneByteString.bytes != NULL);
+    EXPECT_EQ(sizeof(bytes), cloneByteString.len);
+    EXPECT_TRUE(0 == memcmp(bytes, cloneByteString.bytes, sizeof(bytes)));
+    OICFree(cloneByteString.bytes);
+
+    OCRepPayloadDestroy(clone);
 }

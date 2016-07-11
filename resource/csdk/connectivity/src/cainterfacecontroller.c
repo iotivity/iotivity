@@ -75,7 +75,7 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
 
 static void CARegisterCallback(CAConnectivityHandler_t handler)
 {
-    if(handler.startAdapter == NULL ||
+    if (handler.startAdapter == NULL ||
         handler.startListenServer == NULL ||
         handler.stopListenServer == NULL ||
         handler.startDiscoveryServer == NULL ||
@@ -438,7 +438,7 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
     {
         void* ptrType = u_arraylist_get(list, i);
 
-        if(NULL == ptrType)
+        if (NULL == ptrType)
         {
             continue;
         }
@@ -451,9 +451,8 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
 
         int index = CAGetAdapterIndex(connType);
         if (0 > index)
-        if (-1 == index)
         {
-            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
+            OIC_LOG(ERROR, TAG, "unknown connectivity type!");
             continue;
         }
 

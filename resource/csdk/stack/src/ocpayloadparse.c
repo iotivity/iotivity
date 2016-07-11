@@ -35,6 +35,7 @@
 #include "ocstackinternal.h"
 #include "payload_logging.h"
 #include "rdpayload.h"
+#include "platform_features.h"
 
 #define TAG "OIC_RI_PAYLOADPARSE"
 
@@ -248,7 +249,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
         err = cbor_value_map_find_value(&rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
         if (cbor_value_is_valid(&curVal))
         {
-            err = cbor_value_dup_text_string(&curVal, &(out->type), &len, NULL);
+            err = OCParseStringLL(&rootMap, OC_RSRVD_RESOURCE_TYPE, &out->type);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
         }
 
@@ -256,11 +257,11 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
         err = cbor_value_map_find_value(&rootMap, OC_RSRVD_INTERFACE, &curVal);
         if (cbor_value_is_valid(&curVal))
         {
-            err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &out->interface);
+            err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &out->iface);
         }
-        if (!out->interface)
+        if (!out->iface)
         {
-            if (!OCResourcePayloadAddStringLL(&out->interface, OC_RSRVD_INTERFACE_LL))
+            if (!OCResourcePayloadAddStringLL(&out->iface, OC_RSRVD_INTERFACE_LL))
             {
                 err = CborErrorOutOfMemory;
             }
@@ -444,13 +445,17 @@ static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *roo
             err = cbor_value_dup_text_string(&curVal, &out->specVersion, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find spec version in device payload");
         }
-        // Data Model Version
+        // Data Model Versions
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DATA_MODEL_VERSION, &curVal);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find data model ver tag");
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find data model versions tag");
         if (cbor_value_is_valid(&curVal))
         {
-            err = cbor_value_dup_text_string(&curVal, &out->dataModelVersion, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, err, "to find data model version in device payload");
+            size_t len = 0;
+            char * str = NULL;
+            err = cbor_value_dup_text_string(&curVal, &str, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find data model versions in device payload");
+            out->dataModelVersions = OCCreateOCStringLL(str);
+            OICFree(str);
         }
         err = cbor_value_advance(rootValue);
         VERIFY_CBOR_SUCCESS(TAG, err, "to advance device payload");
@@ -469,7 +474,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
     OCStackResult ret = OC_STACK_INVALID_PARAM;
     CborError err = CborNoError;
     OCPlatformInfo info = {0};
-    char* rt = NULL;
+    OCStringLL* rt = NULL;
     OCStringLL* interfaces = NULL;
     OCPlatformPayload* out = NULL;
 
@@ -576,7 +581,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
 
         if(cbor_value_is_valid(&repVal))
         {
-            err = cbor_value_dup_text_string(&repVal, &rt, &len, NULL);
+            err = OCParseStringLL(rootValue, OC_RSRVD_RESOURCE_TYPE, &rt);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find resource type in the platform payload");
         }
 
@@ -1186,17 +1191,21 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
     if (cbor_value_is_map(rootValue))
     {
         CborValue curVal;
+        uint64_t temp = 0;
 
         // Sequence Number
         CborError err = cbor_value_map_find_value(rootValue, OC_RSRVD_NONCE, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce tag");
-        err = cbor_value_get_uint64(&curVal, (uint64_t *)&payload->sequenceNumber);
+        err = cbor_value_get_uint64(&curVal, &temp);
+        payload->sequenceNumber = (uint32_t)temp;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce value");
 
         // Max Age
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TTL, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl tag");
-        err = cbor_value_get_uint64(&curVal, (uint64_t *)&payload->maxAge);
+        temp = 0;
+        err = cbor_value_get_uint64(&curVal, &temp);
+        payload->maxAge = (uint32_t)temp;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl value");
 
         // Trigger

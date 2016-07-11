@@ -50,7 +50,7 @@ CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char* address)
     VERIFY_NON_NULL(address, TAG, "address");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -126,7 +126,7 @@ CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char* address)
     VERIFY_NON_NULL(address, TAG, "address");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -278,6 +278,12 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env)
     }
 
     return res;
+}
+
+void CAManagerLESetScanInterval(jint interval, jint count)
+{
+    OIC_LOG(DEBUG, TAG, "CAManagerLESetScanInterval");
+    CALERestartScanWithInterval(interval, count);
 }
 
 JNIEXPORT void JNICALL

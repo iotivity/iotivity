@@ -272,6 +272,12 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartIP()
 {
+    // Specific the port number received from application.
+    caglobals.ip.u6.port  = caglobals.ports.udp.u6;
+    caglobals.ip.u6s.port = caglobals.ports.udp.u6s;
+    caglobals.ip.u4.port  = caglobals.ports.udp.u4;
+    caglobals.ip.u4s.port = caglobals.ports.udp.u4s;
+
     CAIPStartNetworkMonitor();
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;

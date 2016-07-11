@@ -234,10 +234,10 @@ typedef union
 {
     struct
     {
-        unsigned int token_length :4; /* length of Token */
-        unsigned int type :2; /* type flag */
-        unsigned int version :2; /* protocol version */
-        unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned short token_length :4; /* length of Token */
+        unsigned short type :2; /* type flag */
+        unsigned short version :2; /* protocol version */
+        unsigned short code :8; /* request method (value 1--10) or response code (value 40-255) */
         unsigned short id; /* transaction id (network byte order!) */
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_udp_t;

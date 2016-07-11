@@ -541,12 +541,16 @@ public final class OcPlatform {
             OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerDeviceInfo0(
-                ocDeviceInfo.getDeviceName()
+                ocDeviceInfo.getDeviceName(),
+                ocDeviceInfo.getDeviceTypes().toArray(
+                        new String[ocDeviceInfo.getDeviceTypes().size()]
+                )
         );
     }
 
     private static native void registerDeviceInfo0(
-            String deviceName
+            String deviceName,
+            String[] deviceTypes
     ) throws OcException;
 
     /**
@@ -895,6 +899,81 @@ public final class OcPlatform {
 
     private static native void sendResponse0(OcResourceResponse ocResourceResponse)
             throws OcException;
+
+    /**
+     *  Method to find all devices which are eligible for direct pairing and return the list.
+     *
+     *  @param timeout timeout for discovering direct pair devices.
+     *  @param FindDirectPairingListener Callback function, which will receive the list of direct
+     *                                  pairable devices.
+     *  @throws OcException
+     */
+   public static native void findDirectPairingDevices(int timeout,
+            FindDirectPairingListener onFindDirectPairingListener) throws OcException;
+
+    /**
+     *  Method to get list of all paired devices for a given device.
+     *
+     *  @param GetDirectPairedListener Callback function, which will receive the list of direct
+     *                                 paired devices.
+     *  @throws OcException
+     */
+    public native void getDirectPairedDevices(GetDirectPairedListener onGetDirectPairedListener)
+        throws OcException;
+
+    /**
+     *  Method to perform direct pairing between two devices.
+     *
+     *  @param peer  Target peer
+     *  @param prmType Pairing Method to be used for Pairing
+     *  @param pin pin
+     *  @param DirectPairingListener Callback function, which will be called after
+     *                                      completion of direct pairing.
+     *  @throws OcException
+     */
+    public static void doDirectPairing(
+            OcDirectPairDevice peer,
+            OcPrmType prmType,
+            String pin,
+            DirectPairingListener onDirectPairingListener) throws OcException {
+
+        OcPlatform.doDirectPairing0(
+                peer,
+                prmType.getValue(),
+                pin,
+                onDirectPairingListener
+                );
+    }
+
+    private static native void doDirectPairing0(OcDirectPairDevice peer,
+            int pmSel, String pinNumber, DirectPairingListener onDirectPairingListener)
+    throws OcException;
+
+    /**
+     * An FindDirectPairingListener can be registered via the OcPlatform.findDirectPairingDevices call.
+     * Event listeners are notified asynchronously
+     */
+    public interface FindDirectPairingListener {
+        public void onFindDirectPairingListener(List<OcDirectPairDevice> ocPairedDeviceList);
+    }
+
+    /**
+     * Listerner to Get List of already Direct Paired devices.
+     * An GetDirectPairedListener can be registered via the OcPlatform.getDirectPairedDevices call.
+     * Event listeners are notified asynchronously
+     */
+    public interface GetDirectPairedListener {
+        public void onGetDirectPairedListener(List<OcDirectPairDevice> ocPairedDeviceList);
+    }
+
+    /**
+     * Listner to get result of doDirectPairing.
+     * An DirectPairingListener can be registered via the OcPlatform.doDirectPairing call.
+     * Event listeners are notified asynchronously
+     */
+    public interface DirectPairingListener {
+        public void onDirectPairingListener(String devId, int result);
+    }
 
     /**
      * An OnResourceFoundListener can be registered via the OcPlatform.findResource call.

@@ -25,6 +25,18 @@
 #include "OCRepresentation.h"
 #include "JniUtils.h"
 
+/**
+ * Macro to verify the validity of input argument.
+ *
+ * @param  arg  log level
+ */
+#define VERIFY_VARIABLE_NULL(arg) \
+    if (nullptr == (arg)) \
+    { \
+        LOGE("invalid input"); \
+        return JNI_ERR; \
+    } \
+
 JavaVM* g_jvm = nullptr;
 
 jclass g_cls_Integer = nullptr;
@@ -62,6 +74,8 @@ jclass g_cls_OcResourceIdentifier = nullptr;
 jclass g_cls_OcProvisionResult = nullptr;
 jclass g_cls_OcSecureResource = nullptr;
 jclass g_cls_OcOicSecAcl = nullptr;
+jclass g_cls_OcOicSecPdAcl = nullptr;
+jclass g_cls_OcDirectPairDevice = nullptr;
 
 jmethodID g_mid_Integer_ctor = nullptr;
 jmethodID g_mid_Double_ctor = nullptr;
@@ -94,6 +108,8 @@ jmethodID g_mid_OcPresenceStatus_get = nullptr;
 jmethodID g_mid_OcResourceIdentifier_N_ctor = nullptr;
 jmethodID g_mid_OcProvisionResult_ctor = nullptr;
 jmethodID g_mid_OcSecureResource_ctor = nullptr;
+jmethodID g_mid_OcDirectPairDevice_ctor = nullptr;
+jmethodID g_mid_OcDirectPairDevice_dev_ctor = nullptr;
 
 jmethodID g_mid_OcOicSecAcl_get_subject = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_resources_cnt = nullptr;
@@ -103,6 +119,12 @@ jmethodID g_mid_OcOicSecAcl_get_periods_cnt = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_periods = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_recurrences = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_resources_cnt = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_resources = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_permission = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_periods_cnt = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_periods = nullptr;
+jmethodID g_mid_OcOicSecPdAcl_get_recurrences = nullptr;
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
@@ -141,7 +163,7 @@ void throwOcException(JNIEnv* env, jobject ex)
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     LOGI("JNI_OnLoad");
-    JNIEnv* env;
+    JNIEnv* env = nullptr;
     g_jvm = vm;
 
     if (g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
@@ -149,316 +171,353 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
         LOGE("Failed to get the environment using GetEnv()");
         return JNI_ERR;
     }
+    VERIFY_VARIABLE_NULL(env);
 
     jclass clazz = nullptr;
 
     //Integer
     clazz = env->FindClass("java/lang/Integer");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
+
     g_cls_Integer = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_Integer_ctor = env->GetMethodID(g_cls_Integer, "<init>", "(I)V");
-    if (!g_mid_Integer_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_Integer_ctor);
 
     clazz = env->FindClass("[I");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_int1DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     clazz = env->FindClass("[[I");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_int2DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     //Double
     clazz = env->FindClass("java/lang/Double");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_Double = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_Double_ctor = env->GetMethodID(g_cls_Double, "<init>", "(D)V");
-    if (!g_mid_Double_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_Double_ctor);
 
     clazz = env->FindClass("[D");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_double1DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     clazz = env->FindClass("[[D");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_double2DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     //Boolean
     clazz = env->FindClass("java/lang/Boolean");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_Boolean = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_Boolean_ctor = env->GetMethodID(g_cls_Boolean, "<init>", "(Z)V");
-    if (!g_mid_Boolean_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_Boolean_ctor);
 
     clazz = env->FindClass("[Z");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_boolean1DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     clazz = env->FindClass("[[Z");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_boolean2DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     //String
     clazz = env->FindClass("java/lang/String");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_String = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     clazz = env->FindClass("[Ljava/lang/String;");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_String1DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     clazz = env->FindClass("[[Ljava/lang/String;");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_String2DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     //LinkedList
     clazz = env->FindClass("java/util/LinkedList");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_LinkedList = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_LinkedList_ctor = env->GetMethodID(g_cls_LinkedList, "<init>", "()V");
-    if (!g_mid_LinkedList_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_LinkedList_ctor);
 
     g_mid_LinkedList_add_object = env->GetMethodID(g_cls_LinkedList, "add", "(Ljava/lang/Object;)Z");
-    if (!g_mid_LinkedList_add_object) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_LinkedList_add_object);
 
     //Map
     clazz = env->FindClass("java/util/Map");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_Map = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_Map_entrySet = env->GetMethodID(g_cls_Map, "entrySet", "()Ljava/util/Set;");
-    if (!g_mid_Map_entrySet) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_Map_entrySet);
 
     //MapEntry
     clazz = env->FindClass("java/util/Map$Entry");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_MapEntry = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_MapEntry_getKey = env->GetMethodID(g_cls_MapEntry, "getKey", "()Ljava/lang/Object;");
-    if (!g_mid_MapEntry_getKey) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_MapEntry_getKey);
     g_mid_MapEntry_getValue = env->GetMethodID(g_cls_MapEntry, "getValue", "()Ljava/lang/Object;");
-    if (!g_mid_MapEntry_getValue) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_MapEntry_getValue);
 
     //Set
     clazz = env->FindClass("java/util/Set");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_Set = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_Set_iterator = env->GetMethodID(g_cls_Set, "iterator", "()Ljava/util/Iterator;");
-    if (!g_mid_Set_iterator) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_Set_iterator);
 
     //Iterator
     clazz = env->FindClass("java/util/Iterator");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_Iterator = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_Iterator_hasNext = env->GetMethodID(g_cls_Iterator, "hasNext", "()Z");
-    if (!g_mid_Iterator_hasNext) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_Iterator_hasNext);
 
     g_mid_Iterator_next = env->GetMethodID(g_cls_Iterator, "next", "()Ljava/lang/Object;");
-    if (!g_mid_Iterator_next) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_Iterator_next);
 
     //HashMap
     clazz = env->FindClass("java/util/HashMap");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_HashMap = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_HashMap_ctor = env->GetMethodID(g_cls_HashMap, "<init>", "()V");
-    if (!g_mid_HashMap_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_HashMap_ctor);
 
     g_mid_HashMap_put = env->GetMethodID(g_cls_HashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-    if (!g_mid_HashMap_put) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_HashMap_put);
 
     //OcException
     clazz = env->FindClass("org/iotivity/base/OcException");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcException = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_OcException_ctor = env->GetMethodID(g_cls_OcException, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
-    if (!g_mid_OcException_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcException_ctor);
 
     g_mid_OcException_setNativeExceptionLocation = env->GetMethodID(g_cls_OcException, "setNativeExceptionLocation",
         "(Ljava/lang/String;""Ljava/lang/String;""I)V");
-    if (!g_mid_OcException_setNativeExceptionLocation) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcException_setNativeExceptionLocation);
 
     //OcResource
     clazz = env->FindClass("org/iotivity/base/OcResource");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcResource = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_OcResource_ctor = env->GetMethodID(g_cls_OcResource, "<init>", "(J)V");
-    if (!g_mid_OcResource_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcResource_ctor);
 
     //OcRepresentation
     clazz = env->FindClass("org/iotivity/base/OcRepresentation");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcRepresentation = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_OcRepresentation_N_ctor = env->GetMethodID(g_cls_OcRepresentation, "<init>", "(J)V");
-    if (!g_mid_OcRepresentation_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcRepresentation_N_ctor);
 
     g_mid_OcRepresentation_N_ctor_bool = env->GetMethodID(g_cls_OcRepresentation, "<init>", "(JZ)V");
-    if (!g_mid_OcRepresentation_N_ctor_bool) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcRepresentation_N_ctor_bool);
 
     clazz = env->FindClass("[Lorg/iotivity/base/OcRepresentation;");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcRepresentation1DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     clazz = env->FindClass("[[Lorg/iotivity/base/OcRepresentation;");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcRepresentation2DArray = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     //HeaderOptions
     clazz = env->FindClass("org/iotivity/base/OcHeaderOption");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcHeaderOption = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcHeaderOption_ctor = env->GetMethodID(g_cls_OcHeaderOption, "<init>", "(ILjava/lang/String;)V");
-    if (!g_mid_OcHeaderOption_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcHeaderOption_ctor);
 
     g_mid_OcHeaderOption_get_id = env->GetMethodID(g_cls_OcHeaderOption, "getOptionId", "()I");
-    if (!g_mid_OcHeaderOption_get_id) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcHeaderOption_get_id);
 
     g_mid_OcHeaderOption_get_data = env->GetMethodID(g_cls_OcHeaderOption, "getOptionData", "()Ljava/lang/String;");
-    if (!g_mid_OcHeaderOption_get_data) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcHeaderOption_get_data);
 
     //OcResourceRequest
     clazz = env->FindClass("org/iotivity/base/OcResourceRequest");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcResourceRequest = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_OcResourceRequest_N_ctor = env->GetMethodID(g_cls_OcResourceRequest, "<init>", "(J)V");
-    if (!g_mid_OcResourceRequest_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcResourceRequest_N_ctor);
 
     //OcResourceResponse
     clazz = env->FindClass("org/iotivity/base/OcResourceResponse");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcResourceResponse = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_OcResourceResponse_N_ctor = env->GetMethodID(g_cls_OcResourceResponse, "<init>", "(J)V");
-    if (!g_mid_OcResourceResponse_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcResourceResponse_N_ctor);
 
     //OcResourceHandle
     clazz = env->FindClass("org/iotivity/base/OcResourceHandle");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcResourceHandle = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcResourceHandle_N_ctor = env->GetMethodID(g_cls_OcResourceHandle, "<init>", "(J)V");
-    if (!g_mid_OcResourceHandle_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcResourceHandle_N_ctor);
 
     //OcPresenceHandle
     clazz = env->FindClass("org/iotivity/base/OcPresenceHandle");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcPresenceHandle = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcPresenceHandle_N_ctor = env->GetMethodID(g_cls_OcPresenceHandle, "<init>", "(J)V");
-    if (!g_mid_OcPresenceHandle_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcPresenceHandle_N_ctor);
 
     //OcRequestHandle
     clazz = env->FindClass("org/iotivity/base/OcRequestHandle");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcRequestHandle = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcRequestHandle_N_ctor = env->GetMethodID(g_cls_OcRequestHandle, "<init>", "(J)V");
-    if (!g_mid_OcRequestHandle_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcRequestHandle_N_ctor);
 
     //OcPresenceStatus
     clazz = env->FindClass("org/iotivity/base/OcPresenceStatus");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcPresenceStatus = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcPresenceStatus_get = env->GetStaticMethodID(g_cls_OcPresenceStatus, "get",
         "(Ljava/lang/String;)Lorg/iotivity/base/OcPresenceStatus;");
-    if (!g_mid_OcPresenceStatus_get) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcPresenceStatus_get);
 
     //ObservationInfo
     clazz = env->FindClass("org/iotivity/base/ObservationInfo");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_ObservationInfo = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_ObservationInfo_N_ctor = env->GetMethodID(g_cls_ObservationInfo, "<init>", "(IB)V");
-    if (!g_mid_ObservationInfo_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_ObservationInfo_N_ctor);
 
     clazz = env->FindClass("org/iotivity/base/OcResourceIdentifier");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcResourceIdentifier = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcResourceIdentifier_N_ctor = env->GetMethodID(g_cls_OcResourceIdentifier, "<init>", "(J)V");
-    if (!g_mid_OcResourceIdentifier_N_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcResourceIdentifier_N_ctor);
 
     //OcSecureResource
     clazz = env->FindClass("org/iotivity/base/OcSecureResource");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcSecureResource =  (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcSecureResource_ctor = env->GetMethodID(g_cls_OcSecureResource, "<init>", "(J)V");
-    if (!g_mid_OcSecureResource_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcSecureResource_ctor);
 
     //ProvisionResult
     clazz = env->FindClass("org/iotivity/base/ProvisionResult");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcProvisionResult =  (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
     g_mid_OcProvisionResult_ctor = env->GetMethodID(g_cls_OcProvisionResult, "<init>", "(Ljava/lang/String;I)V");
-    if (!g_mid_OcProvisionResult_ctor) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcProvisionResult_ctor);
+
+    //OcDirectPairDevice
+    clazz = env->FindClass("org/iotivity/base/OcDirectPairDevice");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcDirectPairDevice =  (jclass)env->NewGlobalRef(clazz);
+    g_mid_OcDirectPairDevice_ctor = env->GetMethodID(g_cls_OcDirectPairDevice, "<init>", "(J)V");
+    VERIFY_VARIABLE_NULL(g_mid_OcDirectPairDevice_ctor);
+
+    g_mid_OcDirectPairDevice_dev_ctor = env->GetMethodID(g_cls_OcDirectPairDevice, "<init>", "(Ljava/lang/String;)V");
+    VERIFY_VARIABLE_NULL(g_mid_OcDirectPairDevice_dev_ctor);
+    env->DeleteLocalRef(clazz);
 
     //OicSecAcl
     clazz = env->FindClass("org/iotivity/base/OicSecAcl");
-    if (!clazz) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(clazz);
     g_cls_OcOicSecAcl =  (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
     g_mid_OcOicSecAcl_get_subject = env->GetMethodID(g_cls_OcOicSecAcl, "getSubject", "()Ljava/lang/String;");
-    if (!g_mid_OcOicSecAcl_get_subject) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_subject);
 
     g_mid_OcOicSecAcl_get_resources_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getResourcesCount", "()I");
-    if (!g_mid_OcOicSecAcl_get_resources_cnt) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_resources_cnt);
 
     g_mid_OcOicSecAcl_get_resources = env->GetMethodID(g_cls_OcOicSecAcl, "getResources", "(I)Ljava/lang/String;");
-    if (!g_mid_OcOicSecAcl_get_resources) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_resources);
 
     g_mid_OcOicSecAcl_get_permission = env->GetMethodID(g_cls_OcOicSecAcl, "getPermission", "()I");
-    if (!g_mid_OcOicSecAcl_get_permission) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_permission);
 
     g_mid_OcOicSecAcl_get_periods_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriodsCount", "()I");
-    if (!g_mid_OcOicSecAcl_get_periods_cnt) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_periods_cnt);
 
     g_mid_OcOicSecAcl_get_periods = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriods", "(I)Ljava/lang/String;");
-    if (!g_mid_OcOicSecAcl_get_periods) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_periods);
 
     g_mid_OcOicSecAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecAcl, "getRecurrences", "(I)Ljava/lang/String;");
-    if (!g_mid_OcOicSecAcl_get_recurrences) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_recurrences);
 
     g_mid_OcOicSecAcl_get_rownerID = env->GetMethodID(g_cls_OcOicSecAcl, "getRownerID", "()Ljava/lang/String;");
-    if (!g_mid_OcOicSecAcl_get_rownerID) return JNI_ERR;
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_rownerID);
+
+    //OicSecPdAcl
+    clazz = env->FindClass("org/iotivity/base/OicSecPdAcl");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcOicSecPdAcl =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecPdAcl_get_resources_cnt = env->GetMethodID(g_cls_OcOicSecPdAcl, "getResourcesCount", "()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_resources_cnt);
+
+    g_mid_OcOicSecPdAcl_get_resources = env->GetMethodID(g_cls_OcOicSecPdAcl, "getResources", "(I)Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_resources);
+
+    g_mid_OcOicSecPdAcl_get_permission = env->GetMethodID(g_cls_OcOicSecPdAcl, "getPermission", "()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_permission);
+
+    g_mid_OcOicSecPdAcl_get_periods_cnt = env->GetMethodID(g_cls_OcOicSecPdAcl, "getPeriodsCount", "()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_periods_cnt);
+
+    g_mid_OcOicSecPdAcl_get_periods = env->GetMethodID(g_cls_OcOicSecPdAcl, "getPeriods", "(I)Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_periods);
+
+    g_mid_OcOicSecPdAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecPdAcl, "getRecurrences", "(I)Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_recurrences);
 
     return JNI_CURRENT_VERSION;
 }
@@ -473,6 +532,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         LOGE("Failed to get the environment using GetEnv()");
         return;
     }
+
 
     env->DeleteGlobalRef(g_cls_Integer);
     env->DeleteGlobalRef(g_cls_int1DArray);

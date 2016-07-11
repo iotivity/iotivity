@@ -66,6 +66,14 @@ CAResult_t CAManagerLEClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAManagerLEClientTerminate(JNIEnv *env);
+
+/**
+ * set BLE scan interval time and working count.
+ * @param[in]  intervalTime         interval time(Seconds).
+ * @param[in]  workingCount         working count for selected interval time.
+ */
+void CAManagerLESetScanInterval(jint intervalTime, jint workingCount);
+
 #endif
 
 #ifdef __cplusplus

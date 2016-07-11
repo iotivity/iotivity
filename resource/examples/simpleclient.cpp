@@ -20,10 +20,18 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <Windows.h>
+#endif
 #include <string>
 #include <map>
 #include <cstdlib>
-#include <pthread.h>
 #include <mutex>
 #include <condition_variable>
 #include "OCPlatform.h"
@@ -65,15 +73,11 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
 {
     try
     {
-        if(eCode == OC_STACK_OK && sequenceNumber != OC_OBSERVE_NO_OPTION)
+        if(eCode == OC_STACK_OK && sequenceNumber != -1)
         {
             if(sequenceNumber == OC_OBSERVE_REGISTER)
             {
                 std::cout << "Observe registration action is successful" << std::endl;
-            }
-            else if(sequenceNumber == OC_OBSERVE_DEREGISTER)
-            {
-                std::cout << "Observe De-registration action is successful" << std::endl;
             }
 
             std::cout << "OBSERVE RESULT:"<<std::endl;
@@ -99,9 +103,9 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
         }
         else
         {
-            if(sequenceNumber == OC_OBSERVE_NO_OPTION)
+            if(eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration or de-registration action is failed" << std::endl;
+                std::cout << "Observe registration failed or de-registration action failed/succeeded" << std::endl;
             }
             else
             {
@@ -469,7 +473,7 @@ int main(int argc, char* argv[]) {
         OC::ModeType::Both,
         "0.0.0.0",
         0,
-        OC::QualityOfService::LowQos,
+        OC::QualityOfService::HighQos,
         &ps
     };
 

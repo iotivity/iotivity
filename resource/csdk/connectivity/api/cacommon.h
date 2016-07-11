@@ -40,6 +40,11 @@
 #include <sys/poll.h>
 #endif
 
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#include <mswsock.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -128,13 +133,34 @@ typedef char *CAURI_t;
  */
 typedef char *CAToken_t;
 
-// The following flags are the same as the equivalent OIC values in
-// octypes.h, allowing direct copying with slight fixup.
-// The CA layer should used the OC types when build allows that.
+/*
+ * Socket types and error definitions
+ */
+#ifdef HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      SOCKET_ERROR
+# define OC_INVALID_SOCKET    INVALID_SOCKET
+typedef HANDLE CASocketFd_t;
+#else // HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      (-1)
+# define OC_INVALID_SOCKET    (-1)
+typedef int    CASocketFd_t;
+#endif
+
+/*
+ * The following flags are the same as the equivalent OIC values in
+ * octypes.h, allowing direct copying with slight fixup.
+ * The CA layer should used the OC types when build allows that.
+ */
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE_CA (256)
 #else
-#define MAX_ADDR_STR_SIZE_CA (40)
+/*
+ * Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * Which is 64, +1 for null terminator => 65
+ * OCDevAddr (defined in OCTypes.h) must be the same
+ * as CAEndpoint_t (defined here)
+ */
+#define MAX_ADDR_STR_SIZE_CA (65)
 #endif
 
 typedef enum
@@ -250,7 +276,7 @@ typedef struct
     CATransportFlags_t      flags;      // transport modifiers
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
-    uint32_t                interface;  // usually zero for default interface
+    uint32_t                ifindex;    // usually zero for default interface
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/
@@ -440,8 +466,8 @@ typedef struct
  */
 typedef struct
 {
-    int fd;        /**< socket fd */
-    uint16_t port; /**< socket port */
+    CASocketFd_t fd;    /**< socket fd */
+    uint16_t port;      /**< socket port */
 } CASocket_t;
 
 #define HISTORYSIZE (4)
@@ -468,6 +494,28 @@ typedef struct
     int32_t ifIndex; /**< network interface index */
 } CAIfItem_t;
 
+/**
+ * Hold the port number assigned from application.
+ * It will be used when creating a socket.
+ */
+typedef struct
+{
+    struct udpports
+    {
+        uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
+        uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv4 socket secure port */
+    } udp;
+#ifdef TCP_ADAPTER
+    struct tcpports
+    {
+        uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u6;    /**< unicast IPv6 socket port */
+    } tcp;
+#endif
+} CAPorts_t;
+
 typedef struct
 {
     CATransportFlags_t clientFlags; /**< flag for client */
@@ -475,26 +523,35 @@ typedef struct
     bool client; /**< client mode */
     bool server; /**< server mode */
 
+    CAPorts_t ports;
+
     struct sockets
     {
-        void *threadpool;   /**< threadpool between Initialize and Start */
-        CASocket_t u6;      /**< unicast   IPv6 */
-        CASocket_t u6s;     /**< unicast   IPv6 secure */
-        CASocket_t u4;      /**< unicast   IPv4 */
-        CASocket_t u4s;     /**< unicast   IPv4 secure */
-        CASocket_t m6;      /**< multicast IPv6 */
-        CASocket_t m6s;     /**< multicast IPv6 secure */
-        CASocket_t m4;      /**< multicast IPv4 */
-        CASocket_t m4s;     /**< multicast IPv4 secure */
-        int netlinkFd;      /**< netlink */
-        int shutdownFds[2]; /**< shutdown pipe */
-        int selectTimeout;  /**< in seconds */
-        int maxfd;          /**< highest fd (for select) */
-        bool started;       /**< the IP adapter has started */
-        bool terminate;     /**< the IP adapter needs to stop */
-        bool ipv6enabled;   /**< IPv6 enabled by OCInit flags */
-        bool ipv4enabled;   /**< IPv4 enabled by OCInit flags */
-        bool dualstack;     /**< IPv6 and IPv4 enabled */
+        void *threadpool;           /**< threadpool between Initialize and Start */
+        CASocket_t u6;              /**< unicast   IPv6 */
+        CASocket_t u6s;             /**< unicast   IPv6 secure */
+        CASocket_t u4;              /**< unicast   IPv4 */
+        CASocket_t u4s;             /**< unicast   IPv4 secure */
+        CASocket_t m6;              /**< multicast IPv6 */
+        CASocket_t m6s;             /**< multicast IPv6 secure */
+        CASocket_t m4;              /**< multicast IPv4 */
+        CASocket_t m4s;             /**< multicast IPv4 secure */
+        CASocketFd_t netlinkFd;     /**< netlink */
+#if defined(_WIN32)
+        WSAEVENT shutdownEvent;     /**< Event used to signal threads to stop */
+#else
+        int shutdownFds[2];         /**< fds used to signal threads to stop */
+#endif
+        int selectTimeout;          /**< in seconds */
+        int maxfd;                  /**< highest fd (for select) */
+        bool started;               /**< the IP adapter has started */
+        bool terminate;             /**< the IP adapter needs to stop */
+        bool ipv6enabled;           /**< IPv6 enabled by OCInit flags */
+        bool ipv4enabled;           /**< IPv4 enabled by OCInit flags */
+        bool dualstack;             /**< IPv6 and IPv4 enabled */
+#if defined (_WIN32)
+        LPFN_WSARECVMSG wsaRecvMsg; /**< Win32 function pointer to WSARecvMsg() */
+#endif
 
         struct networkmonitors
         {

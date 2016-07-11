@@ -72,7 +72,7 @@ static CABLEDataReceivedCallback g_leServerDataReceivedCallback = NULL;
 /**
  * Callback to notify any error in LE adapter.
  */
-static CABLEErrorHandleCallback g_serverErrorCallback;
+static CABLEErrorHandleCallback g_serverErrorCallback = NULL;
 
 /**
  * To keep the state of GATT server if started or not.
@@ -373,6 +373,7 @@ CAResult_t CAStopLEGattServer()
             // Kill g main loops and kill threads
             g_main_loop_quit(g_eventLoop);
         }
+        g_eventLoop = NULL;
     }
     else
     {
@@ -526,22 +527,17 @@ CAResult_t CAInitLEGattServer()
         return CA_STATUS_FAILED;
     }
 
-    bt_gatt_server_h server;
-
-    ret = bt_gatt_server_create(&server);
-    if (0 != ret)
+    if (!g_gattServer)
     {
-        OIC_LOG_V(ERROR, TAG, "bt_gatt_server_create failed with ret[%s]",
-                  CALEGetErrorMsg(ret));
-        return CA_STATUS_FAILED;
+        OIC_LOG(DEBUG, TAG, "g_gattServer is NULL. create gatt server..");
+        ret = bt_gatt_server_create(&g_gattServer);
+        if (0 != ret)
+        {
+            OIC_LOG_V(ERROR, TAG, "bt_gatt_server_create failed with ret[%s]",
+                      CALEGetErrorMsg(ret));
+            return CA_STATUS_FAILED;
+        }
     }
-
-    if (NULL != g_gattServer)
-    {
-        OICFree(g_gattServer);
-        g_gattServer = NULL;
-    }
-    g_gattServer = server;
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -566,6 +562,7 @@ CAResult_t CADeInitLEGattServer()
                   CALEGetErrorMsg(ret));
         return CA_STATUS_FAILED;
     }
+    g_gattServer = NULL;
 
     ret =  bt_gatt_server_deinitialize();
     if (0 != ret)
@@ -596,31 +593,22 @@ CAResult_t CAAddNewLEServiceInGattServer(const char *serviceUUID)
 
     OIC_LOG_V(DEBUG, TAG, "service uuid %s", serviceUUID);
 
-    bt_gatt_h service = NULL;
     bt_gatt_service_type_e type = BT_GATT_SERVICE_TYPE_PRIMARY;
 
-    int ret = bt_gatt_service_create(serviceUUID, type, &service);
+    ca_mutex_lock(g_leServiceMutex);
+    int ret = bt_gatt_service_create(serviceUUID, type, &g_gattSvcPath);
     if (0 != ret)
     {
+        ca_mutex_unlock(g_leServiceMutex);
         OIC_LOG_V(ERROR, TAG, "bt_gatt_service_create failed with ret [%s]",
-                  CALEGetErrorMsg(ret));
+                    CALEGetErrorMsg(ret));
         return CA_STATUS_FAILED;
     }
+    ca_mutex_unlock(g_leServiceMutex);
 
-    if (NULL != service)
+    if (g_gattSvcPath)
     {
-        OIC_LOG_V(DEBUG, TAG, "ServicePath obtained is %s", (char *)service);
-
-        ca_mutex_lock(g_leServiceMutex);
-
-        if (NULL != g_gattSvcPath)
-        {
-            OICFree(g_gattSvcPath);
-            g_gattSvcPath = NULL;
-        }
-        g_gattSvcPath = service;
-
-        ca_mutex_unlock(g_leServiceMutex);
+        OIC_LOG_V(DEBUG, TAG, "ServicePath obtained is %s", (char *)g_gattSvcPath);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -707,7 +695,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
 
     int permissions = BT_GATT_PERMISSION_READ | BT_GATT_PERMISSION_WRITE;
     int properties;
-    if(read)
+    if (read)
     {
         properties = BT_GATT_PROPERTY_NOTIFY | BT_GATT_PROPERTY_READ;
     }
@@ -716,7 +704,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
         properties = BT_GATT_PROPERTY_WRITE | BT_GATT_PROPERTY_READ;
     }
 
-    bt_gatt_h charPath;
+    bt_gatt_h charPath = NULL;
 
     int ret = bt_gatt_characteristic_create(charUUID, permissions, properties, charValue,
                                             charValueLen, &charPath);
@@ -764,6 +752,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
                                         &descriptor);
         if (0 != ret)
         {
+            ca_mutex_unlock(g_leCharacteristicMutex);
             OIC_LOG_V(ERROR, TAG,
                       "bt_gatt_descriptor_create  failed with ret[%s]",
                       CALEGetErrorMsg(ret));
@@ -773,27 +762,17 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
         ret = bt_gatt_characteristic_add_descriptor(charPath, descriptor);
         if (0 != ret)
         {
+            ca_mutex_unlock(g_leCharacteristicMutex);
             OIC_LOG_V(ERROR, TAG,
                       "bt_gatt_characteristic_add_descriptor  failed with ret[%s]",
                       CALEGetErrorMsg(ret));
             return CA_STATUS_FAILED;
         }
 
-        if (NULL != g_gattReadCharPath)
-        {
-            OICFree(g_gattReadCharPath);
-            g_gattReadCharPath = NULL;
-        }
         g_gattReadCharPath = charPath;
-
     }
     else
     {
-        if (NULL != g_gattWriteCharPath)
-        {
-            OICFree(g_gattWriteCharPath);
-            g_gattWriteCharPath = NULL;
-        }
         g_gattWriteCharPath = charPath;
     }
 

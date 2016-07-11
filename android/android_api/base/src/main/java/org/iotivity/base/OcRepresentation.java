@@ -25,6 +25,7 @@ package org.iotivity.base;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -51,6 +52,8 @@ public class OcRepresentation {
         this.mNativeHandle = nativeHandle;
         this.mNativeNeedsDelete = nativeNeedsDelete;
     }
+
+    public native Map<String, Object> getValues();
 
     public <T> T getValue(String key) throws OcException {
         Object obj = this.getValueN(key);

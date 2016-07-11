@@ -18,7 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Required for strok_r
+#define _POSIX_C_SOURCE 200112L
 
+#include <stdio.h>
 #include "ocpayload.h"
 #include "octypes.h"
 #include <string.h>
@@ -30,6 +33,7 @@
 #include "rdpayload.h"
 
 #define TAG "OIC_RI_PAYLOAD"
+#define CSV_SEPARATOR ','
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
 
@@ -188,6 +192,12 @@ static void OCCopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *sou
         case OCREP_PROP_STRING:
             dest->str = OICStrdup(source->str);
             break;
+        case OCREP_PROP_BYTE_STRING:
+            dest->ocByteStr.bytes = (uint8_t*)OICMalloc(source->ocByteStr.len * sizeof(uint8_t));
+            VERIFY_PARAM_NON_NULL(TAG, dest->ocByteStr.bytes, "Failed allocating memory");
+            dest->ocByteStr.len = source->ocByteStr.len;
+            memcpy(dest->ocByteStr.bytes, source->ocByteStr.bytes, dest->ocByteStr.len);
+            break;
         case OCREP_PROP_OBJECT:
             dest->obj = OCRepPayloadClone(source->obj);
             break;
@@ -198,6 +208,8 @@ static void OCCopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *sou
             // Nothing to do for the trivially copyable types.
             break;
     }
+exit:
+    return;
 }
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
@@ -416,14 +428,14 @@ bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceTyp
     }
 }
 
-bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* interface)
+bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface)
 {
-    return OCRepPayloadAddInterfaceAsOwner(payload, OICStrdup(interface));
+    return OCRepPayloadAddInterfaceAsOwner(payload, OICStrdup(iface));
 }
 
-bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
+bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface)
 {
-    if (!payload || !interface)
+    if (!payload || !iface)
     {
         return false;
     }
@@ -441,7 +453,7 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
         {
             return false;
         }
-        cur->next->value = interface;
+        cur->next->value = iface;
         return true;
     }
     else
@@ -451,7 +463,7 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
         {
             return false;
         }
-        payload->interfaces->value = interface;
+        payload->interfaces->value = iface;
         return true;
     }
 }
@@ -741,7 +753,7 @@ bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
 {
     if (!array)
     {
-        return NULL;
+        return false;
     }
 
     size_t dimTotal = calcDimTotal(dimensions);
@@ -971,7 +983,7 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
         return false;
     }
 
-    if (val->arr.type != OCREP_PROP_DOUBLE)
+    if (val->arr.type == OCREP_PROP_DOUBLE)
     {
         memcpy(*array, val->arr.dArray, dimTotal * sizeof(double));
     }
@@ -1273,6 +1285,94 @@ OCStringLL* CloneOCStringLL (OCStringLL* ll)
     return headOfClone;
 }
 
+OCStringLL* OCCreateOCStringLL(const char* text)
+{
+    char *token = NULL;
+    char *head = NULL;
+    char *tail = NULL;
+    char *backup  = NULL;
+    OCStringLL* result = NULL;
+    OCStringLL* iter = NULL;
+    OCStringLL* prev = NULL;
+    static const char delim[] = { CSV_SEPARATOR, '\0' };
+
+    VERIFY_PARAM_NON_NULL(TAG, text, "Invalid parameter");
+    backup = OICStrdup(text);
+    VERIFY_PARAM_NON_NULL(TAG, backup, "Failed allocating memory");
+
+    for (head = backup; ; head = NULL)
+    {
+        token = (char *) strtok_r(head, delim, &tail);
+        if (!token) break;
+        iter = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
+        VERIFY_PARAM_NON_NULL(TAG, iter, "Failed allocating memory");
+        if (!result)
+        {
+             result = iter;
+        }
+        else
+        {
+             prev->next = iter;
+        }
+        iter->value = OICStrdup(token);
+        VERIFY_PARAM_NON_NULL(TAG, iter->value, "Failed allocating memory");
+        prev = iter;
+        iter = iter->next;
+    }
+    OICFree(backup);
+    return result;
+
+exit:
+    OICFree(backup);
+    OCFreeOCStringLL(result);
+    return NULL;
+}
+
+char* OCCreateString(const OCStringLL* ll)
+{
+    char *str = NULL;
+    char *pos = NULL;
+    size_t len = 0;
+    size_t sublen = 0;
+    int count = 0;
+
+    if (!ll) return NULL;
+
+    for (const OCStringLL *it = ll; it ; it = it->next )
+    {
+        len += strlen(it->value) + 1;
+    }
+    len--; // renove trailing separator (just added above)
+    str = (char*) malloc(len + 1);
+    if (!str)
+        return NULL;
+
+    pos = str;
+    const OCStringLL *it = ll;
+    while (it)
+    {
+        sublen = strlen(it->value);
+        count = snprintf(pos, len + 1, "%s", it->value);
+        if (count<sublen)
+        {
+            free(str);
+            return NULL;
+        }
+        len-=sublen;
+        pos+=count;
+
+        it = it->next;
+        if (it)
+        {
+            *pos = CSV_SEPARATOR;
+            len--;
+            *(++pos) = '\0';
+       }
+    }
+
+    return str;
+}
+
 OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)
 {
     if (!payload)
@@ -1386,8 +1486,12 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
     return NULL;
 }
 
+#ifndef TCP_ADAPTER
+static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort)
+#else
 static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
                                          uint16_t tcpPort)
+#endif
 {
     OCResourcePayload* pl = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
     if (!pl)
@@ -1489,11 +1593,19 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
     return pl;
 }
 
+#ifndef TCP_ADAPTER
+void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
+                                   uint16_t securePort)
+{
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort));
+}
+#else
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort)
 {
     OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, tcpPort));
 }
+#endif
 
 bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, const char *value)
 {
@@ -1570,9 +1682,9 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     OICFree(payload->sid);
     OICFree(payload->baseURI);
     OICFree(payload->uri);
-    OICFree(payload->type);
+    OCFreeOCStringLL(payload->type);
     OICFree(payload->name);
-    OCFreeOCStringLL(payload->interface);
+    OCFreeOCStringLL(payload->iface);
     OCDiscoveryResourceDestroy(payload->resources);
     OICFree(payload);
 }
@@ -1607,8 +1719,8 @@ OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
         goto exit;
     }
 
-    payload->dataModelVersion = OICStrdup(dmVer);
-    if (dmVer && !payload->dataModelVersion)
+    payload->dataModelVersions = OCCreateOCStringLL(dmVer);
+    if (!payload->dataModelVersions || (dmVer && !payload->dataModelVersions->value))
     {
         goto exit;
     }
@@ -1639,7 +1751,7 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
     OICFree(payload->sid);
     OICFree(payload->deviceName);
     OICFree(payload->specVersion);
-    OICFree(payload->dataModelVersion);
+    OCFreeOCStringLL(payload->dataModelVersions);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
@@ -1681,7 +1793,12 @@ OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
         return NULL;
     }
     payload->interfaces->value = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+    payload->rt = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+    if (!payload->rt)
+    {
+        return NULL;
+    }
+    payload->rt->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
     payload->info = *platformInfo;
 
     return payload;
@@ -1697,7 +1814,7 @@ OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+    OCResourcePayloadAddStringLL(&payload->rt, OC_RSRVD_RESOURCE_TYPE_PLATFORM);
 
     OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
     OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
@@ -1730,7 +1847,7 @@ void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
     }
     OICFree(payload->uri);
     OCPlatformInfoDestroy(&payload->info);
-    OICFree(payload->rt);
+    OCFreeOCStringLL(payload->rt);
     OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }

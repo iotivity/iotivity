@@ -21,9 +21,10 @@
 #define __STDC_LIMIT_MACROS
 
 #include <stdlib.h>
-#ifdef WITH_ARDUINO
+#ifdef HAVE_STRING_H
 #include <string.h>
-#else
+#endif
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 #include <stdint.h>
@@ -124,7 +125,7 @@ static size_t OicSecCredCount(const OicSecCred_t *secCred)
 }
 
 OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
-                                size_t *cborSize)
+                                size_t *cborSize, int secureFlag)
 {
     if (NULL == credS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
@@ -180,7 +181,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             mapSize++;
         }
 #endif /* __WITH_X509__ */
-        if (cred->privateData.data)
+        if (!secureFlag && cred->privateData.data)
         {
             mapSize++;
         }
@@ -245,7 +246,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         }
 #endif /*__WITH_X509__*/
         //PrivateData -- Not Mandatory
-        if(cred->privateData.data)
+        if(!secureFlag && cred->privateData.data)
         {
             CborEncoder privateMap;
             const size_t privateMapSize = 2;
@@ -257,20 +258,45 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encoder_create_map(&credMap, &privateMap, privateMapSize);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PrivateData Map");
 
-            cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_DATA_NAME,
-                strlen(OIC_JSON_DATA_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
-            cborEncoderResult = cbor_encode_byte_string(&privateMap, cred->privateData.data,
-                cred->privateData.len);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Value.");
-
             // TODO: Need to data strucure modification for OicSecKey_t.
-            cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_ENCODING_NAME,
-                strlen(OIC_JSON_ENCODING_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Tag.");
-            cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_SEC_ENCODING_RAW,
-                strlen(OIC_SEC_ENCODING_RAW));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Value.");
+            // TODO: Added as workaround, will be replaced soon.
+            if(OIC_ENCODING_RAW == cred->privateData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_SEC_ENCODING_RAW,
+                    strlen(OIC_SEC_ENCODING_RAW));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
+                cborEncoderResult = cbor_encode_byte_string(&privateMap, cred->privateData.data,
+                    cred->privateData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Value.");
+            }
+            else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_SEC_ENCODING_BASE64,
+                    strlen(OIC_SEC_ENCODING_BASE64));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
+                cborEncoderResult = cbor_encode_text_string(&privateMap, (char*)(cred->privateData.data),
+                    cred->privateData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Value.");
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "Unknow encoding type for private data.");
+                VERIFY_CBOR_SUCCESS(TAG, CborErrorUnknownType, "Failed Adding Private Encoding Value.");
+            }
 
             cborEncoderResult = cbor_encoder_close_container(&credMap, &privateMap);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing PrivateData Map.");
@@ -332,7 +358,7 @@ exit:
         // Since the allocated initial memory failed, double the memory.
         cborLen += encoder.ptr - encoder.end;
         cborEncoderResult = CborNoError;
-        ret = CredToCBORPayload(credS, cborPayload, &cborLen);
+        ret = CredToCBORPayload(credS, cborPayload, &cborLen, secureFlag);
         *cborSize = cborLen;
     }
 
@@ -375,7 +401,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         char* tagName = NULL;
         size_t len = 0;
         CborType type = cbor_value_get_type(&CredRootMap);
-        if (type == CborTextStringType)
+        if (type == CborTextStringType && cbor_value_is_text_string(&CredRootMap))
         {
             cborFindResult = cbor_value_dup_text_string(&CredRootMap, &tagName, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in CRED Root Map.");
@@ -419,7 +445,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 
                     VERIFY_NON_NULL(TAG, cred, ERROR);
 
-                    while(cbor_value_is_valid(&credMap))
+                    while(cbor_value_is_valid(&credMap) && cbor_value_is_text_string(&credMap))
                     {
                         char* name = NULL;
                         CborType type = cbor_value_get_type(&credMap);
@@ -435,8 +461,10 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             //credid
                             if (strcmp(name, OIC_JSON_CREDID_NAME)  == 0)
                             {
-                                cborFindResult = cbor_value_get_uint64(&credMap, (uint64_t *) &cred->credId);
+                                uint64_t credId = 0;
+                                cborFindResult = cbor_value_get_uint64(&credMap, &credId);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredId.");
+                                cred->credId = (uint16_t)credId;
                             }
                             // subjectid
                             if (strcmp(name, OIC_JSON_SUBJECTID_NAME)  == 0)
@@ -451,8 +479,10 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             // credtype
                             if (strcmp(name, OIC_JSON_CREDTYPE_NAME)  == 0)
                             {
-                                cborFindResult = cbor_value_get_uint64(&credMap, (uint64_t *) &cred->credType);
+                                uint64_t credType = 0;
+                                cborFindResult = cbor_value_get_uint64(&credMap, &credType);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredType.");
+                                cred->credType = (OicSecCredType_t)credType;
                             }
                             // privatedata
                             if (strcmp(name, OIC_JSON_PRIVATEDATA_NAME)  == 0)
@@ -464,7 +494,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 {
                                     char* privname = NULL;
                                     CborType type = cbor_value_get_type(&privateMap);
-                                    if (type == CborTextStringType)
+                                    if (type == CborTextStringType && cbor_value_is_text_string(&privateMap))
                                     {
                                         cborFindResult = cbor_value_dup_text_string(&privateMap, &privname,
                                                 &len, NULL);
@@ -477,14 +507,48 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                         // PrivateData::privdata -- Mandatory
                                         if (strcmp(privname, OIC_JSON_DATA_NAME) == 0)
                                         {
-                                            cborFindResult = cbor_value_dup_byte_string(&privateMap, &cred->privateData.data,
-                                                &cred->privateData.len, NULL);
+                                            if(cbor_value_is_byte_string(&privateMap))
+                                            {
+                                                cborFindResult = cbor_value_dup_byte_string(&privateMap, &cred->privateData.data,
+                                                    &cred->privateData.len, NULL);
+                                            }
+                                            else if(cbor_value_is_text_string(&privateMap))
+                                            {
+                                                cborFindResult = cbor_value_dup_text_string(&privateMap, (char**)(&cred->privateData.data),
+                                                    &cred->privateData.len, NULL);
+                                            }
+                                            else
+                                            {
+                                                cborFindResult = CborErrorUnknownType;
+                                                OIC_LOG(ERROR, TAG, "Unknow type for private data.");
+                                            }
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PrivateData.");
                                         }
+
                                         // PrivateData::encoding -- Mandatory
                                         if (strcmp(privname, OIC_JSON_ENCODING_NAME) == 0)
                                         {
-                                            // TODO: Need to update data structure, just ignore encoding value now.
+                                            // TODO: Added as workaround. Will be replaced soon.
+                                            char* strEncoding = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&privateMap, &strEncoding, &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding EncodingType");
+
+                                            if(strcmp(strEncoding, OIC_SEC_ENCODING_RAW) == 0)
+                                            {
+                                                cred->privateData.encoding = OIC_ENCODING_RAW;
+                                            }
+                                            else if(strcmp(strEncoding, OIC_SEC_ENCODING_BASE64) == 0)
+                                            {
+                                                cred->privateData.encoding = OIC_ENCODING_BASE64;
+                                            }
+                                            else
+                                            {
+                                                //For unit test
+                                                cred->privateData.encoding = OIC_ENCODING_RAW;
+                                                OIC_LOG(WARNING, TAG, "Unknow encoding type dectected for private data.");
+                                            }
+
+                                            OICFree(strEncoding);
                                         }
                                     }
                                     if (cbor_value_is_valid(&privateMap))
@@ -506,7 +570,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 {
                                     char* pubname = NULL;
                                     CborType type = cbor_value_get_type(&pubMap);
-                                    if (type == CborTextStringType)
+                                    if (type == CborTextStringType && cbor_value_is_text_string(&pubMap))
                                     {
                                         cborFindResult = cbor_value_dup_text_string(&pubMap, &pubname,
                                                 &len, NULL);
@@ -517,7 +581,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     if (pubname)
                                     {
                                         // PrivateData::privdata -- Mandatory
-                                        if (strcmp(pubname, OIC_JSON_DATA_NAME) == 0)
+                                        if (strcmp(pubname, OIC_JSON_DATA_NAME) == 0 && cbor_value_is_byte_string(&pubMap))
                                         {
                                             cborFindResult = cbor_value_dup_byte_string(&pubMap, &cred->publicData.data,
                                                 &cred->publicData.len, NULL);
@@ -563,7 +627,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
             }
 
             //ROwner -- Mandatory
-            if (strcmp(tagName, OIC_JSON_ROWNERID_NAME)  == 0)
+            if (strcmp(tagName, OIC_JSON_ROWNERID_NAME)  == 0 && cbor_value_is_text_string(&CredRootMap))
             {
                 char *stRowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&CredRootMap, &stRowner, &len, NULL);
@@ -634,6 +698,28 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
         memcpy(cred->privateData.data, privateData->data, privateData->len);
         cred->privateData.len = privateData->len;
+
+        // TODO: Added as workaround. Will be replaced soon.
+        cred->privateData.encoding = OIC_ENCODING_RAW;
+
+#if 0
+        // NOTE: Test codes to use base64 for credential.
+        uint32_t outSize = 0;
+        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((privateData->len + 1));
+        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
+        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        b64Encode(privateData->data, privateData->len, b64Buf, b64BufSize, &outSize);
+
+        OICFree( cred->privateData.data );
+        cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
+        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+
+        strcpy(cred->privateData.data, b64Buf);
+        cred->privateData.encoding = OIC_ENCODING_BASE64;
+        cred->privateData.len = outSize;
+        OICFree(b64Buf);
+#endif //End of Test codes
+
     }
 
     VERIFY_NON_NULL(TAG, rownerID, ERROR);
@@ -658,7 +744,8 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     {
         uint8_t *payload = NULL;
         size_t size = 0;
-        OCStackResult res = CredToCBORPayload(cred, &payload, &size);
+        int secureFlag = 0;
+        OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
         if ((OC_STACK_OK == res) && payload)
         {
             if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, payload, size))
@@ -847,10 +934,35 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     OIC_LOG_BUFFER(DEBUG, TAG, ownerPSK, OWNER_PSK_LENGTH_128);
 
     //Generate owner credential based on recevied credential information
-    receviedCred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
-    VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
-    receviedCred->privateData.len = OWNER_PSK_LENGTH_128;
-    memcpy(receviedCred->privateData.data, ownerPSK, OWNER_PSK_LENGTH_128);
+
+    // TODO: Added as workaround, will be replaced soon.
+    if(OIC_ENCODING_RAW == receviedCred->privateData.encoding)
+    {
+        receviedCred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
+        VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
+        receviedCred->privateData.len = OWNER_PSK_LENGTH_128;
+        memcpy(receviedCred->privateData.data, ownerPSK, OWNER_PSK_LENGTH_128);
+    }
+    else if(OIC_ENCODING_BASE64 == receviedCred->privateData.encoding)
+    {
+        uint32_t b64OutSize = 0;
+        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        char* b64Buf = OICCalloc(1, b64BufSize);
+        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+
+        b64Encode(ownerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize);
+
+        receviedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
+        VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
+        receviedCred->privateData.len = b64OutSize;
+        strncpy((char*)receviedCred->privateData.data, b64Buf, b64OutSize);
+        receviedCred->privateData.data[b64OutSize] = '\0';
+    }
+    else
+    {
+        // TODO: error
+        VERIFY_SUCCESS(TAG, OIC_ENCODING_UNKNOW, ERROR);
+    }
 
     OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");
 
@@ -864,22 +976,23 @@ exit:
 
 #endif //__WITH_DTLS__
 
-static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
-    OIC_LOG(DEBUG, TAG, "HandleCREDPutRequest IN");
+    OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
     //Get binary representation of cbor
     OicSecCred_t *cred  = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
+
     OCStackResult res = CBORPayloadToCred(payload, size, &cred);
     if (res == OC_STACK_OK)
     {
 #ifdef __WITH_DTLS__
         OicUuid_t emptyUuid = {.id={0}};
         const OicSecDoxm_t* doxm = GetDoxmResourceData();
-        if(false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
+        if(doxm && false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
         {
             //in case of owner PSK
             switch(cred->credType)
@@ -1008,29 +1121,36 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
         }
         FreeCred(cred);
     }
-    OIC_LOG(DEBUG, TAG, "HandleCREDPutRequest OUT");
+    OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest OUT");
     return ret;
 }
 
-static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
+/**
+ * The entity handler determines how to process a GET request.
+ */
+static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    OCEntityHandlerResult ret = OC_EH_ERROR;
+    OIC_LOG(INFO, TAG, "HandleGetRequest  processing GET request");
 
-    //Get binary representation of CBOR
-    OicSecCred_t *cred  = NULL;
-    uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData;
-    size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
-    OCStackResult res = CBORPayloadToCred(payload, size, &cred);
-    if ((OC_STACK_OK == res) && cred)
+    // Convert Cred data into CBOR for transmission
+    size_t size = 0;
+    uint8_t *payload = NULL;
+    int secureFlag = 1;
+
+    const OicSecCred_t *cred = gCred;
+    OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
+
+    // A device should always have a default cred. Therefore, payload should never be NULL.
+    OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
+
+    // Send response payload to request originator
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
     {
-        //If the Post request credential has credId, it will be
-        //discarded and the next available credId will be assigned
-        //to it before getting appended to the existing credential
-        //list and updating svr database.
-        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatGetRequest");
     }
-
-    return ret;
+    OICFree(payload);
+    return ehRet;
 }
 
 static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
@@ -1082,15 +1202,13 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         OIC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
-        //TODO :  Handle PUT/DEL methods
+        //TODO :  Remove Handle PUT methods once CTT have changed to POST on OTM
         switch (ehRequest->method)
         {
             case OC_REST_GET:
-                ret = OC_EH_FORBIDDEN;
+                ret = HandleGetRequest(ehRequest);;
                 break;
             case OC_REST_PUT:
-                ret = HandlePutRequest(ehRequest);
-                break;
             case OC_REST_POST:
                 ret = HandlePostRequest(ehRequest);
                 break;
@@ -1114,11 +1232,11 @@ OCStackResult CreateCredResource()
 {
     OCStackResult ret = OCCreateResource(&gCredHandle,
                                          OIC_RSRC_TYPE_SEC_CRED,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_CRED_URI,
                                          CredEntityHandler,
                                          NULL,
-                                         OC_RES_PROP_NONE);
+                                         OC_SECURE);
 
     if (OC_STACK_OK != ret)
     {
@@ -1207,7 +1325,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
             {
-                OicUuid_t deviceID = {.id={}};
+                OicUuid_t deviceID = {.id={0}};
                 // Retrieve Device ID from doxm resource
                 if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
                 {
@@ -1247,15 +1365,42 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             if(IOTVTICAL_VALID_ACCESS != IsRequestWithinValidTime(cred->period, NULL))
                             {
                                 OIC_LOG (INFO, TAG, "Credentials are expired.");
-                                ret = -1;
                                 return ret;
                             }
                         }
 
                         // Copy PSK.
-                        result_length = cred->privateData.len;
-                        memcpy(result, cred->privateData.data, result_length);
-                        return result_length;
+                        // TODO: Added as workaround. Will be replaced soon.
+                        if(OIC_ENCODING_RAW == cred->privateData.encoding)
+                        {
+                            ret = cred->privateData.len;
+                            memcpy(result, cred->privateData.data, ret);
+                        }
+                        else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
+                        {
+                            size_t outBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
+                            uint8_t* outKey = OICCalloc(1, outBufSize);
+                            uint32_t outKeySize;
+                            if(NULL == outKey)
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to memoray allocation.");
+                                return ret;
+                            }
+
+                            if(B64_OK == b64Decode((char*)cred->privateData.data, cred->privateData.len, outKey, outBufSize, &outKeySize))
+                            {
+                                memcpy(result, outKey, outKeySize);
+                                ret = outKeySize;
+                            }
+                            else
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                            }
+
+                            OICFree(outKey);
+                        }
+
+                        return ret;
                     }
                 }
             }
@@ -1264,7 +1409,6 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
         default:
             {
                 OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
-                ret = -1;
             }
             break;
     }
@@ -1297,7 +1441,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     }
 
     uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
-    OicSecKey_t privKey = {privData, OWNER_PSK_LENGTH_128};
+    OicSecKey_t privKey = {privData, OWNER_PSK_LENGTH_128, OIC_ENCODING_RAW};
     OicSecCred_t* cred = NULL;
     int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, rownerID->id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,
@@ -1408,6 +1552,7 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *cborPayload = NULL;
     size_t size = 0;
+    int secureFlag = 0;
     OicUuid_t prevId = {.id={0}};
 
     if(NULL == newROwner)
@@ -1424,7 +1569,7 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
         memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
         memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
-        ret = CredToCBORPayload(gCred, &cborPayload, &size);
+        ret = CredToCBORPayload(gCred, &cborPayload, &size, secureFlag);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         ret = UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, cborPayload, size);

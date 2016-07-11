@@ -51,7 +51,7 @@ uint8_t* GetCrl();
  *
  * @return encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set).
  */
-void  GetDerCrl(ByteArray crlArray);
+void  GetDerCrl(ByteArray* crlArray);
 
 /**
  * This function converts CRL to CBOR
@@ -90,8 +90,10 @@ OCStackResult InitCRLResource();
 
 /**
  * Perform cleanup for CRL resources.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-void DeInitCRLResource();
+OCStackResult DeInitCRLResource();
 
 /**
  * Get an instance of CRL resource.

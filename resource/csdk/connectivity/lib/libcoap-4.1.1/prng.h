@@ -29,7 +29,7 @@
  * implementation for prng().  You might want to change prng() to use
  * a better PRNG on your specific platform.
  */
-static inline int coap_prng_impl(unsigned char *buf, size_t len)
+INLINE_API int coap_prng_impl(unsigned char *buf, size_t len)
 {
     while (len--)
         *buf++ = rand() & 0xFF;
@@ -43,7 +43,7 @@ static inline int coap_prng_impl(unsigned char *buf, size_t len)
  * implementation for prng().  You might want to change prng() to use
  * a better PRNG on your specific platform.
  */
-static inline int
+INLINE_API int
 contiki_prng_impl(unsigned char *buf, size_t len)
 {
     unsigned short v = random_rand();
