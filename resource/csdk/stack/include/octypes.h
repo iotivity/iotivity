@@ -708,6 +708,7 @@ typedef enum
     OC_STACK_RESOURCE_CREATED,
     OC_STACK_RESOURCE_DELETED,
     OC_STACK_CONTINUE,
+    OC_STACK_RESOURCE_CHANGED,
     /** Success status code - END HERE.*/
 
     /** Error status code - START HERE.*/

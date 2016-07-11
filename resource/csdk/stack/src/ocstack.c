@@ -643,6 +643,8 @@ OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
             ret = OC_STACK_RESOURCE_DELETED;
             break;
         case CA_CHANGED:
+            ret = OC_STACK_RESOURCE_CHANGED;
+            break;
         case CA_CONTENT:
         case CA_VALID:
             ret = OC_STACK_OK;
