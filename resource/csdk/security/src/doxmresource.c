@@ -854,10 +854,17 @@ exit:
          * If some error is occured while ownership transfer,
          * ownership transfer related resource should be revert back to initial status.
         */
-        if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
+        if(gDoxm)
         {
-            RestoreDoxmToInitState();
-            RestorePstatToInitState();
+            if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
+            {
+                RestoreDoxmToInitState();
+                RestorePstatToInitState();
+            }
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Invalid DOXM resource.");
         }
     }
     else

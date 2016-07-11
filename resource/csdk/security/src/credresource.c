@@ -1088,12 +1088,20 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                   * If some error is occured while ownership transfer,
                   * ownership transfer related resource should be revert back to initial status.
                   */
-                if(previousMsgId != ehRequest->messageID)
+                const OicSecDoxm_t* doxm =  GetDoxmResourceData();
+                if(doxm)
                 {
-                    OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
-                                        "DOXM will be reverted.");
-                    RestoreDoxmToInitState();
-                    RestorePstatToInitState();
+                    if(!doxm->owned && previousMsgId != ehRequest->messageID)
+                    {
+                        OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
+                                            "DOXM will be reverted.");
+                        RestoreDoxmToInitState();
+                        RestorePstatToInitState();
+                    }
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Invalid DOXM resource");
                 }
             }
         }
