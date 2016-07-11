@@ -62,19 +62,19 @@
 static struct in_addr IPv4MulticastAddress = { 0 };
 
 #define IPv6_DOMAINS       16
-#define IPv6_MULTICAST_INT "ff01::fd"
+#define IPv6_MULTICAST_INT "ff01::158"
 static struct in6_addr IPv6MulticastAddressInt;
-#define IPv6_MULTICAST_LNK "ff02::fd"
+#define IPv6_MULTICAST_LNK "ff02::158"
 static struct in6_addr IPv6MulticastAddressLnk;
-#define IPv6_MULTICAST_RLM "ff03::fd"
+#define IPv6_MULTICAST_RLM "ff03::158"
 static struct in6_addr IPv6MulticastAddressRlm;
-#define IPv6_MULTICAST_ADM "ff04::fd"
+#define IPv6_MULTICAST_ADM "ff04::158"
 static struct in6_addr IPv6MulticastAddressAdm;
-#define IPv6_MULTICAST_SIT "ff05::fd"
+#define IPv6_MULTICAST_SIT "ff05::158"
 static struct in6_addr IPv6MulticastAddressSit;
-#define IPv6_MULTICAST_ORG "ff08::fd"
+#define IPv6_MULTICAST_ORG "ff08::158"
 static struct in6_addr IPv6MulticastAddressOrg;
-#define IPv6_MULTICAST_GLB "ff0e::fd"
+#define IPv6_MULTICAST_GLB "ff0e::158"
 static struct in6_addr IPv6MulticastAddressGlb;
 
 static char *ipv6mcnames[IPv6_DOMAINS] = {
