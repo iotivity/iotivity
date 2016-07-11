@@ -474,6 +474,9 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
         case OC_EH_RESOURCE_DELETED:
             result = OC_STACK_RESOURCE_DELETED;
             break;
+        case OC_EH_CHANGED:
+            result = OC_STACK_RESOURCE_CHANGED;
+            break;
         case OC_EH_RESOURCE_NOT_FOUND:
             result = OC_STACK_NO_RESOURCE;
             break;
