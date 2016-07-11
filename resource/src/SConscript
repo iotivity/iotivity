@@ -23,11 +23,14 @@
 ##
 Import('env')
 
+import os
+
 # Add third party libraries
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
 oclib_env = lib_env.Clone()
+secured = lib_env.get('SECURED')
 ######################################################################
 # Build flags
 ######################################################################
@@ -43,17 +46,17 @@ oclib_env.AppendUnique(CPPPATH = [
 
 oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
-oclib_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+oclib_env.AppendUnique(LIBS = ['oc_logger'])
+oclib_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'ocsrm'])
 
 target_os = env.get('TARGET_OS')
 if target_os == 'linux':
 	oclib_env.AppendUnique(LIBS = ['pthread'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+if target_os not in ['darwin', 'ios', 'windows']:
 	oclib_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 if target_os == 'android':
@@ -66,6 +69,14 @@ if target_os == 'tizen':
 
 if target_os in ['linux'] and env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
+
+if target_os in ['msys_nt', 'windows']:
+	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
+	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
+	oclib_env.AppendUnique(LIBS=['octbstack', 'logger', 'oc_logger','connectivity_abstraction', 'ocsrm', 'c_common', 'routingmanager'])
+	oclib_env.AppendUnique(LIBS=[ 'coap', 'ws2_32' ,'iphlpapi'])
+	if secured == '1':
+		oclib_env.AppendUnique(LIBS=['tinydtls'])
 
 ######################################################################
 # Source files and Targets
@@ -84,10 +95,14 @@ oclib_src = [
 		'OCDirectPairing.cpp'
 	]
 
-oclib = oclib_env.SharedLibrary('oc', oclib_src)
-oclib_env.InstallTarget(oclib, 'liboc')
-oclib_env.UserInstallTargetLib(oclib, 'liboc')
-
+if target_os in ['windows']:
+	oclib_src = oclib_src + ['OCApi.cpp']
+	# TODO: Add OC_EXPORT prefixes to enable DLL generation
+	oclib = oclib_env.StaticLibrary('oc', oclib_src)
+else:
+	oclib = oclib_env.SharedLibrary('oc', oclib_src)
+oclib_env.InstallTarget(oclib, 'oc')
+oclib_env.UserInstallTargetLib(oclib, 'oc')
 header_dir = env.get('SRC_DIR') + '/resource/include/'
 
 oclib_env.UserInstallTargetHeader(header_dir + 'OCApi.h', 'resource', 'OCApi.h')

@@ -346,7 +346,7 @@ def generate( env ) :
 
 
     # read the tools on *nix systems and sets the default parameters
-    elif env["PLATFORM"] in ["darwin", "linux", "posix"] :
+    elif env["PLATFORM"] in ["darwin", "linux", "posix", "msys"] :
 
         if env.WhereIs("unzip") :
             toolset["EXTRACTOR"]["ZIP"]["RUN"]             = "unzip"

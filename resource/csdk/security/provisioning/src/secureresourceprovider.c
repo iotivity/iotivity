@@ -20,7 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "ocprovisioningmanager.h"
 #include "secureresourceprovider.h"
@@ -878,6 +880,9 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
+    OIC_LOG(DEBUG, TAG, "Created payload for ACL:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         selectedDeviceInfo->endpoint.addr,
@@ -1844,4 +1849,123 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
     return OC_STACK_OK;
 }
 
+/**
+ * Internal Function to store results in result array during GetACLResourceCB.
+ */
+static void registerResultForGetACLResourceCB(GetSecData_t *GetSecData,
+                                             OCStackResult stackresult)
+{
+   OIC_LOG_V(INFO, TAG, "Inside registerResultForGetACLResourceCB "
+           "GetSecData->numOfResults is %d\n", GetSecData->numOfResults);
+   memcpy(GetSecData->resArr[(GetSecData->numOfResults)].deviceId.id,
+          GetSecData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
+   GetSecData->resArr[(GetSecData->numOfResults)].res = stackresult;
+   ++(GetSecData->numOfResults);
+}
 
+/**
+ * Callback handler of SRPGetACLResource.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPGetACLResourceCB(void *ctx, OCDoHandle UNUSED,
+                                                  OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(INFO, TAG, "Inside SRPGetACLResourceCB.");
+    (void)UNUSED;
+    VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    GetSecData_t *GetSecData = (GetSecData_t*)ctx;
+    OCProvisionResultCB resultCallback = GetSecData->resultCallback;
+
+    if (clientResponse)
+    {
+        if(OC_STACK_OK == clientResponse->result)
+        {
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+            OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
+            registerResultForGetACLResourceCB(GetSecData, OC_STACK_OK);
+            ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
+                                                    GetSecData->resArr,
+                                                    false);
+             OICFree(GetSecData->resArr);
+             OICFree(GetSecData);
+
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+    }
+    registerResultForGetACLResourceCB(GetSecData, OC_STACK_OK);
+    ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
+                                            GetSecData->resArr,
+                                            false);
+    OIC_LOG_V(ERROR, TAG, "SRPGetACLResourceCB received Null clientResponse");
+    OICFree(GetSecData->resArr);
+    OICFree(GetSecData);
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+
+OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCProvisionResultCB resultCallback)
+{
+    VERIFY_NON_NULL(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        selectedDeviceInfo->endpoint.addr,
+                        selectedDeviceInfo->securePort,
+                        selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_ACL_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SRPGetACLResource : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    cbData.cb = &SRPGetACLResourceCB;
+    GetSecData_t* GetSecData = (GetSecData_t*)OICCalloc(1, sizeof(GetSecData_t));
+    if (NULL == GetSecData)
+    {
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    GetSecData->deviceInfo = selectedDeviceInfo;
+    GetSecData->resultCallback = resultCallback;
+    GetSecData->numOfResults=0;
+    GetSecData->ctx = ctx;
+
+    int noOfRiCalls = 1;
+    GetSecData->resArr = (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
+    if (NULL == GetSecData->resArr)
+    {
+        OICFree(GetSecData);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    cbData.context = (void *)GetSecData;
+    cbData.cd = NULL;
+    OCMethod method = OC_REST_GET;
+    OCDoHandle handle = NULL;
+    OIC_LOG(DEBUG, TAG, "Sending Get ACL to resource server");
+    OCStackResult ret = OCDoResource(&handle, method, query, NULL, NULL,
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(GetSecData->resArr);
+        OICFree(GetSecData);
+    }
+    VERIFY_SUCCESS(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    OIC_LOG(DEBUG, TAG, "OUT SRPGetACLResource");
+
+    return OC_STACK_OK;
+}

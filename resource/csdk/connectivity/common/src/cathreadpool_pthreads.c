@@ -28,12 +28,18 @@
 #define _GNU_SOURCE
 #endif
 #include <errno.h>
+#if defined HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#if defined HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
 #include "cathreadpool.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "uarraylist.h"
 #include "camutex.h"
+#include "platform_features.h"
 
 #define TAG PCF("UTHREADPOOL")
 
@@ -156,7 +162,6 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     info->data = data;
 
     pthread_t threadHandle;
-
     int result = pthread_create(&threadHandle, NULL, ca_thread_pool_pthreads_delegate, info);
 
     if(result != 0)
@@ -194,11 +199,20 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
     for(uint32_t i = 0; i<u_arraylist_length(thread_pool->details->threads_list); ++i)
     {
         pthread_t tid = (pthread_t)u_arraylist_get(thread_pool->details->threads_list, i);
+#if defined(_WIN32)
+        DWORD joinres = WaitForSingleObject(tid, INFINITE);
+        if (WAIT_OBJECT_0 != joinres)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
+        }
+        CloseHandle(tid);
+#else
         int joinres = pthread_join(tid, NULL);
         if(0 != joinres)
         {
             OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
         }
+#endif
     }
 
     u_arraylist_free(&(thread_pool->details->threads_list));

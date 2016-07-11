@@ -30,9 +30,15 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <stdbool.h>
 #include <string.h>
 
@@ -172,7 +178,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx);
  * @param[in] selectedOperationMode selected operation mode
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx);
+static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx);
 
 /**
  * Function to send ownerShip info.
@@ -419,6 +425,28 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
                 &ownerKey, &ptDeviceID);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
+        // TODO: Added as workaround. Will be replaced soon.
+        cred->privateData.encoding = OIC_ENCODING_RAW;
+
+#if 1
+        // NOTE: Test codes to use BASE64 encoded owner PSK.
+        uint32_t outSize = 0;
+        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
+        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
+
+        OICFree( cred->privateData.data );
+        cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
+        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+
+        strncpy(cred->privateData.data, b64Buf, outSize);
+        cred->privateData.data[outSize] = '\0';
+        cred->privateData.encoding = OIC_ENCODING_BASE64;
+        cred->privateData.len = outSize;
+        OICFree(b64Buf);
+#endif //End of Test codes
+
         res = AddCredential(cred);
         if(res != OC_STACK_OK)
         {
@@ -587,12 +615,12 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-            //PUT owner credential to new device according to security spec B.
-            res = PutOwnerCredential(otmCtx);
+            //POST owner credential to new device according to security spec B.
+            res = PostOwnerCredential(otmCtx);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG,
-                        "OwnerUuidUpdateHandler:Failed to send PUT request for onwer credential");
+                        "OwnerUuidUpdateHandler:Failed to send PosT request for onwer credential");
                 SetResult(otmCtx, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
@@ -904,9 +932,9 @@ exit:
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
+static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
 {
-    OIC_LOG(DEBUG, TAG, "IN PutOwnerCredential");
+    OIC_LOG(DEBUG, TAG, "IN PostOwnerCredential");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -922,7 +950,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
-        OIC_LOG(ERROR, TAG, "PutOwnerCredential : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "PostOwnerCredential : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -953,14 +981,15 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         memcpy(&(newCredential.subject), &credSubjectId, sizeof(OicUuid_t));
 
         //Fill private data as empty string
-        newCredential.privateData.data = NULL;
+        newCredential.privateData.data = "";
         newCredential.privateData.len = 0;
+        newCredential.privateData.encoding = ownerCredential->privateData.encoding;
 #ifdef __WITH_X509__
         newCredential.publicData.data = NULL;
         newCredential.publicData.len = 0;
 #endif
         int secureFlag = 0;
-        //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
+        //Send owner credential to new device : POST /oic/sec/cred [ owner credential ]
         if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData,
                                         &secPayload->payloadSize, secureFlag))
         {
@@ -975,7 +1004,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         cbData.cb = &OwnerCredentialHandler;
         cbData.context = (void *)otmCtx;
         cbData.cd = NULL;
-        OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query,
+        OCStackResult res = OCDoResource(NULL, OC_REST_POST, query,
                                          &deviceInfo->endpoint, (OCPayload*)secPayload,
                                          deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
         if (res != OC_STACK_OK)
@@ -989,7 +1018,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         return OC_STACK_NO_RESOURCE;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT PutOwnerCredential");
+    OIC_LOG(DEBUG, TAG, "OUT PostOwnerCredential");
 
     return OC_STACK_OK;
 }

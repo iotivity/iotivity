@@ -45,7 +45,6 @@
 
 #define TAG "OIC_CA_PRTCL_MSG"
 
-#define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)
 #define CA_ENCODE_BUFFER_SIZE (4)
 
@@ -313,7 +312,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 #endif
     {
         OIC_LOG_V(DEBUG, TAG, "msgID is %d", info->messageId);
-        uint16_t message_id;
+        uint16_t message_id = 0;
         if (0 == info->messageId)
         {
             /* initialize message id */
@@ -447,7 +446,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
     }
     else if (str && length)
     {
-        unsigned char uriBuffer[CA_BUFSIZE] = { 0 };
+        unsigned char uriBuffer[CA_MAX_URI_LENGTH] = { 0 };
         unsigned char *pBuf = uriBuffer;
         size_t buflen = sizeof(uriBuffer);
         int res = (target == COAP_OPTION_URI_PATH) ? coap_split_path(str, length, pBuf, &buflen) :
@@ -662,7 +661,7 @@ int CAOrderOpts(void *a, void *b)
 uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
 {
     uint32_t count = 0;
-    coap_opt_t *option;
+    coap_opt_t *option = NULL;
 
     while ((option = coap_option_next(&opt_iter)))
     {
@@ -747,7 +746,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         }
     }
 
-    coap_opt_t *option;
+    coap_opt_t *option = NULL;
     char optionResult[CA_MAX_URI_LENGTH] = {0};
     uint32_t idx = 0;
     uint32_t optionLength = 0;
@@ -962,17 +961,13 @@ CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
     VERIFY_NON_NULL(outInfo, TAG, "outInfo");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
 
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
 #ifdef WITH_TCP
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu_hdr)[0] >> 4);
     }
-    else
 #endif
-    {
-        transport = coap_udp;
-    }
 
     unsigned char* token = NULL;
     unsigned int token_length = 0;
@@ -1053,7 +1048,9 @@ uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
         // should remain that way so a 0 byte of length 1 is inserted.
         len = 1;
         option[0]=0;
-    } else {
+    }
+    else
+    {
         memcpy(option, data, len);
         option[len] = '\0';
     }

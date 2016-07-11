@@ -34,7 +34,9 @@
 
 #include <stddef.h>        // For NULL
 
-#ifndef WITH_ARDUINO
+#if defined(_WIN32)
+# include <windows.h>
+#elif !defined(WITH_ARDUINO)
 # if _POSIX_TIMERS > 0
 #  include <time.h>        // For clock_gettime()
 # else
@@ -50,6 +52,21 @@ uint64_t OICGetCurrentTime(OICTimePrecision precision)
 
 #ifdef WITH_ARDUINO
     currentTime = (TIME_IN_MS == precision) ? millis() : micros();
+#elif defined(_WIN32)
+    FILETIME fileTime;
+
+    GetSystemTimePreciseAsFileTime(&fileTime);
+
+    // fileTime should now be a QWORD hundred-nanoseconds time since 1601
+
+    // MSDN recommends using ULARGE_INTEGER as an intermediate representation for math.
+    ULARGE_INTEGER time = { .LowPart  = fileTime.dwLowDateTime,
+                            .HighPart = fileTime.dwHighDateTime };
+
+    currentTime =
+    (TIME_IN_MS == precision)
+        ? time.QuadPart / (HNS_PER_US * US_PER_MS)
+        : time.QuadPart / (HNS_PER_US);
 #else
 # if _POSIX_TIMERS > 0
 #   if defined(CLOCK_MONOTONIC_COARSE)

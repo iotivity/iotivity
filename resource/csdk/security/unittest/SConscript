@@ -25,27 +25,25 @@ import os.path
 srmtest_env = env.Clone()
 
 src_dir = srmtest_env.get('SRC_DIR')
+target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
 srmtest_env.PrependUnique(CPPPATH = [
-        '../../ocmalloc/include',
+		'../../../c_common/oic_malloc/include',
 		'../../connectivity/inc',
 		'../../connectivity/api',
 		'../../connectivity/external/inc',
 		'../../connectivity/lib/libcoap-4.1.1',
-		'../include',
 		'../include/internal',
 		'../../logger/include',
-		'../../ocmalloc/include',
 		'../../stack/include',
 		'../../stack/include/internal',
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include',
 		'../../../../extlibs/cjson/',
-                '../provisioning/include',
-#		'../../../../extlibs/tinydtls/',
+		'../provisioning/include',
 		'../include'
 		])
 
@@ -62,10 +60,17 @@ srmtest_env.PrependUnique(LIBS = ['ocsrm',
                                     'gtest_main'])
 
 if env.get('SECURED') == '1':
-    srmtest_env.AppendUnique(LIBS = ['tinydtls'])
+    srmtest_env.AppendUnique(LIBS = ['tinydtls', 'timer'])
 
-if not env.get('RELEASE'):
+if env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os == 'windows':
+	srmtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
+	srmtest_env.AppendUnique(LIBS = ['advapi32', 'kernel32', 'ws2_32', 'iphlpapi'])
+else:
+	# TODO: Implement feature check.
+	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])
 
 ######################################################################
 # Source files and Targets
@@ -88,9 +93,9 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
 Alias("test", [unittest])
 
 unittest_src_dir = src_dir + '/resource/csdk/security/unittest/'
-unittest_build_dir = env.get('BUILD_DIR') + 'resource/csdk/security/unittest'
+unittest_build_dir = os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'security', 'unittest') + os.sep
 
-srmtest_env.AppendUnique(CPPDEFINES = ['SECURITY_BUILD_UNITTEST_DIR='+unittest_build_dir])
+srmtest_env.AppendUnique(CPPDEFINES = ['SECURITY_BUILD_UNITTEST_DIR='+unittest_build_dir.encode('string_escape')])
 
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest.json'))
@@ -98,6 +103,8 @@ srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_acl1.json'))
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_default_acl.json'))
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_svr_db.json'))
 
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest.dat'))
@@ -107,17 +114,20 @@ srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_default_acl.dat'))
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_svr_db_prov.dat'))
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_svr_db.dat'))
     
 env.AppendTarget('test')
 if env.get('TEST') == '1':
 	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
+	if target_os in ['linux', 'windows']:
 		out_dir = env.get('BUILD_DIR')
 		result_dir = env.get('BUILD_DIR') + '/test_out/'
 		if not os.path.isdir(result_dir):
 			os.makedirs(result_dir)
 		srmtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		srmtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
+		srmtest_env.AppendENVPath('PATH', [os.path.join(out_dir, 'resource', 'csdk')])
 		srmtest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
 		ut = srmtest_env.Command ('ut', None, out_dir + '/resource/csdk/security/unittest/unittest')
 		AlwaysBuild ('ut')

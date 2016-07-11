@@ -60,7 +60,7 @@ static const uint16_t CBOR_SIZE = 512;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 /** DOXM Map size - Number of mandatory items. */
-static const uint8_t DOXM_MAP_SIZE = 7;
+static const uint8_t DOXM_MAP_SIZE = 9;
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -231,12 +231,44 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     OICFree(strUuid);
     strUuid = NULL;
 
-    //DPC -- not Mandatory, but this type is boolean, so instance always has a value.
+    //x.com.samsung.dpc -- not Mandatory(vendor-specific), but this type is boolean, so instance always has a value.
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DPC_NAME,
         strlen(OIC_JSON_DPC_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Tag.");
     cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->dpc);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Value.");
+
+    //RT -- Mandatory
+    CborEncoder rtArray;
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_RT_NAME,
+            strlen(OIC_JSON_RT_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&doxmMap, &rtArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_DOXM,
+                strlen(OIC_RSRC_TYPE_SEC_DOXM));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&doxmMap, &rtArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+
+    //IF-- Mandatory
+     CborEncoder ifArray;
+     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_IF_NAME,
+             strlen(OIC_JSON_IF_NAME));
+     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+     cborEncoderResult = cbor_encoder_create_array(&doxmMap, &ifArray, 1);
+     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+                strlen(OC_RSRVD_INTERFACE_DEFAULT));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&doxmMap, &ifArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
 
     cborEncoderResult = cbor_encoder_close_container(&encoder, &doxmMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing DoxmMap.");
@@ -313,7 +345,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
 
         int i = 0;
         size_t len = 0;
-        while (cbor_value_is_valid(&oxmType))
+        while (cbor_value_is_valid(&oxmType) && cbor_value_is_text_string(&oxmType))
         {
             cborFindResult = cbor_value_dup_text_string(&oxmType, &doxm->oxmType[i++],
                                                         &len, NULL);
@@ -339,7 +371,7 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmName Array.")
 
         int i = 0;
-        while (cbor_value_is_valid(&oxm))
+        while (cbor_value_is_valid(&oxm) && cbor_value_is_integer(&oxm))
         {
             cborFindResult = cbor_value_get_int(&oxm, (int *) &doxm->oxm[i++]);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmName Value")
@@ -496,6 +528,8 @@ static bool ValidateQuery(const char * query)
     bool bOwnedMatch = false;       // does 'owned' query value matches with doxm.owned status?
     bool bDeviceIDQry = false;      // does querystring contains 'deviceid' query ?
     bool bDeviceIDMatch = false;    // does 'deviceid' query matches with doxm.deviceid ?
+    bool bInterfaceQry = false;      // does querystring contains 'if' query ?
+    bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
 
     OicParseQueryIter_t parseIter = {.attrPos = NULL};
 
@@ -529,6 +563,16 @@ static bool ValidateQuery(const char * query)
                 bDeviceIDMatch = true;
             }
         }
+
+        if (strncasecmp((char *)parseIter.attrPos, OC_RSRVD_INTERFACE, parseIter.attrLen) == 0)
+        {
+            bInterfaceQry = true;
+            if ((strncasecmp((char *)parseIter.valPos, OC_RSRVD_INTERFACE_DEFAULT, parseIter.valLen) == 0))
+            {
+                bInterfaceMatch = true;
+            }
+            return (bInterfaceQry ? bInterfaceMatch: true);
+        }
     }
 
     return ((bOwnedQry ? bOwnedMatch : true) && (bDeviceIDQry ? bDeviceIDMatch : true));
@@ -543,6 +587,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     //Checking if Get request is a query.
     if (ehRequest->query)
     {
+        OIC_LOG_V(DEBUG,TAG,"query:%s",ehRequest->query);
         OIC_LOG(DEBUG, TAG, "HandleDoxmGetRequest processing query");
         if (!ValidateQuery(ehRequest->query))
         {
@@ -563,7 +608,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     {
         if (OC_STACK_OK != DoxmToCBORPayload(gDoxm, &payload, &size))
         {
-            payload = NULL;
+            OIC_LOG(WARNING, TAG, "DoxmToCBORPayload failed in HandleDoxmGetRequest");
         }
     }
 
@@ -584,6 +629,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
     OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0} };
+    static uint16_t previousMsgId = 0;
 
     /*
      * Convert CBOR Doxm data into binary. This will also validate
@@ -683,25 +729,29 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                         caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 
-                        char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
-                        if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                        if(previousMsgId != ehRequest->messageID)
                         {
-                            //Set the device id to derive temporal PSK
-                            SetUuidForRandomPinOxm(&gDoxm->deviceID);
+                            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
+                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                            {
+                                //Set the device id to derive temporal PSK
+                                SetUuidForRandomPinOxm(&gDoxm->deviceID);
 
-                            /**
-                             * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
-                             * Credential should not be saved into SVR.
-                             * For this reason, use a temporary get_psk_info callback to random PIN OxM.
-                             */
-                            caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
-                            VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
-                            ehRet = OC_EH_ERROR;
+                                /**
+                                 * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
+                                 * Credential should not be saved into SVR.
+                                 * For this reason, use a temporary get_psk_info callback to random PIN OxM.
+                                 */
+                                caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
+                                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                                ehRet = OC_EH_OK;
+                            }
+                            else
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
+                                ehRet = OC_EH_ERROR;
+                            }
+                            previousMsgId = ehRequest->messageID;
                         }
 #endif //__WITH_DTLS__
                     }
@@ -778,8 +828,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                 // Update new state in persistent storage
                 if (UpdatePersistentStorage(gDoxm))
                 {
-                    //Update default ACL of security resource to prevent anonymous user access.
-                    if(OC_STACK_OK == UpdateDefaultSecProvACL())
+                    //Update default ACE of security resource to prevent anonymous user access.
+                    if(OC_STACK_OK == UpdateDefaultSecProvACE())
                     {
                         ehRet = OC_EH_OK;
                     }
@@ -863,11 +913,11 @@ OCStackResult CreateDoxmResource()
 {
     OCStackResult ret = OCCreateResource(&gDoxmHandle,
                                          OIC_RSRC_TYPE_SEC_DOXM,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_DOXM_URI,
                                          DoxmEntityHandler,
                                          NULL,
-                                         OC_OBSERVABLE | OC_SECURE |
+                                         OC_SECURE |
                                          OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)

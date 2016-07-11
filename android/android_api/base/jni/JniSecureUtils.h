@@ -35,4 +35,5 @@ class JniSecureUtils
                 std::vector<std::shared_ptr<OC::OCSecureResource>>& deviceListVector);
         static jobject convertUUIDVectorToJavaStrList(JNIEnv *env, OC::UuidList_t &vector);
         static OCStackResult convertJavaACLToOCAcl(JNIEnv *env, jobject in, OicSecAcl_t *out);
+        static OCStackResult convertJavaPdACLToOCAcl(JNIEnv *env, jobject in, OicSecPdAcl_t *pdacl);
 };

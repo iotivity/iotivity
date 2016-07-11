@@ -42,7 +42,7 @@ static const uint16_t CBOR_SIZE = 512;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 // PSTAT Map size - Number of mandatory items
-static const uint8_t PSTAT_MAP_SIZE = 7;
+static const uint8_t PSTAT_MAP_SIZE = 9;
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
@@ -156,6 +156,38 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
     OICFree(strUuid);
     strUuid = NULL;
+
+    //RT -- Mandatory
+    CborEncoder rtArray;
+    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_RT_NAME,
+            strlen(OIC_JSON_RT_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&pstatMap, &rtArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_PSTAT,
+                strlen(OIC_RSRC_TYPE_SEC_PSTAT));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&pstatMap, &rtArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+
+    //IF-- Mandatory
+     CborEncoder ifArray;
+     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_IF_NAME,
+             strlen(OIC_JSON_IF_NAME));
+     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+     cborEncoderResult = cbor_encoder_create_array(&pstatMap, &ifArray, 1);
+     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+                strlen(OC_RSRVD_INTERFACE_DEFAULT));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&pstatMap, &ifArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
 
     cborEncoderResult = cbor_encoder_close_container(&encoder, &pstatMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Closing PSTAT Map.");
@@ -318,21 +350,70 @@ static bool UpdatePersistentStorage(OicSecPstat_t *pstat)
     return bRet;
 }
 
+static bool ValidateQuery(const char * query)
+{
+    OIC_LOG (DEBUG, TAG, "In ValidateQuery");
+    if(NULL == gPstat)
+    {
+        return false;
+    }
+
+    bool bInterfaceQry = false;      // does querystring contains 'if' query ?
+    bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
+
+    OicParseQueryIter_t parseIter = {.attrPos = NULL};
+
+    ParseQueryIterInit((unsigned char*)query, &parseIter);
+
+    while (GetNextQuery(&parseIter))
+    {
+        if (strncasecmp((char *)parseIter.attrPos, OC_RSRVD_INTERFACE, parseIter.attrLen) == 0)
+        {
+            bInterfaceQry = true;
+            if ((strncasecmp((char *)parseIter.valPos, OC_RSRVD_INTERFACE_DEFAULT, parseIter.valLen) == 0))
+            {
+                bInterfaceMatch = true;
+            }
+        }
+    }
+    return (bInterfaceQry ? bInterfaceMatch: true);
+}
 
 /**
  * The entity handler determines how to process a GET request.
  */
 static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
+    OCEntityHandlerResult ehRet = OC_EH_OK;
+
     OIC_LOG(INFO, TAG, "HandlePstatGetRequest  processing GET request");
 
-    // Convert ACL data into CBOR for transmission
+    //Checking if Get request is a query.
+    if (ehRequest->query)
+    {
+        OIC_LOG_V(DEBUG,TAG,"query:%s",ehRequest->query);
+        OIC_LOG(DEBUG, TAG, "HandlePstatGetRequest processing query");
+        if (!ValidateQuery(ehRequest->query))
+        {
+            ehRet = OC_EH_ERROR;
+        }
+    }
+
+    /*
+     * For GET or Valid Query request return doxm resource CBOR payload.
+     * For non-valid query return NULL json payload.
+     * A device will 'always' have a default Pstat, so PstatToCBORPayload will
+     * return valid pstat resource json.
+     */
     size_t size = 0;
     uint8_t *payload = NULL;
-    OCStackResult res = PstatToCBORPayload(gPstat, &payload, &size);
-
-    // A device should always have a default pstat. Therefore, payload should never be NULL.
-    OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
+    if (ehRet == OC_EH_OK)
+    {
+        if(OC_STACK_OK != PstatToCBORPayload(gPstat, &payload, &size))
+        {
+            OIC_LOG(WARNING, TAG, "PstatToCBORPayload failed in HandlePstatGetRequest");
+        }
+    }
 
     // Send response payload to request originator
     if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
@@ -460,11 +541,12 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
 {
     OCStackResult ret = OCCreateResource(&gPstatHandle,
                                          OIC_RSRC_TYPE_SEC_PSTAT,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_PSTAT_URI,
                                          PstatEntityHandler,
                                          NULL,
-                                         OC_RES_PROP_NONE);
+                                         OC_SECURE |
+                                         OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {

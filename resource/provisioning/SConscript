@@ -40,7 +40,7 @@ ocprovision_env.AppendUnique(CPPPATH = [
 		])
 
 target_os = env.get('TARGET_OS')
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	ocprovision_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
 
 if target_os == 'android':

@@ -40,7 +40,7 @@ examples_env.AppendUnique(CPPPATH = [
 		])
 
 target_os = env.get('TARGET_OS')
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 
 	# Note: 'pthread' is in libc for android. On other platform, if use

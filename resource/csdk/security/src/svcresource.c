@@ -230,7 +230,7 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
 
             type = cbor_value_get_type(&svcMap);
             // Service Device Identity
-            if (0 == strcmp(OIC_JSON_SERVICE_DEVICE_ID, name))
+            if (0 == strcmp(OIC_JSON_SERVICE_DEVICE_ID, name) && cbor_value_is_byte_string(&svcMap))
             {
                 uint8_t *subjectId = NULL;
                 cborFindResult = cbor_value_dup_byte_string(&svcMap, &subjectId, &len, NULL);
@@ -239,14 +239,14 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
                 OICFree(subjectId);
             }
             // Service Type
-            if (0 == strcmp(OIC_JSON_SERVICE_TYPE, name))
+            if (0 == strcmp(OIC_JSON_SERVICE_TYPE, name) && cbor_value_is_integer(&svcMap))
             {
                 cborFindResult = cbor_value_get_int(&svcMap, (int *) &svc->svct);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find SVCT.");
             }
 
             // Owners -- Mandatory
-            if (0 == strcmp(OIC_JSON_OWNERS_NAME, name))
+            if (0 == strcmp(OIC_JSON_OWNERS_NAME, name) && cbor_value_is_array(&svcMap))
             {
                 int i = 0;
                 CborValue owners = { .parser = NULL };
@@ -258,7 +258,7 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
                 svc->owners = (OicUuid_t *)OICCalloc(svc->ownersLen, sizeof(*svc->owners));
                 VERIFY_NON_NULL(TAG, svc->owners, ERROR);
 
-                while (cbor_value_is_valid(&owners))
+                while (cbor_value_is_valid(&owners) && cbor_value_is_byte_string(&owners))
                 {
                     uint8_t *owner = NULL;
                     cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
@@ -414,7 +414,7 @@ static OCStackResult CreateSVCResource()
 {
     OCStackResult ret = OCCreateResource(&gSvcHandle,
                                          OIC_RSRC_TYPE_SEC_SVC,
-                                         OIC_MI_DEF,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_SVC_URI,
                                          SVCEntityHandler,
                                          NULL,

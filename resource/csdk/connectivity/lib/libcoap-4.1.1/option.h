@@ -112,7 +112,7 @@ typedef unsigned char coap_opt_filter_t[(COAP_MAX_OPT >> 3) + 1];
  *
  * @param f The filter to clear.
  */
-static inline void coap_option_filter_clear(coap_opt_filter_t f)
+INLINE_API void coap_option_filter_clear(coap_opt_filter_t f)
 {
     memset(f, 0, sizeof(coap_opt_filter_t));
 }
@@ -127,7 +127,7 @@ static inline void coap_option_filter_clear(coap_opt_filter_t f)
  *
  * @return @c 1 if bit was set, @c -1 otherwise.
  */
-inline static int coap_option_setb(coap_opt_filter_t filter, unsigned short type)
+INLINE_API int coap_option_setb(coap_opt_filter_t filter, unsigned short type)
 {
     return bits_setb((uint8_t *) filter, sizeof(coap_opt_filter_t), type);
 }
@@ -142,7 +142,7 @@ inline static int coap_option_setb(coap_opt_filter_t filter, unsigned short type
  *
  * @return @c 1 if bit was set, @c -1 otherwise.
  */
-inline static int coap_option_clrb(coap_opt_filter_t filter, unsigned short type)
+INLINE_API int coap_option_clrb(coap_opt_filter_t filter, unsigned short type)
 {
     return bits_clrb((uint8_t *) filter, sizeof(coap_opt_filter_t), type);
 }
@@ -157,7 +157,7 @@ inline static int coap_option_clrb(coap_opt_filter_t filter, unsigned short type
  *
  * @return @c 1 if bit was set, @c 0 if not, @c -1 on error.
  */
-inline static int coap_option_getb(const coap_opt_filter_t filter, unsigned short type)
+INLINE_API int coap_option_getb(const coap_opt_filter_t filter, unsigned short type)
 {
     return bits_getb((uint8_t *) filter, sizeof(coap_opt_filter_t), type);
 }

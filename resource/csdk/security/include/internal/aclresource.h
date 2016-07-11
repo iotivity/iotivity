@@ -47,9 +47,9 @@ OCStackResult DeInitACLResource();
  *
  * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL.
  *
- * @return reference to @ref OicSecAcl_t if ACL is found, else NULL.
+ * @return reference to @ref OicSecAce_t if ACE is found, else NULL.
  */
-const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **savePtr);
+const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **savePtr);
 
 /**
  * This function converts ACL data into CBOR format.
@@ -70,6 +70,14 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t * acl, uint8_t **outPayload, si
 void DeleteACLList(OicSecAcl_t* acl);
 
 /**
+ * Internal function to duplicate the ACE instance.
+ *
+ * @param ace instance of @ref OicSecAce_t structure to be duplicated.
+ * @return reference to @ref OicSecAce_t if ACE was successfully duplicated.
+ */
+OicSecAce_t* DuplicateACE(const OicSecAce_t* ace);
+
+/**
  * This function installs a new ACL.
  *
  * @param payload cbor value representing a new ACL.
@@ -80,12 +88,12 @@ void DeleteACLList(OicSecAcl_t* acl);
 OCStackResult InstallNewACL(const uint8_t* payload, const size_t size);
 
 /**
- * This function updates default ACL which is required for ownership transfer.
+ * This function updates default ACE which is required for ownership transfer.
  * This function should be invoked after OTM is complete to prevent anonymous user access.
  *
  * @retval OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult UpdateDefaultSecProvACL();
+OCStackResult UpdateDefaultSecProvACE();
 
 /**
  * Internal function to update resource owner

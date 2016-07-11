@@ -2,8 +2,8 @@
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
 
 Name: com-oic-es-sample
-Version:    0.1
-Release:    1
+Version:    1.1.1
+Release:    0
 Summary: Tizen adapter interfacesample application
 URL: http://slp-source.sec.samsung.net
 Source: %{name}-%{version}.tar.gz

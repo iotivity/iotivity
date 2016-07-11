@@ -72,16 +72,17 @@
 #include "directpairing.h"
 //#endif
 
-#ifdef WITH_ARDUINO
+#ifdef HAVE_ARDUINO_TIME_H
 #include "Time.h"
-#else
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include "coap_time.h"
 #include "utlist.h"
 #include "pdu.h"
 
-#ifndef ARDUINO
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
 
@@ -118,7 +119,7 @@ static OCResourceHandle platformResource = {0};
 static OCResourceHandle deviceResource = {0};
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
-static PresenceResource presenceResource;
+static PresenceResource presenceResource = {0};
 static uint8_t PresenceTimeOutSize = 0;
 static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
@@ -437,7 +438,7 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     out->flags = CAToOCTransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
-    out->interface = in->interface;
+    out->ifindex = in->ifindex;
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     memcpy(out->routeData, in->routeData, sizeof(out->routeData));
 #endif
@@ -455,7 +456,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     memcpy(out->routeData, in->routeData, sizeof(out->routeData));
 #endif
     out->port = in->port;
-    out->interface = in->interface;
+    out->ifindex = in->ifindex;
 }
 
 void FixUpClientResponse(OCClientResponse *cr)
@@ -518,7 +519,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 NULL, PAYLOAD_TYPE_REPRESENTATION,
                                                 NULL, 0, 0, NULL,
                                                 OC_OBSERVE_DEREGISTER,
-                                                observer->observeId);
+                                                observer->observeId,
+                                                0);
             if(result != OC_STACK_OK)
             {
                 return result;
@@ -569,7 +571,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     NULL, PAYLOAD_TYPE_REPRESENTATION,
                                                     NULL, 0, 0, NULL,
                                                     OC_OBSERVE_DEREGISTER,
-                                                    observer->observeId);
+                                                    observer->observeId,
+                                                    0);
                 if(result != OC_STACK_OK)
                 {
                     return OC_STACK_ERROR;
@@ -1149,7 +1152,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
             OCClientResponse response =
                 {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
-            response.sequenceNumber = OC_OBSERVE_NO_OPTION;
+            response.sequenceNumber = -1;
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
             response.resourceUri = responseInfo->info.resourceUri;
@@ -1840,7 +1843,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
                                     CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
         }
     }
-    else if(requestResult != OC_STACK_OK)
+    else if(!OCResultToSuccess(requestResult))
     {
         OIC_LOG_V(ERROR, TAG, "HandleStackRequests failed. error: %d", requestResult);
 
@@ -2640,12 +2643,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         requestInfo.info.payloadFormat = CA_FORMAT_UNDEFINED;
     }
 
-    if (result != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, TAG, "CACreateEndpoint error");
-        goto exit;
-    }
-
     // prepare for response
 #ifdef WITH_PRESENCE
     if (method == OC_REST_PRESENCE)
@@ -3079,8 +3076,6 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
         {
             return OC_STACK_INVALID_PARAM;
         }
-        deleteResourceType(resource->rsrcType);
-        resource->rsrcType = NULL;
 
         while (type)
         {
@@ -4131,6 +4126,8 @@ void deleteAllResources()
 #endif // WITH_PRESENCE
         pointer = temp;
     }
+    memset(&platformResource, 0, sizeof(platformResource));
+    memset(&deviceResource, 0, sizeof(deviceResource));
 
     SRMDeInitSecureResources();
 
@@ -4138,6 +4135,7 @@ void deleteAllResources()
     // Ensure that the last resource to be deleted is the presence resource. This allows for all
     // presence notification attributed to their deletion to be processed.
     deleteResource((OCResource *) presenceResource.handle);
+    memset(&presenceResource, 0, sizeof(presenceResource));
 #endif // WITH_PRESENCE
 }
 
@@ -4403,7 +4401,11 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
             previous = pointer;
             pointer = pointer->next;
         }
-        previous->next = newInterface;
+
+        if (previous)
+        {
+            previous->next = newInterface;
+        }
     }
 }
 
@@ -4613,5 +4615,19 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_NOTIMPL;
         default:
             return OC_STACK_ERROR;
+    }
+}
+
+bool OCResultToSuccess(OCStackResult ocResult)
+{
+    switch (ocResult)
+    {
+        case OC_STACK_OK:
+        case OC_STACK_RESOURCE_CREATED:
+        case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_CONTINUE:
+            return true;
+        default:
+            return false;
     }
 }

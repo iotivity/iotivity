@@ -42,9 +42,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include <stdlib.h>
-#ifdef WITH_ARDUINO
-#include <string.h>
-#else
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -136,7 +134,7 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
     }
 
     uint8_t pairingPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t pairingKey = {pairingPSK, OWNER_PSK_LENGTH_128};
+    OicSecKey_t pairingKey = {pairingPSK, OWNER_PSK_LENGTH_128, OIC_ENCODING_RAW};
 
     //Generating PairingPSK using OwnerPSK scheme
     CAResult_t pskRet = CAGenerateOwnerPSK((const CAEndpoint_t *)endpoint,
@@ -297,7 +295,7 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
     dpair = (OicSecDpairing_t *)OICCalloc(1, sizeof(*dpair));
     VERIFY_NON_NULL(TAG, dpair, ERROR);
 
-    while (cbor_value_is_valid(&dpairMap))
+    while (cbor_value_is_valid(&dpairMap) && cbor_value_is_text_string(&dpairMap))
     {
         char *name = NULL;
         size_t len = 0;
@@ -308,7 +306,7 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing a value in DPair map");
 
         type = cbor_value_get_type(&dpairMap);
-        if (0 == strcmp(OIC_JSON_SPM_NAME, name))
+        if (0 == strcmp(OIC_JSON_SPM_NAME, name) && cbor_value_is_integer(&dpairMap))
         {
             cborFindResult = cbor_value_get_int(&dpairMap, (int *) &dpair->spm);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SPM Value");
@@ -559,24 +557,84 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         OicSecPdAcl_t *pdAcl;
         LL_FOREACH(pconf->pdacls, pdAcl)
         {
-            OicSecAcl_t acl;
-            memset(&acl, 0, sizeof(OicSecAcl_t));
-            memcpy(&acl.subject, &gDpair->pdeviceID, sizeof(OicUuid_t));
-            acl.resources = pdAcl->resources;
-            acl.resourcesLen = pdAcl->resourcesLen;
-            memcpy(&acl.rownerID, &pconf->rownerID, sizeof(OicUuid_t));
-            acl.permission = pdAcl->permission;
-            acl.periods = pdAcl->periods;
-            acl.recurrences = pdAcl->recurrences;
-            acl.prdRecrLen = pdAcl->prdRecrLen;
+            OicSecAcl_t* acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+            VERIFY_NON_NULL(TAG, acl, ERROR);
+
+            OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+            VERIFY_NON_NULL(TAG, ace, ERROR);
+
+            LL_APPEND(acl->aces, ace);
+
+            memcpy(&ace->subjectuuid, &gDpair->pdeviceID, sizeof(OicUuid_t));
+
+            for(size_t i = 0; i < pdAcl->resourcesLen; i++)
+            {
+                OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+                VERIFY_NON_NULL(TAG, rsrc, ERROR);
+                LL_APPEND(ace->resources, rsrc);
+
+                //href
+                rsrc->href = OICStrdup(pdAcl->resources[i]);
+
+                // TODO: Append 'if' and 'rt' as workaround
+                // if
+                rsrc->interfaceLen = 1;
+                rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char));
+                VERIFY_NON_NULL(TAG, (rsrc->interfaces), ERROR);
+                rsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+                VERIFY_NON_NULL(TAG, (rsrc->interfaces[0]), ERROR);
+
+                //rt
+                rsrc->typeLen = 1;
+                rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char));
+                VERIFY_NON_NULL(TAG, (rsrc->types), ERROR);
+                rsrc->types[0] = OICStrdup("oic.core");
+                VERIFY_NON_NULL(TAG, (rsrc->types[0]), ERROR);
+            }
+
+            ace->permission = pdAcl->permission;
+
+            //Copy the validity
+            if(pdAcl->periods || pdAcl->recurrences)
+            {
+                OicSecValidity_t* validity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
+                VERIFY_NON_NULL(TAG, validity, ERROR);
+
+                if(pdAcl->periods && pdAcl->periods[0])
+                {
+                    size_t periodLen = strlen(pdAcl->periods[0]) + 1;
+                    validity->period = (char*)OICMalloc(periodLen * sizeof(char));
+                    VERIFY_NON_NULL(TAG, (validity->period), ERROR);
+                    OICStrcpy(validity->period, periodLen, pdAcl->periods[0]);
+                }
+
+                if(pdAcl->recurrences && 0 < pdAcl->prdRecrLen)
+                {
+                    validity->recurrenceLen = pdAcl->prdRecrLen;
+                    validity->recurrences = (char**)OICMalloc(sizeof(char*) * pdAcl->prdRecrLen);
+                    VERIFY_NON_NULL(TAG, (validity->recurrences), ERROR);
+
+                    for(size_t i = 0; i < pdAcl->prdRecrLen; i++)
+                    {
+                        size_t recurrenceLen = strlen(pdAcl->recurrences[i]) + 1;
+                        validity->recurrences[i] = (char*)OICMalloc(recurrenceLen  * sizeof(char));
+                        VERIFY_NON_NULL(TAG, (validity->recurrences[i]), ERROR);
+
+                        OICStrcpy(validity->recurrences[i], recurrenceLen, pdAcl->recurrences[i]);
+                    }
+                }
+
+                LL_APPEND(ace->validities, validity);
+            }
 
             size_t size = 0;
             uint8_t *payload = NULL;
-            if (OC_STACK_OK == AclToCBORPayload(&acl, &payload, &size))
+            if (OC_STACK_OK == AclToCBORPayload(acl, &payload, &size))
             {
                 InstallNewACL(payload, size);
                 OICFree(payload);
             }
+            DeleteACLList(acl);
         }
 
         //update pconf device list
@@ -657,7 +715,7 @@ OCStackResult CreateDpairingResource()
 
     ret = OCCreateResource(&gDpairHandle,
                            OIC_RSRC_TYPE_SEC_DPAIRING,
-                           OIC_MI_DEF,
+                           OC_RSRVD_INTERFACE_DEFAULT,
                            OIC_RSRC_DPAIRING_URI,
                            DpairingEntityHandler,
                            NULL,

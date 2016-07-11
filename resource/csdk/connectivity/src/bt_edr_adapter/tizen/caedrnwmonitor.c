@@ -72,14 +72,14 @@ CAResult_t CAEDRStartNetworkMonitor()
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth initialization failed!, error num [%x]",
                   ret);
-        return;
+        return CA_STATUS_FAILED;
     }
 
     ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
     if(BT_ERROR_NONE != ret)
     {
        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
-       return;
+       return CA_STATUS_FAILED;
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");

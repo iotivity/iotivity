@@ -24,6 +24,9 @@
 /// (properties and methods) and host this resource on the server.
 ///
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <functional>
 
 #include <pthread.h>

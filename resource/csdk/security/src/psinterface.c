@@ -40,7 +40,11 @@
 #define TAG  "SRM-PSI"
 
 //SVR database buffer block size
+#ifdef _WIN32
+#define DB_FILE_SIZE_BLOCK 1023
+#else
 const size_t DB_FILE_SIZE_BLOCK = 1023;
+#endif
 
 /**
  * Gets the Secure Virtual Database size

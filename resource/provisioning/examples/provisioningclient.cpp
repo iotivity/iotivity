@@ -36,9 +36,12 @@
 #include "OCProvisioningManager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
+#include "aclresource.h"
+#include "utlist.h"
 
 #define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
+#define ACL_RESRC_ARRAY_SIZE (3)
 #define CREATE (1)
 #define READ (2)
 #define UPDATE (4)
@@ -270,19 +273,8 @@ int readDeviceNumber(DeviceList_t &list, int count, int *out)
  */
 static void deleteACL(OicSecAcl_t *acl)
 {
-    if (acl)
-    {
-        /* Clean Resources */
-        for (unsigned int i = 0; i < (acl)->resourcesLen; i++)
-        {
-            OICFree((acl)->resources[i]);
-        }
-        OICFree((acl)->resources);
+    DeleteACLList(acl);
 
-        /* Clean ACL node itself */
-        /* Required only if acl was created in heap */
-        OICFree((acl));
-    }
 }
 
 /**
@@ -369,39 +361,54 @@ static int InputACL(OicSecAcl_t *acl)
     printf("Subject : ");
     ret = scanf("%19ms", &temp_id);
 
+    OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    if(NULL == ace)
+    {
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
+        return -1;
+    }
+    LL_APPEND(acl->aces, ace);
+
     if (1 == ret)
     {
         for (int i = 0, j = 0; temp_id[i] != '\0'; i++)
         {
             if (DASH != temp_id[i])
-                acl->subject.id[j++] = temp_id[i];
+                ace->subjectuuid.id[j++] = temp_id[i];
         }
         OICFree(temp_id);
     }
     else
     {
+        deleteACL(acl);
         printf("Error while input\n");
         return -1;
     }
 
     //Set Resource.
+    size_t resourcesLen = 0;
     printf("Num. of Resource : ");
-    ret = scanf("%zu", &acl->resourcesLen);
-    if ((1 != ret) || (acl->resourcesLen <= 0 || acl->resourcesLen > 50))
+    ret = scanf("%zu", &resourcesLen);
+    if ((1 != ret) || (resourcesLen <= 0 || resourcesLen > 50))
     {
+        deleteACL(acl);
         printf("Error while input\n");
         return -1;
     }
     printf("-URI of resource\n");
     printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
-    acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
-    if (NULL == acl->resources)
+    for(size_t i = 0; i < resourcesLen; i++)
     {
-        OIC_LOG(ERROR, TAG, "Error while memory allocation");
-        return -1;
-    }
-    for (size_t i = 0; i < acl->resourcesLen; i++)
-    {
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+        if(NULL == rsrc)
+        {
+            deleteACL(acl);
+            OIC_LOG(ERROR, TAG, "Error while memory allocation");
+            return -1;
+        }
+
+        LL_APPEND(ace->resources, rsrc);
+
         printf("[%zu]Resource : ", i + 1);
         ret = scanf("%64ms", &temp_rsc);
         if (1 != ret)
@@ -410,14 +417,97 @@ static int InputACL(OicSecAcl_t *acl)
             return -1;
         }
 
-        acl->resources[i] = OICStrdup(temp_rsc);
+        rsrc->href = OICStrdup(temp_rsc);
         OICFree(temp_rsc);
-        if (NULL == acl->resources[i])
+
+        char* rsrc_in = NULL;
+        int arrLen = 0;
+        while(1)
         {
-            OIC_LOG(ERROR, TAG, "Error while memory allocation");
-            return -1;
+            printf("         Enter Number of resource type for [%s]: ", rsrc_in);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%d", &arrLen);
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter under %d Again\n", ACL_RESRC_ARRAY_SIZE);
         }
+
+        rsrc->typeLen = arrLen;
+        rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+        if(!rsrc->types)
+        {
+            OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+            goto error;
+        }
+
+        for(int i = 0; i < arrLen; i++)
+        {
+            printf("         Enter ResourceType[%d] Name: ", i+1);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            rsrc->types[i] = OICStrdup(rsrc_in);
+            OICFree(rsrc_in);
+            if(!rsrc->types[i])
+            {
+                OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
+                goto error;
+            }
+        }
+
+        while(1)
+        {
+            printf("         Enter Number of interface name for [%s]: ", rsrc_in);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%d", &arrLen);
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter under %d Again\n", ACL_RESRC_ARRAY_SIZE);
+        }
+
+        rsrc->interfaceLen = arrLen;
+        rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
+        if(!rsrc->interfaces)
+        {
+            OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+            goto error;
+        }
+
+        for(int i = 0; i < arrLen; i++)
+        {
+            printf("         Enter ResourceType[%d] Name: ", i+1);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            rsrc->interfaces[i] = OICStrdup(rsrc_in);
+            OICFree(rsrc_in);
+            if(!rsrc->interfaces[i])
+            {
+                OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
+                goto error;
+            }
+        }
+
     }
+
     // Set Permission
     do
     {
@@ -428,9 +518,9 @@ static int InputACL(OicSecAcl_t *acl)
         if (1 != ret)
         {
             printf("Error while input\n");
-            return -1;
+            goto error;
         }
-        ret = CalculateAclPermission(temp_pms, &(acl->permission));
+        ret = CalculateAclPermission(temp_pms, &(ace->permission));
         OICFree(temp_pms);
     } while (0 != ret );
 
@@ -443,7 +533,7 @@ static int InputACL(OicSecAcl_t *acl)
     if (1 != ret)
     {
         printf("Error while input\n");
-        return -1;
+        goto error;
     }
 
     for (int k = 0, j = 0; temp_id[k] != '\0'; k++)
@@ -456,6 +546,10 @@ static int InputACL(OicSecAcl_t *acl)
     OICFree(temp_id);
 
     return 0;
+
+error:
+    DeleteACLList(acl);
+    return -1;
 }
 
 static int InputCredentials(Credential &cred)

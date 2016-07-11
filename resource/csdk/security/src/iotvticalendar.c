@@ -19,12 +19,16 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Not supported on Arduino due lack of absolute time need to implement iCalendar
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO)
 
 #define _XOPEN_SOURCE  //Needed by strptime
 #include <string.h>
 #include "iotvticalendar.h"
 #include "oic_string.h"
+
+#ifndef HAVE_STRPTIME
+char *strptime(const char *buf, const char *fmt, struct tm *tm);
+#endif
 
 static char dtFormat[] =  "%Y%m%dT%H%M%S"; //date-time format
 static char dFormat[] =  "%Y%m%d";         // date format

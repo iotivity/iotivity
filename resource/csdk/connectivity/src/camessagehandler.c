@@ -140,9 +140,8 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
     }
 
     OIC_LOG_V(DEBUG, TAG, "address : %s", ep->addr);
-    CAResult_t result;
 
-    if(CA_RESPONSE_DATA == dataType)
+    if (CA_RESPONSE_DATA == dataType)
     {
         CAResponseInfo_t* resInfo = (CAResponseInfo_t*)OICCalloc(1, sizeof(CAResponseInfo_t));
         if (!resInfo)
@@ -153,7 +152,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
             return NULL;
         }
 
-        result = CAGetResponseInfoFromPDU(data, resInfo, endpoint);
+        CAResult_t result = CAGetResponseInfoFromPDU(data, resInfo, endpoint);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetResponseInfoFromPDU Failed");
@@ -182,7 +181,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
             return NULL;
         }
 
-        result = CAGetRequestInfoFromPDU(data, endpoint, reqInfo);
+        CAResult_t result = CAGetRequestInfoFromPDU(data, endpoint, reqInfo);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetRequestInfoFromPDU failed");
@@ -415,7 +414,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
     CAResult_t res = CA_SEND_FAILED;
     if (NULL != data->requestInfo)
     {
@@ -520,11 +519,12 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport;
+    coap_transport_type transport = coap_udp;
 
     if (SEND_TYPE_UNICAST == type)
     {
         OIC_LOG(DEBUG,TAG,"Unicast message");
+
 #ifdef ROUTING_GATEWAY
         /*
          * When forwarding a packet, do not attempt retransmission as its the responsibility of
@@ -903,12 +903,12 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         return NULL;
     }
 
-    if(CA_REQUEST_DATA == dataType)
+    if (CA_REQUEST_DATA == dataType)
     {
         // clone request info
         CARequestInfo_t *request = CACloneRequestInfo((CARequestInfo_t *)sendData);
 
-        if(!request)
+        if (!request)
         {
             OIC_LOG(ERROR, TAG, "CACloneRequestInfo failed");
             goto exit;
@@ -917,7 +917,7 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         cadata->type = request->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
         cadata->requestInfo =  request;
     }
-    else if(CA_RESPONSE_DATA == dataType)
+    else if (CA_RESPONSE_DATA == dataType)
     {
         // clone response info
         CAResponseInfo_t *response = CACloneResponseInfo((CAResponseInfo_t *)sendData);
@@ -983,7 +983,7 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
 
 #ifdef SINGLE_THREAD
     CAResult_t result = CAProcessSendData(data);
-    if(CA_STATUS_OK != result)
+    if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, TAG, "CAProcessSendData failed");
         CADestroyData(data, sizeof(CAData_t));
@@ -997,7 +997,7 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     {
         // send block data
         CAResult_t res = CASendBlockWiseData(data);
-        if(CA_NOT_SUPPORTED == res)
+        if (CA_NOT_SUPPORTED == res)
         {
             OIC_LOG(DEBUG, TAG, "normal msg will be sent");
             CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
@@ -1251,7 +1251,7 @@ void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
 
 static void CALogPayloadInfo(CAInfo_t *info)
 {
-    if(info)
+    if (info)
     {
         if (info->options)
         {

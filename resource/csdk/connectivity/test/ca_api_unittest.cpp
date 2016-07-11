@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "platform_features.h"
 #include "gtest/gtest.h"
 #include "cainterface.h"
 #include "cautilinterface.h"
@@ -158,12 +159,6 @@ int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
     return ret;
 }
 #endif  //__WITH_DTLS__
-
-int main(int argc, char **argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
 
 // CAInitialize TC
 // check return value

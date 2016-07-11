@@ -338,11 +338,11 @@ do {                                                                            
     (head)=(head)->next;                                                                       \
   } else {                                                                                     \
     char *_tmp = (char*)(head);                                                                \
-    while (head->next && (head->next != (del))) {                                              \
-      head = head->next;                                                                       \
+    while ((head)->next && ((head)->next != (del))) {                                          \
+      (head) = (head)->next;                                                                   \
     }                                                                                          \
-    if (head->next) {                                                                          \
-      head->next = ((del)->next);                                                              \
+    if ((head)->next) {                                                                        \
+      (head)->next = ((del)->next);                                                            \
     }                                                                                          \
     {                                                                                          \
       char **_head_alias = (char**)&(head);                                                    \

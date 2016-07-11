@@ -21,9 +21,10 @@
 #ifndef TIMER_H_
 #define TIMER_H_
 
-#ifndef WITH_ARDUINO
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else
+#endif
+#ifdef HAVE_ARDUINO_TIME_H
 #include <Time.h>
 #endif
 

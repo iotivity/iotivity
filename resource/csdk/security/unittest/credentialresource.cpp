@@ -52,6 +52,7 @@ OicSecCred_t * getCredList()
 #endif
 
     cred->credType = SYMMETRIC_PAIR_WISE_KEY;
+    cred->privateData.encoding = OIC_ENCODING_RAW;
     cred->privateData.data = (uint8_t *)OICCalloc(1, strlen("My private Key11") + 1);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
     OICStrcpy((char *)cred->privateData.data, strlen("My private Key11")+1,"My private Key11");
@@ -66,6 +67,7 @@ OicSecCred_t * getCredList()
     cred->next->roleIdsLen = 0;
 #endif
     cred->next->credType = SYMMETRIC_PAIR_WISE_KEY;
+    cred->next->privateData.encoding = OIC_ENCODING_RAW;
     sz = strlen("My private Key21") + 1;
     cred->next->privateData.data = (uint8_t *)OICCalloc(1, sz);
     VERIFY_NON_NULL(TAG, cred->next->privateData.data, ERROR);
@@ -110,7 +112,7 @@ static void printCred(const OicSecCred_t * cred)
            OIC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
 #endif /* __WITH_X509__ */
-	OIC_LOG_V(INFO, TAG, "cred->rownerID = %s", credTmp1->rownerID.id);
+    OIC_LOG_V(INFO, TAG, "cred->rownerID = %s", credTmp1->rownerID.id);
     }
 }
 
@@ -430,3 +432,19 @@ TEST(CredResourceTest, GetDtlsX509Credentials)
 }
 
 #endif
+#if defined(__WITH_DTLS__)
+TEST(CredGetDtlsPskCredentialsTest, NullResult)
+{
+    EXPECT_EQ(-1, GetDtlsPskCredentials(CA_DTLS_PSK_KEY, NULL, 0, NULL, 0));
+}
+
+TEST(CredAddTmpPskWithPINTest, NullSubject)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, AddTmpPskWithPIN(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              NULL, 0, NULL, NULL));
+}
+#endif
+TEST(CredCBORPayloadToCredTest, NullPayload)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToCred(NULL, 0, NULL));
+}

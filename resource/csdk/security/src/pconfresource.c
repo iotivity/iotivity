@@ -39,9 +39,7 @@
 #include <stdlib.h>
 #include "psinterface.h"
 #include "security_internals.h"
-#ifdef WITH_ARDUINO
-#include <string.h>
-#else
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -476,7 +474,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
         char *name = NULL;
         size_t len = 0;
         CborType type = cbor_value_get_type(&pconfMap);
-        if (type == CborTextStringType)
+        if (type == CborTextStringType && cbor_value_is_text_string(&pconfMap))
         {
             cborFindResult = cbor_value_dup_text_string(&pconfMap, &name, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
@@ -487,7 +485,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
         if (name)
         {
             //EDP -- Mandatory
-            if(0 == strcmp(OIC_JSON_EDP_NAME, name))
+            if(0 == strcmp(OIC_JSON_EDP_NAME, name) && cbor_value_is_boolean(&pconfMap))
             {
                 cborFindResult = cbor_value_get_boolean(&pconfMap, &pconf->edp);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
@@ -505,7 +503,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 cborFindResult = cbor_value_enter_container(&pconfMap, &prm);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to eneter array");
 
-                while (cbor_value_is_valid(&prm))
+                while (cbor_value_is_valid(&prm) && cbor_value_is_integer(&prm))
                 {
                     cborFindResult = cbor_value_get_int(&prm, (int *)&pconf->prm[i++]);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
@@ -514,7 +512,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 }
             }
             //PIN -- Mandatory
-            if (0 == strcmp(OIC_JSON_PIN_NAME, name))
+            if (0 == strcmp(OIC_JSON_PIN_NAME, name) && cbor_value_is_byte_string(&pconfMap))
             {
                 uint8_t *pin = NULL;
                 cborFindResult = cbor_value_dup_byte_string(&pconfMap, &pin, &len, NULL);
@@ -546,7 +544,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                         char* name = NULL;
                         size_t len = 0;
                         CborType type = cbor_value_get_type(&pdAclMap);
-                        if (type == CborTextStringType)
+                        if (type == CborTextStringType && cbor_value_is_text_string(&pdAclMap))
                         {
                             cborFindResult = cbor_value_dup_text_string(&pdAclMap, &name,
                                     &len, NULL);
@@ -557,7 +555,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                         if (name)
                         {
                             // Resources -- Mandatory
-                            if (strcmp(name, OIC_JSON_RESOURCES_NAME) == 0)
+                            if (strcmp(name, OIC_JSON_RESOURCES_NAME) == 0 && cbor_value_is_array(&pdAclMap))
                             {
                                 int i = 0;
                                 CborValue resources = { .parser = NULL };
@@ -576,7 +574,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                     cborFindResult = cbor_value_enter_container(&resources, &rMap);
                                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Resource Map");
 
-                                    while(cbor_value_is_valid(&rMap))
+                                    while(cbor_value_is_valid(&rMap) && cbor_value_is_text_string(&rMap))
                                     {
                                         char *rMapName = NULL;
                                         size_t rMapNameLen = 0;
@@ -640,15 +638,16 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                             }
 
                             // Permissions -- Mandatory
-                            if (strcmp(name, OIC_JSON_PERMISSION_NAME) == 0)
+                            if (strcmp(name, OIC_JSON_PERMISSION_NAME) == 0 && cbor_value_is_unsigned_integer(&pdAclMap))
                             {
-                                cborFindResult = cbor_value_get_uint64(&pdAclMap,
-                                        (uint64_t *) &pdacl->permission);
+                                uint64_t permission = 0;
+                                cborFindResult = cbor_value_get_uint64(&pdAclMap, &permission);
+                                pdacl->permission = (uint16_t)permission;
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
                             }
 
                             // Period -- Not mandatory
-                            if (strcmp(name, OIC_JSON_PERIODS_NAME) == 0)
+                            if (strcmp(name, OIC_JSON_PERIODS_NAME) == 0 && cbor_value_is_array(&pdAclMap))
                             {
                                 int i = 0;
                                 CborValue period = { .parser = NULL };
@@ -660,7 +659,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 pdacl->periods = (char **) OICCalloc(pdacl->prdRecrLen, sizeof(char*));
                                 VERIFY_NON_NULL(TAG, pdacl->periods, ERROR);
 
-                                while (cbor_value_is_text_string(&period))
+                                while (cbor_value_is_text_string(&period) && cbor_value_is_text_string(&period))
                                 {
                                     cborFindResult = cbor_value_dup_text_string(&period,
                                             &pdacl->periods[i++], &len, NULL);
@@ -672,7 +671,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                             }
 
                             // Recurrence -- Not mandatory
-                            if (strcmp(name, OIC_JSON_RECURRENCES_NAME) == 0)
+                            if (strcmp(name, OIC_JSON_RECURRENCES_NAME) == 0 && cbor_value_is_array(&pdAclMap))
                             {
                                 int i = 0;
                                 CborValue recurrences = { .parser = NULL };
@@ -683,7 +682,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 pdacl->recurrences = (char **) OICCalloc(pdacl->prdRecrLen, sizeof(char*));
                                 VERIFY_NON_NULL(TAG, pdacl->recurrences, ERROR);
 
-                                while (cbor_value_is_text_string(&recurrences))
+                                while (cbor_value_is_text_string(&recurrences) && cbor_value_is_text_string(&recurrences))
                                 {
                                     cborFindResult = cbor_value_dup_text_string(&recurrences,
                                             &pdacl->recurrences[i++], &len, NULL);
@@ -725,7 +724,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
             }
 
             //PDDev -- Mandatory
-            if (strcmp(name, OIC_JSON_PDDEV_LIST_NAME) == 0)
+            if (strcmp(name, OIC_JSON_PDDEV_LIST_NAME) == 0 && cbor_value_is_array(&pconfMap))
             {
                 int i = 0;
                 CborValue pddevs = { .parser = NULL };
@@ -736,7 +735,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
 
                 pconf->pddevs = (OicUuid_t *)OICMalloc(pconf->pddevLen * sizeof(OicUuid_t));
                 VERIFY_NON_NULL(TAG, pconf->pddevs, ERROR);
-                while (cbor_value_is_valid(&pddevs))
+                while (cbor_value_is_valid(&pddevs) && cbor_value_is_text_string(&pddevs))
                 {
                     char *pddev = NULL;
                     cborFindResult = cbor_value_dup_text_string(&pddevs, &pddev, &len, NULL);
@@ -750,7 +749,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
             }
 
             //Mandatory - Device Id
-            if (0 == strcmp(OIC_JSON_DEVICE_ID_NAME, name))
+            if (0 == strcmp(OIC_JSON_DEVICE_ID_NAME, name) && cbor_value_is_text_string(&pconfMap))
             {
                 char *deviceId = NULL;
                 cborFindResult = cbor_value_dup_text_string(&pconfMap, &deviceId, &len, NULL);
@@ -761,7 +760,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
             }
 
             // ROwner -- Mandatory
-            if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name))
+            if (0 == strcmp(OIC_JSON_ROWNERID_NAME, name) && cbor_value_is_text_string(&pconfMap))
             {
                 char *rowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&pconfMap, &rowner, &len, NULL);
@@ -1010,7 +1009,7 @@ OCStackResult CreatePconfResource()
 
     ret = OCCreateResource(&gPconfHandle,
                            OIC_RSRC_TYPE_SEC_PCONF,
-                           OIC_MI_DEF,
+                           OC_RSRVD_INTERFACE_DEFAULT,
                            OIC_RSRC_PCONF_URI,
                            PconfEntityHandler,
                            NULL,
