@@ -50,6 +50,8 @@ OCStackApplicationResult NSConsumerPresenceListener(
             clientResponse->result);
     NS_LOG_V(DEBUG, "Presence sequenceNum : %d",
             clientResponse->sequenceNumber);
+    NS_LOG_V(DEBUG, "Presence Transport Type : %d",
+                clientResponse->devAddr.adapter);
 
     if (!NSIsStartedConsumer())
     {
@@ -92,6 +94,8 @@ OCStackApplicationResult NSProviderDiscoverListener(
             clientResponse->result);
     NS_LOG_V(DEBUG, "Discover sequenceNum : %d",
             clientResponse->sequenceNumber);
+    NS_LOG_V(DEBUG, "Discover Transport Type : %d",
+                    clientResponse->devAddr.adapter);
 
     if (!NSIsStartedConsumer())
     {
@@ -103,9 +107,15 @@ OCStackApplicationResult NSProviderDiscoverListener(
     {
         if (strstr(resource->uri, NS_RESOURCE_URI))
         {
+            OCConnectivityType type = CT_DEFAULT;
+            if (clientResponse->addr->adapter == OC_ADAPTER_TCP)
+            {
+                type = CT_ADAPTER_TCP;
+            }
+
             NSInvokeRequest(NULL, OC_REST_GET, clientResponse->addr,
                     resource->uri, NULL, NSIntrospectProvider, NULL,
-                    clientResponse->addr->adapter);
+                    type);
         }
         resource = resource->next;
     }
@@ -118,10 +128,7 @@ void NSRemoveProviderObj(NSProvider_internal * provider)
     NSOICFree(provider->messageUri);
     NSOICFree(provider->syncUri);
 
-    provider->i_messageHandle = NULL;
-    provider->i_syncHandle = NULL;
-    NSOICFree(provider->i_addr);
-
+    NSRemoveConnections(provider->connection);
     NSOICFree(provider);
 }
 
@@ -142,6 +149,8 @@ OCStackApplicationResult NSIntrospectProvider(
             clientResponse->sequenceNumber);
     NS_LOG_V(DEBUG, "GET response resource uri : %s",
             clientResponse->resourceUri);
+    NS_LOG_V(DEBUG, "GET response Transport Type : %d",
+                    clientResponse->devAddr.adapter);
 
     if (!NSIsStartedConsumer())
     {
@@ -160,12 +169,13 @@ OCStackApplicationResult NSIntrospectProvider(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-void NSGetProviderPostClean(char * pId, char * mUri, char * sUri, OCDevAddr * addr)
+void NSGetProviderPostClean(
+        char * pId, char * mUri, char * sUri, NSProviderConnectionInfo * connection)
 {
     NSOICFree(pId);
     NSOICFree(mUri);
     NSOICFree(sUri);
-    NSOICFree(addr);
+    NSRemoveConnections(connection);
 }
 
 NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
@@ -186,7 +196,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     char * messageUri = NULL;
     char * syncUri = NULL;
     int64_t accepter = 0;
-    OCDevAddr * addr = NULL;
+    NSProviderConnectionInfo * connection = NULL;
 
     NS_LOG(DEBUG, "get information of accepter");
     bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, & accepter);
@@ -199,33 +209,29 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NS_LOG(DEBUG, "get message URI");
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE, & messageUri);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
-            NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
+            NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
 
     NS_LOG(DEBUG, "get sync URI");
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SYNC, & syncUri);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
-            NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
+            NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
 
-    NS_LOG(DEBUG, "get provider address");
-    addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(addr, NULL,
-           NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
-
-    memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
+    NS_LOG(DEBUG, "get provider connection information");
+    NS_VERIFY_NOT_NULL(clientResponse->addr, NULL);
+    connection = NSCreateProviderConnections(clientResponse->addr);
+    NS_VERIFY_NOT_NULL(connection, NULL);
 
     NSProvider_internal * newProvider
         = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProvider, NULL,
-          NSGetProviderPostClean(providerId, messageUri, syncUri, addr));
+          NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
 
     OICStrcpy(newProvider->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
     NSOICFree(providerId);
     newProvider->messageUri = messageUri;
     newProvider->syncUri = syncUri;
     newProvider->accessPolicy = (NSAccessPolicy)accepter;
-    newProvider->i_addr = addr;
-    newProvider->i_messageHandle = NULL;
-    newProvider->i_syncHandle = NULL;
+    newProvider->connection = connection;
 
     return newProvider;
 }
@@ -238,23 +244,33 @@ void NSConsumerDiscoveryTaskProcessing(NSTask * task)
     if (task->taskType == TASK_EVENT_CONNECTED || task->taskType == TASK_CONSUMER_REQ_DISCOVER)
     {
         OCDevAddr * addr = (OCDevAddr *) task->taskData;
+        OCConnectivityType type = CT_DEFAULT;
+        if (addr)
+        {
+            type = addr->adapter;
+        }
 
         NS_LOG(DEBUG, "Request discover [UDP]");
         NSInvokeRequest(NULL, OC_REST_DISCOVER, addr, NS_DISCOVER_QUERY,
-                NULL, NSProviderDiscoverListener, NULL, addr->adapter);
+                NULL, NSProviderDiscoverListener, NULL, type);
     }
     else if (task->taskType == TASK_EVENT_CONNECTED_TCP)
     {
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task->taskData, NSOICFree(task));
         OCDevAddr * addr = (OCDevAddr *) task->taskData;
+        OCConnectivityType type = CT_ADAPTER_TCP;
+        if (addr)
+        {
+            type = addr->adapter;
+        }
 
         NS_LOG(DEBUG, "Request discover [TCP]");
         NSInvokeRequest(NULL, OC_REST_DISCOVER, addr, NS_DISCOVER_QUERY,
-                NULL, NSProviderDiscoverListener, NULL, addr->adapter);
+                NULL, NSProviderDiscoverListener, NULL, type);
 
         NS_LOG(DEBUG, "Subscribe presence [TCP]");
         NSInvokeRequest(NULL, OC_REST_PRESENCE, addr, NS_PRESENCE_SUBSCRIBE_QUERY_TCP,
-                NULL, NSConsumerPresenceListener, NULL, addr->adapter);
+                NULL, NSConsumerPresenceListener, NULL, type);
 
         NSOICFree(task->taskData);
     }

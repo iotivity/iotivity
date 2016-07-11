@@ -35,34 +35,61 @@ NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, 
 NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse);
 NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse);
 
+char * NSGetCloudUri(const char * providerId, char * uri);
+
 NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 {
     NSProvider_internal * provider_internal = (NSProvider_internal *) provider;
     NS_VERIFY_NOT_NULL(provider_internal, NS_ERROR);
 
-    NS_LOG(DEBUG, "get subscribe message query");
-    char * query = NSMakeRequestUriWithConsumerId(provider_internal->messageUri);
-    NS_VERIFY_NOT_NULL(query, NS_ERROR);
+    NSProviderConnectionInfo * connections = provider_internal->connection;
+    while(connections)
+    {
+        if (connections->messageHandle)
+        {
+            continue;
+        }
 
-    NS_LOG(DEBUG, "subscribe message");
-    NS_LOG_V(DEBUG, "subscribe query : %s", query);
-    OCStackResult ret = NSInvokeRequest(&(provider_internal->i_messageHandle),
-                          OC_REST_OBSERVE, provider_internal->i_addr,
-                          query, NULL, NSConsumerMessageListener, NULL, CT_DEFAULT);
-    NS_VERIFY_STACK_OK(ret, NS_ERROR);
-    NSOICFree(query);
+        char * msgUri = OICStrdup(provider_internal->messageUri);
+        char * syncUri = OICStrdup(provider_internal->syncUri);
 
-    NS_LOG(DEBUG, "get subscribe sync query");
-    query = NSMakeRequestUriWithConsumerId(provider_internal->syncUri);
-    NS_VERIFY_NOT_NULL(query, NS_ERROR);
+        OCConnectivityType type = CT_DEFAULT;
+        if (connections->addr->adapter == OC_ADAPTER_TCP)
+        {
+            type = CT_ADAPTER_TCP;
+            msgUri = NSGetCloudUri(provider_internal->providerId, msgUri);
+            syncUri = NSGetCloudUri(provider_internal->providerId, syncUri);
+        }
 
-    NS_LOG(DEBUG, "subscribe sync");
-    NS_LOG_V(DEBUG, "subscribe query : %s", query);
-    ret = NSInvokeRequest(&(provider_internal->i_syncHandle),
-                          OC_REST_OBSERVE, provider_internal->i_addr,
-                          query, NULL, NSConsumerSyncInfoListener, NULL, CT_DEFAULT);
-    NS_VERIFY_STACK_OK(ret, NS_ERROR);
-    NSOICFree(query);
+        NS_LOG(DEBUG, "get subscribe message query");
+        char * query = NULL;
+        query = NSMakeRequestUriWithConsumerId(msgUri);
+        NS_VERIFY_NOT_NULL(query, NS_ERROR);
+
+        NS_LOG(DEBUG, "subscribe message");
+        NS_LOG_V(DEBUG, "subscribe query : %s", query);
+        OCStackResult ret = NSInvokeRequest(&(connections->messageHandle),
+                              OC_REST_OBSERVE, connections->addr, query, NULL,
+                              NSConsumerMessageListener, NULL, type);
+        NS_VERIFY_STACK_OK_WITH_POST_CLEANING(ret, NS_ERROR, NSOICFree(query));
+        NSOICFree(query);
+        NSOICFree(msgUri);
+
+        NS_LOG(DEBUG, "get subscribe sync query");
+        query = NSMakeRequestUriWithConsumerId(syncUri);
+        NS_VERIFY_NOT_NULL(query, NS_ERROR);
+
+        NS_LOG(DEBUG, "subscribe sync");
+        NS_LOG_V(DEBUG, "subscribe query : %s", query);
+        ret = NSInvokeRequest(&(connections->syncHandle),
+                              OC_REST_OBSERVE, connections->addr, query, NULL,
+                              NSConsumerSyncInfoListener, NULL, type);
+        NS_VERIFY_STACK_OK_WITH_POST_CLEANING(ret, NS_ERROR, NSOICFree(query));
+        NSOICFree(query);
+        NSOICFree(syncUri);
+
+        connections = connections->next;
+    }
 
     return NS_OK;
 }
@@ -270,9 +297,31 @@ OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
     OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_STATE, syncInfo->state);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, syncInfo->providerId);
 
-    return NSInvokeRequest(NULL, OC_REST_POST, addr,
-                           NS_SYNC_URI, (OCPayload*)payload,
-                           NSConsumerCheckPostResult, NULL, addr->adapter);
+    char * uri = (char*)OICStrdup(NS_SYNC_URI);
+    OCConnectivityType type = CT_DEFAULT;
+    if(addr->adapter == OC_ADAPTER_TCP)
+    {
+        type = CT_ADAPTER_TCP;
+        uri = NSGetCloudUri(syncInfo->providerId, uri);
+    }
+
+    OCStackResult ret = NSInvokeRequest(NULL, OC_REST_POST, addr,
+                            uri, (OCPayload*)payload,
+                            NSConsumerCheckPostResult, NULL, type);
+    NSOICFree(uri);
+
+    return ret;
+}
+
+char * NSGetCloudUri(const char * providerId, char * uri)
+{
+    size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1;
+    char * retUri = (char *)OICMalloc(uriLen);
+    snprintf(retUri, uriLen, "/%s%s", providerId, uri);
+    NSOICFree(uri);
+    NS_LOG_V(DEBUG, "TCP uri : %s", retUri);
+
+    return retUri;
 }
 
 void NSConsumerCommunicationTaskProcessing(NSTask * task)
@@ -282,27 +331,42 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE)
     {
+        NS_VERIFY_NOT_NULL_V(task->taskData);
         NS_LOG(DEBUG, "Request Subscribe");
         NSResult ret = NSConsumerSubscribeProvider((NSProvider *)task->taskData);
         NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
     }
     else if (task->taskType == TASK_SEND_SYNCINFO)
     {
-        // TODO find target OCDevAddr using provider Id.
+        NS_VERIFY_NOT_NULL_V(task->taskData);
         NSSyncInfo_internal * syncInfo = (NSSyncInfo_internal *)task->taskData;
-        OCDevAddr * addr = syncInfo->i_addr;
-        OCStackResult ret = NSSendSyncInfo((NSSyncInfo *)(task->taskData), addr);
-        NS_VERIFY_STACK_OK_V(ret);
+        NSProviderConnectionInfo * info = syncInfo->connection;
 
-        NSOICFree(syncInfo->i_addr);
+        while(info)
+        {
+            OCStackResult ret = NSSendSyncInfo((NSSyncInfo *)(task->taskData), info->addr);
+            if (ret != OC_STACK_OK)
+            {
+                NS_LOG_V(ERROR, "send sync info fail : %d", info->addr->adapter);
+            }
+
+            info = info->next;
+        }
+
+        NSRemoveConnections(syncInfo->connection);
         NSOICFree(syncInfo);
     }
     else if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL)
     {
         NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
 
-        OCCancel(provider->i_messageHandle, NS_QOS, NULL, 0);
-        OCCancel(provider->i_syncHandle, NS_QOS, NULL, 0);
+        NSProviderConnectionInfo * connections = provider->connection;
+        while(connections)
+        {
+            OCCancel(connections->messageHandle, NS_QOS, NULL, 0);
+            OCCancel(connections->syncHandle, NS_QOS, NULL, 0);
+            connections = connections->next;
+        }
     }
     else
     {

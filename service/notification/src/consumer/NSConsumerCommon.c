@@ -24,7 +24,22 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
+#include <pthread.h>
+
 #define NS_QUERY_CONSUMER_ID "consumerid"
+
+pthread_mutex_t ** NSGetStackMutex()
+{
+    static pthread_mutex_t * g_stackMutext = NULL;
+    if (g_stackMutext == NULL)
+    {
+        g_stackMutext = (pthread_mutex_t *)OICMalloc(sizeof(pthread_mutex_t));
+        NS_VERIFY_NOT_NULL(g_stackMutext, NULL);
+        pthread_mutex_init(g_stackMutext, NULL);
+    }
+
+    return & g_stackMutext;
+}
 
 char ** NSGetConsumerId()
 {
@@ -234,22 +249,79 @@ void NSRemoveMessage(NSMessage_consumer * msg)
     NSOICFree(msg);
 }
 
+void NSRemoveConnections(NSProviderConnectionInfo * connections)
+{
+    NSProviderConnectionInfo * tmp = connections;
+
+    while(tmp)
+    {
+        tmp->messageHandle = NULL;
+        tmp->syncHandle = NULL;
+        NSOICFree(tmp->addr);
+        tmp = tmp->next;
+    }
+
+    NSOICFree(connections);
+}
+
+NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr * inAddr)
+{
+    NSProviderConnectionInfo * connections
+        = (NSProviderConnectionInfo *)OICMalloc(sizeof(NSProviderConnectionInfo));
+    NS_VERIFY_NOT_NULL(connections, NULL);
+
+    connections->addr = NULL;
+    connections->messageHandle = NULL;
+    connections->syncHandle = NULL;
+    connections->next = NULL;
+
+    if (inAddr)
+    {
+        connections->addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(connections->addr, NULL, NSRemoveConnections(connections));
+        memcpy(connections->addr, inAddr, sizeof(OCDevAddr));
+    }
+
+    return connections;
+}
+
+NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * conn)
+{
+    NS_VERIFY_NOT_NULL(conn, NULL);
+    NSProviderConnectionInfo * tmp = conn;
+
+    NSProviderConnectionInfo * retInfo = NSCreateProviderConnections(tmp->addr);
+    tmp = tmp->next;
+    NSProviderConnectionInfo * copyInfo = retInfo;
+
+    while(tmp)
+    {
+        copyInfo = NSCreateProviderConnections(tmp->addr);
+        NS_VERIFY_NOT_NULL(copyInfo, NULL);
+
+        copyInfo->messageHandle = tmp->messageHandle;
+        copyInfo->syncHandle = tmp->syncHandle;
+        tmp = tmp->next;
+        copyInfo = copyInfo->next;
+    }
+
+    return retInfo;
+}
+
 NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
 {
     NS_VERIFY_NOT_NULL(prov, NULL);
 
+    NSProviderConnectionInfo * connections = NSCopyProviderConnections(prov->connection);
+    NS_VERIFY_NOT_NULL(connections, NULL);
+
     NSProvider_internal * newProv = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
-    NS_VERIFY_NOT_NULL(newProv, NULL);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProv, NULL, NSRemoveConnections(connections));
 
+    newProv->connection = connections;
     OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
-    newProv->i_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProv, NULL, OICFree(newProv));
-    memcpy(newProv->i_addr, prov->i_addr, sizeof(OCDevAddr));
-
     newProv->messageUri = OICStrdup(prov->messageUri);
     newProv->syncUri = OICStrdup(prov->syncUri);
-    newProv->i_messageHandle = prov->i_messageHandle;
-    newProv->i_syncHandle = prov->i_syncHandle;
     newProv->accessPolicy = prov->accessPolicy;
 
     return newProv;
@@ -258,9 +330,7 @@ void NSRemoveProvider(NSProvider_internal * prov)
 {
     NSOICFree(prov->messageUri);
     NSOICFree(prov->syncUri);
-    NSOICFree(prov->i_messageHandle);
-    NSOICFree(prov->i_syncHandle);
-    NSOICFree(prov->i_addr);
+    NSRemoveConnections(prov->connection);
 
     NSOICFree(prov);
 }
@@ -270,12 +340,20 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
         const char * queryUrl, OCPayload * payload,
         void * callbackFunc, void * callbackData, OCConnectivityType type)
 {
-    OCCallbackData cbdata;
+    int mutexRet = pthread_mutex_lock(*(NSGetStackMutex()));
+    NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
+
+    OCCallbackData cbdata = { 0, };
 
     cbdata.cb = callbackFunc;
     cbdata.context = callbackData;
     cbdata.cd = NULL;
 
-    return OCDoResource(handle, method, queryUrl, addr,
-            payload, type, NS_QOS, &cbdata, NULL, 0);
+    OCStackResult ret = OCDoResource(handle, method, queryUrl, addr,
+                                     payload, type, NS_QOS, &cbdata, NULL, 0);
+
+    mutexRet = pthread_mutex_unlock(*(NSGetStackMutex()));
+    NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
+
+    return ret;
 }

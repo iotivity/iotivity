@@ -123,6 +123,17 @@ extern "C" {
         } \
     }
 
+typedef struct NSProviderConnectionInfo
+{
+    OCDevAddr * addr;
+
+    OCDoHandle messageHandle;
+    OCDoHandle syncHandle;
+
+    struct NSProviderConnectionInfo * next;
+
+} NSProviderConnectionInfo;
+
 typedef struct
 {
     char providerId[NS_DEVICE_ID_LENGTH];
@@ -130,10 +141,9 @@ typedef struct
     char * messageUri;
     char * syncUri;
 
-    OCDoHandle i_messageHandle;
-    OCDoHandle i_syncHandle;
-    OCDevAddr * i_addr;
     NSAccessPolicy accessPolicy;
+
+    NSProviderConnectionInfo * connection;
 
 } NSProvider_internal;
 
@@ -143,7 +153,8 @@ typedef struct
     char providerId[NS_DEVICE_ID_LENGTH];
     NSSyncType state;
 
-    OCDevAddr * i_addr;
+    NSProviderConnectionInfo * connection;
+
 } NSSyncInfo_internal;
 
 typedef struct
@@ -191,6 +202,10 @@ NSResult NSConsumerPushEvent(NSTask *);
 
 NSMessage_consumer * NSCopyMessage(NSMessage_consumer *);
 void NSRemoveMessage(NSMessage_consumer *);
+
+NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr * inAddr);
+NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * conn);
+void NSRemoveConnections(NSProviderConnectionInfo * connections);
 
 NSProvider_internal * NSCopyProvider(NSProvider_internal *);
 void NSRemoveProvider(NSProvider_internal *);

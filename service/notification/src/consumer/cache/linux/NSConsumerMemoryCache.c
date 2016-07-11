@@ -103,6 +103,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         return NS_ERROR;
     }
 
+    NS_LOG_V(DEBUG, "cache type : %d", type);
     if (type == NS_CONSUMER_CACHE_MESSAGE)
     {
         pthread_mutex_unlock(mutex);
@@ -293,16 +294,17 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     if (it)
     {
         NSProvider_internal * provObj = (NSProvider_internal *) it->data;
-        it->data = (void *) NSCopyProvider(newProvObj);
-        if (!it->data)
-        {
-            NS_LOG (ERROR, "Failed to CopyProvider");
-            it->data = (void *) provObj;
-            pthread_mutex_unlock(mutex);
 
-            return NS_ERROR;
+        NSProviderConnectionInfo * infos = provObj->connection;
+        NSProviderConnectionInfo * lastConn = infos->next;
+        while(lastConn)
+        {
+            infos = lastConn;
+            lastConn = lastConn->next;
         }
-        NSRemoveProvider(provObj);
+        infos->next = NSCopyProviderConnections(newProvObj->connection);
+
+        NSRemoveProvider(newProvObj);
         pthread_mutex_unlock(mutex);
 
         return NS_OK;
@@ -316,6 +318,7 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
 
         return NS_ERROR;
     }
+    NS_LOG_V(DEBUG, "New Object address : %s:%d", newProvObj->connection->addr->addr, newProvObj->connection->addr->port);
     obj->data = (void *) NSCopyProvider(newProvObj);
 
     NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!2");
@@ -336,12 +339,13 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     {
         list->head = obj;
         list->tail = obj;
-        pthread_mutex_unlock(mutex);
 
         NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3");
         prov = (NSProvider_internal *)list->tail->data;
         NS_LOG_V (DEBUG, "%s", prov->providerId);
         NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3");
+
+        pthread_mutex_unlock(mutex);
 
         return NS_OK;
     }
