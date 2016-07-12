@@ -1366,6 +1366,34 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
     if (info.types)
     {
         savedDeviceInfo.types = CloneOCStringLL(info.types);
+        OCStringLL *type = info.types;
+        bool found = false;
+        while (type)
+        {
+            if (type && type->value && 0 == strcmp(type->value, OC_RSRVD_RESOURCE_TYPE_DEVICE))
+            {
+                found = true;
+            }
+            type = type->next;
+        }
+        if (!found)
+        {
+            // Append the oic.wk.d at the start of rt link parameter value.
+            OCStringLL *dest = (OCStringLL*)OICCalloc (1, sizeof (OCStringLL));
+            if (!dest)
+            {
+                DeleteDeviceInfo();
+                return OC_STACK_NO_MEMORY;
+            }
+            dest->value = OICStrdup (OC_RSRVD_RESOURCE_TYPE_DEVICE);
+            if (!dest->value)
+            {
+                DeleteDeviceInfo();
+                return OC_STACK_NO_MEMORY;
+            }
+            dest->next = savedDeviceInfo.types;
+            savedDeviceInfo.types = dest;
+        }
         if(!savedDeviceInfo.types && info.types)
         {
             DeleteDeviceInfo();
