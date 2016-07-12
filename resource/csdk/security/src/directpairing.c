@@ -332,7 +332,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
 
     if (clientResponse)
     {
-        if(OC_STACK_OK == clientResponse->result)
+        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
             // result
             OIC_LOG(INFO, TAG, "DirectPairingFinalizeHandler : success PUT"
@@ -588,7 +588,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
 
     if (clientResponse)
     {
-        if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
+        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
             // result
             OIC_LOG(INFO, TAG, "DirectPairingHandler : success POST request to /oic/sec/dpairing");

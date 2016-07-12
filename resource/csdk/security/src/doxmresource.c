@@ -231,7 +231,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     OICFree(strUuid);
     strUuid = NULL;
 
-    //DPC -- not Mandatory, but this type is boolean, so instance always has a value.
+    //x.org.iotivity.dpc -- not Mandatory(vendor-specific), but this type is boolean, so instance always has a value.
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DPC_NAME,
         strlen(OIC_JSON_DPC_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Tag.");
