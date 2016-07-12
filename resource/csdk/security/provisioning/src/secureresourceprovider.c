@@ -197,9 +197,9 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
     OIC_LOG(INFO, TAG, "provisionCredentialCB2 called");
     if (clientResponse)
     {
-        if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
+        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
-            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CREATED, 2);
+            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, 2);
             OCStackResult res =  PDMLinkDevices(&credData->deviceInfo1->doxm->deviceID,
                     &credData->deviceInfo2->doxm->deviceID);
             if (OC_STACK_OK != res)
@@ -249,10 +249,10 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
     const OCProvisionResultCB resultCallback = credData->resultCallback;
     if (clientResponse)
     {
-        if (OC_STACK_RESOURCE_CREATED == clientResponse->result)
+        if (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
             // send credentials to second device
-            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CREATED,1);
+            registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED,1);
             OCStackResult res = provisionCredentials(credInfo, deviceInfo, credData,
                     provisionCredentialCB2);
             DeleteCredList(credInfo);
@@ -433,9 +433,9 @@ static OCStackApplicationResult SRPProvisionCRLCB(void *ctx, OCDoHandle UNUSED,
 
     if (clientResponse)
     {
-        if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
+        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
-            registerResultForCRLProvisioning(crlData, OC_STACK_RESOURCE_CREATED);
+            registerResultForCRLProvisioning(crlData, OC_STACK_RESOURCE_CHANGED);
             ((OCProvisionResultCB)(resultCallback))(crlData->ctx, crlData->numOfResults,
                                                     crlData->resArr,
                                                     false);
@@ -617,9 +617,9 @@ static OCStackApplicationResult provisionCertCB(void *ctx, OCDoHandle UNUSED,
     OIC_LOG(INFO, TAG, "provisionCertCred called");
     if (clientResponse)
     {
-        if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
+        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
-            registerResultForCertProvisioning(certData, OC_STACK_RESOURCE_CREATED);
+            registerResultForCertProvisioning(certData, OC_STACK_RESOURCE_CHANGED);
             ((OCProvisionResultCB)(resultCallback))(certData->ctx, certData->numOfResults,
                                                     certData->resArr,
                                                     false);
@@ -837,9 +837,9 @@ static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
 
     if (clientResponse)
     {
-        if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
+        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
-            registerResultForACLProvisioning(aclData, OC_STACK_RESOURCE_CREATED);
+            registerResultForACLProvisioning(aclData, OC_STACK_RESOURCE_CHANGED);
             ((OCProvisionResultCB)(resultCallback))(aclData->ctx, aclData->numOfResults,
                                                     aclData->resArr,
                                                     false);
@@ -967,7 +967,7 @@ static OCStackApplicationResult SRPProvisionDirectPairingCB(void *ctx, OCDoHandl
 
     if (clientResponse)
     {
-        if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
+        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
         {
             registerResultForDirectPairingProvisioning(pconfData, OC_STACK_OK);
             ((OCProvisionResultCB)(resultCallback))(pconfData->ctx, pconfData->numOfResults,

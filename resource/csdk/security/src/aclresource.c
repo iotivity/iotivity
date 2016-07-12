@@ -1250,7 +1250,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
             {
                 if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size) == OC_STACK_OK)
                 {
-                    ehRet = OC_EH_RESOURCE_CREATED;
+                    ehRet = OC_EH_CHANGED;
                 }
                 OICFree(cborPayload);
             }

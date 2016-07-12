@@ -1043,7 +1043,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                         OIC_LOG(ERROR, TAG, "OwnerPSK was generated successfully.");
                         if(OC_STACK_OK == AddCredential(cred))
                         {
-                            ret = OC_EH_RESOURCE_CREATED;
+                            ret = OC_EH_CHANGED;
                         }
                         else
                         {
@@ -1057,7 +1057,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                         ret = OC_EH_ERROR;
                     }
 
-                    if(OC_EH_RESOURCE_CREATED == ret)
+                    if(OC_EH_CHANGED == ret)
                     {
                         /**
                          * in case of random PIN based OxM,
@@ -1115,7 +1115,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                 }
             }
 
-            if(OC_EH_RESOURCE_CREATED != ret)
+            if(OC_EH_CHANGED != ret)
             {
                 /*
                   * If some error is occured while ownership transfer,
@@ -1146,7 +1146,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
              * to it before getting appended to the existing credential
              * list and updating svr database.
              */
-            ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
+            ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
         }
 #else //not __WITH_DTLS__
         /*
@@ -1155,11 +1155,11 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
          * to it before getting appended to the existing credential
          * list and updating svr database.
          */
-        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
+        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
 #endif//__WITH_DTLS__
     }
 
-    if (OC_EH_RESOURCE_CREATED != ret)
+    if (OC_EH_CHANGED != ret)
     {
         if(OC_STACK_OK != RemoveCredential(&cred->subject))
         {
