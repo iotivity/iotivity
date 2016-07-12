@@ -47,6 +47,8 @@
 #include "byte_array.h"
 #endif /* __WITH_X509__ */
 
+#include "platform_features.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -139,7 +141,7 @@ typedef enum
 /**
  * Extract Reason Code from Access Response.
  */
-static inline SRMAccessResponseReasonCode_t GetReasonCode(
+INLINE_API SRMAccessResponseReasonCode_t GetReasonCode(
     SRMAccessResponse_t response)
 {
     SRMAccessResponseReasonCode_t reason =
@@ -150,7 +152,7 @@ static inline SRMAccessResponseReasonCode_t GetReasonCode(
 /**
  * Returns 'true' iff request should be passed on to RI layer.
  */
-static inline bool IsAccessGranted(SRMAccessResponse_t response)
+INLINE_API bool IsAccessGranted(SRMAccessResponse_t response)
 {
     if(ACCESS_GRANTED == (response & ACCESS_GRANTED))
     {
@@ -161,6 +163,12 @@ static inline bool IsAccessGranted(SRMAccessResponse_t response)
         return false;
     }
 }
+
+typedef struct OicSecRsrc OicSecRsrc_t;
+
+typedef struct OicSecValidity OicSecValidity_t;
+
+typedef struct OicSecAce OicSecAce_t;
 
 typedef struct OicSecAcl OicSecAcl_t;
 
@@ -321,6 +329,35 @@ struct OicSecKey
 
 };
 
+struct OicSecRsrc
+{
+    char *href; // 0:R:S:Y:String
+    char *rel; // 1:R:S:N:String
+    char** types; // 2:R:S:N:String Array
+    size_t typeLen; // the number of elts in types
+    char** interfaces; // 3:R:S:N:String Array
+    size_t interfaceLen; // the number of elts in interfaces
+    OicSecRsrc_t *next;
+};
+
+struct OicSecValidity
+{
+    char* period; // 0:R:S:Y:String
+    char** recurrences; // 1:R:M:Y:Array of String
+    size_t recurrenceLen; // the number of elts in recurrence
+    OicSecValidity_t *next;
+};
+
+struct OicSecAce
+{
+    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
+    OicUuid_t subjectuuid; // 0:R:S:Y:uuid
+    OicSecRsrc_t *resources; // 1:R:M:Y:Resource
+    uint16_t permission; // 2:R:S:Y:UINT16
+    OicSecValidity_t *validities; // 3:R:M:N:Time-interval
+    OicSecAce_t *next;
+};
+
 /**
  * /oic/sec/acl (Access Control List) data type.
  * Derived from OIC Security Spec; see Spec for details.
@@ -328,17 +365,8 @@ struct OicSecKey
 struct OicSecAcl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t           subject;        // 0:R:S:Y:uuid TODO: this deviates
-                                        // from spec and needs to be updated
-                                        // in spec (where it's a String).
-    size_t              resourcesLen;   // the number of elts in Resources
-    char                **resources;    // 1:R:M:Y:String
-    uint16_t            permission;     // 2:R:S:Y:UINT16
-    size_t              prdRecrLen;     // the number of elts in Periods
-    char                **periods;       // 3:R:M*:N:String (<--M*; see Spec)
-    char                **recurrences;   // 5:R:M:N:String
-    OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
-    OicSecAcl_t         *next;
+    OicUuid_t           rownerID;        // 0:R:S:Y:oic.uuid
+    OicSecAce_t         *aces; // 1:R:M:N:ACE
 };
 
 /**
@@ -439,6 +467,9 @@ struct OicSecSacl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     //TODO fill in from OIC Security Spec
+#if defined(_MSC_VER)
+    uint8_t unused; // VS doesn't like empty structs
+#endif
 };
 
 /**

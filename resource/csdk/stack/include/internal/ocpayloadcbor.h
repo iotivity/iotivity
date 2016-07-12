@@ -27,10 +27,10 @@
 extern "C"
 {
 #endif
-OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadType type,
+OC_EXPORT_TEST OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadType type,
         const uint8_t* payload, size_t payloadSize);
 
-OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* size);
+OC_EXPORT_TEST OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* size);
 
 #ifdef __cplusplus
 }

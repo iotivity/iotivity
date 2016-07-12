@@ -27,6 +27,9 @@
 #include <map>
 #include <memory>
 #include <iterator>
+#if defined(_MSC_VER)
+#include <functional>
+#endif
 
 #include "octypes.h"
 #include "OCHeaderOption.h"
@@ -46,6 +49,9 @@ namespace OC
 
 namespace OC
 {
+#if defined(_MSC_VER)
+    extern std::ostream& oclog();
+#else
     typedef boost::iostreams::stream<OC::oc_log_stream>     log_target_t;
 
     namespace detail
@@ -66,7 +72,7 @@ namespace OC
     {
         return detail::oclog_target();
     };
-
+#endif
 } // namespace OC
 
 namespace OC

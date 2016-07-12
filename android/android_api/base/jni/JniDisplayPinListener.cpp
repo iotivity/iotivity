@@ -33,7 +33,7 @@ JniDisplayPinListener::~JniDisplayPinListener()
     LOGI("~JniDisplayPinListener()");
     if (m_jgListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
         if (NULL == env) return;
         env->DeleteGlobalRef(m_jgListener);
@@ -43,9 +43,12 @@ JniDisplayPinListener::~JniDisplayPinListener()
 
 void JniDisplayPinListener::displayPinCallback(char *pinBuf, size_t pinSize)
 {
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
-    if (NULL == env) return;
+    if (NULL == env)
+    {
+        return;
+    }
 
     jclass clsL = env->GetObjectClass(m_jgListener);
 

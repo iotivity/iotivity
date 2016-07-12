@@ -141,6 +141,13 @@ void CATCPStopServer();
 void CATCPSetPacketReceiveCallback(CATCPPacketReceivedCallback callback);
 
 /**
+ * Set this callback for receiving the changed connection information from peer devices.
+ *
+ * @param[in]  callback    Callback to be notified when connection state changes.
+ */
+void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler);
+
+/**
  * API to send unicast TCP data.
  *
  * @param[in]  endpoint          complete network address to send to.

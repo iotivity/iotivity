@@ -307,48 +307,55 @@ def generate( env ) :
     # read tools for Windows system
     if env["PLATFORM"] <> "darwin" and "win" in env["PLATFORM"] :
 
-        if env.WhereIs("7z") :
+        if env.WhereIs('7z', env.get('PATH')):
             toolset["EXTRACTOR"]["TARGZ"]["RUN"]           = "7z"
             toolset["EXTRACTOR"]["TARGZ"]["LISTEXTRACTOR"] = __fileextractor_win_7zip
             toolset["EXTRACTOR"]["TARGZ"]["LISTFLAGS"]     = "x"
             toolset["EXTRACTOR"]["TARGZ"]["LISTSUFFIX"]    = "-so -y | ${UNPACK['EXTRACTOR']['TARGZ']['RUN']} l -sii -ttar -y -so"
             toolset["EXTRACTOR"]["TARGZ"]["EXTRACTFLAGS"]  = "x"
-            toolset["EXTRACTOR"]["TARGZ"]["EXTRACTSUFFIX"] = "-so -y | ${UNPACK['EXTRACTOR']['TARGZ']['RUN']} x -sii -ttar -y -oc:${UNPACK['EXTRACTDIR']}"
+            toolset["EXTRACTOR"]["TARGZ"]["EXTRACTSUFFIX"] = "-so -y | ${UNPACK['EXTRACTOR']['TARGZ']['RUN']} x -sii -ttar -y -o${UNPACK['EXTRACTDIR']}"
 
             toolset["EXTRACTOR"]["TARBZ"]["RUN"]           = "7z"
             toolset["EXTRACTOR"]["TARBZ"]["LISTEXTRACTOR"] = __fileextractor_win_7zip
             toolset["EXTRACTOR"]["TARBZ"]["LISTFLAGS"]     = "x"
             toolset["EXTRACTOR"]["TARBZ"]["LISTSUFFIX"]    = "-so -y | ${UNPACK['EXTRACTOR']['TARGZ']['RUN']} l -sii -ttar -y -so"
             toolset["EXTRACTOR"]["TARBZ"]["EXTRACTFLAGS"]  = "x"
-            toolset["EXTRACTOR"]["TARBZ"]["EXTRACTSUFFIX"] = "-so -y | ${UNPACK['EXTRACTOR']['TARGZ']['RUN']} x -sii -ttar -y -oc:${UNPACK['EXTRACTDIR']}"
+            toolset["EXTRACTOR"]["TARBZ"]["EXTRACTSUFFIX"] = "-so -y | ${UNPACK['EXTRACTOR']['TARGZ']['RUN']} x -sii -ttar -y -o${UNPACK['EXTRACTDIR']}"
 
             toolset["EXTRACTOR"]["BZIP"]["RUN"]            = "7z"
             toolset["EXTRACTOR"]["BZIP"]["LISTEXTRACTOR"]  = __fileextractor_win_7zip
             toolset["EXTRACTOR"]["BZIP"]["LISTFLAGS"]      = "l"
             toolset["EXTRACTOR"]["BZIP"]["LISTSUFFIX"]     = "-y -so"
             toolset["EXTRACTOR"]["BZIP"]["EXTRACTFLAGS"]   = "x"
-            toolset["EXTRACTOR"]["BZIP"]["EXTRACTSUFFIX"]  = "-y -oc:${UNPACK['EXTRACTDIR']}"
+            toolset["EXTRACTOR"]["BZIP"]["EXTRACTSUFFIX"]  = "-y -o${UNPACK['EXTRACTDIR']}"
 
             toolset["EXTRACTOR"]["GZIP"]["RUN"]            = "7z"
             toolset["EXTRACTOR"]["GZIP"]["LISTEXTRACTOR"]  = __fileextractor_win_7zip
             toolset["EXTRACTOR"]["GZIP"]["LISTFLAGS"]      = "l"
             toolset["EXTRACTOR"]["GZIP"]["LISTSUFFIX"]     = "-y -so"
             toolset["EXTRACTOR"]["GZIP"]["EXTRACTFLAGS"]   = "x"
-            toolset["EXTRACTOR"]["GZIP"]["EXTRACTSUFFIX"]  = "-y -oc:${UNPACK['EXTRACTDIR']}"
+            toolset["EXTRACTOR"]["GZIP"]["EXTRACTSUFFIX"]  = "-y -o${UNPACK['EXTRACTDIR']}"
 
             toolset["EXTRACTOR"]["ZIP"]["RUN"]             = "7z"
             toolset["EXTRACTOR"]["ZIP"]["LISTEXTRACTOR"]   = __fileextractor_win_7zip
             toolset["EXTRACTOR"]["ZIP"]["LISTFLAGS"]       = "l"
             toolset["EXTRACTOR"]["ZIP"]["LISTSUFFIX"]      = "-y -so"
             toolset["EXTRACTOR"]["ZIP"]["EXTRACTFLAGS"]    = "x"
-            toolset["EXTRACTOR"]["ZIP"]["EXTRACTSUFFIX"]   = "-y -oc:${UNPACK['EXTRACTDIR']}"
+            toolset["EXTRACTOR"]["ZIP"]["EXTRACTSUFFIX"]   = "-y -o${UNPACK['EXTRACTDIR']}"
 
             toolset["EXTRACTOR"]["TAR"]["RUN"]             = "7z"
             toolset["EXTRACTOR"]["TAR"]["LISTEXTRACTOR"]   = __fileextractor_win_7zip
             toolset["EXTRACTOR"]["TAR"]["LISTFLAGS"]       = "l"
             toolset["EXTRACTOR"]["TAR"]["LISTSUFFIX"]      = "-y -ttar -so"
             toolset["EXTRACTOR"]["TAR"]["EXTRACTFLAGS"]    = "x"
-            toolset["EXTRACTOR"]["TAR"]["EXTRACTSUFFIX"]   = "-y -ttar -oc:${UNPACK['EXTRACTDIR']}"
+            toolset["EXTRACTOR"]["TAR"]["EXTRACTSUFFIX"]   = "-y -ttar -o${UNPACK['EXTRACTDIR']}"
+        else:
+            print '''*********************** Error ************************
+*                                                    *
+* Please make sure that 7-zip is in your System PATH *
+*                                                    *
+******************************************************
+'''
 
         # here can add some other Windows tools, that can handle the archive files
         # but I don't know which ones can handle all file types
@@ -356,7 +363,7 @@ def generate( env ) :
 
 
     # read the tools on *nix systems and sets the default parameters
-    elif env["PLATFORM"] in ["darwin", "linux", "posix"] :
+    elif env["PLATFORM"] in ["darwin", "linux", "posix", "msys"] :
 
         if env.WhereIs("unzip") :
             toolset["EXTRACTOR"]["ZIP"]["RUN"]             = "unzip"

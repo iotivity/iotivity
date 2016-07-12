@@ -34,35 +34,49 @@ JniOnDeleteListener::~JniOnDeleteListener()
 {
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (nullptr == env) return;
-
+        if (nullptr == env)
+        {
+            return;
+        }
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
 
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniOnDeleteListener::onDeleteCallback(const HeaderOptions& headerOptions, const int eCode)
 {
-    jint envRet;
+    jint envRet = JNI_ERR;
     JNIEnv *env = GetJNIEnv(envRet);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
     jclass clsL = env->GetObjectClass(jListener);
     if (!clsL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -72,14 +86,20 @@ void JniOnDeleteListener::onDeleteCallback(const HeaderOptions& headerOptions, c
         if (!ex)
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
         jmethodID midL = env->GetMethodID(clsL, "onDeleteFailed", "(Ljava/lang/Throwable;)V");
         if (!midL)
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
         env->CallVoidMethod(jListener, midL, ex);
@@ -90,7 +110,10 @@ void JniOnDeleteListener::onDeleteCallback(const HeaderOptions& headerOptions, c
         if (!jHeaderOptionList)
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
 
@@ -98,14 +121,20 @@ void JniOnDeleteListener::onDeleteCallback(const HeaderOptions& headerOptions, c
         if (!midL)
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
         env->CallVoidMethod(jListener, midL, jHeaderOptionList);
     }
 
     checkExAndRemoveListener(env);
-    if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == envRet)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniOnDeleteListener::checkExAndRemoveListener(JNIEnv* env)

@@ -320,7 +320,8 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
     OIC_LOG_V(DEBUG, RM_TAG, "createoption dlen %u slen [%u]", dLen, sLen);
 
     unsigned int totalLength = 0;
-    void *tempData = NULL;
+    uint8_t *tempData = NULL;
+
     if (0 == dLen && 0 == sLen)
     {
         OIC_LOG(DEBUG, RM_TAG, "Source and destination is not present");

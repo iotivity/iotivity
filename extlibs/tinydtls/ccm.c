@@ -46,7 +46,7 @@
       (A)[i] |= (C) & 0xFF;						\
   }
 
-static inline void 
+INLINE_API void 
 block0(size_t M,       /* number of auth bytes */
        size_t L,       /* number of bytes to encode message length */
        size_t la,      /* l(a) octets additional authenticated data */
@@ -145,7 +145,7 @@ add_auth_data(rijndael_ctx *ctx, const unsigned char *msg, size_t la,
   } 
 }
 
-static inline void
+INLINE_API void
 encrypt(rijndael_ctx *ctx, size_t L, unsigned long counter,
 	unsigned char *msg, size_t len,
 	unsigned char A[DTLS_CCM_BLOCKSIZE],
@@ -158,7 +158,7 @@ encrypt(rijndael_ctx *ctx, size_t L, unsigned long counter,
   memxor(msg, S, len);
 }
 
-static inline void
+INLINE_API void
 mac(rijndael_ctx *ctx, 
     unsigned char *msg, size_t len,
     unsigned char B[DTLS_CCM_BLOCKSIZE],

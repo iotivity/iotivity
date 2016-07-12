@@ -60,7 +60,15 @@ namespace OC
 
             OCResourceIdentifier(const OCResourceIdentifier&) = default;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCResourceIdentifier(OCResourceIdentifier&& o):
+                m_resourceUri(std::move(o.m_resourceUri)),
+                m_representation(o.m_representation)
+            {
+            }
+#else
             OCResourceIdentifier(OCResourceIdentifier&&) = default;
+#endif
 
             OCResourceIdentifier& operator=(const OCResourceIdentifier&) = delete;
 
@@ -103,8 +111,32 @@ namespace OC
     public:
         typedef std::shared_ptr<OCResource> Ptr;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+        OCResource(OCResource&& o):
+            m_clientWrapper(std::move(o.m_clientWrapper)),
+            m_uri(std::move(o.m_uri)),
+            m_resourceId(std::move(o.m_resourceId)),
+            m_devAddr(std::move(o.m_devAddr)),
+            m_useHostString(o.m_useHostString),
+            m_isObservable(o.m_isObservable),
+            m_isCollection(o.m_isCollection),
+            m_resourceTypes(std::move(o.m_resourceTypes)),
+            m_interfaces(std::move(o.m_interfaces)),
+            m_children(std::move(m_children)),
+            m_observeHandle(std::move(m_observeHandle)),
+            m_headerOptions(std::move(m_headerOptions))
+        {
+        }
+#else
         OCResource(OCResource&&) = default;
-        OCResource& operator=(OCResource&&) = default;
+#endif
+        // Explicitly delete the copy ctor since VS2013 would try to generate one, and
+        // the standard says that defaulting the move ctor should delete the copy ctor.
+        OCResource(const OCResource&) = delete;
+
+        // We cannot support copy/move assigns since OCResourceIdentifier doesn't.
+        OCResource& operator=(OCResource&&) = delete;
+        OCResource& operator=(const OCResource&) = delete;
 
         /**
         * Virtual destructor

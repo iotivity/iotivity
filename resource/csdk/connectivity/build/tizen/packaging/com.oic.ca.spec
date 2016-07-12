@@ -4,8 +4,8 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ca
-Version:    0.1
-Release:    1
+Version:    1.1.1
+Release:    0
 Summary: Tizen oicca application
 URL: http://slp-source.sec.samsung.net
 Source: %{name}-%{version}.tar.gz

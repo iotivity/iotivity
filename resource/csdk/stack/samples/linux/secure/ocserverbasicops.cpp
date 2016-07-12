@@ -21,9 +21,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"

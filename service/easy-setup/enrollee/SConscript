@@ -68,13 +68,13 @@ if enrollee_env.get('SECURED') == '1':
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	enrollee_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 
 ######################################################################
 # Linux Enrollee
 ######################################################################
-if target_os == 'linux':
+if target_os in ['linux']:
 	enrollee_env.PrependUnique(CPPPATH = [
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi'])
 
@@ -112,7 +112,7 @@ if target_os == 'arduino':
 ######################################################################
 es_enrollee_src = None
 
-if target_os == 'linux':
+if target_os in ['linux']:
 	es_enrollee_common_src =	[enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.c',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c',
@@ -149,7 +149,7 @@ if target_os == 'arduino':
 if target_os == 'arduino':
 	SConscript('../sampleapp/enrollee/arduino/SConscript')
 
-if target_os == 'linux':
+if target_os in ['linux']:
 	SConscript('../sampleapp/enrollee/linux/SConscript')
 	#Build UnitTestcases for Enrollee
 	SConscript('../enrollee/unittests/SConscript')

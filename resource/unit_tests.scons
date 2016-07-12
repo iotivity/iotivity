@@ -29,14 +29,14 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 build_dir = env.get('BUILD_DIR')
 
-if target_os == 'linux':
+if target_os in ['linux']:
 	# Verify that 'google unit test' library is installed.  If not,
 	# get it and install it
-	SConscript(src_dir + '/extlibs/gtest/SConscript')
+	SConscript('#extlibs/gtest/SConscript')
 
 	# Verify that 'hippomocks' mocking code is installed.  If not,
 	# get it and install it
-	SConscript(src_dir + '/extlibs/hippomocks.scons')
+	SConscript('#extlibs/hippomocks.scons')
 
     # Build Common unit tests
 	SConscript('c_common/oic_string/test/SConscript')
@@ -60,13 +60,27 @@ if target_os == 'linux':
 		SConscript('csdk/security/provisioning/unittest/SConscript')
 		SConscript('provisioning/unittests/SConscript')
 
-elif target_os == 'darwin':
+elif target_os == 'windows' and env.get('TEST') == '1':
 	# Verify that 'google unit test' library is installed.  If not,
 	# get it and install it
-	SConscript(src_dir + '/extlibs/gtest/SConscript')
+	SConscript('#extlibs/gtest/SConscript')
 
 	# Build C stack's unit tests.
 	SConscript('csdk/stack/test/SConscript')
 	SConscript('csdk/connectivity/test/SConscript')
 
+	# Build Security Resource Manager unit tests
+	SConscript('csdk/security/unittest/SConscript')
 
+	# Build Provisioning API unit test
+	if env.get('SECURED') == '1':
+		SConscript('csdk/security/provisioning/unittest/SConscript')
+
+elif target_os in ['darwin', 'msys_nt']:
+	# Verify that 'google unit test' library is installed.  If not,
+	# get it and install it
+	SConscript('#extlibs/gtest/SConscript')
+
+	# Build C stack's unit tests.
+	SConscript('csdk/stack/test/SConscript')
+	SConscript('csdk/connectivity/test/SConscript')

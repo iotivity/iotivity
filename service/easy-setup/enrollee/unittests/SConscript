@@ -17,19 +17,20 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
 import os
 import os.path
-enrollee_test_env = env.Clone()
 
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+enrollee_test_env = gtest_env.Clone()
 src_dir = enrollee_test_env.get('SRC_DIR')
+target_os = enrollee_test_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
 
 enrollee_test_env.PrependUnique(CPPPATH = [
-		enrollee_test_env.get('SRC_DIR') + '/extlibs/gtest/gtest-1.7.0/include',
 		enrollee_test_env.get('SRC_DIR') + '/resource/c_common/ocrandom/include',
 		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/stack/include/internal',
 		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
@@ -48,29 +49,28 @@ enrollee_test_env.PrependUnique(CPPPATH = [
 		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
 		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
 
-enrollee_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-enrollee_test_env.AppendUnique(LIBS = ['-lpthread'])
-enrollee_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-enrollee_test_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
-enrollee_test_env.PrependUnique(LIBS = ['m',
-                                    'octbstack',
+if target_os not in ['windows']:
+	enrollee_test_env.PrependUnique(LIBS = ['m'])
+	enrollee_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+	enrollee_test_env.AppendUnique(LIBS = ['pthread'])
+enrollee_test_env.AppendUnique(LIBPATH = [enrollee_test_env.get('BUILD_DIR')])
+enrollee_test_env.PrependUnique(LIBS = [ 'octbstack',
                                     'ocsrm',
                                     'connectivity_abstraction',
                                     'coap',
                                     'gtest',
                                     'gtest_main'])
 
-target_os = env.get('TARGET_OS')
 if target_os != 'darwin':
     enrollee_test_env.PrependUnique(LIBS = ['oc_logger'])
 
-if env.get('SECURED') == '1':
+if enrollee_test_env.get('SECURED') == '1':
     enrollee_test_env.AppendUnique(LIBS = ['tinydtls'])
 
-if env.get('LOGGING'):
+if enrollee_test_env.get('LOGGING'):
 	enrollee_test_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if env.get('ES_SOFTAP_MODE') == 'ENROLLEE_SOFTAP':
+if enrollee_test_env.get('ES_SOFTAP_MODE') == 'ENROLLEE_SOFTAP':
 	print "ES_SOFTAP_MODE == ENROLLEE_SOFTAP"
 	enrollee_test_env.AppendUnique(CPPDEFINES = ['ENROLLEE_SOFTAP'])
 
@@ -83,10 +83,9 @@ enrolleetests = enrollee_test_env.Program('enrolleetests', ['enrolleetests.cpp']
 
 Alias("test", [enrolleetests])
 
-env.AppendTarget('test')
-if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
+enrolleetests.AppendTarget('test')
+if enrollee_test_env.get('TEST') == '1':
+	if target_os in ['linux']:
                 from tools.scons.RunTest import *
                 run_test(enrollee_test_env,
                          '',

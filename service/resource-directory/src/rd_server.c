@@ -123,7 +123,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
 static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *ehRequest, __attribute__((unused)) void *callbackParameter)
+        OCEntityHandlerRequest *ehRequest, OC_ANNOTATE_UNUSED void *callbackParameter)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 

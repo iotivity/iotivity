@@ -33,7 +33,9 @@ extern "C"
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 //-----------------------------------------------------------------------------
@@ -223,6 +225,24 @@ TEST(StackStart, StackStartSuccessClientServer)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, StackStartSuccessServerThenClient)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, StackStartSuccessClientThenServer)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
@@ -1678,6 +1698,8 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+// Visual Studio versions earlier than 2015 have bugs in is_pod and report the wrong answer.
+#if !defined(_MSC_VER) || (_MSC_VER >= 1900)
 TEST(PODTests, OCHeaderOption)
 {
     EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
@@ -1685,8 +1707,9 @@ TEST(PODTests, OCHeaderOption)
 
 TEST(PODTests, OCCallbackData)
 {
-    EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
+    EXPECT_TRUE(std::is_pod<OCCallbackData>::value);
 }
+#endif
 
 TEST(OCDoDirectPairingTests, Nullpeer)
 {

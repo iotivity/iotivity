@@ -215,7 +215,6 @@ if env.get('LOGGING'):
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
-#env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 env.AppendUnique(LIBPATH = [src_dir + '/resource/csdk/connectivity/lib/android'])
@@ -238,4 +237,4 @@ if platform_ver == '' or int(platform_ver) > 20:
 SConscript('compatibility/cpp11_compat.scons')
 
 # Make sure that boost for android is available
-SConscript(env.get('SRC_DIR') + '/extlibs/boost/SConscript')
+SConscript('#extlibs/boost/SConscript')

@@ -29,9 +29,9 @@
 extern "C" {
 #endif
 
-#if defined(__ANDROID__) || defined(__linux__)
+#ifndef ARDUINO
 #include <time.h>
-#elif defined ARDUINO
+#else
 // MEGA has 16 input pins whereas Due has only 12 input pins
 #define ANALOG_IN (10)
 #endif

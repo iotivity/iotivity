@@ -47,7 +47,7 @@ namespace OC
         std::mutex serverWrapperLock;
         std::map <OCResourceHandle, OC::EntityHandler>  entityHandlerMap;
         std::map <OCResourceHandle, std::string> resourceUriMap;
-        EntityHandler defaultDeviceEntityHandler = 0;
+        EntityHandler defaultDeviceEntityHandler;
     }
 }
 

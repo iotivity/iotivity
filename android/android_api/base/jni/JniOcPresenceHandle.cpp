@@ -24,7 +24,8 @@
 
 JniOcPresenceHandle::JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCPresenceHandle presenceHandle)
     : m_jniListener(jniListener), m_presenceHandle(presenceHandle)
-{}
+{
+}
 
 JniOcPresenceHandle::~JniOcPresenceHandle()
 {

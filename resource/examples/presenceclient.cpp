@@ -25,7 +25,7 @@
 #include <pthread.h>
 #include <mutex>
 #include <condition_variable>
-
+#include <getopt.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
 

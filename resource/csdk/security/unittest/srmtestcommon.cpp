@@ -28,7 +28,7 @@
 #define STRINGIZE(x) STRINGIZE2(x)
 
 // TODO: Remove this, once all cbor related are completed.
-char* ReadFile(const char* filename)
+char* ReadFileToBuffer(const char* filename)
 {
 
     FILE *fp = NULL;

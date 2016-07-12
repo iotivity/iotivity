@@ -26,9 +26,10 @@
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
 
-#ifdef WITH_ARDUINO
+#ifdef WITH_STRING_H
 #include <string.h>
-#else
+#endif
+#ifdef WITH_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -63,6 +64,8 @@
 
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \
              TAG, #arg " is NULL"); return (retVal); } }
+
+#include "platform_features.h"
 
 extern OCResource *headResource;
 static OCPlatformInfo savedPlatformInfo = {0};
@@ -702,8 +705,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
 
     OCStackResult discoveryResult = OC_STACK_ERROR;
-
-    bool bMulticast    = false;     // Was the discovery request a multicast request?
     OCPayload* payload = NULL;
 
     OIC_LOG(INFO, TAG, "Entering HandleVirtualResource");
@@ -775,11 +776,13 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                             discPayload->name = OICStrdup(savedDeviceInfo.deviceName);
                             VERIFY_NON_NULL(discPayload->name, ERROR, OC_STACK_NO_MEMORY);
                         }
-                        discPayload->type = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
+                        discPayload->type = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
                         VERIFY_NON_NULL(discPayload->type, ERROR, OC_STACK_NO_MEMORY);
-                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_LL);
-                        OCResourcePayloadAddStringLL(&discPayload->interface, OC_RSRVD_INTERFACE_DEFAULT);
-                        VERIFY_NON_NULL(discPayload->interface, ERROR, OC_STACK_NO_MEMORY);
+                        discPayload->type->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
+                        VERIFY_NON_NULL(discPayload->type->value, ERROR, OC_STACK_NO_MEMORY);
+                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_LL);
+                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_DEFAULT);
+                        VERIFY_NON_NULL(discPayload->iface, ERROR, OC_STACK_NO_MEMORY);
                     }
                     bool foundResourceAtRD = false;
                     for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
@@ -862,15 +865,24 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
         else
         {
-            payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
-                savedDeviceInfo.types, savedDeviceInfo.specVersion, savedDeviceInfo.dataModelVersion);
-            if (!payload)
+            char *dataModelVersions = OCCreateString(savedDeviceInfo.dataModelVersions);
+            if (!dataModelVersions)
             {
                 discoveryResult = OC_STACK_NO_MEMORY;
             }
             else
             {
-                discoveryResult = OC_STACK_OK;
+                payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
+                    savedDeviceInfo.types, savedDeviceInfo.specVersion, dataModelVersions);
+                if (!payload)
+                {
+                     discoveryResult = OC_STACK_NO_MEMORY;
+                }
+                else
+                {
+                     discoveryResult = OC_STACK_OK;
+                }
+                OICFree(dataModelVersions);
             }
         }
     }
@@ -934,19 +946,19 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
-        else if(bMulticast == false && (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
-               (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
+        else if(((request->devAddr.flags &  OC_MULTICAST) == false) &&
+            (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+            (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
         {
-            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
-                discovery request", discoveryResult, virtualUriInRequest);
+            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
+                discoveryResult, virtualUriInRequest);
             SendNonPersistantDiscoveryResponse(request, resource, NULL,
                 (discoveryResult == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
         }
         else
         {
             // Ignoring the discovery request as per RFC 7252, Section #8.2
-            OIC_LOG(INFO, TAG, "Silently ignoring the request since device does not have \
-                any useful data to send");
+            OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send. ");
         }
     }
 
@@ -1339,10 +1351,10 @@ void DeleteDeviceInfo()
     OICFree(savedDeviceInfo.deviceName);
     OCFreeOCStringLL(savedDeviceInfo.types);
     OICFree(savedDeviceInfo.specVersion);
-    OICFree(savedDeviceInfo.dataModelVersion);
+    OCFreeOCStringLL(savedDeviceInfo.dataModelVersions);
     savedDeviceInfo.deviceName = NULL;
     savedDeviceInfo.specVersion = NULL;
-    savedDeviceInfo.dataModelVersion = NULL;
+    savedDeviceInfo.dataModelVersions = NULL;
 }
 
 static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
@@ -1384,10 +1396,10 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
         }
     }
 
-    if (info.dataModelVersion)
+    if (info.dataModelVersions)
     {
-        savedDeviceInfo.dataModelVersion = OICStrdup(info.dataModelVersion);
-        if(!savedDeviceInfo.dataModelVersion && info.dataModelVersion)
+        savedDeviceInfo.dataModelVersions = CloneOCStringLL(info.dataModelVersions);
+        if(!savedDeviceInfo.dataModelVersions && info.dataModelVersions)
         {
             DeleteDeviceInfo();
             return OC_STACK_NO_MEMORY;
@@ -1395,8 +1407,13 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
     }
     else
     {
-        savedDeviceInfo.dataModelVersion = OICStrdup(OC_DATA_MODEL_VERSION);
-        if(!savedDeviceInfo.dataModelVersion && OC_DATA_MODEL_VERSION)
+        savedDeviceInfo.dataModelVersions = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
+        if (!savedDeviceInfo.dataModelVersions)
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+        savedDeviceInfo.dataModelVersions->value = OICStrdup(OC_DATA_MODEL_VERSION);
+        if(!savedDeviceInfo.dataModelVersions->value && OC_DATA_MODEL_VERSION)
         {
             DeleteDeviceInfo();
             return OC_STACK_NO_MEMORY;

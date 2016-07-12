@@ -30,37 +30,39 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-// Platform check can be extended to check and/or define more, or could be
-// moved into a config.h
-#if !defined(__ARDUINO__) && !defined(ARDUINO)
-#define HAVE_UNISTD_H 1
-#endif
-
 // Pull in _POSIX_TIMERS feature test macro to check for
 // clock_gettime() support.
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-
-// if we have unistd.h, we're a Unix system
+#endif
 #include <time.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
 #endif
 
 #include "logger.h"
 #include "string.h"
 #include "logger_types.h"
+#include "platform_features.h"
 
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
 #endif
+
+#if defined(_MSC_VER)
+#define LINE_BUFFER_SIZE (16 * 2) + 16 + 1  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#else
+static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#endif //defined(_MSC_VER)
+
 #ifdef __ANDROID__
-#elif defined __linux__ || defined __APPLE__
+#elif defined __linux__ || defined __APPLE__ || defined _WIN32
 static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
                                       OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
 #endif
-
-// Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
-static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
@@ -72,9 +74,10 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
     static android_LogPriority LEVEL[] =
     {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
 #endif
-#elif defined (__linux__) || defined (__APPLE__)
-    static const char *LEVEL[] __attribute__ ((unused)) =
-    {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#elif defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
+    static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#elif defined(_MSC_VER)
+    static const char * LEVEL[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
 #include <stdarg.h>
 #include "Arduino.h"
@@ -98,7 +101,10 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 #else
     #define GET_PROGMEM_BUFFER(buffer, addr) { buffer[0] = '\0';}
 #endif
-#endif // __ANDROID__
+#else // !defined(__ANDROID__) && !defined(ARDUINO)
+    static const char *LEVEL[] __attribute__ ((unused)) =
+    {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#endif
 
 #ifndef ARDUINO
 
@@ -155,7 +161,7 @@ void OCLogInit()
 
 void OCLogShutdown()
 {
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(_WIN32)
     if (logCtx && logCtx->destroy)
     {
         logCtx->destroy(logCtx);
@@ -176,7 +182,7 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...)
     if (!format || !tag) {
         return;
     }
-    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
+    char buffer[MAX_LOG_V_BUFFER_SIZE] = {0};
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
@@ -207,7 +213,7 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
        __android_log_write(LEVEL[level], tag, logStr);
    #endif
 
-   #elif defined __linux__ || defined __APPLE__
+   #else
        if (logCtx && logCtx->write_level)
        {
            logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);
@@ -230,6 +236,12 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
                sec = when.tv_sec % 60;
                ms = when.tv_nsec / 1000000;
            }
+   #elif defined(_WIN32)
+           SYSTEMTIME systemTime = {0};
+           GetLocalTime(&systemTime);
+           min = (int)systemTime.wMinute;
+           sec = (int)systemTime.wSecond;
+           ms  = (int)systemTime.wMilliseconds;
    #else
            struct timeval now;
            if (!gettimeofday(&now, NULL))

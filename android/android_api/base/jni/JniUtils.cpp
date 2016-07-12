@@ -26,13 +26,22 @@
 jobject JniUtils::convertStrVectorToJavaStrList(JNIEnv *env, std::vector<std::string> &vector)
 {
     jobject jList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
-    if (!jList) return nullptr;
+    if (!jList)
+    {
+        return nullptr;
+    }
     for (size_t i = 0; i < vector.size(); ++i)
     {
         jstring jStr = env->NewStringUTF(vector[i].c_str());
-        if (!jStr) return nullptr;
+        if (!jStr)
+        {
+            return nullptr;
+        }
         env->CallBooleanMethod(jList, g_mid_LinkedList_add_object, jStr);
-        if (env->ExceptionCheck()) return nullptr;
+        if (env->ExceptionCheck())
+        {
+            return nullptr;
+        }
         env->DeleteLocalRef(jStr);
     }
     return jList;
@@ -40,15 +49,24 @@ jobject JniUtils::convertStrVectorToJavaStrList(JNIEnv *env, std::vector<std::st
 
 void JniUtils::convertJavaStrArrToStrVector(JNIEnv *env, jobjectArray jStrArr, std::vector<std::string> &vector)
 {
-    if (!jStrArr) return;
+    if (!jStrArr)
+    {
+        return;
+    }
 
     jsize len = env->GetArrayLength(jStrArr);
     for (jsize i = 0; i < len; ++i)
     {
         jstring jStr = (jstring)env->GetObjectArrayElement(jStrArr, i);
-        if (!jStr) return;
+        if (!jStr)
+        {
+            return;
+        }
         vector.push_back(env->GetStringUTFChars(jStr, nullptr));
-        if (env->ExceptionCheck()) return;
+        if (env->ExceptionCheck())
+        {
+            return;
+        }
         env->DeleteLocalRef(jStr);
     }
 }
@@ -56,12 +74,19 @@ void JniUtils::convertJavaStrArrToStrVector(JNIEnv *env, jobjectArray jStrArr, s
 void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHeaderOptions,
     OC::HeaderOptions &headerOptions)
 {
-    if (!jHeaderOptions) return;
+    if (!jHeaderOptions)
+    {
+        return;
+    }
+
     jsize len = env->GetArrayLength(jHeaderOptions);
     for (jsize i = 0; i < len; ++i)
     {
         jobject header = env->GetObjectArrayElement(jHeaderOptions, i);
-        if (!header) return;
+        if (!header)
+        {
+            return;
+        }
         jint jId = env->CallIntMethod(header, g_mid_OcHeaderOption_get_id);
         jstring jData = (jstring)env->CallObjectMethod(header, g_mid_OcHeaderOption_get_data);
         OC::HeaderOption::OCHeaderOption hopt(
@@ -70,7 +95,10 @@ void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHe
 
         headerOptions.push_back(hopt);
 
-        if (env->ExceptionCheck()) return;
+        if (env->ExceptionCheck())
+        {
+            return;
+        }
         env->DeleteLocalRef(header);
         env->DeleteLocalRef(jData);
     }
@@ -79,7 +107,10 @@ void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHe
 jobject JniUtils::convertHeaderOptionsVectorToJavaList(JNIEnv *env, const OC::HeaderOptions& headerOptions)
 {
     jobject jHeaderOptionList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
-    if (!jHeaderOptionList) return nullptr;
+    if (!jHeaderOptionList)
+    {
+        return nullptr;
+    }
 
     for (size_t i = 0; i < headerOptions.size(); ++i)
     {
@@ -89,10 +120,16 @@ jobject JniUtils::convertHeaderOptionsVectorToJavaList(JNIEnv *env, const OC::He
             static_cast<jint>(headerOptions[i].getOptionID()),
             env->NewStringUTF(headerOptions[i].getOptionData().c_str())
             );
-        if (!jHeaderOption) return nullptr;
+        if (!jHeaderOption)
+        {
+            return nullptr;
+        }
 
         env->CallBooleanMethod(jHeaderOptionList, g_mid_LinkedList_add_object, jHeaderOption);
-        if (env->ExceptionCheck()) return nullptr;
+        if (env->ExceptionCheck())
+        {
+            return nullptr;
+        }
         env->DeleteLocalRef(jHeaderOption);
     }
 
@@ -101,25 +138,43 @@ jobject JniUtils::convertHeaderOptionsVectorToJavaList(JNIEnv *env, const OC::He
 
 void JniUtils::convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap, OC::QueryParamsMap &map)
 {
-    if (!hashMap) return;
+    if (!hashMap)
+    {
+        return;
+    }
 
     jobject jEntrySet = env->CallObjectMethod(hashMap, g_mid_Map_entrySet);
     jobject jIterator = env->CallObjectMethod(jEntrySet, g_mid_Set_iterator);
-    if (!jEntrySet || !jIterator || env->ExceptionCheck()) return;
+    if (!jEntrySet || !jIterator || env->ExceptionCheck())
+    {
+        return;
+    }
 
     while (env->CallBooleanMethod(jIterator, g_mid_Iterator_hasNext))
     {
         jobject jEntry = env->CallObjectMethod(jIterator, g_mid_Iterator_next);
-        if (!jEntry) return;
+        if (!jEntry)
+        {
+            return;
+        }
         jstring jKey = (jstring)env->CallObjectMethod(jEntry, g_mid_MapEntry_getKey);
-        if (!jKey) return;
+        if (!jKey)
+        {
+            return;
+        }
         jstring jValue = (jstring)env->CallObjectMethod(jEntry, g_mid_MapEntry_getValue);
-        if (!jValue) return;
+        if (!jValue)
+        {
+            return;
+        }
 
         map.insert(std::make_pair(env->GetStringUTFChars(jKey, nullptr),
             env->GetStringUTFChars(jValue, nullptr)));
 
-        if (env->ExceptionCheck()) return;
+        if (env->ExceptionCheck())
+        {
+            return;
+        }
         env->DeleteLocalRef(jEntry);
         env->DeleteLocalRef(jKey);
         env->DeleteLocalRef(jValue);
@@ -129,7 +184,10 @@ void JniUtils::convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap, OC::
 jobject JniUtils::convertQueryParamsMapToJavaMap(JNIEnv *env, const OC::QueryParamsMap &map)
 {
     jobject hashMap = env->NewObject(g_cls_HashMap, g_mid_HashMap_ctor);
-    if (!hashMap) return nullptr;
+    if (!hashMap)
+    {
+        return nullptr;
+    }
 
     for (auto it = map.begin(); it != map.end(); ++it)
     {
@@ -140,7 +198,10 @@ jobject JniUtils::convertQueryParamsMapToJavaMap(JNIEnv *env, const OC::QueryPar
             g_mid_HashMap_put,
             env->NewStringUTF(key.c_str()),
             env->NewStringUTF(value.c_str()));
-        if (env->ExceptionCheck()) return nullptr;
+        if (env->ExceptionCheck())
+        {
+            return nullptr;
+        }
     }
 
     return hashMap;
@@ -150,16 +211,25 @@ void JniUtils::convertJavaRepresentationArrToVector(JNIEnv *env,
     jobjectArray jRepresentationArray,
     std::vector<OC::OCRepresentation>& representationVector)
 {
-    if (!jRepresentationArray) return;
+    if (!jRepresentationArray)
+    {
+        return;
+    }
     jsize len = env->GetArrayLength(jRepresentationArray);
 
     for (jsize i = 0; i < len; ++i)
     {
         jobject jRep = env->GetObjectArrayElement(jRepresentationArray, i);
-        if (!jRep) return;
+        if (!jRep)
+        {
+            return;
+        }
         OC::OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, jRep);
         representationVector.push_back(*rep);
-        if (env->ExceptionCheck()) return;
+        if (env->ExceptionCheck())
+        {
+            return;
+        }
         env->DeleteLocalRef(jRep);
     }
 }
@@ -169,7 +239,10 @@ jobjectArray JniUtils::convertRepresentationVectorToJavaArray(JNIEnv *env,
 {
     jsize len = static_cast<jsize>(representationVector.size());
     jobjectArray repArr = env->NewObjectArray(len, g_cls_OcRepresentation, nullptr);
-    if (!repArr) return nullptr;
+    if (!repArr)
+    {
+        return nullptr;
+    }
     for (jsize i = 0; i < len; ++i)
     {
         OCRepresentation* rep = new OCRepresentation(representationVector[i]);
@@ -182,7 +255,10 @@ jobjectArray JniUtils::convertRepresentationVectorToJavaArray(JNIEnv *env,
             return nullptr;
         }
         env->SetObjectArrayElement(repArr, i, jRepresentation);
-        if (env->ExceptionCheck()) return nullptr;
+        if (env->ExceptionCheck())
+        {
+            return nullptr;
+        }
         env->DeleteLocalRef(jRepresentation);
     }
 

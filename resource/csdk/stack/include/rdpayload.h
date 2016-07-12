@@ -165,7 +165,7 @@ void OCDiscoveryCollectionPayloadDestroy(OCDiscoveryPayload* payload);
  * @param level LogLevel for the print.
  * @param tags Structure of the tags payload.
  */
-void OCTagsLog(const LogLevel level, const OCTagsPayload *tags);
+OC_EXPORT void OCTagsLog(const LogLevel level, const OCTagsPayload *tags);
 
 /**
  * Prints links payload.
@@ -173,7 +173,7 @@ void OCTagsLog(const LogLevel level, const OCTagsPayload *tags);
  * @param level LogLevel for the print.
  * @param tags Structure of the links payload.
  */
-void OCLinksLog(const LogLevel level, const OCLinksPayload *links);
+OC_EXPORT void OCLinksLog(const LogLevel level, const OCLinksPayload *links);
 
 #ifdef __cplusplus
 }

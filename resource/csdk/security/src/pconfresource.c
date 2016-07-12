@@ -39,9 +39,7 @@
 #include <stdlib.h>
 #include "psinterface.h"
 #include "security_internals.h"
-#ifdef WITH_ARDUINO
-#include <string.h>
-#else
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -642,8 +640,9 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                             // Permissions -- Mandatory
                             if (strcmp(name, OIC_JSON_PERMISSION_NAME) == 0 && cbor_value_is_unsigned_integer(&pdAclMap))
                             {
-                                cborFindResult = cbor_value_get_uint64(&pdAclMap,
-                                        (uint64_t *) &pdacl->permission);
+                                uint64_t permission = 0;
+                                cborFindResult = cbor_value_get_uint64(&pdAclMap, &permission);
+                                pdacl->permission = (uint16_t)permission;
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
                             }
 
@@ -1010,7 +1009,7 @@ OCStackResult CreatePconfResource()
 
     ret = OCCreateResource(&gPconfHandle,
                            OIC_RSRC_TYPE_SEC_PCONF,
-                           OIC_MI_DEF,
+                           OC_RSRVD_INTERFACE_DEFAULT,
                            OIC_RSRC_PCONF_URI,
                            PconfEntityHandler,
                            NULL,

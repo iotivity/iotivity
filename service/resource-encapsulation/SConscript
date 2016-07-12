@@ -42,7 +42,7 @@ if env.get('LOGGING'):
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 resourceClient_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
@@ -61,16 +61,16 @@ resourceClient_env.AppendUnique(CPPPATH = [
 
 resourceClient_env.PrependUnique(LIBS = ['oc', 'rcs_common', 'octbstack','oc_logger'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
-if target_os == 'linux':
-   resourceClient_env.AppendUnique(LIBS = ['pthread'])
+    resourceClient_env.AppendUnique(LIBS = ['dl'])
+    if target_os in ['linux']:
+        resourceClient_env.AppendUnique(LIBS = ['pthread'])
 
-if target_os == 'android':
+if target_os in ['android']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     resourceClient_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
-resourceClient_env.AppendUnique(LIBS = ['dl'])
 
 ######################################################################
 # Source files and Targets
@@ -93,8 +93,8 @@ client_src = [
 ResourceClientsdk_static = resourceClient_env.StaticLibrary('rcs_client', client_src)
 ResourceClientsdk_shared = resourceClient_env.SharedLibrary('rcs_client', client_src)
 
-resourceClient_env.InstallTarget([ResourceClientsdk_static,ResourceClientsdk_shared], 'librcs_client')
-resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static,ResourceClientsdk_shared], 'librcs_client')
+resourceClient_env.InstallTarget([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
+resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static,ResourceClientsdk_shared], 'rcs_client')
 resourceClient_env.UserInstallTargetHeader('include/RCSAddress.h', 'service/resource-encapsulation', 'RCSAddress.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSDiscoveryManager.h', 'service/resource-encapsulation', 'RCSDiscoveryManager.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSRemoteResourceObject.h', 'service/resource-encapsulation', 'RCSRemoteResourceObject.h')
@@ -113,7 +113,7 @@ SConscript('examples/SConscript')
 # Build UnitTests Resource Client , resourceCache and resourceBroker and 
 # DiscoveryManager
 ################################################ ######################
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
     SConscript('src/resourceCache/unittests/SConscript')
     SConscript('src/resourceBroker/unittest/SConscript')

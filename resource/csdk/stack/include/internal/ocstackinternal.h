@@ -66,8 +66,8 @@ extern void* defaultDeviceHandlerCallbackParameter;
 /** The coap scheme */
 #define OC_COAP_SCHEME "coap://"
 
-/** the first outgoing sequence number will be 5*/
-#define OC_OFFSET_SEQUENCE_NUMBER (4)
+/** the first outgoing sequence number will be 2*/
+#define OC_OFFSET_SEQUENCE_NUMBER (1)
 
 /**
  * This structure will be created in occoap and passed up the stack on the server side.
@@ -266,6 +266,14 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 OCStackResult CAResultToOCResult(CAResult_t caResult);
 
 /**
+ * Converts a OCStackResult type to a bool type.
+ *
+ * @param ocResult OCStackResult value to convert.
+ * @return true on success, false upon failure.
+ */
+bool OCResultToSuccess(OCStackResult ocResult);
+
+/**
  * Map OCQualityOfService to CAMessageType.
  *
  * @param qos Input qos.
@@ -289,9 +297,9 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 

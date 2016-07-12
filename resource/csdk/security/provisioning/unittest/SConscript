@@ -17,14 +17,15 @@
 # // limitations under the License.
 # //
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
 
-Import('env')
 import os
 import os.path
-sptest_env = env.Clone()
 
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+sptest_env = gtest_env.Clone()
 src_dir = sptest_env.get('SRC_DIR')
+target_os = sptest_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
@@ -49,13 +50,9 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../connectivity/common/inc',
 		'../../../connectivity/lib/libcoap-4.1.1',
 		'../../../connectivity/api',
-		'../../../../../extlibs/tinydtls',
-		'../../../../../extlibs/gtest/gtest-1.7.0/include'
+		'../../../../../extlibs/tinydtls'
 		])
-sptest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-sptest_env.AppendUnique(LIBS = ['-lpthread','-ldl'])
-sptest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-sptest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+sptest_env.AppendUnique(LIBPATH = [sptest_env.get('BUILD_DIR')])
 sptest_env.PrependUnique(LIBS = [   'ocpmapi',
                                     'oc',
                                     'ocsrm',
@@ -66,42 +63,58 @@ sptest_env.PrependUnique(LIBS = [   'ocpmapi',
                                     'gtest',
                                     'gtest_main'])
 
-if env.get('SECURED') == '1':
+if sptest_env.get('SECURED') == '1':
+    sptest_env.AppendUnique(LIBS = ['timer'])
     sptest_env.AppendUnique(LIBS = ['tinydtls'])
-if env.get('DTLS_WITH_X509') == '1':
+
+if sptest_env.get('DTLS_WITH_X509') == '1':
 	sptest_env.AppendUnique(LIBS = ['CKManager'])
 	sptest_env.AppendUnique(LIBS = ['asn1'])
 
-if not env.get('RELEASE'):
+if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os in ['msys_nt', 'windows']:
+    sptest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
+    sptest_env.AppendUnique(LIBS = ['ws2_32',
+                                    'advapi32',
+                                    'iphlpapi'])
+else:
+	sptest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+	sptest_env.AppendUnique(LIBS = ['dl', 'pthread'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittest = sptest_env.Program('unittest', ['pmutilitytest.cpp',
-                                           'secureresourceprovider.cpp',
-                                           'provisioningdatabasemanager.cpp',
-                                           'ocprovisioningmanager.cpp','otmunittest.cpp' ])
+unittest_src = ['pmutilitytest.cpp',
+                'secureresourceprovider.cpp',
+                'provisioningdatabasemanager.cpp',
+                'ocprovisioningmanager.cpp',
+                'credentialgeneratortest.cpp',
+                ]
 
-sample_server1 = sptest_env.Program('sample_server1', ['sampleserver1.cpp'])
-sample_server2 = sptest_env.Program('sample_server2', ['sampleserver2.cpp'])
+if target_os not in ['windows']:
+    unittest_src += [ 'otmunittest.cpp' ]
 
-provisioning_unittest_src_dir = src_dir + '/resource/csdk/security/provisioning/unittest/'
-provisioning_unittest_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/unittest/'
+unittest = sptest_env.Program('unittest', unittest_src)
 
-Alias("test", [unittest, sample_server1, sample_server2])
+if target_os not in ['windows']:
+    sample_server1 = sptest_env.Program('sample_server1', ['sampleserver1.cpp'])
+    sample_server2 = sptest_env.Program('sample_server2', ['sampleserver2.cpp'])
+    Alias("test", [sample_server1, sample_server2])
 
-env.AppendTarget('test')
-if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
-		out_dir = env.get('BUILD_DIR')
-		result_dir = env.get('BUILD_DIR') + '/test_out/'
+Alias("test", [unittest])
+
+sptest_env.AppendTarget('test')
+if sptest_env.get('TEST') == '1':
+	if target_os in ['linux', 'windows']:
+		out_dir = sptest_env.get('BUILD_DIR')
+		result_dir = os.path.join(sptest_env.get('BUILD_DIR'), 'test_out') + os.sep
 		if not os.path.isdir(result_dir):
 			os.makedirs(result_dir)
 		sptest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		sptest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
+		sptest_env.AppendENVPath('PATH', sptest_env.get('BUILD_DIR'))
 		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/unittest/unittest')
 		AlwaysBuild ('ut')
 

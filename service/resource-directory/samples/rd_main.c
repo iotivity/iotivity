@@ -20,7 +20,9 @@
 #include "rd_server.h"
 
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 int g_quitFlag = 0;
 

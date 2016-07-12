@@ -20,7 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "ocprovisioningmanager.h"
 #include "secureresourceprovider.h"
@@ -878,6 +880,9 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
+    OIC_LOG(DEBUG, TAG, "Created payload for ACL:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         selectedDeviceInfo->endpoint.addr,

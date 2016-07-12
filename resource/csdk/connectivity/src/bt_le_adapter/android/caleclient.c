@@ -160,7 +160,7 @@ static void CALEScanThread(void* object)
     (void)object;
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -4164,39 +4164,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeScanCallback(JNIEnv *env, jobject o
     {
         OIC_LOG_V(ERROR, TAG, "CALEClientAddScanDeviceToList has failed : %d", res);
     }
-}
-
-static jstring CALEClientGetAddressFromGatt(JNIEnv *env, jobject gatt)
-{
-    OIC_LOG(DEBUG, TAG, "IN - CAManagerGetAddressFromGatt");
-
-    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
-    VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
-
-    jmethodID jni_mid_getDevice = CAGetJNIMethodID(env, CLASSPATH_BT_GATT,
-                                                   "getDevice", METHODID_BT_DEVICE);
-    if (!jni_mid_getDevice)
-    {
-        OIC_LOG(ERROR, TAG, "jni_mid_getDevice is null");
-        return NULL;
-    }
-
-    jobject jni_obj_device = (*env)->CallObjectMethod(env, gatt, jni_mid_getDevice);
-    if (!jni_obj_device)
-    {
-        OIC_LOG(ERROR, TAG, "jni_obj_device is null");
-        return NULL;
-    }
-
-    jstring jni_address = CALEGetAddressFromBTDevice(env, jni_obj_device);
-    if (!jni_address)
-    {
-        OIC_LOG(ERROR, TAG, "jni_address is null");
-        return NULL;
-    }
-
-    OIC_LOG(DEBUG, TAG, "OUT - CAManagerGetAddressFromGatt");
-    return jni_address;
 }
 
 /*

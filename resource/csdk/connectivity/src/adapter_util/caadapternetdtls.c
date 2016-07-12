@@ -25,7 +25,13 @@
 #include "oic_string.h"
 #include "global.h"
 #include "timer.h"
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 
 /* tinyDTLS library error code */
 #define TINY_DTLS_ERROR (-1)
@@ -491,7 +497,7 @@ static int32_t CASendSecureData(dtls_context_t *context,
     endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
     endpoint.flags |= CA_SECURE;
     endpoint.adapter = CA_ADAPTER_IP;
-    endpoint.interface = session->ifindex;
+    endpoint.ifindex = session->ifindex;
     int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
@@ -554,14 +560,14 @@ static int32_t CAHandleSecureEvent(dtls_context_t *context,
             g_dtlsHandshakeCallback(&endpoint, &errorInfo);
         }
     }
-    else if(DTLS_ALERT_LEVEL_FATAL == level && DTLS_ALERT_CLOSE_NOTIFY == code)
-    {
-        OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
-        CARemovePeerFromPeerInfoList(peerAddr, port);
-    }
     else if(DTLS_ALERT_LEVEL_FATAL == level && DTLS_ALERT_HANDSHAKE_FAILURE == code)
     {
         OIC_LOG(INFO, NET_DTLS_TAG, "Failed to DTLS handshake, the peer will be removed.");
+        CARemovePeerFromPeerInfoList(peerAddr, port);
+    }
+    else if(DTLS_ALERT_LEVEL_FATAL == level || DTLS_ALERT_CLOSE_NOTIFY == code)
+    {
+        OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
         CARemovePeerFromPeerInfoList(peerAddr, port);
     }
 

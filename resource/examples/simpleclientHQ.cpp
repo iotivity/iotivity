@@ -29,6 +29,11 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#if defined(HAVE_WINDOWS_H)
+#include <windows.h>
+#endif
+#include "platform_features.h"
+
 using namespace OC;
 
 struct dereference_compare

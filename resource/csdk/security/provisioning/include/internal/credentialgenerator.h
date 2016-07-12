@@ -24,6 +24,10 @@
 #include "ocstack.h"
 #include "securevirtualresourcetypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 /**
  * Function to generate credentials according to the type.
  *

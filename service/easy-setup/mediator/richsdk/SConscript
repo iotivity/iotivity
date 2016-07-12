@@ -49,7 +49,7 @@ if target_enrollee == 'arduino':
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 easy_setup_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
@@ -59,7 +59,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 easy_setup_env.AppendUnique(CPPPATH = ['inc', 'src', '../../inc'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     easy_setup_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 
 if target_os in ['linux']:
@@ -132,12 +132,12 @@ print "Files path is %s" % env.get('es_src')
 ######################################################################
 # Build RichSDK Mediator Sample App
 ################################################ ######################
-if target_os == 'linux':
+if target_os in ['linux']:
 	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]
 ################################################ ######################
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
 
