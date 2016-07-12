@@ -63,7 +63,7 @@ static const uint16_t CBOR_MAX_SIZE = 4400;
 
 /** CRED size - Number of mandatory items. */
 static const uint8_t CRED_ROOT_MAP_SIZE = 2;
-static const uint8_t CRED_MAP_SIZE = 3;
+static const uint8_t CRED_MAP_SIZE = 5;
 
 
 static OicSecCred_t        *gCred = NULL;
@@ -335,6 +335,39 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
         OICFree(rowner);
     }
+
+    //RT -- Mandatory
+    CborEncoder rtArray;
+    cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_RT_NAME,
+            strlen(OIC_JSON_RT_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&credRootMap, &rtArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_CRED,
+                strlen(OIC_RSRC_TYPE_SEC_CRED));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&credRootMap, &rtArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+
+    //IF-- Mandatory
+    CborEncoder ifArray;
+    cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_IF_NAME,
+             strlen(OIC_JSON_IF_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&credRootMap, &ifArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+                strlen(OC_RSRVD_INTERFACE_DEFAULT));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&credRootMap, &ifArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
+
 
     // Close CRED Root Map
     cborEncoderResult = cbor_encoder_close_container(&encoder, &credRootMap);
