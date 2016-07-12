@@ -476,7 +476,7 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
             // should be lock /oic/sec/dpairing resource if Direct-Pairing starts normally ?
             OIC_LOG (DEBUG, TAG, "/oic/sec/dpairing resource created");
 
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet = OC_EH_CHANGED;
         }
         else
         {

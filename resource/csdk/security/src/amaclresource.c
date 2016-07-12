@@ -478,7 +478,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
             if (cborPayload && (OC_STACK_OK == res) &&
                 (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_AMACL_NAME, cborPayload, size)))
             {
-                ehRet = OC_EH_RESOURCE_CREATED;
+                ehRet = OC_EH_CHANGED;
             }
             OICFree(cborPayload);
         }

@@ -305,7 +305,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
         if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_CBOR_CRL_NAME, payload, size))
         {
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet = OC_EH_CHANGED;
         }
 
         DeleteCrlBinData(crl);

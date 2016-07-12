@@ -65,7 +65,6 @@ static const uint16_t CBOR_MAX_SIZE = 4400;
 static const uint8_t CRED_ROOT_MAP_SIZE = 4;
 static const uint8_t CRED_MAP_SIZE = 3;
 
-
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
 
@@ -1025,7 +1024,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 #ifdef __WITH_DTLS__
         OicUuid_t emptyUuid = {.id={0}};
         const OicSecDoxm_t* doxm = GetDoxmResourceData();
-        if(false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
+        if(doxm && false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
         {
             //in case of owner PSK
             switch(cred->credType)
