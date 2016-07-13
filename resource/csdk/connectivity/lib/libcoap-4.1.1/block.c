@@ -23,36 +23,34 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
 #ifndef WITHOUT_BLOCK
-unsigned int coap_opt_block_num(const coap_opt_t *block_opt)
-{
+unsigned int
+coap_opt_block_num(const coap_opt_t *block_opt) {
     unsigned int num = 0;
     unsigned short len;
 
     len = coap_opt_length(block_opt);
 
-    if (len == 0)
-    {
+    if (len == 0) {
         return 0;
     }
 
-    if (len > 1)
-    {
-        num = coap_decode_var_bytes(COAP_OPT_VALUE(block_opt), COAP_OPT_LENGTH(block_opt) - 1);
+    if (len > 1) {
+        num = coap_decode_var_bytes(COAP_OPT_VALUE(block_opt),
+                                    COAP_OPT_LENGTH(block_opt) - 1);
     }
 
     return (num << 4) | ((*COAP_OPT_BLOCK_LAST(block_opt) & 0xF0) >> 4);
 }
 
-int coap_get_block(coap_pdu_t *pdu, unsigned short type, coap_block_t *block)
-{
+int
+coap_get_block(coap_pdu_t *pdu, unsigned short type, coap_block_t *block) {
     coap_opt_iterator_t opt_iter;
     coap_opt_t *option;
 
     assert(block);
     memset(block, 0, sizeof(coap_block_t));
 
-    if (pdu && (option = coap_check_option(pdu, type, &opt_iter)))
-    {
+    if (pdu && (option = coap_check_option(pdu, type, &opt_iter)) != NULL) {
         block->szx = COAP_OPT_BLOCK_SZX(option);
         if (COAP_OPT_BLOCK_MORE(option))
             block->m = 1;
@@ -63,24 +61,22 @@ int coap_get_block(coap_pdu_t *pdu, unsigned short type, coap_block_t *block)
     return 0;
 }
 
-int coap_write_block_opt(coap_block_t *block, unsigned short type, coap_pdu_t *pdu,
-        size_t data_length)
-{
+int
+coap_write_block_opt(coap_block_t *block, unsigned short type,
+        coap_pdu_t *pdu, size_t data_length) {
     size_t start, want, avail;
     unsigned char buf[3];
 
     assert(pdu);
 
     /* Block2 */
-    if (type != COAP_OPTION_BLOCK2)
-    {
+    if (type != COAP_OPTION_BLOCK2) {
         warn("coap_write_block_opt: skipped unknown option\n");
         return -1;
     }
 
     start = block->num << (block->szx + 4);
-    if (data_length <= start)
-    {
+    if (data_length <= start) {
         debug("illegal block requested\n");
         return -2;
     }
@@ -89,30 +85,24 @@ int coap_write_block_opt(coap_block_t *block, unsigned short type, coap_pdu_t *p
     want = 1 << (block->szx + 4);
 
     /* check if entire block fits in message */
-    if (want <= avail)
-    {
+    if (want <= avail) {
         block->m = want < data_length - start;
-    }
-    else
-    {
+    } else {
         /* Sender has requested a block that is larger than the remaining
          * space in pdu. This is ok if the remaining data fits into the pdu
          * anyway. The block size needs to be adjusted only if there is more
          * data left that cannot be delivered in this message. */
 
-        if (data_length - start <= avail)
-        {
+        if (data_length - start <= avail) {
 
             /* it's the final block and everything fits in the message */
             block->m = 0;
         }
-        else
-        {
+        else {
             unsigned char szx;
 
             /* we need to decrease the block size */
-            if (avail < 16)
-            { /* bad luck, this is the smallest block size */
+            if (avail < 16) { /* bad luck, this is the smallest block size */
                 debug("not enough space, even the smallest block does not fit");
                 return -3;
             }
@@ -126,21 +116,22 @@ int coap_write_block_opt(coap_block_t *block, unsigned short type, coap_pdu_t *p
 
     /* to re-encode the block option */
     coap_add_option(pdu, type,
-            coap_encode_var_bytes(buf, ((block->num << 4) | (block->m << 3) | block->szx)), buf,
-            coap_udp);
+            coap_encode_var_bytes(buf, ((block->num << 4) | (block->m << 3) | block->szx)), buf);
 
     return 1;
 }
 
-int coap_add_block(coap_pdu_t *pdu, unsigned int len, const unsigned char *data,
-        unsigned int block_num, unsigned char block_szx)
-{
+int
+coap_add_block(coap_pdu_t *pdu, unsigned int len, const unsigned char *data,
+        unsigned int block_num, unsigned char block_szx) {
     size_t start;
     start = block_num << (block_szx + 4);
 
     if (len <= start)
         return 0;
 
-    return coap_add_data(pdu, min(len - start, (unsigned int)(1 << (block_szx + 4))), data + start);
+    return coap_add_data(pdu,
+                         min(len - start, (unsigned int)(1 << (block_szx + 4))),
+                         data + start);
 }
 #endif /* WITHOUT_BLOCK  */

@@ -77,7 +77,7 @@ void verifyParsedOptions(CoAPOptionCase const *cases,
 
 TEST(CAProtocolMessage, CAParseURIBase)
 {
-    char sampleURI[] = "coap://[::]/oic/res?rt=core.sensor;if=core.mi.ll";
+    char sampleURI[] = "coap://[::]/oic/res?rt=core.sensor&if=core.mi.ll";
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 3, "oic"},
         {COAP_OPTION_URI_PATH, 3, "res"},
@@ -99,8 +99,8 @@ TEST(CAProtocolMessage, CAParseURIBase)
 TEST(CAProtocolMessage, CAParseURIManyPath)
 {
     char sampleURI[] = "coap://[::]"
-        "/medium/a/b/c/d/e/f/g/h/i/j/"
-        "?rt=core.sensor;if=core.mi.ll";
+        "/medium/a/b/c/d/e/f/g/h/i/j"
+        "?rt=core.sensor&if=core.mi.ll";
 
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 6, "medium"},
@@ -131,8 +131,8 @@ TEST(CAProtocolMessage, CAParseURIManyPath)
 // Try for multiple URI parameters that still total less than 128
 TEST(CAProtocolMessage, CAParseURIManyParams)
 {
-    char sampleURI[] = "coap://[::]/oic/res/"
-        "?rt=core.sensor;a=0;b=1;c=2;d=3;e=4;f=5;g=6;h=7;i=8;j=9";
+    char sampleURI[] = "coap://[::]/oic/res"
+        "?rt=core.sensor&a=0&b=1&c=2&d=3&e=4&f=5&g=6&h=7&i=8&j=9";
 
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 3, "oic"},
@@ -166,7 +166,7 @@ TEST(CAProtocolMessage, CAParseURILongPath)
     char sampleURI[] = "coap://[::]/oic"
         "123456789012345678901234567890123456789012345678901234567890"
         "12345678901234567890123456789012345678901234567890"
-        "/res?rt=core.sensor;if=core.mi.ll";
+        "/res?rt=core.sensor&if=core.mi.ll";
 
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 113, "oic"
@@ -197,7 +197,7 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
 
     coap_pdu_t *pdu = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport = coap_udp;
+    coap_transport_t transport = COAP_UDP;
 
     CAInfo_t inData;
     memset(&inData, 0, sizeof(CAInfo_t));
@@ -211,5 +211,5 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     memset(&outData, 0, sizeof(CAInfo_t));
     outData.type = CA_MSG_NONCONFIRM;
 
-    EXPECT_EQ(CA_STATUS_OK, CAGetTokenFromPDU(pdu->hdr, &outData, &tempRep));
+    EXPECT_EQ(CA_STATUS_OK, CAGetTokenFromPDU(pdu->transport_hdr, &outData, &tempRep));
 }

@@ -275,7 +275,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     resInfo->info.type = CAGetMessageTypeFromPduBinaryData(pdu, size);
     resInfo->info.messageId = CAGetMessageIdFromPduBinaryData(pdu, size);
 
-    CAResult_t res = CAGetTokenFromPDU((const coap_hdr_t *) pdu, &(resInfo->info),
+    CAResult_t res = CAGetTokenFromPDU((const coap_hdr_transport_t *) pdu, &(resInfo->info),
                                        endpoint);
     if (CA_STATUS_OK != res)
     {
@@ -421,7 +421,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport = coap_udp;
+    coap_transport_t transport = COAP_UDP;
     CAResult_t res = CA_SEND_FAILED;
 
     if (!data->requestInfo && !data->responseInfo)
@@ -470,9 +470,9 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     CALogPDUInfo(pdu, data->remoteEndpoint);
 
     OIC_LOG(DEBUG, TAG, "pdu to send :");
-    OIC_LOG_BUFFER(DEBUG, TAG,  (uint8_t*)pdu->hdr, pdu->length);
+    OIC_LOG_BUFFER(DEBUG, TAG,  (uint8_t*)pdu->transport_hdr, pdu->length);
 
-    res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length, data->dataType);
+    res = CASendMulticastData(data->remoteEndpoint, pdu->transport_hdr, pdu->length, data->dataType);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
@@ -484,7 +484,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     return res;
 
 exit:
-    CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+    CAErrorHandler(data->remoteEndpoint, pdu->transport_hdr, pdu->length, res);
     coap_delete_list(options);
     coap_delete_pdu(pdu);
     return res;
@@ -502,7 +502,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
     coap_list_t *options = NULL;
-    coap_transport_type transport = coap_udp;
+    coap_transport_t transport = COAP_UDP;
 
     if (SEND_TYPE_UNICAST == type)
     {
@@ -559,7 +559,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(INFO, TAG, "to write block option has failed");
-                        CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                        CAErrorHandler(data->remoteEndpoint, pdu->transport_hdr, pdu->length, res);
                         coap_delete_list(options);
                         coap_delete_pdu(pdu);
                         return res;
@@ -570,11 +570,11 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             CALogPDUInfo(pdu, data->remoteEndpoint);
 
             OIC_LOG_V(INFO, TAG, "CASendUnicastData type : %d", data->dataType);
-            res = CASendUnicastData(data->remoteEndpoint, pdu->hdr, pdu->length, data->dataType);
+            res = CASendUnicastData(data->remoteEndpoint, pdu->transport_hdr, pdu->length, data->dataType);
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
-                CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                CAErrorHandler(data->remoteEndpoint, pdu->transport_hdr, pdu->length, res);
                 coap_delete_list(options);
                 coap_delete_pdu(pdu);
                 return res;
@@ -595,7 +595,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 res = CARetransmissionSentData(&g_retransmissionContext,
                                                data->remoteEndpoint,
                                                data->dataType,
-                                               pdu->hdr, pdu->length);
+                                               pdu->transport_hdr, pdu->length);
                 if ((CA_STATUS_OK != res) && (CA_NOT_SUPPORTED != res))
                 {
                     //when retransmission not supported this will return CA_NOT_SUPPORTED, ignore
@@ -777,7 +777,7 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
         {
             // for retransmission
             void *retransmissionPdu = NULL;
-            CARetransmissionReceivedData(&g_retransmissionContext, cadata->remoteEndpoint, pdu->hdr,
+            CARetransmissionReceivedData(&g_retransmissionContext, cadata->remoteEndpoint, pdu->transport_hdr,
                                          pdu->length, &retransmissionPdu);
 
             // get token from saved data in retransmission list
@@ -786,7 +786,7 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
                 if (cadata->responseInfo)
                 {
                     CAInfo_t *info = &cadata->responseInfo->info;
-                    CAResult_t res = CAGetTokenFromPDU((const coap_hdr_t *)retransmissionPdu,
+                    CAResult_t res = CAGetTokenFromPDU((const coap_hdr_transport_t *)retransmissionPdu,
                                                        info, &(sep->endpoint));
                     if (CA_STATUS_OK != res)
                     {
@@ -1230,19 +1230,19 @@ void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         OIC_LOG(DEBUG, TAG, "pdu header data :");
-        OIC_LOG_BUFFER(DEBUG, TAG,  (const uint8_t *) pdu->hdr, pdu->length);
+        OIC_LOG_BUFFER(DEBUG, TAG,  (const uint8_t *) pdu->transport_hdr, pdu->length);
     }
     else
 #endif
     {
-        OIC_LOG_V(DEBUG, TAG, "PDU Maker - type : %d", pdu->hdr->coap_hdr_udp_t.type);
+        OIC_LOG_V(DEBUG, TAG, "PDU Maker - type : %d", pdu->transport_hdr->udp.type);
 
-        OIC_LOG_V(DEBUG, TAG, "PDU Maker - code : %d", pdu->hdr->coap_hdr_udp_t.code);
+        OIC_LOG_V(DEBUG, TAG, "PDU Maker - code : %d", pdu->transport_hdr->udp.code);
 
         OIC_LOG(DEBUG, TAG, "PDU Maker - token :");
 
-        OIC_LOG_BUFFER(DEBUG, TAG, pdu->hdr->coap_hdr_udp_t.token,
-                       pdu->hdr->coap_hdr_udp_t.token_length);
+        OIC_LOG_BUFFER(DEBUG, TAG, pdu->transport_hdr->udp.token,
+                       pdu->transport_hdr->udp.token_length);
     }
 }
 

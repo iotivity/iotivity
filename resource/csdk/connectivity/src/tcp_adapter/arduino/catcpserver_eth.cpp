@@ -212,7 +212,7 @@ void CATCPReadDataInternal()
 
             if (!isHeaderChecked && totalReceivedLen)
             {
-                coap_transport_type transport;
+                coap_transport_t transport;
                 size_t headerLen;
                 CAGetTCPHeaderDetails(recvBuffer, &transport, &headerLen);
                 if (totalReceivedLen >= headerLen)

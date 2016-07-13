@@ -80,9 +80,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include <coap/coap_time.h>
-#include <coap/utlist.h>
-#include <coap/pdu.h>
+#include <coap/coap.h>
 
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
@@ -137,8 +135,8 @@ static bool gRASetInfo = false;
 #endif
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
-static const char COAP_TCP[] = "coap+tcp:";
-static const char COAPS_TCP[] = "coaps+tcp:";
+static const char COAP_TCP_SCHEME[] = "coap+tcp:";
+static const char COAPS_TCP_SCHEME[] = "coaps+tcp:";
 static const char CORESPEC[] = "core";
 
 //-----------------------------------------------------------------------------
@@ -2453,8 +2451,8 @@ static OCStackResult ParseRequestUri(const char *fullUri,
     bool istcp = false;
     if (prefixLen)
     {
-        if (((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
-        || ((prefixLen == sizeof(COAPS_TCP) - 1) && (!strncmp(fullUri, COAPS_TCP, prefixLen))))
+        if (((prefixLen == sizeof(COAP_TCP_SCHEME) - 1) && (!strncmp(fullUri, COAP_TCP_SCHEME, prefixLen)))
+        || ((prefixLen == sizeof(COAPS_TCP_SCHEME) - 1) && (!strncmp(fullUri, COAPS_TCP_SCHEME, prefixLen))))
         {
             istcp = true;
         }

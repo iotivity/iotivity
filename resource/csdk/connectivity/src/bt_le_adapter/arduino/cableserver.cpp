@@ -68,7 +68,7 @@ static size_t g_packetDataLen = 0;
 
 void CAGetTCPHeaderDetails(unsigned char* recvBuffer, size_t *headerlen)
 {
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
         ((unsigned char *)recvBuffer)[0] >> 4);
     *headerlen = coap_get_tcp_header_length_for_transport(transport);
 }
