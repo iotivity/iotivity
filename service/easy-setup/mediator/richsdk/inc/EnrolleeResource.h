@@ -101,8 +101,6 @@ namespace OIC
         private:
             void onRequestPropertyDataResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
-            void getProvStatusResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-                    const int eCode);
             void checkProvInformationCb(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
             PropertyData parsePropertyDataFromRepresentation(const OCRepresentation& rep);

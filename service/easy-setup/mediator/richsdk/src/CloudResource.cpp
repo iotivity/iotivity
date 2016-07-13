@@ -57,7 +57,7 @@ namespace OIC
             OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "provisionEnrollee : ciServer - %s",
                     (cloudProvInfo.ciServer).c_str());
 
-            m_ocResource->post(OC_RSRVD_ES_PROV_RES_TYPE, BATCH_INTERFACE,
+            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
                         provisioningRepresentation, QueryParamsMap(),
                         std::function<
                                 void(const HeaderOptions& headerOptions,
@@ -77,7 +77,7 @@ namespace OIC
             {
                 ESResult result  = ESResult::ES_ERROR;
 
-                OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is failed ");
+                OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is failed");
 
                 if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
                 {
@@ -91,7 +91,7 @@ namespace OIC
             }
             else
             {
-                OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is success ");
+                OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is success");
                 std::shared_ptr< CloudProvisioningStatus > provStatus = std::make_shared<
                         CloudProvisioningStatus >(ESResult::ES_OK, ESCloudProvState::ES_CLOUD_PROVISIONING_SUCCESS);
                 m_cloudProvStatusCb(provStatus);
@@ -100,7 +100,7 @@ namespace OIC
 
         void CloudResource::registerCloudProvisioningStatusCallback(CloudProvStatusCb callback)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter registerCloudProvisioningStatusCallback.");
+            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter registerCloudProvisioningStatusCallback");
             m_cloudProvStatusCb = callback;
         }
     }

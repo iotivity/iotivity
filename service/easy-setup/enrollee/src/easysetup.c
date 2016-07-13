@@ -224,7 +224,7 @@ ESResult ESSetState(ESEnrolleeState esState)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetState IN");
 
-    if(esState <= 0 || esState >= 6)
+    if(esState < ES_STATE_INIT || esState > ES_STATE_REGISTRRED_FAIL_TO_CLOUD)
     {
         OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "Invalid ESEnrolleeState : %d", esState);
         return ES_ERROR;
@@ -232,10 +232,11 @@ ESResult ESSetState(ESEnrolleeState esState)
 
     if(SetEnrolleeState(esState) != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetState Error");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetState ES_ERROR");
         return ES_ERROR;
     }
 
+    OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Set ESState succesfully : %d", esState);
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetState OUT");
     return ES_OK;
 }
@@ -244,21 +245,19 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetErrorCode IN");
 
-    if(esErrCode <= 0 || esErrCode >= 7)
+    if(esErrCode < ES_ERRCODE_NO_ERROR || esErrCode > ES_ERRCODE_UNKNOWN)
     {
-        if(esErrCode != 999)
-        {
-            OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "Invalid ESErrorCode : %d", esErrCode);
+        OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "Invalid ESSetErrorCode : %d", esErrCode);
             return ES_ERROR;
-        }
     }
 
     if(SetEnrolleeErrCode(esErrCode) != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetErrorCode Error");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetErrorCode ES_ERROR");
         return ES_ERROR;
     }
 
+    OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Set ESErrorCode succesfully : %d", esErrCode);
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetErrorCode OUT");
     return ES_OK;
 }

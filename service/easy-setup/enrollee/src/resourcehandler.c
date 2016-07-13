@@ -126,9 +126,8 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 
 OCStackResult initProvResource(bool isSecured)
 {
-    gProvResource.status = NO_PROVISION;
-    gProvResource.trigger = false;
-    gProvResource.lastErrCode = ES_ERRCODE_NONE;
+    gProvResource.status = ES_STATE_INIT;
+    gProvResource.lastErrCode = ES_ERRCODE_NO_ERROR;
     OICStrcpy(gProvResource.errorMessage, MAX_ERRMSGLEN, "");
     OICStrcpy(gProvResource.ocfWebLinks, MAX_WEBLINKLEN, "");
 
@@ -369,7 +368,7 @@ void updateCloudResource(OCRepPayload* input)
 void updateDevConfResource(OCRepPayload* input)
 {
     char *country = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &country))
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_COUNTRY, &country))
     {
         OICStrcpy(gDevConfResource.country, sizeof(gDevConfResource.country), country);
         OICStrcpy(gDevConfData.country, sizeof(gDevConfData.country), country);
@@ -377,7 +376,7 @@ void updateDevConfResource(OCRepPayload* input)
     }
 
     char *language = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHPROVIDER, &language))
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LANGUAGE, &language))
     {
         OICStrcpy(gDevConfResource.language, sizeof(gDevConfResource.language), language);
         OICStrcpy(gDevConfData.language, sizeof(gDevConfData.language), language);
@@ -413,15 +412,16 @@ OCRepPayload* constructResponseOfWiFi()
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFI);
 
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {gWiFiResource.numMode, 0, 0};
-    OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, (int64_t *)gWiFiResource.supportedMode, dimensions);
+    int64_t *modes_64 = (int64_t *)malloc(gWiFiResource.numMode * sizeof(int64_t));
+    for(int i = 0 ; i < gWiFiResource.numMode ; ++i)
+        modes_64[i] = gWiFiResource.supportedMode[i];
+    OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, (int64_t *)modes_64, dimensions);
 
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, gWiFiResource.supportedFreq);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, gWiFiResource.ssid);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, gWiFiResource.cred);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, (int) gWiFiResource.authType);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) gWiFiResource.encType);
-
-    printf("%s\n", gWiFiResource.ssid);
 
     return payload;
 }
@@ -474,9 +474,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
-    OCRepPayloadSetPropBool(payload, OC_RSRVD_ES_TRIGGER, gProvResource.trigger);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ERRORMESSAGE, gProvResource.errorMessage);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LINKS, gProvResource.ocfWebLinks);
 
     if(ehRequest->query)
@@ -675,6 +673,10 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         return ehResult;
     }
 
+    // TBD : Discuss about triggering flag (to be existed or not)
+    // ES_PS_PROVISIONING_COMPLETED state indicates that already provisioning is completed.
+    // A new request for provisioning means overriding existing network provisioning information.  
+
     if(ehRequest->resource == gProvResource.handle)
         updateProvResource(ehRequest, input);
     else if(ehRequest->resource == gWiFiResource.handle)
@@ -682,33 +684,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     else if(ehRequest->resource == gCloudResource.handle)
         updateCloudResource(input);
     else if(ehRequest->resource == gDevConfResource.handle)
-        updateDevConfResource(input);
-
-    // TBD : Discuss about triggering flag (to be existed or not)
-    // ES_PS_PROVISIONING_COMPLETED state indicates that already provisioning is completed.
-    // A new request for provisioning means overriding existing network provisioning information.
-    // if (gProvResource.trigger)
-    // {
-    //     OIC_LOG(DEBUG, ES_RH_TAG, "Provisioning already completed."
-    //             "Tiggering the network connection");
-
-    //     if (gNetworkInfoProvEventCb)
-    //     {
-    //         gNetworkInfoProvEventCb(ES_RECVTRIGGEROFPROVRES);
-    //         ehResult = OC_EH_OK;
-    //     }
-    //     else
-    //     {
-    //         OIC_LOG(ERROR, ES_RH_TAG, "gNetworkInfoProvEventCb is NULL."
-    //                 "Network handler not registered. Failed to connect to the network");
-    //         ehResult = OC_EH_ERROR;
-    //         return ehResult;
-    //     }
-    // }
-    // else
-    // {
-    //     OIC_LOG(DEBUG, ES_RH_TAG, "Provisioning the network information to the Enrollee.");
-    // }
+        updateDevConfResource(input);      
 
     OCRepPayload *getResp = NULL;
     if(ehRequest->resource == gProvResource.handle)
@@ -719,9 +695,6 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         getResp = constructResponseOfCloud();
     else if(ehRequest->resource == gDevConfResource.handle)
         getResp = constructResponseOfDevConf();
-
-    if (gProvResource.trigger)// Trigger false should be restored after executed
-        gProvResource.trigger = false;
 
     if (!getResp)
     {

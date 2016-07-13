@@ -37,44 +37,35 @@ using namespace std;
 #define IP_PORT                 55555
 
 /**
- * Attributes used to form a proper easysetup conforming JSON message.
+ * Attributes used to form a proper easysetup conforming JSON message
  */
-#define OC_RSRVD_ES_PROVSTATUS                       "ps"
-#define OC_RSRVD_ES_TRIGGER                              "tr"
-#define OC_RSRVD_ES_SSID                                     "tnn"
-#define OC_RSRVD_ES_CRED                                   "cd"
-#define OC_RSRVD_ES_SUPPORTEDWIFIMODE       "swmt"
-#define OC_RSRVD_ES_SUPPORTEDWIFIFREQ        "swf"
-#define OC_RSRVD_ES_AUTHTYPE                          "wat"
-#define OC_RSRVD_ES_ENCTYPE                             "wet"
-#define OC_RSRVD_ES_AUTHCODE                         "ac"
-#define OC_RSRVD_ES_AUTHPROVIDER                  "apn"
-#define OC_RSRVD_ES_CISERVER                            "cisurl"
-#define OC_RSRVD_ES_DEVNAME                            "dn"
-#define OC_RSRVD_ES_LANGUAGE                          "lang"
-#define OC_RSRVD_ES_COUNTRY                            "cont"
-#define OC_RSRVD_ES_TNT                                      "tnt"
-#define OC_RSRVD_ES_ANT                                     "ant"
+#define OC_RSRVD_ES_PROVSTATUS             "ps"
+#define OC_RSRVD_ES_LAST_ERRORCODE         "lec"
+#define OC_RSRVD_ES_LINKS                  "links"
+#define OC_RSRVD_ES_SUPPORTEDWIFIMODE      "swmt"
+#define OC_RSRVD_ES_SUPPORTEDWIFIFREQ      "swf"
+#define OC_RSRVD_ES_SSID                   "tnn"
+#define OC_RSRVD_ES_CRED                   "cd"
+#define OC_RSRVD_ES_AUTHTYPE               "wat"
+#define OC_RSRVD_ES_ENCTYPE                "wet"
+#define OC_RSRVD_ES_AUTHCODE               "ac"
+#define OC_RSRVD_ES_AUTHPROVIDER           "apn"
+#define OC_RSRVD_ES_CISERVER               "cisurl"
+#define OC_RSRVD_ES_DEVNAME                "dn"
+#define OC_RSRVD_ES_LANGUAGE               "lang"
+#define OC_RSRVD_ES_COUNTRY                "ctry"
 
 /**
- * Easysetup defined resoruce types and uris.
+ * Easysetup defined resoruce types and uris
  */
-#define OC_RSRVD_ES_PROV_RES_TYPE                 "ocf.r.prov"
-#define OC_RSRVD_ES_URI_PROV                           "/.well-known/ocf/prov"
-#define OC_RSRVD_ES_RES_TYPE_WIFI                   "ocf.r.wifi"
-#define OC_RSRVD_ES_URI_WIFI                             "/.well-known/ocf/prov/wifi"
+#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.r.prov"
+#define OC_RSRVD_ES_URI_PROV              "/.well-known/ocf/prov"
+#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.r.wifi"
+#define OC_RSRVD_ES_URI_WIFI              "/.well-known/ocf/prov/wifi"
 #define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.r.cloudserver"
-#define OC_RSRVD_ES_URI_CLOUDSERVER            "/.well-known/ocf/prov/cloudserver"
-#define OC_RSRVD_ES_RES_TYPE_DEVCONF          "ocf.r.devconf"
-#define OC_RSRVD_ES_URI_DEVCONF                    "/.well-known/ocf/prov/devconf"
-
-/**
- * @brief Defines for Provisioning status accepted values
- */
-#define ES_PS_NEED_PROVISIONING         1
-#define ES_PS_PROVISIONING_COMPLETED    2
-#define ES_PS_TRIGGER_INIT_VALUE        0
-#define ES_PS_TRIGGER_CONNECTION        1
+#define OC_RSRVD_ES_URI_CLOUDSERVER       "/.well-known/ocf/prov/cloudserver"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.r.devconf"
+#define OC_RSRVD_ES_URI_DEVCONF           "/.well-known/ocf/prov/devconf"
 
 #ifndef WITH_ARDUINO
 namespace OIC
@@ -108,7 +99,7 @@ namespace OIC
         } WIFI_AUTHTYPE;
 
         /**
-         * @brief  WIFI ecnrytion type of the Enroller
+         * @brief  WIFI encryption type of the Enroller
          */
         typedef enum
         {
@@ -245,7 +236,7 @@ namespace OIC
                 return m_netInfo;
             }
 
-            const bool isCloudable() const
+            bool isCloudable() const
             {
                 return m_cloudable;
             }
@@ -326,32 +317,32 @@ namespace OIC
         };
 
         /**
-         * Callback function definition for providing Enrollee security status .
+         * Callback function definition for providing Enrollee security status
          */
         typedef function< void(shared_ptr< RequestPropertyDataStatus >) > RequestPropertyDataStatusCb;
 
         /**
-         * Callback function definition for providing Enrollee security status .
+         * Callback function definition for providing Enrollee security status
          */
         typedef function< void(shared_ptr< DataProvisioningStatus >) > DataProvStatusCb;
 
         /**
-         * Callback function definition for providing Enrollee security status .
+         * Callback function definition for providing Enrollee security status
          */
         typedef function< void(shared_ptr< CloudProvisioningStatus >) > CloudProvStatusCb;
 
         /**
-         * Callback function definition for providing Enrollee security status .
+         * Callback function definition for providing Enrollee security status
          */
         typedef function< void(shared_ptr<SecProvisioningStatus>) > SecurityProvStatusCb;
 
         /**
-         * Callback definition to be invoked when the security stack expects a pin from application.
+         * Callback definition to be invoked when the security stack expects a pin from application
          */
         typedef function< void(string&) > SecurityPinCb;
 
         /**
-         * Callback definition to be invoked when the stack expects a db path.
+         * Callback definition to be invoked when the stack expects a db path
          */
         typedef function< void(string&) > SecProvisioningDbPathCb;
 

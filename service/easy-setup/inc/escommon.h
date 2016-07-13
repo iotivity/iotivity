@@ -24,6 +24,11 @@
 #include "ocstack.h"
 #include "octypes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Defines
 #define OIC_STRING_MAX_VALUE    100
 #define IPV4_ADDR_SIZE          16
@@ -39,9 +44,7 @@
  */
 #define OC_RSRVD_ES_PROVSTATUS             "ps"
 #define OC_RSRVD_ES_LAST_ERRORCODE         "lec"
-#define OC_RSRVD_ES_ERRORMESSAGE           "em"
 #define OC_RSRVD_ES_LINKS                  "links"
-#define OC_RSRVD_ES_TRIGGER                "tr"
 #define OC_RSRVD_ES_SUPPORTEDWIFIMODE      "swmt"
 #define OC_RSRVD_ES_SUPPORTEDWIFIFREQ      "swf"
 #define OC_RSRVD_ES_SSID                   "tnn"
@@ -53,7 +56,7 @@
 #define OC_RSRVD_ES_CISERVER               "cisurl"
 #define OC_RSRVD_ES_DEVNAME                "dn"
 #define OC_RSRVD_ES_LANGUAGE               "lang"
-#define OC_RSRVD_ES_COUNTRY                "cont"
+#define OC_RSRVD_ES_COUNTRY                "ctry"
 
 /**
  * Easysetup defined resoruce types and uris.
@@ -68,19 +71,12 @@
 #define OC_RSRVD_ES_URI_DEVCONF           "/.well-known/ocf/prov/devconf"
 
 #define NUM_WIFIMODE    10
-#define MAX_SSIDLEN 33
-#define MAX_CREDLEN 20
+#define MAX_SSIDLEN     33
+#define MAX_CREDLEN     20
 
-#define MAX_DEVICELEN 100
-#define MAX_ERRMSGLEN 100
-#define MAX_WEBLINKLEN 100
-
-typedef enum
-{
-    NO_PROVISION = 0,
-    CONNECTED_ENROLLER,
-    FAILED_CONNECTION
-} PROV_STATUS;
+#define MAX_DEVICELEN   100
+#define MAX_ERRMSGLEN   100
+#define MAX_WEBLINKLEN  100
 
 typedef enum
 {
@@ -116,25 +112,6 @@ typedef enum
     AES,
     TKIP_AES
 } WIFI_ENCTYPE;
-
-/**
-* Device Roles defined for each device type used in easy setup
-*/
-typedef enum
-{
-    ENROLLEE,
-    MEDIATOR,
-    ENROLLER,
-} DeviceRole;
-
-/**
-* On-boarding connection to create Adhoc network.
-*/
-typedef enum
-{
-    SOFTAP,
-    BLE,
-} OBConnection;
 
 typedef enum
 {
@@ -197,7 +174,7 @@ typedef enum
     /**
      * Default state of the device
      */
-    ES_STATE_INIT = 1,
+    ES_STATE_INIT = 0,
 
     /**
     * Status indicating successful cnnection to target network
@@ -218,14 +195,19 @@ typedef enum
     * Status indicating failure registeration to cloud
     */
     ES_STATE_REGISTRRED_FAIL_TO_CLOUD
-} ESEnrolleeState;
+} ESEnrolleeState, ProvStatus;
 
 typedef enum
 {
     /**
+     * Init Error Code
+     */
+    ES_ERRCODE_NO_ERROR = 0,
+
+    /**
     * Error Code that given WiFi's SSID is not found
     */
-    ES_ERRCODE_SSID_NOT_FOUND = 1,
+    ES_ERRCODE_SSID_NOT_FOUND,
 
     /**
     * Error Code that given WiFi's Password is wrong
@@ -250,111 +232,11 @@ typedef enum
     /**
     * Error Code that Unknown error occured
     */
-    ES_ERRCODE_UNKNOWN,
-
-    /**
-    * No Error Occured
-    */
-    ES_ERRCODE_NONE = 999
+    ES_ERRCODE_UNKNOWN
 } ESErrorCode;
 
-typedef struct
-{
-    // Address of remote server
-    OCDevAddr * addr;
-    // Indicates adaptor type on which the response was received
-    OCConnectivityType connType;
-} EasySetupDeviceInfo;
-
-/**
- * Provosioning Status
- */
-typedef enum
-{
-    ES_NEED_PROVISION = 1,
-    ES_CONNECTED_TO_ENROLLER,
-    ES_CONNECTED_FAIL_TO_ENROLLER,
-    ES_REGISTERED_TO_CLOUD,
-    ES_REGISTERED_FAIL_TO_CLOUD
-} EasySetupState, ProvStatus;
-
-/**
- * Response from queries to remote servers.
- */
-typedef struct
-{
-    // EasySetup Status
-    EasySetupState provStatus;
-    // EasySetup Device Info
-    EasySetupDeviceInfo provDeviceInfo;
-} EasySetupInfo, ProvisioningInfo;
-
-/**
- * @brief  Network information of the Enroller
- */
-typedef union
-{
-    /**
-     * @brief BT Mac Information
-     */
-    struct
-    {
-        char btMacAddress[NET_MACADDR_SIZE];   /**< BT mac address **/
-    } BT;
-
-    /**
-     * @brief LE MAC Information
-     */
-    struct
-    {
-        char leMacAddress[NET_MACADDR_SIZE];   /**< BLE mac address **/
-    } LE;
-
-    /**
-     * @brief IP Information
-     */
-    struct
-    {
-        char ssid[MAX_SSIDLEN]; /**< ssid of the Enroller**/
-        char pwd[MAX_CREDLEN]; /**< pwd of the Enroller**/
-    } WIFI;
-} ProvData;
-
-/**
- * @brief Network Information
- */
-typedef struct
-{
-    ProvData provData;    /**< Enroller Network Info**/
-    OCConnectivityType connType;    /**< Connectivity Type**/
-} ProvConfig;
-
-/**
- * Client applications implement this callback to consume responses received from Servers.
- */
-typedef void (*OCProvisioningStatusCB)(EasySetupInfo *easySetupInfo);
-
-/**
- * @brief This structure represent configuration information to create wifi onboarding SoftAP or connection.
-*/
-
-
-// Note : Below structure is not currently used but added for future purpose.
-typedef struct {
-    char ssid[MAX_SSIDLEN]; /**< ssid of the onboarding Adhoc Wifi network**/
-    char pwd[MAX_CREDLEN]; /**< pwd of the onboarding Adhoc wifi network**/
-    bool isSecured;                 /**< Secure connection**/
-}WiFiOnboardingConfig;
-
-/**
- * @brief This structure represent onboarding connection instance.
-*/
-typedef struct {
- /*Actual use of ipAddress is for unicast discovery, but also used to identify the Enrollee device as of now,
-    device identification should be based on DeviceID in next release.*/
-   char ipAddress[IPV4_ADDR_SIZE]; /**< IP Address of the Enrollee **/
-   bool isSecured;                 /**< Secure connection**/
-}WiFiOnboadingConnection;
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif //ES_COMMON_H_

@@ -248,7 +248,7 @@ namespace OIC
             std::string query("");
             query.append(ES_BASE_RES_URI);
             query.append("?rt=");
-            query.append(OC_RSRVD_ES_PROV_RES_TYPE);
+            query.append(OC_RSRVD_ES_RES_TYPE_PROV);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "query = %s", query.c_str());
 
@@ -312,7 +312,6 @@ namespace OIC
         void RemoteEnrollee::startSecurityProvisioning(SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
-
             m_securityProvStatusCb = callback;
 
             SecurityProvStatusCb securityProvStatusCb = std::bind(
@@ -341,6 +340,7 @@ namespace OIC
                 return ;
             }
 #else
+            (void) callback;
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured.");
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
@@ -439,8 +439,6 @@ namespace OIC
         void RemoteEnrollee::startCloudProvisioning(CloudProvStatusCb callback)
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter startCloudProvisioning");
-
-            ESResult result = ES_ERROR;
 
             if(!callback)
             {

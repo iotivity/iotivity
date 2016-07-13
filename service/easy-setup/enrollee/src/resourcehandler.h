@@ -42,7 +42,6 @@ typedef struct PROVRESOURCE
 {
     OCResourceHandle handle;
     ProvStatus status; // provisiong status
-    bool trigger; // Trigger network connection, 0 : Init value, 1 : Connected to the target network.
     ESErrorCode lastErrCode;
     char errorMessage[MAX_ERRMSGLEN];
     char ocfWebLinks[MAX_WEBLINKLEN];

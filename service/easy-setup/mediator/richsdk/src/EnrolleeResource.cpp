@@ -54,13 +54,9 @@ namespace OIC
                 m_dataProvStatusCb(provStatus);
                 return;
             }
-            // int ps = -1;
-            // rep.getValue(OC_RSRVD_ES_PROVSTATUS, ps);
-            // OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : ps - %d", ps);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                    "checkProvInformationCb : Provisioning is success. "
-                    "Now trigger network connection ");
+                    "checkProvInformationCb : Provisioning is success. ");
 
             std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
                     DataProvisioningStatus >(ESResult::ES_OK, ESDataProvState::ES_PROVISIONING_SUCCESS);
@@ -91,7 +87,6 @@ namespace OIC
                         RequestPropertyDataStatus >(result, propertyData );
                 m_RequestPropertyDataStatusCb(requestPropertyDataStatus);
             }
-
             else
             {
                 PropertyData propertyData = parsePropertyDataFromRepresentation(rep);
@@ -99,83 +94,6 @@ namespace OIC
                 std::shared_ptr< RequestPropertyDataStatus > requestPropertyDataStatus = std::make_shared<
                         RequestPropertyDataStatus >(ESResult::ES_OK, propertyData);
                 m_RequestPropertyDataStatusCb(requestPropertyDataStatus);
-            }
-        }
-
-        void EnrolleeResource::getProvStatusResponse(const HeaderOptions& /*headerOptions*/,
-                const OCRepresentation& rep, const int eCode)
-        {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : %s, eCode = %d",
-                    rep.getUri().c_str(),
-                    eCode);
-
-            if (eCode != 0)
-            {
-                ESResult result  = ESResult::ES_ERROR;
-
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,"getProvStatusResponse : Provisioning is failed ");
-
-                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
-                {
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
-                }
-                std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                        DataProvisioningStatus >(result, ESDataProvState::ES_PROVISIONING_ERROR);
-                m_dataProvStatusCb(provStatus);
-
-                return;
-            }
-
-            int ps = -1;
-
-            rep.getValue(OC_RSRVD_ES_PROVSTATUS, ps);
-
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ps - %d",
-                    ps);
-
-            //if (ps == ES_PS_NEED_PROVISIONING) //Indicates the need for provisioning
-            if (ps == 0) //Indicates the need for provisioning
-            {
-                OCRepresentation provisioningRepresentation;
-
-                provisioningRepresentation.setValue(OC_RSRVD_ES_SSID, m_dataProvInfo.WIFI.ssid);
-                provisioningRepresentation.setValue(OC_RSRVD_ES_CRED, m_dataProvInfo.WIFI.pwd);
-                provisioningRepresentation.setValue(OC_RSRVD_ES_AUTHTYPE, m_dataProvInfo.WIFI.authtype);
-                provisioningRepresentation.setValue(OC_RSRVD_ES_ENCTYPE, m_dataProvInfo.WIFI.enctype);
-                provisioningRepresentation.setValue(OC_RSRVD_ES_LANGUAGE, m_dataProvInfo.Device.language);
-                provisioningRepresentation.setValue(OC_RSRVD_ES_COUNTRY, m_dataProvInfo.Device.country);
-
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ssid - %s",
-                        (m_dataProvInfo.WIFI.ssid).c_str());
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
-                        (m_dataProvInfo.WIFI.pwd).c_str());
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : authtype - %d",
-                        m_dataProvInfo.WIFI.authtype);
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : enctype - %d",
-                        m_dataProvInfo.WIFI.enctype);
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : language - %s",
-                        (m_dataProvInfo.Device.language).c_str());
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : country - %s",
-                        (m_dataProvInfo.Device.country).c_str());
-
-                m_ocResource->post(OC_RSRVD_ES_PROV_RES_TYPE, BATCH_INTERFACE,
-                        provisioningRepresentation, QueryParamsMap(),
-                        std::function<
-                                void(const HeaderOptions& headerOptions,
-                                        const OCRepresentation& rep, const int eCode) >(
-                        std::bind(&EnrolleeResource::checkProvInformationCb, this,
-                        std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3)));
-            }
-            else if (ps == ES_PS_PROVISIONING_COMPLETED) //Indicates that provisioning is completed
-            {
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "getProvStatusResponse : Provisioning is successful");
-                std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                        DataProvisioningStatus >(ESResult::ES_OK, ESDataProvState::ES_PROVISIONED_ALREADY);
-                m_dataProvStatusCb(provStatus);
             }
         }
 
@@ -231,28 +149,36 @@ namespace OIC
             m_dataProvInfo = dataProvInfo;
 
             OC::QueryParamsMap query;
-            OC::OCRepresentation rep;
+            OC::OCRepresentation provisioningRepresentation;
 
-            std::function< OCStackResult(void) > getProvisioingStatus = [&]
-            {   return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
-                        m_ocResource->getResourceInterfaces().at(0), query,
-                        std::function<
-                        void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-                                const int eCode) >(
-                                std::bind(&EnrolleeResource::getProvStatusResponse, this,
-                                        std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3)));
-            };
+            provisioningRepresentation.setValue(OC_RSRVD_ES_SSID, m_dataProvInfo.WIFI.ssid);
+            provisioningRepresentation.setValue(OC_RSRVD_ES_CRED, m_dataProvInfo.WIFI.pwd);
+            provisioningRepresentation.setValue(OC_RSRVD_ES_AUTHTYPE, m_dataProvInfo.WIFI.authtype);
+            provisioningRepresentation.setValue(OC_RSRVD_ES_ENCTYPE, m_dataProvInfo.WIFI.enctype);
+            provisioningRepresentation.setValue(OC_RSRVD_ES_LANGUAGE, m_dataProvInfo.Device.language);
+            provisioningRepresentation.setValue(OC_RSRVD_ES_COUNTRY, m_dataProvInfo.Device.country);
 
-            OCStackResult result = getProvisioingStatus();
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ssid - %s",
+                    (m_dataProvInfo.WIFI.ssid).c_str());
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
+                    (m_dataProvInfo.WIFI.pwd).c_str());
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : authtype - %d",
+                    m_dataProvInfo.WIFI.authtype);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : enctype - %d",
+                    m_dataProvInfo.WIFI.enctype);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : language - %s",
+                    (m_dataProvInfo.Device.language).c_str());
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : country - %s",
+                    (m_dataProvInfo.Device.country).c_str());
 
-            if (result != OCStackResult::OC_STACK_OK)
-            {
-                std::shared_ptr< DataProvisioningStatus > provStatus = std::make_shared<
-                        DataProvisioningStatus >(ESResult::ES_ERROR, ESDataProvState::ES_PROVISIONING_ERROR);
-                m_dataProvStatusCb(provStatus);
-                return;
-            }
+            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
+                    provisioningRepresentation, QueryParamsMap(),
+                    std::function<
+                            void(const HeaderOptions& headerOptions,
+                                    const OCRepresentation& rep, const int eCode) >(
+                    std::bind(&EnrolleeResource::checkProvInformationCb, this,
+                    std::placeholders::_1, std::placeholders::_2,
+                    std::placeholders::_3)));
         }
 
         void EnrolleeResource::unprovisionEnrollee()

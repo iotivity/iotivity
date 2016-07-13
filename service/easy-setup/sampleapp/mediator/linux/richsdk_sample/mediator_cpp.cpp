@@ -69,7 +69,6 @@ void printPropertyData(PropertyData propData)
     cout << "===========================================" << endl;
     DeviceConfig devConfig = propData.getDevConf();
     NetworkInfo netInfo = propData.getNetInfo();
-    bool cloudable = propData.isCloudable();
 
     cout << "\tDeviceConfig.id : " << devConfig.id << endl;
     cout << "\tDeviceConfig.name : " << devConfig.name << endl;
