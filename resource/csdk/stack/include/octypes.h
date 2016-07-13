@@ -1765,7 +1765,7 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  *
  * @param[OUT] ctx - user context returned in the callback.
  * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
+ * @param[OUT] result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
 typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);

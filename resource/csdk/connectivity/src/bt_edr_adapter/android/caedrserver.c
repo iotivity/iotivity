@@ -687,7 +687,7 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t idx)
 
         if (!deviceInfo->totalDataLen)
         {
-            coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+            coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
                     ((unsigned char *) deviceInfo->recvData)[0] >> 4);
             size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
             if (deviceInfo->recvData && deviceInfo->recvDataLen >= headerLen)

@@ -95,6 +95,7 @@ if "!CURRENT_ARG!"=="server" (
   echo   TARGET_OS=%TARGET_OS%
   echo   TARGET_ARCH=%TARGET_ARCH%
   echo   SECURED=%SECURED%
+  echo   TEST=%TEST%
   echo   LOGGING=%LOGGING%
   echo   WITH_RD=%WITH_RD%
   echo   ROUTING=%ROUTING%

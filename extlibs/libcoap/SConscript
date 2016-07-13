@@ -36,13 +36,17 @@ ca_transport = libcoap_env.get('TARGET_TRANSPORT')
 with_tcp = libcoap_env.get('WITH_TCP')
 with_upstream_libcoap = libcoap_env.get('WITH_UPSTREAM_LIBCOAP')
 
+# Temporary LibCoAP URL is a fork of the original.
+# Once a pull request is merged, change this back to the obgm original below.
+libcoap_repo_url    = 'https://github.com/dthaler/libcoap'
+#libcoap_repo_url    = 'https://github.com/obgm/libcoap'
+
 ######################################################################
 # Download libCoAP
 ######################################################################
 libcoap_branch           = 'develop'
 libcoap_dir              = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
 libcoap_zip_file         = os.path.join(src_dir, 'extlibs', 'libcoap', libcoap_branch + '.zip')
-libcoap_repo_url         = 'https://github.com/obgm/libcoap'
 libcoap_url              = libcoap_repo_url + '/archive/' + libcoap_branch + '.zip'
 libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap --branch ' + libcoap_branch
 
@@ -134,6 +138,7 @@ if env.get('LOGGING') == '1':
 ######################################################################
 with_upstream_libcoap = libcoap_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
+    libcoap_env.PrependUnique(CPPPATH = ['libcoap/include/coap'])
     libcoap_env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
     libcoap_src_root = os.path.join(libcoap_dir, 'src')
 
@@ -151,11 +156,14 @@ if with_upstream_libcoap == '1':
         '\@LIBCOAP_PACKAGE_VERSION\@'       : libcoap_version
         }
     libcoap_env.Substfile(coap_h_pc_file, SUBST_DICT = pc_vars)
+
+    libcoap_src = glob.glob(os.path.join(libcoap_src_root, '*.c'))
+    libcoap_src.remove(os.path.join(libcoap_src_root, 'coap_io_lwip.c'))
 else:
     # For bring up purposes only, the forked version will live here.
     libcoap_src_root = src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1'
+    libcoap_src = glob.glob(os.path.join(libcoap_src_root, '*.c'))
 
-libcoap_src = glob.glob(os.path.join(libcoap_src_root, '*.c'))
 libcoap = libcoap_env.StaticLibrary('coap', libcoap_src, OBJPREFIX='libcoap_')
 
 libcoap_env.InstallTarget([libcoap], 'coap')

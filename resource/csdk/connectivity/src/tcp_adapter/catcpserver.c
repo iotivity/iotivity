@@ -467,7 +467,7 @@ static CAResult_t CAReadHeader(CATCPSessionInfo_t *svritem)
         svritem->protocol = COAP;
 
         //seems CoAP data received. read full coap header.
-        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(svritem->data[0] >> 4);
+        coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(svritem->data[0] >> 4);
 
         size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
 
@@ -726,7 +726,7 @@ static int CACreateAcceptSocket(int family, CASocket_t *sock)
 
     if (family == AF_INET6)
     {
-        // the socket is re‐stricted to sending and receiving IPv6 packets only.
+        // the socket is restricted to sending and receiving IPv6 packets only.
         int on = 1;
         if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof (on)))
         {
@@ -949,17 +949,17 @@ static size_t CACheckPayloadLength(const void *data, size_t dlen)
 {
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
 
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)data)[0] >> 4);
 
-    coap_pdu_t *pdu = coap_new_pdu(transport, dlen);
+    coap_pdu_t *pdu = coap_new_pdu2(transport, dlen);
     if (!pdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");
         return 0;
     }
 
-    int ret = coap_pdu_parse((unsigned char *) data, dlen, pdu, transport);
+    int ret = coap_pdu_parse2((unsigned char *) data, dlen, pdu, transport);
     if (0 >= ret)
     {
         OIC_LOG(ERROR, TAG, "pdu parse failed");
@@ -1245,7 +1245,7 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
 {
     OIC_LOG(DEBUG, TAG, "IN - CAGetTotalLengthFromHeader");
 
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)recvBuffer)[0] >> 4);
     size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)recvBuffer,
                                                         transport);

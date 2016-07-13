@@ -1006,7 +1006,7 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 
     if (!deviceInfo->totalDataLen)
     {
-        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+        coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
                 ((unsigned char *)deviceInfo->recvData)[0] >> 4);
         size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
 
