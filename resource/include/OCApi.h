@@ -221,6 +221,9 @@ namespace OC
     // Typedef for query parameter map
     typedef std::map<std::string, std::string> QueryParamsMap;
 
+    // Typedef for query parameter map with Vector
+    typedef std::map< std::string, std::vector<std::string> > QueryParamsList;
+
     // Typedef for list of observation IDs
     typedef std::vector<OCObservationId> ObservationIds;
 

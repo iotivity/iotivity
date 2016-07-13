@@ -535,6 +535,28 @@ namespace OC
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
         /**
+         * Subscribes to a server's device presence change events.
+         *
+         * @param presenceHandle a handle object that can be used to identify this subscription
+         *               request.  It can be used to unsubscribe from these events in the future.
+         *               It will be set upon successful return of this method.
+         * @param host The IP address/addressable name of the server to subscribe to.
+         *               This should be in the format coap://address:port
+         * @param queryParams map which can have the query parameter name and list of value.
+         * @param observeHandler handles callback
+         *        The callback function will be invoked with a map of attribute name and values.
+         *        The callback function will also have the result from this observe operation
+         *        This will have error codes
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                              const std::string& host,
+                                              const QueryParamsList& queryParams,
+                                              OCConnectivityType connectivityType,
+                                              ObserveCallback callback);
+
+        /**
          * Creates a resource proxy object so that get/put/observe functionality
          * can be used without discovering the object in advance.  Note that the
          * consumer of this method needs to provide all of the details required to

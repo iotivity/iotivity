@@ -168,8 +168,14 @@ namespace OC
             SubscribeCallback& presenceHandler);
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
-        OCStackResult GetDefaultQos(QualityOfService& QoS);
 
+        virtual OCStackResult SubscribeDevicePresence(OCDoHandle* handle,
+                                                      const std::string& host,
+                                                      const QueryParamsList& queryParams,
+                                                      OCConnectivityType connectivityType,
+                                                      ObserveCallback& callback);
+
+        OCStackResult GetDefaultQos(QualityOfService& QoS);
 
         virtual OCStackResult FindDirectPairingDevices(unsigned short waittime,
                        GetDirectPairedCallback& callback);
@@ -182,6 +188,7 @@ namespace OC
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
+        std::string assembleSetResourceUri(std::string uri, const QueryParamsList& queryParams);
         OCPayload* assembleSetResourcePayload(const OCRepresentation& attributes);
         OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
            const HeaderOptions& headerOptions);

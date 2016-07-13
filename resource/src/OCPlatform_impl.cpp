@@ -382,6 +382,16 @@ namespace OC
                              std::ref(presenceHandle));
     }
 
+    OCStackResult OCPlatform_impl::subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                                           const std::string& host,
+                                                           const QueryParamsList& queryParams,
+                                                           OCConnectivityType connectivityType,
+                                                           ObserveCallback callback)
+    {
+        return checked_guard(m_client, &IClientWrapper::SubscribeDevicePresence,
+                             &presenceHandle, host, queryParams, connectivityType, callback);
+    }
+
     OCStackResult OCPlatform_impl::sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
     {
         return checked_guard(m_server, &IServerWrapper::sendResponse,

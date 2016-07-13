@@ -559,6 +559,52 @@ namespace OC
         return ret;
     }
 
+    std::string InProcClientWrapper::assembleSetResourceUri(std::string uri,
+        const QueryParamsList& queryParams)
+    {
+        if (!uri.empty())
+        {
+            if (uri.back() == '/')
+            {
+                uri.resize(uri.size() - 1);
+            }
+        }
+
+        ostringstream paramsList;
+        if (queryParams.size() > 0)
+        {
+            paramsList << '?';
+        }
+
+        for (auto& param : queryParams)
+        {
+            for (auto& paramList : param.second)
+            {
+                paramsList << param.first << '=' << paramList;
+                if (paramList != param.second.back())
+                {
+                    paramsList << '&';
+                }
+            }
+            paramsList << ';';
+        }
+
+        std::string queryString = paramsList.str();
+
+        if (queryString.empty())
+        {
+            return uri;
+        }
+
+        if (queryString.back() == ';')
+        {
+            queryString.resize(queryString.size() - 1);
+        }
+
+        std::string ret = uri + queryString;
+        return ret;
+    }
+
     OCPayload* InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
     {
         MessageContainer ocInfo;
@@ -920,6 +966,50 @@ namespace OC
         }
         else
         {
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult InProcClientWrapper::SubscribeDevicePresence(OCDoHandle* handle,
+                                                               const std::string& host,
+                                                               const QueryParamsList& queryParams,
+                                                               OCConnectivityType connectivityType,
+                                                               ObserveCallback& callback)
+    {
+        if (!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+        OCStackResult result;
+
+        ClientCallbackContext::ObserveContext* ctx =
+            new ClientCallbackContext::ObserveContext(callback);
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(ctx),
+        cbdata.cb      = observeResourceCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::ObserveContext*)c;};
+
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+
+            std::ostringstream os;
+            os << host << OCF_RSRVD_DEVICE_PRESENCE_URI;
+            std::string url = assembleSetResourceUri(os.str(), queryParams);
+
+            result = OCDoResource(handle, OC_REST_OBSERVE,
+                                  url.c_str(), nullptr,
+                                  nullptr, connectivityType,
+                                  OC_LOW_QOS, &cbdata,
+                                  nullptr, 0);
+        }
+        else
+        {
+            delete ctx;
             result = OC_STACK_ERROR;
         }
 

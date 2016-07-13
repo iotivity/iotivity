@@ -266,6 +266,19 @@ namespace OC
             return OCPlatform_impl::Instance().unsubscribePresence(presenceHandle);
         }
 
+        OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                              const std::string& host,
+                                              const QueryParamsList& queryParams,
+                                              OCConnectivityType connectivityType,
+                                              ObserveCallback callback)
+        {
+            return OCPlatform_impl::Instance().subscribeDevicePresence(presenceHandle,
+                                                                       host,
+                                                                       queryParams,
+                                                                       connectivityType,
+                                                                       callback);
+        }
+
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
         {
             return OCPlatform_impl::Instance().sendResponse(pResponse);

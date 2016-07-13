@@ -225,6 +225,12 @@ namespace OC
                         SubscribeCallback presenceHandler);
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
+        OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                              const std::string& host,
+                                              const QueryParamsList& queryParams,
+                                              OCConnectivityType connectivityType,
+                                              ObserveCallback callback);
+
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         OCConnectivityType connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,

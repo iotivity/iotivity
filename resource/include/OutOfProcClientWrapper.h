@@ -122,6 +122,14 @@ namespace OC
         virtual OCStackResult UnsubscribePresence(OCDoHandle /*handle*/)
             {return OC_STACK_NOTIMPL;}
 
+        virtual OCStackResult SubscribeDevicePresence(
+            OCDoHandle* /*handle*/,
+            const std::string& /*host*/,
+            const QueryParamsList& /*queryParams*/,
+            OCConnectivityType /*connectivityType*/,
+            ObserveCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
         virtual OCStackResult GetDefaultQos(QualityOfService& /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 

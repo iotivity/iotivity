@@ -62,6 +62,10 @@ namespace OCPlatformTest
     {
     }
 
+    void onObserve(const HeaderOptions, const OCRepresentation&, const int&, const int&)
+    {
+    }
+
     void directPairHandler(std::shared_ptr<OCDirectPairing> /*dev*/, OCStackResult /*res*/)
     {
     }
@@ -830,6 +834,47 @@ namespace OCPlatformTest
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
                 OC_MULTICAST_IP, CT_DEFAULT, &presenceHandler));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+
+    //SubscribeDevicePresence Test
+    TEST(SubscribeDevicePresenceTest, DISABLED_SubscribeDevicePresenceWithValidParameters)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, queryParams, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullHost)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        nullptr, queryParams, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullOnObserve)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        hostAddress, queryParams, CT_DEFAULT, NULL));
+    }
+
+    TEST(SubscribeDevicePresenceTest, DISABLED_UnsubscribePresenceWithValidHandle)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, queryParams, CT_DEFAULT, &onObserve));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
 
