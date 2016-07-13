@@ -256,6 +256,11 @@ void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress)
         OIC_LOG_V(DEBUG, TAG, "Connected to [%s] ", remoteAddress);
 
         char *addr = OICStrdup(remoteAddress);
+        if (NULL == addr)
+        {
+            OIC_LOG(ERROR, TAG, "addr is NULL");
+            return;
+        }
 
         ca_mutex_lock(g_LEClientThreadPoolMutex);
         if (NULL == g_LEClientThreadPool)
@@ -309,7 +314,15 @@ void CALEAdapterScanResultCb(int result, bt_adapter_le_device_scan_result_info_s
     {
         g_deviceDiscoveredList = u_arraylist_create();
     }
+
     char *deviceAddr = OICStrdup(scanInfo->remote_address);
+    if (NULL == deviceAddr)
+    {
+        OIC_LOG_V(ERROR, TAG, "Device address is NULL");
+        ca_mutex_unlock(g_deviceDiscoveredListMutex);
+        return;
+    }
+
     u_arraylist_add(g_deviceDiscoveredList, (void *) deviceAddr);
     ca_mutex_unlock(g_deviceDiscoveredListMutex);
 
@@ -957,6 +970,14 @@ CAResult_t CALEGattDiscoverServices(const char *remoteAddress)
 
     //TODO: This data has to be freed while unsetting the callback.
     char *addr = OICStrdup(remoteAddress);
+    if (NULL == addr)
+    {
+        OIC_LOG(ERROR, TAG, "addr is NULL");
+        bt_gatt_client_destroy(clientHandle);
+        CALEGattDisConnect(remoteAddress);
+        return CA_STATUS_FAILED;
+    }
+
     ret = bt_gatt_client_set_characteristic_value_changed_cb(readChrHandle,
                                                              CALEGattCharacteristicChangedCb,
                                                              (void *)addr);
