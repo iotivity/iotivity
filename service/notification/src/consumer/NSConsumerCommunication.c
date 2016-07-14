@@ -57,8 +57,11 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         if (connections->addr->adapter == OC_ADAPTER_TCP)
         {
             type = CT_ADAPTER_TCP;
-            msgUri = NSGetCloudUri(provider_internal->providerId, msgUri);
-            syncUri = NSGetCloudUri(provider_internal->providerId, syncUri);
+            if (connections->isCloudConnection == true)
+            {
+                msgUri = NSGetCloudUri(provider_internal->providerId, msgUri);
+                syncUri = NSGetCloudUri(provider_internal->providerId, syncUri);
+            }
         }
 
         NS_LOG(DEBUG, "get subscribe message query");

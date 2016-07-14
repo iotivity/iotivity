@@ -273,6 +273,7 @@ NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr * inAddr)
     connections->addr = NULL;
     connections->messageHandle = NULL;
     connections->syncHandle = NULL;
+    connections->isCloudConnection = false;
     connections->next = NULL;
 
     if (inAddr)
@@ -301,6 +302,7 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
 
         copyInfo->messageHandle = tmp->messageHandle;
         copyInfo->syncHandle = tmp->syncHandle;
+        copyInfo->isCloudConnection = tmp->isCloudConnection;
         tmp = tmp->next;
         copyInfo = copyInfo->next;
     }

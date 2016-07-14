@@ -83,6 +83,13 @@ NSResult NSStartConsumer(NSConsumerConfig config);
 NSResult NSStopConsumer();
 
 /**
+ * Request to discover to remote address as parameter.
+ * @param[in]  server address combined with IP address and port number using delimiter :
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSConsumerEnableRemoteService(char *serverAddress);
+
+/**
  * Request discovery manually
  * @return ::NS_OK or result code of NSResult
  */

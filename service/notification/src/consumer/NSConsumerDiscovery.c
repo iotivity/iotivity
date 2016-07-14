@@ -35,6 +35,8 @@
 
 NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 
+OCDevAddr * NSChangeAddress(const char * address);
+
 OCStackApplicationResult NSConsumerPresenceListener(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
@@ -81,7 +83,6 @@ OCStackApplicationResult NSConsumerPresenceListener(
 OCStackApplicationResult NSProviderDiscoverListener(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    (void) ctx;
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
@@ -114,7 +115,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
             }
 
             NSInvokeRequest(NULL, OC_REST_GET, clientResponse->addr,
-                    resource->uri, NULL, NSIntrospectProvider, NULL,
+                    resource->uri, NULL, NSIntrospectProvider, ctx,
                     type);
         }
         resource = resource->next;
@@ -135,7 +136,6 @@ void NSRemoveProviderObj(NSProvider_internal * provider)
 OCStackApplicationResult NSIntrospectProvider(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    (void) ctx;
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
@@ -159,6 +159,11 @@ OCStackApplicationResult NSIntrospectProvider(
 
     NSProvider_internal * newProvider = NSGetProvider(clientResponse);
     NS_VERIFY_NOT_NULL(newProvider, OC_STACK_KEEP_TRANSACTION);
+    if (ctx && *((NSConsumerDiscoverType *)ctx) == NS_DISCOVER_CLOUD )
+    {
+        newProvider->connection->isCloudConnection = true;
+        NSOICFree(ctx);
+    }
 
     NS_LOG(DEBUG, "build NSTask");
     NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DISCOVERED, (void *) newProvider);
@@ -236,42 +241,110 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     return newProvider;
 }
 
+OCDevAddr * NSChangeAddress(const char * address)
+{
+    NS_VERIFY_NOT_NULL(address, NULL);
+    OCDevAddr * retAddr = NULL;
+
+    int index = 0;
+    while(address[index] != '\0')
+    {
+        if (address[index] == ':')
+        {
+            break;
+        }
+        index++;
+    }
+
+    if (address[index] == '\0')
+    {
+        return NULL;
+    }
+
+    int tmp = index + 1;
+    uint16_t port = address[tmp++];
+
+    while(address[tmp] != '\0')
+    {
+        port *= 10;
+        port += address[tmp++] - '0';
+    }
+
+    retAddr = (OCDevAddr *) OICMalloc(sizeof(OCDevAddr));
+    NS_VERIFY_NOT_NULL(retAddr, NULL);
+
+    retAddr->adapter = OC_ADAPTER_TCP;
+    OICStrcpy(retAddr->addr, index - 1, address);
+    retAddr->addr[index] = '\0';
+    retAddr->port = port;
+
+    return retAddr;
+}
+
+void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType rType)
+{
+    OCConnectivityType type = CT_DEFAULT;
+    NSConsumerDiscoverType * callbackData = NULL;
+
+    if (address)
+    {
+        if (address->adapter == OC_ADAPTER_IP)
+        {
+            type = CT_ADAPTER_IP;
+            NS_LOG(DEBUG, "Request discover [UDP]");
+        }
+        else if (address->adapter == OC_ADAPTER_TCP)
+        {
+            type = CT_ADAPTER_TCP;
+            NS_LOG(DEBUG, "Request discover and subscribe presence [TCP]");
+            NS_LOG(DEBUG, "Subscribe presence [TCP]");
+            NSInvokeRequest(NULL, OC_REST_PRESENCE, address, NS_PRESENCE_SUBSCRIBE_QUERY_TCP,
+                    NULL, NSConsumerPresenceListener, NULL, type);
+
+            if (rType == NS_DISCOVER_CLOUD)
+            {
+                callbackData = (NSConsumerDiscoverType *)OICMalloc(sizeof(NSConsumerDiscoverType));
+                *callbackData = NS_DISCOVER_CLOUD;
+            }
+        }
+        else
+        {
+            NS_LOG_V(DEBUG, "Request discover But Adapter is not IP : %d", address->adapter);
+        }
+    }
+    else
+    {
+        NS_LOG(DEBUG, "Request Multicast discover [UDP]");
+    }
+
+    NSInvokeRequest(NULL, OC_REST_DISCOVER, address, NS_DISCOVER_QUERY,
+            NULL, NSProviderDiscoverListener, (void *)callbackData, type);
+}
+
 void NSConsumerDiscoveryTaskProcessing(NSTask * task)
 {
     NS_VERIFY_NOT_NULL_V(task);
 
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
-    if (task->taskType == TASK_EVENT_CONNECTED || task->taskType == TASK_CONSUMER_REQ_DISCOVER)
+    if (task->taskType == TASK_CONSUMER_REQ_DISCOVER)
     {
-        OCDevAddr * addr = (OCDevAddr *) task->taskData;
-        OCConnectivityType type = CT_DEFAULT;
-        if (addr)
+        char * address = (char *) task->taskData;
+        NSConsumerDiscoverType dType = NS_DISCOVER_DEFAULT;
+
+        OCDevAddr * addr = NULL;
+        if (address)
         {
-            type = addr->adapter;
+            addr = NSChangeAddress(address);
+            dType = NS_DISCOVER_CLOUD;
         }
 
-        NS_LOG(DEBUG, "Request discover [UDP]");
-        NSInvokeRequest(NULL, OC_REST_DISCOVER, addr, NS_DISCOVER_QUERY,
-                NULL, NSProviderDiscoverListener, NULL, type);
+        NSConsumerHandleRequestDiscover(addr, dType);
+        NSOICFree(task->taskData);
+        NSOICFree(addr);
     }
-    else if (task->taskType == TASK_EVENT_CONNECTED_TCP)
+    else if (task->taskType == TASK_EVENT_CONNECTED || task->taskType == TASK_EVENT_CONNECTED_TCP)
     {
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task->taskData, NSOICFree(task));
-        OCDevAddr * addr = (OCDevAddr *) task->taskData;
-        OCConnectivityType type = CT_ADAPTER_TCP;
-        if (addr)
-        {
-            type = addr->adapter;
-        }
-
-        NS_LOG(DEBUG, "Request discover [TCP]");
-        NSInvokeRequest(NULL, OC_REST_DISCOVER, addr, NS_DISCOVER_QUERY,
-                NULL, NSProviderDiscoverListener, NULL, type);
-
-        NS_LOG(DEBUG, "Subscribe presence [TCP]");
-        NSInvokeRequest(NULL, OC_REST_PRESENCE, addr, NS_PRESENCE_SUBSCRIBE_QUERY_TCP,
-                NULL, NSConsumerPresenceListener, NULL, type);
-
+        NSConsumerHandleRequestDiscover((OCDevAddr *) task->taskData, NS_DISCOVER_DEFAULT);
         NSOICFree(task->taskData);
     }
     else

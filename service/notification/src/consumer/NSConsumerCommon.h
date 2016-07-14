@@ -123,12 +123,22 @@ extern "C" {
         } \
     }
 
+typedef enum
+{
+    NS_DISCOVER_DEFAULT, // will work for adapter_ip.
+    NS_DISCOVER_UDP,
+    NS_DISCOVER_TCP,
+    NS_DISCOVER_CLOUD
+} NSConsumerDiscoverType;
+
 typedef struct NSProviderConnectionInfo
 {
     OCDevAddr * addr;
 
     OCDoHandle messageHandle;
     OCDoHandle syncHandle;
+
+    bool isCloudConnection;
 
     struct NSProviderConnectionInfo * next;
 

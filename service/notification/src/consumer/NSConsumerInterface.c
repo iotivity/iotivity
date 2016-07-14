@@ -67,6 +67,14 @@ NSResult NSStopConsumer()
     return NS_OK;
 }
 
+NSResult NSConsumerEnableRemoteService(char *serverAddress)
+{
+    NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, (void *)serverAddress);
+    NS_VERIFY_NOT_NULL(discoverTask, NS_ERROR);
+
+    return NSConsumerPushEvent(discoverTask);
+}
+
 NSResult NSSubscribe(NSProvider * provider)
 {
     NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
