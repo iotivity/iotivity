@@ -32,9 +32,10 @@ extern "C"
 
 /**
  * Callback function type for connection status changes delivery.
+ * @param[out]   info           Remote endpoint information.
+ * @param[out]   isConnected    Current connection status info.
  */
-typedef void (*CAConnectionStateChangedCB)(CATransportAdapter_t adapter,
-        const char *remote_address, bool connected);
+typedef void (*CAConnectionStateChangedCB)(const CAEndpoint_t *info, bool isConnected);
 
 /**
  * Callback function type for adapter status changes delivery.

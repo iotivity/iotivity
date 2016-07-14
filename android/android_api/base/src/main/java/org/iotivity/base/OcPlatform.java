@@ -981,6 +981,7 @@ public final class OcPlatform {
      */
     public interface OnResourceFoundListener {
         public void onResourceFound(OcResource resource);
+        public void onFindResourceFailed(Throwable ex, String uri);
     }
 
     /**

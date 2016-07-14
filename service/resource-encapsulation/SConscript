@@ -42,7 +42,7 @@ if env.get('LOGGING'):
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 resourceClient_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
@@ -63,14 +63,14 @@ resourceClient_env.PrependUnique(LIBS = ['oc', 'rcs_common', 'octbstack','oc_log
 
 if target_os not in ['windows']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
-if target_os == 'linux':
-   resourceClient_env.AppendUnique(LIBS = ['pthread'])
+    resourceClient_env.AppendUnique(LIBS = ['dl'])
+    if target_os in ['linux']:
+        resourceClient_env.AppendUnique(LIBS = ['pthread'])
 
-if target_os == 'android':
+if target_os in ['android']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     resourceClient_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
-resourceClient_env.AppendUnique(LIBS = ['dl'])
 
 ######################################################################
 # Source files and Targets
@@ -113,7 +113,7 @@ SConscript('examples/SConscript')
 # Build UnitTests Resource Client , resourceCache and resourceBroker and 
 # DiscoveryManager
 ################################################ ######################
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
     SConscript('src/resourceCache/unittests/SConscript')
     SConscript('src/resourceBroker/unittest/SConscript')

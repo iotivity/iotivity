@@ -74,7 +74,7 @@ if target_os not in ['windows']:
 ######################################################################
 # Linux Enrollee
 ######################################################################
-if target_os == 'linux':
+if target_os in ['linux']:
 	enrollee_env.PrependUnique(CPPPATH = [
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi'])
 
@@ -159,7 +159,7 @@ if target_os == 'arduino':
 #if target_os == 'arduino':
 #	SConscript('../sampleapp/enrollee/arduino/SConscript')
 
-if target_os == 'linux':
+if target_os in ['linux']:
 	SConscript('../sampleapp/enrollee/linux/SConscript')
 	#Build UnitTestcases for Enrollee
 #	SConscript('../enrollee/unittests/SConscript')
