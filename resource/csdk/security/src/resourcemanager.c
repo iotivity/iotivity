@@ -22,7 +22,7 @@
 #include "resourcemanager.h"
 #include "aclresource.h"
 #include "pstatresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "credresource.h"
 #include "amaclresource.h"
 #include "oic_malloc.h"

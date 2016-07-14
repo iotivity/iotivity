@@ -39,7 +39,7 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "credresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "srmutility.h"
 #include "certhelpers.h"
 #include "csrresource.h"

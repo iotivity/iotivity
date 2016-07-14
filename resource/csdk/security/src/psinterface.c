@@ -38,7 +38,7 @@
 #include "srmresourcestrings.h"
 #include "srmutility.h"
 #include "pstatresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "ocresourcehandler.h"
 
 #define TAG  "OIC_SRM_PSI"

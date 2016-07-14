@@ -25,7 +25,7 @@
 #include "ocpayload.h"
 #include "psinterface.h"
 #include "experimental/securevirtualresourcetypes.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "pmutility.h"

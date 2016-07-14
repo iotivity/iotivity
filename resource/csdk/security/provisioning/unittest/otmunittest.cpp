@@ -34,7 +34,7 @@
 #include "multipleownershiptransfermanager.h"
 #endif //MULTIPLE_OWNER
 #include "srmutility.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pmtypes.h"
 #include "pmutility.h"
 #include "experimental/ocrandom.h"

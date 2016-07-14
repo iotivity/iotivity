@@ -29,7 +29,7 @@
 #include "experimental/logger.h"
 #include "aclresource.h"
 #include "srmutility.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "iotvticalendar.h"
 #include "pstatresource.h"
 #include "amaclresource.h"

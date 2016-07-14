@@ -52,7 +52,7 @@
 #include "base64.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "credresource.h"
 #include "aclresource.h"

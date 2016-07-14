@@ -26,7 +26,7 @@
 #include "oic_malloc.h"
 #include "base64.h"
 #include "experimental/ocrandom.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 
 #define TAG  "OIC_SRM_UTILITY"
 

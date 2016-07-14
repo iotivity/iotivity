@@ -32,7 +32,7 @@
 #include "coap/utlist.h"
 #include "srmutility.h"
 #include "aclresource.h"
-#include "internal/doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "experimental/ocrandom.h"
 
 namespace OIC

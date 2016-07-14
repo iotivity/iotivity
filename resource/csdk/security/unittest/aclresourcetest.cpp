@@ -34,7 +34,7 @@
 #include "srmtestcommon.h"
 #include "srmutility.h"
 #include "experimental/logger.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "experimental/payload_logging.h"

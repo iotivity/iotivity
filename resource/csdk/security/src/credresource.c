@@ -44,7 +44,7 @@
 #include "ocpayloadcbor.h"
 #include "utlist.h"
 #include "credresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "iotvticalendar.h"
 #include "pbkdf2.h"

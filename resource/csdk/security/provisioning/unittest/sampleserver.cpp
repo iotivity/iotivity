@@ -31,7 +31,7 @@
 #include "ocpayload.h"
 #include "oic_string.h"
 #include "srmutility.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "experimental/ocrandom.h"
 
 #ifdef HAVE_UNISTD_H

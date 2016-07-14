@@ -31,7 +31,7 @@
 #include "experimental/payload_logging.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "psinterface.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"

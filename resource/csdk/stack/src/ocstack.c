@@ -58,7 +58,7 @@
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
 #include "psinterface.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "ocpayload.h"

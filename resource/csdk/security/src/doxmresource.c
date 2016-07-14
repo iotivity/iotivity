@@ -36,7 +36,7 @@
 #include "cainterface.h"
 #include "ocserverrequest.h"
 #include "resourcemanager.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "deviceonboardingstate.h"
 #include "aclresource.h"
@@ -100,7 +100,7 @@ static OicSecDoxm_t gDefaultDoxm =
 #define W PERMISSION_WRITE
 #define RW PERMISSION_READ | PERMISSION_WRITE
 
-// NOTE that this table must match the DoxmProperty_t enum in doxmresource.h
+// NOTE that this table must match the DoxmProperty_t enum in experimental/doxmresource.h
 static const uint8_t gDoxmPropertyAccessModes[DOXM_PROPERTY_COUNT][DOS_STATE_COUNT] =
 { // RESET RFOTM  RFPRO   RFNOP   SRESET
     { R,    R,      R,      R,      R   }, // .oxmtype TODO [IOT-2105]

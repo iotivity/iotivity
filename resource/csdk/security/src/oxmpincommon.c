@@ -30,7 +30,7 @@
 #include "pbkdf2.h"
 #include "base64.h"
 #include "srmresourcestrings.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "credresource.h"
 #include "cainterface.h"
 #include "oic_string.h"

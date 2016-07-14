@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include "pmutility.h"
 #include "pmutilityinternal.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "utlist.h"

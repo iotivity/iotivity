@@ -21,7 +21,7 @@
 #include <memory.h>
 #include "ocstack.h"
 #include "experimental/securevirtualresourcetypes.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "oic_malloc.h"

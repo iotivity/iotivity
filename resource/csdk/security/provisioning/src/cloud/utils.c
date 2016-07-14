@@ -22,7 +22,7 @@
 #include "experimental/logger.h"
 #include "experimental/payload_logging.h"
 #include "oic_malloc.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "srmutility.h"
 #include "pmutility.h"
 

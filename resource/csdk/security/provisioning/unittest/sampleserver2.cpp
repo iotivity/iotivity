@@ -31,7 +31,7 @@
 #include "ocpayload.h"
 #include "oic_string.h"
 
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "srmutility.h"
 
 #define TAG "UNITTEST_SERVER_2"

@@ -150,3 +150,6 @@ libocsrm_env.InstallTarget(libocsrm, 'ocsrm')
 libocsrm_env.UserInstallTargetHeader(
     'include/experimental/securevirtualresourcetypes.h',
     'resource/stack/experimental', 'securevirtualresourcetypes.h')
+libocsrm_env.UserInstallTargetHeader(
+    'include/experimental/doxmresource.h',
+    'resource/stack/experimental', 'doxmresource.h')

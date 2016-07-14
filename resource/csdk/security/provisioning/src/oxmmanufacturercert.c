@@ -22,7 +22,7 @@
 
 #include "ocstack.h"
 #include "experimental/securevirtualresourcetypes.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "credresource.h"
 #include "cacommon.h"
 #include "cainterface.h"

@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 #include "policyengine.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 
 // test parameters
 // PEContext_t g_peContext;

@@ -43,7 +43,7 @@
 #include "ocpayload.h"
 
 #include "srmresourcestrings.h" //@note: SRM's internal header
-#include "doxmresource.h"       //@note: SRM's internal header
+#include "experimental/doxmresource.h"       //@note: SRM's internal header
 #include "pstatresource.h"      //@note: SRM's internal header
 
 #include "pmtypes.h"

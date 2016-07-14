@@ -39,7 +39,7 @@
 #include "experimental/payload_logging.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "rolesresource.h"
 #include "resourcemanager.h"
 #include "srmutility.h"

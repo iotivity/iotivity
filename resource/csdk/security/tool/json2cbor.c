@@ -36,7 +36,7 @@
 #include "srmutility.h"
 #include "aclresource.h"
 #include "pstatresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "amaclresource.h"
 #include "credresource.h"
 #include "security_internals.h"

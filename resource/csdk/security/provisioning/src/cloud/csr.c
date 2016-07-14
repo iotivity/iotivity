@@ -29,7 +29,7 @@
 
 #include "ocpayload.h"
 #include "experimental/payload_logging.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pmutility.h"
 #include "secureresourceprovider.h"
 
