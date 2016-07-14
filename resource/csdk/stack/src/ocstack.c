@@ -4628,6 +4628,7 @@ bool OCResultToSuccess(OCStackResult ocResult)
         case OC_STACK_RESOURCE_CREATED:
         case OC_STACK_RESOURCE_DELETED:
         case OC_STACK_CONTINUE:
+        case OC_STACK_RESOURCE_CHANGED:
             return true;
         default:
             return false;
