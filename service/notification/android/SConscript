@@ -51,5 +51,5 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
     ' build -bservice/notification/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
     emitter = ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-jdk_env.Gradle(target="notification-service/objs", 
-    source="notification-service/src/main/java/org/iotivity/service/notification/IoTNotification.java")
+jdk_env.Gradle(target="notification-service/objs",
+    source="notification-service/src/main/java/org/iotivity/service/ns/consumer/ConsumerService.java")

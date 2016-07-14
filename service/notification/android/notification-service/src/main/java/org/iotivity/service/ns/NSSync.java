@@ -18,54 +18,29 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.notification;
+package org.iotivity.service.ns;
 
 import android.util.Log;
 
-public class NSMessage
-{
-    String id = null;
-    String title = null;
-    String body = null;
-    String source = null;
+public class NSSync {
 
-    public NSMessage(String id)
-    {
-        this.id = id;
+    String mMessageId = null;
+    String mDeviceId = null;
+
+    public NSSync(String id) {
+        this.mMessageId = id;
     }
 
-    public String getId()
-    {
-        return id;
+    public String getMessageId() {
+        return mMessageId;
     }
 
-    public String getTitle()
-    {
-        return title;
+    public String getDeviceId() {
+        return mDeviceId;
     }
 
-    public void setTitle(String title)
-    {
-        this.title = title;
+    public void setDeviceId(String id) {
+        this.mDeviceId = id;
     }
 
-    public String getBody()
-    {
-        return body;
-    }
-
-    public void setBody(String body)
-    {
-        this.body = body;
-    }
-
-    public String getSource()
-    {
-        return source;
-    }
-
-    public void setSource(String source)
-    {
-        this.source = source;
-    }
 }

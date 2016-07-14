@@ -218,13 +218,13 @@ NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retMsg->ttl);
 
     NS_LOG_V(DEBUG, "Msg Address : %s", retMsg->i_addr->addr);
-    NS_LOG_V(DEBUG, "Msg ID      : %lu", retMsg->messageId);
+    NS_LOG_V(DEBUG, "Msg ID      : %lld", retMsg->messageId);
     NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
     NS_LOG_V(DEBUG, "Msg Content : %s", retMsg->contentText);
     NS_LOG_V(DEBUG, "Msg Source  : %s", retMsg->sourceName);
     NS_LOG_V(DEBUG, "Msg Type    : %d", retMsg->type);
     NS_LOG_V(DEBUG, "Msg Date    : %s", retMsg->dateTime);
-    NS_LOG_V(DEBUG, "Msg ttl     : %lu", retMsg->ttl);
+    NS_LOG_V(DEBUG, "Msg ttl     : %lld", retMsg->ttl);
 
     return retMsg;
 }
@@ -254,7 +254,7 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
     NSSyncInfo * retSync = NSCreateSyncInfo_consumer(id, pId, (NSSyncType)state);
     NS_VERIFY_NOT_NULL(retSync, NULL);
 
-    NS_LOG_V(DEBUG, "Sync ID : %lu", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync ID : %lld", retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
     NS_LOG_V(DEBUG, "Sync Provider ID : %s", retSync->providerId);
 

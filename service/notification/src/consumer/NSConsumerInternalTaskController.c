@@ -258,7 +258,7 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
     NS_VERIFY_NOT_NULL_V(provider);
 
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lu", sync->messageId);
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", sync->messageId);
 
     NSMessage_consumer * msg = NSMessageCacheFind(msgId);
     NS_VERIFY_NOT_NULL_V(msg);

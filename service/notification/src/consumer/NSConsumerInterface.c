@@ -124,7 +124,7 @@ NSProvider * NSConsumerGetProvider(const char * providerId)
 NSMessage * NSConsumerGetMessage(uint64_t messageId)
 {
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lu", messageId);
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", messageId);
 
     return (NSMessage *) NSConsumerFindNSMessage(msgId);
 }

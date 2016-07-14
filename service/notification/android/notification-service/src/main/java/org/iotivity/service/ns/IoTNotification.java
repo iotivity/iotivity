@@ -1,9 +1,9 @@
-package org.iotivity.service.notification;
+package org.iotivity.service.ns;
 
 import android.util.Log;
-import org.iotivity.service.notification.NSMessage;
-import org.iotivity.service.notification.NSConsumer;
-import org.iotivity.service.notification.NSSync;
+import org.iotivity.service.ns.NSMessage;
+import org.iotivity.service.ns.NSConsumer;
+import org.iotivity.service.ns.NSSync;
 
 public class IoTNotification
 {

@@ -35,9 +35,9 @@ import org.iotivity.base.OcResourceHandle;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.service.notification.IoTNotification;
-import org.iotivity.service.notification.NSConsumer;
-import org.iotivity.service.notification.NSMessage;
+import org.iotivity.service.ns.IoTNotification;
+import org.iotivity.service.ns.NSConsumer;
+import org.iotivity.service.ns.NSMessage;
 
 import java.util.HashMap;
 
