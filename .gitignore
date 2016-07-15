@@ -93,6 +93,7 @@ os
 out/
 platform
 iotivity.pc
+tmp/
 
 # Ignore downloaded dependencies
 extlibs/libcoap/libcoap
