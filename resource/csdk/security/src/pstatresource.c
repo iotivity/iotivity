@@ -514,7 +514,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
     OicSecPstat_t *pstat = NULL;
     static uint16_t prevMsgId = 0;
 
-    if (ehRequest->payload)
+    if (ehRequest->payload && NULL != gPstat)
     {
         uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
@@ -534,52 +534,55 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
                     goto exit;
             }
 
-            if ((pstat->cm & TAKE_OWNER) && false == pstat->isOp)
+            //operation mode(om) should be one of supported modes(sm)
+            for(size_t i = 0; i < gPstat->smLen; i++)
             {
-                validReq = true;
-                OIC_LOG(INFO, TAG, "State changed to Ready for Provisioning");
-            }
-            else if (false == (pstat->cm & TAKE_OWNER) && false == pstat->isOp)
-            {
-                validReq = true;
-                OIC_LOG (INFO, TAG, "State changed to Ready for Ownership transfer");
-            }
-            else if (false == (pstat->cm & TAKE_OWNER) && true == pstat->isOp)
-            {
-                validReq = true;
-                OIC_LOG (INFO, TAG, "State changed to Ready for Normal Operation");
-            }
-            else
-            {
-                OIC_LOG(DEBUG, TAG, "Invalid Device provisionig state");
-                OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
-                // TODO: Removed as workaround
-                //ehRet = OC_EH_BAD_REQ;
-                //goto exit;
-            }
-            if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN && gPstat)
-            {
-                /*
-                 * Check if the operation mode is in the supported provisioning services
-                 * operation mode list.
-                 */
-                for (size_t i=0; i< gPstat->smLen; i++)
+                if(gPstat->sm[i] == pstat->om)
                 {
-                    if(gPstat->sm[i] == pstat->om)
-                    {
-                        gPstat->om = pstat->om;
-                        validReq = true;
-                        break;
-                    }
+                    validReq = true;
+                    break;
+                }
+            }
+            if(!validReq)
+            {
+                OIC_LOG_V(ERROR, TAG, "%d is unsupported Operation Mode", (int) pstat->om);
+                ehRet = OC_EH_BAD_REQ;
+                goto exit;
+            }
+            validReq = false;
+
+            //Currently, we dose not support the multiple service server driven yet.
+            if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN)
+            {
+                if ((pstat->cm & TAKE_OWNER) && false == pstat->isOp)
+                {
+                    validReq = true;
+                    OIC_LOG (INFO, TAG, "State changed to Ready for Ownership transfer");
+                }
+                else if (false == (pstat->cm & TAKE_OWNER) && false == pstat->isOp)
+                {
+                    validReq = true;
+                    OIC_LOG(INFO, TAG, "State changed to Ready for Provisioning");
+                }
+                else if (false == (pstat->cm & TAKE_OWNER) && true == pstat->isOp)
+                {
+                    validReq = true;
+                    OIC_LOG (INFO, TAG, "State changed to Ready for Normal Operation");
+                }
+                else
+                {
+                    OIC_LOG(DEBUG, TAG, "Invalid Device provisionig state");
+                    OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+                    ehRet = OC_EH_BAD_REQ;
+                    goto exit;
                 }
             }
 
             if (!validReq)
             {
                 OIC_LOG(DEBUG, TAG, "Bad request for PSTAT");
-                // TODO: Removed as workaround
-                //ehRet = OC_EH_BAD_REQ;
-                //goto exit;
+                ehRet = OC_EH_BAD_REQ;
+                goto exit;
             }
 
             gPstat->isOp = pstat->isOp;

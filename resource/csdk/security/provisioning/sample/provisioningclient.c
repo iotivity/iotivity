@@ -1111,7 +1111,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        printf("         Enter Accessed Resource[%d] Name: ", i+1);
+        printf("         Enter Accessed Resource[%d] Name: (e.g. /a/led)", i+1);
         for(int ret=0; 1!=ret; )
         {
             ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -1130,7 +1130,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         int arrLen = 0;
         while(1)
         {
-            printf("         Enter Number of resource type for [%s]: ", rsrc_in);
+            printf("         Enter Number of resource type for [%s] : ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%d", &arrLen);
@@ -1154,7 +1154,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -1171,7 +1171,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
 
         while(1)
         {
-            printf("         Enter Number of interface name for [%s]: ", rsrc_in);
+            printf("         Enter Number of interface for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%d", &arrLen);
@@ -1195,7 +1195,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter Interface[%d] Name (e.g. oic.if.baseline): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN

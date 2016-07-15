@@ -448,7 +448,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -466,7 +466,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         while(1)
         {
-            printf("         Enter Number of interface name for [%s]: ", rsrc_in);
+            printf("         Enter Number of interface for [%s]: ", rsrc_in);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%d", &arrLen);
@@ -490,7 +490,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter interfnace[%d] Name (e.g. oic.if.baseline): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
