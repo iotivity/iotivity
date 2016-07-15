@@ -403,7 +403,8 @@ namespace OC
         OCStackResult result = clientResponse->result;
         if (OC_STACK_OK               == result ||
             OC_STACK_RESOURCE_CREATED == result ||
-            OC_STACK_RESOURCE_DELETED == result)
+            OC_STACK_RESOURCE_DELETED == result ||
+            OC_STACK_RESOURCE_CHANGED == result)
         {
             parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             try
