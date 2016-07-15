@@ -74,7 +74,7 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
     defaultPstat->sm[0] = (OicSecDpom_t) 3;
     size_t size = 0;
     uint8_t *cbor = NULL;
-    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(defaultPstat, &cbor, &size));
+    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(defaultPstat, &cbor, &size, true));
     DeletePstatBinData(defaultPstat);
     ASSERT_TRUE(cbor != NULL);
 
@@ -93,20 +93,20 @@ TEST(PstatResourceTest, PstatEntityHandlerInvalidRequest)
 
 TEST(PstatResourceTest, PstatToCBORPayloadNULL)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, NULL, 0));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, NULL, 0, false));
     // Case when cbor payload is NULL
     OicSecPstat_t pstat;
     size_t size = 10;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, NULL, &size));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, NULL, &size, false));
     uint8_t *cborPayload = (uint8_t *) OICCalloc(1, size);
     ASSERT_TRUE(NULL != cborPayload);
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, &size));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, &size, false));
     OICFree(cborPayload);
     cborPayload = NULL;
     // Case when pstat is zero.
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, &cborPayload, &size));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, &cborPayload, &size, false));
     // Case when size is 0.
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, 0));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(&pstat, &cborPayload, 0, false));
     OICFree(cborPayload);
 }
 
@@ -133,7 +133,7 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
 
     size_t size = 0;
     uint8_t *cbor = NULL;
-    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(&pstat, &cbor, &size));
+    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayload(&pstat, &cbor, &size, false));
     if (!cbor)
     {
         OICFree(pstat.sm);

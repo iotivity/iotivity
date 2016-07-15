@@ -81,6 +81,14 @@ static OicSecDoxm_t gDefaultDoxm =
     {.id = {0}},            /* OicUuid_t rownerID */
 };
 
+/**
+ * This method is internal method.
+ * the param roParsed is optionally used to know whether cborPayload has
+ * at least read only property value or not.
+ */
+static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t size,
+                                OicSecDoxm_t **doxm, bool *roParsed);
+
 void DeleteDoxmBinData(OicSecDoxm_t* doxm)
 {
     if (doxm)
@@ -100,7 +108,8 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
     }
 }
 
-OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, size_t *size)
+OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, size_t *size,
+                                bool rwOnly)
 {
     if (NULL == doxm || NULL == payload || NULL != *payload || NULL == size)
     {
@@ -159,7 +168,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     }
 
     //Oxm -- Not Mandatory
-    if (doxm->oxmLen > 0)
+    if (doxm->oxmLen > 0 && false == rwOnly)
     {
         CborEncoder oxm;
         cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXMS_NAME,
@@ -185,11 +194,14 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Sel Value.");
 
     //sct -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_SUPPORTED_CRED_TYPE_NAME,
-        strlen(OIC_JSON_SUPPORTED_CRED_TYPE_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Tag");
-    cborEncoderResult = cbor_encode_int(&doxmMap, doxm->sct);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
+    if (false == rwOnly)
+    {
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_SUPPORTED_CRED_TYPE_NAME,
+            strlen(OIC_JSON_SUPPORTED_CRED_TYPE_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Tag");
+        cborEncoderResult = cbor_encode_int(&doxmMap, doxm->sct);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
+    }
 
     //Owned -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OWNED_NAME,
@@ -198,16 +210,19 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->owned);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Value.");
 
-    //DeviceId -- Mandatory
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_NAME,
-        strlen(OIC_JSON_DEVICE_ID_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
-    ret = ConvertUuidToStr(&doxm->deviceID, &strUuid);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
-    OICFree(strUuid);
-    strUuid = NULL;
+    if (false == rwOnly)
+    {
+        //DeviceId -- Mandatory
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_NAME,
+            strlen(OIC_JSON_DEVICE_ID_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
+        ret = ConvertUuidToStr(&doxm->deviceID, &strUuid);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, strUuid, strlen(strUuid));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
+        OICFree(strUuid);
+        strUuid = NULL;
+    }
 
     //devownerid -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVOWNERID_NAME,
@@ -289,7 +304,7 @@ exit:
         cborLen += encoder.ptr - encoder.end;
         OIC_LOG_V(DEBUG, TAG, "Doxm reallocation size : %zd.", cborLen);
         cborEncoderResult = CborNoError;
-        ret = DoxmToCBORPayload(doxm, payload, &cborLen);
+        ret = DoxmToCBORPayload(doxm, payload, &cborLen, rwOnly);
         *size = cborLen;
     }
 
@@ -307,6 +322,12 @@ exit:
 
 OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
                                 OicSecDoxm_t **secDoxm)
+{
+    return CBORPayloadToDoxmBin(cborPayload, size, secDoxm, NULL);
+}
+
+static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t size,
+                                OicSecDoxm_t **secDoxm, bool *roParsed)
 {
     if (NULL == cborPayload || NULL == secDoxm || NULL != *secDoxm || 0 == size)
     {
@@ -378,6 +399,23 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
             cborFindResult = cbor_value_advance(&oxm);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmName.")
         }
+
+        if (roParsed)
+        {
+            *roParsed = true;
+        }
+    }
+    else
+    {
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        doxm->oxm = (OicSecOxm_t *) OICCalloc(gDoxm->oxmLen, sizeof(*doxm->oxm));
+        VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
+        doxm->oxmLen = gDoxm->oxmLen;
+        int i;
+        for (i = 0; i < gDoxm->oxmLen; i++)
+        {
+            doxm->oxm[i] = gDoxm->oxm[i];
+        }
     }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_SEL_NAME, &doxmMap);
@@ -397,6 +435,11 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
     {
         cborFindResult = cbor_value_get_int(&doxmMap, (int *) &doxm->sct);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sct Name Value.")
+
+        if (roParsed)
+        {
+            *roParsed = true;
+        }
     }
     else // PUT/POST JSON may not have sct so set it to the gDoxm->sct
     {
@@ -437,6 +480,16 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid);
         strUuid  = NULL;
+
+        if (roParsed)
+        {
+            *roParsed = true;
+        }
+    }
+    else
+    {
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        memcpy(doxm->deviceID.id, &gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
     }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVOWNERID_NAME, &doxmMap);
@@ -449,6 +502,11 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         OICFree(strUuid);
         strUuid  = NULL;
     }
+    else
+    {
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        memcpy(doxm->owner.id, gDoxm->owner.id, sizeof(doxm->owner.id));
+    }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_ROWNERID_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
@@ -459,6 +517,11 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid);
         strUuid  = NULL;
+    }
+    else
+    {
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        memcpy(doxm->rownerID.id, gDoxm->rownerID.id, sizeof(doxm->rownerID.id));
     }
 
     *secDoxm = doxm;
@@ -489,7 +552,7 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
         // Convert Doxm data into CBOR for update to persistent storage
         uint8_t *payload = NULL;
         size_t size = 0;
-        OCStackResult res = DoxmToCBORPayload(doxm, &payload, &size);
+        OCStackResult res = DoxmToCBORPayload(doxm, &payload, &size, false);
         if (payload && (OC_STACK_OK == res)
             && (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, payload, size)))
         {
@@ -606,7 +669,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
 
     if (ehRet == OC_EH_OK)
     {
-        if (OC_STACK_OK != DoxmToCBORPayload(gDoxm, &payload, &size))
+        if (OC_STACK_OK != DoxmToCBORPayload(gDoxm, &payload, &size, false))
         {
             OIC_LOG(WARNING, TAG, "DoxmToCBORPayload failed in HandleDoxmGetRequest");
         }
@@ -627,6 +690,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0} };
     static uint16_t previousMsgId = 0;
+    static bool ownedChangedFlag = false;
+    static bool establishedOwner = false;
 
     /*
      * Convert CBOR Doxm data into binary. This will also validate
@@ -638,207 +703,246 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
     {
         uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *)ehRequest->payload)->payloadSize;
-        OCStackResult res = CBORPayloadToDoxm(payload, size, &newDoxm);
+        bool roParsed = false;
+        OCStackResult res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed);
 
         if (newDoxm && OC_STACK_OK == res)
         {
-            if (OIC_JUST_WORKS == newDoxm->oxmSel)
+            // Check request on RO property
+            if (true == roParsed)
             {
-                if ((false == gDoxm->owned) && (false == newDoxm->owned))
-                {
-                    /*
-                     * If current state of the device is un-owned, enable
-                     * anonymous ECDH cipher in tinyDTLS so that Provisioning
-                     * tool can initiate JUST_WORKS ownership transfer process.
-                     */
-                    if (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
-                    {
-                        OIC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
-#ifdef __WITH_DTLS__
-                        ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
-#endif //__WITH_DTLS__
-                        goto exit;
-                    }
-                    else
-                    {
-#ifdef __WITH_DTLS__
-                        //Save the owner's UUID to derive owner credential
-                        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-
-                        // Update new state in persistent storage
-                        if (true == UpdatePersistentStorage(gDoxm))
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                        }
-
-                        /*
-                         * Disable anonymous ECDH cipher in tinyDTLS since device is now
-                         * in owned state.
-                         */
-                        CAResult_t caRes = CA_STATUS_OK;
-                        caRes = CAEnableAnonECDHCipherSuite(false);
-                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
-
-#ifdef __WITH_X509__
-#define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
-                        CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
-#endif //__WITH_X509__
-#endif //__WITH_DTLS__
-                    }
-                }
-            }
-            else if (OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
-            {
-                if ((false == gDoxm->owned) && (false == newDoxm->owned))
-                {
-                    /*
-                     * If current state of the device is un-owned, enable
-                     * anonymous ECDH cipher in tinyDTLS so that Provisioning
-                     * tool can initiate JUST_WORKS ownership transfer process.
-                     */
-                    if(memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
-                    {
-                        gDoxm->oxmSel = newDoxm->oxmSel;
-                        //Update new state in persistent storage
-                        if ((UpdatePersistentStorage(gDoxm) == true))
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                        }
-
-#ifdef __WITH_DTLS__
-                        CAResult_t caRes = CA_STATUS_OK;
-
-                        caRes = CAEnableAnonECDHCipherSuite(false);
-                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
-
-                        caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
-                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-
-                        if(previousMsgId != ehRequest->messageID)
-                        {
-                            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
-                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
-                            {
-                                //Set the device id to derive temporal PSK
-                                SetUuidForRandomPinOxm(&gDoxm->deviceID);
-
-                                /**
-                                 * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
-                                 * Credential should not be saved into SVR.
-                                 * For this reason, use a temporary get_psk_info callback to random PIN OxM.
-                                 */
-                                caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
-                                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                                ehRet = OC_EH_OK;
-                            }
-                            else
-                            {
-                                OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
-                                ehRet = OC_EH_ERROR;
-                            }
-                        }
-#endif //__WITH_DTLS__
-                    }
-                    else
-                    {
-#ifdef __WITH_DTLS__
-                        //Save the owner's UUID to derive owner credential
-                        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-
-                        //Update new state in persistent storage
-                        if (UpdatePersistentStorage(gDoxm) == true)
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                        }
-#endif
-                    }
-                }
+                OIC_LOG(ERROR, TAG, "Not acceptable request because of read-only propertys");
+                ehRet = OC_EH_NOT_ACCEPTABLE;
+                goto exit;
             }
 
-            /*
-             * When current state of the device is un-owned and Provisioning
-             * Tool is attempting to change the state to 'Owned' with a
-             * qualified value for the field 'Owner'
-             */
-            if ((false == gDoxm->owned) && (true == newDoxm->owned) &&
-                    (memcmp(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t)) == 0))
+            // in owned state
+            if (true == gDoxm->owned || (true == ownedChangedFlag && false == gDoxm->owned))
             {
-                //Change the SVR's resource owner as owner device.
-                OCStackResult ownerRes = SetAclRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                // update writable properties
+                gDoxm->oxmSel = newDoxm->oxmSel;
+                memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+                memcpy(&(gDoxm->rownerID), &(newDoxm->rownerID), sizeof(OicUuid_t));
+
+                if(gDoxm->owned != newDoxm->owned)
                 {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetAmaclRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetCredRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetPstatRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetDpairingRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetPconfRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
+                    ownedChangedFlag = (!ownedChangedFlag);
+                    gDoxm->owned = newDoxm->owned;
                 }
 
-                gDoxm->owned = true;
-                memcpy(&gDoxm->rownerID, &gDoxm->owner, sizeof(OicUuid_t));
-
-                // Update new state in persistent storage
-                if (UpdatePersistentStorage(gDoxm))
+                //Update new state in persistent storage
+                if (UpdatePersistentStorage(gDoxm) == true)
                 {
-                    //Update default ACE of security resource to prevent anonymous user access.
-                    if(OC_STACK_OK == UpdateDefaultSecProvACE())
-                    {
-                        ehRet = OC_EH_OK;
-                    }
-                    else
-                    {
-                        OIC_LOG(ERROR, TAG, "Failed to remove default ACL for security provisioning");
-                        ehRet = OC_EH_ERROR;
-                    }
+                    ehRet = OC_EH_OK;
                 }
                 else
                 {
                     OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
                     ehRet = OC_EH_ERROR;
+                }
+                goto exit;
+            }
+
+            // in unowned state
+            if (false == establishedOwner)
+            {
+                if ((false == gDoxm->owned) && (false == newDoxm->owned))
+                {
+                    if (OIC_JUST_WORKS == newDoxm->oxmSel)
+                    {
+                        /*
+                         * If current state of the device is un-owned, enable
+                         * anonymous ECDH cipher in tinyDTLS so that Provisioning
+                         * tool can initiate JUST_WORKS ownership transfer process.
+                         */
+                        if (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
+                        {
+                            OIC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
+#ifdef __WITH_DTLS__
+                            ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
+#endif //__WITH_DTLS__
+                            goto exit;
+                        }
+                        else
+                        {
+#ifdef __WITH_DTLS__
+                            //Save the owner's UUID to derive owner credential
+                            memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+
+                            // Update new state in persistent storage
+                            if (true == UpdatePersistentStorage(gDoxm))
+                            {
+                                ehRet = OC_EH_OK;
+                            }
+                            else
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
+                                ehRet = OC_EH_ERROR;
+                            }
+
+                            /*
+                             * Disable anonymous ECDH cipher in tinyDTLS since device is now
+                             * in owned state.
+                             */
+                            CAResult_t caRes = CA_STATUS_OK;
+                            caRes = CAEnableAnonECDHCipherSuite(false);
+                            VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                            OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+#ifdef __WITH_X509__
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
+                            CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+#endif //__WITH_X509__
+#endif //__WITH_DTLS__
+                        }
+                    }
+                    else if (OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
+                    {
+                        /*
+                         * If current state of the device is un-owned, enable
+                         * anonymous ECDH cipher in tinyDTLS so that Provisioning
+                         * tool can initiate JUST_WORKS ownership transfer process.
+                         */
+                        if(memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
+                        {
+                            gDoxm->oxmSel = newDoxm->oxmSel;
+                            //Update new state in persistent storage
+                            if ((UpdatePersistentStorage(gDoxm) == true))
+                            {
+                                ehRet = OC_EH_OK;
+                            }
+                            else
+                            {
+                                OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
+                                ehRet = OC_EH_ERROR;
+                            }
+
+#ifdef __WITH_DTLS__
+                            CAResult_t caRes = CA_STATUS_OK;
+
+                            caRes = CAEnableAnonECDHCipherSuite(false);
+                            VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                            OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                            caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
+                            VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+
+                            if(previousMsgId != ehRequest->messageID)
+                            {
+                                char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
+                                if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                                {
+                                    //Set the device id to derive temporal PSK
+                                    SetUuidForRandomPinOxm(&gDoxm->deviceID);
+
+                                    /**
+                                     * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
+                                     * Credential should not be saved into SVR.
+                                     * For this reason, use a temporary get_psk_info callback to random PIN OxM.
+                                     */
+                                    caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
+                                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                                    ehRet = OC_EH_OK;
+                                }
+                                else
+                                {
+                                    OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
+                                    ehRet = OC_EH_ERROR;
+                                }
+                            }
+#endif //__WITH_DTLS__
+                        }
+                        else
+                        {
+#ifdef __WITH_DTLS__
+                            //Save the owner's UUID to derive owner credential
+                            memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+
+                            //Update new state in persistent storage
+                            if (UpdatePersistentStorage(gDoxm) == true)
+                            {
+                                ehRet = OC_EH_OK;
+                            }
+                            else
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
+                                ehRet = OC_EH_ERROR;
+                            }
+#endif
+                        }
+                    }
+                }
+
+                /*
+                 * When current state of the device is un-owned and Provisioning
+                 * Tool is attempting to change the state to 'Owned' with a
+                 * qualified value for the field 'Owner'
+                 */
+                if ((false == gDoxm->owned) && (true == newDoxm->owned) &&
+                        (memcmp(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t)) == 0))
+                {
+                    //Change the SVR's resource owner as owner device.
+                    OCStackResult ownerRes = SetAclRownerId(&gDoxm->owner);
+                    if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                    {
+                        ehRet = OC_EH_ERROR;
+                        goto exit;
+                    }
+                    ownerRes = SetAmaclRownerId(&gDoxm->owner);
+                    if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                    {
+                        ehRet = OC_EH_ERROR;
+                        goto exit;
+                    }
+                    ownerRes = SetCredRownerId(&gDoxm->owner);
+                    if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                    {
+                        ehRet = OC_EH_ERROR;
+                        goto exit;
+                    }
+                    ownerRes = SetPstatRownerId(&gDoxm->owner);
+                    if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                    {
+                        ehRet = OC_EH_ERROR;
+                        goto exit;
+                    }
+                    ownerRes = SetDpairingRownerId(&gDoxm->owner);
+                    if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                    {
+                        ehRet = OC_EH_ERROR;
+                        goto exit;
+                    }
+                    ownerRes = SetPconfRownerId(&gDoxm->owner);
+                    if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+                    {
+                        ehRet = OC_EH_ERROR;
+                        goto exit;
+                    }
+
+                    gDoxm->owned = true;
+                    memcpy(&gDoxm->rownerID, &gDoxm->owner, sizeof(OicUuid_t));
+
+                    // Update new state in persistent storage
+                    if (UpdatePersistentStorage(gDoxm))
+                    {
+                        establishedOwner = true;
+
+                        //Update default ACE of security resource to prevent anonymous user access.
+                        if(OC_STACK_OK == UpdateDefaultSecProvACE())
+                        {
+                            ehRet = OC_EH_OK;
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to remove default ACL for security provisioning");
+                            ehRet = OC_EH_ERROR;
+                        }
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
+                        ehRet = OC_EH_ERROR;
+                    }
                 }
             }
         }
@@ -847,8 +951,6 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
 exit:
     if(OC_EH_OK != ehRet)
     {
-        OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
-                            "DOXM will be reverted.");
 
         /*
          * If some error is occured while ownership transfer,
@@ -856,8 +958,10 @@ exit:
         */
         if(gDoxm)
         {
-            if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
+            if(!gDoxm->owned && previousMsgId != ehRequest->messageID && false == ownedChangedFlag)
             {
+                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
+                                    "DOXM will be reverted.");
                 RestoreDoxmToInitState();
                 RestorePstatToInitState();
             }

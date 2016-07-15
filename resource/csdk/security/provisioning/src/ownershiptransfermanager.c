@@ -1202,7 +1202,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCStackResult res = DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm,
-            &secPayload->securityData, &secPayload->payloadSize);
+            &secPayload->securityData, &secPayload->payloadSize, true);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -1256,7 +1256,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData,
-                                           &secPayload->payloadSize);
+                                           &secPayload->payloadSize, true);
    if (OC_STACK_OK != res)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -1447,7 +1447,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize))
+            &secPayload->securityData, &secPayload->payloadSize, true))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;
@@ -1505,7 +1505,7 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize))
+            &secPayload->securityData, &secPayload->payloadSize, true))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;

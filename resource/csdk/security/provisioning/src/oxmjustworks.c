@@ -43,7 +43,7 @@ OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **pa
     *payload = NULL;
     *size = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
 OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
@@ -65,7 +65,7 @@ OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t 
     *payload = NULL;
     *size = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)

@@ -126,11 +126,19 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
         return retVal;
     }
 
+    /*
     if(OC_STACK_OK == GetDoxmDevOwnerId(&ownerid))
     {
         retVal = UuidCmp(&context->subject, &ownerid);
     }
+    */
 
+    // TODO: Added as workaround for CTT
+    OicSecDoxm_t* doxm = (OicSecDoxm_t*) GetDoxmResourceData();
+    if (doxm)
+    {
+        retVal = UuidCmp(&doxm->owner, &context->subject);
+    }
     return retVal;
 }
 
