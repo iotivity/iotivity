@@ -61,13 +61,13 @@ extern "C"
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.r.prov"
+#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.wk.prov"
 #define OC_RSRVD_ES_URI_PROV              "/.well-known/ocf/prov"
-#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.r.wifi"
+#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.wk.wifi"
 #define OC_RSRVD_ES_URI_WIFI              "/.well-known/ocf/prov/wifi"
-#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.r.cloudserver"
+#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.wk.cloudserver"
 #define OC_RSRVD_ES_URI_CLOUDSERVER       "/.well-known/ocf/prov/cloudserver"
-#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.r.devconf"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.wk.devconf"
 #define OC_RSRVD_ES_URI_DEVCONF           "/.well-known/ocf/prov/devconf"
 
 #define NUM_WIFIMODE    10
@@ -75,7 +75,6 @@ extern "C"
 #define MAX_CREDLEN     20
 
 #define MAX_DEVICELEN   100
-#define MAX_ERRMSGLEN   100
 #define MAX_WEBLINKLEN  100
 
 typedef enum
@@ -177,7 +176,12 @@ typedef enum
     ES_STATE_INIT = 0,
 
     /**
-    * Status indicating successful cnnection to target network
+    * Status indicating being cnnecting to target network
+    */
+    ES_STATE_CONNECTING_TO_ENROLLER,
+
+    /**
+    * Status indicating successful conection to target network
     */
     ES_STATE_CONNECTED_TO_ENROLLER,
 

@@ -128,7 +128,6 @@ OCStackResult initProvResource(bool isSecured)
 {
     gProvResource.status = ES_STATE_INIT;
     gProvResource.lastErrCode = ES_ERRCODE_NO_ERROR;
-    OICStrcpy(gProvResource.errorMessage, MAX_ERRMSGLEN, "");
     OICStrcpy(gProvResource.ocfWebLinks, MAX_WEBLINKLEN, "");
 
     OCStackResult res = OC_STACK_ERROR;
