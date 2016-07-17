@@ -301,6 +301,10 @@ OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
 OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
+OC_EXPORT_TEST OCStackResult encodeAddressForRFC6874(char * outputAddress,
+                                                     size_t outputSize,
+                                                     const char * inputAddress);
+
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out);
