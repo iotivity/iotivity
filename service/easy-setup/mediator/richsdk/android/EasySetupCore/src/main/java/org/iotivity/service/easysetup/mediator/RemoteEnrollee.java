@@ -30,76 +30,58 @@ public class RemoteEnrollee{
     public static final String TAG = RemoteEnrollee.class.getName();
     private long m_nativeHandle;
 
-    private native void nativeInitRemoteEnrollee();
-    private native void nativeRequestPropertyData(RequestPropertyDataCallback callback);
-    private native void nativeStartSecurityProvision(SecurityProvisioningCallback callback);
-    private native void nativeSetDataProvInfo(String ssid, String pwd, int authType, int encType,
-                                              String language, String country);
-    private native void nativeStartDataProvision(DataProvisioningCallback callback);
-    private native void nativeSetCloudProvInfo(String authCode, String autoProvider,
-                                               String ciServer);
-    private native void nativeStartCloudProvisioning(CloudProvisioningCallback callback);
+    private native void nativeGetConfiguration(GetConfigurationCallback callback);
+    private native void nativeConfigureSecurity(SecurityProvisioningCallback callback);
+    private native void nativeProvisionDeviceProperties(String ssid, String pwd, int authType, int encType,
+                                              String language, String country, DevicePropProvisioningCallback callback);
+    private native void nativeProvisionCloudProperties(String authCode, String autoProvider,
+                                               String ciServer, CloudPropProvisioningCallback callback);
 
     /* constructor will be invoked from the native layer */
     private RemoteEnrollee(long nativeHandle){
         this.m_nativeHandle = nativeHandle;
     }
 
-    /* native setCloudProvInfo */
-    public void initRemoteEnrollee() throws ESException
-    {
-        nativeInitRemoteEnrollee();
-    }
-
-    public void requestPropertyData(RequestPropertyDataCallback callback) throws ESException
+    public void getConfiguration(GetConfigurationCallback callback) throws ESException
     {
         if(callback != null)
         {
-            nativeRequestPropertyData(callback);
+            nativeGetConfiguration(callback);
             return;
         }
-        Log.d(TAG, "RequestPropertyDataCallback is null ");
+        Log.d(TAG, "GetConfigurationCallback is null ");
     }
 
-    public void startSecurityProvisioning(SecurityProvisioningCallback callback) throws ESException
+    public void configureSecurity(SecurityProvisioningCallback callback) throws ESException
     {
         if(callback != null)
         {
-            nativeStartSecurityProvision(callback);
+            nativeConfigureSecurity(callback);
             return;
         }
         Log.d(TAG, "SecurityProvisioningCallback is null ");
     }
 
-    public void setDataProvInfo(DataProvInfo dataInfo) throws ESException
-    {
-        nativeSetDataProvInfo(dataInfo.getSsid(), dataInfo.getPwd(),
-                              dataInfo.getAuthType().getValue(), dataInfo.getEncType().getValue(),
-                              dataInfo.getLanguage(), dataInfo.getCountry());
-    }
-
-    public void startDataProvisioning(DataProvisioningCallback callback) throws ESException
+    public void provisionDeviceProperties(DeviceProp deviceProp, DevicePropProvisioningCallback callback) throws ESException
     {
         if(callback != null)
         {
-            nativeStartDataProvision(callback);
+            nativeProvisionDeviceProperties(deviceProp.getSsid(), deviceProp.getPwd(),
+                              deviceProp.getAuthType().getValue(), deviceProp.getEncType().getValue(),
+                              deviceProp.getLanguage(), deviceProp.getCountry(), callback);
             return;
         }
-        Log.d(TAG, "DataProvisioningCallback is null ");
+        Log.d(TAG, "DevicePropProvisioningCallback is null ");
     }
 
-    public void setCloudProvInfo(CloudProvInfo cloudInfo) throws ESException{
-        nativeSetCloudProvInfo(cloudInfo.getAuthCode(), cloudInfo.getAuthProvider(),
-                               cloudInfo.getCiServer());
-    }
-
-    /* native startCloudProvisioning */
-    public void startCloudProvisioning(CloudProvisioningCallback callback) throws ESException{
+    /* native provisionCloudProperties */
+    public void provisionCloudProperties(CloudProp cloudProp , CloudPropProvisioningCallback callback) throws ESException{
         if(callback != null)
         {
-            nativeStartCloudProvisioning(callback);
+            nativeProvisionCloudProperties(cloudProp.getAuthCode(), cloudProp.getAuthProvider(),
+                               cloudProp.getCiServer(), callback);
             return;
         }
-        Log.d(TAG, "CloudProvisioningCallback is null ");
+        Log.d(TAG, "CloudPropProvisioningCallback is null ");
     }
 }

@@ -51,6 +51,6 @@ WIFI_AUTHTYPE getWifiAuthTypeFromInt(int authType);
 WIFI_ENCTYPE getWifiEncTypeFromInt(int encType);
 int convertNativeWifiFreqToInt(WIFI_FREQ wifiFreq);
 int convertNativeWifiModeToInt(WIFI_MODE wifiMode);
-int convertNativeDataProvStateToInt(ESDataProvState nativeState);
-int convertNativeDataProvResultToInt(ESResult nativeResult);
+int convertNativeDeviceProvStateToInt(ESDeviceProvState nativeState);
+int convertNativeDeviceProvResultToInt(ESResult nativeResult);
 #endif //__JNI_ES_UTILS_H_

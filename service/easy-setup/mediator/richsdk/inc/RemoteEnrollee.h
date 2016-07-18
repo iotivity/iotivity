@@ -38,9 +38,12 @@ namespace OIC
         class EnrolleeSecurity;
 
         /**
-         * This class represents Remote Enrollee device instance.
-         * It will provide APIs for Mediator to perform operations to enable the Enrollee device
-         * to connect to the Enroller.
+         * This class represents Remote Enrollee device instance. What operation the class provides:
+         * 1) Ownership transfer for enabling secured communication between Mediator and Enrollee
+         * devices.
+         * 2) Provision WiFi AP information used for which Enrollee is going to connect to the AP
+         * 3) Provision Device confiruation setting, i.e. language, country, and etc
+         * 4) Provision Cloud information used for which Enrollee is going to register to the cloud
          */
         class RemoteEnrollee
         {
@@ -65,71 +68,77 @@ namespace OIC
 #endif //__WITH_DTLS__
 
             /**
-             * Start provisioning of target Enrollers information to the Enrollee.
+             * Get an Enrollee's configuration which includes WiFi supported frequency and device name
+             *
+             * @param callback will give the requested configuration
              *
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
-             * @see RemoteEnrollee
+             * @see GetConfigurationStatusCb
              */
-            void  initRemoteEnrollee();
-
-            /**
-             * Start provisioning of target Enrollers information to the Enrollee.
-             *
-             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
-             *
-             * @see RemoteEnrollee
-             */
-            void requestPropertyData(RequestPropertyDataStatusCb callback);
+            void getConfiguration(GetConfigurationStatusCb callback);
 
              /**
-             * Start provisioning of target Enrollers information to the Enrollee.
+             * Do security provisioning such as ownership tranfer to Enrollee.
+             *
+             * @param callback will give the result if the security provisioning succeeds or fails for some reasons
              *
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
-             * @see RemoteEnrollee
+             * @see SecurityProvStatusCb
              */
-            void startSecurityProvisioning(SecurityProvStatusCb callback);
+            void configureSecurity(SecurityProvStatusCb callback);
 
             /**
-             * Start provisioning of target Enrollers information to the Enrollee.
+             * Provision WiFi AP information and device configuration to Enrollee
+             * 1. WiFi AP information includes a SSID, password, auth type, and encryption type.
+             * 2. Device configuration includes a language (IETF language tags) and country (ISO 3166-1 Alpha-2)
+             *
+             * @param devProp a data structure storing the above information to be delivered
+             * @param callback will give the result if the provisioning succeeds or fails
              *
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
-             * @see RemoteEnrollee
+             * @see DeviceProp
+             * @see DevicePropProvStatusCb
              */
-            void startDataProvisioning(DataProvStatusCb callback);
+            void provisionDeviceProperties(const DeviceProp& devProp, DevicePropProvStatusCb callback);
 
             /**
-             * Start provisioning of target Enrollers information to the Enrollee.
+             * Provision Cloud information to Enrollee, which includes Auth code, auth provider,
+             * Cloud interface server URL, and etc.
+             * In this function, Discovery for the Enrollee will happen again in a given network.
+             * Because, this function is expected to call *AFTER* the Enrollee disconnects its Soft AP
+             * and successfully connects to the certain WiFi AP. In that case, Mediator should discover
+             * the Enrollee with a certain Device ID in the network.
+             *
+             * @param cloudProp a data structure storing the above information to be delivered
+             * @param callback will give the result if the provisioning succeeds or fails
              *
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
-             * @see RemoteEnrollee
+             * @see CloudProp
+             * @see CloudPropProvStatusCb
              */
-            void startCloudProvisioning(CloudProvStatusCb callback);
+            void provisionCloudProperties(const CloudProp& cloudProp, CloudPropProvStatusCb callback);
 
             /**
-             * Get the Provisioning information provided for the current Enrollee.
-             *
-             * @return DataProvInfo Provisioning information provided for the current Enrollee.
+             * Set device ID the target Enrollee has. Note that, if you change the device ID of enrollee,
+             * unexpected behavior may happen.
              */
-            DataProvInfo getDataProvInfo();
-
-            void setDataProvInfo(const DataProvInfo& );
-            void setCloudProvInfo(const CloudProvInfo& );
+            void setDevID(const std::string devId);
 
         private:
-            RemoteEnrollee();
+            RemoteEnrollee(std::shared_ptr< OC::OCResource > resource);
 
             ESResult discoverResource();
             ESResult ESDiscoveryTimeout(unsigned short waittime);
             void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
             void initCloudResource();
 
-            void RequestPropertyDataStatusHandler (std::shared_ptr< RequestPropertyDataStatus > status);
-            void dataProvisioningStatusHandler (std::shared_ptr< DataProvisioningStatus > status);
-            void cloudProvisioningStatusHandler (std::shared_ptr< CloudProvisioningStatus > status);
+            void getConfigurationStatusHandler (std::shared_ptr< GetConfigurationStatus > status);
+            void devicePropProvisioningStatusHandler (std::shared_ptr< DevicePropProvisioningStatus > status);
+            void cloudPropProvisioningStatusHandler (std::shared_ptr< CloudPropProvisioningStatus > status);
             void securityStatusHandler(std::shared_ptr< SecProvisioningStatus > status);
 
         private:
@@ -142,15 +151,11 @@ namespace OIC
             bool m_discoveryResponse;
 
             SecurityProvStatusCb m_securityProvStatusCb;
-            RequestPropertyDataStatusCb m_requestPropertyDataStatusCb;
+            GetConfigurationStatusCb m_getConfigurationStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
-            DataProvStatusCb m_dataProvStatusCb;
-            CloudProvStatusCb m_cloudProvStatusCb;
-
-            DataProvInfo m_dataProvInfo;
-            CloudProvInfo m_cloudProvInfo;
-            PropertyData m_propertyData;
+            DevicePropProvStatusCb m_devicePropProvStatusCb;
+            CloudPropProvStatusCb m_cloudPropProvStatusCb;
 
             friend class EasySetup;
         };

@@ -20,9 +20,9 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.CloudProvisioningStatus;
+import org.iotivity.service.easysetup.mediator.CloudPropProvisioningStatus;
 
-public abstract class CloudProvisioningCallback {
-	public abstract void onProgress(CloudProvisioningStatus status);
+public abstract class CloudPropProvisioningCallback {
+	public abstract void onProgress(CloudPropProvisioningStatus status);
 }
 

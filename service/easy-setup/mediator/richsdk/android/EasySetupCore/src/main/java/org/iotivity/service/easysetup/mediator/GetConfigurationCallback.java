@@ -3,8 +3,6 @@
  *
  * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
- *
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,34 +18,10 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.mediator.enums;
+package org.iotivity.service.easysetup.mediator;
 
-public enum ESDataProvState
-{
-    ES_PROVISIONING_ERROR(-1),
-    ES_NEED_PROVISIONING(0),
-    ES_PROVISIONED_ALREADY(1),
-    ES_PROVISIONING_SUCCESS(2);
+import org.iotivity.service.easysetup.mediator.GetConfigurationCallback;
 
-    private int value;
-
-    private ESDataProvState(int value)
-    {
-        this.value = value;
-    }
-
-    public int getValue()
-    {
-        return value;
-    }
-
-    public static ESDataProvState fromInt(int i)
-    {
-        for (ESDataProvState b : ESDataProvState.values())
-        {
-            if (b.getValue() == i)
-                return b;
-        }
-        return null;
-    }
+public abstract class GetConfigurationCallback {
+    public abstract void onProgress(GetConfigurationStatus status);
 }

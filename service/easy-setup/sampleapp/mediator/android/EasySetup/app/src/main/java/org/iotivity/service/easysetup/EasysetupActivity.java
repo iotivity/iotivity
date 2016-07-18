@@ -41,28 +41,30 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import org.iotivity.base.ModeType;
+import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcProvisioning;
+import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.service.easysetup.mediator.CloudProvInfo;
-import org.iotivity.service.easysetup.mediator.CloudProvisioningCallback;
-import org.iotivity.service.easysetup.mediator.CloudProvisioningStatus;
-import org.iotivity.service.easysetup.mediator.DataProvInfo;
-import org.iotivity.service.easysetup.mediator.DataProvisioningCallback;
-import org.iotivity.service.easysetup.mediator.DataProvisioningStatus;
+import org.iotivity.service.easysetup.mediator.CloudProp;
+import org.iotivity.service.easysetup.mediator.CloudPropProvisioningCallback;
+import org.iotivity.service.easysetup.mediator.CloudPropProvisioningStatus;
 import org.iotivity.service.easysetup.mediator.DeviceConfig;
+import org.iotivity.service.easysetup.mediator.DeviceProp;
+import org.iotivity.service.easysetup.mediator.DevicePropProvisioningCallback;
+import org.iotivity.service.easysetup.mediator.DevicePropProvisioningStatus;
 import org.iotivity.service.easysetup.mediator.ESException;
 import org.iotivity.service.easysetup.mediator.EasySetup;
-import org.iotivity.service.easysetup.mediator.NetworkInfo;
-import org.iotivity.service.easysetup.mediator.PropertyData;
+import org.iotivity.service.easysetup.mediator.EnrolleeConf;
+import org.iotivity.service.easysetup.mediator.GetConfigurationCallback;
+import org.iotivity.service.easysetup.mediator.GetConfigurationStatus;
 import org.iotivity.service.easysetup.mediator.RemoteEnrollee;
-import org.iotivity.service.easysetup.mediator.RequestPropertyDataCallback;
-import org.iotivity.service.easysetup.mediator.RequestPropertyDataStatus;
 import org.iotivity.service.easysetup.mediator.SecurityProvisioningCallback;
 import org.iotivity.service.easysetup.mediator.SecurityProvisioningStatus;
+import org.iotivity.service.easysetup.mediator.WiFiConfig;
 import org.iotivity.service.easysetup.mediator.enums.ESCloudProvState;
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_AUTHTYPE;
@@ -77,6 +79,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 
 public class EasysetupActivity extends Activity {
@@ -90,23 +93,23 @@ public class EasysetupActivity extends Activity {
     public static final String OIC_SQL_DB_FILE =  "PDM.db";
 
     private boolean isSecurityEnabled = false;
+    private boolean isFirstTime = true;
 
     ToggleButton mSecurityMode;
 
     RadioGroup mEasysetupProcess;
-    RadioButton mSecProvProcess;
-    RadioButton mReqPropertyDataProcess;
-    RadioButton mDataProvProcess;
-    RadioButton mCloudProvProcess;
+    RadioButton mConfigureSecProcess;
+    RadioButton mGetConfigurationProcess;
+    RadioButton mProvisionDevConfProcess;
+    RadioButton mProvisionCloudConfProcess;
 
-    Button mInitRemoteEnrollee;
-    Button mStartRequsetPropertyData;
-    Button mStartSecProvisioning;
-    Button mStartDataProvisioning;
-    Button mStartCloudProvisioning;
+    Button mDiscoverResource;
+    Button mStartGetConfiguration;
+    Button mStartConfigureSec;
+    Button mStartProvisionDevConf;
+    Button mStartProvisionCloudConf;
 
-    TextView mRequesetPropertyDataStateText;
-    TextView mDevIDText;
+    TextView mGetconfigurationStateText;
     TextView mDevNameText;
     TextView mLanguageText;
     TextView mCountryText;
@@ -115,8 +118,8 @@ public class EasysetupActivity extends Activity {
     TextView mCloudAccessableText;
     TextView mSecStateText;
     TextView mSecDevIDText;
-    TextView mDataProvStateText;
-    TextView mCloudProvStaeText;
+    TextView mProvisionDevConfState;
+    TextView mProvisionCloudConfState;
 
     EditText mEnrollerSsidText;
     EditText mEnrollerPWText;
@@ -126,10 +129,10 @@ public class EasysetupActivity extends Activity {
     EditText mAuthProviderText;
     EditText mCIServerText;
 
-    LinearLayout mRequsetPropertyDataInfo;
-    LinearLayout mSecProvisioningState;
-    LinearLayout mDataProvisioningInfo;
-    LinearLayout mCloudProvisioningInfo;
+    LinearLayout mGetConfigurationInfo;
+    LinearLayout mConfigureSecInfo;
+    LinearLayout mProvisionDevConfInfo;
+    LinearLayout mProvisionCloudConfInfo;
 
     Spinner mAuthType;
     Spinner mEncType;
@@ -137,30 +140,36 @@ public class EasysetupActivity extends Activity {
     EasySetup mEasySetup;
     RemoteEnrollee mRemoteEnrollee;
 
+    Activity mActivity;
+    Context mContext;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.easysetup_main);
 
+        mActivity = EasysetupActivity.this;
+        mContext = mActivity.getBaseContext();
+
         mSecurityMode = (ToggleButton) findViewById(R.id.btn_Security);
 
         mEasysetupProcess = (RadioGroup) findViewById(R.id.rg_EasysetupProcess);
 
-        mSecProvProcess = (RadioButton) findViewById(R.id.btn_SecurityProv);
-        mReqPropertyDataProcess = (RadioButton) findViewById(R.id.btn_requestPropertyData);
-        mDataProvProcess = (RadioButton) findViewById(R.id.btn_DataProv);
-        mCloudProvProcess = (RadioButton) findViewById(R.id.btn_CloudProv);
+        mConfigureSecProcess = (RadioButton) findViewById(R.id.btn_configurSec);
+        mGetConfigurationProcess = (RadioButton) findViewById(R.id.btn_getConfiguration);
+        mProvisionDevConfProcess = (RadioButton) findViewById(R.id.btn_provisionDevConf);
+        mProvisionCloudConfProcess =
+                (RadioButton) findViewById(R.id.btn_provisionCloudConf);
 
-        mInitRemoteEnrollee = (Button) findViewById(R.id.btn_initRemoteEnrollee);
-        mStartRequsetPropertyData =
-                (Button) findViewById(R.id.btn_startRequsetPropertyData);
-        mStartSecProvisioning = (Button) findViewById(R.id.btn_startSecProv);
-        mStartDataProvisioning = (Button) findViewById(R.id.btn_startDataProv);
-        mStartCloudProvisioning = (Button) findViewById(R.id.btn_startCloudProv);
+        mDiscoverResource = (Button) findViewById(R.id.btn_discoverResource);
+        mStartGetConfiguration =
+                (Button) findViewById(R.id.btn_startGetConfiguration);
+        mStartConfigureSec = (Button) findViewById(R.id.btn_startConfigureSec);
+        mStartProvisionDevConf = (Button) findViewById(R.id.btn_startProvisionDevConf);
+        mStartProvisionCloudConf = (Button) findViewById(R.id.btn_startProvisionCloudConf);
 
-        mRequesetPropertyDataStateText =
-                (TextView) findViewById(R.id.txt_requesetPropertyDataState);
-        mDevIDText = (TextView) findViewById(R.id.txt_devID);
+        mGetconfigurationStateText =
+                (TextView) findViewById(R.id.txt_getConfigurationState);
         mDevNameText = (TextView) findViewById(R.id.txt_devName);
         mLanguageText = (TextView) findViewById(R.id.txt_language);
         mCountryText = (TextView) findViewById(R.id.txt_country);
@@ -169,8 +178,9 @@ public class EasysetupActivity extends Activity {
         mCloudAccessableText = (TextView) findViewById(R.id.txt_cloudAccessable);
         mSecStateText = (TextView) findViewById(R.id.txt_secState);
         mSecDevIDText = (TextView) findViewById(R.id.txt_secDevID);
-        mDataProvStateText = (TextView) findViewById(R.id.txt_dataProvisioningState);
-        mCloudProvStaeText = (TextView) findViewById(R.id.txt_cloudProvisioningState);
+        mProvisionDevConfState = (TextView) findViewById(R.id.txt_provisionDevConfState);
+        mProvisionCloudConfState =
+                (TextView) findViewById(R.id.txt_provisionCloudConfState);
 
         mEnrollerSsidText = (EditText) findViewById(R.id.editText_EnrollerSSID);
         mEnrollerPWText = (EditText) findViewById(R.id.editText_EnrollerPW);
@@ -180,11 +190,11 @@ public class EasysetupActivity extends Activity {
         mAuthProviderText = (EditText) findViewById(R.id.editText_authprovider);
         mCIServerText = (EditText) findViewById(R.id.editText_ciserver);
 
-        mRequsetPropertyDataInfo =
-                (LinearLayout) findViewById(R.id.layout_RequestPropertyData);
-        mSecProvisioningState = (LinearLayout) findViewById(R.id.layout_SecProvisioning);
-        mDataProvisioningInfo = (LinearLayout) findViewById(R.id.layout_DataProvisioning);
-        mCloudProvisioningInfo = (LinearLayout) findViewById(R.id.layout_CloudProvisioning);
+        mGetConfigurationInfo =
+                (LinearLayout) findViewById(R.id.layout_GetConfiguration);
+        mConfigureSecInfo = (LinearLayout) findViewById(R.id.layout_ConfigurSec);
+        mProvisionDevConfInfo = (LinearLayout) findViewById(R.id.layout_ProvisionDevConf);
+        mProvisionCloudConfInfo = (LinearLayout) findViewById(R.id.layout_ProvisionCloudConf);
 
         mAuthType = (Spinner) findViewById(R.id.spinner_authType);
         mEncType = (Spinner) findViewById(R.id.spinner_encType);
@@ -192,26 +202,26 @@ public class EasysetupActivity extends Activity {
         mEasysetupProcess.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                mRequsetPropertyDataInfo.setVisibility(View.GONE);
-                mSecProvisioningState.setVisibility(View.GONE);
-                mDataProvisioningInfo.setVisibility(View.GONE);
-                mCloudProvisioningInfo.setVisibility(View.GONE);
+                mGetConfigurationInfo.setVisibility(View.GONE);
+                mConfigureSecInfo.setVisibility(View.GONE);
+                mProvisionDevConfInfo.setVisibility(View.GONE);
+                mProvisionCloudConfInfo.setVisibility(View.GONE);
 
                 switch (checkedId) {
-                    case R.id.btn_SecurityProv:
-                        mSecProvisioningState.setVisibility(View.VISIBLE);
+                    case R.id.btn_configurSec:
+                        mConfigureSecInfo.setVisibility(View.VISIBLE);
                         break;
 
-                    case R.id.btn_requestPropertyData:
-                        mRequsetPropertyDataInfo.setVisibility(View.VISIBLE);
+                    case R.id.btn_getConfiguration:
+                        mGetConfigurationInfo.setVisibility(View.VISIBLE);
                         break;
 
-                    case R.id.btn_DataProv:
-                        mDataProvisioningInfo.setVisibility(View.VISIBLE);
+                    case R.id.btn_provisionDevConf:
+                        mProvisionDevConfInfo.setVisibility(View.VISIBLE);
                         break;
 
-                    case R.id.btn_CloudProv:
-                        mCloudProvisioningInfo.setVisibility(View.VISIBLE);
+                    case R.id.btn_provisionCloudConf:
+                        mProvisionCloudConfInfo.setVisibility(View.VISIBLE);
                         break;
                 }
             }
@@ -234,19 +244,18 @@ public class EasysetupActivity extends Activity {
         mEncType.setSelection(0);
 
         addListenerForDiscoverEnrollee();
-        addListenerForStartSecProvisioning();
-        addListenerForStartRequsetPropertyData();
-        addListenerForStartDataProvisioning();
-        addListenerForStartCloudProvisioning();
+        addListenerForStartConfigureSec();
+        addListenerForStartGetConfiguration();
+        addListenerForStartProvisionDevProp();
+        addListenerForStartProvisionCloudProp();
 
         mSecurityMode.setClickable(false);
-        mSecProvProcess.setEnabled(false);
-        mReqPropertyDataProcess.setEnabled(false);
-        mDataProvProcess.setEnabled(false);
-        mCloudProvProcess.setEnabled(false);
+        mConfigureSecProcess.setEnabled(false);
+        mGetConfigurationProcess.setEnabled(false);
+        mProvisionDevConfProcess.setEnabled(false);
+        mProvisionCloudConfProcess.setEnabled(false);
 
         mEasySetup = EasySetup.getInstance(getApplicationContext());
-        mRemoteEnrollee = mEasySetup.createRemoteEnrollee();
 
         initOICStack();
     }
@@ -306,16 +315,67 @@ public class EasysetupActivity extends Activity {
             // Note : Easy setup is built with SECURED = 0, but user still selects Security feature
             // while running the Mediator App it couldn't find "libocprovision.so".
             // As per the programmer guide, security feature should be invoked only if build is done with SECURED = 1.
+            mSecurityMode.setChecked(false);
             Log.e(TAG, " Easy setup is built with secured  = 0, but executed with security feature");
             Toast.makeText(this,"Security is not enabled [Easy setup is built with SECURED = 0]",
                     Toast.LENGTH_LONG).show();
-            mSecurityMode.setChecked(false);
+            return;
         }
-        mSecurityMode.setChecked(true);
+        mSecurityMode.setChecked(false);
     }
 
+    OcPlatform.OnResourceFoundListener listener =
+            new OcPlatform.OnResourceFoundListener() {
+                @Override
+                public void onFindResourceFailed(Throwable throwable, String s) {
+                    Log.e(TAG, "Failed found resource, ecode: " + s);
+                }
+                @Override
+                public void onResourceFound(OcResource ocResource) {
+                    synchronized (mActivity) {
+                        if(isFirstTime){
+                            if (null == ocResource) {
+                                Log.e(TAG, "Found resource is invalid");
+                                return;
+                            }
+
+                            if(ocResource.getHost().contains("coap+tcp")) {
+                                Log.d(TAG, "Recv Found resource event  from tcp port, ignoring URI : " + ocResource.getUri());
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mDiscoverResource.setEnabled(true);
+                                    }
+                                });
+                                return;
+                            }
+
+                            // Get the resource URI
+                            String resourceUri = ocResource.getUri();
+                            // Get the resource host address
+                            String hostAddress = ocResource.getHost();
+                            Log.d(TAG,"URI of the resource: " + resourceUri);
+                            Log.d(TAG,"Host address of the resource: " + hostAddress);
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mDiscoverResource.setText("Founded");
+                                    mConfigureSecProcess.setEnabled(true);
+                                    mGetConfigurationProcess.setEnabled(true);
+                                    mProvisionDevConfProcess.setEnabled(true);
+                                    mProvisionCloudConfProcess.setEnabled(true);
+                                }
+                            });
+                            isFirstTime = false;
+                            mRemoteEnrollee = mEasySetup.createRemoteEnrollee(ocResource);
+                        }
+                    }
+                }
+            };
+
     private void addListenerForDiscoverEnrollee() {
-        mInitRemoteEnrollee.setOnClickListener(new View.OnClickListener() {
+        mDiscoverResource.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Thread thread = new Thread() {
@@ -325,30 +385,25 @@ public class EasysetupActivity extends Activity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                mInitRemoteEnrollee.setEnabled(false);
+                                mDiscoverResource.setEnabled(false);
                             }
                         });
 
                         try {
-                            mRemoteEnrollee.initRemoteEnrollee();
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mInitRemoteEnrollee.setText("Founded");
-                                    mSecProvProcess.setEnabled(true);
-                                    mReqPropertyDataProcess.setEnabled(true);
-                                    mDataProvProcess.setEnabled(true);
-                                    mCloudProvProcess.setEnabled(true);
-                                }
-                            });
+                            String requestUri = OcPlatform.WELL_KNOWN_QUERY + "?rt=ocf.wk.prov";
+                            OcPlatform.findResource("",
+                                    requestUri,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                                    listener
+                            );
                         }
-                        catch (ESException e) {
+                        catch (OcException e) {
                             e.printStackTrace();
                             result = false;
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mInitRemoteEnrollee.setEnabled(true);
+                                    mDiscoverResource.setEnabled(true);
                                 }
                             });
                         }
@@ -360,8 +415,8 @@ public class EasysetupActivity extends Activity {
         });
     }
 
-    private void addListenerForStartSecProvisioning() {
-        mStartSecProvisioning.setOnClickListener(new View.OnClickListener() {
+    private void addListenerForStartConfigureSec() {
+        mStartConfigureSec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Thread thread = new Thread() {
@@ -370,12 +425,12 @@ public class EasysetupActivity extends Activity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                mStartSecProvisioning.setEnabled(false);
+                                mStartConfigureSec.setEnabled(false);
                             }
                         });
 
                         try {
-                            mRemoteEnrollee.startSecurityProvisioning(new SecurityProvisioningCallback() {
+                            mRemoteEnrollee.configureSecurity(new SecurityProvisioningCallback() {
                                 @Override
                                 public void onProgress(final SecurityProvisioningStatus securityProvisioningStatus) {
                                     if(securityProvisioningStatus.getESResult() == ESResult.ES_OK) {
@@ -392,7 +447,7 @@ public class EasysetupActivity extends Activity {
                                             @Override
                                             public void run() {
                                                 mSecStateText.setText("Failed");
-                                                mStartSecProvisioning.setEnabled(true);
+                                                mStartConfigureSec.setEnabled(true);
                                             }
                                         });
                                     }
@@ -403,7 +458,7 @@ public class EasysetupActivity extends Activity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mStartSecProvisioning.setEnabled(true);
+                                    mStartConfigureSec.setEnabled(true);
                                 }
                             });
                         }
@@ -415,8 +470,8 @@ public class EasysetupActivity extends Activity {
         });
     }
 
-    private void addListenerForStartRequsetPropertyData(){
-        mStartRequsetPropertyData.setOnClickListener(new View.OnClickListener() {
+    private void addListenerForStartGetConfiguration(){
+        mStartGetConfiguration.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Thread thread = new Thread() {
@@ -425,32 +480,31 @@ public class EasysetupActivity extends Activity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                mRequesetPropertyDataStateText.setText("Process");
-                                mStartRequsetPropertyData.setEnabled(false);
+                                mGetconfigurationStateText.setText("Process");
+                                mStartGetConfiguration.setEnabled(false);
                             }
                         });
 
                         try {
-                            mRemoteEnrollee.requestPropertyData(new RequestPropertyDataCallback() {
+                            mRemoteEnrollee.getConfiguration(new GetConfigurationCallback() {
                                 @Override
-                                public void onProgress(RequestPropertyDataStatus requestPropertyDataStatus) {
-                                    if(requestPropertyDataStatus.getESResult() == ESResult.ES_OK) {
+                                public void onProgress(GetConfigurationStatus getConfigurationStatus) {
+                                    if(getConfigurationStatus.getESResult() == ESResult.ES_OK) {
 
-                                        final PropertyData propertyData = requestPropertyDataStatus.getPropertyData();
-                                        final DeviceConfig devConf = propertyData.getDeviceConfig();
-                                        final NetworkInfo netInfo = propertyData.getNetworkInfo();
+                                        final EnrolleeConf enrolleeConf = getConfigurationStatus.getEnrolleeConf();
+                                        final DeviceConfig devConf = enrolleeConf.getDeviceConfig();
+                                        final WiFiConfig netInfo = enrolleeConf.getWiFiConfig();
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mRequesetPropertyDataStateText.setText("Success");
-                                                mDevIDText.setText(devConf.getId());
+                                                mGetconfigurationStateText.setText("Success");
                                                 mDevNameText.setText(devConf.getName());
                                                 mLanguageText.setText(devConf.getLanguage());
                                                 mCountryText.setText(devConf.getCountry());
                                                 setWifiModeTypes(netInfo.getWifiModeTypes());
                                                 setWifiFreq(netInfo.getWifiFreq());
 
-                                                if(propertyData.isCloudable()) {
+                                                if(enrolleeConf.isCloudable()) {
                                                     mCloudAccessableText.setText("TRUE");
                                                 }
                                                 else {
@@ -464,8 +518,8 @@ public class EasysetupActivity extends Activity {
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mRequesetPropertyDataStateText.setText("Failed");
-                                                mStartRequsetPropertyData.setEnabled(true);
+                                                mGetconfigurationStateText.setText("Failed");
+                                                mStartGetConfiguration.setEnabled(true);
                                             }
                                         });
                                     }
@@ -476,8 +530,8 @@ public class EasysetupActivity extends Activity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mRequesetPropertyDataStateText.setText("Failed");
-                                    mStartRequsetPropertyData.setEnabled(true);
+                                    mGetconfigurationStateText.setText("Failed");
+                                    mStartGetConfiguration.setEnabled(true);
                                 }
                             });
                         }
@@ -489,8 +543,8 @@ public class EasysetupActivity extends Activity {
         });
     }
 
-    private void addListenerForStartDataProvisioning() {
-        mStartDataProvisioning.setOnClickListener(new View.OnClickListener() {
+    private void addListenerForStartProvisionDevProp() {
+        mStartProvisionDevConf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Thread thread = new Thread() {
@@ -500,8 +554,8 @@ public class EasysetupActivity extends Activity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mDataProvStateText.setText("Progress");
-                                    mStartDataProvisioning.setEnabled(false);
+                                    mProvisionDevConfState.setText("Progress");
+                                    mStartProvisionDevConf.setEnabled(false);
                                 }
                             });
 
@@ -514,29 +568,27 @@ public class EasysetupActivity extends Activity {
                             String inputLanguage = mInputLanguageText.getText().toString();
                             String inputCountry = mInputCountryText.getText().toString();
 
-                            DataProvInfo dataProvInfo =
-                                    new DataProvInfo(enrollerSSID, enrollerPW, authType, encType,
+                            DeviceProp deviceProp =
+                                    new DeviceProp(enrollerSSID, enrollerPW, authType, encType,
                                                     inputLanguage, inputCountry);
 
-                            mRemoteEnrollee.setDataProvInfo(dataProvInfo);
-
-                            mRemoteEnrollee.startDataProvisioning(new DataProvisioningCallback() {
+                            mRemoteEnrollee.provisionDeviceProperties(deviceProp, new DevicePropProvisioningCallback() {
                                 @Override
-                                public void onProgress(DataProvisioningStatus dataProvisioningStatus) {
-                                    final ESResult result = dataProvisioningStatus.getESResult();
+                                public void onProgress(DevicePropProvisioningStatus devPropProvisioningStatus) {
+                                    final ESResult result = devPropProvisioningStatus.getESResult();
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
                                             if(result.equals(ESResult.ES_OK)) {
-                                                mDataProvStateText.setText("Success");
+                                                mProvisionDevConfState.setText("Success");
                                             }
                                             else if(result.equals(ESResult.ES_ERROR)) {
-                                                mDataProvStateText.setText("Failed");
+                                                mProvisionDevConfState.setText("Failed");
                                             }
                                             else if(result.equals(ESResult.ES_UNAUTHORIZED)) {
-                                                mDataProvStateText.setText("Failed. Need SecProv");
+                                                mProvisionDevConfState.setText("Failed. Need SecProv");
                                             }
-                                            mStartDataProvisioning.setEnabled(true);
+                                            mStartProvisionDevConf.setEnabled(true);
                                         }
                                     });
                                 }
@@ -546,8 +598,8 @@ public class EasysetupActivity extends Activity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mDataProvStateText.setText("Failed");
-                                    mStartDataProvisioning.setEnabled(true);
+                                    mProvisionDevConfState.setText("Failed");
+                                    mStartProvisionDevConf.setEnabled(true);
                                 }
                             });
                         }
@@ -559,8 +611,8 @@ public class EasysetupActivity extends Activity {
         });
     }
 
-    private void addListenerForStartCloudProvisioning() {
-        mStartCloudProvisioning.setOnClickListener(new View.OnClickListener() {
+    private void addListenerForStartProvisionCloudProp() {
+        mStartProvisionCloudConf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Thread thread = new Thread() {
@@ -569,8 +621,8 @@ public class EasysetupActivity extends Activity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                mCloudProvStaeText.setText("Progress");
-                                mStartCloudProvisioning.setEnabled(false);
+                                mProvisionCloudConfState.setText("Progress");
+                                mStartProvisionCloudConf.setEnabled(false);
                             }
                         });
 
@@ -579,13 +631,12 @@ public class EasysetupActivity extends Activity {
                             String authProvider = mAuthProviderText.getText().toString();
                             String ciserver = mCIServerText.getText().toString();
 
-                            CloudProvInfo cloudProvInfo =
-                                    new CloudProvInfo(authCode, authProvider, ciserver);
-                            mRemoteEnrollee.setCloudProvInfo(cloudProvInfo);
+                            CloudProp cloudProp =
+                                    new CloudProp(authCode, authProvider, ciserver);
 
-                            mRemoteEnrollee.startCloudProvisioning(new CloudProvisioningCallback() {
+                            mRemoteEnrollee.provisionCloudProperties(cloudProp, new CloudPropProvisioningCallback() {
                                 @Override
-                                public void onProgress(CloudProvisioningStatus cloudProvisioningStatus) {
+                                public void onProgress(CloudPropProvisioningStatus cloudProvisioningStatus) {
                                     final ESResult result = cloudProvisioningStatus.getESResult();
                                     final ESCloudProvState state = cloudProvisioningStatus.getESCloudState();
                                     runOnUiThread(new Runnable() {
@@ -593,20 +644,20 @@ public class EasysetupActivity extends Activity {
                                         public void run() {
                                             if(result.equals(ESResult.ES_OK)) {
                                                 if(state.equals(ESCloudProvState.ES_CLOUD_ENROLLEE_FOUND)) {
-                                                    mCloudProvStaeText.setText("Found Resource");
+                                                    mProvisionCloudConfState.setText("Found Resource");
                                                 }
                                                 else if(state.equals(ESCloudProvState.ES_CLOUD_PROVISIONING_SUCCESS)) {
-                                                    mCloudProvStaeText.setText("Success");
+                                                    mProvisionCloudConfState.setText("Success");
                                                 }
                                             }
                                             else {
                                                 if(state.equals(ESCloudProvState.ES_CLOUD_ENROLLEE_NOT_FOUND)) {
-                                                    mCloudProvStaeText.setText("Not Found Resource");
+                                                    mProvisionCloudConfState.setText("Not Found Resource");
                                                 }
                                                 else if(state.equals(ESCloudProvState.ES_CLOUD_PROVISIONING_ERROR)) {
-                                                    mCloudProvStaeText.setText("Failed");
+                                                    mProvisionCloudConfState.setText("Failed");
                                                 }
-                                                mStartCloudProvisioning.setEnabled(true);
+                                                mStartProvisionCloudConf.setEnabled(true);
                                             }
                                         }
                                     });
@@ -617,8 +668,8 @@ public class EasysetupActivity extends Activity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mCloudProvStaeText.setText("Failed");
-                                    mStartCloudProvisioning.setEnabled(true);
+                                    mProvisionCloudConfState.setText("Failed");
+                                    mStartProvisionCloudConf.setEnabled(true);
                                 }
                             });
                         }

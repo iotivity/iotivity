@@ -22,25 +22,25 @@
 JavaVM *g_jvm = NULL;
 
 jclass g_cls_RemoteEnrollee = NULL;
-jclass g_cls_PropertyData = NULL;
-jclass g_cls_DeviceConfig = NULL;
-jclass g_cls_NetworkInfo = NULL;
-jclass g_cls_RequestPropertyDataStatus = NULL;
-jclass g_cls_SecurityProvisioningStatus = NULL;
-jclass g_cls_DataProvisioningStatus = NULL;
 jclass g_cls_ESException = NULL;
-jclass g_cls_CloudProvisioningStatus = NULL;
+jclass g_cls_EnrolleeConf = NULL;
+jclass g_cls_DeviceConfig = NULL;
+jclass g_cls_WiFiConfig = NULL;
+jclass g_cls_getConfigurationStatus = NULL;
+jclass g_cls_SecurityProvisioningStatus = NULL;
+jclass g_cls_DevicePropProvisioningStatus = NULL;
+jclass g_cls_CloudPropProvisioningStatus = NULL;
 jclass g_cls_Integer = NULL;
 
 jmethodID g_mid_RemoteEnrollee_ctor = NULL;
 jmethodID g_mid_ESException_ctor = NULL;
-jmethodID g_mid_PropertyData_ctor = NULL;
+jmethodID g_mid_EnrolleeConf_ctor = NULL;
 jmethodID g_mid_DeviceConfig_ctor = NULL;
-jmethodID g_mid_NetworkInfo_ctor = NULL;
-jmethodID g_mid_RequestPropertyDataStatus_ctor = NULL;
+jmethodID g_mid_WiFiConfig_ctor = NULL;
+jmethodID g_mid_getConfigurationStatus_ctor = NULL;
 jmethodID g_mid_SecurityProvisioningStatus_ctor = NULL;
-jmethodID g_mid_DataProvisioningStatus_ctor = NULL;
-jmethodID g_mid_CloudProvisioningStatus_ctor = NULL;
+jmethodID g_mid_DevicePropProvisioningStatus_ctor = NULL;
+jmethodID g_mid_CloudPropProvisioningStatus_ctor = NULL;
 jmethodID g_mid_Integer_ctor = NULL;
 
 // JNI OnLoad
@@ -85,41 +85,41 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     env->DeleteLocalRef(clazz);
 
     g_mid_DeviceConfig_ctor = env->GetMethodID(g_cls_DeviceConfig, "<init>",
-                                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+                                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     if (!g_mid_DeviceConfig_ctor) return JNI_ERR;
 
-    // NetworkInfo
-    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/NetworkInfo");
+    // WiFiConfig
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/WiFiConfig");
     if (!clazz) return JNI_ERR;
 
-    g_cls_NetworkInfo = (jclass)env->NewGlobalRef(clazz);
+    g_cls_WiFiConfig = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_NetworkInfo_ctor = env->GetMethodID(g_cls_NetworkInfo, "<init>",
+    g_mid_WiFiConfig_ctor = env->GetMethodID(g_cls_WiFiConfig, "<init>",
                                 "(Ljava/util/ArrayList;I)V");
-    if (!g_mid_NetworkInfo_ctor) return JNI_ERR;
+    if (!g_mid_WiFiConfig_ctor) return JNI_ERR;
 
-    // PropertyData
-    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/PropertyData");
+    // EnrolleeConf
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/EnrolleeConf");
     if (!clazz) return JNI_ERR;
 
-    g_cls_PropertyData = (jclass)env->NewGlobalRef(clazz);
+    g_cls_EnrolleeConf = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_PropertyData_ctor = env->GetMethodID(g_cls_PropertyData, "<init>",
-                                "(Lorg/iotivity/service/easysetup/mediator/DeviceConfig;Lorg/iotivity/service/easysetup/mediator/NetworkInfo;Z)V");
-    if (!g_mid_PropertyData_ctor) return JNI_ERR;
+    g_mid_EnrolleeConf_ctor = env->GetMethodID(g_cls_EnrolleeConf, "<init>",
+                                "(Lorg/iotivity/service/easysetup/mediator/DeviceConfig;Lorg/iotivity/service/easysetup/mediator/WiFiConfig;Z)V");
+    if (!g_mid_EnrolleeConf_ctor) return JNI_ERR;
 
-    // RequestPropertyDataStatus
-    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/RequestPropertyDataStatus");
+    // getConfigurationStatus
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/GetConfigurationStatus");
     if (!clazz) return JNI_ERR;
 
-    g_cls_RequestPropertyDataStatus = (jclass)env->NewGlobalRef(clazz);
+    g_cls_getConfigurationStatus = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_RequestPropertyDataStatus_ctor = env->GetMethodID(g_cls_RequestPropertyDataStatus, "<init>",
-                                "(ILorg/iotivity/service/easysetup/mediator/PropertyData;)V");
-    if (!g_mid_RequestPropertyDataStatus_ctor) return JNI_ERR;
+    g_mid_getConfigurationStatus_ctor = env->GetMethodID(g_cls_getConfigurationStatus, "<init>",
+                                "(ILorg/iotivity/service/easysetup/mediator/EnrolleeConf;)V");
+    if (!g_mid_getConfigurationStatus_ctor) return JNI_ERR;
 
     // SecurityProvisioningStatus
     clazz = env->FindClass("org/iotivity/service/easysetup/mediator/SecurityProvisioningStatus");
@@ -132,26 +132,26 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
                                 "(ILjava/lang/String;)V");
     if (!g_mid_SecurityProvisioningStatus_ctor) return JNI_ERR;
 
-    // DataProvisioningStatus
-    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/DataProvisioningStatus");
+    // DevicePropProvisioningStatus
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/DevicePropProvisioningStatus");
     if (!clazz) return JNI_ERR;
 
-    g_cls_DataProvisioningStatus = (jclass)env->NewGlobalRef(clazz);
+    g_cls_DevicePropProvisioningStatus = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_DataProvisioningStatus_ctor = env->GetMethodID(g_cls_DataProvisioningStatus, "<init>",
-                                "(II)V");
-    if (!g_mid_DataProvisioningStatus_ctor) return JNI_ERR;
+    g_mid_DevicePropProvisioningStatus_ctor = env->GetMethodID(g_cls_DevicePropProvisioningStatus, "<init>",
+                                "(I)V");
+    if (!g_mid_DevicePropProvisioningStatus_ctor) return JNI_ERR;
 
-    // CloudProvisioningStatus
-    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/CloudProvisioningStatus");
+    // CloudPropProvisioningStatus
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/CloudPropProvisioningStatus");
     if (!clazz) return JNI_ERR;
-    g_cls_CloudProvisioningStatus = (jclass)env->NewGlobalRef(clazz);
+    g_cls_CloudPropProvisioningStatus = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_CloudProvisioningStatus_ctor = env->GetMethodID(g_cls_CloudProvisioningStatus, "<init>",
+    g_mid_CloudPropProvisioningStatus_ctor = env->GetMethodID(g_cls_CloudPropProvisioningStatus, "<init>",
                                 "(II)V");
-    if (!g_mid_CloudProvisioningStatus_ctor) return JNI_ERR;
+    if (!g_mid_CloudPropProvisioningStatus_ctor) return JNI_ERR;
 
     // Integer
     clazz = env->FindClass("java/lang/Integer");

@@ -27,13 +27,13 @@ import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
 
 import java.util.ArrayList;
 
-public class NetworkInfo
+public class WiFiConfig
 {
-    public static final String TAG = NetworkInfo.class.getName();
+    public static final String TAG = WiFiConfig.class.getName();
     private final ArrayList<WIFI_MODE> mWifiModeTypes;
     private final WIFI_FREQ mWifiFreq;
 
-    public NetworkInfo(ArrayList<Integer> types, int wifiFreq)
+    public WiFiConfig(ArrayList<Integer> types, int wifiFreq)
     {
         mWifiModeTypes = convertWifiModeTypes(types);
         mWifiFreq = WIFI_FREQ.fromInt(wifiFreq);

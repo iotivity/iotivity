@@ -20,8 +20,38 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.RequestPropertyDataCallback;
+import org.iotivity.service.easysetup.mediator.enums.WIFI_FREQ;
+import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
 
-public abstract class RequestPropertyDataCallback {
-    public abstract void onProgress(RequestPropertyDataStatus status);
+import java.util.ArrayList;
+
+public class EnrolleeConf
+{
+    private final DeviceConfig mDevConf;
+    private final WiFiConfig mWiFiConf;
+    private final boolean mCloudable;
+
+    public EnrolleeConf(DeviceConfig devConf, WiFiConfig wifiConf, boolean cloudable)
+    {
+        mDevConf = devConf;
+        mWiFiConf = wifiConf;
+        mCloudable = cloudable;
+    }
+
+    public DeviceConfig getDeviceConfig()
+    {
+        return mDevConf;
+    }
+
+    public WiFiConfig getWiFiConfig()
+    {
+        return mWiFiConf;
+    }
+
+    public boolean isCloudable()
+    {
+        return mCloudable;
+    }
 }
+
+

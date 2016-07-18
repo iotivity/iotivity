@@ -21,8 +21,8 @@
  *   @brief  This file contains JNI Provisioing status Listener class
  */
 
-#ifndef __JNI_ES_CLOUD_PROVISIONING_STATUS_LISTENER_H_
-#define __JNI_ES_CLOUD_PROVISIONING_STATUS_LISTENER_H_
+#ifndef __JNI_ES_CLOUD_PROP_PROVISIONING_STATUS_LISTENER_H_
+#define __JNI_ES_CLOUD_PROP_PROVISIONING_STATUS_LISTENER_H_
 
 #include <jni.h>
 
@@ -36,27 +36,27 @@ class JniRemoteEnrollee;
 using namespace OIC::Service;
 
 /**
- * @class   JniCloudProvisioningStatusListener
+ * @class   JniCloudPropProvisioningStatusListener
  * @brief   This class provides functions for handling the cloud provisioning status callback between the Java and native layer
  *
  */
-class JniCloudProvisioningStatusListener
+class JniCloudPropProvisioningStatusListener
 {
     public:
         /**
          * @brief constructor
          */
-        JniCloudProvisioningStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
+        JniCloudPropProvisioningStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
 
         /**
          * @brief destructor
         */
-        ~JniCloudProvisioningStatusListener();
+        ~JniCloudPropProvisioningStatusListener();
 
         /**
          * @brief callback function that will be passed to Native layer
         */
-        void onCloudProvisioningStatus (std::shared_ptr<CloudProvisioningStatus> cloudProvisioningStatus);
+        void onCloudPropProvisioningStatus (std::shared_ptr<CloudPropProvisioningStatus> cloudPropProvisioningStatus);
 
     private:
         jweak m_jwListener;
@@ -64,5 +64,5 @@ class JniCloudProvisioningStatusListener
         void checkExAndRemoveListener(JNIEnv *env);
 };
 
-#endif //__JNI_ES_PROVISIONING_STATUS_LISTENER_H_
+#endif //__JNI_ES_CLOUD_PROP_PROVISIONING_STATUS_LISTENER_H_
 

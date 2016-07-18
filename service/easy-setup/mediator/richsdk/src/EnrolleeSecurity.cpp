@@ -47,11 +47,10 @@ namespace OIC
 #define ES_SEC_DISCOVERY_TIMEOUT 5
 
         EnrolleeSecurity::EnrolleeSecurity(
-        std::shared_ptr< EnrolleeResource > EnrolleeResource,
+        std::shared_ptr< OC::OCResource > resource,
         std::string secDbPath)
         {
-            m_enrolleeSecState = EnrolleeSecState::ES_SEC_UNKNOWN;
-            m_EnrolleeResource = EnrolleeResource;
+            m_ocResource = resource;
         }
 
         void EnrolleeSecurity::registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
@@ -66,7 +65,7 @@ namespace OIC
         {
             for (unsigned int i = 0; i < list.size(); i++)
             {
-                if(m_deviceId == list[i]->getDeviceID().c_str())
+                if(m_ocResource->sid() == list[i]->getDeviceID().c_str())
                 {
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Device %d ID %s ", i + 1,
                             list[i]->getDeviceID().c_str());
@@ -133,11 +132,6 @@ namespace OIC
 
                 delete result;
             }
-        }
-
-        void EnrolleeSecurity::setTargetDevID(const std::string devID)
-        {
-            m_deviceId = devID;
         }
 
         void EnrolleeSecurity::performOwnershipTransfer()

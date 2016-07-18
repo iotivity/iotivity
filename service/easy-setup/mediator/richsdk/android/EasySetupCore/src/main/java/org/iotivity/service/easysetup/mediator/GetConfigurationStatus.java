@@ -22,24 +22,24 @@ package org.iotivity.service.easysetup.mediator;
 
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 
-public class RequestPropertyDataStatus
+public class GetConfigurationStatus
 {
-    private ESResult m_result;
-    private PropertyData m_propertyData;
+    private ESResult mResult;
+    private EnrolleeConf mEnrolleeConf;
 
-    public RequestPropertyDataStatus(int result, PropertyData data)
+    public GetConfigurationStatus(int result, EnrolleeConf conf)
     {
-        m_result = ESResult.fromInt(result);
-        m_propertyData = data;
+        mResult = ESResult.fromInt(result);
+        mEnrolleeConf = conf;
     }
 
     public ESResult getESResult()
     {
-        return m_result;
+        return mResult;
     }
 
-    public PropertyData getPropertyData()
+    public EnrolleeConf getEnrolleeConf()
     {
-        return m_propertyData;
+        return mEnrolleeConf;
     }
 };

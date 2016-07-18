@@ -18,21 +18,21 @@
  *
  ******************************************************************/
 
-#include "JniRequestPropertyDataStatusListener.h"
+#include "JniGetConfigurationStatusListener.h"
 #include "JniRemoteEnrollee.h"
 
 using namespace OIC::Service;
 
-JniRequestPropertyDataStatusListener::JniRequestPropertyDataStatusListener(JNIEnv *env, jobject jListener,
+JniGetConfigurationStatusListener::JniGetConfigurationStatusListener(JNIEnv *env, jobject jListener,
         JniRemoteEnrollee *owner)
     : m_ownerResource(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
 }
 
-JniRequestPropertyDataStatusListener::~JniRequestPropertyDataStatusListener()
+JniGetConfigurationStatusListener::~JniGetConfigurationStatusListener()
 {
-    LOGI("~JniRequestPropertyDataStatusListener()");
+    LOGI("~JniGetConfigurationStatusListener()");
     if (m_jwListener)
     {
         jint ret;
@@ -43,10 +43,10 @@ JniRequestPropertyDataStatusListener::~JniRequestPropertyDataStatusListener()
     }
 }
 
-void JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback (
-    std::shared_ptr<RequestPropertyDataStatus> requestPropertyDataStatusCb)
+void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
+    std::shared_ptr<GetConfigurationStatus> getConfigurationStatusCb)
 {
-    LOGI("JniRequestPropertyDataStatusListener::provisioiningStatusCallback enter");
+    LOGI("JniGetConfigurationStatusListener::provisioiningStatusCallback enter");
 
     jint ret;
     JNIEnv *env = GetESJNIEnv(ret);
@@ -69,7 +69,7 @@ void JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback (
 
     jmethodID midL = env->GetMethodID(clsL, "onProgress",
                                       "(Lorg/iotivity/service/easysetup/mediator/"
-                                      "RequestPropertyDataStatus;"
+                                      "GetConfigurationStatus;"
                                       ")V");
 
     if (!midL)
@@ -79,19 +79,18 @@ void JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback (
         return;
     }
 
-    const PropertyData propertyData = requestPropertyDataStatusCb->getPropertyData();
-    DeviceConfig devConf = propertyData.getDevConf();
-    NetworkInfo netInfo = propertyData.getNetInfo();
+    const EnrolleeConf enrolleeConf = getConfigurationStatusCb->getEnrolleeConf();
+    DeviceConfig devConf = enrolleeConf.getDevConf();
+    WiFiConfig wifiConf = enrolleeConf.getWiFiConf();
 
     jobject jDevConf = NULL;
     jDevConf = env->NewObject(g_cls_DeviceConfig,
                                                 g_mid_DeviceConfig_ctor,
-                                                (jstring)env->NewStringUTF(devConf.id.c_str()),
                                                 (jstring)env->NewStringUTF(devConf.name.c_str()),
                                                 (jstring)env->NewStringUTF(devConf.language.c_str()),
                                                 (jstring)env->NewStringUTF(devConf.country.c_str()));
     if (!jDevConf) {
-        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the jDevConf");
+        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jDevConf");
         return ;
     }
 
@@ -99,54 +98,54 @@ void JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback (
     jobject wifiModeTypes = env->NewObject(clazz, env->GetMethodID(clazz, "<init>", "()V"));
     jmethodID arraylist_add = env->GetMethodID(clazz, "add", "(Ljava/lang/Object;)Z");
 
-    for (int n=0; n<netInfo.types.size(); n++)
+    for (int n=0; n<wifiConf.types.size(); n++)
     {
         jobject value = env->NewObject(g_cls_Integer,
                                                             g_mid_Integer_ctor,
-                                                            convertNativeWifiModeToInt(static_cast<WIFI_MODE>(netInfo.types[n])));
+                                                            convertNativeWifiModeToInt(static_cast<WIFI_MODE>(wifiConf.types[n])));
        env->CallBooleanMethod(wifiModeTypes, arraylist_add, value);
     }
     if (!wifiModeTypes) {
-        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the wifiModeTypes");
+        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the wifiModeTypes");
         return ;
     }
 
 
-    jobject jNetInfo = NULL;
-    jNetInfo = env->NewObject(g_cls_NetworkInfo,
-                                                g_mid_NetworkInfo_ctor,
+    jobject jWiFiConf = NULL;
+    jWiFiConf = env->NewObject(g_cls_WiFiConfig,
+                                                g_mid_WiFiConfig_ctor,
                                                 (jobject)wifiModeTypes,
-                                                (jint)convertNativeWifiFreqToInt(netInfo.freq));
-    if (!jNetInfo) {
-        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the jNetInfo");
+                                                (jint)convertNativeWifiFreqToInt(wifiConf.freq));
+    if (!jWiFiConf) {
+        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jWiFiConf");
         return ;
     }
 
-    jobject jPropertyData = NULL;
-    jPropertyData = env->NewObject(g_cls_PropertyData,
-                                                g_mid_PropertyData_ctor,
+    jobject jEnrolleeConf = NULL;
+    jEnrolleeConf = env->NewObject(g_cls_EnrolleeConf,
+                                                g_mid_EnrolleeConf_ctor,
                                                 (jobject)jDevConf,
-                                                (jobject)jNetInfo,
-                                                (jboolean)propertyData.isCloudable());
-    if (!jPropertyData) {
-        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the jPropertyData");
+                                                (jobject)jWiFiConf,
+                                                (jboolean)enrolleeConf.isCloudable());
+    if (!jEnrolleeConf) {
+        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jEnrolleeConf");
         return ;
     }
 
-    ESResult esResult = requestPropertyDataStatusCb->getESResult();
-    jobject jRequestPropertyDataStatus = NULL;
-    jRequestPropertyDataStatus = env->NewObject(g_cls_RequestPropertyDataStatus,
-                                                g_mid_RequestPropertyDataStatus_ctor,
+    ESResult esResult = getConfigurationStatusCb->getESResult();
+    jobject jgetConfigurationStatus = NULL;
+    jgetConfigurationStatus = env->NewObject(g_cls_getConfigurationStatus,
+                                                g_mid_getConfigurationStatus_ctor,
                                                 (jint)esResult,
-                                                (jobject)jPropertyData);
-LOGI("4");
-    if (!jRequestPropertyDataStatus)
+                                                (jobject)jEnrolleeConf);
+
+    if (!jgetConfigurationStatus)
     {
-        LOGE("JniRequestPropertyDataStatusListener::requestPropertyDataStatusCallback Unable to create the java object");
+        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the java object");
         return ;
     }
 
-    env->CallVoidMethod(jListener, midL, jRequestPropertyDataStatus);
+    env->CallVoidMethod(jListener, midL, jgetConfigurationStatus);
 
     if (env->ExceptionCheck())
     {
@@ -159,18 +158,18 @@ LOGI("4");
     if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
 }
 
-void JniRequestPropertyDataStatusListener::checkExAndRemoveListener(JNIEnv *env)
+void JniGetConfigurationStatusListener::checkExAndRemoveListener(JNIEnv *env)
 {
     if (env->ExceptionCheck())
     {
         jthrowable ex = env->ExceptionOccurred();
         env->ExceptionClear();
-        m_ownerResource->removeStatusListener<JniRequestPropertyDataStatusListener>(env, m_jwListener);
+        m_ownerResource->removeStatusListener<JniGetConfigurationStatusListener>(env, m_jwListener);
 
         env->Throw((jthrowable)ex);
     }
     else
     {
-        m_ownerResource->removeStatusListener<JniRequestPropertyDataStatusListener>(env, m_jwListener);
+        m_ownerResource->removeStatusListener<JniGetConfigurationStatusListener>(env, m_jwListener);
     }
 }

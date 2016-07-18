@@ -51,7 +51,8 @@ extern "C" {
  */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrollee
-(JNIEnv *env, jobject interfaceClass);
+(JNIEnv *env, jobject thiz, jstring host, jstring uri, jstring jdID, jboolean isObservable, jint conType);
+
 
 #ifdef __cplusplus
 }

@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __JNI_ES_REQUEST_PROPERTY_DATA_STATUS_LISTENER_H_
-#define __JNI_ES_REQUEST_PROPERTY_DATA_STATUS_LISTENER_H_
+#ifndef __JNI_ES_DEVICE_PROP_PROVISIONING_STATUS_LISTENER_H_
+#define __JNI_ES_DEVICE_PROP_PROVISIONING_STATUS_LISTENER_H_
 
 #include <jni.h>
 
@@ -32,23 +32,23 @@ class JniRemoteEnrollee;
 
 using namespace OIC::Service;
 
-class JniRequestPropertyDataStatusListener
+class JniDevicePropProvisioningStatusListener
 {
     public:
         /**
          * @brief constructor
          */
-        JniRequestPropertyDataStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
+        JniDevicePropProvisioningStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
 
         /**
          * @brief destructor
         */
-        ~JniRequestPropertyDataStatusListener();
+        ~JniDevicePropProvisioningStatusListener();
 
         /**
          * @brief callback function that will be passed to Native layer
         */
-        void requestPropertyDataStatusCallback (std::shared_ptr<RequestPropertyDataStatus> requestPropertyDataStatus);
+        void onDevicePropProvisioningStatusCallback (std::shared_ptr<DevicePropProvisioningStatus> devicePropProvisioningStatus);
 
     private:
         jweak m_jwListener;
@@ -56,4 +56,4 @@ class JniRequestPropertyDataStatusListener
         void checkExAndRemoveListener(JNIEnv *env);
 };
 
-#endif //__JNI_ES_REQUEST_PROPERTY_DATA_STATUS_LISTENER_H_
+#endif //__JNI_ES_DEVICE_PROP_PROVISIONING_STATUS_LISTENER_H_

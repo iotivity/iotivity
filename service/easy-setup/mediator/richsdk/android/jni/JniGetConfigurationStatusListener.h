@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __JNI_ES_DATA_PROVISIONING_STATUS_LISTENER_H_
-#define __JNI_ES_DATA_PROVISIONING_STATUS_LISTENER_H_
+#ifndef __JNI_ES_GET_CONFIGURATION_STATUS_LISTENER_H_
+#define __JNI_ES_GET_CONFIGURATION_STATUS_LISTENER_H_
 
 #include <jni.h>
 
@@ -32,23 +32,23 @@ class JniRemoteEnrollee;
 
 using namespace OIC::Service;
 
-class JniDataProvisioningStatusListener
+class JniGetConfigurationStatusListener
 {
     public:
         /**
          * @brief constructor
          */
-        JniDataProvisioningStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
+        JniGetConfigurationStatusListener(JNIEnv *env, jobject jListener, JniRemoteEnrollee *resource);
 
         /**
          * @brief destructor
         */
-        ~JniDataProvisioningStatusListener();
+        ~JniGetConfigurationStatusListener();
 
         /**
          * @brief callback function that will be passed to Native layer
         */
-        void dataProvisionStatusCallback (std::shared_ptr<DataProvisioningStatus> dataProvisioningStatus);
+        void getConfigurationStatusCallback (std::shared_ptr<GetConfigurationStatus> getConfigurationStatus);
 
     private:
         jweak m_jwListener;
@@ -56,4 +56,4 @@ class JniDataProvisioningStatusListener
         void checkExAndRemoveListener(JNIEnv *env);
 };
 
-#endif //__JNI_ES_DATA_PROVISIONING_STATUS_LISTENER_H_
+#endif //__JNI_ES_GET_CONFIGURATION_STATUS_LISTENER_H_

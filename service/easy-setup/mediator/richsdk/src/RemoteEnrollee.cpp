@@ -37,16 +37,16 @@ namespace OIC
         #define ES_REMOTE_ENROLLEE_TAG "ES_REMOTE_ENROLLEE"
         #define DISCOVERY_TIMEOUT 5
 
-        RemoteEnrollee::RemoteEnrollee()
+        RemoteEnrollee::RemoteEnrollee(std::shared_ptr< OC::OCResource > resource)
         {
+            m_ocResource = resource;
+            m_enrolleeResource = std::make_shared<EnrolleeResource>(m_ocResource);
             m_securityProvStatusCb = nullptr;
-            m_requestPropertyDataStatusCb = nullptr;
+            m_getConfigurationStatusCb = nullptr;
             m_securityPinCb = nullptr;
             m_secProvisioningDbPathCb = nullptr;
-            m_dataProvStatusCb = nullptr;
-            m_cloudProvStatusCb = nullptr;
-
-            //m_deviceId = nullptr;
+            m_devicePropProvStatusCb = nullptr;
+            m_cloudPropProvStatusCb = nullptr;
         }
 
 #ifdef __WITH_DTLS__
@@ -88,48 +88,36 @@ namespace OIC
             }
         }
 
-        void RemoteEnrollee::RequestPropertyDataStatusHandler (
-                std::shared_ptr< RequestPropertyDataStatus > status)
+        void RemoteEnrollee::getConfigurationStatusHandler (
+                std::shared_ptr< GetConfigurationStatus > status)
         {
-            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering RequestPropertyDataStatusHandler");
+            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering getConfigurationStatusHandler");
 
-            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"RequestPropertyDataStatus = %d", status->getESResult());
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"GetConfigurationStatus = %d", status->getESResult());
 
-            if(status->getESResult() == ES_OK)
-            {
-                m_propertyData = status->getPropertyData();
-            }
-
-            m_requestPropertyDataStatusCb(status);
+            m_getConfigurationStatusCb(status);
         }
 
-        void RemoteEnrollee::dataProvisioningStatusHandler(
-                std::shared_ptr< DataProvisioningStatus > status)
+        void RemoteEnrollee::devicePropProvisioningStatusHandler(
+                std::shared_ptr< DevicePropProvisioningStatus > status)
         {
-            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering dataProvisioningStatusHandler");
+            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering DevicePropProvisioningStatusHandler");
 
             OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"ProvStatus = %d", status->getESResult());
 
-            if (status->getESResult() == ES_OK)
-            {
-                if (status->getESDataProvState() >= ESDataProvState::ES_PROVISIONED_ALREADY)
-                {
-                    OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"ProvStatus = %d", status->getESResult());
-                }
-            }
-            m_dataProvStatusCb(status);
+            m_devicePropProvStatusCb(status);
 
             return;
         }
 
-        void RemoteEnrollee::cloudProvisioningStatusHandler (
-                std::shared_ptr< CloudProvisioningStatus > status)
+        void RemoteEnrollee::cloudPropProvisioningStatusHandler (
+                std::shared_ptr< CloudPropProvisioningStatus > status)
         {
-            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering cloudProvisioningStatusHandler");
+            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering cloudPropProvisioningStatusHandler");
 
             OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"CloudProvStatus = %d", status->getESCloudState());
 
-            m_cloudProvStatusCb(status);
+            m_cloudPropProvStatusCb(status);
             return;
         }
 
@@ -207,20 +195,7 @@ namespace OIC
                         OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG,
                                 "Host DeviceID of the resource: %s", hostDeviceID.c_str());
 
-                        if(m_deviceId .empty())
-                        {
-                            /*
-                             * Easysetup is always performed with a single Enrollee device and
-                             * in a private network (SoftAP or BLE), so the assumption is that
-                             * only the intended device will respond for the discovery.
-                             * With the above assumption the below two statements are written.
-                             */
-                            m_ocResource = resource;
-                            m_deviceId = resource->sid();
-                            m_discoveryResponse = true;
-                        }
-
-                        else if(!m_deviceId.empty() && m_deviceId == hostDeviceID)
+                        if(!m_deviceId.empty() && m_deviceId == hostDeviceID)
                         {
                             OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_TAG, "Find matched CloudResource");
                             m_ocResource = resource;
@@ -239,11 +214,6 @@ namespace OIC
         ESResult RemoteEnrollee::discoverResource()
         {
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Enter discoverResource");
-
-            if (m_ocResource != nullptr)
-            {
-                throw ESBadRequestException("resource is already created");
-            }
 
             std::string query("");
             query.append(ES_BASE_RES_URI);
@@ -278,38 +248,7 @@ namespace OIC
             return ES_OK;
         }
 
-        void RemoteEnrollee::initRemoteEnrollee()
-        {
-            ESResult result = ES_ERROR;
-
-            if (m_enrolleeResource != nullptr)
-            {
-                throw ESBadRequestException ("Already created");
-            }
-
-            result = discoverResource();
-
-            if (result == ES_ERROR)
-            {
-                OIC_LOG(ERROR,ES_REMOTE_ENROLLEE_TAG,
-                                    "Failed to create resource object using discoverResource");
-                throw ESBadRequestException ("Resource object not created");
-            }
-
-            else
-            {
-                if(m_ocResource != nullptr)
-                {
-                    m_enrolleeResource = std::make_shared<EnrolleeResource>(std::move(m_ocResource));
-                }
-                else
-                {
-                    throw ESBadGetException ("Resource handle is invalid");
-                }
-            }
-        }
-
-        void RemoteEnrollee::startSecurityProvisioning(SecurityProvStatusCb callback)
+        void RemoteEnrollee::configureSecurity(SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
             m_securityProvStatusCb = callback;
@@ -319,9 +258,8 @@ namespace OIC
                     this,
                     std::placeholders::_1);
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
-            m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_enrolleeResource, "");
+            m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
-            m_enrolleeSecurity->setTargetDevID(m_deviceId);
             m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb, m_securityPinCb, m_secProvisioningDbPathCb);
 
             try
@@ -340,7 +278,6 @@ namespace OIC
                 return ;
             }
 #else
-            (void) callback;
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured.");
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
@@ -349,54 +286,52 @@ namespace OIC
 #endif
         }
 
-        void RemoteEnrollee::requestPropertyData(RequestPropertyDataStatusCb callback)
+        void RemoteEnrollee::getConfiguration(GetConfigurationStatusCb callback)
         {
             if(!callback)
             {
                 throw ESInvalidParameterException("Callback is empty");
             }
 
-            m_requestPropertyDataStatusCb = callback;
+            m_getConfigurationStatusCb = callback;
 
             if (m_enrolleeResource == nullptr)
             {
                 throw ESBadRequestException ("Device not created");
             }
 
-            RequestPropertyDataStatusCb RequestPropertyDataStatusCb = std::bind(
-                    &RemoteEnrollee::RequestPropertyDataStatusHandler, this, std::placeholders::_1);
-            m_enrolleeResource->registerRequestPropertyDataStatusCallback(RequestPropertyDataStatusCb);
-            m_enrolleeResource->RequestPropertyData();
+            GetConfigurationStatusCb getConfigurationStatusCb = std::bind(
+                    &RemoteEnrollee::getConfigurationStatusHandler, this, std::placeholders::_1);
+            m_enrolleeResource->registerGetConfigurationStatusCallback(getConfigurationStatusCb);
+            m_enrolleeResource->getConfiguration();
         }
 
-        void RemoteEnrollee::startDataProvisioning(DataProvStatusCb callback)
+        void RemoteEnrollee::provisionDeviceProperties(const DeviceProp& devProp, DevicePropProvStatusCb callback)
         {
-            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter startDataProvisioning");
+            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionDeviceProperties");
 
             if(!callback)
             {
                 throw ESInvalidParameterException("Callback is empty");
             }
 
-            m_dataProvStatusCb = callback;
+            m_devicePropProvStatusCb = callback;
 
             if (m_enrolleeResource == nullptr)
             {
                 throw ESBadRequestException ("Device not created");
             }
 
-            if(m_dataProvInfo.WIFI.ssid.empty())
+            if(devProp.WIFI.ssid.empty())
             {
                 throw ESBadRequestException ("Invalid Provisiong Data.");
             }
 
-            m_dataProvStatusCb = callback;
+            DevicePropProvStatusCb devicePropProvStatusCb = std::bind(
+                    &RemoteEnrollee::devicePropProvisioningStatusHandler, this, std::placeholders::_1);
 
-            DataProvStatusCb dataProvStatusCb = std::bind(
-                    &RemoteEnrollee::dataProvisioningStatusHandler, this, std::placeholders::_1);
-
-            m_enrolleeResource->registerProvStatusCallback(dataProvStatusCb);
-            m_enrolleeResource->provisionEnrollee(m_dataProvInfo);
+            m_enrolleeResource->registerDevicePropProvStatusCallback(devicePropProvStatusCb);
+            m_enrolleeResource->provisionEnrollee(devProp);
         }
 
         void RemoteEnrollee::initCloudResource()
@@ -423,10 +358,10 @@ namespace OIC
                 {
                     m_cloudResource = std::make_shared<CloudResource>(std::move(m_ocResource));
 
-                    std::shared_ptr< CloudProvisioningStatus > provStatus = std::make_shared<
-                        CloudProvisioningStatus >(ESResult::ES_OK, ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
+                    std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
+                        CloudPropProvisioningStatus >(ESResult::ES_OK, ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
 
-                    m_cloudProvStatusCb(provStatus);
+                    m_cloudPropProvStatusCb(provStatus);
                 }
                 else
                 {
@@ -436,16 +371,25 @@ namespace OIC
         }
 
 
-        void RemoteEnrollee::startCloudProvisioning(CloudProvStatusCb callback)
+        void RemoteEnrollee::provisionCloudProperties(const CloudProp& cloudProp, CloudPropProvStatusCb callback)
         {
-            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter startCloudProvisioning");
+            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionCloudProperties");
+
+            ESResult result = ES_ERROR;
 
             if(!callback)
             {
                 throw ESInvalidParameterException("Callback is empty");
             }
 
-            m_cloudProvStatusCb = callback;
+            m_cloudPropProvStatusCb = callback;
+
+            if(cloudProp.authCode.empty()
+                || cloudProp.authProvider.empty()
+                || cloudProp.ciServer.empty())
+            {
+                throw ESBadRequestException ("Invalid Cloud Provisiong Info.");
+            }
 
             try
             {
@@ -455,11 +399,11 @@ namespace OIC
             catch (const std::exception& e)
             {
                 OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
-                    "Exception caught in startCloudProvisioning = %s", e.what());
+                    "Exception caught in provisionCloudProperties = %s", e.what());
 
-                std::shared_ptr< CloudProvisioningStatus > provStatus = std::make_shared<
-                        CloudProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_CLOUD_ENROLLEE_NOT_FOUND);
-                m_cloudProvStatusCb(provStatus);
+                std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
+                        CloudPropProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_CLOUD_ENROLLEE_NOT_FOUND);
+                m_cloudPropProvStatusCb(provStatus);
             }
 
             if (m_cloudResource == nullptr)
@@ -467,33 +411,16 @@ namespace OIC
                 throw ESBadRequestException ("Cloud Resource not created");
             }
 
-            if(m_cloudProvInfo.authCode.empty()
-                || m_cloudProvInfo.authProvider.empty()
-                || m_cloudProvInfo.ciServer.empty())
-            {
-                throw ESBadRequestException ("Invalid Cloud Provisiong Info.");
-            }
+            CloudPropProvStatusCb cloudPropProvStatusCb = std::bind(
+                    &RemoteEnrollee::cloudPropProvisioningStatusHandler, this, std::placeholders::_1);
 
-            CloudProvStatusCb cloudProvStatusCb = std::bind(
-                    &RemoteEnrollee::cloudProvisioningStatusHandler, this, std::placeholders::_1);
-
-            m_cloudResource->registerCloudProvisioningStatusCallback(cloudProvStatusCb);
-            m_cloudResource->provisionEnrollee(m_cloudProvInfo);
+            m_cloudResource->registerCloudPropProvisioningStatusCallback(cloudPropProvStatusCb);
+            m_cloudResource->provisionEnrollee(cloudProp);
         }
 
-        void RemoteEnrollee::setDataProvInfo(const DataProvInfo& dataProvInfo)
+        void RemoteEnrollee::setDevID(const std::string devId)
         {
-            m_dataProvInfo = dataProvInfo;
-        }
-
-        void RemoteEnrollee::setCloudProvInfo(const CloudProvInfo& cloudProvInfo)
-        {
-            m_cloudProvInfo = cloudProvInfo;
-        }
-
-        DataProvInfo RemoteEnrollee::getDataProvInfo()
-        {
-            return m_dataProvInfo;
+            m_deviceId = devId;
         }
     }
 }

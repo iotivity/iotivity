@@ -51,44 +51,30 @@ JniRemoteEnrollee *JniRemoteEnrollee::getJniRemoteEnrollee(JNIEnv *env, jobject 
     return remoteEnrollee;
 }
 
-void JniRemoteEnrollee::initRemoteEnrollee(JNIEnv *env)
+void JniRemoteEnrollee::getConfiguration(JNIEnv *env, jobject jListener)
 {
-    try
-    {
-        m_sharedResource->initRemoteEnrollee();
-    }
-    catch (ESBadRequestException exception)
-    {
-        LOGE("JNI initRemoteEnrollee :: Exception occured");
-        //throw the exception to java
-        throwESException( env,  exception.what());
-    }
-}
+    JniGetConfigurationStatusListener *onGetConfigurationStatusReceived =
+                    addStatusListener<JniGetConfigurationStatusListener>(env, jListener);
 
-void JniRemoteEnrollee::requestPropertyData(JNIEnv *env, jobject jListener)
-{
-    JniRequestPropertyDataStatusListener *onRequestPropertyDataStatusReceived =
-                    addStatusListener<JniRequestPropertyDataStatusListener>(env, jListener);
-
-    RequestPropertyDataStatusCb requestPropertyDataStatusCallback = [onRequestPropertyDataStatusReceived]
-            (std::shared_ptr<OIC::Service::RequestPropertyDataStatus > requestPropertyDataStatus)
+    GetConfigurationStatusCb getConfigurationStatusCallback = [onGetConfigurationStatusReceived]
+            (std::shared_ptr<OIC::Service::GetConfigurationStatus > getConfigurationStatus)
     {
-        onRequestPropertyDataStatusReceived->requestPropertyDataStatusCallback(requestPropertyDataStatus);
+        onGetConfigurationStatusReceived->getConfigurationStatusCallback(getConfigurationStatus);
     };
 
     try
     {
-        m_sharedResource->requestPropertyData(requestPropertyDataStatusCallback);
+        m_sharedResource->getConfiguration(getConfigurationStatusCallback);
     }
     catch (ESBadRequestException exception)
     {
-        LOGE("JNI requestPropertyData :: Exception occured");
+        LOGE("JNI getConfiguration :: Exception occured");
         //throw the exception to java
         throwESException( env,  exception.what());
     }
 }
 
-void JniRemoteEnrollee::startSecurityProvisioning(JNIEnv *env, jobject jListener)
+void JniRemoteEnrollee::configureSecurity(JNIEnv *env, jobject jListener)
 {
     JniSecurityStatusListener *onSecurityProvStatusReceived =
                     addStatusListener<JniSecurityStatusListener>(env, jListener);
@@ -101,79 +87,71 @@ void JniRemoteEnrollee::startSecurityProvisioning(JNIEnv *env, jobject jListener
 
     try
     {
-        m_sharedResource->startSecurityProvisioning(secProvStatusCallback);
+        m_sharedResource->configureSecurity(secProvStatusCallback);
     }
     catch (ESBadRequestException exception)
     {
-        LOGE("JNI startSecurityProvisioning :: Exception occured");
+        LOGE("JNI configureSecurity :: Exception occured");
         //throw the exception to java
         throwESException( env,  exception.what());
     }
 }
 
-void JniRemoteEnrollee::startDataProvisioning(JNIEnv *env, jobject jListener)
+void JniRemoteEnrollee::provisionDeviceProperties(JNIEnv *env, jstring jssid, jstring jpwd, jint jauthType,
+    jint jencType, jstring jlanguage, jstring jcountry, jobject jListener)
 {
-    JniDataProvisioningStatusListener *onDataProvStatusReceived =
-                    addStatusListener<JniDataProvisioningStatusListener>(env, jListener);
+    DeviceProp prop;
 
-    DataProvStatusCb dataProvStatusCallback = [onDataProvStatusReceived]
-            (std::shared_ptr<OIC::Service::DataProvisioningStatus > dataProvisioningStatus)
+    prop.WIFI.ssid = env->GetStringUTFChars(jssid, NULL);
+    prop.WIFI.pwd = env->GetStringUTFChars(jpwd, NULL);
+    prop.WIFI.authtype = getWifiAuthTypeFromInt(jauthType);
+    prop.WIFI.enctype = getWifiEncTypeFromInt(jencType);
+    prop.Device.language = env->GetStringUTFChars(jlanguage, NULL);
+    prop.Device.country = env->GetStringUTFChars(jcountry, NULL);
+
+    JniDevicePropProvisioningStatusListener *onDevicePropProvStatusReceived =
+                    addStatusListener<JniDevicePropProvisioningStatusListener>(env, jListener);
+
+    DevicePropProvStatusCb devicePropProvStatusCallback = [onDevicePropProvStatusReceived]
+            (std::shared_ptr<OIC::Service::DevicePropProvisioningStatus > devicePropProvisioningStatus)
     {
-        onDataProvStatusReceived->dataProvisionStatusCallback(dataProvisioningStatus);
+        onDevicePropProvStatusReceived->onDevicePropProvisioningStatusCallback(devicePropProvisioningStatus);
     };
 
     try
     {
-        m_sharedResource->startDataProvisioning(dataProvStatusCallback);
+        m_sharedResource->provisionDeviceProperties(prop, devicePropProvStatusCallback);
     }
     catch (ESBadRequestException exception)
     {
-        LOGE("JNI startDataProvisioning :: Exception occured");
+        LOGE("JNI provisionDeviceProperties :: Exception occured");
         //throw the exception to java
         throwESException( env,  exception.what());
     }
 }
 
-void JniRemoteEnrollee::setDataProvInfo(JNIEnv *env, jstring jssid, jstring jpwd, jint jauthType,
-    jint jencType, jstring jlanguage, jstring jcountry)
+void JniRemoteEnrollee::provisionCloudProperties(JNIEnv *env, jstring jauthCode, jstring jauthProvider,
+    jstring jciServer, jobject jListener)
 {
-    DataProvInfo info;
+    CloudProp prop;
 
-    info.WIFI.ssid = env->GetStringUTFChars(jssid, NULL);
-    info.WIFI.pwd = env->GetStringUTFChars(jpwd, NULL);
-    info.WIFI.authtype = getWifiAuthTypeFromInt(jauthType);
-    info.WIFI.enctype = getWifiEncTypeFromInt(jencType);
-    info.Device.language = env->GetStringUTFChars(jlanguage, NULL);
-    info.Device.country = env->GetStringUTFChars(jcountry, NULL);
+    prop.authCode = env->GetStringUTFChars(jauthCode, NULL);
+    prop.authProvider = env->GetStringUTFChars(jauthProvider, NULL);
+    prop.ciServer = env->GetStringUTFChars(jciServer, NULL);
 
-    m_sharedResource->setDataProvInfo(info);
-}
+    JniCloudPropProvisioningStatusListener *onCloudPropProvisioningStatusReceived =
+                    addStatusListener<JniCloudPropProvisioningStatusListener>(env, jListener);
 
-void JniRemoteEnrollee::setCloudProvInfo(JNIEnv *env, jstring jauthCode, jstring jauthProvider, jstring jciServer)
-{
-    CloudProvInfo info;
-    info.authCode = env->GetStringUTFChars(jauthCode, NULL);
-    info.authProvider = env->GetStringUTFChars(jauthProvider, NULL);
-    info.ciServer = env->GetStringUTFChars(jciServer, NULL);
-
-    m_sharedResource->setCloudProvInfo(info);
-}
-
-void JniRemoteEnrollee::startCloudProvisioning(JNIEnv *env, jobject jListener)
-{
-    JniCloudProvisioningStatusListener *onCloudProvisioningStatusReceived =
-                    addStatusListener<JniCloudProvisioningStatusListener>(env, jListener);
-
-    CloudProvStatusCb provisionStatusCallback = [onCloudProvisioningStatusReceived]
-            (std::shared_ptr< OIC::Service::CloudProvisioningStatus > cloudProvisioningStatus)
+    CloudPropProvStatusCb cloudPropProvStatusCallback = [onCloudPropProvisioningStatusReceived]
+            (std::shared_ptr< OIC::Service::CloudPropProvisioningStatus > cloudPropProvisioningStatus)
 
     {
-        onCloudProvisioningStatusReceived->onCloudProvisioningStatus(cloudProvisioningStatus);
+        onCloudPropProvisioningStatusReceived->onCloudPropProvisioningStatus(cloudPropProvisioningStatus);
     };
 
     try
     {
-        m_sharedResource->startCloudProvisioning(provisionStatusCallback);
+        m_sharedResource->provisionCloudProperties(prop, cloudPropProvStatusCallback);
     }
     catch (ESBadRequestException exception)
     {
@@ -185,87 +163,52 @@ void JniRemoteEnrollee::startCloudProvisioning(JNIEnv *env, jobject jListener)
 
 //JNI
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeInitRemoteEnrollee
-(JNIEnv *env, jobject jClass)
-{
-    LOGD("nativeInitRemoteEnrollee Enter");
-
-    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->initRemoteEnrollee(env);
-
-    LOGD("nativeInitRemoteEnrollee Exit");
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRequestPropertyData
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeGetConfiguration
 (JNIEnv *env, jobject jClass, jobject jListener)
 {
-    LOGD("nativeRequestPropertyData Enter");
+    LOGD("nativegetConfiguration Enter");
 
     JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->requestPropertyData(env, jListener);
+    remoteEnrollee->getConfiguration(env, jListener);
 
-    LOGD("nativeRequestPropertyData Exit");
+    LOGD("nativegetConfiguration Exit");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartSecurityProvision
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeConfigureSecurity
 (JNIEnv *env, jobject jClass, jobject jListener)
 {
     LOGD("nativeStartSecurityProvision Enter");
 
     JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->startSecurityProvisioning(env, jListener);
+    remoteEnrollee->configureSecurity(env, jListener);
 
     LOGD("nativeStartSecurityProvision Exit");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartDataProvision
-(JNIEnv *env, jobject jClass, jobject jListener)
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionDeviceProperties
+(JNIEnv *env, jobject jClass, jstring jssid, jstring jpwd, jint jauthType,
+    jint jencType, jstring jlanguage, jstring jcountry, jobject jListener)
 {
-    LOGD("nativeStartDataProvision Enter");
+    LOGD("nativeProvisionDeviceProperties Enter");
 
     JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->startDataProvisioning(env, jListener);
+    remoteEnrollee->provisionDeviceProperties(env, jssid, jpwd, jauthType, jencType,
+                                                                            jlanguage, jcountry, jListener);
 
-    LOGD("nativeStartDataProvision Exit");
+    LOGD("nativeProvisionDeviceProperties Exit");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetDataProvInfo
-(JNIEnv *env, jobject jClass, jstring jssid, jstring jpwd, jint jauthType, jint jencType,
-    jstring jlanguage, jstring jcountry)
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionCloudProperties
+(JNIEnv *env, jobject jClass, jstring authCode, jstring authProvider,
+    jstring ciServer, jobject jListener)
 {
-    LOGD("nativeSetDataProvInfo Enter");
+    LOGD("nativeprovisionCloudProperties Enter");
 
     JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->setDataProvInfo(env, jssid, jpwd, jauthType, jencType, jlanguage, jcountry);
+    remoteEnrollee->provisionCloudProperties(env, authCode, authProvider, ciServer, jListener);
 
-    LOGD("nativeSetDataProvInfo Exit");
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetCloudProvInfo
-(JNIEnv *env, jobject jClass, jstring jauthCode, jstring jauthProvider, jstring jciServer)
-{
-    LOGD("nativeSetCloudProvInfo Enter");
-
-    // TODO
-    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->setCloudProvInfo(env, jauthCode, jauthProvider, jciServer);
-
-    LOGD("nativeSetCloudProvInfo Exit");
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartCloudProvisioning
-(JNIEnv *env, jobject jClass, jobject jListener)
-{
-    LOGD("nativeStartCloudProvisioning Enter");
-
-    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->startCloudProvisioning(env, jListener);
-
-    LOGD("nativeStartCloudProvisioning Exit");
+    LOGD("nativeprovisionCloudProperties Exit");
 }

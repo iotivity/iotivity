@@ -27,7 +27,7 @@ import org.iotivity.service.easysetup.mediator.enums.WIFI_ENCTYPE;
  * This class contains on data provisioning information.
  * It implements ProvisioningInfo interface and provide configuration object specific to data registration
  */
-public class DataProvInfo {
+public class DeviceProp {
 
     private final String mSsid;
     private final String mPwd;
@@ -36,7 +36,7 @@ public class DataProvInfo {
     private final String mLanguage;
     private final String mCountry;
 
-    public DataProvInfo(String ssid, String pwd, WIFI_AUTHTYPE authType, WIFI_ENCTYPE encType,
+    public DeviceProp(String ssid, String pwd, WIFI_AUTHTYPE authType, WIFI_ENCTYPE encType,
                                      String language, String country)
     {
         mSsid = ssid;

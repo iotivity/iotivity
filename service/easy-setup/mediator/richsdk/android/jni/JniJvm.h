@@ -43,24 +43,24 @@ extern JavaVM *g_jvm;
 
 extern jclass g_cls_RemoteEnrollee;
 extern jclass g_cls_ESException;
-extern jclass g_cls_PropertyData;
+extern jclass g_cls_EnrolleeConf;
 extern jclass g_cls_DeviceConfig;
-extern jclass g_cls_NetworkInfo;
-extern jclass g_cls_RequestPropertyDataStatus;
+extern jclass g_cls_WiFiConfig;
+extern jclass g_cls_getConfigurationStatus;
 extern jclass g_cls_SecurityProvisioningStatus;
-extern jclass g_cls_DataProvisioningStatus;
-extern jclass g_cls_CloudProvisioningStatus;
+extern jclass g_cls_DevicePropProvisioningStatus;
+extern jclass g_cls_CloudPropProvisioningStatus;
 extern jclass g_cls_Integer;
 
 extern jmethodID g_mid_RemoteEnrollee_ctor;
 extern jmethodID g_mid_ESException_ctor;
-extern jmethodID g_mid_PropertyData_ctor;
+extern jmethodID g_mid_EnrolleeConf_ctor;
 extern jmethodID g_mid_DeviceConfig_ctor;
-extern jmethodID g_mid_NetworkInfo_ctor;
-extern jmethodID g_mid_RequestPropertyDataStatus_ctor;
+extern jmethodID g_mid_WiFiConfig_ctor;
+extern jmethodID g_mid_getConfigurationStatus_ctor;
 extern jmethodID g_mid_SecurityProvisioningStatus_ctor;
-extern jmethodID g_mid_DataProvisioningStatus_ctor;
-extern jmethodID g_mid_CloudProvisioningStatus_ctor;
+extern jmethodID g_mid_DevicePropProvisioningStatus_ctor;
+extern jmethodID g_mid_CloudPropProvisioningStatus_ctor;
 extern jmethodID g_mid_Integer_ctor;
 
 typedef void(*RemoveListenerCallback)(JNIEnv *env, jobject jListener);

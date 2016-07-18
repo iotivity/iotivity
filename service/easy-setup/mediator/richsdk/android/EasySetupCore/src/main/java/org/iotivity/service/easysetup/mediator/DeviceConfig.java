@@ -22,22 +22,15 @@ package org.iotivity.service.easysetup.mediator;
 
 public class DeviceConfig
 {
-    private final String mId;
     private final String mName;
     private final String mLanguage;
     private final String mCountry;
 
-    public DeviceConfig(String id, String name, String language, String country)
+    public DeviceConfig(String name, String language, String country)
     {
-        mId = id;
         mName = name;
         mLanguage = language;
         mCountry = country;
-    }
-
-    public String getId()
-    {
-        return mId;
     }
 
     public String getName()

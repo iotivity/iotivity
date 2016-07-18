@@ -135,8 +135,8 @@ print "Files path is %s" % env.get('es_src')
 ######################################################################
 # Build RichSDK Mediator Sample App
 ################################################ ######################
-if target_os in ['linux']:
-	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
+#if target_os in ['linux']:
+#	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]

@@ -2,7 +2,7 @@
  * ***************************************************************
  *
  * Copyright 2017 Samsung Electronics All Rights Reserved.
- * 
+ *
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,13 @@ package org.iotivity.service.easysetup.mediator;
 import android.content.Context;
 import android.util.Log;
 
-import java.io.IOException;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.base.OcResource;
+import org.iotivity.base.OcPlatform;
+
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * <To be modified>
@@ -39,7 +44,7 @@ import java.util.ArrayList;
 public class EasySetup {
 
     private static final String TAG = EasySetup.class.getName();
-
+    public static final String PROV_RESOURCE_TYPE = "ocf.wk.prov";
     private static EasySetup sInstance;
 
     private static Context mContext;
@@ -49,8 +54,8 @@ public class EasySetup {
     protected RemoteEnrollee mRemoteEnrollee;
 
     //function to call the native nativeCreateRemoteEnrollee
-    private native RemoteEnrollee nativeCreateRemoteEnrollee();
-
+    private native RemoteEnrollee nativeCreateRemoteEnrollee(String Host, String Uri, String devID,
+                                                             Boolean isObservable, int conType);
     static {
         // Load Easy Setup JNI interface
         System.loadLibrary("ESMediatorRich");
@@ -76,10 +81,38 @@ public class EasySetup {
     /**
      * API to create a new RemoteEnrollee instance
      */
-    public synchronized RemoteEnrollee createRemoteEnrollee()
+    public synchronized RemoteEnrollee createRemoteEnrollee(OcResource enrolleeResource)
     {
         // native call
-        mRemoteEnrollee = nativeCreateRemoteEnrollee();
+        String Host = enrolleeResource.getHost();
+        String HostInIPv6;
+        int pos1 = Host.indexOf("%");   // it indicates the address is IPv6.
+        if(pos1 >= 0) {
+            int pos2 = Host.indexOf("]");
+            HostInIPv6 = Host.substring(0, pos1) + Host.substring(pos2, Host.length());
+            Host = HostInIPv6;
+            Log.d(TAG,"Host address of the resource(truncated): " + HostInIPv6);
+        }
+
+        String Uri = enrolleeResource.getUri();
+        String devID = enrolleeResource.getServerId();
+        Boolean isObservable = enrolleeResource.isObservable();
+        EnumSet<OcConnectivityType> ConType = enrolleeResource.getConnectivityTypeSet();
+        int conType = 0;
+        for (OcConnectivityType type : ConType)
+        {
+            conType |= type.getValue();
+        }
+        List<String> resourceTypes = enrolleeResource.getResourceTypes();
+        List<String> resourceInterfaces = enrolleeResource.getResourceInterfaces();
+
+        if(!resourceTypes.contains(PROV_RESOURCE_TYPE)
+                || !resourceInterfaces.contains(OcPlatform.BATCH_INTERFACE))
+        {
+            Log.e(TAG, "Validation check for OcResource is failed.");
+            return null;
+        }
+        mRemoteEnrollee = nativeCreateRemoteEnrollee(Host, Uri, devID, isObservable, conType);
         mRemoteEnrolleeList.add(mRemoteEnrollee);
         return mRemoteEnrollee;
     }

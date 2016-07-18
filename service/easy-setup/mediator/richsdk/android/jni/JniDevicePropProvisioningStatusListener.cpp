@@ -3,6 +3,7 @@
  * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,21 +18,21 @@
  *
  ******************************************************************/
 
-#include "JniCloudProvisioningStatusListener.h"
+#include "JniDevicePropProvisioningStatusListener.h"
 #include "JniRemoteEnrollee.h"
 
 using namespace OIC::Service;
 
-JniCloudProvisioningStatusListener::JniCloudProvisioningStatusListener(JNIEnv *env, jobject jListener,
+JniDevicePropProvisioningStatusListener::JniDevicePropProvisioningStatusListener(JNIEnv *env, jobject jListener,
         JniRemoteEnrollee *owner)
     : m_ownerResource(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
 }
 
-JniCloudProvisioningStatusListener::~JniCloudProvisioningStatusListener()
+JniDevicePropProvisioningStatusListener::~JniDevicePropProvisioningStatusListener()
 {
-    LOGI("~JniCloudProvisioningStatusListener()");
+    LOGI("~JniDevicePropProvisioningStatusListener()");
     if (m_jwListener)
     {
         jint ret;
@@ -42,11 +43,11 @@ JniCloudProvisioningStatusListener::~JniCloudProvisioningStatusListener()
     }
 }
 
-void JniCloudProvisioningStatusListener::onCloudProvisioningStatus(std::shared_ptr<CloudProvisioningStatus>
-        cloudProvisioningStatus)
+void JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCallback (std::shared_ptr<DevicePropProvisioningStatus>
+        devicePropProvStatusCb)
 {
 
-    LOGI("JniCloudProvisioningStatusListener::onCloudProvisioningStatus enter");
+    LOGI("JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCallback enter");
 
     jint ret;
     JNIEnv *env = GetESJNIEnv(ret);
@@ -66,11 +67,12 @@ void JniCloudProvisioningStatusListener::onCloudProvisioningStatus(std::shared_p
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;
     }
-
+    //TODO:
     jmethodID midL = env->GetMethodID(clsL, "onProgress",
                                       "(Lorg/iotivity/service/easysetup/mediator/"
-                                      "CloudProvisioningStatus;"
+                                      "DevicePropProvisioningStatus;"
                                       ")V");
+
     if (!midL)
     {
         checkExAndRemoveListener(env);
@@ -78,38 +80,26 @@ void JniCloudProvisioningStatusListener::onCloudProvisioningStatus(std::shared_p
         return;
     }
 
-    ESResult esResult = cloudProvisioningStatus->getESResult();
-    ESCloudProvState cloudProvisionState = cloudProvisioningStatus->getESCloudState();
+    int nativeESResult = convertNativeDeviceProvResultToInt(devicePropProvStatusCb->getESResult());
 
-    //create the java object
-    jobject jCloudProvisioningStatus = NULL;
-    jCloudProvisioningStatus = env->NewObject(g_cls_CloudProvisioningStatus,
-                                                g_mid_CloudProvisioningStatus_ctor,
-                                                (jint)esResult,
-                                                (jint)cloudProvisionState);
+    jobject jDevicePropProvisioningStatus = NULL;
+    jDevicePropProvisioningStatus = env->NewObject(g_cls_DevicePropProvisioningStatus,
+                                                g_mid_DevicePropProvisioningStatus_ctor,
+                                                (jint)nativeESResult);
 
-    LOGI("JniCloudProvisioningStatus::onCloudProvisioningStatus - %d, %d", esResult, cloudProvisionState);
-    if (!jCloudProvisioningStatus)
+    LOGI("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus - %d", nativeESResult);
+    if (!jDevicePropProvisioningStatus)
     {
-        LOGE("JniCloudProvisioningStatus::onCloudProvisioningStatus Unable to create the java object");
+        LOGE("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus Unable to create the java object");
         return ;
     }
 
-    env->CallVoidMethod(jListener, midL, jCloudProvisioningStatus);
-
-    bool needRemoveListener = false;
-
-    if(cloudProvisionState == ES_CLOUD_PROVISIONING_ERROR ||
-            cloudProvisionState == ES_CLOUD_PROVISIONING_SUCCESS )
-    {
-        needRemoveListener = true;
-    }
+    env->CallVoidMethod(jListener, midL, jDevicePropProvisioningStatus);
 
     if (env->ExceptionCheck())
     {
         LOGE("Java exception is thrown");
-        if(needRemoveListener)
-            checkExAndRemoveListener(env);
+        checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;
     }
@@ -117,17 +107,17 @@ void JniCloudProvisioningStatusListener::onCloudProvisioningStatus(std::shared_p
     if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
 }
 
-void JniCloudProvisioningStatusListener::checkExAndRemoveListener(JNIEnv *env)
+void JniDevicePropProvisioningStatusListener::checkExAndRemoveListener(JNIEnv *env)
 {
     if (env->ExceptionCheck())
     {
         jthrowable ex = env->ExceptionOccurred();
         env->ExceptionClear();
-        m_ownerResource->removeStatusListener<JniCloudProvisioningStatusListener>(env, m_jwListener);
+        m_ownerResource->removeStatusListener<JniDevicePropProvisioningStatusListener>(env, m_jwListener);
         env->Throw((jthrowable)ex);
     }
     else
     {
-        m_ownerResource->removeStatusListener<JniCloudProvisioningStatusListener>(env, m_jwListener);
+        m_ownerResource->removeStatusListener<JniDevicePropProvisioningStatusListener>(env, m_jwListener);
     }
 }

@@ -58,13 +58,13 @@ using namespace std;
 /**
  * Easysetup defined resoruce types and uris
  */
-#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.r.prov"
+#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.wk.prov"
 #define OC_RSRVD_ES_URI_PROV              "/.well-known/ocf/prov"
-#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.r.wifi"
+#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.wk.wifi"
 #define OC_RSRVD_ES_URI_WIFI              "/.well-known/ocf/prov/wifi"
-#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.r.cloudserver"
+#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.wk.cloudserver"
 #define OC_RSRVD_ES_URI_CLOUDSERVER       "/.well-known/ocf/prov/cloudserver"
-#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.r.devconf"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.wk.devconf"
 #define OC_RSRVD_ES_URI_DEVCONF           "/.well-known/ocf/prov/devconf"
 
 #ifndef WITH_ARDUINO
@@ -132,7 +132,7 @@ namespace OIC
             string authCode;
             string authProvider;
             string ciServer;
-        } CloudProvInfo;
+        } CloudProp;
 
         typedef struct
         {
@@ -149,11 +149,10 @@ namespace OIC
                 string language;
                 string country;
             } Device;
-        } DataProvInfo;
+        } DeviceProp;
 
         typedef struct
         {
-            string id;
             string name;
             string language;
             string country;
@@ -163,7 +162,7 @@ namespace OIC
         {
             vector<WIFI_MODE> types;
             WIFI_FREQ freq;
-        } NetworkInfo;
+        } WiFiConfig;
 
         typedef enum
         {
@@ -171,7 +170,7 @@ namespace OIC
             ES_NEED_PROVISIONING,
             ES_PROVISIONED_ALREADY,
             ES_PROVISIONING_SUCCESS
-        } ESDataProvState;
+        } ESDeviceProvState;
 
         typedef enum
         {
@@ -181,13 +180,6 @@ namespace OIC
             ES_CLOUD_ENROLLEE_NOT_FOUND
         }ESCloudProvState;
 
-        typedef enum
-        {
-            ES_SEC_UNKNOWN = 0,
-            ES_SEC_OWNED,
-            ES_SEC_ACL_PROVISIONED,
-            ES_SEC_CREDS_PROVISIONED
-        } EnrolleeSecState;
 
         /**
          * Security Provisioning Status
@@ -214,15 +206,15 @@ namespace OIC
             ESResult m_result;
         };
 
-        class PropertyData
+        class EnrolleeConf
         {
         public:
-            PropertyData()
+            EnrolleeConf()
             {
             }
 
-            PropertyData(DeviceConfig devConfig, NetworkInfo netInfo, bool cloudable) :
-                m_devConfig(devConfig), m_netInfo(netInfo), m_cloudable(cloudable)
+            EnrolleeConf(DeviceConfig devConfig, WiFiConfig wifiConfig, bool cloudable) :
+                m_devConfig(devConfig), m_wifiConfig(wifiConfig), m_cloudable(cloudable)
             {
             }
 
@@ -231,9 +223,9 @@ namespace OIC
                 return m_devConfig;
             }
 
-            const NetworkInfo& getNetInfo() const
+            const WiFiConfig& getWiFiConf() const
             {
-                return m_netInfo;
+                return m_wifiConfig;
             }
 
             bool isCloudable() const
@@ -243,15 +235,15 @@ namespace OIC
 
         private:
             DeviceConfig m_devConfig;
-            NetworkInfo m_netInfo;
+            WiFiConfig m_wifiConfig;
             bool m_cloudable;
         };
 
-        class RequestPropertyDataStatus
+        class GetConfigurationStatus
         {
         public:
-            RequestPropertyDataStatus(ESResult result, const PropertyData& data) :
-                    m_result(result), m_propertyData(data)
+            GetConfigurationStatus(ESResult result, const EnrolleeConf& conf) :
+                    m_result(result), m_enrolleeConf(conf)
             {
             }
 
@@ -260,21 +252,21 @@ namespace OIC
                 return m_result;
             }
 
-            const PropertyData& getPropertyData()
+            const EnrolleeConf& getEnrolleeConf()
             {
-                return m_propertyData;
+                return m_enrolleeConf;
             }
 
         private:
             ESResult m_result;
-            PropertyData m_propertyData;
+            EnrolleeConf m_enrolleeConf;
         };
 
-        class DataProvisioningStatus
+        class DevicePropProvisioningStatus
         {
         public:
-            DataProvisioningStatus(ESResult result, ESDataProvState dataProvState) :
-                    m_result(result), m_state(dataProvState)
+            DevicePropProvisioningStatus(ESResult result) :
+                    m_result(result)
             {
             }
 
@@ -283,20 +275,15 @@ namespace OIC
                 return m_result;
             }
 
-            ESDataProvState getESDataProvState()
-            {
-                return m_state;
-            }
 
         private:
             ESResult m_result;
-            ESDataProvState m_state;
         };
 
-        class CloudProvisioningStatus
+        class CloudPropProvisioningStatus
         {
         public:
-            CloudProvisioningStatus(ESResult result, ESCloudProvState state) :
+            CloudPropProvisioningStatus(ESResult result, ESCloudProvState state) :
                     m_result(result), m_esCloudState(state)
             {
             }
@@ -319,17 +306,17 @@ namespace OIC
         /**
          * Callback function definition for providing Enrollee security status
          */
-        typedef function< void(shared_ptr< RequestPropertyDataStatus >) > RequestPropertyDataStatusCb;
+        typedef function< void(shared_ptr< GetConfigurationStatus >) > GetConfigurationStatusCb;
 
         /**
          * Callback function definition for providing Enrollee security status
          */
-        typedef function< void(shared_ptr< DataProvisioningStatus >) > DataProvStatusCb;
+        typedef function< void(shared_ptr< DevicePropProvisioningStatus >) > DevicePropProvStatusCb;
 
         /**
          * Callback function definition for providing Enrollee security status
          */
-        typedef function< void(shared_ptr< CloudProvisioningStatus >) > CloudProvStatusCb;
+        typedef function< void(shared_ptr< CloudPropProvisioningStatus >) > CloudPropProvStatusCb;
 
         /**
          * Callback function definition for providing Enrollee security status

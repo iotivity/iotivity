@@ -20,31 +20,19 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.enums.ESCloudProvState;
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 
-/**
- * This interface facilitates Application to get progress & result of Cloud provisioning
- * process in easy setup
- */
-public class CloudProvisioningStatus
+public class DevicePropProvisioningStatus
 {
     private ESResult m_result;
-    private ESCloudProvState m_esCloudState;
 
-    public CloudProvisioningStatus(int result, int state)
+    public DevicePropProvisioningStatus(int result)
     {
         m_result = ESResult.fromInt(result);
-        m_esCloudState = ESCloudProvState.fromInt(state);
     }
 
     public ESResult getESResult()
     {
         return m_result;
-    }
-
-    public ESCloudProvState getESCloudState()
-    {
-        return m_esCloudState;
     }
 };

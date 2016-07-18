@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Discovery"
-            android:id="@+id/btn_initRemoteEnrollee"
+            android:id="@+id/btn_discoverResource"
             android:layout_marginLeft="20dp"
             android:layout_marginTop="10dp" />
 
@@ -89,30 +89,30 @@
                 android:layout_width="160dp"
                 android:layout_height="32dp"
                 android:text="@string/securityprovisioning"
-                android:id="@+id/btn_SecurityProv"
+                android:id="@+id/btn_configurSec"
                 android:checked="false"
                 android:textSize="12sp" />
 
             <RadioButton
             android:layout_width="160dp"
             android:layout_height="32dp"
-            android:text="@string/requsetpropertydata"
-            android:id="@+id/btn_requestPropertyData"
+            android:text="GetConfiguration"
+            android:id="@+id/btn_getConfiguration"
             android:checked="false"
             android:textSize="12sp" />
 
             <RadioButton
-                android:layout_width="160dp"
+                android:layout_width="173dp"
                 android:layout_height="32dp"
-                android:text="@string/dataprovisioning"
-                android:id="@+id/btn_DataProv"
+                android:text="ProvisionDeviceConfig"
+                android:id="@+id/btn_provisionDevConf"
                 android:textSize="12sp" />
 
             <RadioButton
                 android:layout_width="160dp"
                 android:layout_height="32dp"
                 android:text="@string/cloudprovisioning"
-                android:id="@+id/btn_CloudProv"
+                android:id="@+id/btn_provisionCloudConf"
                 android:textSize="12sp" />
         </RadioGroup>
 
@@ -146,7 +146,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp"
-                android:id="@+id/layout_SecProvisioning"
+                android:id="@+id/layout_ConfigurSec"
                 android:layout_marginTop="10dp"
                 android:weightSum="1"
                 android:visibility="gone">
@@ -214,7 +214,7 @@
                     android:layout_width="90dp"
                     android:layout_height="wrap_content"
                     android:text="START"
-                    android:id="@+id/btn_startSecProv"
+                    android:id="@+id/btn_startConfigureSec"
                     android:layout_marginTop="10dp"
                     android:layout_gravity="bottom|right" />
 
@@ -226,7 +226,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp"
-                android:id="@+id/layout_RequestPropertyData"
+                android:id="@+id/layout_GetConfiguration"
                 android:layout_marginTop="10dp"
                 android:visibility="gone">
 
@@ -253,7 +253,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="wait"
-                        android:id="@+id/txt_requesetPropertyDataState" />
+                        android:id="@+id/txt_getConfigurationState" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -428,7 +428,7 @@
                     android:layout_width="90dp"
                     android:layout_height="wrap_content"
                     android:text="@string/start"
-                    android:id="@+id/btn_startRequsetPropertyData"
+                    android:id="@+id/btn_startGetConfiguration"
                     android:layout_gravity="bottom|right" />
 
             </LinearLayout>
@@ -439,7 +439,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp"
-                android:id="@+id/layout_DataProvisioning"
+                android:id="@+id/layout_ProvisionDevConf"
                 android:layout_marginTop="10dp"
                 android:visibility="gone">
 
@@ -466,7 +466,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="wait"
-                        android:id="@+id/txt_dataProvisioningState" />
+                        android:id="@+id/txt_provisionDevConfState" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -622,7 +622,7 @@
                     android:layout_width="90dp"
                     android:layout_height="wrap_content"
                     android:text="START"
-                    android:id="@+id/btn_startDataProv"
+                    android:id="@+id/btn_startProvisionDevConf"
                     android:layout_marginTop="10dp"
                     android:layout_gravity="bottom|right" />
 
@@ -634,7 +634,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp"
-                android:id="@+id/layout_CloudProvisioning"
+                android:id="@+id/layout_ProvisionCloudConf"
                 android:layout_marginTop="10dp"
                 android:visibility="gone">
 
@@ -661,7 +661,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="wait"
-                        android:id="@+id/txt_cloudProvisioningState" />
+                        android:id="@+id/txt_provisionCloudConfState" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -740,7 +740,7 @@
                     android:layout_width="90dp"
                     android:layout_height="wrap_content"
                     android:text="START"
-                    android:id="@+id/btn_startCloudProv"
+                    android:id="@+id/btn_startProvisionCloudConf"
                     android:layout_marginTop="10dp"
                     android:layout_gravity="bottom|right" />
 

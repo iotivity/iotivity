@@ -47,63 +47,29 @@ namespace OIC
             friend class EnrolleeSecurity;
 
         public:
-
-            /**
-             * EnrolleeResource constructor
-             *
-             * @param enrolleeNWProvInfo Provisioning information for the Enrollee
-             *
-             * @throw ESBadRequestException is thrown if the parameters are invalid
-             */
             EnrolleeResource(std::shared_ptr< OC::OCResource > resource);
-            // EnrolleeResource(const DataProvInfo &enrolleeNWProvInfo,
-            //                                    const WiFiOnboadingConnection &onboardingconn);
 
             ~EnrolleeResource() = default;
 
-            /**
-             * Register provisioning status handler.
-             *
-             * @param callback Callback to get Provisioning status.
-             *
-             * @throws InvalidParameterException If callback is an empty function or null.
-             * @throws ESBadRequestException If registration is already completed.
-             *
-             * @see DataProvisioningStatus
-             */
-            void registerRequestPropertyDataStatusCallback (RequestPropertyDataStatusCb callback);
-            void registerProvStatusCallback (DataProvStatusCb callback);
+            void registerGetConfigurationStatusCallback (GetConfigurationStatusCb callback);
+            void registerDevicePropProvStatusCallback (DevicePropProvStatusCb callback);
 
-            void RequestPropertyData();
+            void getConfiguration();
 
-            /**
-             * Function for provisioning of Remote Enrollee resource using the information provided.
-             *
-             * @throws InvalidParameterException If cb is empty.
-             */
-            void provisionEnrollee(const DataProvInfo& dataProvInfo);
-
-            /**
-             * Function for unprovisioning of Remote Enrollee and bring to unprovisioned state
-             *
-             * @throws ESBadRequestException If device is not provisioned already.
-             */
-            void unprovisionEnrollee();
+            void provisionEnrollee(const DeviceProp& deviceProp);
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
 
-            RequestPropertyDataStatusCb m_RequestPropertyDataStatusCb;
-            DataProvStatusCb m_dataProvStatusCb;
-
-            DataProvInfo m_dataProvInfo;
+            GetConfigurationStatusCb m_getConfigurationStatusCb;
+            DevicePropProvStatusCb m_devicePropProvStatusCb;
 
         private:
-            void onRequestPropertyDataResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            void onGetConfigurationResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
             void checkProvInformationCb(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
-            PropertyData parsePropertyDataFromRepresentation(const OCRepresentation& rep);
+            EnrolleeConf parseEnrolleeConfFromRepresentation(const OCRepresentation& rep);
         };
     }
 }

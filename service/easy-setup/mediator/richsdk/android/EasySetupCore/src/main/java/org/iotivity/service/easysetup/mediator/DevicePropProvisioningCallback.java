@@ -20,27 +20,8 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.enums.ESDataProvState;
-import org.iotivity.service.easysetup.mediator.enums.ESResult;
+import org.iotivity.service.easysetup.mediator.DevicePropProvisioningStatus;
 
-public class DataProvisioningStatus
-{
-    private ESResult m_result;
-    private ESDataProvState m_state;
-
-    public DataProvisioningStatus(int result, int state)
-    {
-        m_result = ESResult.fromInt(result);
-        m_state = ESDataProvState.fromInt(state);
-    }
-
-    public ESResult getESResult()
-    {
-        return m_result;
-    }
-
-    public ESDataProvState getESDataProvState()
-    {
-        return m_state;
-    }
-};
+public abstract class DevicePropProvisioningCallback {
+    public abstract void onProgress(DevicePropProvisioningStatus status);
+}

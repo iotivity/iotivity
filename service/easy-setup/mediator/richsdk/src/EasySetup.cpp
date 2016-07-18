@@ -46,9 +46,9 @@ namespace OIC
             return s_instance;
         }
 
-        std::shared_ptr<RemoteEnrollee> EasySetup::createRemoteEnrollee ()
+        std::shared_ptr<RemoteEnrollee> EasySetup::createRemoteEnrollee (std::shared_ptr< OC::OCResource > resource)
         {
-            return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee());
+            return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
         }
     }
 }

@@ -20,7 +20,7 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.SecurityProvisioningCallback;
+import org.iotivity.service.easysetup.mediator.SecurityProvisioningStatus;
 
 public abstract class SecurityProvisioningCallback {
     public abstract void onProgress(SecurityProvisioningStatus status);

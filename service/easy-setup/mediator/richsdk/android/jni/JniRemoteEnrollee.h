@@ -27,16 +27,16 @@
 #ifndef __JNI_ES_REMOTEENROLLEE_H
 #define __JNI_ES_REMOTEENROLLEE_H
 
-#include "RemoteEnrollee.h"
 #include "ESRichCommon.h"
 #include "ESException.h"
+#include "RemoteEnrollee.h"
 
 #include "JniJvm.h"
 #include "JniEsUtils.h"
-#include "JniRequestPropertyDataStatusListener.h"
+#include "JniGetConfigurationStatusListener.h"
 #include "JniSecurityStatusListener.h"
-#include "JniDataProvisioningStatusListener.h"
-#include "JniCloudProvisioningStatusListener.h"
+#include "JniDevicePropProvisioningStatusListener.h"
+#include "JniCloudPropProvisioningStatusListener.h"
 #include "JniEsListenerManager.h"
 
 using namespace OIC::Service;
@@ -62,14 +62,12 @@ class JniRemoteEnrollee
         ~JniRemoteEnrollee();
 
         // ***** JNI APIs internally call the APIs of this class ***** //
-        void initRemoteEnrollee(JNIEnv *env);
-        void requestPropertyData(JNIEnv *env, jobject jListener);
-        void startSecurityProvisioning(JNIEnv *env, jobject jListener);
-        void startDataProvisioning(JNIEnv *env, jobject jListener);
-        void startCloudProvisioning(JNIEnv *env, jobject jListener);
-        void setDataProvInfo(JNIEnv *env, jstring jssid, jstring jpwd, jint jauthType,
-                                            jint jencType, jstring jlanguage, jstring jcountry);
-        void setCloudProvInfo(JNIEnv *env, jstring authCode, jstring authProvider, jstring ciServer);
+        void getConfiguration(JNIEnv *env, jobject jListener);
+        void configureSecurity(JNIEnv *env, jobject jListener);
+        void provisionDeviceProperties(JNIEnv *env, jstring jssid, jstring jpwd, jint jauthType,
+                                            jint jencType, jstring jlanguage, jstring jcountry, jobject jListener);
+        void provisionCloudProperties(JNIEnv *env, jstring authCode, jstring authProvider,
+                                            jstring ciServer, jobject jListener);
 
         static JniRemoteEnrollee *getJniRemoteEnrollee(JNIEnv *env, jobject thiz);
 
@@ -90,60 +88,39 @@ class JniRemoteEnrollee
 
 };
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * API for starting the initRemoteEnrollee process.
+ * API for starting the Request EnrolleeConf process.
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeInitRemoteEnrollee
-(JNIEnv *env, jobject jClass);
-
-/**
- * API for starting the Request PropertyData process.
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeRequestPropertyData
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeGetConfiguration
 (JNIEnv *env, jobject jClass, jobject jListener);
 
 /**
  * API for starting the Sequrity provisioning process.
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartSecurityProvision
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeConfigureSecurity
 (JNIEnv *env, jobject jClass, jobject jListener);
 
 /**
  * API for starting the Data provisioning process.
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartDataProvision
-(JNIEnv *env, jobject jClass, jobject jListener);
-
-/**
- * API for setting data provisioning information.
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetDataProvInfo
-(JNIEnv *env, jobject jClass, jstring jssid, jstring jpwd, jint jauthType, jint jencType,
-    jstring jlanguage, jstring jcountry);
-
-/**
- * API for setting cloud provisioning information.
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeSetCloudProvInfo
-(JNIEnv *env, jobject jClass, jstring jauthCode, jstring jauthProvider, jstring jciServer);
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionDeviceProperties
+(JNIEnv *env, jobject jClass, jstring jssid, jstring jpwd, jint jauthType,
+    jint jencType, jstring jlanguage, jstring jcountry, jobject jListener);
 
 /**
  * API for starting the cloud provisioning process.
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeStartCloudProvisioning
-(JNIEnv *env, jobject jClass, jobject jListener);
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionCloudProperties
+(JNIEnv *env, jobject jClass, jstring authCode, jstring authProvider,
+    jstring ciServer, jobject jListener);
 
 #ifdef __cplusplus
 }
