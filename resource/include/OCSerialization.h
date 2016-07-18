@@ -44,10 +44,10 @@ namespace OC
                     OCDevAddr& devAddr, OCDiscoveryPayload* payload)
                     : m_clientWrapper(cw), m_devAddr(devAddr)
             {
-                OCResourcePayload* res = payload->resources;
-                if (res)
+                while (payload)
                 {
-                    while(res)
+                    OCResourcePayload* res = payload->resources;
+                    while (res)
                     {
                         if (res->secure)
                         {
@@ -103,6 +103,7 @@ namespace OC
                         }
                         res = res->next;
                     }
+                    payload = payload->next;
                 }
             }
 
