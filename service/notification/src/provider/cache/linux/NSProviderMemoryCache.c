@@ -99,6 +99,8 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
             NS_LOG_V(DEBUG, "currData_ID = %s", itData->id);
             NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
             NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
+            NS_LOG_V(DEBUG, "currData_Cloud_MsgObID = %d", itData->remote_messageObId);
+            NS_LOG_V(DEBUG, "currData_Cloud_SyncObID = %d", itData->remote_syncObId);
             NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
 
             NS_LOG_V(DEBUG, "update state = %d", state);
@@ -156,21 +158,36 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
                 NS_LOG_V(DEBUG, "currData_ID = %s", itData->id);
                 NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
                 NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
+                NS_LOG_V(DEBUG, "currData_Cloud_MsgObID = %d", itData->remote_messageObId);
+                NS_LOG_V(DEBUG, "currData_Cloud_SyncObID = %d", itData->remote_syncObId);
                 NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
 
                 NS_LOG_V(DEBUG, "subData_ID = %s", subData->id);
                 NS_LOG_V(DEBUG, "subData_MsgObID = %d", subData->messageObId);
                 NS_LOG_V(DEBUG, "subData_SyncObID = %d", subData->syncObId);
+                NS_LOG_V(DEBUG, "subData_Cloud_MsgObID = %d", subData->remote_messageObId);
+                NS_LOG_V(DEBUG, "subData_Cloud_SyncObID = %d", subData->remote_syncObId);
                 NS_LOG_V(DEBUG, "subData_IsWhite = %d", subData->isWhite);
 
-                if (itData->messageObId == 0)
+                if (subData->messageObId != 0)
                 {
                     itData->messageObId = subData->messageObId;
                 }
 
-                if (itData->syncObId == 0)
+                if (subData->syncObId != 0)
                 {
                     itData->syncObId = subData->syncObId;
+                }
+
+                if (subData->remote_messageObId != 0)
+                {
+                    itData->remote_messageObId = subData->remote_messageObId;
+                }
+
+                if (subData->remote_syncObId != 0)
+                {
+                    itData->remote_syncObId = subData->remote_syncObId;
+                    NS_LOG_V(DEBUG, "sync id cached: %d", itData->remote_syncObId);
                 }
 
                 NS_LOG(DEBUG, "Update Data - OUT");

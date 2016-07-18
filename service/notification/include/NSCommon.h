@@ -27,8 +27,6 @@
 #ifndef _NS_COMMON_H_
 #define _NS_COMMON_H_
 
-#include <ocstack.h>
-
 #define NS_ATTRIBUTE_POLICY "ACCEPTER"
 #define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
 #define NS_ATTRIBUTE_SYNC "SYNC_URI"

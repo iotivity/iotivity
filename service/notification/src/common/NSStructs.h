@@ -52,15 +52,17 @@ typedef struct
 
 typedef struct
 {
-    char id[37]; // ip
-    int syncObId;
-    int messageObId;
-    bool isWhite;
+    char id[37];
+    int syncObId; // sync resource observer ID for local consumer
+    int messageObId; // message resource observer ID for local consumer
+    int remote_syncObId; //sync observer ID subscribed through remote server
+    int remote_messageObId; //message observer ID subscribed through remote server
+    bool isWhite; // access state -> True: allowed / False: blocked
 } NSCacheSubData;
 
 typedef struct
 {
-    char * id; // ip ? ? ?
+    char * id;
     int messageType; // noti = 1, read = 2, dismiss = 3
     NSMessage * nsMessage;
 } NSCacheMsgData;

@@ -152,6 +152,8 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
     }
 
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+    NSSetRemoteServerAddress(serverAddress);
+
     NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
 
     pthread_mutex_unlock(&nsInitMutex);
@@ -170,6 +172,7 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
         return NS_FAIL;
     }
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
+    NSDeleteRemoteServerAddress(serverAddress);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
@@ -312,4 +315,3 @@ void * NSInterfaceSchedule(void * ptr)
     NS_LOG(DEBUG, "Destroy NSResponseSchedule");
     return NULL;
 }
-

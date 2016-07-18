@@ -82,6 +82,8 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         return NS_ERROR;
     }
 
+    NS_LOG_V(DEBUG, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
+
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetSubscriptionAccepter());
@@ -128,16 +130,25 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
+        NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
 
+        NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
+        if(NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr))
+        {
+            NS_LOG(DEBUG, "Requested by remote server");
+            subData->remote_messageObId = entityHandlerRequest->obsInfo.obsId;
+            NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->remote_messageObId);
+        }
+        else
+        {
+            NS_LOG(DEBUG, "Requested by local consumer");
+            subData->messageObId = entityHandlerRequest->obsInfo.obsId;
+            NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->messageObId);
+        }
         subData->isWhite = false;
-        subData->messageObId = entityHandlerRequest->obsInfo.obsId;
-        subData->syncObId = 0;
 
         element->data = (void*) subData;
         element->next = NULL;
-
-        NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
-        NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->messageObId);
 
         if (NSStorageWrite(consumerSubList, element) != NS_OK)
         {
@@ -160,18 +171,28 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_SYNC");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-        OICStrcpy(subData->id, UUID_STRING_SIZE, id);
 
+        OICStrcpy(subData->id, UUID_STRING_SIZE, id);
+        NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
+
+        NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
+        if(NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr))
+        {
+            NS_LOG(DEBUG, "Requested by remote server");
+            subData->remote_syncObId = entityHandlerRequest->obsInfo.obsId;
+            NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->remote_syncObId);
+        }
+        else
+        {
+            NS_LOG(DEBUG, "Requested by local consumer");
+            subData->syncObId = entityHandlerRequest->obsInfo.obsId;
+            NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->syncObId);
+        }
 
         subData->isWhite = false;
-        subData->syncObId = entityHandlerRequest->obsInfo.obsId;
-        subData->messageObId = 0;
 
         element->data = (void*) subData;
         element->next = NULL;
-
-        NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
-        NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->syncObId);
 
         if (NSStorageWrite(consumerSubList, element) != NS_OK)
         {

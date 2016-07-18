@@ -19,7 +19,10 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
+#define MAX_SERVER_ADDRESS 32
 static NSConnectionState NSProviderConnectionState;
+static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
+
 NSProviderInfo * providerInfo;
 
 void NSSetProviderConnectionState(NSConnectionState state)
@@ -34,6 +37,31 @@ NSConnectionState NSGetProviderConnectionState()
     NS_LOG(DEBUG, "Change Connection State");
 
     return NSProviderConnectionState;
+}
+
+void NSSetRemoteServerAddress(char *serverAddress)
+{
+
+    OICStrcpy(NSRemoteServerAddress, MAX_SERVER_ADDRESS, serverAddress);
+}
+
+void NSDeleteRemoteServerAddress(char *serverAddress)
+{
+    NS_LOG_V(DEBUG, "Delete cloud address: %s", serverAddress);
+
+    memset(NSRemoteServerAddress, 0, MAX_SERVER_ADDRESS);
+}
+
+bool NSIsRemoteServerAddress(char *serverAddress)
+{
+    NS_LOG_V(DEBUG, "Check server address: %s", serverAddress);
+
+    if(serverAddress != NULL)
+    {
+        return strstr(NSRemoteServerAddress, serverAddress);
+    }
+
+    return false;
 }
 
 void NSInitProviderInfo()

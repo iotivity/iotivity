@@ -113,14 +113,20 @@ NSResult NSSendNotification(NSMessage *msg)
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
-        NS_LOG_V(DEBUG, "subData->id = %s", subData->id);
+        NS_LOG_V(DEBUG, "message subData->id = %s", subData->id);
         NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
-        NS_LOG_V(DEBUG, "subData->obID = %d", subData->syncObId);
+        NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
+        NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);
+        NS_LOG_V(DEBUG, "subData->cloud_syncId = %d", subData->remote_syncObId);
         NS_LOG_V(DEBUG, "subData->isWhite = %d", subData->isWhite);
 
         if (subData->isWhite)
         {
-            obArray[obCount++] = subData->messageObId;
+            if(subData->messageObId != 0)
+                obArray[obCount++] = subData->messageObId;
+
+            if(subData->remote_messageObId != 0)
+                obArray[obCount++] = subData->remote_messageObId;
         }
         it = it->next;
     }
@@ -177,9 +183,20 @@ NSResult NSSendSync(NSSyncInfo *sync)
     while (it)
     {
         NSCacheSubData * subData = (NSCacheSubData *) it->data;
+        NS_LOG_V(DEBUG, "sync subData->id = %s", subData->id);
+        NS_LOG_V(DEBUG, "subData->messageId = %d", subData->messageObId);
+        NS_LOG_V(DEBUG, "subData->cloud_messageId = %d", subData->remote_messageObId);
+        NS_LOG_V(DEBUG, "subData->syncId = %d", subData->syncObId);
+        NS_LOG_V(DEBUG, "subData->cloud_syncId = %d", subData->remote_syncObId);
+        NS_LOG_V(DEBUG, "subData->isWhite = %d", subData->isWhite);
+
         if (subData->isWhite)
         {
-            obArray[obCount++] = subData->syncObId;
+            if(subData->syncObId != 0)
+                obArray[obCount++] = subData->syncObId;
+
+            if(subData->remote_syncObId != 0)
+                obArray[obCount++] = subData->remote_syncObId;
         }
         it = it->next;
     }
