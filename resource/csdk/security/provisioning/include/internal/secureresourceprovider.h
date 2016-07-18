@@ -141,6 +141,22 @@ OCStackResult SRPRemoveDevice(void* ctx,
                               OCProvisionResultCB resultCallback);
 
 /*
+* Function to device revocation
+* This function will remove credential of target device from all devices in subnet.
+*
+* @param[in] ctx Application context would be returned in result callback
+* @param[in] pOwnedDevList List of owned devices
+* @param[in] pTargetDev Device information to be revoked.
+* @param[in] resultCallback callback provided by API user, callback will be called when
+*            credential revocation is finished.
+* @return  OC_STACK_OK in case of success and other value otherwise.
+*          If OC_STACK_OK is returned, the caller of this API should wait for callback.
+*          OC_STACK_CONTINUE means operation is success but no request is need to be initiated.
+*/
+OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t* pOwnedDevList,
+                             const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback);
+
+/*
  * Function to sync-up credential and ACL of the target device.
  * This function will remove credential and ACL of target device from all devices in subnet.
  *

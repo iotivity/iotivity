@@ -202,6 +202,23 @@ OCStackResult OCRemoveDevice(void* ctx,
                              unsigned short waitTimeForOwnedDeviceDiscovery,
                              const OCProvisionDev_t* pTargetDev,
                              OCProvisionResultCB resultCallback);
+
+/*
+* Function to device revocation
+* This function will remove credential of target device from all devices in subnet.
+*
+* @param[in] ctx Application context would be returned in result callback
+* @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
+* @param[in] pTargetDev Device information to be revoked.
+* @param[in] resultCallback callback provided by API user, callback will be called when
+*            credential revocation is finished.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+*/
+OCStackResult OCRemoveDeviceWithUuid(void* ctx,
+                                     unsigned short waitTimeForOwnedDeviceDiscovery,
+                                     const OicUuid_t* pTargetUuid,
+                                     OCProvisionResultCB resultCallback);
+
 /**
  * API to get status of all the devices in current subnet. The status include endpoint information
  * and doxm information which can be extracted duing owned and unowned discovery. Along with this

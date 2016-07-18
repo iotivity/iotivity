@@ -22,6 +22,7 @@
 #include <string.h>
 #include "ocprovisioningmanager.h"
 #include "pmutility.h"
+#include "srmutility.h"
 #include "ownershiptransfermanager.h"
 #include "oic_malloc.h"
 #include "logger.h"
@@ -304,6 +305,51 @@ error:
     return res;
 }
 
+static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDev)
+{
+    // Remove credential of revoked device from SVR database
+    OCStackResult res = OC_STACK_ERROR;
+    const OicSecCred_t *cred = NULL;
+    cred = GetCredResourceData(&pTargetDev->doxm->deviceID);
+    if (cred == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to get credential of remove device.");
+        goto error;
+    }
+
+    res = RemoveCredential(&cred->subject);
+    if (res != OC_STACK_RESOURCE_DELETED)
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to remove credential.");
+        goto error;
+    }
+
+    /**
+     * Change the device status as stale status.
+     * If all request are successed, this device information will be deleted.
+     */
+    res = PDMSetDeviceStale(&pTargetDev->doxm->deviceID);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to set device status as stale");
+        goto error;
+    }
+
+    // TODO: We need to add new mechanism to clean up the stale state of the device.
+
+    //Close the DTLS session of the removed device.
+    CAEndpoint_t* endpoint = (CAEndpoint_t *)&pTargetDev->endpoint;
+    endpoint->port = pTargetDev->securePort;
+    CAResult_t caResult = CACloseDtlsSession(endpoint);
+    if(CA_STATUS_OK != caResult)
+    {
+        OIC_LOG_V(WARNING, TAG, "OCRemoveDevice : Failed to close DTLS session : %d", caResult);
+    }
+
+error:
+    return res;
+}
+
 /*
 * Function to device revocation
 * This function will remove credential of target device from all devices in subnet.
@@ -349,52 +395,19 @@ OCStackResult OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDis
         }
     }
 
-    // Remove credential of revoked device from SVR database
-    const OicSecCred_t *cred = NULL;
-    cred = GetCredResourceData(&pTargetDev->doxm->deviceID);
-    if (cred == NULL)
+    res = RemoveDeviceInfoFromLocal(pTargetDev);
+    if(OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to get credential of remove device.");
+        OIC_LOG(ERROR, TAG, "Filed to remove the device information from local.");
         goto error;
     }
 
-    res = RemoveCredential(&cred->subject);
-    if (res != OC_STACK_RESOURCE_DELETED)
+    if(OC_STACK_CONTINUE == resReq)
     {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to remove credential.");
-        goto error;
-    }
-
-    /**
-     * Change the device status as stale status.
-     * If all request are successed, this device information will be deleted.
-     */
-    res = PDMSetDeviceStale(&pTargetDev->doxm->deviceID);
-    if (res != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to set device status as stale");
-        goto error;
-    }
-
-    // TODO: We need to add new mechanism to clean up the stale state of the device.
-
-    res = resReq;
-
-    //Close the DTLS session of the removed device.
-    CAEndpoint_t* endpoint = (CAEndpoint_t *)&pTargetDev->endpoint;
-    endpoint->port = pTargetDev->securePort;
-    CAResult_t caResult = CACloseDtlsSession(endpoint);
-    if(CA_STATUS_OK != caResult)
-    {
-        OIC_LOG_V(WARNING, TAG, "OCRemoveDevice : Failed to close DTLS session : %d", caResult);
-    }
-
-    /**
-     * If there is no linked device, PM does not send any request.
-     * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
-     */
-    if(OC_STACK_CONTINUE == res)
-    {
+        /**
+          * If there is no linked device, PM does not send any request.
+          * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
+          */
         if(resultCallback)
         {
             resultCallback(ctx, 0, NULL, false);
@@ -404,6 +417,116 @@ OCStackResult OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDis
 
 error:
     OIC_LOG(INFO, TAG, "OUT OCRemoveDevice");
+    return res;
+}
+
+/*
+* Function to device revocation
+* This function will remove credential of target device from all devices in subnet.
+*
+* @param[in] ctx Application context would be returned in result callback
+* @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
+* @param[in] pTargetDev Device information to be revoked.
+* @param[in] resultCallback callback provided by API user, callback will be called when
+*            credential revocation is finished.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+*/
+OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                            const OicUuid_t* pTargetUuid,
+                            OCProvisionResultCB resultCallback)
+{
+    OIC_LOG(INFO, TAG, "IN OCRemoveDeviceWithUuid");
+    OCStackResult res = OC_STACK_ERROR;
+    if (!pTargetUuid || 0 == waitTimeForOwnedDeviceDiscovery)
+    {
+        OIC_LOG(INFO, TAG, "OCRemoveDeviceWithUuid : Invalied parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "OCRemoveDeviceWithUuid : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    OCProvisionDev_t* pOwnedDevList = NULL;
+    //2. Find owned device from the network
+    res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to PMDeviceDiscovery");
+        goto error;
+    }
+
+    OCProvisionDev_t* pTargetDev = NULL;
+    LL_FOREACH(pOwnedDevList, pTargetDev)
+    {
+        if(memcmp(&pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id)) == 0)
+        {
+            break;
+        }
+    }
+
+    char* strUuid = NULL;
+    if(OC_STACK_OK != ConvertUuidToStr(pTargetUuid, &strUuid))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to covert UUID to String.");
+        goto error;
+    }
+
+    if(pTargetDev)
+    {
+        OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
+        OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
+
+        // Send DELETE requests to linked devices
+        OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
+        resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
+        if (OC_STACK_OK != resReq)
+        {
+            if (OC_STACK_CONTINUE == resReq)
+            {
+                OIC_LOG(DEBUG, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
+                res = resReq;
+                OICFree(strUuid);
+                goto error;
+            }
+        }
+
+        res = RemoveDeviceInfoFromLocal(pTargetDev);
+        if(OC_STACK_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Filed to remove the device information from local.");
+            OICFree(strUuid);
+            goto error;
+        }
+
+        if(OC_STACK_CONTINUE == resReq)
+        {
+            /**
+              * If there is no linked device, PM does not send any request.
+              * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
+              */
+            if(resultCallback)
+            {
+                resultCallback(ctx, 0, NULL, false);
+            }
+            res = OC_STACK_OK;
+        }
+    }
+    else
+    {
+        OIC_LOG_V(WARNING, TAG, "OCRemoveDeviceWithUuid : Failed to find the [%s] on the network.", strUuid);
+        res = OC_STACK_ERROR;
+    }
+
+error:
+    OICFree(strUuid);
+    PMDeleteDeviceList(pOwnedDevList);
+    OIC_LOG(INFO, TAG, "OUT OCRemoveDeviceWithUuid");
     return res;
 }
 

@@ -1978,6 +1978,143 @@ error:
 }
 
 /*
+* Function to device revocation
+* This function will remove credential of target device from all devices in subnet.
+*
+* @param[in] ctx Application context would be returned in result callback
+* @param[in] pOwnedDevList List of owned devices
+* @param[in] pTargetDev Device information to be revoked.
+* @param[in] resultCallback callback provided by API user, callback will be called when
+*            credential revocation is finished.
+* @return  OC_STACK_OK in case of success and other value otherwise.
+*          If OC_STACK_OK is returned, the caller of this API should wait for callback.
+*          OC_STACK_CONTINUE means operation is success but no request is need to be initiated.
+*/
+OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t* pOwnedDevList,
+                             const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback)
+{
+    OIC_LOG(INFO, TAG, "IN SRPRemoveDeviceWithoutDiscovery");
+
+    if (!pTargetDev  || !pOwnedDevList)
+    {
+        OIC_LOG(INFO, TAG, "SRPRemoveDeviceWithoutDiscovery : NULL parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPRemoveDeviceWithoutDiscovery : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    // Declare variables in here to handle error cases with goto statement.
+    OCProvisionDev_t* pLinkedDevList = NULL;
+    RemoveData_t* removeData = NULL;
+
+    //1. Find all devices that has a credential of the revoked device
+    OCUuidList_t* pLinkedUuidList = NULL;
+    size_t numOfDevices = 0;
+    OCStackResult res = OC_STACK_ERROR;
+    res = PDMGetLinkedDevices(&pTargetDev->doxm->deviceID, &pLinkedUuidList, &numOfDevices);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to get linked devices information");
+        return res;
+    }
+    // if there is no related device, we can skip further process.
+    if (0 == numOfDevices)
+    {
+        OIC_LOG(DEBUG, TAG, "SRPRemoveDeviceWithoutDiscovery : No linked device found.");
+        res = OC_STACK_CONTINUE;
+        goto error;
+    }
+
+    //2. Make a list of devices to send DELETE credential request
+    //   by comparing owned devices from provisioning database with mutlicast discovery result.
+    size_t numOfLinkedDev = 0;
+    res = GetListofDevToReqDeleteCred(pTargetDev, pOwnedDevList, pLinkedUuidList,
+                                      &pLinkedDevList, &numOfLinkedDev);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : GetListofDevToReqDeleteCred() failed");
+        goto error;
+    }
+    if (0 == numOfLinkedDev) // This case means, there is linked device but it's not alive now.
+    {                       // So we don't have to send request message.
+        OIC_LOG(DEBUG, TAG, "SRPRemoveDeviceWithoutDiscovery : No alived & linked device found.");
+        res = OC_STACK_CONTINUE;
+        goto error;
+    }
+
+    // 3. Prepare RemoveData Context data.
+    removeData = (RemoveData_t*)OICCalloc(1, sizeof(RemoveData_t));
+    if (!removeData)
+    {
+        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to memory allocation");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+
+    removeData->revokeTargetDev = PMCloneOCProvisionDev(pTargetDev);
+    if (!removeData->revokeTargetDev)
+    {
+        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : PMCloneOCProvisionDev Failed");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+
+    removeData->removeRes =
+        (OCProvisionResult_t*)OICCalloc(numOfLinkedDev, sizeof(OCProvisionResult_t));
+    if (!removeData->removeRes)
+    {
+        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to memory allocation");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+
+    removeData->ctx = ctx;
+    removeData->linkedDevList = pLinkedDevList;
+    removeData->resultCallback = resultCallback;
+    removeData->numOfResults = 0;
+    removeData->sizeOfResArray = numOfLinkedDev;
+    removeData->hasError = false;
+
+    // 5. Send DELETE credential request to linked devices.
+    OCProvisionDev_t *curDev = NULL, *tmpDev = NULL;
+    OCStackResult totalRes = OC_STACK_ERROR;  /* variable for checking request is sent or not */
+    LL_FOREACH_SAFE(pLinkedDevList, curDev, tmpDev)
+    {
+        res = SendDeleteCredentialRequest((void*)removeData, &SRPRemoveDeviceCB,
+                                           removeData->revokeTargetDev, curDev);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Fail to send the DELETE credential request to\
+                     %s:%u", curDev->endpoint.addr, curDev->endpoint.port);
+        }
+        else
+        {
+            totalRes = OC_STACK_OK; // This means at least one request is successfully sent.
+        }
+    }
+
+    PDMDestoryOicUuidLinkList(pLinkedUuidList); //TODO: Modify API name to have unified convention.
+    OIC_LOG(INFO, TAG, "OUT SRPRemoveDeviceWithoutDiscovery");
+
+    return totalRes; // Caller of this API should wait callback if totalRes == OC_STACK_OK.
+
+error:
+    PDMDestoryOicUuidLinkList(pLinkedUuidList);
+    PMDeleteDeviceList(pLinkedDevList);
+    if (removeData)
+    {
+        OICFree(removeData->revokeTargetDev);
+        OICFree(removeData->removeRes);
+        OICFree(removeData);
+    }
+    OIC_LOG(INFO, TAG, "OUT ERROR case SRPRemoveDeviceWithoutDiscovery");
+    return res;
+}
+
+/*
  * Function to sync-up credential and ACL of the target device.
  * This function will remove credential and ACL of target device from all devices in subnet.
  *

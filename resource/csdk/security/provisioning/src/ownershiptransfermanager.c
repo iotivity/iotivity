@@ -1404,9 +1404,31 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
         }
         if (isDuplicate)
         {
-            OIC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicated");
-            res = OC_STACK_INVALID_PARAM;
-            goto error;
+            bool isStale = false;
+            res = PDMIsDeviceStale(&pCurDev->doxm->deviceID, &isStale);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Internal error in PDMIsDeviceStale");
+                goto error;
+            }
+            if(isStale)
+            {
+                OIC_LOG(INFO, TAG, "Detected duplicated UUID in stale status, "\
+                                   "this UUID will be removed from PDM");
+
+                res = PDMDeleteDevice(&pCurDev->doxm->deviceID);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Internal error in PDMDeleteDevice");
+                    goto error;
+                }
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device UUID is duplicated");
+                res = OC_STACK_INVALID_PARAM;
+                goto error;
+            }
         }
         memcpy(otmCtx->ctxResultArray[devIdx].deviceId.id,
                pCurDev->doxm->deviceID.id,

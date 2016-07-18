@@ -146,6 +146,16 @@ TEST(OCRemoveDeviceTest, NullTargetDevice)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCRemoveDevice(NULL, waitTime, NULL, provisioningCB));
 }
 
+TEST(OCRemoveDeviceWithUuidTest, NullTargetDevice)
+{
+    unsigned short waitTime = 10 ;
+    OicUuid_t uuid;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCRemoveDeviceWithUuid(NULL, waitTime, NULL, provisioningCB));
+
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRemoveDeviceWithUuid(NULL, waitTime, &uuid, NULL));
+}
+
+
 TEST(OCRemoveDeviceTest, NullResultCallback)
 {
     unsigned short waitTime = 10;
