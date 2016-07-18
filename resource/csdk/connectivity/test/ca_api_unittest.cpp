@@ -74,8 +74,7 @@ void adapter_handler(CATransportAdapter_t /*adapter*/,
 {
 }
 
-void connection_handler(CATransportAdapter_t /*adapter*/,
-                        const char * /*remote_address*/,
+void connection_handler(const CAEndpoint_t * /*endpoint*/, 
                         bool /*connected*/)
 {
 }

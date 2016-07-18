@@ -168,7 +168,6 @@ if env.get('LOGGING'):
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
-#env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 src_dir = env.get('SRC_DIR')

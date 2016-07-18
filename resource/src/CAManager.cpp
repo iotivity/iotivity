@@ -62,12 +62,31 @@ void DefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enable
     }
 }
 
-void DefaultConnectionStateChangedHandler(CATransportAdapter_t adapter,
-                                          const char *remote_address, bool connected)
+void DefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected)
 {
     if (g_connectionHandler)
     {
-        g_connectionHandler((OCTransportAdapter) adapter, remote_address, connected);
+        std::ostringstream ss;
+
+        if (info->flags & CA_IPV6)
+        {
+            ss << '[' << info->addr << ']';
+        }
+        else
+        {
+            ss << info->addr;
+        }
+        if (info->port)
+        {
+            ss << ':' << info->port;
+        }
+
+        OCTransportAdapter adapter = (OCTransportAdapter)info->adapter;
+        OCTransportFlags flags = (OCTransportFlags)info->flags;
+        OCConnectivityType connType = (OCConnectivityType)
+                ((adapter << CT_ADAPTER_SHIFT) | (flags & CT_MASK_FLAGS));
+
+        g_connectionHandler(ss.str(), connType, isConnected);
     }
 }
 

@@ -151,6 +151,12 @@ public class GroupClient extends Activity implements
         enableStartStopButton();
     }
 
+    @Override
+    public synchronized void onFindResourceFailed(Throwable throwable, String uri) {
+        msg("findResource request has failed.");
+        Log.e(TAG, throwable.toString());
+    }
+
     /**
      * An event handler to be executed whenever a "get" request completes successfully
      *

@@ -283,6 +283,14 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
                 }
             }
         }
+
+        @Override
+        public void onFindResourceFailed(Throwable throwable, String uri) {
+            synchronized (mActivity) {
+                Log.i(TAG, "findResource request has failed");
+                Log.e(TAG, throwable.toString());
+            }
+        }
     };
 
     @Override

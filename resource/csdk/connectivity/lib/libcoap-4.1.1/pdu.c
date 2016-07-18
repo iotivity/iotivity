@@ -278,12 +278,10 @@ coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
     {
         return coap_tcp_16bit;
     }
-    else if (size - COAP_TCP_LENGTH_FIELD_32_BIT < ULONG_MAX)
+    else //if (size - COAP_TCP_LENGTH_FIELD_32_BIT < ULONG_MAX) always true due to range of data types
     {
         return coap_tcp_32bit;
     }
-
-    return -1;
 }
 
 coap_transport_type coap_get_tcp_header_type_from_initbyte(unsigned int length)

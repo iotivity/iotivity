@@ -1,6 +1,6 @@
 ##
-# 'googletest' script to check if Google Unit Test library is installed.  If not,
-# get it and install it
+# 'googletest' script to check if Google Unit Test library is installed.
+# If not, get it and install it
 #
 ##
 
@@ -8,46 +8,43 @@ import os
 
 Import('env')
 
-target_os = env.get('TARGET_OS')
-src_dir = env.get('SRC_DIR')
+gtest_env = env.Clone()
+target_os = gtest_env.get('TARGET_OS')
+src_dir = gtest_env.get('SRC_DIR')
 
 targets_need_gtest = ['darwin','linux', 'msys_nt', 'windows']
 gtest_dir      = os.path.join(src_dir, 'extlibs', 'gtest', 'gtest-1.7.0')
+gtest_lib_dir = os.path.join(gtest_dir,'lib')
+gtest_dotlib_dir =  os.path.join(gtest_lib_dir, '.libs')
 gtest_zip_file = os.path.join(src_dir, 'extlibs', 'gtest', 'gtest-1.7.0.zip')
 gtest_url      = 'https://googletest.googlecode.com/files/gtest-1.7.0.zip'
 
 if target_os in targets_need_gtest:
 	print '*** Checking for installation of google unit test 1.7.0 ***'
-	if not os.path.exists(gtest_dir):
+	if not os.path.exists(os.path.join(gtest_dir, 'configure')):
 		# If the gtest zip file is not already present, download it
 		if not os.path.exists(gtest_zip_file):
-			gtest_zip = env.Download(gtest_zip_file, gtest_url)
+			gtest_zip = gtest_env.Download(gtest_zip_file, gtest_url)
 		else:
 			gtest_zip = gtest_zip_file
-
-		# Unzip gtest
-		if not os.path.exists(os.path.join(gtest_dir, 'configure')):
-			print 'Unzipping google unit test'
-			env.UnpackAll(gtest_dir, gtest_zip)
-
+		print 'Unzipping to : ' + gtest_dir
+		gtest_env.UnpackAll(gtest_dir, gtest_zip)
 
 if target_os == 'darwin':
 	if os.path.exists(gtest_dir):
 		# Build gtest and store it at a temporary directory
-		gtest_lib_dir = gtest_dir + '/lib'
-		gtest_dotlib_dir = gtest_lib_dir + '/.libs'
 
-        if not os.path.exists(gtest_lib_dir):
+		if not os.path.exists(gtest_lib_dir):
 #			print 'Create a directory'
 #			os.mkdir(gtest_lib_dir)
 
 
 			print 'Invoke cmake command to generate appropriate make files'
-			env.Configure(gtest_dir, './configure')
+			gtest_env.Configure(gtest_dir, './configure')
 
 			# Run make on gtest
 			print 'Making google unit test'
-			env.Configure(gtest_dir, 'make')
+			gtest_env.Configure(gtest_dir, 'make')
 
 #			print 'Create a directory'
 #			os.mkdir(gtest_dotlib_dir)
@@ -64,9 +61,9 @@ if target_os == 'darwin':
 			print 'Create hard links pointing to gtest libraries - DONE'
 
 
-elif target_os == 'linux':
+elif target_os in ['linux']:
 	if os.path.exists(gtest_dir):
-		if not os.path.exists(gtest_dir + "/lib"):
+		if not os.path.exists(gtest_lib_dir):
 			# Run configure on gtest
 			print 'Configuring google unit test'
 			if env.get('CROSS_COMPILE'):
@@ -75,13 +72,10 @@ elif target_os == 'linux':
 				env.Configure(gtest_dir, './configure --disable-shared')
 			# Run make on gtest
 			print 'Making google unit test'
-			env.Configure(gtest_dir, 'make')
-
+			gtest_env.Configure(gtest_dir, 'make')
 
 elif target_os == 'msys_nt':
 	if os.path.exists(gtest_dir):
-		gtest_lib_dir = gtest_dir + '/lib'
-		gtest_dotlib_dir = gtest_lib_dir + '/.libs'
 		if not os.path.exists(gtest_lib_dir):
 			# Create lib dir
 			os.mkdir(gtest_lib_dir)
@@ -89,23 +83,21 @@ elif target_os == 'msys_nt':
 
 			# Run configure on gtest
 			print 'Configuring google unit test for compilation'
-			env.Configure(gtest_dir, 'cmake -G "Unix Makefiles" .')
+			gtest_env.Configure(gtest_dir, 'cmake -G "Unix Makefiles" .')
 
 			# Run make on gtest
 			print 'Making google unit test'
-			env.Configure(gtest_dir, 'make')
+			gtest_env.Configure(gtest_dir, 'make')
 
 			print 'Moving libraries to lib folder'
-			env.Configure(gtest_dir, 'cp libgtest.a lib')
-			env.Configure(gtest_dir, 'mv libgtest.a lib/.libs')
-			env.Configure(gtest_dir, 'cp libgtest_main.a lib')
-			env.Configure(gtest_dir, 'mv libgtest_main.a lib/.libs')
+			gtest_env.Configure(gtest_dir, 'cp libgtest.a lib')
+			gtest_env.Configure(gtest_dir, 'mv libgtest.a lib/.libs')
+			gtest_env.Configure(gtest_dir, 'cp libgtest_main.a lib')
+			gtest_env.Configure(gtest_dir, 'mv libgtest_main.a lib/.libs')
 
 elif target_os == 'windows':
 	if os.path.exists(gtest_dir):
-		gtest_lib_dir = os.path.join(gtest_dir, 'lib')
-		gtest_dotlib_dir = os.path.join(gtest_lib_dir, '.libs')
-		if env.get('RELEASE'):
+		if gtest_env.get('RELEASE'):
 			output_dir = os.path.join(gtest_dir, 'Release') + os.sep
 		else:
 			output_dir = os.path.join(gtest_dir, 'Debug') + os.sep
@@ -138,7 +130,7 @@ elif target_os == 'windows':
 		if not vs_version_year or not vs_target_arch:
 			Exit(1)
 
-		if not env.WhereIs('cmake', env.get('PATH')):
+		if not gtest_env.WhereIs('cmake', gtest_env.get('PATH')):
 			print '''*********************** Error ************************
 *                                                    *
 * Please make sure that CMake is in your System PATH *
@@ -157,16 +149,32 @@ elif target_os == 'windows':
 
 			# Run configure on gtest
 			print 'Configuring google unit test for compilation'
-			env.Configure(gtest_dir, 'cmake . -G"'+vs_target_string+'" -Dgtest_force_shared_crt=ON')
+			gtest_env.Configure(gtest_dir, 'cmake . -G"' + vs_target_string + '" -Dgtest_force_shared_crt=ON')
 
 			# Run make on gtest
 			print 'Making google unit test'
-			env.Configure(gtest_dir, 'msbuild gtest.vcxproj')
-			env.Configure(gtest_dir, 'msbuild gtest_main.vcxproj')
+			gtest_env.Configure(gtest_dir, 'msbuild gtest.vcxproj')
+			gtest_env.Configure(gtest_dir, 'msbuild gtest_main.vcxproj')
 
 			print 'Moving libraries to lib folder'
-			env.Configure(gtest_dir, 'copy '+output_dir+'gtest.lib %s' % gtest_lib_dir)
-			env.Configure(gtest_dir, 'move '+output_dir+'gtest.lib %s' % gtest_dotlib_dir )
-			env.Configure(gtest_dir, 'copy '+output_dir+'gtest_main.lib %s' % gtest_lib_dir)
-			env.Configure(gtest_dir, 'move '+output_dir+'gtest_main.lib %s' % gtest_dotlib_dir)
+			gtest_env.Configure(gtest_dir, 'copy '+output_dir+'gtest.lib %s' % gtest_lib_dir)
+			gtest_env.Configure(gtest_dir, 'move '+output_dir+'gtest.lib %s' % gtest_dotlib_dir )
+			gtest_env.Configure(gtest_dir, 'copy '+output_dir+'gtest_main.lib %s' % gtest_lib_dir)
+			gtest_env.Configure(gtest_dir, 'move '+output_dir+'gtest_main.lib %s' % gtest_dotlib_dir)
 
+# Export flags once for all
+if target_os in targets_need_gtest:
+	gtest_env.AppendUnique(LIBPATH = [gtest_dotlib_dir])
+	gtest_env.PrependUnique(CPPPATH = [os.path.join(gtest_dir, 'include')])
+	gtest_env.AppendENVPath('LD_LIBRARY_PATH', gtest_dotlib_dir)
+	if 'g++' in gtest_env.get('CXX'):
+		gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
+		gtest_env.AppendUnique(CXXFLAGS = ['-Wall'])
+# Note: 'pthread' for android is in bionic 
+# On other platform, if use new gcc(>4.9?) it isn't required, otherwise, it's required
+		if target_os not in ['android']:
+			gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
+			gtest_env.PrependUnique(LIBS = ['pthread'])
+	gtest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
+
+Return('gtest_env')
