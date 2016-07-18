@@ -30,7 +30,8 @@ if not os.path.exists(cborDir):
     print '''
 *********************************** Error: ****************************************
 * Please download cbor using the following command:                               *
-*     $ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor *
+*   $ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor \ *
+*      -b v0.2.1                                                                  *
 ***********************************************************************************
 '''
     Exit(1)
