@@ -394,12 +394,8 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
     return ehResult;
 }
 
-void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char *remote_address,
-        bool connected)
+void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected)
 {
-
-    (void)adapter;
-    (void)remote_address;
 
     NS_LOG(DEBUG, "NSProviderConnectionStateListener - IN");
 
@@ -413,9 +409,9 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
         // Start Presence
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
 
-        if(adapter == CA_ADAPTER_TCP)
+        if(info->adapter == CA_ADAPTER_TCP)
         {
-            NS_LOG_V(DEBUG, "TCP Connected remote address: %s", remote_address);
+            NS_LOG_V(DEBUG, "TCP Connected remote address: %s:%d", info->addr, info->port);
         }
     }
     else
@@ -426,9 +422,9 @@ void NSProviderConnectionStateListener(CATransportAdapter_t adapter, const char 
         // Set Connection State
         NSSetProviderConnectionState(DISCONNECTED);
 
-        if(adapter == CA_ADAPTER_TCP)
+        if(info->adapter == CA_ADAPTER_TCP)
         {
-            NS_LOG_V(DEBUG, "TCP Disconnected remote address: %s", remote_address);
+            NS_LOG_V(DEBUG, "TCP Disconnected remote address: %s:%d", info->addr, info->port);
         }
     }
 

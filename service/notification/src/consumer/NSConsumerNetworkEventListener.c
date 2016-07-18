@@ -31,8 +31,7 @@
 
 #define NS_PRESENCE_SUBSCRIBE_QUERY "coap://224.0.1.187:5683/oic/ad?rt=oic.r.notification"
 
-void NSConnectionStateListener(CATransportAdapter_t adapter,
-        const char *remote_address, bool connected);
+void NSConnectionStateListener(const CAEndpoint_t * info, bool isConnected);
 
 void NSAdapterStateListener(CATransportAdapter_t adapter, bool enabled);
 
@@ -75,28 +74,26 @@ void NSConsumerListenerTermiate()
     OCCancel(*getPresenceHandle(), NS_QOS, NULL, 0);
 }
 
-void NSConnectionStateListener(CATransportAdapter_t adapter,
-        const char *remote_address, bool connected)
+void NSConnectionStateListener(const CAEndpoint_t * info, bool connected)
 {
-    NS_LOG_V(DEBUG, "adapter : %d", adapter);
-    NS_LOG_V(DEBUG, "remote_address : %s", remote_address);
-    NS_LOG_V(DEBUG, "isConnect : %d", connected);
+    NS_VERIFY_NOT_NULL_V(info);
 
-    (void) adapter;
-    (void) remote_address;
+    NS_LOG_V(DEBUG, "adapter : %d", info->adapter);
+    NS_LOG_V(DEBUG, "remote_address : %s:%d", info->addr, info->port);
+    NS_LOG_V(DEBUG, "isConnect : %d", connected);
 
     NSTaskType type = TASK_EVENT_CONNECTED;
     OCDevAddr * addr = NULL;
     if (connected)
     {
-        if (adapter == CA_ADAPTER_TCP)
+        if (info->adapter == CA_ADAPTER_TCP)
         {
             type = TASK_EVENT_CONNECTED_TCP;
             NS_LOG(DEBUG, "try to discover notification provider : TCP.");
             // TODO convet to OCDevAddr;
             // addr = .....
         }
-        else if (adapter == CA_ADAPTER_IP)
+        else if (info->adapter == CA_ADAPTER_IP)
         {
             NS_LOG(DEBUG, "try to discover notification provider.");
             // TODO convet to OCDevAddr;
