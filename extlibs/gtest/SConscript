@@ -80,13 +80,14 @@ if target_os in targets_need_gtest:
 	gtest_env.AppendUnique(LIBPATH = [gtest_dotlib_dir])
 	gtest_env.PrependUnique(CPPPATH = [os.path.join(gtest_dir, 'include')])
 	gtest_env.AppendENVPath('LD_LIBRARY_PATH', gtest_dotlib_dir)
-	compiler = gtest_env.get('CXX')
-	if 'g++' in compiler:
+	if 'g++' in gtest_env.get('CXX'):
 		gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
 		gtest_env.AppendUnique(CXXFLAGS = ['-Wall'])
 # Note: 'pthread' for android is in bionic 
 # On other platform, if use new gcc(>4.9?) it isn't required, otherwise, it's required
 		if target_os not in ['android']:
 			gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
+			gtest_env.PrependUnique(LIBS = ['pthread'])
+	gtest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
 
 Return('gtest_env')
