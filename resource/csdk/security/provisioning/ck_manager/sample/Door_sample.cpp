@@ -442,7 +442,7 @@ void SendGetRequest()
 
     initAddress();
 
-    char szQueryUri[64] = { '\0'};
+    char szQueryUri[MAX_QUERY_LENGTH] = { '\0'};
     OCDoHandle handle;
     OCCallbackData cbData;
     cbData.cb = getReqCB;
@@ -462,7 +462,7 @@ void SendGetRequest()
 void *input_function(void * /*data*/)
 {
     char input;
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     OCDoHandle handle;
     OCCallbackData cbData;
     cbData.cb = discoveryReqCB;

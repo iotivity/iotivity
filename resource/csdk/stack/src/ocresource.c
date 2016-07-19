@@ -154,6 +154,12 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
 
     OIC_LOG_V(INFO, TAG, "Extracting params from %s", query);
 
+    if (strnlen(query, MAX_QUERY_LENGTH) >= MAX_QUERY_LENGTH)
+    {
+        OIC_LOG(ERROR, TAG, "Query exceeds maximum length.");
+        return OC_STACK_INVALID_QUERY;
+    }
+
     char *keyValuePair = strtok_r (query, OC_QUERY_SEPARATOR, &restOfQuery);
 
     while(keyValuePair)

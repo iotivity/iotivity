@@ -350,7 +350,7 @@ int InitDiscovery()
     OCStackResult ret;
     OCCallbackData cbData;
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     strcpy(szQueryUri, RESOURCE_DISCOVERY_QUERY);
 
