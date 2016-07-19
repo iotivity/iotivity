@@ -22,6 +22,7 @@
 Import('env')
 
 provisioning_env = env.Clone()
+target_os = provisioning_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
@@ -61,6 +62,9 @@ if env.get('DTLS_WITH_X509') == '1':
 provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
 
 provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os == 'tizen':
+    provisioning_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
 
 ######################################################################
 # Source files and Targets
