@@ -32,17 +32,39 @@ public class CloudPropProvisioningStatus
     private ESResult m_result;
     private ESCloudProvState m_esCloudState;
 
+    /**
+     * Constructor
+     *
+     * @param result a result of cloud property provisioning
+     * @param state a state of cloud property provisioning.
+     *              ES_CLOUD_PROVISIONING_ERROR(-1), ES_CLOUD_PROVISIONING_SUCCESS(0),
+     *              ES_CLOUD_ENROLLEE_FOUND(1), ES_CLOUD_ENROLLEE_NOT_FOUND(2)
+     *
+     * @see ESCloudProvState
+     */
     public CloudPropProvisioningStatus(int result, int state)
     {
         m_result = ESResult.fromInt(result);
         m_esCloudState = ESCloudProvState.fromInt(state);
     }
 
+    /**
+     * Get a result of cloud property provisioning
+     *
+     * @result ESResult a result of cloud property provisioning
+     */
     public ESResult getESResult()
     {
         return m_result;
     }
 
+    /**
+     * Get a state of cloud property provisioning
+     *
+     * @result ESCloudProvState a state of cloud property provisioning
+     *
+     * @see ESCloudProvState
+     */
     public ESCloudProvState getESCloudState()
     {
         return m_esCloudState;

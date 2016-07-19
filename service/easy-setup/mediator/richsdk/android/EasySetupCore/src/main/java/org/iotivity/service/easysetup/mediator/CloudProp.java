@@ -21,8 +21,7 @@
 package org.iotivity.service.easysetup.mediator;
 
 /**
- * This class contains on cloud provisioning information.
- * It implements ProvisioningInfo interface and provide configuration object specific to cloud registration
+ * This class contains cloud server properties to be delivered to Enrollee
  */
 public class CloudProp {
 
@@ -30,6 +29,13 @@ public class CloudProp {
     private final String mAuthProvider;
     private final String mCiServer;
 
+    /**
+     * Constructor
+     *
+     * @param authCode Authcode issued by OAuth 2.0 protocol compatible account server
+     * @param authProvider Auth provider which issued the auth code
+     * @param ciServer Cloud interface server that Enrollee is going to be registered
+     */
     public CloudProp(String authCode, String authProvider, String ciServer) {
         mAuthCode = authCode;
         mAuthProvider = authProvider;

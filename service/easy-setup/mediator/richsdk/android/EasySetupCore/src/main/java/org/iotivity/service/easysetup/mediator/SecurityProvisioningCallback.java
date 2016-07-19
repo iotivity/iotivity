@@ -22,6 +22,23 @@ package org.iotivity.service.easysetup.mediator;
 
 import org.iotivity.service.easysetup.mediator.SecurityProvisioningStatus;
 
+/**
+ * This interface class is used as a callback function called after receiving
+ * Security provisioning result
+ *
+ * @see SecurityProvisioningStatus
+ */
 public abstract class SecurityProvisioningCallback {
+
+    /**
+     * Called after receiving Security provisioning result
+     *
+     * @param status
+     *          a result of security provisioning
+     *          a device ID of a target Enrollee even if security provisioning
+     *          is failed for some reasons
+     *
+     * @see SecurityProvisioningStatus
+     */
     public abstract void onProgress(SecurityProvisioningStatus status);
 }

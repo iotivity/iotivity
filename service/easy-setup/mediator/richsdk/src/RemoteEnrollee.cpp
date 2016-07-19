@@ -47,6 +47,8 @@ namespace OIC
             m_secProvisioningDbPathCb = nullptr;
             m_devicePropProvStatusCb = nullptr;
             m_cloudPropProvStatusCb = nullptr;
+
+            m_deviceId = resource->sid();
         }
 
 #ifdef __WITH_DTLS__
@@ -248,7 +250,7 @@ namespace OIC
             return ES_OK;
         }
 
-        void RemoteEnrollee::configureSecurity(SecurityProvStatusCb callback)
+        void RemoteEnrollee::provisionSecurity(SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
             m_securityProvStatusCb = callback;
@@ -416,11 +418,6 @@ namespace OIC
 
             m_cloudResource->registerCloudPropProvisioningStatusCallback(cloudPropProvStatusCb);
             m_cloudResource->provisionEnrollee(cloudProp);
-        }
-
-        void RemoteEnrollee::setDevID(const std::string devId)
-        {
-            m_deviceId = devId;
         }
     }
 }

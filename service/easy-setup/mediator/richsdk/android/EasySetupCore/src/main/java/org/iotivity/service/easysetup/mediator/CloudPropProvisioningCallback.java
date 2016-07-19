@@ -22,7 +22,21 @@ package org.iotivity.service.easysetup.mediator;
 
 import org.iotivity.service.easysetup.mediator.CloudPropProvisioningStatus;
 
+/**
+ * This interface class is used as a callback function called after receiving
+ * a response of cloud property provisioning result
+ *
+ * @see CloudPropProvisioningStatus
+ */
 public abstract class CloudPropProvisioningCallback {
+
+    /**
+     * Called after receiving a response of cloud property provisioning result
+     *
+     * @param status
+     *          a result of cloud property provisioning
+     *          a state of cloud property provisioning
+     */
 	public abstract void onProgress(CloudPropProvisioningStatus status);
 }
 

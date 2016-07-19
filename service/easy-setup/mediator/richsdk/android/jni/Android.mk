@@ -1,4 +1,5 @@
 LOCAL_PATH := $(call my-dir)
+SECURED := $(SECURE)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../../../out/android/$(TARGET_ARCH_ABI)/debug
@@ -10,6 +11,20 @@ include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../../../out/android/$(TARGET_ARCH_ABI)/debug
 LOCAL_MODULE := android-easysetup
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libESMediatorRich.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+ifeq ($(SECURED), 1)
+include $(CLEAR_VARS)
+OIC_LIB_PATH := ../../../../../../out/android/$(TARGET_ARCH_ABI)/debug
+LOCAL_MODULE := android-ocprovision
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocprovision.so
+include $(PREBUILT_SHARED_LIBRARY)
+endif
+
+include $(CLEAR_VARS)
+OIC_LIB_PATH := ../../../../../.././android/android_api/base/libs/armeabi
+LOCAL_MODULE := android-ocstack
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocstack-jni.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -54,6 +69,10 @@ LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.h))
 
 LOCAL_LDLIBS := -llog
 #LOCAL_SHARED_LIBRARIES += android-connectivity_abstraction
+LOCAL_SHARED_LIBRARIES += android-ocstack
+ifeq ($(SECURED), 1)
+LOCAL_SHARED_LIBRARIES += android-ocprovision
+endif
 LOCAL_SHARED_LIBRARIES += android-oc
 LOCAL_SHARED_LIBRARIES += android-easysetup
 

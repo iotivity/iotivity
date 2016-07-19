@@ -22,6 +22,20 @@ package org.iotivity.service.easysetup.mediator;
 
 import org.iotivity.service.easysetup.mediator.DevicePropProvisioningStatus;
 
+/**
+ * This interface class is used as a callback function called after receiving
+ * a response of device property provisioning result
+ *
+ * @see DevicePropProvisioningStatus
+ */
 public abstract class DevicePropProvisioningCallback {
+
+    /**
+     * Called after receiving a response of device property provisioning result
+     *
+     * @param status a result of device property provisioning
+     *
+     * @see DevicePropProvisioningStatus
+     */
     public abstract void onProgress(DevicePropProvisioningStatus status);
 }

@@ -74,7 +74,7 @@ void JniRemoteEnrollee::getConfiguration(JNIEnv *env, jobject jListener)
     }
 }
 
-void JniRemoteEnrollee::configureSecurity(JNIEnv *env, jobject jListener)
+void JniRemoteEnrollee::provisionSecurity(JNIEnv *env, jobject jListener)
 {
     JniSecurityStatusListener *onSecurityProvStatusReceived =
                     addStatusListener<JniSecurityStatusListener>(env, jListener);
@@ -87,11 +87,11 @@ void JniRemoteEnrollee::configureSecurity(JNIEnv *env, jobject jListener)
 
     try
     {
-        m_sharedResource->configureSecurity(secProvStatusCallback);
+        m_sharedResource->provisionSecurity(secProvStatusCallback);
     }
     catch (ESBadRequestException exception)
     {
-        LOGE("JNI configureSecurity :: Exception occured");
+        LOGE("JNI provisionSecurity :: Exception occured");
         //throw the exception to java
         throwESException( env,  exception.what());
     }
@@ -175,13 +175,13 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeGetConfigurati
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeConfigureSecurity
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionSecurity
 (JNIEnv *env, jobject jClass, jobject jListener)
 {
     LOGD("nativeStartSecurityProvision Enter");
 
     JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->configureSecurity(env, jListener);
+    remoteEnrollee->provisionSecurity(env, jListener);
 
     LOGD("nativeStartSecurityProvision Exit");
 }

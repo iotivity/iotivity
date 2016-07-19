@@ -22,6 +22,9 @@
 
 package org.iotivity.service.easysetup.mediator.enums;
 
+/**
+ * This enum class indicates a WiFi authentication type
+ */
 public enum WIFI_AUTHTYPE
 {
     NONE_AUTH(0),

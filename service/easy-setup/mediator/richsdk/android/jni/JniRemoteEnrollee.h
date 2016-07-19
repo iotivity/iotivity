@@ -63,7 +63,7 @@ class JniRemoteEnrollee
 
         // ***** JNI APIs internally call the APIs of this class ***** //
         void getConfiguration(JNIEnv *env, jobject jListener);
-        void configureSecurity(JNIEnv *env, jobject jListener);
+        void provisionSecurity(JNIEnv *env, jobject jListener);
         void provisionDeviceProperties(JNIEnv *env, jstring jssid, jstring jpwd, jint jauthType,
                                             jint jencType, jstring jlanguage, jstring jcountry, jobject jListener);
         void provisionCloudProperties(JNIEnv *env, jstring authCode, jstring authProvider,
@@ -103,7 +103,7 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeGetConfigurati
  * API for starting the Sequrity provisioning process.
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeConfigureSecurity
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionSecurity
 (JNIEnv *env, jobject jClass, jobject jListener);
 
 /**

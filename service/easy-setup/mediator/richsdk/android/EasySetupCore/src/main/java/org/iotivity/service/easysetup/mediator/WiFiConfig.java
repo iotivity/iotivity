@@ -27,32 +27,60 @@ import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
 
 import java.util.ArrayList;
 
+/**
+ * This class stores an Enrollee's configuration specific to WiFi configuration
+ * supported WiFi modes and frequency are stored
+ */
 public class WiFiConfig
 {
     public static final String TAG = WiFiConfig.class.getName();
-    private final ArrayList<WIFI_MODE> mWifiModeTypes;
+    private final ArrayList<WIFI_MODE> mWifiModes;
     private final WIFI_FREQ mWifiFreq;
 
+    /**
+     * Constructor
+     *
+     * @param types
+     *          stores an array of Wifi modes like 11G and 11N.
+     *          11A(0), 11B, 11G, 11N, 11AC(4) are supported
+     * @param wifiFreq
+     *          stores WiFi frequency like 2.4G, 5G, or both
+     */
     public WiFiConfig(ArrayList<Integer> types, int wifiFreq)
     {
-        mWifiModeTypes = convertWifiModeTypes(types);
+        mWifiModes = convertWifiModes(types);
         mWifiFreq = WIFI_FREQ.fromInt(wifiFreq);
     }
 
-    private ArrayList<WIFI_MODE> convertWifiModeTypes(ArrayList<Integer> types)
+    private ArrayList<WIFI_MODE> convertWifiModes(ArrayList<Integer> types)
     {
-        ArrayList<WIFI_MODE> wifiModeTypes = new ArrayList<>();
+        ArrayList<WIFI_MODE> wifiModes = new ArrayList<>();
         for (Integer type: types) {
-            wifiModeTypes.add(WIFI_MODE.fromInt(type.intValue()));
+            wifiModes.add(WIFI_MODE.fromInt(type.intValue()));
         };
-        return wifiModeTypes;
+        return wifiModes;
     }
 
-    public ArrayList<WIFI_MODE> getWifiModeTypes()
+    /**
+     * get WiFi mode
+     *
+     * @return ArrayList<WIFI_MODE>
+     *                  11A(0), 11B, 11G, 11N, 11AC(4) are supported
+     * @see WIFI_MODE
+     */
+    public ArrayList<WIFI_MODE> getWifiModes()
     {
-        return mWifiModeTypes;
+        return mWifiModes;
     }
 
+    /**
+     * get WiFi frequency
+     *
+     * @param WIFI_FREQ
+     *          2.4G, 5G, or both
+     *
+     * @see WIFI_FREQ
+     */
     public WIFI_FREQ getWifiFreq()
     {
         return mWifiFreq;

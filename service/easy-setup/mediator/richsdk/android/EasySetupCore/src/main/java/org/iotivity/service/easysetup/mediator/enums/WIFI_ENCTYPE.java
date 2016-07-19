@@ -22,6 +22,9 @@
 
 package org.iotivity.service.easysetup.mediator.enums;
 
+/**
+ * This enum class indicates a WiFi encryption type
+ */
 public enum WIFI_ENCTYPE
 {
     NONE_ENC(0),

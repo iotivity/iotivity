@@ -22,22 +22,46 @@ package org.iotivity.service.easysetup.mediator;
 
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 
+/**
+ * This class indicates a result if a getConfiguartion API succeed or fails and
+ * Enrollee's configuration delivered by a response.
+ */
 public class GetConfigurationStatus
 {
     private ESResult mResult;
     private EnrolleeConf mEnrolleeConf;
 
+    /**
+     * Constructor
+     *
+     * @param result a result if a getConfiguartion API succeed or fail
+     * @param conf Enrollee's configuration
+     *
+     */
     public GetConfigurationStatus(int result, EnrolleeConf conf)
     {
         mResult = ESResult.fromInt(result);
         mEnrolleeConf = conf;
     }
 
+    /**
+     * Get a result of a getConfiguartion API call
+     *
+     * @return ESResult
+     *
+     */
     public ESResult getESResult()
     {
         return mResult;
     }
 
+    /**
+     * Get Enrollee's configuration
+     *
+     * @return EnrolleeConf includes a WiFi and Device configuration of Enrollee
+     *
+     * @see EnrolleeConf
+     */
     public EnrolleeConf getEnrolleeConf()
     {
         return mEnrolleeConf;

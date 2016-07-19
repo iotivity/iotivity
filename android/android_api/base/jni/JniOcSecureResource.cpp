@@ -27,8 +27,7 @@ namespace PH = std::placeholders;
 
 JniOcSecureResource::JniOcSecureResource(std::shared_ptr<OCSecureResource> device)
     : m_sharedSecureResource(device)
-{
-}
+{}
 
 JniOcSecureResource::~JniOcSecureResource()
 {
@@ -210,6 +209,7 @@ OCStackResult JniOcSecureResource::provisionCredentials(JNIEnv* env, jint type, 
 
 OCStackResult JniOcSecureResource::provisionACL(JNIEnv* env, jobject _acl, jobject jListener)
 {
+/*
     OCStackResult ret;
     JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
     OicSecAcl_t *acl = new OicSecAcl_t;
@@ -240,6 +240,8 @@ OCStackResult JniOcSecureResource::provisionACL(JNIEnv* env, jobject _acl, jobje
 
     }
     return ret;
+    */
+    return OC_STACK_OK;
 }
 
 OCStackResult JniOcSecureResource::provisionDirectPairing(JNIEnv* env, jobjectArray jpdacls,
@@ -328,6 +330,7 @@ OCStackResult JniOcSecureResource::provisionDirectPairing(JNIEnv* env, jobjectAr
 OCStackResult JniOcSecureResource::provisionPairwiseDevices(JNIEnv* env, jint type, jint keySize,
         jobject _acl1, jobject _device2, jobject _acl2, jobject jListener)
 {
+/*
     OCStackResult ret;
 
     JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
@@ -393,6 +396,8 @@ OCStackResult JniOcSecureResource::provisionPairwiseDevices(JNIEnv* env, jint ty
         delete acl2;
     }
     return ret;
+    */
+    return OC_STACK_OK;
 }
 
 /*

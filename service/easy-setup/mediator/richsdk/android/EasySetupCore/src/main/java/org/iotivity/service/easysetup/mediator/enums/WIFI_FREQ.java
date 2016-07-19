@@ -22,6 +22,9 @@
 
 package org.iotivity.service.easysetup.mediator.enums;
 
+/**
+ * This enum class indicates a WiFi frequency like 2.4G and 5G
+ */
 public enum WIFI_FREQ
 {
     WIFI_24G(0),
@@ -35,11 +38,21 @@ public enum WIFI_FREQ
         this.value = value;
     }
 
+    /**
+     * Get WiFi frequency as an integer value
+     *
+     * @return int WiFi freq. as an integer value
+     */
     public int getValue()
     {
         return value;
     }
 
+    /**
+     * Get WiFi frequency as an integer value
+     *
+     * @return WIFI_FREQ enum value corresponding to its integer value
+     */
     public static WIFI_FREQ fromInt(int i)
     {
         for (WIFI_FREQ b : WIFI_FREQ.values())

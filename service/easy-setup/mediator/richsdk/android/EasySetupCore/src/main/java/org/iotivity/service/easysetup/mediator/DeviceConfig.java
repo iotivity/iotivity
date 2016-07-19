@@ -20,12 +20,23 @@
 
 package org.iotivity.service.easysetup.mediator;
 
+/*
+ * This class stores an Enrollee's configuration specific to device configuration
+ * device name, language, and country information are stored
+ */
 public class DeviceConfig
 {
     private final String mName;
     private final String mLanguage;
     private final String mCountry;
 
+    /**
+     * Constructor
+     *
+     * @param name Device's human-friendly name like device model name
+     * @param language IETF language tag using ISO 639X
+     * @param country ISO Country Code (ISO 3166-1 Alpha-2)
+     */
     public DeviceConfig(String name, String language, String country)
     {
         mName = name;
@@ -33,16 +44,31 @@ public class DeviceConfig
         mCountry = country;
     }
 
+    /**
+     * Get a device name
+     *
+     * @return a device name
+     */
     public String getName()
     {
         return mName;
     }
 
+    /**
+     * Get a language
+     *
+     * @return a language
+     */
     public String getLanguage()
     {
         return mLanguage;
     }
 
+    /**
+     * Get a country
+     *
+     * @return a country
+     */
     public String getCountry()
     {
         return mCountry;

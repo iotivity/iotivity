@@ -24,22 +24,42 @@ import android.util.Log;
 
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 
+/**
+ * This class indicates a result if a provisionSecurity API succeed or fails and
+ * a target Enrollee's device ID
+ */
 public class SecurityProvisioningStatus
 {
     private ESResult mResult;
     private String mDevUUID;
 
+    /**
+     * Constructor
+     *
+     * @param result a result of security provisioning
+     * @param uuid a device ID of a target Enrollee
+     */
     public SecurityProvisioningStatus(int result, String uuid)
     {
         mResult = ESResult.fromInt(result);
         mDevUUID = uuid;
     }
 
+    /**
+     * Get a Result of security provisioning
+     *
+     * @return ESResult a result of security provisioning
+     */
     public ESResult getESResult()
     {
         return mResult;
     }
 
+    /**
+     * Get a device ID of a target Enrollee
+     *
+     * @return String a device ID of a target Enrollee
+     */
     public String getDevUUID()
     {
         return mDevUUID;

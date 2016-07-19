@@ -25,6 +25,8 @@
 #include "octypes.h"
 #include "ESRichCommon.h"
 
+#include "JniOcPlatform.h"
+#include "JniOcResource.h"
 #include "JniEasySetup.h"
 
 using namespace OC;
@@ -35,42 +37,24 @@ extern "C" {
 #endif
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrollee
-(JNIEnv *env, jobject thiz , jstring jhost, jstring juri, jstring jdID, jboolean jisObservable, jint jconType)
+(JNIEnv *env, jobject thiz, jobject jResource)
 {
     LOGI("JniEasySetup::nativeCreateRemoteEnrollee enter");
 
     std::shared_ptr<RemoteEnrollee> nativeRemoteEnrollee;
-    std::shared_ptr< OC::OCResource > resource;
     jobject jRemoteEnrollee;
-    std::string host;
-    std::string uri;
-    std::string devID;
 
-    host = env->GetStringUTFChars(jhost, NULL);
-    uri = env->GetStringUTFChars(juri, NULL);
-    devID = env->GetStringUTFChars(jdID, NULL);
-    bool isObservable = jisObservable;
-    OCConnectivityType conType = static_cast<OCConnectivityType>(jconType);
-    std::vector<std::string> resourceTypes = {OC_RSRVD_ES_RES_TYPE_PROV};
-    std::vector<std::string> interfaces = {OC_RSRVD_INTERFACE_BATCH};
+    JniOcResource* jniOcResource = JniOcResource::getJniOcResourcePtr(env, jResource);
 
-    LOGI("host : %s", host.c_str());
-    LOGI("uri : %s", uri.c_str());
-    try
+    if (!jniOcResource)
     {
-        resource = OC::OCPlatform::constructResourceObject(host,
-                                uri, conType, isObservable, resourceTypes, interfaces);
-    }
-    catch(ResourceInitException e)
-    {
-        LOGI("constructResourceObject error : %s", e.what());
-        return NULL;
+        LOGE("JniEasySetup::nativeCreateRemoteEnrollee getJniOcResourcePtr returns nullptr.");
+        return nullptr;
     }
 
     try
     {
-        nativeRemoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
-        nativeRemoteEnrollee->setDevID(devID);
+        nativeRemoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(jniOcResource->getOCResource());
         //create the java object
         jRemoteEnrollee = env->NewObject(g_cls_RemoteEnrollee, g_mid_RemoteEnrollee_ctor);
         if (!jRemoteEnrollee)

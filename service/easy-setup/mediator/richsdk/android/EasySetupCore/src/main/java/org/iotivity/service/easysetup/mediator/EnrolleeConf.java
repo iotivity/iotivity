@@ -25,12 +25,26 @@ import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
 
 import java.util.ArrayList;
 
+/**
+ * This class stores Enrollee's configuration including WiFi and Device configuration
+ * including supported WiFi frequency and device name
+ */
 public class EnrolleeConf
 {
     private final DeviceConfig mDevConf;
     private final WiFiConfig mWiFiConf;
     private final boolean mCloudable;
 
+    /**
+     * Constructor
+     *
+     * @param devConf
+     *          device name, language, and country
+     * @param wifiConf
+     *          supported WiFi modes and frequency
+     * @param cloudable
+     *          a preference if Enrollee is supposed to be registered to Cloud
+     */
     public EnrolleeConf(DeviceConfig devConf, WiFiConfig wifiConf, boolean cloudable)
     {
         mDevConf = devConf;
@@ -38,16 +52,37 @@ public class EnrolleeConf
         mCloudable = cloudable;
     }
 
+    /**
+     * Get device configuration
+     *
+     * @return DeviceConfig
+     *          device name, language, and country
+     *
+     * @see DeviceConfig
+     */
     public DeviceConfig getDeviceConfig()
     {
         return mDevConf;
     }
 
+    /**
+     * Get WiFi configuration
+     *
+     * @return WiFiConfig
+     *          supported WiFi modes and frequency
+     *
+     * @see WiFiConfig
+     */
     public WiFiConfig getWiFiConfig()
     {
         return mWiFiConf;
     }
 
+    /**
+     * Get a preference of cloud registration of Enrollee
+     *
+     * @return true if Enrollee is supposed to be registered to Cloud
+     */
     public boolean isCloudable()
     {
         return mCloudable;

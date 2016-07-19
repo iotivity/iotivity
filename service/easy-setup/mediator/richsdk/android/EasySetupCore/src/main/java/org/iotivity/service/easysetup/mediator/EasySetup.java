@@ -34,12 +34,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 /**
- * <To be modified>
- * This is facade class, a single point of contact for Application.
- * It contains set of APIs to do easy setup of the enrolling device.
- * ON-BOARDING - This is a step to establish connectivity between the device & Mediator device.
- * PROVISION   - This is a step where the netowork's detail & credentials are given to the
- * enrolling device.
+ * This provides an API to instanciate a new RemoteEnrollee object correspondent to Enrollee
+ * Device to be setup.
  */
 public class EasySetup {
 
@@ -53,11 +49,18 @@ public class EasySetup {
 
     protected RemoteEnrollee mRemoteEnrollee;
 
-    //function to call the native nativeCreateRemoteEnrollee
-    private native RemoteEnrollee nativeCreateRemoteEnrollee(String Host, String Uri, String devID,
-                                                             Boolean isObservable, int conType);
+    // function to call the native nativeCreateRemoteEnrollee
+    private native RemoteEnrollee nativeCreateRemoteEnrollee(OcResource enrolleeResource);
     static {
         // Load Easy Setup JNI interface
+        try
+        {
+            System.loadLibrary("ocprovision");
+        } catch (UnsatisfiedLinkError e) {
+            Log.i(TAG, "ocprovision library does not exist. (Unsecure mode)");
+        }
+
+        System.loadLibrary("ocstack-jni");
         System.loadLibrary("ESMediatorRich");
         System.loadLibrary("easysetup-jni");
     }
@@ -78,51 +81,28 @@ public class EasySetup {
         return sInstance;
     }
 
-    /**
-     * API to create a new RemoteEnrollee instance
+     /**
+     * This API is used for creating a remote Enrollee instance
+     *
+     * @param enrolleeResource an OCResource object corresponding to enrollee resource
+     *        discovered in a network. The OcResource object can be obtained by calling
+     *        OcPlatform.findResource() API. What resource you have to discover with
+     *        the OcPlatform.findResource() API is a "provisioning" resource with a certain
+     *        resource type, i.e. ocf.wk.prov
+     *
+     * @return Pointer to RemoteEnrollee instance
      */
     public synchronized RemoteEnrollee createRemoteEnrollee(OcResource enrolleeResource)
     {
         // native call
-        String Host = enrolleeResource.getHost();
-        String HostInIPv6;
-        int pos1 = Host.indexOf("%");   // it indicates the address is IPv6.
-        if(pos1 >= 0) {
-            int pos2 = Host.indexOf("]");
-            HostInIPv6 = Host.substring(0, pos1) + Host.substring(pos2, Host.length());
-            Host = HostInIPv6;
-            Log.d(TAG,"Host address of the resource(truncated): " + HostInIPv6);
-        }
-
-        String Uri = enrolleeResource.getUri();
-        String devID = enrolleeResource.getServerId();
-        Boolean isObservable = enrolleeResource.isObservable();
-        EnumSet<OcConnectivityType> ConType = enrolleeResource.getConnectivityTypeSet();
-        int conType = 0;
-        for (OcConnectivityType type : ConType)
-        {
-            conType |= type.getValue();
-        }
-        List<String> resourceTypes = enrolleeResource.getResourceTypes();
-        List<String> resourceInterfaces = enrolleeResource.getResourceInterfaces();
-
-        if(!resourceTypes.contains(PROV_RESOURCE_TYPE)
-                || !resourceInterfaces.contains(OcPlatform.BATCH_INTERFACE))
+        if(!enrolleeResource.getResourceTypes().contains(PROV_RESOURCE_TYPE)
+                || !enrolleeResource.getResourceInterfaces().contains(OcPlatform.BATCH_INTERFACE))
         {
             Log.e(TAG, "Validation check for OcResource is failed.");
             return null;
         }
-        mRemoteEnrollee = nativeCreateRemoteEnrollee(Host, Uri, devID, isObservable, conType);
+        mRemoteEnrollee = nativeCreateRemoteEnrollee(enrolleeResource);
         mRemoteEnrolleeList.add(mRemoteEnrollee);
         return mRemoteEnrollee;
     }
-
-    /**
-     * Reset the Easy setup
-     */
-    public void finish() {
-        //Call the stop Provisioning
-        //for (RemoteEnrollee remoteEnrollee : mRemoteEnrolleeList)
-        //    remoteEnrollee.stopProvisioningProcess();
-        }
 }

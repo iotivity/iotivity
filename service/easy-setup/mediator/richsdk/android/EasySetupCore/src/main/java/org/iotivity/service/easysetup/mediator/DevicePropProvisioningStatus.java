@@ -22,15 +22,28 @@ package org.iotivity.service.easysetup.mediator;
 
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 
+/**
+ * This class indicates a result if a provisionDeviceProperties API succeed or fails
+ */
 public class DevicePropProvisioningStatus
 {
     private ESResult m_result;
 
+    /**
+     * Constructor
+     *
+     * @param result a result if a provisionDeviceProperties API succeed or fails
+     */
     public DevicePropProvisioningStatus(int result)
     {
         m_result = ESResult.fromInt(result);
     }
 
+    /**
+     * Get a result if a provisionDeviceProperties API succeed or fails
+     *
+     * @return ESResult a result if a provisionDeviceProperties API succeed or fails
+     */
     public ESResult getESResult()
     {
         return m_result;

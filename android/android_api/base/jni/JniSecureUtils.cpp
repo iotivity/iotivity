@@ -134,6 +134,7 @@ jobject JniSecureUtils::convertUUIDVectorToJavaStrList(JNIEnv *env, UuidList_t &
 
 OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, OicSecAcl_t *acl)
 {
+/*
     jstring jData;
     jvalue args[1];
 
@@ -229,7 +230,7 @@ OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, Oic
     {
         return OC_STACK_ERROR;
     }
-
+*/
     return OC_STACK_OK;
 }
 

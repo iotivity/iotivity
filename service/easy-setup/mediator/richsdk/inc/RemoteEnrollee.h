@@ -87,7 +87,7 @@ namespace OIC
              *
              * @see SecurityProvStatusCb
              */
-            void configureSecurity(SecurityProvStatusCb callback);
+            void provisionSecurity(SecurityProvStatusCb callback);
 
             /**
              * Provision WiFi AP information and device configuration to Enrollee
@@ -121,12 +121,6 @@ namespace OIC
              * @see CloudPropProvStatusCb
              */
             void provisionCloudProperties(const CloudProp& cloudProp, CloudPropProvStatusCb callback);
-
-            /**
-             * Set device ID the target Enrollee has. Note that, if you change the device ID of enrollee,
-             * unexpected behavior may happen.
-             */
-            void setDevID(const std::string devId);
 
         private:
             RemoteEnrollee(std::shared_ptr< OC::OCResource > resource);

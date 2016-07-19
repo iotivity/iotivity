@@ -305,11 +305,14 @@ public class EasysetupActivity extends Activity {
 
             //SQLiteDatabase.openOrCreateDatabase(sqlDbPath+ OIC_SQL_DB_FILE, null);
             OcProvisioning.provisionInit(sqlDbPath + OIC_SQL_DB_FILE);
+            mSecurityMode.setChecked(true);
         } catch (OcException e) {
             logMessage(TAG + "provisionInit error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
             Toast.makeText(this,"provisionInit error: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
+            mSecurityMode.setChecked(false);
+            return;
         } catch (UnsatisfiedLinkError e) {
 
             // Note : Easy setup is built with SECURED = 0, but user still selects Security feature
@@ -321,7 +324,6 @@ public class EasysetupActivity extends Activity {
                     Toast.LENGTH_LONG).show();
             return;
         }
-        mSecurityMode.setChecked(false);
     }
 
     OcPlatform.OnResourceFoundListener listener =
@@ -430,7 +432,7 @@ public class EasysetupActivity extends Activity {
                         });
 
                         try {
-                            mRemoteEnrollee.configureSecurity(new SecurityProvisioningCallback() {
+                            mRemoteEnrollee.provisionSecurity(new SecurityProvisioningCallback() {
                                 @Override
                                 public void onProgress(final SecurityProvisioningStatus securityProvisioningStatus) {
                                     if(securityProvisioningStatus.getESResult() == ESResult.ES_OK) {
@@ -501,7 +503,7 @@ public class EasysetupActivity extends Activity {
                                                 mDevNameText.setText(devConf.getName());
                                                 mLanguageText.setText(devConf.getLanguage());
                                                 mCountryText.setText(devConf.getCountry());
-                                                setWifiModeTypes(netInfo.getWifiModeTypes());
+                                                setWifiModes(netInfo.getWifiModes());
                                                 setWifiFreq(netInfo.getWifiFreq());
 
                                                 if(enrolleeConf.isCloudable()) {
@@ -734,7 +736,7 @@ public class EasysetupActivity extends Activity {
 
     }
 
-    public void setWifiModeTypes(ArrayList<WIFI_MODE> types) {
+    public void setWifiModes(ArrayList<WIFI_MODE> types) {
         String temp = "WIFI - ";
 
         for(WIFI_MODE type : types) {
