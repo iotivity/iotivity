@@ -63,7 +63,7 @@ static void CAManagerConnectionMonitorHandler(const CAEndpoint_t *info, bool isC
     {
         if (g_connStateCB)
         {
-            g_connStateCB(info->adapter, info->addr, isConnected);
+            g_connStateCB(info, isConnected);
             OIC_LOG(DEBUG, TAG, "Pass the connected device info to upper layer");
         }
     }
@@ -71,7 +71,7 @@ static void CAManagerConnectionMonitorHandler(const CAEndpoint_t *info, bool isC
     {
         if (g_connStateCB)
         {
-            g_connStateCB(info->adapter, info->addr, isConnected);
+            g_connStateCB(info, isConnected);
             OIC_LOG(DEBUG, TAG, "Pass the disconnected device info to upper layer");
         }
     }

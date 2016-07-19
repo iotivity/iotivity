@@ -116,7 +116,7 @@ namespace OC
          * @param resourceURI name of the resource. If null or empty, performs search for all
          *       resource names
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param resourceHandler Handles callbacks, success states and failure states.
          *
          *        Four modes of discovery defined as follows:
@@ -146,7 +146,7 @@ namespace OC
          * @param resourceURI name of the resource. If null or empty, performs search for all
          *       resource names
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param resourceHandler Handles callbacks, success states and failure states.
          *
          *        Four modes of discovery defined as follows:
@@ -181,7 +181,7 @@ namespace OC
          * @param deviceURI Uri containing address to the virtual device in C Stack
                                 ("/oic/d")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param deviceInfoHandler device discovery callback
          *
          * @return Returns ::OC_STACK_OK if success.
@@ -197,7 +197,7 @@ namespace OC
          * @param deviceURI Uri containing address to the virtual device in C Stack
                                 ("/oic/d")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param deviceInfoHandler device discovery callback
          * @param QoS the quality of communication
          * @see getDeviceInfo(const std::string&, const std::string&, OCConnectivityType, FindDeviceCallback)
@@ -214,7 +214,7 @@ namespace OC
          * @param platformURI Uri containing address to the virtual platform in C Stack
                                 ("/oic/p")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param platformInfoHandler platform discovery callback
          *
          * @return Returns ::OC_STACK_OK if success.
@@ -231,7 +231,7 @@ namespace OC
          * @param platformURI Uri containing address to the virtual platform in C Stack
                                 ("/oic/p")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param platformInfoHandler platform discovery callback
          * @param QoS the quality of communication
          * @see getPlatformInfo(const std::string&, const std::string&, OCConnectivityType, FindPlatformCallback)
@@ -494,7 +494,7 @@ namespace OC
          * @param host The IP address/addressable name of the server to subscribe to.
          *               This should be in the format coap://address:port
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param presenceHandler callback function that will receive notifications/subscription
          *               events
          *
@@ -513,7 +513,7 @@ namespace OC
          *               This should be in the format coap://address:port
          * @param resourceType a resource type specified as a filter for subscription callbacks.
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param presenceHandler callback function that will receive notifications/subscription
          *               events
          * @see subscribePresence(OCPresenceHandle&, const std::string&, OCConnectivityType, SubscribeCallback)
@@ -553,7 +553,11 @@ namespace OC
          *           properly routed.  Example: /a/light
          *
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         *                           if you want to use specific a Flag like IPv4
+         *                           you should apply OR operation for the flag in here.
+         *                           Example: static_cast<OCConnectivityType>(CT_ADAPTER_TCP
+         *                                                                    | OC_IP_USE_V4)
          *
          * @param isObservable a boolean containing whether the resource supports observation
          *

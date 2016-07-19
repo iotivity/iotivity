@@ -56,7 +56,7 @@ target_os = env.get('TARGET_OS')
 
 if target_os in ['android']:
 	# Add third party libraries
-	SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+	SConscript('#service/third_party_libs.scons', 'lib_env')
 
 ######################################################################
 # Build flags
@@ -64,14 +64,14 @@ if target_os in ['android']:
 
 easy_setup_env.AppendUnique(CPPPATH = ['inc',  'src','../../inc'])
 easy_setup_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-if target_os == 'linux':
+if target_os in ['linux']:
 	easy_setup_env.AppendUnique(LIBS = ['pthread', 'dl'])
 
 
 ######################################################################
 # Linux Mediator
 ######################################################################
-if target_os == 'linux':
+if target_os in ['linux']:
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
@@ -111,7 +111,7 @@ if target_os == 'android':
                     'src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_m_csdk_static, 'libESMediatorCSDK')
 
-if target_os == 'linux':
+if target_os in ['linux']:
 	es_m_csdk_shared = easy_setup_env.SharedLibrary('ESMediatorCSDK',
 					['src/provisioningapi.cpp',
 					'src/wifiprovisioning.cpp',
@@ -124,7 +124,7 @@ if target_os == 'linux':
 ######################################################################
 #Build UnitTestcases for Mediator[CSDK]
 ################################################ ######################
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
 
 

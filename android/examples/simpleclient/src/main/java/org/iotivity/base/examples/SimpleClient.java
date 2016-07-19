@@ -173,6 +173,12 @@ public class SimpleClient extends Activity implements
         }
     }
 
+    @Override
+    public synchronized void onFindResourceFailed(Throwable throwable, String uri) {
+        msg("findResource request has failed");
+        Log.e(TAG, throwable.toString());
+    }
+
     /**
      * Local method to get representation of a found light resource
      */

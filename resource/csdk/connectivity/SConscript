@@ -27,7 +27,7 @@ if 'ALL' in transport:
 			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
 	if with_tcp == True:
 			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
-	if target_os == 'linux':
+	if target_os in ['linux']:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
@@ -42,7 +42,7 @@ if 'ALL' in transport:
 	print "CA Transport is ALL"
 else:
 	if 'BT' in transport:
-		if target_os == 'linux':
+		if target_os in ['linux']:
 			print "CA Transport BT is not supported in Linux"
 			Exit(1)
 		else:

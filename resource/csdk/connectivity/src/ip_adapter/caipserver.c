@@ -361,7 +361,7 @@ static void CAFindReadyMessage()
     PUSH_IP_SOCKET(m4,  eventArray, socketArray, arraySize);
     PUSH_IP_SOCKET(m4s, eventArray, socketArray, arraySize);
 
-    if (-1 != caglobals.ip.shutdownEvent)
+    if (WSA_INVALID_EVENT != caglobals.ip.shutdownEvent)
     {
         INSERT_SOCKET(OC_INVALID_SOCKET, socketArray, arraySize);
         PUSH_HANDLE(caglobals.ip.shutdownEvent, eventArray, arraySize);
@@ -400,7 +400,7 @@ static void CAFindReadyMessage()
                     }
 
                     // Break out if shutdownEvent is triggered
-                    if ((caglobals.ip.shutdownEvent != -1) &&
+                    if ((caglobals.ip.shutdownEvent != WSA_INVALID_EVENT) &&
                         (caglobals.ip.shutdownEvent == eventArray[eventIndex]))
                     {
                         break;
@@ -427,7 +427,7 @@ static void CAFindReadyMessage()
 
     if (caglobals.ip.terminate)
     {
-        caglobals.ip.shutdownEvent = -1;
+        caglobals.ip.shutdownEvent = WSA_INVALID_EVENT;
         WSACleanup();
     }
 }
@@ -559,7 +559,7 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     }
 
     WSABUF iov = {.len = sizeof (recvBuffer), .buf = recvBuffer};
-    WSAMSG msg = {.name = &srcAddr,
+    WSAMSG msg = {.name = (PSOCKADDR)&srcAddr,
                   .namelen = namelen,
                   .lpBuffers = &iov,
                   .dwBufferCount = 1,
@@ -800,14 +800,8 @@ static void CAInitializeFastShutdownMechanism()
     caglobals.ip.selectTimeout = -1; // don't poll for shutdown
     int ret = -1;
 #if defined(WSA_WAIT_EVENT_0)
-    caglobals.ip.shutdownEvent = -1;
     caglobals.ip.shutdownEvent = WSACreateEvent();
-
-    if (caglobals.ip.shutdownEvent == WSA_INVALID_EVENT)
-    {
-        caglobals.ip.shutdownEvent = -1;
-    }
-    else
+    if (WSA_INVALID_EVENT != caglobals.ip.shutdownEvent)
     {
         ret = 0;
     }

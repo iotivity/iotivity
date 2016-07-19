@@ -233,7 +233,13 @@ OC_EXPORT OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler en
 /**
  * This function sets device information.
  *
- * @param deviceInfo   Structure passed by the server application containing the device information.
+ * Upon call to OCInit, the default Device Type (i.e. "rt") has already been set to the default
+ * Device Type "oic.wk.d". You do not have to specify "oic.wk.d" in the OCDeviceInfo.types linked
+ * list. The default Device Type is mandatory and always specified by this Device as the first
+ * Device Type.
+ *
+ * @param deviceInfo   Structure passed by the server application containing the device
+ *                     information.
  *
  * @return
  *     ::OC_STACK_OK               no errors.

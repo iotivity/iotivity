@@ -159,6 +159,11 @@ void CATCPSetPacketReceiveCallback(CATCPPacketReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
+void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler)
+{
+    return;
+}
+
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback)
 {
     return;
@@ -232,7 +237,9 @@ void CATCPReadDataInternal()
             if (totalLen == totalReceivedLen)
             {
                 CASecureEndpoint_t ep =
-                    {.endpoint = {.adapter = CA_ADAPTER_TCP, .port = tcpClientPort}};
+                    {.endpoint = {.adapter = CA_ADAPTER_TCP,
+                                  .flags = CA_DEFAULT_FLAGS,
+                                  .port = tcpClientPort}};
 
                 IPAddress clientIP = tcpClientIP;
                 int ret = snprintf(ep.endpoint.addr, sizeof(ep.endpoint.addr), "%d.%d.%d.%d",

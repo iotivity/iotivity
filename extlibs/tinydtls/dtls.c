@@ -4583,6 +4583,7 @@ dtls_handle_message(dtls_context_t *ctx,
       if (peer) {
         (void)CALL(ctx, event, &peer->session,
               DTLS_ALERT_LEVEL_FATAL, DTLS_ALERT_HANDSHAKE_FAILURE);
+        dtls_clear_retransmission(ctx, peer);
         dtls_destroy_peer(ctx, peer, 1);
       }
 
@@ -4705,6 +4706,7 @@ dtls_free_context(dtls_context_t *ctx) {
 
   if (ctx->peers) {
     HASH_ITER(hh, ctx->peers, p, tmp) {
+      dtls_clear_retransmission(ctx, p);
       dtls_destroy_peer(ctx, p, 1);
     }
   }

@@ -4,6 +4,9 @@
 # the build script.  For now, use set -e and fail the build at first failure.
 set -e
 
+# maybe overridden in user's shell
+VERBOSE=${VERBOSE:=1}
+
 function build_all()
 {
 	if [ $(uname -s) = "Linux" ]
@@ -40,44 +43,44 @@ function build_linux()
 function build_linux_unsecured()
 {
 	echo "*********** Build for linux ************"
-	scons RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" RELEASE=$1 $2
 }
 
 function build_linux_unsecured_with_rm()
 {
 	echo "*********** Build for linux with RoutingManager************"
-	scons ROUTING=GW RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" ROUTING=GW RELEASE=$1 $2
 }
 
 function build_linux_secured()
 {
 	echo "*********** Build for linux with Security *************"
-	scons RELEASE=$1 SECURED=1 $2
+	scons VERBOSE="$VERBOSE" RELEASE=$1 SECURED=1 $2
 }
 
 function build_linux_unsecured_with_ra()
 {
 
 	echo "*********** Build for linux With Remote Access *************"
-	scons RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 $2
+	scons VERBOSE="$VERBOSE" RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 $2
 }
 
 function build_linux_secured_with_ra()
 {
 	echo "*********** Build for linux With Remote Access & Security ************"
-	scons RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 SECURED=1 $2
+	scons VERBOSE="$VERBOSE" RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 SECURED=1 $2
 }
 
 function build_linux_unsecured_with_rd()
 {
 	echo "*********** Build for linux With Resource Directory *************"
-	scons RELEASE=$1 WITH_RD=1 $2
+	scons VERBOSE="$VERBOSE" RELEASE=$1 WITH_RD=1 $2
 }
 
 function build_linux_secured_with_rd()
 {
 	echo "*********** Build for linux With Resource Directory & Security ************"
-	scons RELEASE=$1 WITH_RD=1 SECURED=1 $2
+	scons VERBOSE="$VERBOSE" RELEASE=$1 WITH_RD=1 SECURED=1 $2
 }
 
 function build_android()
@@ -95,45 +98,45 @@ function build_android()
 function build_android_x86()
 {
 	echo "*********** Build for android x86 *************"
-	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=IP $2
-	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BT $2
-	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BLE $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BLE $2
 }
 
 function build_android_x86_with_rm()
 {
 	echo "*********** Build for android x86 with Routing Manager *************"
-	scons TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=IP $2
-	scons TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BT $2
-	scons TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BLE $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BLE $2
 }
 
 function build_android_armeabi()
 {
 	echo "*********** Build for android armeabi *************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=IP $2
-	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BT $2
-	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BLE $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BLE $2
 }
 
 function build_android_armeabi_with_rm()
 {
 	echo "*********** Build for android armeabi with Routing Manager*************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=IP $2
-	scons TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BT $2
-	scons TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BLE $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BLE $2
 }
 
 function build_arduino()
 {
 	echo "*********** Build for arduino avr *************"
-	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
-	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
-	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=BLE SHIELD=RBL_NRF8001 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=BLE SHIELD=RBL_NRF8001 RELEASE=$1 $2
 
 	echo "*********** Build for arduino arm *************"
-	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
-	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
 	# BLE support for the Arduino Due is currently unavailable.
 }
 
@@ -143,48 +146,48 @@ function build_tizen()
 	./gbsbuild.sh
 
 	echo "*********** Build for Tizen octbstack lib and sample *************"
-	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
 
 	echo "*********** Build for Tizen octbstack lib and sample with Security*************"
-	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$1 $2
 
 	echo "*********** Build for Tizen octbstack lib and sample with Routing Manager*************"
-	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true ROUTING=GW RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true ROUTING=GW RELEASE=$1 $2
 }
 
 function build_darwin() # Mac OSx and iOS
 {
 	echo "*********** Build for OSX *************"
-	scons TARGET_OS=darwin SYS_VERSION=10.9 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=darwin SYS_VERSION=10.9 RELEASE=$1 $2
 
 	echo "*********** Build for IOS i386 *************"
-	scons TARGET_OS=ios TARGET_ARCH=i386 SYS_VERSION=7.0 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=ios TARGET_ARCH=i386 SYS_VERSION=7.0 RELEASE=$1 $2
 
 	echo "*********** Build for IOS x86_64 *************"
-	scons TARGET_OS=ios TARGET_ARCH=x86_64 SYS_VERSION=7.0 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=ios TARGET_ARCH=x86_64 SYS_VERSION=7.0 RELEASE=$1 $2
 
 	echo "*********** Build for IOS armv7 *************"
-	scons TARGET_OS=ios TARGET_ARCH=armv7 SYS_VERSION=7.0 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=ios TARGET_ARCH=armv7 SYS_VERSION=7.0 RELEASE=$1 $2
 
 	echo "*********** Build for IOS armv7s *************"
-	scons TARGET_OS=ios TARGET_ARCH=armv7s SYS_VERSION=7.0 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=ios TARGET_ARCH=armv7s SYS_VERSION=7.0 RELEASE=$1 $2
 
 	echo "*********** Build for IOS arm64 *************"
-	scons TARGET_OS=ios TARGET_ARCH=arm64 SYS_VERSION=7.0 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" TARGET_OS=ios TARGET_ARCH=arm64 SYS_VERSION=7.0 RELEASE=$1 $2
 }
 
 function build_simulator()
 {
 	echo "*********** Build for simulator plugin *************"
-	scons SIMULATOR=1 RELEASE=$1 $2
+	scons VERBOSE="$VERBOSE" SIMULATOR=1 RELEASE=$1 $2
 }
 
 function unit_tests()
 {
 	echo "*********** Unit test Start *************"
-	scons resource RELEASE=false -c
-	scons resource LOGGING=false RELEASE=false
-	scons resource TEST=1 RELEASE=false
+	scons VERBOSE="$VERBOSE" resource RELEASE=false -c
+	scons VERBOSE="$VERBOSE" resource LOGGING=false RELEASE=false
+	scons VERBOSE="$VERBOSE" resource TEST=1 RELEASE=false
 	echo "*********** Unit test Stop *************"
 }
 

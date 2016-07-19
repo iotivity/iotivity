@@ -8,17 +8,17 @@
                         {
                             "href": "/oic/light",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.core"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/fan",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.core"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
-                    "permission": 31        
+                    "permission": 31
                 },
                 {
                     "subjectuuid": "33333333-3333-3333-3333-333333333333",
@@ -26,17 +26,17 @@
                         {
                             "href": "/oic/light",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.core"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/garage",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.core"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
-                    "permission": 31        
+                    "permission": 31
                 }
             ]
         },

@@ -769,13 +769,19 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0(
         onResFoundListener->foundResourceCallback(resource);
     };
 
+    FindErrorCallback findErrorCallback = [onResFoundListener](const std::string& uri, const int eCode)
+    {
+        onResFoundListener->findResourceErrorCallback(uri, eCode);
+    };
+
     try
     {
         OCStackResult result = OCPlatform::findResource(
             host,
             resourceUri,
             static_cast<OCConnectivityType>(jConnectivityType),
-            findCallback);
+            findCallback,
+            findErrorCallback);
 
         if (OC_STACK_OK != result)
         {
@@ -827,6 +833,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
         onResFoundListener->foundResourceCallback(resource);
     };
 
+    FindErrorCallback findErrorCallback = [onResFoundListener](const std::string& uri, const int eCode)
+    {
+        onResFoundListener->findResourceErrorCallback(uri, eCode);
+    };
+
     try
     {
         OCStackResult result = OCPlatform::findResource(
@@ -834,6 +845,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
             resourceUri,
             static_cast<OCConnectivityType>(jConnectivityType),
             findCallback,
+            findErrorCallback,
             JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
         if (OC_STACK_OK != result)

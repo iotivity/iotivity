@@ -228,6 +228,24 @@ TEST(StackStart, StackStartSuccessClientServer)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackStart, StackStartSuccessServerThenClient)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, StackStartSuccessClientThenServer)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackStart, StackStartSuccessiveInits)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);

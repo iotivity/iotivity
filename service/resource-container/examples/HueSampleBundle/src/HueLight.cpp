@@ -50,7 +50,7 @@ void HueLight::initAttributes()
 }
 
 RCSResourceAttributes HueLight::handleGetAttributesRequest(
-    const std::map< std::string, std::string > &queryParams)
+    const std::map< std::string, std::string > &/*queryParams*/)
 {
     cout << "HueLight::handleGetAttributesRequest" << endl;
     // TODO read from HueLight and update attribute data
@@ -58,7 +58,7 @@ RCSResourceAttributes HueLight::handleGetAttributesRequest(
 }
 
 void HueLight::handleSetAttributesRequest(const RCSResourceAttributes &value,
-                                          const std::map< std::string, std::string > &queryParams)
+                                          const std::map< std::string, std::string > &/*queryParams*/)
 {
     cout << "HueLight::handleSetAttributesRequest" << std::endl;
 

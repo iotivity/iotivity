@@ -21,7 +21,7 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#define IOTIVITY_VERSION "1.1.0"
+#define IOTIVITY_VERSION "1.1.1"
 
 #include <stdint.h>
 #include <stdio.h>

@@ -7,7 +7,7 @@ Import('env')
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+SConscript('#service/third_party_libs.scons', exports = 'lib_env')
 
 tm_jni_env = lib_env.Clone()
 target_os = tm_jni_env.get('TARGET_OS')
