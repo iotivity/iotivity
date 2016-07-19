@@ -32,7 +32,7 @@ extern "C" {
 #include "NSStructs.h"
 #include "ocstack.h"
 
-#define NS_QOS OC_LOW_QOS
+#define NS_QOS OC_HIGH_QOS
 #define NS_RESOURCE_TYPE "oic.r.notification"
 #define NS_RESOURCE_URI "/notification"
 #define NS_INTERFACE_BASELINE "oic.if.baseline"
@@ -82,30 +82,30 @@ extern "C" {
         } \
     }
 
-#define NS_VERIFY_STACK_OK_V(obj) \
+#define NS_VERIFY_STACK_SUCCESS_V(obj) \
     { \
-        OCStackResult _ret = (obj); \
-        if ( _ret != OC_STACK_OK) \
+        bool _ret = (obj); \
+        if ( _ret != true) \
         { \
             NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
             return; \
         } \
     }
 
-#define NS_VERIFY_STACK_OK(obj, retVal) \
+#define NS_VERIFY_STACK_SUCCESS(obj, retVal) \
     { \
-        OCStackResult _ret = (obj); \
-        if ( _ret != OC_STACK_OK) \
+        bool _ret = (obj); \
+        if ( _ret != true) \
         { \
             NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
             return (retVal); \
         } \
     }
 
-#define NS_VERIFY_STACK_OK_WITH_POST_CLEANING(obj, retVal, func) \
+#define NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(obj, retVal, func) \
     { \
-        OCStackResult _ret = (obj); \
-        if ( _ret != OC_STACK_OK) \
+        bool _ret = (obj); \
+        if ( _ret != true) \
         { \
             NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
             (func); \
@@ -139,6 +139,7 @@ typedef struct NSProviderConnectionInfo
     OCDoHandle syncHandle;
 
     bool isCloudConnection;
+    bool isSubscribing;
 
     struct NSProviderConnectionInfo * next;
 
@@ -224,6 +225,8 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload,
         void * callbackFunc, void * callbackData, OCConnectivityType type);
+
+bool NSOCResultToSuccess(OCStackResult ret);
 
 #ifdef __cplusplus
 }

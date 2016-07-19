@@ -55,6 +55,8 @@ void NSDestroyMessageCacheList()
     {
         NSStorageDestroy(cache);
     }
+
+    NSSetMessageCacheList(NULL);
 }
 
 void NSDestroyProviderCacheList()
@@ -64,6 +66,8 @@ void NSDestroyProviderCacheList()
     {
         NSStorageDestroy(cache);
     }
+
+    NSSetProviderCacheList(NULL);
 }
 
 NSMessage_consumer * NSMessageCacheFind(const char * messageId)
@@ -82,8 +86,9 @@ NSMessage_consumer * NSMessageCacheFind(const char * messageId)
     }
 
     NSCacheElement * cacheElement = NSStorageRead(MessageCache, messageId);
+    NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
-    return (NSMessage_consumer *) cacheElement->data;
+    return NSCopyMessage((NSMessage_consumer *) cacheElement->data);
 }
 
 NSProvider_internal * NSProviderCacheFind(const char * providerId)
@@ -104,7 +109,7 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
     NSCacheElement * cacheElement = NSStorageRead(ProviderCache, providerId);
     NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
-    return (NSProvider_internal *) cacheElement->data;
+    return NSCopyProvider((NSProvider_internal *) cacheElement->data);
 }
 
 
@@ -134,9 +139,7 @@ NSResult NSMessageCacheUpdate(NSMessage_consumer * msg, NSSyncType type)
     NS_LOG(DEBUG, "try to write to storage");
     NSResult ret = NSStorageWrite(MessageCache, obj);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
-            NS_ERROR, NSRemoveMessage(msg));
-
-    NSOICFree(obj);
+            NS_ERROR, NSOICFree(obj));
 
     return NS_OK;
 }
@@ -165,9 +168,7 @@ NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
     NS_LOG(DEBUG, "try to write to storage");
     NSResult ret = NSStorageWrite(ProviderCache, obj);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
-            NS_ERROR, NSRemoveProvider(provider));
-
-    NSOICFree(obj);
+            NS_ERROR, NSOICFree(obj));
 
     return NS_OK;
 }
@@ -177,21 +178,26 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     NS_VERIFY_NOT_NULL_V(provider);
 
     bool isAdded = true;
+    bool isSubscribing = false;
     NSProvider_internal * providerCacheData = NSProviderCacheFind(provider->providerId);
-    //NS_VERIFY_NOT_NULL_V(providerCacheData == NULL ? (void *)1 : NULL);
+
     if (providerCacheData == NULL)
     {
         isAdded = false;
     }
     else
     {
+        providerCacheData->accessPolicy = provider->accessPolicy;
         NSProviderConnectionInfo * infos = providerCacheData->connection;
         OCTransportAdapter newAdapter = provider->connection->addr->adapter;
-        while(infos)
+        while (infos)
         {
-            if (infos->addr->adapter == newAdapter)
+            isSubscribing |= infos->isSubscribing;
+            if (infos->addr->adapter == newAdapter && infos->isSubscribing == true)
             {
-                NS_LOG(DEBUG, "This provider already discovered.");
+                NS_LOG_V(DEBUG, "This provider already discovered : %s:%d",
+                         infos->addr->addr, infos->addr->port);
+                NS_LOG_V(DEBUG, "Subscription : %d", infos->isSubscribing);
                 return;
             }
             infos = infos->next;
@@ -211,8 +217,7 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
         NS_LOG(DEBUG, "provider's connection is updated.");
     }
 
-
-    if (provider->accessPolicy == NS_ACCESS_DENY && isAdded == false)
+    if (provider->accessPolicy == NS_ACCESS_DENY && isSubscribing == false)
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
         NSDiscoveredProvider((NSProvider *) provider);
@@ -220,17 +225,27 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     else
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
-        NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
+        NSProvider_internal * subProvider = NSCopyProvider(provider);
+        NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) subProvider);
         NS_VERIFY_NOT_NULL_V(task);
 
         NSConsumerPushEvent(task);
     }
+
+    NSRemoveProvider(providerCacheData);
+}
+
+void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
+{
+    // TODO delete provider infomation on storage list.
+    (void) provider;
 }
 
 void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
+    NS_LOG_V(DEBUG, "confirmed by : %s", msg->providerId);
     NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
     NS_VERIFY_NOT_NULL_V(provider);
 
@@ -254,9 +269,6 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
 {
     NS_VERIFY_NOT_NULL_V(sync);
 
-    NSProvider_internal * provider = NSProviderCacheFind(sync->providerId);
-    NS_VERIFY_NOT_NULL_V(provider);
-
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
     snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", sync->messageId);
 
@@ -265,6 +277,7 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
 
     NSResult ret = NSMessageCacheUpdate(msg, sync->state);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+    NSRemoveMessage(msg);
 
     NSNotificationSync(sync);
 }
@@ -291,8 +304,6 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(syncTask, NSOICFree(syncInfo));
 
     NSConsumerPushEvent(syncTask);
-
-    NSOICFree(sync);
 }
 
 void NSConsumerInternalTaskProcessing(NSTask * task)
@@ -306,31 +317,41 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         {
             NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
             NSConsumerHandleRecvSubscriptionConfirmed((NSMessage_consumer *)task->taskData);
+            NSRemoveMessage((NSMessage_consumer *)task->taskData);
             break;
         }
         case TASK_CONSUMER_RECV_MESSAGE:
         {
             NS_LOG(DEBUG, "Receive New Notification");
             NSConsumerHandleRecvMessage((NSMessage_consumer *)task->taskData);
-
+            NSRemoveMessage((NSMessage_consumer *)task->taskData);
             break;
         }
         case TASK_CONSUMER_PROVIDER_DISCOVERED:
         {
             NS_LOG(DEBUG, "Receive New Provider is discovered.");
             NSConsumerHandleProviderDiscovered((NSProvider_internal *)task->taskData);
+            NSRemoveProvider((NSProvider_internal *)task->taskData);
             break;
         }
         case TASK_RECV_SYNCINFO:
         {
             NS_LOG(DEBUG, "Receive SyncInfo.");
             NSConsumerHandleRecvSyncInfo((NSSyncInfo *)task->taskData);
+            NSOICFree(task->taskData);
             break;
         }
         case TASK_MAKE_SYNCINFO:
         {
             NS_LOG(DEBUG, "Make SyncInfo, get Provider's Addr");
             NSConsumerHandleMakeSyncInfo((NSSyncInfo *)task->taskData);
+            NSOICFree(task->taskData);
+            break;
+        }
+        case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
+        {
+            NSConsumerHandleProviderDeleted((NSProvider_internal *)task->taskData);
+            NSRemoveProvider((NSProvider_internal *)task->taskData);
             break;
         }
         default :
@@ -339,4 +360,5 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
             return ;
         }
     }
+    NSOICFree(task);
 }

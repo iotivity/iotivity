@@ -131,7 +131,12 @@ void * NSDiscoveredProviderFunc(void * provider)
 
 void NSDiscoveredProvider(NSProvider * provider)
 {
-    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSProvider * retProvider = (NSProvider *)NSCopyProvider((NSProvider_internal *)provider);
+    NS_VERIFY_NOT_NULL_V(retProvider);
+
+    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) retProvider);
     NS_VERIFY_NOT_NULL_V(thread);
 }
 
@@ -173,7 +178,12 @@ void * NSNotificationSyncFunc(void * obj)
 void NSNotificationSync(NSSyncInfo * sync)
 {
     NS_VERIFY_NOT_NULL_V(sync);
-    NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) sync);
+
+    NSSyncInfo * retSync = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+    NS_VERIFY_NOT_NULL_V(retSync);
+    memcpy(retSync, sync, sizeof(NSSyncInfo));
+
+    NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) retSync);
     NS_VERIFY_NOT_NULL_V(thread);
 }
 
@@ -203,7 +213,11 @@ void * NSMessagePostFunc(void * obj)
 void NSMessagePost(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
-    NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) msg);
+
+    NSMessage * retMsg = (NSMessage *)NSCopyMessage((NSMessage_consumer *)msg);
+    NS_VERIFY_NOT_NULL_V(retMsg);
+
+    NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) retMsg);
     NS_VERIFY_NOT_NULL_V(thread);
 }
 
@@ -228,18 +242,21 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
 
     OICStrcpy(newMsg->providerId, NS_DEVICE_ID_LENGTH, msg->providerId);
     newMsg->i_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, OICFree(newMsg));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, NSOICFree(newMsg));
     memcpy(newMsg->i_addr, msg->i_addr, sizeof(OCDevAddr));
 
     newMsg->messageId = msg->messageId;
     newMsg->title = OICStrdup(msg->title);
     newMsg->contentText = OICStrdup(msg->contentText);
     newMsg->sourceName = OICStrdup(msg->sourceName);
+    newMsg->type = msg->type;
 
     return newMsg;
 }
 void NSRemoveMessage(NSMessage_consumer * msg)
 {
+    NS_VERIFY_NOT_NULL_V(msg);
+
     msg->messageId = 0;
     NSOICFree(msg->title);
     NSOICFree(msg->contentText);
@@ -251,6 +268,8 @@ void NSRemoveMessage(NSMessage_consumer * msg)
 
 void NSRemoveConnections(NSProviderConnectionInfo * connections)
 {
+    NS_VERIFY_NOT_NULL_V(connections);
+
     NSProviderConnectionInfo * tmp = connections;
 
     while(tmp)
@@ -274,6 +293,7 @@ NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr * inAddr)
     connections->messageHandle = NULL;
     connections->syncHandle = NULL;
     connections->isCloudConnection = false;
+    connections->isSubscribing = false;
     connections->next = NULL;
 
     if (inAddr)
@@ -303,6 +323,7 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
         copyInfo->messageHandle = tmp->messageHandle;
         copyInfo->syncHandle = tmp->syncHandle;
         copyInfo->isCloudConnection = tmp->isCloudConnection;
+        copyInfo->isSubscribing = tmp->isSubscribing;
         tmp = tmp->next;
         copyInfo = copyInfo->next;
     }
@@ -330,6 +351,8 @@ NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
 }
 void NSRemoveProvider(NSProvider_internal * prov)
 {
+    NS_VERIFY_NOT_NULL_V(prov);
+
     NSOICFree(prov->messageUri);
     NSOICFree(prov->syncUri);
     NSRemoveConnections(prov->connection);
@@ -358,4 +381,19 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
     NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
 
     return ret;
+}
+
+bool NSOCResultToSuccess(OCStackResult ret)
+{
+    switch (ret)
+    {
+        case OC_STACK_OK:
+        case OC_STACK_RESOURCE_CREATED:
+        case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_CONTINUE:
+        case OC_STACK_RESOURCE_CHANGED:
+            return true;
+        default:
+            return false;
+    }
 }

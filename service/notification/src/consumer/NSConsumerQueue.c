@@ -38,15 +38,17 @@ NSConsumerQueue * NSCreateQueue()
 
 void NSDestroyQueue(NSConsumerQueue * queue)
 {
+    NS_VERIFY_NOT_NULL_V(queue);
+
     NSConsumerQueueObject * node = NSPopQueue(queue);
     while(node)
     {
         node = (NSConsumerQueueObject *)node->next;
-        OICFree(node->data);
-        OICFree(node);
+        NSOICFree(node->data);
+        NSOICFree(node);
     }
 
-    OICFree(queue);
+    NSOICFree(queue);
 }
 
 bool NSPushQueue(NSConsumerQueue * queue, NSConsumerQueueObject * object)

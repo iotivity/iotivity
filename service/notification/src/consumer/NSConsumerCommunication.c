@@ -45,8 +45,9 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
     NSProviderConnectionInfo * connections = provider_internal->connection;
     while(connections)
     {
-        if (connections->messageHandle)
+        if (connections->isSubscribing == true)
         {
+            connections = connections->next;
             continue;
         }
 
@@ -64,6 +65,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
             }
         }
 
+        NS_LOG_V(DEBUG, "subscribe to %s:%d", connections->addr->addr, connections->addr->port);
+
         NS_LOG(DEBUG, "get subscribe message query");
         char * query = NULL;
         query = NSMakeRequestUriWithConsumerId(msgUri);
@@ -74,7 +77,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         OCStackResult ret = NSInvokeRequest(&(connections->messageHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
                               NSConsumerMessageListener, NULL, type);
-        NS_VERIFY_STACK_OK_WITH_POST_CLEANING(ret, NS_ERROR, NSOICFree(query));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(
+                NSOCResultToSuccess(ret), NS_ERROR, NSOICFree(query));
         NSOICFree(query);
         NSOICFree(msgUri);
 
@@ -87,9 +91,12 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         ret = NSInvokeRequest(&(connections->syncHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
                               NSConsumerSyncInfoListener, NULL, type);
-        NS_VERIFY_STACK_OK_WITH_POST_CLEANING(ret, NS_ERROR, NSOICFree(query));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(
+                NSOCResultToSuccess(ret), NS_ERROR, NSOICFree(query));
         NSOICFree(query);
         NSOICFree(syncUri);
+
+        connections->isSubscribing = true;
 
         connections = connections->next;
     }
@@ -104,7 +111,8 @@ OCStackApplicationResult NSConsumerCheckPostResult(
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
-    NS_VERIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(
+            NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     return OC_STACK_KEEP_TRANSACTION;
 }
@@ -121,7 +129,8 @@ OCStackApplicationResult NSConsumerSyncInfoListener(
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
-    NS_VERIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(
+            NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "get NSSyncInfo");
     NSSyncInfo * newSync = NSGetSyncInfoc(clientResponse);
@@ -146,7 +155,7 @@ OCStackApplicationResult NSConsumerMessageListener(
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
-    NS_VERIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "build NSMessage");
     NSMessage_consumer * newNoti = NSGetMessage(clientResponse);
@@ -366,8 +375,20 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NSProviderConnectionInfo * connections = provider->connection;
         while(connections)
         {
+            if (connections->isSubscribing == false)
+            {
+                NS_LOG_V(DEBUG, "unsubscribed to %s:%d",
+                     connections->addr->addr, connections->addr->port);
+                connections = connections->next;
+                continue;
+            }
+            NS_LOG_V(DEBUG, "cancel subscribe to %s:%d",
+                     connections->addr->addr, connections->addr->port);
             OCCancel(connections->messageHandle, NS_QOS, NULL, 0);
             OCCancel(connections->syncHandle, NS_QOS, NULL, 0);
+            connections->messageHandle = NULL;
+            connections->syncHandle = NULL;
+            connections->isSubscribing = false;
             connections = connections->next;
         }
     }
@@ -375,4 +396,5 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
     {
         NS_LOG(ERROR, "Unknown type message");
     }
+    NSOICFree(task);
 }

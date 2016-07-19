@@ -218,6 +218,14 @@ NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj
     if (it)
     {
         NSMessage_consumer * msgObj = (NSMessage_consumer *) it->data;
+        if(msgObj->type == newMsgObj->type)
+        {
+            NS_LOG (DEBUG, "Already receive message");
+            pthread_mutex_unlock(mutex);
+            return NS_ERROR;
+        }
+
+
         it->data = (void *) NSCopyMessage(newMsgObj);
         if (!it->data)
         {
@@ -304,7 +312,6 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
         }
         infos->next = NSCopyProviderConnections(newProvObj->connection);
 
-        NSRemoveProvider(newProvObj);
         pthread_mutex_unlock(mutex);
 
         return NS_OK;

@@ -117,6 +117,7 @@ void NSConsumerMessageHandlerExit()
     NSConsumerListenerTermiate();
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
+    NSSetMsgHandleQueue(NULL);
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
@@ -186,8 +187,8 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     if (!queue)
     {
         NS_LOG(ERROR, "NSQueue is null. can not insert to queue");
-        OICFree(data);
-        OICFree(obj);
+        NSOICFree(data);
+        NSOICFree(obj);
     }
     else
     {

@@ -44,7 +44,8 @@ OCStackApplicationResult NSConsumerPresenceListener(
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
-    NS_VERIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(
+            NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG_V(DEBUG, "Presence income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
@@ -87,7 +88,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
     NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
-    NS_VERIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG_V(DEBUG, "Discover income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
@@ -139,7 +140,7 @@ OCStackApplicationResult NSIntrospectProvider(
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
-    NS_VERIFY_STACK_OK(clientResponse->result, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG_V(DEBUG, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);

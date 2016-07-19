@@ -57,13 +57,13 @@ NSResult NSConsumerListenerInit()
     OCStackResult stackResult = NSInvokeRequest(getPresenceHandle(), OC_REST_PRESENCE, NULL,
                         NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener,
                         NULL, CT_DEFAULT);
-    NS_VERIFY_STACK_OK(stackResult, NS_ERROR);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(stackResult), NS_ERROR);
 
     NS_LOG(DEBUG, "Request to discover provider");
     stackResult = NSInvokeRequest(NULL, OC_REST_DISCOVER, NULL,
                       NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener,
                       NULL, CT_DEFAULT);
-    NS_VERIFY_STACK_OK(stackResult, NS_ERROR);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(stackResult), NS_ERROR);
 
     return NS_OK;
 }
