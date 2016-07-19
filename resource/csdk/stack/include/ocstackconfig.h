@@ -39,7 +39,7 @@
  * Maximum length of the query supported by client/server while processing
  * REST requests/responses.
  */
-#define MAX_QUERY_LENGTH (64)
+#define MAX_QUERY_LENGTH (256)
 
 /**
  * Maximum length of the Manufacturer name supported by the server
