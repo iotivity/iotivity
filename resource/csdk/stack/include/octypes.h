@@ -398,8 +398,8 @@ typedef enum
     /** IP & TCP adapter only.*/
     OC_IP_USE_V4       = (1 << 6),
 
-    /** internal use only.*/
-    OC_RESERVED1       = (1 << 7),   // internal use only
+    /** Multicast only.*/
+    OC_MULTICAST       = (1 << 7),
 
     /** Link-Local multicast is the default multicast scope for IPv6.
      *  These are placed here to correspond to the IPv6 multicast address bits.*/
@@ -673,8 +673,12 @@ typedef enum
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
 
+#ifdef __WITH_DTLS__
     /** When this bit is set, the resource is a secure resource.*/
     OC_SECURE        = (1 << 4),
+#else
+    OC_SECURE        = (0),
+#endif
 
     /** When this bit is set, the resource is allowed to be discovered only
      *  if discovery request contains an explicit querystring.
@@ -704,6 +708,7 @@ typedef enum
     OC_STACK_RESOURCE_CREATED,
     OC_STACK_RESOURCE_DELETED,
     OC_STACK_CONTINUE,
+    OC_STACK_RESOURCE_CHANGED,
     /** Success status code - END HERE.*/
 
     /** Error status code - START HERE.*/
@@ -1194,7 +1199,7 @@ typedef struct OCResourceCollectionPayload
     struct OCResourceCollectionPayload *next;
 } OCResourceCollectionPayload;
 
-typedef struct
+typedef struct OCDiscoveryPayload
 {
     OCPayload base;
 
@@ -1218,6 +1223,9 @@ typedef struct
 
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;
+
+    /** Holding address of the next DiscoveryPayload. */
+    struct OCDiscoveryPayload *next;
 
 } OCDiscoveryPayload;
 

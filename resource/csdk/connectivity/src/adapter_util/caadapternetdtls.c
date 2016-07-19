@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
+#include "platform_features.h"
 #include "caadapternetdtls.h"
 #include "cacommon.h"
 #include "caipinterface.h"
@@ -257,6 +258,11 @@ static eDtlsRet_t CAAdapterNetDtlsEncryptInternal(const stCADtlsAddrInfo_t *dstS
         return DTLS_FAIL;
     }
 
+    // @todo: Remove need to typecast stCADtlsAddrInfo_t --> session_t below.
+    // Until then, apply a static assert.
+    OC_STATIC_ASSERT((sizeof(session_t) == sizeof(stCADtlsAddrInfo_t)),
+         "BUG: session_t size must exactly match stCADtlsAddrInfo_t!");
+
     int retLen = dtls_write(g_caDtlsContext->dtlsContext, (session_t *)dstSession, data,
                                 dataLen);
     OIC_LOG_V(DEBUG, NET_DTLS_TAG, "dtls_write retun len [%d]", retLen);
@@ -295,6 +301,7 @@ static eDtlsRet_t CAAdapterNetDtlsDecryptInternal(const stCADtlsAddrInfo_t *srcS
 
     eDtlsRet_t ret = DTLS_FAIL;
 
+    // @todo: Remove need to typecast stCADtlsAddrInfo_t --> session_t below.
     if (dtls_handle_message(g_caDtlsContext->dtlsContext, (session_t *)srcSession, buf, bufLen) == 0)
     {
         OIC_LOG(DEBUG, NET_DTLS_TAG, "dtls_handle_message success");

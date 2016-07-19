@@ -811,7 +811,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char *address, const uint8_
     }
 
     ret = bt_gatt_server_notify(g_gattReadCharPath, false, CALEServerNotificationSentCB,
-                                address, NULL);
+                                NULL);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TAG,
@@ -850,7 +850,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue, uin
     }
 
     ret = bt_gatt_server_notify(g_gattReadCharPath, false, CALEServerNotificationSentCB,
-                                NULL, NULL);
+                                NULL);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TAG,

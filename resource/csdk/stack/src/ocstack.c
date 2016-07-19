@@ -119,7 +119,7 @@ static OCResourceHandle platformResource = {0};
 static OCResourceHandle deviceResource = {0};
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
-static PresenceResource presenceResource;
+static PresenceResource presenceResource = {0};
 static uint8_t PresenceTimeOutSize = 0;
 static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
@@ -643,6 +643,8 @@ OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
             ret = OC_STACK_RESOURCE_DELETED;
             break;
         case CA_CHANGED:
+            ret = OC_STACK_RESOURCE_CHANGED;
+            break;
         case CA_CONTENT:
         case CA_VALID:
             ret = OC_STACK_OK;
@@ -1843,7 +1845,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
                                     CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
         }
     }
-    else if(requestResult != OC_STACK_OK)
+    else if(!OCResultToSuccess(requestResult))
     {
         OIC_LOG_V(ERROR, TAG, "HandleStackRequests failed. error: %d", requestResult);
 
@@ -3076,8 +3078,6 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
         {
             return OC_STACK_INVALID_PARAM;
         }
-        deleteResourceType(resource->rsrcType);
-        resource->rsrcType = NULL;
 
         while (type)
         {
@@ -4128,6 +4128,8 @@ void deleteAllResources()
 #endif // WITH_PRESENCE
         pointer = temp;
     }
+    memset(&platformResource, 0, sizeof(platformResource));
+    memset(&deviceResource, 0, sizeof(deviceResource));
 
     SRMDeInitSecureResources();
 
@@ -4135,6 +4137,7 @@ void deleteAllResources()
     // Ensure that the last resource to be deleted is the presence resource. This allows for all
     // presence notification attributed to their deletion to be processed.
     deleteResource((OCResource *) presenceResource.handle);
+    memset(&presenceResource, 0, sizeof(presenceResource));
 #endif // WITH_PRESENCE
 }
 
@@ -4614,5 +4617,20 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_NOTIMPL;
         default:
             return OC_STACK_ERROR;
+    }
+}
+
+bool OCResultToSuccess(OCStackResult ocResult)
+{
+    switch (ocResult)
+    {
+        case OC_STACK_OK:
+        case OC_STACK_RESOURCE_CREATED:
+        case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_CONTINUE:
+        case OC_STACK_RESOURCE_CHANGED:
+            return true;
+        default:
+            return false;
     }
 }

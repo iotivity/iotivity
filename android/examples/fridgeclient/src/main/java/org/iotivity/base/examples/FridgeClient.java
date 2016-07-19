@@ -178,6 +178,12 @@ public class FridgeClient extends Activity implements
         }
     }
 
+    @Override
+    public synchronized void onFindResourceFailed(Throwable throwable, String uri) {
+        logMessage("findResource request has failed");
+        Log.e(TAG, throwable.toString());
+    }
+
     /**
      * An event handler to be executed whenever a "get" request completes successfully
      *

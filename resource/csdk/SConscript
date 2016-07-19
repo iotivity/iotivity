@@ -24,7 +24,7 @@
 Import('env')
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 liboctbstack_env = lib_env.Clone()
 
@@ -90,9 +90,6 @@ else:
 
 if target_os in ['tizen', 'linux']:
 	liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
-
-if target_os not in ['android', 'arduino', 'windows', 'msys_nt']:
-	liboctbstack_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])

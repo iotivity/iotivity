@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "utlist.h"
 #include "cJSON.h"
 #include "base64.h"
 #include "cainterface.h"
@@ -343,23 +344,9 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             cJSON *jsonAcl = cJSON_GetArrayItem(jsonAclArray, idx);
             VERIFY_NON_NULL(TAG, jsonAcl, ERROR);
 
-            OicSecAcl_t *acl = NULL;
-            if(idx == 0)
-            {
-                acl = headAcl;
-            }
-            else
-            {
-                acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
-                OicSecAcl_t *temp = headAcl;
-                while (temp->next)
-                {
-                    temp = temp->next;
-                }
-                temp->next = acl;
-            }
-
-            VERIFY_NON_NULL(TAG, acl, ERROR);
+            OicSecAce_t *ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+            VERIFY_NON_NULL(TAG, ace, ERROR);
+            LL_APPEND(headAcl->aces, ace);
 
             size_t jsonObjLen = 0;
             cJSON *jsonObj = NULL;
@@ -368,11 +355,11 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
             if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
             {
-                acl->subject.id[0] = '*';
+                ace->subjectuuid.id[0] = '*';
             }
             else
             {
-                ret = ConvertStrToUuid(jsonObj->valuestring, &acl->subject);
+                ret = ConvertStrToUuid(jsonObj->valuestring, &ace->subjectuuid);
                 VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
             }
             // Resources -- Mandatory
@@ -380,87 +367,134 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            acl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
+            size_t resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
+            VERIFY_SUCCESS(TAG, resourcesLen > 0, ERROR);
 
-            VERIFY_SUCCESS(TAG, acl->resourcesLen > 0, ERROR);
-            acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
-            VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
-
-            size_t idxx = 0;
-            do
+            for(size_t idxx = 0; idxx < resourcesLen; idxx++)
             {
+                OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+                VERIFY_NON_NULL(TAG, rsrc, ERROR);
+
                 cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
                 VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
 
+                //href
                 size_t jsonRsrcObjLen = 0;
                 cJSON *jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_HREF_NAME);
                 VERIFY_NON_NULL(TAG, jsonRsrcObj, ERROR);
                 VERIFY_SUCCESS(TAG, cJSON_String == jsonRsrcObj->type, ERROR);
 
                 jsonRsrcObjLen = strlen(jsonRsrcObj->valuestring) + 1;
-                acl->resources[idxx] = (char*)OICMalloc(jsonRsrcObjLen);
+                rsrc->href = (char*)OICMalloc(jsonRsrcObjLen);
+                VERIFY_NON_NULL(TAG, (rsrc->href), ERROR);
+                OICStrcpy(rsrc->href, jsonRsrcObjLen, jsonRsrcObj->valuestring);
 
-                VERIFY_NON_NULL(TAG, (acl->resources[idxx]), ERROR);
-                OICStrcpy(acl->resources[idxx], jsonRsrcObjLen, jsonRsrcObj->valuestring);
+                //rel
+                jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_REL_NAME);
+                if(jsonRsrcObj)
+                {
+                    jsonRsrcObjLen = strlen(jsonRsrcObj->valuestring) + 1;
+                    rsrc->rel = (char*)OICMalloc(jsonRsrcObjLen);
+                    VERIFY_NON_NULL(TAG, (rsrc->rel), ERROR);
+                    OICStrcpy(rsrc->rel, jsonRsrcObjLen, jsonRsrcObj->valuestring);
+                }
 
-            } while ( ++idxx < acl->resourcesLen);
+                //rt
+                jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_RT_NAME);
+                if(jsonRsrcObj && cJSON_Array == jsonRsrcObj->type)
+                {
+                    rsrc->typeLen = (size_t)cJSON_GetArraySize(jsonRsrcObj);
+                    VERIFY_SUCCESS(TAG, (0 < rsrc->typeLen), ERROR);
+                    rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+                    VERIFY_NON_NULL(TAG, (rsrc->types), ERROR);
+                    for(size_t i = 0; i < rsrc->typeLen; i++)
+                    {
+                        cJSON *jsonRsrcType = cJSON_GetArrayItem(jsonRsrcObj, i);
+                        rsrc->types[i] = OICStrdup(jsonRsrcType->valuestring);
+                        VERIFY_NON_NULL(TAG, (rsrc->types[i]), ERROR);
+                    }
+                }
+
+                //if
+                jsonRsrcObj = cJSON_GetObjectItem(jsonRsrc, OIC_JSON_IF_NAME);
+                if(jsonRsrcObj && cJSON_Array == jsonRsrcObj->type)
+                {
+                    rsrc->interfaceLen = (size_t)cJSON_GetArraySize(jsonRsrcObj);
+                    VERIFY_SUCCESS(TAG, (0 < rsrc->interfaceLen), ERROR);
+                    rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
+                    VERIFY_NON_NULL(TAG, (rsrc->interfaces), ERROR);
+                    for(size_t i = 0; i < rsrc->interfaceLen; i++)
+                    {
+                        cJSON *jsonInterface = cJSON_GetArrayItem(jsonRsrcObj, i);
+                        rsrc->interfaces[i] = OICStrdup(jsonInterface->valuestring);
+                        VERIFY_NON_NULL(TAG, (rsrc->interfaces[i]), ERROR);
+                    }
+                }
+
+                LL_APPEND(ace->resources, rsrc);
+            }
 
             // Permissions -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            acl->permission = jsonObj->valueint;
-            //Period -- Not Mandatory
-            cJSON *jsonPeriodObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERIOD_NAME);
-            if(jsonPeriodObj)
-            {
-                VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type, ERROR);
-                acl->prdRecrLen = (size_t)cJSON_GetArraySize(jsonPeriodObj);
-                if(acl->prdRecrLen > 0)
-                {
-                    acl->periods = (char**)OICCalloc(acl->prdRecrLen, sizeof(char*));
-                    VERIFY_NON_NULL(TAG, acl->periods, ERROR);
+            ace->permission = jsonObj->valueint;
 
-                    cJSON *jsonPeriod = NULL;
-                    for(size_t i = 0; i < acl->prdRecrLen; i++)
+            //Validity -- Not Mandatory
+            cJSON *jsonValidityObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_VALIDITY_NAME);
+            if(jsonValidityObj)
+            {
+                VERIFY_SUCCESS(TAG, cJSON_Array == jsonValidityObj->type, ERROR);
+                size_t validityLen = cJSON_GetArraySize(jsonValidityObj);
+                VERIFY_SUCCESS(TAG, (0 < validityLen), ERROR);
+
+                cJSON *jsonValidity = NULL;
+                for(size_t i = 0; i < validityLen; i++)
+                {
+                    jsonValidity = cJSON_GetArrayItem(jsonValidityObj, i);
+                    VERIFY_NON_NULL(TAG, jsonValidity, ERROR);
+                    VERIFY_SUCCESS(TAG, (jsonValidity->type == cJSON_Array), ERROR);
+
+                    OicSecValidity_t* validity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
+                    VERIFY_NON_NULL(TAG, validity, ERROR);
+                    LL_APPEND(ace->validities, validity);
+
+                    //Period
+                    cJSON* jsonPeriod = cJSON_GetArrayItem(jsonValidity, 0);
+                    if(jsonPeriod)
                     {
-                        jsonPeriod = cJSON_GetArrayItem(jsonPeriodObj, i);
-                        VERIFY_NON_NULL(TAG, jsonPeriod, ERROR);
+                        VERIFY_SUCCESS(TAG, (cJSON_String == jsonPeriod->type), ERROR);
 
                         jsonObjLen = strlen(jsonPeriod->valuestring) + 1;
-                        acl->periods[i] = (char*)OICMalloc(jsonObjLen);
-                        VERIFY_NON_NULL(TAG, acl->periods[i], ERROR);
-                        OICStrcpy(acl->periods[i], jsonObjLen, jsonPeriod->valuestring);
+                        validity->period = (char*)OICMalloc(jsonObjLen);
+                        VERIFY_NON_NULL(TAG, validity->period, ERROR);
+                        OICStrcpy(validity->period, jsonObjLen, jsonPeriod->valuestring);
                     }
-                }
-            }
-            //Recurrence -- Not mandatory
-            cJSON *jsonRecurObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RECURRENCES_NAME);
-            if(jsonRecurObj)
-            {
 
-                VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type, ERROR);
-
-                if(acl->prdRecrLen > 0)
-                {
-                    acl->recurrences = (char**)OICCalloc(acl->prdRecrLen, sizeof(char*));
-                    VERIFY_NON_NULL(TAG, acl->recurrences, ERROR);
-
-                    cJSON *jsonRecur = NULL;
-                    for(size_t i = 0; i < acl->prdRecrLen; i++)
+                    //Recurrence
+                    cJSON* jsonRecurObj = cJSON_GetArrayItem(jsonValidity, 1);
+                    if(jsonRecurObj)
                     {
-                        jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
-                        VERIFY_NON_NULL(TAG, jsonRecur, ERROR);
-                        jsonObjLen = strlen(jsonRecur->valuestring) + 1;
-                        acl->recurrences[i] = (char*)OICMalloc(jsonObjLen);
-                        VERIFY_NON_NULL(TAG, acl->recurrences[i], ERROR);
-                        OICStrcpy(acl->recurrences[i], jsonObjLen, jsonRecur->valuestring);
+                        VERIFY_SUCCESS(TAG, (cJSON_Array == jsonRecurObj->type), ERROR);
+                        validity->recurrenceLen = cJSON_GetArraySize(jsonRecurObj);
+                        VERIFY_SUCCESS(TAG, (0 < validity->recurrenceLen), ERROR);
+
+                        validity->recurrences = (char**)OICCalloc(validity->recurrenceLen, sizeof(char*));
+                        VERIFY_NON_NULL(TAG, validity->recurrences, ERROR);
+
+                        cJSON *jsonRecur = NULL;
+                        for(size_t i = 0; i < validity->recurrenceLen; i++)
+                        {
+                            jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                            VERIFY_NON_NULL(TAG, jsonRecur, ERROR);
+                            jsonObjLen = strlen(jsonRecur->valuestring) + 1;
+                            validity->recurrences[i] = (char*)OICMalloc(jsonObjLen);
+                            VERIFY_NON_NULL(TAG, validity->recurrences[i], ERROR);
+                            OICStrcpy(validity->recurrences[i], jsonObjLen, jsonRecur->valuestring);
+                        }
                     }
                 }
             }
-
-            acl->next = NULL;
-
         } while( ++idx < numAcl);
     }
 
@@ -734,7 +768,6 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
         int numCred = cJSON_GetArraySize(jsonCredArray);
         VERIFY_SUCCESS(TAG, numCred > 0, ERROR);
         int idx = 0;
-        size_t ownersLen = 0;
         do
         {
             cJSON *jsonCred = cJSON_GetArrayItem(jsonCredArray, idx);
@@ -792,6 +825,24 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 VERIFY_NON_NULL(TAG, (cred->privateData.data), ERROR);
                 memcpy(cred->privateData.data, jsonPriv->valuestring, jsonObjLen);
                 cred->privateData.len = jsonObjLen;
+
+                cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
+                VERIFY_NON_NULL(TAG, jsonEncoding, ERROR);
+
+                if(strcmp(OIC_SEC_ENCODING_RAW, jsonEncoding->valuestring) == 0)
+                {
+                    cred->privateData.encoding = OIC_ENCODING_RAW;
+                }
+                else if(strcmp(OIC_SEC_ENCODING_BASE64, jsonEncoding->valuestring) == 0)
+                {
+                    cred->privateData.encoding = OIC_ENCODING_BASE64;
+                }
+                else
+                {
+                    printf("Unknow encoding type dectected!\n");
+                    printf("json2cbor will use \"oic.sec.encoding.raw\" as default encoding type.\n");
+                    cred->privateData.encoding = OIC_ENCODING_RAW;
+                }
             }
 #ifdef __WITH_X509__
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.

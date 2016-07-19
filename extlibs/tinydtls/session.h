@@ -62,6 +62,9 @@ typedef struct {
 
 typedef struct {
   socklen_t size;		/**< size of addr */
+#ifdef _MSC_VER
+  __declspec(align(8))
+#endif
   union {
     struct sockaddr     sa;
     struct sockaddr_storage st;

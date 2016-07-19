@@ -556,7 +556,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
     responseInfo.info.tokenLength = serverRequest->tokenLength;
 
-    if(serverRequest->observeResult == OC_STACK_OK)
+    // De-register observe option should not be included in the response header
+    if((serverRequest->observeResult == OC_STACK_OK) && (serverRequest->observationOption != OC_OBSERVE_DEREGISTER))
     {
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
     }
@@ -641,7 +642,11 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     OICFree(responseInfo.info.options);
                     return result;
                 }
-                responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                //Add CONTENT_FORMAT OPT if payload exist
+                if (responseInfo.info.payloadSize > 0)
+                {
+                    responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                }
                 break;
             default:
                 responseInfo.result = CA_NOT_ACCEPTABLE;

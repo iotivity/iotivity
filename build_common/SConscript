@@ -29,7 +29,7 @@ os_arch_map = {
 host = platform.system().lower()
 
 # the host string contains version of windows. 6.3, 6.4, 10.0 which is 8.0, 8.1, and 10 respectively.
-# Let's canonicalize the msys_nt-XX.X system name  by stripping version off.
+# Let's canonicalize the msys_nt-XX.X system name by stripping version off.
 if 'msys_nt' in host:
 	host = 'msys_nt'
 
@@ -324,14 +324,14 @@ if not user_lib:
 if user_prefix:
 	pc_vars = {'\@PREFIX\@': user_prefix,
 				'\@EXEC_PREFIX\@':user_prefix,
-				'\@VERSION\@': '1.0.1',
+				'\@VERSION\@': '1.1.1',
 				'\@LIB_INSTALL_DIR\@': user_lib,
 				'\@ROUTING_DEFINE\@': routing_define
 				}
 else:
 	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
 				'\@EXEC_PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@VERSION\@': '1.0.1',
+				'\@VERSION\@': '1.1.1',
 				'\@LIB_INSTALL_DIR\@': user_lib,
 				'\@ROUTING_DEFINE\@': routing_define
 				}
@@ -396,8 +396,7 @@ if target_os == "yocto":
     env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
     env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
-    env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
-    env.AppendUnique(LIBS = ['uuid'])
+    env.AppendUnique(LIBS = ['dl', 'pthread', 'uuid'])
     Export('env')
 else:
     '''

@@ -54,10 +54,10 @@ provisioning_env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
 if target_os not in ['windows']:
 	provisioning_env.AppendUnique(CFLAGS = ['-std=c99'])
 	provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-fpermissive'])
-	provisioning_env.AppendUnique(LIBS = ['-lpthread'])
+	provisioning_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os not in ['msys_nt', 'windows']:
-	provisioning_env.AppendUnique(LIBS = ['-ldl', 'm'])
+	provisioning_env.AppendUnique(LIBS = ['dl', 'm'])
 	provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
 	provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:

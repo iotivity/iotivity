@@ -22,7 +22,7 @@ if "!SECOND_ARG!"=="debug" (
   set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g" 
 )
 
-IF "%BUILD_MSYS%" == "" (
+IF "%CURRENT_ARG%" == "build" IF "%BUILD_MSYS%" == "" (
   IF NOT "%VS140COMNTOOLS%" == "" (
     CALL "%VS140COMNTOOLS%"vsvars32.bat
   ) ELSE (

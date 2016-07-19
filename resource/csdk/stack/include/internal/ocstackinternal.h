@@ -266,6 +266,14 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 OCStackResult CAResultToOCResult(CAResult_t caResult);
 
 /**
+ * Converts a OCStackResult type to a bool type.
+ *
+ * @param ocResult OCStackResult value to convert.
+ * @return true on success, false upon failure.
+ */
+bool OCResultToSuccess(OCStackResult ocResult);
+
+/**
  * Map OCQualityOfService to CAMessageType.
  *
  * @param qos Input qos.
