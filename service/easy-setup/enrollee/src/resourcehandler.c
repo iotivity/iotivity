@@ -348,6 +348,14 @@ void updateCloudResource(OCRepPayload* input)
         OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.ciServer %s", gCloudResource.ciServer);
     }
 
+    char *serverID = NULL;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SERVERID, &serverID))
+    {
+        OICStrcpy(gCloudResource.serverID, sizeof(gCloudResource.serverID), serverID);
+        OICStrcpy(gCloudData.serverID, sizeof(gCloudData.serverID), serverID);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.serverID %s", gCloudResource.serverID);
+    }
+
     if(authCode || authProvider || ciServer)
     {
         OIC_LOG(INFO, ES_RH_TAG, "Send CloudRsrc Callback To ES");
@@ -439,6 +447,7 @@ OCRepPayload* constructResponseOfCloud()
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, gCloudResource.authCode);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, gCloudResource.authProvider);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SERVERID, gCloudResource.serverID);
 
     return payload;
 }

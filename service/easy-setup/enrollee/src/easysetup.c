@@ -39,28 +39,6 @@
 // Private variables
 //-----------------------------------------------------------------------------
 
-/**
- * @var gTargetSsid
- * @brief Target SSID of the Soft Access point to which the device has to connect
- */
-// static char gTargetSsid[MAXSSIDLEN];
-
-/**
- * @var gTargetPass
- * @brief Password of the target access point to which the device has to connect
- */
-// static char gTargetPass[MAXNETCREDLEN];
-
-/**
- * @var gEnrolleeStatusCb
- * @brief Fucntion pointer holding the callback for intimation of EasySetup Enrollee status callback
- */
-// static ESEnrolleeEventCallback gEnrolleeStatusCb = NULL;
-
-/**
- * @var gIsSecured
- * @brief Variable to check if secure mode is enabled or not.
- */
 static bool gIsSecured = false;
 
 static ESProvisioningCallbacks gESProvisioningCb;

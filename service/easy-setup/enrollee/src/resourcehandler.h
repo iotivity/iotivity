@@ -64,6 +64,7 @@ typedef struct
     char authCode[OIC_STRING_MAX_VALUE];
     char authProvider[OIC_STRING_MAX_VALUE];
     char ciServer[OIC_STRING_MAX_VALUE];
+    char serverID[OIC_STRING_MAX_VALUE];
 } CloudResource;
 
 typedef struct

@@ -53,7 +53,8 @@ extern "C"
 #define OC_RSRVD_ES_ENCTYPE                "wet"
 #define OC_RSRVD_ES_AUTHCODE               "ac"
 #define OC_RSRVD_ES_AUTHPROVIDER           "apn"
-#define OC_RSRVD_ES_CISERVER               "cisurl"
+#define OC_RSRVD_ES_CISERVER               "cis"
+#define OC_RSRVD_ES_SERVERID               "sid"
 #define OC_RSRVD_ES_DEVNAME                "dn"
 #define OC_RSRVD_ES_LANGUAGE               "lang"
 #define OC_RSRVD_ES_COUNTRY                "ctry"
@@ -153,6 +154,7 @@ typedef struct
     char authCode[OIC_STRING_MAX_VALUE];
     char authProvider[OIC_STRING_MAX_VALUE];
     char ciServer[OIC_STRING_MAX_VALUE];
+    char serverID[OIC_STRING_MAX_VALUE];
 } ESCloudProvData;
 
 typedef struct
