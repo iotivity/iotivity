@@ -266,7 +266,7 @@ void * NSNotificationSchedule(void *ptr)
                 case TASK_RECV_READ:
                     NS_LOG(DEBUG, "CASE TASK_RECV_READ : ");
                     NSSendSync((NSSyncInfo*) node->taskData);
-                    NSPushQueue(INTERFACE_SCHEDULER, TASK_CB_SYNC, node->taskData);
+                    NSPushQueue(CALLBACK_RESPONSE_SCHEDULER, TASK_CB_SYNC, node->taskData);
                     break;
 
                 default:

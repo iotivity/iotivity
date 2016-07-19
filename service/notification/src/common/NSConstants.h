@@ -93,7 +93,7 @@ typedef enum eConnectionState
 
 typedef enum eSchedulerType
 {
-    INTERFACE_SCHEDULER = 0,
+    CALLBACK_RESPONSE_SCHEDULER = 0,
     DISCOVERY_SCHEDULER = 1,
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,

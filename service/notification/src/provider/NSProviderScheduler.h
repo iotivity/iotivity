@@ -42,7 +42,7 @@ extern pthread_mutex_t NSMutex[THREAD_COUNT];
 extern sem_t NSSemaphore[THREAD_COUNT];
 extern bool NSIsRunning[THREAD_COUNT];
 
-extern void * NSResponseSchedule(void *ptr);
+extern void * NSCallbackResponseSchedule(void *ptr);
 extern void * NSDiscoverySchedule(void *ptr);
 extern void * NSSubScriptionSchedule(void *ptr);
 extern void * NSNotificationSchedule(void *ptr);

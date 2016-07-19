@@ -22,8 +22,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "NSProvider.h"
 #include "NSCommon.h"
-#include "NSProviderInterface.h"
 #include "logger.h"
 #include "octypes.h"
 #include "pthread.h"

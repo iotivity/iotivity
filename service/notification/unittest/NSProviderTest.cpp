@@ -18,6 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "../include/NSProvider.h"
+
 #include <gtest/gtest.h>
 #include <HippoMocks/hippomocks.h>
 #include <atomic>
@@ -29,7 +31,6 @@
 #include "NSConsumerSimulator.h"
 
 #include "NSCommon.h"
-#include "NSProviderInterface.h"
 
 namespace
 {

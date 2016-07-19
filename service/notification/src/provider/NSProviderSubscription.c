@@ -245,7 +245,7 @@ void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSAskAcceptanceToUser - IN");
 
-    NSPushQueue(INTERFACE_SCHEDULER, TASK_CB_SUBSCRIPTION, entityHandlerRequest);
+    NSPushQueue(CALLBACK_RESPONSE_SCHEDULER, TASK_CB_SUBSCRIPTION, entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSAskAcceptanceToUser - OUT");
 }

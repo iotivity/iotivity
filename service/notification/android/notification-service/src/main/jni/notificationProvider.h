@@ -19,7 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <jni.h>
-#include "NSProviderInterface.h"
+
+#include "NSProvider.h"
 #include "NSCommon.h"
 
 #ifndef NOTIFICATION_JNI_H

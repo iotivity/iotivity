@@ -18,11 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSProviderInterface.h"
+#include "NSProvider.h"
 #include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
 #include "NSProviderSubscription.h"
 #include "NSProviderNotification.h"
+#include "NSProviderCallbackResponse.h"
 #include "NSStorageAdapter.h"
 #include "NSProviderMemoryCache.h"
 #include "oic_malloc.h"
@@ -32,8 +33,6 @@
 #include "oic_time.h"
 
 bool initProvider = false;
-static NSSubscribeRequestCallback g_subscribeRequestCb = NULL;
-static NSProviderSyncInfoCallback g_syncCb = NULL;
 
 pthread_mutex_t nsInitMutex;
 
@@ -41,34 +40,6 @@ void initializeMutex()
 {
     static pthread_mutex_t initMutex = PTHREAD_MUTEX_INITIALIZER;
     nsInitMutex = initMutex;
-}
-
-void NSRegisterSubscribeRequestCb(NSSubscribeRequestCallback subscribeRequestCb)
-{
-    NS_LOG(DEBUG, "NSRegisterSubscribeRequestCb - IN");
-    g_subscribeRequestCb = subscribeRequestCb;
-    NS_LOG(DEBUG, "NSRegisterSubscribeRequestCb - OUT");
-}
-
-void  NSRegisterSyncCb(NSProviderSyncInfoCallback syncCb)
-{
-    NS_LOG(DEBUG, "NSRegisterSyncCb - IN");
-    g_syncCb = syncCb;
-    NS_LOG(DEBUG, "NSRegisterSyncCb - OUT");
-}
-
-void NSSubscribeRequestCb(NSConsumer *consumer)
-{
-    NS_LOG(DEBUG, "NSSubscribeRequestCb - IN");
-    g_subscribeRequestCb(consumer);
-    NS_LOG(DEBUG, "NSSubscribeRequestCb - OUT");
-}
-
-void NSSyncCb(NSSyncInfo *sync)
-{
-    NS_LOG(DEBUG, "NSSyncCb - IN");
-    g_syncCb(sync);
-    NS_LOG(DEBUG, "NSSyncCb - OUT");
 }
 
 NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
@@ -88,8 +59,8 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
         NSSetSubscriptionAccessPolicy(policy);
         NSRegisterSubscribeRequestCb(subscribeRequestCb);
         NSRegisterSyncCb(syncCb);
-        CARegisterNetworkMonitorHandler(NSProviderAdapterStateListener,
-                NSProviderConnectionStateListener);
+        CARegisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
+                (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
 
         NSSetList();
         NSInitScheduler();
@@ -152,8 +123,6 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
     }
 
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
-    NSSetRemoteServerAddress(serverAddress);
-
     NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
 
     pthread_mutex_unlock(&nsInitMutex);
@@ -172,7 +141,6 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
         return NS_FAIL;
     }
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
-    NSDeleteRemoteServerAddress(serverAddress);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
@@ -252,66 +220,4 @@ NSMessage * NSCreateMessage()
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSCreateMessage - OUT");
     return msg;
-}
-
-void * NSInterfaceSchedule(void * ptr)
-{
-    if (ptr == NULL)
-    {
-        NS_LOG(DEBUG, "Create NSReponseSchedule");
-    }
-
-    while (NSIsRunning[INTERFACE_SCHEDULER])
-    {
-        sem_wait(&NSSemaphore[INTERFACE_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[INTERFACE_SCHEDULER]);
-
-        if (NSHeadMsg[INTERFACE_SCHEDULER] != NULL)
-        {
-            NSTask *node = NSHeadMsg[INTERFACE_SCHEDULER];
-            NSHeadMsg[INTERFACE_SCHEDULER] = node->nextTask;
-
-            switch (node->taskType)
-            {
-                case TASK_CB_SUBSCRIPTION:
-                {
-                    NS_LOG(DEBUG, "CASE TASK_CB_SUBSCRIPTION : ");
-
-                    OCEntityHandlerRequest * request = (OCEntityHandlerRequest*)node->taskData;
-                    NSConsumer * consumer = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
-
-                    char * consumerId = NSGetValueFromQuery(OICStrdup(request->query),
-                            NS_QUERY_CONSUMER_ID);
-
-                    if(consumerId)
-                    {
-                        OICStrcpy(consumer->consumerId, UUID_STRING_SIZE, consumerId);
-                        NSSubscribeRequestCb(consumer);
-                    }
-
-                    NSFreeConsumer(consumer);
-                    NSFreeOCEntityHandlerRequest(request);
-
-                    break;
-                }
-                case TASK_CB_SYNC:
-                {
-                    NS_LOG(DEBUG, "CASE TASK_CB_SYNC : ");
-                    NSSyncInfo * sync = (NSSyncInfo*)node->taskData;
-                    NSSyncCb(NSDuplicateSync(sync));
-                    NSFreeSync(sync);
-                    break;
-                }
-                default:
-                    NS_LOG(DEBUG, "No Task Type");
-                    break;
-            }
-            OICFree(node);
-        }
-
-        pthread_mutex_unlock(&NSMutex[INTERFACE_SCHEDULER]);
-    }
-
-    NS_LOG(DEBUG, "Destroy NSResponseSchedule");
-    return NULL;
 }
