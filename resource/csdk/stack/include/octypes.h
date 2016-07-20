@@ -285,10 +285,10 @@ extern "C" {
 #define MAX_ADDR_STR_SIZE (256)
 #else
 /** Max Address could be
- * "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * "coaps+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
  * +1 for null terminator.
  */
-#define MAX_ADDR_STR_SIZE (65)
+#define MAX_ADDR_STR_SIZE (66)
 #endif
 
 /** Length of MAC address */
