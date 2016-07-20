@@ -27,66 +27,12 @@
 
 #define TAG "OIC_CA_COMMON_UTILS"
 
-static CAAdapterStateChangedCB g_adapterStateCB = NULL;
-static CAConnectionStateChangedCB g_connStateCB = NULL;
-
-static void CAManagerAdapterMonitorHandler(CATransportAdapter_t adapter,
-                                           CANetworkStatus_t status)
-{
-    if (CA_INTERFACE_DOWN == status)
-    {
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(adapter, false);
-            OIC_LOG(DEBUG, TAG, "Pass the disabled adapter state to upper layer");
-        }
-    }
-    else if (CA_INTERFACE_UP == status)
-    {
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(adapter, true);
-            OIC_LOG(DEBUG, TAG, "Pass the enabled adapter state to upper layer");
-        }
-    }
-}
-
-static void CAManagerConnectionMonitorHandler(const CAEndpoint_t *info, bool isConnected)
-{
-    if (!info || !info->addr[0])
-    {
-        OIC_LOG(ERROR, TAG, "remoteAddress is NULL");
-        return;
-    }
-
-    if (isConnected)
-    {
-        if (g_connStateCB)
-        {
-            g_connStateCB(info, isConnected);
-            OIC_LOG(DEBUG, TAG, "Pass the connected device info to upper layer");
-        }
-    }
-    else
-    {
-        if (g_connStateCB)
-        {
-            g_connStateCB(info, isConnected);
-            OIC_LOG(DEBUG, TAG, "Pass the disconnected device info to upper layer");
-        }
-    }
-}
-
 CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
                                            CAConnectionStateChangedCB connStateCB)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterNetworkMonitorHandler");
 
-    g_adapterStateCB = adapterStateCB;
-    g_connStateCB = connStateCB;
-
-    CASetNetworkMonitorCallbacks(CAManagerAdapterMonitorHandler,
-                                 CAManagerConnectionMonitorHandler);
+    CASetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
     return CA_STATUS_OK;
 }
 

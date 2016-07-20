@@ -81,7 +81,58 @@ TEST_F(CABlockTransferTests, CACreateNewDataSetTest)
         CAData_t *getData = CAGetDataSetFromBlockDataList(currData->blockDataId);
         EXPECT_TRUE(getData != NULL);
 
-        CARemoveBlockDataFromList(currData->blockDataId);
+        EXPECT_EQ(CA_STATUS_OK, CARemoveBlockDataFromList(currData->blockDataId));
+    }
+
+    CADestroyDataSet(cadata);
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
+
+    CADestroyToken(tempToken);
+    CADestroyEndpoint(tempRep);
+    free(requestData.payload);
+}
+
+TEST_F(CABlockTransferTests, CARemoveBlockDataFromListWithSeed)
+{
+    CAEndpoint_t* tempRep = NULL;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "127.0.0.1", 5683, &tempRep);
+
+    coap_pdu_t *pdu = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_type transport = coap_udp;
+
+    CAToken_t tempToken = NULL;
+    CAGenerateToken(&tempToken, CA_MAX_TOKEN_LEN);
+
+    CAInfo_t requestData;
+    memset(&requestData, 0, sizeof(CAInfo_t));
+    requestData.token = tempToken;
+    requestData.tokenLength = CA_MAX_TOKEN_LEN;
+    requestData.type = CA_MSG_NONCONFIRM;
+
+    requestData.payload = (CAPayload_t) calloc(LARGE_PAYLOAD_LENGTH, sizeof(char));
+    if (!requestData.payload)
+    {
+        CADestroyToken(tempToken);
+        FAIL() << "requestData.payload allocation failed";
+    }
+    memset(requestData.payload, '1', sizeof(requestData.payload) - 1);
+    requestData.payloadSize = sizeof(requestData.payload);
+    requestData.type = CA_MSG_NONCONFIRM;
+
+    pdu = CAGeneratePDU(CA_GET, &requestData, tempRep, &options, &transport);
+
+    CAData_t *cadata = CACreateNewDataSet(pdu, tempRep);
+    EXPECT_TRUE(cadata != NULL);
+
+    CABlockData_t *currData = CACreateNewBlockData(cadata);
+    EXPECT_TRUE(currData != NULL);
+
+    if (currData)
+    {
+        EXPECT_EQ(CA_STATUS_OK, CARemoveBlockDataFromListWithSeed(tempToken,
+                                                                  CA_MAX_TOKEN_LEN, 5683));
     }
 
     CADestroyDataSet(cadata);
@@ -124,7 +175,7 @@ TEST_F(CABlockTransferTests, CAGetBlockDataFromBlockDataListTest)
         CABlockData_t *data = CAGetBlockDataFromBlockDataList(currData->blockDataId);
         EXPECT_TRUE(data != NULL);
 
-        CARemoveBlockDataFromList(currData->blockDataId);
+        EXPECT_EQ(CA_STATUS_OK, CARemoveBlockDataFromList(currData->blockDataId));
     }
 
     CADestroyDataSet(cadata);
@@ -462,7 +513,45 @@ TEST_F(CABlockTransferTests, CAGetBlockSizeOptionFromPduTest)
     free(requestData.payload);
 }
 
-TEST_F(CABlockTransferTests, CASetNextBlockOption1Test)
+TEST_F(CABlockTransferTests, CASetNextBlockOption1WithRequest)
+{
+    CAEndpoint_t* tempRep = NULL;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "127.0.0.1", 5683, &tempRep);
+
+    coap_pdu_t *pdu = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_type transport = coap_udp;
+
+    CAToken_t tempToken = NULL;
+    CAGenerateToken(&tempToken, CA_MAX_TOKEN_LEN);
+
+    CAInfo_t requestData;
+    memset(&requestData, 0, sizeof(CAInfo_t));
+    requestData.token = tempToken;
+    requestData.tokenLength = CA_MAX_TOKEN_LEN;
+    requestData.type = CA_MSG_NONCONFIRM;
+
+    pdu = CAGeneratePDU(CA_GET, &requestData, tempRep, &options, &transport);
+
+    CAData_t *cadata = CACreateNewDataSet(pdu, tempRep);
+    EXPECT_TRUE(cadata != NULL);
+
+    CABlockData_t *currData = CACreateNewBlockData(cadata);
+    EXPECT_TRUE(currData != NULL);
+
+    coap_block_t block = {0, 0, 0};
+    EXPECT_EQ(CA_STATUS_OK, CASetNextBlockOption1(pdu, tempRep, cadata, block, pdu->length));
+
+    CADestroyDataSet(cadata);
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
+
+    CADestroyToken(tempToken);
+    CADestroyEndpoint(tempRep);
+    free(requestData.payload);
+}
+
+TEST_F(CABlockTransferTests, CASetNextBlockOption1WithResponse)
 {
     CAEndpoint_t* tempRep = NULL;
     CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "127.0.0.1", 5683, &tempRep);
@@ -492,8 +581,6 @@ TEST_F(CABlockTransferTests, CASetNextBlockOption1Test)
     coap_block_t block = {0, 0, 0};
     EXPECT_EQ(CA_STATUS_OK, CASetNextBlockOption1(pdu, tempRep, cadata, block, pdu->length));
 
-    EXPECT_EQ(CA_STATUS_OK, CAHandleRequestResponse());
-
     CADestroyDataSet(cadata);
     coap_delete_list(options);
     coap_delete_pdu(pdu);
@@ -503,7 +590,7 @@ TEST_F(CABlockTransferTests, CASetNextBlockOption1Test)
     free(responseData.payload);
 }
 
-TEST_F(CABlockTransferTests, CASetNextBlockOption2Test)
+TEST_F(CABlockTransferTests, CASetNextBlockOption2WithRequest)
 {
     CAEndpoint_t* tempRep = NULL;
     CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "127.0.0.1", 5683, &tempRep);
@@ -539,4 +626,112 @@ TEST_F(CABlockTransferTests, CASetNextBlockOption2Test)
     CADestroyToken(tempToken);
     CADestroyEndpoint(tempRep);
     free(requestData.payload);
+}
+
+TEST_F(CABlockTransferTests, CASetNextBlockOption2WithResponse)
+{
+    CAEndpoint_t* tempRep = NULL;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "127.0.0.1", 5683, &tempRep);
+
+    coap_pdu_t *pdu = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_type transport = coap_udp;
+
+    CAToken_t tempToken = NULL;
+    CAGenerateToken(&tempToken, CA_MAX_TOKEN_LEN);
+
+    CAInfo_t responseData;
+    memset(&responseData, 0, sizeof(CAInfo_t));
+    responseData.token = tempToken;
+    responseData.tokenLength = CA_MAX_TOKEN_LEN;
+    responseData.type = CA_MSG_NONCONFIRM;
+    responseData.messageId = 1;
+
+    pdu = CAGeneratePDU(CA_CREATED, &responseData, tempRep, &options, &transport);
+
+    CAData_t *cadata = CACreateNewDataSet(pdu, tempRep);
+    EXPECT_TRUE(cadata != NULL);
+
+    CABlockData_t *currData = CACreateNewBlockData(cadata);
+    EXPECT_TRUE(currData != NULL);
+
+    coap_block_t block = {0, 0, 0};
+    EXPECT_EQ(CA_STATUS_OK, CASetNextBlockOption2(pdu, tempRep, cadata, block, pdu->length));
+
+    CADestroyDataSet(cadata);
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
+
+    CADestroyToken(tempToken);
+    CADestroyEndpoint(tempRep);
+    free(responseData.payload);
+}
+
+TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithRequest)
+{
+    CAEndpoint_t* tempRep = NULL;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "127.0.0.1", 5683, &tempRep);
+
+    CAToken_t tempToken = NULL;
+    CAGenerateToken(&tempToken, CA_MAX_TOKEN_LEN);
+
+    CAInfo_t requestData;
+    requestData.type = CA_MSG_NONCONFIRM;
+    requestData.token = tempToken;
+    requestData.tokenLength = CA_MAX_TOKEN_LEN;
+    requestData.options = NULL;
+    requestData.payload = NULL;
+    requestData.payloadSize = 0;
+
+    CARequestInfo_t requestInfo;
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
+    requestInfo.isMulticast = false;
+
+    CAData_t cadata;
+    cadata.type = SEND_TYPE_UNICAST;
+    cadata.remoteEndpoint = tempRep;
+    cadata.requestInfo = &requestInfo;
+    cadata.dataType = CA_REQUEST_DATA;
+
+    CAPayload_t payload = (CAPayload_t) "requestPayload";
+    size_t payloadLen = strlen((const char*) payload) + 1;
+
+    EXPECT_EQ(CA_STATUS_OK, CAUpdatePayloadToCAData(&cadata, payload, payloadLen));
+
+    EXPECT_STREQ((const char*) payload, (const char*) cadata.requestInfo->info.payload);
+}
+
+TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithResponse)
+{
+    CAEndpoint_t* tempRep = NULL;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "127.0.0.1", 5683, &tempRep);
+
+    CAToken_t tempToken = NULL;
+    CAGenerateToken(&tempToken, CA_MAX_TOKEN_LEN);
+
+    CAInfo_t responseData;
+    responseData.type = CA_MSG_NONCONFIRM;
+    responseData.token = tempToken;
+    responseData.tokenLength = CA_MAX_TOKEN_LEN;
+    responseData.options = NULL;
+    responseData.payload = NULL;
+    responseData.payloadSize = 0;
+
+    CAResponseInfo_t responseInfo;
+    responseInfo.result = CA_VALID;
+    responseInfo.info = responseData;
+
+    CAData_t cadata;
+    cadata.type = SEND_TYPE_UNICAST;
+    cadata.remoteEndpoint = tempRep;
+    cadata.responseInfo = &responseInfo;
+    cadata.dataType = CA_RESPONSE_DATA;
+
+    CAPayload_t payload = (CAPayload_t) "responsePayload";
+    size_t payloadLen = strlen((const char*) payload) + 1;
+
+    EXPECT_EQ(CA_STATUS_OK, CAUpdatePayloadToCAData(&cadata, payload, payloadLen));
+
+    EXPECT_STREQ((const char*) payload, (const char*) cadata.responseInfo->info.payload);
 }

@@ -236,15 +236,15 @@ ca_cond ca_cond_new(void)
             return retVal;
         }
 
- #if defined(__ANDROID__) || _POSIX_TIMERS > 0
-  #ifdef __ANDROID__
+#if defined(__ANDROID__) || _POSIX_TIMERS > 0
+#ifdef __ANDROID__
         if (camutex_condattr_setclock)
         {
             ret = camutex_condattr_setclock(&(eventInfo->condattr), CLOCK_MONOTONIC);
-  #else
+#else
         {
             ret = pthread_condattr_setclock(&(eventInfo->condattr), CLOCK_MONOTONIC);
-  #endif /*  __ANDROID__ */
+#endif /*  __ANDROID__ */
             if(0 != ret)
             {
                 OIC_LOG_V(ERROR, TAG, "%s: Failed to set condition variable clock %d!",
@@ -254,7 +254,7 @@ ca_cond ca_cond_new(void)
                 return retVal;
             }
         }
- #endif /* defined(__ANDROID__) || _POSIX_TIMERS > 0 */
+#endif /* defined(__ANDROID__) || _POSIX_TIMERS > 0 */
         ret = pthread_cond_init(&(eventInfo->cond), &(eventInfo->condattr));
         if (0 == ret)
         {

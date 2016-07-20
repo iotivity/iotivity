@@ -31,8 +31,7 @@
 extern "C" {
 #endif
 
-    void CAManagerConnectionStateChangedCB(CATransportAdapter_t adapter,
-                                           const char *remote_address, bool connected);
+    void CAManagerConnectionStateChangedCB(const CAEndpoint_t *info, bool connected);
 
     void CAManagerAdapterStateChangedCB(CATransportAdapter_t adapter, bool enabled);
 

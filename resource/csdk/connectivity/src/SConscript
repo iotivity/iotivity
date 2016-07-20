@@ -126,7 +126,7 @@ if 'ALL' in ca_transport:
 if 'IP' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'ip_adapter/SConscript'))
 	if ca_os == 'arduino':
-		if with_tcp:
+		if with_tcp == True:
 			transports = [ 'ip_adapter', 'tcp_adapter']
 			env.SConscript(dirs = [
 				os.path.join(ca_path, d) for d in transports ])
