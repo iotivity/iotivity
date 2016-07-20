@@ -60,7 +60,10 @@ public:
       m_notificationUri(std::string("/notification")),
       m_messageUri(std::string("/message")),
       m_syncUri(std::string("/sync")),
-      m_syncObservers() { };
+      m_syncObservers()
+    {
+
+    };
 
     ~NSProviderSimulator() = default;
 
@@ -94,9 +97,11 @@ private:
                 {
                     std::string msgUri = m_notificationUri + m_messageUri;
                     std::string syncUri = m_notificationUri + m_syncUri;
+                    std::string providerId = "123456789012345678901234567890123456";
                     rep.setValue("ACCEPTER", m_accepter);
                     rep.setValue("MESSAGE_URI", msgUri);
                     rep.setValue("SYNC_URI", syncUri);
+                    rep.setValue("PROVIDER_ID", providerId);
                 }
                 else if (type == requestType::NS_SYNC)
                 {
@@ -150,6 +155,25 @@ private:
                         observationInfo.obsId), m_syncObservers.end());
             }
         }
+        else if (type == requestType::NS_MESSAGE)
+        {
+            OC::OCRepresentation rep;
+            std::string providerId = "123456789012345678901234567890123456";
+            rep.setValue<int>("MESSAGE_ID", (int)1);
+            rep.setValue("PROVIDER_ID", providerId);
+
+            auto response = std::make_shared<OC::OCResourceResponse>();
+            response->setRequestHandle(requests->getRequestHandle());
+            response->setResourceHandle(requests->getResourceHandle());
+            response->setErrorCode(200);
+            response->setResponseResult(OC_EH_OK);
+            response->setResourceRepresentation(rep);
+
+            OC::ObservationIds ids;
+            ids.push_back(requests->getObservationInfo().obsId);
+
+            OC::OCPlatform::notifyListOfObservers(m_messageHandle, ids, response);
+        }
     }
 
     OCEntityHandlerResult entityHandler(
@@ -199,30 +223,36 @@ public:
         OC::OCPlatform::notifyAllObservers(m_messageHandle);
     }
 
-    void notifyMessage(const std::string & id, const std::string & title, const std::string & content)
+    void notifyMessage(const uint64_t & id, const std::string & title, const std::string & content)
     {
         setMessage(id, title, content);
         notifyMessage();
     }
 
-    void sendRead(const std::string & id)
+    void sendRead(const uint64_t & id)
     {
-        m_syncRep.setValue("ID", id);
-        m_syncRep.setValue("STATE", (int)0);
+        std::string providerId = "123456789012345678901234567890123456";
+        m_syncRep.setValue<int>("MESSAGE_ID", id);
+        m_syncRep.setValue("STATE", (int)1);
+        m_syncRep.setValue("PROVIDER_ID", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
-    void sendDismiss(const std::string & id)
+    void sendDismiss(const uint64_t & id)
     {
-        m_syncRep.setValue("ID", id);
-        m_syncRep.setValue("STATE", (int)1);
+        std::string providerId = "123456789012345678901234567890123456";
+        m_syncRep.setValue<int>("MESSAGE_ID", id);
+        m_syncRep.setValue("STATE", (int)2);
+        m_syncRep.setValue("PROVIDER_ID", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
 
-    void setMessage(const std::string & id, const std::string & title, const std::string & content)
+    void setMessage(const uint64_t & id, const std::string & title, const std::string & content)
     {
-        m_messageRep.setValue("ID", id);
+        std::string providerId = "123456789012345678901234567890123456";
+        m_messageRep.setValue<int>("MESSAGE_ID", id);
         m_messageRep.setValue("TITLE", title);
         m_messageRep.setValue("CONTENTTEXT", content);
+        m_messageRep.setValue("PROVIDER_ID", providerId);
     }
 
     void deleteNotificationResource()
@@ -260,7 +290,8 @@ public:
                     std::bind(& NSProviderSimulator::entityHandler, this,
                             std::placeholders::_1, requestType::NS_MESSAGE),
                             resourceProperty);
-        } catch (std::exception & e)
+        }
+        catch (std::exception & e)
         {
             std::cout << e.what() << std::endl;
         }
@@ -275,7 +306,8 @@ public:
                     std::bind(& NSProviderSimulator::entityHandler, this,
                             std::placeholders::_1, requestType::NS_SYNC),
                             resourceProperty);
-        } catch (std::exception & e)
+        }
+        catch (std::exception & e)
         {
             std::cout << e.what() << std::endl;
         }
@@ -290,7 +322,8 @@ public:
                     std::bind(& NSProviderSimulator::entityHandler, this,
                             std::placeholders::_1, requestType::NS_NOTIFICATION),
                             resourceProperty);
-        } catch (std::exception & e)
+        }
+        catch (std::exception & e)
         {
             std::cout << e.what() << std::endl;
         }

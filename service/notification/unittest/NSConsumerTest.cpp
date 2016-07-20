@@ -53,9 +53,13 @@ public:
     MockRepository mocks;
 
 protected:
-    virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test())) {}
+    virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test()))
+    {
 
-    virtual void TearDown() {
+    }
+
+    virtual void TearDown()
+    {
         try
         {
             mocks.VerifyAll();
@@ -79,11 +83,25 @@ public:
         std::cout << __func__ << std::endl;
     }
 
-    static void NSNotificationReceivedCallbackEmpty(NSProvider *, NSMessage *) { }
+    static void NSNotificationReceivedCallbackEmpty(NSMessage *)
+    {
+        std::cout << __func__ << std::endl;
+    }
 
-    static void NSSyncCallbackEmpty(NSProvider *, NSSync *) { }
+    static void NSSyncCallbackEmpty(NSSyncInfo *)
+    {
+        std::cout << __func__ << std::endl;
+    }
 
-    static void foundResourceEmpty(std::shared_ptr< OC::OCResource >) { }
+    static void foundResourceEmpty(std::shared_ptr< OC::OCResource >)
+    {
+        std::cout << __func__ << std::endl;
+    }
+
+    static void SubscriptionAcceptedCallback(NSProvider *)
+    {
+        std::cout << __func__ << std::endl;
+    }
 
 protected:
 
@@ -126,11 +144,12 @@ protected:
 
 TEST_F(NotificationConsumerTest, StartConsumerPositive)
 {
-    EXPECT_EQ(NS_OK,
-              NSStartConsumer(
-                    NSProviderDiscoveredCallbackEmpty,
-                    NSNotificationReceivedCallbackEmpty,
-                    NSSyncCallbackEmpty));
+    NSConsumerConfig cfg;
+    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
+    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
+    cfg.syncInfoCb = NSSyncCallbackEmpty;
+    EXPECT_EQ(NS_OK, NSStartConsumer(cfg));
 }
 
 TEST_F(NotificationConsumerTest, StopConsumerPositive)
@@ -141,16 +160,18 @@ TEST_F(NotificationConsumerTest, StopConsumerPositive)
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsumerFirst)
 {
     mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty).Do(
-            [this, & responseCon](NSProvider *)
+            [this](NSProvider *)
             {
                 std::cout << "Call Discovered" << std::endl;
                 responseCon.notify_all();
             });
 
-    NSStartConsumer(
-            NSProviderDiscoveredCallbackEmpty,
-            NSNotificationReceivedCallbackEmpty,
-            NSSyncCallbackEmpty);
+    NSConsumerConfig cfg;
+    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
+    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
+    cfg.syncInfoCb = NSSyncCallbackEmpty;
+    NSStartConsumer(cfg);
 
     g_providerSimul.setAccepter(1);
     g_providerSimul.createNotificationResource();
@@ -172,16 +193,19 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
     }
 
     mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty).Do(
-            [this, & responseCon](NSProvider *)
+            [this](NSProvider * provider)
             {
                 std::cout << "Call Discovered" << std::endl;
+                g_provider = provider;
                 responseCon.notify_all();
             });
 
-    NSStartConsumer(
-            NSProviderDiscoveredCallbackEmpty,
-            NSNotificationReceivedCallbackEmpty,
-            NSSyncCallbackEmpty);
+    NSConsumerConfig cfg;
+    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
+    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
+    cfg.syncInfoCb = NSSyncCallbackEmpty;
+    NSStartConsumer(cfg);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
@@ -190,12 +214,13 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 {
-    mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty)
-            .Do(
-            [this, & responseCon](NSProvider * provider)
+    g_providerSimul.setAccepter(1);
+    mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty).Do(
+            [this](NSProvider * provider)
             {
                 std::cout << "Call Discovered" << std::endl;
                 g_provider = provider;
+                std::cout << g_provider->providerId << std::endl;
                 responseCon.notify_all();
             });
 
@@ -209,6 +234,12 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 
 TEST_F(NotificationConsumerTest, ExpectSubscribeSuccess)
 {
+    mocks.ExpectCallFunc(SubscriptionAcceptedCallback).Do(
+            [](NSProvider * )
+            {
+                std::cout << "Income Accepted subscription : " << std::endl;
+            });
+
     NSResult ret = NSSubscribe(g_provider);
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
@@ -218,15 +249,14 @@ TEST_F(NotificationConsumerTest, ExpectSubscribeSuccess)
 
 TEST_F(NotificationConsumerTest, ExpectReceiveNotification)
 {
-    std::string id = "id";
+    uint64_t id = 10;
     std::string title = "title";
     std::string msg = "msg";
 
     mocks.ExpectCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [](NSProvider *, NSMessage * message)
+            [](NSMessage * message)
             {
-                std::cout << "Income Notification : " << message->mId << std::endl;
-                NSDropNSObject(message);
+                std::cout << "Income Notification : " << message->messageId << std::endl;
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -234,36 +264,32 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotification)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-}
-
-TEST_F(NotificationConsumerTest, ExpectUnsubscribeSuccess)
-{
-    NSResult ret = NSUnsubscribe(g_provider);
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
-
-    EXPECT_EQ(NS_OK, ret);
+    NSStopConsumer();
 }
 
 TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider)
 {
-    std::string id = "ExpectReceiveNotificationWithAccepterisProvider";
+    uint64_t id = 11;
     std::string title = "title";
     std::string msg = "msg";
 
     g_providerSimul.setAccepter(0);
 
-    NSRescanProvider();
+    NSConsumerConfig cfg;
+    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
+    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
+    cfg.syncInfoCb = NSSyncCallbackEmpty;
+    NSStartConsumer(cfg);
     {
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait_for(lock, g_waitForResponse);
     }
 
     mocks.ExpectCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [](NSProvider *, NSMessage * message)
+            [](NSMessage * message)
             {
-                std::cout << "Income Notification : " << message->mId << std::endl;
-                NSDropNSObject(message);
+                std::cout << "Income Notification : " << message->messageId << std::endl;
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -277,25 +303,24 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider
 
 TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenProviderNotifySync)
 {
-    std::string id = "ExpectCallbackReadCheckWhenProviderNotifySync";
+    uint64_t id = 12;
     std::string title = "title";
     std::string msg = "msg";
 
-    NSSyncTypes type = Notification_Dismiss;
+    NSSyncType type = NS_SYNC_DELETED;
 
     mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [](NSProvider *, NSMessage * message)
+            [](NSMessage * message)
             {
-                std::cout << "Income Notification : " << message->mId << std::endl;
-                NSDropNSObject(message);
+                std::cout << "Income Notification : " << message->messageId << std::endl;
             });
 
     mocks.ExpectCallFunc(NSSyncCallbackEmpty).Do(
-            [& type](NSProvider *, NSSync * sync)
+            [& type](NSSyncInfo * sync)
             {
-                std::cout << "Income Notification : " << sync->mMessageId
-                        << ", State : " << sync->mState << std::endl;
-                type = sync->mState;
+                std::cout << "Income SyncInfo : " << sync->messageId
+                        << ", State : " << sync->state << std::endl;
+                type = sync->state;
 
             });
 
@@ -314,30 +339,29 @@ TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenProviderNotifySync)
 //    g_providerSimul.deleteNotificationResource();
 //    NSStopConsumer();
 
-    EXPECT_EQ(Notification_Read, type);
+    EXPECT_EQ(NS_SYNC_READ, type);
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenProviderNotifySync)
 {
-    std::string id = "ExpectCallbackDismissCheckWhenProviderNotifySync";
+    uint64_t id = 13;
     std::string title = "title";
     std::string msg = "msg";
 
-    NSSyncTypes type = Notification_Read;
+    NSSyncType type = NS_SYNC_READ;
 
     mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [](NSProvider *, NSMessage * message)
+            [](NSMessage * message)
             {
-                std::cout << "Income Notification : " << message->mId << std::endl;
-                NSDropNSObject(message);
+                std::cout << "Income Notification : " << message->messageId << std::endl;
             });
 
     mocks.ExpectCallFunc(NSSyncCallbackEmpty).Do(
-            [& type](NSProvider *, NSSync * sync)
+            [& type](NSSyncInfo * sync)
             {
-                std::cout << "Income Notification : " << sync->mMessageId
-                        << ", State : " << sync->mState << std::endl;
-                type = sync->mState;
+                std::cout << "Income Notification : " << sync->messageId
+                        << ", State : " << sync->state << std::endl;
+                type = sync->state;
 
             });
 
@@ -356,32 +380,32 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenProviderNotifySyn
 //    g_providerSimul.deleteNotificationResource();
 //    NSStopConsumer();
 
-    EXPECT_EQ(Notification_Dismiss, type);
+    EXPECT_EQ(NS_SYNC_DELETED, type);
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenConsumerPostSync)
 {
-    std::string id = "ExpectCallbackReadCheckWhenConsumerPostSync";
+    uint64_t id = 14;
     std::string title = "title";
     std::string msg = "msg";
 
-    NSSyncTypes type = Notification_Dismiss;
+    NSSyncType type = NS_SYNC_DELETED;
 
     mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [](NSProvider *, NSMessage * message)
+            [](NSMessage * message)
             {
-                std::cout << "Income Notification : " << message->mId << std::endl;
-                NSConsumerReadCheck(message);
+                std::cout << "Income Notification : " << message->messageId << std::endl;
+                NSConsumerSendSyncInfo(message->providerId, message->messageId, NS_SYNC_READ);
                 std::unique_lock< std::mutex > lock{ mutexForCondition };
                 responseCon.wait_for(lock, g_waitForResponse);
             });
 
     mocks.ExpectCallFunc(NSSyncCallbackEmpty).Do(
-            [& type](NSProvider *, NSSync * sync)
+            [& type](NSSyncInfo * sync)
             {
-                std::cout << "Income Notification : " << sync->mMessageId
-                        << ", State : " << sync->mState << std::endl;
-                type = sync->mState;
+                std::cout << "Income Notification : " << sync->messageId
+                        << ", State : " << sync->state << std::endl;
+                type = sync->state;
 
             });
 
@@ -394,32 +418,32 @@ TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenConsumerPostSync)
 //    g_providerSimul.deleteNotificationResource();
 //    NSStopConsumer();
 
-    EXPECT_EQ(Notification_Read, type);
+    EXPECT_EQ(NS_SYNC_READ, type);
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
 {
-    std::string id = "ExpectCallbackDismissCheckWhenConsumerPostSync";
+    uint64_t id = 15;
     std::string title = "title";
     std::string msg = "msg";
 
-    NSSyncTypes type = Notification_Read;
+    NSSyncType type = NS_SYNC_READ;
 
     mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [](NSProvider *, NSMessage * message)
+            [](NSMessage * message)
             {
-                std::cout << "Income Notification : " << message->mId << std::endl;
-                NSConsumerDismissCheck(message);
+                std::cout << "Income Notification : " << message->messageId << std::endl;
+                NSConsumerSendSyncInfo(message->providerId, message->messageId, NS_SYNC_DELETED);
                 std::unique_lock< std::mutex > lock{ mutexForCondition };
                 responseCon.wait_for(lock, g_waitForResponse);
             });
 
     mocks.ExpectCallFunc(NSSyncCallbackEmpty).Do(
-            [& type](NSProvider *, NSSync * sync)
+            [& type](NSSyncInfo * sync)
             {
-                std::cout << "Income Notification : " << sync->mMessageId
-                        << ", State : " << sync->mState << std::endl;
-                type = sync->mState;
+                std::cout << "Income Notification : " << sync->messageId
+                        << ", State : " << sync->state << std::endl;
+                type = sync->state;
 
             });
 
@@ -429,8 +453,17 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
         responseCon.wait_for(lock, g_waitForResponse);
     }
 
+    EXPECT_EQ(NS_SYNC_DELETED, type);
+}
+
+TEST_F(NotificationConsumerTest, ExpectUnsubscribeSuccess)
+{
+    NSResult ret = NSUnsubscribe(g_provider);
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
     g_providerSimul.deleteNotificationResource();
     NSStopConsumer();
 
-    EXPECT_EQ(Notification_Dismiss, type);
+    EXPECT_EQ(NS_OK, ret);
 }
