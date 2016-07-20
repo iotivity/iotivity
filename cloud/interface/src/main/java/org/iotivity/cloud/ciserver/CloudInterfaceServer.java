@@ -1,94 +1,113 @@
 /*
- *******************************************************************
- *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.ciserver;
 
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
-import org.iotivity.cloud.base.CoapServer;
-import org.iotivity.cloud.base.ResourceManager;
-import org.iotivity.cloud.base.SessionManager;
-import org.iotivity.cloud.ciserver.protocols.CoapAuthHandler;
-import org.iotivity.cloud.ciserver.protocols.CoapRelayHandler;
+import org.iotivity.cloud.base.connector.ConnectorPool;
+import org.iotivity.cloud.base.server.CoapServer;
+import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
+import org.iotivity.cloud.ciserver.resources.DiResource;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
-import org.iotivity.cloud.util.CoapLogHandler;
+import org.iotivity.cloud.ciserver.resources.proxy.Account;
+import org.iotivity.cloud.ciserver.resources.proxy.DevicePresence;
+import org.iotivity.cloud.ciserver.resources.proxy.MessageQueue;
+import org.iotivity.cloud.ciserver.resources.proxy.ResourceDirectory;
+import org.iotivity.cloud.ciserver.resources.proxy.ResourceFind;
+import org.iotivity.cloud.ciserver.resources.proxy.ResourcePresence;
+import org.iotivity.cloud.util.ErrorLogger;
+import org.iotivity.cloud.util.FileLogger;
 import org.iotivity.cloud.util.Logger;
 
 public class CloudInterfaceServer {
 
     public static void main(String[] args) throws Exception {
 
+        System.setOut(FileLogger.createLoggingProxy(System.out));
+
         System.out.println("-----CI SERVER-------");
 
-        if (args.length != 5) {
+        if (args.length != 8) {
             Logger.e(
-                    "coap server port and RDServer_Address port AccountServer_Address Port required\n"
-                            + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685\n");
+                    "coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
+                            + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
             return;
         }
 
-        ResourceManager resourceManager = null;
-        SessionManager sessionManager = null;
-        CoapServer coapServer = null;
+        boolean tlsMode = Integer.parseInt(args[7]) == 1;
 
-        CoapRelayHandler relayHandler = null;
-        CoapAuthHandler authHandler = null;
+        ConnectorPool.addConnection("rd",
+                new InetSocketAddress(args[1], Integer.parseInt(args[2])),
+                tlsMode);
+        ConnectorPool.addConnection("account",
+                new InetSocketAddress(args[3], Integer.parseInt(args[4])),
+                tlsMode);
+        ConnectorPool.addConnection("mq",
+                new InetSocketAddress(args[5], Integer.parseInt(args[6])),
+                tlsMode);
 
-        KeepAliveResource keepAliveResource = null;
+        ErrorLogger.Init();
 
-        coapServer = new CoapServer();
+        DeviceServerSystem deviceServer = new DeviceServerSystem();
 
-        sessionManager = new SessionManager();
+        Account acHandler = new Account();
+        ResourceDirectory rdHandler = new ResourceDirectory();
+        ResourceFind resHandler = new ResourceFind();
+        ResourcePresence adHandler = new ResourcePresence();
+        DevicePresence prsHandler = new DevicePresence();
+        MessageQueue mqHandler = new MessageQueue();
 
-        resourceManager = new ResourceManager();
+        CoapDevicePool devicePool = deviceServer.getDevicePool();
 
-        relayHandler = new CoapRelayHandler(sessionManager);
+        deviceServer.addResource(acHandler);
 
-        authHandler = new CoapAuthHandler();
+        deviceServer.addResource(rdHandler);
 
-        keepAliveResource = new KeepAliveResource(sessionManager,
+        deviceServer.addResource(resHandler);
+
+        deviceServer.addResource(adHandler);
+
+        deviceServer.addResource(prsHandler);
+
+        deviceServer.addResource(mqHandler);
+
+        KeepAliveResource resKeepAlive = new KeepAliveResource(
                 new int[] { 1, 2, 4, 8 });
 
-        coapServer.addHandler(new CoapLogHandler());
+        deviceServer.addResource(resKeepAlive);
 
-        coapServer.addHandler(authHandler);
+        deviceServer.addResource(new DiResource(devicePool));
 
-        coapServer.addHandler(relayHandler);
+        deviceServer.addServer(new CoapServer(
+                new InetSocketAddress(Integer.parseInt(args[0]))));
 
-        coapServer.addHandler(resourceManager);
+        // deviceServer.addServer(new HttpServer(new InetSocketAddress(8080)));
 
-        resourceManager.registerResource(keepAliveResource);
+        deviceServer.startSystem(tlsMode);
 
-        authHandler.startHandler(args[3], Integer.parseInt(args[4]));
+        resKeepAlive.startSessionChecker();
 
-        relayHandler.startHandler(args[1], Integer.parseInt(args[2]), args[3],
-                Integer.parseInt(args[4]));
-
-        coapServer
-                .startServer(new InetSocketAddress(Integer.parseInt(args[0])));
-
-        keepAliveResource.startSessionChecker();
-
-        Scanner in = new Scanner(System.in, "UTF-8");
+        Scanner in = new Scanner(System.in);
 
         System.out.println("press 'q' to terminate");
 
@@ -98,13 +117,9 @@ public class CloudInterfaceServer {
 
         System.out.println("Terminating...");
 
-        keepAliveResource.stopSessionChecker();
+        resKeepAlive.stopSessionChecker();
 
-        coapServer.stopServer();
-
-        relayHandler.stopHandler();
-
-        authHandler.stopHandler();
+        deviceServer.stopSystem();
 
         System.out.println("Terminated");
     }
