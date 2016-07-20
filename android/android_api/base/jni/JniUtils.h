@@ -144,6 +144,8 @@ public:
                 return "RESOURCE_CREATED";
             case OC_STACK_RESOURCE_DELETED:
                 return "RESOURCE_DELETED";
+            case OC_STACK_RESOURCE_CHANGED:
+                return "RESOURCE_CHANGED";
             case OC_STACK_CONTINUE:
                 return "CONTINUE";
             /* Error status code - START HERE */

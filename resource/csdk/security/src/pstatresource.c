@@ -436,6 +436,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing POST request");
     OicSecPstat_t *pstat = NULL;
+    static uint16_t prevMsgId = 0;
 
     if (ehRequest->payload)
     {
@@ -484,15 +485,31 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
         }
     }
  exit:
-    if(OC_EH_OK != ehRet)
-    {
-        /*
-          * If some error is occured while ownership transfer,
-          * ownership transfer related resource should be revert back to initial status.
-          */
-        RestoreDoxmToInitState();
-        RestorePstatToInitState();
-    }
+     if(OC_EH_OK != ehRet)
+     {
+         /*
+           * If some error is occured while ownership transfer,
+           * ownership transfer related resource should be revert back to initial status.
+           */
+         const OicSecDoxm_t* doxm = GetDoxmResourceData();
+         if(doxm)
+         {
+             if(!doxm->owned && prevMsgId !=  ehRequest->messageID)
+             {
+                 RestoreDoxmToInitState();
+                 RestorePstatToInitState();
+             }
+         }
+         else
+         {
+             OIC_LOG(ERROR, TAG, "Invalid DOXM resource.");
+         }
+     }
+     else
+     {
+         prevMsgId = ehRequest->messageID;
+     }
+
 
     //Send payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))

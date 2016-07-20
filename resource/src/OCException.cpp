@@ -31,6 +31,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
              return OC::Exception::RESOURCE_CREATED;
         case OC_STACK_RESOURCE_DELETED:
              return OC::Exception::RESOURCE_DELETED;
+        case OC_STACK_RESOURCE_CHANGED:
+             return OC::Exception::RESOURCE_CHANGED;
         case OC_STACK_INVALID_URI:
             return OC::Exception::INVALID_URI;
         case OC_STACK_INVALID_IP:

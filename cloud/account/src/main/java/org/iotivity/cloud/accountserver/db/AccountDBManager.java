@@ -1,23 +1,23 @@
 /*
- *******************************************************************
- *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.accountserver.db;
 
@@ -42,14 +42,11 @@ public class AccountDBManager {
             mongoDB = new MongoDB(Constants.DB_NAME);
 
             mongoDB.createTable(Constants.DEVICE_TABLE);
-            mongoDB.createTable(Constants.SESSION_TABLE);
-
-            registerAdminAccount();
+            // mongoDB.createTable(Constants.SESSION_TABLE);
+            mongoDB.createTable(Constants.TOKEN_TABLE);
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
         }
     }
 
@@ -58,31 +55,38 @@ public class AccountDBManager {
         return accoutDBManager;
     }
 
-    /**
-     * API for storing session information of authorized user
-     *
-     * @param userId
-     *            user identifier
-     * @param sessionCode
-     *            session code
-     * @return Boolean - true if stored, otherwise false
-     */
-    public Boolean registerUserSessionCode(String userId, String sessionCode) {
+    public Boolean registerUserToken(String userId, String accessToken,
+            String refreshToken) {
 
-        UserSession userSession = new UserSession();
+        UserToken userToken = new UserToken();
 
-        userSession.setUserId(userId);
-        userSession.setSessionCode(sessionCode);
-
-        mongoDB.createResource(userSession);
+        userToken.setUserToken(userId, accessToken, refreshToken);
+        mongoDB.createResource(userToken);
         mongoDB.printResources();
 
         return true;
     }
 
+    public Boolean updateUserToken(String userId, String oldRefreshToken,
+            String newAccessToken, String newRefreshToken) {
+
+        Boolean updateUserToken = false;
+
+        UserToken oldUserToken = new UserToken();
+        oldUserToken.setUserToken(userId, null, oldRefreshToken);
+
+        UserToken newUserToken = new UserToken();
+        newUserToken.setUserToken(userId, newAccessToken, newRefreshToken);
+
+        updateUserToken = mongoDB.updateResource(oldUserToken, newUserToken);
+        mongoDB.printResources();
+
+        return updateUserToken;
+    }
+
     /**
      * API for storing device information of authorized user
-     *
+     * 
      * @param userId
      *            user identifier
      * @param deviceId
@@ -105,47 +109,67 @@ public class AccountDBManager {
     /**
      * API for getting user identifier information corresponding with session
      * code
-     *
+     * 
      * @param userId
      *            identifier of authorized user
      * @param sessionCode
      *            session code
      * @return Boolean - true if stored, otherwise false
      */
-    public String getUserId(String sessionCode) {
+    public String getUserIdByAccessToken(String token) {
 
         String userId = null;
 
-        userId = mongoDB.getUserId(sessionCode);
+        userId = mongoDB.getUserIdByAccessToken(token);
+
+        return userId;
+    }
+
+    public String getUserIdByRefreshToken(String token) {
+
+        String userId = null;
+
+        userId = mongoDB.getUserIdByRefreshToken(token);
 
         return userId;
     }
 
     /**
      * API for getting devices corresponding with user identifier
-     *
+     * 
      * @param userId
      *            user identifier
      * @return ArrayList<String> - list of devices
      */
     public ArrayList<String> getDevices(String userId) {
 
-        ArrayList<String> deviceList = mongoDB.getDevices(userId);
+        ArrayList<String> deviceList = new ArrayList<>();
+
+        deviceList = mongoDB.getDevices(userId);
 
         return deviceList;
     }
 
-    private void registerAdminAccount() {
+    public Boolean hasAccessToken(String token) {
 
-        String adminId = "admin";
-        String adminSessionCode = "00000000";
+        Boolean hasAccessToken = false;
+        hasAccessToken = mongoDB.hasAccessToken(token);
 
-        UserSession userSession = new UserSession();
+        return hasAccessToken;
+    }
 
-        userSession.setUserId(adminId);
-        userSession.setSessionCode(adminSessionCode);
+    public Boolean hasRefreshToken(String token) {
 
-        mongoDB.createResource(userSession);
-        mongoDB.printResources();
+        Boolean hasRefreshToken = false;
+        hasRefreshToken = mongoDB.hasRefreshToken(token);
+
+        return hasRefreshToken;
+    }
+
+    public String getIssuedTime(String accessToken) {
+
+        String issuedTime = mongoDB.getIssuedTime(accessToken);
+        return issuedTime;
+
     }
 }
