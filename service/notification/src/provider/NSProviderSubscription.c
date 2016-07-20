@@ -209,36 +209,11 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
-
-    if(!id)
-    {
-        NSFreeOCEntityHandlerRequest(entityHandlerRequest);
-        NS_LOG(ERROR, "Invalid ConsumerID");
-        return;
-    }
-
-    NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-    NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-
-    OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-    subData->isWhite = false;
-    subData->messageObId = entityHandlerRequest->obsInfo.obsId;
-
-    element->data = (void*) subData;
-    element->next = NULL;
-
-    NS_LOG_V(DEBUG, "SubList IP[ID] = [%s]", subData->id);
-    NS_LOG_V(DEBUG, "SubList observation ID = [%d]", subData->syncObId);
-
-    if (NSStorageWrite(consumerSubList, element) != NS_OK)
-    {
-        NS_LOG(ERROR, "fail to write consumer white list");
-    }
-
-    NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
+    NSProviderDeleteSubDataFromObId(consumerSubList, entityHandlerRequest->obsInfo.obsId);
 
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
+
+    NS_LOG(DEBUG, "NSHandleUnsubscription - OUT");
 }
 
 void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest)

@@ -245,12 +245,22 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
     {
         NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_FLAG");
 
-        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
+        OCObserveAction ocObAction = entityHandlerRequest->obsInfo.action;
+
+        if (ocObAction == OC_OBSERVE_REGISTER)
         {
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_REGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n"
                     "Register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_SUBSCRIPTION,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+        }
+        else if(ocObAction == OC_OBSERVE_DEREGISTER)
+        {
+            NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_DEREGISTER");
+            NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n - "
+                    "Deregister Message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
+            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_UNSUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
     }
@@ -379,12 +389,23 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
         NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_FLAG");
 
-        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
+
+        OCObserveAction ocObAction = entityHandlerRequest->obsInfo.action;
+
+        if (ocObAction == OC_OBSERVE_REGISTER)
         {
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_REGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerSyncCb\n - "
                     "Register Sync observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SYNC_SUBSCRIPTION,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+        }
+        else if(ocObAction == OC_OBSERVE_DEREGISTER)
+        {
+            NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_DEREGISTER");
+            NS_LOG_V(DEBUG, "NSEntityHandlerSyncCb\n - "
+                    "Deregister Sync observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
+            NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_UNSUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
     }

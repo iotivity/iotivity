@@ -41,6 +41,8 @@ bool NSProviderIsFoundCacheData(NSCacheType, void *, void*);
 
 NSResult NSCacheUpdateSubScriptionState(NSCacheList *, char *, bool);
 
+NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id);
+
 pthread_mutex_t NSCacheMutex;
 
 #endif /* _NS_PROVIDER_CACHEADAPTER__H_ */

@@ -145,7 +145,7 @@ NSResult NSSendNotification(NSMessage *msg)
     }
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray, obCount, payload,
-            OC_LOW_QOS);
+            OC_HIGH_QOS);
 
     NS_LOG_V(DEBUG, "Message ocstackResult = %d", ocstackResult);
 
@@ -216,7 +216,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
     }
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray,
-            obCount, payload, OC_LOW_QOS);
+            obCount, payload, OC_HIGH_QOS);
 
     NS_LOG_V(DEBUG, "Sync ocstackResult = %d", ocstackResult);
 
@@ -268,7 +268,6 @@ void * NSNotificationSchedule(void *ptr)
                     NSSendSync((NSSyncInfo*) node->taskData);
                     NSPushQueue(CALLBACK_RESPONSE_SCHEDULER, TASK_CB_SYNC, node->taskData);
                     break;
-
                 default:
                     NS_LOG(ERROR, "Unknown type message");
                     break;

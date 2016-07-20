@@ -101,8 +101,8 @@ typedef struct
 
 typedef struct
 {
-  char providerId[37];
-  char * providerName;
+    char providerId[37];
+    char * providerName;
 } NSProviderInfo;
 
 #endif /* _NS_STRUCTS_H_ */
