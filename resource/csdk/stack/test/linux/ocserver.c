@@ -22,7 +22,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
 #include <stdbool.h>
 #include <ocstack.h>
@@ -48,7 +53,7 @@ void handleSigInt(int signum) {
 }
 
 int main() {
-    OIC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
+    OIC_LOG_V(INFO, TAG, "Starting ocserver");
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK) {
         OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
@@ -91,6 +96,7 @@ OCStackResult createLightResource() {
                     "core.rw",
                     "/a/light",
                     0,
+                    NULL,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
     return res;
 }

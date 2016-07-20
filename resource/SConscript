@@ -68,6 +68,7 @@ if target_os not in ['arduino','darwin','ios','android']:
 
 if target_os == 'linux':
 	# Build C Samples
+	SConscript('csdk/stack/test/linux/SConscript')
 	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
 
 	# Build secure samples
