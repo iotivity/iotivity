@@ -1024,10 +1024,7 @@ namespace OC
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     result, sequenceNumber);
         exec.detach();
-        if (sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+
         return OC_STACK_KEEP_TRANSACTION;
     }
 
