@@ -29,6 +29,8 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#define maxSequenceNumber 0xFFFFFF
+
 using namespace OC;
 
 static const char* SVR_DB_FILE_NAME = "./oic_svr_db_client.dat";
@@ -65,7 +67,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
 {
     try
     {
-        if(eCode == OC_STACK_OK && sequenceNumber != -1)
+        if(eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
         {
             if(sequenceNumber == OC_OBSERVE_REGISTER)
             {

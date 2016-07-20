@@ -1140,6 +1140,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         {
             OIC_LOG(INFO, TAG, "Removed observer successfully");
             request->observeResult = OC_STACK_OK;
+            // There should be no observe option header for de-registration response.
+            // Set as an invalid value here so we can detect it later and remove the field in response.
+            request->observationOption = MAX_SEQUENCE_NUMBER + 1;
         }
         else
         {
