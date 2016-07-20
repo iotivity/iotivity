@@ -10,7 +10,7 @@ env.AppendUnique(CPPPATH = [os.path.abspath('./include')])
 ######################################################################
 # Source files and Targets
 ######################################################################
-src_dir = os.path.abspath('./src')
+src_dir = Dir('src').abspath
 helper_src = [
 	os.path.join(src_dir, 'getopt.c'),
 	os.path.join(src_dir, 'win_sleep.c'),

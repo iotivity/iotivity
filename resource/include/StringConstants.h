@@ -76,6 +76,7 @@ namespace OC
                             "and from 2048 to 3000 inclusive.";
         static const char NO_ERROR[]                   = "No Error";
         static const char RESOURCE_CREATED[]           = "Resource Created";
+        static const char RESOURCE_CHANGED[]           = "Resource Changed";
         static const char RESOURCE_DELETED[]           = "Resource Deleted";
         static const char INVALID_URI[]                = "Invalid URI";
         static const char INVALID_IP[]                 = "Invalid IP";

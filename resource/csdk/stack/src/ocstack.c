@@ -56,6 +56,7 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
+#include "platform_features.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -839,6 +840,97 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
 }
 
 /**
+ * Encode an address string to match RFC6874.
+ *
+ * @param outputAddress    a char array to be written with the encoded string.
+ *
+ * @param outputSize       size of outputAddress buffer.
+ *
+ * @param inputAddress     a char array of size <= CA_MAX_URI_LENGTH
+ *                         containing a valid IPv6 address string.
+ *
+ * @return                 OC_STACK_OK if encoding succeeded.
+ *                         Else an error occured.
+ */
+ OCStackResult encodeAddressForRFC6874(char *outputAddress,
+                                       size_t outputSize,
+                                       const char *inputAddress)
+{
+    VERIFY_NON_NULL(inputAddress,  FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(outputAddress, FATAL, OC_STACK_INVALID_PARAM);
+
+    /** @todo Use a max IPv6 string length instead of CA_MAX_URI_LENGTH. */
+#define ENCODE_MAX_INPUT_LENGTH    CA_MAX_URI_LENGTH
+
+    size_t inputLength = strnlen(inputAddress, ENCODE_MAX_INPUT_LENGTH);
+
+    if (inputLength >= ENCODE_MAX_INPUT_LENGTH)
+    {
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Invalid input string: too long/unterminated!");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // inputSize includes the null terminator
+    size_t inputSize = inputLength + 1;
+
+    if (inputSize > outputSize)
+    {
+        OIC_LOG_V(ERROR, TAG,
+                  "encodeAddressForRFC6874 failed: "
+                  "outputSize (%d) < inputSize (%d)",
+                  outputSize, inputSize);
+
+        return OC_STACK_ERROR;
+    }
+
+    char* percentChar = strchr(inputAddress, '%');
+
+    // If there is no '%' character, then no change is required to the string.
+    if (NULL == percentChar)
+    {
+        OICStrcpy(outputAddress, outputSize, inputAddress);
+        return OC_STACK_OK;
+    }
+
+    const char* addressPart = &inputAddress[0];
+    const char* scopeIdPart = percentChar + 1;
+
+    // Sanity check to make sure this string doesn't have more '%' characters
+    if (NULL != strchr(scopeIdPart, '%'))
+    {
+        return OC_STACK_ERROR;
+    }
+
+    // If no string follows the first '%', then the input was invalid.
+    if (scopeIdPart[0] == '\0')
+    {
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Invalid input string: no scope ID!");
+        return OC_STACK_ERROR;
+    }
+
+    // Check to see if the string is already encoded
+    if ((scopeIdPart[0] == '2') && (scopeIdPart[1] == '5'))
+    {
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Input string is already encoded");
+        return OC_STACK_ERROR;
+    }
+
+    // Fail if we don't have room for encoded string's two additional chars
+    if (outputSize < (inputSize + 2))
+    {
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Input string is already encoded");
+        return OC_STACK_ERROR;
+    }
+
+    // Restore the null terminator with an escaped '%' character, per RFC6874
+    OICStrcpy(outputAddress, scopeIdPart - addressPart, addressPart);
+    strcat(outputAddress, "%25");
+    strcat(outputAddress, scopeIdPart);
+
+    return OC_STACK_OK;
+}
+
+/**
  * The cononical presence allows constructed URIs to be string compared.
  *
  * requestUri must be a char array of size CA_MAX_URI_LENGTH
@@ -862,8 +954,19 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
             }
             else
             {
+                char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+
+                OCStackResult result = encodeAddressForRFC6874(addressEncoded,
+                                                               sizeof(addressEncoded),
+                                                               ep->addr);
+
+                if (OC_STACK_OK != result)
+                {
+                    return -1;
+                }
+
                 return snprintf(presenceUri, CA_MAX_URI_LENGTH, "coap://[%s]:%u%s",
-                        ep->addr, ep->port, OC_RSRVD_PRESENCE_URI);
+                        addressEncoded, ep->port, OC_RSRVD_PRESENCE_URI);
             }
         }
         else

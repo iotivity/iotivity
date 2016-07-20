@@ -1,27 +1,30 @@
 /*
- *******************************************************************
- *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.accountserver.db;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.bson.Document;
 import org.iotivity.cloud.accountserver.Constants;
@@ -88,23 +91,20 @@ public class MongoDB {
         return db;
     }
 
-    /**
-     * API for storing session information of user
-     * 
-     * @param UserSession
-     *            session information of user
-     */
-    public void createResource(UserSession userSession) {
-
-        Document doc = createDocument(userSession);
+    public void createResource(UserToken userToken) {
+        Document doc = createDocument(userToken);
         MongoCollection<Document> collection = db
-                .getCollection(Constants.SESSION_TABLE);
+                .getCollection(Constants.TOKEN_TABLE);
 
-        if (collection.findOneAndReplace(Filters.and(
-                Filters.eq(Constants.USER_ID, doc.get(Constants.USER_ID)),
-                Filters.eq(Constants.SESSION_CODE, doc.get(Constants.SESSION_CODE))),
+        if (collection.findOneAndReplace(
+                Filters.and(
+                        Filters.eq(Constants.KEY_USER_ID,
+                                doc.get(Constants.KEY_USER_ID)),
+                        Filters.eq(Constants.KEY_ACCESS_TOKEN,
+                                doc.get(Constants.KEY_ACCESS_TOKEN)),
+                        Filters.eq(Constants.KEY_REFRESH_TOKEN,
+                                doc.get(Constants.KEY_REFRESH_TOKEN))),
                 doc) == null) {
-
             collection.insertOne(doc);
         }
 
@@ -123,9 +123,13 @@ public class MongoDB {
         MongoCollection<Document> collection = db
                 .getCollection(Constants.DEVICE_TABLE);
 
-        if (collection.findOneAndReplace(Filters.and(
-                Filters.eq(Constants.USER_ID, doc.get(Constants.USER_ID)),
-                Filters.eq(Constants.DEVICE_ID, doc.get(Constants.DEVICE_ID))), doc) == null) {
+        if (collection.findOneAndReplace(
+                Filters.and(
+                        Filters.eq(Constants.KEY_USER_ID,
+                                doc.get(Constants.KEY_USER_ID)),
+                        Filters.eq(Constants.KEY_DEVICE_ID,
+                                doc.get(Constants.KEY_DEVICE_ID))),
+                doc) == null) {
 
             collection.insertOne(doc);
         }
@@ -141,24 +145,54 @@ public class MongoDB {
      *            session code
      * @return String - user identifier
      */
-    public String getUserId(String sessionCode) {
+    public String getUserIdByAccessToken(String token) {
 
         String userId = null;
 
         MongoCollection<Document> collection = db
-                .getCollection(Constants.SESSION_TABLE);
+                .getCollection(Constants.TOKEN_TABLE);
 
-        MongoCursor<Document> cursor = collection.find(
-                Filters.eq(Constants.SESSION_CODE, sessionCode)).iterator();
+        MongoCursor<Document> cursor = collection
+                .find(Filters.eq(Constants.KEY_ACCESS_TOKEN, token)).iterator();
 
         try {
 
             while (cursor.hasNext()) {
 
                 Document doc = cursor.next();
-                UserSession userSession = convertSessionDocToResource(doc);
+                UserToken userToken = convertTokenDocToResource(doc);
 
-                userId = userSession.getUserId();
+                userId = userToken.getUserId();
+                break;
+            }
+
+        } finally {
+
+            cursor.close();
+        }
+
+        return userId;
+    }
+
+    public String getUserIdByRefreshToken(String token) {
+
+        String userId = null;
+
+        MongoCollection<Document> collection = db
+                .getCollection(Constants.TOKEN_TABLE);
+
+        MongoCursor<Document> cursor = collection
+                .find(Filters.eq(Constants.KEY_REFRESH_TOKEN, token))
+                .iterator();
+
+        try {
+
+            while (cursor.hasNext()) {
+
+                Document doc = cursor.next();
+                UserToken userToken = convertTokenDocToResource(doc);
+
+                userId = userToken.getUserId();
                 break;
             }
 
@@ -178,13 +212,13 @@ public class MongoDB {
      */
     public ArrayList<String> getDevices(String userId) {
 
-        ArrayList<String> deviceList = new ArrayList<String>();
+        ArrayList<String> deviceList = new ArrayList<>();
 
         MongoCollection<Document> collection = db
                 .getCollection(Constants.DEVICE_TABLE);
 
-        MongoCursor<Document> cursor = collection.find(
-                Filters.eq(Constants.USER_ID, userId)).iterator();
+        MongoCursor<Document> cursor = collection
+                .find(Filters.eq(Constants.KEY_USER_ID, userId)).iterator();
 
         try {
 
@@ -204,12 +238,108 @@ public class MongoDB {
         return deviceList;
     }
 
+    public Boolean hasAccessToken(String token) {
+
+        Boolean hasAccessToken = false;
+
+        MongoCollection<Document> collection = db
+                .getCollection(Constants.TOKEN_TABLE);
+
+        MongoCursor<Document> cursor = collection
+                .find(Filters.eq(Constants.KEY_ACCESS_TOKEN, token)).iterator();
+
+        if (cursor.hasNext())
+            hasAccessToken = true;
+
+        cursor.close();
+
+        return hasAccessToken;
+    }
+
+    public Boolean hasRefreshToken(String token) {
+
+        Boolean hasRefreshToken = false;
+
+        MongoCollection<Document> collection = db
+                .getCollection(Constants.TOKEN_TABLE);
+
+        MongoCursor<Document> cursor = collection
+                .find(Filters.eq(Constants.KEY_REFRESH_TOKEN, token))
+                .iterator();
+
+        if (cursor.hasNext())
+            hasRefreshToken = true;
+
+        cursor.close();
+
+        return hasRefreshToken;
+    }
+
+    public Boolean updateResource(UserToken oldUserToken,
+            UserToken newUserToken) {
+
+        Boolean updateResource = false;
+        String userId = oldUserToken.getUserId();
+        String oldRefreshToken = oldUserToken.getRefreshToken();
+
+        Document doc = createDocument(newUserToken);
+
+        MongoCollection<Document> collection = db
+                .getCollection(Constants.TOKEN_TABLE);
+
+        // update
+        if (collection.findOneAndReplace(
+                Filters.and(Filters.eq(Constants.KEY_USER_ID, userId), Filters
+                        .eq(Constants.KEY_REFRESH_TOKEN, oldRefreshToken)),
+                doc) != null) {
+
+            // collection.insertOne(doc);
+            updateResource = true;
+
+        } else {
+            Logger.e("UpdateResource failed!");
+        }
+
+        return updateResource;
+    }
+
+    public String getIssuedTime(String accessToken) {
+
+        MongoCollection<Document> collection = db
+                .getCollection(Constants.TOKEN_TABLE);
+
+        MongoCursor<Document> cursor = collection
+                .find(Filters.eq(Constants.KEY_ACCESS_TOKEN, accessToken))
+                .iterator();
+
+        String issuedTime = null;
+
+        try {
+
+            while (cursor.hasNext()) {
+
+                Document doc = cursor.next();
+                UserToken userToken = convertTokenDocToResource(doc);
+
+                issuedTime = userToken.getIssuedTime();
+                break;
+            }
+
+        } finally {
+
+            cursor.close();
+        }
+
+        return issuedTime;
+
+    }
+
     public void printResources() {
 
         ArrayList<UserDevice> dlist = readDeviceResources();
         int size = dlist.size();
-
-        Logger.i("*Table: " + Constants.DEVICE_TABLE);
+        
+        Logger.i("[" + Constants.DEVICE_TABLE + "]Table");
         for (int i = 0; i < size; i++) {
 
             UserDevice item = dlist.get(i);
@@ -218,79 +348,114 @@ public class MongoDB {
                     + item.getDeviceId());
         }
 
-        ArrayList<UserSession> slist = readSessionResources();
-        size = slist.size();
+        /*
+         * ArrayList<UserSession> slist = readSessionResources(); size =
+         * slist.size();
+         * 
+         * Logger.i("*Table: " + Constants.SESSION_TABLE);
+         * 
+         * for (int i = 0; i < size; i++) {
+         * 
+         * UserSession item = slist.get(i);
+         * 
+         * Logger.i("[" + i + "]" + item.getUserId() + ", " +
+         * item.getSessionCode());
+         * 
+         * }
+         */
 
-        Logger.i("*Table: " + Constants.SESSION_TABLE);
+        ArrayList<UserToken> tlist = readUserTokenResources();
+        size = tlist.size();
+
+        Logger.i("[" + Constants.TOKEN_TABLE + "]Table");
 
         for (int i = 0; i < size; i++) {
 
-            UserSession item = slist.get(i);
+            UserToken item = tlist.get(i);
 
-            Logger.i("[" + i + "]" + item.getUserId() + ", "
-                    + item.getSessionCode());
+            Logger.i("[" + i + "]" + item.getUserId() + "/"
+                    + item.getAccessToken() + "/" + item.getRefreshToken() + "/"
+                    + item.getIssuedTime());
 
         }
     }
 
-    private Document createDocument(UserSession userSession) {
+    private Document createDocument(UserToken userToken) {
 
-        Document doc = new Document(Constants.USER_ID, userSession.getUserId())
-                .append(Constants.SESSION_CODE, userSession.getSessionCode());
+        String userId = userToken.getUserId();
+        String accessToken = userToken.getAccessToken();
+        String refreshToken = userToken.getRefreshToken();
+
+        DateFormat f = new SimpleDateFormat("yyyyMMddkkmm");
+        Date currentDate = new Date();
+
+        String issuedTime = f.format(currentDate);
+
+        Document doc = new Document(Constants.KEY_USER_ID, userId)
+                .append(Constants.KEY_ACCESS_TOKEN, accessToken)
+                .append(Constants.KEY_REFRESH_TOKEN, refreshToken)
+                .append(Constants.KEY_ISSUED_TIME, issuedTime);
 
         return doc;
     }
 
     private Document createDocument(UserDevice userDevice) {
 
-        Document doc = new Document(Constants.USER_ID, userDevice.getUserId())
-                .append(Constants.DEVICE_ID, userDevice.getDeviceId());
+        Document doc = new Document(Constants.KEY_USER_ID,
+                userDevice.getUserId()).append(Constants.KEY_DEVICE_ID,
+                        userDevice.getDeviceId());
 
         return doc;
     }
 
-    private UserSession convertSessionDocToResource(Document doc) {
+    private UserToken convertTokenDocToResource(Document doc) {
 
-        UserSession userSession = new UserSession();
+        UserToken userToken = new UserToken();
 
-        userSession.setUserId(doc.getString(Constants.USER_ID));
-        userSession.setSessionCode(doc.getString(Constants.SESSION_CODE));
+        String userId = doc.getString(Constants.KEY_USER_ID);
+        String accessToken = doc.getString(Constants.KEY_ACCESS_TOKEN);
+        String refreshToken = doc.getString(Constants.KEY_REFRESH_TOKEN);
+        String issuedTime = doc.getString(Constants.KEY_ISSUED_TIME);
 
-        return userSession;
+        // Logger.d("issuedTime: " + issuedTime);
+        userToken.setUserToken(userId, accessToken, refreshToken);
+        userToken.setIssuedTime(issuedTime);
+
+        return userToken;
     }
 
     private UserDevice convertDeviceDocToResource(Document doc) {
 
         UserDevice userDevice = new UserDevice();
 
-        userDevice.setUserId(doc.getString(Constants.USER_ID));
-        userDevice.setDeviceId(doc.getString(Constants.DEVICE_ID));
+        userDevice.setUserId(doc.getString(Constants.KEY_USER_ID));
+        userDevice.setDeviceId(doc.getString(Constants.KEY_DEVICE_ID));
 
         return userDevice;
     }
 
-    private ArrayList<UserSession> readSessionResources() {
+    private ArrayList<UserToken> readUserTokenResources() {
 
-        ArrayList<UserSession> userSessionList = new ArrayList<UserSession>();
+        ArrayList<UserToken> userTokenList = new ArrayList<>();
 
         MongoCollection<Document> collection = db
-                .getCollection(Constants.SESSION_TABLE);
+                .getCollection(Constants.TOKEN_TABLE);
         MongoCursor<Document> cursor = collection.find().iterator();
 
         while (cursor.hasNext()) {
 
             Document doc = cursor.next();
-            userSessionList.add(convertSessionDocToResource(doc));
+            userTokenList.add(convertTokenDocToResource(doc));
         }
 
         cursor.close();
 
-        return userSessionList;
+        return userTokenList;
     }
 
     private ArrayList<UserDevice> readDeviceResources() {
 
-        ArrayList<UserDevice> userDeviceList = new ArrayList<UserDevice>();
+        ArrayList<UserDevice> userDeviceList = new ArrayList<>();
 
         MongoCollection<Document> collection = db
                 .getCollection(Constants.DEVICE_TABLE);
