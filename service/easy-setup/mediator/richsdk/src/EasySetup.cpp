@@ -20,9 +20,12 @@
 
 #include "EasySetup.h"
 
+#include "OCPlatform.h"
 #include "logger.h"
 #include "ESException.h"
 #include "RemoteEnrollee.h"
+
+using namespace OC;
 
 namespace OIC
 {
@@ -48,6 +51,11 @@ namespace OIC
 
         std::shared_ptr<RemoteEnrollee> EasySetup::createRemoteEnrollee (std::shared_ptr< OC::OCResource > resource)
         {
+            if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV)
+            {
+                OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid reousrce");
+                return nullptr;
+            }
             return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
         }
     }

@@ -45,7 +45,7 @@ namespace OIC
                     rep.getUri().c_str(),
                     eCode);
 
-            if (eCode != 0)
+            if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "checkProvInformationCb : Provisioning is failed ");
@@ -69,7 +69,7 @@ namespace OIC
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : %s, eCode = %d",
                     rep.getUri().c_str(), eCode);
 
-            if (eCode != 0)
+            if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 ESResult result  = ESResult::ES_ERROR;
 
@@ -197,13 +197,13 @@ namespace OIC
                     if(prop->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE)
                                 && prop->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
                     {
-                        std::vector<int> types = prop->getValue<std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE);
+                        std::vector<int> modes = prop->getValue<std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE);
 
-                        for(auto type = types.begin(); type != types.end(); ++type)
+                        for(auto mode = modes.begin(); mode != modes.end(); ++mode)
                         {
                             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "OC_RSRVD_ES_SUPPORTEDWIFIMODE = %d",
-                                *type);
-                            wifiConf.types.push_back(static_cast<WIFI_MODE>(*type));
+                                *mode);
+                            wifiConf.modes.push_back(static_cast<WIFI_MODE>(*mode));
                         }
 
                         wifiConf.freq = static_cast<WIFI_FREQ>(prop->getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));

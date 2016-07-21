@@ -161,7 +161,7 @@ namespace OIC
 
         typedef struct
         {
-            vector<WIFI_MODE> types;
+            vector<WIFI_MODE> modes;
             WIFI_FREQ freq;
         } WiFiConfig;
 

@@ -19,14 +19,14 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <iostream>
-#include<stdio.h>
+#include <condition_variable>
 
-#include "oic_string.h"
+#include "OCPlatform.h"
+#include "OCApi.h"
+#include "OCProvisioningManager.h"
+
 #include "EasySetup.h"
 #include "ESRichCommon.h"
-#include "OCPlatform.h"
-#include "logger.h"
-#include "OCProvisioningManager.h"
 
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"
 #define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC }
@@ -36,11 +36,13 @@
 using namespace OC;
 using namespace OIC::Service;
 
-static EasySetup *easySetupIntance = nullptr;
 static std::shared_ptr<RemoteEnrollee> remoteEnrollee = nullptr;
+static std::shared_ptr<OC::OCResource> curResource = nullptr;
 
-static std::string ipaddress, ssid, pwd;
-char security;
+static std::mutex g_discoverymtx;
+static std::condition_variable g_cond;
+
+#define PROV_RESOURCE_TYPE "ocf.wk.prov"
 
 typedef void (*Runner)();
 
@@ -64,201 +66,226 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
     throw std::runtime_error("Invalid Input, please try again");
 }
 
-void printPropertyData(PropertyData propData)
+void printConfiguration(EnrolleeConf conf)
 {
     cout << "===========================================" << endl;
-    DeviceConfig devConfig = propData.getDevConf();
-    NetworkInfo netInfo = propData.getNetInfo();
+    DeviceConfig devConfig = conf.getDevConf();
+    WiFiConfig wifiConfig = conf.getWiFiConf();
 
-    cout << "\tDeviceConfig.id : " << devConfig.id << endl;
     cout << "\tDeviceConfig.name : " << devConfig.name << endl;
     cout << "\tDeviceConfig.language : " << devConfig.language << endl;
     cout << "\tDeviceConfig.country : " << devConfig.country << endl;
 
-    for(auto type = netInfo.types.begin(); type != netInfo.types.end(); ++type)
+    for(auto mode = wifiConfig.modes.begin(); mode != wifiConfig.modes.end(); ++mode)
     {
-        cout << "\tnetInfo.types : " << static_cast<int>(*type) << endl;
+        cout << "\tnetInfo.modes : " << static_cast<int>(*mode) << endl;
     }
-    cout << "\tnetInfo.freq : " << static_cast<int>(netInfo.freq) << endl;
+    cout << "\tnetInfo.freq : " << static_cast<int>(wifiConfig.freq) << endl;
     cout << "===========================================" << endl;
 }
 
-void RequestPropertyDataStatusCallback(std::shared_ptr< RequestPropertyDataStatus > requestPropertyDataStatus)
+void provisionSecurity()
 {
-    cout << "Enter RequestPropertyDataStatusCb." << endl;
+    // TODO
+}
 
-    if(requestPropertyDataStatus->getESResult() != ES_OK)
+void GetConfigurationCallback(std::shared_ptr< GetConfigurationStatus > getConfigurationStatus)
+{
+    if(getConfigurationStatus->getESResult() != ES_OK)
     {
-      cout << "requestPropertyDataStatus is failed." << endl;
+      cout << "GetConfigurationStatus is failed." << endl;
       return;
     }
     else
     {
-      cout << "requestPropertyDataStatus is success." << endl;
-      printPropertyData(requestPropertyDataStatus->getPropertyData());
+      cout << "GetConfigurationStatus is success." << endl;
+      printConfiguration(getConfigurationStatus->getEnrolleeConf());
     }
 }
 
-void dataProvisioningStatusCallback(std::shared_ptr< DataProvisioningStatus > provStatus)
+void getConfiguration()
 {
-    cout << "Enter dataProvisioningStatusCallback." << endl;
+    if(!remoteEnrollee)
+        return;
 
+    try
+    {
+        remoteEnrollee->getConfiguration(GetConfigurationCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during getConfiguration call" << e.reason();
+        return;
+    }
+}
+
+void deviceProvisioningStatusCallback(std::shared_ptr< DevicePropProvisioningStatus > provStatus)
+{
     if(provStatus->getESResult() != ES_OK)
     {
-      cout << "dataProvisioningStatusCallback is failed." << endl;
+      cout << "Device Provisioning is failed." << endl;
       return;
     }
     else
     {
-      cout << "dataProvisioningStatusCallback is success." << endl;
-      cout << "ESDataProvState : " << provStatus->getESDataProvState() << endl;
+      cout << "Device Provisioning is success." << endl;
     }
 }
 
-void cloudProvisioningStatusCallback(std::shared_ptr< CloudProvisioningStatus > status)
+void provisionDeviceProperty()
 {
-    cout << "Enter cloudProvisioningStatusCallback." << endl;
-    cout << "CloudProvStatus : " <<  status->getESCloudState() << endl;
-}
-
-void createRemoteEnrollee()
-{
-    easySetupIntance = EasySetup::getInstance();
-    try
-    {
-        remoteEnrollee = easySetupIntance->createRemoteEnrollee();
-    }
-    catch (OCException &e)
-    {
-        std::cout << "Exception during createEnrolleeDevice call" << e.reason();
+    if(!remoteEnrollee)
         return;
-    }
-    cout << "createRemoteEnrollee is success." << endl;
-}
 
-void initRemoteEnrollee()
-{
+    DeviceProp deviceProp;
+    deviceProp.WIFI.ssid = "Iotivity_SSID";
+    deviceProp.WIFI.pwd = "Iotivity_PWD";
+    deviceProp.WIFI.authtype = WPA2_PSK;
+    deviceProp.WIFI.enctype = TKIP_AES;
+    deviceProp.Device.language = "korean";
+    deviceProp.Device.country = "Korea";
+
     try
     {
-        remoteEnrollee->initRemoteEnrollee();
+        remoteEnrollee->provisionDeviceProperties(deviceProp, deviceProvisioningStatusCallback);
     }
     catch (OCException &e)
     {
-        std::cout << "Exception during initRemoteEnrollee call" << e.reason();
+        std::cout << "Exception during provisionDeviceProperties call" << e.reason();
         return;
     }
 }
 
-void requestPropertyData()
+void cloudProvisioningStatusCallback(std::shared_ptr< CloudPropProvisioningStatus > provStatus)
 {
-    try
+    switch (provStatus->getESCloudState())
     {
-        remoteEnrollee->requestPropertyData(RequestPropertyDataStatusCallback);
+        case ES_CLOUD_PROVISIONING_ERROR:
+            cout << "Cloud Provisioning is failed." << endl;
+            break;
+        case ES_CLOUD_PROVISIONING_SUCCESS:
+            cout << "Cloud Provisioning is success." << endl;
+            break;
+        case ES_CLOUD_ENROLLEE_FOUND:
+            cout << "Enrollee is found in a given network." << endl;
+            break;
+        case ES_CLOUD_ENROLLEE_NOT_FOUND:
+            cout << "Enrollee is not found in a given network." << endl;
+            break;
     }
-    catch (OCException &e)
-    {
-        std::cout << "Exception during requestPropertyData call" << e.reason();
+}
+
+void provisionCloudProperty()
+{
+    if(!remoteEnrollee)
         return;
-    }
-}
 
-void setDataProvInfo()
-{
-    DataProvInfo dataProvInfo;
-    dataProvInfo.WIFI.ssid = "Iotivity_2.4G";
-    dataProvInfo.WIFI.pwd = "1234567890";
-    dataProvInfo.WIFI.authtype = WPA2_PSK;
-    dataProvInfo.WIFI.enctype = TKIP_AES;
-    dataProvInfo.Device.language = "korean";
-    dataProvInfo.Device.country = "korea";
+    CloudProp cloudProp;
+    cloudProp.authCode = "authCode";
+    cloudProp.authProvider = "authProvider";
+    cloudProp.ciServer = "ciServer";
 
-    remoteEnrollee->setDataProvInfo(dataProvInfo);
-}
-
-void setCloudProvInfo()
-{
-    CloudProvInfo cloudProvInfo;
-    cloudProvInfo.authCode = "authCode";
-    cloudProvInfo.authProvider = "authProvider";
-    cloudProvInfo.ciServer = "ciServer";
-
-    remoteEnrollee->setCloudProvInfo(cloudProvInfo);
-}
-
-void startDataProvisioning()
-{
     try
     {
-        remoteEnrollee->startDataProvisioning(dataProvisioningStatusCallback);
+        remoteEnrollee->provisionCloudProperties(cloudProp, cloudProvisioningStatusCallback);
     }
     catch (OCException &e)
     {
-        std::cout << "Exception during startDataProvisioning call" << e.reason();
-        return;
-    }
-}
-
-void startCloudProvisioning()
-{
-    try
-    {
-        remoteEnrollee->startCloudProvisioning(cloudProvisioningStatusCallback);
-    }
-    catch (OCException &e)
-    {
-        std::cout << "Exception during startDataProvisioning call" << e.reason();
+        std::cout << "Exception during provisionCloudProperties call" << e.reason();
         return;
     }
 }
 
 void DisplayMenu()
 {
-    constexpr int CREATE_REMOTE_ENROLLEE = 1;
-    constexpr int EASY_SETUP_INIT = 2;
-    constexpr int REQUEST_PROPERTY_DATA = 3;
-    constexpr int SET_DATA_PROVISIONING_INFO = 4;
-    constexpr int START_DATA_PROVISIONING = 5;
-    constexpr int SET_CLOUD_PROVISIONING_INFO = 6;
-    constexpr int START_CLOUD_PROVISIONING = 7;
+    constexpr int PROVISION_SECURITY = 1;
+    constexpr int GET_CONFIGURATION = 2;
+    constexpr int PROVISION_DEVICE_PROPERTY = 3;
+    constexpr int PROVISION_CLOUD_PROPERTY = 4;
 
     std::cout << "========================================================\n";
-    std::cout << CREATE_REMOTE_ENROLLEE << ". Create Remote Enrollee                    \n";
-    std::cout << EASY_SETUP_INIT << ". Easy Setup Init                    \n";
-    std::cout << REQUEST_PROPERTY_DATA << ". Request PropertyData              \n";
-    std::cout << SET_DATA_PROVISIONING_INFO << ". Set Data Provisioning Info              \n";
-    std::cout << START_DATA_PROVISIONING << ". Start Data Provisioning              \n";
-    std::cout << SET_CLOUD_PROVISIONING_INFO << ". Set Cloud Provisioning Info              \n";
-    std::cout << START_CLOUD_PROVISIONING << ". Start Cloud Provisioning              \n";
+    std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
+    std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
+    std::cout << PROVISION_DEVICE_PROPERTY << ". Provision Device Property\n";
+    std::cout << PROVISION_CLOUD_PROPERTY << ". Provision Cloud Property  \n";
     std::cout << "========================================================\n";
 
-    int selection = processUserInput(CREATE_REMOTE_ENROLLEE, START_CLOUD_PROVISIONING);
+    int selection = processUserInput(PROVISION_SECURITY, PROVISION_CLOUD_PROPERTY);
 
     switch (selection)
     {
-        case CREATE_REMOTE_ENROLLEE:
-            createRemoteEnrollee();
+        case PROVISION_SECURITY:
+            provisionSecurity();
             break;
-        case EASY_SETUP_INIT:
-            initRemoteEnrollee();
+        case GET_CONFIGURATION:
+            getConfiguration();
             break;
-        case REQUEST_PROPERTY_DATA:
-            requestPropertyData();
+        case PROVISION_DEVICE_PROPERTY:
+            provisionDeviceProperty();
             break;
-        case SET_DATA_PROVISIONING_INFO:
-            setDataProvInfo();
-            break;
-        case START_DATA_PROVISIONING:
-            startDataProvisioning();
-            break;
-        case SET_CLOUD_PROVISIONING_INFO:
-            setCloudProvInfo();
-            break;
-        case START_CLOUD_PROVISIONING:
-            startCloudProvisioning();
+        case PROVISION_CLOUD_PROPERTY:
+            provisionCloudProperty();
             break;
         default:
             break;
     };
+}
+
+// Callback to found resources
+void foundResource(std::shared_ptr<OC::OCResource> resource)
+{
+    std::string resourceURI;
+    std::string hostAddress;
+    try
+    {
+        // Do some operations with resource object.
+        if(resource &&
+           !curResource &&
+           resource->getResourceTypes().at(0) == PROV_RESOURCE_TYPE)
+        {
+            std::cout<<"DISCOVERED Resource:"<<std::endl;
+            // Get the resource URI
+            resourceURI = resource->uri();
+            std::cout << "\tURI of the resource: " << resourceURI << std::endl;
+
+            // Get the resource host address
+            hostAddress = resource->host();
+            std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
+
+            // Get the resource types
+            std::cout << "\tList of resource types: " << std::endl;
+            for(auto &resourceTypes : resource->getResourceTypes())
+            {
+                std::cout << "\t\t" << resourceTypes << std::endl;
+            }
+
+            // Get the resource interfaces
+            std::cout << "\tList of resource interfaces: " << std::endl;
+            for(auto &resourceInterfaces : resource->getResourceInterfaces())
+            {
+                std::cout << "\t\t" << resourceInterfaces << std::endl;
+            }
+
+            if(curResource == nullptr)
+            {
+                remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
+                if(!remoteEnrollee)
+                {
+                    std::cout << "RemoteEnrollee object is failed for some reasons!" << std::endl;
+                }
+                else
+                {
+                    curResource = resource;
+                    std::cout << "RemoteEnrollee object is successfully created!" << std::endl;
+                    g_cond.notify_all();
+                }
+            }
+        }
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << "Exception in foundResource: "<< e.what() << std::endl;
+    }
 }
 
 static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
@@ -269,6 +296,7 @@ static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
 
 int main()
 {
+    std::ostringstream requestURI;
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
     PlatformConfig config
@@ -287,6 +315,21 @@ int main()
         return -1;
     }
 #endif
+
+    try
+    {
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << PROV_RESOURCE_TYPE;
+
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
+        std::cout<< "Finding Resource... " <<std::endl;
+
+        std::unique_lock<std::mutex> lck(g_discoverymtx);
+        g_cond.wait_for(lck, std::chrono::seconds(4));
+
+    }catch(OCException& e)
+    {
+        oclog() << "Exception in main: "<<e.what();
+    }
 
     while (true)
     {

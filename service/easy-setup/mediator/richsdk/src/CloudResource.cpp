@@ -73,7 +73,7 @@ namespace OIC
             OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : %s, eCode = %d",
                     rep.getUri().c_str(), eCode);
 
-            if (eCode != 0)
+            if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 ESResult result  = ESResult::ES_ERROR;
 

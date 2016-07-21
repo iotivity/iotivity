@@ -63,5 +63,8 @@ enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.c')
 
 i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)
 
-Alias('enrollee', i_enrollee)
+justworksdat = enrollee_env.Install(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/linux/',
+                                    env.get('SRC_DIR') + '/service/easy-setup/sampleapp/enrollee/linux/oic_svr_db_server.dat')
+
+Alias('enrollee', [i_enrollee, justworksdat])
 env.AppendTarget('enrollee')
