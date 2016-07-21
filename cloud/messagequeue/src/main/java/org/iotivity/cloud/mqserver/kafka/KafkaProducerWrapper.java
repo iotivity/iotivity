@@ -26,7 +26,7 @@ import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class KafkaProducerWrapper {
 
@@ -47,7 +47,7 @@ public class KafkaProducerWrapper {
     // TODO handle exception
     public boolean publishMessage(byte[] message) {
 
-        Logger.d("kafka publishMessage - " + mTopicName);
+        Log.d("kafka publishMessage - " + mTopicName);
 
         ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(
                 mTopicName, message);

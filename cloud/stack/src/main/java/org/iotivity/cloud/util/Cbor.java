@@ -85,7 +85,7 @@ public class Cbor<T> {
                 throw new PreconditionFailedException("deviceId is null");
             }
 
-            Logger.i("deviceId : " + deviceId);
+            Log.i("deviceId : " + deviceId);
 
             return deviceId;
         }

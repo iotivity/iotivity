@@ -40,7 +40,7 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -100,7 +100,7 @@ public class AccountResource extends Resource {
         String authProvider = payloadData.get(Constants.REQ_AUTH_PROVIDER)
                 .toString();
 
-        Logger.d("authCode: " + authCode);
+        Log.d("authCode: " + authCode);
 
         @SuppressWarnings("unchecked")
         HashMap<String, String> options = (HashMap<String, String>) payloadData

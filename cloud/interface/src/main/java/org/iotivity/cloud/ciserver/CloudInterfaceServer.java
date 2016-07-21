@@ -35,20 +35,17 @@ import org.iotivity.cloud.ciserver.resources.proxy.MessageQueue;
 import org.iotivity.cloud.ciserver.resources.proxy.ResourceDirectory;
 import org.iotivity.cloud.ciserver.resources.proxy.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.ResourcePresence;
-import org.iotivity.cloud.util.ErrorLogger;
-import org.iotivity.cloud.util.FileLogger;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
 
     public static void main(String[] args) throws Exception {
-
-        System.setOut(FileLogger.createLoggingProxy(System.out));
+        Log.Init();
 
         System.out.println("-----CI SERVER-------");
 
         if (args.length != 8) {
-            Logger.e(
+            Log.e(
                     "coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
                             + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
             return;
@@ -65,8 +62,6 @@ public class CloudInterfaceServer {
         ConnectorPool.addConnection("mq",
                 new InetSocketAddress(args[5], Integer.parseInt(args[6])),
                 tlsMode);
-
-        ErrorLogger.Init();
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
