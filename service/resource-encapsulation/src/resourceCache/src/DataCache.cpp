@@ -31,6 +31,8 @@
 #include "RCSResourceAttributes.h"
 #include "ExpiryTimer.h"
 
+#include "ocrandom.h"
+
 namespace OIC
 {
     namespace Service
@@ -314,17 +316,15 @@ namespace OIC
         CacheID DataCache::generateCacheID()
         {
             CacheID retID = 0;
-            srand(time(NULL));
-
             while (1)
             {
                 if (findSubscriber(retID).first == 0 && retID != 0)
                 {
                     break;
                 }
-                retID = rand();
-            }
 
+                retID = OCGetRandom();
+            }
             return retID;
         }
 
