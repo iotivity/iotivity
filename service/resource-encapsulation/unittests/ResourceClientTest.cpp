@@ -43,6 +43,7 @@ constexpr int DEFAULT_WAITING_TIME_IN_MILLIS = 3000;
 
 void getRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void setRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
+void setRemoteRepresentationCallback(const HeaderOpts&, const RCSRepresentation&, int) {}
 void resourceStateChanged(ResourceState) { }
 void cacheUpdatedCallback(const RCSResourceAttributes&) {}
 
@@ -159,6 +160,32 @@ TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
             Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     object->setRemoteAttributes(newAttrs, setRemoteAttributesCallback);
+    Wait();
+
+    ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY));
+}
+
+TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationDoesNotAllowEmptyFunction)
+{
+    RCSQueryParams queryParams;
+    RCSRepresentation rcsRep;
+    ASSERT_THROW(object->set(queryParams, rcsRep, {}), RCSInvalidParameterException);
+}
+
+TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationSetsRepresentationOfServer)
+{
+    RCSRepresentation rcsRep;
+    RCSQueryParams queryParams;
+    constexpr int newValue = ATTR_VALUE + 1;
+    RCSResourceAttributes newAttrs;
+    newAttrs[ATTR_KEY] = newValue;
+
+    rcsRep.setAttributes(newAttrs);
+
+    mocks.ExpectCallFunc(setRemoteRepresentationCallback).
+            Do([this](const HeaderOpts&, const RCSRepresentation&, int){ Proceed(); });
+
+    object->set(queryParams, rcsRep, setRemoteRepresentationCallback);
     Wait();
 
     ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY));

@@ -463,5 +463,23 @@ namespace OIC
                     std::move(cb));
         }
 
+        void RCSRemoteResourceObject::set(const RCSQueryParams& queryParams,
+                const RCSRepresentation& rep, SetCallback cb)
+        {
+            SCOPE_LOG_F(DEBUG, TAG);
+
+            if (!cb)
+            {
+                throw RCSInvalidParameterException{ "set : Callback is empty" };
+            }
+
+            const auto& paramMap = queryParams.getAll();
+
+            m_primitiveResource->requestSetWith(
+                    queryParams.getResourceType(), queryParams.getResourceInterface(),
+                    OC::QueryParamsMap{ paramMap.begin(), paramMap.end() }, rep,
+                    std::move(cb));
+        }
+
     }
 }
