@@ -251,6 +251,14 @@ namespace OIC
                     std::shared_ptr< OC::OCResource > ocResource);
 
             /**
+             * Returns an equivalent OCResource using RCSRemoteResourceObject instance.
+             *
+             * @throw RCSInvalidParameterException If rcsResource is nullptr.
+             */
+            static std::shared_ptr< OC::OCResource > toOCResource(
+                    RCSRemoteResourceObject::Ptr rcsResource);
+
+            /**
              * Returns whether monitoring is enabled.
              *
              * @see startMonitoring()

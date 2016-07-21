@@ -20,6 +20,8 @@
 
 #include "UnitTestHelper.h"
 
+#include "OCResource.h"
+
 #include "RCSRemoteResourceObject.h"
 #include "RCSDiscoveryManager.h"
 #include "RCSResourceObject.h"
@@ -391,5 +393,14 @@ TEST_F(RemoteResourceObjectTest, HasSameTypeWithServer)
 TEST_F(RemoteResourceObjectTest, HasSameInterfaceWithServer)
 {
     EXPECT_EQ(RESOURCEINTERFACE, object->getInterfaces()[0]);
+}
+
+TEST_F(RemoteResourceObjectTest, GetValidOCResourceTest)
+{
+    std::shared_ptr<OC::OCResource> ocRes = RCSRemoteResourceObject::toOCResource(object);
+
+    EXPECT_NE(nullptr, ocRes);
+
+    EXPECT_EQ(RESOURCEURI, ocRes->uri());
 }
 

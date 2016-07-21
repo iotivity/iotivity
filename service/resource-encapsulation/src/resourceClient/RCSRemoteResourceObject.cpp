@@ -20,6 +20,8 @@
 
 #include "RCSRemoteResourceObject.h"
 
+#include "OCPlatform.h"
+
 #include "ResourceBroker.h"
 #include "ResourceCacheManager.h"
 
@@ -166,7 +168,6 @@ namespace OIC
             return m_map;
         }
 
-
         RCSRemoteResourceObject::RCSRemoteResourceObject(
                 std::shared_ptr< PrimitiveResource > primtiveResource) :
                 m_primitiveResource{ primtiveResource },
@@ -186,7 +187,6 @@ namespace OIC
             catch(std::exception &e){
                 OIC_LOG_V(ERROR, TAG, "%s", e.what());
             }
-
         }
 
         RCSRemoteResourceObject::Ptr RCSRemoteResourceObject::fromOCResource(
@@ -199,6 +199,24 @@ namespace OIC
 
             return std::make_shared< RCSRemoteResourceObject >(
                     PrimitiveResource::create(ocResource));
+        }
+
+        std::shared_ptr< OC::OCResource > RCSRemoteResourceObject::toOCResource(
+        RCSRemoteResourceObject::Ptr rcsResource)
+        {
+            if (!rcsResource)
+            {
+                throw RCSInvalidParameterException("the rcs resource must not be nullptr.");
+            }
+
+            OC::OCResource::Ptr ocResource = OC::OCPlatform::constructResourceObject(rcsResource->getAddress(),
+                rcsResource->getUri(),
+                CT_DEFAULT,
+                rcsResource->isObservable(),
+                rcsResource->getTypes(),
+                rcsResource->getInterfaces());
+
+            return ocResource;
         }
 
         bool RCSRemoteResourceObject::isMonitoring() const
