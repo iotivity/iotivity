@@ -168,6 +168,16 @@ public class KafkaConsumerWrapper {
         return true;
     }
 
+    public void closeConnection() {
+
+        if (mConsumerStarted == true) {
+            unsubscribeTopic();
+        }
+
+        mZkUtils.close();
+        mZkClient.close();
+    }
+
     public ArrayList<byte[]> getMessages() {
 
         Logger.d("kafka get all messages - " + mTopicName);

@@ -58,6 +58,11 @@ public class KafkaProducerWrapper {
         return true;
     }
 
+    public void closeConnection() {
+
+        mProducer.close();
+    }
+
     private Properties buildPropertiesForPublish() {
 
         // TODO check property settings
