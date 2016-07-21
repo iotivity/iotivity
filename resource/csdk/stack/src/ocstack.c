@@ -51,6 +51,7 @@
 #include "logger.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
+#include "psinterface.h"
 #include "doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
@@ -4012,6 +4013,7 @@ OCStackResult initResources()
 
     if(result == OC_STACK_OK)
     {
+        CreateResetProfile();
         result = OCCreateResource(&deviceResource,
                                   OC_RSRVD_RESOURCE_TYPE_DEVICE,
                                   OC_RSRVD_INTERFACE_DEFAULT,

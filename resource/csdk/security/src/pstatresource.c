@@ -510,7 +510,7 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
 static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing PUT request");
+    OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing POST request");
     OicSecPstat_t *pstat = NULL;
     static uint16_t prevMsgId = 0;
 
@@ -543,6 +543,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
                     break;
                 }
             }
+
             if(!validReq)
             {
                 OIC_LOG_V(ERROR, TAG, "%d is unsupported Operation Mode", (int) pstat->om);
@@ -554,7 +555,12 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             //Currently, we dose not support the multiple service server driven yet.
             if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN)
             {
-                if ((pstat->cm & TAKE_OWNER) && false == pstat->isOp)
+                if ((pstat->cm & RESET) && false == pstat->isOp)
+                {
+                    validReq = true;
+                    OIC_LOG(INFO, TAG, "State changed to Ready for Reset");
+                }
+                else if ((pstat->cm & TAKE_OWNER) && false == pstat->isOp)
                 {
                     validReq = true;
                     OIC_LOG (INFO, TAG, "State changed to Ready for Ownership transfer");
@@ -594,6 +600,23 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             if (UpdatePersistentStorage(gPstat))
             {
                 ehRet = OC_EH_OK;
+            }
+            if (true == (pstat->cm & RESET))
+            {
+                if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+                {
+                    ehRet = OC_EH_ERROR;
+                    OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
+                    DeletePstatBinData(pstat);
+                    return ehRet;
+                }
+                ret = ResetSecureResourceInPS();
+                if (OC_STACK_OK == ret)
+                {
+                    ehRet = OC_EH_OK;
+                }
+                DeletePstatBinData(pstat);
+                return ehRet;
             }
         }
     }

@@ -979,7 +979,7 @@ exit:
  *     ::OC_STACK_NO_RESOURCE on failure to find the appropriate ACE
  *     ::OC_STACK_INVALID_PARAM on invalid parameter
  */
-static OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource)
+OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource)
 {
     OIC_LOG(DEBUG, TAG, "IN RemoveACE");
 
