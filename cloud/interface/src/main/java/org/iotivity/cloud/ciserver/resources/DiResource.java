@@ -36,6 +36,7 @@ import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedExcep
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
+import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
@@ -92,6 +93,20 @@ public class DiResource extends Resource {
         return uriPath.toString();
     }
 
+    private IResponse convertReponseUri(IResponse response, String di) {
+
+        String convertedUri = new String();
+
+        CoapResponse coapResponse = (CoapResponse) response;
+
+        if (coapResponse.getUriPath().isEmpty() == false) {
+            convertedUri = "/di/" + di + "/" + coapResponse.getUriPath();
+        }
+
+        return MessageBuilder
+                .modifyResponse(response, convertedUri, null, null);
+    }
+
     class LinkInterfaceHandler implements IResponseEventHandler {
         private Cbor<List<HashMap<String, Object>>> mCbor      = new Cbor<>();
         private String                              mTargetDI  = null;
@@ -117,9 +132,11 @@ public class DiResource extends Resource {
                 convertHref(linkPayload);
             }
 
-            mSrcDevice.sendResponse(MessageBuilder.modifyResponse(response,
-                    ContentFormat.APPLICATION_CBOR, linkPayload != null
-                            ? mCbor.encodingPayloadToCbor(linkPayload) : null));
+            mSrcDevice.sendResponse(MessageBuilder.modifyResponse(
+                    convertReponseUri(response, mTargetDI),
+                    ContentFormat.APPLICATION_CBOR,
+                    linkPayload != null ? mCbor
+                            .encodingPayloadToCbor(linkPayload) : null));
         }
     }
 
@@ -133,10 +150,25 @@ public class DiResource extends Resource {
 
         String deviceId = request.getUriPathSegments().get(1);
 
-        requestChannel.sendRequest(
-                MessageBuilder.modifyRequest(request,
-                        extractTargetUriPath(request), null, null, null),
+        requestChannel.sendRequest(MessageBuilder.modifyRequest(request,
+                extractTargetUriPath(request), null, null, null),
                 new LinkInterfaceHandler(deviceId, srcDevice));
+    }
+
+    class DefaultResponseHandler implements IResponseEventHandler {
+        private String mTargetDI  = null;
+        private Device mSrcDevice = null;
+
+        public DefaultResponseHandler(String targetDI, Device srcDevice) {
+            mTargetDI = targetDI;
+            mSrcDevice = srcDevice;
+        }
+
+        @Override
+        public void onResponseReceived(IResponse response) {
+
+            mSrcDevice.sendResponse(convertReponseUri(response, mTargetDI));
+        }
     }
 
     // This is optional method for packet handling
@@ -150,9 +182,11 @@ public class DiResource extends Resource {
             throw new NotFoundException();
         }
 
-        requestChannel.sendRequest(
-                MessageBuilder.modifyRequest(request,
-                        extractTargetUriPath(request), null, null, null),
-                srcDevice);
+        String deviceId = request.getUriPathSegments().get(1);
+
+        requestChannel.sendRequest(MessageBuilder.modifyRequest(request,
+                extractTargetUriPath(request), null, null, null),
+                new DefaultResponseHandler(deviceId, srcDevice));
     }
+
 }
