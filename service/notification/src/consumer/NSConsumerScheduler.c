@@ -112,17 +112,20 @@ NSResult NSConsumerPushEvent(NSTask * task)
 
 void NSConsumerMessageHandlerExit()
 {
-    NSDestroyMessageCacheList();
-    NSDestroyProviderCacheList();
+
     NSConsumerListenerTermiate();
+    NSCancelAllSubscription();
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
     NSSetMsgHandleQueue(NULL);
+
+    NSDestroyMessageCacheList();
+    NSDestroyProviderCacheList();
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 {
-    NSConsumerQueue * queue = NULL;
+    NSConsumerQueue * queue = *(NSGetMsgHandleQueue());;
     NSConsumerQueueObject * obj = NULL;
 
     NS_LOG(DEBUG, "create thread for consumer message handle");
@@ -131,16 +134,17 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 
     while (true)
     {
-        if (!queueHandleThread->isStarted)
+        if (!queue)
+        {
+            queue = *(NSGetMsgHandleQueue());
+            usleep(2000);
+            continue;
+        }
+
+        if (!queueHandleThread->isStarted && NSIsQueueEmpty(queue))
         {
             NS_LOG(ERROR, "msg handler thread will be terminated");
             break;
-        }
-
-        queue = *(NSGetMsgHandleQueue());
-        if (!queue)
-        {
-            continue;
         }
 
         if (NSIsQueueEmpty(queue))

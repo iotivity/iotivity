@@ -1,5 +1,26 @@
+//******************************************************************
+//
+// Copyright 2016 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #include <stdio.h>
 #include <unistd.h>
+#include "pthread.h"
 
 #include "ocstack.h"
 #include "NSCommon.h"
@@ -46,6 +67,7 @@ void onNotificationSync(NSSyncInfo * sync)
     printf("Sync STATE : %d\n", sync->state);
 }
 
+
 #ifdef WITH_CLOUD
 OCStackApplicationResult handleLoginoutCB(void *ctx,
         OCDoHandle handle,
@@ -86,8 +108,27 @@ OCStackApplicationResult handleLoginoutCB(void *ctx,
 }
 #endif
 
+void* OCProcessThread(void * ptr)
+{
+    (void) ptr;
+
+    while (true)
+    {
+        usleep(2000);
+        if(OCProcess() != OC_STACK_OK)
+        {
+            OCStop();
+            break;
+        }
+    }
+
+    return NULL;
+}
+
 int main(void)
 {
+    bool isExit = false;
+    pthread_t OCThread;
 
     printf("start Iotivity\n");
     if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
@@ -102,27 +143,47 @@ int main(void)
     cfg.messageCb = onNotificationPosted;
     cfg.syncInfoCb = onNotificationSync;
 
-
-    printf("start notification consumer service\n");
-    NSResult ret = NSStartConsumer(cfg);
-    if(ret != NS_OK)
-    {
-        printf("error discoverNoti %d\n", ret);
-    }
-
 #ifdef WITH_CLOUD
     NS_LOG(DEBUG, "process OCCloudLogin...");
     OCCloudLogin(CLOUD_HOST_ADDRESS, CLOUD_IOTIVITYNS_SESSION, handleLoginoutCB);
     NS_LOG(DEBUG, "OCCloudLogin return");
 #endif
 
-    while (true)
+    pthread_create(&OCThread, NULL, OCProcessThread, NULL);
+
+    printf("start notification consumer service\n");
+    while (!isExit)
     {
-        usleep(2000);
-        if(OCProcess() != OC_STACK_OK)
+        int num;
+        char dummy;
+
+        printf("1. Start Consumer\n");
+        printf("2. Stop Consumer\n");
+        printf("5. Exit\n");
+
+        printf("Input: ");
+
+        scanf("%d", &num);
+        fflush(stdin);
+        scanf("%c", &dummy);
+        fflush(stdin);
+
+        switch (num)
         {
-            OCStop();
-            break;
+            case 1:
+                printf("1. Start Consumer\n");
+                NSStartConsumer(cfg);
+                break;
+            case 2:
+                printf("2. Stop Consumer");
+                NSStopConsumer();
+                break;
+            case 5:
+                printf("5. Exit");
+                isExit = true;
+                break;
+            default:
+                break;
         }
     }
 

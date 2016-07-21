@@ -173,6 +173,30 @@ NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
     return NS_OK;
 }
 
+void NSCancelAllSubscription()
+{
+    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
+    if (!ProviderCache)
+    {
+        NS_LOG(DEBUG, "Provider Cache Init");
+        ProviderCache = NSStorageCreate();
+        NS_VERIFY_NOT_NULL_V(ProviderCache);
+
+        ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
+        NSSetProviderCacheList(ProviderCache);
+    }
+
+    NSCacheElement * obj = NULL;
+    while ((obj = NSPopProviderCacheList(ProviderCache)))
+    {
+        NS_LOG(DEBUG, "build NSTask");
+        NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) obj->data);
+        NS_VERIFY_NOT_NULL_V(task);
+
+        NSConsumerPushEvent(task);
+    }
+}
+
 void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
@@ -355,6 +379,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
         {
+            NS_LOG(DEBUG, "Make Subscribe cancel from provider.");
             NSConsumerHandleProviderDeleted((NSProvider_internal *)task->taskData);
             NSRemoveProvider((NSProvider_internal *)task->taskData);
             break;

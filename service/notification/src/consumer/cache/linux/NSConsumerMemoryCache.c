@@ -140,6 +140,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 
     NSCacheElement * prev = list->head;
     NSCacheElement * del = list->head;
+    NS_VERIFY_NOT_NULL(del, NS_ERROR);
 
     if (NSConsumerCompareIdCacheData(type, del->data, delId))
     {
@@ -370,6 +371,30 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     return NS_OK;
 }
 
+NSCacheElement * NSPopProviderCacheList(NSCacheList * list)
+{
+    pthread_mutex_t * mutex = NSGetCacheMutex();
+
+    pthread_mutex_lock(mutex);
+
+    NSCacheElement * head = list->head;
+    if (head)
+    {
+		NSCacheElement * next = list->head->next;
+
+		if (list->tail == head)
+			list->tail = NULL;
+
+		list->head = next;
+		head->next = NULL;
+    }
+
+    pthread_mutex_unlock(mutex);
+
+    return head;
+}
+
+
 NSResult NSStorageDestroy(NSCacheList * list)
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
@@ -438,7 +463,6 @@ bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id
     else if (type == NS_CONSUMER_CACHE_PROVIDER)
     {
         NSProvider_internal * prov = (NSProvider_internal *) data;
-
         if (!strcmp(prov->providerId, id))
         {
             return true;

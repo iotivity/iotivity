@@ -56,6 +56,9 @@ NSResult NSStartConsumer(NSConsumerConfig config)
 
 NSResult NSStopConsumer()
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
     NSSetDiscoverProviderCb(NULL);
     NSSetMessagePostedCb(NULL);
     NSSetNotificationSyncCb(NULL);
@@ -69,6 +72,9 @@ NSResult NSStopConsumer()
 
 NSResult NSConsumerEnableRemoteService(char *serverAddress)
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
     NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, (void *)serverAddress);
     NS_VERIFY_NOT_NULL(discoverTask, NS_ERROR);
 
@@ -77,6 +83,9 @@ NSResult NSConsumerEnableRemoteService(char *serverAddress)
 
 NSResult NSSubscribe(NSProvider * provider)
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
     NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
     NS_VERIFY_NOT_NULL(subscribeTask, NS_ERROR);
 
@@ -85,6 +94,9 @@ NSResult NSSubscribe(NSProvider * provider)
 
 NSResult NSUnsubscribe(NSProvider * provider)
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
     NSTask * unsubscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) provider);
     NS_VERIFY_NOT_NULL(unsubscribeTask, NS_ERROR);
 
@@ -93,6 +105,9 @@ NSResult NSUnsubscribe(NSProvider * provider)
 
 NSResult NSConsumerSendSyncInfo(const char * providerId, uint64_t messageId, NSSyncType type)
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
     NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
     NS_VERIFY_NOT_NULL(syncInfo, NS_ERROR);
 
@@ -108,6 +123,9 @@ NSResult NSConsumerSendSyncInfo(const char * providerId, uint64_t messageId, NSS
 
 NSResult NSRescanProvider()
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
     NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, NULL);
     NS_VERIFY_NOT_NULL(discoverTask, NS_ERROR);
 
@@ -116,6 +134,9 @@ NSResult NSRescanProvider()
 
 NSProvider * NSConsumerGetProvider(const char * providerId)
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NULL);
+
     NS_VERIFY_NOT_NULL(providerId, NULL);
 
     return (NSProvider *) NSConsumerFindNSProvider(providerId);
@@ -123,6 +144,9 @@ NSProvider * NSConsumerGetProvider(const char * providerId)
 
 NSMessage * NSConsumerGetMessage(uint64_t messageId)
 {
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NULL);
+
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
     snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)messageId);
 

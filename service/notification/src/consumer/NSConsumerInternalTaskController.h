@@ -27,6 +27,7 @@ extern "C" {
 
 #include "NSStructs.h"
 #include "NSStorageAdapter.h"
+#include "NSConsumerMemoryCache.h"
 #include "NSConsumerCommunication.h"
 
 NSCacheList ** NSGetMessageCacheList();
@@ -34,6 +35,8 @@ NSCacheList ** NSGetMessageCacheList();
 void NSSetMessageCacheList(NSCacheList *);
 
 NSCacheList ** NSGetProviderCacheList();
+
+void NSCancelAllSubscription();
 
 void NSSetProviderCacheList(NSCacheList *);
 
