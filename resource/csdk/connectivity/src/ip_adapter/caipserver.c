@@ -485,9 +485,11 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 {
     char recvBuffer[COAP_MAX_PDU_SIZE] = {0};
 
-    size_t len;
-    int level, type, namelen;
-    struct sockaddr_storage srcAddr;
+    size_t len = 0;
+    int level = 0;
+    int type = 0;
+    int namelen = 0;
+    struct sockaddr_storage srcAddr = { .ss_family = 0 };
     unsigned char *pktinfo = NULL;
 #if !defined(WSA_CMSG_DATA)
     struct cmsghdr *cmp = NULL;
@@ -667,7 +669,7 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
     }
 #endif
     struct sockaddr_storage sa = { .ss_family = family };
-    socklen_t socklen;
+    socklen_t socklen = 0;
 
     if (family == AF_INET6)
     {
@@ -1207,10 +1209,10 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     (void)cast;  // eliminates release warning
     (void)fam;
 
-    struct sockaddr_storage sock;
+    struct sockaddr_storage sock = { .ss_family = 0 };
     CAConvertNameToAddr(endpoint->addr, endpoint->port, &sock);
 
-    socklen_t socklen;
+    socklen_t socklen = 0;
     if (sock.ss_family == AF_INET6)
     {
         /** @todo figure out correct usage for ifindex, and sin6_scope_id */

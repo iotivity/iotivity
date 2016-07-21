@@ -29,7 +29,8 @@
 
 class CATests : public testing::Test {
     protected:
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
         CAInitialize();
     }
 

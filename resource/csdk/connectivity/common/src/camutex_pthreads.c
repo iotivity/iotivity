@@ -425,8 +425,8 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
             retVal = CA_WAIT_SUCCESS;
         }
 #else
-        int ret;
-        struct timespec abstime;
+        int ret = 0;
+        struct timespec abstime = { .tv_sec = 0 };
 
 #ifdef __ANDROID__
         if (camutex_cond_timedwait_relative)
