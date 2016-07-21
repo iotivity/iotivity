@@ -13,7 +13,7 @@ Usage:
     build:
         python %s <targetbuild>
         Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, simulator, darwin, windows, msys
-        Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\" & \"linux_unsecured_with_rd\".
+        Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\", \"linux_unsecured_with_mq\" & \"linux_unsecured_with_rd\".
         Any selection will build both debug and release versions of all available targets in the scope you've selected.
         To choose any specific command, please use the SCons commandline directly. Please refer to [IOTIVITY_REPO]/Readme.scons.txt.
     clean:
@@ -47,6 +47,7 @@ def build_all(flag, extra_option_str):
         build_linux_unsecured_with_rm(flag, extra_option_str)
         build_linux_unsecured_with_rd(flag, extra_option_str)
         build_linux_secured_with_rd(flag, extra_option_str)
+        build_linux_unsecured_with_mq(flag, extra_option_str)
         build_simulator(flag, extra_option_str)
 
     build_android(flag, extra_option_str)
@@ -119,6 +120,14 @@ def build_linux_secured_with_rd(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_RD':1,
                         'SECURED':1,
+                    }
+    call_scons(build_options, extra_option_str)
+
+def build_linux_unsecured_with_mq(flag, extra_option_str):
+    print ("*********** Build for linux With Message Queue ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'WITH_MQ':'PUB,SUB,BROKER',
                     }
     call_scons(build_options, extra_option_str)
 
@@ -415,6 +424,10 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "linux_secured_with_rd":
         build_linux_secured_with_rd("true", "")
         build_linux_secured_with_rd("false", "")
+
+    elif str(sys.argv[1]) == "linux_unsecured_with_mq":
+        build_linux_unsecured_with_mq("true", "")
+        build_linux_unsecured_with_mq("false", "")
 
     elif str(sys.argv[1]) == "android":
         build_android("true", "")
