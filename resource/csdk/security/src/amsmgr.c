@@ -322,12 +322,9 @@ exit:
 OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endpoint,
                         const CARequestInfo_t *requestInfo)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-
-    if (!context->amsMgrContext)
-    {
-        goto exit;
-    }
+    OCStackResult ret = OC_STACK_INVALID_PARAM;
+    VERIFY_NON_NULL(TAG, context->amsMgrContext, ERROR);
+    ret = OC_STACK_ERROR;
 
     //The AmsMgr context endpoint and requestInfo will be free from ,
     //AmsMgrAclReqCallback function
