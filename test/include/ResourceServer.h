@@ -53,12 +53,11 @@ protected:
     std::vector<std::string> m_resourceTypeNames;
     std::string m_resourceInterface;
     std::vector<std::string> m_resourceInterfaces;
-    bool m_observeStatus;
-    bool m_discoverStatus;
     OCResourceHandle m_resourceHandle;
     PlatformConfig m_platformConfig;
     bool m_isServerRunning;
     bool m_isSlowResource;
+    uint8_t m_resourceProperty;
     static bool m_isServerConstructed;
     static OCPlatformInfo m_platformInfo;
     static OCDeviceInfo m_deviceInfo;
@@ -200,7 +199,7 @@ public:
      * @return OCStackResult - returns OC_STACK_OK if successful to stop server,
      *                          else OC_STACK_ERROR
      */
-    OCStackResult stopServer(void);
+    OCStackResult stopResource(void);
 
     /**
      * API for starting the server.
@@ -212,8 +211,8 @@ public:
      *
      * NOTE: The server will stop when the main program exits
      */
-    OCStackResult startServer(
-            uint8_t resourceProperty = (uint8_t) OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE);
+    OCStackResult startResource(
+            uint8_t resourceProperty = (uint8_t) OC_ACTIVE);
 
     /**
      * API for getting the uri of the resource
@@ -224,6 +223,30 @@ public:
      *
      */
     std::string getUri(void);
+
+    /**
+     * API for setting the resource response as secured
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     */
+    void setAsSecuredResource(void);
+
+    /**
+     * API for setting the resource response as discoverable
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     */
+    void setAsDiscoverableResource(void);
+
+    /**
+     * API for setting the resource response as observable
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     */
+    void setAsObservableResource(void);
 
     /**
      * API for setting the resource response as slow
@@ -270,6 +293,16 @@ public:
      *
      */
     bool isObservableResource(void);
+
+    /**
+     * API to know whether the resource is secured or not
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @return bool - if resource is observable. true is returned, else  false
+     *
+     */
+    bool isSecuredResource(void);
 
     /**
      * API to know whether the resource is discoverable or not

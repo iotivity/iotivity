@@ -187,7 +187,7 @@ void SampleResource::handleDeleteRequest(QueryParamsMap &queryParamsMap,
     }
     if (shouldDelete)
     {
-        this->stopServer();
+        this->stopResource();
     }
 
 }
@@ -805,7 +805,7 @@ void SampleResource::createResource(string initialUri, OCRepresentation incoming
                 }
 
                 newResource->setResourceRepresentation(incomingRepresentation);
-                result = newResource->startServer(resourceProperty);
+                result = newResource->startResource(resourceProperty);
 
                 if (result != OC_STACK_OK)
                 {

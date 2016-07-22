@@ -18,6 +18,7 @@
 *
 ******************************************************************/
 
+#include <sstream>
 #include <ResourceHelper.h>
 
 ResourceHelper *ResourceHelper::s_resourceHelperInstance = NULL;
@@ -208,7 +209,15 @@ void ResourceHelper::printRepresentation(OCRepresentation rep)
             string value = "";
             if (repValue->type == OCRepPayloadPropType::OCREP_PROP_INT)
             {
+#ifdef __LINUX__
                 value = to_string(repValue->i);
+#endif        
+        
+#ifdef __ANDROID__
+                std::stringstream strstream;
+                strstream << repValue->i;
+                strstream >> value;
+#endif                
             }
             if (repValue->type == OCRepPayloadPropType::OCREP_PROP_DOUBLE)
             {

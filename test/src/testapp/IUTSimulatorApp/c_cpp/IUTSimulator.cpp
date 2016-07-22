@@ -22,7 +22,11 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifdef __LINUX__
 #include <execinfo.h>
+#endif
+
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -135,12 +139,18 @@ void handler(int sig)
     void *array[10];
     size_t size;
 
+#ifdef __LINUX__
     // get void*'s for all entries on the stack
     size = backtrace(array, 10);
+#endif
 
     // print out all the frames to stderr
     fprintf(stderr, "Error: signal %d:\n", sig);
+
+#ifdef __LINUX__    
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
+
     exit(1);
 }
 
@@ -549,7 +559,9 @@ void createResource()
         g_createdLightResource = new SampleResource();
         g_createdLightResource->setResourceProperties(LIGHT_1_URI, RESOURCE_TYPE_LIGHT,
         ACTUATOR_INTERFACE);
-        OCStackResult result = g_createdLightResource->startServer();
+        g_createdLightResource->setAsDiscoverableResource();
+        g_createdLightResource->setAsObservableResource();
+        OCStackResult result = g_createdLightResource->startResource();
 
         if (result == OC_STACK_OK)
         {
@@ -562,11 +574,10 @@ void createResource()
         }
 
         g_createdFanResource = new SampleResource();
-        g_createdFanResource->setResourceProperties(FAN_1_URI, RESOURCE_TYPE_FAN, ACTUATOR_INTERFACE);
-        uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
-
-        result = g_createdFanResource->startServer(resourceProperty);
-        g_createdFanResource->setAsSlowResource();
+        g_createdFanResource->setResourceProperties(FAN_1_URI, RESOURCE_TYPE_FAN,
+                ACTUATOR_INTERFACE);
+        g_createdFanResource->setAsDiscoverableResource();
+        result = g_createdFanResource->startResource();
 
         if (result == OC_STACK_OK)
         {
@@ -606,7 +617,7 @@ void createTvDevice(bool isSecured)
         switchRep.setValue("value", true);
         g_tvSwitchResource->setResourceRepresentation(switchRep);
 
-        result = g_tvSwitchResource->startServer(resourceProperty);
+        result = g_tvSwitchResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -644,7 +655,7 @@ void createTvDevice(bool isSecured)
         list.push_back(rep2);
         mainRep.setValue("sources", list);
         g_tvMediaSourceListResource->setResourceRepresentation(mainRep);
-        result = g_tvMediaSourceListResource->startServer(resourceProperty);
+        result = g_tvMediaSourceListResource->startResource(resourceProperty);
         g_tvMediaSourceListResource->setAsSlowResource();
 
         if (result == OC_STACK_OK)
@@ -667,7 +678,7 @@ void createTvDevice(bool isSecured)
         audioRep.setValue("volume", volume);
         g_tvAudioResource->setResourceRepresentation(audioRep);
 
-        result = g_tvAudioResource->startServer(resourceProperty);
+        result = g_tvAudioResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -710,7 +721,7 @@ void createAirConDevice(bool isSecured)
         switchRep.setValue("value", true);
         g_acSwitchResource->setResourceRepresentation(switchRep);
 
-        result = g_acSwitchResource->startServer(resourceProperty);
+        result = g_acSwitchResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -738,7 +749,7 @@ void createAirConDevice(bool isSecured)
         double temperature = 24.50;
         temperatureRep.setValue("temperature", temperature);
         g_acTemperatureResource->setResourceRepresentation(temperatureRep);
-        result = g_acTemperatureResource->startServer(resourceProperty);
+        result = g_acTemperatureResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -768,7 +779,7 @@ void createAirConDevice(bool isSecured)
         g_acAirFlowResource->setAsReadOnly("range");
         g_acAirFlowResource->setResourceRepresentation(airFlowRep);
 
-        result = g_acAirFlowResource->startServer(resourceProperty);
+        result = g_acAirFlowResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -793,7 +804,6 @@ void createAirConDevice(bool isSecured)
 
         OCRepresentation clockRep;
         int time = 10;
-        value = "up";
         clockRep.setValue("x.com.vendor.timer.hour", time);
         time = 30;
         clockRep.setValue("x.com.vendor.timer.minute", time);
@@ -802,7 +812,7 @@ void createAirConDevice(bool isSecured)
 
         g_acTimerResource->setResourceRepresentation(clockRep);
 
-        result = g_acTimerResource->startServer(resourceProperty);
+        result = g_acTimerResource->startResource(resourceProperty);
         g_acTimerResource->setAsSlowResource();
 
         if (result == OC_STACK_OK)
@@ -836,7 +846,9 @@ void createManyLightResources()
             g_manyResources[i] = new SampleResource();
             g_manyResources[i]->setResourceProperties(uri, RESOURCE_TYPE_LIGHT,
             ACTUATOR_INTERFACE);
-            OCStackResult result = g_manyResources[i]->startServer();
+            g_manyResources[i]->setAsDiscoverableResource();
+            g_manyResources[i]->setAsObservableResource();
+            OCStackResult result = g_manyResources[i]->startResource();
 
             if (result == OC_STACK_OK)
             {
@@ -868,7 +880,7 @@ void createSecuredResource()
         g_securedLightResource->setResourceProperties(LIGHT_SECURED_URI, RESOURCE_TYPE_LIGHT,
         ACTUATOR_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
-        OCStackResult result = g_securedLightResource->startServer(resourceProperty);
+        OCStackResult result = g_securedLightResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -885,7 +897,7 @@ void createSecuredResource()
         g_securedFanResource->setResourceProperties(FAN_SECURED_URI, RESOURCE_TYPE_FAN,
         ACTUATOR_INTERFACE);
         resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_SECURE;
-        result = g_securedFanResource->startServer(resourceProperty);
+        result = g_securedFanResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -914,7 +926,7 @@ void createInvisibleResource()
         g_invisibleFanResource->setResourceProperties(FAN_INVISIBLE_URI, RESOURCE_TYPE_FAN,
         ACTUATOR_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE;
-        OCStackResult result = g_invisibleFanResource->startServer(resourceProperty);
+        OCStackResult result = g_invisibleFanResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -932,7 +944,7 @@ void createInvisibleResource()
         g_invisibleLightResource->setResourceProperties(LIGHT_INVISIBLE_URI, RESOURCE_TYPE_LIGHT,
                 interface);
         resourceProperty = OC_ACTIVE | OC_OBSERVABLE | OC_EXPLICIT_DISCOVERABLE;
-        result = g_invisibleLightResource->startServer(resourceProperty);
+        result = g_invisibleLightResource->startResource(resourceProperty);
 
         if (result == OC_STACK_OK)
         {
@@ -1032,7 +1044,6 @@ void createGroup(string groupType)
 
             OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType,
                     resourceInterface, NULL,
-                    //&entityHandler, // entityHandler
                     OC_DISCOVERABLE | OC_OBSERVABLE);
 
             cout << "Create Group is called." << endl;
@@ -1195,7 +1206,7 @@ void deleteResource()
 
         for (unsigned int i = 0; i < g_createdResourceList.size(); i++)
         {
-            result = g_createdResourceList[i]->stopServer();
+            result = g_createdResourceList[i]->stopResource();
             if (result == OC_STACK_OK)
             {
                 cout << "Successfully stopped Resource with URI: "
@@ -2176,7 +2187,16 @@ void handleMenu()
                 break;
 
             case 26:
-                cancelObserveResource();
+                try
+                {
+                    cancelObserveResource();
+                }
+                catch (exception& e)
+                {
+                    cout << "Unable to cancel observing resource." << endl;
+                    cout << "Error is: " << e.what() << endl;
+                }
+
                 break;
 
             case 27:

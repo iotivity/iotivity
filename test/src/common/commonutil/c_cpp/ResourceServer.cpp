@@ -40,8 +40,7 @@ ResourceServer::ResourceServer(void) :
     m_isServerRunning = false;
     m_isServerConstructed = false;
     m_isSlowResource = false;
-    m_observeStatus = false;
-    m_discoverStatus = false;
+    m_resourceProperty = OC_ACTIVE;
     m_resourceTypeNames.clear();
     m_resourceInterfaces.clear();
 }
@@ -50,7 +49,7 @@ ResourceServer::~ResourceServer(void)
 {
     if (m_isServerRunning)
     {
-        stopServer();
+        stopResource();
     }
 }
 
@@ -155,24 +154,23 @@ OCStackResult ResourceServer::setResourceProperties(std::string resourceUri,
     return result;
 }
 
-OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
+OCStackResult ResourceServer::startResource(uint8_t resourceProperty)
 {
     OCStackResult result = OC_STACK_OK;
 
-    if (resourceProperty & OC_OBSERVABLE)
+    m_resourceProperty = m_resourceProperty | resourceProperty;
+
+    if (isObservableResource())
     {
         cout << "This resource is Observable" << endl;
-        m_observeStatus = true;
     }
-    if (resourceProperty & OC_DISCOVERABLE)
+    if (isDiscoverableResource())
     {
         cout << "This resource is Discoverable" << endl;
-        m_discoverStatus = true;
     }
-    if (resourceProperty & OC_SECURE)
+    if (isSecuredResource())
     {
         cout << "This resource is Secured" << endl;
-        m_discoverStatus = true;
     }
 
     if (m_resourceTypeName.find(" ") != string::npos)
@@ -208,7 +206,7 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
     // This will internally create and register the resource.
     result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, std::bind(&ResourceServer::entityHandler, this, PH::_1),
-            resourceProperty);
+            m_resourceProperty);
     if (m_resourceTypeNames.size() > 1)
     {
         for (unsigned int i = 1; i < m_resourceTypeNames.size(); i++)
@@ -252,7 +250,7 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
     return result;
 }
 
-OCStackResult ResourceServer::stopServer(void)
+OCStackResult ResourceServer::stopResource(void)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -411,12 +409,12 @@ void ResourceServer::handleSlowResponse(std::shared_ptr< OCResourceRequest > req
 
 bool ResourceServer::isObservableResource(void)
 {
-    return m_observeStatus;
+    return m_resourceProperty & OC_OBSERVABLE;
 }
 
 bool ResourceServer::isDiscoverableResource(void)
 {
-    return m_discoverStatus;
+    return m_resourceProperty & OC_DISCOVERABLE;
 }
 
 std::vector< std::string > ResourceServer::getResourceInterfaces(void)
@@ -427,4 +425,24 @@ std::vector< std::string > ResourceServer::getResourceInterfaces(void)
 std::vector< std::string > ResourceServer::getResourceTypes(void)
 {
     return m_resourceTypeNames;
+}
+
+void ResourceServer::setAsSecuredResource(void)
+{
+    m_resourceProperty = m_resourceProperty | OC_SECURE;
+}
+
+void ResourceServer::setAsDiscoverableResource(void)
+{
+    m_resourceProperty = m_resourceProperty | OC_DISCOVERABLE;
+}
+
+void ResourceServer::setAsObservableResource(void)
+{
+    m_resourceProperty = m_resourceProperty | OC_OBSERVABLE;
+}
+
+bool ResourceServer::isSecuredResource(void)
+{
+    return m_resourceProperty & OC_SECURE;
 }
