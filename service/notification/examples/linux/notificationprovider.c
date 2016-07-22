@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "NSProvider.h"
+#include "NSProviderInterface.h"
 #include "NSCommon.h"
 #include "logger.h"
 #include "octypes.h"

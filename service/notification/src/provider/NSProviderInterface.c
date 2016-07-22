@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSProvider.h"
+#include "NSProviderInterface.h"
 #include "NSProviderScheduler.h"
 #include "NSProviderListener.h"
 #include "NSProviderSubscription.h"
