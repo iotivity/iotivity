@@ -702,7 +702,8 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
                    // This should not happen but,
                    // give it a value just in case but output an error
                    ret = CA_CONTENT;
-                   OIC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [%d].", method);
+                   OIC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [%d].",
+                            method);
             }
             break;
         case OC_STACK_RESOURCE_CREATED:
@@ -710,6 +711,9 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
             break;
         case OC_STACK_RESOURCE_DELETED:
             ret = CA_DELETED;
+            break;
+        case OC_STACK_RESOURCE_CHANGED:
+            ret = CA_CHANGED;
             break;
         case OC_STACK_INVALID_QUERY:
             ret = CA_BAD_REQ;
@@ -870,7 +874,8 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
 
     if (inputLength >= ENCODE_MAX_INPUT_LENGTH)
     {
-        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Invalid input string: too long/unterminated!");
+        OIC_LOG(ERROR, TAG,
+                "encodeAddressForRFC6874 failed: Invalid input string: too long/unterminated!");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -4486,7 +4491,8 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
         }
         else
         {
-            OCStackResult result = BindResourceInterfaceToResource(resource, OC_RSRVD_INTERFACE_DEFAULT);
+            OCStackResult result = BindResourceInterfaceToResource(resource,
+                                                                    OC_RSRVD_INTERFACE_DEFAULT);
             if (result != OC_STACK_OK)
             {
                 OICFree(newInterface->name);
