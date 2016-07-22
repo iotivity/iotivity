@@ -44,6 +44,8 @@
 #define NS_ATTRIBUTE_DATETIME "DATE_TIME"
 #define NS_ATTRIBUTE_TTL "TTL"
 
+#include <stdint.h>
+
 /**
  * Result code of notification service
  */

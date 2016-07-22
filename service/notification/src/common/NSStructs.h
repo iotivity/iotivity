@@ -28,6 +28,7 @@
 #include <octypes.h>
 #include "NSCommon.h"
 #include "NSConstants.h"
+#include "ocstack.h"
 
 typedef struct _nsTask
 {

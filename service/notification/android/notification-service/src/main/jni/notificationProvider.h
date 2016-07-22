@@ -20,7 +20,7 @@
 
 #include <jni.h>
 
-#include "NSProvider.h"
+#include "NSProviderInterface.h"
 #include "NSCommon.h"
 
 #ifndef NOTIFICATION_JNI_H

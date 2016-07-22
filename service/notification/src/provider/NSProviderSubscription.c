@@ -137,15 +137,19 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_messageObId = entityHandlerRequest->obsInfo.obsId;
+            subData->messageObId = 0;
             NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->remote_messageObId);
         }
         else
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->messageObId = entityHandlerRequest->obsInfo.obsId;
+            subData->remote_messageObId = 0;
             NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->messageObId);
         }
         subData->isWhite = false;
+        subData->remote_syncObId = 0;
+        subData->syncObId = 0;
 
         element->data = (void*) subData;
         element->next = NULL;
@@ -180,16 +184,20 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_syncObId = entityHandlerRequest->obsInfo.obsId;
+            subData->syncObId = 0;
             NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->remote_syncObId);
         }
         else
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->syncObId = entityHandlerRequest->obsInfo.obsId;
+            subData->remote_syncObId = 0;
             NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->syncObId);
         }
 
         subData->isWhite = false;
+        subData->messageObId = 0;
+        subData->remote_messageObId = 0;
 
         element->data = (void*) subData;
         element->next = NULL;

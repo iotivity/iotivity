@@ -125,11 +125,10 @@ bool NSStopScheduler()
         {
             NSTask* temp = NSHeadMsg[i];
             NSHeadMsg[i] = NSHeadMsg[i]->nextTask;
-            NSFreeData(i, NSHeadMsg[i]);
+            NSFreeData(i, temp);
             OICFree(temp);
         }
 
-        OICFree(NSHeadMsg[i]);
         NSTailMsg[i] = NSHeadMsg[i] = NULL;
 
         pthread_mutex_unlock(&NSMutex[i]);
