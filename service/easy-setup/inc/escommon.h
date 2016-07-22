@@ -63,13 +63,13 @@ extern "C"
  * Easysetup defined resoruce types and uris.
  */
 #define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.wk.prov"
-#define OC_RSRVD_ES_URI_PROV              "/.well-known/ocf/prov"
+#define OC_RSRVD_ES_URI_PROV              "/ProvisioningResURI"
 #define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.wk.wifi"
-#define OC_RSRVD_ES_URI_WIFI              "/.well-known/ocf/prov/wifi"
+#define OC_RSRVD_ES_URI_WIFI              "/WiFiProvisioningResURI"
 #define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.wk.cloudserver"
-#define OC_RSRVD_ES_URI_CLOUDSERVER       "/.well-known/ocf/prov/cloudserver"
+#define OC_RSRVD_ES_URI_CLOUDSERVER       "/CloudServerProvisioningResURI"
 #define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.wk.devconf"
-#define OC_RSRVD_ES_URI_DEVCONF           "/.well-known/ocf/prov/devconf"
+#define OC_RSRVD_ES_URI_DEVCONF           "/DevConfProvisioningResURI"
 
 #define NUM_WIFIMODE    10
 #define MAX_SSIDLEN     33
