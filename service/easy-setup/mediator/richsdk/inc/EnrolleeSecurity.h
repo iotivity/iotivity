@@ -35,6 +35,8 @@ namespace OIC
         class EnrolleeResource;
         class OCSecureResource;
 
+        typedef std::vector<OCProvisionResult_t> PMResultList_t;
+
         /**
          * This class contains the methods needed for security  layer interaction.
          *
@@ -48,6 +50,7 @@ namespace OIC
             void registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
             void performOwnershipTransfer();
+            void performACLProvisioningForCloudServer(OicUuid_t serverUuid);
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
@@ -62,6 +65,9 @@ namespace OIC
             std::shared_ptr< OC::OCSecureResource > getEnrollee(OC::DeviceList_t &list);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(OicUuid_t uuid, std::string& uuidString);
+            OicSecAcl_t* createAcl(OicUuid_t serverUuid);
+
+            void ACLProvisioningCb(PMResultList_t *result, int hasError);
         };
     }
 }
