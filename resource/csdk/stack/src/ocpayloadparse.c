@@ -101,8 +101,6 @@ exit:
     return result;
 }
 
-void OCFreeOCStringLL(OCStringLL* ll);
-
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, const uint8_t *payload,
         size_t size)
 {
