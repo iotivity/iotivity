@@ -241,9 +241,6 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
     NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     OICStrcpy(newMsg->providerId, NS_DEVICE_ID_LENGTH, msg->providerId);
-    newMsg->i_addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newMsg, NULL, NSOICFree(newMsg));
-    memcpy(newMsg->i_addr, msg->i_addr, sizeof(OCDevAddr));
 
     newMsg->messageId = msg->messageId;
     newMsg->title = OICStrdup(msg->title);
@@ -261,7 +258,10 @@ void NSRemoveMessage(NSMessage_consumer * msg)
     NSOICFree(msg->title);
     NSOICFree(msg->contentText);
     NSOICFree(msg->sourceName);
-    NSOICFree(msg->i_addr);
+    NSOICFree(msg->dateTime);
+
+    // TODO change to remove function.
+    NSOICFree(msg->mediaContents);
 
     NSOICFree(msg);
 }
@@ -312,6 +312,7 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
     NSProviderConnectionInfo * tmp = conn;
 
     NSProviderConnectionInfo * retInfo = NSCreateProviderConnections(tmp->addr);
+    NS_VERIFY_NOT_NULL(retInfo, NULL);
     tmp = tmp->next;
     NSProviderConnectionInfo * copyInfo = retInfo;
 

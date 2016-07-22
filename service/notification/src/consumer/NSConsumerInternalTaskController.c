@@ -237,8 +237,13 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
 
 void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
 {
-    // TODO delete provider infomation on storage list.
-    (void) provider;
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSCacheList * providerCache = *(NSGetProviderCacheList());
+    NS_VERIFY_NOT_NULL_V(providerCache);
+
+    NSResult ret = NSStorageDelete(providerCache, provider->providerId);
+    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 }
 
 void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
@@ -270,7 +275,7 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
     NS_VERIFY_NOT_NULL_V(sync);
 
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", sync->messageId);
+    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)sync->messageId);
 
     NSMessage_consumer * msg = NSMessageCacheFind(msgId);
     NS_VERIFY_NOT_NULL_V(msg);

@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <octypes.h>
 #include "NSCommon.h"
 #include "NSConstants.h"
 

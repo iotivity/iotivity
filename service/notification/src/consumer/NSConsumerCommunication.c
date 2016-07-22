@@ -204,18 +204,10 @@ NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
     NS_LOG_V (DEBUG, "provider id: %s", pId);
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
-    NS_LOG(DEBUG, "get provider address");
-    OCDevAddr * addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(addr, NULL, NSGetMessagePostClean(pId, addr));
-    memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
-
     NS_LOG(DEBUG, "create NSMessage");
     NSMessage_consumer * retMsg = NSCreateMessage_internal(id, pId);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retMsg, NULL, NSGetMessagePostClean(pId, addr));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retMsg, NULL, NSOICFree(pId));
     NSOICFree(pId);
-
-    retMsg->i_addr = addr;
-    retMsg->i_messageTypes = NS_SYNC_UNREAD;
 
     NS_LOG(DEBUG, "get msg optional field");
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retMsg->title);
@@ -226,14 +218,13 @@ NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_DATETIME, &retMsg->dateTime);
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retMsg->ttl);
 
-    NS_LOG_V(DEBUG, "Msg Address : %s", retMsg->i_addr->addr);
-    NS_LOG_V(DEBUG, "Msg ID      : %lld", retMsg->messageId);
+    NS_LOG_V(DEBUG, "Msg ID      : %lld", (long long int)retMsg->messageId);
     NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
     NS_LOG_V(DEBUG, "Msg Content : %s", retMsg->contentText);
     NS_LOG_V(DEBUG, "Msg Source  : %s", retMsg->sourceName);
     NS_LOG_V(DEBUG, "Msg Type    : %d", retMsg->type);
     NS_LOG_V(DEBUG, "Msg Date    : %s", retMsg->dateTime);
-    NS_LOG_V(DEBUG, "Msg ttl     : %lld", retMsg->ttl);
+    NS_LOG_V(DEBUG, "Msg ttl     : %lld", (long long int)retMsg->ttl);
 
     return retMsg;
 }
@@ -263,7 +254,7 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
     NSSyncInfo * retSync = NSCreateSyncInfo_consumer(id, pId, (NSSyncType)state);
     NS_VERIFY_NOT_NULL(retSync, NULL);
 
-    NS_LOG_V(DEBUG, "Sync ID : %lld", retSync->messageId);
+    NS_LOG_V(DEBUG, "Sync ID : %lld", (long long int)retSync->messageId);
     NS_LOG_V(DEBUG, "Sync State : %d", (int) retSync->state);
     NS_LOG_V(DEBUG, "Sync Provider ID : %s", retSync->providerId);
 
@@ -283,7 +274,7 @@ NSMessage_consumer * NSCreateMessage_internal(uint64_t id, const char * provider
     retMsg->type = NS_MESSAGE_INFO;
     retMsg->dateTime = NULL;
     retMsg->ttl = 0;
-    retMsg->i_addr = NULL;
+    retMsg->mediaContents = NULL;
 
     return retMsg;
 }

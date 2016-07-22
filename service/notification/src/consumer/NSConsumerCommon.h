@@ -181,10 +181,8 @@ typedef struct
     char * title;
     char * contentText;
     char * sourceName;
-    NSMediaContents mediaContents;
+    NSMediaContents * mediaContents;
 
-    OCDevAddr * i_addr;
-    NSSyncType i_messageTypes;
 } NSMessage_consumer;
 
 bool NSIsStartedConsumer();

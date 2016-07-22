@@ -33,7 +33,7 @@ void onSubscriptionAccepted(NSProvider * provider)
 
 void onNotificationPosted(NSMessage * notification)
 {
-    printf("id : %lld\n", notification->messageId);
+    printf("id : %lld\n", (long long int)notification->messageId);
     printf("title : %s\n", notification->title);
     printf("content : %s\n", notification->contentText);
     printf("source : %s\n", notification->sourceName);
@@ -42,7 +42,7 @@ void onNotificationPosted(NSMessage * notification)
 
 void onNotificationSync(NSSyncInfo * sync)
 {
-    printf("Sync ID : %lld\n", sync->messageId);
+    printf("Sync ID : %lld\n", (long long int)sync->messageId);
     printf("Sync STATE : %d\n", sync->state);
 }
 

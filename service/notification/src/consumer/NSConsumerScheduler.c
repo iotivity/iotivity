@@ -212,10 +212,19 @@ void NSConsumerTaskProcessing(NSTask * task)
         break;
     }
     case TASK_CONSUMER_REQ_SUBSCRIBE:
-    case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
     case TASK_SEND_SYNCINFO:
     {
         NSConsumerCommunicationTaskProcessing(task);
+        break;
+    }
+    case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
+    {
+        NSProvider_internal * data = NSCopyProvider((NSProvider_internal *)task->taskData);
+        NS_VERIFY_NOT_NULL_V(data);
+        NSTask * conTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data);
+        NS_VERIFY_NOT_NULL_V(conTask);
+        NSConsumerCommunicationTaskProcessing(task);
+        NSConsumerInternalTaskProcessing(conTask);
         break;
     }
     case TASK_RECV_SYNCINFO:
