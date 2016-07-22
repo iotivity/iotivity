@@ -382,6 +382,7 @@ namespace OC
                              std::ref(presenceHandle));
     }
 
+#ifdef WITH_CLOUD
     OCStackResult OCPlatform_impl::subscribeDevicePresence(OCPresenceHandle& presenceHandle,
                                                            const std::string& host,
                                                            const QueryParamsList& queryParams,
@@ -391,6 +392,7 @@ namespace OC
         return checked_guard(m_client, &IClientWrapper::SubscribeDevicePresence,
                              &presenceHandle, host, queryParams, connectivityType, callback);
     }
+#endif
 
     OCStackResult OCPlatform_impl::sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
     {

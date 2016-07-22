@@ -534,6 +534,7 @@ namespace OC
          */
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
+#ifdef WITH_CLOUD
         /**
          * Subscribes to a server's device presence change events.
          *
@@ -555,6 +556,7 @@ namespace OC
                                               const QueryParamsList& queryParams,
                                               OCConnectivityType connectivityType,
                                               ObserveCallback callback);
+#endif
 
         /**
          * Creates a resource proxy object so that get/put/observe functionality

@@ -79,8 +79,10 @@ extern "C" {
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
 
+#ifdef WITH_CLOUD
 /** Presence URI through which the OCF devices advertise their device presence.*/
 #define OCF_RSRVD_DEVICE_PRESENCE_URI         "/.well-known/ocf/prs"
+#endif
 
 /** Sets the default time to live (TTL) for presence.*/
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)

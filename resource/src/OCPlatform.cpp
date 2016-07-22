@@ -266,6 +266,7 @@ namespace OC
             return OCPlatform_impl::Instance().unsubscribePresence(presenceHandle);
         }
 
+#ifdef WITH_CLOUD
         OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
                                               const std::string& host,
                                               const QueryParamsList& queryParams,
@@ -278,6 +279,7 @@ namespace OC
                                                                        connectivityType,
                                                                        callback);
         }
+#endif
 
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
         {

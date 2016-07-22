@@ -225,11 +225,13 @@ namespace OC
                         SubscribeCallback presenceHandler);
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
+#ifdef WITH_CLOUD
         OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
                                               const std::string& host,
                                               const QueryParamsList& queryParams,
                                               OCConnectivityType connectivityType,
                                               ObserveCallback callback);
+#endif
 
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         OCConnectivityType connectivityType, bool isObservable,

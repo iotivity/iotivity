@@ -1197,6 +1197,7 @@ namespace OC
         return result;
     }
 
+#ifdef WITH_CLOUD
     OCStackResult InProcClientWrapper::SubscribeDevicePresence(OCDoHandle* handle,
                                                                const std::string& host,
                                                                const QueryParamsList& queryParams,
@@ -1240,6 +1241,7 @@ namespace OC
 
         return result;
     }
+#endif
 
     OCStackResult InProcClientWrapper::GetDefaultQos(QualityOfService& qos)
     {
