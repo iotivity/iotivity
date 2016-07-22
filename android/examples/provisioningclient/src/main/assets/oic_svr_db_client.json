@@ -10,30 +10,16 @@
                             "rel": "",
                             "rt": ["oic.wk.res"],
                             "if": ["oic.if.ll"]
-                        },
-                        {
+                        },{
                             "href": "/oic/d",
                             "rel": "",
                             "rt": ["oic.wk.d"],
                             "if": ["oic.if.baseline", "oic.if.r"]
-                        },
-                        {
+                        },{
                             "href": "/oic/p",
                             "rel": "",
                             "rt": ["oic.wk.p"],
                             "if": ["oic.if.baseline", "oic.if.r"]
-                        },
-                        {
-                            "href": "/oic/ad",
-                            "rel": "",
-                            "rt": ["oic.wk.ad"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/sec/amacl",
-                            "rel": "",
-                            "rt": ["oic.r.amacl"],
-                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 2
@@ -55,6 +41,24 @@
                         }
                     ],
                     "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/pconf",
+                            "rel": "",
+                            "rt": ["oic.r.pconf"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/dpairing",
+                            "rel": "",
+                            "rt": ["oic.r.dpairing"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    "permission": 2
                 }
             ]
         },
@@ -62,7 +66,7 @@
     },
     "pstat": {
         "isop": true,
-        "cm": 2,
+        "cm": 0,
         "tm": 0,
         "om": 3,
         "sm": 3,

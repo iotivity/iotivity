@@ -29,6 +29,7 @@ class JniSecureUtils
         static std::string convertUUIDtoStr(OicUuid_t uuid);
         static void convertStrToUUID(char *str, OicUuid_t &uuid);
     public:
+        static void FreeACLList(OicSecAcl_t *acl);
         static jobject convertProvisionresultVectorToJavaList(JNIEnv *,
                 const OC::PMResultList_t *);
         static jobjectArray convertDeviceVectorToJavaArray(JNIEnv *env,

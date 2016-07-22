@@ -85,6 +85,10 @@ extern jclass g_cls_OcOicSecAcl;
 extern jclass g_cls_OcOicSecPdAcl;
 extern jclass g_cls_OcDirectPairDevice;
 
+extern jclass g_cls_OcOicSecAcl_ace;
+extern jclass g_cls_OcOicSecAcl_resr;
+extern jclass g_cls_OcOicSecAcl_validity;
+
 extern jmethodID g_mid_Integer_ctor;
 extern jmethodID g_mid_Double_ctor;
 extern jmethodID g_mid_Boolean_ctor;
@@ -118,14 +122,22 @@ extern jmethodID g_mid_OcProvisionResult_ctor;
 extern jmethodID g_mid_OcSecureResource_ctor;
 extern jmethodID g_mid_OcDirectPairDevice_ctor;
 extern jmethodID g_mid_OcDirectPairDevice_dev_ctor;
-extern jmethodID g_mid_OcOicSecAcl_get_subject;
-extern jmethodID g_mid_OcOicSecAcl_get_resources_cnt;
-extern jmethodID g_mid_OcOicSecAcl_get_resources;
-extern jmethodID g_mid_OcOicSecAcl_get_permission;
-extern jmethodID g_mid_OcOicSecAcl_get_periods_cnt;
-extern jmethodID g_mid_OcOicSecAcl_get_periods;
-extern jmethodID g_mid_OcOicSecAcl_get_recurrences;
+
 extern jmethodID g_mid_OcOicSecAcl_get_rownerID;
+extern jmethodID g_mid_OcOicSecAcl_get_aces;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_subjectID;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_permissions;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_resources;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_validities;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_href;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_rel;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_types;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_typeLen;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_interfaces;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_interfaceLen;
+extern jmethodID g_mid_OcOicSecAcl_validity_get_getPeriod;
+extern jmethodID g_mid_OcOicSecAcl_validity_get_recurrences;
+extern jmethodID g_mid_OcOicSecAcl_validity_get_recurrenceLen;
 extern jmethodID g_mid_OcOicSecPdAcl_get_resources_cnt;
 extern jmethodID g_mid_OcOicSecPdAcl_get_resources;
 extern jmethodID g_mid_OcOicSecPdAcl_get_permission;
@@ -161,26 +173,29 @@ static JNIEnv* GetJNIEnv(jint& ret)
     JNIEnv *env = nullptr;
 
     ret = g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION);
-    switch (ret) {
-    case JNI_OK:
-        return env;
-    case JNI_EDETACHED:
-        if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
-        {
+    switch (ret)
+    {
+        case JNI_OK:
+            return env;
+        case JNI_EDETACHED:
+            if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
+            {
+                LOGE("Failed to get the environment");
+                return nullptr;
+            }
+            else
+            {
+                return env;
+            }
+
+        case JNI_EVERSION:
+            LOGE("JNI version not supported");
+            break;
+        default:
             LOGE("Failed to get the environment");
             return nullptr;
-        }
-        else
-        {
-            return env;
-        }
-
-    case JNI_EVERSION:
-        LOGE("JNI version not supported");
-    default:
-        LOGE("Failed to get the environment");
-        return nullptr;
     }
+    return nullptr;
 }
 
 static void DuplicateString(char ** targetString, std::string sourceString)
