@@ -96,7 +96,22 @@ if 'rc' in target_service or 'all' in target_service:
     default_targets += [gbs_script_rc]
 
     
+if 'iut' in target_service or 'all' in target_service:
 
+    rpms_dir = env_tizen.get('RPMS_DIR') 
+    print 'rpms_dir: ' + rpms_dir   
+    push = env_tizen.get('PUSH') 
+    print 'push: ' + str(push)
+    
+    security_mode = env_tizen.get('SECURITY_MODE')
+
+    if target_source != '':
+        target_source_command = 'target_source=' + target_source
+    else:    
+        target_source_command = ''
+
+    gbs_script_iut = "bash build/tizen/iut/gbsbuild.sh stand_alone=false %s rpms_dir=%s push=%s security_mode=%s" % (target_source_command, rpms_dir, push, security_mode)
+    default_targets += [gbs_script_iut]    
     
     
 gbs_build = env_tizen.Command('gbs_build', None, default_targets)

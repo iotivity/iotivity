@@ -117,9 +117,12 @@ help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_va
 help_vars.Add(EnumVariable('PREVENT', 'Build with sample', 'OFF', allowed_values=('ON', 'OFF')))
 help_vars.Add(BoolVariable('SRC_BUILD', 'Enable Dev Source Building?', False))
 help_vars.Add(BoolVariable('SRC_UPDATE', 'Enable Dev Source Updating?', False))
-help_vars.Add('RPMS_DIR', 'GBS RPMS Full Directory to copy the rpm to bin folder', 'PATH_NOT_DEFINED')
+help_vars.Add('RPMS_DIR', 'GBS RPMS Full Directory to copy the rpm to bin folder', '')
 help_vars.Add('TARGET_PORT', 'insert Arduino Port Number', '/dev/ttyACM0')
 help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device', 'OIC-DEVICE', None, None),)
+help_vars.Add('SECURITY_MODE', 'Set the name of provisiong security mode', 'justworks')
+help_vars.Add('ANDROID_NDK', 'NDK Directory Path', '')
+help_vars.Add(BoolVariable('PUSH', 'To push binary to device', True))
 
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
@@ -133,10 +136,10 @@ if target_os in targets_support_cc:
 
 if target_os in ['android', 'arduino']: # Android/Arduino always uses GNU compiler regardless of the host
 	env = Environment(variables = help_vars,
-			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as']
-			)
+			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as'],
+			ENV = os.environ)
 else:
-	env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os)
+	env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os, ENV = os.environ)
 
 Help(help_vars.GenerateHelpText(env))
 

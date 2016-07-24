@@ -31,21 +31,10 @@ Import('env')
 # Build Tools
 #----------------------------------------------------------------------
 
-env.Replace(ANDROID_HOME = 'NOT_DEFINED')
-env.Replace(ANDROID_NDK = 'NOT_DEFINED')
-env.Replace(ARDUINO_HOME = '/root/arduino-1.5.8')
-
-#----------------------------------------------------------------------
-# Tizen dirs
-#----------------------------------------------------------------------
-
-env.Replace(RPMS_DIR = '/home/mushfiqul/GBS-ROOT/local/repos/tizen/armv7l/RPMS')
-
+#env.Replace(ANDROID_HOME = 'NOT_DEFINED')
+#env.Replace(ANDROID_NDK = 'NOT_DEFINED')
+#env.Replace(ARDUINO_HOME = '/root/arduino-1.5.8')
 env.Replace(SRC_RPM_NAME = 'iotivityTest-1.0.0-0.armv7l.rpm')
-#----------------------------------------------------------------------
-# Target Dirs
-#----------------------------------------------------------------------
-
 env.Replace(LINUX_TARGET = 'bin/linux/')
 env.Replace(TIZEN_TARGET = 'bin/tizen/')
 env.Replace(ANDROID_TARGET = 'bin/android/')

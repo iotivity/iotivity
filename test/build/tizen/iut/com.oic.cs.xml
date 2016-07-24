@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" package="com.oic.cs" version="0.0.1" install-location="internal-only">
+	<label>conformance_simulator</label>
+	<author email="oic" href="www.iotivity.org">OIC</author>
+	<description>conformance_simulator</description>
+	<ui-application appid="com.oic.cs" exec="/usr/apps/com.oic.cs/bin/ConformanceSimulator" nodisplay="false" multiple="false" type="capp" taskmanage="true">
+		<icon>com.oic.ca.sample.png</icon>
+		<label>casim</label>
+		<label xml:lang="en-us">casim</label>
+		<label xml:lang="nl-nl">casim</label>
+	</ui-application>
+	<privileges>
+         	<privilege>http://tizen.org/privilege/socket</privilege>
+	</privileges>
+
+</manifest>
+
