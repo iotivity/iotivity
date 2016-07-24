@@ -83,6 +83,9 @@ const char * OIC_RSRC_TYPE_SEC_VER = "oic.r.ver";
 const char * OIC_RSRC_VER_URI =  "/oic/sec/ver";
 const char * OIC_JSON_VER_NAME = "ver";
 
+//reset profile
+const char * OIC_JSON_RESET_PF_NAME = "resetpf";
+
 const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_RESOURCES_NAME = "resources";
 const char * OIC_JSON_AMSS_NAME = "amss";

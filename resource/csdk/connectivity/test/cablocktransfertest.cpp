@@ -213,14 +213,18 @@ TEST_F(CABlockTransferTests, CAGetPayloadFromBlockDataListTest)
     CABlockData_t *currData = CACreateNewBlockData(cadata);
     EXPECT_TRUE(currData != NULL);
 
-    size_t fullPayload = 0;
-    CAPayload_t payload = CAGetPayloadFromBlockDataList(currData->blockDataId,
-                                                        &fullPayload);
+    if (currData)
+    {
+        size_t fullPayload = 0;
+        CAPayload_t payload = CAGetPayloadFromBlockDataList(currData->blockDataId,
+                                                            &fullPayload);
 
-    size_t payloadLen = (payload != NULL) ? strlen((const char*) payload) : 0;
-    EXPECT_TRUE(fullPayload == payloadLen);
+        size_t payloadLen = (payload != NULL) ? strlen((const char*) payload) : 0;
+        EXPECT_TRUE(fullPayload == payloadLen);
 
-    CARemoveBlockDataFromList(currData->blockDataId);
+        CARemoveBlockDataFromList(currData->blockDataId);
+    }
+
     CADestroyDataSet(cadata);
     coap_delete_list(options);
     coap_delete_pdu(pdu);
@@ -306,12 +310,15 @@ TEST_F(CABlockTransferTests, CAAddBlockOption1InRequest)
     CABlockData_t *currData = CACreateNewBlockData(cadata);
     EXPECT_TRUE(currData != NULL);
 
-    EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
-                                                    COAP_OPTION_BLOCK1));
+    if (currData)
+    {
+        EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
+                                                        COAP_OPTION_BLOCK1));
 
-    EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption1(&pdu, &requestData,
-                                              requestData.payloadSize,
-                                              currData->blockDataId, &options));
+        EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption1(&pdu, &requestData,
+                                                  requestData.payloadSize,
+                                                  currData->blockDataId, &options));
+    }
 
     CADestroyDataSet(cadata);
     coap_delete_list(options);
@@ -359,12 +366,15 @@ TEST_F(CABlockTransferTests, CAAddBlockOption1InResponse)
     CABlockData_t *currData = CACreateNewBlockData(cadata);
     EXPECT_TRUE(currData != NULL);
 
-    EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
-                                                    COAP_OPTION_BLOCK1));
+    if (currData)
+    {
+        EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
+                                                        COAP_OPTION_BLOCK1));
 
-    EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption1(&pdu, &responseData,
-                                              responseData.payloadSize,
-                                              currData->blockDataId, &options));
+        EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption1(&pdu, &responseData,
+                                                  responseData.payloadSize,
+                                                  currData->blockDataId, &options));
+    }
 
     CADestroyDataSet(cadata);
     coap_delete_list(options);
@@ -412,12 +422,15 @@ TEST_F(CABlockTransferTests, CAAddBlockOption2InResponse)
     CABlockData_t *currData = CACreateNewBlockData(cadata);
     EXPECT_TRUE(currData != NULL);
 
-    EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
-                                                    COAP_OPTION_BLOCK2));
+    if (currData)
+    {
+        EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
+                                                        COAP_OPTION_BLOCK2));
 
-    EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption2(&pdu, &responseData,
-                                              responseData.payloadSize,
-                                              currData->blockDataId, &options));
+        EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption2(&pdu, &responseData,
+                                                  responseData.payloadSize,
+                                                  currData->blockDataId, &options));
+    }
 
     CADestroyDataSet(cadata);
     coap_delete_list(options);
@@ -464,14 +477,16 @@ TEST_F(CABlockTransferTests, CAAddBlockOption2InRequest)
     CABlockData_t *currData = CACreateNewBlockData(cadata);
     EXPECT_TRUE(currData != NULL);
 
-    EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
-                                                    COAP_OPTION_BLOCK2));
+    if (currData)
+    {
+        EXPECT_EQ(CA_STATUS_OK, CAUpdateBlockOptionType(currData->blockDataId,
+                                                        COAP_OPTION_BLOCK2));
 
-    EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption2(&pdu, &requestData,
-                                              requestData.payloadSize,
-                                              currData->blockDataId, &options));
+        EXPECT_EQ(CA_STATUS_OK, CAAddBlockOption2(&pdu, &requestData,
+                                                  requestData.payloadSize,
+                                                  currData->blockDataId, &options));
+    }
 
-    CARemoveBlockDataFromList(currData->blockDataId);
     CADestroyDataSet(cadata);
     coap_delete_list(options);
     coap_delete_pdu(pdu);

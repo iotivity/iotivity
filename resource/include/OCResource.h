@@ -118,7 +118,7 @@ namespace OC
             m_resourceId(std::move(o.m_resourceId)),
             m_devAddr(std::move(o.m_devAddr)),
             m_useHostString(o.m_useHostString),
-            m_isObservable(o.m_isObservable),
+            m_property(o.m_property),
             m_isCollection(o.m_isCollection),
             m_resourceTypes(std::move(o.m_resourceTypes)),
             m_interfaces(std::move(o.m_interfaces)),
@@ -503,6 +503,15 @@ namespace OC
         */
         bool isObservable() const;
 
+#ifdef WITH_MQ
+        /**
+        * Function to provide ability to check if this resource is publisher or not
+        * @return bool true indicates resource is publisher; false indicates resource is
+        *         not publisher.
+        */
+        bool isPublish() const;
+#endif
+
         /**
         * Function to get the list of resource types
         * @return vector of resource types
@@ -534,6 +543,92 @@ namespace OC
         */
         std::string sid() const;
 
+#ifdef WITH_MQ
+        /**
+        * Function to discovery Topics from MQ Broker.
+        *
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult discoveryMQTopics(const QueryParamsMap& queryParametersMap,
+                                        FindCallback attributeHandler);
+        /**
+        * Function to create Topic into MQ Broker.
+        * SubTopic is also created through this method.
+        *
+        * @param rep representation of the topic
+        * @param topicUri new uri of the topic which want to create
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult createMQTopic(const OCRepresentation& rep,
+                                    const std::string& topicUri,
+                                    const QueryParamsMap& queryParametersMap,
+                                    MQCreateTopicCallback attributeHandler);
+#endif
+#ifdef MQ_SUBSCRIBER
+        /**
+        * Function to subscribe Topic to MQ Broker.
+        *
+        * @param observeType allows the client to specify how it wants to observe.
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param observeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult subscribeMQTopic(ObserveType observeType,
+                                       const QueryParamsMap& queryParametersMap,
+                                       ObserveCallback observeHandler);
+
+        /**
+        * Function to unsubscribe Topic to MQ Broker.
+        *
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult unsubscribeMQTopic();
+
+        /**
+        * Function to request publish to MQ publisher.
+        * Publisher can confirm the request message as key:"req_pub" and value:"true".
+        *
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult requestMQPublish(const QueryParamsMap& queryParametersMap,
+                                       PostCallback attributeHandler);
+#endif
+#ifdef MQ_PUBLISHER
+        /**
+        * Function to publish Topic information into MQ Broker.
+        *
+        * @param rep representation of the topic
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler handles callback
+
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
+        */
+        OCStackResult publishMQTopic(const OCRepresentation& rep,
+                                     const QueryParamsMap& queryParametersMap,
+                                     PostCallback attributeHandler);
+#endif
         // overloaded operators allow for putting into a 'set'
         // the uniqueidentifier allows for putting into a hash
         bool operator==(const OCResource &other) const;
@@ -555,8 +650,8 @@ namespace OC
         OCResourceIdentifier m_resourceId;
         OCDevAddr m_devAddr;
         bool m_useHostString;
-        bool m_isObservable;
         bool m_isCollection;
+        uint8_t m_property;
         std::vector<std::string> m_resourceTypes;
         std::vector<std::string> m_interfaces;
         std::vector<std::string> m_children;
@@ -566,14 +661,14 @@ namespace OC
     private:
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                     const OCDevAddr& devAddr, const std::string& uri,
-                    const std::string& serverId, bool observable,
+                    const std::string& serverId, uint8_t property,
                     const std::vector<std::string>& resourceTypes,
                     const std::vector<std::string>& interfaces);
 
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                     const std::string& host, const std::string& uri,
                     const std::string& serverId,
-                    OCConnectivityType connectivityType, bool observable,
+                    OCConnectivityType connectivityType, uint8_t property,
                     const std::vector<std::string>& resourceTypes,
                     const std::vector<std::string>& interfaces);
     };

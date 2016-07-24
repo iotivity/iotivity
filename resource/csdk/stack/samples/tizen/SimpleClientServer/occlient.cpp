@@ -719,7 +719,7 @@ int InitPlatformDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, PLATFORM_DISCOVERY_QUERY, g_discoveryAddr);
 
@@ -744,7 +744,7 @@ int InitDeviceDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, DEVICE_DISCOVERY_QUERY, g_discoveryAddr);
 
@@ -767,7 +767,7 @@ int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, RESOURCE_DISCOVERY_QUERY, g_discoveryAddr);
 
