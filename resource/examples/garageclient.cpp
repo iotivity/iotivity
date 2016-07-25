@@ -164,7 +164,7 @@ void printRepresentation(const OCRepresentation& rep)
 // callback handler on PUT request
 void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         std::cout << "PUT request was successful" << std::endl;
 

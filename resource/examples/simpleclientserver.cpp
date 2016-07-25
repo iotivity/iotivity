@@ -51,7 +51,7 @@ private:
        std::cout <<"Clientside Put response to get was: "<<std::endl;
        std::cout <<"ErrorCode: "<<eCode <<std::endl;
 
-       if(eCode == 0)
+       if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
        {
             std::cout<<"Successful Put.  Attributes sent were: "<<std::endl;
 
