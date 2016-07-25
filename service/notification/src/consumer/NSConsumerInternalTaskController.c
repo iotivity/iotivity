@@ -70,7 +70,7 @@ void NSDestroyProviderCacheList()
     NSSetProviderCacheList(NULL);
 }
 
-NSMessage_consumer * NSMessageCacheFind(const char * messageId)
+NSMessage * NSMessageCacheFind(const char * messageId)
 {
     NS_VERIFY_NOT_NULL(messageId, NULL);
 
@@ -88,7 +88,7 @@ NSMessage_consumer * NSMessageCacheFind(const char * messageId)
     NSCacheElement * cacheElement = NSStorageRead(MessageCache, messageId);
     NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
-    return NSCopyMessage((NSMessage_consumer *) cacheElement->data);
+    return NSCopyMessage(((NSStoreMessage *) cacheElement->data)->msg);
 }
 
 NSProvider_internal * NSProviderCacheFind(const char * providerId)
@@ -112,9 +112,17 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
     return NSCopyProvider((NSProvider_internal *) cacheElement->data);
 }
 
-
-NSResult NSMessageCacheUpdate(NSMessage_consumer * msg, NSSyncType type)
+void NSRemoveCacheElementMessage(NSCacheElement * obj)
 {
+    NSRemoveMessage(((NSStoreMessage *)obj->data)->msg);
+    NSOICFree(obj->data);
+    NSOICFree(obj);
+}
+
+NSResult NSMessageCacheUpdate(NSMessage * msg, NSSyncType type)
+{
+    NS_VERIFY_NOT_NULL(msg, NS_ERROR);
+
     NSCacheList * MessageCache = *(NSGetMessageCacheList());
     if (!MessageCache)
     {
@@ -126,21 +134,26 @@ NSResult NSMessageCacheUpdate(NSMessage_consumer * msg, NSSyncType type)
         NSSetMessageCacheList(MessageCache);
     }
 
-    NS_VERIFY_NOT_NULL(msg, NS_ERROR);
-
-    msg->type = type;
+    NSStoreMessage * sMsg = (NSStoreMessage *)OICMalloc(sizeof(NSStoreMessage));
+    NS_VERIFY_NOT_NULL(sMsg, NS_ERROR);
 
     NSCacheElement * obj = (NSCacheElement *)OICMalloc(sizeof(NSCacheElement));
-    NS_VERIFY_NOT_NULL(obj, NS_ERROR);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NS_ERROR, NSOICFree(sMsg));
 
-    obj->data = (NSCacheData *) msg;
+    sMsg->status = type;
+    sMsg->msg = NSCopyMessage(msg);
+
+    obj->data = (NSCacheData *) sMsg;
     obj->next = NULL;
 
     NS_LOG(DEBUG, "try to write to storage");
     NSResult ret = NSStorageWrite(MessageCache, obj);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
-            NS_ERROR, NSOICFree(obj));
+            NS_ERROR, NSRemoveCacheElementMessage(obj));
 
+    NSRemoveCacheElementMessage(obj);
+
+    NS_LOG(DEBUG, "Update message done");
     return NS_OK;
 }
 
@@ -270,7 +283,7 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 }
 
-void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
+void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
@@ -284,7 +297,7 @@ void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage_consumer * msg)
     }
 }
 
-void NSConsumerHandleRecvMessage(NSMessage_consumer * msg)
+void NSConsumerHandleRecvMessage(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
@@ -301,7 +314,7 @@ void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
     char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
     snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)sync->messageId);
 
-    NSMessage_consumer * msg = NSMessageCacheFind(msgId);
+    NSMessage * msg = NSMessageCacheFind(msgId);
     NS_VERIFY_NOT_NULL_V(msg);
 
     NSResult ret = NSMessageCacheUpdate(msg, sync->state);
@@ -345,15 +358,15 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
         {
             NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
-            NSConsumerHandleRecvSubscriptionConfirmed((NSMessage_consumer *)task->taskData);
-            NSRemoveMessage((NSMessage_consumer *)task->taskData);
+            NSConsumerHandleRecvSubscriptionConfirmed((NSMessage *)task->taskData);
+            NSRemoveMessage((NSMessage *)task->taskData);
             break;
         }
         case TASK_CONSUMER_RECV_MESSAGE:
         {
             NS_LOG(DEBUG, "Receive New Notification");
-            NSConsumerHandleRecvMessage((NSMessage_consumer *)task->taskData);
-            NSRemoveMessage((NSMessage_consumer *)task->taskData);
+            NSConsumerHandleRecvMessage((NSMessage *)task->taskData);
+            NSRemoveMessage((NSMessage *)task->taskData);
             break;
         }
         case TASK_CONSUMER_PROVIDER_DISCOVERED:

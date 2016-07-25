@@ -43,9 +43,11 @@ void NSDestroyQueue(NSConsumerQueue * queue)
     NSConsumerQueueObject * node = NSPopQueue(queue);
     while(node)
     {
-        node = (NSConsumerQueueObject *)node->next;
+        NSConsumerQueueObject * next = (NSConsumerQueueObject *)node->next;
         NSOICFree(node->data);
         NSOICFree(node);
+
+        node = next;
     }
 
     NSOICFree(queue);

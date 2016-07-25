@@ -39,7 +39,7 @@ void NSConsumerMessageHandlerExit();
 
 extern NSResult NSConsumerPushEvent(NSTask *);
 
-NSMessage_consumer * NSConsumerFindNSMessage(const char *);
+NSMessage * NSConsumerFindNSMessage(const char *);
 
 NSProvider_internal * NSConsumerFindNSProvider(const char *);
 

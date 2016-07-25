@@ -29,10 +29,10 @@
 
 unsigned long NS_MESSAGE_ACCEPTANCE = 1;
 
-NSMessage_consumer * NSCreateMessage_internal(uint64_t msgId, const char * providerId);
+NSMessage * NSCreateMessage_internal(uint64_t msgId, const char * providerId);
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);
 
-NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse);
+NSMessage * NSGetMessage(OCClientResponse * clientResponse);
 NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse);
 
 char * NSGetCloudUri(const char * providerId, char * uri);
@@ -158,7 +158,7 @@ OCStackApplicationResult NSConsumerMessageListener(
     NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG(DEBUG, "build NSMessage");
-    NSMessage_consumer * newNoti = NSGetMessage(clientResponse);
+    NSMessage * newNoti = NSGetMessage(clientResponse);
     NS_VERIFY_NOT_NULL(newNoti, OC_STACK_KEEP_TRANSACTION);
 
     NSTaskType type = TASK_CONSUMER_RECV_MESSAGE;
@@ -188,7 +188,7 @@ void NSGetMessagePostClean(char * pId, OCDevAddr * addr)
     NSOICFree(addr);
 }
 
-NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
+NSMessage * NSGetMessage(OCClientResponse * clientResponse)
 {
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
@@ -205,7 +205,7 @@ NSMessage_consumer * NSGetMessage(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "create NSMessage");
-    NSMessage_consumer * retMsg = NSCreateMessage_internal(id, pId);
+    NSMessage * retMsg = NSCreateMessage_internal(id, pId);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retMsg, NULL, NSOICFree(pId));
     NSOICFree(pId);
 
@@ -261,9 +261,9 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
     return retSync;
 }
 
-NSMessage_consumer * NSCreateMessage_internal(uint64_t id, const char * providerId)
+NSMessage * NSCreateMessage_internal(uint64_t id, const char * providerId)
 {
-    NSMessage_consumer * retMsg = (NSMessage_consumer *)OICMalloc(sizeof(NSMessage_consumer));
+    NSMessage * retMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
     NS_VERIFY_NOT_NULL(retMsg, NULL);
 
     retMsg->messageId = id;
@@ -281,6 +281,8 @@ NSMessage_consumer * NSCreateMessage_internal(uint64_t id, const char * provider
 
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state)
 {
+    NS_VERIFY_NOT_NULL(providerId, NULL);
+
     NSSyncInfo * retSync = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
     NS_VERIFY_NOT_NULL(retSync, NULL);
 
@@ -293,6 +295,9 @@ NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, 
 
 OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
 {
+    NS_VERIFY_NOT_NULL(syncInfo, OC_STACK_ERROR);
+    NS_VERIFY_NOT_NULL(addr, OC_STACK_ERROR);
+
     OCRepPayload * payload = OCRepPayloadCreate();
     NS_VERIFY_NOT_NULL(payload, OC_STACK_ERROR);
 
@@ -301,11 +306,14 @@ OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, syncInfo->providerId);
 
     char * uri = (char*)OICStrdup(NS_SYNC_URI);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(uri, OC_STACK_ERROR, OCRepPayloadDestroy(payload));
+
     OCConnectivityType type = CT_DEFAULT;
     if(addr->adapter == OC_ADAPTER_TCP)
     {
         type = CT_ADAPTER_TCP;
         uri = NSGetCloudUri(syncInfo->providerId, uri);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(uri, OC_STACK_ERROR, OCRepPayloadDestroy(payload));
     }
 
     OCStackResult ret = NSInvokeRequest(NULL, OC_REST_POST, addr,
@@ -320,9 +328,11 @@ char * NSGetCloudUri(const char * providerId, char * uri)
 {
     size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1;
     char * retUri = (char *)OICMalloc(uriLen);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retUri, NULL, NSOICFree(uri));
+
     snprintf(retUri, uriLen, "/%s%s", providerId, uri);
     NSOICFree(uri);
-    NS_LOG_V(DEBUG, "TCP uri : %s", retUri);
+    NS_LOG_V(DEBUG, "Cloud uri : %s", retUri);
 
     return retUri;
 }

@@ -36,21 +36,18 @@ void NSSetCacheMutex(pthread_mutex_t mutex)
 NSCacheList * NSStorageCreate()
 {
     pthread_mutex_t * mutex = (pthread_mutex_t *) OICMalloc(sizeof(pthread_mutex_t));
+    NS_VERIFY_NOT_NULL(mutex, NULL);
+
     pthread_mutex_init(mutex, NULL);
     NSSetCacheMutex(*mutex);
-    mutex = NSGetCacheMutex();
 
     pthread_mutex_lock(mutex);
 
     NSCacheList * newList = (NSCacheList *) OICMalloc(sizeof(NSCacheList));
-    if (!newList)
-    {
-        pthread_mutex_unlock(mutex);
-        NS_LOG (ERROR, "Failed to Create Cache");
-        return NULL;
-    }
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newList, NULL, pthread_mutex_unlock(mutex));
 
-    newList->head = newList->tail = NULL;
+    newList->head = NULL;
+    newList->tail = NULL;
 
     pthread_mutex_unlock(mutex);
 
@@ -59,88 +56,66 @@ NSCacheList * NSStorageCreate()
 
 NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId)
 {
-    pthread_mutex_t * mutex = NSGetCacheMutex();
+    NS_VERIFY_NOT_NULL(list, NULL);
+    NS_VERIFY_NOT_NULL(findId, NULL);
 
+    pthread_mutex_t * mutex = NSGetCacheMutex();
     pthread_mutex_lock(mutex);
 
     NSCacheElement * iter = list->head;
-    NSCacheElement * next = NULL;
     NSCacheType type = list->cacheType;
 
     while (iter)
     {
-        next = iter->next;
-
-        pthread_mutex_unlock(mutex);
-
         if (NSConsumerCompareIdCacheData(type, iter->data, findId))
         {
             pthread_mutex_unlock(mutex);
-
             return iter;
         }
 
-        iter = next;
+        iter = iter->next;
     }
 
-    pthread_mutex_unlock(mutex);
     NS_LOG (DEBUG, "No Cache Element");
+    pthread_mutex_unlock(mutex);
     return NULL;
 }
 
 NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
-    pthread_mutex_t * mutex = NSGetCacheMutex();
-
-    pthread_mutex_lock(mutex);
+    NS_VERIFY_NOT_NULL(list, NS_ERROR);
+    NS_VERIFY_NOT_NULL(newObj, NS_ERROR);
 
     NSCacheType type = list->cacheType;
-
-    if (!newObj)
-    {
-        pthread_mutex_unlock(mutex);
-        NS_LOG (ERROR, "Failed to Write Cache");
-        return NS_ERROR;
-    }
-
     NS_LOG_V(DEBUG, "cache type : %d", type);
+
     if (type == NS_CONSUMER_CACHE_MESSAGE)
     {
-        pthread_mutex_unlock(mutex);
-
         return NSConsumerCacheWriteMessage(list, newObj);
     }
     else if (type == NS_CONSUMER_CACHE_PROVIDER)
     {
-        pthread_mutex_unlock(mutex);
-
         return NSConsumerCacheWriteProvider(list, newObj);
     }
 
     NS_LOG (ERROR, "Not Supported Type");
-    pthread_mutex_unlock(mutex);
 
     return NS_ERROR;
 }
 
 NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 {
-    pthread_mutex_t * mutex = NSGetCacheMutex();
-
-    pthread_mutex_lock(mutex);
+    NS_VERIFY_NOT_NULL(list, NS_ERROR);
+    NS_VERIFY_NOT_NULL(delId, NS_ERROR);
 
     NSCacheType type = list->cacheType;
 
-    if (!delId)
-    {
-        pthread_mutex_unlock(mutex);
-        NS_LOG (ERROR, "Failed to Delete Cache");
-        return NS_ERROR;
-    }
+    pthread_mutex_t * mutex = NSGetCacheMutex();
+    pthread_mutex_lock(mutex);
 
     NSCacheElement * prev = list->head;
     NSCacheElement * del = list->head;
-    NS_VERIFY_NOT_NULL(del, NS_ERROR);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(del, NS_ERROR, pthread_mutex_unlock(mutex));
 
     if (NSConsumerCompareIdCacheData(type, del->data, delId))
     {
@@ -152,7 +127,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 
             if (type == NS_CONSUMER_CACHE_MESSAGE)
             {
-                NSRemoveMessage((NSMessage_consumer *) del->data);
+                NSRemoveMessage((NSMessage *) del->data);
             }
             else if (type == NS_CONSUMER_CACHE_PROVIDER)
             {
@@ -176,7 +151,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
             prev->next = del->next;
             if (type == NS_CONSUMER_CACHE_MESSAGE)
             {
-                NSRemoveMessage((NSMessage_consumer *) del->data);
+                NSRemoveMessage((NSMessage *) del->data);
             }
             else if (type == NS_CONSUMER_CACHE_PROVIDER)
             {
@@ -195,77 +170,63 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
     return NS_OK;
 }
 
+void NSConsumerRemoveMessageStore(NSCacheElement * ele, NSStoreMessage * msg)
+{
+    NSOICFree(ele);
+    NSOICFree(msg);
+}
+
 NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj)
 {
+    NS_VERIFY_NOT_NULL(list, NS_ERROR);
+    NS_VERIFY_NOT_NULL(newObj, NS_ERROR);
+
     pthread_mutex_t * mutex = NSGetCacheMutex();
 
-    pthread_mutex_lock(mutex);
+    NSMessage * newMsgObj = ((NSStoreMessage *)newObj->data)->msg;
 
-    if (!newObj)
-    {
-        pthread_mutex_unlock(mutex);
-        NS_LOG (ERROR, "Failed to Write Message Cache");
-        return NS_ERROR;
-    }
-
-    NSMessage_consumer * newMsgObj = (NSMessage_consumer *) newObj->data;
-
-    pthread_mutex_unlock(mutex);
     char msgId[NS_DEVICE_ID_LENGTH] = {0, };
     snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)newMsgObj->messageId);
     NSCacheElement * it = NSStorageRead(list, msgId);
-    pthread_mutex_lock(mutex);
 
     if (it)
     {
-        NSMessage_consumer * msgObj = (NSMessage_consumer *) it->data;
-        if(msgObj->type == newMsgObj->type)
+        NS_LOG(DEBUG, "Update message status.");
+        pthread_mutex_lock(mutex);
+        NSStoreMessage * sMsgObj = (NSStoreMessage *) it->data;
+        if(sMsgObj->status == ((NSStoreMessage *)newObj->data)->status)
         {
             NS_LOG (DEBUG, "Already receive message");
             pthread_mutex_unlock(mutex);
             return NS_ERROR;
         }
 
-
-        it->data = (void *) NSCopyMessage(newMsgObj);
-        if (!it->data)
-        {
-            NS_LOG (ERROR, "Failed to CopyMessage");
-            it->data = (void *) msgObj;
-            pthread_mutex_unlock(mutex);
-
-            return NS_ERROR;
-        }
-        NSRemoveMessage(msgObj);
+        sMsgObj->status = ((NSStoreMessage *)newObj->data)->status;
         pthread_mutex_unlock(mutex);
-
         return NS_OK;
     }
 
+    NS_LOG(DEBUG, "Add message at storage.");
+    NSStoreMessage * sMsgObj = (NSStoreMessage *) OICMalloc(sizeof(NSStoreMessage));
+    NS_VERIFY_NOT_NULL(sMsgObj, NS_ERROR);
+
     NSCacheElement * obj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-    if (!obj)
-    {
-        NS_LOG(ERROR, "Fail to Create New Object");
-        pthread_mutex_unlock(mutex);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NS_ERROR, NSOICFree(sMsgObj));
 
-        return NS_ERROR;
-    }
-    obj->data = (void *) NSCopyMessage(newMsgObj);
-    if (!obj->data)
-    {
-        NS_LOG (ERROR, "Failed to CopyMessage");
-        pthread_mutex_unlock(mutex);
+    sMsgObj->status = NS_SYNC_UNREAD;
+    sMsgObj->msg = (void *) NSCopyMessage(newMsgObj);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(sMsgObj->msg, NS_ERROR,
+          NSConsumerRemoveMessageStore(obj, sMsgObj));
 
-        return NS_ERROR;
-    }
     obj->next = NULL;
+    obj->data = (NSCacheData *) sMsgObj;
 
+    pthread_mutex_lock(mutex);
     if (!list->head)
     {
         list->head = obj;
         list->tail = obj;
         pthread_mutex_unlock(mutex);
-
         return NS_OK;
     }
 
@@ -373,32 +334,33 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
 
 NSCacheElement * NSPopProviderCacheList(NSCacheList * list)
 {
-    pthread_mutex_t * mutex = NSGetCacheMutex();
+    NS_VERIFY_NOT_NULL(list, NULL);
 
+    pthread_mutex_t * mutex = NSGetCacheMutex();
     pthread_mutex_lock(mutex);
 
     NSCacheElement * head = list->head;
     if (head)
     {
-		NSCacheElement * next = list->head->next;
+        if (list->tail == head)
+        {
+            list->tail = NULL;
+        }
 
-		if (list->tail == head)
-			list->tail = NULL;
-
-		list->head = next;
-		head->next = NULL;
+        list->head = head->next;
+        head->next = NULL;
     }
 
     pthread_mutex_unlock(mutex);
-
     return head;
 }
 
 
 NSResult NSStorageDestroy(NSCacheList * list)
 {
-    pthread_mutex_t * mutex = NSGetCacheMutex();
+    NS_VERIFY_NOT_NULL(list, NS_ERROR);
 
+    pthread_mutex_t * mutex = NSGetCacheMutex();
     pthread_mutex_lock(mutex);
 
     NSCacheElement * iter = list->head;
@@ -412,7 +374,8 @@ NSResult NSStorageDestroy(NSCacheList * list)
         {
             next = (NSCacheElement *) iter->next;
 
-            NSRemoveMessage((NSMessage_consumer *) iter->data);
+            NSRemoveMessage(((NSStoreMessage *) iter->data)->msg);
+            NSOICFree(iter->data);
             NSOICFree(iter);
 
             iter = next;
@@ -442,14 +405,12 @@ NSResult NSStorageDestroy(NSCacheList * list)
 
 bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id)
 {
-    if (data == NULL)
-    {
-        return false;
-    }
+    NS_VERIFY_NOT_NULL(data, false);
+    NS_VERIFY_NOT_NULL(id, false);
 
     if (type == NS_CONSUMER_CACHE_MESSAGE)
     {
-        NSMessage_consumer * msg = (NSMessage_consumer *) data;
+        NSMessage * msg = ((NSStoreMessage *) data)->msg;
 
         char msgId[NS_DEVICE_ID_LENGTH] = {0, };
         snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)msg->messageId);

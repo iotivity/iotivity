@@ -246,7 +246,7 @@ void NSConsumerTaskProcessing(NSTask * task)
     }
 }
 
-NSMessage_consumer * NSConsumerFindNSMessage(const char* messageId)
+NSMessage * NSConsumerFindNSMessage(const char* messageId)
 {
     NS_VERIFY_NOT_NULL(messageId, NULL);
 

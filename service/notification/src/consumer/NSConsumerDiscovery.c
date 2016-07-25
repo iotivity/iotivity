@@ -29,7 +29,6 @@
 #include "oic_string.h"
 
 #define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
-#define NS_PRESENCE_SUBSCRIBE_QUERY "coap://224.0.1.187:5683/oic/ad?rt=oic.r.notification"
 #define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.r.notification"
 #define NS_GET_INFORMATION_QUERY "/notification?if=oic.if.notification"
 

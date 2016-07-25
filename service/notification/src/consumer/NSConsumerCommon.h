@@ -170,20 +170,10 @@ typedef struct
 
 typedef struct
 {
-    // Mandatory
-    uint64_t messageId;
-    char providerId[NS_DEVICE_ID_LENGTH];
+    NSSyncType status;
+    NSMessage * msg;
 
-    //optional
-    NSMessageType type;
-    char * dateTime;
-    uint64_t ttl;
-    char * title;
-    char * contentText;
-    char * sourceName;
-    NSMediaContents * mediaContents;
-
-} NSMessage_consumer;
+} NSStoreMessage;
 
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
@@ -209,8 +199,8 @@ NSTask * NSMakeTask(NSTaskType, void *);
 
 NSResult NSConsumerPushEvent(NSTask *);
 
-NSMessage_consumer * NSCopyMessage(NSMessage_consumer *);
-void NSRemoveMessage(NSMessage_consumer *);
+NSMessage * NSCopyMessage(NSMessage *);
+void NSRemoveMessage(NSMessage *);
 
 NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr * inAddr);
 NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * conn);

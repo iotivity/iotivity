@@ -214,7 +214,7 @@ void NSMessagePost(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
-    NSMessage * retMsg = (NSMessage *)NSCopyMessage((NSMessage_consumer *)msg);
+    NSMessage * retMsg = NSCopyMessage(msg);
     NS_VERIFY_NOT_NULL_V(retMsg);
 
     NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) retMsg);
@@ -233,11 +233,11 @@ NSTask * NSMakeTask(NSTaskType type, void * data)
     return retTask;
 }
 
-NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
+NSMessage * NSCopyMessage(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL(msg, NULL);
 
-    NSMessage_consumer * newMsg = (NSMessage_consumer *)OICMalloc(sizeof(NSMessage_consumer));
+    NSMessage * newMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
     NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     OICStrcpy(newMsg->providerId, NS_DEVICE_ID_LENGTH, msg->providerId);
@@ -246,11 +246,15 @@ NSMessage_consumer * NSCopyMessage(NSMessage_consumer * msg)
     newMsg->title = OICStrdup(msg->title);
     newMsg->contentText = OICStrdup(msg->contentText);
     newMsg->sourceName = OICStrdup(msg->sourceName);
+    newMsg->dateTime = OICStrdup(msg->dateTime);
     newMsg->type = msg->type;
+
+    // TODO change to copy function.
+    newMsg->mediaContents = msg->mediaContents;
 
     return newMsg;
 }
-void NSRemoveMessage(NSMessage_consumer * msg)
+void NSRemoveMessage(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 

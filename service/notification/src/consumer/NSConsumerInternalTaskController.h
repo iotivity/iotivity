@@ -44,7 +44,7 @@ void NSDestroyMessageCacheList();
 
 void NSDestroyProviderCacheList();
 
-NSMessage_consumer * NSMessageCacheFind(const char *);
+NSMessage * NSMessageCacheFind(const char *);
 
 NSProvider_internal * NSProviderCacheFind(const char *);
 
