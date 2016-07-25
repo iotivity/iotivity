@@ -24,14 +24,14 @@ package org.iotivity.cloud.mqserver;
 import java.util.HashMap;
 
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class MessageQueueUtils {
 
     public static <T> T extractDataFromPayload(byte[] payload, String key) {
 
         if (payload == null || key.isEmpty()) {
-            Logger.e("payload or key is empty");
+            Log.e("payload or key is empty");
             return null;
         }
 
@@ -41,7 +41,7 @@ public class MessageQueueUtils {
         parsedData = cbor.parsePayloadFromCbor(payload, HashMap.class);
 
         if (parsedData == null || parsedData.containsKey(key) == false) {
-            Logger.e("payload doesn't contain " + key + " information");
+            Log.e("payload doesn't contain " + key + " information");
             return null;
         }
 

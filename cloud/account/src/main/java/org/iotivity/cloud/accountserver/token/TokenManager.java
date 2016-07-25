@@ -22,7 +22,7 @@
 package org.iotivity.cloud.accountserver.token;
 
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class TokenManager {
 
@@ -70,7 +70,7 @@ public class TokenManager {
         verifyRefreshToken = tokenValidator.verifyRefreshToken(token);
 
         if (!verifyRefreshToken) {
-            Logger.w("RefreshToken is not existed!");
+            Log.w("RefreshToken is not existed!");
             return null;
         }
 

@@ -40,7 +40,7 @@ import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.db.DBManager;
 import org.iotivity.cloud.rdserver.util.TypeCastingManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class DevicePresenceResource extends Resource {
 
@@ -128,7 +128,7 @@ public class DevicePresenceResource extends Resource {
             getPayload.add(payloadSegment);
         }
 
-        Logger.i("Get observe response" + getPayload.toString());
+        Log.i("Get observe response" + getPayload.toString());
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
@@ -161,7 +161,7 @@ public class DevicePresenceResource extends Resource {
                     DBManager.getInstance().findDeviceState(deviceId));
             getPayload.add(payloadSegment);
         }
-        Logger.i("Get observe response" + getPayload.toString());
+        Log.i("Get observe response" + getPayload.toString());
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,

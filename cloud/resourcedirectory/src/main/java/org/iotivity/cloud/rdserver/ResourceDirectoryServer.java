@@ -30,24 +30,20 @@ import org.iotivity.cloud.rdserver.resources.directory.rd.ResourceDirectoryResou
 import org.iotivity.cloud.rdserver.resources.directory.res.DiscoveryResource;
 import org.iotivity.cloud.rdserver.resources.presence.device.DevicePresenceResource;
 import org.iotivity.cloud.rdserver.resources.presence.resource.ResPresenceResource;
-import org.iotivity.cloud.util.ErrorLogger;
-import org.iotivity.cloud.util.FileLogger;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class ResourceDirectoryServer {
 
     public static void main(String[] args) throws Exception {
-        System.setOut(FileLogger.createLoggingProxy(System.out));
+        Log.Init();
 
         System.out.println("-----RD SERVER-----");
 
         if (args.length != 2) {
-            Logger.e("coap server port and TLS mode required\n"
+            Log.e("coap server port and TLS mode required\n"
                     + "ex) 5684 0\n");
             return;
         }
-
-        ErrorLogger.Init();
 
         ServerSystem serverSystem = new ServerSystem();
 

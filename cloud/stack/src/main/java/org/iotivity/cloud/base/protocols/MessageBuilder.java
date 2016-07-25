@@ -44,6 +44,7 @@ public class MessageBuilder {
         if (request instanceof CoapRequest) {
             CoapRequest coapRequest = (CoapRequest) request;
             CoapResponse coapResponse = new CoapResponse(responseStatus);
+            coapResponse.setUriPath(coapRequest.getUriPath());
             coapResponse.setToken(coapRequest.getToken());
             if (payload != null) {
                 coapResponse.setContentFormat(format);
@@ -117,8 +118,17 @@ public class MessageBuilder {
     public static IResponse modifyResponse(IResponse orgResponse,
             ContentFormat contentFormat, byte[] payload) {
 
+        return modifyResponse(orgResponse, null, contentFormat, payload);
+    }
+
+    public static IResponse modifyResponse(IResponse orgResponse,
+            String uriPath, ContentFormat contentFormat, byte[] payload) {
+
         CoapResponse coapResponse = (CoapResponse) orgResponse;
 
+        if (uriPath != null) {
+            coapResponse.setUriPath(uriPath);
+        }
         if (payload != null) {
             coapResponse.setContentFormat(contentFormat);
             coapResponse.setPayload(payload);
