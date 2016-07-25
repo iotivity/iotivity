@@ -477,7 +477,7 @@ bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name)
 
     if (!val)
     {
-        return false;
+        return true;
     }
 
     return val->type == OCREP_PROP_NULL;
