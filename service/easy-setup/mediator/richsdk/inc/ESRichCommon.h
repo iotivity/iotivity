@@ -93,10 +93,10 @@ namespace OIC
          */
         typedef enum
         {
-            NONE_AUTH = 0,
-            WEP,
-            WPA_PSK,
-            WPA2_PSK
+            NONE_AUTH = 0,      /**< NO authentication **/
+            WEP,                /**< WEP **/
+            WPA_PSK,            /**< WPA-PSK **/
+            WPA2_PSK            /**< WPA2-PSK **/
         } WIFI_AUTHTYPE;
 
         /**
@@ -104,67 +104,95 @@ namespace OIC
          */
         typedef enum
         {
-            NONE_ENC = 0,
-            WEP_64,
-            WEP_128,
-            TKIP,
-            AES,
-            TKIP_AES
+            NONE_ENC = 0,       /**< NO encryption **/
+            WEP_64,             /**< WEP-64 **/
+            WEP_128,            /**< WEP-128**/
+            TKIP,               /**< TKIP **/
+            AES,                /**< AES **/
+            TKIP_AES            /**< TKIP-AES **/
         } WIFI_ENCTYPE;
 
+        /**
+         * @brief  Supported WIFI frequency like 2.4G and 5G
+         */
         typedef enum
         {
-            WIFI_24G = 0,
-            WIFI_5G,
-            WIFI_BOTH
+            WIFI_24G = 0,       /**< 2.4G **/
+            WIFI_5G,            /**< 5G **/
+            WIFI_BOTH           /**< 2.4G and 5G **/
         } WIFI_FREQ;
 
+        /**
+         * @brief  Supported WIFI mode like 802.11g and 802.11n
+         */
         typedef enum
         {
-            WIFI_11A = 0,
-            WIFI_11B,
-            WIFI_11G,
-            WIFI_11N,
-            WIFI_11AC
+            WIFI_11A = 0,       /**< 802.11a **/
+            WIFI_11B,           /**< 802.11b **/
+            WIFI_11G,           /**< 802.11g **/
+            WIFI_11N,           /**< 802.11n **/
+            WIFI_11AC           /**< 802.11ac **/
         } WIFI_MODE;
 
+        /**
+         * @brief Data structure stored for Cloud server property provisioning
+         */
         typedef struct
         {
-            string authCode;
-            string authProvider;
-            string ciServer;
+            string authCode;        /**< Auth code issued by OAuth2.0-compatible account server **/
+            string authProvider;    /**< Auth provider ID **/
+            string ciServer;        /**< Cloud interface server URL which an Enrollee is going to registered **/
         } CloudProp;
 
+        /**
+         * @brief Data structure stored for Device property provisioning which includes a WiFi
+         *        and device configuration provisioning
+         */
         typedef struct
         {
+            /**
+             * @brief Data structure stored for WiFi property provisioning
+             */
             struct
             {
-                string ssid; /**< ssid of the Enroller**/
-                string pwd; /**< pwd of the Enroller**/
-                WIFI_AUTHTYPE authtype; /**< auth type of the Enroller**/
-                WIFI_ENCTYPE enctype; /**< encryption type of the Enroller**/
+                string ssid;            /**< Ssid of the Enroller **/
+                string pwd;             /**< Pwd of the Enroller **/
+                WIFI_AUTHTYPE authtype; /**< Auth type of the Enroller **/
+                WIFI_ENCTYPE enctype;   /**< Encryption type of the Enroller **/
             } WIFI;
 
+            /**
+             * @brief Data structure stored for device configuration property provisioning
+             */
             struct
             {
-                string language;
-                string country;
+                string language;        /**< IETF language tag using ISO 639X **/
+                string country;         /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
             } Device;
         } DeviceProp;
 
+        /**
+         * @brief Data structure for received properties of device configuration resource
+         */
         typedef struct
         {
-            string name;
-            string language;
-            string country;
+            string name;        /**< Device's human-friendly name like device model name **/
+            string language;    /**< IETF language tag using ISO 639X **/
+            string country;     /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
         } DeviceConfig;
 
+        /**
+         * @brief Data structure for received properties of WiFi resource
+         */
         typedef struct
         {
-            vector<WIFI_MODE> modes;
-            WIFI_FREQ freq;
+            vector<WIFI_MODE> modes;    /**< Supported WIFI mode like 802.11g and 802.11n **/
+            WIFI_FREQ freq;             /**< Supported WIFI frequency like 2.4G and 5G **/
         } WiFiConfig;
 
+        /**
+         * @brief Provisioning state in device property provisioning.
+         */
         typedef enum
         {
             ES_PROVISIONING_ERROR = -1,
@@ -173,14 +201,16 @@ namespace OIC
             ES_PROVISIONING_SUCCESS
         } ESDeviceProvState;
 
+        /**
+         * @brief Provisioning state in cloud server property provisioning.
+         */
         typedef enum
         {
-            ES_CLOUD_PROVISIONING_ERROR = -1,
-            ES_CLOUD_PROVISIONING_SUCCESS,
-            ES_CLOUD_ENROLLEE_FOUND,
-            ES_CLOUD_ENROLLEE_NOT_FOUND
+            ES_CLOUD_PROVISIONING_ERROR = -1,   /**< An error in cloud provisioning happens **/
+            ES_CLOUD_PROVISIONING_SUCCESS,      /**< Cloud provisioning is successfully done **/
+            ES_CLOUD_ENROLLEE_FOUND,            /**< An enrollee is found in a given network **/
+            ES_CLOUD_ENROLLEE_NOT_FOUND         /**< NO enrollee is found in a given network **/
         }ESCloudProvState;
-
 
         /**
          * Security Provisioning Status
@@ -207,6 +237,11 @@ namespace OIC
             ESResult m_result;
         };
 
+        /**
+         * It comprises sets of WiFi and device configuration properties.
+         * Additionally, it provides a variable, m_cloudable, to make app know if
+         * the enrollee has a preference to register IoTivity cloud server.
+         */
         class EnrolleeConf
         {
         public:
@@ -240,6 +275,13 @@ namespace OIC
             bool m_cloudable;
         };
 
+        /**
+         * Status object for getConfiguration API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the API and requested data delivered in the response
+         *
+         * @see EnrolleeConf
+         */
         class GetConfigurationStatus
         {
         public:
@@ -263,6 +305,11 @@ namespace OIC
             EnrolleeConf m_enrolleeConf;
         };
 
+        /**
+         * Status object for provisionDeviceProperties API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the request.
+         */
         class DevicePropProvisioningStatus
         {
         public:
@@ -281,6 +328,13 @@ namespace OIC
             ESResult m_result;
         };
 
+        /**
+         * Status object for provisionCloudProperties API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the request and status of this provisioning. The status provides
+         * an information if the enrollee is found in a given network and the provisioning is
+         * successfully done.
+         */
         class CloudPropProvisioningStatus
         {
         public:

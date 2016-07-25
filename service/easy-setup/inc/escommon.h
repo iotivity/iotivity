@@ -78,39 +78,51 @@ extern "C"
 #define MAX_DEVICELEN   100
 #define MAX_WEBLINKLEN  100
 
+/**
+ * @brief  Supported WIFI mode like 802.11g and 802.11n
+ */
 typedef enum
 {
-    WiFi_11A = 0,
-    WiFi_11B,
-    WiFi_11G,
-    WiFi_11N,
-    WiFi_11AC,
-    WiFi_EOF = 999,
+    WiFi_11A = 0,       /**< 802.11a **/
+    WiFi_11B,           /**< 802.11b **/
+    WiFi_11G,           /**< 802.11g **/
+    WiFi_11N,           /**< 802.11n **/
+    WiFi_11AC,          /**< 802.11ac **/
+    WiFi_EOF = 999
 } WIFI_MODE;
 
+/**
+ * @brief  Supported WIFI frequency like 2.4G and 5G
+ */
 typedef enum
 {
-    WiFi_24G = 0,
-    WiFi_5G,
-    WiFi_BOTH
+    WiFi_24G = 0,       /**< 2.4G **/
+    WiFi_5G,            /**< 5G **/
+    WiFi_BOTH           /**< 2.4G and 5G **/
 } WIFI_FREQ;
 
+/**
+ * @brief  WIFI Authentication tlype of the Enroller
+ */
 typedef enum
 {
-    NONE_AUTH = 0,
-    WEP,
-    WPA_PSK,
-    WPA2_PSK
+    NONE_AUTH = 0,      /**< NO authentication **/
+    WEP,                /**< WEP **/
+    WPA_PSK,            /**< WPA-PSK **/
+    WPA2_PSK            /**< WPA2-PSK **/
 } WIFI_AUTHTYPE;
 
+/**
+ * @brief  WIFI encryption type of the Enroller
+ */
 typedef enum
 {
-    NONE_ENC = 0,
-    WEP_64,
-    WEP_128,
-    TKIP,
-    AES,
-    TKIP_AES
+    NONE_ENC = 0,       /**< NO encryption **/
+    WEP_64,             /**< WEP-64 **/
+    WEP_128,            /**< WEP-128**/
+    TKIP,               /**< TKIP **/
+    AES,                /**< AES **/
+    TKIP_AES            /**< TKIP-AES **/
 } WIFI_ENCTYPE;
 
 typedef enum
@@ -128,6 +140,9 @@ typedef enum
     ES_UNAUTHORIZED = 31
 } ESResult;
 
+/**
+ * @brief Indicate which resource is created in Enrollee
+ */
 typedef enum
 {
     ES_WIFI_RESOURCE = 0x01,
@@ -135,41 +150,64 @@ typedef enum
     ES_DEVCONF_RESOURCE = 0x04
 } ESResourceMask;
 
+/**
+ * @brief Data structure delivered from mediator, which provides WiFi information
+ */
 typedef struct
 {
-    char ssid[MAX_SSIDLEN]; /**< ssid of the Enroller**/
-    char pwd[MAX_CREDLEN]; /**< pwd of the Enroller**/
-    WIFI_AUTHTYPE authtype; /**< auth type of the Enroller**/
-    WIFI_ENCTYPE enctype; /**< encryption type of the Enroller**/
+    char ssid[MAX_SSIDLEN];         /**< Ssid of the Enroller**/
+    char pwd[MAX_CREDLEN];          /**< Pwd of the Enroller**/
+    WIFI_AUTHTYPE authtype;         /**< Auth type of the Enroller**/
+    WIFI_ENCTYPE enctype;           /**< Encryption type of the Enroller**/
 } ESWiFiProvData;
 
+/**
+ * @brief Data structure delivered from mediator, which provides device configuration information
+ */
 typedef struct
 {
-    char language[OIC_STRING_MAX_VALUE];
-    char country[OIC_STRING_MAX_VALUE];
+    char language[OIC_STRING_MAX_VALUE];    /**< IETF language tag using ISO 639X **/
+    char country[OIC_STRING_MAX_VALUE];     /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
 } ESDevConfProvData;
 
+/**
+ * @brief Data structure delivered from mediator, which provides Cloud server information
+ */
 typedef struct
 {
-    char authCode[OIC_STRING_MAX_VALUE];
-    char authProvider[OIC_STRING_MAX_VALUE];
-    char ciServer[OIC_STRING_MAX_VALUE];
-    char serverID[OIC_STRING_MAX_VALUE];
+    char authCode[OIC_STRING_MAX_VALUE];        /**< Auth code issued by OAuth2.0-compatible account server **/
+    char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
+    char ciServer[OIC_STRING_MAX_VALUE];        /**< Cloud interface server URL which an Enrollee is going to registered **/
+    char serverID[OIC_STRING_MAX_VALUE];        /**< Cloud interface server UUID **/
 } ESCloudProvData;
 
+/**
+ * @brief Data structure stored for Device property which includes a WiFi and device configuration.
+ */
 typedef struct
 {
+    /**
+     * @brief Data structure indicating WiFi configuration of Enrollee
+     */
     struct
     {
         WIFI_MODE mode[NUM_WIFIMODE];
         WIFI_FREQ freq;
     } WiFi;
+
+    /**
+     * @brief Data structure indicating device configuration of Enrollee
+     */
     struct
     {
         char deviceName[MAX_DEVICELEN];
     } DevConf;
 } ESDeviceProperty;
 
+/**
+ * @brief Indicate enrollee and provisioning status. Provisioning status is shown in "provisioning
+ *        status" property in provisioning resource.
+ */
 typedef enum
 {
     /**
@@ -203,6 +241,9 @@ typedef enum
     ES_STATE_REGISTRRED_FAIL_TO_CLOUD
 } ESEnrolleeState, ProvStatus;
 
+/**
+ * @brief Indicate last error code to describe a reason of error during easy setup.
+ */
 typedef enum
 {
     /**

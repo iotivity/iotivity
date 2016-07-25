@@ -681,8 +681,8 @@ INPUT                  = . \
                          ../../csdk/stack/include/internal/oicgroup.h \
                          ../../csdk/stack/include/internal/oickeepalive.h \
                          guides \
+                         ../../../service/easy-setup/inc \
                          ../../../service/easy-setup/enrollee/inc \
-                         ../../../service/easy-setup/enrollee/src/softap.h \
                          ../../../service/resource-directory/include \
 
 

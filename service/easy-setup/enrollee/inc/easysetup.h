@@ -70,6 +70,8 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
  *
  * @param deviceProperty   Contains device information composed of WiFi Structure & DevConf Structure
  * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESDeviceProperty
  */
 ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty);
 
@@ -79,6 +81,8 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty);
  *
  * @param esState   Contains current enrollee's state.
  * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESEnrolleeState
  */
 ESResult ESSetState(ESEnrolleeState esState);
 
@@ -88,6 +92,8 @@ ESResult ESSetState(ESEnrolleeState esState);
  *
  * @param esErrCode   Contains enrollee's error code.
  * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESErrorCode
  */
 ESResult ESSetErrorCode(ESErrorCode esErrCode);
 
