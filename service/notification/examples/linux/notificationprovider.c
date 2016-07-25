@@ -64,7 +64,7 @@ void subscribeRequestCallback(NSConsumer *consumer)
 
     printf("NS_APP Consumer Device ID: %s\n", consumer->consumerId);
 
-    NSAccept(consumer, true);
+    NSAcceptSubscription(consumer, true);
 }
 
 void syncCallback(NSSyncInfo *sync)

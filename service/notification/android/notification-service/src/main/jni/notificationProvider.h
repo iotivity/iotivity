@@ -42,7 +42,7 @@ extern "C"
     JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSProviderReadCheck(
             JNIEnv *, jobject, jobject);
 
-    JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSAccept(JNIEnv *,
+    JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSAcceptSubscription(JNIEnv *,
             jobject, jobject, jboolean);
 
     void NSSubscribeRequestCb(NSConsumer*);

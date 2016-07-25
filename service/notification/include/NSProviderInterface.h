@@ -93,7 +93,7 @@ NSResult NSSendMessage(NSMessage *msg);
  * @param[in]  accepted  the result of acceptance; Allow or Deny
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSAccept(NSConsumer *consumer, bool accepted);
+NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted);
 
 /**
  * Get consumer list that is stored in the cache of notification service

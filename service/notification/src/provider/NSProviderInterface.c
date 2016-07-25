@@ -186,7 +186,7 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
     return NS_OK;
 }
 
-NSResult NSAccept(NSConsumer *consumer, bool accepted)
+NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted)
 {
     NS_LOG(DEBUG, "NSAccept - IN");
 

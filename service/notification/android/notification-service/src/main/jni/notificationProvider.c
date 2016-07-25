@@ -107,7 +107,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NS
     return 0;
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSAccept(JNIEnv * env,
+JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NSAcceptSubscription(JNIEnv * env,
         jobject jObj, jobject jConsumer, jboolean jAccepted)
 {
     if (jAccepted)
@@ -171,7 +171,7 @@ void NSSubscribeRequestCb(NSConsumer *consumer)
 
     (*g_jvm)->DetachCurrentThread(g_jvm);
 
-    NSAccept(consumer, true);
+    NSAcceptSubscription(consumer, true);
 
     return;
 }
