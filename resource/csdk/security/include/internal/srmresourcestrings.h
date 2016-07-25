@@ -89,6 +89,9 @@ extern const char * OIC_RSRC_TYPE_SEC_VER;
 extern const char * OIC_RSRC_VER_URI;
 extern const char * OIC_JSON_VER_NAME;
 
+//reset profile
+extern const char * OIC_JSON_RESET_PF_NAME;
+
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_SUBJECTID_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;

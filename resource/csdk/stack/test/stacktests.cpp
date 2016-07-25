@@ -373,7 +373,7 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
     InitStack(OC_CLIENT);
 
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     strcpy(szQueryUri, OC_RSRVD_WELL_KNOWN_URI);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -415,7 +415,7 @@ TEST(StackResource, DISABLED_UpdateResourceNullURI)
     InitStack(OC_CLIENT);
 
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     strcpy(szQueryUri, OC_RSRVD_WELL_KNOWN_URI);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -464,7 +464,7 @@ TEST(StackResource, CreateResourceBadParams)
                                             "/a/led",
                                             0,
                                             NULL,
-                                            128));// invalid bitmask for OCResourceProperty
+                                            255));// invalid bitmask for OCResourceProperty
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1758,7 +1758,7 @@ TEST(StackResource, MultipleResourcesDiscovery)
                                             NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     /* Start a discovery query*/
-    char szQueryUri[256] = "/oic/res?if=oic.if.ll";
+    char szQueryUri[MAX_QUERY_LENGTH] = "/oic/res?if=oic.if.ll";
     OCCallbackData cbData;
     cbData.cb = discoveryCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;

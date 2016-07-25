@@ -68,10 +68,19 @@ extern "C" {
 /** Gateway URI.*/
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
 #endif
+
+#ifdef WITH_MQ
+/** MQ Broker URI.*/
+#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/.well-known/ocf/ps"
+#endif
+
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
+
+/** Presence URI through which the OCF devices advertise their device presence.*/
+#define OCF_RSRVD_DEVICE_PRESENCE_URI         "/.well-known/ocf/prs"
 
 /** Sets the default time to live (TTL) for presence.*/
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
@@ -145,6 +154,14 @@ extern "C" {
 
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES    "oic.wk.res"
+
+#ifdef WITH_MQ
+/** To represent content type with MQ Broker.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER     "ocf.wk.ps"
+
+/** To represent content type with MQ Topic.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC      "ocf.wk.ps.topic"
+#endif
 
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
@@ -282,10 +299,10 @@ extern "C" {
 #define MAX_ADDR_STR_SIZE (256)
 #else
 /** Max Address could be
- * "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * "coaps+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
  * +1 for null terminator.
  */
-#define MAX_ADDR_STR_SIZE (65)
+#define MAX_ADDR_STR_SIZE (66)
 #endif
 
 /** Length of MAC address */
@@ -337,6 +354,38 @@ extern "C" {
 
 /** To represent resource type with Publish RD.*/
 #define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdpub"
+
+/** Cloud Account */
+
+/** Account URI.*/
+#define OC_RSRVD_ACCOUNT_URI               "/.well-known/ocf/account"
+
+/** Account session URI.*/
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/.well-known/ocf/account/session"
+
+/** Account token refresh URI.*/
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/.well-known/ocf/account/tokenrefresh"
+
+/** Defines auth provider. */
+#define OC_RSRVD_AUTHPROVIDER              "authprovider"
+
+/** Defines auth code. */
+#define OC_RSRVD_AUTHCODE                  "authcode"
+
+/** Defines session. */
+#define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
+
+/** Defines status. */
+#define OC_RSRVD_STATUS                    "status"
+
+/** Defines grant type. */
+#define OC_RSRVD_GRANT_TYPE                "granttype"
+
+/** Defines refresh token. */
+#define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
+
+/** To represent grant type with refresh token. */
+#define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
 
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
@@ -684,6 +733,16 @@ typedef enum
      *  if discovery request contains an explicit querystring.
      *  Ex: GET /oic/res?rt=oic.sec.acl */
     OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
+
+#ifdef WITH_MQ
+    /** When this bit is set, the resource is allowed to be published */
+    ,OC_MQ_PUBLISHER     = (1 << 6)
+#endif
+
+#ifdef MQ_BROKER
+    /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
+    ,OC_MQ_BROKER        = (1 << 7)
+#endif
 } OCResourceProperty;
 
 /**
@@ -810,7 +869,14 @@ typedef enum
     OC_OBSERVE_DEREGISTER = 1,
 
     /** Others. */
-    OC_OBSERVE_NO_OPTION = 2
+    OC_OBSERVE_NO_OPTION = 2,
+
+//#ifdef WITH_MQ
+    OC_MQ_SUBSCRIBER = 3,
+
+    OC_MQ_UNSUBSCRIBER = 4,
+//#endif
+
 } OCObserveAction;
 
 

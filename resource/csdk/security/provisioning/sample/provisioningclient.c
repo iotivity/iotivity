@@ -50,11 +50,12 @@ extern "C"
 #define _30_PROVIS_PAIR_DEVS_   30
 #define _31_PROVIS_CRED_        31
 #define _32_PROVIS_ACL_         32
-#define _33_PROVIS_DP_           33
+#define _33_PROVIS_DP_          33
 #define _34_CHECK_LINK_STATUS_  34
 #define _40_UNLINK_PAIR_DEVS_   40
 #define _50_REMOVE_SELEC_DEV_   50
-#define _60_GET_CRED_  60
+#define _51_RESET_SELEC_DEV_    51
+#define _60_GET_CRED_           60
 #define _61_GET_ACL_            61
 #define _99_EXIT_PRVN_CLT_      99
 
@@ -221,6 +222,20 @@ static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     else
     {
         OIC_LOG_V(ERROR, TAG, "Remove Device FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Sync Device SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Sync Device FAILED - ctx: %s", (char*) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
     g_doneCB = true;
@@ -1031,6 +1046,58 @@ static int removeDevice(void)
     return 0;
 }
 
+static int resetDevice(void)
+{
+    // check |own_list| for removing device
+    if (!g_own_list || 1 > g_own_cnt)
+    {
+        printf("   > Owned Device List, to Reset Device, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;
+    }
+
+    // select device for removing it
+    int dev_num = 0;
+    for ( ; ; )
+    {
+        printf("   > Enter Device Number, for Resetting Device: ");
+        for (int ret = 0; 1 != ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for ( ; 0x20 <= getchar() ; );  // for removing overflow garbages
+                                            // '0x20 <= code' is character region
+        }
+        if (0 < dev_num && g_own_cnt >= dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    g_doneCB = false;
+    printf("   Resetting Selected Owned Device..\n");
+
+    OCStackResult rst = OCResetDevice((void *) g_ctx, DISCOVERY_TIMEOUT,
+                    getDevInst((const OCProvisionDev_t *) g_own_list, dev_num), syncDeviceCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCResetDevice API error: %d", rst);
+        return -1;
+    }
+
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        return -1;
+    }
+
+    // display the removed result
+    printf("   > Reset Selected Owned Device SUCCEEDED\n");
+    printf("   > Please Discover Owned Devices for the Registered Result, with [10|12] Menu\n");
+
+    return 0;
+}
+
 static OicSecAcl_t* createAcl(const int dev_num)
 {
     if(0>=dev_num || g_own_cnt<dev_num)
@@ -1492,7 +1559,8 @@ static void printMenu(void)
     printf("** 40. Unlink Pairwise Things\n\n");
 
     printf("** [E] REMOVE THE SELECTED DEVICE\n");
-    printf("** 50. Remove the Selected Device\n\n");
+    printf("** 50. Remove the Selected Device\n");
+    printf("** 51. Reset the Selected Device\n\n");
 
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
@@ -1614,6 +1682,12 @@ int main()
             if(removeDevice())
             {
                 OIC_LOG(ERROR, TAG, "_50_REMOVE_SELEC_DEV_: error");
+            }
+            break;
+        case _51_RESET_SELEC_DEV_:
+            if(resetDevice())
+            {
+                OIC_LOG(ERROR, TAG, "_51_RESET_SELEC_DEV_: error");
             }
             break;
         case _60_GET_CRED_:

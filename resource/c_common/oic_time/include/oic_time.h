@@ -53,6 +53,8 @@ typedef enum
  * @param     precision   based on this parameter, current time is returned in milliseconds or
  *                        microseconds
  *
+ * @warning   This function may be sensitive to system time changes on some platforms.
+ *
  * @note
  *            On Arduino platform:
  *            if the time precision is in milliseconds then the function will overflow
