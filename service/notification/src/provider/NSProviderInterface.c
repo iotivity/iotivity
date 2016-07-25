@@ -119,6 +119,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
     if(!initProvider)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
+        pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
 

@@ -71,7 +71,7 @@ void NSInitProviderInfo()
     providerInfo = (NSProviderInfo *) OICMalloc(sizeof(NSProviderInfo));
     const char * generatedUuid = (char *)OCGetServerInstanceIDString();
     NS_LOG_V(DEBUG, "Generate Provider ID: %s", generatedUuid);
-    OICStrcpy(providerInfo->providerId, strlen(generatedUuid), generatedUuid);
+    OICStrcpy(providerInfo->providerId, UUID_STRING_SIZE, generatedUuid);
 
     providerInfo->providerName = NULL;
 }

@@ -143,8 +143,10 @@ bool NSStopScheduler()
 void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
 {
 
-    if(NSIsRunning[schedulerType] == false)
+    if(!NSIsRunning[schedulerType])
+    {
         return;
+    }
 
     pthread_mutex_lock(&NSMutex[schedulerType]);
 
@@ -155,7 +157,6 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     if (NSHeadMsg[schedulerType] == NULL)
     {
         NSHeadMsg[schedulerType] = (NSTask*) OICMalloc(sizeof(NSTask));
-        memset(NSHeadMsg[schedulerType], 0, sizeof(NSTask));
         NSHeadMsg[schedulerType]->taskType = taskType;
         NSHeadMsg[schedulerType]->taskData = data;
         NSHeadMsg[schedulerType]->nextTask = NULL;
@@ -164,7 +165,6 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     else
     {
         NSTask* newNode = (NSTask*) OICMalloc(sizeof(NSTask));
-        memset(newNode, 0, sizeof(NSTask));
         newNode->taskType = taskType;
         newNode->taskData = data;
         newNode->nextTask = NULL;

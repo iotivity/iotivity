@@ -23,7 +23,6 @@
 
 #include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
 
 #include "NSCommon.h"
 #include "NSConstants.h"

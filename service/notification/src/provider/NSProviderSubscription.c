@@ -60,7 +60,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     NS_LOG(DEBUG, "NSSendAccessPolicyResponse - IN");
 
     // put notification resource
-    OCResourceHandle notificationResourceHandle;
+    OCResourceHandle notificationResourceHandle = NULL;
     if (NSPutNotificationResource(NSGetSubscriptionAccepter(), &notificationResourceHandle)
             != NS_OK)
     {
@@ -244,7 +244,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
         return NS_ERROR;
     }
 
-    OCResourceHandle rHandle;
+    OCResourceHandle rHandle = NULL;
     if (NSPutMessageResource(NULL, &rHandle) != NS_OK)
     {
         NS_LOG(ERROR, "Fail to put notification resource");

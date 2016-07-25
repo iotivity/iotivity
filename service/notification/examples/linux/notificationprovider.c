@@ -190,11 +190,6 @@ int main()
 
             case 4:
                 printf("NSRead");
-                NSSyncInfo * sync = (NSSyncInfo*) OICMalloc(sizeof(NSSyncInfo));
-
-                sync->messageId = OICStrdup("dev_001");
-                sync->state = 1;
-
                 break;
 
             case 5:
@@ -209,7 +204,6 @@ int main()
 
                 printf("Session Code: ");
                 gets(REMOTE_SERVER_SESSION);
-
 
                 NSCloudLogin(REMOTE_SERVER_ADDRESS, REMOTE_SERVER_SESSION, CloudLoginoutCallback);
                 printf("OCCloudLogin requested");

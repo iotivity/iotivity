@@ -163,13 +163,19 @@ NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
 {
     NSSyncInfo * newMsg = NULL;
 
-    if(copyMsg == NULL)
+    if(!copyMsg)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
     }
 
     newMsg = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+
+    if(!newMsg)
+    {
+        NS_LOG(ERROR, "newMsg is NULL");
+        return NULL;
+    }
 
     newMsg->messageId = copyMsg->messageId;
     OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);
@@ -204,6 +210,13 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
     }
 
     newMsg = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
+
+    if(!newMsg)
+    {
+        NS_LOG(ERROR, "newMsg is NULL");
+        return NULL;
+    }
+
     (newMsg->consumerId)[0] = '\0';
 
     OICStrcpy(newMsg->consumerId, UUID_STRING_SIZE, copyMsg->consumerId);
@@ -233,7 +246,7 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
 {
     NS_LOG(DEBUG, "NSGetSyncInfo - IN");
     char * providerId = NULL;
-    int64_t state;
+    int64_t state = 0;
 
     if(!payload)
     {
@@ -362,6 +375,12 @@ NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj)
 
     NSMediaContents * newObj = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
 
+    if(!newObj)
+    {
+        NS_LOG(ERROR, "contents newObj is NULL");
+        return NULL;
+    }
+
     if(copyObj->iconImage)
     {
         newObj->iconImage = OICStrdup(copyObj->iconImage);
@@ -374,7 +393,7 @@ NSResult NSFreeMediaContents(NSMediaContents * obj)
 {
     if(!obj)
     {
-        return NS_OK;
+        return NS_FAIL;
     }
 
     NSFreeMalloc(&(obj->iconImage));
@@ -386,6 +405,13 @@ NSResult NSFreeMediaContents(NSMediaContents * obj)
 NSMessage * NSInitializeMessage()
 {
     NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
+
+    if(!msg)
+    {
+        NS_LOG(ERROR, "Msg is NULL");
+        return NULL;
+    }
+
     msg->messageId = OICGetCurrentTime(TIME_IN_MS);
     (msg->providerId)[0] = '\0';
     msg->type = 0;

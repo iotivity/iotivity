@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderMemoryCache.h"
+#include <string.h>
 
 NSCacheList * NSStorageCreate()
 {
@@ -204,7 +205,9 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 
         NSCacheMsgData * msgData = (NSCacheMsgData *) newObj->data;
 
+        pthread_mutex_unlock(&NSCacheMutex);
         NSCacheElement * it = NSStorageRead(list, msgData->id);
+        pthread_mutex_lock(&NSCacheMutex);
         if (it)
         {
             NSCacheMsgData * itData = (NSCacheMsgData *) it->data;
@@ -248,7 +251,9 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
         if (del == list->head) // first object
         {
             if (del == list->tail) // first object (one object)
+            {
                 list->tail = del->next;
+            }
 
             list->head = del->next;
 
@@ -265,7 +270,9 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
         if (NSProviderCompareIdCacheData(type, del->data, delId))
         {
             if (del == list->tail) // delete object same to last object
+            {
                 list->tail = prev;
+            }
 
             prev->next = del->next;
             NSProviderDeleteCacheData(type, del->data);
@@ -391,7 +398,10 @@ bool NSIsSameObId(NSCacheSubData * data, OCObservationId id)
 {
     if (id == data->messageObId || id == data->syncObId || id == data->remote_messageObId ||
                 id == data->remote_syncObId)
+    {
         return true;
+    }
+
     return false;
 }
 
@@ -416,7 +426,9 @@ NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id)
             if (del == list->head) // first object
             {
                 if (del == list->tail) // first object (one object)
+                {
                     list->tail = del->next;
+                }
 
                 list->head = del->next;
 
@@ -433,7 +445,9 @@ NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id)
                 if (NSIsSameObId(curr, id))
                 {
                     if (del == list->tail) // delete object same to last object
+                    {
                         list->tail = prev;
+                    }
 
                     prev->next = del->next;
                     NSProviderDeleteCacheData(type, del->data);

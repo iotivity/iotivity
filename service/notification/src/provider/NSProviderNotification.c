@@ -100,7 +100,7 @@ NSResult NSSendNotification(NSMessage *msg)
         return NS_ERROR;
     }
 
-    OCRepPayload* payload;
+    OCRepPayload* payload = NULL;
 
     if (NSSetMessagePayload(msg, &payload) != NS_OK)
     {
@@ -123,10 +123,14 @@ NSResult NSSendNotification(NSMessage *msg)
         if (subData->isWhite)
         {
             if(subData->messageObId != 0)
+            {
                 obArray[obCount++] = subData->messageObId;
+            }
 
             if(subData->remote_messageObId != 0)
+            {
                 obArray[obCount++] = subData->remote_messageObId;
+            }
         }
         it = it->next;
     }
@@ -193,10 +197,14 @@ NSResult NSSendSync(NSSyncInfo *sync)
         if (subData->isWhite)
         {
             if(subData->syncObId != 0)
+            {
                 obArray[obCount++] = subData->syncObId;
+            }
 
             if(subData->remote_syncObId != 0)
+            {
                 obArray[obCount++] = subData->remote_syncObId;
+            }
         }
         it = it->next;
     }
