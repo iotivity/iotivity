@@ -63,6 +63,19 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
 OCStackResult AclToCBORPayload(const OicSecAcl_t * acl, uint8_t **outPayload, size_t *size);
 
 /**
+ * This method removes ACE for the subject and resource from the ACL
+ *
+ * @param subject of the ACE
+ * @param resource of the ACE
+ *
+ * @return
+ *     ::OC_STACK_RESOURCE_DELETED on success
+ *     ::OC_STACK_NO_RESOURCE on failure to find the appropriate ACE
+ *     ::OC_STACK_INVALID_PARAM on invalid parameter
+ */
+OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource);
+
+/**
  * This function deletes ACL data.
  *
  * @param acl instance of @ref OicSecAcl_t structure to be deleted.

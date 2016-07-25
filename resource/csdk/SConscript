@@ -32,6 +32,7 @@ target_os = env.get('TARGET_OS')
 with_ra = env.get('WITH_RA')
 with_ra_ibb = env.get('WITH_RA_IBB')
 with_tcp = env.get('WITH_TCP')
+with_mq = env.get('WITH_MQ')
 # As in the source code, it includes arduino Time library (C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
@@ -57,6 +58,13 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'security/include/internal',
 		'security/provisioning/include',
 		])
+
+if 'SUB' in with_mq:
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+if 'PUB' in with_mq:
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+if 'BROKER' in with_mq:
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
 
 if target_os not in ['arduino', 'windows']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])

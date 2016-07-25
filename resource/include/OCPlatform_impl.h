@@ -225,6 +225,12 @@ namespace OC
                         SubscribeCallback presenceHandler);
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
+        OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                              const std::string& host,
+                                              const QueryParamsList& queryParams,
+                                              OCConnectivityType connectivityType,
+                                              ObserveCallback callback);
+
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         OCConnectivityType connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,
@@ -241,7 +247,34 @@ namespace OC
         OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
                                          const std::string& pinNumber,
                                          DirectPairingCallback resultCallback);
+#ifdef WITH_CLOUD
+        OCStackResult signUp(const std::string& host,
+                             const std::string& authProvider,
+                             const std::string& authCode,
+                             OCConnectivityType connectivityType,
+                             PostCallback cloudConnectHandler);
 
+        OCStackResult signIn(const std::string& host,
+                             const std::string& accessToken,
+                             OCConnectivityType connectivityType,
+                             PostCallback cloudConnectHandler);
+
+        OCStackResult signOut(const std::string& host,
+                              const std::string& accessToken,
+                              OCConnectivityType connectivityType,
+                              PostCallback cloudConnectHandler);
+
+        OCStackResult signInOut(const std::string& host,
+                                const std::string& accessToken,
+                                bool isSignIn,
+                                OCConnectivityType connectivityType,
+                                PostCallback cloudConnectHandler);
+
+        OCStackResult refreshAccessToken(const std::string& host,
+                                         const std::string& refreshToken,
+                                         OCConnectivityType connectivityType,
+                                         PostCallback cloudConnectHandler);
+#endif // WITH_CLOUD
     private:
         PlatformConfig m_cfg;
 

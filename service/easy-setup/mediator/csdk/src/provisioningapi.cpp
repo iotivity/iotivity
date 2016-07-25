@@ -97,7 +97,7 @@ void UnRegisterCallback()
 OCStackResult StartProvisioning(const ProvConfig *provConfig, WiFiOnboadingConnection *onboardConn)
 {
 
-    char findQuery[64] =
+    char findQuery[MAX_QUERY_LENGTH] =
     { 0 };
 
     if (provConfig == NULL || onboardConn == NULL)

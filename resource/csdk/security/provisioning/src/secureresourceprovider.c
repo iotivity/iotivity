@@ -1177,6 +1177,64 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
     return ret;
 }
 
+static OCStackResult SendDeleteACLRequest(void* ctx,
+                                                 OCClientResponseHandler respHandler,
+                                                 const OCProvisionDev_t* revokedDev,
+                                                 const OCProvisionDev_t* destDev)
+{
+    OIC_LOG(DEBUG, TAG, "IN SendDeleteACLRequest");
+
+    if (NULL == ctx || NULL == respHandler || NULL == revokedDev || NULL == destDev)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    char *subID = NULL;
+    OCStackResult ret = ConvertUuidToStr(&revokedDev->doxm->deviceID, &subID);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "SendDeleteACLRequest : Failed to canonical UUID encoding");
+        return OC_STACK_ERROR;
+    }
+
+    char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    int snRet = 0;
+                    //coaps://0.0.0.0:5684/oic/sec/acl?subjectuuid=(Canonical ENCODED UUID)
+    snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,
+                     destDev->securePort, OIC_RSRC_ACL_URI, OIC_JSON_SUBJECTID_NAME, subID);
+    OICFree(subID);
+    if (snRet < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendDeleteACLRequest : Error (snprintf) %d\n", snRet);
+        return OC_STACK_ERROR;
+    }
+    else if ((size_t)snRet >= sizeof(reqBuf))
+    {
+        OIC_LOG_V(ERROR, TAG, "SendDeleteACLRequest : Truncated (snprintf) %d\n", snRet);
+        return OC_STACK_ERROR;
+    }
+
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
+    cbData.context = ctx;
+    cbData.cb = respHandler;
+    cbData.cd = NULL;
+    OIC_LOG_V(INFO, TAG, "URI: %s",reqBuf);
+
+    OIC_LOG(DEBUG, TAG, "Sending remove ACL request to resource server");
+
+    ret = OCDoResource(NULL, OC_REST_DELETE, reqBuf,
+                                     &destDev->endpoint, NULL,
+                                     CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendDeleteACLRequest : Error in OCDoResource %d", ret);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT SendDeleteACLRequest");
+
+    return ret;
+}
+
 /**
  * Callback handler of unlink second device.
  *
@@ -1450,6 +1508,34 @@ static void registerResultForRemoveDevice(RemoveData_t *removeData, OicUuid_t *p
     }
  }
 
+static void registerResultForResetDevice(RemoveData_t *removeData, OicUuid_t *pLinkedDevId,
+                                          OCStackResult stackresult, bool hasError)
+{
+    OIC_LOG_V(INFO, TAG, "Inside registerResultForResetDevice removeData->numOfResults is %zu\n",
+                         removeData->numOfResults + 1);
+    if (pLinkedDevId)
+    {
+        memcpy(removeData->removeRes[(removeData->numOfResults)].deviceId.id,
+               &pLinkedDevId->id, sizeof(pLinkedDevId->id));
+    }
+    else
+    {
+        memset(removeData->removeRes[(removeData->numOfResults)].deviceId.id,
+               0, sizeof(pLinkedDevId->id) );
+    }
+    removeData->removeRes[(removeData->numOfResults)].res = stackresult;
+    removeData->hasError = hasError;
+    ++(removeData->numOfResults);
+
+    // If we get suffcient result from linked devices, we have to call user callback and do free
+    if (removeData->sizeOfResArray == removeData->numOfResults)
+    {
+        removeData->resultCallback(removeData->ctx, removeData->numOfResults, removeData->removeRes,
+                                   removeData->hasError);
+        DeleteRemoveData_t(removeData);
+    }
+}
+
 /**
  * Callback handler of unlink first device.
  *
@@ -1527,6 +1613,171 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
 
 
     return OC_STACK_DELETE_TRANSACTION;
+}
+
+/**
+ * Callback handler of reset device.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] handle          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPSyncDeviceCredCB(void *delDevCtx, OCDoHandle handle,
+        OCClientResponse *clientResponse)
+{
+    //Update the delete credential into delete device context
+    //Save the deleted status in delDevCtx
+    (void)handle;
+    OIC_LOG_V(INFO, TAG, "Inside SRPSyncDeviceCredCB.");
+    VERIFY_NON_NULL(TAG, delDevCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    OCStackResult res = OC_STACK_ERROR;
+
+    RemoveData_t* removeData = (RemoveData_t*)delDevCtx;
+    OCProvisionDev_t * pTargetDev = PMCloneOCProvisionDev(removeData->revokeTargetDev);
+    OCProvisionResultCB resultCallback = removeData->resultCallback;
+    if (clientResponse)
+    {
+        OicUuid_t revDevUuid = {.id={0}};
+        if(UUID_LENGTH == clientResponse->identity.id_length)
+        {
+            memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
+            if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+            {
+                res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID, &revDevUuid);
+                if (OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
+                           registerResultForResetDevice(removeData, &revDevUuid,
+                           OC_STACK_INCONSISTENT_DB, true);
+
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+
+                registerResultForResetDevice(removeData, &revDevUuid,
+                                              OC_STACK_RESOURCE_DELETED, false);
+            }
+            else
+            {
+                registerResultForResetDevice(removeData, &revDevUuid,
+                                              clientResponse->result, false);
+                OIC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
+            }
+        }
+        else
+        {
+            OIC_LOG_V(WARNING, TAG, "Incorrect length of device UUID was sent from %s:%d",
+                     clientResponse->devAddr.addr, clientResponse->devAddr.port);
+
+            if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+            {
+                /**
+                  * Since server's credential was deleted,
+                  * register result as OC_STACK_INCONSISTENT_DB with NULL UUID.
+                  */
+                OIC_LOG_V(ERROR, TAG, "But server's credential was deleted.");
+                registerResultForResetDevice(removeData, NULL, OC_STACK_INCONSISTENT_DB, true);
+            }
+            else
+            {
+                registerResultForResetDevice(removeData, NULL, clientResponse->result, true);
+            }
+        }
+    }
+    else
+    {
+        registerResultForResetDevice(removeData, NULL, OC_STACK_ERROR, true);
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice received Null clientResponse");
+    }
+
+    SRPResetDevice(pTargetDev, resultCallback);
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+/**
+ * Callback handler of reset device sync-up
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] handle          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPSyncDeviceACLCB(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse)
+{
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+/**
+ * Callback handler of device remote reset.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] handle          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult SRPResetDeviceCB(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse)
+{
+    OIC_LOG(DEBUG, TAG, "IN SRPResetDeviceCB");
+    if(OC_STACK_OK == clientResponse->result)
+    {
+        OIC_LOG(DEBUG, TAG, "Change Target Device Pstat Cm SUCCEEDED");
+    }
+
+    // Delete Cred and ACL related to the target device.
+    const OicSecCred_t *cred = NULL;
+    OCProvisionDev_t * pTargetDev = (OCProvisionDev_t *)ctx;
+    cred = GetCredResourceData(&pTargetDev->doxm->deviceID);
+    if (cred == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "OCResetDevice : Failed to get credential of target device.");
+        goto error;
+    }
+
+    OCStackResult res = RemoveCredential(&cred->subject);
+    if (res != OC_STACK_RESOURCE_DELETED && res != OC_STACK_NO_RESOURCE)
+    {
+        OIC_LOG(ERROR, TAG, "OCResetDevice : Failed to remove credential.");
+        goto error;
+    }
+
+    res = RemoveACE(&cred->subject, NULL);
+    if (res != OC_STACK_RESOURCE_DELETED && res != OC_STACK_NO_RESOURCE)
+    {
+        OIC_LOG(ERROR, TAG, "OCResetDevice : Failed to remove ACL.");
+        goto error;
+    }
+    if (OC_STACK_OK != PDMDeleteDevice(&pTargetDev->doxm->deviceID))
+    {
+        OIC_LOG(ERROR, TAG, "OCResetDevice : Failed to delete device from PDM");
+    }
+
+    //Close the DTLS session of the reset device.
+    CAEndpoint_t* endpoint = (CAEndpoint_t *)&clientResponse->devAddr;
+    CAResult_t caResult = CACloseDtlsSession(endpoint);
+    if(CA_STATUS_OK != caResult)
+    {
+        OIC_LOG_V(WARNING, TAG, "OCResetDevice : Failed to close DTLS session : %d", caResult);
+    }
+
+    /**
+     * If there is no linked device, PM does not send any request.
+     * So we should directly invoke the result callback to inform the result of OCResetDevice.
+     */
+    if(OC_STACK_NO_RESOURCE == res)
+    {
+        res = OC_STACK_OK;
+    }
+
+error:
+    OICFree(pTargetDev);
+    return OC_STACK_DELETE_TRANSACTION;
+
 }
 
 static OCStackResult GetListofDevToReqDeleteCred(const OCProvisionDev_t* pRevokeTargetDev,
@@ -1725,6 +1976,270 @@ error:
         OICFree(removeData);
     }
     OIC_LOG(INFO, TAG, "OUT ERROR case SRPRemoveDevice");
+    return res;
+}
+
+/*
+ * Function to sync-up credential and ACL of the target device.
+ * This function will remove credential and ACL of target device from all devices in subnet.
+ *
+ * @param[in] ctx Application context would be returned in result callback
+ * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
+ * @param[in] pTargetDev Device information to be revoked.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            credential revocation is finished.
+ *            when there is an error, this user callback is called immediately.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ *         If OC_STACK_OK is returned, the caller of this API should wait for callback.
+ *         OC_STACK_CONTINUE means operation is success but no request is need to be initiated.
+ */
+OCStackResult SRPSyncDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                         const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback)
+{
+    OIC_LOG(INFO, TAG, "IN SRPSyncDevice");
+    if (!pTargetDev  || 0 == waitTimeForOwnedDeviceDiscovery)
+    {
+        OIC_LOG(INFO, TAG, "SRPSyncDevice : NULL parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPSyncDevice : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    // Declare variables in here to handle error cases with goto statement.
+    OCProvisionDev_t* pOwnedDevList = NULL;
+    OCProvisionDev_t* pLinkedDevList = NULL;
+    RemoveData_t* removeData = NULL;
+
+    //1. Find all devices that has a credential of the revoked device
+    OCUuidList_t* pLinkedUuidList = NULL;
+    size_t numOfDevices = 0;
+    OCStackResult res = OC_STACK_ERROR;
+    res = PDMGetLinkedDevices(&pTargetDev->doxm->deviceID, &pLinkedUuidList, &numOfDevices);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice : Failed to get linked devices information");
+        return res;
+    }
+    // if there is no related device, we can skip further process.
+    if (0 == numOfDevices)
+    {
+        OIC_LOG(DEBUG, TAG, "SRPSyncDevice : No linked device found.");
+        res = OC_STACK_CONTINUE;
+        goto error;
+    }
+
+    //2. Find owned device from the network
+    res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice : Failed to PMDeviceDiscovery");
+        goto error;
+    }
+
+    //3. Make a list of devices to send DELETE credential request
+    //   by comparing owned devices from provisioning database with mutlicast discovery result.
+    size_t numOfLinkedDev = 0;
+    res = GetListofDevToReqDeleteCred(pTargetDev, pOwnedDevList, pLinkedUuidList,
+                                      &pLinkedDevList, &numOfLinkedDev);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice : GetListofDevToReqDeleteCred() failed");
+        goto error;
+    }
+    if (0 == numOfLinkedDev) // This case means, there is linked device but it's not alive now.
+    {                       // So we don't have to send request message.
+        OIC_LOG(DEBUG, TAG, "SRPSyncDevice : No alived & linked device found.");
+        res = OC_STACK_CONTINUE;
+        goto error;
+    }
+
+    // 4. Prepare RemoveData Context data.
+    removeData = (RemoveData_t*)OICCalloc(1, sizeof(RemoveData_t));
+    if (!removeData)
+    {
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice : Failed to memory allocation");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+
+    removeData->revokeTargetDev = PMCloneOCProvisionDev(pTargetDev);
+    if (!removeData->revokeTargetDev)
+    {
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice : PMCloneOCProvisionDev Failed");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+
+    removeData->removeRes =
+        (OCProvisionResult_t*)OICCalloc(numOfLinkedDev, sizeof(OCProvisionResult_t));
+    if (!removeData->removeRes)
+    {
+        OIC_LOG(ERROR, TAG, "SRPSyncDevice : Failed to allocate memory");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+
+    removeData->ctx = ctx;
+    removeData->linkedDevList = pLinkedDevList;
+    removeData->resultCallback = resultCallback;
+    removeData->numOfResults = 0;
+    removeData->sizeOfResArray = numOfLinkedDev;
+    removeData->hasError = false;
+
+    // 5. Send DELETE credential request to linked devices.
+    OCProvisionDev_t *curDev = NULL, *tmpDev = NULL;
+    OCStackResult totalRes = OC_STACK_ERROR;  /* variable for checking request is sent or not */
+    LL_FOREACH_SAFE(pLinkedDevList, curDev, tmpDev)
+    {
+        res = SendDeleteACLRequest((void*)removeData, &SRPSyncDeviceACLCB,
+                                           removeData->revokeTargetDev, curDev);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "SRPSyncDevice : Fail to send the DELETE ACL request to\
+                     %s:%u", curDev->endpoint.addr, curDev->endpoint.port);
+            goto error;
+        }
+        res = SendDeleteCredentialRequest((void*)removeData, &SRPSyncDeviceCredCB,
+                                           removeData->revokeTargetDev, curDev);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "SRPSyncDevice : Fail to send the DELETE credential request to\
+                     %s:%u", curDev->endpoint.addr, curDev->endpoint.port);
+            totalRes = OC_STACK_ERROR;
+        }
+        else
+        {
+            totalRes = OC_STACK_OK; // This means at least one request is successfully sent.
+        }
+    }
+
+    PDMDestoryOicUuidLinkList(pLinkedUuidList); //TODO: Modify API name to have unified convention.
+    PMDeleteDeviceList(pOwnedDevList);
+    OIC_LOG(INFO, TAG, "OUT SRPSyncDevice");
+
+    return totalRes; // Caller of this API should wait callback if totalRes == OC_STACK_OK.
+
+error:
+    PDMDestoryOicUuidLinkList(pLinkedUuidList);
+    PMDeleteDeviceList(pOwnedDevList);
+    PMDeleteDeviceList(pLinkedDevList);
+    if (removeData)
+    {
+        OICFree(removeData->revokeTargetDev);
+        OICFree(removeData->removeRes);
+        OICFree(removeData);
+    }
+    OIC_LOG(INFO, TAG, "OUT ERROR case SRPSyncDevice");
+    return res;
+}
+
+/*
+ * Function for remote reset
+ * This function will send pstat PUT message to the target device to initiate remote reset.
+ *
+ * @param[in] pTargetDev Device information to be revoked.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            credential revocation is finished.
+ *            when there is an error, this user callback is called immediately.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ *         If OC_STACK_OK is returned, the caller of this API should wait for callback.
+ *         OC_STACK_CONTINUE means operation is success but no request is need to be initiated.
+ */
+OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
+        OCProvisionResultCB resultCallback)
+{
+    OIC_LOG(INFO, TAG, "IN SRPResetDevice");
+    if (!pTargetDev)
+    {
+        OIC_LOG(INFO, TAG, "SRPResetDevice : NULL parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "SRPResetDevice : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    OCStackResult res = OC_STACK_ERROR;
+    OicSecPstat_t * pstat = (OicSecPstat_t *) OICCalloc(1, sizeof(OicSecPstat_t));
+    if (!pstat)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    pstat->cm = (OicSecDpm_t) 1;
+    pstat->isOp = 0;
+    memcpy(pstat->deviceID.id, pTargetDev->doxm->deviceID.id, sizeof(OicUuid_t));
+    pstat->tm = (OicSecDpm_t) 2;
+    pstat->om = (OicSecDpom_t) 0;
+    pstat->smLen = 1;
+    pstat->sm = (OicSecDpom_t *) OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+    if (NULL == pstat->sm)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+        OICFree(pstat);
+        return OC_STACK_NO_MEMORY;
+    }
+    pstat->sm[0] = (OicSecDpom_t) 3;
+
+    OCSecurityPayload * secPayload = (OCSecurityPayload *) OICCalloc(1, sizeof(OCSecurityPayload));
+    if (!secPayload)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+
+    if (OC_STACK_OK != PstatToCBORPayload(pstat, &(secPayload->securityData),
+                &(secPayload->payloadSize)))
+    {
+        OCPayloadDestroy((OCPayload *) secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to PstatToCBORPayload");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+    OIC_LOG(DEBUG, TAG, "Created payload for pstat set");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if (!PMGenerateQuery(true,
+                pTargetDev->endpoint.addr,
+                pTargetDev->securePort,
+                pTargetDev->connType,
+                query, sizeof(query), OIC_RSRC_PSTAT_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SRPResetDevice : Failed to generate query");
+        OCPayloadDestroy((OCPayload *) secPayload);
+        res = OC_STACK_ERROR;
+        goto error;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCProvisionDev_t * targetDev = PMCloneOCProvisionDev(pTargetDev);
+    OCCallbackData cbData = { .context = NULL, .cb = NULL, .cd = NULL };
+    cbData.cb = &SRPResetDeviceCB;
+    cbData.context = (void *) targetDev;
+    cbData.cd = NULL;
+    OCMethod method = OC_REST_POST;
+    OCDoHandle handle = NULL;
+    OIC_LOG(DEBUG, TAG, "Sending PSTAT info to resource server");
+    res = OCDoResource(&handle, method, query,
+            &targetDev->endpoint, (OCPayload *)secPayload,
+            targetDev->connType, OC_LOW_QOS, &cbData, NULL, 0);\
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+
+error:
+    OICFree(pstat->sm);
+    OICFree(pstat);
+    OIC_LOG(INFO, TAG, "OUT SRPResetDevice");
     return res;
 }
 

@@ -43,7 +43,7 @@ bool gProvisioningCondFlag = false;
 
 static ProvConfig *gProvConfig;
 static WiFiOnboadingConnection *gOnboardConn;
-static char gSzFindResourceQueryUri[64] =
+static char gSzFindResourceQueryUri[MAX_QUERY_LENGTH] =
 { 0 };
 
 /**

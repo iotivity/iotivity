@@ -99,6 +99,16 @@ namespace OC
             DirectPairingContext(DirectPairingCallback cb) : callback(cb){}
 
         };
+
+#ifdef WITH_MQ
+        struct CreateMQTopicContext
+        {
+            MQCreateTopicCallback callback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+            CreateMQTopicContext(MQCreateTopicCallback cb, std::weak_ptr<IClientWrapper> cw)
+                : callback(cb), clientWrapper(cw){}
+        };
+#endif
     }
 
     class InProcClientWrapper : public IClientWrapper
@@ -138,7 +148,8 @@ namespace OC
             const OCDevAddr& devAddr,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS);
+            const HeaderOptions& headerOptions, OCConnectivityType connectivityType,
+            PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult DeleteResource(
             const OCDevAddr& devAddr,
@@ -167,8 +178,14 @@ namespace OC
             SubscribeCallback& presenceHandler);
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
-        OCStackResult GetDefaultQos(QualityOfService& QoS);
 
+        virtual OCStackResult SubscribeDevicePresence(OCDoHandle* handle,
+                                                      const std::string& host,
+                                                      const QueryParamsList& queryParams,
+                                                      OCConnectivityType connectivityType,
+                                                      ObserveCallback& callback);
+
+        OCStackResult GetDefaultQos(QualityOfService& QoS);
 
         virtual OCStackResult FindDirectPairingDevices(unsigned short waittime,
                        GetDirectPairedCallback& callback);
@@ -178,9 +195,25 @@ namespace OC
         virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> peer, const OCPrm_t& pmSel,
                 const std::string& pinNumber, DirectPairingCallback& resultCallback);
 
+#ifdef WITH_MQ
+        virtual OCStackResult ListenForMQTopic(
+            const OCDevAddr& devAddr,
+            const std::string& resourceUri,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            FindCallback& callback, QualityOfService QoS);
+
+        virtual OCStackResult PutMQTopicRepresentation(
+            const OCDevAddr& devAddr,
+            const std::string& uri,
+            const OCRepresentation& rep,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            MQCreateTopicCallback& callback, QualityOfService QoS);
+#endif
+
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
+        std::string assembleSetResourceUri(std::string uri, const QueryParamsList& queryParams);
         OCPayload* assembleSetResourcePayload(const OCRepresentation& attributes);
         OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
            const HeaderOptions& headerOptions);

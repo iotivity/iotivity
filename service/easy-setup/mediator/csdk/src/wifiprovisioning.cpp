@@ -219,7 +219,7 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/, OCDoHan
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    char szQueryUri[64] =
+    char szQueryUri[MAX_QUERY_LENGTH] =
     { 0 };
 
     OCDiscoveryPayload *discoveryPayload = (OCDiscoveryPayload *) (clientResponse->payload);
