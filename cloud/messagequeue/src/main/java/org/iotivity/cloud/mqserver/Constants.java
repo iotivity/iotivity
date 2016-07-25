@@ -25,12 +25,7 @@ import org.iotivity.cloud.base.OCFConstants;
 
 public class Constants extends OCFConstants {
 
-    public static final String MQ_TOPIC                = "topic";
-    public static final String MQ_LOCATION             = "location";
     public static final String MQ_TOPICLIST            = "topiclist";
-
-    public static final long   MIN_SEQ_NUM             = 5;
-    public static final long   MAX_SEQ_NUM             = 16777215;
 
     // For Kafka
     public static final int    KAFKA_SESSION_TIMEOUT   = 10000;

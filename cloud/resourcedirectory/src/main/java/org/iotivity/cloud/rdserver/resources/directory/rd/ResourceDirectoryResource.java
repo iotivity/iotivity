@@ -42,7 +42,7 @@ import org.iotivity.cloud.rdserver.resources.presence.ResPresenceManager;
 import org.iotivity.cloud.rdserver.resources.presence.resource.ResPresencePayload;
 import org.iotivity.cloud.rdserver.util.TypeCastingManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class ResourceDirectoryResource extends Resource {
 
@@ -141,7 +141,7 @@ public class ResourceDirectoryResource extends Resource {
         }
         responseMap.put(Constants.LINKS, links);
 
-        Logger.i("publish response :" + responseMap.toString());
+        Log.i("publish response :" + responseMap.toString());
 
         byte[] encodedPaylod = mCbor.encodingPayloadToCbor(responseMap);
 
@@ -157,7 +157,7 @@ public class ResourceDirectoryResource extends Resource {
         if (payloadData == null) {
             throw new BadRequestException("payload is null");
         } else {
-            Logger.i("publish payload: " + payloadData.toString());
+            Log.i("publish payload: " + payloadData.toString());
         }
 
         PublishTags tags = new PublishTags();

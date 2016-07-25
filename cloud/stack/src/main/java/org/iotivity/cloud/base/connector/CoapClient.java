@@ -33,7 +33,7 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.util.Bytes;
-import org.iotivity.cloud.util.ErrorLogger;
+import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.Channel;
 
@@ -107,7 +107,7 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
             mChannel.writeAndFlush(request);
 
         } catch (Exception e) {
-            ErrorLogger.write(mChannel, e);
+            Log.f(mChannel, e);
         }
     }
 

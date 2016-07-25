@@ -27,26 +27,22 @@ import java.util.Scanner;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.mqserver.resources.MQBrokerResource;
-import org.iotivity.cloud.util.ErrorLogger;
-import org.iotivity.cloud.util.FileLogger;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class MessageQueueServer {
 
     public static void main(String[] args) throws Exception {
-        System.setOut(FileLogger.createLoggingProxy(System.out));
+        Log.Init();
 
         System.out.println("-----MQ SERVER-----");
 
         if (args.length != 6) {
-            Logger.e("coap server port, Kafka_zookeeper_Address port"
+            Log.e("coap server port, Kafka_zookeeper_Address port"
                     + " and Kafka_broker_Address Port and TLS mode required\n"
                     + "ex) 5686 127.0.0.1 2181 127.0.0.1 9092 0\n");
 
             return;
         }
-
-        ErrorLogger.Init();
 
         ServerSystem serverSystem = new ServerSystem();
 
