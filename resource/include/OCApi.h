@@ -221,6 +221,9 @@ namespace OC
     // Typedef for query parameter map
     typedef std::map<std::string, std::string> QueryParamsMap;
 
+    // Typedef for query parameter map with Vector
+    typedef std::map< std::string, std::vector<std::string> > QueryParamsList;
+
     // Typedef for list of observation IDs
     typedef std::vector<OCObservationId> ObservationIds;
 
@@ -290,6 +293,10 @@ namespace OC
     typedef std::function<void(std::shared_ptr<OCDirectPairing>, OCStackResult)> DirectPairingCallback;
 
     typedef std::function<void(const PairedDevices&)> GetDirectPairedCallback;
+
+    typedef std::function<void(const HeaderOptions&,
+                               const OCRepresentation&, const int,
+                               std::shared_ptr<OCResource>)> MQCreateTopicCallback;
 
 } // namespace OC
 

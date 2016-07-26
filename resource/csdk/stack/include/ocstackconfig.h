@@ -39,7 +39,7 @@
  * Maximum length of the query supported by client/server while processing
  * REST requests/responses.
  */
-#define MAX_QUERY_LENGTH (64)
+#define MAX_QUERY_LENGTH (256)
 
 /**
  * Maximum length of the Manufacturer name supported by the server
@@ -63,7 +63,7 @@
  *  Maximum number of vendor specific header options an application can set or receive
  *  in PDU
  */
-#define MAX_HEADER_OPTIONS (2)
+#define MAX_HEADER_OPTIONS (100)
 
 /**
  *  Maximum Length of the vendor specific header option

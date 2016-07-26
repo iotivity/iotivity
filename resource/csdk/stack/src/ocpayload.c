@@ -1584,7 +1584,11 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         }
     }
 
-    pl->bitmap = res->resourceProperties & (OC_OBSERVABLE | OC_DISCOVERABLE);
+    pl->bitmap = res->resourceProperties & (OC_OBSERVABLE | OC_DISCOVERABLE
+#ifdef MQ_PUBLISHER
+                                            | OC_MQ_PUBLISHER
+#endif
+                                            );
     pl->secure = (res->resourceProperties & OC_SECURE) != 0;
     pl->port = securePort;
 #ifdef TCP_ADAPTER

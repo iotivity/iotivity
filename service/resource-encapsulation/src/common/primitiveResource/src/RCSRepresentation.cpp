@@ -147,9 +147,17 @@ namespace OIC
 
         RCSRepresentation RCSRepresentation::fromOCRepresentation(const OC::OCRepresentation& ocRep)
         {
-            return RCSRepresentation(ocRep.getUri(), ocRep.getResourceInterfaces(),
+            RCSRepresentation rcsRep(ocRep.getUri(), ocRep.getResourceInterfaces(),
                     ocRep.getResourceTypes(),
                     ResourceAttributesConverter::fromOCRepresentation(ocRep));
+
+            // Convert child representations
+            for (auto &childOCRep : ocRep.getChildren())
+            {
+                rcsRep.addChild(fromOCRepresentation(childOCRep));
+            }
+
+            return rcsRep;
         }
 
         OC::OCRepresentation RCSRepresentation::toOCRepresentation(const RCSRepresentation& rcsRep)

@@ -71,4 +71,21 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
  */
 OCStackResult UpdateSecureResourceInPS(const char* rsrcName, uint8_t* cborPayload, size_t size);
 
+/**
+ * This method resets the secure resources according to the reset profile.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult ResetSecureResourceInPS(void);
+
+/**
+ * This method creates the reset profile from the persistent storage.
+ * The reset profile is the copy of the initial state of SVR resources
+ * when secure resources are initiated at first.
+ * In remote reset, the SVR will be reset according to the reset profile.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult CreateResetProfile(void);
+
 #endif //IOTVT_SRM_PSI_H

@@ -84,6 +84,7 @@ namespace OC
             const OCRepresentation& /*attributes*/,
             const QueryParamsMap& /*queryParams*/,
             const HeaderOptions& /*headerOptions*/,
+            OCConnectivityType /*connectivityType*/,
             PostCallback& /*callback*/, QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -121,6 +122,14 @@ namespace OC
         virtual OCStackResult UnsubscribePresence(OCDoHandle /*handle*/)
             {return OC_STACK_NOTIMPL;}
 
+        virtual OCStackResult SubscribeDevicePresence(
+            OCDoHandle* /*handle*/,
+            const std::string& /*host*/,
+            const QueryParamsList& /*queryParams*/,
+            OCConnectivityType /*connectivityType*/,
+            ObserveCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
         virtual OCStackResult GetDefaultQos(QualityOfService& /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -135,6 +144,25 @@ namespace OC
                 const OCPrm_t& /*pmSel*/,
                 const std::string& /*pinNumber*/, DirectPairingCallback& /*resultCallback*/)
             {return OC_STACK_NOTIMPL;}
+
+#ifdef WITH_MQ
+        virtual OCStackResult ListenForMQTopic(const OCDevAddr& /*devAddr*/,
+                                               const std::string& /*resourceUri*/,
+                                               const QueryParamsMap& /*queryParams*/,
+                                               const HeaderOptions& /*headerOptions*/,
+                                               FindCallback& /*callback*/,
+                                               QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult PutMQTopicRepresentation(const OCDevAddr& /*devAddr*/,
+                                                       const std::string& /*uri*/,
+                                                       const OCRepresentation& /*rep*/,
+                                                       const QueryParamsMap& /*queryParams*/,
+                                                       const HeaderOptions& /*headerOptions*/,
+                                                       MQCreateTopicCallback& /*callback*/,
+                                                       QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+#endif
     };
 }
 

@@ -407,6 +407,53 @@ error:
     return res;
 }
 
+/*
+ * Function to reset the target device.
+ * This function will remove credential and ACL of target device from all devices in subnet.
+ *
+ * @param[in] ctx Application context would be returned in result callback
+ * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
+ * @param[in] pTargetDev Device information to be revoked.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            credential revocation is finished.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                            const OCProvisionDev_t* pTargetDev,
+                            OCProvisionResultCB resultCallback)
+{
+    OIC_LOG(INFO, TAG, "IN OCResetDevice");
+    OCStackResult res = OC_STACK_ERROR;
+    if (!pTargetDev || 0 == waitTimeForOwnedDeviceDiscovery)
+    {
+        OIC_LOG(INFO, TAG, "OCResetDevice : Invalid parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (!resultCallback)
+    {
+        OIC_LOG(INFO, TAG, "OCResetDevice : NULL Callback");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    // Send DELETE requests to linked devices
+    res = SRPSyncDevice(ctx, waitTimeForOwnedDeviceDiscovery, pTargetDev, resultCallback);
+    if (OC_STACK_CONTINUE == res)
+    {
+        OIC_LOG(DEBUG, TAG, "OCResetDevice : Target device has no linked device except PT.");
+        if(resultCallback)
+        {
+            resultCallback(ctx, 0, NULL, false);
+        }
+        SRPResetDevice(pTargetDev, resultCallback);
+        res = OC_STACK_OK;
+    }
+    else if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "OCResetDevice : Failed to invoke SRPSyncDevice");
+    }
+    OIC_LOG(INFO, TAG, "OUT OCResetDevice");
+    return res;
+}
 
 /**
  * Internal Function to update result in link result array.
