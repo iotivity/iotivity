@@ -92,6 +92,15 @@ void NSSetList()
     NS_LOG(DEBUG, "NSSetList - OUT");
 }
 
+void NSDestroyList()
+{
+    NSStorageDestroy(consumerSubList);
+    NSStorageDestroy(messageList);
+
+    pthread_mutex_destroy(&NSCacheMutex);
+    pthread_mutexattr_destroy(&NSCacheMutexAttr);
+}
+
 NSResult NSStopProvider()
 {
     NS_LOG(DEBUG, "NSStopProvider - IN");
@@ -104,8 +113,7 @@ NSResult NSStopProvider()
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
         NSStopScheduler();
-        NSStorageDestroy(consumerSubList);
-        NSStorageDestroy(messageList);
+        NSDestroyList();
 
         initProvider = false;
     }
