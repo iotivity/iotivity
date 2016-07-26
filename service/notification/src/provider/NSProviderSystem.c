@@ -24,6 +24,7 @@ static NSConnectionState NSProviderConnectionState;
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
 
 NSProviderInfo * providerInfo;
+bool NSPolicy = true;
 
 void NSSetProviderConnectionState(NSConnectionState state)
 {
@@ -101,5 +102,15 @@ NSProviderInfo * NSGetProviderInfo()
     NS_LOG_V(DEBUG, "ProviderInfo: %s", providerInfo->providerId);
 
     return providerInfo;
+}
+
+bool NSGetPolicy()
+{
+    return NSPolicy;
+}
+
+void NSSetPolicy(bool policy)
+{
+    NSPolicy = policy;
 }
 

@@ -84,6 +84,9 @@
 
 #define NS_QUERY_ID_SIZE           10
 
+#define NS_POLICY_PROVIDER         1
+#define NS_POLICY_CONSUMER         0
+
 typedef enum eConnectionState
 {
     DISCONNECTED = 0,

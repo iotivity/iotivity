@@ -42,7 +42,7 @@ void initializeMutex()
     nsInitMutex = initMutex;
 }
 
-NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
+NSResult NSStartProvider(bool policy, NSSubscribeRequestCallback subscribeRequestCb,
         NSProviderSyncInfoCallback syncCb)
 {
     NS_LOG(DEBUG, "NSStartProvider - IN");

@@ -31,28 +31,23 @@ NSResult NSInitSubscriptionList()
     return NS_OK;
 }
 
-NSResult NSSetSubscriptionAccessPolicy(NSAccessPolicy access)
+NSResult NSSetSubscriptionAccessPolicy(bool policy)
 {
     NS_LOG(DEBUG, "NSSetSubscriptionAcceptPolicy - IN");
 
-    if (access == NS_ACCESS_ALLOW)
+    if (policy == NS_POLICY_PROVIDER)
     {
         NS_LOG(DEBUG, "Place Provider as a subscription accepter");
     }
-    else if (access == NS_ACCESS_DENY)
+    else if (policy == NS_POLICY_CONSUMER)
     {
         NS_LOG(DEBUG, "Place Consumer as a subscription accepter");
     }
 
-    NSSubscriptionAccess = access;
+    NSSetPolicy(policy);
 
     NS_LOG(DEBUG, "NSSetSubscriptionAcceptPolicy - OUT");
     return NS_OK;
-}
-
-int NSGetSubscriptionAccepter()
-{
-    return NSSubscriptionAccess;
 }
 
 NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest)
@@ -61,7 +56,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     // put notification resource
     OCResourceHandle notificationResourceHandle = NULL;
-    if (NSPutNotificationResource(NSGetSubscriptionAccepter(), &notificationResourceHandle)
+    if (NSPutNotificationResource(NSGetPolicy(), &notificationResourceHandle)
             != NS_OK)
     {
         NS_LOG(ERROR, "Fail to put notification resource");
@@ -86,7 +81,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
-    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetSubscriptionAccepter());
+    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetPolicy());
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, NS_COLLECTION_MESSAGE_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, NS_COLLECTION_SYNC_URI);
 
@@ -159,12 +154,14 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
             NS_LOG(DEBUG, "fail to write cache");
         }
 
-        if (NSGetSubscriptionAccepter() == NS_ACCESS_ALLOW)
+        bool currPolicy = NSGetPolicy();
+
+        if (currPolicy == NS_POLICY_PROVIDER)
         {
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_PROVIDER");
             NSAskAcceptanceToUser(entityHandlerRequest);
         }
-        else if (NSGetSubscriptionAccepter() == NS_ACCESS_DENY)
+        else if (currPolicy == NS_POLICY_CONSUMER)
         {
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_CONSUMER");
             NSSendSubscriptionResponse(entityHandlerRequest, true);

@@ -155,11 +155,11 @@ int main()
         {
             case 1:
                 printf("NSStartProvider(Accepter: Provider)");
-                NSStartProvider(NS_ACCESS_ALLOW, subscribeRequestCallback, syncCallback);
+                NSStartProvider(true, subscribeRequestCallback, syncCallback);
                 break;
             case 2:
                 printf("NSStartProvider(Accepter: Consumer)");
-                NSStartProvider(NS_ACCESS_DENY, subscribeRequestCallback, syncCallback);
+                NSStartProvider(false, subscribeRequestCallback, syncCallback);
                 break;
             case 3:
                 printf("NSSendNotification()");

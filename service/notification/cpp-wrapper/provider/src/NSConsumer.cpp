@@ -50,7 +50,7 @@ namespace OIC
         {
             NS_LOG(DEBUG, "acceptSubscription - IN");
             if (consumer != nullptr)
-                return NSAccept(consumer->getNSConsumer(), accepted);
+                return NSAcceptSubscription(consumer->getNSConsumer(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
             return NS_ERROR;
         }

@@ -65,7 +65,7 @@ typedef enum eAccessPolicy
 {
     NS_ACCESS_ALLOW = 0,
     NS_ACCESS_DENY = 1,
-} NSAccessPolicy;
+} NSAccessPolicy;  // not used , this structure will be deleted.
 
 /**
  * Notification message status to synchronize

@@ -57,7 +57,7 @@ typedef void (*NSProviderSyncInfoCallback)(NSSyncInfo *);
  * @param[in]  syncCallback   Callback function to register for receiving  sync data
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subscribeRequestCb,
+NSResult NSStartProvider(bool policy, NSSubscribeRequestCallback subscribeRequestCb,
         NSProviderSyncInfoCallback syncCb);
 
 /**
