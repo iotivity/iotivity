@@ -416,11 +416,8 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
     }
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatGetRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
     OICFree(payload);
     return ehRet;
 }
@@ -533,12 +530,10 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
      }
 
 
-    //Send payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
-    }
+    // Send response payload to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     DeletePstatBinData(pstat);
     return ehRet;
 }
@@ -565,8 +560,8 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
                 ehRet = HandlePstatPostRequest(ehRequest);
                 break;
             default:
-                ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                               OC_EH_OK : OC_EH_ERROR;
                 break;
         }
     }
