@@ -84,12 +84,51 @@ void printConfiguration(EnrolleeConf conf)
     cout << "===========================================" << endl;
 }
 
+void printStatus(EnrolleeStatus status)
+{
+    cout << "===========================================" << endl;
+    cout << "\tEnrolleeStatus.provStatus : " << status.provStatus << endl;
+    cout << "\tEnrolleeStatus.lastErrCode : " << status.lastErrCode << endl;
+    cout << "===========================================" << endl;
+}
+
 void provisionSecurity()
 {
     // TODO
 }
 
-void GetConfigurationCallback(std::shared_ptr< GetConfigurationStatus > getConfigurationStatus)
+void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
+{
+    if(getEnrolleeStatus->getESResult() != ES_OK)
+    {
+      cout << "getStatus is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "getStatus is success." << endl;
+      printStatus(getEnrolleeStatus->getEnrolleeStatus());
+    }
+}
+
+
+void getStatus()
+{
+    if(!remoteEnrollee)
+        return;
+
+    try
+    {
+        remoteEnrollee->getStatus(getStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during getConfiguration call" << e.reason();
+        return;
+    }
+}
+
+void getConfigurationCallback(std::shared_ptr< GetConfigurationStatus > getConfigurationStatus)
 {
     if(getConfigurationStatus->getESResult() != ES_OK)
     {
@@ -110,7 +149,7 @@ void getConfiguration()
 
     try
     {
-        remoteEnrollee->getConfiguration(GetConfigurationCallback);
+        remoteEnrollee->getConfiguration(getConfigurationCallback);
     }
     catch (OCException &e)
     {
@@ -199,12 +238,14 @@ void provisionCloudProperty()
 void DisplayMenu()
 {
     constexpr int PROVISION_SECURITY = 1;
-    constexpr int GET_CONFIGURATION = 2;
-    constexpr int PROVISION_DEVICE_PROPERTY = 3;
-    constexpr int PROVISION_CLOUD_PROPERTY = 4;
+    constexpr int GET_STATUS = 2;
+    constexpr int GET_CONFIGURATION = 3;
+    constexpr int PROVISION_DEVICE_PROPERTY = 4;
+    constexpr int PROVISION_CLOUD_PROPERTY = 5;
 
     std::cout << "========================================================\n";
     std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
+    std::cout << GET_STATUS << ". Get Status from Enrollee  \n";
     std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
     std::cout << PROVISION_DEVICE_PROPERTY << ". Provision Device Property\n";
     std::cout << PROVISION_CLOUD_PROPERTY << ". Provision Cloud Property  \n";
@@ -216,6 +257,9 @@ void DisplayMenu()
     {
         case PROVISION_SECURITY:
             provisionSecurity();
+            break;
+        case GET_STATUS:
+            getStatus();
             break;
         case GET_CONFIGURATION:
             getConfiguration();

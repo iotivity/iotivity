@@ -95,18 +95,18 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
     }
 
     jclass clazz = env->FindClass("java/util/ArrayList");
-    jobject wifiModeTypes = env->NewObject(clazz, env->GetMethodID(clazz, "<init>", "()V"));
+    jobject wifiModes = env->NewObject(clazz, env->GetMethodID(clazz, "<init>", "()V"));
     jmethodID arraylist_add = env->GetMethodID(clazz, "add", "(Ljava/lang/Object;)Z");
 
-    for (int n=0; n<wifiConf.types.size(); n++)
+    for (int n=0; n<wifiConf.modes.size(); n++)
     {
         jobject value = env->NewObject(g_cls_Integer,
-                                                            g_mid_Integer_ctor,
-                                                            convertNativeWifiModeToInt(static_cast<WIFI_MODE>(wifiConf.types[n])));
-       env->CallBooleanMethod(wifiModeTypes, arraylist_add, value);
+                                        g_mid_Integer_ctor,
+                                        convertNativeWifiModeToInt(static_cast<WIFI_MODE>(wifiConf.modes[n])));
+       env->CallBooleanMethod(wifiModes, arraylist_add, value);
     }
-    if (!wifiModeTypes) {
-        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the wifiModeTypes");
+    if (!wifiModes) {
+        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the wifiModes");
         return ;
     }
 
@@ -114,7 +114,7 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
     jobject jWiFiConf = NULL;
     jWiFiConf = env->NewObject(g_cls_WiFiConfig,
                                                 g_mid_WiFiConfig_ctor,
-                                                (jobject)wifiModeTypes,
+                                                (jobject)wifiModes,
                                                 (jint)convertNativeWifiFreqToInt(wifiConf.freq));
     if (!jWiFiConf) {
         LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jWiFiConf");

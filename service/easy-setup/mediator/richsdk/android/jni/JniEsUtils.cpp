@@ -111,21 +111,6 @@ int convertNativeWifiModeToInt(WIFI_MODE wifiMode)
     }
 }
 
-int convertNativeDeviceProvStateToInt(ESDeviceProvState nativeState)
-{
-    switch (nativeState)
-    {
-        case ESDeviceProvState::ES_PROVISIONING_ERROR:
-            return -1;
-        case ESDeviceProvState::ES_NEED_PROVISIONING:
-            return 0;
-        case ESDeviceProvState::ES_PROVISIONED_ALREADY:
-            return 1;
-        case ESDeviceProvState::ES_PROVISIONING_SUCCESS:
-            return 2;
-    }
-}
-
 int convertNativeDeviceProvResultToInt(ESResult nativeResult)
 {
     switch (nativeResult)

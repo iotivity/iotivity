@@ -89,6 +89,84 @@ namespace OIC
         } ESResult;
 
         /**
+         * @brief Indicate enrollee and provisioning status. Provisioning status is shown in "provisioning
+         *        status" property in provisioning resource.
+         */
+        typedef enum
+        {
+            /**
+             * Default state of the device
+             */
+            ES_STATE_INIT = 0,
+
+            /**
+            * Status indicating being cnnecting to target network
+            */
+            ES_STATE_CONNECTING_TO_ENROLLER,
+
+            /**
+            * Status indicating successful conection to target network
+            */
+            ES_STATE_CONNECTED_TO_ENROLLER,
+
+            /**
+            * Status indicating failure connection to target network
+            */
+            ES_STATE_CONNECTED_FAIL_TO_ENROLLER,
+
+            /**
+            * Status indicating successful registration to cloud
+            */
+            ES_STATE_REGISTERED_TO_CLOUD,
+
+            /**
+            * Status indicating failure registeration to cloud
+            */
+            ES_STATE_REGISTRRED_FAIL_TO_CLOUD
+        } ProvStatus;
+
+        /**
+         * @brief Indicate last error code to describe a reason of error during easy setup.
+         */
+        typedef enum
+        {
+            /**
+             * Init Error Code
+             */
+            ES_ERRCODE_NO_ERROR = 0,
+
+            /**
+            * Error Code that given WiFi's SSID is not found
+            */
+            ES_ERRCODE_SSID_NOT_FOUND,
+
+            /**
+            * Error Code that given WiFi's Password is wrong
+            */
+            ES_ERRCODE_PW_WRONG,
+
+            /**
+            * Error Code that IP address is not allocated
+            */
+            ES_ERRCODE_IP_NOT_ALLOCATED,
+
+            /**
+            * Error Code that there is no Internet connection
+            */
+            ES_ERRCODE_NO_INTERNETCONNECTION,
+
+            /**
+            * Error Code that Timeout occured
+            */
+            ES_ERRCODE_TIMEOUT,
+
+            /**
+            * Error Code that Unknown error occured
+            */
+            ES_ERRCODE_UNKNOWN
+        } ESErrorCode;
+
+        /**
          * @brief  WIFI Authentication tlype of the Enroller
          */
         typedef enum
@@ -119,7 +197,8 @@ namespace OIC
         {
             WIFI_24G = 0,       /**< 2.4G **/
             WIFI_5G,            /**< 5G **/
-            WIFI_BOTH           /**< 2.4G and 5G **/
+            WIFI_BOTH,          /**< 2.4G and 5G **/
+            WIFI_FREQ_NONE      /**< EOF **/
         } WIFI_FREQ;
 
         /**
@@ -133,6 +212,16 @@ namespace OIC
             WIFI_11N,           /**< 802.11n **/
             WIFI_11AC           /**< 802.11ac **/
         } WIFI_MODE;
+
+        /**
+         * @brief Properties of provisioning resource. It includes a provisioning status and last
+         *        error code.
+         */
+        typedef struct
+        {
+            ProvStatus provStatus;
+            ESErrorCode lastErrCode;
+        } EnrolleeStatus;
 
         /**
          * @brief Data structure stored for Cloud server property provisioning
@@ -191,17 +280,6 @@ namespace OIC
         } WiFiConfig;
 
         /**
-         * @brief Provisioning state in device property provisioning.
-         */
-        typedef enum
-        {
-            ES_PROVISIONING_ERROR = -1,
-            ES_NEED_PROVISIONING,
-            ES_PROVISIONED_ALREADY,
-            ES_PROVISIONING_SUCCESS
-        } ESDeviceProvState;
-
-        /**
          * @brief Provisioning state in cloud server property provisioning.
          */
         typedef enum
@@ -247,6 +325,11 @@ namespace OIC
         public:
             EnrolleeConf()
             {
+                m_devConfig.name = nullptr;
+                m_devConfig.language = nullptr;
+                m_devConfig.country = nullptr;
+                m_wifiConfig.freq = WIFI_FREQ_NONE;
+                m_cloudable = false;
             }
 
             EnrolleeConf(DeviceConfig devConfig, WiFiConfig wifiConfig, bool cloudable) :
@@ -276,9 +359,45 @@ namespace OIC
         };
 
         /**
+         * Status object for getStatus API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the API and requested data delivered in the response which includes
+         * a provisioning status and last error code stored in Enrollee.
+         *
+         * @see EnrolleeStatus
+         */
+        class GetEnrolleeStatus
+        {
+        public:
+            GetEnrolleeStatus()
+            {
+            }
+
+            GetEnrolleeStatus(ESResult result, const EnrolleeStatus& status) :
+                m_result(result), m_enrolleeStatus(status)
+            {
+            }
+
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+            const EnrolleeStatus& getEnrolleeStatus()
+            {
+                return m_enrolleeStatus;
+            }
+
+        private:
+            ESResult m_result;
+            EnrolleeStatus m_enrolleeStatus;
+        };
+
+        /**
          * Status object for getConfiguration API. This object is given to application
          * when a response for GET request to provisioning resource at Enrollee is arrived.
-         * It returns a result of the API and requested data delivered in the response
+         * It returns a result of the API and requested data delivered in the response which includes
+         * WiFi configuration and device configuration stored in Enrollee.
          *
          * @see EnrolleeConf
          */
@@ -359,22 +478,27 @@ namespace OIC
         };
 
         /**
-         * Callback function definition for providing Enrollee security status
+         * Callback function definition for providing Enrollee status
+         */
+        typedef function< void(shared_ptr< GetEnrolleeStatus >) > GetStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee configuration status
          */
         typedef function< void(shared_ptr< GetConfigurationStatus >) > GetConfigurationStatusCb;
 
         /**
-         * Callback function definition for providing Enrollee security status
+         * Callback function definition for providing Enrollee device property provisioning status
          */
         typedef function< void(shared_ptr< DevicePropProvisioningStatus >) > DevicePropProvStatusCb;
 
         /**
-         * Callback function definition for providing Enrollee security status
+         * Callback function definition for providing Enrollee cloud property provisioning status
          */
         typedef function< void(shared_ptr< CloudPropProvisioningStatus >) > CloudPropProvStatusCb;
 
         /**
-         * Callback function definition for providing Enrollee security status
+         * Callback function definition for providing Enrollee security provisioning status
          */
         typedef function< void(shared_ptr<SecProvisioningStatus>) > SecurityProvStatusCb;
 

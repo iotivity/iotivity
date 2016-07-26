@@ -51,25 +51,31 @@ namespace OIC
 
             ~EnrolleeResource() = default;
 
+            void registerGetStatusCallback (GetStatusCb callback);
             void registerGetConfigurationStatusCallback (GetConfigurationStatusCb callback);
             void registerDevicePropProvStatusCallback (DevicePropProvStatusCb callback);
 
             void getConfiguration();
+            void getStatus();
 
             void provisionEnrollee(const DeviceProp& deviceProp);
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
 
+            GetStatusCb m_getStatusCb;
             GetConfigurationStatusCb m_getConfigurationStatusCb;
             DevicePropProvStatusCb m_devicePropProvStatusCb;
 
         private:
+            void onGetStatusResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+                    const int eCode);
             void onGetConfigurationResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
             void checkProvInformationCb(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
             EnrolleeConf parseEnrolleeConfFromRepresentation(const OCRepresentation& rep);
+            EnrolleeStatus parseEnrolleeStatusFromRepresentation(const OCRepresentation& rep);
         };
     }
 }

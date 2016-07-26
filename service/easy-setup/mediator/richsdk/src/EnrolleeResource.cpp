@@ -63,6 +63,42 @@ namespace OIC
             m_devicePropProvStatusCb(provStatus);
         }
 
+        void EnrolleeResource::onGetStatusResponse(const HeaderOptions& /*headerOptions*/,
+                const OCRepresentation& rep, const int eCode)
+        {
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetStatusResponse : %s, eCode = %d",
+                    rep.getUri().c_str(), eCode);
+
+            if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
+            {
+                ESResult result = ESResult::ES_ERROR;
+
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                            "onGetStatusResponse : onGetStatusResponse is failed ");
+
+                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                {
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "Mediator is unauthorized from Enrollee.");
+                    result = ESResult::ES_UNAUTHORIZED;
+                }
+
+                EnrolleeStatus enrolleeStatus = {ES_STATE_INIT, ES_ERRCODE_NO_ERROR};
+                std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus = std::make_shared<
+                        GetEnrolleeStatus >(ESResult::ES_ERROR, enrolleeStatus);
+
+                m_getStatusCb(getEnrolleeStatus);
+            }
+            else
+            {
+                EnrolleeStatus enrolleeStatus = parseEnrolleeStatusFromRepresentation(rep);
+                std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus = std::make_shared<
+                        GetEnrolleeStatus >(ESResult::ES_OK, enrolleeStatus);
+
+                m_getStatusCb(getEnrolleeStatus);
+            }
+        }
+
         void EnrolleeResource::onGetConfigurationResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
@@ -73,7 +109,8 @@ namespace OIC
             {
                 ESResult result  = ESResult::ES_ERROR;
 
-                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,"onGetConfigurationResponse : onGetConfigurationResponse is failed ");
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                            "onGetConfigurationResponse : onGetConfigurationResponse is failed ");
 
                 if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
                 {
@@ -97,6 +134,11 @@ namespace OIC
             }
         }
 
+        void EnrolleeResource::registerGetStatusCallback(GetStatusCb callback)
+        {
+            m_getStatusCb = callback;
+        }
+
         void EnrolleeResource::registerGetConfigurationStatusCallback(GetConfigurationStatusCb callback)
         {
             m_getConfigurationStatusCb = callback;
@@ -105,6 +147,39 @@ namespace OIC
         void EnrolleeResource::registerDevicePropProvStatusCallback(DevicePropProvStatusCb callback)
         {
             m_devicePropProvStatusCb = callback;
+        }
+
+        void EnrolleeResource::getStatus()
+        {
+            if (m_ocResource == nullptr)
+            {
+                throw ESBadRequestException("Resource is not initialized");
+            }
+
+            OC::QueryParamsMap query;
+            OC::OCRepresentation rep;
+
+            std::function< OCStackResult(void) > getStatus = [&]
+            {   return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
+                        DEFAULT_INTERFACE, query, std::function<void(const HeaderOptions& headerOptions,
+                        const OCRepresentation& rep, const int eCode) >(
+                                std::bind(&EnrolleeResource::onGetStatusResponse, this,
+                                        std::placeholders::_1, std::placeholders::_2,
+                                        std::placeholders::_3)));
+            };
+
+            OCStackResult result = getStatus();
+
+            if (result != OCStackResult::OC_STACK_OK)
+            {
+                EnrolleeStatus enrolleeStatus = {ES_STATE_INIT, ES_ERRCODE_NO_ERROR};
+                std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus = std::make_shared<
+                        GetEnrolleeStatus >(ESResult::ES_ERROR, enrolleeStatus);
+
+                m_getStatusCb(getEnrolleeStatus);
+
+                return;
+            }
         }
 
         void EnrolleeResource::getConfiguration()
@@ -248,5 +323,25 @@ namespace OIC
             return EnrolleeConf(devConf, wifiConf, cloudable);
         }
 
+        EnrolleeStatus EnrolleeResource::parseEnrolleeStatusFromRepresentation(const OCRepresentation& rep)
+        {
+            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_RES_TAG, "Enter parseEnrolleeStatusFromRepresentation");
+
+            EnrolleeStatus enrolleeStatus;
+
+            if(rep.hasAttribute(OC_RSRVD_ES_PROVSTATUS))
+            {
+                enrolleeStatus.provStatus = static_cast<ProvStatus>(
+                                                        rep.getValue<int>(OC_RSRVD_ES_PROVSTATUS));
+            }
+
+            if(rep.hasAttribute(OC_RSRVD_ES_LAST_ERRORCODE))
+            {
+                enrolleeStatus.lastErrCode = static_cast<ESErrorCode>(
+                                                        rep.getValue<int>(OC_RSRVD_ES_LAST_ERRORCODE));
+            }
+
+            return enrolleeStatus;
+        }
     }
 }

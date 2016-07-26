@@ -68,6 +68,17 @@ namespace OIC
 #endif //__WITH_DTLS__
 
             /**
+             * Get an Enrollee's status which includes provisioning status and last error code
+             *
+             * @param callback will give the requested status
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see GetStatusCb
+             */
+            void getStatus(GetStatusCb callback);
+
+            /**
              * Get an Enrollee's configuration which includes WiFi supported frequency and device name
              *
              * @param callback will give the requested configuration
@@ -130,6 +141,7 @@ namespace OIC
             void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
             void initCloudResource();
 
+            void getStatusHandler (std::shared_ptr< GetEnrolleeStatus > status);
             void getConfigurationStatusHandler (std::shared_ptr< GetConfigurationStatus > status);
             void devicePropProvisioningStatusHandler (std::shared_ptr< DevicePropProvisioningStatus > status);
             void cloudPropProvisioningStatusHandler (std::shared_ptr< CloudPropProvisioningStatus > status);
@@ -145,6 +157,7 @@ namespace OIC
             bool m_discoveryResponse;
 
             SecurityProvStatusCb m_securityProvStatusCb;
+            GetStatusCb m_getStatusCb;
             GetConfigurationStatusCb m_getConfigurationStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;

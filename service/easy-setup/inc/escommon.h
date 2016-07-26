@@ -98,7 +98,8 @@ typedef enum
 {
     WiFi_24G = 0,       /**< 2.4G **/
     WiFi_5G,            /**< 5G **/
-    WiFi_BOTH           /**< 2.4G and 5G **/
+    WiFi_BOTH,          /**< 2.4G and 5G **/
+    WiFi_FREQ_NONE      /**< EOF **/
 } WIFI_FREQ;
 
 /**

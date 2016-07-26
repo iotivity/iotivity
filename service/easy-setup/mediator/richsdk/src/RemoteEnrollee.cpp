@@ -90,6 +90,15 @@ namespace OIC
             }
         }
 
+        void RemoteEnrollee::getStatusHandler(std::shared_ptr< GetEnrolleeStatus > status)
+        {
+            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering getStatusHandler");
+
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"getStatusHandler = %d", status->getESResult());
+
+            m_getStatusCb(status);
+        }
+
         void RemoteEnrollee::getConfigurationStatusHandler (
                 std::shared_ptr< GetConfigurationStatus > status)
         {
@@ -288,6 +297,27 @@ namespace OIC
 #endif
         }
 
+        void RemoteEnrollee::getStatus(GetStatusCb callback)
+        {
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
+
+            if (m_enrolleeResource == nullptr)
+            {
+                throw ESBadRequestException ("Device not created");
+            }
+
+            m_getStatusCb = callback;
+
+            GetStatusCb getStatusCb = std::bind(
+                &RemoteEnrollee::getStatusHandler, this, std::placeholders::_1);
+            m_enrolleeResource->registerGetStatusCallback(getStatusCb);
+            m_enrolleeResource->getStatus();
+
+        }
+
         void RemoteEnrollee::getConfiguration(GetConfigurationStatusCb callback)
         {
             if(!callback)
@@ -295,12 +325,12 @@ namespace OIC
                 throw ESInvalidParameterException("Callback is empty");
             }
 
-            m_getConfigurationStatusCb = callback;
-
             if (m_enrolleeResource == nullptr)
             {
                 throw ESBadRequestException ("Device not created");
             }
+
+            m_getConfigurationStatusCb = callback;
 
             GetConfigurationStatusCb getConfigurationStatusCb = std::bind(
                     &RemoteEnrollee::getConfigurationStatusHandler, this, std::placeholders::_1);
