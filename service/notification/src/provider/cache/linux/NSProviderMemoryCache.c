@@ -34,7 +34,6 @@ NSCacheList * NSStorageCreate()
     newList->head = newList->tail = NULL;
 
     pthread_mutex_unlock(&NSCacheMutex);
-
     NS_LOG(DEBUG, "NSCacheCreate");
 
     return newList;
@@ -86,9 +85,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
         return NS_ERROR;
     }
 
-    pthread_mutex_unlock(&NSCacheMutex);
     NSCacheElement * it = NSStorageRead(list, id);
-    pthread_mutex_lock(&NSCacheMutex);
 
     if (it)
     {
@@ -143,10 +140,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NS_LOG(DEBUG, "Type is SUBSCRIBER");
 
         NSCacheSubData * subData = (NSCacheSubData *) newObj->data;
-
-        pthread_mutex_unlock(&NSCacheMutex);
         NSCacheElement * it = NSStorageRead(list, subData->id);
-        pthread_mutex_lock(&NSCacheMutex);
 
         if (it)
         {
@@ -204,10 +198,8 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NS_LOG(DEBUG, "Type is MESSAGE");
 
         NSCacheMsgData * msgData = (NSCacheMsgData *) newObj->data;
-
-        pthread_mutex_unlock(&NSCacheMutex);
         NSCacheElement * it = NSStorageRead(list, msgData->id);
-        pthread_mutex_lock(&NSCacheMutex);
+
         if (it)
         {
             NSCacheMsgData * itData = (NSCacheMsgData *) it->data;

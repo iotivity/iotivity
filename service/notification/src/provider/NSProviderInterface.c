@@ -82,7 +82,11 @@ NSResult NSStartProvider(NSAccessPolicy policy, NSSubscribeRequestCallback subsc
 void NSSetList()
 {
     NS_LOG(DEBUG, "NSSetList - IN");
-    pthread_mutex_init(&NSCacheMutex, NULL);
+
+    pthread_mutexattr_init(&NSCacheMutexAttr);
+    int pthreadResult = pthread_mutexattr_settype(&NSCacheMutexAttr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&NSCacheMutex, &NSCacheMutexAttr);
+
     NSInitSubscriptionList();
     NSInitMessageList();
     NS_LOG(DEBUG, "NSSetList - OUT");
