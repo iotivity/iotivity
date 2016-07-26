@@ -18,7 +18,6 @@
  *
  *
  ******************************************************************/
-
 #ifndef PMCsdkHelper_H_
 #define PMCsdkHelper_H_
 #include <stdio.h>
@@ -34,7 +33,9 @@
 #include "pmtypes.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "utlist.h"
 
+#include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
 
 #define DASH "-"
@@ -46,6 +47,7 @@
 #define ctxRemoveDevice "ctxRemoveDevice"
 #define RANDOM_PIN_TEXT_FILE "server_pincode.txt"
 #define PIN_MAX_SIZE 9
+#define MAX_TIME_INPUT_PROMPT_FOR_PASSWORD 5
 #define DEVICE_INDEX_ONE 1
 #define DEVICE_INDEX_TWO 2
 
@@ -63,7 +65,15 @@
 #define ACL_RESRC_MAX_LEN   128
 #define ACL_PEMISN_CNT      5
 #define DEFAULT_DP_PROVSIONING_PIN "00000000"
+#define DEFAULT_DP_PROVSIONING_PIN2 "00000011"
 #define FULL_PERMISSION 31
+#define NO_PERMISSION 0
+#define MAX_PERMISSION_RANGE 65535
+
+#define ACL_RESOURCE_URI "sensor/light"
+#define ACL_RESOURCE_LENGTH 6 // Check ACL_RESOURCE_NAME for the length. ACL_RESOURCE_LENGTH = len(ACL_RESOURCE_URI) + 1
+#define ACL_RES_TYPE_NAME "light"
+#define ACL_RES_IF_TYPE_NAME "sensor"
 
 /*
  * Callback Releated Resources
@@ -85,7 +95,7 @@
 /*
  * Credential Representative value
  */
-#define SYM_PAIR_WISE_KEY 0
+#define SYM_PAIR_WISE_KEY 1
 #define CRED_TYPE_UOBV 30
 #define CRED_TYPE_LOBV -3
 
@@ -130,10 +140,12 @@ int printResultList(const OCProvisionResult_t*, const int);
 int waitCallbackRet(void);
 size_t printUuidList(const OCUuidList_t*);
 void printUuid(const OicUuid_t*);
-OicSecAcl_t* createAcl(const int dev_num, OCProvisionDev_t** m_own_list);
-OicSecPdAcl_t* createPdAcl(const int dev_num);
+OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list);
+
+OicSecPdAcl_t* createPdAcl(int nPermission);
 OCProvisionDev_t* getDevInst(OCProvisionDev_t*, const int);
 OTMCallbackData_t otmCbRegister(int otmType);
+void inputPinCBWrong(char* pin, size_t len);
 
 /**
  * Helper Class for Provisioning Manager
@@ -144,8 +156,6 @@ private:
     std::string m_failureMessage;
 
 public:
-
-    static bool m_doneCB;
 
     PMCsdkHelper();
     bool initProvisionClient(int clientOTMType = OTM_JUSTWORK, char* chDBPath =
@@ -175,8 +185,8 @@ public:
     bool removeDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
             const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback,
             OCStackResult expectedResult);
-    bool getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t* uuidList,
-            size_t *numOfDevices, OCStackResult expectedResult);
+    bool getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
+            size_t* numOfDevices, OCStackResult expectedResult);
 
     /**
      * All Callback Methods for Provision Manager

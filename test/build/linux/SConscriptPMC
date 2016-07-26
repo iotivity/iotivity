@@ -214,13 +214,13 @@ COMMON_STATIC_LIBS = [GTEST_LIB]
 COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov uuid')
 
 
-PM_SHARED_LIBS = Split('libocprovision libocpmapi libocsrm libm libc_common libtinydtls -lstdc++')
+PM_SHARED_LIBS = Split('libocprovision libocpmapi libocsrm libm libtinydtls -lstdc++')
 PM_STATIC_LIBS = []
 PM_LIBS = [PM_SHARED_LIBS, COMMON_SHARED_LIBS]
 
 PM_PKIX = PM_LIB + '/resource/csdk/connectivity/src/adapter_util/pkix'
 PM_RES = PM_LIB + '/resource/csdk/security/src/crlresource.o'
-PM_CERT_SHARED_LIBS = Split('libocprovision libocsrm libm libc_common libtinydtls liboctbstack')
+PM_CERT_SHARED_LIBS = Split('libocprovision libocsrm libm libtinydtls liboctbstack')
 PM_CERT_STATIC_LIBS = [PM_LIB + '/resource/csdk/security/provisioning/ck_manager/libCKManager.a', PM_PKIX + '/pki.o', PM_LIB + '/libasn1.a', PM_PKIX + '/crl.o', PM_PKIX + '/sn_store.o', PM_PKIX + '/cert.o', PM_PKIX + '/der_const.o', PM_PKIX + '/der_dec.o', PM_RES]
 PM_CERT_LIBS = [PM_CERT_SHARED_LIBS]
 

@@ -8,26 +8,18 @@
                         {
                             "href": "/oic/res",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/res/d",
+                            "rt": ["oic.wk.res"],
+                            "if": ["oic.if.ll"]
+                        },{
+                            "href": "/oic/d",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/res/types/d",
+                            "rt": ["oic.wk.d"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        },{
+                            "href": "/oic/p",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
-                        },
-                        {
-                            "href": "/oic/presence",
-                            "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.wk.p"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
                         }
                     ],
                     "permission": 2
@@ -38,26 +30,26 @@
                         {
                             "href": "/oic/sec/doxm",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.doxm"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/pstat",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.pstat"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/acl",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.acl"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/cred",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.cred"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 6
@@ -68,14 +60,14 @@
                         {
                             "href": "/oic/sec/pconf",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.pconf"],
+                            "if": ["oic.if.baseline"]
                         },
                         {
                             "href": "/oic/sec/dpairing",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.dpairing"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 6
@@ -86,20 +78,20 @@
                         {
                             "href": "/oic/sec/ver",
                             "rel": "",
-                            "rt": "",
-                            "if": ""
+                            "rt": ["oic.r.ver"],
+                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 2
                 }
             ]
         },
-        "rowneruuid" : "6A757374-776F-726B-4465-765575699999"
+        "rowneruuid" : "6A757374-776F-726B-4465-765575690000"
     },
     "pstat": {
         "isop": false,
-        "deviceuuid": "6A757374-776F-726B-4465-765575699999",
-        "rowneruuid": "6A757374-776F-726B-4465-765575699999",
+        "deviceuuid": "6A757374-776F-726B-4465-765575690000",
+        "rowneruuid": "6A757374-776F-726B-4465-765575690000",
         "cm": 2,
         "tm": 0,
         "om": 3,
@@ -110,9 +102,9 @@
         "oxmsel": 0,
         "sct": 1,
         "owned": false,
-        "deviceuuid": "6A757374-776F-726B-4465-765575699999",
+        "deviceuuid": "6A757374-776F-726B-4465-765575690000",
         "devowneruuid": "",
-        "rowneruuid": "6A757374-776F-726B-4465-765575699999",
-        "dpc": true
+        "rowneruuid": "6A757374-776F-726B-4465-765575690000",
+        "x.org.iotivity.dpc": true
     }
 }

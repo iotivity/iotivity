@@ -18,7 +18,6 @@
  *
  *
  ******************************************************************/
-
 #include "PMCsdkHelper.h"
 
 class PMCsdkTest_btc: public ::testing::Test
@@ -145,7 +144,7 @@ TEST_F(PMCsdkTest_btc, OCDiscoverUnownedDevicesTime_LBV_P)
  *                  3. call OCInitPM
  *                  4. call OCSetOwnerTransferCallbackData
  *                  5. call OCDiscoverUnownedDevices
- *                  * @post_condition  None
+ * @post_condition  None
  * @expected        OCDiscoverUnownedDevices will return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__)
@@ -218,7 +217,7 @@ TEST_F(PMCsdkTest_btc, OCDiscoverUnownedDevices_ECRC_NV_N)
  *                  4. call OCSetOwnerTransferCallbackData
  *                  5. call OCDiscoverOwnedDevices
  * @post_condition  none
- * @expected               OCDiscoverOwnedDevices will return OC_STACK_OK
+ * @expected        OCDiscoverOwnedDevices will return OC_STACK_OK
  */
 #if defined(__LINUX__)
 TEST_F(PMCsdkTest_btc, OCDiscoverOwnedDevices_RV_SRC_P)
@@ -806,7 +805,7 @@ TEST_F(PMCsdkTest_btc, OCSetOwnerTransferCallbackDataRandomPinNullCB_N)
  *                  5. call OCDiscoverUnownedDevices
  *                  6. call OCDoOwnershipTransfer
  * @post_condition  None
- * @expected        OCDoOwnershipTransfer will succeed
+ * @expected        OCDoOwnershipTransfer will return OC_STACK_OK
  */
 #if defined(__LINUX__)
 TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferJustWork_RSV_SRC_P)
@@ -850,7 +849,7 @@ TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferJustWork_RSV_SRC_P)
  *                  5. call OCDiscoverUnownedDevices
  *                  6. call OCDoOwnershipTransfer
  * @post_condition  None
- * @expected        OCDoOwnershipTransfer will succeed
+ * @expected        OCDoOwnershipTransfer will return OC_STACK_OK
  */
 #if defined(__LINUX__)
 TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferRandomPin_SRC_P)
@@ -1011,7 +1010,7 @@ TEST_F(PMCsdkTest_btc, OCProvisionDirectPairing_SRC_RV_P)
     memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
 
     // set default pdacl
-    pconf.pdacls = createPdAcl(1);
+    pconf.pdacls = createPdAcl(FULL_PERMISSION);
 
     if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, device1,
                     &pconf, m_PMHelper.provisionDPCB, OC_STACK_OK))
@@ -1096,7 +1095,7 @@ TEST_F(PMCsdkTest_btc, OCProvisionDirectPairingCB_NV_N)
     memcpy(pconf.pin.val, DP_DEFAULT_PIN, DP_PIN_LENGTH);
 
     // set default pdacl
-    pconf.pdacls = createPdAcl(1);
+    pconf.pdacls = createPdAcl(FULL_PERMISSION);
 
     if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, device1,
                     &pconf, NULL, OC_STACK_INVALID_CALLBACK))
@@ -1180,7 +1179,7 @@ TEST_F(PMCsdkTest_btc, OCProvisionDirectPairingDeviceInfo_NV_N)
     memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
 
     // set default pdacl
-    pconf.pdacls = createPdAcl(1);
+    pconf.pdacls = createPdAcl(FULL_PERMISSION);
 
     if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, NULL,
                     &pconf, m_PMHelper.provisionDPCB, OC_STACK_INVALID_PARAM))
@@ -1287,7 +1286,7 @@ TEST_F(PMCsdkTest_btc, OCDeletePdAclList_SRC_P)
     memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
 
     // set default pdacl
-    pconf.pdacls = createPdAcl(1);
+    pconf.pdacls = createPdAcl(FULL_PERMISSION);
 
     m_PMHelper.deletePdAclList(pconf.pdacls);
 
@@ -1546,8 +1545,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialCB_ECRC_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -2008,7 +2005,7 @@ TEST_F(PMCsdkTest_btc, ProvisionAcl_SRC_RV_P)
         return;
     }
 
-    m_Acl = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
+    m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
     if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, m_Acl,
                     m_PMHelper.provisionAclCB, OC_STACK_OK))
@@ -2071,7 +2068,7 @@ TEST_F(PMCsdkTest_btc, ProvisionAclDeviceList_ECRC_NV_N)
         return;
     }
 
-    m_Acl = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
+    m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
     if (!m_PMHelper.provisionACL((void*)g_ctx, NULL, m_Acl,
                     m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
@@ -2134,7 +2131,7 @@ TEST_F(PMCsdkTest_btc, ProvisionAclAcl_NV_N)
         return;
     }
 
-    m_Acl = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
+    m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
     if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, NULL,
                     m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
@@ -2197,7 +2194,7 @@ TEST_F(PMCsdkTest_btc, ProvisionAclCB_NV_N)
         return;
     }
 
-    m_Acl = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
+    m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
     if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, m_Acl,
                     NULL, OC_STACK_INVALID_CALLBACK))
@@ -2261,7 +2258,7 @@ TEST_F(PMCsdkTest_btc, ProvisionAclMultipleTime_P)
         return;
     }
 
-    m_Acl = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
+    m_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
 
     if (!m_PMHelper.provisionACL((void*)g_ctx, m_OwnList, m_Acl,
                     m_PMHelper.provisionAclCB, OC_STACK_OK))
@@ -2339,8 +2336,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevices_SRC_RV_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -2407,8 +2404,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesKeySize_UBV_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
 
@@ -2475,8 +2472,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesAcl1_NV_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -2543,8 +2540,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesAcl2_NV_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -2583,6 +2580,12 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesAcl2_NV_P)
 #if defined(__LINUX__)
 TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesCB_NV_N)
 {
+    if (!m_PMHelper.initProvisionClient())
+    {
+        SET_FAILURE(m_PMHelper.getFailureMessage());
+        return;
+    }
+
     if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
                     &m_UnownList, OC_STACK_OK))
     {
@@ -2605,8 +2608,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesCB_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -2672,8 +2675,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDev1_NV_N)
     }
 
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -2740,8 +2743,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDev2_NV_N)
     }
 
     OCProvisionDev_t *device1 = m_OwnList;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -2808,8 +2811,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDeviceKeySize_LOBV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128-1;
 
@@ -2876,8 +2879,8 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDeviceKeySize_UOBV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256 + 1;
 
@@ -2946,8 +2949,8 @@ TEST_F(PMCsdkTest_btc, UnlinkDevices_RSV_SRC_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3023,8 +3026,8 @@ TEST_F(PMCsdkTest_btc, UnlinkDevicesDev1_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3100,8 +3103,8 @@ TEST_F(PMCsdkTest_btc, UnlinkDevicesDev2_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3177,8 +3180,8 @@ TEST_F(PMCsdkTest_btc, UnlinkDevicesCB_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3254,8 +3257,8 @@ TEST_F(PMCsdkTest_btc, RemoveDevice_SRC_RV_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3331,8 +3334,8 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceTime_LBV_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3409,8 +3412,8 @@ TEST_F(PMCsdkTest_btc, RemoveDevice_LOBV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3486,8 +3489,8 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceTargetDev_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3563,8 +3566,8 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceCB_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3640,8 +3643,8 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatus_RSV_SRC_P)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3655,7 +3658,7 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatus_RSV_SRC_P)
     OCUuidList_t* uuidList = NULL;
     size_t numOfDevices = 0;
 
-    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, uuidList, &numOfDevices ,OC_STACK_OK))
+    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, &numOfDevices, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3719,8 +3722,8 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusDeviceID_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3734,7 +3737,7 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusDeviceID_NV_N)
     OCUuidList_t* uuidList = NULL;
     size_t numOfDevices = 0;
 
-    if (!m_PMHelper.getLinkedStatus(NULL, uuidList, &numOfDevices ,OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.getLinkedStatus(NULL, &uuidList, &numOfDevices, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -3798,8 +3801,8 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusUuidListNV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3876,8 +3879,8 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusNumDev_NV_N)
 
     OCProvisionDev_t *device1 = m_OwnList;
     OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, &m_OwnList);
+    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
+    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
 
@@ -3890,7 +3893,7 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusNumDev_NV_N)
 
     OCUuidList_t* uuidList = NULL;
 
-    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, uuidList, NULL ,OC_STACK_INVALID_PARAM))
+    if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, NULL ,OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;

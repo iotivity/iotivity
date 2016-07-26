@@ -18,7 +18,6 @@
  *
  *
  ******************************************************************/
-
 #include "PMCsdkHelper.h"
 
 int g_OwnDevCount = 0;
@@ -46,6 +45,7 @@ OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
     {
         if (dev_num == ++i)
         {
+            IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getDevInst OUT");
             return lst;
         }
         lst = lst->next;
@@ -77,7 +77,7 @@ int printDevList(OCProvisionDev_t* dev_lst)
     }
     printf("\n");
 
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printDevList IN");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printDevList OUT");
     return lst_cnt;
 }
 
@@ -103,12 +103,13 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     }
     printf("\n");
 
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuidList OUT");
     return lst_cnt;
 }
 
 static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
 {
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] [PMHelper] printResultList IN");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printResultList IN");
 
     if (!rslt_lst || 0 >= rslt_cnt)
     {
@@ -125,7 +126,7 @@ static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_c
     }
     printf("\n");
 
-    IOTIVITYTEST_LOG(INFO, "[PMHelper] [PMHelper] printResultList IN");
+    IOTIVITYTEST_LOG(INFO, "[PMHelper] printResultList IN");
     return lst_cnt;
 }
 
@@ -188,7 +189,8 @@ static void PMCsdkHelper::ownershipTransferCB(void* ctx, int nOfRes, OCProvision
     g_CBInvoked = true;
 }
 
-void PMCsdkHelper::provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+void PMCsdkHelper::provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
+        bool hasError)
 {
     if (!hasError)
     {
@@ -297,7 +299,6 @@ static void inputPinCB(char* pin, size_t len)
     fclose(fp);
 
     IOTIVITYTEST_LOG(DEBUG, "[PIN CODE] %s\n\n", buff);
-
     strcpy(pin, (const char*) buff);
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] inputPinCB Out");
@@ -409,7 +410,6 @@ bool PMCsdkHelper::discoverAllDevices(int nTime, OCProvisionDev_t** own_list,
 
     if (OC_STACK_OK == res)
     {
-
         IOTIVITYTEST_LOG(INFO, "[PMHelper] Discovered Owned Devices List :");
         g_OwnDevCount = printDevList(*own_list);
 
@@ -511,7 +511,7 @@ bool PMCsdkHelper::doOwnerShipTransfer(void* ctx, OCProvisionDev_t** unown_list,
         }
     }
 
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] doOwnerShipTransfer IN");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] doOwnerShipTransfer OUT");
     return true;
 }
 
@@ -661,24 +661,14 @@ bool PMCsdkHelper::provisionPairwiseDevices(void* ctx, OicSecCredType_t type, si
 /**
  * Helper Method for OCGetLinkedStatus
  */
-bool PMCsdkHelper::getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t* uuidList,
-        size_t *numOfDevices, OCStackResult expectedResult)
+bool PMCsdkHelper::getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
+        size_t* numOfDevices, OCStackResult expectedResult)
 {
-
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLinkedStatus IN");
-
-    g_CBInvoked = false;
 
     OCStackResult res;
 
-    if (NULL == uuidList)
-    {
-        res = OCGetLinkedStatus(uuidOfDevice, NULL, numOfDevices);
-    }
-    else
-    {
-        res = OCGetLinkedStatus(uuidOfDevice, &uuidList, numOfDevices);
-    }
+    res = OCGetLinkedStatus(uuidOfDevice, uuidList, numOfDevices);
 
     IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCGetLinkedStatus API returns: %s\n",
             getOCStackResult(res));
@@ -692,7 +682,7 @@ bool PMCsdkHelper::getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t* 
     if (OC_STACK_OK == res)
     {
         IOTIVITYTEST_LOG(INFO, "[PMHelper]  Total Linked Devices =  %d\n", *numOfDevices);
-        printUuidList(uuidList);
+        printUuidList(*uuidList);
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLinkedStatus OUT");
@@ -790,46 +780,63 @@ OTMCallbackData_t otmCbRegister(int otmType)
     return otmcb;
 }
 
-OicSecAcl_t* createAcl(const int dev_num, OCProvisionDev_t** m_own_list)
+OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl IN");
+    printDevList(*m_own_list);
 
-    OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
-    char* subject = NULL;
-    char* owner = NULL;
+    OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+    OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
 
-    if (dev_num == 1)
+    LL_APPEND(acl->aces, ace);
+
+    int num = (dev_num == DEVICE_INDEX_TWO) ? DEVICE_INDEX_ONE : DEVICE_INDEX_TWO;
+
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) *m_own_list, num);
+    if (!dev || !dev->doxm)
     {
-        subject = (char*) ACL_SUBJECT_UUID_02;
-        owner = (char*) ACL_ROWNER_UUID_02;
+        IOTIVITYTEST_LOG(ERROR, "createAcl: device instance empty");
+        return NULL;
     }
-    else
+
+    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
+
+    num = 1;
+    char rsrc_in[129]; // '1' for null termination
+    for (int i = 0; num > i; ++i)
     {
-        subject = (char*) ACL_SUBJECT_UUID_01;
-        owner = (char*) ACL_ROWNER_UUID_01;
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*) OICCalloc(1, sizeof(OicSecRsrc_t));
+
+        //Resource URI
+        OICStrcpy(rsrc->href, ACL_RESOURCE_LENGTH, ACL_RESOURCE_URI);
+
+        rsrc->typeLen = 1;
+        rsrc->types = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
+
+        for (int i = 0; i < rsrc->typeLen; i++)
+        {
+            rsrc->types[i] = OICStrdup(ACL_RES_TYPE_NAME);
+        }
+
+        rsrc->interfaceLen = 1;
+        rsrc->interfaces = (char**) OICCalloc(rsrc->interfaceLen, sizeof(char*));
+
+        for (int i = 0; i < rsrc->interfaceLen; i++)
+        {
+            rsrc->interfaces[i] = OICStrdup(ACL_RES_IF_TYPE_NAME);
+        }
+
+        LL_APPEND(ace->resources, rsrc);
     }
 
-    // Subject
-    strcpy((char *) acl->subject.id, (const char*) subject);
-
-    // resource
-    acl->resourcesLen = ACL_RESOURCE_LEN;
-    acl->resources = (char **) OICCalloc(acl->resourcesLen, sizeof(char *));
-    acl->resources[0] = (char*) LIGHT_RESOURCE_URI_01;
-    acl->resources[1] = (char*) LIGHT_RESOURCE_URI_02;
-
-    // Permission
-    acl->permission = FULL_PERMISSION;
-
-    // Owner
-    memcpy(&acl->rownerID, &owner, sizeof(OicUuid_t));
+    ace->permission = permission;
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl OUT");
 
     return acl;
 }
 
-OicSecPdAcl_t* createPdAcl(const int dev_num)
+OicSecPdAcl_t* createPdAcl(int nPermission)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createPdAcl IN");
 
@@ -870,7 +877,7 @@ OicSecPdAcl_t* createPdAcl(const int dev_num)
     }
 
     // permission
-    pdAcl->permission = FULL_PERMISSION;
+    pdAcl->permission = nPermission;
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createPdAcl OUT");
     return pdAcl;
@@ -960,7 +967,8 @@ std::string PMCsdkHelper::getFailureMessage()
 /**
  * Function to set failure message
  */
-std::string PMCsdkHelper::setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult)
+std::string PMCsdkHelper::setFailureMessage(OCStackResult actualResult,
+        OCStackResult expectedResult)
 {
     std::string errorMessage("\033[1;31m[Error] Expected : ");
     errorMessage.append(getOCStackResult(expectedResult));

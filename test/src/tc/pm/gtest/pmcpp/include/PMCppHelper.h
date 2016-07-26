@@ -39,11 +39,14 @@
 #include "oxmrandompin.h"
 #include "pinoxmcommon.h"
 #include "oic_string.h"
-#include "CommonUtil.h"
-#include "IotivityTest_Logger.h"
+#include "utlist.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "OCProvisioningManager.h"
+
+#include "CommonUtil.h"
+#include "IotivityTest_Logger.h"
+
 using namespace OC;
 
 #define EMPTY_STRING ""
@@ -90,6 +93,11 @@ using namespace OC;
 #define DEVICE_INDEX_ONE 1
 #define DEVICE_INDEX_TWO 1
 
+#define ACL_RESOURCE_URI "sensor/light"
+#define ACL_RESOURCE_LENGTH 6 // Check ACL_RESOURCE_NAME for the length. ACL_RESOURCE_LENGTH = len(ACL_RESOURCE_URI) + 1
+#define ACL_RES_TYPE_NAME "light"
+#define ACL_RES_IF_TYPE_NAME "sensor"
+
 /*
  * Device Status
  */
@@ -104,7 +112,7 @@ using namespace OC;
 #define OTM_INVALID_LOBV -1
 #define OTM_INVALID_UOBV 10
 #define OTM_NONE 0
-#define OTM_JUSTWORK 1
+#define OTM_JUSTWORK 0
 #define OTM_RANDOMPIN 2
 #define OTM_ALL 3
 
@@ -134,11 +142,11 @@ using namespace OC;
 #define DATABASE_PDM "./PDM.db"
 #define PRVN_DATABASE "./oic_prvn_mng.db"
 
-OicSecAcl_t* createAcl(const int dev_num);
 const char *getResult(OCStackResult result);
 void InputPinCB(char* pinBuf, size_t bufSize);
 std::string setFailureMessage(OCStackResult expectedResult, OCStackResult actualResult);
 std::string getOCStackResultCPP(OCStackResult ocstackresult);
+OicSecAcl_t* createAcl(const int dev_num, int nPermission, DeviceList_t &m_OwnedDevList);
 
 class PMCppHelper
 {
