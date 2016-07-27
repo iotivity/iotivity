@@ -82,7 +82,7 @@ void JniOnPutListener::onPutCallback(const HeaderOptions& headerOptions,
         return;
     }
 
-    if (OC_STACK_OK != eCode)
+    if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CHANGED != eCode)
     {
         jobject ex = GetOcException(eCode, "stack error in onPutCallback");
         if (!ex)
