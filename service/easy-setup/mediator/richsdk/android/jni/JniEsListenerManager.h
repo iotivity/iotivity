@@ -60,7 +60,7 @@ class JniEsListenerManager
                     refPair.second++;
                     it->second = refPair;
                     m_listenerMap.insert(*it);
-                    LOGD("OnEventListener: ref. count is incremented");
+                    ES_LOGD("OnEventListener: ref. count is incremented");
                     break;
                 }
             }
@@ -77,10 +77,10 @@ class JniEsListenerManager
                 }
                 else
                 {
-                    LOGD("OnEventListener: Failed to create global listener ref.");
+                    ES_LOGD("OnEventListener: Failed to create global listener ref.");
                     delete onEventListener;
                 }
-                LOGD("OnEventListener: new listener");
+                ES_LOGD("OnEventListener: new listener");
             }
             m_mapMutex.unlock();
             return onEventListener;
@@ -102,7 +102,7 @@ class JniEsListenerManager
                         refPair.second--;
                         it->second = refPair;
                         m_listenerMap.insert(*it);
-                        LOGI("OnEventListener: ref. count is decremented");
+                        ES_LOGI("OnEventListener: ref. count is decremented");
                     }
                     else
                     {
@@ -111,7 +111,7 @@ class JniEsListenerManager
                         delete listener;
                         m_listenerMap.erase(it);
 
-                        LOGI("OnEventListener is removed");
+                        ES_LOGI("OnEventListener is removed");
                     }
                     break;
                 }

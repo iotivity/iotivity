@@ -29,7 +29,8 @@ public enum WIFI_FREQ
 {
     WIFI_24G(0),
     WIFI_5G(1),
-    WIFI_BOTH(2);
+    WIFI_BOTH(2),
+    WIFI_FREQ_NONE(999);
 
     private int value;
 

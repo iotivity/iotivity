@@ -32,7 +32,7 @@ JniDevicePropProvisioningStatusListener::JniDevicePropProvisioningStatusListener
 
 JniDevicePropProvisioningStatusListener::~JniDevicePropProvisioningStatusListener()
 {
-    LOGI("~JniDevicePropProvisioningStatusListener()");
+    ES_LOGI("~JniDevicePropProvisioningStatusListener()");
     if (m_jwListener)
     {
         jint ret;
@@ -47,7 +47,7 @@ void JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCall
         devicePropProvStatusCb)
 {
 
-    LOGI("JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCallback enter");
+    ES_LOGI("JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCallback enter");
 
     jint ret;
     JNIEnv *env = GetESJNIEnv(ret);
@@ -87,10 +87,10 @@ void JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCall
                                                 g_mid_DevicePropProvisioningStatus_ctor,
                                                 (jint)nativeESResult);
 
-    LOGI("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus - %d", nativeESResult);
+    ES_LOGI("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus - %d", nativeESResult);
     if (!jDevicePropProvisioningStatus)
     {
-        LOGE("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus Unable to create the java object");
+        ES_LOGE("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus Unable to create the java object");
         return ;
     }
 
@@ -98,7 +98,7 @@ void JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCall
 
     if (env->ExceptionCheck())
     {
-        LOGE("Java exception is thrown");
+        ES_LOGE("Java exception is thrown");
         checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;

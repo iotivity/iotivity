@@ -64,10 +64,9 @@ class JniRemoteEnrollee
         // ***** JNI APIs internally call the APIs of this class ***** //
         void getConfiguration(JNIEnv *env, jobject jListener);
         void provisionSecurity(JNIEnv *env, jobject jListener);
-        void provisionDeviceProperties(JNIEnv *env, jstring jssid, jstring jpwd, jint jauthType,
-                                            jint jencType, jstring jlanguage, jstring jcountry, jobject jListener);
-        void provisionCloudProperties(JNIEnv *env, jstring authCode, jstring authProvider,
-                                            jstring ciServer, jobject jListener);
+
+        void provisionDeviceProperties(JNIEnv *env, jobject jRepresentation, jobject jListener);
+        void provisionCloudProperties(JNIEnv *env, jobject jRepresentation, jobject jListener);
 
         static JniRemoteEnrollee *getJniRemoteEnrollee(JNIEnv *env, jobject thiz);
 
@@ -111,16 +110,14 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionSecur
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionDeviceProperties
-(JNIEnv *env, jobject jClass, jstring jssid, jstring jpwd, jint jauthType,
-    jint jencType, jstring jlanguage, jstring jcountry, jobject jListener);
+(JNIEnv *env, jobject jClass, jobject jRepresentation, jobject jListener);
 
 /**
  * API for starting the cloud provisioning process.
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionCloudProperties
-(JNIEnv *env, jobject jClass, jstring authCode, jstring authProvider,
-    jstring ciServer, jobject jListener);
+(JNIEnv *env, jobject jClass, jobject jRepresentation, jobject jListener);
 
 #ifdef __cplusplus
 }

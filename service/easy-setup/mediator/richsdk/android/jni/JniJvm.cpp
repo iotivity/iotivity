@@ -31,6 +31,7 @@ jclass g_cls_SecurityProvisioningStatus = NULL;
 jclass g_cls_DevicePropProvisioningStatus = NULL;
 jclass g_cls_CloudPropProvisioningStatus = NULL;
 jclass g_cls_Integer = NULL;
+jclass g_cls_OcRepresentation = NULL;
 
 jmethodID g_mid_RemoteEnrollee_ctor = NULL;
 jmethodID g_mid_ESException_ctor = NULL;
@@ -42,17 +43,18 @@ jmethodID g_mid_SecurityProvisioningStatus_ctor = NULL;
 jmethodID g_mid_DevicePropProvisioningStatus_ctor = NULL;
 jmethodID g_mid_CloudPropProvisioningStatus_ctor = NULL;
 jmethodID g_mid_Integer_ctor = NULL;
+jmethodID g_mid_OcRepresentation_N_ctor_bool = NULL;
 
 // JNI OnLoad
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-    LOGI("JNI_OnLoad");
+    ES_LOGI("JNI_OnLoad");
     JNIEnv *env;
     g_jvm = vm;
 
     if (g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
-        LOGE("Failed to get the environment using GetEnv()");
+        ES_LOGE("Failed to get the environment using GetEnv()");
         return JNI_ERR;
     }
 
@@ -107,7 +109,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     env->DeleteLocalRef(clazz);
 
     g_mid_EnrolleeConf_ctor = env->GetMethodID(g_cls_EnrolleeConf, "<init>",
-                                "(Lorg/iotivity/service/easysetup/mediator/DeviceConfig;Lorg/iotivity/service/easysetup/mediator/WiFiConfig;Z)V");
+                                "(Lorg/iotivity/base/OcRepresentation;)V");
     if (!g_mid_EnrolleeConf_ctor) return JNI_ERR;
 
     // getConfigurationStatus
@@ -163,18 +165,27 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
                                 "(I)V");
     if (!g_mid_Integer_ctor) return JNI_ERR;
 
+    //OcRepresentation
+    clazz = env->FindClass("org/iotivity/base/OcRepresentation");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcRepresentation = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcRepresentation_N_ctor_bool = env->GetMethodID(g_cls_OcRepresentation, "<init>", "(JZ)V");
+    if (!g_mid_OcRepresentation_N_ctor_bool) return JNI_ERR;
+
     return JNI_CURRENT_VERSION;
 }
 
 //JNI OnUnload
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 {
-    LOGI("JNI_OnUnload");
+    ES_LOGI("JNI_OnUnload");
     JNIEnv *env;
 
     if (g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
-        LOGE("Failed to get the environment using GetEnv()");
+        ES_LOGE("Failed to get the environment using GetEnv()");
         return;
     }
     env->DeleteGlobalRef(g_cls_RemoteEnrollee);

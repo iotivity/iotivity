@@ -35,9 +35,9 @@
 #define ESTAG "ES-JNI"
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
 
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, ESTAG, __VA_ARGS__)
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, ESTAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, ESTAG, __VA_ARGS__)
+#define ES_LOGI(...) __android_log_print(ANDROID_LOG_INFO, ESTAG, __VA_ARGS__)
+#define ES_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, ESTAG, __VA_ARGS__)
+#define ES_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, ESTAG, __VA_ARGS__)
 
 extern JavaVM *g_jvm;
 
@@ -51,6 +51,7 @@ extern jclass g_cls_SecurityProvisioningStatus;
 extern jclass g_cls_DevicePropProvisioningStatus;
 extern jclass g_cls_CloudPropProvisioningStatus;
 extern jclass g_cls_Integer;
+extern jclass g_cls_OcRepresentation;
 
 extern jmethodID g_mid_RemoteEnrollee_ctor;
 extern jmethodID g_mid_ESException_ctor;
@@ -62,6 +63,7 @@ extern jmethodID g_mid_SecurityProvisioningStatus_ctor;
 extern jmethodID g_mid_DevicePropProvisioningStatus_ctor;
 extern jmethodID g_mid_CloudPropProvisioningStatus_ctor;
 extern jmethodID g_mid_Integer_ctor;
+extern jmethodID g_mid_OcRepresentation_N_ctor_bool;
 
 typedef void(*RemoveListenerCallback)(JNIEnv *env, jobject jListener);
 
@@ -110,7 +112,7 @@ static JNIEnv *GetESJNIEnv(jint &ret)
         case JNI_EDETACHED:
             if (g_jvm->AttachCurrentThread(&env, NULL) < 0)
             {
-                LOGE("Failed to get the environment");
+                ES_LOGE("Failed to get the environment");
                 return nullptr;
             }
             else
@@ -119,9 +121,9 @@ static JNIEnv *GetESJNIEnv(jint &ret)
             }
 
         case JNI_EVERSION:
-            LOGE("JNI version not supported");
+            ES_LOGE("JNI version not supported");
         default:
-            LOGE("Failed to get the environment");
+            ES_LOGE("Failed to get the environment");
             return nullptr;
     }
 }

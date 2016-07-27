@@ -31,7 +31,7 @@ JniCloudPropProvisioningStatusListener::JniCloudPropProvisioningStatusListener(J
 
 JniCloudPropProvisioningStatusListener::~JniCloudPropProvisioningStatusListener()
 {
-    LOGI("~JniCloudPropProvisioningStatusListener()");
+    ES_LOGI("~JniCloudPropProvisioningStatusListener()");
     if (m_jwListener)
     {
         jint ret;
@@ -46,7 +46,7 @@ void JniCloudPropProvisioningStatusListener::onCloudPropProvisioningStatus(std::
         cloudPropProvisioningStatus)
 {
 
-    LOGI("JniCloudPropProvisioningStatusListener::onCloudPropProvisioningStatus enter");
+    ES_LOGI("JniCloudPropProvisioningStatusListener::onCloudPropProvisioningStatus enter");
 
     jint ret;
     JNIEnv *env = GetESJNIEnv(ret);
@@ -88,10 +88,10 @@ void JniCloudPropProvisioningStatusListener::onCloudPropProvisioningStatus(std::
                                                 (jint)esResult,
                                                 (jint)cloudProvisionState);
 
-    LOGI("JniCloudPropProvisioningStatus::onCloudPropProvisioningStatus - %d, %d", esResult, cloudProvisionState);
+    ES_LOGI("JniCloudPropProvisioningStatus::onCloudPropProvisioningStatus - %d, %d", esResult, cloudProvisionState);
     if (!jCloudPropProvisioningStatus)
     {
-        LOGE("JniCloudPropProvisioningStatus::onCloudPropProvisioningStatus Unable to create the java object");
+        ES_LOGE("JniCloudPropProvisioningStatus::onCloudPropProvisioningStatus Unable to create the java object");
         return ;
     }
 
@@ -107,7 +107,7 @@ void JniCloudPropProvisioningStatusListener::onCloudPropProvisioningStatus(std::
 
     if (env->ExceptionCheck())
     {
-        LOGE("Java exception is thrown");
+        ES_LOGE("Java exception is thrown");
         if(needRemoveListener)
             checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();

@@ -21,6 +21,7 @@
 #include "JniGetConfigurationStatusListener.h"
 #include "JniRemoteEnrollee.h"
 
+using namespace OC;
 using namespace OIC::Service;
 
 JniGetConfigurationStatusListener::JniGetConfigurationStatusListener(JNIEnv *env, jobject jListener,
@@ -32,7 +33,7 @@ JniGetConfigurationStatusListener::JniGetConfigurationStatusListener(JNIEnv *env
 
 JniGetConfigurationStatusListener::~JniGetConfigurationStatusListener()
 {
-    LOGI("~JniGetConfigurationStatusListener()");
+    ES_LOGI("~JniGetConfigurationStatusListener()");
     if (m_jwListener)
     {
         jint ret;
@@ -46,7 +47,7 @@ JniGetConfigurationStatusListener::~JniGetConfigurationStatusListener()
 void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
     std::shared_ptr<GetConfigurationStatus> getConfigurationStatusCb)
 {
-    LOGI("JniGetConfigurationStatusListener::provisioiningStatusCallback enter");
+    ES_LOGI("JniGetConfigurationStatusListener::provisioiningStatusCallback enter");
 
     jint ret;
     JNIEnv *env = GetESJNIEnv(ret);
@@ -79,56 +80,28 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
         return;
     }
 
-    const EnrolleeConf enrolleeConf = getConfigurationStatusCb->getEnrolleeConf();
-    DeviceConfig devConf = enrolleeConf.getDevConf();
-    WiFiConfig wifiConf = enrolleeConf.getWiFiConf();
+    EnrolleeConf enrolleeConf = getConfigurationStatusCb->getEnrolleeConf();
+    OCRepresentation m_ProvRep = enrolleeConf.getProvResRep();
 
-    jobject jDevConf = NULL;
-    jDevConf = env->NewObject(g_cls_DeviceConfig,
-                                                g_mid_DeviceConfig_ctor,
-                                                (jstring)env->NewStringUTF(devConf.name.c_str()),
-                                                (jstring)env->NewStringUTF(devConf.language.c_str()),
-                                                (jstring)env->NewStringUTF(devConf.country.c_str()));
-    if (!jDevConf) {
-        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jDevConf");
-        return ;
-    }
-
-    jclass clazz = env->FindClass("java/util/ArrayList");
-    jobject wifiModes = env->NewObject(clazz, env->GetMethodID(clazz, "<init>", "()V"));
-    jmethodID arraylist_add = env->GetMethodID(clazz, "add", "(Ljava/lang/Object;)Z");
-
-    for (int n=0; n<wifiConf.modes.size(); n++)
+    OCRepresentation* rep = new OCRepresentation(m_ProvRep);
+    jlong handle = reinterpret_cast<jlong>(rep);
+    jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool,
+                                            handle, true);
+    if (!jRepresentation)
     {
-        jobject value = env->NewObject(g_cls_Integer,
-                                        g_mid_Integer_ctor,
-                                        convertNativeWifiModeToInt(static_cast<WIFI_MODE>(wifiConf.modes[n])));
-       env->CallBooleanMethod(wifiModes, arraylist_add, value);
-    }
-    if (!wifiModes) {
-        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the wifiModes");
-        return ;
-    }
-
-
-    jobject jWiFiConf = NULL;
-    jWiFiConf = env->NewObject(g_cls_WiFiConfig,
-                                                g_mid_WiFiConfig_ctor,
-                                                (jobject)wifiModes,
-                                                (jint)convertNativeWifiFreqToInt(wifiConf.freq));
-    if (!jWiFiConf) {
-        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jWiFiConf");
-        return ;
+        delete rep;
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
     }
 
     jobject jEnrolleeConf = NULL;
-    jEnrolleeConf = env->NewObject(g_cls_EnrolleeConf,
-                                                g_mid_EnrolleeConf_ctor,
-                                                (jobject)jDevConf,
-                                                (jobject)jWiFiConf,
-                                                (jboolean)enrolleeConf.isCloudable());
+    jEnrolleeConf = env->NewObject(g_cls_EnrolleeConf, g_mid_EnrolleeConf_ctor, (jobject)jRepresentation);
     if (!jEnrolleeConf) {
-        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jEnrolleeConf");
+        ES_LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jEnrolleeConf");
         return ;
     }
 
@@ -141,7 +114,7 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
 
     if (!jgetConfigurationStatus)
     {
-        LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the java object");
+        ES_LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the java object");
         return ;
     }
 
@@ -149,7 +122,7 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
 
     if (env->ExceptionCheck())
     {
-        LOGE("Java exception is thrown");
+        ES_LOGE("Java exception is thrown");
         checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;

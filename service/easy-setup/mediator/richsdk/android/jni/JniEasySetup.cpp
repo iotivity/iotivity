@@ -25,7 +25,6 @@
 #include "octypes.h"
 #include "ESRichCommon.h"
 
-#include "JniOcPlatform.h"
 #include "JniOcResource.h"
 #include "JniEasySetup.h"
 
@@ -39,7 +38,7 @@ JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrollee
 (JNIEnv *env, jobject thiz, jobject jResource)
 {
-    LOGI("JniEasySetup::nativeCreateRemoteEnrollee enter");
+    ES_LOGI("JniEasySetup::nativeCreateRemoteEnrollee enter");
 
     std::shared_ptr<RemoteEnrollee> nativeRemoteEnrollee;
     jobject jRemoteEnrollee;
@@ -48,7 +47,7 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
 
     if (!jniOcResource)
     {
-        LOGE("JniEasySetup::nativeCreateRemoteEnrollee getJniOcResourcePtr returns nullptr.");
+        ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee getJniOcResourcePtr returns nullptr.");
         return nullptr;
     }
 
@@ -59,7 +58,7 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
         jRemoteEnrollee = env->NewObject(g_cls_RemoteEnrollee, g_mid_RemoteEnrollee_ctor);
         if (!jRemoteEnrollee)
         {
-            LOGE("JniEasySetup::nativeCreateRemoteEnrollee Unable to create the java object");
+            ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee Unable to create the java object");
             return NULL;
         }
         JniRemoteEnrollee *jniRemoteEnrollee = new JniRemoteEnrollee(nativeRemoteEnrollee);
@@ -67,12 +66,12 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
     }
     catch (ESBadRequestException exception)
     {
-        LOGE("JniEasySetup::nativeCreateRemoteEnrollee Unable to create the Native EnrolleeDevice");
+        ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee Unable to create the Native EnrolleeDevice");
         //throw the exception to java layer
         throwESException( env,  exception.what());
     }
 
-    LOGI("JniEasySetup::nativeCreateRemoteEnrollee exit");
+    ES_LOGI("JniEasySetup::nativeCreateRemoteEnrollee exit");
 
     return jRemoteEnrollee;
 }

@@ -20,40 +20,49 @@
 
 package org.iotivity.service.easysetup.mediator;
 
+import android.util.Log;
+
 import org.iotivity.service.easysetup.mediator.enums.WIFI_AUTHTYPE;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_ENCTYPE;
+
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcRepresentation;
 
 /**
  * This class contains device properties to be delivered to Enrollee
  */
 public class DeviceProp {
-
-    private final String mSsid;
-    private final String mPwd;
-    private final WIFI_AUTHTYPE mAuthType;
-    private final WIFI_ENCTYPE mEncType;
-    private final String mLanguage;
-    private final String mCountry;
+    private static final String TAG = DeviceProp.class.getName();
+    protected OcRepresentation mRep;
 
     /**
      * Constructor
-     *
-     * @param ssid WiFi AP's SSID
-     * @param pwd WiFi AP's password
-     * @param authType WiFi AP's authenticate type
-     * @param encType WiFi AP's encryption type
-     * @param language IETF language tag using ISO 639X
-     * @param country ISO Country Code (ISO 3166-1 Alpha-2)
      */
-    public DeviceProp(String ssid, String pwd, WIFI_AUTHTYPE authType, WIFI_ENCTYPE encType,
-                                     String language, String country)
+    public DeviceProp() {
+        mRep = new OcRepresentation();
+    }
+
+    public void setWiFiProp(String ssid, String pwd, WIFI_AUTHTYPE authtype, WIFI_ENCTYPE enctype)
     {
-        mSsid = ssid;
-        mPwd = pwd;
-        mAuthType = authType;
-        mEncType = encType;
-        mLanguage = language;
-        mCountry = country;
+        try
+        {
+            mRep.setValue(ESConstants.OC_RSRVD_ES_SSID, ssid);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_CRED, pwd);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHTYPE, authtype.getValue());
+            mRep.setValue(ESConstants.OC_RSRVD_ES_ENCTYPE, enctype.getValue());
+        } catch (OcException e) {
+            Log.e(TAG, "setWiFiProp is failed.");
+        }
+    }
+
+    public void setDevConfProp(String language, String country)
+    {
+        try {
+            mRep.setValue(ESConstants.OC_RSRVD_ES_LANGUAGE, language);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_COUNTRY, country);
+        } catch (OcException e) {
+            Log.e(TAG, "setDevConfProp is failed.");
+        }
     }
 
     /**
@@ -63,7 +72,13 @@ public class DeviceProp {
      */
     public String getSsid()
     {
-        return mSsid;
+        try {
+            if(mRep.hasAttribute(ESConstants.OC_RSRVD_ES_SSID))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_SSID);
+        } catch (OcException e) {
+            Log.e(TAG, "getSsid is failed.");
+        }
+        return new String("");
     }
 
     /**
@@ -71,9 +86,15 @@ public class DeviceProp {
      *
      * @return String WiFi AP's password
      */
-    public String getPwd()
+    public String getPassword()
     {
-        return mPwd;
+        try {
+            if(mRep.hasAttribute(ESConstants.OC_RSRVD_ES_CRED))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_CRED);
+        } catch (OcException e) {
+            Log.e(TAG, "getPassword is failed.");
+        }
+        return new String("");
     }
 
     /**
@@ -84,7 +105,13 @@ public class DeviceProp {
      */
     public WIFI_AUTHTYPE getAuthType()
     {
-        return mAuthType;
+        try {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_AUTHTYPE))
+                return WIFI_AUTHTYPE.fromInt((int)mRep.getValue(ESConstants.OC_RSRVD_ES_AUTHTYPE));
+        } catch (OcException e) {
+            Log.e(TAG, "getAuthType is failed.");
+        }
+        return WIFI_AUTHTYPE.NONE_AUTH;
     }
 
     /**
@@ -95,7 +122,13 @@ public class DeviceProp {
      */
     public WIFI_ENCTYPE getEncType()
     {
-        return mEncType;
+        try {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_ENCTYPE))
+                return WIFI_ENCTYPE.fromInt((int)mRep.getValue(ESConstants.OC_RSRVD_ES_ENCTYPE));
+        } catch (OcException e) {
+            Log.e(TAG, "getEncType is failed.");
+        }
+        return WIFI_ENCTYPE.NONE_ENC;
     }
 
     /**
@@ -105,7 +138,13 @@ public class DeviceProp {
      */
     public String getLanguage()
     {
-        return mLanguage;
+        try {
+            if(mRep.hasAttribute(ESConstants.OC_RSRVD_ES_LANGUAGE))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_LANGUAGE);
+        } catch (OcException e) {
+            Log.e(TAG, "getLanguage is failed.");
+        }
+        return new String("");
     }
 
     /**
@@ -115,6 +154,17 @@ public class DeviceProp {
      */
     public String getCountry()
     {
-        return mCountry;
+        try {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_COUNTRY))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_COUNTRY);
+        } catch (OcException e) {
+            Log.e(TAG, "getCountry is failed.");
+        }
+        return new String("");
+    }
+
+    public OcRepresentation toOCRepresentation()
+    {
+        return mRep;
     }
 }

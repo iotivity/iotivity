@@ -26,7 +26,7 @@ void throwESException(JNIEnv *env, std::string reason)
                                 env->NewStringUTF(reason.c_str()));
     if (!ex)
     {
-        LOGI("throwException : jobject is NULL");
+        ES_LOGI("throwException : jobject is NULL");
     }
     env->Throw((jthrowable)ex);
 }

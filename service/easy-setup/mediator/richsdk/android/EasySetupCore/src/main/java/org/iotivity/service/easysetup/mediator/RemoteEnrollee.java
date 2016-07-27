@@ -25,6 +25,8 @@ package org.iotivity.service.easysetup.mediator;
 
 import android.util.Log;
 
+import org.iotivity.base.OcRepresentation;
+
 /**
  * This class represents Remote Enrollee device instance. What operations the class provides:
  * 1) Ownership transfer for enabling secured communication between Mediator and Enrollee
@@ -40,10 +42,10 @@ public class RemoteEnrollee{
 
     private native void nativeGetConfiguration(GetConfigurationCallback callback);
     private native void nativeProvisionSecurity(SecurityProvisioningCallback callback);
-    private native void nativeProvisionDeviceProperties(String ssid, String pwd, int authType, int encType,
-                                              String language, String country, DevicePropProvisioningCallback callback);
-    private native void nativeProvisionCloudProperties(String authCode, String autoProvider,
-                                               String ciServer, CloudPropProvisioningCallback callback);
+    private native void nativeProvisionDeviceProperties(OcRepresentation deviceProp,
+                                                        DevicePropProvisioningCallback callback);
+    private native void nativeProvisionCloudProperties(OcRepresentation cloudProp,
+                                                       CloudPropProvisioningCallback callback);
 
     /* constructor will be invoked from the native layer */
     private RemoteEnrollee(long nativeHandle){
@@ -93,7 +95,7 @@ public class RemoteEnrollee{
      * 1. WiFi AP information includes a SSID, password, auth type, and encryption type.
      * 2. Device configuration includes a language (IETF language tags) and country (ISO 3166-1 Alpha-2)
      *
-     * @param devProp a data structure storing the above information to be delivered
+     * @param deviceProp a data structure storing the above information to be delivered
      * @param callback will give the result if the provisioning succeeds or fails
      *
      * @throws ESException If some errors happen in this function
@@ -105,9 +107,7 @@ public class RemoteEnrollee{
     {
         if(callback != null)
         {
-            nativeProvisionDeviceProperties(deviceProp.getSsid(), deviceProp.getPwd(),
-                              deviceProp.getAuthType().getValue(), deviceProp.getEncType().getValue(),
-                              deviceProp.getLanguage(), deviceProp.getCountry(), callback);
+            nativeProvisionDeviceProperties(deviceProp.toOCRepresentation(), callback);
             return;
         }
         Log.d(TAG, "DevicePropProvisioningCallback is null ");
@@ -132,8 +132,7 @@ public class RemoteEnrollee{
     public void provisionCloudProperties(CloudProp cloudProp, CloudPropProvisioningCallback callback) throws ESException{
         if(callback != null)
         {
-            nativeProvisionCloudProperties(cloudProp.getAuthCode(), cloudProp.getAuthProvider(),
-                               cloudProp.getCiServer(), callback);
+            nativeProvisionCloudProperties(cloudProp.toOCRepresentation(), callback);
             return;
         }
         Log.d(TAG, "CloudPropProvisioningCallback is null ");

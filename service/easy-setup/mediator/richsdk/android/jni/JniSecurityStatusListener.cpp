@@ -34,7 +34,7 @@ JniSecurityStatusListener::JniSecurityStatusListener(JNIEnv *env, jobject jListe
 
 JniSecurityStatusListener::~JniSecurityStatusListener()
 {
-    LOGI("~JniSecurityStatusListener()");
+    ES_LOGI("~JniSecurityStatusListener()");
     if (m_jwListener)
     {
         jint ret;
@@ -48,7 +48,7 @@ void JniSecurityStatusListener::secProvisionStatusCallback(
                 std::shared_ptr<SecProvisioningStatus> secProvisioningStatus)
 {
 
-    LOGI("JniSecurityStatusListener::secProvisionStatusCallback enter");
+    ES_LOGI("JniSecurityStatusListener::secProvisionStatusCallback enter");
 
     jint ret;
     JNIEnv *env = GetESJNIEnv(ret);
@@ -86,15 +86,16 @@ void JniSecurityStatusListener::secProvisionStatusCallback(
     //create the java object
     jobject jSecurityProvisioningStatus = NULL;
     jSecurityProvisioningStatus = env->NewObject(g_cls_SecurityProvisioningStatus,
-                                                g_mid_SecurityProvisioningStatus_ctor,
-                                                (jint)esResult,
-                                                env->NewStringUTF(secProvisioningStatus->getDeviceUUID().c_str()));
+                                        g_mid_SecurityProvisioningStatus_ctor,
+                                        (jint)esResult,
+                                        env->NewStringUTF(secProvisioningStatus->getDeviceUUID().c_str()));
 
-    LOGE("JniSecurityStatusListener::onSecurityProvisioningStatus UUID : %s", secProvisioningStatus->getDeviceUUID().c_str());
+    ES_LOGE("JniSecurityStatusListener::onSecurityProvisioningStatus UUID : %s",
+                                                     secProvisioningStatus->getDeviceUUID().c_str());
 
     if (!jSecurityProvisioningStatus)
     {
-        LOGE("JniSecurityStatusListener::onSecurityProvisioningStatus Unable to create the java object");
+        ES_LOGE("JniSecurityStatusListener::onSecurityProvisioningStatus Unable to create the java object");
         return ;
     }
 
@@ -102,7 +103,7 @@ void JniSecurityStatusListener::secProvisionStatusCallback(
 
     if (env->ExceptionCheck())
     {
-        LOGE("Java exception is thrown");
+        ES_LOGE("Java exception is thrown");
         checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;

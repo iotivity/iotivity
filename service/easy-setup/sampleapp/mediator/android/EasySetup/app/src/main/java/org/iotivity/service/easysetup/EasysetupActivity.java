@@ -494,19 +494,15 @@ public class EasysetupActivity extends Activity {
                                     if(getConfigurationStatus.getESResult() == ESResult.ES_OK) {
 
                                         final EnrolleeConf enrolleeConf = getConfigurationStatus.getEnrolleeConf();
-                                        final DeviceConfig devConf = enrolleeConf.getDeviceConfig();
-                                        final WiFiConfig netInfo = enrolleeConf.getWiFiConfig();
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
                                                 mGetconfigurationStateText.setText("Success");
-                                                mDevNameText.setText(devConf.getName());
-                                                mLanguageText.setText(devConf.getLanguage());
-                                                mCountryText.setText(devConf.getCountry());
-                                                setWifiModes(netInfo.getWifiModes());
-                                                setWifiFreq(netInfo.getWifiFreq());
+                                                mDevNameText.setText(enrolleeConf.getDeviceName());
+                                                setWifiModes(enrolleeConf.getWiFiModes());
+                                                setWifiFreq(enrolleeConf.getWiFiFreq());
 
-                                                if(enrolleeConf.isCloudable()) {
+                                                if(enrolleeConf.isCloudAccessible()) {
                                                     mCloudAccessableText.setText("TRUE");
                                                 }
                                                 else {
@@ -570,9 +566,9 @@ public class EasysetupActivity extends Activity {
                             String inputLanguage = mInputLanguageText.getText().toString();
                             String inputCountry = mInputCountryText.getText().toString();
 
-                            DeviceProp deviceProp =
-                                    new DeviceProp(enrollerSSID, enrollerPW, authType, encType,
-                                                    inputLanguage, inputCountry);
+                            DeviceProp deviceProp = new DeviceProp();
+                            deviceProp.setWiFiProp(enrollerSSID, enrollerPW, authType, encType);
+                            deviceProp.setDevConfProp(inputLanguage, inputCountry);
 
                             mRemoteEnrollee.provisionDeviceProperties(deviceProp, new DevicePropProvisioningCallback() {
                                 @Override
@@ -633,8 +629,8 @@ public class EasysetupActivity extends Activity {
                             String authProvider = mAuthProviderText.getText().toString();
                             String ciserver = mCIServerText.getText().toString();
 
-                            CloudProp cloudProp =
-                                    new CloudProp(authCode, authProvider, ciserver);
+                            CloudProp cloudProp = new CloudProp();
+                            cloudProp.setCloudProp(authCode, authProvider, ciserver);
 
                             mRemoteEnrollee.provisionCloudProperties(cloudProp, new CloudPropProvisioningCallback() {
                                 @Override

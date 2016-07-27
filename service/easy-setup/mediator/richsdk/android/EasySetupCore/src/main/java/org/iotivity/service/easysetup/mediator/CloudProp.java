@@ -20,49 +20,83 @@
 
 package org.iotivity.service.easysetup.mediator;
 
+import android.util.Log;
+
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcRepresentation;
+
 /**
  * This class contains cloud server properties to be delivered to Enrollee
  */
 public class CloudProp {
-
-    private final String mAuthCode;
-    private final String mAuthProvider;
-    private final String mCiServer;
+    private static final String TAG = CloudProp.class.getName();
+    protected OcRepresentation mRep;
 
     /**
      * Constructor
-     *
-     * @param authCode Authcode issued by OAuth 2.0 protocol compatible account server
-     * @param authProvider Auth provider which issued the auth code
-     * @param ciServer Cloud interface server that Enrollee is going to be registered
      */
-    public CloudProp(String authCode, String authProvider, String ciServer) {
-        mAuthCode = authCode;
-        mAuthProvider = authProvider;
-        mCiServer = ciServer;
+    public CloudProp() {
+        mRep = new OcRepresentation();
+    }
+
+    public void setCloudProp(String authCode, String authProvider, String ciServer)
+    {
+        try {
+            mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHCODE, authCode);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_CISERVER, ciServer);
+        } catch (OcException e) {
+            Log.e(TAG, "setCloudProp is failed.");
+        }
     }
 
     /**
      * This method returns the authCode used for the first registration to IoTivity cloud
      * @return AuthCode for sign-up to IoTivity cloud
      */
-    public String getAuthCode() {
-        return mAuthCode;
+    public String getAuthCode()
+    {
+        try {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_AUTHCODE))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_AUTHCODE);
+        } catch (OcException e) {
+            Log.e(TAG, "getAuthCode is failed.");
+        }
+        return new String("");
     }
 
     /**
      * This method returns the auth provider which issued the given AuthCode
      * @return Auth provider which issued the given AuthCode
      */
-    public String getAuthProvider() {
-        return mAuthProvider;
+    public String getAuthProvider()
+    {
+        try {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_AUTHPROVIDER))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER);
+        } catch (OcException e) {
+            Log.e(TAG, "getAuthProvider is failed.");
+        }
+        return new String("");
     }
 
 	/**
      * This method returns the Cloud Interface server's URL to be registered
      * @return CI server's URL to be registered
      */
-    public String getCiServer() {
-        return mCiServer;
+    public String getCiServer()
+    {
+        try {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_CISERVER))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_CISERVER);
+        } catch (OcException e) {
+            Log.e(TAG, "getCiServer is failed.");
+        }
+        return new String("");
+    }
+
+    public OcRepresentation toOCRepresentation()
+    {
+        return mRep;
     }
 }

@@ -23,6 +23,7 @@
 
 #include <jni.h>
 
+#include "OCPlatform.h"
 #include "RemoteEnrollee.h"
 #include "ESRichCommon.h"
 
