@@ -46,17 +46,12 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../include'
 		])
 
-if target_os not in ['windows']:
-    srmtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-    srmtest_env.AppendUnique(LIBS = ['pthread'])
 srmtest_env.AppendUnique(LIBPATH = [srmtest_env.get('BUILD_DIR')])
 srmtest_env.PrependUnique(LIBS = ['ocsrm',
                                     'octbstack',
                                     'oc_logger',
                                     'connectivity_abstraction',
-                                    'coap',
-                                    'gtest',
-                                    'gtest_main'])
+                                    'coap'])
 
 if srmtest_env.get('SECURED') == '1':
     srmtest_env.AppendUnique(LIBS = ['tinydtls', 'timer'])

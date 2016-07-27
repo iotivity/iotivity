@@ -62,13 +62,6 @@ ThingsManager_gtest_env.AppendUnique(
                 '../../../extlibs/timer'
         ])
 
-if target_os not in ['windows']:
-    ThingsManager_gtest_env.AppendUnique(LIBS = ['dl'])
-    ThingsManager_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-    if target_os != 'android':
-        ThingsManager_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
-        ThingsManager_gtest_env.AppendUnique(LIBS = ['pthread'])
-
 ThingsManager_gtest_env.PrependUnique(LIBS = [
     'libTGMSDKLibrary',
     'coap',
@@ -76,9 +69,7 @@ ThingsManager_gtest_env.PrependUnique(LIBS = [
     'oc_logger',
     'oc_logger_core',
     'oc',
-    'octbstack',
-    'gtest',
-    'gtest_main'])
+    'octbstack'])
 
 ######################################################################
 # Build Test

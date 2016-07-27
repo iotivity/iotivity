@@ -50,10 +50,6 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../../extlibs/hippomocks-master/HippoMocksTest'
 		])
 
-if target_os not in ['windows']:
-	provisiontests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-	provisiontests_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
-
 provisiontests_env.AppendUnique(LIBPATH = [provisiontests_env.get('BUILD_DIR')])
 provisiontests_env.PrependUnique(LIBS = [
         'ocprovision',
@@ -62,9 +58,7 @@ provisiontests_env.PrependUnique(LIBS = [
 		'octbstack',
 		'oc_logger',
 		'connectivity_abstraction',
-		'coap',
-		'gtest',
-		'gtest_main',
+		'coap'
 		])
 
 if with_ra_ibb:

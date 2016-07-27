@@ -50,9 +50,6 @@ rcs_common_env.AppendUnique(LIBPATH = [rcs_common_env.get('BUILD_DIR')])
 
 if target_os not in ['windows']:
     rcs_common_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-    if target_os not in ['android']:
-        rcs_common_env.AppendUnique(CXXFLAGS = ['-pthread'])
-        rcs_common_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os not in ['darwin', 'ios', 'windows']:
     rcs_common_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
@@ -105,11 +102,7 @@ if target_os in ['linux']:
 		'oc_logger',
 		'connectivity_abstraction',
 		'coap',
-		'rcs_common',
-		'gtest',
-		'gtest_main',
-		'pthread'
-		])
+		'rcs_common'])
 
 	rcs_common_test_src = [
 		rcs_common_test_env.Glob('primitiveResource/unittests/*.cpp'),

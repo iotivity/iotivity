@@ -51,15 +51,10 @@ target_os = scene_test_env.get('TARGET_OS')
 scene_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 scene_test_env.AppendUnique(LIBS = [
     'scene_manager', 'rcs_server', 'rcs_client','rcs_common',
-    'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap',
-    'gtest_main', 'gtest'])
+    'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 
 if target_os not in ['windows']:
-    scene_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
-
-if target_os in ['linux']:
-    scene_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-    scene_test_env.AppendUnique(LIBS = ['pthread'])
+    scene_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 if not scene_test_env.get('RELEASE'):
     scene_test_env.PrependUnique(LIBS = ['gcov'])

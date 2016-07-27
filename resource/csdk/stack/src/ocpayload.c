@@ -64,9 +64,11 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_SECURITY:
             OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
             break;
+#if defined(RD_CLIENT) || defined(RD_SERVER)
         case PAYLOAD_TYPE_RD:
            OCRDPayloadDestroy((OCRDPayload*)payload);
            break;
+#endif
         default:
             OIC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
             OICFree(payload);
@@ -485,7 +487,7 @@ bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name)
 
     if (!val)
     {
-        return false;
+        return true;
     }
 
     return val->type == OCREP_PROP_NULL;
@@ -1584,7 +1586,11 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         }
     }
 
-    pl->bitmap = res->resourceProperties & (OC_OBSERVABLE | OC_DISCOVERABLE);
+    pl->bitmap = res->resourceProperties & (OC_OBSERVABLE | OC_DISCOVERABLE
+#ifdef MQ_PUBLISHER
+                                            | OC_MQ_PUBLISHER
+#endif
+                                            );
     pl->secure = (res->resourceProperties & OC_SECURE) != 0;
     pl->port = securePort;
 #ifdef TCP_ADAPTER
@@ -1686,6 +1692,7 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     OICFree(payload->name);
     OCFreeOCStringLL(payload->iface);
     OCDiscoveryResourceDestroy(payload->resources);
+    OCDiscoveryPayloadDestroy(payload->next);
     OICFree(payload);
 }
 

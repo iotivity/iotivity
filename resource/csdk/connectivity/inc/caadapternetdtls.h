@@ -90,6 +90,9 @@ typedef enum
 typedef struct
 {
     socklen_t size;                 /**< Size of address. */
+#ifdef _MSC_VER
+    __declspec(align(8))
+#endif
     union
     {
         struct sockaddr     sa;

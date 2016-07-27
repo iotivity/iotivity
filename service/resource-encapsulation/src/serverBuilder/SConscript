@@ -56,9 +56,6 @@ if not release:
     server_builder_env.PrependUnique(LIBS = ['gcov'])
 if target_os not in ['windows']:
     server_builder_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-    if target_os not in ['android']:
-        server_builder_env.AppendUnique(LIBS = ['dl'])
-        server_builder_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
 if target_os not in ['darwin', 'ios', 'windows']:
     server_builder_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
@@ -94,11 +91,7 @@ if target_os in ['linux']:
 		'octbstack',
 		'oc_logger',
 		'connectivity_abstraction',
-		'coap',
-		'gtest',
-		'gtest_main',
-		'pthread',
-		])
+		'coap'])
 
 	server_builder_test_src = server_builder_test_env.Glob('unittests/*.cpp')
 

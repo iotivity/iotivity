@@ -62,6 +62,12 @@ namespace OCPlatformTest
     {
     }
 
+#ifdef WITH_CLOUD
+    void onObserve(const HeaderOptions, const OCRepresentation&, const int&, const int&)
+    {
+    }
+#endif
+
     void directPairHandler(std::shared_ptr<OCDirectPairing> /*dev*/, OCStackResult /*res*/)
     {
     }
@@ -69,7 +75,12 @@ namespace OCPlatformTest
     void pairedHandler(const PairedDevices& /*list*/)
     {
     }
-
+#ifdef WITH_CLOUD
+    void accountHandler(const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/)
+    {
+    }
+#endif
     //Helper methods
     void DeleteStringLL(OCStringLL* ll)
     {
@@ -828,6 +839,49 @@ namespace OCPlatformTest
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
 
+#ifdef WITH_CLOUD
+    //SubscribeDevicePresence Test
+    TEST(SubscribeDevicePresenceTest, DISABLED_SubscribeDevicePresenceWithValidParameters)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, queryParams, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullHost)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        nullptr, queryParams, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullOnObserve)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        hostAddress, queryParams, CT_DEFAULT, NULL));
+    }
+
+    TEST(SubscribeDevicePresenceTest, DISABLED_UnsubscribePresenceWithValidHandle)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        QueryParamsList queryParams = {};
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, queryParams, CT_DEFAULT, &onObserve));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+#endif
+
     TEST(FindDirectPairingTest, FindDirectPairingNullCallback)
     {
         EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(1, nullptr));
@@ -869,4 +923,70 @@ namespace OCPlatformTest
         std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
         EXPECT_ANY_THROW(OCPlatform::doDirectPairing(nullptr, pmSel, pin, nullptr));
     }
+#ifdef WITH_CLOUD
+    //SignUp Test
+    TEST(SignUpTest, DISABLED_SignUpWithValidParameters)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string authProvider("AnyAuthProvider");
+        std::string authCode("AnyAuthCode");
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::signUp(host, authProvider, authCode,
+                                                  CT_DEFAULT, &accountHandler));
+    }
+
+    TEST(SignUpTest, SignUpWithNullCallback)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string authProvider("AnyAuthProvider");
+        std::string authCode("AnyAuthCode");
+        EXPECT_ANY_THROW(OCPlatform::signUp(host, authProvider, authCode, CT_DEFAULT, nullptr));
+    }
+
+    //SignIn Test
+    TEST(SignInTest, DISABLED_SignInWithValidParameters)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string accessToken("AnyAccessToken");
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::signIn(host, accessToken, CT_DEFAULT, &accountHandler));
+    }
+
+    TEST(SignInTest, SignInWithNullCallback)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string accessToken("AnyAccessToken");
+        EXPECT_ANY_THROW(OCPlatform::signIn(host, accessToken, CT_DEFAULT, nullptr));
+    }
+
+    //SignOut Test
+    TEST(SignOutTest, DISABLED_SignOutWithValidParameters)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string accessToken("AnyAccessToken");
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::signOut(host, accessToken,
+                                                   CT_DEFAULT, &accountHandler));
+    }
+
+    TEST(SignOutTest, SignOutWithNullCallback)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string accessToken("AnyAccessToken");
+        EXPECT_ANY_THROW(OCPlatform::signOut(host, accessToken, CT_DEFAULT, nullptr));
+    }
+
+    //RefreshAccessToken Test
+    TEST(RefreshAccessTokenTest, DISABLED_RefreshAccessTokenWithValidParameters)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string refreshToken("AnyRefreshToken");
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::refreshAccessToken(host, refreshToken,
+                                                              CT_DEFAULT, &accountHandler));
+    }
+
+    TEST(RefreshAccessTokenTest, RefreshAccessTokenWithNullCallback)
+    {
+        std::string host("coap+tcp://192.168.1.2:5000");
+        std::string refreshToken("AnyRefreshToken");
+        EXPECT_ANY_THROW(OCPlatform::refreshAccessToken(host, refreshToken, CT_DEFAULT, nullptr));
+    }
+#endif // WITH_CLOUD
 }

@@ -51,11 +51,13 @@
 #include "logger.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
+#include "psinterface.h"
 #include "doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
+#include "platform_features.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -117,6 +119,10 @@ OCResource *headResource = NULL;
 static OCResource *tailResource = NULL;
 static OCResourceHandle platformResource = {0};
 static OCResourceHandle deviceResource = {0};
+#ifdef MQ_BROKER
+static OCResourceHandle brokerResource = {0};
+#endif
+
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
 static PresenceResource presenceResource = {0};
@@ -633,7 +639,6 @@ static OCStackResult CAResultToOCStackResult(CAResult_t caResult)
 OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
 {
     OCStackResult ret = OC_STACK_ERROR;
-
     switch(caCode)
     {
         case CA_CREATED:
@@ -643,6 +648,8 @@ OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
             ret = OC_STACK_RESOURCE_DELETED;
             break;
         case CA_CHANGED:
+            ret = OC_STACK_RESOURCE_CHANGED;
+            break;
         case CA_CONTENT:
         case CA_VALID:
             ret = OC_STACK_OK;
@@ -695,7 +702,8 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
                    // This should not happen but,
                    // give it a value just in case but output an error
                    ret = CA_CONTENT;
-                   OIC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [%d].", method);
+                   OIC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [%d].",
+                            method);
             }
             break;
         case OC_STACK_RESOURCE_CREATED:
@@ -703,6 +711,9 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
             break;
         case OC_STACK_RESOURCE_DELETED:
             ret = CA_DELETED;
+            break;
+        case OC_STACK_RESOURCE_CHANGED:
+            ret = CA_CHANGED;
             break;
         case OC_STACK_INVALID_QUERY:
             ret = CA_BAD_REQ;
@@ -837,6 +848,98 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
 }
 
 /**
+ * Encode an address string to match RFC6874.
+ *
+ * @param outputAddress    a char array to be written with the encoded string.
+ *
+ * @param outputSize       size of outputAddress buffer.
+ *
+ * @param inputAddress     a char array of size <= CA_MAX_URI_LENGTH
+ *                         containing a valid IPv6 address string.
+ *
+ * @return                 OC_STACK_OK if encoding succeeded.
+ *                         Else an error occured.
+ */
+ OCStackResult encodeAddressForRFC6874(char *outputAddress,
+                                       size_t outputSize,
+                                       const char *inputAddress)
+{
+    VERIFY_NON_NULL(inputAddress,  FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(outputAddress, FATAL, OC_STACK_INVALID_PARAM);
+
+    /** @todo Use a max IPv6 string length instead of CA_MAX_URI_LENGTH. */
+#define ENCODE_MAX_INPUT_LENGTH    CA_MAX_URI_LENGTH
+
+    size_t inputLength = strnlen(inputAddress, ENCODE_MAX_INPUT_LENGTH);
+
+    if (inputLength >= ENCODE_MAX_INPUT_LENGTH)
+    {
+        OIC_LOG(ERROR, TAG,
+                "encodeAddressForRFC6874 failed: Invalid input string: too long/unterminated!");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // inputSize includes the null terminator
+    size_t inputSize = inputLength + 1;
+
+    if (inputSize > outputSize)
+    {
+        OIC_LOG_V(ERROR, TAG,
+                  "encodeAddressForRFC6874 failed: "
+                  "outputSize (%d) < inputSize (%d)",
+                  outputSize, inputSize);
+
+        return OC_STACK_ERROR;
+    }
+
+    char* percentChar = strchr(inputAddress, '%');
+
+    // If there is no '%' character, then no change is required to the string.
+    if (NULL == percentChar)
+    {
+        OICStrcpy(outputAddress, outputSize, inputAddress);
+        return OC_STACK_OK;
+    }
+
+    const char* addressPart = &inputAddress[0];
+    const char* scopeIdPart = percentChar + 1;
+
+    // Sanity check to make sure this string doesn't have more '%' characters
+    if (NULL != strchr(scopeIdPart, '%'))
+    {
+        return OC_STACK_ERROR;
+    }
+
+    // If no string follows the first '%', then the input was invalid.
+    if (scopeIdPart[0] == '\0')
+    {
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Invalid input string: no scope ID!");
+        return OC_STACK_ERROR;
+    }
+
+    // Check to see if the string is already encoded
+    if ((scopeIdPart[0] == '2') && (scopeIdPart[1] == '5'))
+    {
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Input string is already encoded");
+        return OC_STACK_ERROR;
+    }
+
+    // Fail if we don't have room for encoded string's two additional chars
+    if (outputSize < (inputSize + 2))
+    {
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Input string is already encoded");
+        return OC_STACK_ERROR;
+    }
+
+    // Restore the null terminator with an escaped '%' character, per RFC6874
+    OICStrcpy(outputAddress, scopeIdPart - addressPart, addressPart);
+    strcat(outputAddress, "%25");
+    strcat(outputAddress, scopeIdPart);
+
+    return OC_STACK_OK;
+}
+
+/**
  * The cononical presence allows constructed URIs to be string compared.
  *
  * requestUri must be a char array of size CA_MAX_URI_LENGTH
@@ -860,8 +963,19 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
             }
             else
             {
+                char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+
+                OCStackResult result = encodeAddressForRFC6874(addressEncoded,
+                                                               sizeof(addressEncoded),
+                                                               ep->addr);
+
+                if (OC_STACK_OK != result)
+                {
+                    return -1;
+                }
+
                 return snprintf(presenceUri, CA_MAX_URI_LENGTH, "coap://[%s]:%u%s",
-                        ep->addr, ep->port, OC_RSRVD_PRESENCE_URI);
+                        addressEncoded, ep->port, OC_RSRVD_PRESENCE_URI);
             }
         }
         else
@@ -1152,7 +1266,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
             OCClientResponse response =
                 {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
-            response.sequenceNumber = -1;
+            response.sequenceNumber = MAX_SEQUENCE_NUMBER + 1;
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
             response.resourceUri = responseInfo->info.resourceUri;
@@ -1178,6 +1292,12 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         type = PAYLOAD_TYPE_DISCOVERY;
                     }
+#ifdef WITH_MQ
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_WELL_KNOWN_MQ_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DISCOVERY;
+                    }
+#endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_DEVICE_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_DEVICE;
@@ -1274,7 +1394,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                             (observationOption << 8) | optionData[i];
                     }
                     response.sequenceNumber = observationOption;
-
                     response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
                     start = 1;
                 }
@@ -1299,6 +1418,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
             if (cbNode->method == OC_REST_OBSERVE &&
                 response.sequenceNumber > OC_OFFSET_SEQUENCE_NUMBER &&
+                cbNode->sequenceNumber <=  MAX_SEQUENCE_NUMBER &&
                 response.sequenceNumber <= cbNode->sequenceNumber)
             {
                 OIC_LOG_V(INFO, TAG, "Received stale notification. Number :%d",
@@ -3116,15 +3236,25 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(!resourceInterfaceName || strlen(resourceInterfaceName) == 0)
+    if (!resourceInterfaceName || strlen(resourceInterfaceName) == 0)
     {
         resourceInterfaceName = OC_RSRVD_INTERFACE_DEFAULT;
     }
 
+#ifdef MQ_PUBLISHER
+    resourceProperties = resourceProperties | OC_MQ_PUBLISHER;
+#endif
     // Make sure resourceProperties bitmask has allowed properties specified
     if (resourceProperties
             > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_SECURE |
-               OC_EXPLICIT_DISCOVERABLE))
+               OC_EXPLICIT_DISCOVERABLE
+#ifdef MQ_PUBLISHER
+               | OC_MQ_PUBLISHER
+#endif
+#ifdef MQ_BROKER
+               | OC_MQ_BROKER
+#endif
+               ))
     {
         OIC_LOG(ERROR, TAG, "Invalid property");
         return OC_STACK_INVALID_PARAM;
@@ -4045,6 +4175,7 @@ OCStackResult initResources()
 
     if(result == OC_STACK_OK)
     {
+        CreateResetProfile();
         result = OCCreateResource(&deviceResource,
                                   OC_RSRVD_RESOURCE_TYPE_DEVICE,
                                   OC_RSRVD_INTERFACE_DEFAULT,
@@ -4128,6 +4259,9 @@ void deleteAllResources()
     }
     memset(&platformResource, 0, sizeof(platformResource));
     memset(&deviceResource, 0, sizeof(deviceResource));
+#ifdef MQ_BROKER
+    memset(&brokerResource, 0, sizeof(brokerResource));
+#endif
 
     SRMDeInitSecureResources();
 
@@ -4358,7 +4492,8 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
         }
         else
         {
-            OCStackResult result = BindResourceInterfaceToResource(resource, OC_RSRVD_INTERFACE_DEFAULT);
+            OCStackResult result = BindResourceInterfaceToResource(resource,
+                                                                    OC_RSRVD_INTERFACE_DEFAULT);
             if (result != OC_STACK_OK)
             {
                 OICFree(newInterface->name);
@@ -4626,8 +4761,67 @@ bool OCResultToSuccess(OCStackResult ocResult)
         case OC_STACK_RESOURCE_CREATED:
         case OC_STACK_RESOURCE_DELETED:
         case OC_STACK_CONTINUE:
+        case OC_STACK_RESOURCE_CHANGED:
             return true;
         default:
             return false;
     }
 }
+
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins)
+{
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
+
+    OCResource *resource = NULL;
+
+    resource = findResource((OCResource *) handle);
+    if (!resource)
+    {
+        OIC_LOG(ERROR, TAG, "Resource not found");
+        return OC_STACK_ERROR;
+    }
+
+    resource->ins = ins;
+
+    return OC_STACK_OK;
+}
+
+OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
+{
+    if (!uri)
+    {
+        OIC_LOG(ERROR, TAG, "Resource uri is NULL");
+        return NULL;
+    }
+
+    OCResource *pointer = headResource;
+
+    while (pointer)
+    {
+        if (strncmp(uri, pointer->uri, MAX_URI_LENGTH) == 0)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Found Resource %s", uri);
+            return pointer;
+        }
+        pointer = pointer->next;
+    }
+    return NULL;
+}
+
+OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
+{
+    OCResource *resource = NULL;
+
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(ins, ERROR, OC_STACK_INVALID_PARAM);
+
+    resource = findResource((OCResource *) handle);
+    if (resource)
+    {
+        *ins = resource->ins;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+#endif

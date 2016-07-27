@@ -66,7 +66,9 @@ namespace OC
             void setPayload(const OCPlatformPayload* rep);
 
             void setPayload(const OCRepPayload* rep);
-
+#ifdef RD_CLIENT
+            void setPayload(const OCRDPayload* rep);
+#endif
             OCRepPayload* getPayload() const;
 
             const std::vector<OCRepresentation>& representations() const;
@@ -464,6 +466,9 @@ namespace OC
             template<typename T>
             T payload_array_helper_copy(size_t index, const OCRepPayloadValue* pl);
             void setPayload(const OCRepPayload* payload);
+#ifdef RD_CLIENT
+            void setPayload(const OCLinksPayload* payload);
+#endif
             void setPayloadArray(const OCRepPayloadValue* pl);
             void getPayloadArray(OCRepPayload* payload,
                     const OCRepresentation::AttributeItem& item) const;

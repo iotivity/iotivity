@@ -29,7 +29,7 @@
 #ifdef WITH_STRING_H
 #include <string.h>
 #endif
-#ifdef WITH_STRINGS_H
+#ifdef WITH_STRING_H
 #include <strings.h>
 #endif
 
@@ -45,12 +45,7 @@
 #include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
-#include "rdpayload.h"
 #include "ocpayload.h"
-
-#ifdef WITH_RD
-#include "rd_server.h"
-#endif
 
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
@@ -157,6 +152,12 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
 
     OIC_LOG_V(INFO, TAG, "Extracting params from %s", query);
 
+    if (strnlen(query, MAX_QUERY_LENGTH) >= MAX_QUERY_LENGTH)
+    {
+        OIC_LOG(ERROR, TAG, "Query exceeds maximum length.");
+        return OC_STACK_INVALID_QUERY;
+    }
+
     char *keyValuePair = strtok_r (query, OC_QUERY_SEPARATOR, &restOfQuery);
 
     while(keyValuePair)
@@ -225,6 +226,13 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
         return OC_PRESENCE;
     }
 #endif //WITH_PRESENCE
+
+#ifdef MQ_BROKER
+    else if (0 == strcmp(uriInRequest, OC_RSRVD_WELL_KNOWN_MQ_URI))
+    {
+        return OC_MQ_BROKER_URI;
+    }
+#endif //MQ_BROKER
     return OC_UNKNOWN_URI;
 }
 
@@ -479,6 +487,9 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
         case OC_EH_RESOURCE_DELETED:
             result = OC_STACK_RESOURCE_DELETED;
             break;
+        case OC_EH_CHANGED:
+            result = OC_STACK_RESOURCE_CHANGED;
+            break;
         case OC_EH_RESOURCE_NOT_FOUND:
             result = OC_STACK_NO_RESOURCE;
             break;
@@ -601,102 +612,6 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
     return OCDoResponse(&response);
 }
 
-#ifdef WITH_RD
-static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType,
-     OCResource **payload, OCDevAddr *devAddr)
-{
-    OCResourceCollectionPayload *repPayload;
-    if (!payload)
-    {
-        return OC_STACK_ERROR;
-    }
-    if (OCRDCheckPublishedResource(interfaceType, resourceType, &repPayload, devAddr) == OC_STACK_OK)
-    {
-        if (!repPayload)
-        {
-            return OC_STACK_ERROR;
-        }
-        OCResource *ptr = ((OCResource *) OICCalloc(1, sizeof(OCResource)));
-        if (!ptr)
-        {
-           return OC_STACK_NO_MEMORY;
-        }
-
-        ptr->uri = OICStrdup(repPayload->setLinks->href);
-        if (!ptr->uri)
-        {
-           return OC_STACK_NO_MEMORY;
-        }
-        OCStringLL *rt = repPayload->setLinks->rt;
-        while (rt)
-        {
-            OCResourceType *temp = (OCResourceType *) OICCalloc(1, sizeof(OCResourceType));
-            if(!temp)
-            {
-                OICFree(ptr->uri);
-                return OC_STACK_NO_MEMORY;
-            }
-            temp->next = NULL;
-            temp->resourcetypename = OICStrdup(rt->value);
-            if (!ptr->rsrcType)
-            {
-                ptr->rsrcType = temp;
-            }
-            else
-            {
-                OCResourceType *type = ptr->rsrcType;
-                while (type->next)
-                {
-                    type = type->next;
-                }
-                type->next = temp;
-            }
-            rt = rt->next;
-        }
-
-        OCStringLL *itf = repPayload->setLinks->itf;
-        while (itf)
-        {
-            OCResourceInterface *temp = (OCResourceInterface *) OICCalloc(1, sizeof(OCResourceInterface));
-            if (!temp)
-            {
-                OICFree(ptr->uri);
-
-                return OC_STACK_NO_MEMORY;
-            }
-            temp->next = NULL;
-            temp->name = OICStrdup(itf->value);
-            if (!ptr->rsrcInterface)
-            {
-                ptr->rsrcInterface = temp;
-            }
-            else
-            {
-                OCResourceInterface *type = ptr->rsrcInterface;
-                while (type->next)
-                {
-                    type = type->next;
-                }
-                type->next = temp;
-            }
-            itf = itf->next;
-        }
-
-        ptr->resourceProperties = (OCResourceProperty) repPayload->tags->bitmap;
-
-        OCFreeCollectionResource(repPayload);
-        *payload = ptr;
-        return OC_STACK_OK;
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "The resource type or interface type doe not exist \
-                             on the resource directory");
-    }
-    return OC_STACK_ERROR;
-}
-#endif
-
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
     if (!request || !resource)
@@ -712,7 +627,11 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     OCVirtualResources virtualUriInRequest = GetTypeOfVirtualURI (request->resourceUrl);
 
     // Step 1: Generate the response to discovery request
-    if (virtualUriInRequest == OC_WELL_KNOWN_URI)
+    if (virtualUriInRequest == OC_WELL_KNOWN_URI
+#ifdef MQ_BROKER
+            || virtualUriInRequest == OC_MQ_BROKER_URI
+#endif
+            )
     {
         if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
         {
@@ -750,10 +669,19 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
                 if (!resourceTypeQuery && interfaceQuery && (0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
                 {
+                    OCResourceProperty prop = OC_DISCOVERABLE;
+#ifdef MQ_BROKER
+                    if (OC_MQ_BROKER_URI == virtualUriInRequest)
+                    {
+                        prop = OC_MQ_BROKER;
+                    }
+#endif
+
                     for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
                         bool result = false;
-                        if (resource->resourceProperties & OC_DISCOVERABLE)
+
+                        if (resource->resourceProperties & prop)
                         {
                             result = true;
                         }
@@ -787,42 +715,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     bool foundResourceAtRD = false;
                     for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
-#ifdef WITH_RD
-                        if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
-                        {
-                            OCResource *resource1 = NULL;
-                            OCDevAddr devAddr;
-                            discoveryResult = checkResourceExistsAtRD(interfaceQuery,
-                                resourceTypeQuery, &resource1, &devAddr);
-                            if (discoveryResult != OC_STACK_OK)
-                            {
-                                 break;
-                            }
-                            discoveryResult = BuildVirtualResourceResponse(resource1,
-                                discPayload, &devAddr, true);
-                            if (payload)
-                            {
-                                discPayload->baseURI = OICStrdup(devAddr.addr);
-                            }
-                            OICFree(resource1->uri);
-                            for (OCResourceType *rsrcRt = resource1->rsrcType, *rsrcRtNext = NULL; rsrcRt; )
-                            {
-                                rsrcRtNext = rsrcRt->next;
-                                OICFree(rsrcRt->resourcetypename);
-                                OICFree(rsrcRt);
-                                rsrcRt = rsrcRtNext;
-                            }
-
-                            for (OCResourceInterface *rsrcPtr = resource1->rsrcInterface, *rsrcNext = NULL; rsrcPtr; )
-                            {
-                                rsrcNext = rsrcPtr->next;
-                                OICFree(rsrcPtr->name);
-                                OICFree(rsrcPtr);
-                                rsrcPtr = rsrcNext;
-                            }
-                            foundResourceAtRD = true;
-                        }
-#endif
                         if (!foundResourceAtRD && includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
                         {
                             discoveryResult = BuildVirtualResourceResponse(resource,
@@ -1137,6 +1029,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         {
             OIC_LOG(INFO, TAG, "Removed observer successfully");
             request->observeResult = OC_STACK_OK;
+            // There should be no observe option header for de-registration response.
+            // Set as an invalid value here so we can detect it later and remove the field in response.
+            request->observationOption = MAX_SEQUENCE_NUMBER + 1;
         }
         else
         {
@@ -1370,6 +1265,34 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
     if (info.types)
     {
         savedDeviceInfo.types = CloneOCStringLL(info.types);
+        OCStringLL *type = info.types;
+        bool found = false;
+        while (type)
+        {
+            if (type && type->value && 0 == strcmp(type->value, OC_RSRVD_RESOURCE_TYPE_DEVICE))
+            {
+                found = true;
+            }
+            type = type->next;
+        }
+        if (!found)
+        {
+            // Append the oic.wk.d at the start of rt link parameter value.
+            OCStringLL *dest = (OCStringLL*)OICCalloc (1, sizeof (OCStringLL));
+            if (!dest)
+            {
+                DeleteDeviceInfo();
+                return OC_STACK_NO_MEMORY;
+            }
+            dest->value = OICStrdup (OC_RSRVD_RESOURCE_TYPE_DEVICE);
+            if (!dest->value)
+            {
+                DeleteDeviceInfo();
+                return OC_STACK_NO_MEMORY;
+            }
+            dest->next = savedDeviceInfo.types;
+            savedDeviceInfo.types = dest;
+        }
         if(!savedDeviceInfo.types && info.types)
         {
             DeleteDeviceInfo();

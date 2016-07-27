@@ -63,22 +63,13 @@ mediator_csdk_test_env.AppendUnique(
                 '../../../inc',
         ])
 
-if target_os not in ['windows']:
-    mediator_csdk_test_env.AppendUnique(LIBS = ['dl'])
-    mediator_csdk_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-    if target_os != 'android':
-        mediator_csdk_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-        mediator_csdk_test_env.AppendUnique(LIBS = ['pthread'])
-
 mediator_csdk_test_env.PrependUnique(LIBS = [
     'ESMediatorCSDK',
     'oc',
     'octbstack',
     'oc_logger',
     'oc_logger_core',
-    'connectivity_abstraction',
-    'gtest',
-    'gtest_main'])
+    'connectivity_abstraction'])
 
 ######################################################################
 # Build Test

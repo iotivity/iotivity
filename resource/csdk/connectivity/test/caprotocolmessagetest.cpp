@@ -186,3 +186,30 @@ TEST(CAProtocolMessage, CAParseURILongPath)
     verifyParsedOptions(cases, numCases, optlist);
     coap_delete_list(optlist);
 }
+
+TEST(CAProtocolMessage, CAGetTokenFromPDU)
+{
+    CAEndpoint_t tempRep;
+    memset(&tempRep, 0, sizeof(CAEndpoint_t));
+    tempRep.flags = CA_DEFAULT_FLAGS;
+    tempRep.adapter = CA_ADAPTER_IP;
+    tempRep.port = 5683;
+
+    coap_pdu_t *pdu = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_type transport = coap_udp;
+
+    CAInfo_t inData;
+    memset(&inData, 0, sizeof(CAInfo_t));
+    inData.token = "token";
+    inData.tokenLength = strlen(inData.token);
+    inData.type = CA_MSG_NONCONFIRM;
+
+    pdu = CAGeneratePDU(CA_GET, &inData, &tempRep, &options, &transport);
+
+    CAInfo_t outData;
+    memset(&outData, 0, sizeof(CAInfo_t));
+    outData.type = CA_MSG_NONCONFIRM;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetTokenFromPDU(pdu->hdr, &outData, &tempRep));
+}

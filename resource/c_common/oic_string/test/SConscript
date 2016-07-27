@@ -33,9 +33,7 @@ stringtest_env.PrependUnique(CPPPATH = ['../include'])
 
 stringtest_env.AppendUnique(LIBPATH = [os.path.join(stringtest_env.get('BUILD_DIR'), 'resource', 'c_common')])
 stringtest_env.PrependUnique(LIBS = ['c_common'])
-if target_os not in ['windows']:
-    stringtest_env.PrependUnique(LIBS = ['pthread'])
-stringtest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
+
 if stringtest_env.get('LOGGING'):
     stringtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 #

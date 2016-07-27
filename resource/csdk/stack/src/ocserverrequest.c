@@ -22,6 +22,7 @@
 #include "ocstack.h"
 #include "ocserverrequest.h"
 #include "ocresourcehandler.h"
+#include "ocobserve.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
@@ -556,8 +557,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
     responseInfo.info.tokenLength = serverRequest->tokenLength;
 
-    // De-register observe option should not be included in the response header
-    if((serverRequest->observeResult == OC_STACK_OK) && (serverRequest->observationOption != OC_OBSERVE_DEREGISTER))
+    if((serverRequest->observeResult == OC_STACK_OK)&&
+       (serverRequest->observationOption != MAX_SEQUENCE_NUMBER + 1))
     {
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
     }
@@ -642,7 +643,11 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     OICFree(responseInfo.info.options);
                     return result;
                 }
-                responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                //Add CONTENT_FORMAT OPT if payload exist
+                if (responseInfo.info.payloadSize > 0)
+                {
+                    responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                }
                 break;
             default:
                 responseInfo.result = CA_NOT_ACCEPTABLE;

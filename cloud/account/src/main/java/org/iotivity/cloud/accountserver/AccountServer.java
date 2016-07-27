@@ -1,34 +1,36 @@
 /*
- *******************************************************************
- *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.accountserver;
 
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
-import org.iotivity.cloud.accountserver.resources.AccountResource;
-import org.iotivity.cloud.accountserver.resources.AuthResource;
-import org.iotivity.cloud.base.CoapServer;
-import org.iotivity.cloud.base.ResourceManager;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.accountserver.resources.account.AccountResource;
+import org.iotivity.cloud.accountserver.resources.account.device.DeviceResource;
+import org.iotivity.cloud.accountserver.resources.account.session.SessionResource;
+import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.TokenRefreshResource;
+import org.iotivity.cloud.base.ServerSystem;
+import org.iotivity.cloud.base.server.CoapServer;
+import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -38,28 +40,33 @@ import org.iotivity.cloud.util.Logger;
 public class AccountServer {
 
     public static void main(String[] args) throws Exception {
-
+        Log.Init();
+        
         System.out.println("-----Account SERVER-----");
 
-        if (args.length != 1) {
-            Logger.e("coap server port required");
+        if (args.length != 2) {
+            Log.e("coap server port and TLS mode required\n"
+                    + "ex) 5685 0\n");
             return;
         }
 
-        ResourceManager resourceManager = null;
+        ServerSystem serverSystem = new ServerSystem();
 
-        CoapServer coapServer = null;
+        serverSystem.addResource(new AccountResource());
 
-        coapServer = new CoapServer();
+        serverSystem.addResource(new SessionResource());
 
-        resourceManager = new ResourceManager();
-        coapServer.addHandler(resourceManager);
+        serverSystem.addResource(new TokenRefreshResource());
 
-        resourceManager.registerResource(new AuthResource());
-        resourceManager.registerResource(new AccountResource());
+        // Temporally added
+        serverSystem.addResource(new DeviceResource());
 
-        coapServer
-                .startServer(new InetSocketAddress(Integer.parseInt(args[0])));
+        serverSystem.addServer(new CoapServer(
+                new InetSocketAddress(Integer.parseInt(args[0]))));
+
+        boolean tlsMode = Integer.parseInt(args[1]) == 1;
+
+        serverSystem.startSystem(tlsMode);
 
         Scanner in = new Scanner(System.in, "UTF-8");
 
@@ -71,7 +78,7 @@ public class AccountServer {
 
         System.out.println("Terminating...");
 
-        coapServer.stopServer();
+        serverSystem.stopSystem();
 
         System.out.println("Terminated");
     }

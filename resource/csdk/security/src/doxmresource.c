@@ -612,12 +612,12 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
         }
     }
 
+    OIC_LOG(DEBUG, TAG, "Send payload for doxm GET request");
+    OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmGetRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     OICFree(payload);
 
@@ -751,7 +751,6 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                 OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
                                 ehRet = OC_EH_ERROR;
                             }
-                            previousMsgId = ehRequest->messageID;
                         }
 #endif //__WITH_DTLS__
                     }
@@ -851,23 +850,33 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
 exit:
     if(OC_EH_OK != ehRet)
     {
-        OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
-                            "DOXM will be reverted.");
 
         /*
          * If some error is occured while ownership transfer,
          * ownership transfer related resource should be revert back to initial status.
-         */
-        RestoreDoxmToInitState();
-        RestorePstatToInitState();
+        */
+        if(gDoxm)
+        {
+            if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
+            {
+                RestoreDoxmToInitState();
+                RestorePstatToInitState();
+            }
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Invalid DOXM resource.");
+        }
+    }
+    else
+    {
+        previousMsgId = ehRequest->messageID;
     }
 
     //Send payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmPostRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     DeleteDoxmBinData(newDoxm);
 
     return ehRet;
@@ -900,8 +909,8 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
                 break;
 
             default:
-                ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                               OC_EH_OK : OC_EH_ERROR;
                 break;
         }
     }

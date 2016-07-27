@@ -9,10 +9,12 @@ transport = env.get('TARGET_TRANSPORT')
 build_sample = env.get('BUILD_SAMPLE')
 with_ra = env.get('WITH_RA')
 with_tcp = env.get('WITH_TCP')
+with_mq = env.get('WITH_MQ')
 
 print "Given Transport is %s" % transport
 print "Given OS is %s" % target_os
 print "BUILD_SAMPLE is %s" % build_sample
+print "MQ flag is %s" % with_mq
 
 targets_disallow_multitransport = ['arduino']
 
@@ -82,5 +84,17 @@ else:
 			Exit(1)
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_NFC_ADAPTER'])
+
+if 'SUB' in with_mq:
+	env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+	print "MQ SUB support"
+
+if 'PUB' in with_mq:
+	env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+	print "MQ PUB support"
+
+if 'BROKER' in with_mq:
+	env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
+	print "MQ Broker support"
 
 env.SConscript('./src/SConscript')

@@ -36,9 +36,6 @@ unittests_env.PrependUnique(CPPPATH = [
                 os.path.join(pi_dir, 'include'),
 		])
 
-if target_os not in ['windows']:
-	unittests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-	unittests_env.PrependUnique(LIBS = ['pthread'])
 unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
 unittests_env.PrependUnique(LIBS = [
 		'plugin_interface',
@@ -46,9 +43,7 @@ unittests_env.PrependUnique(LIBS = [
 		'octbstack',
 		'oc_logger',
 		'connectivity_abstraction',
-		'coap',
-		'gtest',
-		'gtest_main'
+		'coap'
 		])
 
 if unittests_env.get('LOGGING'):

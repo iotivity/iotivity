@@ -49,6 +49,93 @@ extern "C"
 OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+INLINE_API void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
+{
+    if (tags)
+    {
+        if (tags->n.deviceName)
+        {
+            OIC_LOG_V(level, PL_TAG, " Device Name : %s ", tags->n.deviceName);
+        }
+        if (tags->di.id)
+        {
+            OIC_LOG_V(level, PL_TAG, " Device ID : %s ", tags->di.id);
+        }
+        OIC_LOG_V(level, PL_TAG, " lt : %lld ",tags->ttl);
+    }
+    else
+    {
+        (void) level;
+    }
+}
+
+INLINE_API void OCLinksLog(const LogLevel level, const OCLinksPayload *links)
+{
+    if (!links)
+    {
+        return;
+    }
+
+    while (links)
+    {
+        if (links->href)
+        {
+            OIC_LOG_V(level, PL_TAG, "   href: %s ",links->href);
+        }
+        OIC_LOG(level, PL_TAG, "   RT: ");
+        OCStringLL *rt = links->rt;
+        while (rt)
+        {
+            if (rt->value)
+            {
+                OIC_LOG_V(level, PL_TAG, "   %s", rt->value);
+            }
+            rt = rt->next;
+        }
+        OIC_LOG(level, PL_TAG, "   IF: ");
+        OCStringLL *itf = links->itf;
+        while (itf)
+        {
+            if (itf->value)
+            {
+                OIC_LOG_V(level, PL_TAG, "   %s", itf->value);
+            }
+            itf = itf->next;
+        }
+        OIC_LOG(level, PL_TAG, "   MT: ");
+        OCStringLL *mt = links->type;
+        while (mt)
+        {
+            if (mt->value)
+            {
+                OIC_LOG_V(level, PL_TAG, "   %s", mt->value);
+            }
+            mt = mt->next;
+        }
+        if (links->type)
+        {
+            OIC_LOG_V(level, PL_TAG, "   %s", links->type);
+        }
+        OIC_LOG_V(level, PL_TAG, "   INS: %d", links->ins);
+        OIC_LOG_V(level, PL_TAG, "   TTL: %d", links->ttl);
+        OIC_LOG_V(level, PL_TAG, "   P: %d", links->p);
+        if (links->rel)
+        {
+            OIC_LOG_V(level, PL_TAG, "   REL: %s", links->rel);
+        }
+        if (links->title)
+        {
+            OIC_LOG_V(level, PL_TAG, "   TITLE: %s", links->title);
+        }
+        if (links->anchor)
+        {
+            OIC_LOG_V(level, PL_TAG, "   URI: %s", links->anchor);
+        }
+        links = links->next;
+    }
+}
+#endif
 INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 {
     OIC_LOG(level, (PL_TAG), "Payload Type: Representation");
@@ -167,66 +254,65 @@ INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Discovery");
-    int i = 1;
 
-    if(!payload->resources)
+    while(payload && payload->resources)
     {
-        OIC_LOG(level, PL_TAG, "\tNO Resources");
-        return;
-    }
-    OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
-    if (payload->baseURI)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
-    }
-    if (payload->name)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
-    }
-    if (payload->uri)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
-    }
-    if (payload->type)
-    {
-        for (OCStringLL *strll = payload->type; strll; strll = strll->next)
+        OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
+        if (payload->baseURI)
         {
-            OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", strll->value);
+            OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
         }
-    }
-    OIC_LOG(level, PL_TAG, "\tInterface:");
-    for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
-    {
-        OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
-    }
-
-    OCResourcePayload* res = payload->resources;
-
-    while(res)
-    {
-        OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
-        OIC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
-        OIC_LOG(level, PL_TAG, "\tResource Types:");
-        OCStringLL* strll =  res->types;
-        while(strll)
+        if (payload->name)
         {
-            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
-            strll = strll->next;
+            OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
         }
-        OIC_LOG(level, PL_TAG, "\tInterfaces:");
-        strll =  res->interfaces;
-        while(strll)
+        if (payload->uri)
         {
-            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
-            strll = strll->next;
+            OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
+        }
+        if (payload->type)
+        {
+            for (OCStringLL *strll = payload->type; strll; strll = strll->next)
+            {
+                OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", strll->value);
+            }
+        }
+        OIC_LOG(level, PL_TAG, "\tInterface:");
+        for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
         }
 
-        OIC_LOG_V(level, PL_TAG, "\tBitmap: %u", res->bitmap);
-        OIC_LOG_V(level, PL_TAG, "\tSecure?: %s", res->secure ? "true" : "false");
-        OIC_LOG_V(level, PL_TAG, "\tPort: %u", res->port);
-        OIC_LOG(level, PL_TAG, "");
-        res = res->next;
-        ++i;
+        OCResourcePayload* res = payload->resources;
+
+        int i = 1;
+        while(res)
+        {
+            OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
+            OIC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
+            OIC_LOG(level, PL_TAG, "\tResource Types:");
+            OCStringLL* strll =  res->types;
+            while(strll)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+                strll = strll->next;
+            }
+            OIC_LOG(level, PL_TAG, "\tInterfaces:");
+            strll =  res->interfaces;
+            while(strll)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+                strll = strll->next;
+            }
+
+            OIC_LOG_V(level, PL_TAG, "\tBitmap: %u", res->bitmap);
+            OIC_LOG_V(level, PL_TAG, "\tSecure?: %s", res->secure ? "true" : "false");
+            OIC_LOG_V(level, PL_TAG, "\tPort: %u", res->port);
+            OIC_LOG(level, PL_TAG, "");
+            res = res->next;
+            ++i;
+        }
+        payload = payload->next;
     }
 }
 
@@ -311,6 +397,7 @@ INLINE_API void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
     OIC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", payload->securityData);
 }
 
+#if defined(RD_CLIENT) || defined(RD_SERVER)
 INLINE_API void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
 {
     if (!payload)
@@ -333,7 +420,7 @@ INLINE_API void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
         OCLinksLog(level, rdPublish->setLinks);
     }
 }
-
+#endif
 INLINE_API void OCPayloadLog(LogLevel level, OCPayload* payload)
 {
     if(!payload)
@@ -361,9 +448,11 @@ INLINE_API void OCPayloadLog(LogLevel level, OCPayload* payload)
         case PAYLOAD_TYPE_SECURITY:
             OCPayloadLogSecurity(level, (OCSecurityPayload*)payload);
             break;
+#if defined(RD_CLIENT) || defined(RD_SERVER)
         case PAYLOAD_TYPE_RD:
             OCRDPayloadLog(level, (OCRDPayload*)payload);
             break;
+#endif
         default:
             OIC_LOG_V(level, PL_TAG, "Unknown Payload Type: %d", payload->type);
             break;

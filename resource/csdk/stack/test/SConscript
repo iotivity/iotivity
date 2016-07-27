@@ -41,16 +41,12 @@ stacktest_env.PrependUnique(CPPPATH = [
 		'../../extlibs/cjson',
 		'../../../oc_logger/include',
 		])
-if target_os not in ['windows']:
-	stacktest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+
 stacktest_env.AppendUnique(LIBPATH = [stacktest_env.get('BUILD_DIR')])
 stacktest_env.PrependUnique(LIBS = ['octbstack',
                                     'ocsrm',
                                     'connectivity_abstraction',
-                                    'coap',
-                                    'gtest',
-                                    'gtest_main'])
-
+                                    'coap'])
 if target_os != 'darwin':
     stacktest_env.PrependUnique(LIBS = ['oc_logger'])
 
@@ -65,7 +61,6 @@ if target_os in ['msys_nt', 'windows']:
 	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32'])
 else:
 	stacktest_env.PrependUnique(LIBS = ['m'])
-	stacktest_env.PrependUnique(LIBS = ['pthread'])
 
 ######################################################################
 # Source files and Targets

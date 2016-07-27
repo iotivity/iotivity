@@ -483,7 +483,7 @@ static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle U
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     (void)UNUSED;
-    if(clientResponse->result == OC_STACK_OK)
+    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         OIC_LOG(INFO, TAG, "OwnerTransferModeHandler : response result = OC_STACK_OK");
         //Send request : GET /oic/sec/pstat
@@ -603,7 +603,7 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
 
-    if(OC_STACK_OK == clientResponse->result)
+    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
@@ -658,7 +658,7 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     (void) UNUSED;
-    if  (OC_STACK_OK == clientResponse->result)
+    if  (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         OCStackResult res = OC_STACK_ERROR;
         OicSecOxm_t selOxm = otmCtx->selectedDeviceInfo->doxm->oxmSel;
@@ -810,7 +810,7 @@ static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandl
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
 
-    if(OC_STACK_OK == clientResponse->result)
+    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
@@ -859,7 +859,7 @@ static OCStackApplicationResult ProvisioningStatusHandler(void *ctx, OCDoHandle 
     (void)UNUSED;
     OCStackResult res = OC_STACK_OK;
 
-    if(OC_STACK_OK == clientResponse->result)
+    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
@@ -905,7 +905,7 @@ static OCStackApplicationResult ReadyForNomalStatusHandler(void *ctx, OCDoHandle
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
     (void)UNUSED;
 
-    if (OC_STACK_OK == clientResponse->result)
+    if (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         OIC_LOG(INFO, TAG, "Device state is in Ready for Normal Operation.");
         OCStackResult res = PDMAddDevice(&otmCtx->selectedDeviceInfo->doxm->deviceID);

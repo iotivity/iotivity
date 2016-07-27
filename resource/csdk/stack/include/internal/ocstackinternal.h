@@ -66,8 +66,8 @@ extern void* defaultDeviceHandlerCallbackParameter;
 /** The coap scheme */
 #define OC_COAP_SCHEME "coap://"
 
-/** the first outgoing sequence number will be 2*/
-#define OC_OFFSET_SEQUENCE_NUMBER (1)
+/** the first outgoing sequence number will be 1*/
+#define OC_OFFSET_SEQUENCE_NUMBER (0)
 
 /**
  * This structure will be created in occoap and passed up the stack on the server side.
@@ -300,6 +300,10 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
 OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
 OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+
+OC_EXPORT_TEST OCStackResult encodeAddressForRFC6874(char * outputAddress,
+                                                     size_t outputSize,
+                                                     const char * inputAddress);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 

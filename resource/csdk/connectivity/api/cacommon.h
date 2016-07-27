@@ -139,7 +139,7 @@ typedef char *CAToken_t;
 #ifdef HAVE_WINSOCK2_H
 # define OC_SOCKET_ERROR      SOCKET_ERROR
 # define OC_INVALID_SOCKET    INVALID_SOCKET
-typedef HANDLE CASocketFd_t;
+typedef SOCKET CASocketFd_t;
 #else // HAVE_WINSOCK2_H
 # define OC_SOCKET_ERROR      (-1)
 # define OC_INVALID_SOCKET    (-1)
@@ -155,12 +155,12 @@ typedef int    CASocketFd_t;
 #define MAX_ADDR_STR_SIZE_CA (256)
 #else
 /*
- * Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
- * Which is 64, +1 for null terminator => 65
+ * Max Address could be "coaps+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * Which is 65, +1 for null terminator => 66
  * OCDevAddr (defined in OCTypes.h) must be the same
  * as CAEndpoint_t (defined here)
  */
-#define MAX_ADDR_STR_SIZE_CA (65)
+#define MAX_ADDR_STR_SIZE_CA (66)
 #endif
 
 typedef enum
