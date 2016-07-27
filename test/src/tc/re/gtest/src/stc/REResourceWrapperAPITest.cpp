@@ -22,18 +22,20 @@
 #include "gtest/gtest.h"
 #include "REHelper.h"
 
-class REResourceWrapperAPITest_stc: public ::testing::Test {
+class REResourceWrapperAPITest_stc: public ::testing::Test
+{
 protected:
 
     REHelper* m_pREHelper;
     static std::mutex s_mutex;
     std::string m_errorMsg;
-    shared_ptr<RCSRemoteResourceObject> m_resource;
-    vector<shared_ptr<RCSRemoteResourceObject> > m_foundResourceList;
-    unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
+    shared_ptr< RCSRemoteResourceObject > m_resource;
+    vector< shared_ptr< RCSRemoteResourceObject > > m_foundResourceList;
+    unique_ptr< RCSDiscoveryManager::DiscoveryTask > discoveryTask;
     bool callbackcheck;
 
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
         CommonUtil::runCommonTCSetUpPart();
 
 #ifdef __LINUX__
@@ -44,12 +46,15 @@ protected:
 
         callbackcheck = false;
         bool isResourceAvailable = m_pREHelper->findPrimitiveResources(
-                RESOURCE_TYPE_LIGHT);
-        if (isResourceAvailable) {
+        RESOURCE_TYPE_LIGHT);
+        if (isResourceAvailable)
+        {
             m_resource = m_pREHelper->getFoundResourceList().at(0);
             IOTIVITYTEST_LOG(DEBUG, "Uri of 1st resource on list is = %s",
                     m_pREHelper->getFoundResourceList().at(0)->getUri().c_str());
-        } else {
+        }
+        else
+        {
             SET_FAILURE("Precondition Failed, No Resource Found!!");
         }
 
@@ -58,7 +63,8 @@ protected:
         m_errorMsg = "";
     }
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
 
 #ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
@@ -68,20 +74,22 @@ protected:
     }
 
 public:
-    void OnResourceDiscovered(
-            shared_ptr<OIC::Service::RCSRemoteResourceObject> pResource) {
+    void OnResourceDiscovered(shared_ptr< OIC::Service::RCSRemoteResourceObject > pResource)
+    {
         s_mutex.lock();
         callbackcheck = true;
 
         IOTIVITYTEST_LOG(DEBUG, "Inside OnResourceDiscovered!!");
 
-        if (pResource) {
+        if (pResource)
+        {
             m_foundResourceList.push_back(pResource);
             IOTIVITYTEST_LOG(DEBUG,
                     "Resource added to local found resource list, host = %s , uri = %s",
-                    pResource->getAddress().c_str(),
-                    pResource->getUri().c_str());
-        } else {
+                    pResource->getAddress().c_str(), pResource->getUri().c_str());
+        }
+        else
+        {
             IOTIVITYTEST_LOG(WARNING, "Found resource is null");
         }
         s_mutex.unlock();
@@ -162,7 +170,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceWithEmptyUri_ESV_N)
         {
             SET_FAILURE(
                     "Exception occurred while discovering resource, exception is : "
-                    + exceptionMsg);
+                            + exceptionMsg);
         }
     }
 }
@@ -202,7 +210,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceWithNullCallback_ETC_N)
         {
             SET_FAILURE(
                     "Exception occurred while discovering resource, exception is : "
-                    + exceptionMsg);
+                            + exceptionMsg);
         }
     }
 }
@@ -231,7 +239,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceMultipleTimes_VLCC_P)
         {
             SET_FAILURE(
                     "DiscoverResourceMultipleTimes_P failed for iteration no. " + to_string(i)
-                    + ", No resource found!!");
+                            + ", No resource found!!");
         }
     }
 }
@@ -263,19 +271,18 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceMultipleTimesWithoutWaiting
 
     try
     {
-        for (iter = 1; iter <10; iter++)
+        for (iter = 1; iter < 10; iter++)
         {
             discoveryTask = discoveryManager->discoverResource(host, uri,
                     bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
             discoveryTask->cancel();
         }
-
     }
     catch (exception& e)
     {
         SET_FAILURE(
                 "Exception occurred while discovering resource, from iteration: "
-                + to_string(iter));
+                        + to_string(iter));
 
         if (m_foundResourceList.size() == 0)
         {
@@ -319,7 +326,6 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverAllResources_SQV_P)
         {
             SET_FAILURE("All the Resources not Found!!");
         }
-
     }
     catch (exception& e)
     {
@@ -416,7 +422,6 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_CACC_P)
 }
 #endif
 
-
 /**
  * @since 2016-02-29
  * @see None
@@ -436,7 +441,6 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_CACC_P)
 TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_EG_N)
 {
 
-
     try
     {
         RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
@@ -444,11 +448,12 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_EG_N)
         RCSAddress host = RCSAddress::multicast();
         string resType = "Hello";
 
-        discoveryTask = discoveryManager->discoverResourceByType(host, resType, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        discoveryTask = discoveryManager->discoverResourceByType(host, resType,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
         discoveryTask->cancel();
 
-        if(callbackcheck == true)
+        if (callbackcheck == true)
         {
             SET_FAILURE("Callback Invoked !");
         }
@@ -459,7 +464,6 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_EG_N)
     }
 }
 #endif
-
 
 /**
  * @since 2016-02-29
@@ -488,7 +492,6 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_ICCC_N)
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
         discoveryTask->cancel();
-
     }
     catch (exception& e)
     {
@@ -525,13 +528,13 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithoutUri_ALVC_N)
 
     try
     {
-        for(int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
-            discoveryTask = discoveryManager->discoverResourceByType(host, RESOURCE_TYPE_LIGHT, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+            discoveryTask = discoveryManager->discoverResourceByType(host, RESOURCE_TYPE_LIGHT,
+                    bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
 
             discoveryTask->cancel();
         }
-
     }
     catch (exception& e)
     {
@@ -659,11 +662,12 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithInvalidResType_E
 
     try
     {
-        discoveryTask = discoveryManager->discoverResourceByType(host, URI, resType, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        discoveryTask = discoveryManager->discoverResourceByType(host, URI, resType,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
         discoveryTask->cancel();
 
-        if(callbackcheck == true)
+        if (callbackcheck == true)
             SET_FAILURE("Callback Invoked !");
     }
     catch (exception& e)
@@ -702,11 +706,11 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByTypeWithInvalidUri_EG_N)
 
     try
     {
-        discoveryTask = discoveryManager->discoverResourceByType(host, URI, resType, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        discoveryTask = discoveryManager->discoverResourceByType(host, URI, resType,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
         discoveryTask->cancel();
-
     }
     catch (exception& e)
     {
@@ -747,11 +751,11 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_ICCC_N)
 
     try
     {
-        discoveryTask = discoveryManager->discoverResourceByType(host, URI, RESOURCE_TYPE_LIGHT, NULL);
+        discoveryTask = discoveryManager->discoverResourceByType(host, URI, RESOURCE_TYPE_LIGHT,
+                NULL);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
         discoveryTask->cancel();
-
     }
     catch (exception& e)
     {
@@ -791,12 +795,12 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesByType_ALVC_N)
 
     try
     {
-        for(int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
-            discoveryTask = discoveryManager->discoverResourceByType(host, URI, RESOURCE_TYPE_LIGHT, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+            discoveryTask = discoveryManager->discoverResourceByType(host, URI, RESOURCE_TYPE_LIGHT,
+                    bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
             discoveryTask->cancel();
         }
-
     }
     catch (exception& e)
     {
@@ -842,6 +846,43 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_CCC_P)
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred while discovering resource");
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-25
+ * @see None
+ * @objective Test 'discoverResource' function with empty uri
+ * @target DiscoveryTask::Ptr discoverResource(const RCSAddress& address,
+ *                  const std::string& relativeUri, ResourceDiscoveredCallback cb);
+ * @test_data 1. host
+ *            2. uri = ""
+ *            3. Callback
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure Perform discoverResource() API
+ * @post_condition None
+ * @expected The API should not throw exception
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ESV_P)
+{
+    RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
+
+    RCSAddress host = RCSAddress::multicast();
+    string URI = "";
+
+    try
+    {
+        discoveryTask = discoveryManager->discoverResource(host, URI,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
+        discoveryTask->cancel();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE(
+                "Exception occurred while discovering resource, exception is: " + string(e.what()));
     }
 }
 #endif
@@ -917,11 +958,11 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithInvalidUri_EG_N)
 
     try
     {
-        discoveryTask = discoveryManager->discoverResource(host, URI, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        discoveryTask = discoveryManager->discoverResource(host, URI,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
         discoveryTask->cancel();
-
     }
     catch (exception& e)
     {
@@ -964,7 +1005,6 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ICCC_N)
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
         discoveryTask->cancel();
-
     }
     catch (exception& e)
     {
@@ -1002,12 +1042,12 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResources_ALVC_N)
 
     try
     {
-        for(int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
-            discoveryTask = discoveryManager->discoverResource(host, URI, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+            discoveryTask = discoveryManager->discoverResource(host, URI,
+                    bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
             discoveryTask->cancel();
         }
-
     }
     catch (exception& e)
     {
@@ -1038,7 +1078,8 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_CCC_P)
 
     try
     {
-        discoveryTask = discoveryManager->discoverResource(host, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        discoveryTask = discoveryManager->discoverResource(host,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
         discoveryTask->cancel();
 
@@ -1076,11 +1117,13 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_CACC_P)
 
     try
     {
-        discoveryTask = discoveryManager->discoverResource(host, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        discoveryTask = discoveryManager->discoverResource(host,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
         discoveryTask->cancel();
 
-        discoveryTask = discoveryManager->discoverResource(host, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+        discoveryTask = discoveryManager->discoverResource(host,
+                bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
         discoveryTask->cancel();
 
@@ -1122,7 +1165,6 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_ICCC_N)
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 
         discoveryTask->cancel();
-
     }
     catch (exception& e)
     {
@@ -1158,12 +1200,12 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourcesWithoutResType_ALVC_N)
 
     try
     {
-        for(int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
-            discoveryTask = discoveryManager->discoverResource(host, bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+            discoveryTask = discoveryManager->discoverResource(host,
+                    bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
             discoveryTask->cancel();
         }
-
     }
     catch (exception& e)
     {
@@ -1192,7 +1234,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_CV_P)
     RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
 
     RCSAddress host = RCSAddress::multicast();
-    vector< string > resourceTypes;
+    vector < string > resourceTypes;
 
     resourceTypes.push_back(RESOURCE_TYPE_LIGHT);
     resourceTypes.push_back(RESOURCE_TYPE_FAN);
@@ -1201,12 +1243,14 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_CV_P)
     {
         std::unique_ptr< RCSDiscoveryManager::DiscoveryTask > discoveryTask =
                 discoveryManager->discoverResourceByTypes(host, resourceTypes,
-                        std::bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+                        std::bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this,
+                                PH::_1));
 
         CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
         discoveryTask->cancel();
 
-        if(callbackcheck != true) {
+        if (callbackcheck != true)
+        {
             SET_FAILURE("Callback Condition Check Fail !");
         }
 
@@ -1218,6 +1262,51 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_CV_P)
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred while discovering resource");
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-25
+ * @see RCSDiscoveryManager getInstance()
+ * @objective Test 'discoverResourceByTypes' function with NULL callback
+ * @target DiscoveryTask::Ptr discoverResourceByTypes(const RCSAddress& address,
+ *                 const std::vector< std::string >& resourceTypes, ResourceDiscoveredCallback cb)
+ * @test_data 1. host
+ *            2. Resource Types
+ *            3. NULL Callback
+ * @pre_condition None
+ * @procedure Perform discoverResourceByTypes() API with NULL callback
+ * @post_condition None
+ * @expected returned discovery manager should not be null
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypes_NV_N)
+{
+    RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
+
+    RCSAddress host = RCSAddress::multicast();
+    vector < string > resourceTypes;
+
+    resourceTypes.push_back(RESOURCE_TYPE_LIGHT);
+    resourceTypes.push_back(RESOURCE_TYPE_FAN);
+
+    try
+    {
+        std::unique_ptr< RCSDiscoveryManager::DiscoveryTask > discoveryTask =
+                discoveryManager->discoverResourceByTypes(host, resourceTypes, NULL);
+
+        discoveryTask->cancel();
+    }
+    catch (exception& e)
+    {
+        string exceptionMsg = string(e.what());
+        if (exceptionMsg.compare("Callback is empty") != 0)
+        {
+            SET_FAILURE(
+                    "Exception occurred while discovering resource, exception is : "
+                            + exceptionMsg);
+        }
     }
 }
 #endif
@@ -1244,7 +1333,7 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_CV_P)
 
     RCSAddress host = RCSAddress::multicast();
     string uri = OC_RSRVD_WELL_KNOWN_URI;
-    vector< string > resourceTypes;
+    vector < string > resourceTypes;
 
     resourceTypes.push_back(RESOURCE_TYPE_LIGHT);
     resourceTypes.push_back(RESOURCE_TYPE_FAN);
@@ -1253,12 +1342,14 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_CV_P)
     {
         std::unique_ptr< RCSDiscoveryManager::DiscoveryTask > discoveryTask =
                 discoveryManager->discoverResourceByTypes(host, uri, resourceTypes,
-                        std::bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this, PH::_1));
+                        std::bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this,
+                                PH::_1));
 
         CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
         discoveryTask->cancel();
 
-        if(callbackcheck != true) {
+        if (callbackcheck != true)
+        {
             SET_FAILURE("Callback Condition Check Fail !");
         }
 
@@ -1270,6 +1361,99 @@ TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_CV_P)
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred while discovering resource");
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-25
+ * @see RCSDiscoveryManager getInstance()
+ * @objective Test 'discoverResourceByTypes' function with null callback
+ * @target DiscoveryTask::Ptr discoverResourceByTypes(const RCSAddress& address, const std::string& relativeUri,
+ *                  const std::vector< std::string >& resourceTypes, ResourceDiscoveredCallback cb)
+ * @test_data 1. host
+ *            2. uri
+ *            3. Resource Types
+ *            4. Null Callback
+ * @pre_condition None
+ * @procedure Perform discoverResourceByTypes() API with null callback
+ * @post_condition None
+ * @expected The API should throw InvalidParameterException
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_NV_N)
+{
+    RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
+
+    RCSAddress host = RCSAddress::multicast();
+    string uri = OC_RSRVD_WELL_KNOWN_URI;
+    vector < string > resourceTypes;
+
+    resourceTypes.push_back(RESOURCE_TYPE_LIGHT);
+    resourceTypes.push_back(RESOURCE_TYPE_FAN);
+
+    try
+    {
+        std::unique_ptr< RCSDiscoveryManager::DiscoveryTask > discoveryTask =
+                discoveryManager->discoverResourceByTypes(host, uri, resourceTypes, NULL);
+
+        discoveryTask->cancel();
+    }
+    catch (exception& e)
+    {
+        string exceptionMsg = string(e.what());
+        if (exceptionMsg.compare("Callback is empty") != 0)
+        {
+            SET_FAILURE(
+                    "Exception occurred while discovering resource, exception is : "
+                            + exceptionMsg);
+        }
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-25
+ * @see RCSDiscoveryManager getInstance()
+ * @objective Test 'discoverResourceByTypes' function with empty uri
+ * @target DiscoveryTask::Ptr discoverResourceByTypes(const RCSAddress& address, const std::string& relativeUri,
+ *                  const std::vector< std::string >& resourceTypes, ResourceDiscoveredCallback cb)
+ * @test_data 1. host
+ *            2. uri = ""
+ *            3. Resource Types
+ *            4. Callback
+ * @pre_condition None
+ * @procedure Perform discoverResourceByTypes() API with empty uri
+ * @post_condition None
+ * @expected The API should throw Exception
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceWrapperAPITest_stc, DiscoverResourceByTypesWithUri_ESV_N)
+{
+    RCSDiscoveryManager* discoveryManager = RCSDiscoveryManager::getInstance();
+
+    RCSAddress host = RCSAddress::multicast();
+    string uri = "";
+    vector < string > resourceTypes;
+
+    resourceTypes.push_back(RESOURCE_TYPE_LIGHT);
+    resourceTypes.push_back(RESOURCE_TYPE_FAN);
+
+    try
+    {
+        std::unique_ptr< RCSDiscoveryManager::DiscoveryTask > discoveryTask =
+                discoveryManager->discoverResourceByTypes(host, uri, resourceTypes,
+                        std::bind(&REResourceWrapperAPITest_stc::OnResourceDiscovered, this,
+                                PH::_1));
+
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
+        discoveryTask->cancel();
+    }
+    catch (exception& e)
+    {
+        string exceptionMsg = string(e.what());
+        SET_FAILURE(
+                "Exception occurred while discovering resource, exception is : " + exceptionMsg);
     }
 }
 #endif

@@ -306,6 +306,7 @@ TEST_F(REResourceBrokerTest_btc, GetState_SRC_P)
 #endif
 
 /**
+ * @since 2016-02-19
  * @see startMonitoring
  * @objective Test 'GetState' function with positive basic way
  * @target ResourceState getState() const;

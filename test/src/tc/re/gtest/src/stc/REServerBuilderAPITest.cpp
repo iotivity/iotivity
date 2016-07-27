@@ -27,17 +27,13 @@ class REServerBuilderAPITest_stc: public ::testing::Test
 protected:
 
     REHelper* m_pREHelper;
-    std::string m_errorMsg;
     RCSResourceObject::Builder* m_pBuilder;
     shared_ptr< RCSResourceObject > m_resourceObject;
 
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
-#ifdef __LINUX__
-        CommonUtil::launchApp(RE_SERVER_APP);
-        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
+
         m_pREHelper = REHelper::getInstance();
         try
         {
@@ -54,7 +50,6 @@ protected:
             SET_FAILURE("Exception occurred in setup, reason : " + string(e.what()));
         }
 
-        m_errorMsg = "";
         IOTIVITYTEST_LOG(INFO, "Testcase setUp finished!!");
     }
 
@@ -62,10 +57,7 @@ protected:
     {
         delete m_pBuilder;
         m_pBuilder = NULL;
-#ifdef __LINUX__
-        CommonUtil::killApp(RE_SERVER_APP);
-        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
+
         CommonUtil::runCommonTCTearDownPart();
 
     }
@@ -107,7 +99,7 @@ TEST_F(REServerBuilderAPITest_stc, BuildResourcePointer_SQV_P)
 {
     shared_ptr< RCSResourceObject > resourceObject = NULL;
 
-    RCSResourceObject::Builder* pBuilder = new RCSResourceObject::Builder("/device/dummy", "core.dummy",
+    RCSResourceObject::Builder* pBuilder = new RCSResourceObject::Builder(DUMMY_RESOURCE_URI, DUMMY_RESOURCE_TYPE,
             DEFAULT_INTERFACE);
     pBuilder->setDiscoverable(true);
     pBuilder->setObservable(false);
@@ -135,8 +127,7 @@ TEST_F(REServerBuilderAPITest_stc, BuildResourcePointer_SQV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderAPITest_stc, RemoveAttribute_SQV_P)
 {
-    string key = "power";
-    bool isRemoved = m_resourceObject->removeAttribute(key);
+    bool isRemoved = m_resourceObject->removeAttribute(DEFAULT_POWER_KEY);
 
     if (isRemoved == false)
     {
@@ -162,8 +153,7 @@ TEST_F(REServerBuilderAPITest_stc, RemoveAttribute_ESV_N)
 {
     RCSResourceAttributes resAttributes;
 
-    string key = "";
-    bool isRemoved = m_resourceObject->removeAttribute(key);
+    bool isRemoved = m_resourceObject->removeAttribute(DEFAULT_EMPTY_KEY);
 
     if (isRemoved == true)
     {
@@ -190,14 +180,13 @@ TEST_F(REServerBuilderAPITest_stc, RemoveAttribute_ESV_N)
 TEST_F(REServerBuilderAPITest_stc, RemoveAttributeAndContainsAttribute_SQV_P)
 {
     try {
-        string key = "power";
-        bool isRemoved = m_resourceObject->removeAttribute(key);
+        bool isRemoved = m_resourceObject->removeAttribute(DEFAULT_POWER_KEY);
 
         if (isRemoved == false) {
             SET_FAILURE("Attribute with key=power is not removed");
         }
 
-        bool hasPowerAttribute = m_resourceObject->containsAttribute(key);
+        bool hasPowerAttribute = m_resourceObject->containsAttribute(DEFAULT_POWER_KEY);
 
         if (hasPowerAttribute == true)
         {
@@ -255,7 +244,6 @@ TEST_F(REServerBuilderAPITest_stc, GetAutoNotifyPolicy_DSCC_N)
         m_resourceObject->getAutoNotifyPolicy();
         IOTIVITYTEST_LOG(DEBUG, "No policy found");
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in GetAutoNotifyPolicy_DSCC_N: " + string(e.what()));

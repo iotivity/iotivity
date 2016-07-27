@@ -22,24 +22,23 @@
 #include "gtest/gtest.h"
 #include "REHelper.h"
 
-
 class RERepresentationTest_btc: public ::testing::Test
 {
-	virtual void SetUp()
-	{
+    virtual void SetUp()
+    {
 #ifdef __LINUX__
-		CommonUtil::launchApp(RE_SERVER_APP);
-		CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
+        CommonUtil::launchApp(RE_SERVER_APP);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 #endif
-	}
+    }
 
-	virtual void TearDown()
-	{
+    virtual void TearDown()
+    {
 #ifdef __LINUX__
-		CommonUtil::killApp(RE_SERVER_APP);
-		CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
+        CommonUtil::killApp(RE_SERVER_APP);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 #endif
-	}
+    }
 };
 
 /**
@@ -48,7 +47,7 @@ class RERepresentationTest_btc: public ::testing::Test
  * @see RCSResourceObject, RCRemoteResourceObject
  * @objective Test RCSRepresentation() in a positive basic way
  * @target RCSRepresentation(const std::string& uri, const std::vector< std::string >& interfaces,
-                    const std::vector< std::string >& resourceTypes);
+ const std::vector< std::string >& resourceTypes);
  * @test_data uriString = "uri";
  * @pre_condition None
  * @procedure Perform RCSRepresentation() API
@@ -59,17 +58,19 @@ class RERepresentationTest_btc: public ::testing::Test
 TEST_F(RERepresentationTest_btc, RCSRepresentationWithData_SRC_P)
 {
 
-	std::string uriString = "uri";
-	std::vector<std::string> interfaces;
-	std::vector<std::string> resourceTypes;
+    std::string uriString = "uri";
+    std::vector < std::string > interfaces;
+    std::vector < std::string > resourceTypes;
 
     try
     {
-    	RCSRepresentation representation(uriString, interfaces, resourceTypes);
+        RCSRepresentation representation(uriString, interfaces, resourceTypes);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationWithData_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationWithData_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -79,11 +80,11 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationWithData_SRC_P)
  * @see RCSResourceObject, RCRemoteResourceObject
  * @objective Test RCSRepresentation() With Data ResourceAttributes in a positive basic way
  * @target RCSRepresentation(const std::string& uri, const std::vector< std::string >& interfaces,
-                    const std::vector< std::string >& resourceTypes,
-                    const RCSResourceAttributes& attrs);
+ const std::vector< std::string >& resourceTypes,
+ const RCSResourceAttributes& attrs);
  * @test_data uriString = "uri";
  * @pre_condition None
- * @procedure Perform RCSRepresentation() With Data ResourceAttributes 
+ * @procedure Perform RCSRepresentation() With Data ResourceAttributes
  * @post_condition None
  * @expected The API should not generate any exception
  **/
@@ -91,17 +92,19 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationWithData_SRC_P)
 TEST_F(RERepresentationTest_btc, RCSRepresentationWithDataResourceAttributes_SRC_P)
 {
 
-	std::string uriString = "uri";
-	std::vector<std::string> interfaces;
-	std::vector<std::string> resourceTypes;
-	RCSResourceAttributes resourceAttributes;
+    std::string uriString = "uri";
+    std::vector < std::string > interfaces;
+    std::vector < std::string > resourceTypes;
+    RCSResourceAttributes resourceAttributes;
     try
     {
-    	RCSRepresentation representation(uriString, interfaces, resourceTypes, resourceAttributes);
+        RCSRepresentation representation(uriString, interfaces, resourceTypes, resourceAttributes);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationWithDataResourceAttributes_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationWithDataResourceAttributes_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -112,7 +115,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationWithDataResourceAttributes_SRC
  * @objective Test getUri() in a positive basic way
  * @target std::string getUri() const;
  * @test_data None
- * @pre_condition 
+ * @pre_condition None
  * @procedure Perform getUri() API
  * @post_condition None
  * @expected The API should not generate any exception
@@ -120,14 +123,16 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationWithDataResourceAttributes_SRC
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetUri_SRC_P)
 {
-	RCSRepresentation representation;
+    RCSRepresentation representation;
     try
     {
-    	representation.getUri();
+        representation.getUri();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationGetUri_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationGetUri_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -138,7 +143,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetUri_SRC_P)
  * @objective Test setUri() in a positive basic way
  * @target  void setUri(std::string uri)
  * @test_data uri = "uri";
- * @pre_condition 
+ * @pre_condition None
  * @procedure Perform setUri() API
  * @post_condition None
  * @expected The API should not generate any exception
@@ -146,15 +151,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetUri_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_SRC_P)
 {
-	RCSRepresentation representation;
-	std::string uri = "uri";
+    RCSRepresentation representation;
+    std::string uri = "uri";
     try
     {
-    	representation.setUri(uri);
+        representation.setUri(uri);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationSetUri_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationSetUri_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -165,7 +172,7 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_SRC_P)
  * @objective Test setUri() API with empty uri
  * @target  void setUri(std::string uri)
  * @test_data uri = "";
- * @pre_condition 
+ * @pre_condition None
  * @procedure Perform setUri() with empty value
  * @post_condition None
  * @expected The API should throw exception
@@ -173,15 +180,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_ESV_N)
 {
-	RCSRepresentation representation;
-	std::string emptyString = "";
+    RCSRepresentation representation;
+    std::string emptyString = "";
     try
     {
-    	representation.setUri(emptyString);
+        representation.setUri(emptyString);
     }
     catch (exception& e)
     {
-    	SET_FAILURE("exception occurred inside RCSRepresentationSetUri_ESV_N: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationSetUri_ESV_N: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -192,23 +201,25 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetUri_ESV_N)
  * @objective Test addInterface() API in a positive basic way
  * @target void addInterface(std::string interface)
  * @test_data interface = "interface";
- * @pre_condition 
- * @procedure Perform addInterface() API 
+ * @pre_condition None
+ * @procedure Perform addInterface() API
  * @post_condition None
  * @expected The API should not generate any exception
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_SRC_P)
 {
-	RCSRepresentation representation;
-	std::string interface = "interface";
+    RCSRepresentation representation;
+    std::string interface = "interface";
     try
     {
-    	representation.addInterface(interface);
+        representation.addInterface(interface);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationAddInterface_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationAddInterface_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -227,15 +238,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_ESV_N)
 {
-	RCSRepresentation representation;
-	std::string emptyInterface = "";
+    RCSRepresentation representation;
+    std::string emptyInterface = "";
     try
     {
-    	representation.addInterface(emptyInterface);
+        representation.addInterface(emptyInterface);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationAddInterface_ESV_N: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationAddInterface_ESV_N: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -254,14 +267,16 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddInterface_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetInterfaces_SRC_P)
 {
-	RCSRepresentation representation;
+    RCSRepresentation representation;
     try
     {
-    	std::vector<std::string> interfaces = representation.getInterfaces();
+        std::vector < std::string > interfaces = representation.getInterfaces();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationGetInterfaces_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationGetInterfaces_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -280,14 +295,16 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetInterfaces_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationClearInterfaces_SRC_P)
 {
-	RCSRepresentation representation;
+    RCSRepresentation representation;
     try
     {
-    	representation.clearInterfaces();
+        representation.clearInterfaces();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationClearInterfaces_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationClearInterfaces_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -306,14 +323,16 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationClearInterfaces_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetResourceTypes_SRC_P)
 {
-	RCSRepresentation representation;
+    RCSRepresentation representation;
     try
     {
-    	std::vector<std::string> interfaces = representation.getResourceTypes();
+        std::vector < std::string > interfaces = representation.getResourceTypes();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationGetResourceTypes_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationGetResourceTypes_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -332,15 +351,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetResourceTypes_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_SRC_P)
 {
-	RCSRepresentation representation;
-	std::string resourceType = "resourceType";
+    RCSRepresentation representation;
+    std::string resourceType = "resourceType";
     try
     {
-    	representation.addResourceType(resourceType);
+        representation.addResourceType(resourceType);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationAddResourceTypes_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationAddResourceTypes_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -359,15 +380,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_ESV_N)
 {
-	RCSRepresentation representation;
-	std::string resourceType = "";
+    RCSRepresentation representation;
+    std::string resourceType = "";
     try
     {
-    	representation.addResourceType(resourceType);
+        representation.addResourceType(resourceType);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationAddResourceTypes_ESV_N: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationAddResourceTypes_ESV_N: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -386,15 +409,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddResourceTypes_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationClearResourceTypes_SRC_P)
 {
-	RCSRepresentation representation;
+    RCSRepresentation representation;
 
     try
     {
-    	representation.clearResourceTypes();
+        representation.clearResourceTypes();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationClearResourceTypes_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationClearResourceTypes_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -413,15 +438,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationClearResourceTypes_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetAttributes_SRC_P)
 {
-	RCSRepresentation representation;
+    RCSRepresentation representation;
 
     try
     {
-    	RCSResourceAttributes attributes = representation.getAttributes();
+        RCSResourceAttributes attributes = representation.getAttributes();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationGetAttributes_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationGetAttributes_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -440,16 +467,18 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetAttributes_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetAttributes_SRC_P)
 {
-	RCSResourceAttributes resourceAttributes;
-	RCSRepresentation representation;
-	
+    RCSResourceAttributes resourceAttributes;
+    RCSRepresentation representation;
+
     try
     {
-    	representation.setAttributes(resourceAttributes);
+        representation.setAttributes(resourceAttributes);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationSetAttributes_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationSetAttributes_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -468,16 +497,18 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetAttributes_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationGetChildren_SRC_P)
 {
-	RCSRepresentation representation;
-	std::vector< RCSRepresentation > representationVector;
-	
+    RCSRepresentation representation;
+    std::vector< RCSRepresentation > representationVector;
+
     try
     {
-    	representationVector = representation.getChildren();
+        representationVector = representation.getChildren();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationGetChildren_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationGetChildren_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -496,16 +527,18 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationGetChildren_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationAddChild_SRC_P)
 {
-	RCSRepresentation representation;
-	RCSRepresentation child;
+    RCSRepresentation representation;
+    RCSRepresentation child;
 
     try
     {
-    	representation.addChild(child);
+        representation.addChild(child);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationAddChild_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationAddChild_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -517,23 +550,25 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationAddChild_SRC_P)
  * @target  void setChildren(std::vector< RCSRepresentation > children);
  * @test_data None
  * @pre_condition None
- * @procedure Perform setChildren() API 
+ * @procedure Perform setChildren() API
  * @post_condition None
  * @expected The API should not generate any exception
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationSetChildren_SRC_P)
 {
-	RCSRepresentation representation;
-	std::vector< RCSRepresentation > children;
+    RCSRepresentation representation;
+    std::vector< RCSRepresentation > children;
 
     try
     {
-    	representation.setChildren(children);
+        representation.setChildren(children);
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationSetChildren_SRC_P : " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationSetChildren_SRC_P : "
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -552,15 +587,17 @@ TEST_F(RERepresentationTest_btc, RCSRepresentationSetChildren_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RERepresentationTest_btc, RCSRepresentationClearChildren_SRC_P)
 {
-	RCSRepresentation representation;
+    RCSRepresentation representation;
 
     try
     {
-    	representation.clearChildren();
+        representation.clearChildren();
     }
     catch (exception& e)
     {
-        SET_FAILURE("exception occurred inside RCSRepresentationClearChildren_SRC_P: " + std::string(e.what()));
+        SET_FAILURE(
+                "exception occurred inside RCSRepresentationClearChildren_SRC_P: "
+                        + std::string(e.what()));
     }
 }
 #endif

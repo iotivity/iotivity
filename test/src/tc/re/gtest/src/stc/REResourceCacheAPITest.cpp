@@ -18,8 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <string>
-#include "gtest/gtest.h"
 #include "REHelper.h"
 
 static bool m_GetCallbackCheck;
@@ -173,7 +171,9 @@ TEST_F(REResourceCacheAPITest_stc, StartCachingWithIsCachedAvailable_SQV_P)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside StartCachingWithIsCachedAvailable_SQV_P" + string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside StartCachingWithIsCachedAvailable_SQV_P"
+                        + string(e.what()));
     }
 }
 #endif
@@ -395,7 +395,8 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttributes_DSCC_N)
     {
         if (string(e.what()).compare("Caching not started.") != 0)
         {
-            SET_FAILURE("Expected exception: \"Caching not started.\" But Actual: " + string(e.what()));
+            SET_FAILURE(
+                    "Expected exception: \"Caching not started.\" But Actual: " + string(e.what()));
         }
     }
 }
@@ -473,7 +474,8 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttributeWithInvalidKey_EG_N)
     {
         if (string(e.what()).size() == 0)
         {
-            SET_FAILURE("Should got an exception when calling getCachedAttribute() with invalid key.");
+            SET_FAILURE(
+                    "Should got an exception when calling getCachedAttribute() with invalid key.");
         }
     }
 }
@@ -495,8 +497,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttribute_DSCC_N)
 {
     try
     {
-        string key = "power";
-        string value = m_resource->getCachedAttribute(key).toString();
+        string value = m_resource->getCachedAttribute(DEFAULT_POWER_KEY).toString();
         if (value.compare("") != 0)
         {
             SET_FAILURE("getCachedAttribute(string&) API returned NULL resource attributes");
@@ -511,7 +512,8 @@ TEST_F(REResourceCacheAPITest_stc, GetCachedAttribute_DSCC_N)
     {
         if (string(e.what()).compare("Caching not started.") != 0)
         {
-            SET_FAILURE("Exception occurred inside GetCachedAttribute_DSCC_N : " + string(e.what()));
+            SET_FAILURE(
+                    "Exception occurred inside GetCachedAttribute_DSCC_N : " + string(e.what()));
         }
     }
 }
@@ -536,7 +538,9 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_SCV_P)
         CacheState cacheState = m_resource->getCacheState();
         if (cacheState != OIC::Service::CacheState::NONE)
         {
-            SET_FAILURE("Expected CacheState: NONE, actual: " + string(m_pREHelper->getCacheState(cacheState)));
+            SET_FAILURE(
+                    "Expected CacheState: NONE, actual: "
+                            + string(m_pREHelper->getCacheState(cacheState)));
         }
     }
     catch (exception& e)
@@ -568,12 +572,16 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCaching_SQV_P)
         CacheState cacheState = m_resource->getCacheState();
         if (cacheState != OIC::Service::CacheState::UNREADY)
         {
-            SET_FAILURE("Expected CacheState: UNREADY, actual: " + string(m_pREHelper->getCacheState(cacheState)));
+            SET_FAILURE(
+                    "Expected CacheState: UNREADY, actual: "
+                            + string(m_pREHelper->getCacheState(cacheState)));
         }
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside GetCacheStateAfterStartCaching_SQV_P" + string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside GetCacheStateAfterStartCaching_SQV_P"
+                        + string(e.what()));
     }
 }
 #endif
@@ -597,17 +605,21 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCachingAndWait_SCV_P)
     try
     {
         m_resource->startCaching();
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
         CacheState cacheState = m_resource->getCacheState();
         if (cacheState != OIC::Service::CacheState::READY)
         {
-            SET_FAILURE("Expected CacheState: READY, actual: " + string(m_pREHelper->getCacheState(cacheState)));
+            SET_FAILURE(
+                    "Expected CacheState: READY, actual: "
+                            + string(m_pREHelper->getCacheState(cacheState)));
         }
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside GetCacheStateAfterStartCachingAndWait_SCV_P" + string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside GetCacheStateAfterStartCachingAndWait_SCV_P"
+                        + string(e.what()));
     }
 }
 #endif
@@ -636,15 +648,19 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_STCC_P)
         cacheState = m_resource->getCacheState();
         if (cacheState != OIC::Service::CacheState::UNREADY)
         {
-            SET_FAILURE("Expected CacheState: UNREADY, actual: " + string(m_pREHelper->getCacheState(cacheState)));
+            SET_FAILURE(
+                    "Expected CacheState: UNREADY, actual: "
+                            + string(m_pREHelper->getCacheState(cacheState)));
         }
 
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
         cacheState = m_resource->getCacheState();
         if (cacheState != OIC::Service::CacheState::READY)
         {
-            SET_FAILURE("Expected CacheState: READY, actual: " + string(m_pREHelper->getCacheState(cacheState)));
+            SET_FAILURE(
+                    "Expected CacheState: READY, actual: "
+                            + string(m_pREHelper->getCacheState(cacheState)));
         }
 
         m_resource->stopCaching();
@@ -678,22 +694,26 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_SLCC_P)
     CacheState cacheState;
     try
     {
-        for(int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
             m_resource->startCaching();
 
             cacheState = m_resource->getCacheState();
             if (cacheState != OIC::Service::CacheState::UNREADY)
             {
-                SET_FAILURE("Expected CacheState: UNREADY, actual: " + string(m_pREHelper->getCacheState(cacheState)));
+                SET_FAILURE(
+                        "Expected CacheState: UNREADY, actual: "
+                                + string(m_pREHelper->getCacheState(cacheState)));
             }
 
-            CommonUtil::waitInSecond(5);
+            CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
             cacheState = m_resource->getCacheState();
             if (cacheState != OIC::Service::CacheState::READY)
             {
-                SET_FAILURE("Expected CacheState: READY, actual: " + string(m_pREHelper->getCacheState(cacheState)));
+                SET_FAILURE(
+                        "Expected CacheState: READY, actual: "
+                                + string(m_pREHelper->getCacheState(cacheState)));
             }
 
             m_resource->stopCaching();
@@ -767,7 +787,7 @@ TEST_F(REResourceCacheAPITest_stc, GetRemoteAttributes_ETC_N)
         {
             SET_FAILURE(
                     "Exception occurred inside GetRemoteAttribute_N, exception is : "
-                    + exceptionMsg);
+                            + exceptionMsg);
         }
     }
 }
@@ -791,8 +811,8 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributes_SQV_P)
     try
     {
         RCSResourceAttributes resAttributes;
-        string key = "power";
-        string value = "on";
+        string key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
         resAttributes[key] = value;
 
         m_resource->setRemoteAttributes(resAttributes,
@@ -848,7 +868,8 @@ TEST_F(REResourceCacheAPITest_stc, SetAndGetRemoteAttributes_GSRV_P)
             SET_FAILURE("Callback did not come");
         }
 
-        m_resource->getRemoteAttributes(bind(&REResourceCacheAPITest_stc::onRemoteAttributesReceived, this, PH::_1));
+        m_resource->getRemoteAttributes(
+                bind(&REResourceCacheAPITest_stc::onRemoteAttributesReceived, this, PH::_1));
         CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
         string receivedValue = m_remoteResourceAttributes[key].toString();
@@ -859,7 +880,9 @@ TEST_F(REResourceCacheAPITest_stc, SetAndGetRemoteAttributes_GSRV_P)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside SetRemoteAttributesWithCheckingGetValue_P. " + string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside SetRemoteAttributesWithCheckingGetValue_P. "
+                        + string(e.what()));
     }
 }
 #endif
@@ -910,7 +933,9 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesAndGetCashedAttribute_SQV_
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside SetRemoteAttributesWithCheckingGetValue_P. " + string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside SetRemoteAttributesWithCheckingGetValue_P. "
+                        + string(e.what()));
     }
 }
 #endif
@@ -977,7 +1002,9 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesWithNullCallback_N)
     {
         if (string(e.what()).compare("setRemoteAttributes : Callback is empty") != 0)
         {
-            SET_FAILURE("Expected exception is \"setRemoteAttributes : Callback is empty\" But actual: " + string(e.what()));
+            SET_FAILURE(
+                    "Expected exception is \"setRemoteAttributes : Callback is empty\" But actual: "
+                            + string(e.what()));
         }
     }
 }
@@ -1010,7 +1037,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SQV_P)
 
         isCach = m_resource->isCaching();
 
-        if(isCach == false)
+        if (isCach == false)
         {
             SET_FAILURE("isCaching() is false after startMonitoring");
         }
@@ -1053,7 +1080,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SCV_P)
 
         isCaching = m_resource->isCaching();
 
-        if(isCaching == false)
+        if (isCaching == false)
         {
             SET_FAILURE("isMonitoring() is false after startMonitoring");
         }
@@ -1062,11 +1089,10 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SCV_P)
 
         isCaching = m_resource->isCaching();
 
-        if(isCaching == true)
+        if (isCaching == true)
         {
             SET_FAILURE("isMonitoring() is false after startMonitoring");
         }
-
     }
     catch (exception& e)
     {
@@ -1107,7 +1133,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SLCC_P)
         {
             isCaching = m_resource->isCaching();
 
-            if(isCaching == false)
+            if (isCaching == false)
             {
                 SET_FAILURE("isMonitoring() is false after startMonitoring");
             }
@@ -1119,12 +1145,11 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SLCC_P)
         {
             isCaching = m_resource->isCaching();
 
-            if(isCaching == true)
+            if (isCaching == true)
             {
                 SET_FAILURE("isMonitoring() is false after startMonitoring");
             }
         }
-
     }
     catch (exception& e)
     {
@@ -1157,7 +1182,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_USTC_N)
     {
         isCaching = m_resource->isCaching();
 
-        if(isCaching == true)
+        if (isCaching == true)
         {
             SET_FAILURE("isMonitoring() is false after startMonitoring");
         }
@@ -1169,7 +1194,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_USTC_N)
 
         isCaching = m_resource->isCaching();
 
-        if(isCaching == false)
+        if (isCaching == false)
         {
             SET_FAILURE("isMonitoring() is false after startMonitoring");
         }
@@ -1207,11 +1232,11 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_STLSEC_N)
 
     try
     {
-        for(int i = 0; i < 1; i++)
+        for (int i = 0; i < 1; i++)
         {
             isCaching = m_resource->isCaching();
 
-            if(isCaching == true)
+            if (isCaching == true)
             {
                 SET_FAILURE("isMonitoring() is false after startMonitoring");
             }
@@ -1223,14 +1248,13 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_STLSEC_N)
 
             isCaching = m_resource->isCaching();
 
-            if(isCaching == false)
+            if (isCaching == false)
             {
                 SET_FAILURE("isMonitoring() is false after startMonitoring");
             }
 
             m_resource->stopCaching();
         }
-
     }
     catch (exception& e)
     {
@@ -1266,7 +1290,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SQV_P)
 
         isCach = m_resource->isCachedAvailable();
 
-        if(isCach == false)
+        if (isCach == false)
         {
             SET_FAILURE("isCachedAvailable() is false");
         }
@@ -1309,7 +1333,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SCV_P)
 
         isCaching = m_resource->isCachedAvailable();
 
-        if(isCaching == false)
+        if (isCaching == false)
         {
             SET_FAILURE("isCachedAvailable() is false");
         }
@@ -1318,11 +1342,10 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SCV_P)
 
         isCaching = m_resource->isCachedAvailable();
 
-        if(isCaching == true)
+        if (isCaching == true)
         {
             SET_FAILURE("isCachedAvailable() is false ");
         }
-
     }
     catch (exception& e)
     {
@@ -1363,7 +1386,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SLCC_P)
         {
             isCaching = m_resource->isCachedAvailable();
 
-            if(isCaching == false)
+            if (isCaching == false)
             {
                 SET_FAILURE("isCachedAvailable() is false after startMonitoring");
             }
@@ -1375,12 +1398,11 @@ TEST_F(REResourceCacheAPITest_stc, IsCachedAvailable_SLCC_P)
         {
             isCaching = m_resource->isCachedAvailable();
 
-            if(isCaching == true)
+            if (isCaching == true)
             {
                 SET_FAILURE("isCachedAvailable() is false after startMonitoring");
             }
         }
-
     }
     catch (exception& e)
     {
@@ -1405,16 +1427,54 @@ TEST_F(REResourceCacheAPITest_stc, GetResourceInterface_SQV_P)
 {
     try
     {
-
         RCSQueryParams m_get;
         string interface = DEFAULT_INTERFACE;
         m_get.setResourceInterface(interface);
-        m_get.getResourceInterface();
+        string val = m_get.getResourceInterface();
+        if (val.compare(DEFAULT_INTERFACE) != 0)
+        {
+            SET_FAILURE("get and set interface isn't the same!");
+        }
 
     }
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred inside GetResourceInterface_SQV_P" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-25
+ * @see None
+ * @objective Test 'getResourceInterface' function by performing setResourceInterface() API with empty interface
+ * @target std::string getResourceInterface() const
+ * @test_data interface = ""
+ * @pre_condition Perform setResourceInterface(std::string interface) API with empty interface
+ * @procedure Perform getResourceInterface() API
+ * @post_condition None
+ * @expected 1. The API should not generate throw exception
+ *           2. Should get empty string for interface
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheAPITest_stc, SetGetResourceInterface_ESV_P)
+{
+    try
+    {
+        RCSQueryParams m_get;
+        string interface = "";
+        m_get.setResourceInterface(interface);
+        string value = m_get.getResourceInterface();
+
+        if (value.compare(interface) != 0)
+        {
+            SET_FAILURE("ResourceInterface is not empty!!");
+        }
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE(
+                "Exception occurred inside SetGetResourceInterface_ESV_P " + std::string(e.what()));
     }
 }
 #endif
@@ -1435,16 +1495,53 @@ TEST_F(REResourceCacheAPITest_stc, GetResourceType_SQV_P)
 {
     try
     {
-
         RCSQueryParams m_get;
         string type = RESOURCE_TYPE_LIGHT;
         m_get.setResourceType(type);
-        m_get.getResourceType();
-
+        string val = m_get.getResourceType();
+        if (val.compare(RESOURCE_TYPE_LIGHT) != 0)
+        {
+            SET_FAILURE("get and set resource type isn't the same!");
+        }
     }
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred inside GetResourceType_SQV_P" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-25
+ * @see None
+ * @objective Test 'setResourceType' API with empty resource type and then perform getResourceType() API
+ * @target 1. setResourceType(std::string type)
+ *         2. std::string getResourceType() const
+ * @test_data type = ""
+ * @pre_condition None
+ * @procedure 1. Perform setResourceType(std::string type) API with empty resource type
+ *            2. Perform getResourceType() API
+ * @post_condition None
+ * @expected The API should throw exception
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheAPITest_stc, SetGetResourceType_ESV_P)
+{
+    try
+    {
+        RCSQueryParams m_get;
+        string type = "";
+        m_get.setResourceType(type);
+        string value = m_get.getResourceType();
+
+        if (value.compare("") != 0)
+        {
+            SET_FAILURE("ResourceType is not empty!");
+        }
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside SetGetResourceType_ESV_P" + std::string(e.what()));
     }
 }
 #endif
@@ -1468,13 +1565,13 @@ TEST_F(REResourceCacheAPITest_stc, Get_SQV_P)
     {
 
         RCSQueryParams m_get;
-        const string &key = "power";
-        string value = "on";
+        const string &key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
 
         m_get.put(key, value);
         string val = m_get.get(key);
 
-        if(val != value)
+        if (val != value)
         {
             SET_FAILURE("put value and get value are not equal");
         }
@@ -1488,17 +1585,50 @@ TEST_F(REResourceCacheAPITest_stc, Get_SQV_P)
 #endif
 
 /**
+ * @since 2016-07-25
+ * @see None
+ * @objective Test 'get' function with empty value
+ * @target std::string get(const std::string& key) const
+ * @test_data &key = "power"
+ *            value = ""
+ * @pre_condition Perform put(std::string key, std::string value) API
+ * @procedure Perform get(const std::string& key) API
+ * @post_condition None
+ * @expected 1. The API should not throw exception
+ *           2. Should get proper value
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheAPITest_stc, PutGet_ESV_P)
+{
+    try
+    {
+        RCSQueryParams m_get;
+        const string &key = "";
+        string value = "";
+
+        m_get.put(key, value);
+        string val = m_get.get(key);
+
+        if (value.compare("") != 0)
+        {
+            SET_FAILURE("Get value isn't empty!");
+        }
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside PutGet_ESV_P" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
  * @since 2016-03-11
  * @see None
  * @objective Test 'getAll' function with Sequential Validation
  * @target const Map& getAll() const
- * @test_data key = "power"
- *            value = "on"
- *            interface = DEFAULT_INTERFACE
- *            type = RESOURCE_TYPE_LIGHT
- * @pre_condition 1. Perform setResourceInterface(std::string interface) API
- *                2. Perform setResourceType(std::string type) API
- *                3. Perform put(std::string key, std::string value) API
+ * @test_data key = DEFAULT_POWER_KEY
+ *            value = DEFAULT_POWER_VALUE_ON
+ * @pre_condition Perform put(std::string key, std::string value) API
  * @procedure Perform getAll() API
  * @post_condition None
  * @expected The API should not generate any exception
@@ -1510,20 +1640,61 @@ TEST_F(REResourceCacheAPITest_stc, GetAll_SQV_P)
     {
 
         RCSQueryParams m_get;
-        string interface = DEFAULT_INTERFACE;
-        string type = RESOURCE_TYPE_LIGHT;
-        string key = "power";
-        string value = "on";
+        string key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
+        std::unordered_map < std::string, std::string > m_map;
 
-        m_get.setResourceInterface(interface);
-        m_get.setResourceType(type);
         m_get.put(key, value);
 
-        m_get.getAll();
+        m_map = m_get.getAll();
+        if (m_map.empty())
+        {
+            SET_FAILURE("Failed to return all params");
+        }
     }
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred inside GetAll_SQV_P" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-08-01
+ * @see None
+ * @objective Test 'put' and 'getAll' function by setting empty key and empty value
+ * @target  1. put(std::string key, std::string value) API
+ *          2. const Map& getAll() const
+ * @test_data 1. Empty key
+ *            2. Empty value
+ * @pre_condition None
+ * @procedure 1. Perform put() API with empty key and empty value
+ *            2. Perform getAll() API
+ * @post_condition None
+ * @expected The API should not throw any exception with empty key and empty value
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheAPITest_stc, PutAndGetAll_ESV_P)
+{
+    try
+    {
+        RCSQueryParams m_get;
+        std::string key;
+        std::string value;
+
+        std::unordered_map < std::string, std::string > m_map;
+
+        m_get.put(key, value);
+        m_map = m_get.getAll();
+
+        if (m_map.size() != 1)
+        {
+            SET_FAILURE("Failed to put empty key & empty value in map ");
+        }
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside PutAndGetAll_ESV_P" + std::string(e.what()));
     }
 }
 #endif
@@ -1545,16 +1716,17 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectGet_CV_P)
     try
     {
         m_resource->get(&REResourceCacheAPITest_stc::onRROGetCallback);
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_GetCallbackCheck == false)
+        if (m_GetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectGet_CV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectGet_CV_P" + std::string(e.what()));
     }
 }
 #endif
@@ -1577,16 +1749,18 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectGetWithQueryParams_CV_P)
     try
     {
         m_resource->get(queryParams, &REResourceCacheAPITest_stc::onRROGetCallback);
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_GetCallbackCheck == false)
+        if (m_GetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectGetWithQueryParams_CV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectGetWithQueryParams_CV_P"
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -1609,21 +1783,22 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSet_CV_P)
     try
     {
         RCSResourceAttributes resAttributes;
-        string key = "power";
-        string value = "on";
+        string key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
         resAttributes[key] = value;
 
-        m_resource->set(resAttributes,&REResourceCacheAPITest_stc::onRROSetCallback);
-        CommonUtil::waitInSecond(5);
+        m_resource->set(resAttributes, &REResourceCacheAPITest_stc::onRROSetCallback);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_SetCallbackCheck == false)
+        if (m_SetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectSet_CV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectSet_CV_P" + std::string(e.what()));
     }
 }
 #endif
@@ -1647,30 +1822,30 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSet_SQV_P)
     try
     {
         RCSResourceAttributes resAttributes;
-        string key = "power";
-        string value = "on";
+        string key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
         resAttributes[key] = value;
 
         m_resource->get(&REResourceCacheAPITest_stc::onRROGetCallback);
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_GetCallbackCheck == false)
+        if (m_GetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
 
-        m_resource->set(resAttributes,&REResourceCacheAPITest_stc::onRROSetCallback);
-        CommonUtil::waitInSecond(5);
+        m_resource->set(resAttributes, &REResourceCacheAPITest_stc::onRROSetCallback);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_SetCallbackCheck == false)
+        if (m_SetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
-
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectSet_SQV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectSet_SQV_P" + std::string(e.what()));
     }
 }
 #endif
@@ -1693,23 +1868,24 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_CV_P)
     try
     {
         RCSResourceAttributes resAttributes;
-        string key = "power";
-        string value = "on";
+        string key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
         resAttributes[key] = value;
         RCSQueryParams queryParams;
 
         m_resource->set(queryParams, resAttributes, &REResourceCacheAPITest_stc::onRROSetCallback);
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_SetCallbackCheck == false)
+        if (m_SetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
-
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectSetWithQueryParams_CV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectSetWithQueryParams_CV_P"
+                        + std::string(e.what()));
     }
 }
 #endif
@@ -1733,31 +1909,32 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_SQV_P)
     try
     {
         RCSResourceAttributes resAttributes;
-        string key = "power";
-        string value = "on";
+        string key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
         resAttributes[key] = value;
         RCSQueryParams queryParams;
 
         m_resource->get(queryParams, &REResourceCacheAPITest_stc::onRROGetCallback);
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_GetCallbackCheck == false)
+        if (m_GetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
 
         m_resource->set(queryParams, resAttributes, &REResourceCacheAPITest_stc::onRROSetCallback);
-        CommonUtil::waitInSecond(5);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 
-        if(m_SetCallbackCheck == false)
+        if (m_SetCallbackCheck == false)
         {
             SET_FAILURE("Callback is not Invoked!");
         }
-
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectSetWithQueryParams_SQV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectSetWithQueryParams_SQV_P"
+                        + std::string(e.what()));
     }
 }
 #endif

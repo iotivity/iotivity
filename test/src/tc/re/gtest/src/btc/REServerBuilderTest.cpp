@@ -27,17 +27,13 @@ class REServerBuilderTest_btc: public ::testing::Test
 protected:
 
     REHelper* m_pREHelper;
-    std::string m_errorMsg;
     RCSResourceObject::Builder* m_pBuilder;
     shared_ptr< RCSResourceObject > m_resourceObject;
 
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
-#ifdef __LINUX__ 
-        CommonUtil::launchApp(RE_SERVER_APP);
-        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
+
         m_pREHelper = REHelper::getInstance();
         m_pBuilder = new RCSResourceObject::Builder(LIGHT_1_URI, RESOURCE_TYPE_LIGHT,
                 DEFAULT_INTERFACE);
@@ -46,7 +42,6 @@ protected:
         m_resourceObject = m_pBuilder->build();
         m_resourceObject->setAttribute(DEFAULT_POWER_KEY, DEFAULT_POWER_VALUE);
         m_resourceObject->setAttribute(DEFAULT_INTENSITY_KEY, DEFAULT_INTENSITY_VALUE);
-        m_errorMsg = "";
     }
 
     virtual void TearDown()
@@ -54,10 +49,6 @@ protected:
         delete m_pBuilder;
         m_pBuilder = NULL;
 
-#ifdef __LINUX__ 
-        CommonUtil::killApp(RE_SERVER_APP);
-        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
         CommonUtil::runCommonTCTearDownPart();
     }
 
@@ -97,7 +88,12 @@ TEST_F(REServerBuilderTest_btc, Builder_SRC_P)
     try
     {
         RCSResourceObject::Builder* builder;
-        builder = new RCSResourceObject::Builder(LIGHT_1_URI, RESOURCE_TYPE_LIGHT, DEFAULT_INTERFACE);
+        builder = new RCSResourceObject::Builder(LIGHT_1_URI, RESOURCE_TYPE_LIGHT,
+                DEFAULT_INTERFACE);
+
+        if (builder == NULL) {
+            SET_FAILURE("Builder object not created.");
+        }
     }
     catch (exception& e)
     {
@@ -125,7 +121,9 @@ TEST_F(REServerBuilderTest_btc, SetDiscoverableAsTrue_SRC_P)
     try
     {
         m_pBuilder->setDiscoverable(discoverable);
-    }catch(exception& e) {
+    }
+    catch (exception& e)
+    {
         SET_FAILURE("Unable to set discoverable to true, exception is " + string(e.what()));
     }
 }
@@ -150,7 +148,9 @@ TEST_F(REServerBuilderTest_btc, SetDiscoverableAsFalse_SRC_P)
     try
     {
         m_pBuilder->setDiscoverable(discoverable);
-    }catch(exception& e) {
+    }
+    catch (exception& e)
+    {
         SET_FAILURE("Unable to set discoverable to false, exception is " + string(e.what()));
     }
 }
@@ -175,7 +175,9 @@ TEST_F(REServerBuilderTest_btc, SetObservableAsTrue_SRC_P)
     try
     {
         m_pBuilder->setObservable(observable);
-    }catch(exception& e) {
+    }
+    catch (exception& e)
+    {
         SET_FAILURE("Unable to set observable to true, exception is " + string(e.what()));
     }
 }
@@ -200,7 +202,9 @@ TEST_F(REServerBuilderTest_btc, SetObservableAsFalse_SRC_P)
     try
     {
         m_pBuilder->setObservable(observable);
-    }catch(exception& e) {
+    }
+    catch (exception& e)
+    {
         SET_FAILURE("Unable to set observable to false, exception is " + string(e.what()));
     }
 }
@@ -221,14 +225,15 @@ TEST_F(REServerBuilderTest_btc, SetObservableAsFalse_SRC_P)
 TEST_F(REServerBuilderTest_btc, SetAttributes_SRC_P)
 {
     RCSResourceAttributes resAttributes;
-    string key = "power";
-    string value = "on";
-    resAttributes[key] = value;
+
+    resAttributes[DEFAULT_POWER_KEY] = DEFAULT_POWER_VALUE_ON;
 
     try
     {
         m_pBuilder->setAttributes(resAttributes);
-    }catch (exception& e){
+    }
+    catch (exception& e)
+    {
         SET_FAILURE("Unable to set Resource Attributes, exception is : " + string(e.what()));
     }
 }
@@ -253,7 +258,9 @@ TEST_F(REServerBuilderTest_btc, SetAttributes_ECRC_N)
     try
     {
         m_pBuilder->setAttributes(resAttributes);
-    }catch (exception& e){
+    }
+    catch (exception& e)
+    {
         SET_FAILURE("Unable to set Resource Attributes, exception is : " + string(e.what()));
     }
 }
@@ -277,12 +284,9 @@ TEST_F(REServerBuilderTest_btc, SetAttribute_SRC_P)
 {
     RCSResourceAttributes resAttributes;
 
-    string key = "power";
-    string value = "on";
-
     try
     {
-        m_resourceObject->setAttribute(key, value);
+        m_resourceObject->setAttribute(DEFAULT_POWER_KEY, DEFAULT_POWER_VALUE_ON);
     }
     catch (exception& e)
     {
@@ -340,9 +344,7 @@ TEST_F(REServerBuilderTest_btc, GetAttribute_SRC_P)
 {
     RCSResourceAttributes resAttributes;
 
-    string key = "power";
-    string value = m_resourceObject->getAttributeValue(key).toString();
-    ;
+    string value = m_resourceObject->getAttributeValue(DEFAULT_POWER_KEY).toString();
 
     if (value.compare("") == 0)
     {
@@ -372,16 +374,20 @@ TEST_F(REServerBuilderTest_btc, GetAttribute_ESV_N)
     const string key = "";
     string value = "";
 
-    try{
+    try
+    {
         value = m_resourceObject->getAttributeValue(key).toString();
 
         if (value.compare("") != 0)
         {
             SET_FAILURE("Attribute Value is not empty!!");
         }
-    }catch(exception& e){
+    }
+    catch (exception& e)
+    {
         string exceptionMsg = string(e.what());
-        if(exceptionMsg.compare("No attribute named ''") != 0){
+        if (exceptionMsg.compare("No attribute named ''") != 0)
+        {
             SET_FAILURE("Exception Occurred : " + exceptionMsg);
         }
     }
@@ -427,8 +433,7 @@ TEST_F(REServerBuilderTest_btc, GetAttributes_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderTest_btc, ContainsAttribute_SRC_P)
 {
-    string key = "power";
-    bool hasPowerAttribute = m_resourceObject->containsAttribute(key);
+    bool hasPowerAttribute = m_resourceObject->containsAttribute(DEFAULT_POWER_KEY);
 
     if (hasPowerAttribute == false)
     {
@@ -452,8 +457,7 @@ TEST_F(REServerBuilderTest_btc, ContainsAttribute_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderTest_btc, ContainsAttribute_ESV_N)
 {
-    const string key = "";
-    bool hasEmptyAttribute = m_resourceObject->containsAttribute(key);
+    bool hasEmptyAttribute = m_resourceObject->containsAttribute(DEFAULT_EMPTY_KEY);
 
     if (hasEmptyAttribute == true)
     {
@@ -507,7 +511,8 @@ TEST_F(REServerBuilderTest_btc, SetGetAttributeRequestHandler_SRC_P)
 {
     try
     {
-        m_resourceObject->setGetRequestHandler(bind(&REServerBuilderTest_btc::OnGetRequestReceived, this, PH::_1, PH::_2));
+        m_resourceObject->setGetRequestHandler(
+                bind(&REServerBuilderTest_btc::OnGetRequestReceived, this, PH::_1, PH::_2));
     }
     catch (exception& e)
     {
@@ -559,7 +564,8 @@ TEST_F(REServerBuilderTest_btc, SetSetAttributesRequestHandler_SRC_P)
 {
     try
     {
-        m_resourceObject->setSetRequestHandler(bind(&REServerBuilderTest_btc::OnSetRequestReceived, this, PH::_1, PH::_2));
+        m_resourceObject->setSetRequestHandler(
+                bind(&REServerBuilderTest_btc::OnSetRequestReceived, this, PH::_1, PH::_2));
     }
     catch (exception& e)
     {
@@ -611,11 +617,13 @@ TEST_F(REServerBuilderTest_btc, SetSetRequestHandlerPolicy_SRC_P)
 {
     try
     {
-        m_resourceObject->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
+        m_resourceObject->setSetRequestHandlerPolicy(
+                RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
     }
     catch (exception& e)
     {
-        SET_FAILURE("Unable to set SetRequestHandlerPolicy, exception occurred: " + string(e.what()));
+        SET_FAILURE(
+                "Unable to set SetRequestHandlerPolicy, exception occurred: " + string(e.what()));
     }
 }
 #endif
@@ -628,7 +636,7 @@ TEST_F(REServerBuilderTest_btc, SetSetRequestHandlerPolicy_SRC_P)
  * @test_data Resource Attributes
  * @pre_condition Builder class should be initialized
  * @procedure 1. Perform setAttribute() API
-              2. Perform removeAttribute() API
+ 2. Perform removeAttribute() API
  * @post_condition None
  * @expected API should not generate exception
  **/
@@ -638,16 +646,13 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_SRC_P)
 {
     RCSResourceAttributes resAttributes;
 
-    string key = "power";
-    string value = "on";
-
-    bool m_result = NULL;
+    bool m_result = false;
 
     try
     {
-        m_resourceObject->setAttribute(key, value);
-        m_result = m_resourceObject->removeAttribute(key);
-        if(!m_result)
+        m_resourceObject->setAttribute(DEFAULT_POWER_KEY, DEFAULT_POWER_VALUE_ON);
+        m_result = m_resourceObject->removeAttribute(DEFAULT_POWER_KEY);
+        if (!m_result)
         {
             SET_FAILURE("Unable to remove attribute");
         }
@@ -667,9 +672,10 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_SRC_P)
  * @test_data Resource Attributes
  * @pre_condition Builder class should be initialized
  * @procedure 1. Perform setAttribute() API
-              2. Perform removeAttribute() API with a custom key to check success return
+ *            2. Perform removeAttribute() API with a custom key to check success return
  * @post_condition None
- * @expected The API should not crash
+ * @expected 1. API should return false
+ *           2. The API should not crash
  **/
 
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -677,13 +683,15 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_ECRC_N)
 {
     RCSResourceAttributes resAttributes;
 
-    bool m_result = NULL;
+    bool m_result = false;
+    string energyKey = "energy";
 
     try
     {
         m_resourceObject->setAttribute(DEFAULT_POWER_KEY, DEFAULT_POWER_VALUE_ON);
-        m_result = m_resourceObject->removeAttribute("energy");
-        if(m_result)
+        m_result = m_resourceObject->removeAttribute(energyKey);
+
+        if (m_result)
         {
             SET_FAILURE("Unable to remove attribute");
         }
@@ -714,7 +722,7 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_ESV_P)
 
     try
     {
-        m_resourceObject->removeAttribute("");
+        m_resourceObject->removeAttribute(DEFAULT_EMPTY_KEY);
     }
     catch (exception& e)
     {
@@ -731,7 +739,7 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_ESV_P)
  * @test_data key = "energy"
  * @pre_condition Builder class should be initialized
  * @procedure 1. Perform setAttribute() API
-              2. Perform containsAttribute() API with a custom key to check success return
+ 2. Perform containsAttribute() API with a custom key to check success return
  * @post_condition None
  * @expected API should not generate exception
  **/
@@ -740,13 +748,15 @@ TEST_F(REServerBuilderTest_btc, RemoveAttribute_ESV_P)
 TEST_F(REServerBuilderTest_btc, ContainsAttribute_ECRC_N)
 {
     RCSResourceAttributes resAttributes;
-    bool m_result = NULL;
+    bool m_result = false;
+    string energyKey = "energy";
 
     try
     {
         m_resourceObject->setAttribute(DEFAULT_POWER_KEY, DEFAULT_POWER_VALUE_ON);
-        m_result = m_resourceObject->containsAttribute("energy");
-        if(m_result)
+        m_result = m_resourceObject->containsAttribute(energyKey);
+
+        if (m_result)
         {
             SET_FAILURE("No such attribute present!");
         }
@@ -776,15 +786,16 @@ TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRC_P)
     {
         bool m_result = NULL;
         m_result = m_resourceObject->isDiscoverable();
+
         if (!m_result)
         {
             SET_FAILURE("Resource isn't Discoverable");
         }
     }
-    catch(exception& e) {
+    catch (exception& e)
+    {
         SET_FAILURE("exception occured inside IsDiscoverable_SRC_P: " + string(e.what()));
     }
-
 }
 #endif
 
@@ -803,22 +814,26 @@ TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRC_P)
 TEST_F(REServerBuilderTest_btc, IsDiscoverable_SRCC_P)
 {
     bool discoverable = false;
-
     try
     {
+
+        RCSResourceObject::Builder* pBuilder = new RCSResourceObject::Builder(LIGHT_URI,
+                RESOURCE_TYPE_LIGHT, DEFAULT_INTERFACE);
+        pBuilder->setDiscoverable(discoverable);
+        shared_ptr< RCSResourceObject > resourceObject = pBuilder->build();
+
         bool m_result = NULL;
-        m_pBuilder->setDiscoverable(discoverable);
-        m_result = m_resourceObject->isDiscoverable();
-        if (m_result == true)
+        m_result = resourceObject->isDiscoverable();
+
+        if (m_result != discoverable)
         {
-            SET_FAILURE("Resource is Discoverable although discoverable is set as false!" );
-            IOTIVITYTEST_LOG(DEBUG, "Return value is:  %d", m_result);
+            SET_FAILURE("isDiscoverable is true although it should return false !");
         }
     }
-    catch(exception& e) {
+    catch (exception& e)
+    {
         SET_FAILURE("exception occured inside IsDiscoverable_SRCC_P: " + string(e.what()));
     }
-
 }
 #endif
 
@@ -841,16 +856,17 @@ TEST_F(REServerBuilderTest_btc, IsObservable_SRC_P)
         bool m_result = NULL;
 
         m_result = m_resourceObject->isObservable();
+
         if (!m_result)
         {
             SET_FAILURE("Resource isn't Observable");
             IOTIVITYTEST_LOG(DEBUG, "Return value is:  %d", m_result);
         }
     }
-    catch(exception& e) {
+    catch (exception& e)
+    {
         SET_FAILURE("exception occured inside IsObservable_SRC_P: " + string(e.what()));
     }
-
 }
 #endif
 
@@ -871,16 +887,21 @@ TEST_F(REServerBuilderTest_btc, IsObservable_SRCC_P)
     bool observable = false;
     try
     {
-        m_pBuilder->setObservable(observable);
+        RCSResourceObject::Builder* pBuilder = new RCSResourceObject::Builder(LIGHT_URI,
+                RESOURCE_TYPE_LIGHT, DEFAULT_INTERFACE);
+        pBuilder->setObservable(observable);
+        shared_ptr< RCSResourceObject > resourceObject = pBuilder->build();
 
         bool m_result = NULL;
-        m_result = m_resourceObject->isObservable();
-        if (m_result == true)
+        m_result = resourceObject->isObservable();
+
+        if (m_result != observable)
         {
-            SET_FAILURE("Resource is Discoverable although discoverable is set as false!");
+            SET_FAILURE("isObservable is true although it should return false !");
         }
     }
-    catch(exception& e) {
+    catch (exception& e)
+    {
         SET_FAILURE("exception occured inside IsObservable_SRCC_P: " + string(e.what()));
     }
 
@@ -906,10 +927,10 @@ TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicy_SRC_P)
     {
         m_resourceObject->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::ALWAYS);
     }
-
     catch (exception& e)
     {
-        SET_FAILURE("Unable to set SetAutoNotifyPolicy_FSV_P, exception occurred: " + string(e.what()));
+        SET_FAILURE(
+                "Unable to set SetAutoNotifyPolicy_FSV_P, exception occurred: " + string(e.what()));
     }
 }
 #endif
@@ -933,7 +954,6 @@ TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicyNever_CLU_P)
     {
         m_resourceObject->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
         IOTIVITYTEST_LOG(DEBUG, "Requests are ignored");
-
     }
     catch (exception& e)
     {
@@ -961,7 +981,6 @@ TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicyUPDATED_CLU_P)
     {
         m_resourceObject->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
         IOTIVITYTEST_LOG(DEBUG, "attributes are changed");
-
     }
     catch (exception& e)
     {
@@ -979,7 +998,7 @@ TEST_F(REServerBuilderTest_btc, SetAutoNotifyPolicyUPDATED_CLU_P)
  * @pre_condition   1. Builder class should be initialized
  *                  2. Resource object should be built
  * @procedure   1. Perform setAutoNotifyPolicy() API using AutoNotifyPolicy
-                2. Perform getAutoNotifyPolicy() API
+ *              2. Perform getAutoNotifyPolicy() API
  * @post_condition None
  * @expected    Current auto notify policy should be returned
  **/
@@ -990,18 +1009,17 @@ TEST_F(REServerBuilderTest_btc, GetAutoNotifyPolicy_SRC_P)
     {
         RCSResourceObject::AutoNotifyPolicy autoNotifyPolicy;
         m_resourceObject->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::ALWAYS);
-        m_resourceObject->getAutoNotifyPolicy();
-        if(autoNotifyPolicy != RCSResourceObject::AutoNotifyPolicy::ALWAYS)
+        autoNotifyPolicy = m_resourceObject->getAutoNotifyPolicy();
+
+        if (autoNotifyPolicy != RCSResourceObject::AutoNotifyPolicy::ALWAYS)
             SET_FAILURE("Current auto notify policy not found!");
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Unable to Get AutoNotifyPolicy, exception occurred: " + string(e.what()));
     }
 }
 #endif
-
 
 /**
  * @since 2016-02-25
@@ -1012,7 +1030,7 @@ TEST_F(REServerBuilderTest_btc, GetAutoNotifyPolicy_SRC_P)
  * @pre_condition   1. Builder class should be initialized
  *                  2. Resource object should be built
  * @procedure   1. Perform setSetRequestHandlerPolicy() API using SetRequestHandlerPolicy
-                2. Perform getSetRequestHandlerPolicy()
+ *              2. Perform getSetRequestHandlerPolicy() API
  * @post_condition None
  * @expected    Current set request handling policy should be returned
  **/
@@ -1022,18 +1040,19 @@ TEST_F(REServerBuilderTest_btc, GetSetRequestHandlerPolicy_SRC_P)
     try
     {
         RCSResourceObject::SetRequestHandlerPolicy setRequestHandlerPolicy;
-        m_resourceObject->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
-        m_resourceObject->getSetRequestHandlerPolicy();
-        if(setRequestHandlerPolicy != RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE)
+        m_resourceObject->setSetRequestHandlerPolicy(
+                RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
+        setRequestHandlerPolicy = m_resourceObject->getSetRequestHandlerPolicy();
+        if (setRequestHandlerPolicy != RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE)
             SET_FAILURE("Current set request handling policy not found!");
     }
     catch (exception& e)
     {
-        SET_FAILURE("Unable to get SetRequestHandlerPolicy, exception occurred: " + string(e.what()));
+        SET_FAILURE(
+                "Unable to get SetRequestHandlerPolicy, exception occurred: " + string(e.what()));
     }
 }
 #endif
-
 
 /**
  * @since 2016-02-25
@@ -1052,11 +1071,13 @@ TEST_F(REServerBuilderTest_btc, setSetRequestHandlerPolicy_CLU_P)
 {
     try
     {
-        m_resourceObject->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::NEVER);
+        m_resourceObject->setSetRequestHandlerPolicy(
+                RCSResourceObject::SetRequestHandlerPolicy::NEVER);
     }
     catch (exception& e)
     {
-        SET_FAILURE("Unable to set SetRequestHandlerPolicy, exception occurred: " + string(e.what()));
+        SET_FAILURE(
+                "Unable to set SetRequestHandlerPolicy, exception occurred: " + string(e.what()));
     }
 }
 #endif
@@ -1076,10 +1097,13 @@ TEST_F(REServerBuilderTest_btc, setSetRequestHandlerPolicy_CLU_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REServerBuilderTest_btc, Build_SRC_P)
 {
+    string acUri = "/device/ac-1";
+    string acType = "core.ac";
+
     try
     {
         RCSResourceObject::Builder* builder;
-        builder = new RCSResourceObject::Builder("/device/ac-1", "core.ac", DEFAULT_INTERFACE);
+        builder = new RCSResourceObject::Builder(acUri, acType, DEFAULT_INTERFACE);
         builder->build();
     }
     catch (exception& e)
@@ -1096,10 +1120,10 @@ TEST_F(REServerBuilderTest_btc, Build_SRC_P)
  * @target RCSResourceAttributes::Value getAttributeValue(const std::string& key) const
  * @test_data   1. key = "power"
  *              2. value = "on"
- * @pre_condition   1. Builder class should be initialized
- *                  2. Resource object should be built
+ * @pre_condition 1. Builder class should be initialized
+ *                2. Resource object should be built
  * @procedure 1. Perform setAttribute() API
-              2. Perform getAttributeValue() API
+ *            2. Perform getAttributeValue() API
  * @post_condition None
  * @expected The API should not generate exception
  **/
@@ -1120,7 +1144,37 @@ TEST_F(REServerBuilderTest_btc, GetAttributeValue_SRC_P)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Unable to get attribute, exception occurred inside GetAttributeValue_SRC_P: " + string(e.what()));
+        SET_FAILURE(
+                "Unable to get attribute, exception occurred inside GetAttributeValue_SRC_P: "
+                        + string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-25
+ * @see None
+ * @objective Test 'setSecureFlag' function with secureFlag as true
+ * @target Builder& setSecureFlag(bool secureFlag);
+ * @test_data secureFlag = true
+ * @pre_condition Builder class should be initialized
+ * @procedure Perform setSecureFlag() API with secureFlag as true
+ * @post_condition None
+ * @expected The API should not throw any exception
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REServerBuilderTest_btc, SetSecureFlag_SRC_P)
+{
+    bool secureFlag = true;
+
+    try
+    {
+        m_pBuilder->setSecureFlag(secureFlag);
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE(
+                "Exception occured inside SetSecureFlag_SRC_P, exception is: " + string(e.what()));
     }
 }
 #endif

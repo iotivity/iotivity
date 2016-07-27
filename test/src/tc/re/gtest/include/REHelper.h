@@ -49,6 +49,8 @@ using namespace OIC::Service;
 using namespace std;
 namespace PH = std::placeholders;
 
+#define DUMMY_RESOURCE_URI "/device/dummy"
+#define DUMMY_RESOURCE_TYPE "core.dummy"
 #define LIGHT_1_URI "/device/light-1"
 #define LIGHT_URI "/device/tube-light"
 #define FAN_URI "/device/table-fan"
@@ -84,7 +86,7 @@ private:
     void OnPrimitiveResourceDiscovered(shared_ptr< RCSRemoteResourceObject > pResource);
 public:
     RCSDiscoveryManager* m_pDiscoveryManager;
-	REHelper();
+    REHelper();
     virtual ~REHelper();
 
     /**

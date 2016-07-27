@@ -29,7 +29,6 @@ protected:
 
     REHelper* m_pREHelper;
     shared_ptr< RCSRemoteResourceObject > m_resource;
-    std::string m_errorMsg;
 
     virtual void SetUp()
     {
@@ -38,12 +37,12 @@ protected:
 #ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif    
+#endif
 
         m_pREHelper = REHelper::getInstance();
 
         bool isResourceAvailable = m_pREHelper->findPrimitiveResources(
-                RESOURCE_TYPE_LIGHT);
+        RESOURCE_TYPE_LIGHT);
         if (isResourceAvailable)
         {
             m_resource = m_pREHelper->getFoundResourceList().at(0);
@@ -52,13 +51,12 @@ protected:
         {
             SET_FAILURE("Precondition Failed, No Resource Found!!");
         }
-        m_errorMsg = "";
     }
 
     virtual void TearDown()
     {
 
-#ifdef __LINUX__       
+#ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 #endif
@@ -93,12 +91,12 @@ public:
  * @since 2015-07-01
  * @see None
  * @objective Test 'startCaching' function with positive basic way
- * @target void startCaching(void)
+ * @target void startCaching()
  * @test_data None
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure Perform startCaching() API
  * @post_condition None
- * @expected No crash should occur
+ * @expected The API should be called successfully without generating any exception
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, StartCaching_SRC_P)
@@ -118,13 +116,12 @@ TEST_F(REResourceCacheTest_btc, StartCaching_SRC_P)
  * @since 2015-07-01
  * @see None
  * @objective Test 'startCaching' function with positive basic way
- * @target void startCaching(ReportPolicy , CacheUpdatedCallback)
- * @test_data 1. Report Policy
- *            2. callback function for receiving cached attribute
+ * @target void startCaching(CacheUpdatedCallback)
+ * @test_data callback function for receiving cached attribute
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure Perform startCaching() API
  * @post_condition None
- * @expected The API should not crash
+ * @expected The API should be called successfully without generating any exception
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, StartCachingWithCallback_SRC_P)
@@ -137,7 +134,8 @@ TEST_F(REResourceCacheTest_btc, StartCachingWithCallback_SRC_P)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside StartCachingWithCallback_SRC_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside StartCachingWithCallback_SRC_P" + std::string(e.what()));
     }
 }
 #endif
@@ -146,9 +144,8 @@ TEST_F(REResourceCacheTest_btc, StartCachingWithCallback_SRC_P)
  * @since 2015-07-01
  * @see None
  * @objective Test 'startCaching' function with null callback
- * @target void startCaching(ReportPolicy , CacheUpdatedCallback)
- * @test_data 1. Report Policy
- *            2. Null callback
+ * @target void startCaching(CacheUpdatedCallback)
+ * @test_data Null callback
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure Perform startCaching() API
  * @post_condition None
@@ -161,7 +158,6 @@ TEST_F(REResourceCacheTest_btc, StartCaching_NV_N)
     {
         m_resource->startCaching(NULL);
     }
-
     catch (exception& e)
     {
         string exceptionMsg = std::string(e.what());
@@ -182,7 +178,7 @@ TEST_F(REResourceCacheTest_btc, StartCaching_NV_N)
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure Perform stopCaching() API
  * @post_condition None
- * @expected The API should not crash
+ * @expected The API should be called successfully without generating any exception
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, StopCaching_SRC_P)
@@ -202,12 +198,13 @@ TEST_F(REResourceCacheTest_btc, StopCaching_SRC_P)
  * @since 2015-07-01
  * @see None
  * @objective Test 'getCachedAttributes' function with positive basic way
- * @target void getCachedAttributes()
+ * @target RCSResourceAttributes getCachedAttributes() const;
  * @test_data None
  * @pre_condition Remote Resource Object should be instantialized
- * @procedure Perform getCachedAttributes() API
+ * @procedure  1. Perform startCaching() API
+ *             2. Perform getCachedAttributes() API
  * @post_condition None
- * @expected Returned Resource Attributes are not null
+ * @expected The API should be called successfully without generating any exception
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, GetCachedAttributes_SRC_P)
@@ -217,7 +214,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttributes_SRC_P)
         m_resource->startCaching();
         CommonUtil::waitInSecond(CALLBACK_WAIT_MIN);
         RCSResourceAttributes resourceAttributes = m_resource->getCachedAttributes();
-        if(resourceAttributes.size() <= 0)
+        if (resourceAttributes.size() <= 0)
         {
             SET_FAILURE("getCachedAttributes() API returned NULL resource attributes");
         }
@@ -233,10 +230,11 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttributes_SRC_P)
  * @since 2015-07-07
  * @see None
  * @objective Test 'getCachedAttribute' function with positive basic way
- * @target void getCachedAttribute(string&)
+ * @target getCachedAttribute(const std::string& key) const;
  * @test_data key = "power"
  * @pre_condition Remote Resource Object should be instantialized
- * @procedure Perform getCachedAttributes(string&) API
+ * @procedure 1. Perform startCaching() API
+ *            2. Perform getCachedAttributes(string&) API
  * @post_condition None
  * @expected returned Attribute is not empty
  **/
@@ -249,7 +247,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_SRC_P)
         CommonUtil::waitInSecond(CALLBACK_WAIT_MIN);
 
         string value = m_resource->getCachedAttribute(DEFAULT_POWER_KEY).toString();
-        if(value.compare("") == 0)
+        if (value.compare("") == 0)
         {
             SET_FAILURE("getCachedAttribute(string&) API returned NULL resource attributes");
         }
@@ -279,7 +277,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_ECRC_N)
     {
         string key = "invalid_key";
         string value = m_resource->getCachedAttribute(key).toString();
-        if(value.compare("") != 0)
+        if (value.compare("") != 0)
         {
             SET_FAILURE("getCachedAttribute(string&) API returned NULL resource attributes");
         }
@@ -311,7 +309,7 @@ TEST_F(REResourceCacheTest_btc, GetCacheState_SRC_P)
     try
     {
         CacheState cacheState = m_resource->getCacheState();
-        if((int) cacheState < 0 || (int) cacheState > 6)
+        if ((int) cacheState < 0 || (int) cacheState > 6)
         {
             SET_FAILURE("getCacheState() API returned NULL resource attributes");
         }
@@ -339,7 +337,8 @@ TEST_F(REResourceCacheTest_btc, GetRemoteAttributes_SRC_P)
 {
     try
     {
-        m_resource->getRemoteAttributes(bind(&REResourceCacheTest_btc::onRemoteAttributesReceived, this, PH::_1));
+        m_resource->getRemoteAttributes(
+                bind(&REResourceCacheTest_btc::onRemoteAttributesReceived, this, PH::_1));
 
     }
     catch (exception& e)
@@ -371,7 +370,7 @@ TEST_F(REResourceCacheTest_btc, GetRemoteAttributes_NV_N)
     catch (exception& e)
     {
         string exceptionMsg = std::string(e.what());
-        if(exceptionMsg.compare("getRemoteAttributes : Callback is empty") != 0)
+        if (exceptionMsg.compare("getRemoteAttributes : Callback is empty") != 0)
         {
             SET_FAILURE("Exception occurred inside GetRemoteAttributes_NV_N : " + exceptionMsg);
         }
@@ -398,7 +397,8 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_SRC_P)
     {
         RCSResourceAttributes resAttributes;
         resAttributes[DEFAULT_POWER_KEY] = DEFAULT_POWER_VALUE_ON;
-        m_resource->setRemoteAttributes(resAttributes, bind(&REResourceCacheTest_btc::onRemoteAttributesReceived, this, PH::_1));
+        m_resource->setRemoteAttributes(resAttributes,
+                bind(&REResourceCacheTest_btc::onRemoteAttributesReceived, this, PH::_1));
     }
     catch (exception& e)
     {
@@ -411,8 +411,7 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_SRC_P)
  * @since 2015-07-01
  * @see None
  * @objective Test 'setRemoteAttributes' function without setting resAttribute
- * @target void setRemoteAttributes(const RCSResourceAttributes& attributes,
-                    RemoteAttributesSetCallback cb);
+ * @target void setRemoteAttributes(const RCSResourceAttributes& attributes, RemoteAttributesSetCallback cb);
  * @test_data Null Resource Attributes
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Create resource Attributes
@@ -426,7 +425,8 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_DSCC_N)
     try
     {
         RCSResourceAttributes resAttributes;
-        m_resource->setRemoteAttributes(resAttributes, bind(&REResourceCacheTest_btc::onRemoteAttributesReceived, this, PH::_1));
+        m_resource->setRemoteAttributes(resAttributes,
+                bind(&REResourceCacheTest_btc::onRemoteAttributesReceived, this, PH::_1));
     }
     catch (exception& e)
     {
@@ -452,7 +452,7 @@ TEST_F(REResourceCacheTest_btc, getCacheState_SRC_P)
     try
     {
         CacheState cacheState = m_resource->getCacheState();
-        if((int)cacheState)
+        if ((int) cacheState)
         {
             SET_FAILURE("getCacheState() API returned NULL resource attributes");
         }
@@ -482,7 +482,7 @@ TEST_F(REResourceCacheTest_btc, getCacheState_SRCC_P)
     {
         CacheState cacheState = m_resource->getCacheState();
 
-        if((int)cacheState != 0)
+        if ((int) cacheState != 0)
         {
             SET_FAILURE("getCacheState() API returned NULL resource attributes");
         }
@@ -512,7 +512,7 @@ TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRC_P)
     {
         bool icaa = m_resource->isCachedAvailable();
 
-        if(icaa)
+        if (icaa)
         {
             SET_FAILURE("getCacheState() API returned NULL resource attributes");
         }
@@ -522,7 +522,7 @@ TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRC_P)
         SET_FAILURE("Exception occurred inside isCachedAvailable_SRC_P" + std::string(e.what()));
     }
 }
-#endif 
+#endif
 
 /**
  * @since 2016-02-23
@@ -541,7 +541,7 @@ TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRCC_P)
     try
     {
         bool icaa = m_resource->isCachedAvailable();
-        if(icaa == true)
+        if (icaa == true)
         {
             SET_FAILURE("getCacheState() API returned NULL resource attributes");
         }
@@ -563,7 +563,8 @@ TEST_F(REResourceCacheTest_btc, isCachedAvailable_SRCC_P)
  * @target void getCachedAttribute(string&)
  * @test_data key = "power"
  * @pre_condition Remote Resource Object should be instantialized
- * @procedure Perform getCachedAttributes(string&) API
+ * @procedure 1. Perform startCaching() API
+ *            2. Perform getCachedAttributes(string&) API
  * @post_condition None
  * @expected The API should not generate any exception
  **/
@@ -576,7 +577,7 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_SRCC_P)
         CommonUtil::waitInSecond(CALLBACK_WAIT_MIN);
 
         string value = m_resource->getCachedAttribute(DEFAULT_POWER_KEY).toString();
-        if(value == "off")
+        if (value.compare(DEFAULT_POWER_VALUE) == 0)
         {
             SET_FAILURE("getCachedAttribute(string&) API returned NULL resource attributes");
         }
@@ -598,7 +599,8 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_SRCC_P)
  * @target void getCachedAttribute(string&)
  * @test_data key = "power"
  * @pre_condition Remote Resource Object should be instantialized
- * @procedure Perform getCachedAttributes(string&) API
+ * @procedure 1. Perform startCaching() API
+ *            2. Perform getCachedAttributes(string&) API
  * @post_condition None
  * @expected The API should not generate any exception
  **/
@@ -610,9 +612,8 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_FSV_P)
         m_resource->startCaching();
         CommonUtil::waitInSecond(CALLBACK_WAIT_MIN);
 
-
         string value = m_resource->getCachedAttribute(DEFAULT_POWER_KEY).toString();
-        if(value == "off")
+        if (value.compare(DEFAULT_POWER_VALUE) == 0)
         {
             SET_FAILURE("getCachedAttribute(string&) API returned NULL resource attributes");
         }
@@ -634,7 +635,8 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_FSV_P)
  * @target void getCachedAttribute(string&)
  * @test_data &key = "power"
  * @pre_condition Remote Resource Object should be instantialized
- * @procedure Perform getCachedAttributes(string&) API
+ * @procedure 1. Perform startCaching() API
+ *            2. Perform getCachedAttributes(string&) API
  * @post_condition None
  * @expected The API should not generate any exception
  **/
@@ -646,9 +648,8 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_RSV_P)
         m_resource->startCaching();
         CommonUtil::waitInSecond(CALLBACK_WAIT_MIN);
 
-        const string &key = "power";
-        string value = m_resource->getCachedAttribute(key).toString();
-        if(value == "off")
+        string value = m_resource->getCachedAttribute(DEFAULT_POWER_KEY).toString();
+        if (value.compare(DEFAULT_POWER_VALUE) == 0)
         {
             SET_FAILURE("getCachedAttribute(string&) API returned NULL resource attributes");
         }
@@ -662,31 +663,23 @@ TEST_F(REResourceCacheTest_btc, GetCachedAttribute_RSV_P)
 
 /**
  * @since 2016-02-23
- * @see 1. RCSResourceAttributes::Value
- *      2. isCachedAvailable()
- *      3. startCaching()
- *      4. startCaching(CacheUpdatedCallback)
+ * @see startCaching()
  * @objective Test 'getCachedAttribute' function with empty key
- * @target void getCachedAttribute(string&)
+ * @target getCachedAttribute(const std::string& key) const;
  * @test_data key = ""
  * @pre_condition Remote Resource Object should be instantialized
- * @procedure Perform getCachedAttributes(string&) API
+ * @procedure 1. Perform startCaching() API
+ *            2. Perform getCachedAttributes() API
  * @post_condition None
- * @expected The API should not crash
+ * @expected API should throw RCSInvalidKeyException.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(REResourceCacheTest_btc, GetCachedAttribute_ESV_N)
+TEST_F(REResourceCacheTest_btc, GetCachedAttribute_ESV_ETC_N)
 {
-
-    m_resource->startCaching();
+    m_resource->startCaching(std::bind(&REResourceCacheTest_btc::onCacheUpdated, this, PH::_1));
     CommonUtil::waitInSecond(CALLBACK_WAIT_MIN);
 
-    string value = m_resource->getCachedAttribute(DEFAULT_EMPTY_KEY).toString();
-    if(value.compare("") != 0)
-    {
-        SET_FAILURE("getCachedAttribute(string&) API returned NULL resource attributes");
-    }
-
+    EXPECT_THROW(m_resource->getCachedAttribute(DEFAULT_EMPTY_KEY), RCSInvalidKeyException);
 }
 #endif
 
@@ -709,7 +702,6 @@ TEST_F(REResourceCacheTest_btc, SetResourceInterface_SRC_P)
         RCSQueryParams m_interface;
         string interface = DEFAULT_INTERFACE;
         m_interface.setResourceInterface(interface);
-
     }
     catch (exception& e)
     {
@@ -727,10 +719,10 @@ TEST_F(REResourceCacheTest_btc, SetResourceInterface_SRC_P)
  * @pre_condition None
  * @procedure Perform setResourceInterface(std::string interface) API
  * @post_condition None
- * @expected The API should not crash
+ * @expected The API should be called successfully with empty resourcetype
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(REResourceCacheTest_btc, SetResourceInterface_ESV_N)
+TEST_F(REResourceCacheTest_btc, SetResourceInterface_ESV_P)
 {
     try
     {
@@ -741,12 +733,10 @@ TEST_F(REResourceCacheTest_btc, SetResourceInterface_ESV_N)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside SetResourceInterface_ESV_N" + std::string(e.what()));
+        SET_FAILURE("Exception occurred inside SetResourceInterface_ESV_P" + std::string(e.what()));
     }
 }
 #endif
-
-
 
 /**
  * @since 2016-03-10
@@ -785,10 +775,10 @@ TEST_F(REResourceCacheTest_btc, SetResourceType_SRC_P)
  * @pre_condition None
  * @procedure Perform setResourceType(std::string type) API
  * @post_condition None
- * @expected The API should not crash
+ * @expected The API should be called successfully with empty resourcetype
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(REResourceCacheTest_btc, SetResourceType_ESV_N)
+TEST_F(REResourceCacheTest_btc, SetResourceType_ESV_P)
 {
     try
     {
@@ -843,10 +833,10 @@ TEST_F(REResourceCacheTest_btc, Put_SRC_P)
  * @pre_condition None
  * @procedure Perform put(std::string key, std::string value) API
  * @post_condition None
- * @expected The API should not crash
+ * @expected The API should be called successfully with empty key and value = on
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(REResourceCacheTest_btc, Put_Key_ESV_N)
+TEST_F(REResourceCacheTest_btc, Put_Key_ESV_P)
 {
     try
     {
@@ -872,45 +862,49 @@ TEST_F(REResourceCacheTest_btc, Put_Key_ESV_N)
  * @pre_condition None
  * @procedure Perform put(std::string key, std::string value) API
  * @post_condition None
- * @expected The API should not crash
+ * @expected The API should be called successfully with key and empty value
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(REResourceCacheTest_btc, Put_Value_ESV_N)
+TEST_F(REResourceCacheTest_btc, Put_Value_ESV_P)
 {
     try
     {
         RCSQueryParams m_put;
         string value = "";
-                m_put.put(DEFAULT_POWER_KEY, value);
 
+        m_put.put(DEFAULT_POWER_KEY, value);
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside Put_Value_ESV_N" + std::string(e.what()));
+        SET_FAILURE("Exception occurred inside Put_Value_ESV_P" + std::string(e.what()));
     }
 }
 #endif
 
 /**
  * @since 2016-03-10
- * @see RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
+ * @see RCSQueryParams& setResourceInterface(string interface)
  * @objective Test 'getResourceInterface' function with positive way [SRC]
  * @target std::string getResourceInterface() const
  * @test_data None
  * @pre_condition None
  * @procedure Perform getResourceInterface() API
  * @post_condition None
- * @expected The API should not generate any exception
+ * @expected 1. The API should not generate any exception
+ *           2. Return value should empty
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, GetResourceInterface_SRC_P)
 {
     try
     {
-
         RCSQueryParams m_get;
-        m_get.getResourceInterface();
+        string val = m_get.getResourceInterface();
 
+        if (!val.empty())
+        {
+            SET_FAILURE("Get interface isn't empty!");
+        }
     }
     catch (exception& e)
     {
@@ -948,28 +942,30 @@ TEST_F(REResourceCacheTest_btc, GetResourceType_SRC_P)
 
 /**
  * @since 2016-03-10
- * @see RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
+ * @see RCSQueryParams& put(std::string key, std::string value)
  * @objective Test 'get' function with positive way [SRC]
- * @target std::string get(const std::string& key) const
- * @test_data &key = "power"
+ * @target string get(std::string& key)
+ * @test_data key = "power"
  *            value = "on";
  * @pre_condition Perform put() API
  * @procedure Perform get() API
  * @post_condition None
- * @expected The API should not generate any exception
+ * @expected The API should return the value which is set by put()
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, Get_SRC_P)
 {
     try
     {
-        RCSQueryParams m_get;
-        const string &m_key = "power";
+        RCSQueryParams queryParams;
+        queryParams.put(DEFAULT_POWER_KEY, DEFAULT_POWER_VALUE_ON);
+        string val = queryParams.get(DEFAULT_POWER_KEY);
 
-        m_get.put(m_key, DEFAULT_POWER_VALUE_ON);
-        m_get.get(m_key);
+        if (val.find(DEFAULT_POWER_VALUE_ON) == string::npos)
+        {
+            SET_FAILURE("Didn't get proper value.");
+        }
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred inside Get_SRC_P" + std::string(e.what()));
@@ -979,24 +975,32 @@ TEST_F(REResourceCacheTest_btc, Get_SRC_P)
 
 /**
  * @since 2016-03-10
- * @see RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
+ * @see None
  * @objective Test 'get' function with reference of the empty key
  * @target std::string get(const std::string& key) const
- * @test_data &key = ""
+ * @test_data key = ""
  * @pre_condition None
  * @procedure Perform get(const std::string& key) API
  * @post_condition None
- * @expected The API should not crash
+ * @expected 1. The API should throw Exception
+ *           2. Should get proper exception message
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(REResourceCacheTest_btc, Get_ESV_N)
+TEST_F(REResourceCacheTest_btc, Get_ESV_ETC_P)
 {
     RCSQueryParams m_get;
-    const string &m_key = "";
 
-    m_get.get(m_key);
-    SET_FAILURE("Although key is Empty. API called successfully!");
-
+    try
+    {
+        m_get.get(DEFAULT_EMPTY_KEY);
+    }
+    catch (exception& e)
+    {
+        if (std::string(e.what()).find("is an invalid key") == string::npos)
+        {
+            SET_FAILURE("Didn't get proper exception message.");
+        }
+    }
 }
 #endif
 
@@ -1019,7 +1023,6 @@ TEST_F(REResourceCacheTest_btc, GetAll_SRC_P)
         RCSQueryParams m_get;
         m_get.getAll();
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred inside GetAll_SRC_P" + std::string(e.what()));
@@ -1048,7 +1051,8 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_RV_P)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectGet_RV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectGet_RV_P" + std::string(e.what()));
     }
 }
 #endif
@@ -1062,16 +1066,12 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_RV_P)
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure Perform  get(GetCallback cb)API
  * @post_condition None
- * @expected The API should generate exception
+ * @expected The API should generate RCSInvalidParameterException
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_NV_N)
 {
-
-    m_resource->get(NULL);
-    SET_FAILURE("Exception NOT occurred inside RemoteResourceObjectGet_NV_N");
-
-
+    EXPECT_THROW(m_resource->get(NULL), RCSInvalidParameterException);
 }
 #endif
 
@@ -1096,7 +1096,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGet_ETC_N)
     catch (exception& e)
     {
         string exceptionMsg = std::string(e.what());
-        if(exceptionMsg.compare("get : Callback is empty") != 0)
+        if (exceptionMsg.compare("get : Callback is empty") != 0)
         {
             SET_FAILURE("Exception occurred inside RemoteResourceObjectGet_ETC_N: " + exceptionMsg);
         }
@@ -1126,7 +1126,9 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetCSQ_RV_P)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectGetCSQ_RV_P" + std::string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectGetCSQ_RV_P"
+                + std::string(e.what()));
     }
 }
 #endif
@@ -1140,16 +1142,13 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetCSQ_RV_P)
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure Perform  get(queryParams, GetCallback cb)API
  * @post_condition None
- * @expected The API should generate exception
+ * @expected The API should generate RCSInvalidParameterException
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetCSQ_NV_N)
 {
     RCSQueryParams queryParams;
-    m_resource->get(queryParams,NULL);
-    SET_FAILURE("Exception NOT occurred inside RemoteResourceObjectGetCSQ_NV_N");
-
-
+    EXPECT_THROW(m_resource->get(queryParams, NULL), RCSInvalidParameterException);
 }
 #endif
 
@@ -1175,7 +1174,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetRCSQ_ETC_N)
     catch (exception& e)
     {
         string exceptionMsg = std::string(e.what());
-        if(exceptionMsg.compare("get : Callback is empty") != 0)
+        if (exceptionMsg.compare("get : Callback is empty") != 0)
         {
             SET_FAILURE("Exception occurred inside Get_N : " + exceptionMsg);
         }
@@ -1188,7 +1187,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectGetRCSQ_ETC_N)
  * @see RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
  * @objective Test 'setRemoteAttributes' function with null callback
  * @target void setRemoteAttributes(const RCSResourceAttributes& attributes,
-                    RemoteAttributesSetCallback cb);
+ RemoteAttributesSetCallback cb);
  * @test_data Resource Attributes, NULL cb
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Create resource Attributes
@@ -1219,7 +1218,7 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_NV_N)
  * @see RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
  * @objective Test 'setRemoteAttributes' function with null callback for error throw checking
  * @target void setRemoteAttributes(const RCSResourceAttributes& attributes,
-                    RemoteAttributesSetCallback cb);
+ RemoteAttributesSetCallback cb);
  * @test_data Resource Attributes, NULL cb
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Create resource Attributes
@@ -1240,7 +1239,7 @@ TEST_F(REResourceCacheTest_btc, SetRemoteAttributes_ETC_N)
     catch (exception& e)
     {
         string exceptionMsg = std::string(e.what());
-        if(exceptionMsg != "setRemoteAttributes : Callback is empty")
+        if (exceptionMsg != "setRemoteAttributes : Callback is empty")
         {
             SET_FAILURE("Callback is Not empty although given callback is NULL !" + exceptionMsg);
         }
@@ -1294,13 +1293,17 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_NV_N)
 {
-
     RCSResourceAttributes resAttributes;
-    resAttributes[DEFAULT_POWER_KEY] = DEFAULT_POWER_VALUE_ON;
-    m_resource->set(resAttributes, NULL);
-    SET_FAILURE("Exception NOT occurred !");
 
-
+    try
+    {
+        resAttributes[DEFAULT_POWER_KEY] = DEFAULT_POWER_VALUE_ON;
+        m_resource->set(resAttributes, NULL);
+        SET_FAILURE("Exception NOT occurred !");
+    }
+    catch (exception& e)
+    {
+    }
 }
 #endif
 
@@ -1314,7 +1317,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_NV_N)
  * @procedure 1. Create resource Attributes
  *            2. Perform set() API with NUll cb
  * @post_condition None
- * @expected The API should generate exception
+ * @expected The API should not crashed
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_ETC_N)
@@ -1328,9 +1331,9 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_ETC_N)
     catch (exception& e)
     {
         string exceptionMsg = std::string(e.what());
-        if(exceptionMsg != "set : Callback is empty")
+        if (exceptionMsg != "set : Callback is empty")
         {
-            SET_FAILURE("Callback is NOt empty although given callback is NULL !"  + exceptionMsg);
+            SET_FAILURE("Callback is NOt empty although given callback is NULL !" + exceptionMsg);
         }
 
     }
@@ -1347,7 +1350,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSet_ETC_N)
  * @procedure 1. Create resource Attributes
  *            2. Perform set() API
  * @post_condition None
- * @expected Returned set null value should check
+ * @expected The API should be called successfully without generating any exception
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_RV_P)
@@ -1363,7 +1366,8 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_RV_P)
     }
     catch (exception& e)
     {
-        SET_FAILURE("Exception occurred inside RemoteResourceObjectSetRCSQ_RV_P: " + string(e.what()));
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectSetRCSQ_RV_P: " + string(e.what()));
     }
 }
 #endif
@@ -1378,19 +1382,23 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_RV_P)
  * @procedure 1. Create resource Attributes
  *            2. Perform set() API with NULL Cb
  * @post_condition None
- * @expected The API should throw exception
+ * @expected The API should not crashed
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_NV_N)
 {
+    RCSQueryParams queryParams;
     RCSResourceAttributes resAttributes;
     resAttributes[DEFAULT_POWER_KEY] = DEFAULT_POWER_VALUE_ON;
 
-    RCSQueryParams queryParams;
-
-    m_resource->set(queryParams, resAttributes, NULL);
-    SET_FAILURE("Exception NOT occurred !");
-
+    try
+    {
+        m_resource->set(queryParams, resAttributes, NULL);
+        SET_FAILURE("Exception NOT occurred !");
+    }
+    catch (exception& e)
+    {
+    }
 }
 #endif
 
@@ -1404,7 +1412,7 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_NV_N)
  * @procedure 1. Create resource Attributes
  *            2. Perform set() API with NULL cb
  * @post_condition None
- * @expected The API should throw exception
+ * @expected The API should not crashed
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_ETC_N)
@@ -1420,11 +1428,10 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_ETC_N)
     catch (exception& e)
     {
         string exceptionMsg = std::string(e.what());
-        if( exceptionMsg != "set : Callback is empty")
+        if (exceptionMsg != "set : Callback is empty")
         {
             SET_FAILURE("Callback is not Empty!");
         }
-
     }
 }
 #endif
