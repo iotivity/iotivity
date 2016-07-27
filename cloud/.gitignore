@@ -1,5 +1,6 @@
-/target/
 *.class
 .project
 .classpath
 *.log
+*/bin/
+*/target/
