@@ -128,7 +128,7 @@ void* OCProcessThread(void * ptr)
 int main(void)
 {
     bool isExit = false;
-    pthread_t OCThread;
+    pthread_t OCThread = NULL;
 
     printf("start Iotivity\n");
     if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
@@ -154,8 +154,8 @@ int main(void)
     printf("start notification consumer service\n");
     while (!isExit)
     {
-        int num;
-        char dummy;
+        int num = 0;
+        char dummy = '\0';
 
         printf("1. Start Consumer\n");
         printf("2. Stop Consumer\n");

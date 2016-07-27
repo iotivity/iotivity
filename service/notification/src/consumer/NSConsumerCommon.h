@@ -131,6 +131,12 @@ typedef enum
     NS_DISCOVER_CLOUD
 } NSConsumerDiscoverType;
 
+typedef enum
+{
+    NS_SELECTION_CONSUMER = 0,
+    NS_SELECTION_PROVIDER = 1
+} NSSelector;
+
 typedef struct NSProviderConnectionInfo
 {
     OCDevAddr * addr;
@@ -152,7 +158,7 @@ typedef struct
     char * messageUri;
     char * syncUri;
 
-    NSAccessPolicy accessPolicy;
+    NSSelector accessPolicy;
 
     NSProviderConnectionInfo * connection;
 

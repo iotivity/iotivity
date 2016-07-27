@@ -45,6 +45,12 @@ namespace
     std::condition_variable responseCon;
     std::mutex mutexForCondition;
 
+    enum class NSSelector
+    {
+        NS_SELECTION_CONSUMER = 0,
+        NS_SELECTION_PROVIDER = 1
+    };
+
 }
 
 class TestWithMock: public testing::Test
@@ -93,12 +99,12 @@ public:
         std::cout << __func__ << std::endl;
     }
 
-    static void foundResourceEmpty(std::shared_ptr< OC::OCResource >)
+    static void NSFoundResourceEmpty(std::shared_ptr< OC::OCResource >)
     {
         std::cout << __func__ << std::endl;
     }
 
-    static void SubscriptionAcceptedCallback(NSProvider *)
+    static void NSSubscriptionAcceptedCallback(NSProvider *)
     {
         std::cout << __func__ << std::endl;
     }
@@ -146,7 +152,7 @@ TEST_F(NotificationConsumerTest, StartConsumerPositive)
 {
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     EXPECT_EQ(NS_OK, NSStartConsumer(cfg));
@@ -168,12 +174,12 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
 
-    g_providerSimul.setAccepter(1);
+    g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
     g_providerSimul.createNotificationResource();
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
@@ -185,7 +191,7 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsumerAfter)
 {
-    g_providerSimul.setAccepter(1);
+    g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
     g_providerSimul.createNotificationResource();
     {
         std::unique_lock< std::mutex > lock{ mutexForCondition };
@@ -202,7 +208,7 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
@@ -214,7 +220,7 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 {
-    g_providerSimul.setAccepter(1);
+    g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
     mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty).Do(
             [this](NSProvider * provider)
             {
@@ -234,11 +240,11 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 
 TEST_F(NotificationConsumerTest, ExpectSubscribeSuccess)
 {
-    mocks.ExpectCallFunc(SubscriptionAcceptedCallback).Do(
-            [](NSProvider * )
-            {
-                std::cout << "Income Accepted subscription : " << std::endl;
-            });
+//    mocks.ExpectCallFunc(NSSubscriptionAcceptedCallback).Do(
+//            [](NSProvider * )
+//            {
+//                std::cout << "Income Accepted subscription : " << std::endl;
+//            });
 
     NSResult ret = NSSubscribe(g_provider);
     std::unique_lock< std::mutex > lock{ mutexForCondition };
@@ -273,11 +279,11 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider
     std::string title = "title";
     std::string msg = "msg";
 
-    g_providerSimul.setAccepter(0);
+    g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_PROVIDER);
 
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = SubscriptionAcceptedCallback;
+    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);

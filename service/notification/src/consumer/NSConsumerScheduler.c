@@ -74,10 +74,13 @@ NSResult NSConsumerMessageHandlerInit()
     NSConsumerThread * handle = NULL;
     NSConsumerQueue * queue = NULL;
 
-    uint8_t uuid[UUID_SIZE];
-    char uuidString[UUID_STRING_SIZE];
-    OCGenerateUuid(uuid);
-    OCConvertUuidToString(uuid, uuidString);
+    uint8_t uuid[UUID_SIZE] = {0,};
+    char uuidString[UUID_STRING_SIZE] = {0,};
+    OCRandomUuidResult randomRet = OCGenerateUuid(uuid);
+    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
+    randomRet = OCConvertUuidToString(uuid, uuidString);
+    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
+
     NSSetConsumerId(uuidString);
     NS_LOG_V(DEBUG, "Consumer ID : %s", *NSGetConsumerId());
 
@@ -208,41 +211,43 @@ void NSConsumerTaskProcessing(NSTask * task)
 {
     switch (task->taskType)
     {
-    case TASK_EVENT_CONNECTED:
-    case TASK_EVENT_CONNECTED_TCP:
-    case TASK_CONSUMER_REQ_DISCOVER:
-    {
-        NSConsumerDiscoveryTaskProcessing(task);
-        break;
-    }
-    case TASK_CONSUMER_REQ_SUBSCRIBE:
-    case TASK_SEND_SYNCINFO:
-    {
-        NSConsumerCommunicationTaskProcessing(task);
-        break;
-    }
-    case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
-    {
-        NSProvider_internal * data = NSCopyProvider((NSProvider_internal *)task->taskData);
-        NS_VERIFY_NOT_NULL_V(data);
-        NSTask * conTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data);
-        NS_VERIFY_NOT_NULL_V(conTask);
-        NSConsumerCommunicationTaskProcessing(task);
-        NSConsumerInternalTaskProcessing(conTask);
-        break;
-    }
-    case TASK_RECV_SYNCINFO:
-    case TASK_CONSUMER_RECV_MESSAGE:
-    case TASK_CONSUMER_PROVIDER_DISCOVERED:
-    case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
-    case TASK_MAKE_SYNCINFO:
-    {
-        NSConsumerInternalTaskProcessing(task);
-        break;
-    }
-    default:
-        NS_LOG(ERROR, "Unknown type of task");
-        break;
+        case TASK_EVENT_CONNECTED:
+        case TASK_EVENT_CONNECTED_TCP:
+        case TASK_CONSUMER_REQ_DISCOVER:
+        {
+            NSConsumerDiscoveryTaskProcessing(task);
+            break;
+        }
+        case TASK_CONSUMER_REQ_SUBSCRIBE:
+        case TASK_SEND_SYNCINFO:
+        {
+            NSConsumerCommunicationTaskProcessing(task);
+            break;
+        }
+        case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
+        {
+            NSProvider_internal * data = NSCopyProvider((NSProvider_internal *)task->taskData);
+            NS_VERIFY_NOT_NULL_V(data);
+            NSTask * conTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data);
+            NS_VERIFY_NOT_NULL_V(conTask);
+            NSConsumerCommunicationTaskProcessing(task);
+            NSConsumerInternalTaskProcessing(conTask);
+            break;
+        }
+        case TASK_RECV_SYNCINFO:
+        case TASK_CONSUMER_RECV_MESSAGE:
+        case TASK_CONSUMER_PROVIDER_DISCOVERED:
+        case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+        case TASK_MAKE_SYNCINFO:
+        {
+            NSConsumerInternalTaskProcessing(task);
+            break;
+        }
+        default:
+        {
+            NS_LOG(ERROR, "Unknown type of task");
+            break;
+        }
     }
 }
 

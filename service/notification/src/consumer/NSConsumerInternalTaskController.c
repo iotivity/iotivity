@@ -254,7 +254,7 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
         NS_LOG(DEBUG, "provider's connection is updated.");
     }
 
-    if (provider->accessPolicy == NS_ACCESS_DENY && isSubscribing == false)
+    if (provider->accessPolicy == NS_SELECTION_CONSUMER && isSubscribing == false)
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
         NSDiscoveredProvider((NSProvider *) provider);
@@ -293,6 +293,7 @@ void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage * msg)
 
     if (provider->connection->next == NULL)
     {
+        NS_LOG(DEBUG, "call back to user");
         NSSubscriptionAccepted((NSProvider *) provider);
     }
 }

@@ -124,15 +124,6 @@ OCStackApplicationResult NSProviderDiscoverListener(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-void NSRemoveProviderObj(NSProvider_internal * provider)
-{
-    NSOICFree(provider->messageUri);
-    NSOICFree(provider->syncUri);
-
-    NSRemoveConnections(provider->connection);
-    NSOICFree(provider);
-}
-
 OCStackApplicationResult NSIntrospectProvider(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
@@ -167,7 +158,7 @@ OCStackApplicationResult NSIntrospectProvider(
 
     NS_LOG(DEBUG, "build NSTask");
     NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DISCOVERED, (void *) newProvider);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProviderObj(newProvider));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider(newProvider));
 
     NSConsumerPushEvent(task);
 
@@ -235,7 +226,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NSOICFree(providerId);
     newProvider->messageUri = messageUri;
     newProvider->syncUri = syncUri;
-    newProvider->accessPolicy = (NSAccessPolicy)accepter;
+    newProvider->accessPolicy = (NSSelector)accepter;
     newProvider->connection = connection;
 
     return newProvider;

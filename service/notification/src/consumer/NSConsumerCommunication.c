@@ -52,7 +52,9 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         }
 
         char * msgUri = OICStrdup(provider_internal->messageUri);
+        NS_VERIFY_NOT_NULL(msgUri, NS_ERROR);
         char * syncUri = OICStrdup(provider_internal->syncUri);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(syncUri, NS_ERROR, NSOICFree(msgUri));
 
         OCConnectivityType type = CT_DEFAULT;
         if (connections->addr->adapter == OC_ADAPTER_TCP)
@@ -61,7 +63,9 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
             if (connections->isCloudConnection == true)
             {
                 msgUri = NSGetCloudUri(provider_internal->providerId, msgUri);
+                NS_VERIFY_NOT_NULL(msgUri, NS_ERROR);
                 syncUri = NSGetCloudUri(provider_internal->providerId, syncUri);
+                NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(syncUri, NS_ERROR, NSOICFree(msgUri));
             }
         }
 
