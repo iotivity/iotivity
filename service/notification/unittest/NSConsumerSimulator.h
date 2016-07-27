@@ -29,11 +29,11 @@
 class NSConsumerSimulator
 {
 private:
-    std::function<void(const std::string&, const std::string&, const std::string&)> m_messageFunc;
-    std::function<void(int, const std::string&)> m_syncFunc;
+    std::function<void(const int&, const std::string&, const std::string&,
+            const std::string&)> m_messageFunc;
+    std::function<void(const int&, const int&)> m_syncFunc;
 
     std::shared_ptr<OC::OCResource> m_syncResource;
-
 
 public:
     NSConsumerSimulator()
@@ -55,7 +55,7 @@ public:
                 OC::QualityOfService::LowQos);
     }
 
-    void syncToProvider(int & type, const std::string & id)
+    void syncToProvider(int & type, const int & id, const std::string & providerID)
     {
         if (m_syncResource == nullptr)
         {
@@ -64,14 +64,16 @@ public:
         }
 
         OC::OCRepresentation rep;
-        rep.setValue("ID", id);
+        rep.setValue("PROVIDER_ID", providerID);
+        rep.setValue("MESSAGE_ID", id);
         rep.setValue("STATE", type);
 
         m_syncResource->post(rep, OC::QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
     }
 
-    void setCallback(const std::function<void(const std::string&, const std::string&, const std::string&)> & messageFunc,
-            const std::function<void(int, const std::string&)> & syncFunc)
+    void setCallback(std::function<void(const int&, const std::string&,
+            const std::string&, const std::string&)> messageFunc,
+            const std::function<void(const int&, const int&)> & syncFunc)
     {
         m_messageFunc = messageFunc;
         m_syncFunc = syncFunc;
@@ -85,11 +87,16 @@ private:
     }
     void findResultCallback(std::shared_ptr<OC::OCResource> resource)
     {
+
         std::cout << __func__ << " " << resource->host() << std::endl;
-        resource->get(OC::QueryParamsMap(),
-                std::bind(&NSConsumerSimulator::onGet, this,
-                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, resource),
-                OC::QualityOfService::LowQos);
+
+        if(resource->uri() == "/notification")
+        {
+            resource->get(OC::QueryParamsMap(),
+                    std::bind(&NSConsumerSimulator::onGet, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, resource),
+                    OC::QualityOfService::LowQos);
+        }
     }
     void onGet(const OC::HeaderOptions &/*headerOption*/,
             const OC::OCRepresentation & rep , const int eCode,
@@ -97,21 +104,42 @@ private:
     {
         std::cout << __func__ << " " << rep.getHost() << " result : " << eCode << std::endl;
 
-        std::shared_ptr<OC::OCResource> msgResource
-            = OC::OCPlatform::constructResourceObject(resource->host(), resource->uri() + "/message",
-                    resource->connectivityType(), false, resource->getResourceTypes(),
-                    resource->getResourceInterfaces());
+        OC::QueryParamsMap map;
+        map.insert(std::pair<std::string,std::string>(std::string("consumerid"), std::string("123456789012345678901234567890123456")));
+
+        try
+        {
+            std::cout << "resourc : host " << resource->host() << std::endl;
+            std::cout << "resourc : uri " << resource->uri() << std::endl;
+            std::cout << " resource->connectivityType() " <<  resource->connectivityType() << std::endl;
+            std::cout << "resourc : getResourceInterfaces " << resource->getResourceInterfaces()[0] << std::endl;
+            std::cout << "resourc : getResourceTypes " << resource->getResourceTypes()[0] << std::endl;
+
+
+            std::vector<std::string> rts{"oic.r.notification"};
+
+            std::shared_ptr<OC::OCResource> msgResource
+                = OC::OCPlatform::constructResourceObject(
+                        std::string(resource->host()), std::string(resource->uri() + "/message"),
+                        OCConnectivityType(resource->connectivityType()), true, rts,
+                        std::vector<std::string>(resource->getResourceInterfaces()));
+
+            msgResource->observe(OC::ObserveType::Observe, map,
+                            std::bind(&NSConsumerSimulator::onObserve, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, std::placeholders::_4, resource),
+                            OC::QualityOfService::LowQos);
+        }
+        catch(std::exception & e)
+        {
+            std::cout << "OC::ResoureInitException : " << e.what() << std::endl;
+        }
         m_syncResource
             = OC::OCPlatform::constructResourceObject(resource->host(), resource->uri() + "/sync",
-                    resource->connectivityType(), false, resource->getResourceTypes(),
+                    resource->connectivityType(), true, resource->getResourceTypes(),
                     resource->getResourceInterfaces());
 
-        msgResource->observe(OC::ObserveType::Observe, OC::QueryParamsMap(),
-                std::bind(&NSConsumerSimulator::onObserve, this,
-                        std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3, std::placeholders::_4, resource),
-                OC::QualityOfService::LowQos);
-        m_syncResource->observe(OC::ObserveType::Observe, OC::QueryParamsMap(),
+        m_syncResource->observe(OC::ObserveType::Observe, map,
                 std::bind(&NSConsumerSimulator::onObserve, this,
                         std::placeholders::_1, std::placeholders::_2,
                         std::placeholders::_3, std::placeholders::_4, resource),
@@ -125,20 +153,21 @@ private:
         std::cout << __func__ << " " << rep.getHost() << " result : " << eCode;
         std::cout << " uri : " << rep.getUri() << std::endl;
 
-        if (rep.getUri() == "/notification/message" && rep.hasAttribute("ID")
-                && rep.getValueToString("ID") != "0000-0000-0000-0000")
+        if (rep.getUri() == "/notification/message" && rep.hasAttribute("MESSAGE_ID")
+                && rep.getValue<int>("MESSAGE_ID") != 1)
         {
-            std::cout << "ID : " << rep.getValueToString("ID") << std::endl;
+            std::cout << "ID : " << rep.getValue<int>("ID") << std::endl;
             std::cout << "TITLE : " << rep.getValueToString("TITLE") << std::endl;
             std::cout << "CONTENT : " << rep.getValueToString("CONTENT") << std::endl;
-            m_messageFunc(std::string(rep.getValueToString("ID")),
+            m_messageFunc(int(rep.getValue<int>("MESSAGE_ID")),
                           std::string(rep.getValueToString("TITLE")),
-                          std::string(rep.getValueToString("CONTENT")));
+                          std::string(rep.getValueToString("CONTENT")),
+                          std::string(rep.getValueToString("SOURCE")));
         }
         else if (rep.getUri() == "/notification/sync")
         {
-            m_syncFunc(int(rep.getValue<int>("STATE")),
-                       std::string(rep.getValueToString("ID")));
+            std::cout << "else if (rep.getUri() == sync) " << std::endl;
+            m_syncFunc(int(rep.getValue<int>("STATE")), int(rep.getValue<int>("ID")));
         }
     }
 };
