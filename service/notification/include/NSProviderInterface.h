@@ -37,15 +37,16 @@ extern "C"
 #include <stdint.h>
 
 /**
- * Provider uses this callback function to receive subscription request of consumer
- * @param[in] consumer        Consumer who subscribes the resource
+ * Invoked the subscription request from consumer is received
+ * @param[in] consumer  Consumer who subscribes the resource
  */
 typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
 
 /**
- * Provider use this callback function to receive the status of the message
+ * Invoked when the synchronization data which has notification message 
+ * read/delete event from consumer is received
  * synchronization
- * @param[in] sync        Synchronization information of the notification message
+ * @param[in] syncinfo  Synchronization information of the notification message
  */
 typedef void (*NSProviderSyncInfoCallback)(NSSyncInfo *);
 
@@ -96,23 +97,17 @@ NSResult NSSendMessage(NSMessage *msg);
 NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted);
 
 /**
- * Get consumer list that is stored in the cache of notification service
- * @param[in]  list  Consumer list
- * @param[in]  size  the number of consumers stored in the cache
- * @return ::NS_OK or result code of NSResult
- */
-// NSResult NSGetConsumerList(uint8_t *list, uint32_t size);
-
-/**
- * Send read-check to provider in order to synchronize notification status with other consumers
- * @param[in]  message  Notification message to synchronize the status
+ * Send sync type in order to synchronize notification status with other consumers,
+ * when provider consumes the notification such as READ, DELETE
+ * @param[in]  messageId  Notification message if to synchronize the status
+ * @param[in]  type  changed notification status from NSSyncType
  * @return ::NS_OK or result code of NSResult
  */
 NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 
 
 /**
- * Initialize NSMessage struct, our service set message id and provider(device) id
+ * Initialize NSMessage structure with message id and provider(device) id
  * @return ::NSMessage *
  */
 NSMessage * NSCreateMessage();

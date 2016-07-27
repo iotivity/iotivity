@@ -35,26 +35,29 @@ extern "C"
 #include "NSCommon.h"
 
 /**
- * Consumer uses this callback function to receive the discovered providers
- * @param[in] provider        Provider who has the notification resource
+ * Invoked when the discovered provider is received
+ * @param[in] provider  Provider who has the notification resource
  */
 typedef void (* NSProviderDiscoveredCallback)(NSProvider *);
 
+/**
+ * Invoked when the response of the subscription is received
+ * @param[in] provider  Provider which has the notification resource
+ */
 typedef void (* NSSubscriptionAcceptedCallback)(NSProvider *);
 
 /**
- * Consumer use this callback function to receive notification message from provider
+ * Invoked when the notification message from provider is received
  * synchronization
- * @param[in] provider    Provider who sends notification message
- * @param[in] message     Notification message
+ * @param[in] message  Notification message
  */
 typedef void (* NSMessageReceivedCallback)(NSMessage *);
 
 /**
- * Provider and consumer use this callback function to receive the status of the message
+ * Invoked when the synchronization data which has notification message 
+ * read/delete event from provider/consumer is received
  * synchronization
- * @param[in] provider    Provider who requests synchronization with the status
- * @param[in] sync        Synchronization information of the notification message
+ * @param[in] syncInfo  Synchronization information of the notification message
  */
 typedef void (* NSSyncInfoReceivedCallback)(NSSyncInfo *);
 
@@ -69,9 +72,7 @@ typedef struct
 
 /**
  * Initialize notification service for consumer
- * @param[in]  providerDiscoveredCallback   Callback function to discover notification providers
- * @param[in]  notificationReceivedCallback   Callback function to receive notification messages
- * @param[in]  syncCallback   Callback function to receive synchronization status of notification
+ * @param[in]  config  NSConsumerconfig structure of callback functions
  * @return ::NS_OK or result code of NSResult
  */
 NSResult NSStartConsumer(NSConsumerConfig config);
@@ -109,11 +110,29 @@ NSResult NSSubscribe(NSProvider *provider);
  */
 NSResult NSUnsubscribe(NSProvider *provider);
 
+/**
+ * Send sync type to provider in order to synchronize notification status with other consumers
+ * when consumer consumes the notification such as READ, DELETE
+ * @param[in]  providerId  Provider id of the Notification message
+ * @param[in]  messageId  Notification message id to synchronize the status
+ * @param[in]  type  changed notification status from NSSyncType
+ * @return ::NS_OK or result code of NSResult
+ */
 NSResult NSConsumerSendSyncInfo(
         const char * providerId, uint64_t messageId, NSSyncType type);
 
+/**
+ * Request NSProvider that is matched by provider id
+ * @param[in]  providerId  the id of provider that user wants to get
+ * @return NSProvider
+ */
 NSProvider * NSConsumerGetProvider(const char * providerId);
 
+/**
+ * Request NSMessage that is matched by message id
+ * @param[in]  messageId  the id of message that user wants to get
+ * @return NSMessage
+ */
 NSMessage * NSConsumerGetMessage(uint64_t messageId);
 
 #ifdef __cplusplus
