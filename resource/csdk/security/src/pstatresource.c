@@ -529,7 +529,6 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
          prevMsgId = ehRequest->messageID;
      }
 
-
     // Send response payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
                    OC_EH_OK : OC_EH_ERROR;

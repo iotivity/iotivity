@@ -859,8 +859,6 @@ exit:
         {
             if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
             {
-                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
-                                    "DOXM will be reverted.");
                 RestoreDoxmToInitState();
                 RestorePstatToInitState();
             }
