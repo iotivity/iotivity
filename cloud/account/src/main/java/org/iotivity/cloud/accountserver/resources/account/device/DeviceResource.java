@@ -96,9 +96,8 @@ public class DeviceResource extends Resource {
 
         ArrayList<String> deviceList = mAsManager.requestAccountDevices(userId);
 
-        if (request.getUriQueryMap().get("di") != null) {
-            String di = request.getUriQueryMap().get("di").get(0);
-            if (deviceList.contains(di)) {
+        if (request.getUriQueryMap().get("di") != null) {            
+            if (deviceList.containsAll(request.getUriQueryMap().get("di"))) {
                 return MessageBuilder.createResponse(request,
                         ResponseStatus.VALID);
             } else {

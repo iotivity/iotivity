@@ -119,8 +119,7 @@ public class ResourceFind extends Resource {
         uriQuery.append(coapDevice.getAccessToken());
 
         if (request.getUriQueryMap().get("di") != null) {
-            String di = request.getUriQueryMap().get("di").get(0);
-            if (di != null) {
+            for(String di : request.getUriQueryMap().get("di")){
                 uriQuery.append("&");
                 uriQuery.append("di" + "=");
                 uriQuery.append(di);
