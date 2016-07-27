@@ -69,26 +69,23 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
 void printConfiguration(EnrolleeConf conf)
 {
     cout << "===========================================" << endl;
-    DeviceConfig devConfig = conf.getDevConf();
-    WiFiConfig wifiConfig = conf.getWiFiConf();
+    cout << "\tDevice Name : " << conf.getDeviceName() << endl;
 
-    cout << "\tDeviceConfig.name : " << devConfig.name << endl;
-    cout << "\tDeviceConfig.language : " << devConfig.language << endl;
-    cout << "\tDeviceConfig.country : " << devConfig.country << endl;
-
-    for(auto mode = wifiConfig.modes.begin(); mode != wifiConfig.modes.end(); ++mode)
+    for(auto it : conf.getWiFiModes())
     {
-        cout << "\tnetInfo.modes : " << static_cast<int>(*mode) << endl;
+        cout << "\tSupported WiFi modes : " << it << endl;
     }
-    cout << "\tnetInfo.freq : " << static_cast<int>(wifiConfig.freq) << endl;
+
+    cout << "\tSupported WiFi freq : " << static_cast<int>(conf.getWiFiFreq()) << endl;
+    cout << "\tCloud accessibility: " << conf.isCloudAccessible() << endl;
     cout << "===========================================" << endl;
 }
 
 void printStatus(EnrolleeStatus status)
 {
     cout << "===========================================" << endl;
-    cout << "\tEnrolleeStatus.provStatus : " << status.provStatus << endl;
-    cout << "\tEnrolleeStatus.lastErrCode : " << status.lastErrCode << endl;
+    cout << "\tProvStatus : " << status.getProvStatus() << endl;
+    cout << "\tLastErrCode : " << status.getLastErrCode() << endl;
     cout << "===========================================" << endl;
 }
 
@@ -176,17 +173,14 @@ void provisionDeviceProperty()
     if(!remoteEnrollee)
         return;
 
-    DeviceProp deviceProp;
-    deviceProp.WIFI.ssid = "Iotivity_SSID";
-    deviceProp.WIFI.pwd = "Iotivity_PWD";
-    deviceProp.WIFI.authtype = WPA2_PSK;
-    deviceProp.WIFI.enctype = TKIP_AES;
-    deviceProp.Device.language = "korean";
-    deviceProp.Device.country = "Korea";
+    DeviceProp devProp;
+    devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
+    devProp.setDevConfProp("korean", "Korea");
 
     try
     {
-        remoteEnrollee->provisionDeviceProperties(deviceProp, deviceProvisioningStatusCallback);
+        //remoteEnrollee->provisionDeviceProperties(deviceProp, deviceProvisioningStatusCallback);
+        remoteEnrollee->provisionDeviceProperties(devProp, deviceProvisioningStatusCallback);
     }
     catch (OCException &e)
     {
@@ -220,9 +214,7 @@ void provisionCloudProperty()
         return;
 
     CloudProp cloudProp;
-    cloudProp.authCode = "authCode";
-    cloudProp.authProvider = "authProvider";
-    cloudProp.ciServer = "ciServer";
+    cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
 
     try
     {

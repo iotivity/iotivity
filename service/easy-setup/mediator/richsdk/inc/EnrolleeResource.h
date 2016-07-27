@@ -74,8 +74,6 @@ namespace OIC
                     const int eCode);
             void checkProvInformationCb(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
-            EnrolleeConf parseEnrolleeConfFromRepresentation(const OCRepresentation& rep);
-            EnrolleeStatus parseEnrolleeStatusFromRepresentation(const OCRepresentation& rep);
         };
     }
 }

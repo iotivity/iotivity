@@ -83,7 +83,7 @@ namespace OIC
                     result = ESResult::ES_UNAUTHORIZED;
                 }
 
-                EnrolleeStatus enrolleeStatus = {ES_STATE_INIT, ES_ERRCODE_NO_ERROR};
+                EnrolleeStatus enrolleeStatus(rep);
                 std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus = std::make_shared<
                         GetEnrolleeStatus >(ESResult::ES_ERROR, enrolleeStatus);
 
@@ -91,7 +91,7 @@ namespace OIC
             }
             else
             {
-                EnrolleeStatus enrolleeStatus = parseEnrolleeStatusFromRepresentation(rep);
+                EnrolleeStatus enrolleeStatus(rep);
                 std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus = std::make_shared<
                         GetEnrolleeStatus >(ESResult::ES_OK, enrolleeStatus);
 
@@ -119,14 +119,14 @@ namespace OIC
                     result = ESResult::ES_UNAUTHORIZED;
                 }
 
-                EnrolleeConf enrolleeConf;
+                EnrolleeConf enrolleeConf(rep);
                 std::shared_ptr< GetConfigurationStatus > getConfigurationStatus = std::make_shared<
                         GetConfigurationStatus >(result, enrolleeConf);
                 m_getConfigurationStatusCb(getConfigurationStatus);
             }
             else
             {
-                EnrolleeConf enrolleeConf = parseEnrolleeConfFromRepresentation(rep);
+                EnrolleeConf enrolleeConf(rep);
 
                 std::shared_ptr< GetConfigurationStatus > getConfigurationStatus = std::make_shared<
                         GetConfigurationStatus >(ESResult::ES_OK, enrolleeConf);
@@ -172,7 +172,7 @@ namespace OIC
 
             if (result != OCStackResult::OC_STACK_OK)
             {
-                EnrolleeStatus enrolleeStatus = {ES_STATE_INIT, ES_ERRCODE_NO_ERROR};
+                EnrolleeStatus enrolleeStatus(rep);// = {ES_STATE_INIT, ES_ERRCODE_NO_ERROR};
                 std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus = std::make_shared<
                         GetEnrolleeStatus >(ESResult::ES_ERROR, enrolleeStatus);
 
@@ -205,7 +205,7 @@ namespace OIC
 
             if (result != OCStackResult::OC_STACK_OK)
             {
-                EnrolleeConf enrolleeConf;
+                EnrolleeConf enrolleeConf(rep);
                 std::shared_ptr< GetConfigurationStatus > getConfigurationStatus = std::make_shared<
                         GetConfigurationStatus >(ESResult::ES_ERROR, enrolleeConf);
                 m_getConfigurationStatusCb(getConfigurationStatus);
@@ -214,7 +214,6 @@ namespace OIC
         }
 
         void EnrolleeResource::provisionEnrollee(const DeviceProp& deviceProp)
-
         {
             if (m_ocResource == nullptr)
             {
@@ -222,27 +221,7 @@ namespace OIC
             }
 
             OC::QueryParamsMap query;
-            OC::OCRepresentation provisioningRepresentation;
-
-            provisioningRepresentation.setValue(OC_RSRVD_ES_SSID, deviceProp.WIFI.ssid);
-            provisioningRepresentation.setValue(OC_RSRVD_ES_CRED, deviceProp.WIFI.pwd);
-            provisioningRepresentation.setValue(OC_RSRVD_ES_AUTHTYPE, deviceProp.WIFI.authtype);
-            provisioningRepresentation.setValue(OC_RSRVD_ES_ENCTYPE, deviceProp.WIFI.enctype);
-            provisioningRepresentation.setValue(OC_RSRVD_ES_LANGUAGE, deviceProp.Device.language);
-            provisioningRepresentation.setValue(OC_RSRVD_ES_COUNTRY, deviceProp.Device.country);
-
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ssid - %s",
-                    (deviceProp.WIFI.ssid).c_str());
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
-                    (deviceProp.WIFI.pwd).c_str());
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : authtype - %d",
-                    deviceProp.WIFI.authtype);
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : enctype - %d",
-                    deviceProp.WIFI.enctype);
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : language - %s",
-                    (deviceProp.Device.language).c_str());
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : country - %s",
-                    (deviceProp.Device.country).c_str());
+            OC::OCRepresentation provisioningRepresentation = deviceProp.toOCRepresentation();
 
             m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
                     provisioningRepresentation, QueryParamsMap(),
@@ -252,96 +231,6 @@ namespace OIC
                     std::bind(&EnrolleeResource::checkProvInformationCb, this,
                     std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3)));
-        }
-
-        EnrolleeConf EnrolleeResource::parseEnrolleeConfFromRepresentation(const OCRepresentation& rep)
-        {
-            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_RES_TAG, "Enter parseEnrolleeConfFromRepresentation");
-
-            DeviceConfig devConf;
-            WiFiConfig wifiConf;
-            bool cloudable = false;
-
-            std::vector<OCRepresentation> children = rep.getChildren();
-
-            for(auto prop = children.begin(); prop != children.end(); ++prop)
-            {
-                if(prop->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
-                {
-                    OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_RES_TAG, "Find wifi resource");
-                    if(prop->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE)
-                                && prop->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
-                    {
-                        std::vector<int> modes = prop->getValue<std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE);
-
-                        for(auto mode = modes.begin(); mode != modes.end(); ++mode)
-                        {
-                            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "OC_RSRVD_ES_SUPPORTEDWIFIMODE = %d",
-                                *mode);
-                            wifiConf.modes.push_back(static_cast<WIFI_MODE>(*mode));
-                        }
-
-                        wifiConf.freq = static_cast<WIFI_FREQ>(prop->getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
-
-
-                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "OC_RSRVD_ES_SUPPORTEDWIFIFREQ = %d",
-                                wifiConf.freq);
-                    }
-                }
-
-                else if(prop->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
-                {
-                    OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_RES_TAG, "Find devconf");
-                    if(prop->hasAttribute(OC_RSRVD_ES_DEVNAME)
-                                && prop->hasAttribute(OC_RSRVD_ES_LANGUAGE)
-                                && prop->hasAttribute(OC_RSRVD_ES_COUNTRY))
-                    {
-                        //TODO:: setting DeviceID.
-                        //devInfo.id = devId;
-                        devConf.name = prop->getValue<std::string>(OC_RSRVD_ES_DEVNAME);
-                        devConf.language = prop->getValue<std::string>(OC_RSRVD_ES_LANGUAGE);
-                        devConf.country = prop->getValue<std::string>(OC_RSRVD_ES_COUNTRY);
-
-                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "OC_RSRVD_ES_DEVNAME = %s",
-                                devConf.name.c_str());
-                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "OC_RSRVD_ES_LANGUAGE = %s",
-                                devConf.language.c_str());
-                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "OC_RSRVD_ES_COUNTRY = %s",
-                                devConf.country.c_str());
-                    }
-                }
-
-                else if(prop->getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
-                {
-                    OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_RES_TAG, "Find cloudserver");
-                    cloudable = true;
-                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "cloudable = %d",
-                                cloudable);
-                }
-            }
-
-            return EnrolleeConf(devConf, wifiConf, cloudable);
-        }
-
-        EnrolleeStatus EnrolleeResource::parseEnrolleeStatusFromRepresentation(const OCRepresentation& rep)
-        {
-            OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_RES_TAG, "Enter parseEnrolleeStatusFromRepresentation");
-
-            EnrolleeStatus enrolleeStatus;
-
-            if(rep.hasAttribute(OC_RSRVD_ES_PROVSTATUS))
-            {
-                enrolleeStatus.provStatus = static_cast<ProvStatus>(
-                                                        rep.getValue<int>(OC_RSRVD_ES_PROVSTATUS));
-            }
-
-            if(rep.hasAttribute(OC_RSRVD_ES_LAST_ERRORCODE))
-            {
-                enrolleeStatus.lastErrCode = static_cast<ESErrorCode>(
-                                                        rep.getValue<int>(OC_RSRVD_ES_LAST_ERRORCODE));
-            }
-
-            return enrolleeStatus;
         }
     }
 }

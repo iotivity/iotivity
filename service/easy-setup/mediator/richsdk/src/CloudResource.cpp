@@ -44,18 +44,7 @@ namespace OIC
         {
             OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter provisionEnrollee.");
 
-            OCRepresentation provisioningRepresentation;
-
-            provisioningRepresentation.setValue(OC_RSRVD_ES_AUTHCODE, cloudProp.authCode);
-            provisioningRepresentation.setValue(OC_RSRVD_ES_AUTHPROVIDER, cloudProp.authProvider);
-            provisioningRepresentation.setValue(OC_RSRVD_ES_CISERVER, cloudProp.ciServer);
-
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "provisionEnrollee : authCode - %s",
-                    (cloudProp.authCode).c_str());
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "provisionEnrollee : authProvider - %s",
-                    (cloudProp.authProvider).c_str());
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "provisionEnrollee : ciServer - %s",
-                    (cloudProp.ciServer).c_str());
+            OCRepresentation provisioningRepresentation = cloudProp.toOCRepresentation();
 
             m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
                         provisioningRepresentation, QueryParamsMap(),

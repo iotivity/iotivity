@@ -338,7 +338,7 @@ namespace OIC
             m_enrolleeResource->getConfiguration();
         }
 
-        void RemoteEnrollee::provisionDeviceProperties(const DeviceProp& devProp, DevicePropProvStatusCb callback)
+        void RemoteEnrollee::provisionDeviceProperties(const DeviceProp& deviceProp, DevicePropProvStatusCb callback)
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionDeviceProperties");
 
@@ -354,7 +354,7 @@ namespace OIC
                 throw ESBadRequestException ("Device not created");
             }
 
-            if(devProp.WIFI.ssid.empty())
+            if(!deviceProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_SSID))
             {
                 throw ESBadRequestException ("Invalid Provisiong Data.");
             }
@@ -363,7 +363,7 @@ namespace OIC
                     &RemoteEnrollee::devicePropProvisioningStatusHandler, this, std::placeholders::_1);
 
             m_enrolleeResource->registerDevicePropProvStatusCallback(devicePropProvStatusCb);
-            m_enrolleeResource->provisionEnrollee(devProp);
+            m_enrolleeResource->provisionEnrollee(deviceProp);
         }
 
         void RemoteEnrollee::initCloudResource()
@@ -416,9 +416,9 @@ namespace OIC
 
             m_cloudPropProvStatusCb = callback;
 
-            if(cloudProp.authCode.empty()
-                || cloudProp.authProvider.empty()
-                || cloudProp.ciServer.empty())
+            if(!cloudProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_AUTHCODE) ||
+                !cloudProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_AUTHPROVIDER) ||
+                !cloudProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_CISERVER))
             {
                 throw ESBadRequestException ("Invalid Cloud Provisiong Info.");
             }
