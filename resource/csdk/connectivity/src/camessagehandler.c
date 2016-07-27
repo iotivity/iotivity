@@ -406,40 +406,49 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     coap_list_t *options = NULL;
     coap_transport_type transport = coap_udp;
     CAResult_t res = CA_SEND_FAILED;
-    if (NULL != data->requestInfo)
+
+    if (!data->requestInfo && !data->responseInfo)
+    {
+        OIC_LOG(ERROR, TAG, "request or response info is empty");
+        return res;
+    }
+
+    if (data->requestInfo)
     {
         OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
         info = &data->requestInfo->info;
         pdu = CAGeneratePDU(CA_GET, info, data->remoteEndpoint, &options, &transport);
-
-        if (NULL != pdu)
-        {
-#ifdef WITH_BWT
-            if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
-            {
-                // Blockwise transfer
-                res = CAAddBlockOption(&pdu, info, data->remoteEndpoint, &options);
-                if (CA_STATUS_OK != res)
-                {
-                    OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
-                    goto exit;
-                }
-            }
-#endif // WITH_BWT
-        }
-        else
-        {
-            OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
-            CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
-            return res;
-        }
     }
-    else
+    else if (data->responseInfo)
     {
-        OIC_LOG(ERROR, TAG, "not supported message type for multicast.");
+        OIC_LOG(DEBUG, TAG, "responseInfo is available..");
+
+        info = &data->responseInfo->info;
+        pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint,
+                            &options, &transport);
+    }
+
+    if (!pdu)
+    {
+        OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
+        CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
+        coap_delete_list(options);
         return res;
     }
+
+#ifdef WITH_BWT
+    if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
+    {
+        // Blockwise transfer
+        res = CAAddBlockOption(&pdu, info, data->remoteEndpoint, &options);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
+            goto exit;
+        }
+    }
+#endif // WITH_BWT
 
     CALogPDUInfo(pdu, data->remoteEndpoint);
 
