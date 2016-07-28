@@ -130,7 +130,7 @@ protected:
 
 };
 
-TEST_F(NotificationProviderTest, StartProviderPositive)
+TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyTrue)
 {
     NSResult ret = NSStartProvider(true,
             NSRequestedSubscribeCallbackEmpty,
@@ -149,6 +149,21 @@ TEST_F(NotificationProviderTest, StopProviderPositive)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
+    EXPECT_EQ(ret, NS_OK);
+}
+
+TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
+{
+    NSResult ret = NSStartProvider(false,
+            NSRequestedSubscribeCallbackEmpty,
+            NSSyncCallbackEmpty);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, std::chrono::milliseconds(3000));
+    g_consumerSimul.findProvider();
+
+    responseCon.wait_for(lock, std::chrono::milliseconds(3000));
+    NSStopProvider();
     EXPECT_EQ(ret, NS_OK);
 }
 
