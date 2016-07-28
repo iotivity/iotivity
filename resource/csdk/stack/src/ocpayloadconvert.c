@@ -28,7 +28,10 @@
 #include "ocrandom.h"
 #include "ocresourcehandler.h"
 #include "cbor.h"
+
+#if defined(RD_CLIENT) || defined(RD_SERVER)
 #include "rdpayload.h"
+#endif
 
 #define TAG "OIC_RI_PAYLOADCONVERT"
 
@@ -155,8 +158,10 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, uint8_t* outPayload, s
             return OCConvertPresencePayload((OCPresencePayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_SECURITY:
             return OCConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
+#if defined(RD_CLIENT) || defined(RD_SERVER)
         case PAYLOAD_TYPE_RD:
             return OCRDPayloadToCbor((OCRDPayload*)payload, outPayload, size);
+#endif
         default:
             OIC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
             return CborErrorUnknownType;

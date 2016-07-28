@@ -25,7 +25,7 @@ import org.apache.oltu.oauth2.as.issuer.MD5Generator;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuerImpl;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class TokenGenerator {
 
@@ -38,7 +38,7 @@ public class TokenGenerator {
         try {
 
             accessToken = oauthIssuerImpl.accessToken();
-            Logger.d("accessToken : " + accessToken);
+            Log.d("accessToken : " + accessToken);
 
         } catch (OAuthSystemException e) {
 
@@ -57,7 +57,7 @@ public class TokenGenerator {
         try {
 
             refreshToken = oauthIssuerImpl.refreshToken();
-            Logger.d("refreshToken : " + refreshToken);
+            Log.d("refreshToken : " + refreshToken);
 
         } catch (OAuthSystemException e) {
 

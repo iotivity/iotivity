@@ -62,9 +62,11 @@ namespace OCPlatformTest
     {
     }
 
+#ifdef WITH_CLOUD
     void onObserve(const HeaderOptions, const OCRepresentation&, const int&, const int&)
     {
     }
+#endif
 
     void directPairHandler(std::shared_ptr<OCDirectPairing> /*dev*/, OCStackResult /*res*/)
     {
@@ -837,6 +839,7 @@ namespace OCPlatformTest
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
 
+#ifdef WITH_CLOUD
     //SubscribeDevicePresence Test
     TEST(SubscribeDevicePresenceTest, DISABLED_SubscribeDevicePresenceWithValidParameters)
     {
@@ -877,6 +880,7 @@ namespace OCPlatformTest
                 hostAddress, queryParams, CT_DEFAULT, &onObserve));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
+#endif
 
     TEST(FindDirectPairingTest, FindDirectPairingNullCallback)
     {

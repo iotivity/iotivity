@@ -30,8 +30,6 @@ import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
-import org.iotivity.cloud.mqserver.Constants;
-import org.iotivity.cloud.mqserver.MessageQueueUtils;
 import org.iotivity.cloud.mqserver.kafka.KafkaConsumerWrapper;
 import org.iotivity.cloud.mqserver.kafka.KafkaProducerWrapper;
 
@@ -87,8 +85,8 @@ public class Topic {
 
     public IResponse handleCreateSubtopic(IRequest request) {
 
-        String newTopicName = MessageQueueUtils.extractDataFromPayload(
-                request.getPayload(), Constants.MQ_TOPIC);
+        String newTopicName = request.getUriPathSegments().get(
+                request.getUriPathSegments().size() - 1);
 
         String newTopicType = new String();
 
@@ -117,26 +115,23 @@ public class Topic {
 
         mSubtopics.put(newTopicName, newTopic);
 
-        return MessageBuilder.createResponse(
-                request,
-                ResponseStatus.CREATED,
-                ContentFormat.APPLICATION_CBOR,
-                MessageQueueUtils.buildPayload(Constants.MQ_LOCATION,
-                        newTopic.getName()));
+        return MessageBuilder.createResponse(request, ResponseStatus.CREATED);
     }
 
     public IResponse handleRemoveSubtopic(IRequest request, String topicName) {
 
         Topic targetTopic = getSubtopic(topicName);
 
-        // TODO check error
         if (targetTopic == null) {
             // topic doesn't exist
             return MessageBuilder.createResponse(request,
                     ResponseStatus.BAD_REQUEST);
         }
 
+        targetTopic.cleanup();
+
         if (mTopicManager.removeTopic(targetTopic) == false) {
+
             return MessageBuilder.createResponse(request,
                     ResponseStatus.INTERNAL_SERVER_ERROR);
         }
@@ -224,6 +219,12 @@ public class Topic {
                 ContentFormat.APPLICATION_CBOR, mLatestData);
     }
 
+    public void cleanup() {
+
+        mKafkaProducerOperator.closeConnection();
+        mKafkaConsumerOperator.closeConnection();
+    }
+
     // callback from Kafka Consumer
     public void onMessagePublished(byte[] message) {
 
@@ -232,7 +233,6 @@ public class Topic {
         notifyPublishedMessage();
     }
 
-    // TODO check
     private Topic getSubtopic(String topicName) {
 
         if (mSubtopics.containsKey(topicName) == false) {
@@ -245,6 +245,7 @@ public class Topic {
     private void notifyPublishedMessage() {
         synchronized (mSubscribers) {
             for (TopicSubscriber subscriber : mSubscribers.values()) {
+
                 subscriber.mSubscriber.sendResponse(MessageBuilder
                         .createResponse(subscriber.mRequest,
                                 ResponseStatus.CONTENT,

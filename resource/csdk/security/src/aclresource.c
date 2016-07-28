@@ -1180,12 +1180,10 @@ exit:
     // A device should always have a default acl. Therefore, payload should never be NULL.
     ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
 
-    // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed for HandleACLGetRequest");
-    }
+    //Send payload to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     OICFree(payload);
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
@@ -1229,12 +1227,9 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
         DeleteACLList(newAcl);
     }
 
-    // Send payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleACLPostRequest");
-    }
+    //Send response to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -1260,12 +1255,9 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
     }
 
 exit:
-    // Send payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleACLDeleteRequest");
-    }
+    //Send response to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     return ehRet;
 }
@@ -1301,8 +1293,8 @@ OCEntityHandlerResult ACLEntityHandler(OCEntityHandlerFlag flag, OCEntityHandler
                 break;
 
             default:
-                ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                               OC_EH_OK : OC_EH_ERROR;
         }
     }
 

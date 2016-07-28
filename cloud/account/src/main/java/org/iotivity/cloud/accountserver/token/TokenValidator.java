@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class TokenValidator {
 
@@ -38,14 +38,14 @@ public class TokenValidator {
         // check token existed
         valid = AccountDBManager.getInstance().hasAccessToken(token);
         if (!valid) {
-            Logger.w("accessToken is not existed..");
+            Log.w("accessToken is not existed..");
             return false;
         }
 
         // check token expired
         if (getElaspedSeconds(token) > TokenPolicy.EXPIRES_IN) {
 
-            Logger.w("accessToken is expired..");
+            Log.w("accessToken is expired..");
             return false;
         }
 
@@ -68,10 +68,10 @@ public class TokenValidator {
 
         long difference = currentTime.getTime() - issuedTime.getTime();
         long elaspedSeconds = difference / 1000;
-        // Logger.d("currentTime : " + currentTime.getTime());
-        // Logger.d("issuedTime : " + issuedTime.getTime());
-        // Logger.d("difference : " + difference);
-        Logger.d("accessToken elasped time: " + elaspedSeconds + "s");
+        // Log.d("currentTime : " + currentTime.getTime());
+        // Log.d("issuedTime : " + issuedTime.getTime());
+        // Log.d("difference : " + difference);
+        Log.d("accessToken elasped time: " + elaspedSeconds + "s");
 
         return elaspedSeconds;
     }
@@ -86,7 +86,7 @@ public class TokenValidator {
         // check token existed
         valid = AccountDBManager.getInstance().hasRefreshToken(token);
         if (!valid)
-            Logger.w("refreshToken is not existed..");
+            Log.w("refreshToken is not existed..");
 
         return valid;
     }

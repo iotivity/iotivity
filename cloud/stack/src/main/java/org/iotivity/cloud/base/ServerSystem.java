@@ -40,7 +40,7 @@ import org.iotivity.cloud.base.resource.ResourceManager;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
-import org.iotivity.cloud.util.ErrorLogger;
+import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -95,11 +95,11 @@ public class ServerSystem extends ResourceManager {
             } catch (ServerException e) {
                 ctx.channel().writeAndFlush(MessageBuilder.createResponse(msg,
                         e.getErrorResponse()));
-                ErrorLogger.write(ctx.channel(), e);
+                Log.f(ctx.channel(), e);
             } catch (ClientException e) {
-                ErrorLogger.write(ctx.channel(), e);
+                Log.f(ctx.channel(), e);
             } catch (Throwable t) {
-                ErrorLogger.write(ctx.channel(), t);
+                Log.f(ctx.channel(), t);
                 if (msg instanceof CoapRequest) {
                     ctx.channel().writeAndFlush(MessageBuilder.createResponse(
                             msg, ResponseStatus.INTERNAL_SERVER_ERROR));

@@ -30,7 +30,7 @@ import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
 import org.iotivity.cloud.mqserver.Constants;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class KafkaCommonWrapper {
 
@@ -49,7 +49,7 @@ public class KafkaCommonWrapper {
 
     public boolean createTopic(String topic) {
 
-        Logger.d("kafka createTopic - " + topic);
+        Log.d("kafka createTopic - " + topic);
 
         topic = topic.replace('/', '.');
 
@@ -66,7 +66,7 @@ public class KafkaCommonWrapper {
 
     public boolean deleteTopic(String topic) {
 
-        Logger.d("kafka deleteTopic - " + topic);
+        Log.d("kafka deleteTopic - " + topic);
 
         topic = topic.replace('/', '.');
 

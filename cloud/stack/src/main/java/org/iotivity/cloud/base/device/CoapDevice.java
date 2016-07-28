@@ -25,7 +25,7 @@ import java.util.Date;
 
 import org.iotivity.cloud.base.connector.CoapClient;
 import org.iotivity.cloud.base.protocols.IResponse;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -88,7 +88,7 @@ public class CoapDevice extends Device {
 
         if (remainTime < 0) {
 
-            Logger.w("accessToken is expired..");
+            Log.w("accessToken is expired..");
             return true;
         }
 

@@ -66,8 +66,8 @@ extern void* defaultDeviceHandlerCallbackParameter;
 /** The coap scheme */
 #define OC_COAP_SCHEME "coap://"
 
-/** the first outgoing sequence number will be 2*/
-#define OC_OFFSET_SEQUENCE_NUMBER (1)
+/** the first outgoing sequence number will be 1*/
+#define OC_OFFSET_SEQUENCE_NUMBER (0)
 
 /**
  * This structure will be created in occoap and passed up the stack on the server side.

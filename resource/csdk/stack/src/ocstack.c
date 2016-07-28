@@ -1266,7 +1266,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
             OCClientResponse response =
                 {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
-            response.sequenceNumber = -1;
+            response.sequenceNumber = MAX_SEQUENCE_NUMBER + 1;
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
             response.resourceUri = responseInfo->info.resourceUri;
@@ -1418,6 +1418,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
             if (cbNode->method == OC_REST_OBSERVE &&
                 response.sequenceNumber > OC_OFFSET_SEQUENCE_NUMBER &&
+                cbNode->sequenceNumber <=  MAX_SEQUENCE_NUMBER &&
                 response.sequenceNumber <= cbNode->sequenceNumber)
             {
                 OIC_LOG_V(INFO, TAG, "Received stale notification. Number :%d",
@@ -4766,3 +4767,61 @@ bool OCResultToSuccess(OCStackResult ocResult)
             return false;
     }
 }
+
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins)
+{
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
+
+    OCResource *resource = NULL;
+
+    resource = findResource((OCResource *) handle);
+    if (!resource)
+    {
+        OIC_LOG(ERROR, TAG, "Resource not found");
+        return OC_STACK_ERROR;
+    }
+
+    resource->ins = ins;
+
+    return OC_STACK_OK;
+}
+
+OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
+{
+    if (!uri)
+    {
+        OIC_LOG(ERROR, TAG, "Resource uri is NULL");
+        return NULL;
+    }
+
+    OCResource *pointer = headResource;
+
+    while (pointer)
+    {
+        if (strncmp(uri, pointer->uri, MAX_URI_LENGTH) == 0)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Found Resource %s", uri);
+            return pointer;
+        }
+        pointer = pointer->next;
+    }
+    return NULL;
+}
+
+OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
+{
+    OCResource *resource = NULL;
+
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(ins, ERROR, OC_STACK_INVALID_PARAM);
+
+    resource = findResource((OCResource *) handle);
+    if (resource)
+    {
+        *ins = resource->ins;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+#endif

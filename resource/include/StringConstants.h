@@ -124,6 +124,7 @@ namespace OC
         static const char DUPLICATE_UUID[]             = "Duplicate UUID in DB";
         static const char INCONSISTENT_DB[]            = "Data in provisioning DB is inconsistent";
         static const char AUTHENTICATION_FAILURE[]     = "Authentication failure";
+        static const char PUBLISH_RESOURCE_FAILED[]    = "Publish Resource failure";
     }
 
     namespace Error

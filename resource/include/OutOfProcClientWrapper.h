@@ -121,7 +121,7 @@ namespace OC
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle /*handle*/)
             {return OC_STACK_NOTIMPL;}
-
+#ifdef WITH_CLOUD
         virtual OCStackResult SubscribeDevicePresence(
             OCDoHandle* /*handle*/,
             const std::string& /*host*/,
@@ -129,6 +129,7 @@ namespace OC
             OCConnectivityType /*connectivityType*/,
             ObserveCallback& /*callback*/)
             {return OC_STACK_NOTIMPL;}
+#endif
 
         virtual OCStackResult GetDefaultQos(QualityOfService& /*QoS*/)
             {return OC_STACK_NOTIMPL;}

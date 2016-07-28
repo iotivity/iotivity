@@ -40,7 +40,7 @@ import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.db.DBManager;
 import org.iotivity.cloud.rdserver.util.TypeCastingManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 public class DiscoveryResource extends Resource {
     private Cbor<HashMap<Object, Object>>      mCbor                     = new Cbor<>();
@@ -167,7 +167,7 @@ public class DiscoveryResource extends Resource {
             responseMapList.add(responseSegment);
         }
 
-        Logger.i("discover payload :" + responseMapList.toString());
+        Log.i("discover payload :" + responseMapList.toString());
 
         byte[] encodedPaylod = mCbor.encodingPayloadToCbor(responseMapList);
 

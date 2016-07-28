@@ -27,7 +27,7 @@ import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.oauth.OAuthServerFactory;
 import org.iotivity.cloud.accountserver.token.Token;
 import org.iotivity.cloud.accountserver.token.TokenManager;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -41,7 +41,7 @@ public class AccountServerManager {
 
     /**
      * API for requesting user account
-     * 
+     *
      * @param userId
      *            user identifier
      * @param deviceId
@@ -62,7 +62,7 @@ public class AccountServerManager {
     /**
      * API for requesting user account and getting session code for registered
      * user.
-     * 
+     *
      * @param userId
      *            user identifier
      * @return String - session code for registered user
@@ -86,7 +86,7 @@ public class AccountServerManager {
     /**
      * API for requesting user identifier corresponding with authorization
      * information.
-     * 
+     *
      * @param authCode
      *            authorization code
      * @param authServer
@@ -105,7 +105,7 @@ public class AccountServerManager {
 
     /**
      * API for requesting user identifier corresponding with session code.
-     * 
+     *
      * @param sessionCode
      *            session code
      * @return String - user identifier
@@ -123,14 +123,14 @@ public class AccountServerManager {
 
     /**
      * API for getting devices corresponding with user identifier.
-     * 
+     *
      * @param userId
      *            user identifier
      * @return ArrayList<String> - list of devices
      */
     public ArrayList<String> requestAccountDevices(String userId) {
 
-        Logger.d("userId= " + userId);
+        Log.d("userId= " + userId);
 
         ArrayList<String> deviceList = AccountDBManager.getInstance()
                 .getDevices(userId);

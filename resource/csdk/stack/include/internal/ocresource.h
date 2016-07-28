@@ -240,6 +240,17 @@ typedef struct OCResource {
 
     /** Pointer of ActionSet which to support group action.*/
     OCActionSet *actionsetHead;
+
+    /** The instance identifier for this web link in an array of web links - used in links. */
+    union
+    {
+        /** An ordinal number that is not repeated - must be unique in the collection context. */
+        uint8_t ins;
+        /** Any unique string including a URI. */
+        char *uniqueStr;
+        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
+        OCIdentity uniqueUUID;
+    };
 } OCResource;
 
 

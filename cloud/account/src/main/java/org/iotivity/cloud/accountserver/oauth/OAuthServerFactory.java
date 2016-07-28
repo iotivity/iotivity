@@ -29,7 +29,7 @@ import java.net.URLClassLoader;
 import java.util.HashMap;
 
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -53,7 +53,7 @@ public class OAuthServerFactory {
                     .invoke(authServerObj, authCode, authServerUrl);
             String errorMessage = authServerInfo.get(Constants.ERROR_MESSAGE);
             if (errorMessage != null) {
-                Logger.d("Exception Error Message from Auth Server : "
+                Log.d("Exception Error Message from Auth Server : "
                         + errorMessage);
             } else {
                 accessToken = authServerInfo.get(Constants.KEY_ACCESS_TOKEN_GH);
@@ -76,7 +76,7 @@ public class OAuthServerFactory {
                     .invoke(authServerObj, accessToken, apiServerUrl);
             String errorMessage = authServerInfo.get(Constants.ERROR_MESSAGE);
             if (errorMessage != null) {
-                Logger.d("Exception Error Message from Auth Server : "
+                Log.d("Exception Error Message from Auth Server : "
                         + errorMessage);
             } else {
                 userId = authServerInfo.get(Constants.KEY_USER_ID);
@@ -106,7 +106,7 @@ public class OAuthServerFactory {
         try {
             URL urls = new URL("jar:" + jarFile.toURI() + "!/");
 
-            Logger.d("urls: " + urls.toString());
+            Log.d("urls: " + urls.toString());
 
             classLoader = new URLClassLoader(new URL[] { urls });
             Class<?> gitHubClass = classLoader

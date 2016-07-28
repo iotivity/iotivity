@@ -28,7 +28,7 @@ import java.util.Date;
 
 import org.bson.Document;
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -48,7 +48,7 @@ public class MongoDB {
 
     /**
      * API creating MongoClient and initializing MongoDatabase
-     * 
+     *
      * @param dbname
      *            database name to create MongoDatabase
      * @throws Exception
@@ -62,7 +62,7 @@ public class MongoDB {
 
     /**
      * API creating collection
-     * 
+     *
      * @param tableName
      *            collection name
      */
@@ -73,7 +73,7 @@ public class MongoDB {
 
     /**
      * API deleting collection
-     * 
+     *
      * @param tableName
      *            collection name
      */
@@ -84,7 +84,7 @@ public class MongoDB {
 
     /**
      * API getting database object
-     * 
+     *
      */
     public MongoDatabase getMongoDatabase() {
 
@@ -113,7 +113,7 @@ public class MongoDB {
 
     /**
      * API for inserting device information of user
-     * 
+     *
      * @param UserDevice
      *            device information of user
      */
@@ -140,7 +140,7 @@ public class MongoDB {
     /**
      * API for getting user identifier corresponding with session code from
      * database
-     * 
+     *
      * @param sessionCode
      *            session code
      * @return String - user identifier
@@ -206,7 +206,7 @@ public class MongoDB {
 
     /**
      * API for getting devices corresponding with user identifier from database
-     * 
+     *
      * @param userId
      *            user identifier
      */
@@ -297,7 +297,7 @@ public class MongoDB {
             updateResource = true;
 
         } else {
-            Logger.e("UpdateResource failed!");
+            Log.e("UpdateResource failed!");
         }
 
         return updateResource;
@@ -338,42 +338,42 @@ public class MongoDB {
 
         ArrayList<UserDevice> dlist = readDeviceResources();
         int size = dlist.size();
-        
-        Logger.i("[" + Constants.DEVICE_TABLE + "]Table");
+
+        Log.i("[" + Constants.DEVICE_TABLE + "]Table");
         for (int i = 0; i < size; i++) {
 
             UserDevice item = dlist.get(i);
 
-            Logger.i("[" + i + "]" + item.getUserId() + ", "
+            Log.i("[" + i + "]" + item.getUserId() + ", "
                     + item.getDeviceId());
         }
 
         /*
          * ArrayList<UserSession> slist = readSessionResources(); size =
          * slist.size();
-         * 
-         * Logger.i("*Table: " + Constants.SESSION_TABLE);
-         * 
+         *
+         * Log.i("*Table: " + Constants.SESSION_TABLE);
+         *
          * for (int i = 0; i < size; i++) {
-         * 
+         *
          * UserSession item = slist.get(i);
-         * 
-         * Logger.i("[" + i + "]" + item.getUserId() + ", " +
+         *
+         * Log.i("[" + i + "]" + item.getUserId() + ", " +
          * item.getSessionCode());
-         * 
+         *
          * }
          */
 
         ArrayList<UserToken> tlist = readUserTokenResources();
         size = tlist.size();
 
-        Logger.i("[" + Constants.TOKEN_TABLE + "]Table");
+        Log.i("[" + Constants.TOKEN_TABLE + "]Table");
 
         for (int i = 0; i < size; i++) {
 
             UserToken item = tlist.get(i);
 
-            Logger.i("[" + i + "]" + item.getUserId() + "/"
+            Log.i("[" + i + "]" + item.getUserId() + "/"
                     + item.getAccessToken() + "/" + item.getRefreshToken() + "/"
                     + item.getIssuedTime());
 
@@ -417,7 +417,7 @@ public class MongoDB {
         String refreshToken = doc.getString(Constants.KEY_REFRESH_TOKEN);
         String issuedTime = doc.getString(Constants.KEY_ISSUED_TIME);
 
-        // Logger.d("issuedTime: " + issuedTime);
+        // Log.d("issuedTime: " + issuedTime);
         userToken.setUserToken(userId, accessToken, refreshToken);
         userToken.setIssuedTime(issuedTime);
 

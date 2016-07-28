@@ -79,8 +79,10 @@ extern "C" {
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
 
+#ifdef WITH_CLOUD
 /** Presence URI through which the OCF devices advertise their device presence.*/
 #define OCF_RSRVD_DEVICE_PRESENCE_URI         "/.well-known/ocf/prs"
+#endif
 
 /** Sets the default time to live (TTL) for presence.*/
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
@@ -166,6 +168,9 @@ extern "C" {
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
 
+/** To indicate how long RD should publish this item.*/
+#define OC_RSRVD_DEVICE_TTL             "lt"
+
 /** To represent time to live.*/
 #define OC_RSRVD_TTL                    "ttl"
 
@@ -215,7 +220,7 @@ extern "C" {
 #define OC_RSRVD_HOSTING_PORT           "port"
 
 /** TCP Port. */
-#define OC_RSRVD_TCP_PORT               "tcp"
+#define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -312,7 +317,7 @@ extern "C" {
 #define MAC_ADDR_BLOCKS (6)
 
 /** Max identity size. */
-#define MAX_IDENTITY_SIZE (32)
+#define MAX_IDENTITY_SIZE (37)
 
 /** Universal unique identity size. */
 #define UUID_IDENTITY_SIZE (128/8)
@@ -347,10 +352,10 @@ extern "C" {
 #define OC_RSRVD_TITLE                   "title"
 
 /** Defines URI. */
-#define OC_RSRVD_URI                     "uri"
+#define OC_RSRVD_URI                     "anchor"
 
 /** Defines media type. */
-#define OC_RSRVD_MEDIA_TYPE              "mt"
+#define OC_RSRVD_MEDIA_TYPE              "type"
 
 /** To represent resource type with Publish RD.*/
 #define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdpub"
@@ -1191,20 +1196,20 @@ typedef struct OCLinksPayload
 {
     /** This is the target relative URI. */
     char *href;
+    /** The relation of the target URI referenced by the link to the context URI;
+     * The default value is null. */
+    char *rel;
     /** Resource Type - A standard OIC specified or vendor defined resource
      * type of the resource referenced by the target URI. */
     OCStringLL *rt;
     /** Interface - The interfaces supported by the resource referenced by the target URI. */
     OCStringLL *itf;
-    /** The relation of the target URI referenced by the link to the context URI;
-     * The default value is null. */
-    char *rel;
-    /** Specifies if the resource referenced by the target URIis observable or not. */
-    bool obs;
+    /** Bitmap - The bitmap holds observable, discoverable, secure option flag. */
+    uint8_t p;
     /** A title for the link relation. Can be used by the UI to provide a context. */
     char *title;
     /** This is used to override the context URI e.g. override the URI of the containing collection. */
-    char *uri;
+    char *anchor;
     /** The instance identifier for this web link in an array of web links - used in links. */
     union
     {
@@ -1215,8 +1220,10 @@ typedef struct OCLinksPayload
         /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
         OCIdentity uniqueUUID;
     };
+    /** Time to keep holding resource.*/
+    uint64_t ttl;
     /** A hint of the media type of the representation of the resource referenced by the target URI. */
-    OCStringLL *mt;
+    OCStringLL *type;
     /** Holding address of the next resource. */
     struct OCLinksPayload *next;
 } OCLinksPayload;
@@ -1228,30 +1235,8 @@ typedef struct
     OCDeviceInfo n;
     /** Device identifier. */
     OCIdentity di;
-    /** The base URI where the resources are hold. */
-    char *baseURI;
-    /** Bitmap holds observable, discoverable, secure option flag.*/
-    uint8_t bitmap;
-    /** Port set in case, the secure flag is set above. */
-    uint16_t port;
-    /** Id for each set of links i.e. tag. */
-    union
-    {
-        /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
-        /** Any unique string including a URI. */
-        char *uniqueStr;
-        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
-        OCIdentity uniqueUUID;
-    };
-    /** Defines the list of allowable resource types (for Target and anchors) in links included
-     * in the collection; new links being created can only be from this list. */
-    char *rts;
-    /** When specified this is the default relationship to use when an OIC Link does not specify
-     * an explicit relationship with *rel* parameter. */
-    char *drel;
     /** Time to keep holding resource.*/
-    uint32_t ttl;
+    uint64_t ttl;
 } OCTagsPayload;
 
 /** Resource collection payload. */
@@ -1261,8 +1246,6 @@ typedef struct OCResourceCollectionPayload
     OCTagsPayload *tags;
     /** Array of links payload. */
     OCLinksPayload *setLinks;
-    /** Holding address of the next resource. */
-    struct OCResourceCollectionPayload *next;
 } OCResourceCollectionPayload;
 
 typedef struct OCDiscoveryPayload
