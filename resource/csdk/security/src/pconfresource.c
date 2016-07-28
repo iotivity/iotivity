@@ -937,7 +937,7 @@ static OCEntityHandlerResult HandlePconfPostRequest (const OCEntityHandlerReques
         // Update storage
         if(OC_EH_ERROR != ehRet && true == UpdatePersistentStorage(gPconf))
         {
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet = OC_EH_CHANGED;
         }
 
         DeletePconfBinData(newPconf);

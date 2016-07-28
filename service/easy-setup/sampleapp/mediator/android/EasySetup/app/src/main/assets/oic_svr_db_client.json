@@ -83,6 +83,6 @@
         "deviceuuid": "61646d69-6e44-6576-6963-655575696430",
         "devowneruuid": "61646d69-6e44-6576-6963-655575696430",
         "rowneruuid": "61646d69-6e44-6576-6963-655575696430",
-        "x.com.samsung.dpc": false
+        "x.org.iotivity.dpc": false
     }
 }
