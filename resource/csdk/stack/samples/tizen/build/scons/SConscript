@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 ##
 # 'resource' sub-project main build script
 #
@@ -16,7 +17,7 @@ else:
 	env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 env.ParseConfig("pkg-config --cflags --libs capi-network-wifi dlog glib-2.0")
 if 'ALL' in transport:

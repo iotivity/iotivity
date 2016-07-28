@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 # //******************************************************************
 # //
 # // Copyright 2015 Samsung Electronics All Rights Reserved.
@@ -86,13 +87,12 @@ if target_os == 'android':
 	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	provisioning_env.AppendUnique(LIBS = ['gnustl_static'])
 
-	if not env.get('RELEASE'):
-		provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
 if target_os in ['darwin', 'ios']:
 	provisioning_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
-provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if provisioning_env.get('LOGGING'):
+    provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
