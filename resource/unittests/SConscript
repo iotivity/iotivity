@@ -55,7 +55,7 @@ unittests_env.PrependUnique(LIBS = [
 		])
 
 if unittests_env.get('SECURED') == '1':
-    unittests_env.AppendUnique(LIBS = ['tinydtls'])
+	unittests_env.AppendUnique(LIBS = ['tinydtls'])
 
 if unittests_env.get('LOGGING'):
 	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -66,14 +66,22 @@ if unittests_env.get('WITH_CLOUD'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittests = unittests_env.Program('unittests', ['ConstructResourceTest.cpp',
-                                                'OCPlatformTest.cpp',
-                                                'OCRepresentationTest.cpp',
-                                                'OCRepresentationEncodingTest.cpp',
-                                                'OCResourceTest.cpp',
-                                                'OCExceptionTest.cpp',
-                                                'OCResourceResponseTest.cpp',
-                                                'OCHeaderOptionTest.cpp'])
+
+unittests_src = [
+		'ConstructResourceTest.cpp',
+		'OCPlatformTest.cpp',
+		'OCRepresentationTest.cpp',
+		'OCRepresentationEncodingTest.cpp',
+		'OCResourceTest.cpp',
+		'OCExceptionTest.cpp',
+		'OCResourceResponseTest.cpp',
+		'OCHeaderOptionTest.cpp'
+	]
+
+if unittests_env.get('WITH_CLOUD'):
+	unittests_src = unittests_src + ['OCAccountManagerTest.cpp']
+
+unittests = unittests_env.Program('unittests', unittests_src)
 
 Alias("unittests", [unittests])
 

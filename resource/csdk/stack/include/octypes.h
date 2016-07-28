@@ -381,13 +381,19 @@ extern "C" {
 #define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
 
 /** Defines status. */
-#define OC_RSRVD_STATUS                    "status"
+#define OC_RSRVD_LOGIN                     "login"
 
 /** Defines grant type. */
 #define OC_RSRVD_GRANT_TYPE                "granttype"
 
 /** Defines refresh token. */
 #define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
+
+/** Defines user ID. */
+#define OC_RSRVD_USER_ID                   "uid"
+
+/** Defines options. */
+#define OC_RSRVD_OPTIONS                   "options"
 
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"

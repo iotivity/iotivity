@@ -578,7 +578,7 @@ namespace OC
          *
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
-         *                           if you want to use specific a Flag like IPv4
+         *                           if you want to use a specific Flag like IPv4,
          *                           you should apply OR operation for the flag in here.
          *                           Example: static_cast<OCConnectivityType>(CT_ADAPTER_TCP
          *                                                                    | OC_IP_USE_V4)
@@ -641,79 +641,25 @@ namespace OC
                                      DirectPairingCallback resultCallback);
 #ifdef WITH_CLOUD
         /**
-         * API for Account Registration to Account Server
-         * @note Not supported on client mode for now since device id is not generated yet on
-         *       client mode. So it should be server or both mode for API to work.
+         * Create an account manager object that can be used for doing request to account server.
+         * You can only create this object if OCPlatform was initialized to be a Client or
+         * Client/Server. Otherwise, this will return an empty shared ptr.
+         *
+         * @note For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
+         *       methods of this object to work since device id is not generated on Client mode.
          *
          * @param host Host IP Address of a account server.
-         * @param authProvider Provider name used for authentication.
-         * @param authCode The authorization code obtained by using an authorization server
-         *                 as an intermediary between the client and resource owner.
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *                           if you want to use a specific Flag like IPv4,
+         *                           you should apply OR operation for the flag in here.
+         *                           Example: static_cast<OCConnectivityType>(CT_ADAPTER_TCP
+         *                                                                    | OC_IP_USE_V4)
          *
-         * @return Returns ::OC_STACK_OK if success
+         * @return OCAccountManager::Ptr a shared pointer to the new account manager object
          */
-        OCStackResult signUp(const std::string& host,
-                             const std::string& authProvider,
-                             const std::string& authCode,
-                             OCConnectivityType connectivityType,
-                             PostCallback cloudConnectHandler);
-
-        /**
-         * API for Sign-In to Account Server
-         * @note Not supported on client mode for now since device id is not generated yet on
-         *       client mode. So it should be server or both mode for API to work.
-         *
-         * @param host Host IP Address of a account server.
-         * @param accessToken Identifier of the resource obtained by account registration.
-         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
-         *
-         * @return Returns ::OC_STACK_OK if success
-         */
-        OCStackResult signIn(const std::string& host,
-                             const std::string& accessToken,
-                             OCConnectivityType connectivityType,
-                             PostCallback cloudConnectHandler);
-
-        /**
-         * API for Sign-Out to Account Server
-         * @note Not supported on client mode for now since device id is not generated yet on
-         *       client mode. So it should be server or both mode for API to work.
-         *
-         * @param host Host IP Address of a account server.
-         * @param accessToken Identifier of the resource obtained by account registration.
-         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
-         *
-         * @return Returns ::OC_STACK_OK if success
-         */
-        OCStackResult signOut(const std::string& host,
-                              const std::string& accessToken,
-                              OCConnectivityType connectivityType,
-                              PostCallback cloudConnectHandler);
-
-        /**
-         * API for Refresh Access token to Account Server
-         * @note Not supported on client mode for now since device id is not generated yet on
-         *       client mode. So it should be server or both mode for API to work.
-         *
-         * @param host Host IP Address of a account server.
-         * @param refreshToken Refresh token used for access token refresh.
-         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
-         *
-         * @return Returns ::OC_STACK_OK if success
-         */
-        OCStackResult refreshAccessToken(const std::string& host,
-                                         const std::string& refreshToken,
-                                         OCConnectivityType connectivityType,
-                                         PostCallback cloudConnectHandler);
+        OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType);
 #endif // WITH_CLOUD
 #ifdef RD_CLIENT
         /**

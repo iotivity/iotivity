@@ -39,6 +39,10 @@
 #include "OCRepresentation.h"
 #include "OCDirectPairing.h"
 
+#ifdef WITH_CLOUD
+#include "OCAccountManager.h"
+#endif
+
 #include "oc_logger.hpp"
 
 namespace OC
@@ -274,32 +278,8 @@ namespace OC
                                          const std::string& pinNumber,
                                          DirectPairingCallback resultCallback);
 #ifdef WITH_CLOUD
-        OCStackResult signUp(const std::string& host,
-                             const std::string& authProvider,
-                             const std::string& authCode,
-                             OCConnectivityType connectivityType,
-                             PostCallback cloudConnectHandler);
-
-        OCStackResult signIn(const std::string& host,
-                             const std::string& accessToken,
-                             OCConnectivityType connectivityType,
-                             PostCallback cloudConnectHandler);
-
-        OCStackResult signOut(const std::string& host,
-                              const std::string& accessToken,
-                              OCConnectivityType connectivityType,
-                              PostCallback cloudConnectHandler);
-
-        OCStackResult signInOut(const std::string& host,
-                                const std::string& accessToken,
-                                bool isSignIn,
-                                OCConnectivityType connectivityType,
-                                PostCallback cloudConnectHandler);
-
-        OCStackResult refreshAccessToken(const std::string& host,
-                                         const std::string& refreshToken,
-                                         OCConnectivityType connectivityType,
-                                         PostCallback cloudConnectHandler);
+        OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType);
 #endif // WITH_CLOUD
     private:
         PlatformConfig m_cfg;
