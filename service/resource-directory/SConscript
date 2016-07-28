@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 #******************************************************************
 #
 # Copyright 2015 Samsung Electronics All Rights Reserved.
@@ -31,7 +32,7 @@ else:
     env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')

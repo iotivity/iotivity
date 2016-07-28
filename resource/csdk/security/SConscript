@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 # //******************************************************************
 # //
 # // Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
@@ -78,13 +79,12 @@ if target_os in ['darwin', 'ios']:
 	libocsrm_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	libocsrm_env.AppendUnique(LIBS = ['coap'])
 
-if not env.get('RELEASE'):
-	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
 if env.get('DTLS_WITH_X509') == '1':
 	libocsrm_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
 
-libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if libocsrm_env.get('LOGGING'):
+    libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
