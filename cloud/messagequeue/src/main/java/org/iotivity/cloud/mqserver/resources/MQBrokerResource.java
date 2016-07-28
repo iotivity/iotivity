@@ -44,10 +44,8 @@ public class MQBrokerResource extends Resource {
     private TopicManager mTopicManager = new TopicManager();
 
     public MQBrokerResource() {
-        super(Arrays.asList(Constants.PREFIX_OIC, Constants.MQ_BROKER_URI));
-
-        // addQueryHandler(Arrays.asList("if=" + Constants.INTERFACE_DEFAULT),
-        // this::onDefaultInterfaceReceived);
+        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
+                Constants.MQ_BROKER_URI));
     }
 
     public void setKafkaInformation(String zookeeper, String broker) {
@@ -82,8 +80,7 @@ public class MQBrokerResource extends Resource {
     private IResponse handleGetRequest(Device srcDevice, IRequest request) {
 
         // DISCOVER
-        if (request.getUriPathSegments().size() == getUriPathSegments()
-                .size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
             return discoverTopic(request);
         }
 
@@ -105,16 +102,22 @@ public class MQBrokerResource extends Resource {
                 ResponseStatus.BAD_REQUEST);
     }
 
-    // PUBLISH
+    // CREATE topic
     private IResponse handlePutRequest(IRequest request) {
 
-        return publishMessage(request);
-    }
+        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
 
-    // CREATE topic
-    private IResponse handlePostRequest(IRequest request) {
+            return MessageBuilder.createResponse(request,
+                    ResponseStatus.BAD_REQUEST);
+        }
 
         return createTopic(request);
+    }
+
+    // PUBLISH
+    private IResponse handlePostRequest(IRequest request) {
+
+        return publishMessage(request);
     }
 
     // REMOVE topic
@@ -125,15 +128,15 @@ public class MQBrokerResource extends Resource {
 
     private IResponse createTopic(IRequest request) {
 
-        String uriPath = request.getUriPath();
-
         // main topic creation request
-        if (request.getUriPathSegments().size() == getUriPathSegments()
-                .size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size() + 1) {
             return createMainTopic(request);
         }
 
         // subtopic creation request
+        String uriPath = request.getUriPath();
+        uriPath = uriPath.substring(0, uriPath.lastIndexOf('/'));
+
         Topic targetTopic = mTopicManager.getTopic(uriPath);
 
         if (targetTopic == null) {
@@ -146,12 +149,6 @@ public class MQBrokerResource extends Resource {
 
     private IResponse removeTopic(IRequest request) {
 
-        String uriPath = request.getUriPath();
-
-        String parentName = uriPath.substring(0, uriPath.lastIndexOf('/'));
-        String targetName = request.getUriPathSegments()
-                .get(request.getUriPathSegments().size() - 1);
-
         // main topic removal request
         if (request.getUriPathSegments().size() - 1 == getUriPathSegments()
                 .size()) {
@@ -159,6 +156,12 @@ public class MQBrokerResource extends Resource {
         }
 
         // subtopic removal request
+        String uriPath = request.getUriPath();
+
+        String parentName = uriPath.substring(0, uriPath.lastIndexOf('/'));
+        String targetName = request.getUriPathSegments().get(
+                request.getUriPathSegments().size() - 1);
+
         Topic parentTopic = mTopicManager.getTopic(parentName);
 
         if (parentTopic == null) {
@@ -233,14 +236,14 @@ public class MQBrokerResource extends Resource {
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
-                ContentFormat.APPLICATION_CBOR, MessageQueueUtils
-                        .buildPayload(Constants.MQ_TOPICLIST, topicList));
+                ContentFormat.APPLICATION_CBOR, MessageQueueUtils.buildPayload(
+                        Constants.MQ_TOPICLIST, topicList));
     }
 
     private IResponse createMainTopic(IRequest request) {
 
-        String topicName = MessageQueueUtils.extractDataFromPayload(
-                request.getPayload(), Constants.MQ_TOPIC);
+        String topicName = request.getUriPathSegments().get(
+                request.getUriPathSegments().size() - 1);
 
         String type = new String();
 
@@ -253,8 +256,17 @@ public class MQBrokerResource extends Resource {
                     ResponseStatus.BAD_REQUEST);
         }
 
-        topicName = "/" + Constants.PREFIX_OIC + "/" + Constants.MQ_BROKER_URI
-                + "/" + topicName;
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("/");
+
+        for (String uri : getUriPathSegments()) {
+            stringBuilder.append(uri);
+            stringBuilder.append("/");
+        }
+
+        stringBuilder.append(topicName);
+
+        topicName = stringBuilder.toString();
 
         if (mTopicManager.getTopic(topicName) != null) {
             // Topic already exists
@@ -269,9 +281,7 @@ public class MQBrokerResource extends Resource {
                     ResponseStatus.INTERNAL_SERVER_ERROR);
         }
 
-        return MessageBuilder.createResponse(request, ResponseStatus.CREATED,
-                ContentFormat.APPLICATION_CBOR, MessageQueueUtils.buildPayload(
-                        Constants.MQ_LOCATION, newTopic.getName()));
+        return MessageBuilder.createResponse(request, ResponseStatus.CREATED);
     }
 
     private IResponse removeMainTopic(IRequest request) {
@@ -280,12 +290,13 @@ public class MQBrokerResource extends Resource {
 
         Topic targetTopic = mTopicManager.getTopic(topicName);
 
-        // TODO check error
         if (targetTopic == null) {
             // Topic doesn't exist
             return MessageBuilder.createResponse(request,
                     ResponseStatus.BAD_REQUEST);
         }
+
+        targetTopic.cleanup();
 
         if (mTopicManager.removeTopic(targetTopic) == false) {
             return MessageBuilder.createResponse(request,

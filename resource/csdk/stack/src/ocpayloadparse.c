@@ -34,8 +34,11 @@
 #include "ocpayloadcbor.h"
 #include "ocstackinternal.h"
 #include "payload_logging.h"
-#include "rdpayload.h"
 #include "platform_features.h"
+
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+#include "rdpayload.h"
+#endif
 
 #define TAG "OIC_RI_PAYLOADPARSE"
 
@@ -86,9 +89,11 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
         case PAYLOAD_TYPE_SECURITY:
             result = OCParseSecurityPayload(outPayload, payload, payloadSize);
             break;
+#if defined(RD_CLIENT) || defined(RD_SERVER)
         case PAYLOAD_TYPE_RD:
             result = OCRDCborToPayload(&rootValue, outPayload);
             break;
+#endif
         default:
             OIC_LOG_V(ERROR, TAG, "ParsePayload Type default: %d", payloadType);
             result = OC_STACK_INVALID_PARAM;
@@ -100,8 +105,6 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
 exit:
     return result;
 }
-
-void OCFreeOCStringLL(OCStringLL* ll);
 
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, const uint8_t *payload,
         size_t size)

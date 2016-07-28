@@ -109,11 +109,13 @@ namespace OC
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle) =0;
 
+#ifdef WITH_CLOUD
         virtual OCStackResult SubscribeDevicePresence(OCDoHandle* handle,
                                                       const std::string& host,
                                                       const QueryParamsList& queryParams,
                                                       OCConnectivityType connectivityType,
                                                       ObserveCallback& callback) = 0;
+#endif
 
         virtual OCStackResult GetDefaultQos(QualityOfService& qos) = 0;
 

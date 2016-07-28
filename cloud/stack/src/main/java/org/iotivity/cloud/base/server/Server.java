@@ -30,7 +30,7 @@ import java.util.List;
 import javax.net.ssl.SSLException;
 
 import org.iotivity.cloud.base.OCFConstants;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandler;
@@ -91,7 +91,7 @@ public abstract class Server {
             throws CertificateException, SSLException, InterruptedException {
 
         try {
-            Logger.i("[CoapServer]startServer with tlsMode! mode= " + tlsMode);
+            Log.i("[CoapServer]startServer with tlsMode! mode= " + tlsMode);
 
             if (tlsMode == true) {
 

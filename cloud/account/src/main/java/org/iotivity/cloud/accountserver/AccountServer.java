@@ -30,9 +30,7 @@ import org.iotivity.cloud.accountserver.resources.account.session.SessionResourc
 import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.TokenRefreshResource;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.server.CoapServer;
-import org.iotivity.cloud.util.ErrorLogger;
-import org.iotivity.cloud.util.FileLogger;
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -42,17 +40,15 @@ import org.iotivity.cloud.util.Logger;
 public class AccountServer {
 
     public static void main(String[] args) throws Exception {
-        System.setOut(FileLogger.createLoggingProxy(System.out));
-
+        Log.Init();
+        
         System.out.println("-----Account SERVER-----");
 
         if (args.length != 2) {
-            Logger.e("coap server port and TLS mode required\n"
+            Log.e("coap server port and TLS mode required\n"
                     + "ex) 5685 0\n");
             return;
         }
-
-        ErrorLogger.Init();
 
         ServerSystem serverSystem = new ServerSystem();
 

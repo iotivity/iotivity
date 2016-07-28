@@ -21,10 +21,18 @@
  */
 package org.iotivity.cloud.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public class Logger {
+import org.apache.log4j.Logger;
+
+import io.netty.channel.Channel;
+
+public class Log {
 
     public static final int VERBOSE  = 0;
     public static final int DEBUG    = 1;
@@ -33,6 +41,46 @@ public class Logger {
     public static final int ERROR    = 4;
 
     private static int      logLevel = VERBOSE;
+
+    private static FileOutputStream fos = null;
+    private static PrintStream      ps  = null;
+
+    private final static Logger logger = Logger.getLogger(Log.class);
+
+    public static void Init() throws FileNotFoundException {
+        System.setOut(Log.createLoggingProxy(System.out));
+        createfile();
+    }
+
+    public static PrintStream createLoggingProxy(
+            final PrintStream realPrintStream) {
+        // TODO Auto-generated method stub
+        return new PrintStream(realPrintStream) {
+            public void print(final String string) {
+                realPrintStream.print(string);
+                logger.fatal(string);
+            }
+        };
+    }
+
+    public static void createfile() throws FileNotFoundException{
+        File dir = new File("..//errLog//");
+        if (!dir.isDirectory()) {
+            dir.mkdirs();
+        }
+        fos = new FileOutputStream("../errLog/[" + getDate() + "] error.log",
+                true);
+        ps = new PrintStream(fos);
+    }
+
+    static public void f(Channel channel, Throwable t) {
+        String log = channel.id().asLongText().substring(26) + " "
+                + t.getMessage();
+        ps.println(getTime() + " " + log);
+        t.printStackTrace(ps);
+        Log.v(log);
+    }
+
 
     public static void setLogLevel(int level) {
         logLevel = level;
@@ -115,6 +163,12 @@ public class Logger {
         SimpleDateFormat dateFormat = new SimpleDateFormat(
                 "yyyy-MM-dd HH:mm:ss:SSS");
 
+        return dateFormat.format(calendar.getTime());
+    }
+
+    protected static String getDate() {
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         return dateFormat.format(calendar.getTime());
     }
 

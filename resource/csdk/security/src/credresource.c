@@ -981,6 +981,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     OCEntityHandlerResult ret = OC_EH_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
+    static uint16_t previousMsgId = 0;
     //Get binary representation of cbor
     OicSecCred_t *cred  = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
@@ -1088,8 +1089,21 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                   * If some error is occured while ownership transfer,
                   * ownership transfer related resource should be revert back to initial status.
                   */
-                RestoreDoxmToInitState();
-                RestorePstatToInitState();
+                const OicSecDoxm_t* doxm =  GetDoxmResourceData();
+                if(doxm)
+                {
+                    if(!doxm->owned && previousMsgId != ehRequest->messageID)
+                    {
+                        OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
+                                            "DOXM will be reverted.");
+                        RestoreDoxmToInitState();
+                        RestorePstatToInitState();
+                    }
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Invalid DOXM resource");
+                }
             }
         }
         else
@@ -1121,6 +1135,14 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
         }
         FreeCred(cred);
     }
+    else
+    {
+        previousMsgId = ehRequest->messageID;
+    }
+    //Send response to request originator
+    ret = ((SendSRMResponse(ehRequest, ret, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest OUT");
     return ret;
 }
@@ -1143,12 +1165,10 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     // A device should always have a default cred. Therefore, payload should never be NULL.
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
-    // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatGetRequest");
-    }
+
+    //Send payload to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
+                       OC_EH_OK : OC_EH_ERROR;
     OICFree(payload);
     return ehRet;
 }
@@ -1183,7 +1203,9 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
     {
         ehRet = OC_EH_RESOURCE_DELETED;
     }
-
+    //Send response to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 exit:
     return ehRet;
 }
@@ -1216,15 +1238,11 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
                 ret = HandleDeleteRequest(ehRequest);
                 break;
             default:
-                ret = OC_EH_ERROR;
+                ret = ((SendSRMResponse(ehRequest, ret, NULL, 0)) == OC_STACK_OK) ?
+                               OC_EH_OK : OC_EH_ERROR;
                 break;
         }
     }
-
-    //Send payload to request originator
-    ret = (SendSRMResponse(ehRequest, ret, NULL, 0) == OC_STACK_OK) ?
-                       ret : OC_EH_ERROR;
-
     return ret;
 }
 

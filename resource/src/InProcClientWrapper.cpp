@@ -1024,10 +1024,7 @@ namespace OC
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     result, sequenceNumber);
         exec.detach();
-        if (sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -1197,6 +1194,7 @@ namespace OC
         return result;
     }
 
+#ifdef WITH_CLOUD
     OCStackResult InProcClientWrapper::SubscribeDevicePresence(OCDoHandle* handle,
                                                                const std::string& host,
                                                                const QueryParamsList& queryParams,
@@ -1240,6 +1238,7 @@ namespace OC
 
         return result;
     }
+#endif
 
     OCStackResult InProcClientWrapper::GetDefaultQos(QualityOfService& qos)
     {

@@ -183,8 +183,7 @@ OCStackResult NSCloudPublish(const char *host, const char *query,
 
     const unsigned char *id = (unsigned char *)OCGetServerInstanceIDString();
     NS_LOG_V(DEBUG, "DeviceID: %s", id);
-    tagsPayload = OCCopyTagsResources(NULL, id,
-                                      NULL, OC_DISCOVERABLE, 0, 0, NULL, NULL, OC_RD_PUBLISH_TTL);
+    tagsPayload = OCCopyTagsResources(NULL, id, OC_RD_PUBLISH_TTL);
     if (!tagsPayload)
     {
         goto no_memory;
@@ -232,12 +231,15 @@ OCStackResult NSCloudPublish(const char *host, const char *query,
 
             if (!linksPayload)
             {
-                linksPayload = OCCopyLinksResources(uri, rt, itf, NULL, 0, NULL,
+                /* Need to update with Cloud Interface Implementation.
+                 *
+            	linksPayload = OCCopyLinksResources(uri, rt, itf, NULL, 0, NULL,
                                                     NULL, j, mt);;
                 if (!linksPayload)
                 {
                     goto no_memory;
                 }
+                */
             }
             else
             {
@@ -246,12 +248,15 @@ OCStackResult NSCloudPublish(const char *host, const char *query,
                 {
                     temp = temp->next;
                 }
+                /* Need to update with Cloud Interface Implementation.
+                 *
                 temp->next = OCCopyLinksResources(uri, rt, itf, NULL, 0, NULL,
                                                   NULL, j, mt);
                 if (!temp->next)
                 {
                     goto no_memory;
                 }
+                */
             }
             OCFreeOCStringLL(rt);
             OCFreeOCStringLL(itf);

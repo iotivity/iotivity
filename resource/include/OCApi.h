@@ -213,18 +213,21 @@ namespace OC
         Observe,
         ObserveAll
     };
-    //
-    // Typedef for header option vector
-    // OCHeaderOption class is in HeaderOption namespace
+
+    // Typedef for list of resource handles.
+    typedef std::vector<OCResourceHandle> ResourceHandles;
+
+    // Typedef for header option vector.
+    // OCHeaderOption class is in HeaderOption namespace.
     typedef std::vector<HeaderOption::OCHeaderOption> HeaderOptions;
 
-    // Typedef for query parameter map
+    // Typedef for query parameter map.
     typedef std::map<std::string, std::string> QueryParamsMap;
 
     // Typedef for query parameter map with Vector
     typedef std::map< std::string, std::vector<std::string> > QueryParamsList;
 
-    // Typedef for list of observation IDs
+    // Typedef for list of observation IDs.
     typedef std::vector<OCObservationId> ObservationIds;
 
     enum class ObserveAction
@@ -297,7 +300,11 @@ namespace OC
     typedef std::function<void(const HeaderOptions&,
                                const OCRepresentation&, const int,
                                std::shared_ptr<OCResource>)> MQCreateTopicCallback;
+#ifdef RD_CLIENT
+    typedef std::function<void(const OCRepresentation&, const int)> PublishResourceCallback;
 
+    typedef std::function<void(const int)> DeleteResourceCallback;
+#endif
 } // namespace OC
 
 #endif

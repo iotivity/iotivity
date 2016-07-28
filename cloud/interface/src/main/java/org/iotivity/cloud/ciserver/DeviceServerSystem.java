@@ -43,7 +43,7 @@ import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.ErrorLogger;
+import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -103,7 +103,7 @@ public class DeviceServerSystem extends ServerSystem {
                             : ResponseStatus.BAD_REQUEST;
                     ctx.channel().writeAndFlush(MessageBuilder
                             .createResponse((CoapRequest) msg, responseStatus));
-                    ErrorLogger.write(ctx.channel(), t);
+                    Log.f(ctx.channel(), t);
                 }
             }
 
@@ -208,7 +208,7 @@ public class DeviceServerSystem extends ServerSystem {
                 ctx.writeAndFlush(msg);
 
             } catch (Throwable t) {
-                ErrorLogger.write(ctx.channel(), t);
+                Log.f(ctx.channel(), t);
                 ctx.writeAndFlush(msg);
                 ctx.close();
             }
@@ -270,7 +270,7 @@ public class DeviceServerSystem extends ServerSystem {
                         : ResponseStatus.UNAUTHORIZED;
                 ctx.channel().writeAndFlush(MessageBuilder
                         .createResponse((CoapRequest) msg, responseStatus));
-                ErrorLogger.write(ctx.channel(), t);
+                Log.f(ctx.channel(), t);
             }
         }
     }

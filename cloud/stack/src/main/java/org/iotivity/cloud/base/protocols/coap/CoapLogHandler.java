@@ -21,7 +21,7 @@
  */
 package org.iotivity.cloud.base.protocols.coap;
 
-import org.iotivity.cloud.util.Logger;
+import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -41,7 +41,7 @@ public class CoapLogHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Logger.v(ctx.channel().id().asLongText().substring(26)
+        Log.v(ctx.channel().id().asLongText().substring(26)
                 + " Connected, Address: "
                 + ctx.channel().remoteAddress().toString());
 
@@ -51,7 +51,7 @@ public class CoapLogHandler extends ChannelDuplexHandler {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelInactive();
-        Logger.v(ctx.channel().id().asLongText().substring(26)
+        Log.v(ctx.channel().id().asLongText().substring(26)
                 + " Disconnected, Address: "
                 + ctx.channel().remoteAddress().toString());
     }
@@ -72,7 +72,7 @@ public class CoapLogHandler extends ChannelDuplexHandler {
                     (CoapResponse) msg);
         }
 
-        Logger.v(log);
+        Log.v(log);
 
         ctx.writeAndFlush(msg);
     }
@@ -93,7 +93,7 @@ public class CoapLogHandler extends ChannelDuplexHandler {
                     (CoapResponse) msg);
         }
 
-        Logger.v(log);
+        Log.v(log);
 
         ctx.fireChannelRead(msg);
     }

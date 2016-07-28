@@ -29,7 +29,7 @@
 #ifdef WITH_STRING_H
 #include <string.h>
 #endif
-#ifdef WITH_STRINGS_H
+#ifdef WITH_STRING_H
 #include <strings.h>
 #endif
 
@@ -45,12 +45,7 @@
 #include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
-#include "rdpayload.h"
 #include "ocpayload.h"
-
-#ifdef WITH_RD
-#include "rd_server.h"
-#endif
 
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
@@ -617,102 +612,6 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
     return OCDoResponse(&response);
 }
 
-#ifdef WITH_RD
-static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType,
-     OCResource **payload, OCDevAddr *devAddr)
-{
-    OCResourceCollectionPayload *repPayload;
-    if (!payload)
-    {
-        return OC_STACK_ERROR;
-    }
-    if (OCRDCheckPublishedResource(interfaceType, resourceType, &repPayload, devAddr) == OC_STACK_OK)
-    {
-        if (!repPayload)
-        {
-            return OC_STACK_ERROR;
-        }
-        OCResource *ptr = ((OCResource *) OICCalloc(1, sizeof(OCResource)));
-        if (!ptr)
-        {
-           return OC_STACK_NO_MEMORY;
-        }
-
-        ptr->uri = OICStrdup(repPayload->setLinks->href);
-        if (!ptr->uri)
-        {
-           return OC_STACK_NO_MEMORY;
-        }
-        OCStringLL *rt = repPayload->setLinks->rt;
-        while (rt)
-        {
-            OCResourceType *temp = (OCResourceType *) OICCalloc(1, sizeof(OCResourceType));
-            if(!temp)
-            {
-                OICFree(ptr->uri);
-                return OC_STACK_NO_MEMORY;
-            }
-            temp->next = NULL;
-            temp->resourcetypename = OICStrdup(rt->value);
-            if (!ptr->rsrcType)
-            {
-                ptr->rsrcType = temp;
-            }
-            else
-            {
-                OCResourceType *type = ptr->rsrcType;
-                while (type->next)
-                {
-                    type = type->next;
-                }
-                type->next = temp;
-            }
-            rt = rt->next;
-        }
-
-        OCStringLL *itf = repPayload->setLinks->itf;
-        while (itf)
-        {
-            OCResourceInterface *temp = (OCResourceInterface *) OICCalloc(1, sizeof(OCResourceInterface));
-            if (!temp)
-            {
-                OICFree(ptr->uri);
-
-                return OC_STACK_NO_MEMORY;
-            }
-            temp->next = NULL;
-            temp->name = OICStrdup(itf->value);
-            if (!ptr->rsrcInterface)
-            {
-                ptr->rsrcInterface = temp;
-            }
-            else
-            {
-                OCResourceInterface *type = ptr->rsrcInterface;
-                while (type->next)
-                {
-                    type = type->next;
-                }
-                type->next = temp;
-            }
-            itf = itf->next;
-        }
-
-        ptr->resourceProperties = (OCResourceProperty) repPayload->tags->bitmap;
-
-        OCFreeCollectionResource(repPayload);
-        *payload = ptr;
-        return OC_STACK_OK;
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "The resource type or interface type doe not exist \
-                             on the resource directory");
-    }
-    return OC_STACK_ERROR;
-}
-#endif
-
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
     if (!request || !resource)
@@ -816,42 +715,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     bool foundResourceAtRD = false;
                     for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
-#ifdef WITH_RD
-                        if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
-                        {
-                            OCResource *resource1 = NULL;
-                            OCDevAddr devAddr;
-                            discoveryResult = checkResourceExistsAtRD(interfaceQuery,
-                                resourceTypeQuery, &resource1, &devAddr);
-                            if (discoveryResult != OC_STACK_OK)
-                            {
-                                 break;
-                            }
-                            discoveryResult = BuildVirtualResourceResponse(resource1,
-                                discPayload, &devAddr, true);
-                            if (payload)
-                            {
-                                discPayload->baseURI = OICStrdup(devAddr.addr);
-                            }
-                            OICFree(resource1->uri);
-                            for (OCResourceType *rsrcRt = resource1->rsrcType, *rsrcRtNext = NULL; rsrcRt; )
-                            {
-                                rsrcRtNext = rsrcRt->next;
-                                OICFree(rsrcRt->resourcetypename);
-                                OICFree(rsrcRt);
-                                rsrcRt = rsrcRtNext;
-                            }
-
-                            for (OCResourceInterface *rsrcPtr = resource1->rsrcInterface, *rsrcNext = NULL; rsrcPtr; )
-                            {
-                                rsrcNext = rsrcPtr->next;
-                                OICFree(rsrcPtr->name);
-                                OICFree(rsrcPtr);
-                                rsrcPtr = rsrcNext;
-                            }
-                            foundResourceAtRD = true;
-                        }
-#endif
                         if (!foundResourceAtRD && includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
                         {
                             discoveryResult = BuildVirtualResourceResponse(resource,
@@ -1166,6 +1029,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         {
             OIC_LOG(INFO, TAG, "Removed observer successfully");
             request->observeResult = OC_STACK_OK;
+            // There should be no observe option header for de-registration response.
+            // Set as an invalid value here so we can detect it later and remove the field in response.
+            request->observationOption = MAX_SEQUENCE_NUMBER + 1;
         }
         else
         {

@@ -241,7 +241,7 @@ void WinUIClientApp::onPut(const HeaderOptions& /*headerOptions*/, const OCRepre
 {
     try
     {
-        if (eCode == OC_STACK_OK)
+        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "PUT request was successful" << std::endl;
 
@@ -288,7 +288,8 @@ void WinUIClientApp::onPost(const HeaderOptions& /*headerOptions*/,
 {
     try
     {
-        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED
+                || OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "POST request was successful" << std::endl;
 
