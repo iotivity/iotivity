@@ -45,6 +45,8 @@ public class Constants extends OCFConstants {
 
     // request payload key
 
+    public static final String REQ_USER_ID         = "uid";
+
     public static final String REQ_DEVICE_ID       = "di";
 
     public static final String REQ_AUTH_CODE       = "authcode";

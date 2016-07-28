@@ -32,6 +32,7 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
+import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
@@ -85,8 +86,14 @@ public class TokenRefreshResource extends Resource {
             throw new BadRequestException("payload is null");
         }
 
-        // String deviceId =
-        // payloadData.get(Constants.REQUEST_DEVICE_ID).toString();
+        if (payloadData.get(Constants.REQ_USER_ID) == null) {
+            throw new PreconditionFailedException("UserId missing");
+        }
+
+        if (payloadData.get(Constants.REQ_DEVICE_ID) == null) {
+            throw new PreconditionFailedException("DeviceId missing");
+        }
+
         String refreshToken = payloadData.get(Constants.REQ_REFRESH_TOKEN)
                 .toString();
 

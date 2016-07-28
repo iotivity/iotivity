@@ -29,6 +29,7 @@ import org.iotivity.cloud.accountserver.token.TokenManager;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
@@ -84,11 +85,17 @@ public class SessionResource extends Resource {
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
         if (payloadData == null) {
-            throw new BadRequestException("CBOR parsing failed");
+            throw new BadRequestException("payload is null");
         }
 
-        // String deviceId =
-        // payloadData.get(Constants.REQUEST_DEVICE_ID).toString();
+        if (payloadData.get(Constants.REQ_USER_ID) == null) {
+            throw new PreconditionFailedException("UserId missing");
+        }
+
+        if (payloadData.get(Constants.REQ_DEVICE_ID) == null) {
+            throw new PreconditionFailedException("DeviceId missing");
+        }
+
         String accessToken = payloadData.get(Constants.REQ_ACCESS_TOKEN)
                 .toString();
         boolean signinRequest = (boolean) payloadData.get(Constants.REQ_STATUS);
