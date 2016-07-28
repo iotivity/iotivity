@@ -81,53 +81,6 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
                     entityHandlerRequest->method);
             ehResult = OC_EH_OK;
         }
-
-        // If the result isn't an error or forbidden, send response
-        if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
-        {
-            // Format the response.  Note this requires some info about the request
-            response.requestHandle = entityHandlerRequest->requestHandle;
-            response.resourceHandle = entityHandlerRequest->resource;
-            response.ehResult = ehResult;
-            //response.payload = reinterpret_cast<OCPayload*>(payload);
-            response.payload = (OCPayload*) payload;
-            // Indicate that response is NOT in a persistent buffer
-            response.persistentBufferFlag = 0;
-
-            // Handle vendor specific options
-            if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions
-                    && entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
-            {
-                NS_LOG (DEBUG, "Received vendor specific options");
-                uint8_t i = 0;
-                OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
-                for (i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
-                {
-                    if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
-                    {
-                        OIC_LOG_V(DEBUG, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
-                                ((OCHeaderOption)rcvdOptions[i]).optionID );
-
-                        OIC_LOG_BUFFER(DEBUG, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                                MAX_HEADER_OPTION_DATA_LENGTH);
-                    }
-                }
-                OCHeaderOption * sendOptions = response.sendVendorSpecificHeaderOptions;
-                uint8_t option2[] =
-                { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
-                uint8_t option3[] =
-                { 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 };
-                sendOptions[0].protocolID = OC_COAP_ID;
-                sendOptions[0].optionID = 2248;
-                memcpy(sendOptions[0].optionData, option2, sizeof(option2));
-                sendOptions[0].optionLength = 10;
-                sendOptions[1].protocolID = OC_COAP_ID;
-                sendOptions[1].optionID = 2600;
-                memcpy(sendOptions[1].optionData, option3, sizeof(option3));
-                sendOptions[1].optionLength = 10;
-                response.numSendVendorSpecificHeaderOptions = 2;
-            }
-        }
     }
 
     OCPayloadDestroy(response.payload);
@@ -191,53 +144,6 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
             NS_LOG_V(DEBUG, "Received unsupported method %d from client",
                     entityHandlerRequest->method);
             ehResult = OC_EH_OK;
-        }
-
-        // If the result isn't an error or forbidden, send response
-        if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
-        {
-            // Format the response.  Note this requires some info about the request
-            response.requestHandle = entityHandlerRequest->requestHandle;
-            response.resourceHandle = entityHandlerRequest->resource;
-            response.ehResult = ehResult;
-            //response.payload = reinterpret_cast<OCPayload*>(payload);
-            response.payload = (OCPayload*) payload;
-            // Indicate that response is NOT in a persistent buffer
-            response.persistentBufferFlag = 0;
-
-            // Handle vendor specific options
-            if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions
-                    && entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
-            {
-                NS_LOG(DEBUG, "Received vendor specific options");
-                uint8_t i = 0;
-                OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
-                for (i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
-                {
-                    if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
-                    {
-                        OIC_LOG_V(DEBUG, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
-                                ((OCHeaderOption)rcvdOptions[i]).optionID );
-
-                        OIC_LOG_BUFFER(DEBUG, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                                MAX_HEADER_OPTION_DATA_LENGTH);
-                    }
-                }
-                OCHeaderOption * sendOptions = response.sendVendorSpecificHeaderOptions;
-                uint8_t option2[] =
-                { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
-                uint8_t option3[] =
-                { 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 };
-                sendOptions[0].protocolID = OC_COAP_ID;
-                sendOptions[0].optionID = 2248;
-                memcpy(sendOptions[0].optionData, option2, sizeof(option2));
-                sendOptions[0].optionLength = 10;
-                sendOptions[1].protocolID = OC_COAP_ID;
-                sendOptions[1].optionID = 2600;
-                memcpy(sendOptions[1].optionData, option3, sizeof(option3));
-                sendOptions[1].optionLength = 10;
-                response.numSendVendorSpecificHeaderOptions = 2;
-            }
         }
     }
 
@@ -333,53 +239,6 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
                     entityHandlerRequest->method);
             ehResult = OC_EH_OK;
         }
-
-        // If the result isn't an error or forbidden, send response
-        if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
-        {
-            // Format the response.  Note this requires some info about the request
-            response.requestHandle = entityHandlerRequest->requestHandle;
-            response.resourceHandle = entityHandlerRequest->resource;
-            response.ehResult = ehResult;
-            //response.payload = reinterpret_cast<OCPayload*>(payload);
-            response.payload = (OCPayload*) payload;
-            // Indicate that response is NOT in a persistent buffer
-            response.persistentBufferFlag = 0;
-
-            // Handle vendor specific options
-            if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions
-                    && entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
-            {
-                NS_LOG(DEBUG, "Received vendor specific options");
-                uint8_t i = 0;
-                OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
-                for (i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
-                {
-                    if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
-                    {
-                        OIC_LOG_V(DEBUG, LISTENER_TAG, "Received option with OC_COAP_ID and ID %u with",
-                                ((OCHeaderOption)rcvdOptions[i]).optionID );
-
-                        OIC_LOG_BUFFER(DEBUG, LISTENER_TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                                MAX_HEADER_OPTION_DATA_LENGTH);
-                    }
-                }
-                OCHeaderOption * sendOptions = response.sendVendorSpecificHeaderOptions;
-                uint8_t option2[] =
-                { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
-                uint8_t option3[] =
-                { 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 };
-                sendOptions[0].protocolID = OC_COAP_ID;
-                sendOptions[0].optionID = 2248;
-                memcpy(sendOptions[0].optionData, option2, sizeof(option2));
-                sendOptions[0].optionLength = 10;
-                sendOptions[1].protocolID = OC_COAP_ID;
-                sendOptions[1].optionID = 2600;
-                memcpy(sendOptions[1].optionData, option3, sizeof(option3));
-                sendOptions[1].optionLength = 10;
-                response.numSendVendorSpecificHeaderOptions = 2;
-            }
-        }
     }
 
     if (flag & OC_OBSERVE_FLAG)
@@ -388,7 +247,6 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
             Store the observer IDs to storage or cache */
 
         NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_FLAG");
-
 
         OCObserveAction ocObAction = entityHandlerRequest->obsInfo.action;
 
