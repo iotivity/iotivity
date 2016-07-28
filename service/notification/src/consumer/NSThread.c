@@ -97,6 +97,8 @@ void NSDestroyThreadHandle(NSConsumerThread * handle)
     pthread_mutex_destroy(&(handle->mutex));
     pthread_mutexattr_destroy(&(handle->mutex_attr));
 
+    NSOICFree(handle);
+
     pthread_mutex_unlock(&g_create_mutex);
 }
 
