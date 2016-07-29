@@ -22,8 +22,15 @@
 package org.iotivity.cloud.accountserver.db;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import org.bson.Document;
 import org.iotivity.cloud.accountserver.Constants;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 
 /**
  *
@@ -32,22 +39,81 @@ import org.iotivity.cloud.accountserver.Constants;
  */
 public class AccountDBManager {
 
-    private static AccountDBManager accoutDBManager = new AccountDBManager();
-    private MongoDB                 mongoDB;
+    private static AccountDBManager            accoutDBManager = new AccountDBManager();
+
+    private MongoDB                            mongoDB;
+
+    private HashMap<String, ArrayList<String>> keyField        = new HashMap<String, ArrayList<String>>();
 
     private AccountDBManager() {
+
+        createDatabase();
+        createTables();
+        createIndexes();
+    }
+
+    private void createDatabase() {
 
         try {
 
             mongoDB = new MongoDB(Constants.DB_NAME);
-
-            mongoDB.createTable(Constants.DEVICE_TABLE);
-            // mongoDB.createTable(Constants.SESSION_TABLE);
-            mongoDB.createTable(Constants.TOKEN_TABLE);
-
         } catch (Exception e) {
             e.printStackTrace();
+            throw new InternalServerErrorException(
+                    "Database or Table create failed!");
         }
+    }
+
+    private void createTables() {
+
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
+        mongoDB.createTable(Constants.DEVICE_TABLE);
+        mongoDB.createTable(Constants.ACL_TABLE);
+        mongoDB.createTable(Constants.ACLTEMPLATE_TABLE);
+    }
+
+    private void createIndexes() {
+
+        ArrayList<String> keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_UUID);
+
+        mongoDB.createIndex(Constants.USER_TABLE, keys);
+        keyField.put(Constants.USER_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_UUID);
+        keys.add(Constants.KEYFIELD_DID);
+
+        mongoDB.createIndex(Constants.TOKEN_TABLE, keys);
+        keyField.put(Constants.TOKEN_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_GID);
+
+        mongoDB.createIndex(Constants.GROUP_TABLE, keys);
+        keyField.put(Constants.GROUP_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_UUID);
+        keys.add(Constants.KEYFIELD_DID);
+
+        mongoDB.createIndex(Constants.DEVICE_TABLE, keys);
+        keyField.put(Constants.DEVICE_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_ACLID);
+
+        mongoDB.createIndex(Constants.ACL_TABLE, keys);
+        keyField.put(Constants.ACL_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_GTYPE);
+
+        mongoDB.createIndex(Constants.ACLTEMPLATE_TABLE, keys);
+        keyField.put(Constants.ACLTEMPLATE_TABLE, keys);
+
     }
 
     public static AccountDBManager getInstance() {
@@ -55,121 +121,158 @@ public class AccountDBManager {
         return accoutDBManager;
     }
 
-    public Boolean registerUserToken(String userId, String accessToken,
-            String refreshToken) {
+    /**
+     * API for inserting a record into DB table. the record will not be inserted
+     * if duplicated one.
+     * 
+     * @param tableName
+     *            table name to be inserted
+     * @param record
+     *            record to be inserted
+     */
+    public void insertRecord(String tableName, HashMap<String, Object> insert) {
 
-        UserToken userToken = new UserToken();
-
-        userToken.setUserToken(userId, accessToken, refreshToken);
-        mongoDB.createResource(userToken);
-        mongoDB.printResources();
-
-        return true;
-    }
-
-    public Boolean updateUserToken(String userId, String oldRefreshToken,
-            String newAccessToken, String newRefreshToken) {
-
-        Boolean updateUserToken = false;
-
-        UserToken oldUserToken = new UserToken();
-        oldUserToken.setUserToken(userId, null, oldRefreshToken);
-
-        UserToken newUserToken = new UserToken();
-        newUserToken.setUserToken(userId, newAccessToken, newRefreshToken);
-
-        updateUserToken = mongoDB.updateResource(oldUserToken, newUserToken);
-        mongoDB.printResources();
-
-        return updateUserToken;
+        if (!_insertRecord(tableName, insert))
+            throw new InternalServerErrorException(
+                    "Database record insert failed");
     }
 
     /**
-     * API for storing device information of authorized user
+     * API for inserting a record into DB table. the record will be replaced if
+     * duplicated one.
      * 
-     * @param userId
-     *            user identifier
-     * @param deviceId
-     *            device identifier
-     * @return Boolean - true if stored, otherwise false
+     * @param tableName
+     *            table name to be inserted
+     * @param replace
+     *            record to be inserted
      */
-    public Boolean registerUserDevice(String userId, String deviceId) {
+    public void insertAndReplaceRecord(String tableName,
+            HashMap<String, Object> replace) {
 
-        UserDevice userDevice = new UserDevice();
-
-        userDevice.setUserId(userId);
-        userDevice.setDeviceId(deviceId);
-
-        mongoDB.createResource(userDevice);
-        mongoDB.printResources();
-
-        return true;
+        if (!_insertAndReplaceRecord(tableName, replace))
+            throw new InternalServerErrorException(
+                    "Database record insert failed");
     }
 
     /**
-     * API for getting user identifier information corresponding with session
-     * code
+     * API for selecting records from DB table.
      * 
-     * @param userId
-     *            identifier of authorized user
-     * @param sessionCode
-     *            session code
-     * @return Boolean - true if stored, otherwise false
+     * @param tableName
+     *            table name to be inserted
+     * @param condition
+     *            condition record to be selected
+     * @return selected records
      */
-    public String getUserIdByAccessToken(String token) {
+    public ArrayList<HashMap<String, Object>> selectRecord(String tableName,
+            HashMap<String, Object> condition) {
 
-        String userId = null;
-
-        userId = mongoDB.getUserIdByAccessToken(token);
-
-        return userId;
-    }
-
-    public String getUserIdByRefreshToken(String token) {
-
-        String userId = null;
-
-        userId = mongoDB.getUserIdByRefreshToken(token);
-
-        return userId;
+        return _selectRecord(tableName, condition);
     }
 
     /**
-     * API for getting devices corresponding with user identifier
+     * API for deleting records from DB table.
      * 
-     * @param userId
-     *            user identifier
-     * @return ArrayList<String> - list of devices
+     * @param tableName
+     *            table name to be inserted
+     * @param condition
+     *            condition record to be deleted
      */
-    public ArrayList<String> getDevices(String userId) {
+    public void deleteRecord(String tableName,
+            HashMap<String, Object> condition) {
 
-        ArrayList<String> deviceList = new ArrayList<>();
-
-        deviceList = mongoDB.getDevices(userId);
-
-        return deviceList;
+        if (!_deleteRecord(tableName, condition))
+            throw new InternalServerErrorException(
+                    "Database record delete failed");
     }
 
-    public Boolean hasAccessToken(String token) {
+    /**
+     * API for updating a record into DB table.
+     * 
+     * @param tableName
+     *            table name to be inserted
+     * @param replace
+     *            record to be updated
+     */
+    public void updateRecord(String tableName,
+            HashMap<String, Object> replace) {
 
-        Boolean hasAccessToken = false;
-        hasAccessToken = mongoDB.hasAccessToken(token);
-
-        return hasAccessToken;
-    }
-
-    public Boolean hasRefreshToken(String token) {
-
-        Boolean hasRefreshToken = false;
-        hasRefreshToken = mongoDB.hasRefreshToken(token);
-
-        return hasRefreshToken;
-    }
-
-    public String getIssuedTime(String accessToken) {
-
-        String issuedTime = mongoDB.getIssuedTime(accessToken);
-        return issuedTime;
+        if (!_updateRecord(tableName, replace))
+            throw new InternalServerErrorException(
+                    "Database record update failed");
 
     }
+
+    private Boolean _insertRecord(String tableName,
+            HashMap<String, Object> record) {
+
+        Document doc = createDocument(record);
+
+        return mongoDB.insertRecord(tableName, doc);
+    }
+
+    private Boolean _insertAndReplaceRecord(String tableName,
+            HashMap<String, Object> record) {
+
+        Document doc = createDocument(record);
+        Document filter = getKeyFilter(tableName, record);
+
+        return mongoDB.insertAndReplaceRecord(tableName, filter, doc);
+    }
+
+    private Boolean _deleteRecord(String tableName,
+            HashMap<String, Object> condition) {
+
+        Document doc = createDocument(condition);
+
+        return mongoDB.deleteRecord(tableName, doc);
+    }
+
+    private Boolean _updateRecord(String tableName,
+            HashMap<String, Object> record) {
+
+        Document replace = createDocument(record);
+        Document filter = getKeyFilter(tableName, record);
+
+        return mongoDB.updateRecord(tableName, filter, replace);
+    }
+
+    private ArrayList<HashMap<String, Object>> _selectRecord(String tableName,
+            HashMap<String, Object> record) {
+
+        Document doc = createDocument(record);
+
+        return mongoDB.selectRecord(tableName, doc);
+    }
+
+    private Document getKeyFilter(String tableName,
+            HashMap<String, Object> record) {
+
+        Document filterDoc = new Document();
+
+        ArrayList<String> keys = keyField.get(tableName);
+
+        for (String key : keys) {
+
+            String value = (String) record.get(key);
+            filterDoc.append(key, value);
+        }
+
+        return filterDoc;
+    }
+
+    private Document createDocument(HashMap<String, Object> record) {
+
+        Document doc = new Document();
+        Set<Entry<String, Object>> resEntrySet = record.entrySet();
+        Iterator<Entry<String, Object>> entryIter = resEntrySet.iterator();
+
+        while (entryIter.hasNext()) {
+            Map.Entry<String, Object> entry = (Map.Entry<String, Object>) entryIter
+                    .next();
+            doc.append(entry.getKey().toString(), entry.getValue());
+        }
+
+        return doc;
+    }
+
 }

@@ -19,31 +19,46 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-package org.iotivity.cloud.ciserver.resources.proxy;
+package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
+import org.iotivity.cloud.base.protocols.MessageBuilder;
+import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.util.Cbor;
 
-public class ResourceDirectory extends Resource {
-    IRequestChannel mRDServer = null;
+public class AccountSession extends Resource {
+    IRequestChannel                       mAuthServer = null;
+    private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
-    public ResourceDirectory() {
-        super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
+    public AccountSession() {
+        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
+                Constants.ACCOUNT_URI, Constants.SESSION_URI));
 
-        mRDServer = ConnectorPool.getConnection("rd");
+        mAuthServer = ConnectorPool.getConnection("account");
     }
 
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        // Token exchange is done by CoapClient
-        mRDServer.sendRequest(request, srcDevice);
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+        if (payloadData.get(Constants.REQ_LOGIN).toString().equals("false")) {
+            payloadData.put(Constants.USER_ID, srcDevice.getUserId());
+            payloadData.put(Constants.DEVICE_ID, srcDevice.getDeviceId());
+            payloadData.put(Constants.ACCESS_TOKEN, srcDevice.getAccessToken());
+            request = MessageBuilder.modifyRequest(request, null, null,
+                    ContentFormat.APPLICATION_CBOR,
+                    mCbor.encodingPayloadToCbor(payloadData));
+        }
+        mAuthServer.sendRequest(request, srcDevice);
     }
 }

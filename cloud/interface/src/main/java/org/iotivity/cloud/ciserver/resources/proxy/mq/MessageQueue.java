@@ -19,7 +19,7 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-package org.iotivity.cloud.ciserver.resources.proxy;
+package org.iotivity.cloud.ciserver.resources.proxy.mq;
 
 import java.util.Arrays;
 

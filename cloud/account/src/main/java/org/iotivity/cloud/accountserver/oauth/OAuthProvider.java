@@ -21,14 +21,15 @@
  */
 package org.iotivity.cloud.accountserver.oauth;
 
-import java.util.HashMap;
+import org.iotivity.cloud.accountserver.db.TokenTable;
+import org.iotivity.cloud.accountserver.db.UserTable;
 
 /**
  *
  * This class provides abstraction of APIs relating authorization for OAuth 2.0
  *
  */
-public abstract interface OAuthServer {
+public abstract interface OAuthProvider {
 
     /**
      * API for requesting access token
@@ -39,8 +40,10 @@ public abstract interface OAuthServer {
      *            authorization server url
      * @return access token and error message if error occur
      */
-    public abstract HashMap<String, String> requestAccessToken(String authCode,
-            String authServerUrl);
+    public abstract TokenTable requestAccessTokenInfo(String authCode,
+            Object options);
+
+    public abstract TokenTable requestRefreshTokenInfo(String refreshToken);
 
     /**
      * API for getting user's information
@@ -51,6 +54,6 @@ public abstract interface OAuthServer {
      *            api server url
      * @return access token and error message if error occur
      */
-    public abstract HashMap<String, String> requestGetUserInfo(
-            String accessToken, String apiServerUrl);
+    public abstract UserTable requestGetUserInfo(String accessToken,
+            Object options);
 }

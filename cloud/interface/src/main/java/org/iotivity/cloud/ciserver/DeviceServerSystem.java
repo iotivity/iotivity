@@ -98,12 +98,12 @@ public class DeviceServerSystem extends ServerSystem {
                     }
 
                 } catch (Throwable t) {
+                    Log.f(ctx.channel(), t);
                     ResponseStatus responseStatus = t instanceof ServerException
                             ? ((ServerException) t).getErrorResponse()
-                            : ResponseStatus.BAD_REQUEST;
+                            : ResponseStatus.INTERNAL_SERVER_ERROR;
                     ctx.channel().writeAndFlush(MessageBuilder
                             .createResponse((CoapRequest) msg, responseStatus));
-                    Log.f(ctx.channel(), t);
                     ctx.channel().close();
                 }
             }
@@ -142,7 +142,7 @@ public class DeviceServerSystem extends ServerSystem {
             Cbor<HashMap<String, Object>> cbor = new Cbor<>();
             IRequestChannel RDServer = ConnectorPool.getConnection("rd");
             HashMap<String, Object> payload = new HashMap<String, Object>();
-            payload.put(Constants.DEVICE_ID, deviceId);
+            payload.put(Constants.REQ_DEVICE_ID, deviceId);
             payload.put(Constants.PRESENCE_STATE, state);
             StringBuffer uriPath = new StringBuffer();
             uriPath.append("/" + Constants.PREFIX_WELL_KNOWN);
@@ -257,8 +257,9 @@ public class DeviceServerSystem extends ServerSystem {
                 }
 
                 CoapDevice device = new CoapDevice(ctx,
-                        (String) authPayload.get("di"),
-                        (String) authPayload.get("accesstoken"));
+                        (String) authPayload.get(Constants.DEVICE_ID),
+                        (String) authPayload.get(Constants.USER_ID),
+                        (String) authPayload.get(Constants.ACCESS_TOKEN));
 
                 // Create device first and pass to upperlayer
                 ctx.channel().attr(keyDevice).set(device);

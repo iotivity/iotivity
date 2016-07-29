@@ -30,17 +30,21 @@ import org.iotivity.cloud.util.Log;
 import io.netty.channel.ChannelHandlerContext;
 
 public class CoapDevice extends Device {
-    private CoapClient mCoapClient    = null;
-    private String     mDeviceId;
-    private String     mAccessToken   = null;
-    private Date       mIssuedTime    = null;
-    private int        mExpiredPolicy = 0;
+    private CoapClient       mCoapClient    = null;
+    private String           mUserId        = null;
+    private String           mDeviceId      = null;
+    private String           mAccessToken   = null;
+    private Date             mIssuedTime    = null;
+    private int              mExpiredPolicy = 0;
 
-    public CoapDevice(ChannelHandlerContext ctx, String deviceId,
-            String accessToken) {
+    private static final int INFINITE_TIME  = -1;
+
+    public CoapDevice(ChannelHandlerContext ctx, String did, String uid,
+            String accesstoken) {
         super(ctx);
-        mDeviceId = deviceId;
-        mAccessToken = accessToken;
+        mDeviceId = did;
+        mUserId = uid;
+        mAccessToken = accesstoken;
     }
 
     @Override
@@ -48,6 +52,12 @@ public class CoapDevice extends Device {
         return mDeviceId;
     }
 
+    @Override
+    public String getUserId() {
+        return mUserId;
+    }
+
+    @Override
     public String getAccessToken() {
         return mAccessToken;
     }
@@ -63,6 +73,14 @@ public class CoapDevice extends Device {
     public void setExpiredPolicy(int expiredPolicy) {
         mIssuedTime = new Date();
         this.mExpiredPolicy = expiredPolicy;
+    }
+
+    public void setUerId(String userId) {
+        this.mUserId = userId;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.mAccessToken = accessToken;
     }
 
     // This is called by cloud resource model
@@ -81,6 +99,10 @@ public class CoapDevice extends Device {
     }
 
     public boolean isExpiredTime() {
+
+        if (mExpiredPolicy == INFINITE_TIME) {
+            return false;
+        }
 
         Date currentTime = new Date();
         long difference = currentTime.getTime() - mIssuedTime.getTime();
@@ -102,4 +124,5 @@ public class CoapDevice extends Device {
     @Override
     public void onDisconnected() {
     }
+
 }

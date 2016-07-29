@@ -271,7 +271,7 @@ public abstract class CoapMessage extends Message {
             return;
         }
 
-        String[] querySegments = query.split("&");
+        String[] querySegments = query.split(";");
         for (String querySegment : querySegments) {
             uri_query.add(querySegment.getBytes(StandardCharsets.UTF_8));
         }

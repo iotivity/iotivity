@@ -25,9 +25,9 @@ import java.net.InetSocketAddress;
 import java.util.Scanner;
 
 import org.iotivity.cloud.accountserver.resources.account.AccountResource;
-import org.iotivity.cloud.accountserver.resources.account.device.DeviceResource;
 import org.iotivity.cloud.accountserver.resources.account.session.SessionResource;
 import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.TokenRefreshResource;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.util.Log;
@@ -41,12 +41,11 @@ public class AccountServer {
 
     public static void main(String[] args) throws Exception {
         Log.Init();
-        
+
         System.out.println("-----Account SERVER-----");
 
         if (args.length != 2) {
-            Log.e("coap server port and TLS mode required\n"
-                    + "ex) 5685 0\n");
+            Log.e("coap server port and TLS mode required\n" + "ex) 5685 0\n");
             return;
         }
 
@@ -58,8 +57,7 @@ public class AccountServer {
 
         serverSystem.addResource(new TokenRefreshResource());
 
-        // Temporally added
-        serverSystem.addResource(new DeviceResource());
+        serverSystem.addResource(new GroupResource());
 
         serverSystem.addServer(new CoapServer(
                 new InetSocketAddress(Integer.parseInt(args[0]))));

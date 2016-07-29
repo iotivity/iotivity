@@ -19,7 +19,7 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-package org.iotivity.cloud.ciserver.resources.proxy;
+package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import java.util.Arrays;
 
@@ -28,6 +28,8 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
+import org.iotivity.cloud.base.protocols.MessageBuilder;
+import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 
@@ -44,7 +46,17 @@ public class Account extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        // Token exchange is done by CoapClient
+        if (request.getMethod().equals(RequestMethod.DELETE)) {
+            String di = request.getUriQueryMap().get(Constants.REQ_DEVICE_ID)
+                    .get(0);
+            StringBuffer uriQuery = new StringBuffer();
+            uriQuery.append(Constants.REQ_DEVICE_ID + "=" + di);
+            uriQuery.append(";");
+            uriQuery.append(Constants.USER_ID + "=" + srcDevice.getUserId());
+
+            request = MessageBuilder.modifyRequest(request, null,
+                    uriQuery.toString(), null, null);
+        }
         mAuthServer.sendRequest(request, srcDevice);
     }
 }

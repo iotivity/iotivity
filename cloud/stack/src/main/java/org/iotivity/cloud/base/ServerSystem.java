@@ -65,7 +65,8 @@ public class ServerSystem extends ResourceManager {
             deviceId.insert(13, '-');
             deviceId.insert(18, '-');
             deviceId.insert(23, '-');
-            Device device = new CoapDevice(ctx, deviceId.toString(), null);
+            Device device = new CoapDevice(ctx, deviceId.toString(), null,
+                    null);
             ctx.channel().attr(keyDevice).set(device);
 
             device.onConnected();

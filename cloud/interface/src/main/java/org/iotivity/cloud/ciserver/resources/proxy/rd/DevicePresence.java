@@ -19,20 +19,20 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-package org.iotivity.cloud.ciserver.resources.proxy;
+package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
-import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ClientException.BadResponseException;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -42,7 +42,8 @@ import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
 public class DevicePresence extends Resource {
-    IRequestChannel mASServer = null;
+    IRequestChannel                       mASServer = null;
+    private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
 
     public DevicePresence() {
         super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
@@ -66,42 +67,53 @@ public class DevicePresence extends Resource {
         @Override
         public void onResponseReceived(IResponse response)
                 throws ClientException {
-
             switch (response.getStatus()) {
-                case VALID:
-                    mRDServer.sendRequest(mRequest, mSrcDevice);
-                    break;
-
                 case CONTENT:
                     StringBuilder additionalQuery = new StringBuilder();
 
-                    Cbor<HashMap<String, ArrayList<String>>> responsePayload = new Cbor<>();
-
-                    ArrayList<String> deviceList = responsePayload
+                    HashMap<String, Object> payloadData = mCbor
                             .parsePayloadFromCbor(response.getPayload(),
-                                    HashMap.class)
-                            .get("devices");
-
-                    int index = deviceList.size();
-                    for (String deviceId : deviceList) {
-                        if (!deviceId.equals(mSrcDevice.getDeviceId())) {
-                            additionalQuery.append("di=");
-                            additionalQuery.append(deviceId);
-                            if (--index > 0) {
-                                additionalQuery.append("&");
+                                    HashMap.class);
+                    List<String> deviceList = (List<String>) payloadData
+                            .get(Constants.REQ_DEVICE_LIST);
+                    if (deviceList != null) {
+                        int index = deviceList.size();
+                        if (mRequest.getUriQuery() == null) {
+                            for (String device : deviceList) {
+                                if (!device.equals(mSrcDevice.getDeviceId())) {
+                                    additionalQuery
+                                            .append(Constants.REQ_DEVICE_ID
+                                                    + "=" + device);
+                                    if (--index > 0) {
+                                        additionalQuery.append(";");
+                                    }
+                                }
+                            }
+                            String uriQuery = (mRequest.getUriQuery() == null
+                                    ? "" : mRequest.getUriQuery()) + ";"
+                                    + additionalQuery.toString();
+                            mRequest = MessageBuilder.modifyRequest(mRequest,
+                                    null, uriQuery, null, null);
+                        } else {
+                            List<String> originDeviceList = mRequest
+                                    .getUriQueryMap()
+                                    .get(Constants.REQ_DEVICE_ID);
+                            if (originDeviceList == null) {
+                                throw new UnAuthorizedException(
+                                        "device is not include in group");
+                            }
+                            for (String device : originDeviceList) {
+                                if (!deviceList.contains(device)) {
+                                    throw new UnAuthorizedException(device
+                                            + " device is not include in group");
+                                }
                             }
                         }
-                    }
-
-                    String uriQuery = (mRequest.getUriQuery() == null ? ""
-                            : mRequest.getUriQuery() + "&")
-                            + additionalQuery.toString();
-                    IRequest requestToAS = MessageBuilder.modifyRequest(
-                            mRequest, null, uriQuery, null, null);
-
-                    mRDServer.sendRequest(requestToAS, mSrcDevice);
+                        mRDServer.sendRequest(mRequest, mSrcDevice);
+                    } else
+                        throw new UnAuthorizedException(
+                                "There is not device in group");
                     break;
-
                 default:
                     throw new BadResponseException(
                             response.getStatus().toString()
@@ -113,28 +125,15 @@ public class DevicePresence extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        // Token exchange is done by CoapClient
-        CoapDevice coapDevice = (CoapDevice) srcDevice;
         StringBuffer uriQuery = new StringBuffer();
-        uriQuery.append(Constants.SEARCH_ACCESS_TOKEN + "=");
-        uriQuery.append(coapDevice.getAccessToken());
-
-        if (request.getUriQueryMap() != null) {
-            if (request.getUriQueryMap().get("di") != null) {
-                String di = request.getUriQueryMap().get("di").get(0);
-                if (di != null) {
-                    uriQuery.append("&");
-                    uriQuery.append("di" + "=");
-                    uriQuery.append(di);
-                }
-            }
-        }
+        uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
 
         StringBuffer uriPath = new StringBuffer();
         uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
         uriPath.append(Constants.PREFIX_OCF + "/");
-        uriPath.append(Constants.ACCOUNT_URI + "/");
-        uriPath.append(Constants.DEVICE_URI);
+        uriPath.append(Constants.ACL_URI + "/");
+        uriPath.append(Constants.GROUP_URI + "/");
+        uriPath.append(srcDevice.getUserId());
 
         IRequest requestToAS = MessageBuilder.createRequest(RequestMethod.GET,
                 uriPath.toString(), uriQuery.toString());

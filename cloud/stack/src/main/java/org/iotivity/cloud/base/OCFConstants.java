@@ -44,6 +44,15 @@ public class OCFConstants {
 
     public static final String TOKEN_REFRESH_URI   = "tokenrefresh";
 
+    /* resource url for acl */
+    public static final String ACL_URI             = "acl";
+
+    public static final String GROUP_URI           = "group";
+
+    public static final String VERIFY_URI          = "verify";
+
+    public static final String ID_URI              = "id";
+
     /* resource uri to publish, update, delete resource info */
     public static final String RD_URI              = "rd";
 
@@ -63,11 +72,14 @@ public class OCFConstants {
     public static final String MQ_BROKER_URI       = "ps";
     public static final String MQ_BROKER_RT        = "oic.wk.ps";
 
-    /* file path for tls communication - Modify filePath to yours */
+    /* certificate file path - Modify this to yours */
     public static final String ROOT_CERT_FILE      = "./rootca.crt";
 
     public static final String CLOUD_CERT_FILE     = "./iotivitycloud.crt";
 
     public static final String CLOUD_KEY_FILE      = "./iotivitycloud.key";
+
+    /* cloud uuid */
+    public static final String CLOUD_UUID          = "2a6085d1-815d-4277-baba-4e4e4df91308";
 
 }

@@ -25,12 +25,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.token.TokenManager;
+import org.iotivity.cloud.accountserver.resources.account.AccountManager;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
-import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -41,16 +39,13 @@ import org.iotivity.cloud.util.Cbor;
 
 public class SessionResource extends Resource {
 
-    private Cbor<HashMap<String, Object>> mCbor         = new Cbor<>();
+    private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
 
-    TokenManager                          mTokenManager = new TokenManager();
+    private AccountManager                mAsManager = new AccountManager();
 
     public SessionResource() {
         super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
                 Constants.ACCOUNT_URI, Constants.SESSION_URI));
-
-        // addQueryHandler(Arrays.asList("if=" + Constants.INTERFACE_DEFAULT),
-        // this::onDefaultInterfaceReceived);
     }
 
     @Override
@@ -85,39 +80,33 @@ public class SessionResource extends Resource {
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
         if (payloadData == null) {
-            throw new BadRequestException("payload is null");
-        }
-
-        if (payloadData.get(Constants.REQ_USER_ID) == null) {
-            throw new PreconditionFailedException("UserId missing");
-        }
-
-        if (payloadData.get(Constants.REQ_DEVICE_ID) == null) {
-            throw new PreconditionFailedException("DeviceId missing");
-        }
-
-        String accessToken = payloadData.get(Constants.REQ_ACCESS_TOKEN)
-                .toString();
-        boolean signinRequest = (boolean) payloadData.get(Constants.REQ_LOGIN);
-
-        Boolean res = false;
-
-        res = mTokenManager.verifyAccessToken(accessToken);
-
-        if (!res) {
-            throw new UnAuthorizedException("AccessToken is unauthorized");
-        }
-
-        if (!signinRequest) {
-            return MessageBuilder.createResponse(request, ResponseStatus.VALID);
+            throw new BadRequestException("CBOR parsing failed");
         }
 
         HashMap<String, Object> responsePayload = null;
 
-        responsePayload = new HashMap<String, Object>();
+        if (checkPayloadException(
+                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID,
+                        Constants.REQ_ACCESS_TOKEN, Constants.REQ_LOGIN),
+                payloadData)) {
 
-        responsePayload.put(Constants.RESP_EXPIRES_IN,
-                mTokenManager.getRemainExpiredTime(accessToken));
+            String uuid = payloadData.get(Constants.REQ_UUID_ID).toString();
+            String deviceId = payloadData.get(Constants.REQ_DEVICE_ID)
+                    .toString();
+            String accessToken = payloadData.get(Constants.REQ_ACCESS_TOKEN)
+                    .toString();
+            boolean signinRequest = (boolean) payloadData
+                    .get(Constants.REQ_LOGIN);
+
+            if (signinRequest) {
+                responsePayload = mAsManager.signInOut(uuid, deviceId,
+                        accessToken);
+            } else {
+                mAsManager.signInOut(uuid, deviceId, accessToken);
+                return MessageBuilder.createResponse(request,
+                        ResponseStatus.CHANGED);
+            }
+        }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,

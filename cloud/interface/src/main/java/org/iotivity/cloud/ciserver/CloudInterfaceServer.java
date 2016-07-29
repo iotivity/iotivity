@@ -29,12 +29,15 @@ import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
 import org.iotivity.cloud.ciserver.resources.DiResource;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
-import org.iotivity.cloud.ciserver.resources.proxy.Account;
-import org.iotivity.cloud.ciserver.resources.proxy.DevicePresence;
-import org.iotivity.cloud.ciserver.resources.proxy.MessageQueue;
-import org.iotivity.cloud.ciserver.resources.proxy.ResourceDirectory;
-import org.iotivity.cloud.ciserver.resources.proxy.ResourceFind;
-import org.iotivity.cloud.ciserver.resources.proxy.ResourcePresence;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
+import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
+import org.iotivity.cloud.ciserver.resources.proxy.account.AclGroup;
+import org.iotivity.cloud.ciserver.resources.proxy.mq.MessageQueue;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
 import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
@@ -45,9 +48,8 @@ public class CloudInterfaceServer {
         System.out.println("-----CI SERVER-------");
 
         if (args.length != 8) {
-            Log.e(
-                    "coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
-                            + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
+            Log.e("coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
+                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
             return;
         }
 
@@ -66,15 +68,20 @@ public class CloudInterfaceServer {
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
         Account acHandler = new Account();
+        AccountSession acSessionHandler = new AccountSession();
         ResourceDirectory rdHandler = new ResourceDirectory();
         ResourceFind resHandler = new ResourceFind();
         ResourcePresence adHandler = new ResourcePresence();
         DevicePresence prsHandler = new DevicePresence();
         MessageQueue mqHandler = new MessageQueue();
+        Acl aclHandler = new Acl();
+        AclGroup aclGroupHandler = new AclGroup();
 
         CoapDevicePool devicePool = deviceServer.getDevicePool();
 
         deviceServer.addResource(acHandler);
+
+        deviceServer.addResource(acSessionHandler);
 
         deviceServer.addResource(rdHandler);
 
@@ -85,6 +92,10 @@ public class CloudInterfaceServer {
         deviceServer.addResource(prsHandler);
 
         deviceServer.addResource(mqHandler);
+
+        deviceServer.addResource(aclHandler);
+
+        deviceServer.addResource(aclGroupHandler);
 
         KeepAliveResource resKeepAlive = new KeepAliveResource(
                 new int[] { 1, 2, 4, 8 });

@@ -85,13 +85,14 @@ public class Resource implements IRequestEventHandler {
         throw new NotFoundException("No handlers registered");
     }
 
-    public boolean checkQueryException(String property, IRequest request) {
-        return checkQueryException(Arrays.asList(property), request);
+    public boolean checkQueryException(String property,
+            HashMap<String, List<String>> queryData) {
+        return checkQueryException(Arrays.asList(property), queryData);
     }
 
     public boolean checkQueryException(List<String> propertyList,
-            IRequest request) {
-        HashMap<String, List<String>> queryData = request.getUriQueryMap();
+            HashMap<String, List<String>> queryData) {
+
         if (queryData == null)
             throw new BadRequestException("queryData is null");
 
@@ -106,15 +107,14 @@ public class Resource implements IRequestEventHandler {
         return true;
     }
 
-    public boolean checkPayloadException(String property, IRequest request) {
-        return checkPayloadException(Arrays.asList(property), request);
+    public boolean checkPayloadException(String property,
+            HashMap<String, Object> payloadData) {
+        return checkPayloadException(Arrays.asList(property), payloadData);
     }
 
     public boolean checkPayloadException(List<String> propertyList,
-            IRequest request) {
-        Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-        HashMap<String, Object> payloadData = cbor
-                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+            HashMap<String, Object> payloadData) {
+
         if (payloadData == null)
             throw new BadRequestException("payloadData is null");
 

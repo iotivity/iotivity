@@ -91,7 +91,8 @@ public abstract class Server {
             throws CertificateException, SSLException, InterruptedException {
 
         try {
-            Log.i("[CoapServer]startServer with tlsMode! mode= " + tlsMode);
+            if (tlsMode)
+                Log.i("Server starts with TLS!");
 
             if (tlsMode == true) {
 
