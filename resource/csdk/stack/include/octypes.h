@@ -367,6 +367,12 @@ extern "C" {
 /** Account token refresh URI.*/
 #define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/ocf/account/tokenrefresh"
 
+/** ACL group URI.*/
+#define OC_RSRVD_ACL_GROUP_URI             "/ocf/acl/group"
+
+/** ACL invite URI.*/
+#define OC_RSRVD_ACL_INVITE_URI            "/ocf/acl/invite"
+
 /** Defines auth provider. */
 #define OC_RSRVD_AUTHPROVIDER              "authprovider"
 
@@ -390,6 +396,33 @@ extern "C" {
 
 /** Defines user UUID. */
 #define OC_RSRVD_USER_UUID                 "uid"
+
+/** Defines user ID. */
+#define OC_RSRVD_USER_ID                   "userid"
+
+/** Defines group ID. */
+#define OC_RSRVD_GROUP_ID                  "gid"
+
+/** Defines group Master ID. */
+#define OC_RSRVD_GROUP_MASTER_ID           "gmid"
+
+/** Defines group type. */
+#define OC_RSRVD_GROUP_TYPE                "gtype"
+
+/** Defines member of group ID. */
+#define OC_RSRVD_MEMBER_ID                 "mid"
+
+/** Defines device ID list. */
+#define OC_RSRVD_DEVICE_ID_LIST            "dilist"
+
+/** Defines public. */
+#define OC_RSRVD_PUBLIC                    "Public"
+
+/** Defines private. */
+#define OC_RSRVD_PRIVATE                   "Private"
+
+/** Defines options. */
+#define OC_RSRVD_INVITE                    "invite"
 
 /** Defines options. */
 #define OC_RSRVD_OPTIONS                   "options"
@@ -1511,6 +1544,15 @@ typedef struct OCDPDev
     struct OCDPDev *next;
 } OCDPDev_t;
 //#endif // DIRECT_PAIRING
+
+/**
+ * Type of Group for ACL.
+ */
+typedef enum
+{
+    GT_PUBLIC = 0,
+    GT_PRIVATE,
+} OCAclGroupType;
 
 /*
  * -------------------------------------------------------------------------------------------
