@@ -446,7 +446,11 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     out->port = in->port;
     out->ifindex = in->ifindex;
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-    memcpy(out->routeData, in->routeData, sizeof(out->routeData));
+    /* This assert is to prevent accidental mismatch between address size macros defined in
+     * RI and CA and cause crash here. */
+    OC_STATIC_ASSERT(MAX_ADDR_STR_SIZE_CA == MAX_ADDR_STR_SIZE,
+                                        "Address size mismatch between RI and CA");
+    memcpy(out->routeData, in->routeData, sizeof(in->routeData));
 #endif
 }
 
@@ -459,7 +463,11 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-    memcpy(out->routeData, in->routeData, sizeof(out->routeData));
+    /* This assert is to prevent accidental mismatch between address size macros defined in
+     * RI and CA and cause crash here. */
+    OC_STATIC_ASSERT(MAX_ADDR_STR_SIZE_CA == MAX_ADDR_STR_SIZE,
+                                        "Address size mismatch between RI and CA");
+    memcpy(out->routeData, in->routeData, sizeof(in->routeData));
 #endif
     out->port = in->port;
     out->ifindex = in->ifindex;
