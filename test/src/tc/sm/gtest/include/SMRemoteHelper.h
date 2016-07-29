@@ -21,51 +21,19 @@
 #ifndef INCLUDE_TESTCASE_SMREMOTEHELPER_H_
 #define INCLUDE_TESTCASE_SMREMOTEHELPER_H_
 
-#include <string>
-#include <map>
-#include <utility>
-#include <vector>
-#include <mutex>
-
-#include "gtest/gtest.h"
 #include "RemoteScene.h"
 #include "RemoteSceneAction.h"
 #include "RemoteSceneCollection.h"
 #include "RemoteSceneList.h"
+#include "SMCommon.h"
 
-#include "RCSDiscoveryManager.h"
-#include "RCSRemoteResourceObject.h"
-#include "RCSResourceAttributes.h"
-#include "RCSResourceObject.h"
-#include "RCSAddress.h"
-#include "OCPlatform.h"
-
-#include "CommonUtil.h"
-#include "IotivityTest_Logger.h"
-
-#define MAX_SLEEP_TIME 5
-#define INT_ZERO 0
-#define INT_ONE 1
-#define INT_TWO 2
-#define EMPTY_STRING ""
-#define NULL_PTR nullptr
-
-#define FAN_SERVER "./fanserver"
-#define LIGHT_SERVER "./lightserver"
 #define SCENE_SERVER "./sceneserver"
+#define RESOURCE_TYPE_SCENELIST "oic.wk.scenelist"
 
+constexpr char REMOTE_SCENE_LIST_NAME[] { "Home" };
 constexpr int SCENE_RESULT_OK = 200;
 const int CALLBACK_WAIT_MIN = 1;
 const int CALLBACK_WAIT_MAX = 5;
-const int SM_REMOTE_DEFAULT_WAITTIME = 2000;
-constexpr int DEFAULT_WAITTIME = 2000;
-constexpr char KEY_POWER[] { "power" };
-constexpr char KEY_EMPTY[] { "" };
-constexpr char VALUE_EMPTY[] { "" };
-constexpr char VALUE_OFF[] { "off" };
-constexpr char VALUE_ON[] { "on" };
-constexpr char KEY_SPEED[] { "speed" };
-constexpr char VALUE_SPEED[] { "20" };
 
 using namespace std;
 using namespace OIC::Service;
@@ -74,59 +42,50 @@ namespace PH = std::placeholders;
 
 class SMRemoteHelper {
 private:
-	static SMRemoteHelper* s_smRemoteHelperInstance;
-	static std::mutex s_mutex;
-	std::shared_ptr<RemoteSceneList> m_pHelperRemoteSceneList;
+    static std::mutex s_mutex;
+    std::shared_ptr<RemoteSceneList> m_pHelperRemoteSceneList;
 
 public:
-	RCSRemoteResourceObject::Ptr g_pFoundSceneList;
-	RCSRemoteResourceObject::Ptr g_pFoundLightResource;
-	RCSRemoteResourceObject::Ptr g_pFoundFanResource;
-	std::vector<RCSRemoteResourceObject::Ptr> g_vecFoundResourceList;
-	std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
-	const std::string relativetUri;
-	const std::vector<std::string> resourceTypes;
+    RCSRemoteResourceObject::Ptr g_pFoundSceneList;
+    RCSRemoteResourceObject::Ptr g_pFoundLightResource;
+    RCSRemoteResourceObject::Ptr g_pFoundFanResource;
+    std::vector<RCSRemoteResourceObject::Ptr> g_vecFoundResourceList;
+    std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> m_pDiscoveryTask;
+    const std::string m_relativetUri;
+    const std::vector<std::string> m_resourceTypes;
 
 public:
-	/**
-	 * @brief 	constructor for SMRemoteHelper class
-	 */
-	SMRemoteHelper();
+    /**
+     * @brief     constructor for SMRemoteHelper class
+     */
+    SMRemoteHelper();
 
-	/**
-	 * @brief 	function for getting helper instance
-	 * @return	remote helper instance
-	 */
-	static SMRemoteHelper* getInstance(void);
+    /**
+     * @brief     function for discovering resources
+     */
+    void discoverResource();
 
-	/**
-	 * @brief 	function for discovering resources
-	 */
-	void discoverResource();
+    /**
+     * @brief     callback function to be called when resource is discovered
+     */
+    void onRemoteResourceDiscovered(
+            std::shared_ptr<RCSRemoteResourceObject> foundResource);
 
-	/**
-	 * @brief 	callback function to be called when resource is discovered
-	 */
-	void onRemoteResourceDiscovered(
-			std::shared_ptr<RCSRemoteResourceObject> foundResource);
+    /**
+     * @brief     function for stopping resource discovery
+     */
+    void stopDiscovery();
 
-	/**
-	 * @brief 	function for stopping resource discovery
-	 */
-	void stopDiscovery();
+    /**
+     * @brief     function for creating remote scene list instance
+     * @return    remote scene list pointer
+     */
+    std::shared_ptr<RemoteSceneList> createRemoteSceneListInstance();
 
-	/**
-	 * @brief 	function for creating remote scene list instance
-	 * @return	remote scene list pointer
-	 */
-	std::shared_ptr<RemoteSceneList> createRemoteSceneListInstance();
-
-	/**
-	 * @brief 	callback function to be called when remote scene list is created
-	 */
-	void onRemoteSceneListCreated(RemoteSceneList::Ptr remoteSceneList,
-			int eCode);
-
+    /**
+     * @brief     callback function to be called when remote scene list is created
+     */
+    void onRemoteSceneListCreated(RemoteSceneList::Ptr remoteSceneList,
+            int eCode);
 };
-
 #endif

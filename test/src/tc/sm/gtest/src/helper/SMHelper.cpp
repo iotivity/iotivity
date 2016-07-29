@@ -20,72 +20,68 @@
 
 #include "SMHelper.h"
 
-SMHelper* SMHelper::s_smHelperInstance = NULL;
 std::mutex SMHelper::s_mutex;
 bool SMHelper::s_checkExecuteCallback = false;
 
 SMHelper::SMHelper() {
-	IOTIVITYTEST_LOG(INFO, "[SMHelper] IN");
-	PlatformConfig config { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0",
-			0, OC::QualityOfService::LowQos };
-	OCPlatform::Configure(config);
-	resourceTypes = {"core.light", "core.fan"};
-	relativetUri = OC_RSRVD_WELL_KNOWN_URI;
-}
-
-SMHelper* SMHelper::getInstance(void) {
-	s_smHelperInstance = new SMHelper();
-	return s_smHelperInstance;
+    IOTIVITYTEST_LOG(INFO, "[SMHelper] IN");
+    PlatformConfig config { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0",
+            0, OC::QualityOfService::LowQos };
+    OCPlatform::Configure(config);
+    m_resourceTypes = {RESOURCE_TYPE_LIGHT, RESOURCE_TYPE_FAN};
+    m_relativetUri = OC_RSRVD_WELL_KNOWN_URI;
 }
 
 SceneList* SMHelper::getSceneListInstance() {
-	SceneList* sceneListInstance = nullptr;
-	sceneListInstance = SceneList::getInstance();
+    SceneList* sceneListInstance = nullptr;
+    sceneListInstance = SceneList::getInstance();
 
-	return sceneListInstance;
+    return sceneListInstance;
 }
 
 void SMHelper::onResourceDiscovered(
-		std::shared_ptr<RCSRemoteResourceObject> foundResource) {
-	s_mutex.lock();
+        std::shared_ptr<RCSRemoteResourceObject> foundResource) {
+    s_mutex.lock();
 
-	IOTIVITYTEST_LOG(INFO, "onResourceDiscovered callback");
+    IOTIVITYTEST_LOG(INFO, "onResourceDiscovered callback");
 
-	std::string resourceURI = foundResource->getUri();
-	std::string hostAddress = foundResource->getAddress();
+    std::string resourceURI = foundResource->getUri();
+    std::string hostAddress = foundResource->getAddress();
 
-	IOTIVITYTEST_LOG(INFO, "Resource URI : %s", resourceURI.c_str());
-	IOTIVITYTEST_LOG(INFO, "Resource Host : %s", hostAddress.c_str());
+    IOTIVITYTEST_LOG(INFO, "Resource URI : %s", resourceURI.c_str());
+    IOTIVITYTEST_LOG(INFO, "Resource Host : %s", hostAddress.c_str());
 
-	g_foundResourceList.push_back(foundResource);
-	IOTIVITYTEST_LOG(INFO, "size of resource list : %d",
-			g_foundResourceList.size());
+    g_foundResourceList.push_back(foundResource);
+    IOTIVITYTEST_LOG(INFO, "size of resource list : %d",
+            g_foundResourceList.size());
 
-	s_mutex.unlock();
+    s_mutex.unlock();
 }
 
 void SMHelper::onExecute(int /*Code*/) {
-	SMHelper::s_checkExecuteCallback = true;
-	IOTIVITYTEST_LOG(INFO, "%s is called", __func__);
+    IOTIVITYTEST_LOG(INFO, "%s is called", __func__);
+    SMHelper::s_checkExecuteCallback = true;
 }
 
 void SMHelper::discoverResource() {
-	std::string exceptionMsg = "";
-	try {
-		discoveryTask =
-				RCSDiscoveryManager::getInstance()->discoverResourceByTypes(
-						RCSAddress::multicast(), relativetUri, resourceTypes,
-						std::bind(&SMHelper::onResourceDiscovered, this,
-								PH::_1));
-	} catch (const RCSPlatformException& e) {
-		exceptionMsg = e.what();
-		IOTIVITYTEST_LOG(ERROR, "%s", exceptionMsg.c_str());
-	} catch (const RCSException& e) {
-		exceptionMsg = e.what();
-		IOTIVITYTEST_LOG(ERROR, "%s", exceptionMsg.c_str());
-	}
+    std::string exceptionMsg = "";
+    try {
+        m_pDiscoveryTask =
+                RCSDiscoveryManager::getInstance()->discoverResourceByTypes(
+                        RCSAddress::multicast(), m_relativetUri, m_resourceTypes,
+                        std::bind(&SMHelper::onResourceDiscovered, this,
+                                PH::_1));
+    } catch (const RCSPlatformException& e) {
+        exceptionMsg = e.what();
+        IOTIVITYTEST_LOG(ERROR, "%s", exceptionMsg.c_str());
+    } catch (const RCSException& e) {
+        exceptionMsg = e.what();
+        IOTIVITYTEST_LOG(ERROR, "%s", exceptionMsg.c_str());
+    }
+    IOTIVITYTEST_LOG(INFO, "Wait 5 seconds until resources discovered.");
+    CommonUtil::waitInSecond(MAX_SLEEP_TIME);
 }
 
 void SMHelper::stopDiscovery() {
-	discoveryTask->cancel();
+    m_pDiscoveryTask->cancel();
 }

@@ -22,31 +22,28 @@
 
 class SMSceneListTest_btc: public ::testing::Test {
 public:
-	SMHelper* m_pSMHelper;
-	SceneList* m_pSceneList;
-	std::shared_ptr<SceneCollection> m_pSceneCollection;
-	std::string sceneListName;
+    SMHelper* m_pSMHelper;
+    SceneList* m_pSceneList;
+    std::shared_ptr<SceneCollection> m_pSceneCollection;
 
-	SMSceneListTest_btc() {
-		m_pSMHelper = nullptr;
-		m_pSceneList = nullptr;
-		m_pSceneCollection = nullptr;
-		sceneListName = "Home";
-	}
+    SMSceneListTest_btc() {
+        m_pSMHelper = nullptr;
+        m_pSceneList = nullptr;
+        m_pSceneCollection = nullptr;
+    }
 
-	virtual void SetUp() {
-		IOTIVITYTEST_LOG(INFO, "SetUp IN");
+    virtual void SetUp() {
+        IOTIVITYTEST_LOG(INFO, "SetUp IN");
 
-		CommonUtil::runCommonTCSetUpPart();
-		m_pSMHelper = SMHelper::getInstance();
-	}
+        CommonUtil::runCommonTCSetUpPart();
+        m_pSMHelper = new SMHelper();
+    }
 
-	virtual void TearDown() {
-		IOTIVITYTEST_LOG(INFO, "TearDown IN");
+    virtual void TearDown() {
+        IOTIVITYTEST_LOG(INFO, "TearDown IN");
 
-		CommonUtil::runCommonTCTearDownPart();
-	}
-
+        CommonUtil::runCommonTCTearDownPart();
+    }
 };
 
 /**
@@ -63,14 +60,12 @@ public:
 #if defined(__LINUX__)
 TEST_F(SMSceneListTest_btc, GetInstance_SRC_P)
 {
-	m_pSceneList = m_pSMHelper->getSceneListInstance();
+    m_pSceneList = m_pSMHelper->getSceneListInstance();
 
-	if(m_pSceneList == NULL_PTR)
-	{
-		SET_FAILURE("scenelist pointer is not found");
-	}
-
-	SUCCEED();
+    if(m_pSceneList == NULL_PTR)
+    {
+        SET_FAILURE("scenelist pointer is not found");
+    }
 }
 #endif
 
@@ -89,30 +84,28 @@ TEST_F(SMSceneListTest_btc, GetInstance_SRC_P)
 #if defined(__LINUX__)
 TEST_F(SMSceneListTest_btc, AddNewSceneCollection_SRC_P)
 {
-	m_pSceneList = m_pSMHelper->getSceneListInstance();
+    m_pSceneList = m_pSMHelper->getSceneListInstance();
 
-	if(m_pSceneList == NULL_PTR)
-	{
-		SET_FAILURE("scenelist pointer is not found");
-		return;
-	}
+    if(m_pSceneList == NULL_PTR)
+    {
+        SET_FAILURE("scenelist pointer is not found");
+        return;
+    }
 
-	try
-	{
-		m_pSceneCollection = m_pSceneList->addNewSceneCollection();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside addNewSceneCollection: " + std::string(e.what()));
-		return;
-	}
+    try
+    {
+        m_pSceneCollection = m_pSceneList->addNewSceneCollection();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside addNewSceneCollection: " + std::string(e.what()));
+        return;
+    }
 
-	if(m_pSceneCollection == NULL_PTR)
-	{
-		SET_FAILURE("scene collection pointer is not found");
-	}
-
-	SUCCEED();
+    if(m_pSceneCollection == NULL_PTR)
+    {
+        SET_FAILURE("scene collection pointer is not found");
+    }
 }
 #endif
 
@@ -124,8 +117,8 @@ TEST_F(SMSceneListTest_btc, AddNewSceneCollection_SRC_P)
  * @objective Test getSceneCollections function positively for getting list of SceneCollections
  * @target std::vector<SceneCollection::Ptr> getSceneCollections() const;
  * @test_data none
- * @pre_condition	1. call getInstance method
- * 					2. call addNewSceneCollection
+ * @pre_condition    1. call getInstance method
+ *                     2. call addNewSceneCollection
  * @procedure call getSceneCollections and check if list of scene collections is returned
  * @post_condition none
  * @expected getSceneCollections will return list of scene collections and no exceptions occur
@@ -133,34 +126,32 @@ TEST_F(SMSceneListTest_btc, AddNewSceneCollection_SRC_P)
 #if defined(__LINUX__)
 TEST_F(SMSceneListTest_btc, GetSceneCollections_SRC_P)
 {
-	m_pSceneList = m_pSMHelper->getSceneListInstance();
+    m_pSceneList = m_pSMHelper->getSceneListInstance();
 
-	if(m_pSceneList == NULL_PTR)
-	{
-		SET_FAILURE("scenelist pointer is not found");
-		return;
-	}
+    if(m_pSceneList == NULL_PTR)
+    {
+        SET_FAILURE("scenelist pointer is not found");
+        return;
+    }
 
-	m_pSceneCollection = m_pSceneList->addNewSceneCollection();
+    m_pSceneCollection = m_pSceneList->addNewSceneCollection();
 
-	std::vector<SceneCollection::Ptr> sceneCollections;
+    std::vector<SceneCollection::Ptr> sceneCollections;
 
-	try
-	{
-		sceneCollections = m_pSceneList->getSceneCollections();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside getSceneCollections: " + std::string(e.what()));
-		return;
-	}
+    try
+    {
+        sceneCollections = m_pSceneList->getSceneCollections();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside getSceneCollections: " + std::string(e.what()));
+        return;
+    }
 
-	if(sceneCollections.size() == INT_ZERO)
-	{
-		SET_FAILURE("list of scene collections is not found");
-	}
-
-	SUCCEED();
+    if(sceneCollections.size() == INT_ZERO)
+    {
+        SET_FAILURE("list of scene collections is not found");
+    }
 }
 #endif
 
@@ -179,24 +170,22 @@ TEST_F(SMSceneListTest_btc, GetSceneCollections_SRC_P)
 #if defined(__LINUX__)
 TEST_F(SMSceneListTest_btc, SceneListSetName_SRC_P)
 {
-	m_pSceneList = m_pSMHelper->getSceneListInstance();
+    m_pSceneList = m_pSMHelper->getSceneListInstance();
 
-	if(m_pSceneList == NULL_PTR)
-	{
-		SET_FAILURE("scenelist pointer is not found");
-		return;
-	}
+    if(m_pSceneList == NULL_PTR)
+    {
+        SET_FAILURE("scenelist pointer is not found");
+        return;
+    }
 
-	try
-	{
-		m_pSceneList->setName(sceneListName);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside setName: " + std::string(e.what()));
-	}
-
-	SUCCEED();
+    try
+    {
+        m_pSceneList->setName(SCENE_LIST_NAME);
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside setName: " + std::string(e.what()));
+    }
 }
 #endif
 
@@ -215,24 +204,22 @@ TEST_F(SMSceneListTest_btc, SceneListSetName_SRC_P)
 #if defined(__LINUX__)
 TEST_F(SMSceneListTest_btc, SceneListSetName_ESV_P)
 {
-	m_pSceneList = m_pSMHelper->getSceneListInstance();
+    m_pSceneList = m_pSMHelper->getSceneListInstance();
 
-	if(m_pSceneList == NULL_PTR)
-	{
-		SET_FAILURE("scenelist pointer is not found");
-		return;
-	}
+    if(m_pSceneList == NULL_PTR)
+    {
+        SET_FAILURE("scenelist pointer is not found");
+        return;
+    }
 
-	try
-	{
-		m_pSceneList->setName(EMPTY_STRING);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside setName: " + std::string(e.what()));
-	}
-
-	SUCCEED();
+    try
+    {
+        m_pSceneList->setName(EMPTY_STRING);
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside setName: " + std::string(e.what()));
+    }
 }
 #endif
 
@@ -245,8 +232,8 @@ TEST_F(SMSceneListTest_btc, SceneListSetName_ESV_P)
  * @objective Test getName function positively
  * @target std::string getName() const;
  * @test_data none
- * @pre_condition	1. call getInstance method
- *    			 	2. call setName
+ * @pre_condition    1. call getInstance method
+ *                     2. call setName
  * @procedure call getName and check if name is returned
  * @post_condition none
  * @expected getName will return name and no exceptions occur
@@ -254,32 +241,30 @@ TEST_F(SMSceneListTest_btc, SceneListSetName_ESV_P)
 #if defined(__LINUX__)
 TEST_F(SMSceneListTest_btc, SceneListGetName_SRC_P)
 {
-	m_pSceneList = m_pSMHelper->getSceneListInstance();
+    m_pSceneList = m_pSMHelper->getSceneListInstance();
 
-	if(m_pSceneList == NULL_PTR)
-	{
-		SET_FAILURE("scenelist pointer is not found");
-		return;
-	}
+    if(m_pSceneList == NULL_PTR)
+    {
+        SET_FAILURE("scenelist pointer is not found");
+        return;
+    }
 
-	m_pSceneList->setName(sceneListName);
+    m_pSceneList->setName(SCENE_LIST_NAME);
 
-	std::string receivedName = "";
+    std::string receivedName = "";
 
-	try
-	{
-		receivedName = m_pSceneList->getName();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside getName: " + std::string(e.what()));
-	}
+    try
+    {
+        receivedName = m_pSceneList->getName();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside getName: " + std::string(e.what()));
+    }
 
-	if(receivedName == EMPTY_STRING)
-	{
-		SET_FAILURE("getName did not return scene list name");
-	}
-
-	SUCCEED();
+    if(receivedName == EMPTY_STRING)
+    {
+        SET_FAILURE("getName did not return scene list name");
+    }
 }
 #endif
