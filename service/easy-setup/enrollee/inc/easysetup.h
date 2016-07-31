@@ -24,6 +24,8 @@
 
 #include "escommon.h"
 
+#include "ocpayload.h"
+
 /**
  * @file
  *
@@ -34,22 +36,37 @@
 extern "C" {
 #endif // __cplusplus
 
-/*
- * Callback function for updating the Enrollee OnBoarding and Provisioning status result
- * to the application
- *
- * @param esResult ESResult provides the current state of the Enrollee Device
+/**
+ * A set of functions pointers for callback functions which are called after provisioning data is
+ * received from Mediator.
  */
-typedef void (*ESEnrolleeEventCallback)(ESResult esResult, ESEnrolleeState enrolleeState);
-
-
-
 typedef struct
 {
     void (*WiFiProvCb) (ESWiFiProvData *);
     void (*DevConfProvCb) (ESDevConfProvData *);
     void (*CloudDataProvCb) (ESCloudProvData *);
 } ESProvisioningCallbacks;
+
+/**
+ * A function pointer for registering a user-defined function to set user-specific properties to a
+ * response going back to a client.
+ * @param payload Represents a response. You can set a specific value with specific property key
+ * to the payload. If a client receives the response and know the property key, then it can
+ * extract the value.
+ * @param resourceType Used to distinguish which resource the received property belongs to.
+ */
+typedef void (*ESWriteUserdataCb)(OCRepPayload* payload, char* resourceType);
+
+/**
+ * A function pointer for registering a user-defined function to parse user-specific properties from
+ * received POST request.
+ * @param payload Represents a received POST request. If you know user-specific property key,
+ * then you can extract a corresponding value if it exists.
+ * @param resourceType Used to distinguish which resource the received property belongs to
+ * @param userdata User-specific data you want to deliver to desired users, i.e. application.
+ * The user should know a data structure of passed userdata.
+ */
+typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void* userdata);
 
 /**
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API
@@ -104,6 +121,22 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode);
  * @return ::ES_OK on success, some other value upon failure.
  */
 ESResult ESTerminateEnrollee();
+
+/**
+ * This function is to set two function pointer to handle user-specific properties in in-comming
+ * POST request and to out-going response for GET or POST request.
+ * If you register certain functions with this API, you have to handle OCRepPayload structure to
+ * set and get properties you want.
+ *
+ * @param readCb a callback for parsing properties from POST request
+ * @param writeCb a callback for putting properties to a response to be sent
+ *
+ * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESReadUserdataCb
+ * @see ESWriteUserdataCb
+ */
+ESResult ESSetCallbackForUserdata(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb);
 
 #ifdef __cplusplus
 }

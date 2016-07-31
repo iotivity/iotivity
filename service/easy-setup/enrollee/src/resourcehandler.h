@@ -37,6 +37,9 @@ typedef void (*ESWiFiCB) (ESResult, ESWiFiProvData *);
 typedef void (*ESCloudCB) (ESResult, ESCloudProvData *);
 typedef void (*ESDevConfCB) (ESResult, ESDevConfProvData *);
 
+typedef void (*ESWriteUserdataCb)(OCRepPayload* payload, char* resourceType);
+typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void* userdata);
+
 /* Structure to represent a Light resource */
 typedef struct PROVRESOURCE
 {
@@ -52,7 +55,7 @@ typedef struct
     WIFI_MODE supportedMode[NUM_WIFIMODE];
     uint8_t numMode;        // the number of device's supported wifi modes
     WIFI_FREQ supportedFreq;
-    char ssid[MAX_SSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
+    char ssid[MAX_SSIDLEN]; // SSID
     char cred[MAX_CREDLEN]; // credential information.
     WIFI_AUTHTYPE authType;
     WIFI_ENCTYPE encType;
@@ -64,7 +67,6 @@ typedef struct
     char authCode[OIC_STRING_MAX_VALUE];
     char authProvider[OIC_STRING_MAX_VALUE];
     char ciServer[OIC_STRING_MAX_VALUE];
-    char serverID[OIC_STRING_MAX_VALUE];
 } CloudResource;
 
 typedef struct
@@ -74,7 +76,6 @@ typedef struct
     char language[OIC_STRING_MAX_VALUE];
     char country[OIC_STRING_MAX_VALUE];
 } DevConfResource;
-
 
 OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
 OCStackResult DeleteEasySetupResources();
@@ -88,6 +89,7 @@ void RegisterWifiRsrcEventCallBack(ESWiFiCB);
 void RegisterCloudRsrcEventCallBack(ESCloudCB);
 void RegisterDevConfRsrcEventCallBack(ESDevConfCB);
 void UnRegisterResourceEventCallBack(void);
+ESResult SetCallbackForUserData(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb);
 
 #ifdef __cplusplus
 }

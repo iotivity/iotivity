@@ -20,17 +20,18 @@
 
 
 #include "easysetup.h"
+#include "easysetup_x.h"
 
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <oic_string.h>
+#include "oic_malloc.h"
 
 #define TAG "ENROLLEE_SAMPLE"
 
 void *listeningFunc(void *);
-
 
 /**
  * Secure Virtual Resource database for Iotivity Server
@@ -39,14 +40,15 @@ void *listeningFunc(void *);
  */
 static char CRED_FILE[] = "oic_svr_db_server.dat";
 
-OCPersistentStorage ps ;
-
+OCPersistentStorage ps;
 
 /**
  * @var gIsSecured
  * @brief Variable to check if secure mode is enabled or not.
  */
 static bool gIsSecured = false;
+
+UserProperties g_userProperties;
 
 void PrintMenu()
 {
@@ -55,6 +57,7 @@ void PrintMenu()
     printf("I: Init & Start EasySetup\n");
     printf("D: Set DeviceInfo\n");
     printf("T: Terminate\n");
+    printf("U: set Callback for userdata\n");
     printf("Q: Quit\n");
     printf("============\n");
 }
@@ -104,6 +107,11 @@ void WiFiProvCbInApp(ESWiFiProvData *eventData)
     {
         printf("ERROR! EncType IS NULL\n");
         return;
+    }
+
+    if(eventData->userdata != NULL)
+    {
+        printf("userValue : %d\n", ((UserProperties *)(eventData->userdata))->userValue_int);
     }
 
     printf("WiFiProvCbInApp OUT\n");
@@ -229,7 +237,13 @@ void SetDeviceInfo()
 
     ESDeviceProperty deviceProperty = {
         {{WiFi_11G, WiFi_11N, WiFi_11AC, WiFi_EOF}, WiFi_5G}, {"Test Device"}
-    } ;
+    };
+
+    // Set user properties if needed
+    char userValue_str[] = "user_str";
+    g_userProperties.userValue_int = 0;
+    strcpy(g_userProperties.userValue_str, userValue_str);
+    SetUserProperties(&g_userProperties);
 
     if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
         printf("ESSetDeviceProperty Error\n");
@@ -255,6 +269,11 @@ void StopEasySetup()
     }
 
     printf("StopEasySetup OUT\n");
+}
+
+void SetCallbackForUserdata()
+{
+    ESSetCallbackForUserdata(&ReadUserdataCb, &WriteUserdataCb);
 }
 
 int main()
@@ -309,6 +328,11 @@ int main()
                     StopEasySetup();
                     PrintMenu();
                     break;
+                case 'U': // set callback
+                case 'u':
+                    SetCallbackForUserdata();
+                    PrintMenu();
+                    break;
 
                 default:
                     printf("wrong option\n");
@@ -323,6 +347,7 @@ int main()
 
 void *listeningFunc(void * data)
 {
+    (void)data;
     OCStackResult result;
 
     while (true)

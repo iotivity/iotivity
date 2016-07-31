@@ -20,10 +20,9 @@
 
 #include "resourcehandler.h"
 
-#include <stdio.h>
-
 #include "ocpayload.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
 
 /**
  * @var ES_RH_TAG
@@ -44,28 +43,6 @@ static WiFiResource gWiFiResource;
 static CloudResource gCloudResource;
 static DevConfResource gDevConfResource;
 
-/**
- * @var gWiFiData
- * @brief Structure for holding the target information required to
- * connect to the target network
- */
- static ESWiFiProvData gWiFiData;
-
-/**
- * @var gDevConfData
- * @brief Structure for holding the device information
- */
- static ESDevConfProvData gDevConfData;
-
-/**
- * @var gCloudData
- * @brief Structure for holding the cloud information required to
- * connect to CI Server
- */
- static ESCloudProvData gCloudData;
-
-
-
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
@@ -83,6 +60,21 @@ void updateDevConfResource(OCRepPayload* input);
 ESWiFiCB gWifiRsrcEvtCb = NULL;
 ESCloudCB gCloudRsrcEvtCb = NULL;
 ESDevConfCB gDevConfRsrcEvtCb = NULL;
+
+ESReadUserdataCb gReadUserdataCb = NULL;
+ESWriteUserdataCb gWriteUserdataCb = NULL;
+
+ESResult SetCallbackForUserData(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb)
+{
+    if(!readCb && !writeCb)
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "Both of callbacks for user data are null");
+        return ES_ERROR;
+    }
+    gReadUserdataCb = readCb;
+    gWriteUserdataCb = writeCb;
+    return ES_OK;
+}
 
 void RegisterWifiRsrcEventCallBack(ESWiFiCB cb)
 {
@@ -273,11 +265,18 @@ void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 
 void updateWiFiResource(OCRepPayload* input)
 {
+    ESWiFiProvData* wiFiData = (ESWiFiProvData*)OICMalloc(sizeof(ESWiFiProvData));
+    if(wiFiData == NULL)
+    {
+        OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
+    }
+    wiFiData->userdata = NULL;
+
     char* ssid = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SSID, &ssid))
     {
         OICStrcpy(gWiFiResource.ssid, sizeof(gWiFiResource.ssid), ssid);
-        OICStrcpy(gWiFiData.ssid, sizeof(gWiFiData.ssid), ssid);
+        OICStrcpy(wiFiData->ssid, sizeof(wiFiData->ssid), ssid);
         OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.ssid : %s", gWiFiResource.ssid);
     }
 
@@ -285,7 +284,7 @@ void updateWiFiResource(OCRepPayload* input)
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CRED, &cred))
     {
         OICStrcpy(gWiFiResource.cred, sizeof(gWiFiResource.cred), cred);
-        OICStrcpy(gWiFiData.pwd, sizeof(gWiFiData.pwd), cred);
+        OICStrcpy(wiFiData->pwd, sizeof(wiFiData->pwd), cred);
         OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.cred %s", gWiFiResource.cred);
     }
 
@@ -293,7 +292,7 @@ void updateWiFiResource(OCRepPayload* input)
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_AUTHTYPE, &authType))
     {
         gWiFiResource.authType = authType;
-        gWiFiData.authtype = gWiFiResource.authType;
+        wiFiData->authtype = gWiFiResource.authType;
         OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.authType %u", gWiFiResource.authType);
     }
 
@@ -301,9 +300,12 @@ void updateWiFiResource(OCRepPayload* input)
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ENCTYPE, &encType))
     {
         gWiFiResource.encType = encType;
-        gWiFiData.enctype = gWiFiResource.encType;
+        wiFiData->enctype = gWiFiResource.encType;
         OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.encType %u", gWiFiResource.encType);
     }
+
+    if(gReadUserdataCb)
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_WIFI, wiFiData->userdata);
 
     if(ssid || cred || authType!= -1 || encType != -1)
     {
@@ -312,7 +314,7 @@ void updateWiFiResource(OCRepPayload* input)
         // TODO : Need to check appropriateness of gWiFiData
         if(gWifiRsrcEvtCb != NULL)
         {
-            gWifiRsrcEvtCb(ES_OK, &gWiFiData);
+            gWifiRsrcEvtCb(ES_OK, wiFiData);
         }
         else
         {
@@ -320,15 +322,23 @@ void updateWiFiResource(OCRepPayload* input)
         }
     }
 
+    OICFree(wiFiData);
 }
 
 void updateCloudResource(OCRepPayload* input)
 {
+    ESCloudProvData* cloudData = (ESCloudProvData*)OICMalloc(sizeof(ESCloudProvData));
+    if(cloudData == NULL)
+    {
+        OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
+    }
+    cloudData->userdata = NULL;
+
     char *authCode = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &authCode))
     {
         OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), authCode);
-        OICStrcpy(gCloudData.authCode, sizeof(gCloudData.authCode), authCode);
+        OICStrcpy(cloudData->authCode, sizeof(cloudData->authCode), authCode);
         OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authCode %s", gCloudResource.authCode);
     }
 
@@ -336,7 +346,7 @@ void updateCloudResource(OCRepPayload* input)
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHPROVIDER, &authProvider))
     {
         OICStrcpy(gCloudResource.authProvider, sizeof(gCloudResource.authProvider), authProvider);
-        OICStrcpy(gCloudData.authProvider, sizeof(gCloudData.authProvider), authProvider);
+        OICStrcpy(cloudData->authProvider, sizeof(cloudData->authProvider), authProvider);
         OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authServerUrl %s", gCloudResource.authProvider);
     }
 
@@ -344,17 +354,12 @@ void updateCloudResource(OCRepPayload* input)
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CISERVER, &ciServer))
     {
         OICStrcpy(gCloudResource.ciServer, sizeof(gCloudResource.ciServer), ciServer);
-        OICStrcpy(gCloudData.ciServer, sizeof(gCloudData.ciServer), ciServer);
+        OICStrcpy(cloudData->ciServer, sizeof(cloudData->ciServer), ciServer);
         OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.ciServer %s", gCloudResource.ciServer);
     }
 
-    char *serverID = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SERVERID, &serverID))
-    {
-        OICStrcpy(gCloudResource.serverID, sizeof(gCloudResource.serverID), serverID);
-        OICStrcpy(gCloudData.serverID, sizeof(gCloudData.serverID), serverID);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.serverID %s", gCloudResource.serverID);
-    }
+    if(gReadUserdataCb)
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER, cloudData->userdata);
 
     if(authCode || authProvider || ciServer)
     {
@@ -363,22 +368,31 @@ void updateCloudResource(OCRepPayload* input)
         // TODO : Need to check appropriateness of gCloudData
         if(gCloudRsrcEvtCb != NULL)
         {
-            gCloudRsrcEvtCb(ES_OK, &gCloudData);
+            gCloudRsrcEvtCb(ES_OK, cloudData);
         }
         else
         {
             OIC_LOG(ERROR, ES_RH_TAG, "gCloudRsrcEvtCb is NULL");
         }
     }
+
+    OICFree(cloudData);
 }
 
 void updateDevConfResource(OCRepPayload* input)
 {
+    ESDevConfProvData* devConfData = (ESDevConfProvData*)OICMalloc(sizeof(ESDevConfProvData));
+    if(devConfData == NULL)
+    {
+        OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
+    }
+    devConfData->userdata = NULL;
+
     char *country = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_COUNTRY, &country))
     {
         OICStrcpy(gDevConfResource.country, sizeof(gDevConfResource.country), country);
-        OICStrcpy(gDevConfData.country, sizeof(gDevConfData.country), country);
+        OICStrcpy(devConfData->country, sizeof(devConfData->country), country);
         OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.country %s", gDevConfResource.country);
     }
 
@@ -386,9 +400,12 @@ void updateDevConfResource(OCRepPayload* input)
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LANGUAGE, &language))
     {
         OICStrcpy(gDevConfResource.language, sizeof(gDevConfResource.language), language);
-        OICStrcpy(gDevConfData.language, sizeof(gDevConfData.language), language);
+        OICStrcpy(devConfData->language, sizeof(devConfData->language), language);
         OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.language %s", gDevConfResource.language);
     }
+
+    if(gReadUserdataCb)
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_DEVCONF, devConfData->userdata);
 
     if(country || language)
     {
@@ -397,13 +414,15 @@ void updateDevConfResource(OCRepPayload* input)
         // TODO : Need to check appropriateness of gDevConfData
         if(gDevConfRsrcEvtCb != NULL)
         {
-            gDevConfRsrcEvtCb(ES_OK, &gDevConfData);
+            gDevConfRsrcEvtCb(ES_OK, devConfData);
         }
         else
         {
             OIC_LOG(ERROR, ES_RH_TAG, "gDevConfRsrcEvtCb is NULL");
         }
     }
+
+    OICFree(devConfData);
 }
 
 OCRepPayload* constructResponseOfWiFi()
@@ -419,7 +438,7 @@ OCRepPayload* constructResponseOfWiFi()
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFI);
 
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {gWiFiResource.numMode, 0, 0};
-    int64_t *modes_64 = (int64_t *)malloc(gWiFiResource.numMode * sizeof(int64_t));
+    int64_t *modes_64 = (int64_t *)OICMalloc(gWiFiResource.numMode * sizeof(int64_t));
     for(int i = 0 ; i < gWiFiResource.numMode ; ++i)
         modes_64[i] = gWiFiResource.supportedMode[i];
     OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, (int64_t *)modes_64, dimensions);
@@ -429,6 +448,9 @@ OCRepPayload* constructResponseOfWiFi()
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, gWiFiResource.cred);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, (int) gWiFiResource.authType);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) gWiFiResource.encType);
+
+    if(gWriteUserdataCb)
+        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
 
     return payload;
 }
@@ -447,7 +469,9 @@ OCRepPayload* constructResponseOfCloud()
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, gCloudResource.authCode);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, gCloudResource.authProvider);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SERVERID, gCloudResource.serverID);
+
+    if(gWriteUserdataCb)
+        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
 
     return payload;
 }
@@ -467,6 +491,9 @@ OCRepPayload* constructResponseOfDevConf()
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LANGUAGE, gDevConfResource.language);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, gDevConfResource.country);
 
+    if(gWriteUserdataCb)
+        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_DEVCONF);
+
     return payload;
 }
 
@@ -484,6 +511,9 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LINKS, gProvResource.ocfWebLinks);
+
+    if(gWriteUserdataCb)
+        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_PROV);
 
     if(ehRequest->query)
     {
@@ -692,7 +722,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     else if(ehRequest->resource == gCloudResource.handle)
         updateCloudResource(input);
     else if(ehRequest->resource == gDevConfResource.handle)
-        updateDevConfResource(input);      
+        updateDevConfResource(input);
 
     OCRepPayload *getResp = NULL;
     if(ehRequest->resource == gProvResource.handle)

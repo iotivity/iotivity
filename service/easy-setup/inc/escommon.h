@@ -160,6 +160,7 @@ typedef struct
     char pwd[MAX_CREDLEN];          /**< Pwd of the Enroller**/
     WIFI_AUTHTYPE authtype;         /**< Auth type of the Enroller**/
     WIFI_ENCTYPE enctype;           /**< Encryption type of the Enroller**/
+    void *userdata;                 /**< Vender-specific data**/
 } ESWiFiProvData;
 
 /**
@@ -169,6 +170,7 @@ typedef struct
 {
     char language[OIC_STRING_MAX_VALUE];    /**< IETF language tag using ISO 639X **/
     char country[OIC_STRING_MAX_VALUE];     /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
+    void *userdata;                         /**< Vender-specific data**/
 } ESDevConfProvData;
 
 /**
@@ -179,7 +181,7 @@ typedef struct
     char authCode[OIC_STRING_MAX_VALUE];        /**< Auth code issued by OAuth2.0-compatible account server **/
     char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
     char ciServer[OIC_STRING_MAX_VALUE];        /**< Cloud interface server URL which an Enrollee is going to registered **/
-    char serverID[OIC_STRING_MAX_VALUE];        /**< Cloud interface server UUID **/
+    void *userdata;                             /**< Vender-specific data**/
 } ESCloudProvData;
 
 /**

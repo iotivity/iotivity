@@ -256,3 +256,15 @@ ESResult ESTerminateEnrollee()
     OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESTerminateEnrollee success");
     return ES_OK;
 }
+
+ESResult ESSetCallbackForUserdata(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb)
+{
+    if(!readCb && !writeCb)
+    {
+        OIC_LOG(INFO, ES_ENROLLEE_TAG, "Both of callbacks for user data are null");
+        return ES_ERROR;
+    }
+
+    SetCallbackForUserData(readCb, writeCb);
+    return ES_OK;
+}
