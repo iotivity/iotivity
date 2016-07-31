@@ -82,7 +82,8 @@ void JniOnPostListener::onPostCallback(const HeaderOptions& headerOptions,
         return;
     }
 
-    if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CREATED != eCode)
+    if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CREATED != eCode &&
+            OC_STACK_RESOURCE_CHANGED != eCode)
     {
         jobject ex = GetOcException(eCode, "stack error in onPostCallback");
         if (!ex)

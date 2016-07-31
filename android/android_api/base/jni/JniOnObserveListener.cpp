@@ -82,7 +82,8 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         return;
     }
 
-    if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CREATED != eCode && OC_STACK_RESOURCE_DELETED != eCode)
+    if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CREATED != eCode &&
+            OC_STACK_RESOURCE_DELETED != eCode && OC_STACK_RESOURCE_CHANGED != eCode)
     {
         jobject ex = GetOcException(eCode, "stack error in onObserveCallback");
         if (!ex)

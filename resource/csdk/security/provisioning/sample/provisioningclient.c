@@ -43,21 +43,22 @@ extern "C"
 
 // declaration(s) for provisioning client using C-level provisioning API
 // user input definition for main loop on provisioning client
-#define _10_DISCOV_ALL_DEVS_    10
-#define _11_DISCOV_UNOWN_DEVS_  11
-#define _12_DISCOV_OWN_DEVS_    12
-#define _20_REGIST_DEVS_        20
-#define _30_PROVIS_PAIR_DEVS_   30
-#define _31_PROVIS_CRED_        31
-#define _32_PROVIS_ACL_         32
-#define _33_PROVIS_DP_          33
-#define _34_CHECK_LINK_STATUS_  34
-#define _40_UNLINK_PAIR_DEVS_   40
-#define _50_REMOVE_SELEC_DEV_   50
-#define _51_RESET_SELEC_DEV_    51
-#define _60_GET_CRED_           60
-#define _61_GET_ACL_            61
-#define _99_EXIT_PRVN_CLT_      99
+#define _10_DISCOV_ALL_DEVS_        10
+#define _11_DISCOV_UNOWN_DEVS_      11
+#define _12_DISCOV_OWN_DEVS_        12
+#define _20_REGIST_DEVS_            20
+#define _30_PROVIS_PAIR_DEVS_       30
+#define _31_PROVIS_CRED_            31
+#define _32_PROVIS_ACL_             32
+#define _33_PROVIS_DP_              33
+#define _34_CHECK_LINK_STATUS_      34
+#define _40_UNLINK_PAIR_DEVS_       40
+#define _50_REMOVE_SELEC_DEV_       50
+#define _51_REMOVE_DEV_WITH_UUID_   51
+#define _52_RESET_SELEC_DEV_        52
+#define _60_GET_CRED_               60
+#define _61_GET_ACL_                61
+#define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
 #define ACL_RESRC_ARRAY_SIZE   3 //This value is used only for sample (not OCF spec)
@@ -1046,6 +1047,45 @@ static int removeDevice(void)
     return 0;
 }
 
+static int removeDeviceWithUuid(void)
+{
+    char strUuid[64] = {0};
+    OicUuid_t revUuid;
+    printf("Input the UUID : ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%64s", strUuid);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+    OCStackResult rst = ConvertStrToUuid(strUuid, &revUuid);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "ConvertStrToUuid API error: %d", rst);
+        return -1;
+    }
+
+    rst = OCRemoveDeviceWithUuid("RemoveDeviceWithUUID", DISCOVERY_TIMEOUT, &revUuid, removeDeviceCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCRemoveDeviceWithUuid API error: %d", rst);
+        return -1;
+    }
+
+    g_doneCB = false;
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid callback error");
+        return -1;
+    }
+
+    // display the removed result
+    printf("   > Removed %s Device\n", strUuid);
+    printf("   > Please Discover Owned Devices for the Registered Result, with [10|12] Menu\n");
+
+    return 0;
+}
+
 static int resetDevice(void)
 {
     // check |own_list| for removing device
@@ -1181,7 +1221,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        printf("         Enter Accessed Resource[%d] Name: ", i+1);
+        printf("         Enter Accessed Resource[%d] Name: (e.g. /a/led)", i+1);
         for(int ret=0; 1!=ret; )
         {
             ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -1200,7 +1240,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         int arrLen = 0;
         while(1)
         {
-            printf("         Enter Number of resource type for [%s]: ", rsrc_in);
+            printf("         Enter Number of resource type for [%s] : ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%d", &arrLen);
@@ -1224,7 +1264,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -1241,7 +1281,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
 
         while(1)
         {
-            printf("         Enter Number of interface name for [%s]: ", rsrc_in);
+            printf("         Enter Number of interface for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%d", &arrLen);
@@ -1265,7 +1305,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter Interface[%d] Name (e.g. oic.if.baseline): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -1560,7 +1600,8 @@ static void printMenu(void)
 
     printf("** [E] REMOVE THE SELECTED DEVICE\n");
     printf("** 50. Remove the Selected Device\n");
-    printf("** 51. Reset the Selected Device\n\n");
+    printf("** 51. Remove Device with UUID (UUID input is required)\n");
+    printf("** 52. Reset the Selected Device\n\n");
 
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
@@ -1684,10 +1725,16 @@ int main()
                 OIC_LOG(ERROR, TAG, "_50_REMOVE_SELEC_DEV_: error");
             }
             break;
-        case _51_RESET_SELEC_DEV_:
+        case _51_REMOVE_DEV_WITH_UUID_:
+            if(removeDeviceWithUuid())
+            {
+                OIC_LOG(ERROR, TAG, "_51_REMOVE_DEV_WITH_UUID_: error");
+            }
+            break;
+        case _52_RESET_SELEC_DEV_:
             if(resetDevice())
             {
-                OIC_LOG(ERROR, TAG, "_51_RESET_SELEC_DEV_: error");
+                OIC_LOG(ERROR, TAG, "_52_RESET_SELEC_DEV_: error");
             }
             break;
         case _60_GET_CRED_:

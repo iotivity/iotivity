@@ -87,10 +87,11 @@ void printMenu()
     std::cout << "   6. Credential & ACL provisioning b/w two devices"<<std::endl;
     std::cout << "   7. Unlink Devices"<<std::endl;
     std::cout << "   8. Remove Device"<<std::endl;
-    std::cout << "   9. Get Linked Devices"<<std::endl;
-    std::cout << "  10. Get Device Status"<<std::endl;
-    std::cout << "  11. Provision Direct-Pairing Configuration"<<std::endl;
-    std::cout << "  12. Exit loop"<<std::endl;
+    std::cout << "   9. Remove Device using UUID"<<std::endl;
+    std::cout << "  10. Get Linked Devices"<<std::endl;
+    std::cout << "  11. Get Device Status"<<std::endl;
+    std::cout << "  12. Provision Direct-Pairing Configuration"<<std::endl;
+    std::cout << "  13. Exit loop"<<std::endl;
 }
 
 void moveTransferredDevice()
@@ -424,7 +425,7 @@ static int InputACL(OicSecAcl_t *acl)
         int arrLen = 0;
         while(1)
         {
-            printf("         Enter Number of resource type for [%s]: ", rsrc_in);
+            printf("         Enter Number of resource type for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%d", &arrLen);
@@ -448,7 +449,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -466,7 +467,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         while(1)
         {
-            printf("         Enter Number of interface name for [%s]: ", rsrc_in);
+            printf("         Enter Number of interface name for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%d", &arrLen);
@@ -490,7 +491,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         for(int i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name: ", i+1);
+            printf("         Enter interfnace[%d] Name (e.g. oic.if.baseline): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%64ms", &rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -1107,7 +1108,28 @@ int main(void)
                         }
                         break;
                     }
-                case 9: //Get Linked devices
+                case 9: //Remove Device using UUID
+                    {
+                        int index;
+
+                        if (0 != readDeviceNumber(pOwnedDevList, 1, &index)) break;
+
+                        std::cout << "Remove Device: "<< pOwnedDevList[index]->getDeviceID()<< std::endl;
+
+                        ask = 0;
+
+                        if (pOwnedDevList[index]->removeDeviceWithUuid(DISCOVERY_TIMEOUT,
+                                                                       pOwnedDevList[index]->getDeviceID(),
+                                                                       provisionCB)
+                                != OC_STACK_OK)
+                        {
+                            ask = 1;
+                            std::cout <<"removeDevice is failed"<< std::endl;
+                        }
+                        break;
+                    }
+
+                case 10: //Get Linked devices
                     {
                         UuidList_t linkedUuid;
                         unsigned int devNum;
@@ -1152,7 +1174,7 @@ int main(void)
                         }
                         break;
                     }
-                case 10: //Get device' status
+                case 11: //Get device' status
                     {
                         DeviceList_t unownedList, ownedList;
 
@@ -1180,7 +1202,7 @@ int main(void)
                         break;
                     }
 
-                case 11:
+                case 12:
                     {
                         unsigned int devNum;
 
@@ -1210,7 +1232,7 @@ int main(void)
 
                         break;
                     }
-                case 12:
+                case 13:
                 default:
                     out = 1;
                     break;

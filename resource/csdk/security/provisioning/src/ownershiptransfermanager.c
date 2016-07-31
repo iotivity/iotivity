@@ -483,7 +483,7 @@ static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle U
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     (void)UNUSED;
-    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
+    if (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         OIC_LOG(INFO, TAG, "OwnerTransferModeHandler : response result = OC_STACK_OK");
         //Send request : GET /oic/sec/pstat
@@ -722,7 +722,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
 
-    if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
+    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
@@ -1208,7 +1208,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCStackResult res = DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm,
-            &secPayload->securityData, &secPayload->payloadSize);
+            &secPayload->securityData, &secPayload->payloadSize, true);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -1262,7 +1262,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData,
-                                           &secPayload->payloadSize);
+                                           &secPayload->payloadSize, true);
    if (OC_STACK_OK != res)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -1410,9 +1410,31 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
         }
         if (isDuplicate)
         {
-            OIC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicated");
-            res = OC_STACK_INVALID_PARAM;
-            goto error;
+            bool isStale = false;
+            res = PDMIsDeviceStale(&pCurDev->doxm->deviceID, &isStale);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Internal error in PDMIsDeviceStale");
+                goto error;
+            }
+            if(isStale)
+            {
+                OIC_LOG(INFO, TAG, "Detected duplicated UUID in stale status, "\
+                                   "this UUID will be removed from PDM");
+
+                res = PDMDeleteDevice(&pCurDev->doxm->deviceID);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Internal error in PDMDeleteDevice");
+                    goto error;
+                }
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device UUID is duplicated");
+                res = OC_STACK_INVALID_PARAM;
+                goto error;
+            }
         }
         memcpy(otmCtx->ctxResultArray[devIdx].deviceId.id,
                pCurDev->doxm->deviceID.id,
@@ -1453,7 +1475,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize))
+            &secPayload->securityData, &secPayload->payloadSize, true))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;
@@ -1511,7 +1533,7 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData, &secPayload->payloadSize))
+            &secPayload->securityData, &secPayload->payloadSize, true))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_INVALID_JSON;

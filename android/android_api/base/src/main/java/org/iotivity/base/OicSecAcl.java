@@ -1,7 +1,7 @@
 /*
  *******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  *
@@ -22,95 +22,34 @@
 
 package org.iotivity.base;
 
-import java.io.Serializable;
 import java.util.List;
-import java.util.Arrays;
 
-public class OicSecAcl implements Serializable {
-
-    private String       subject;
-    private int          permission;
-    private List<String> resources;
-    private List<String> periods;
-    private List<String> recurrences;
+public class OicSecAcl {
     private String rownerID;
+    private List<OicSecAce> oicSecAces;
 
-    public OicSecAcl(String subject, List<String> recurrences, List<String> periods, int permission,
-            List<String> resources, String rownerID) {
-        this.subject = subject;
-        this.recurrences = recurrences;
-        this.periods = periods;
-        this.permission = permission;
-        this.resources = resources;
-        this.rownerID = rownerID;
+   public OicSecAcl (String rownerID, List<OicSecAce> oicSecAces) {
+       super();
+       this.rownerID = rownerID;
+       this.oicSecAces = oicSecAces;
+   }
+    public String getRownerID() {
+        return rownerID;
     }
-
-    public String getSubject() {
-        return this.subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
 
     public void setRownerID(String rownerID) {
         this.rownerID = rownerID;
     }
 
-    public List<String> getRecurrences() {
-        return recurrences;
+    public List<OicSecAce> getOicSecAcesList() {
+        return oicSecAces;
     }
 
-    public void setRecurrences(List<String> recurrences) {
-        this.recurrences = recurrences;
+    public OicSecAce[] getOicSecAces() {
+        return oicSecAces.toArray(new OicSecAce[oicSecAces.size()]);
     }
 
-    public List<String> getPeriods() {
-        return periods;
-    }
-
-    public void setPeriods(List<String> periods) {
-        this.periods = periods;
-    }
-
-    public int getPermission() {
-        return this.permission;
-    }
-
-    public void setPermission(int permission) {
-        this.permission = permission;
-    }
-
-    public List<String> getResources() {
-        return resources;
-    }
-
-    public void setResources(List<String> resources) {
-        this.resources = resources;
-    }
-
-    public int getResourcesCount() {
-        return this.resources.size();
-    }
-
-    public String getResources(int i) {
-        return this.resources.get(i);
-    }
-
-    public int getPeriodsCount() {
-        return this.periods.size();
-    }
-
-    public String getPeriods(int i) {
-        return this.periods.get(i);
-    }
-
-    public String getRecurrences(int i) {
-        return this.recurrences.get(i);
-    }
-
-    public String getRownerID() {
-        return this.rownerID;
+    public void setOicSecAces(List<OicSecAce> oicSecAces) {
+        this.oicSecAces = oicSecAces;
     }
 }
