@@ -19,24 +19,25 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-import java.math.BigInteger;
-import java.util.Date;
+package org.iotivity.cloud.accountserver.x509.cert;
 
-public class CrlInfo {
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 
-    private BigInteger serialNumber;
-    private Date revocationDate;
+public class CertificatePrivateKeyPair {
+    private X509Certificate certificate = null;
+    private PrivateKey      key         = null;
 
-    void setSerialNumber(BigInteger serialNumber) {
-        this.serialNumber = serialNumber;
+    public CertificatePrivateKeyPair(X509Certificate cert, PrivateKey k) {
+        certificate = cert;
+        key = k;
     }
-    BigInteger getSerialNumber() {
-        return serialNumber;
+
+    public X509Certificate getCertificate() {
+        return certificate;
     }
-    void setRevocationDate(Date date) {
-        this.revocationDate = date;
-    }
-    Date getRevocationDate() {
-        return new Date(revocationDate.getTime());
+
+    public PrivateKey getKey() {
+        return key;
     }
 }

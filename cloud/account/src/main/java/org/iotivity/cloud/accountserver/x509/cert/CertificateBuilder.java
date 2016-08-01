@@ -19,7 +19,8 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-package org.iotivity.cloud.accountserver.security.x509;
+package org.iotivity.cloud.accountserver.x509.cert;
+
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -50,41 +51,46 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 public class CertificateBuilder {
-    private String issuer;
-    private String subjectCN;
-    private String subjectC;
-    private String subjectO;
-    private String subjectOU;
-    private String subjectAltName;
-    private Date notBefore;
-    private Date notAfter;
-    private PrivateKey privKey;
-    private PublicKey  pubKey;
-    private BigInteger serial;
-    private static final String SIGNATURE_ALGORITHM = "SHA256withECDSA";
-    private static final String CURVE = "secp256r1";
+    private String              issuer;
+    private String              subjectCN;
+    private String              subjectC;
+    private String              subjectO;
+    private String              subjectOU;
+    private String              subjectAltName;
+    private Date                notBefore;
+    private Date                notAfter;
+    private PrivateKey          privKey;
+    private PublicKey           pubKey;
+    private BigInteger          serial;
+    private static final String SIGNATURE_ALGORITHM     = "SHA256withECDSA";
+    private static final String CURVE                   = "secp256r1";
     private static final String KEY_GENERATOR_ALGORITHM = "ECDSA";
 
-    public CertificateBuilder(String subject, Date notBefore, Date notAfter, BigInteger serial) {
+    public CertificateBuilder(String subject, Date notBefore, Date notAfter,
+            BigInteger serial) {
         Security.addProvider(new BouncyCastleProvider());
         init(subject, null, notBefore, notAfter, null, null, serial);
     }
 
-    public CertificateBuilder(String subject, PublicKey pubKey, Date notBefore, Date notAfter, 
-            BigInteger serial, CertificatePrivateKeyPair root) {
-        X500Name x500name = new X500Name( root.getCertificate().getSubjectX500Principal().getName() );
+    public CertificateBuilder(String subject, PublicKey pubKey, Date notBefore,
+            Date notAfter, BigInteger serial, CertificatePrivateKeyPair root) {
+        X500Name x500name = new X500Name(
+                root.getCertificate().getSubjectX500Principal().getName());
         RDN cn = x500name.getRDNs(BCStyle.CN)[0];
-        init(subject, IETFUtils.valueToString(cn.getFirst().getValue()), notBefore, notAfter, root.getKey(), pubKey, serial);
+        init(subject, IETFUtils.valueToString(cn.getFirst().getValue()),
+                notBefore, notAfter, root.getKey(), pubKey, serial);
     }
 
-    public CertificateBuilder(String subject, String issuer, Date notBefore, Date notAfter, 
-            PrivateKey privKey, PublicKey pubKey, BigInteger serial) {
+    public CertificateBuilder(String subject, String issuer, Date notBefore,
+            Date notAfter, PrivateKey privKey, PublicKey pubKey,
+            BigInteger serial) {
         Security.addProvider(new BouncyCastleProvider());
         init(subject, issuer, notBefore, notAfter, privKey, pubKey, serial);
     }
 
-    private void init(String subject, String issuer, Date notBefore, Date notAfter,
-            PrivateKey privKey, PublicKey pubKey, BigInteger serial) {
+    private void init(String subject, String issuer, Date notBefore,
+            Date notAfter, PrivateKey privKey, PublicKey pubKey,
+            BigInteger serial) {
         this.subjectCN = subject;
         this.issuer = issuer;
         this.notBefore = notBefore;
@@ -110,10 +116,9 @@ public class CertificateBuilder {
         this.subjectAltName = subjectAltName;
     }
 
-    public CertificatePrivateKeyPair build()
-            throws GeneralSecurityException, OperatorCreationException, CertIOException {
-        if(null == privKey && null == pubKey)
-        {
+    public CertificatePrivateKeyPair build() throws GeneralSecurityException,
+            OperatorCreationException, CertIOException {
+        if (null == privKey && null == pubKey) {
             ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec(CURVE);
             KeyPairGenerator g = null;
 
@@ -131,31 +136,35 @@ public class CertificateBuilder {
 
         subjectNameBld.addRDN(BCStyle.CN, subjectCN);
 
-        if(null != subjectOU) {
+        if (null != subjectOU) {
             subjectNameBld.addRDN(BCStyle.OU, subjectOU);
         }
 
-        if(null != subjectO) {
+        if (null != subjectO) {
             subjectNameBld.addRDN(BCStyle.O, subjectO);
         }
 
-        if(null != subjectC) {
+        if (null != subjectC) {
             subjectNameBld.addRDN(BCStyle.C, subjectC);
         }
 
         X500NameBuilder issuerNameBld = new X500NameBuilder(BCStyle.INSTANCE);
         issuerNameBld.addRDN(BCStyle.CN, issuer);
 
-        ContentSigner sigGen = new JcaContentSignerBuilder(SIGNATURE_ALGORITHM).setProvider("BC").build(privKey);
+        ContentSigner sigGen = new JcaContentSignerBuilder(SIGNATURE_ALGORITHM)
+                .setProvider("BC").build(privKey);
 
-        X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(issuerNameBld.build(),
-                serial, notBefore, notAfter ,subjectNameBld.build(), pubKey);
+        X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(
+                issuerNameBld.build(), serial, notBefore, notAfter,
+                subjectNameBld.build(), pubKey);
 
-        if(null != subjectAltName) {
-            certGen.addExtension(Extension.subjectAlternativeName, false, new DEROctetString(subjectAltName.getBytes()));
+        if (null != subjectAltName) {
+            certGen.addExtension(Extension.subjectAlternativeName, false,
+                    new DEROctetString(subjectAltName.getBytes()));
         }
 
-        cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certGen.build(sigGen));
+        cert = new JcaX509CertificateConverter().setProvider("BC")
+                .getCertificate(certGen.build(sigGen));
 
         return new CertificatePrivateKeyPair(cert, privKey);
     }
