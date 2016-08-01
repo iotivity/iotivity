@@ -85,6 +85,11 @@ public class SmokeTest extends InstrumentationTestCase {
                         }
                         signal.countDown();
                     }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
+                    }
                 };
 
         try {
@@ -156,6 +161,11 @@ public class SmokeTest extends InstrumentationTestCase {
                         } catch (InterruptedException e) {
                             assertTrue(false);
                         }
+                    }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
                     }
                 };
 
@@ -262,6 +272,11 @@ public class SmokeTest extends InstrumentationTestCase {
                             assertTrue(false);
                         }
                         signal1.countDown();
+                    }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
                     }
                 };
 
@@ -429,6 +444,11 @@ public class SmokeTest extends InstrumentationTestCase {
                             assertTrue(false);
                         }
                         signal1.countDown();
+                    }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
                     }
                 };
 
@@ -603,6 +623,11 @@ public class SmokeTest extends InstrumentationTestCase {
                         }
                         signal1.countDown();
                     }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
+                    }
                 };
 
         try {
@@ -730,6 +755,11 @@ public class SmokeTest extends InstrumentationTestCase {
                             assertTrue(false);
                         }
                         signal1.countDown();
+                    }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
                     }
                 };
 
@@ -894,6 +924,11 @@ public class SmokeTest extends InstrumentationTestCase {
                             assertTrue(false);
                         }
                         signal1.countDown();
+                    }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
                     }
                 };
 
@@ -1094,12 +1129,22 @@ public class SmokeTest extends InstrumentationTestCase {
             public void onResourceFound(OcResource resource) {
                 signal1.countDown();
             }
+
+            @Override
+            public void onFindResourceFailed(Throwable ex, String uri) {
+                Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
+            }
         };
 
         OcPlatform.OnResourceFoundListener resourceFoundListener2 = new OcPlatform.OnResourceFoundListener() {
             @Override
             public void onResourceFound(OcResource resource) {
                 signal2.countDown();
+            }
+
+            @Override
+            public void onFindResourceFailed(Throwable ex, String uri) {
+                Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
             }
         };
 
@@ -1108,12 +1153,22 @@ public class SmokeTest extends InstrumentationTestCase {
             public void onResourceFound(OcResource resource) {
                 signal3.countDown();
             }
+
+            @Override
+            public void onFindResourceFailed(Throwable ex, String uri) {
+                Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
+            }
         };
 
         OcPlatform.OnResourceFoundListener resourceFoundListener4 = new OcPlatform.OnResourceFoundListener() {
             @Override
             public void onResourceFound(OcResource resource) {
                 signal4.countDown();
+            }
+
+            @Override
+            public void onFindResourceFailed(Throwable ex, String uri) {
+                Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
             }
         };
 
@@ -1122,12 +1177,22 @@ public class SmokeTest extends InstrumentationTestCase {
             public void onResourceFound(OcResource resource) {
                 signal5.countDown();
             }
+
+            @Override
+            public void onFindResourceFailed(Throwable ex, String uri) {
+                Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
+            }
         };
 
         OcPlatform.OnResourceFoundListener resourceFoundListener6 = new OcPlatform.OnResourceFoundListener() {
             @Override
             public void onResourceFound(OcResource resource) {
                 signal6.countDown();
+            }
+
+            @Override
+            public void onFindResourceFailed(Throwable ex, String uri) {
+                Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
             }
         };
 
@@ -1279,6 +1344,11 @@ public class SmokeTest extends InstrumentationTestCase {
 
                         signal.countDown();
                     }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
+                    }
                 };
 
         try {
@@ -1358,6 +1428,11 @@ public class SmokeTest extends InstrumentationTestCase {
                             assertTrue(false);
                         }
                         signal.countDown();
+                    }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
                     }
                 };
 
@@ -1556,6 +1631,11 @@ public class SmokeTest extends InstrumentationTestCase {
                                 assertTrue(false);
                             }
                         }
+                    }
+
+                    @Override
+                    public void onFindResourceFailed(Throwable ex, String uri) {
+                        Log.i(TAG, "Find Resource Failed for Uri: " + uri + " Error: " + ex.getMessage());
                     }
                 };
         try {

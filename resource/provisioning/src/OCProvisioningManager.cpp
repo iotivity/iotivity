@@ -458,6 +458,45 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecureResource::removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
+            std::string uuid,
+            ResultCallBack resultCallback)
+    {
+        if (!resultCallback)
+        {
+            oclog() << "Result calback can't be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            ProvisionContext* context = new ProvisionContext(resultCallback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+
+            OicUuid_t targetDev;
+            result = ConvertStrToUuid(uuid.c_str(), &targetDev);
+            if(OC_STACK_OK == result)
+            {
+                result = OCRemoveDeviceWithUuid(static_cast<void*>(context), waitTimeForOwnedDeviceDiscovery,
+                        &targetDev, &OCSecureResource::callbackWrapper);
+            }
+            else
+            {
+                oclog() <<"Can not convert struuid to uuid";
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
     OCStackResult OCSecureResource::getLinkedDevices(UuidList_t &uuidList)
     {
         OCStackResult result;

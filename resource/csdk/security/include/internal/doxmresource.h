@@ -72,11 +72,12 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
  * @note Caller needs to invoke OCFree after done using the return pointer.
  * @param cborPayload is the payload of the cbor.
  * @param cborSize is the size of the cbor payload. Passed parameter should not be NULL.
+ * @param rwOnly indicates whether convertingpayload has all properties or read-write properties only.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult DoxmToCBORPayload(const OicSecDoxm_t * doxm, uint8_t **cborPayload,
-                                size_t *cborSize);
+                                size_t *cborSize, bool rwOnly);
 
 /**
  * This method returns the SRM device ID for this device.

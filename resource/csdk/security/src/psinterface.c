@@ -629,7 +629,7 @@ OCStackResult CreateResetProfile(void)
             memcpy(&pstat->deviceID, &emptyUuid, sizeof(OicUuid_t));
             memcpy(&pstat->rownerID, &emptyUuid, sizeof(OicUuid_t));
 
-            ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborLen);
+            ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborLen, false);
             OICFree(pstat);
         }
         if (doxmCbor)
@@ -644,7 +644,7 @@ OCStackResult CreateResetProfile(void)
             memcpy(&doxm->deviceID, &emptyUuid, sizeof(OicUuid_t));
             memcpy(&doxm->rownerID, &emptyUuid, sizeof(OicUuid_t));
 
-            ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborLen);
+            ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborLen, false);
             OICFree(doxm);
         }
 
@@ -690,4 +690,3 @@ exit:
     OICFree(resetPfCbor);
     return ret;
 }
-

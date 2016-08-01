@@ -227,7 +227,7 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
 /**
  * Function to check whether device is stale or not
  */
-static OCStackResult isDeviceStale(const OicUuid_t *uuid, bool *result)
+OCStackResult PDMIsDeviceStale(const OicUuid_t *uuid, bool *result)
 {
     if (NULL == uuid || NULL == result)
     {
@@ -359,7 +359,7 @@ OCStackResult PDMLinkDevices(const OicUuid_t *UUID1, const OicUuid_t *UUID2)
     }
 
     bool result = false;
-    if (OC_STACK_OK != isDeviceStale(UUID1, &result))
+    if (OC_STACK_OK != PDMIsDeviceStale(UUID1, &result))
     {
         OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
@@ -370,7 +370,7 @@ OCStackResult PDMLinkDevices(const OicUuid_t *UUID1, const OicUuid_t *UUID2)
         return OC_STACK_INVALID_PARAM;
     }
     result = false;
-    if (OC_STACK_OK != isDeviceStale(UUID2, &result))
+    if (OC_STACK_OK != PDMIsDeviceStale(UUID2, &result))
     {
         OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
@@ -636,7 +636,7 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST
         return OC_STACK_INVALID_PARAM;
     }
     bool result = false;
-    OCStackResult ret = isDeviceStale(UUID, &result);
+    OCStackResult ret = PDMIsDeviceStale(UUID, &result);
     if (OC_STACK_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Internal error occured");
@@ -802,7 +802,7 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     }
 
     bool isStale = false;
-    if (OC_STACK_OK != isDeviceStale(uuidOfDevice1, &isStale))
+    if (OC_STACK_OK != PDMIsDeviceStale(uuidOfDevice1, &isStale))
     {
         OIC_LOG(ERROR, TAG, "uuidOfDevice1:Internal error occured");
         return OC_STACK_ERROR;
@@ -814,7 +814,7 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     }
 
     isStale = false;
-    if (OC_STACK_OK != isDeviceStale(uuidOfDevice2, &isStale))
+    if (OC_STACK_OK != PDMIsDeviceStale(uuidOfDevice2, &isStale))
     {
         OIC_LOG(ERROR, TAG, "uuidOfDevice2:Internal error occured");
         return OC_STACK_ERROR;
