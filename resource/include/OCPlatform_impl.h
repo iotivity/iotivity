@@ -255,10 +255,6 @@ namespace OC
 
         OCStackResult deleteResourceFromRD(const std::string& host,
                                            OCConnectivityType connectivityType,
-                                           DeleteResourceCallback callback);
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
                                            ResourceHandles& resourceHandles,
                                            DeleteResourceCallback callback);
 
