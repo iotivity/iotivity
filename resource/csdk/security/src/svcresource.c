@@ -353,7 +353,7 @@ static OCEntityHandlerResult HandleSVCPostRequest(const OCEntityHandlerRequest *
             if (cborPayload && OC_STACK_OK == res &&
                 UpdateSecureResourceInPS(OIC_JSON_SVC_NAME, cborPayload, size) == OC_STACK_OK)
             {
-                ehRet = OC_EH_RESOURCE_CREATED;
+                ehRet = OC_EH_CHANGED;
             }
             OICFree(cborPayload);
         }

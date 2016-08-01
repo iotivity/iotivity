@@ -21,7 +21,9 @@
 */
 
 #include "JniSecureUtils.h"
+#include "JniOcStack.h"
 #include "JniOcSecureResource.h"
+#include "oic_malloc.h"
 #include "srmutility.h"
 #include "base64.h"
 
@@ -35,7 +37,15 @@ jobject JniSecureUtils::convertProvisionresultVectorToJavaList(JNIEnv *env, cons
 
     for (size_t i = 0; i < result->size(); ++i)
     {
-        jstring jStr = env->NewStringUTF((convertUUIDtoStr(result->at(i).deviceId).c_str()));
+        char *Str = NULL;
+
+        if (OC_STACK_OK != ConvertUuidToStr(&(result->at(i).deviceId), &Str))
+        {
+            return nullptr;
+        }
+        jstring jStr = env->NewStringUTF(Str);
+        OICFree(Str);
+
         if (!jStr)
         {
             return nullptr;
@@ -117,7 +127,15 @@ jobject JniSecureUtils::convertUUIDVectorToJavaStrList(JNIEnv *env, UuidList_t &
     }
     for (size_t i = 0; i < vector.size(); ++i)
     {
-        jstring jStr = env->NewStringUTF((convertUUIDtoStr(vector[i])).c_str());
+        char *Str = NULL;
+
+        if (OC_STACK_OK != ConvertUuidToStr(&(vector[i]), &Str))
+        {
+            return nullptr;
+        }
+        jstring jStr = env->NewStringUTF(Str);
+        OICFree(Str);
+
         if (!jStr)
         {
             return nullptr;
@@ -132,86 +150,162 @@ jobject JniSecureUtils::convertUUIDVectorToJavaStrList(JNIEnv *env, UuidList_t &
     return jList;
 }
 
+static OicSecValidity_t* getValiditiesList(JNIEnv *env, jobject validityObject)
+{
+    jstring jData;
+    jobjectArray  valList = (jobjectArray)env->CallObjectMethod(validityObject, g_mid_OcOicSecAcl_ace_get_validities);
+    if (!valList || env->ExceptionCheck())
+    {
+        return nullptr;
+    }
+    int nr_validities = env->GetArrayLength(valList);
+
+    OicSecValidity_t *valHead = NULL;
+
+    for (int i = 0 ; i < nr_validities; i++)
+    {
+        OicSecValidity_t *tmp = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
+        jobject element = env->GetObjectArrayElement(valList, i);
+        if (!element || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+
+        jData = (jstring)env->CallObjectMethod(element, g_mid_OcOicSecAcl_validity_get_getPeriod);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        tmp->period = (char*)env->GetStringUTFChars(jData, 0);
+
+        jint jrecurrenceLen = (jint) env->CallIntMethod(element,
+                g_mid_OcOicSecAcl_validity_get_recurrenceLen);
+        tmp->recurrenceLen = (int)jrecurrenceLen;
+
+        if (jrecurrenceLen > 0)
+        {
+            jvalue argv[1];
+            tmp->recurrences = (char**)OICCalloc(jrecurrenceLen, sizeof(char*));
+
+            for (int i = 0 ; i < jrecurrenceLen; i++)
+            {
+                argv[0].i = i;
+                jData = (jstring)env->CallObjectMethodA(element, g_mid_OcOicSecAcl_validity_get_recurrences, argv);
+                if (!jData || env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
+                tmp->recurrences[i] = (char*)env->GetStringUTFChars(jData, 0);
+            }
+        }
+        if (NULL == valHead)
+        {
+            valHead = tmp;
+        }
+        else
+        {
+            OicSecValidity_t *ptr = valHead;
+            while(ptr->next != NULL) ptr = ptr->next;
+            ptr->next = tmp;
+            tmp->next = NULL;
+        }
+        env->DeleteLocalRef(element);
+    }
+    return valHead;
+}
+
+static OicSecRsrc_t * getResourcesList(JNIEnv *env, jobject resourceObject)
+{
+    jstring jData;
+
+    jobjectArray rescList = (jobjectArray)env->CallObjectMethod(resourceObject, g_mid_OcOicSecAcl_ace_get_resources);
+    if (!rescList || env->ExceptionCheck())
+    {
+        return nullptr;
+    }
+
+    int nr_resc = env->GetArrayLength(rescList);
+    OicSecRsrc_t *rescHead = NULL;
+
+    for (int i = 0 ; i < nr_resc; i++)
+    {
+        OicSecRsrc_t *tmp = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+        jobject element = env->GetObjectArrayElement(rescList, i);
+        if (!element || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        jData = (jstring)env->CallObjectMethod(element, g_mid_OcOicSecAcl_resr_get_href);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        tmp->href = (char*)env->GetStringUTFChars(jData, 0);
+
+        jData = (jstring)env->CallObjectMethod(element, g_mid_OcOicSecAcl_resr_get_rel);
+        if (!jData || env->ExceptionCheck())
+        {
+            return nullptr;
+        }
+        tmp->rel = (char*)env->GetStringUTFChars(jData, 0);
+
+        jint len = (jint) env->CallIntMethod(element, g_mid_OcOicSecAcl_resr_get_typeLen);
+        tmp->typeLen = (int)len;
+        if (len > 0)
+        {
+            jvalue argv[1];
+            tmp->types = (char**)OICCalloc(len, sizeof(char*));
+
+            for (int i = 0 ; i < len; i++)
+            {
+                argv[0].i = i;
+                jData = (jstring)env->CallObjectMethodA(element, g_mid_OcOicSecAcl_resr_get_types, argv);
+                if (!jData || env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
+                tmp->types[i] = (char*)env->GetStringUTFChars(jData, 0);
+            }
+        }
+
+        len = (jint) env->CallIntMethod(element, g_mid_OcOicSecAcl_resr_get_interfaceLen);
+        tmp->interfaceLen = len;
+        if (len > 0)
+        {
+            jvalue argv[1];
+            tmp->interfaces = (char**)OICCalloc(len, sizeof(char*));
+
+            for (int i = 0 ; i < len; i++)
+            {
+                argv[0].i = i;
+                jData = (jstring)env->CallObjectMethodA(element, g_mid_OcOicSecAcl_resr_get_interfaces, argv);
+                if (!jData || env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
+                tmp->interfaces[i] = (char*)env->GetStringUTFChars(jData, 0);
+            }
+        }
+
+        if (NULL == rescHead)
+        {
+            rescHead = tmp;
+        }
+        else
+        {
+            OicSecRsrc_t *ptr = rescHead;
+            while(ptr->next != NULL) ptr = ptr->next;
+            ptr->next = tmp;
+            tmp->next = NULL;
+        }
+        env->DeleteLocalRef(element);
+    }
+    return rescHead;
+}
+
 OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, OicSecAcl_t *acl)
 {
     jstring jData;
-    jvalue args[1];
-
-    jData = (jstring) env->CallObjectMethod(in, g_mid_OcOicSecAcl_get_subject);
-    if (!jData || env->ExceptionCheck())
-    {
-        return OC_STACK_ERROR;
-    }
-
-    char *str = (char*) env->GetStringUTFChars(jData, 0);
-    if (OC_STACK_OK == ConvertStrToUuid(str, &acl->subject))
-    {
-        env->ReleaseStringUTFChars(jData, str);
-    }
-    else
-    {
-        return OC_STACK_ERROR;
-    }
-
-    jint jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecAcl_get_resources_cnt);
-    if (!jCount || env->ExceptionCheck())
-    {
-        return OC_STACK_ERROR;
-    }
-
-    acl->resourcesLen = jCount;
-    acl->resources = new char*[jCount];
-    for (jint i = 0; i < jCount; ++i)
-    {
-        args[0].i = i;
-        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecAcl_get_resources, args);
-        if (!jData || env->ExceptionCheck())
-        {
-            return OC_STACK_ERROR;
-        }
-
-        acl->resources[i] = (char*) env->GetStringUTFChars(jData, 0);
-    }
-
-    jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecAcl_get_permission);
-    if (env->ExceptionCheck())
-    {
-        return OC_STACK_ERROR;
-    }
-
-    acl->permission = jCount;
-    jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecAcl_get_periods_cnt);
-    if (env->ExceptionCheck())
-    {
-        return OC_STACK_ERROR;
-    }
-
-    acl->prdRecrLen = jCount;
-    acl->periods = new char*[jCount];
-    for (jint i = 0; i < jCount; ++i)
-    {
-        args[0].i = i;
-        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecAcl_get_periods, args);
-        if (!jData || env->ExceptionCheck())
-        {
-            return OC_STACK_ERROR;
-        }
-
-        acl->periods[i] = (char*) env->GetStringUTFChars(jData, 0);
-    }
-
-    acl->recurrences = new char*[jCount]; //TODO:Period Len and Reccurence len is same
-    for (jint i = 0; i < jCount; ++i)
-    {
-        args[0].i = i;
-        jData = (jstring) env->CallObjectMethodA(in, g_mid_OcOicSecAcl_get_recurrences, args);
-        if (!jData ||  env->ExceptionCheck())
-        {
-            return OC_STACK_ERROR;
-        }
-
-        acl->recurrences[i] = (char*) env->GetStringUTFChars(jData, 0);
-    }
 
     jData = (jstring) env->CallObjectMethod(in, g_mid_OcOicSecAcl_get_rownerID);
     if (!jData || env->ExceptionCheck())
@@ -219,8 +313,7 @@ OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, Oic
         return OC_STACK_ERROR;
     }
 
-    str = (char*) env->GetStringUTFChars(jData, 0);
-
+    char *str = (char*) env->GetStringUTFChars(jData, 0);
     if (OC_STACK_OK == ConvertStrToUuid(str, &acl->rownerID))
     {
         env->ReleaseStringUTFChars(jData, str);
@@ -230,6 +323,70 @@ OCStackResult JniSecureUtils::convertJavaACLToOCAcl(JNIEnv *env, jobject in, Oic
         return OC_STACK_ERROR;
     }
 
+    jobjectArray acesList = (jobjectArray)env->CallObjectMethod(in, g_mid_OcOicSecAcl_get_aces);
+
+    if (!acesList || env->ExceptionCheck())
+    {
+        return OC_STACK_ERROR;
+    }
+
+    int nr_aces = env->GetArrayLength(acesList);
+
+    OicSecAce_t *acesHead = NULL;
+
+    for (int i = 0 ; i < nr_aces; i++)
+    {
+        OicSecAce_t *tmp = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+
+        jobject element = env->GetObjectArrayElement(acesList, i);
+        if (!element || env->ExceptionCheck())
+        {
+            return OC_STACK_ERROR;
+        }
+
+        jData = (jstring) env->CallObjectMethod(element, g_mid_OcOicSecAcl_ace_get_subjectID);
+        if (!jData || env->ExceptionCheck())
+        {
+            return OC_STACK_ERROR;
+        }
+
+        str = (char*) env->GetStringUTFChars(jData, 0);
+        if (OC_STACK_OK == ConvertStrToUuid(str, &tmp->subjectuuid))
+        {
+            env->ReleaseStringUTFChars(jData, str);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+
+        jint perm = (jint)env->CallIntMethod(element, g_mid_OcOicSecAcl_ace_get_permissions);
+        tmp->permission = (uint16_t)perm;
+        if (nullptr == (tmp->resources = getResourcesList(env, element)))
+        {
+            return OC_STACK_ERROR;
+        }
+
+        tmp->validities = NULL; //TODO Seems Validities CBOR conversion is broken in C stack
+#if 0
+        if (nullptr == (tmp->validities = getValiditiesList(env, element)))
+        {
+            return OC_STACK_ERROR;
+        }
+#endif
+        if (NULL == acesHead)
+        {
+            acesHead = tmp;
+        }
+        else
+        {
+            OicSecAce_t *ptr = acesHead;
+            while(ptr->next != NULL) ptr = ptr->next;
+            ptr->next = tmp;
+            tmp->next = NULL;
+        }
+    }
+    acl->aces = acesHead;
     return OC_STACK_OK;
 }
 

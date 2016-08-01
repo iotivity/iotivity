@@ -143,10 +143,10 @@ TEST(DoxmResourceTest, DoxmToCBORPayloadNULL)
     OicSecDoxm_t *doxm =  getBinDoxm();
     size_t size = 10;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(NULL, NULL, 0));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(doxm, NULL, &size));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(doxm, &payload, 0));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(NULL, &payload, &size));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(NULL, NULL, 0, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(doxm, NULL, &size, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(doxm, &payload, 0, false));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(NULL, &payload, &size, false));
     DeleteDoxmBinData(doxm);
 }
 
@@ -156,7 +156,7 @@ TEST(DoxmResourceTest, DoxmToCBORPayloadVALID)
 
     uint8_t *payload = NULL;
     size_t size = 0;
-    EXPECT_EQ(OC_STACK_OK, DoxmToCBORPayload(doxm, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, DoxmToCBORPayload(doxm, &payload, &size, false));
     EXPECT_TRUE(payload != NULL);
 
     DeleteDoxmBinData(doxm);
@@ -181,7 +181,7 @@ TEST(DoxmResourceTest, CBORPayloadToDoxmVALID)
     OicSecDoxm_t *doxm =  getBinDoxm();
     uint8_t *payload = NULL;
     size_t size = 0;
-    EXPECT_EQ(OC_STACK_OK, DoxmToCBORPayload(doxm, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, DoxmToCBORPayload(doxm, &payload, &size, false));
     EXPECT_TRUE(payload != NULL);
 
     OicSecDoxm_t *doxmSec = NULL;

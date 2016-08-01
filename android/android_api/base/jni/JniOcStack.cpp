@@ -74,6 +74,9 @@ jclass g_cls_OcResourceIdentifier = nullptr;
 jclass g_cls_OcProvisionResult = nullptr;
 jclass g_cls_OcSecureResource = nullptr;
 jclass g_cls_OcOicSecAcl = nullptr;
+jclass g_cls_OcOicSecAcl_ace = nullptr;
+jclass g_cls_OcOicSecAcl_resr = nullptr;
+jclass g_cls_OcOicSecAcl_validity = nullptr;
 jclass g_cls_OcOicSecPdAcl = nullptr;
 jclass g_cls_OcDirectPairDevice = nullptr;
 
@@ -99,6 +102,7 @@ jmethodID g_mid_OcResourceRequest_N_ctor = nullptr;
 jmethodID g_mid_OcResourceResponse_N_ctor = nullptr;
 jmethodID g_mid_OcResourceHandle_N_ctor = nullptr;
 jmethodID g_mid_OcPresenceHandle_N_ctor = nullptr;
+
 jmethodID g_mid_OcRequestHandle_N_ctor = nullptr;
 jmethodID g_mid_OcHeaderOption_ctor = nullptr;
 jmethodID g_mid_OcHeaderOption_get_id = nullptr;
@@ -111,20 +115,28 @@ jmethodID g_mid_OcSecureResource_ctor = nullptr;
 jmethodID g_mid_OcDirectPairDevice_ctor = nullptr;
 jmethodID g_mid_OcDirectPairDevice_dev_ctor = nullptr;
 
-jmethodID g_mid_OcOicSecAcl_get_subject = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_resources_cnt = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_resources = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_permission = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_periods_cnt = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_periods = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_recurrences = nullptr;
-jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
 jmethodID g_mid_OcOicSecPdAcl_get_resources_cnt = nullptr;
 jmethodID g_mid_OcOicSecPdAcl_get_resources = nullptr;
 jmethodID g_mid_OcOicSecPdAcl_get_permission = nullptr;
 jmethodID g_mid_OcOicSecPdAcl_get_periods_cnt = nullptr;
 jmethodID g_mid_OcOicSecPdAcl_get_periods = nullptr;
 jmethodID g_mid_OcOicSecPdAcl_get_recurrences = nullptr;
+
+jmethodID g_mid_OcOicSecAcl_get_aces = nullptr;
+jmethodID g_mid_OcOicSecAcl_ace_get_subjectID = nullptr;
+jmethodID g_mid_OcOicSecAcl_ace_get_permissions = nullptr;
+jmethodID g_mid_OcOicSecAcl_ace_get_resources = nullptr;
+jmethodID g_mid_OcOicSecAcl_ace_get_validities = nullptr;
+jmethodID g_mid_OcOicSecAcl_resr_get_href = nullptr;
+jmethodID g_mid_OcOicSecAcl_resr_get_rel = nullptr;
+jmethodID g_mid_OcOicSecAcl_resr_get_types = nullptr;
+jmethodID g_mid_OcOicSecAcl_resr_get_typeLen = nullptr;
+jmethodID g_mid_OcOicSecAcl_resr_get_interfaces = nullptr;
+jmethodID g_mid_OcOicSecAcl_validity_get_getPeriod = nullptr;
+jmethodID g_mid_OcOicSecAcl_validity_get_recurrences = nullptr;
+jmethodID g_mid_OcOicSecAcl_validity_get_recurrenceLen = nullptr;
+jmethodID g_mid_OcOicSecAcl_resr_get_interfaceLen = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
@@ -471,29 +483,68 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     g_cls_OcOicSecAcl =  (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_OcOicSecAcl_get_subject = env->GetMethodID(g_cls_OcOicSecAcl, "getSubject", "()Ljava/lang/String;");
-    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_subject);
-
-    g_mid_OcOicSecAcl_get_resources_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getResourcesCount", "()I");
-    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_resources_cnt);
-
-    g_mid_OcOicSecAcl_get_resources = env->GetMethodID(g_cls_OcOicSecAcl, "getResources", "(I)Ljava/lang/String;");
-    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_resources);
-
-    g_mid_OcOicSecAcl_get_permission = env->GetMethodID(g_cls_OcOicSecAcl, "getPermission", "()I");
-    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_permission);
-
-    g_mid_OcOicSecAcl_get_periods_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriodsCount", "()I");
-    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_periods_cnt);
-
-    g_mid_OcOicSecAcl_get_periods = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriods", "(I)Ljava/lang/String;");
-    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_periods);
-
-    g_mid_OcOicSecAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecAcl, "getRecurrences", "(I)Ljava/lang/String;");
-    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_recurrences);
-
     g_mid_OcOicSecAcl_get_rownerID = env->GetMethodID(g_cls_OcOicSecAcl, "getRownerID", "()Ljava/lang/String;");
     VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_rownerID);
+
+    g_mid_OcOicSecAcl_get_aces = env->GetMethodID(g_cls_OcOicSecAcl, "getOicSecAces", "()[Lorg/iotivity/base/OicSecAce;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_get_aces);
+
+    //OicSecAce
+    clazz = env->FindClass("org/iotivity/base/OicSecAce");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcOicSecAcl_ace =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecAcl_ace_get_subjectID = env->GetMethodID(g_cls_OcOicSecAcl_ace, "getSubjectID","()Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_ace_get_subjectID);
+
+    g_mid_OcOicSecAcl_ace_get_permissions = env->GetMethodID(g_cls_OcOicSecAcl_ace, "getPermission","()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_ace_get_permissions);
+
+    g_mid_OcOicSecAcl_ace_get_resources = env->GetMethodID(g_cls_OcOicSecAcl_ace, "getResources","()[Lorg/iotivity/base/OicSecResr;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_ace_get_resources);
+
+    g_mid_OcOicSecAcl_ace_get_validities = env->GetMethodID(g_cls_OcOicSecAcl_ace, "getValidities","()[Lorg/iotivity/base/OicSecValidity;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_ace_get_validities);
+
+    //OicSecResr
+    clazz = env->FindClass("org/iotivity/base/OicSecResr");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcOicSecAcl_resr =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecAcl_resr_get_href = env->GetMethodID(g_cls_OcOicSecAcl_resr, "getHref","()Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_resr_get_href);
+
+    g_mid_OcOicSecAcl_resr_get_rel = env->GetMethodID(g_cls_OcOicSecAcl_resr, "getRel","()Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_resr_get_rel);
+
+    g_mid_OcOicSecAcl_resr_get_types = env->GetMethodID(g_cls_OcOicSecAcl_resr, "getTypes","(I)Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_resr_get_types);
+
+    g_mid_OcOicSecAcl_resr_get_typeLen = env->GetMethodID(g_cls_OcOicSecAcl_resr, "getTypeLen","()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_resr_get_typeLen);
+
+    g_mid_OcOicSecAcl_resr_get_interfaces = env->GetMethodID(g_cls_OcOicSecAcl_resr, "getInterfaces","(I)Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_resr_get_interfaces);
+
+    g_mid_OcOicSecAcl_resr_get_interfaceLen = env->GetMethodID(g_cls_OcOicSecAcl_resr, "getInterfaceLen","()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_resr_get_interfaceLen);
+
+    //OicSecAcl$OicSecValidity
+    clazz = env->FindClass("org/iotivity/base/OicSecValidity");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcOicSecAcl_validity =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecAcl_validity_get_getPeriod = env->GetMethodID(g_cls_OcOicSecAcl_validity, "getPeriod","()Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_validity_get_getPeriod);
+
+    g_mid_OcOicSecAcl_validity_get_recurrences = env->GetMethodID(g_cls_OcOicSecAcl_validity, "getRecurrences","(I)Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_validity_get_recurrences);
+
+    g_mid_OcOicSecAcl_validity_get_recurrenceLen = env->GetMethodID(g_cls_OcOicSecAcl_validity, "getRecurrenceLen","()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcOicSecAcl_validity_get_recurrenceLen);
 
     //OicSecPdAcl
     clazz = env->FindClass("org/iotivity/base/OicSecPdAcl");
@@ -569,4 +620,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_OcSecureResource);
     env->DeleteGlobalRef(g_cls_OcProvisionResult);
     env->DeleteGlobalRef(g_cls_OcOicSecAcl);
+    env->DeleteGlobalRef(g_cls_OcOicSecAcl_ace);
+    env->DeleteGlobalRef(g_cls_OcOicSecAcl_resr);
+    env->DeleteGlobalRef(g_cls_OcOicSecAcl_validity);
 }
