@@ -251,6 +251,9 @@ typedef struct OCResource {
         /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
         OCIdentity uniqueUUID;
     };
+
+    /** Resource endpoint type(s). */
+    OCTpsSchemeFlags endpointType;
 } OCResource;
 
 
