@@ -27,6 +27,8 @@
 #include "OCResource.h"
 #ifdef __WITH_DTLS__
 #include "EnrolleeSecurity.h"
+#include "base64.h"
+#include "oic_malloc.h"
 #endif //__WITH_DTLS
 
 namespace OIC
@@ -69,7 +71,7 @@ namespace OIC
         void RemoteEnrollee::securityStatusHandler(
                         std::shared_ptr< SecProvisioningStatus > status)
         {
-            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "easySetupStatusCallback status is, UUID = %s, "
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "easySetupStatusCallback status is, UUID = %s,"
                     "Status = %d", status->getDeviceUUID().c_str(),
                     status->getESResult());
 
@@ -104,7 +106,8 @@ namespace OIC
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering getConfigurationStatusHandler");
 
-            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"GetConfigurationStatus = %d", status->getESResult());
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"GetConfigurationStatus = %d",
+                                                    status->getESResult());
 
             m_getConfigurationStatusCb(status);
         }
@@ -126,56 +129,11 @@ namespace OIC
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering cloudPropProvisioningStatusHandler");
 
-            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"CloudProvStatus = %d", status->getESCloudState());
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"CloudProvStatus = %d",
+                                                    status->getESCloudState());
 
             m_cloudPropProvStatusCb(status);
             return;
-        }
-
-        ESResult RemoteEnrollee::ESDiscoveryTimeout(unsigned short waittime)
-        {
-            struct timespec startTime;
-            startTime.tv_sec=0;
-            startTime.tv_sec=0;
-            struct timespec currTime;
-            currTime.tv_sec=0;
-            currTime.tv_nsec=0;
-
-            ESResult res = ES_OK;
-            #ifdef _POSIX_MONOTONIC_CLOCK
-                int clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
-            #else
-                int clock_res = clock_gettime(CLOCK_REALTIME, &startTime);
-            #endif
-
-            if (0 != clock_res)
-            {
-                return ES_ERROR;
-            }
-
-            while (ES_OK == res || m_discoveryResponse == false)
-            {
-                #ifdef _POSIX_MONOTONIC_CLOCK
-                        clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
-                #else
-                        clock_res = clock_gettime(CLOCK_REALTIME, &currTime);
-                #endif
-
-                if (0 != clock_res)
-                {
-                    return ES_ERROR;
-                }
-                long elapsed = (currTime.tv_sec - startTime.tv_sec);
-                if (elapsed > waittime)
-                {
-                    return ES_OK;
-                }
-                if (m_discoveryResponse)
-                {
-                    res = ES_OK;
-                }
-             }
-             return res;
         }
 
         void RemoteEnrollee::onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource)
@@ -211,6 +169,7 @@ namespace OIC
                             OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_TAG, "Find matched CloudResource");
                             m_ocResource = resource;
                             m_discoveryResponse = true;
+                            m_cond.notify_all();
                         }
                     }
                 }
@@ -248,9 +207,10 @@ namespace OIC
                 return ES_ERROR;
             }
 
-            ESResult foundResponse = ESDiscoveryTimeout (DISCOVERY_TIMEOUT);
+            std::unique_lock<std::mutex> lck(m_discoverymtx);
+            m_cond.wait_for(lck, std::chrono::seconds(DISCOVERY_TIMEOUT));
 
-            if (foundResponse == ES_ERROR || !m_discoveryResponse)
+            if (!m_discoveryResponse)
             {
                 OIC_LOG(ERROR,ES_REMOTE_ENROLLEE_TAG,
                         "Failed discoverResource because timeout");
@@ -271,16 +231,17 @@ namespace OIC
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
             m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
-            m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb, m_securityPinCb, m_secProvisioningDbPathCb);
+            m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb, m_securityPinCb,
+                                                        m_secProvisioningDbPathCb);
 
             try
             {
                 m_enrolleeSecurity->performOwnershipTransfer();
             }
-            catch (OCException & e)
+            catch (const std::exception& e)
             {
                 OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
-                        "Exception for performOwnershipTransfer : %s", e.reason().c_str());
+                        "Exception for performOwnershipTransfer : %s", e.what());
 
                 OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Fail performOwnershipTransfer");
                     std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
@@ -338,7 +299,8 @@ namespace OIC
             m_enrolleeResource->getConfiguration();
         }
 
-        void RemoteEnrollee::provisionDeviceProperties(const DeviceProp& deviceProp, DevicePropProvStatusCb callback)
+        void RemoteEnrollee::provisionDeviceProperties(const DeviceProp& deviceProp,
+                                                            DevicePropProvStatusCb callback)
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionDeviceProperties");
 
@@ -360,7 +322,8 @@ namespace OIC
             }
 
             DevicePropProvStatusCb devicePropProvStatusCb = std::bind(
-                    &RemoteEnrollee::devicePropProvisioningStatusHandler, this, std::placeholders::_1);
+                    &RemoteEnrollee::devicePropProvisioningStatusHandler,
+                    this, std::placeholders::_1);
 
             m_enrolleeResource->registerDevicePropProvStatusCallback(devicePropProvStatusCb);
             m_enrolleeResource->provisionEnrollee(deviceProp);
@@ -388,10 +351,11 @@ namespace OIC
             {
                 if(m_ocResource != nullptr)
                 {
-                    m_cloudResource = std::make_shared<CloudResource>(std::move(m_ocResource));
+                    m_cloudResource = std::make_shared<CloudResource>(m_ocResource);
 
                     std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_OK, ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
+                        CloudPropProvisioningStatus >(ESResult::ES_OK,
+                                                        ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
 
                     m_cloudPropProvStatusCb(provStatus);
                 }
@@ -402,12 +366,11 @@ namespace OIC
             }
         }
 
-
-        void RemoteEnrollee::provisionCloudProperties(const CloudProp& cloudProp, CloudPropProvStatusCb callback)
+        void RemoteEnrollee::provisionCloudProperties(const CloudProp& cloudProp,
+                                                            CloudPropProvStatusCb callback)
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionCloudProperties");
-
-            ESResult result = ES_ERROR;
+            ESResult res = ES_OK;
 
             if(!callback)
             {
@@ -434,9 +397,45 @@ namespace OIC
                     "Exception caught in provisionCloudProperties = %s", e.what());
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_ERROR, ESCloudProvState::ES_CLOUD_ENROLLEE_NOT_FOUND);
+                        CloudPropProvisioningStatus >(ESResult::ES_ERROR,
+                                                    ESCloudProvState::ES_CLOUD_ENROLLEE_NOT_FOUND);
                 m_cloudPropProvStatusCb(provStatus);
+                return;
             }
+
+#ifdef __WITH_DTLS__
+            try
+            {
+                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+
+                if(cloudProp.getCloudID().empty())
+                {
+                    throw ESBadRequestException("Invalid Cloud Server UUID.");
+                }
+
+                res = m_enrolleeSecurity->performACLProvisioningForCloudServer(cloudProp.getCloudID());
+
+                if(res == ESResult::ES_ERROR)
+                {
+                    throw ESBadRequestException("Error in provisioning operation!");
+                }
+
+            }
+
+            catch (const std::exception& e)
+            {
+                OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
+                    "Exception caught in provisionCloudProperties = %s", e.what());
+
+                m_cloudResource = nullptr;
+
+                std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
+                        CloudPropProvisioningStatus >(ESResult::ES_ERROR,
+                                                    ESCloudProvState::ES_CLOUD_PROVISIONING_ERROR);
+                m_cloudPropProvStatusCb(provStatus);
+                return;
+            }
+#endif
 
             if (m_cloudResource == nullptr)
             {
@@ -444,7 +443,8 @@ namespace OIC
             }
 
             CloudPropProvStatusCb cloudPropProvStatusCb = std::bind(
-                    &RemoteEnrollee::cloudPropProvisioningStatusHandler, this, std::placeholders::_1);
+                    &RemoteEnrollee::cloudPropProvisioningStatusHandler,
+                                    this, std::placeholders::_1);
 
             m_cloudResource->registerCloudPropProvisioningStatusCallback(cloudPropProvStatusCb);
             m_cloudResource->provisionEnrollee(cloudProp);

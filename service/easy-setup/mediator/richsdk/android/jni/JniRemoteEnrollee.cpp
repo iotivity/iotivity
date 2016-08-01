@@ -99,7 +99,9 @@ void JniRemoteEnrollee::provisionSecurity(JNIEnv *env, jobject jListener)
     }
 }
 
-void JniRemoteEnrollee::provisionDeviceProperties(JNIEnv *env, jobject jRepresentation, jobject jListener)
+void JniRemoteEnrollee::provisionDeviceProperties(JNIEnv *env,
+                                                    jobject jRepresentation,
+                                                    jobject jListener)
 {
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
     if (!representation)
@@ -129,7 +131,10 @@ void JniRemoteEnrollee::provisionDeviceProperties(JNIEnv *env, jobject jRepresen
     }
 }
 
-void JniRemoteEnrollee::provisionCloudProperties(JNIEnv *env, jobject jRepresentation, jobject jListener)
+void JniRemoteEnrollee::provisionCloudProperties(JNIEnv *env,
+                                                jobject jRepresentation,
+                                                jstring jCloudID,
+                                                jobject jListener)
 {
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
     if (!representation)
@@ -138,6 +143,8 @@ void JniRemoteEnrollee::provisionCloudProperties(JNIEnv *env, jobject jRepresent
     }
 
     CloudProp cloudProp(*representation);
+    cloudProp.setCloudID(env->GetStringUTFChars(jCloudID, NULL));
+
     JniCloudPropProvisioningStatusListener *onCloudPropProvisioningStatusReceived =
                     addStatusListener<JniCloudPropProvisioningStatusListener>(env, jListener);
 
@@ -199,12 +206,12 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionDevic
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionCloudProperties
-(JNIEnv *env, jobject jClass, jobject jRepresentation, jobject jListener)
+(JNIEnv *env, jobject jClass, jobject jRepresentation, jstring jCloudID, jobject jListener)
 {
     ES_LOGD("nativeprovisionCloudProperties Enter");
 
     JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
-    remoteEnrollee->provisionCloudProperties(env, jRepresentation, jListener);
+    remoteEnrollee->provisionCloudProperties(env, jRepresentation, jCloudID, jListener);
 
     ES_LOGD("nativeprovisionCloudProperties Exit");
 }

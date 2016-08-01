@@ -85,7 +85,7 @@ namespace OIC
 
                 EnrolleeStatus enrolleeStatus(rep);
                 std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus = std::make_shared<
-                        GetEnrolleeStatus >(ESResult::ES_ERROR, enrolleeStatus);
+                        GetEnrolleeStatus >(result, enrolleeStatus);
 
                 m_getStatusCb(getEnrolleeStatus);
             }

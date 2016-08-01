@@ -22,6 +22,7 @@
 #define ENROLLEE_SECURITY_H_
 
 #include <functional>
+#include <condition_variable>
 
 #include "ESRichCommon.h"
 #include "OCProvisioningManager.h"
@@ -50,7 +51,7 @@ namespace OIC
             void registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
             void performOwnershipTransfer();
-            void performACLProvisioningForCloudServer(OicUuid_t serverUuid);
+            ESResult performACLProvisioningForCloudServer(std::string cloudUuid);
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
@@ -59,13 +60,17 @@ namespace OIC
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
             std::shared_ptr< OC::OCSecureResource > m_unownedDevice;
 
+            std::mutex m_mtx;
+            std::condition_variable m_cond;
+            bool aclResult;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
             std::shared_ptr< OC::OCSecureResource > getEnrollee(OC::DeviceList_t &list);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(OicUuid_t uuid, std::string& uuidString);
-            OicSecAcl_t* createAcl(OicUuid_t serverUuid);
+            void convertStringToUUID(OicUuid_t& uuid, std::string uuidString);
+            OicSecAcl_t* createAcl(OicUuid_t cloudUuid);
 
             void ACLProvisioningCb(PMResultList_t *result, int hasError);
         };

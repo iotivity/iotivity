@@ -22,6 +22,8 @@
 #define REMOTE_ENROLLEE_H_
 
 #include <memory>
+#include <iostream>
+#include <condition_variable>
 
 #include "ESRichCommon.h"
 #include "OCApi.h"
@@ -113,7 +115,8 @@ namespace OIC
              * @see DeviceProp
              * @see DevicePropProvStatusCb
              */
-            void provisionDeviceProperties(const DeviceProp& devProp, DevicePropProvStatusCb callback);
+            void provisionDeviceProperties(const DeviceProp& devProp,
+                                               DevicePropProvStatusCb callback);
 
             /**
              * Provision Cloud information to Enrollee, which includes Auth code, auth provider,
@@ -131,13 +134,13 @@ namespace OIC
              * @see CloudProp
              * @see CloudPropProvStatusCb
              */
-            void provisionCloudProperties(const CloudProp& cloudProp, CloudPropProvStatusCb callback);
+            void provisionCloudProperties(const CloudProp& cloudProp,
+                                              CloudPropProvStatusCb callback);
 
         private:
             RemoteEnrollee(std::shared_ptr< OC::OCResource > resource);
 
             ESResult discoverResource();
-            ESResult ESDiscoveryTimeout(unsigned short waittime);
             void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
             void initCloudResource();
 
@@ -155,6 +158,9 @@ namespace OIC
 
             std::string  m_deviceId;
             bool m_discoveryResponse;
+
+            std::mutex m_discoverymtx;
+            std::condition_variable m_cond;
 
             SecurityProvStatusCb m_securityProvStatusCb;
             GetStatusCb m_getStatusCb;

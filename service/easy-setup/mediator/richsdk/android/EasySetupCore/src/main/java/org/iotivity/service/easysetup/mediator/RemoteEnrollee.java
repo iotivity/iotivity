@@ -44,7 +44,7 @@ public class RemoteEnrollee{
     private native void nativeProvisionSecurity(SecurityProvisioningCallback callback);
     private native void nativeProvisionDeviceProperties(OcRepresentation deviceProp,
                                                         DevicePropProvisioningCallback callback);
-    private native void nativeProvisionCloudProperties(OcRepresentation cloudProp,
+    private native void nativeProvisionCloudProperties(OcRepresentation cloudProp, String cloudID,
                                                        CloudPropProvisioningCallback callback);
 
     /* constructor will be invoked from the native layer */
@@ -61,7 +61,8 @@ public class RemoteEnrollee{
      *
      * @see GetConfigurationCallback
      */
-    public void getConfiguration(GetConfigurationCallback callback) throws ESException
+    public void getConfiguration(GetConfigurationCallback callback)
+                                                        throws ESException
     {
         if(callback != null)
         {
@@ -80,7 +81,8 @@ public class RemoteEnrollee{
      *
      * @see SecurityProvisioningCallback
      */
-    public void provisionSecurity(SecurityProvisioningCallback callback) throws ESException
+    public void provisionSecurity(SecurityProvisioningCallback callback)
+                                                        throws ESException
     {
         if(callback != null)
         {
@@ -103,11 +105,12 @@ public class RemoteEnrollee{
      * @see DeviceProp
      * @see DevicePropProvisioningCallback
      */
-    public void provisionDeviceProperties(DeviceProp deviceProp, DevicePropProvisioningCallback callback) throws ESException
-    {
+    public void provisionDeviceProperties(DeviceProp deviceProp,
+                    DevicePropProvisioningCallback callback) throws ESException{
         if(callback != null)
         {
-            nativeProvisionDeviceProperties(deviceProp.toOCRepresentation(), callback);
+            nativeProvisionDeviceProperties(deviceProp.toOCRepresentation(),
+                                                callback);
             return;
         }
         Log.d(TAG, "DevicePropProvisioningCallback is null ");
@@ -129,10 +132,13 @@ public class RemoteEnrollee{
      * @see CloudProp
      * @see CloudPropProvisioningCallback
      */
-    public void provisionCloudProperties(CloudProp cloudProp, CloudPropProvisioningCallback callback) throws ESException{
+    public void provisionCloudProperties(CloudProp cloudProp,
+                    CloudPropProvisioningCallback callback) throws ESException{
         if(callback != null)
         {
-            nativeProvisionCloudProperties(cloudProp.toOCRepresentation(), callback);
+            nativeProvisionCloudProperties(cloudProp.toOCRepresentation(),
+                                            cloudProp.getCloudID(),
+                                            callback);
             return;
         }
         Log.d(TAG, "CloudPropProvisioningCallback is null ");

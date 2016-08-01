@@ -89,9 +89,23 @@ void printStatus(EnrolleeStatus status)
     cout << "===========================================" << endl;
 }
 
+void provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus> secProvisioningStatus)
+{
+    if(secProvisioningStatus->getESResult() != ES_OK)
+    {
+      cout << "provisionSecurity is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "provisionSecurity is success." << endl;
+      cout << "uuid : " << secProvisioningStatus->getDeviceUUID()<< endl;
+    }
+}
+
 void provisionSecurity()
 {
-    // TODO
+    remoteEnrollee->provisionSecurity(provisionSecurityStatusCallback);
 }
 
 void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
@@ -215,6 +229,7 @@ void provisionCloudProperty()
 
     CloudProp cloudProp;
     cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
+    cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
 
     try
     {

@@ -31,12 +31,14 @@ import org.iotivity.base.OcRepresentation;
 public class CloudProp {
     private static final String TAG = CloudProp.class.getName();
     protected OcRepresentation mRep;
+    protected String mCloudID;
 
     /**
      * Constructor
      */
     public CloudProp() {
         mRep = new OcRepresentation();
+        mCloudID = "";
     }
 
     public void setCloudProp(String authCode, String authProvider, String ciServer)
@@ -48,6 +50,11 @@ public class CloudProp {
         } catch (OcException e) {
             Log.e(TAG, "setCloudProp is failed.");
         }
+    }
+
+    public void setCloudID(String cloudID)
+    {
+        mCloudID = cloudID;
     }
 
     /**
@@ -93,6 +100,15 @@ public class CloudProp {
             Log.e(TAG, "getCiServer is failed.");
         }
         return new String("");
+    }
+
+    /**
+     * This method returns the Cloud Interface server's UUID
+     * @return CI server's UUID
+     */
+    public String getCloudID()
+    {
+        return mCloudID;
     }
 
     public OcRepresentation toOCRepresentation()

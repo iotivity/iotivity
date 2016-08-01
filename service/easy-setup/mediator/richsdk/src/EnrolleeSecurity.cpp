@@ -45,7 +45,7 @@ namespace OIC
         //TODO : Currently discovery timeout for owned and unowned devices is fixed as 5
         // The value should be accepted from the application as a parameter during ocplatform
         // config call
-#define ES_SEC_DISCOVERY_TIMEOUT 5
+        #define ES_SEC_DISCOVERY_TIMEOUT 5
 
         EnrolleeSecurity::EnrolleeSecurity(
         std::shared_ptr< OC::OCResource > resource,
@@ -74,12 +74,6 @@ namespace OIC
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s", list[i]->getDevAddr().c_str());
                     return list[i];
                 }
-                //Always return the first element of the unOwned devices. This is considering that Mediator is
-                // always connected with only one Enrollee for which ownership transfer is being performed.
-                // Incase of multiple Enrollee devices connected to the Mediator via any OnBoarding method (SoftAp
-                // for example), the Enrollee devices will be provisioned in the first come first serve basis in the order
-                // returned by the security layer.
-
             }
             OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! DeviceList_t is NULL");
             return NULL;
@@ -101,6 +95,34 @@ namespace OIC
                 deviceId << base64Buff;
             }
             uuidString =  deviceId.str();
+        }
+
+        void EnrolleeSecurity::convertStringToUUID(OicUuid_t& uuid, std::string uuidString)
+        {
+            size_t outBufSize = B64DECODE_OUT_SAFESIZE((uuidString.length() + 1));
+            uint8_t* outKey = (uint8_t*)OICCalloc(1, outBufSize);
+            uint32_t outKeySize;
+            if(NULL == outKey)
+            {
+                OIC_LOG (ERROR, ENROLEE_SECURITY_TAG, "Failed to memoray allocation.");
+                throw ESBadRequestException ("Failed to memoray allocation.");
+            }
+
+            if(B64_OK == b64Decode((char*)uuidString.c_str(),
+                                    uuidString.length(),
+                                    outKey,
+                                    outBufSize,
+                                    &outKeySize))
+            {
+                memcpy(uuid.id, outKey, outKeySize);
+            }
+            else
+            {
+                OIC_LOG (ERROR, ENROLEE_SECURITY_TAG, "Failed to base64 decoding.");
+                throw ESBadRequestException ("Failed to base64 decoding.");
+            }
+
+            OICFree(outKey);
         }
 
         void EnrolleeSecurity::ownershipTransferCb(OC::PMResultList_t *result, int hasError)
@@ -144,7 +166,7 @@ namespace OIC
             pUnownedDevList.clear();
 
             OCStackResult result;
-            /*
+
             result = OCSecure::discoverOwnedDevices(ES_SEC_DISCOVERY_TIMEOUT,
                     pOwnedDevList);
             if (result != OC_STACK_OK)
@@ -167,7 +189,7 @@ namespace OIC
                     return;
                 }
             }
-            */
+
             result = OCSecure::discoverUnownedDevices(ES_SEC_DISCOVERY_TIMEOUT, pUnownedDevList);
             if (result != OC_STACK_OK)
             {
@@ -205,16 +227,26 @@ namespace OIC
                         throw ESPlatformException(result);
                     }
                 }
+                else
+                {
+                    OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No matched unowned devices found.");
+                    throw ESException("No matched unowned devices found.");
+                }
             }
             else
             {
-                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No unOwned devices found.");
-                throw ESException("No unOwned devices found.");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No unowned devices found.");
+                throw ESException("No unowned devices found.");
             }
         }
 
-        void EnrolleeSecurity::performACLProvisioningForCloudServer(OicUuid_t serverUuid)
+        ESResult EnrolleeSecurity::performACLProvisioningForCloudServer(std::string cloudUuid)
         {
+            ESResult res = ESResult::ES_ERROR;
+
+            OicUuid_t uuid;
+            convertStringToUUID(uuid, cloudUuid);
+
             // Need to discover Owned device in a given network, again
             OC::DeviceList_t pOwnedDevList;
             std::shared_ptr< OC::OCSecureResource > ownedDevice = NULL;
@@ -240,21 +272,21 @@ namespace OIC
                 if (!ownedDevice)
                 {
                     OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Not found owned devices.");
-                    return;
+                    return res;
                 }
             }
             else
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Not found owned devices.");
-                return;
+                return res;
             }
 
             // Create Acl for Cloud Server to be provisioned to Enrollee
-            OicSecAcl_t* acl = createAcl(serverUuid);
+            OicSecAcl_t* acl = createAcl(uuid);
             if(!acl)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "createAcl error return");
-                return;
+                return res;
             }
 
             OC::ResultCallBack aclProvisioningCb = std::bind(
@@ -265,11 +297,21 @@ namespace OIC
             if(OC_STACK_OK != rst)
             {
                 OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OCProvisionACL API error: %d", rst);
-                return;
+                return res;
             }
+
+            std::unique_lock<std::mutex> lck(m_mtx);
+            m_cond.wait_for(lck, std::chrono::seconds(ES_SEC_DISCOVERY_TIMEOUT));
+
+            if(aclResult)
+            {
+                res = ESResult::ES_OK;
+            }
+
+            return res;
         }
 
-        OicSecAcl_t* EnrolleeSecurity::createAcl(OicUuid_t serverUuid)
+        OicSecAcl_t* EnrolleeSecurity::createAcl(OicUuid_t cloudUuid)
         {
             // allocate memory for |acl| struct
             OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
@@ -286,7 +328,7 @@ namespace OIC
             }
             LL_APPEND(acl->aces, ace);
 
-            memcpy(&ace->subjectuuid, &serverUuid, UUID_LENGTH);
+            memcpy(&ace->subjectuuid, &cloudUuid, UUID_LENGTH);
 
             OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
             if(!rsrc)
@@ -323,8 +365,26 @@ namespace OIC
 
         void EnrolleeSecurity::ACLProvisioningCb(PMResultList_t *result, int hasError)
         {
-            (void) result;
-            (void) hasError;
+            if (hasError)
+            {
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in provisioning operation!");
+               aclResult = false;
+            }
+            else
+            {
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received provisioning results: ");
+
+               std::string devUuid;
+               for (unsigned int i = 0; i < result->size(); i++)
+               {
+                   convertUUIDToString(result->at(i).deviceId, devUuid);
+                   OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d  for device %s",
+                                                           result->at(i).res, devUuid.c_str());
+               }
+               delete result;
+               aclResult = true;
+            }
+            m_cond.notify_all();
         }
     }
 }

@@ -685,7 +685,8 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/editText_authcode"
                         android:layout_marginLeft="20dp"
-                        android:layout_gravity="center_vertical" />
+                        android:layout_gravity="center_vertical"
+                        android:text="authcode" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -709,7 +710,8 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/editText_authprovider"
                         android:layout_marginLeft="20dp"
-                        android:layout_gravity="center_vertical" />
+                        android:layout_gravity="center_vertical"
+                        android:text="authprovider" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -733,7 +735,8 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/editText_ciserver"
                         android:layout_marginLeft="20dp"
-                        android:layout_gravity="center_vertical" />
+                        android:layout_gravity="center_vertical"
+                        android:text="ciserver" />
                 </LinearLayout>
 
                 <Button

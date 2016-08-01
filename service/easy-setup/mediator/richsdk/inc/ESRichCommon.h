@@ -272,7 +272,11 @@ namespace OIC
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
              */
-            CloudProp(const OCRepresentation &rep) { m_rep = rep; }
+            CloudProp(const OCRepresentation &rep)
+            {
+                m_rep = rep;
+                m_cloudID = "";
+            }
 
             /**
              * Set CloudServer resource properties to be delivered to Enrollee
@@ -286,6 +290,16 @@ namespace OIC
                 m_rep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
                 m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
                 m_rep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
+            }
+
+            /**
+             * Set CloudServer's UUID
+             *
+             * @param cloudID Cloud Interface server's UUID
+             */
+            void setCloudID(string cloudID)
+            {
+                m_cloudID = cloudID;
             }
 
             /**
@@ -325,6 +339,16 @@ namespace OIC
             }
 
             /**
+             * Get a CI server's Uuid to be delivered
+             *
+             * @return a CI server's Uuid to be delivered
+             */
+            std::string getCloudID() const
+            {
+                return m_cloudID;
+            }
+
+            /**
              * Get OCRepresentation object
              *
              * @return OCRepresentation object
@@ -335,6 +359,7 @@ namespace OIC
             }
         protected:
             OCRepresentation m_rep;
+            std::string m_cloudID;
         };
 
         /**
