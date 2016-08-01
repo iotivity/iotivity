@@ -193,28 +193,6 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         }
 
     }
-    else if (type == NS_PROVIDER_CACHE_MESSAGE)
-    {
-        NS_LOG(DEBUG, "Type is MESSAGE");
-
-        NSCacheMsgData * msgData = (NSCacheMsgData *) newObj->data;
-        NSCacheElement * it = NSStorageRead(list, msgData->id);
-
-        if (it)
-        {
-            NSCacheMsgData * itData = (NSCacheMsgData *) it->data;
-
-            if (strcmp(itData->id, msgData->id) == 0)
-            {
-
-                itData->messageType = msgData->messageType;
-                NS_LOG(DEBUG, "Updated messageType");
-                pthread_mutex_unlock(&NSCacheMutex);
-                return NS_OK;
-
-            }
-        }
-    }
 
     if (list->head == NULL)
     {
@@ -226,56 +204,6 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 
     list->tail = list->tail->next = newObj;
     NS_LOG(DEBUG, "list->head is not NULL");
-    pthread_mutex_unlock(&NSCacheMutex);
-    return NS_OK;
-}
-
-NSResult NSStorageDelete(NSCacheList * list, const char * delId)
-{
-    pthread_mutex_lock(&NSCacheMutex);
-    NSCacheElement * prev = list->head;
-    NSCacheElement * del = list->head;
-
-    NSCacheType type = list->cacheType;
-
-    if (NSProviderCompareIdCacheData(type, del->data, delId))
-    {
-        if (del == list->head) // first object
-        {
-            if (del == list->tail) // first object (one object)
-            {
-                list->tail = del->next;
-            }
-
-            list->head = del->next;
-
-            NSProviderDeleteCacheData(type, del->data);
-            OICFree(del);
-            pthread_mutex_unlock(&NSCacheMutex);
-            return NS_OK;
-        }
-    }
-
-    del = del->next;
-    while (del)
-    {
-        if (NSProviderCompareIdCacheData(type, del->data, delId))
-        {
-            if (del == list->tail) // delete object same to last object
-            {
-                list->tail = prev;
-            }
-
-            prev->next = del->next;
-            NSProviderDeleteCacheData(type, del->data);
-            OICFree(del);
-            pthread_mutex_unlock(&NSCacheMutex);
-            return NS_OK;
-        }
-
-        prev = del;
-        del = del->next;
-    }
     pthread_mutex_unlock(&NSCacheMutex);
     return NS_OK;
 }
@@ -328,19 +256,6 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
         return false;
 
     }
-    else if (type == NS_PROVIDER_CACHE_MESSAGE)
-    {
-        NSCacheMsgData * msgData = (NSCacheMsgData *) data;
-
-        if (strcmp(msgData->id, id) == 0)
-        {
-            NS_LOG(DEBUG, "Message Data is Same");
-            return true;
-        }
-
-        NS_LOG(DEBUG, "Message Data is Not Same");
-        return false;
-    }
 
     NS_LOG(DEBUG, "NSProviderCompareIdCacheData - OUT");
 
@@ -360,25 +275,6 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
 
         (subData->id)[0] = '\0';
         OICFree(subData);
-
-        return NS_OK;
-    }
-    else if (type == NS_PROVIDER_CACHE_MESSAGE)
-    {
-        NSCacheMsgData * msgData = (NSCacheMsgData *) data;
-
-        if (msgData->id)
-        {
-            OICFree(msgData->id);
-            msgData->id = NULL;
-        }
-
-        if (msgData->nsMessage)
-        {
-            NSFreeMessage(msgData->nsMessage);
-        }
-
-        OICFree(msgData);
 
         return NS_OK;
     }
