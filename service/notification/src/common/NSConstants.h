@@ -87,6 +87,88 @@
 #define NS_POLICY_PROVIDER         1
 #define NS_POLICY_CONSUMER         0
 
+#define NS_VERIFY_NOT_NULL_V(obj) \
+    { \
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            return; \
+        } \
+    }
+
+#define NS_VERIFY_NOT_NULL(obj, retVal) \
+    { \
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            return (retVal); \
+        } \
+    }
+
+#define NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(obj, func) \
+    { \
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            NS_LOG(ERROR, "execute deletion"); \
+            (func); \
+            return; \
+        } \
+    }
+
+#define NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, retVal, func) \
+    { \
+        if ((obj) == NULL) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            NS_LOG(ERROR, "execute deletion"); \
+            (func); \
+            return (retVal); \
+        } \
+    }
+
+#define NS_VERIFY_STACK_SUCCESS_V(obj) \
+    { \
+        bool _ret = (obj); \
+        if ( _ret != true) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
+            return; \
+        } \
+    }
+
+#define NS_VERIFY_STACK_SUCCESS(obj, retVal) \
+    { \
+        bool _ret = (obj); \
+        if ( _ret != true) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
+            return (retVal); \
+        } \
+    }
+
+#define NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(obj, retVal, func) \
+    { \
+        bool _ret = (obj); \
+        if ( _ret != true) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
+            (func); \
+            return (retVal); \
+        } \
+    }
+
+#define NSOICFree(obj) \
+    { \
+        if ((obj)) \
+        { \
+            OICFree((obj)); \
+            (obj) = NULL; \
+            NS_LOG_V(DEBUG, "%s : %s Removed", __func__, #obj); \
+        } \
+    }
+
+
 typedef enum eConnectionState
 {
     DISCONNECTED = 0,
