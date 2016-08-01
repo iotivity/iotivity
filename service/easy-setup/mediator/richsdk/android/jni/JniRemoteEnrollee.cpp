@@ -53,6 +53,29 @@ JniRemoteEnrollee *JniRemoteEnrollee::getJniRemoteEnrollee(JNIEnv *env, jobject 
     return remoteEnrollee;
 }
 
+void JniRemoteEnrollee::getStatus(JNIEnv *env, jobject jListener)
+{
+    JniGetEnrolleeStatusListener *onGetEnrolleeStatusReceived =
+                    addStatusListener<JniGetEnrolleeStatusListener>(env, jListener);
+
+    GetStatusCb getEnrolleeStatusCallback = [onGetEnrolleeStatusReceived]
+            (std::shared_ptr<OIC::Service::GetEnrolleeStatus > getEnrolleeStatus)
+    {
+        onGetEnrolleeStatusReceived->getEnrolleeStatusCallback(getEnrolleeStatus);
+    };
+
+    try
+    {
+        m_sharedResource->getStatus(getEnrolleeStatusCallback);
+    }
+    catch (ESBadRequestException exception)
+    {
+        ES_LOGE("JNI getStatus :: Exception occured");
+        //throw the exception to java
+        throwESException( env,  exception.what());
+    }
+}
+
 void JniRemoteEnrollee::getConfiguration(JNIEnv *env, jobject jListener)
 {
     JniGetConfigurationStatusListener *onGetConfigurationStatusReceived =
@@ -165,6 +188,19 @@ void JniRemoteEnrollee::provisionCloudProperties(JNIEnv *env,
         //throw the exception to java
         throwESException(env, exception.what());
     }
+}
+
+//JNI
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeGetStatus
+(JNIEnv *env, jobject jClass, jobject jListener)
+{
+    ES_LOGD("nativeGetStatus Enter");
+
+    JniRemoteEnrollee *remoteEnrollee = JniRemoteEnrollee::getJniRemoteEnrollee(env, jClass);
+    remoteEnrollee->getStatus(env, jListener);
+
+    ES_LOGD("nativeGetStatus Exit");
 }
 
 //JNI

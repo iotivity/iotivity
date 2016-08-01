@@ -40,6 +40,7 @@ public class RemoteEnrollee{
     public static final String TAG = RemoteEnrollee.class.getName();
     private long m_nativeHandle;
 
+    private native void nativeGetStatus(GetStatusCallback callback);
     private native void nativeGetConfiguration(GetConfigurationCallback callback);
     private native void nativeProvisionSecurity(SecurityProvisioningCallback callback);
     private native void nativeProvisionDeviceProperties(OcRepresentation deviceProp,
@@ -50,6 +51,25 @@ public class RemoteEnrollee{
     /* constructor will be invoked from the native layer */
     private RemoteEnrollee(long nativeHandle){
         this.m_nativeHandle = nativeHandle;
+    }
+
+    /**
+     * Get an Enrollee's status which includes a provisioning status and last error code
+     *
+     * @param callback will give the requested status
+     *
+     * @throws ESException If some errors happen in this function
+     *
+     * @see GetStatusCallback
+     */
+    public void getStatus(GetStatusCallback callback) throws ESException
+    {
+        if(callback != null)
+        {
+            nativeGetStatus(callback);
+            return;
+        }
+        Log.d(TAG, "GetStatusCallback is null ");
     }
 
     /**

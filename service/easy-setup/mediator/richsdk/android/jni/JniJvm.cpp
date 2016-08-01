@@ -23,9 +23,9 @@ JavaVM *g_jvm = NULL;
 
 jclass g_cls_RemoteEnrollee = NULL;
 jclass g_cls_ESException = NULL;
+jclass g_cls_EnrolleeStatus = NULL;
 jclass g_cls_EnrolleeConf = NULL;
-jclass g_cls_DeviceConfig = NULL;
-jclass g_cls_WiFiConfig = NULL;
+jclass g_cls_getEnrolleeStatus = NULL;
 jclass g_cls_getConfigurationStatus = NULL;
 jclass g_cls_SecurityProvisioningStatus = NULL;
 jclass g_cls_DevicePropProvisioningStatus = NULL;
@@ -35,9 +35,9 @@ jclass g_cls_OcRepresentation = NULL;
 
 jmethodID g_mid_RemoteEnrollee_ctor = NULL;
 jmethodID g_mid_ESException_ctor = NULL;
+jmethodID g_mid_EnrolleeStatus_ctor = NULL;
 jmethodID g_mid_EnrolleeConf_ctor = NULL;
-jmethodID g_mid_DeviceConfig_ctor = NULL;
-jmethodID g_mid_WiFiConfig_ctor = NULL;
+jmethodID g_mid_getEnrolleeStatus_ctor = NULL;
 jmethodID g_mid_getConfigurationStatus_ctor = NULL;
 jmethodID g_mid_SecurityProvisioningStatus_ctor = NULL;
 jmethodID g_mid_DevicePropProvisioningStatus_ctor = NULL;
@@ -79,27 +79,16 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_mid_ESException_ctor = env->GetMethodID(g_cls_ESException, "<init>", "(Ljava/lang/String;)V");
     if (!g_mid_ESException_ctor) return JNI_ERR;
 
-   // DeviceConfig
-    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/DeviceConfig");
+    // EnrolleeStatus
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/EnrolleeStatus");
     if (!clazz) return JNI_ERR;
 
-    g_cls_DeviceConfig = (jclass)env->NewGlobalRef(clazz);
+    g_cls_EnrolleeStatus = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    g_mid_DeviceConfig_ctor = env->GetMethodID(g_cls_DeviceConfig, "<init>",
-                                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    if (!g_mid_DeviceConfig_ctor) return JNI_ERR;
-
-    // WiFiConfig
-    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/WiFiConfig");
-    if (!clazz) return JNI_ERR;
-
-    g_cls_WiFiConfig = (jclass)env->NewGlobalRef(clazz);
-    env->DeleteLocalRef(clazz);
-
-    g_mid_WiFiConfig_ctor = env->GetMethodID(g_cls_WiFiConfig, "<init>",
-                                "(Ljava/util/ArrayList;I)V");
-    if (!g_mid_WiFiConfig_ctor) return JNI_ERR;
+    g_mid_EnrolleeStatus_ctor = env->GetMethodID(g_cls_EnrolleeStatus, "<init>",
+                                "(Lorg/iotivity/base/OcRepresentation;)V");
+    if (!g_mid_EnrolleeStatus_ctor) return JNI_ERR;
 
     // EnrolleeConf
     clazz = env->FindClass("org/iotivity/service/easysetup/mediator/EnrolleeConf");
@@ -111,6 +100,17 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_mid_EnrolleeConf_ctor = env->GetMethodID(g_cls_EnrolleeConf, "<init>",
                                 "(Lorg/iotivity/base/OcRepresentation;)V");
     if (!g_mid_EnrolleeConf_ctor) return JNI_ERR;
+
+    // getEnrolleeStatus
+    clazz = env->FindClass("org/iotivity/service/easysetup/mediator/GetEnrolleeStatus");
+    if (!clazz) return JNI_ERR;
+
+    g_cls_getEnrolleeStatus = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_getEnrolleeStatus_ctor = env->GetMethodID(g_cls_getEnrolleeStatus, "<init>",
+                                "(ILorg/iotivity/service/easysetup/mediator/EnrolleeStatus;)V");
+    if (!g_mid_getEnrolleeStatus_ctor) return JNI_ERR;
 
     // getConfigurationStatus
     clazz = env->FindClass("org/iotivity/service/easysetup/mediator/GetConfigurationStatus");

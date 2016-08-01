@@ -33,6 +33,7 @@
 
 #include "JniJvm.h"
 #include "JniEsUtils.h"
+#include "JniGetEnrolleeStatusListener.h"
 #include "JniGetConfigurationStatusListener.h"
 #include "JniSecurityStatusListener.h"
 #include "JniDevicePropProvisioningStatusListener.h"
@@ -62,6 +63,7 @@ class JniRemoteEnrollee
         ~JniRemoteEnrollee();
 
         // ***** JNI APIs internally call the APIs of this class ***** //
+        void getStatus(JNIEnv *env, jobject jListener);
         void getConfiguration(JNIEnv *env, jobject jListener);
         void provisionSecurity(JNIEnv *env, jobject jListener);
         void provisionDeviceProperties(JNIEnv *env, jobject jRepresentation, jobject jListener);
@@ -89,6 +91,13 @@ class JniRemoteEnrollee
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * API for starting the Request Enrollee status process.
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeGetStatus
+(JNIEnv *env, jobject jClass, jobject jListener);
 
 /**
  * API for starting the Request EnrolleeConf process.

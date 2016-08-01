@@ -80,6 +80,16 @@ namespace OIC
                                         m_rep.getValue<int>(OC_RSRVD_ES_LAST_ERRORCODE));
                 return ES_ERRCODE_NO_ERROR;
             }
+
+            /**
+             * Get OCRepresentation object
+             *
+             * @return OCRepresentation object
+             */
+            const OCRepresentation& getRepresentation()
+            {
+                return m_rep;
+            }
         protected:
             OCRepresentation m_rep;
         };

@@ -43,9 +43,9 @@ extern JavaVM *g_jvm;
 
 extern jclass g_cls_RemoteEnrollee;
 extern jclass g_cls_ESException;
+extern jclass g_cls_EnrolleeStatus;
 extern jclass g_cls_EnrolleeConf;
-extern jclass g_cls_DeviceConfig;
-extern jclass g_cls_WiFiConfig;
+extern jclass g_cls_getEnrolleeStatus;
 extern jclass g_cls_getConfigurationStatus;
 extern jclass g_cls_SecurityProvisioningStatus;
 extern jclass g_cls_DevicePropProvisioningStatus;
@@ -55,9 +55,9 @@ extern jclass g_cls_OcRepresentation;
 
 extern jmethodID g_mid_RemoteEnrollee_ctor;
 extern jmethodID g_mid_ESException_ctor;
+extern jmethodID g_mid_EnrolleeStatus_ctor;
 extern jmethodID g_mid_EnrolleeConf_ctor;
-extern jmethodID g_mid_DeviceConfig_ctor;
-extern jmethodID g_mid_WiFiConfig_ctor;
+extern jmethodID g_mid_getEnrolleeStatus_ctor;
 extern jmethodID g_mid_getConfigurationStatus_ctor;
 extern jmethodID g_mid_SecurityProvisioningStatus_ctor;
 extern jmethodID g_mid_DevicePropProvisioningStatus_ctor;

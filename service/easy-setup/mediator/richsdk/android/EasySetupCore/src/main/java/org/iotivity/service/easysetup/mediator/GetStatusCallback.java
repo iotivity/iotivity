@@ -22,18 +22,18 @@ package org.iotivity.service.easysetup.mediator;
 
 /**
  * This interface class is used as a callback function called after receiving
- * Enrollee's configuration.
+ * Enrollee's status.
  *
- * @see GetConfigurationStatus
+ * @see GetEnrolleeStatus
  */
-public abstract class GetConfigurationCallback {
+public abstract class GetStatusCallback {
 
     /**
-     * Called after receiving Enrollee's configuration
+     * Called after receiving Enrollee's status
      *
      * @param status
      *          result if the request succeeds or fails
-     *          Enrollee's configuration like supported WiFi freq and device name
+     *          Enrollee's status like a provisioning status and last error code
      */
-    public abstract void onProgress(GetConfigurationStatus status);
+    public abstract void onProgress(GetEnrolleeStatus status);
 }
