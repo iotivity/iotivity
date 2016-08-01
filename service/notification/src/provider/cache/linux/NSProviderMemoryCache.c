@@ -295,6 +295,12 @@ bool NSIsSameObId(NSCacheSubData * data, OCObservationId id)
 
 NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id)
 {
+    if(!list || !list->head)
+    {
+        NS_LOG(INFO, "list is NULL");
+        return NS_FAIL;
+    }
+
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheElement * prev = list->head;
     NSCacheElement * del = list->head;
