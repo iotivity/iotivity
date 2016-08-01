@@ -29,6 +29,10 @@
 #include "JniUtils.h"
 #include "ocpayload.h"
 
+#ifdef WITH_CLOUD
+#include "JniOcAccountManager.h"
+#endif
+
 using namespace OC;
 
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener)
@@ -2418,7 +2422,6 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
     }
 
     JniOcResource *jniOcResource = new JniOcResource(resource);
-    jlong handle = reinterpret_cast<jlong>(jniOcResource);
 
     jobject jResource = env->NewObject(g_cls_OcResource, g_mid_OcResource_ctor);
     if (!jResource)
@@ -2771,5 +2774,65 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD1(
 #else
     ThrowOcException(OC_STACK_ERROR, "Delete resource has failed");
     return;
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    constructAccountManagerObject0
+* Signature: (Ljava/lang/String;I)Lorg/iotivity/base/OcAccountManager;
+*/
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructAccountManagerObject0(
+    JNIEnv *env,
+    jclass clazz,
+    jstring jHost,
+    jint jConnectivityType)
+{
+#ifndef WITH_CLOUD
+    ThrowOcException(OC_STACK_ERROR,
+                     "OCAccountManager is not supported. (Please build with WITH_CLOUD=1 option)");
+    return nullptr;
+#else
+    LOGD("OcPlatform_constructAccountManagerObject");
+    if (!jHost)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "host cannot be null");
+        return nullptr;
+    }
+
+    const char* charHost = env->GetStringUTFChars(jHost, nullptr);
+    if (!charHost)
+    {
+        ThrowOcException(JNI_EXCEPTION, "charHost is null");
+        return nullptr;
+    }
+    std::string host(charHost);
+    env->ReleaseStringUTFChars(jHost, charHost);
+
+    std::shared_ptr<OCAccountManager> accountManager = OCPlatform::constructAccountManagerObject(
+        host,
+        static_cast<OCConnectivityType>(jConnectivityType));
+
+    if (!accountManager)
+    {
+        ThrowOcException(OC_STACK_ERROR, "Failed to create OCAccountManager");
+        return nullptr;
+    }
+
+    JniOcAccountManager *jniOcAccountManager = new JniOcAccountManager(accountManager);
+
+    jobject jAccountManager = env->NewObject(g_cls_OcAccountManager, g_mid_OcAccountManager_ctor);
+    if (!jAccountManager)
+    {
+        delete jniOcAccountManager;
+        return nullptr;
+    }
+    SetHandle<JniOcAccountManager>(env, jAccountManager, jniOcAccountManager);
+    if (env->ExceptionCheck())
+    {
+        delete jniOcAccountManager;
+        return nullptr;
+    }
+    return jAccountManager;
 #endif
 }

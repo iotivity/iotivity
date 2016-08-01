@@ -1340,4 +1340,39 @@ public final class OcPlatform {
         OcPlatform.initCheck();
         return sPlatformQualityOfService;
     }
+
+    /**
+     * Create an account manager object that can be used for doing request to account server.
+     * You can only create this object if OCPlatform was initialized to be a Client or
+     * Client/Server. Otherwise, this will return an empty shared ptr.
+     *
+     * @note For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
+     *       methods of this object to work since device id is not generated on Client mode.
+     *
+     * @param host                Host IP Address of a account server.
+     * @param connectivityTypeSet Set of types of connectivity. Example: CT_ADAPTER_IP
+     * @return new AccountManager object
+     * @throws OcException if failure
+     */
+    public static OcAccountManager constructAccountManagerObject(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+            {
+                connTypeInt |= connType.getValue();
+            }
+        }
+        return OcPlatform.constructAccountManagerObject0(
+                host,
+                connTypeInt
+                );
+    }
+
+    private static native OcAccountManager constructAccountManagerObject0(
+            String host,
+            int connectivityType) throws OcException;
 }

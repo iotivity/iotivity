@@ -1,6 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 TARGET_ARCH_ABI := $(APP_ABI)
 SECURED := $(SECURE)
+WITH_CLOUD := $(WITH_CLOUD)
 WITH_MQ_PUB := $(WITH_MQ_PUB)
 WITH_MQ_SUB := $(WITH_MQ_SUB)
 WITH_MQ_BROKER := $(WITH_MQ_BROKER)
@@ -57,6 +58,11 @@ include $(CLEAR_VARS)
 OIC_SRC_PATH := ../../../resource
 OIC_OUT_PATH := ../../../out
 LOCAL_MODULE    := ocstack-jni
+
+ifeq ($(WITH_CLOUD), 1)
+    LOCAL_CPPFLAGS += -DWITH_CLOUD
+endif
+
 MQ_FLAG = 0
 ifeq ($(WITH_MQ_PUB), 1)
 LOCAL_CFLAGS += -DWITH_MQ -DMQ_PUBLISHER
@@ -70,6 +76,7 @@ ifeq ($(WITH_MQ_BROKER), 1)
 LOCAL_CFLAGS += -DWITH_MQ -DMQ_BROKER
 MQ_FLAG = 1
 endif
+
 LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniUtils.cpp \
                     JniEntityHandler.cpp \
@@ -110,6 +117,10 @@ ifeq ($(SECURED), 1)
                         JniProvisionResultListner.cpp \
                         JniPinCheckListener.cpp \
                         JniDisplayPinListener.cpp
+endif
+
+ifeq ($(WITH_CLOUD), 1)
+    LOCAL_SRC_FILES +=  JniOcAccountManager.cpp
 endif
 
 LOCAL_LDLIBS := -llog

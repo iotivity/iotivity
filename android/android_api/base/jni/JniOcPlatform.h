@@ -369,6 +369,15 @@ extern "C" {
      */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD1
         (JNIEnv *, jclass, jstring, jint, jobjectArray, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    constructAccountManagerObject0
+    * Signature: (Ljava/lang/String;I)Lorg/iotivity/base/OcAccountManager;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructAccountManagerObject0
+        (JNIEnv *, jclass, jstring, jint);
+
 #ifdef __cplusplus
 }
 #endif
