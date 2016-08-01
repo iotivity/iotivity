@@ -34,6 +34,7 @@ private:
     std::function<void(const int&, const int&)> m_syncFunc;
 
     std::shared_ptr<OC::OCResource> m_syncResource;
+    std::shared_ptr<OC::OCResource> m_msgResource;
 
 public:
     NSConsumerSimulator()
@@ -69,6 +70,14 @@ public:
         rep.setValue("STATE", type);
 
         m_syncResource->post(rep, OC::QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
+    }
+
+    bool cancelObserves()
+    {
+        if(!msgResourceCancelObserve(OC::QualityOfService::HighQos) &&
+                !syncResourceCancelObserve(OC::QualityOfService::HighQos))
+            return true;
+        return false;
     }
 
     void setCallback(std::function<void(const int&, const std::string&,
@@ -115,16 +124,15 @@ private:
             std::cout << "resourc : getResourceInterfaces " << resource->getResourceInterfaces()[0] << std::endl;
             std::cout << "resourc : getResourceTypes " << resource->getResourceTypes()[0] << std::endl;
 
-
             std::vector<std::string> rts{"oic.r.notification"};
 
-            std::shared_ptr<OC::OCResource> msgResource
+            m_msgResource
                 = OC::OCPlatform::constructResourceObject(
                         std::string(resource->host()), std::string(resource->uri() + "/message"),
                         OCConnectivityType(resource->connectivityType()), true, rts,
                         std::vector<std::string>(resource->getResourceInterfaces()));
 
-            msgResource->observe(OC::ObserveType::Observe, map,
+            m_msgResource->observe(OC::ObserveType::Observe, map,
                             std::bind(&NSConsumerSimulator::onObserve, this,
                                     std::placeholders::_1, std::placeholders::_2,
                                     std::placeholders::_3, std::placeholders::_4, resource),
@@ -169,6 +177,16 @@ private:
             std::cout << "else if (rep.getUri() == sync) " << std::endl;
             m_syncFunc(int(rep.getValue<int>("STATE")), int(rep.getValue<int>("ID")));
         }
+    }
+
+    OCStackResult msgResourceCancelObserve(OC::QualityOfService qos)
+    {
+        return m_msgResource->cancelObserve(qos);
+    }
+
+    OCStackResult syncResourceCancelObserve(OC::QualityOfService qos)
+    {
+        return m_syncResource->cancelObserve(qos);
     }
 };
 

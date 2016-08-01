@@ -312,3 +312,13 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, std::chrono::milliseconds(5000));
 }
+
+TEST_F(NotificationProviderTest, CancelObserves)
+{
+    bool ret = g_consumerSimul.cancelObserves();
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, std::chrono::milliseconds(5000));
+
+    EXPECT_EQ(ret, true);
+}
