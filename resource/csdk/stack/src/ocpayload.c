@@ -472,10 +472,23 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface)
 
 bool OCRepPayloadSetUri(OCRepPayload* payload, const char*  uri)
 {
+    size_t arrayCount = 0;
+
     if (!payload)
     {
         return false;
     }
+
+    for (OCRepPayload *temp = payload; temp; temp = temp->next)
+    {
+        arrayCount++;
+    }
+
+    if (arrayCount <= 1)
+    {
+        return false;
+    }
+
     OICFree(payload->uri);
     payload->uri = OICStrdup(uri);
     return payload->uri != NULL;
