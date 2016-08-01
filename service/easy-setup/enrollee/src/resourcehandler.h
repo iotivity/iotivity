@@ -24,6 +24,7 @@
 #include "logger.h"
 #include "ocstack.h"
 #include "escommon.h"
+#include "ESEnrolleeCommon.h"
 #include "octypes.h"
 
 #ifndef ES_RESOURCE_HANDLER_H_

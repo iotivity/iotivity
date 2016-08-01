@@ -79,28 +79,29 @@ extern "C"
 #define MAX_WEBLINKLEN  100
 
 /**
- * @brief  Supported WIFI mode like 802.11g and 802.11n
- */
-typedef enum
-{
-    WiFi_11A = 0,       /**< 802.11a **/
-    WiFi_11B,           /**< 802.11b **/
-    WiFi_11G,           /**< 802.11g **/
-    WiFi_11N,           /**< 802.11n **/
-    WiFi_11AC,          /**< 802.11ac **/
-    WiFi_EOF = 999
-} WIFI_MODE;
-
-/**
  * @brief  Supported WIFI frequency like 2.4G and 5G
  */
 typedef enum
 {
-    WiFi_24G = 0,       /**< 2.4G **/
-    WiFi_5G,            /**< 5G **/
-    WiFi_BOTH,          /**< 2.4G and 5G **/
-    WiFi_FREQ_NONE      /**< EOF **/
+    WIFI_24G = 0,       /**< 2.4G **/
+    WIFI_5G,            /**< 5G **/
+    WIFI_BOTH,          /**< 2.4G and 5G **/
+    WIFI_FREQ_NONE      /**< EOF **/
 } WIFI_FREQ;
+
+/**
+ * @brief  Supported WIFI mode like 802.11g and 802.11n
+ */
+typedef enum
+{
+    WIFI_11A = 0,       /**< 802.11a **/
+    WIFI_11B,           /**< 802.11b **/
+    WIFI_11G,           /**< 802.11g **/
+    WIFI_11N,           /**< 802.11n **/
+    WIFI_11AC,          /**< 802.11ac **/
+    WiFi_EOF = 999
+} WIFI_MODE;
+
 
 /**
  * @brief  WIFI Authentication tlype of the Enroller
@@ -150,62 +151,6 @@ typedef enum
     ES_CLOUD_RESOURCE = 0x02,
     ES_DEVCONF_RESOURCE = 0x04
 } ESResourceMask;
-
-/**
- * @brief Data structure delivered from mediator, which provides WiFi information
- */
-typedef struct
-{
-    char ssid[MAX_SSIDLEN];         /**< Ssid of the Enroller**/
-    char pwd[MAX_CREDLEN];          /**< Pwd of the Enroller**/
-    WIFI_AUTHTYPE authtype;         /**< Auth type of the Enroller**/
-    WIFI_ENCTYPE enctype;           /**< Encryption type of the Enroller**/
-    void *userdata;                 /**< Vender-specific data**/
-} ESWiFiProvData;
-
-/**
- * @brief Data structure delivered from mediator, which provides device configuration information
- */
-typedef struct
-{
-    char language[OIC_STRING_MAX_VALUE];    /**< IETF language tag using ISO 639X **/
-    char country[OIC_STRING_MAX_VALUE];     /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
-    void *userdata;                         /**< Vender-specific data**/
-} ESDevConfProvData;
-
-/**
- * @brief Data structure delivered from mediator, which provides Cloud server information
- */
-typedef struct
-{
-    char authCode[OIC_STRING_MAX_VALUE];        /**< Auth code issued by OAuth2.0-compatible account server **/
-    char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
-    char ciServer[OIC_STRING_MAX_VALUE];        /**< Cloud interface server URL which an Enrollee is going to registered **/
-    void *userdata;                             /**< Vender-specific data**/
-} ESCloudProvData;
-
-/**
- * @brief Data structure stored for Device property which includes a WiFi and device configuration.
- */
-typedef struct
-{
-    /**
-     * @brief Data structure indicating WiFi configuration of Enrollee
-     */
-    struct
-    {
-        WIFI_MODE mode[NUM_WIFIMODE];
-        WIFI_FREQ freq;
-    } WiFi;
-
-    /**
-     * @brief Data structure indicating device configuration of Enrollee
-     */
-    struct
-    {
-        char deviceName[MAX_DEVICELEN];
-    } DevConf;
-} ESDeviceProperty;
 
 /**
  * @brief Indicate enrollee and provisioning status. Provisioning status is shown in "provisioning

@@ -163,11 +163,11 @@ OCStackResult initWiFiResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    gWiFiResource.supportedFreq = WiFi_BOTH;
-    gWiFiResource.supportedMode[0] = WiFi_11A;
-    gWiFiResource.supportedMode[1] = WiFi_11B;
-    gWiFiResource.supportedMode[2] = WiFi_11G;
-    gWiFiResource.supportedMode[3] = WiFi_11N;
+    gWiFiResource.supportedFreq = WIFI_BOTH;
+    gWiFiResource.supportedMode[0] = WIFI_11A;
+    gWiFiResource.supportedMode[1] = WIFI_11B;
+    gWiFiResource.supportedMode[2] = WIFI_11G;
+    gWiFiResource.supportedMode[3] = WIFI_11N;
     gWiFiResource.numMode = 4;
     gWiFiResource.authType = NONE_AUTH;
     gWiFiResource.encType = NONE_ENC;

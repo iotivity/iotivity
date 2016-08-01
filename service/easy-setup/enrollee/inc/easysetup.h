@@ -23,6 +23,7 @@
 #define EASYSETUP_ENROLLEE_H__
 
 #include "escommon.h"
+#include "ESEnrolleeCommon.h"
 
 #include "ocpayload.h"
 
@@ -35,17 +36,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
-/**
- * A set of functions pointers for callback functions which are called after provisioning data is
- * received from Mediator.
- */
-typedef struct
-{
-    void (*WiFiProvCb) (ESWiFiProvData *);
-    void (*DevConfProvCb) (ESDevConfProvData *);
-    void (*CloudDataProvCb) (ESCloudProvData *);
-} ESProvisioningCallbacks;
 
 /**
  * A function pointer for registering a user-defined function to set user-specific properties to a
