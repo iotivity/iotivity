@@ -24,7 +24,9 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
-
+%if 0%{?speedpython}
+%en_speedpython
+%endif
 
 ## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
 ## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
@@ -127,7 +129,13 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %define RPM_ARCH "x86"
 %endif
 
-scons -j2 --prefix=%{_prefix} \
+%define JOB "-j4"
+
+%if 0%{?speedpython}
+%define JOB %{?_smp_mflags}
+%endif
+
+scons %{JOB} --prefix=%{_prefix} \
 	VERBOSE=%{VERBOSE} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} WITH_MQ=%{WITH_MQ} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
