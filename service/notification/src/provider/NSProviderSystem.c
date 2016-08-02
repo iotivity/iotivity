@@ -40,6 +40,7 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
+#ifdef WITH_CLOUD
 void NSSetRemoteServerAddress(char *serverAddress)
 {
 
@@ -64,6 +65,7 @@ bool NSIsRemoteServerAddress(char *serverAddress)
 
     return false;
 }
+#endif
 
 void NSInitProviderInfo()
 {

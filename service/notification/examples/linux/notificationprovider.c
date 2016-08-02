@@ -74,6 +74,7 @@ void syncCallback(NSSyncInfo *sync)
     printf("NS_APP Sync State: %d\n", sync->state);
 }
 
+#ifdef WITH_CLOUD
 OCStackApplicationResult CloudLoginoutCallback(void *ctx,
         OCDoHandle handle, OCClientResponse *clientResponse)
 {
@@ -104,6 +105,7 @@ OCStackApplicationResult CloudLoginoutCallback(void *ctx,
 
     return OC_STACK_KEEP_TRANSACTION;
 }
+#endif
 
 FILE* server_fopen(const char *path, const char *mode)
 {
@@ -205,13 +207,16 @@ int main()
                 printf("Session Code: ");
                 gets(REMOTE_SERVER_SESSION);
 
+#ifdef WITH_CLOUD
                 NSCloudLogin(REMOTE_SERVER_ADDRESS, REMOTE_SERVER_SESSION, CloudLoginoutCallback);
+#endif
                 printf("OCCloudLogin requested");
                 break;
             case 12:
                 printf("NSCloudLogout");
-
+#ifdef WITH_CLOUD
                 NSCloudLogout(REMOTE_SERVER_ADDRESS, REMOTE_SERVER_SESSION, CloudLoginoutCallback);
+#endif
                 printf("OCCloudLogout requested");
                 break;
             case 0:

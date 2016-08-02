@@ -124,6 +124,7 @@ NSResult NSStopProvider()
     return NS_OK;
 }
 
+#ifdef WITH_CLOUD
 NSResult NSProviderEnableRemoteService(char *serverAddress)
 {
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
@@ -160,6 +161,7 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
     return NS_OK;
 }
+#endif
 
 NSResult NSSendMessage(NSMessage *msg)
 {

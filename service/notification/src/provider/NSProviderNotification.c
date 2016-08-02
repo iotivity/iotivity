@@ -127,10 +127,13 @@ NSResult NSSendNotification(NSMessage *msg)
                 obArray[obCount++] = subData->messageObId;
             }
 
+#ifdef WITH_CLOUD
             if(subData->remote_messageObId != 0)
             {
                 obArray[obCount++] = subData->remote_messageObId;
             }
+#endif
+
         }
         it = it->next;
     }
@@ -201,10 +204,12 @@ NSResult NSSendSync(NSSyncInfo *sync)
                 obArray[obCount++] = subData->syncObId;
             }
 
+#ifdef WITH_CLOUD
             if(subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;
             }
+#endif
         }
         it = it->next;
     }

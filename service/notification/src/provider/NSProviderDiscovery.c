@@ -79,10 +79,12 @@ void * NSDiscoverySchedule(void * ptr)
                     NS_LOG(DEBUG, "CASE TASK_REGISTER_RESOURCE : ");
                     NSRegisterResource();
                     break;
+#ifdef WITH_CLOUD
                 case TASK_PUBLISH_RESOURCE:
                     NS_LOG(DEBUG, "CASE TASK_PUBLISH_PESOURCE : ");
                     NSPublishResourceToCloud((char*)node->taskData);
                     break;
+#endif
                 default:
                     break;
             }

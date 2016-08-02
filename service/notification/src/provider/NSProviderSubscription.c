@@ -128,20 +128,28 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
 
         NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
-        if(NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr))
+
+        subData->remote_messageObId = subData->messageObId = 0;
+
+        bool iSRemoteServer = false;
+
+#ifdef WITH_CLOUD
+        iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
+        if(iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_messageObId = entityHandlerRequest->obsInfo.obsId;
-            subData->messageObId = 0;
             NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->remote_messageObId);
         }
-        else
+#endif
+
+        if(!iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->messageObId = entityHandlerRequest->obsInfo.obsId;
-            subData->remote_messageObId = 0;
             NS_LOG_V(DEBUG, "SubList message observation ID = [%d]", subData->messageObId);
         }
+
         subData->isWhite = false;
         subData->remote_syncObId = 0;
         subData->syncObId = 0;
@@ -177,18 +185,24 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
 
         NS_LOG_V(DEBUG, "Consumer Address: %s", entityHandlerRequest->devAddr.addr);
-        if(NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr))
+
+        subData->remote_syncObId = subData->syncObId = 0;
+        bool isRemoteServer = false;
+
+#ifdef WITH_CLOUD
+        isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
+        if(isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_syncObId = entityHandlerRequest->obsInfo.obsId;
-            subData->syncObId = 0;
             NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->remote_syncObId);
         }
-        else
+#endif
+
+        if(!isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->syncObId = entityHandlerRequest->obsInfo.obsId;
-            subData->remote_syncObId = 0;
             NS_LOG_V(DEBUG, "SubList sync observation ID = [%d]", subData->syncObId);
         }
 

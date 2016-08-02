@@ -25,6 +25,7 @@ NSNotificationResource NotificationResource;
 NSMessageResource NotificationMessageResource;
 NSSyncResource NotificationSyncResource;
 
+#ifdef WITH_CLOUD
 OCStackApplicationResult NSHandlePublishCb(void *ctx, OCDoHandle handle,
     OCClientResponse *clientResponse)
 {
@@ -57,6 +58,7 @@ NSResult NSPublishResourceToCloud(char *serverAddress)
     NS_LOG(DEBUG, "NSPublishResourceToCloud - OUT");
     return NS_OK;
 }
+#endif
 
 NSResult NSCreateResource(char *uri)
 {
