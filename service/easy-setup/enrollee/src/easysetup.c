@@ -142,7 +142,7 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
     }
     if((resourceMask & ES_CLOUD_RESOURCE) == ES_CLOUD_RESOURCE)
     {
-        if(callbacks.DevConfProvCb != NULL)
+        if(callbacks.CloudDataProvCb != NULL)
         {
             gESProvisioningCb.CloudDataProvCb = callbacks.CloudDataProvCb;
             RegisterCloudRsrcEventCallBack(ESCloudRsrcCallback);

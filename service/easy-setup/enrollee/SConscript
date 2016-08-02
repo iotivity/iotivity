@@ -43,16 +43,14 @@ enrollee_env.PrependUnique(CPPPATH = [
 		enrollee_env.get('SRC_DIR') + '/resource/include',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		enrollee_env.get('SRC_DIR') + '/resource/oc_logger/include',
-     	enrollee_env.get('SRC_DIR') + '/resource/csdk/stack/include',
-        enrollee_env.get('SRC_DIR') + '/resource/csdk/logger/include',
+                enrollee_env.get('SRC_DIR') + '/resource/csdk/stack/include',
+                enrollee_env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/include',
 		enrollee_env.get('SRC_DIR') + '/extlibs/cjson',
 		enrollee_env.get('SRC_DIR') + '/extlibs/sqlite3',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/inc',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino'])
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
 
 if enrollee_env.get('SECURED') == '1':
 	enrollee_env.AppendUnique(CPPPATH = [
@@ -63,13 +61,14 @@ if enrollee_env.get('SECURED') == '1':
 if target_os not in ['windows']:
 	enrollee_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 
+if not env.get('RELEASE'):
+    enrollee_env.PrependUnique(LIBS = ['gcov'])
+    enrollee_env.AppendUnique(CCFLAGS = ['--coverage'])
+
 ######################################################################
 # Linux Enrollee
 ######################################################################
 if target_os in ['linux']:
-	enrollee_env.PrependUnique(CPPPATH = [
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi'])
-
 	enrollee_env.AppendUnique(LIBS = ['pthread', 'dl'])
 	enrollee_env.AppendUnique(LIBPATH = [enrollee_env.get('BUILD_DIR')])
 	enrollee_env.AppendUnique(RPATH = [enrollee_env.get('BUILD_DIR')])
@@ -95,41 +94,23 @@ if target_os == 'arduino':
 	enrollee_env.AppendUnique(LIBPATH = [enrollee_env.get('BUILD_DIR')])
 	enrollee_env.AppendUnique(RPATH = [enrollee_env.get('BUILD_DIR')])
 	enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
-	enrollee_env.AppendUnique(CPPPATH = [
-	               enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 es_enrollee_src = None
 
-if target_os == 'linux':
-	es_enrollee_common_src = [enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c'
-		]
-
-	enrollee_env.AppendUnique(es_enrollee_src = es_enrollee_common_src)
-
-	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', enrollee_env.get('es_enrollee_src'))
+if target_os in ['linux', 'tizen']:
+	es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']
+	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', es_enrollee_common_src)
 	enrollee_env.InstallTarget(enrollee_sdk_shared, 'libESEnrollee')
-
-if target_os == 'tizen':
-	es_enrollee_common_src = [enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c'
-		]
-
-	enrollee_env.AppendUnique(es_enrollee_src = es_enrollee_common_src)
-	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', enrollee_env.get('es_enrollee_src'))
-	enrollee_env.InstallTarget(enrollee_sdk_shared, 'libESEnrollee')
-	enrollee_env.UserInstallTargetLib(enrollee_sdk_shared, 'libESEnrolleeSDK')
+	enrollee_env.UserInstallTargetLib(enrollee_sdk_shared, 'libESEnrollee')
 
 if target_os == 'arduino':
-	es_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', [
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.c',
-		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.c'
-		])
-
-	enrollee_env.InstallTarget(es_sdk_static, 'libESEnrolleeSDK')
+	es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']
+	enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', es_enrollee_common_src)
+	enrollee_env.InstallTarget(enrollee_sdk_static, 'libESEnrolleeSDK')
+	enrollee_env.UserInstallTargetLib(enrollee_sdk_static, 'libESEnrollee')
 
 #Go to build sample apps
 #if target_os == 'arduino':
@@ -138,5 +119,5 @@ if target_os == 'arduino':
 if target_os in ['linux']:
 	SConscript('../sampleapp/enrollee/linux/SConscript')
 	#Build UnitTestcases for Enrollee
-#	SConscript('../enrollee/unittests/SConscript')
+	SConscript('../enrollee/unittests/SConscript')
 

@@ -48,7 +48,6 @@ static DevConfResource gDevConfResource;
 //-----------------------------------------------------------------------------
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest *ehRequest,
         void *callback);
-const char *getResult(OCStackResult result);
 OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
@@ -56,6 +55,7 @@ void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
 void updateWiFiResource(OCRepPayload* input);
 void updateCloudResource(OCRepPayload* input);
 void updateDevConfResource(OCRepPayload* input);
+const char *getResult(OCStackResult result);
 
 ESWiFiCB gWifiRsrcEvtCb = NULL;
 ESCloudCB gCloudRsrcEvtCb = NULL;
@@ -145,13 +145,13 @@ OCStackResult initProvResource(bool isSecured)
     res = OCBindResourceInterfaceToResource(gProvResource.handle, OC_RSRVD_INTERFACE_LL);
     if(res)
     {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+        OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
         return res;
     }
     res = OCBindResourceInterfaceToResource(gProvResource.handle, OC_RSRVD_INTERFACE_BATCH);
     if(res)
     {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+        OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
         return res;
     }
 
@@ -305,7 +305,9 @@ void updateWiFiResource(OCRepPayload* input)
     }
 
     if(gReadUserdataCb)
+    {
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_WIFI, wiFiData->userdata);
+    }
 
     if(ssid || cred || authType!= -1 || encType != -1)
     {
@@ -359,7 +361,9 @@ void updateCloudResource(OCRepPayload* input)
     }
 
     if(gReadUserdataCb)
+    {
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER, cloudData->userdata);
+    }
 
     if(authCode || authProvider || ciServer)
     {
@@ -405,7 +409,9 @@ void updateDevConfResource(OCRepPayload* input)
     }
 
     if(gReadUserdataCb)
+    {
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_DEVCONF, devConfData->userdata);
+    }
 
     if(country || language)
     {
@@ -450,7 +456,9 @@ OCRepPayload* constructResponseOfWiFi()
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) gWiFiResource.encType);
 
     if(gWriteUserdataCb)
+    {
         gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
+    }
 
     return payload;
 }
@@ -492,7 +500,9 @@ OCRepPayload* constructResponseOfDevConf()
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, gDevConfResource.country);
 
     if(gWriteUserdataCb)
+    {
         gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_DEVCONF);
+    }
 
     return payload;
 }
@@ -513,7 +523,9 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LINKS, gProvResource.ocfWebLinks);
 
     if(gWriteUserdataCb)
+    {
         gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+    }
 
     if(ehRequest->query)
     {
@@ -674,13 +686,21 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
     OCRepPayload *getResp = NULL;
 
     if(ehRequest->resource == gProvResource.handle)
+    {
         getResp = constructResponseOfProv(ehRequest);
+    }
     else if(ehRequest->resource == gWiFiResource.handle)
+    {
         getResp = constructResponseOfWiFi();
+    }
     else if(ehRequest->resource == gCloudResource.handle)
+    {
         getResp = constructResponseOfCloud();
+    }
     else if(ehRequest->resource == gDevConfResource.handle)
+    {
         getResp = constructResponseOfDevConf();
+    }
 
     if (!getResp)
     {
@@ -711,28 +731,40 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         return ehResult;
     }
 
-    // TBD : Discuss about triggering flag (to be existed or not)
-    // ES_PS_PROVISIONING_COMPLETED state indicates that already provisioning is completed.
-    // A new request for provisioning means overriding existing network provisioning information.  
-
     if(ehRequest->resource == gProvResource.handle)
+    {
         updateProvResource(ehRequest, input);
+    }
     else if(ehRequest->resource == gWiFiResource.handle)
+    {
         updateWiFiResource(input);
+    }
     else if(ehRequest->resource == gCloudResource.handle)
+    {
         updateCloudResource(input);
+    }
     else if(ehRequest->resource == gDevConfResource.handle)
+    {
         updateDevConfResource(input);
+    }
 
     OCRepPayload *getResp = NULL;
     if(ehRequest->resource == gProvResource.handle)
+    {
         getResp = constructResponseOfProv(ehRequest);
+    }
     else if(ehRequest->resource == gWiFiResource.handle)
+    {
         getResp = constructResponseOfWiFi();
+    }
     else if(ehRequest->resource == gCloudResource.handle)
+    {
         getResp = constructResponseOfCloud();
+    }
     else if(ehRequest->resource == gDevConfResource.handle)
+    {
         getResp = constructResponseOfDevConf();
+    }
 
     if (!getResp)
     {
@@ -877,6 +909,7 @@ OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode)
     OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeErrCode OUT");
     return OC_STACK_OK;
 }
+
 const char *getResult(OCStackResult result)
 {
     switch (result)
@@ -917,4 +950,3 @@ const char *getResult(OCStackResult result)
             return "UNKNOWN";
     }
 }
-

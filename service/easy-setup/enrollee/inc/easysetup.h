@@ -25,8 +25,6 @@
 #include "escommon.h"
 #include "ESEnrolleeCommon.h"
 
-#include "ocpayload.h"
-
 /**
  * @file
  *
