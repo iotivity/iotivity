@@ -1095,12 +1095,166 @@ public final class OcPlatform {
             int qualityOfService) throws OcException;
 
     /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onDeleteResourceListener    Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnDeleteResourceListener onDeleteResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD0(
+                host,
+                connTypeInt,
+                onDeleteResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onDeleteResourceListener    Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication.
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnDeleteResourceListener onDeleteResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD0(
+                host,
+                connTypeInt,
+                onDeleteResourceListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void deleteResourceFromRD0(
+            String host,
+            int connectivityType,
+            OnDeleteResourceListener onDeleteResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onDeleteResourceListener   	Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnDeleteResourceListener onDeleteResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD1(
+                host,
+                connTypeInt,
+                ocResourceHandleList.toArray(
+                        new OcResourceHandle[ocResourceHandleList.size()]),
+                onDeleteResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host IP Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onDeleteResourceListener    Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnDeleteResourceListener onDeleteResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD1(
+            host,
+            connTypeInt,
+            ocResourceHandleList.toArray(
+                    new OcResourceHandle[ocResourceHandleList.size()]),
+            onDeleteResourceListener,
+            qualityOfService.getValue()
+        );
+    }
+
+    private static native void deleteResourceFromRD1(
+            String host,
+            int connectivityType,
+            OcResourceHandle[] ocResourceHandleArray,
+            OnDeleteResourceListener onDeleteResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
      * An OnPublishResourceListener can be registered via the OcPlatform.publishResourceToRD call.
      * Event listeners are notified asynchronously
      */
     public interface OnPublishResourceListener {
         public void onPublishResourceCompleted(OcRepresentation ocRepresentation);
         public void onPublishResourceFailed(Throwable ex);
+    }
+
+    /**
+     * An OnDeleteResourceListener can be registered via the OcPlatform.deleteResourceFromRD call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnDeleteResourceListener {
+        public void onDeleteResourceCompleted(int result);
+        public void onDeleteResourceFailed(Throwable ex);
     }
 
     /**

@@ -547,6 +547,89 @@ void RemoveOnPublishResourceListener(JNIEnv* env, jobject jListener)
     publishResourceListenerMapLock.unlock();
 }
 
+JniOnDeleteResourceListener* AddOnDeleteResourceListener(JNIEnv* env, jobject jListener)
+{
+    if (!env)
+    {
+        LOGD("env is null");
+        return nullptr;
+    }
+
+    JniOnDeleteResourceListener *onDeleteResourceListener = nullptr;
+
+    deleteResourceListenerMapLock.lock();
+
+    for (auto it = onDeleteResourceListenerMap.begin(); it !=
+            onDeleteResourceListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            onDeleteResourceListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            onDeleteResourceListenerMap.insert(*it);
+            LOGD("onDeleteResourceListener: ref. count incremented");
+            break;
+        }
+    }
+    if (!onDeleteResourceListener)
+    {
+        onDeleteResourceListener = new JniOnDeleteResourceListener(env, jListener,
+                RemoveOnDeleteResourceListener);
+        jobject jgListener = env->NewGlobalRef(jListener);
+        onDeleteResourceListenerMap.insert(
+                std::pair<jobject, std::pair<JniOnDeleteResourceListener*, int>>(
+                    jgListener,
+                    std::pair<JniOnDeleteResourceListener*, int>(onDeleteResourceListener, 1)));
+        LOGI("onDeleteResourceListener: new listener");
+    }
+    deleteResourceListenerMapLock.unlock();
+    return onDeleteResourceListener;
+}
+
+void RemoveOnDeleteResourceListener(JNIEnv* env, jobject jListener)
+{
+    if (!env)
+    {
+        ThrowOcException(JNI_EXCEPTION, "env is null");
+        return;
+    }
+
+    deleteResourceListenerMapLock.lock();
+    bool isFound = false;
+    for (auto it = onDeleteResourceListenerMap.begin(); it !=
+            onDeleteResourceListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                onDeleteResourceListenerMap.insert(*it);
+                LOGI("onDeleteResourceListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnDeleteResourceListener* listener = refPair.first;
+                delete listener;
+                onDeleteResourceListenerMap.erase(it);
+                LOGI("onDeleteResourceListener is removed");
+            }
+            isFound = true;
+            break;
+        }
+    }
+    if (!isFound)
+    {
+        ThrowOcException(JNI_EXCEPTION, "onDeleteResourceListener not found");
+    }
+    deleteResourceListenerMapLock.unlock();
+}
+
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    configure
@@ -2539,6 +2622,154 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD1(
     }
 #else
     ThrowOcException(OC_STACK_ERROR, "Publish resource has failed");
+    return;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcPlatform
+ * Method:    deleteResourceFromRD0
+ * Signature: (Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnDeleteResourceListener;I)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD0(
+        JNIEnv *env,
+        jclass clazz,
+        jstring jHost,
+        jint jConnectivityType,
+        jobject jListener,
+        jint jQoS)
+{
+    LOGD("OcPlatform_deleteResourceFromRD");
+#ifdef RD_CLIENT
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onDeleteResourceListener cannot be null");
+        return;
+    }
+    JniOnDeleteResourceListener *onDelResListener = AddOnDeleteResourceListener(env, jListener);
+
+    DeleteResourceCallback delResCallback = [onDelResListener](const int eCode)
+    {
+        onDelResListener->onDeleteResourceCallback(eCode);
+    };
+
+    try
+    {
+        OCStackResult result = OCPlatform::deleteResourceFromRD(
+            host,
+            static_cast<OCConnectivityType>(jConnectivityType),
+            delResCallback,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Delete resource has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_ERROR, "Delete resource has failed");
+    return;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcPlatform
+ * Method:    deleteResourceFromRD1
+ * Signature: (Ljava/lang/String;I[Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcPlatform/OnDeleteResourceListener;I)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD1(
+        JNIEnv *env,
+        jclass clazz,
+        jstring jHost,
+        jint jConnectivityType,
+        jobjectArray jResourceHandleArray,
+        jint jQoS,
+        jobject jListener)
+{
+    LOGD("OcPlatform_deleteResourceFromRD");
+#ifdef RD_CLIENT
+    if (!env)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "env is null");
+        return;
+    }
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onDeleteResourceListener cannot be null");
+        return;
+    }
+    if (!jResourceHandleArray)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceHandleList cannot be null");
+        return;
+    }
+    JniOnDeleteResourceListener *onDelResListener = AddOnDeleteResourceListener(env, jListener);
+
+    DeleteResourceCallback delResCallback = [onDelResListener](const int eCode)
+    {
+        onDelResListener->onDeleteResourceCallback(eCode);
+    };
+
+    std::vector<OCResourceHandle> resourceHandleList;
+    size_t len = env->GetArrayLength(jResourceHandleArray);
+    for (size_t i = 0; i < len; ++i)
+    {
+        jobject jResourceHandle = env->GetObjectArrayElement(jResourceHandleArray, i);
+        if (!jResourceHandle)
+        {
+            ThrowOcException(JNI_EXCEPTION, "resource handle cannot be null");
+            return;
+        }
+
+        JniOcResourceHandle* jniOcResourceHandle =
+            JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceHandle);
+        if (!jniOcResourceHandle)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "resource handle is invalid");
+            return;
+        }
+
+        resourceHandleList.push_back(jniOcResourceHandle->getOCResourceHandle());
+    }
+
+    try
+    {
+        OCStackResult result = OCPlatform::deleteResourceFromRD(
+            host,
+            static_cast<OCConnectivityType>(jConnectivityType),
+            resourceHandleList,
+            delResCallback,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Delete resource has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_ERROR, "Delete resource has failed");
     return;
 #endif
 }

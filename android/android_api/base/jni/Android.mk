@@ -95,7 +95,8 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOnDPDevicesFoundListener.cpp \
                     JniOnDirectPairingListener.cpp \
                     JniOcDirectPairDevice.cpp \
-                    JniOnPublishResourceListener.cpp
+                    JniOnPublishResourceListener.cpp \
+                    JniOnDeleteResourceListener.cpp
 
 ifeq ($(MQ_FLAG), 1)
 #new listener will be added.
