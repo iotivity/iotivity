@@ -543,7 +543,9 @@ namespace OC
          *               It will be set upon successful return of this method.
          * @param host The IP address/addressable name of the server to subscribe to.
          *               This should be in the format coap://address:port
-         * @param queryParams map which can have the query parameter name and list of value.
+         * @param di Vector which can have the devices id.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
          * @param observeHandler handles callback
          *        The callback function will be invoked with a map of attribute name and values.
          *        The callback function will also have the result from this observe operation
@@ -553,7 +555,7 @@ namespace OC
          */
         OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
                                               const std::string& host,
-                                              const QueryParamsList& queryParams,
+                                              const std::vector<std::string>& di,
                                               OCConnectivityType connectivityType,
                                               ObserveCallback callback);
 #endif

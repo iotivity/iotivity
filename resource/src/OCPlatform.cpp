@@ -269,13 +269,13 @@ namespace OC
 #ifdef WITH_CLOUD
         OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
                                               const std::string& host,
-                                              const QueryParamsList& queryParams,
+                                              const std::vector<std::string>& di,
                                               OCConnectivityType connectivityType,
                                               ObserveCallback callback)
         {
             return OCPlatform_impl::Instance().subscribeDevicePresence(presenceHandle,
                                                                        host,
-                                                                       queryParams,
+                                                                       di,
                                                                        connectivityType,
                                                                        callback);
         }

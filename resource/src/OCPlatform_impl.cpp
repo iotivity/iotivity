@@ -385,12 +385,12 @@ namespace OC
 #ifdef WITH_CLOUD
     OCStackResult OCPlatform_impl::subscribeDevicePresence(OCPresenceHandle& presenceHandle,
                                                            const std::string& host,
-                                                           const QueryParamsList& queryParams,
+                                                           const std::vector<std::string>& di,
                                                            OCConnectivityType connectivityType,
                                                            ObserveCallback callback)
     {
         return checked_guard(m_client, &IClientWrapper::SubscribeDevicePresence,
-                             &presenceHandle, host, queryParams, connectivityType, callback);
+                             &presenceHandle, host, di, connectivityType, callback);
     }
 #endif
 

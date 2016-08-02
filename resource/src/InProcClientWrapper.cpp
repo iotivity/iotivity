@@ -1197,7 +1197,7 @@ namespace OC
 #ifdef WITH_CLOUD
     OCStackResult InProcClientWrapper::SubscribeDevicePresence(OCDoHandle* handle,
                                                                const std::string& host,
-                                                               const QueryParamsList& queryParams,
+                                                               const std::vector<std::string>& di,
                                                                OCConnectivityType connectivityType,
                                                                ObserveCallback& callback)
     {
@@ -1222,6 +1222,7 @@ namespace OC
 
             std::ostringstream os;
             os << host << OCF_RSRVD_DEVICE_PRESENCE_URI;
+            QueryParamsList queryParams({{OC_RSRVD_DEVICE_ID, di}});
             std::string url = assembleSetResourceUri(os.str(), queryParams);
 
             result = OCDoResource(handle, OC_REST_OBSERVE,
