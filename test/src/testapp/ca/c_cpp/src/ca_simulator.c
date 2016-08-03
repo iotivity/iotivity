@@ -1,22 +1,22 @@
 /******************************************************************
-*
-* Copyright 2016 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #define IDENTITY     ("1111111111111111")
 #define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
@@ -51,6 +51,7 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "casimulator.h"
+#include "cautilinterface.h"
 
 #ifdef __TC_PLATFORM_ARDUINO__
 #include "Arduino.h"
@@ -104,19 +105,18 @@ void output(const char *format, ...)
 {
 //#ifdef __TC_PLATFORM_LINUX__
 #if defined (__TC_PLATFORM_LINUX__) || defined (__TC_PLATFORM_ANDROID_NATIVE__) || defined (__TC_PLATFORM_TIZEN__)
-   va_list arg;
+    va_list arg;
 
-   va_start (arg, format);
+    va_start (arg, format);
 
-   vfprintf (stdout, format, arg);
+    vfprintf (stdout, format, arg);
 
-   va_end (arg);
+    va_end (arg);
 #endif
 
 #ifdef __TC_PLATFORM_ARDUINO__
-   Serial.print(format);
+    Serial.print(format);
 #endif
-
 
 }
 
@@ -187,15 +187,15 @@ void GMainLoopThread()
 
 int initialize()
 {
-	CAResult_t result = CAInitialize();
+    CAResult_t result = CAInitialize();
 
-   if (result != CA_STATUS_OK)
-   {
-	   output("CAInitialize failed\n");
-	   return 0;
-   }
+    if (result != CA_STATUS_OK)
+    {
+        output("CAInitialize failed\n");
+        return 0;
+    }
 
-   return 1;
+    return 1;
 }
 
 char* getString(char a[], int length)
@@ -204,7 +204,7 @@ char* getString(char a[], int length)
 
     int i;
 
-    for(i = 0; i < length; i++)
+    for (i = 0; i < length; i++)
     {
         str[i] = a[i];
     }
@@ -217,7 +217,7 @@ char* getString(char a[], int length)
 #ifdef __WITH_DTLS__
 
 int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc,
-		size_t desc_len, unsigned char *result, size_t result_length)
+        size_t desc_len, unsigned char *result, size_t result_length)
 {
     output("getDtlsPskCredentials in\n");
 
@@ -232,37 +232,37 @@ int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *de
     {
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
-        	output("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
-            if (result_length < sizeof(IDENTITY))
+        output("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
+        if (result_length < sizeof(IDENTITY))
+        {
+            output("ERROR : Wrong value for result for storing IDENTITY\n");
+            return ret;
+        }
+
+        memcpy(result, IDENTITY, sizeof(IDENTITY));
+        ret = sizeof(IDENTITY);
+        break;
+
+        case CA_DTLS_PSK_KEY:
+        output("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
+        if ((desc_len == sizeof(IDENTITY)) &&
+                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+        {
+            if (result_length < sizeof(RS_CLIENT_PSK))
             {
-                output("ERROR : Wrong value for result for storing IDENTITY\n");
+                output("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
                 return ret;
             }
 
-            memcpy(result, IDENTITY, sizeof(IDENTITY));
-            ret = sizeof(IDENTITY);
-            break;
-
-        case CA_DTLS_PSK_KEY:
-        	output("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
-            if ((desc_len == sizeof(IDENTITY)) &&
-                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
-            {
-                if (result_length < sizeof(RS_CLIENT_PSK))
-                {
-                    output("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
-                    return ret;
-                }
-
-                memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
-                ret = sizeof(RS_CLIENT_PSK);
-            }
-            break;
+            memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
+            ret = sizeof(RS_CLIENT_PSK);
+        }
+        break;
 
         default:
 
-            output("Wrong value passed for PSK_CRED_TYPE.\n");
-            ret = -1;
+        output("Wrong value passed for PSK_CRED_TYPE.\n");
+        ret = -1;
     }
 
     output("getDtlsPskCredentials out\n");
@@ -272,10 +272,10 @@ int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *de
 
 int registerDtlsHandler()
 {
-	CAResult_t result = CARegisterDTLSCredentialsHandler(getDtlsPskCredentials);
+    CAResult_t result = CARegisterDTLSCredentialsHandler(getDtlsPskCredentials);
     if (result != CA_STATUS_OK)
     {
-    	output("CARegisterDTLSCredentialsHandler FAILED\n");
+        output("CARegisterDTLSCredentialsHandler FAILED\n");
     }
 
     return 1;
@@ -300,7 +300,7 @@ int selectNetwork()
     scanf("%d", &number);
 //    number = 0;
 
-    if(number >= 0 && number <= 4)
+    if (number >= 0 && number <= 4)
     {
         g_selectedNetwork = 1 << number;
 
@@ -325,9 +325,9 @@ int selectNetwork()
         ret = 0;
     }
 
-	output("\n=============================================\n");
+    output("\n=============================================\n");
 
-	return ret;
+    return ret;
 }
 
 int selectAndStartServerOrClient()
@@ -376,12 +376,12 @@ int selectAndStartServerOrClient()
     {
         output("Invalid Selection\n");
     }
-    else if(g_mode == g_server)
+    else if (g_mode == g_server)
     {
         output("Server is starting ...\n");
         ret = startServer();
     }
-    else if(g_mode == g_client)
+    else if (g_mode == g_client)
     {
         output("Client is starting ...\n");
         ret = startClient();
@@ -394,58 +394,60 @@ int selectAndStartServerOrClient()
 
 int startServer()
 {
-	CAResult_t result = CAStartListeningServer();
-	if (result != CA_STATUS_OK)
-	{
-		output("CAStartListeningServer Failed\n");
-		return 0;
-	}
-	else
-	{
-	    output("Server Started Successfully\n");
-	}
+    CAResult_t result = CAStartListeningServer();
+    if (result != CA_STATUS_OK)
+    {
+        output("CAStartListeningServer Failed\n");
+        return 0;
+    }
+    else
+    {
+        output("Server Started Successfully\n");
+    }
 
-	return 1;
+    return 1;
 }
 
 int startClient()
 {
-	CAResult_t result = CAStartDiscoveryServer();
-	if (result != CA_STATUS_OK)
-	{
-		output("CAStartDiscoveryServer\n");
-		return 0;
-	}
-	else
+    CAResult_t result = CAStartDiscoveryServer();
+    if (result != CA_STATUS_OK)
+    {
+        output("CAStartDiscoveryServer\n");
+        return 0;
+    }
+    else
     {
         output("Client Started Successfully\n");
     }
 
-	return 1;
+    return 1;
 }
 
 int handleMessage()
 {
-	CAResult_t res = CAHandleRequestResponse();
+    CAResult_t res = CAHandleRequestResponse();
 
-	if (res != CA_STATUS_OK)
-	{
-		return 0;
-	}
+    if (res != CA_STATUS_OK)
+    {
+        return 0;
+    }
 
-	return 1;
+    return 1;
 }
 
 int returnRequest(const CAEndpoint_t* endPoint, char* resourceUri, char* payload, int payloadSize,
-        CAMessageType_t type, CAMethod_t method, CAToken_t token, uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
+        CAMessageType_t type, CAMethod_t method, CAToken_t token, uint8_t tokenLength,
+        CAHeaderOption_t *options, uint8_t numOptions)
 {
     output("[returnRequest] in\n");
 
-    CAInfo_t requestData = { 0 };
+    CAInfo_t requestData =
+    { 0 };
     requestData.token = token;
     requestData.tokenLength = tokenLength;
     requestData.payload = payload;
-    if(payload != NULL)
+    if (payload != NULL)
     {
         requestData.payloadSize = payloadSize;
     }
@@ -460,7 +462,8 @@ int returnRequest(const CAEndpoint_t* endPoint, char* resourceUri, char* payload
     requestData.options = options;
     requestData.numOptions = numOptions;
 
-    CARequestInfo_t requestInfo = { 0 };
+    CARequestInfo_t requestInfo =
+    { 0 };
     requestInfo.method = method;
     requestInfo.info = requestData;
     requestInfo.isMulticast = false;
@@ -487,11 +490,12 @@ int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payloa
 {
     output("[returnResponse] in\n");
 
-    CAInfo_t responseData = { 0 };
+    CAInfo_t responseData =
+    { 0 };
 
     responseData.payload = payload;
 
-    if(payload != NULL)
+    if (payload != NULL)
     {
         responseData.payloadSize = payloadSize;
     }
@@ -508,7 +512,8 @@ int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payloa
     responseData.options = options;
     responseData.numOptions = numOptions;
 
-    CAResponseInfo_t responseInfo = { 0 };
+    CAResponseInfo_t responseInfo =
+    { 0 };
     responseInfo.result = responseCode;
     responseInfo.info = responseData;
 
@@ -539,7 +544,7 @@ void processRequestResponse(void)
 
     while (g_simulatorProcess)
     {
-    	if(!handleMessage())
+        if (!handleMessage())
         {
             if (showError)
             {
@@ -595,17 +600,18 @@ void returnMessage(const CAEndpoint_t* endPoint, TestConfiguration* testConfig)
         case MESSAGE_RESPONSE:
             for (index = 0; index < testConfig->numberOfTimes; index++)
             {
-                returnResponse(endPoint, testConfig->resourceUri, testConfig->payload, testConfig->payloadSize,
-                        CA_MSG_NONCONFIRM, CA_VALID, testConfig->messageId, testConfig->token,
-                        testConfig->tokenLength, NULL, 0);
+                returnResponse(endPoint, testConfig->resourceUri, testConfig->payload,
+                        testConfig->payloadSize, CA_MSG_NONCONFIRM, CA_VALID, testConfig->messageId,
+                        testConfig->token, testConfig->tokenLength, NULL, 0);
                 customWait(testConfig->interval);
             }
             break;
         case MESSAGE_REQUEST:
             for (index = 0; index < testConfig->numberOfTimes; index++)
             {
-                returnRequest(endPoint, testConfig->resourceUri, testConfig->payload, testConfig->payloadSize,
-                        CA_MSG_NONCONFIRM, testConfig->caMethod, testConfig->token, testConfig->tokenLength, NULL, 0);
+                returnRequest(endPoint, testConfig->resourceUri, testConfig->payload,
+                        testConfig->payloadSize, CA_MSG_NONCONFIRM, testConfig->caMethod,
+                        testConfig->token, testConfig->tokenLength, NULL, 0);
                 customWait(testConfig->interval);
             }
             break;
@@ -623,13 +629,13 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
     output("requestHandler in\n");
 
-    if(!endPoint)
+    if (!endPoint)
     {
         output("endPoint is NULL\n");
         return;
     }
 
-    if(!requestInfo)
+    if (!requestInfo)
     {
         output("requestInfo is NULL\n");
         return;
@@ -648,7 +654,7 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
         {
             output("Option ID : %d\n", requestInfo->info.options[i].optionID);
             output("Option Data[%d]: %s\n", requestInfo->info.options[i].optionLength,
-                   requestInfo->info.options[i].optionData);
+                    requestInfo->info.options[i].optionData);
         }
     }
     else
@@ -656,7 +662,7 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
         output("No Header Option Found\n");
     }
 
-    if(requestInfo->info.type == CA_MSG_RESET)
+    if (requestInfo->info.type == CA_MSG_RESET)
     {
         char str[12];
 
@@ -666,9 +672,9 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
         output("calling returnResponse ...\n");
 
-        returnResponse(endPoint, SIM_RES_ACK, str, strlen(str), CA_MSG_NONCONFIRM,
-                    CA_VALID, requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
-                    requestInfo->info.options, requestInfo->info.numOptions);
+        returnResponse(endPoint, SIM_RES_ACK, str, strlen(str), CA_MSG_NONCONFIRM, CA_VALID,
+                requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
+                requestInfo->info.options, requestInfo->info.numOptions);
 
         output("returnResponse called\n");
 
@@ -679,21 +685,21 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
     char *payload = NULL;
 
-    if(requestInfo->info.payload)
-	{
+    if (requestInfo->info.payload)
+    {
         payload = getString(requestInfo->info.payload, requestInfo->info.payloadSize);
         output("Payload: %s\n", payload);
-	}
+    }
     else
-	{
+    {
         output("Payload is NULL\n");
-	}
+    }
 
-    if(!requestInfo->info.resourceUri)
-	{
+    if (!requestInfo->info.resourceUri)
+    {
         output("ResourceUri is NULL\n");
-		return;
-	}
+        return;
+    }
 
     output("ResourceUri: %s\n", requestInfo->info.resourceUri);
 
@@ -793,10 +799,10 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
         output("calling returnResponse ...\n");
 
-        returnResponse(endPoint, requestInfo->info.resourceUri,
-            requestInfo->info.payload, requestInfo->info.payloadSize, messageType, CA_VALID,
-            requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
-            requestInfo->info.options, requestInfo->info.numOptions);
+        returnResponse(endPoint, requestInfo->info.resourceUri, requestInfo->info.payload,
+                requestInfo->info.payloadSize, messageType, CA_VALID, requestInfo->info.messageId,
+                requestInfo->info.token, requestInfo->info.tokenLength, requestInfo->info.options,
+                requestInfo->info.numOptions);
 
         output("returnResponse called\n");
     }
@@ -810,83 +816,83 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
 void responseHandler(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
-	output("responseHandler in\n");
+    output("responseHandler in\n");
 
-	if(!endPoint)
-	{
-	    output("endPoint is NULL\n");
-	    return;
-	}
+    if (!endPoint)
+    {
+        output("endPoint is NULL\n");
+        return;
+    }
 
-	if(!responseInfo)
-	{
-	    output("responseInfo is NULL\n");
-	    return;
-	}
+    if (!responseInfo)
+    {
+        output("responseInfo is NULL\n");
+        return;
+    }
 
-	output("IP %s, Port %d\n", endPoint->addr, endPoint->port);
-	output("MessageId: %d\n", responseInfo->info.messageId);
+    output("IP %s, Port %d\n", endPoint->addr, endPoint->port);
+    output("MessageId: %d\n", responseInfo->info.messageId);
 
-	if (responseInfo->info.options)
-	{
-		output("Header Option Found\n");
+    if (responseInfo->info.options)
+    {
+        output("Header Option Found\n");
 
-		uint32_t len = responseInfo->info.numOptions;
-		uint32_t i;
-		for (i = 0; i < len; i++)
-		{
-			output("Option ID: %d\n", responseInfo->info.options[i].optionID);
-			output("Option Data[%d]: %s\n", responseInfo->info.options[i].optionLength,
-					responseInfo->info.options[i].optionData);
-		}
-	}
-	else
-	{
+        uint32_t len = responseInfo->info.numOptions;
+        uint32_t i;
+        for (i = 0; i < len; i++)
+        {
+            output("Option ID: %d\n", responseInfo->info.options[i].optionID);
+            output("Option Data[%d]: %s\n", responseInfo->info.options[i].optionLength,
+                    responseInfo->info.options[i].optionData);
+        }
+    }
+    else
+    {
         output("No Header Option Found\n");
-	}
+    }
 
-	if (responseInfo->info.type == CA_MSG_RESET)
-	{
-	    char str[12];
+    if (responseInfo->info.type == CA_MSG_RESET)
+    {
+        char str[12];
 
-	    output("Message Type: CA_MSG_RESET\n");
+        output("Message Type: CA_MSG_RESET\n");
 
-		sprintf(str, "%d", responseInfo->info.messageId);
+        sprintf(str, "%d", responseInfo->info.messageId);
 
-		output("calling returnRequest ...\n");
+        output("calling returnRequest ...\n");
 
-		returnRequest(endPoint, SIM_REQ_ACK, str, strlen(str),
-		        CA_MSG_NONCONFIRM, CA_GET, responseInfo->info.token, responseInfo->info.tokenLength,
-		        responseInfo->info.options, responseInfo->info.numOptions);
+        returnRequest(endPoint, SIM_REQ_ACK, str, strlen(str), CA_MSG_NONCONFIRM, CA_GET,
+                responseInfo->info.token, responseInfo->info.tokenLength,
+                responseInfo->info.options, responseInfo->info.numOptions);
 
-		output("returnRequest called\n");
+        output("returnRequest called\n");
 
-		return;
-	}
+        return;
+    }
 
-	char *payload;
+    char *payload;
 
-	if(responseInfo->info.payload)
-	{
-	    payload = getString(responseInfo->info.payload, responseInfo->info.payloadSize);
+    if (responseInfo->info.payload)
+    {
+        payload = getString(responseInfo->info.payload, responseInfo->info.payloadSize);
         output("Payload: %s\n", payload);
-	}
-	else
-	{
-	    output("Payload is NULL\n");
-	}
+    }
+    else
+    {
+        output("Payload is NULL\n");
+    }
 
-	if(!responseInfo->info.resourceUri)
-	{
-	    output("ResourceUri is NULL\n");
-		return;
-	}
+    if (!responseInfo->info.resourceUri)
+    {
+        output("ResourceUri is NULL\n");
+        return;
+    }
 
-	output("ResourceUri: %s\n", responseInfo->info.resourceUri);
+    output("ResourceUri: %s\n", responseInfo->info.resourceUri);
 
-	if (strstr(responseInfo->info.resourceUri, SIM_RES_ACK) != NULL)
-	{
-	    CAMessageType_t messageType;
+    if (strstr(responseInfo->info.resourceUri, SIM_RES_ACK) != NULL)
+    {
+        CAMessageType_t messageType;
 
         if (responseInfo->info.type == CA_MSG_NONCONFIRM)
         {
@@ -915,28 +921,29 @@ void responseHandler(const CAEndpoint_t* endPoint, const CAResponseInfo_t* respo
         output("calling returnRequest ...\n");
 
         returnRequest(endPoint, responseInfo->info.resourceUri, responseInfo->info.payload,
-            responseInfo->info.payloadSize, messageType, CA_GET, responseInfo->info.token,
-            responseInfo->info.tokenLength, responseInfo->info.options, responseInfo->info.numOptions);
+                responseInfo->info.payloadSize, messageType, CA_GET, responseInfo->info.token,
+                responseInfo->info.tokenLength, responseInfo->info.options,
+                responseInfo->info.numOptions);
 
         output("returnRequest called\n");
-	}
-	else
-	{
-	    output("Unknown ResourceUri Type\n");
-	}
+    }
+    else
+    {
+        output("Unknown ResourceUri Type\n");
+    }
 }
 
 void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
 {
     output("errorHandler in\n");
 
-    if(!errorInfo)
+    if (!errorInfo)
     {
         output("ErrorInfo NULL\n");
         return;
     }
 
-    if(!endPoint)
+    if (!endPoint)
     {
         output("endPoint is NULL\n");
         return;
@@ -946,7 +953,7 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
 
     const CAInfo_t *info = &errorInfo->info;
 
-    if(!info)
+    if (!info)
     {
         output("CAInfo is NULL\n");
         return;
@@ -954,7 +961,7 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
 
     output("result: %d\n", errorInfo->result);
 
-    if(info->token)
+    if (info->token)
     {
         output("token: %s\n", info->token);
     }
@@ -968,7 +975,7 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
     output("type: %d\n", info->type);
     output("payloadSize: %d\n", info->payloadSize);
 
-    if(info->resourceUri)
+    if (info->resourceUri)
     {
         output("resourceUri: %s\n", info->resourceUri);
     }
@@ -977,7 +984,7 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
         output("resourceUri is NULL\n");
     }
 
-    if(info->payload)
+    if (info->payload)
     {
         output("payload: %s\n", getString(info->payload, info->payloadSize));
     }
@@ -986,23 +993,23 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
         output("Payload is NULL\n");
     }
 
-    if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+    if (CA_ADAPTER_NOT_ENABLED == errorInfo->result)
     {
         output("CA_ADAPTER_NOT_ENABLED, enable the adapter\n");
     }
-    else if(CA_SEND_FAILED == errorInfo->result)
+    else if (CA_SEND_FAILED == errorInfo->result)
     {
         output("CA_SEND_FAILED, unable to send the message, check parameters\n");
     }
-    else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+    else if (CA_MEMORY_ALLOC_FAILED == errorInfo->result)
     {
         output("CA_MEMORY_ALLOC_FAILED, insufficient memory\n");
     }
-    else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+    else if (CA_SOCKET_OPERATION_FAILED == errorInfo->result)
     {
         output("CA_SOCKET_OPERATION_FAILED, socket operation failed\n");
     }
-    else if(CA_STATUS_FAILED == errorInfo->result)
+    else if (CA_STATUS_FAILED == errorInfo->result)
     {
         output("CA_STATUS_FAILED, message could not be delivered, internal error\n");
     }
@@ -1012,9 +1019,9 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
 
 int registerMessageHandler()
 {
-	CARegisterHandler(requestHandler, responseHandler, errorHandler);
+    CARegisterHandler(requestHandler, responseHandler, errorHandler);
 
-	return 1;
+    return 1;
 }
 
 #ifdef __TC_PLATFORM_ARDUINO__
@@ -1053,11 +1060,8 @@ void setup()
 
     const char ssid[] = "NETGEAR24"; // your network SSID (name)
     const char pass[] = "mightyrabbit219";// your network password
-/*
-    const char ssid[] = "NTGR_arDxZhz"; // your network SSID (name)
-    const char pass[] = "1234567890";// your network password
-    */
-    int16_t status = WL_IDLE_STATUS;// the Wifi radio's status
+
+    int16_t status = WL_IDLE_STATUS; // the Wifi radio's status
 
     if (WiFi.status() == WL_NO_SHIELD)
     {
@@ -1107,7 +1111,6 @@ void setup()
     Serial.println("Callbacks registered");
 }
 
-
 void loop()
 {
     char buffer[5];
@@ -1139,19 +1142,19 @@ void loop()
         switch (toupper(buffer[0]))
         {
             case 'P':
-                g_simulatorProcess = false;
-                Serial.println("Simulator paused");
-                break;
+            g_simulatorProcess = false;
+            Serial.println("Simulator paused");
+            break;
 
             case 'R':
-                g_simulatorProcess = true;
-                Serial.println("Simulator resumed");
-                break;
+            g_simulatorProcess = true;
+            Serial.println("Simulator resumed");
+            break;
             case 'E':
-                g_simulatorProcess = false;
-                loop_status = 0;
-                Serial.println("Simulator stopped");
-                break;
+            g_simulatorProcess = false;
+            loop_status = 0;
+            Serial.println("Simulator stopped");
+            break;
         }
     }
 
@@ -1166,44 +1169,46 @@ void loop()
 #if defined (__TC_PLATFORM_LINUX__) || defined (__TC_PLATFORM_ANDROID_NATIVE__) || defined (__TC_PLATFORM_TIZEN__)
 int main()
 {
-	CAResult_t result;
+    CAResult_t result;
     CAEndpoint_t *tempInfo = NULL;
     uint32_t tempSize = 0;
-	
+
     clearDisplay();
 
     output("[CASimulator] IN\n");
 
 #ifdef __TC_PLATFORM_TIZEN__
-   g_mainloop = g_main_loop_new(NULL, FALSE);
-   if(!g_mainloop)
-   {
-       output("g_main_loop_new failed\n");
-       return -1;
-   }
+    g_mainloop = g_main_loop_new(NULL, FALSE);
+    if(!g_mainloop)
+    {
+        output("g_main_loop_new failed\n");
+        return -1;
+    }
 
-   if (pthread_create(&thread, NULL, (void *) &GMainLoopThread, NULL) < 0)
-   {
-       output("pthread_create failed in initialize\n");
-       return -1;
-   }
+    if (pthread_create(&thread, NULL, (void *) &GMainLoopThread, NULL) < 0)
+    {
+        output("pthread_create failed in initialize\n");
+        return -1;
+    }
 #endif
 
-   if (!initialize())
-   {
-       return -1;
-   }
+    caglobals.server = true;
+
+    if (!initialize())
+    {
+        return -1;
+    }
 
 #ifdef __WITH_DTLS__
-   if(!registerDtlsHandler())
-   {
-	   return -1;
-   }
+    if(!registerDtlsHandler())
+    {
+        return -1;
+    }
 #endif
 
     if(!selectNetwork())
     {
-    	return -1;
+        return -1;
     }
 
     if(!selectAndStartServerOrClient())
@@ -1213,37 +1218,17 @@ int main()
 
     if(!registerMessageHandler())
     {
-    	return -1;
+        return -1;
     }
-
-    output("################## Network Information #######################\n");
-    output("Network info total size is %d\n\n", tempSize);
-
-    result = CAGetNetworkInformation(&tempInfo, &tempSize);
-    if (CA_STATUS_OK != result || NULL == tempInfo || 0 >= tempSize)
-    {
-        output("Network not connected\n");
-        free(tempInfo);
-        return;
-    }
-
-    int index;
-    for (index = 0; index < tempSize; index++)
-    {
-        output("Type: %d\n", tempInfo[index].adapter);
-        output("Address: %s\n", tempInfo[index].addr);
-    }
-
 
     if(g_selectedNetwork == CA_ADAPTER_IP)
     {
-        output("Unsecured Port: %d;\n", caglobals.ip.u4.port);
-        output("Secured Port: %d;\n", caglobals.ip.u4s.port);
+        output("Unsecured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
+        output("Secured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_SECURE|CA_IPV4));
     }
     else if(g_selectedNetwork == CA_ADAPTER_TCP)
     {
-        output("Unsecured Port: %d;\n", 8000);
-        output("Secured Port: %d;\n", caglobals.ip.u4s.port);
+        output("Unsecured Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
     }
 
     processRequestResponse();
@@ -1251,7 +1236,7 @@ int main()
     result = CAUnSelectNetwork(g_selectedNetwork);
     if (result != CA_STATUS_OK)
     {
-    	output("CAUnSelectNetwork Failed\n");
+        output("CAUnSelectNetwork Failed\n");
         return -1;
     }
 

@@ -671,7 +671,7 @@ TEST_F(CATest_btc, CADestroyEndpoint_NV_N)
  * @post_condition Terminate CA using CATerminate
  * @expected CARegisterDTLSCredentialsHandler return value will be CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if (defined(__LINUX__) && defined(__IP__)) || defined(__TIZEN__) || (defined(__ANDROID__) && defined(__IP__))
 TEST_F(CATest_btc, RegisterDtls_P)
 {
     if (!m_caHelper.initialize())
@@ -703,7 +703,7 @@ TEST_F(CATest_btc, RegisterDtls_P)
  * @post_condition Terminate CA using CATerminate
  * @expected CARegisterDTLSCredentialsHandler return value won't be CA_STATUS_OK
  */
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
+#if (defined(__LINUX__) && defined(__IP__)) || defined(__TIZEN__) || (defined(__ANDROID__) && defined(__IP__))
 TEST_F(CATest_btc, RegisterDtlsCredentialsWithNullHandler_N)
 {
     if (!m_caHelper.initialize())

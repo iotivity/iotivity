@@ -55,7 +55,7 @@ protected:
  * @post_condition Terminate CA using CATerminate
  * @expected It will start the listening server and will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CAStartListeningServer_P)
 {
     if (!m_caHelper.initServerNetwork())
@@ -85,7 +85,7 @@ TEST_F(CANetworkTest_btc, CAStartListeningServer_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will stop the listening server and will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CAStopListeningServer_SRC_P)
 {
     if (!m_caHelper.initServerNetwork())
@@ -117,7 +117,7 @@ TEST_F(CANetworkTest_btc, CAStopListeningServer_SRC_P)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will start the discovery server and will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CAStartDiscoveryServer_P)
 {
     if (!m_caHelper.initClientNetwork())
@@ -143,7 +143,7 @@ TEST_F(CANetworkTest_btc, CAStartDiscoveryServer_P)
  * @expected 1. It will create the endpoint object and return CA_STATUS_OK
  *           2. CAEndpoint must not be NULL.
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CACreateEndpoint_P)
 {
     if (!m_caHelper.createEndpoint(VALID_ENDPOINT_URI))
@@ -169,7 +169,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_P)
  * @post_condition none
  * @expected It will fail to create end point and return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CACreateEndpoint_Flag_ECRC_N)
 {
     CAEndpoint_t* m_endpoint = NULL;
@@ -200,7 +200,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_Flag_ECRC_N)
  * @post_condition call CADestroyEndpoint to destroy the endpoint
  * @expected It will create end point and return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CACreateEndpoint_Address_NV_N)
 {
     CAEndpoint_t* m_endpoint = NULL;
@@ -232,7 +232,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_Address_NV_N)
  * @post_condition none
  * @expected It will fail to create end point and return CA_STATUS_INVALID_PARAM
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CACreateEndpoint_Endpoint_NV_N)
 {
     CAResult_t result = CACreateEndpoint(CA_DEFAULT_FLAGS, m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, NULL);
@@ -256,7 +256,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_Endpoint_NV_N)
  * @post_condition call CADestroyEndpoint to destroy endpoint
  * @expected It will create end point and return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CACreateEndpoint_ESV_P)
 {
     CAEndpoint_t* m_endpoint = NULL;
@@ -288,7 +288,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_ESV_P)
  * @post_condition none
  * @expected It will not create end point and return CA_STATUS_INVALID_PARAM
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CACreateEndpoint_URSV_N)
 {
     CAEndpoint_t** m_endpoint = NULL;
@@ -319,7 +319,7 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_URSV_N)
  * @post_condition Terminate CA using CATerminate API
  * @expected It will select the given network (IP) and return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CASelectNetwork_P)
 {
     if (!m_caHelper.initialize())
@@ -352,7 +352,7 @@ TEST_F(CANetworkTest_btc, CASelectNetwork_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will un-select the given network (IP) and return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CAUnSelectNetwork_P)
 {
     if (!m_caHelper.initialize())
@@ -403,8 +403,8 @@ TEST_F(CANetworkTest_btc, CAUnSelectNetwork_P)
  *                 3. Terminate CA using CATerminate
  * @expected It will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
-TEST_F(CANetworkTest_btc, CASendRequest_P)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
+TEST_F(CANetworkTest_btc, CASendRequest_P) 
 {
     if (!m_caHelper.initClientNetwork())
     {
@@ -443,7 +443,7 @@ TEST_F(CANetworkTest_btc, CASendRequest_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CASendRequest_N)
 {
     if (!m_caHelper.initClientNetwork())
@@ -483,7 +483,7 @@ TEST_F(CANetworkTest_btc, CASendRequest_N)
  * @post_condition Terminate CA using CATerminate
  * @expected  It will return CA_MEMORY_ALLOC_FAILED
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CASendRequestWithInvalidMethod_N)
 {
     if (!m_caHelper.initClientNetwork())
@@ -533,7 +533,7 @@ TEST_F(CANetworkTest_btc, CASendRequestWithInvalidMethod_N)
  *                 3. Terminate CA using CATerminate function
  * @expected It will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CASendResponse_P)
 {
     if (!m_caHelper.initServerNetwork())
@@ -573,7 +573,7 @@ TEST_F(CANetworkTest_btc, CASendResponse_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CASendResponse_N)
 {
     if (!m_caHelper.initServerNetwork())
@@ -611,7 +611,7 @@ TEST_F(CANetworkTest_btc, CASendResponse_N)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if (defined(__LINUX__) && defined(__IP__)) || (defined(__TIZEN__) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && defined(__IP__))
 TEST_F(CANetworkTest_btc, CAGetNetworkInformation_P)
 {
     if (!m_caHelper.initNetwork())
@@ -641,7 +641,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if (defined(__LINUX__) && defined(__IP__)) || (defined(__TIZEN__) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && defined(__IP__))
 TEST_F(CANetworkTest_btc, CAGetNetworkInformation_N)
 {
     if (!m_caHelper.initialize())
@@ -675,7 +675,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_N)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if (defined(__LINUX__) && defined(__IP__)) || (defined(__TIZEN__) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && defined(__IP__))
 TEST_F(CANetworkTest_btc, CAGetNetworkInformation_Info_USV_N)
 {
     if (!m_caHelper.initNetwork())
@@ -713,7 +713,7 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_Info_USV_N)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return CA_STATUS_INVALID_PARAM
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__))
+#if (defined(__LINUX__) && defined(__IP__)) || (defined(__TIZEN__) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && defined(__IP__))
 TEST_F(CANetworkTest_btc, CAGetNetworkInformation_temSize_USV_N)
 {
     if (!m_caHelper.initNetwork())

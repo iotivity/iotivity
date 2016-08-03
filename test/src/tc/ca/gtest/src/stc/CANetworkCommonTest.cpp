@@ -78,7 +78,7 @@ protected:
  * @post_condition none
  * @expected All of them will return CA_STATUS_NOT_INITIALIZED
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CallOtherCAApiWithoutCallingCAInitialize_N)
 {
     CAEndpoint_t* endpoint = NULL;
@@ -170,7 +170,7 @@ TEST_F(CANetworkCommonTest_stc, CallOtherCAApiWithoutCallingCAInitialize_N)
  * @post_condition none
  * @expected All APIs will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CAInitializeAndCATerminateLoopWithOtherFn_P)
 {
     for (int count = 0; count < TRY_COUNT; count++)
@@ -220,7 +220,7 @@ TEST_F(CANetworkCommonTest_stc, CAInitializeAndCATerminateLoopWithOtherFn_P)
  *           4. It will select network
  *           6. It will unselect network
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetwor_STCC_P)
 {
     if (!m_caHelper.initialize())
@@ -268,7 +268,7 @@ TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetwor_STCC_P)
  * @post_condition Terminate CA using CATerminate function
  * @expected It will always return CA_STATUS_FAILED
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CAUnSelectNetworkLoop_ITLC_N)
 {
     if (!m_caHelper.initialize())
@@ -309,7 +309,7 @@ TEST_F(CANetworkCommonTest_stc, CAUnSelectNetworkLoop_ITLC_N)
  * @post_condition Terminate CA using CATerminate function
  * @expected 4. It will return CA_STATUS_FAILED
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetwork_EG_N)
 {
     if (!m_caHelper.initialize())
@@ -359,7 +359,7 @@ TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetwork_EG_N)
  * @expected 2. It will return CA_STATUS_OK
  *           6. It will return CA_STATUS_FAILED
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetwork_SCV_N)
 {
     if (!m_caHelper.initServerNetwork())
@@ -399,7 +399,7 @@ TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetwork_SCV_N)
  * @post_condition Terminate CA using CATerminate
  * @expected It will select and unselect network in each time and will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetworkLoop_SLCC_P)
 {
     if (!m_caHelper.initialize())
@@ -446,7 +446,7 @@ TEST_F(CANetworkCommonTest_stc, CASelectNetworkUnSelectNetworkLoop_SLCC_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will start and stop the listening server and will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CAStartListeningServerStopListeningServer_VLCC_P)
 {
 
@@ -488,7 +488,7 @@ TEST_F(CANetworkCommonTest_stc, CAStartListeningServerStopListeningServer_VLCC_P
  * @post_condition Terminate CA using CATerminate function
  * @expected It will start the discovery server and will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CAStartDiscoveryServer_VLCC_P)
 {
     for (int count = 0; count < TRY_COUNT; count++)
@@ -525,7 +525,7 @@ TEST_F(CANetworkCommonTest_stc, CAStartDiscoveryServer_VLCC_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will create and destroy end point and will return CA_STATUS_OK
  */
-#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || defined(__ANDROID__)
+#if ((defined(__LINUX__) || defined(__TIZEN__)) && defined(__ALL_TRANSPORT__)) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkCommonTest_stc, CACreateEndpointDestroyEndpoint_VLCC_P)
 {
     CAResult_t m_result=NULL;

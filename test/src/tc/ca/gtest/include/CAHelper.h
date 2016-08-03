@@ -39,6 +39,7 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
+#include "cautilinterface.h"
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
 
