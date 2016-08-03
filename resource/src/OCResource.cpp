@@ -588,64 +588,57 @@ std::string OCResource::sid() const
 
 #ifdef WITH_MQ
 OCStackResult OCResource::discoveryMQTopics(const QueryParamsMap& queryParametersMap,
-                                            FindCallback attributeHandler)
+                                            MQTopicCallback attributeHandler,
+                                            QualityOfService qos)
 {
-    QualityOfService defaultQos = OC::QualityOfService::NaQos;
-    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
     return checked_guard(m_clientWrapper.lock(),
                             &IClientWrapper::ListenForMQTopic,
                             m_devAddr, m_uri,
                             queryParametersMap, m_headerOptions,
-                            attributeHandler, defaultQos);
+                            attributeHandler, qos);
 }
 
 OCStackResult OCResource::createMQTopic(const OCRepresentation& rep,
                                         const std::string& topicUri,
                                         const QueryParamsMap& queryParametersMap,
-                                        MQCreateTopicCallback attributeHandler)
+                                        MQTopicCallback attributeHandler,
+                                        QualityOfService qos)
 {
-    QualityOfService defaultQos = OC::QualityOfService::NaQos;
-    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutMQTopicRepresentation,
                          m_devAddr, topicUri, rep, queryParametersMap,
-                         m_headerOptions, attributeHandler, defaultQos);
+                         m_headerOptions, attributeHandler, qos);
 }
 #endif
 #ifdef MQ_SUBSCRIBER
 OCStackResult OCResource::subscribeMQTopic(ObserveType observeType,
-        const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
+                                           const QueryParamsMap& queryParametersMap,
+                                           ObserveCallback observeHandler,
+                                           QualityOfService qos)
 {
-    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
-    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
-
-    return result_guard(observe(observeType, queryParametersMap, observeHandler, defaultQoS));
+    return result_guard(observe(observeType, queryParametersMap, observeHandler, qos));
 }
 
-OCStackResult OCResource::unsubscribeMQTopic()
+OCStackResult OCResource::unsubscribeMQTopic(QualityOfService qos)
 {
-    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
-    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
-    return result_guard(cancelObserve(defaultQoS));
+    return result_guard(cancelObserve(qos));
 }
 
 OCStackResult OCResource::requestMQPublish(const QueryParamsMap& queryParametersMap,
-                                           PostCallback attributeHandler)
+                                           PostCallback attributeHandler,
+                                           QualityOfService qos)
 {
     OCRepresentation rep;
     rep.setValue(std::string("req_pub"), std::string("true"));
-    QualityOfService defaultQos = OC::QualityOfService::NaQos;
-    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
-    return result_guard(post(rep, queryParametersMap, attributeHandler, defaultQos));
+    return result_guard(post(rep, queryParametersMap, attributeHandler, qos));
 }
 #endif
 #ifdef MQ_PUBLISHER
 OCStackResult OCResource::publishMQTopic(const OCRepresentation& rep,
                                          const QueryParamsMap& queryParametersMap,
-                                         PostCallback attributeHandler)
+                                         PostCallback attributeHandler,
+                                         QualityOfService qos)
 {
-    QualityOfService defaultQos = OC::QualityOfService::NaQos;
-    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
-    return result_guard(post(rep, queryParametersMap, attributeHandler, defaultQos));
+    return result_guard(post(rep, queryParametersMap, attributeHandler, qos));
 }
 #endif
 

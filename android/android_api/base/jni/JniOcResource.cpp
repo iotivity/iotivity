@@ -457,7 +457,7 @@ OCStackResult JniOcResource::discoveryMQTopics(JNIEnv* env,
         onTopicFoundListener->foundTopicCallback(eCode, uri, resource);
     };
 
-    return m_sharedResource->discoveryMQTopics(queryParametersMap, findCallback);
+    return m_sharedResource->discoveryMQTopics(queryParametersMap, findCallback, QoS);
 }
 
 OCStackResult JniOcResource::createMQTopic(JNIEnv* env,
@@ -474,7 +474,7 @@ OCStackResult JniOcResource::createMQTopic(JNIEnv* env,
 
     return m_sharedResource->createMQTopic(representation, targetUri,
                                            queryParametersMap,
-                                           createCallback);
+                                           createCallback, QoS);
 }
 #endif
 #ifdef MQ_SUBSCRIBER
@@ -490,12 +490,12 @@ OCStackResult JniOcResource::subscribeMQTopic(JNIEnv* env,
     };
 
     return m_sharedResource->subscribeMQTopic(ObserveType::Observe, queryParametersMap,
-                                              subscribeCallback);
+                                              subscribeCallback, QoS);
 }
 
 OCStackResult JniOcResource::unsubscribeMQTopic(QualityOfService QoS)
 {
-    return m_sharedResource->unsubscribeMQTopic();
+    return m_sharedResource->unsubscribeMQTopic(QoS);
 }
 
 OCStackResult JniOcResource::requestMQPublish(JNIEnv* env,
@@ -509,7 +509,7 @@ OCStackResult JniOcResource::requestMQPublish(JNIEnv* env,
         onPostListener->onPostCallback(opts, rep, eCode);
     };
 
-    return m_sharedResource->requestMQPublish(queryParametersMap, postCallback);
+    return m_sharedResource->requestMQPublish(queryParametersMap, postCallback, QoS);
 }
 #endif
 #ifdef MQ_PUBLISHER
@@ -525,7 +525,7 @@ OCStackResult JniOcResource::publishMQTopic(JNIEnv* env, const OCRepresentation 
     };
 
     return m_sharedResource->publishMQTopic(representation, queryParametersMap,
-                                            postCallback);
+                                            postCallback, QoS);
 }
 #endif
 
