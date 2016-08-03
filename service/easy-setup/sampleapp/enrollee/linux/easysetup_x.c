@@ -41,7 +41,7 @@ void SetUserProperties(const UserProperties *prop)
     }
 }
 
-void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void* userdata)
+void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void** userdata)
 {
     OIC_LOG(DEBUG, ESX_ENROLLEE_TAG, "ReadUserdataCb IN");
 
@@ -52,11 +52,11 @@ void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void* userdata)
             int64_t value = -1;
             if (OCRepPayloadGetPropInt(payload, USERPROPERTY_KEY_INT, &value))
             {
-                if(userdata != NULL)
-                    userdata = (void*)OICMalloc(sizeof(UserProperties));
+                if(*userdata != NULL)
+                    *userdata = (void*)OICMalloc(sizeof(UserProperties));
                 OIC_LOG_V(INFO, ESX_ENROLLEE_TAG, "[User specific property] %s : %ld",
                                                                             USERPROPERTY_KEY_INT, value);
-                ((UserProperties*)userdata)->userValue_int = value;
+                ((UserProperties*)(*userdata))->userValue_int = value;
                 g_userProperties.userValue_int = value;
             }
         }

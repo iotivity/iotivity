@@ -39,7 +39,7 @@ typedef void (*ESCloudCB) (ESResult, ESCloudProvData *);
 typedef void (*ESDevConfCB) (ESResult, ESDevConfProvData *);
 
 typedef void (*ESWriteUserdataCb)(OCRepPayload* payload, char* resourceType);
-typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void* userdata);
+typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void** userdata);
 
 /* Structure to represent a Light resource */
 typedef struct PROVRESOURCE

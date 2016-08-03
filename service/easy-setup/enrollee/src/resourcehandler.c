@@ -306,7 +306,7 @@ void updateWiFiResource(OCRepPayload* input)
 
     if(gReadUserdataCb)
     {
-        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_WIFI, wiFiData->userdata);
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_WIFI, &wiFiData->userdata);
     }
 
     if(ssid || cred || authType!= -1 || encType != -1)
@@ -362,7 +362,7 @@ void updateCloudResource(OCRepPayload* input)
 
     if(gReadUserdataCb)
     {
-        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER, cloudData->userdata);
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER, &cloudData->userdata);
     }
 
     if(authCode || authProvider || ciServer)
@@ -410,7 +410,7 @@ void updateDevConfResource(OCRepPayload* input)
 
     if(gReadUserdataCb)
     {
-        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_DEVCONF, devConfData->userdata);
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_DEVCONF, &devConfData->userdata);
     }
 
     if(country || language)
@@ -479,7 +479,9 @@ OCRepPayload* constructResponseOfCloud()
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
 
     if(gWriteUserdataCb)
+    {
         gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+    }
 
     return payload;
 }

@@ -54,7 +54,7 @@ typedef void (*ESWriteUserdataCb)(OCRepPayload* payload, char* resourceType);
  * @param userdata User-specific data you want to deliver to desired users, i.e. application.
  * The user should know a data structure of passed userdata.
  */
-typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void* userdata);
+typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void** userdata);
 
 /**
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API

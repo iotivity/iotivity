@@ -35,7 +35,7 @@ typedef struct UserProperties_t
 #define USERPROPERTY_KEY_INT "x.user.property.int"
 #define USERPROPERTY_KEY_STR "x.user.property.str"
 
-void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void* userdata);
+void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void** userdata);
 void WriteUserdataCb(OCRepPayload* payload, char* resourceType);
 
 void SetUserProperties(const UserProperties *prop);
