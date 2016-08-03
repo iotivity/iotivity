@@ -52,6 +52,7 @@ namespace OIC
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
             void performOwnershipTransfer();
             ESResult performACLProvisioningForCloudServer(std::string cloudUuid);
+            std::string getUUID() const;
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
@@ -65,7 +66,6 @@ namespace OIC
             bool aclResult;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
-
             std::shared_ptr< OC::OCSecureResource > getEnrollee(OC::DeviceList_t &list);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(OicUuid_t uuid, std::string& uuidString);

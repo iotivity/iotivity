@@ -244,8 +244,9 @@ namespace OIC
                         "Exception for performOwnershipTransfer : %s", e.what());
 
                 OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Fail performOwnershipTransfer");
-                    std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
-                            std::make_shared< SecProvisioningStatus >(nullptr, ES_ERROR);
+                std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                        std::make_shared< SecProvisioningStatus >
+                                                        (m_enrolleeSecurity->getUUID(), ES_ERROR);
                     m_securityProvStatusCb(securityProvisioningStatus);
                 return ;
             }
@@ -253,7 +254,8 @@ namespace OIC
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured.");
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
-                     std::make_shared< SecProvisioningStatus >(nullptr, ES_ERROR);
+                     std::make_shared< SecProvisioningStatus >
+                                                        ("", ES_UNSUPPORTED_OPERATION);
             m_securityProvStatusCb(securityProvisioningStatus);
 #endif
         }

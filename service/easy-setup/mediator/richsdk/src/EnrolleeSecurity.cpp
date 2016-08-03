@@ -311,6 +311,11 @@ namespace OIC
             return res;
         }
 
+        std::string EnrolleeSecurity::getUUID() const
+        {
+            return m_ocResource->sid();
+        };
+
         OicSecAcl_t* EnrolleeSecurity::createAcl(OicUuid_t cloudUuid)
         {
             // allocate memory for |acl| struct
