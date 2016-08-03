@@ -25,13 +25,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.iotivity.cloud.base.device.Device;
+import org.iotivity.cloud.base.exception.ServerException.ForbiddenException;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
+import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
+import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.mqserver.Constants;
 import org.iotivity.cloud.mqserver.kafka.KafkaConsumerWrapper;
 import org.iotivity.cloud.mqserver.kafka.KafkaProducerWrapper;
+import org.iotivity.cloud.util.Cbor;
 
 public class Topic {
 
@@ -58,6 +64,8 @@ public class Topic {
     private KafkaProducerWrapper             mKafkaProducerOperator = null;
     private KafkaConsumerWrapper             mKafkaConsumerOperator = null;
 
+    Cbor<HashMap<String, Object>>            mCbor                  = new Cbor<>();
+
     public Topic(String name, String type, TopicManager topicManager) {
 
         mTopicManager = topicManager;
@@ -73,6 +81,11 @@ public class Topic {
         mKafkaProducerOperator = new KafkaProducerWrapper(kafka_broker, name);
         mKafkaConsumerOperator = new KafkaConsumerWrapper(kafka_zookeeper,
                 kafka_broker, this);
+
+        HashMap<String, Object> data = new HashMap<>();
+        data.put(Constants.MQ_MESSAGE, null);
+
+        mLatestData = mCbor.encodingPayloadToCbor(data);
     }
 
     public String getName() {
@@ -94,26 +107,20 @@ public class Topic {
             newTopicType = request.getUriQueryMap().get("rt").get(0);
         }
 
-        if (newTopicName == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
-        }
-
         if (getSubtopic(newTopicName) != null) {
-            // topic already exists
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new ForbiddenException("topic already exist");
         }
 
         Topic newTopic = new Topic(mName + "/" + newTopicName, newTopicType,
                 mTopicManager);
 
         if (mTopicManager.createTopic(newTopic) == false) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.INTERNAL_SERVER_ERROR);
+            throw new InternalServerErrorException("create topic falied");
         }
 
-        mSubtopics.put(newTopicName, newTopic);
+        synchronized (mSubtopics) {
+            mSubtopics.put(newTopicName, newTopic);
+        }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CREATED);
     }
@@ -123,27 +130,25 @@ public class Topic {
         Topic targetTopic = getSubtopic(topicName);
 
         if (targetTopic == null) {
-            // topic doesn't exist
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("topic doesn't exist");
         }
 
         targetTopic.cleanup();
 
         if (mTopicManager.removeTopic(targetTopic) == false) {
-
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.INTERNAL_SERVER_ERROR);
+            throw new InternalServerErrorException("remove topic failed");
         }
 
-        mSubtopics.remove(topicName);
+        synchronized (mSubtopics) {
+            mSubtopics.remove(topicName);
+        }
 
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);
     }
 
     public IResponse handleSubscribeTopic(Device srcDevice, IRequest request) {
 
-        // get latest data from kafka if cosumer started for the first time
+        // get latest data from kafka if consumer started for the first time
         if (mKafkaConsumerOperator.consumerStarted() == false) {
 
             ArrayList<byte[]> data = mKafkaConsumerOperator.getMessages();
@@ -154,8 +159,7 @@ public class Topic {
         }
 
         if (mKafkaConsumerOperator.subscribeTopic() == false) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.INTERNAL_SERVER_ERROR);
+            throw new InternalServerErrorException("subscribe topic failed");
         }
 
         synchronized (mSubscribers) {
@@ -174,12 +178,6 @@ public class Topic {
             TopicSubscriber subscriber = mSubscribers.get(request
                     .getRequestId());
 
-            if (subscriber == null) {
-                // client is not a subscriber
-                return MessageBuilder.createResponse(request,
-                        ResponseStatus.BAD_REQUEST);
-            }
-
             mSubscribers.remove(subscriber.mRequest.getRequestId());
 
             // if there's no more subscriber, stop subscribing topic
@@ -194,11 +192,19 @@ public class Topic {
     }
 
     public IResponse handlePublishMessage(IRequest request) {
-        byte[] data = request.getPayload();
+        byte[] payload = request.getPayload();
 
-        if (mKafkaProducerOperator.publishMessage(data) == false) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.INTERNAL_SERVER_ERROR);
+        HashMap<String, Object> message = mCbor.parsePayloadFromCbor(payload,
+                HashMap.class);
+
+        if (message == null
+                || message.containsKey(Constants.MQ_MESSAGE) == false) {
+            throw new PreconditionFailedException(
+                    "message field is not included");
+        }
+
+        if (mKafkaProducerOperator.publishMessage(payload) == false) {
+            throw new InternalServerErrorException("publish message failed");
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
@@ -235,11 +241,13 @@ public class Topic {
 
     private Topic getSubtopic(String topicName) {
 
-        if (mSubtopics.containsKey(topicName) == false) {
-            return null;
+        Topic topic = null;
+
+        synchronized (mSubtopics) {
+            topic = mSubtopics.get(topicName);
         }
 
-        return mSubtopics.get(topicName);
+        return topic;
     }
 
     private void notifyPublishedMessage() {
