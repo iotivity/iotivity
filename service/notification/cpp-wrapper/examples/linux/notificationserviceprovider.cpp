@@ -92,8 +92,10 @@ int main()
         std::cout << "2. Start the Notification Provider(Accepter: Consumer)" << std::endl;
         std::cout << "3. SendMessage " << std::endl;
         std::cout << "4. SendSyncInfo" << std::endl;
+#ifdef WITH_CLOUD
         std::cout << "5. Enable NS Provider RemoteService" << std::endl;
         std::cout << "6. Disable NS Provider RemoteService" << std::endl;
+#endif
         std::cout << "9. Stop the Notification Provider" << std::endl;
         std::cout << "0. Exit()" << std::endl;
 
@@ -158,6 +160,7 @@ int main()
                             OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
                     break;
                 }
+#ifdef WITH_CLOUD
             case 5:
                 {
                     std::cout << "3. Enable NS Provider RemoteService" << std::endl;
@@ -173,6 +176,7 @@ int main()
                     NSProviderService::getInstance()->DisableRemoteService(REMOTE_SERVER_ADDRESS);
                     break;
                 }
+#endif
             case 9:
                 NSProviderService::getInstance()->Stop();
                 break;

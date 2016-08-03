@@ -19,8 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSConsumerService.h"
-#include "NSProvider.h"
+#include <cstring>
+#include "NSConsumerInterface.h"
 #include "NSMessage.h"
+#include "NSCommon.h"
+#include "NSConstants.h"
+#include "oic_string.h"
 
 namespace OIC
 {
@@ -130,10 +134,15 @@ namespace OIC
             return;
         }
 
-        NSResult NSConsumerService::EnableRemoteService(const std::string &serverAddress)
+        Result NSConsumerService::EnableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "EnableRemoteService - IN");
-            NSResult result = NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
+            Result result = Result::ERROR;
+#ifdef WITH_CLOUD
+            result = (Result) NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
+#else
+            NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
+#endif
             NS_LOG(DEBUG, "EnableRemoteService - OUT");
             return result;
         }

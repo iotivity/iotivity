@@ -18,39 +18,30 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSSyncInfo.h"
-#include "string.h"
+/**
+ * @file
+ *
+ * This file contains Notification service Error Codes.
+ */
+
+#ifndef _NS_ERROR_CODE_H_
+#define _NS_ERROR_CODE_H_
+
 
 namespace OIC
 {
     namespace Service
     {
-        NSSyncInfo::NSSyncInfo(::NSSyncInfo *syncInfo)
+        /** Result - enumeration for NS service Result*/
+        enum class Result
         {
-            if (syncInfo != nullptr)
-            {
-                m_messageId = syncInfo->messageId;
-
-                if ((syncInfo->providerId != nullptr) && strlen(syncInfo->providerId))
-                    m_providerId.assign(syncInfo->providerId, strlen(syncInfo->providerId));
-
-                m_state = (NSSyncType) syncInfo->state;
-            }
-        }
-
-        uint64_t NSSyncInfo::getMessageId() const
-        {
-            return m_messageId;
-        }
-
-        std::string NSSyncInfo::getProviderId() const
-        {
-            return m_providerId;
-        }
-
-        NSSyncInfo::NSSyncType NSSyncInfo::getState() const
-        {
-            return m_state;
-        }
+            OK = 100,
+            ERROR = 200,
+            SUCCESS = 300,
+            FAIL = 400,
+            ALLOW = 500,
+            DENY = 600,
+        };
     }
 }
+#endif /* _NS_ERROR_CODE_H_ */

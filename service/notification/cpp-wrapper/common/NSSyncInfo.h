@@ -29,8 +29,6 @@
 
 #include <string>
 #include "NSCommon.h"
-#include "oic_string.h"
-#include "string.h"
 
 namespace OIC
 {

@@ -27,14 +27,11 @@
 #ifndef _NS_PROVIDER_SERVICE_H_
 #define _NS_PROVIDER_SERVICE_H_
 
-#include "NSCommon.h"
-#include "NSProviderInterface.h"
-#include "NSMessage.h"
-#include "oic_string.h"
+#include <string>
 #include "NSConsumer.h"
 #include "NSSyncInfo.h"
-#include "NSConstants.h"
-#include <cstring>
+#include "NSMessage.h"
+#include "NSErrorCode.h"
 
 namespace OIC
 {
@@ -96,43 +93,42 @@ namespace OIC
                       * @param[in]  policy   Accepter
                       * @param[in]  config   ProviderConfig Callback function pointers to onConsumerSubscribed,
                       * and onMessageSynchronized function listeners
-                      * @return :: result code of NSResult
+                      * @return :: result code of Provider Service
                       */
-                NSResult Start(NSAccessPolicy policy, ProviderConfig config);
+                Result Start(NSAccessPolicy policy, ProviderConfig config);
 
                 /**
                       * Terminate notification service for provider
-                      * @return :: result code of NSResult
+                      * @return :: result code of Provider Service
                       */
-                NSResult Stop();
+                Result Stop();
 
                 /**
                       * Request to publish resource to cloud server
                       * @param[in]  server address combined with IP address and port number using delimiter :
-                      * @return  result code of NSResult
+                      * @return  result code of Provider Service
                       */
-                NSResult EnableRemoteService(const std::string &serverAddress);
+                Result EnableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Request to cancel remote service using cloud server
                       * @param[in]  server address combined with IP address and port number using delimiter :
-                      * @return  result code of NSResult
+                      * @return  result code of Provider Service
                       */
-                NSResult DisableRemoteService(const std::string &serverAddress);
+                Result DisableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Send notification message to all subscribers
                       * @param[in]  msg  Notification message including id, title, contentText
-                      * @return :: result code of NSResult
+                      * @return :: result code of Provider Service
                       */
-                NSResult SendMessage(NSMessage *msg);
+                Result SendMessage(NSMessage *msg);
 
 
                 /**
                       * Send read-check to provider in order to synchronize notification status with other consumers
                       * @param[in]  messageId  Notification message to synchronize the status
                       * @param[in]  type  NotificationSyncType of the SyncInfo message
-                      * @return :: result code of NSResult
                       */
                 void SendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
 

@@ -28,18 +28,16 @@
 #ifndef _NS_CONSUMER_SERVICE_H_
 #define _NS_CONSUMER_SERVICE_H_
 
-#include "NSCommon.h"
-#include "NSConsumerInterface.h"
 #include <list>
 #include <algorithm>
-#include "NSConstants.h"
+#include "NSProvider.h"
+#include "NSErrorCode.h"
 
 
 namespace OIC
 {
     namespace Service
     {
-        class NSProvider;
         /**
          * @class   NSConsumerService
          * @brief   This class provides a set of C++APIs for Notification Consumer.
@@ -95,9 +93,9 @@ namespace OIC
                 /**
                      * Request to discover to remote address as parameter.
                      * @param[in]  server address combined with IP address and port number using delimiter :
-                     * @return  result code of NSResult
+                     * @return  result code of Consumer Service
                      */
-                NSResult EnableRemoteService(const std::string &serverAddress);
+                Result EnableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Request discovery manually

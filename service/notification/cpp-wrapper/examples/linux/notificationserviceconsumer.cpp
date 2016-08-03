@@ -102,7 +102,9 @@ int main(void)
 
         std::cout << "1. Start Consumer" << std::endl;
         std::cout << "2. Stop Consumer" << std::endl;
+#ifdef WITH_CLOUD
         std::cout << "3. Enable  NS Consumer RemoteService" << std::endl;
+#endif
         std::cout << "5. Exit" << std::endl;
 
         std::cout << "Input: " << std::endl;
@@ -117,6 +119,7 @@ int main(void)
                 std::cout << "2. Stop the Notification Consumer" << std::endl;
                 NSConsumerService::getInstance()->Stop();
                 break;
+#ifdef WITH_CLOUD
             case 3:
                 {
                     std::cout << "3. Enable NS Consumer RemoteService" << std::endl;
@@ -125,6 +128,7 @@ int main(void)
                     NSConsumerService::getInstance()->EnableRemoteService(REMOTE_SERVER_ADDRESS);
                     break;
                 }
+#endif
             case 5:
                 std::cout << "5. Exit" << std::endl;
                 isExit = true;

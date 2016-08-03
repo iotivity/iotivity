@@ -27,10 +27,8 @@
 #ifndef _NS_MESSAGE_H_
 #define _NS_MESSAGE_H_
 
+#include <string>
 #include "NSMediaContents.h"
-#include "oic_string.h"
-#include <cstdint>
-#include "string.h"
 
 namespace OIC
 {
@@ -77,11 +75,25 @@ namespace OIC
                 uint64_t getMessageId() const;
 
                 /**
+                     * This method is for setting Message Id from the Notification service Message.
+                     *
+                     * @param messageId as uint64_t.
+                     */
+                void setMessageId(const uint64_t &messageId);
+
+                /**
                      * This method is for getting Provider Id from the Notification service Message.
                      *
                      * @return Id as string.
                      */
                 std::string getProviderId() const;
+
+                /**
+                     * This method is for setting Provider Id from the Notification service Message.
+                     *
+                     * @param providerId as string.
+                     */
+                void setProviderId(const std::string &providerId);
 
                 /**
                      * This method is for getting type from the Notification service Message.

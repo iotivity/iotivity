@@ -19,7 +19,10 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSConsumer.h"
+#include <cstring>
 #include "NSProviderInterface.h"
+#include "NSConstants.h"
+#include "oic_string.h"
 
 namespace OIC
 {
