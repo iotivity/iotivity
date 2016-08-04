@@ -99,7 +99,8 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOnDeleteResourceListener.cpp
 
 ifeq ($(MQ_FLAG), 1)
-#new listener will be added.
+    LOCAL_SRC_FILES +=  JniOnMQTopicFoundListener.cpp \
+                        JniOnMQSubscribeListener.cpp
 endif
 
 ifeq ($(SECURED), 1)

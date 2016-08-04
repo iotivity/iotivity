@@ -758,7 +758,8 @@ public class OcResource {
         public void onSubScribeCompleted(List<OcHeaderOption> headerOptionList,
                 OcRepresentation ocRepresentation,
                 int sequenceNumber);
-
+        public void onUnsubScribeCompleted(OcRepresentation ocRepresentation,
+                int sequenceNumber);
         public void onSubScribeFailed(Throwable ex);
     }
 }
