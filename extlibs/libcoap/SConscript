@@ -146,6 +146,12 @@ if with_upstream_libcoap == '1':
     coap_h_pc_file = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h.in')
     coap_h_output  = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h')
 
+    # Generate coap_config.h
+    # TODO: generate coap_config.h dynamically.  For now we use a pregenerated version
+    # per target OS.
+    if target_os == 'windows':
+        libcoap_env.Textfile(target = libcoap_dir + '/include/coap/coap_config.h', source = [File(libcoap_dir + '/coap_config.h.windows')])
+
     libcoap_version = libcoap_branch
     lib_prefix = '' + str(libcoap_env.get('PREFIX'))
     pc_vars = {
