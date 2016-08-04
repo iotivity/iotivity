@@ -182,7 +182,7 @@ namespace OC
 #ifdef WITH_CLOUD
         virtual OCStackResult SubscribeDevicePresence(OCDoHandle* handle,
                                                       const std::string& host,
-                                                      const QueryParamsList& queryParams,
+                                                      const std::vector<std::string>& di,
                                                       OCConnectivityType connectivityType,
                                                       ObserveCallback& callback);
 #endif

@@ -23,7 +23,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <ocstack.h>
 #include <logger.h>
 
@@ -43,7 +48,7 @@ OCStackApplicationResult applicationDiscoverCB(
         OCClientResponse * clientResponse) {
     OIC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
     OIC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
-                                    clientResponse->resJSONPayload,
+                                    clientResponse->resourceUri,
                                     clientResponse->devAddr.addr,
                                     clientResponse->devAddr.port);
     //return OC_STACK_DELETE_TRANSACTION;
@@ -51,7 +56,7 @@ OCStackApplicationResult applicationDiscoverCB(
 }
 
 int main() {
-    OIC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
+    OIC_LOG_V(INFO, TAG, "Starting occlient");
 
     /* Initialize OCStack*/
     if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK) {
@@ -61,9 +66,9 @@ int main() {
 
     /* Start a discovery query*/
     char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
-    strcpy(szQueryUri, OC_EXPLICIT_DEVICE_DISCOVERY_URI);
-    if (OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS,
-            0, 0, 0) != OC_STACK_OK) {
+    strcpy(szQueryUri, OC_MULTICAST_DISCOVERY_URI);
+    if (OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, 
+            CT_DEFAULT, OC_LOW_QOS, 0, 0, 0) != OC_STACK_OK) {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
         return 0;
     }

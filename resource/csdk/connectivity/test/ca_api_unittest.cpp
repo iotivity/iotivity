@@ -344,6 +344,7 @@ TEST_F(CATests, SendResponseTestWithInvalidCode)
     responseData.type = CA_MSG_RESET;
     responseData.messageId = 1;
     responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    responseData.dataType = CA_RESPONSE_DATA;
 
     EXPECT_TRUE(responseData.payload != NULL);
 
@@ -376,6 +377,7 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    responseData.dataType = CA_RESPONSE_DATA;
 
     EXPECT_TRUE(responseData.payload != NULL);
     if(!responseData.payload)
@@ -413,6 +415,7 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    responseData.dataType = CA_RESPONSE_DATA;
     EXPECT_TRUE(responseData.payload != NULL);
 
     if(!responseData.payload)

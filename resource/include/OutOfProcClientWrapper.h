@@ -125,7 +125,7 @@ namespace OC
         virtual OCStackResult SubscribeDevicePresence(
             OCDoHandle* /*handle*/,
             const std::string& /*host*/,
-            const QueryParamsList& /*queryParams*/,
+            const std::vector<std::string>& /*di*/,
             OCConnectivityType /*connectivityType*/,
             ObserveCallback& /*callback*/)
             {return OC_STACK_NOTIMPL;}

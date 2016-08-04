@@ -52,7 +52,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri), m_devAddr(devAddr),
-    m_property(property), m_isCollection(false),
+    m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
@@ -77,7 +77,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_property(property), m_isCollection(false),
+    m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {

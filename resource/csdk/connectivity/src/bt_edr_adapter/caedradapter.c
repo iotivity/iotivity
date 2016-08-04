@@ -264,11 +264,12 @@ CAResult_t CAStartEDRDiscoveryServer()
 }
 
 int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data,
-                             uint32_t dataLength)
+                             uint32_t dataLength, CADataType_t dataType)
 {
     // Input validation
     VERIFY_NON_NULL_RET(remoteEndpoint, TAG, "Remote endpoint is null", -1);
     VERIFY_NON_NULL_RET(data, TAG, "Data is null", -1);
+    (void)dataType;
 
     if (0 == dataLength)
     {
@@ -296,9 +297,11 @@ int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *dat
     return sentLength;
 }
 
-int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                               CADataType_t dataType)
 {
     OIC_LOG(DEBUG, TAG, "IN - CASendEDRMulticastData");
+    (void)dataType;
 
     // Input validation
     VERIFY_NON_NULL_RET(data, TAG, "Data is null", -1);
