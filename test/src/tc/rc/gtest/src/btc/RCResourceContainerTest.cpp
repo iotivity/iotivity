@@ -1,22 +1,22 @@
 /******************************************************************
-*
-* Copyright 2016 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #include <string>
 #include "RCHelper.h"
@@ -39,38 +39,45 @@
 #define BUNDLE_VERSION "version"
 #define BUNDLE_ACTIVATOR "activator"
 #define BUNDLE_INSERT_VERSION "Version"
+#define BMI_BUNDLE_ID "oic.bundle.BMISensor"
+#define BMI_BUNDLE_PATH "libBMISensorBundle.so"
+#define BMI_BUNDLE_VERSION "1.0.0"
+#define EMPTY_STRING ""
+#define INVALID_INPUT "invalidConfig"
+#define NULL_VALUE NULL
+#define ZERO_VALUE 0
 
-#define emptyString ""
-#define nullValue "NULL"
-#define zeroValue 0
+static string s_bundleID;
+const string &g_config_file_address = CONFIG_FILE;
+std::map< string, string > g_params;
+std::list< std::unique_ptr< RCSBundleInfo > > g_bundles;
+std::list< std::unique_ptr< RCSBundleInfo > > g_newBundles;
+std::unique_ptr< RCSBundleInfo > g_bundleInfo;
+int nValue;
 
-string btcBundleID;
-const string &config_file_address = CONFIG_FILE;
-
-std::map<string, string> btcParams;
-std::list<std::unique_ptr<RCSBundleInfo>> bundles;
-std::unique_ptr<RCSBundleInfo> btcBundleInfo;
-
-class RCResourceContainerTest_btc: public ::testing::Test {
+class RCResourceContainerTest_btc: public ::testing::Test
+{
 protected:
-	std::string m_errorMsg;
-	RCSResourceContainer *m_pContainer;
+    std::string m_errorMsg;
+    RCSResourceContainer *m_pContainer;
 
 private:
 
 protected:
 
-	virtual void SetUp() {
-		CommonUtil::runCommonTCSetUpPart();
+    virtual void SetUp()
+    {
+        CommonUtil::runCommonTCSetUpPart();
 
-		m_errorMsg = emptyString;
-		m_pContainer = RCSResourceContainer::getInstance();
-	}
+        m_errorMsg = EMPTY_STRING;
+        m_pContainer = RCSResourceContainer::getInstance();
+    }
 
-	virtual void TearDown() {
+    virtual void TearDown()
+    {
 
-		CommonUtil::runCommonTCTearDownPart();
-	}
+        CommonUtil::runCommonTCTearDownPart();
+    }
 
 public:
 };
@@ -89,7 +96,7 @@ public:
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, GetInstance_SRC_P)
 {
-	ASSERT_NE(nullValue, RCSResourceContainer::getInstance());
+    ASSERT_NE(NULL_VALUE, RCSResourceContainer::getInstance())<<"Get Instance Not Found!";
 }
 #endif
 
@@ -107,14 +114,16 @@ TEST_F(RCResourceContainerTest_btc, GetInstance_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StartContainer_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StartContainer_P" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        EXPECT_GT(m_pContainer->listBundles().size(), ZERO_VALUE)
+        << "Container is Not started !";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartContainer_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -132,14 +141,43 @@ TEST_F(RCResourceContainerTest_btc, StartContainer_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StartContainer_ESV_N)
 {
-	try
-	{
-		m_pContainer->startContainer(emptyString);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StartContainer_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startContainer(EMPTY_STRING);
+        EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundles().size())
+        << "Container Started with empty string!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartContainer_N" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-26
+ * @see getInstance
+ * @objective Test 'StartContainer' function that's does not start resource container with invalid resource config file
+ * @target void StartContainer(string configFile)
+ * @test_data None
+ * @pre_condition Get container instance
+ * @procedure Perform StartContainer() API
+ * @post_condition None
+ * @expected start container should Not started and verify with the list bundle size
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, StartContainer_USV_N)
+{
+    try
+    {
+        m_pContainer->startContainer(INVALID_INPUT);
+        EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundles().size())
+        << "Container Started with invalid parameter!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartContainer_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -151,7 +189,7 @@ TEST_F(RCResourceContainerTest_btc, StartContainer_ESV_N)
  * @target void StopContainer(void)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- 2. Perform StartContainer() API
+ *                2. Perform StartContainer() API
  * @procedure Perform StopContainer() API
  * @post_condition None
  * @expected Container can stop container.
@@ -159,15 +197,75 @@ TEST_F(RCResourceContainerTest_btc, StartContainer_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StopContainer_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StopContainer_P" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        m_pContainer->stopContainer();
+        EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundles().size())
+        << "Container can't stopped!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StopContainer_P" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-27
+ * @see getInstance
+ * @see startContainer
+ * @objective Test 'StopContainer' function without start startContainer
+ * @target void StopContainer(void)
+ * @test_data ResourceContainerConfig
+ * @pre_condition Get container instance
+ * @procedure Perform StopContainer() API
+ * @post_condition None
+ * @expected Container can not stop container because container not started before.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, StopContainer_SQV_P)
+{
+    try
+    {
+        m_pContainer->stopContainer();
+        EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundles().size())
+        << "Container stopped without started before!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StopContainer_P" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-27
+ * @see getInstance
+ * @see startContainer
+ * @objective Test 'StopContainer' function that start startContainer with invalid parameter first
+ * @target void StopContainer(void)
+ * @test_data ResourceContainerConfig
+ * @pre_condition 1. Get container instance
+ *                2. Perform StartContainer() API
+ * @procedure Perform StopContainer() API
+ * @post_condition None
+ * @expected Container can not stop container.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, StopContainer_USV_N)
+{
+    try
+    {
+        m_pContainer->startContainer(INVALID_INPUT);
+        m_pContainer->stopContainer();
+        EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundles().size())
+        << "Container Stopped successfully but container started with invalid parameter!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StopContainer_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -179,7 +277,7 @@ TEST_F(RCResourceContainerTest_btc, StopContainer_SRC_P)
  * @target list<BundleInfo*> listBundles(void)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- 2. Perform StartContainer() API
+ *                2. Perform StartContainer() API
  * @procedure Perform listBundles() API
  * @post_condition Stop container
  * @expected Container provides list of bundles.
@@ -187,13 +285,42 @@ TEST_F(RCResourceContainerTest_btc, StopContainer_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, ListBundles_SRC_P)
 {
-	m_pContainer->startContainer(CONFIG_FILE);
+    m_pContainer->startContainer(CONFIG_FILE);
 
-	bundles = m_pContainer->listBundles();
+    g_bundles = m_pContainer->listBundles();
 
-	ASSERT_NE(zeroValue, bundles.size());
+    EXPECT_GT(g_bundles.size(), ZERO_VALUE) << "Bundle list found!";
 
-	m_pContainer->stopContainer();
+    m_pContainer->stopContainer();
+}
+#endif
+
+/**
+ * @since 2015-07-16
+ * @see getInstance
+ * @see startContainer
+ * @objective Test 'listBundles' function gives bundle list in positive way
+ * @target list<BundleInfo*> listBundles(void)
+ * @test_data ResourceContainerConfig
+ * @pre_condition 1. Get container instance
+ *                2. Perform StartContainer() API
+ * @procedure Perform listBundles() API
+ * @post_condition Stop container
+ * @expected Container provides list of bundles and verify with bundle ID, Path and version info.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, ListBMIBundles_SQV_P)
+{
+    m_pContainer->startContainer(CONFIG_FILE);
+
+    EXPECT_STREQ(BMI_BUNDLE_ID, (*m_pContainer->listBundles().begin())->getID().c_str())
+    << "BMI bundle id found!";
+    EXPECT_STREQ(BMI_BUNDLE_PATH, (*m_pContainer->listBundles().begin())->getPath().c_str())
+    << "BMI bundle path found!";
+    EXPECT_STREQ(BMI_BUNDLE_VERSION, (*m_pContainer->listBundles().begin())->getVersion().c_str())
+    << "BMI bundle version found!";
+
+    m_pContainer->stopContainer();
 }
 #endif
 
@@ -204,7 +331,7 @@ TEST_F(RCResourceContainerTest_btc, ListBundles_SRC_P)
  * @target list<BundleInfo*> listBundles(void)
  * @test_data None
  * @pre_condition 1. Get container instance
- * 				  2. start container
+ *                2. start container
  * @procedure Perform listBundles() API
  * @post_condition Stop container
  * @expected empty list of bundles.
@@ -212,13 +339,38 @@ TEST_F(RCResourceContainerTest_btc, ListBundles_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, ListBundles_ESV_N)
 {
-	m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+    m_pContainer->startContainer(CONFIG_EMPTY_FILE);
 
-	bundles = m_pContainer->listBundles();
+    g_bundles = m_pContainer->listBundles();
 
-	ASSERT_EQ(zeroValue, bundles.size());
+    EXPECT_EQ(ZERO_VALUE, g_bundles.size())<<"Bundle list id greater than zero!";
 
-	m_pContainer->stopContainer();
+    m_pContainer->stopContainer();
+}
+#endif
+
+/**
+ * @since 2016-07-26
+ * @see None
+ * @objective Test 'listBundles' function does not give bundle list in negative way
+ * @target list<BundleInfo*> listBundles(void)
+ * @test_data None
+ * @pre_condition 1. Get container instance
+ *                2. start container
+ * @procedure Perform listBundles() API
+ * @post_condition Stop container
+ * @expected empty list of bundles.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, ListBundles_USV_N)
+{
+    m_pContainer->startContainer(INVALID_INPUT);
+
+    g_bundles = m_pContainer->listBundles();
+
+    EXPECT_EQ(ZERO_VALUE, g_bundles.size())<<"Bundle size is greater than zero through container start with invalid parameter!";
+
+    m_pContainer->stopContainer();
 }
 #endif
 
@@ -226,10 +378,10 @@ TEST_F(RCResourceContainerTest_btc, ListBundles_ESV_N)
  * @since 2015-07-16
  * @see startContainer
  * @objective Test 'startBundle' function start bundle in positive way
- * @target void startBundle(string bundleId)
+ * @target void startBundle(string bundleID)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- 2. Perform StartContainer() API
+ *                2. Perform StartContainer() API
  * @procedure Perform startBundle() API
  * @post_condition Stop container
  * @expected Container can start bundle.
@@ -237,20 +389,22 @@ TEST_F(RCResourceContainerTest_btc, ListBundles_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StartBundle_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
 
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
 
-		m_pContainer->startBundle(btcBundleInfo->getID());
+        m_pContainer->startBundle(g_bundleInfo->getID());
 
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StartBundle_P" + std::string(e.what()));
-	}
+        EXPECT_GT(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT greater than zero!";
+
+        m_pContainer->stopContainer();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartBundle_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -259,7 +413,7 @@ TEST_F(RCResourceContainerTest_btc, StartBundle_SRC_P)
  * @see get instance
  * @see startContainer
  * @objective Test 'startBundle' function start bundle without start container
- * @target void startBundle(string bundleId)
+ * @target void startBundle(string bundleID)
  * @test_data None
  * @pre_condition Get container instance
  * @procedure Perform startBundle() API
@@ -269,14 +423,42 @@ TEST_F(RCResourceContainerTest_btc, StartBundle_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StartBundle_ESV_N)
 {
-	try
-	{
-		m_pContainer->startBundle(emptyString);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StartBundle_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startBundle(EMPTY_STRING);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartBundle_N" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2015-07-16
+ * @see get instance
+ * @see startContainer
+ * @objective Test 'startBundle' with invalid input
+ * @target void startBundle(string bundleID)
+ * @test_data None
+ * @pre_condition Get container instance
+ * @procedure Perform startBundle() API
+ * @post_condition None
+ * @expected No crash occurs
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, StartBundle_USV_N)
+{
+    try
+    {
+        m_pContainer->startBundle(INVALID_INPUT);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartBundle_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -285,11 +467,11 @@ TEST_F(RCResourceContainerTest_btc, StartBundle_ESV_N)
  * @see startContainer
  * @see startBundle
  * @objective Test 'stopBundle' function stop bundle in positive way
- * @target void stopBundle(string bundleId)
+ * @target void stopBundle(string bundleID)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- 2. Perform StartContainer() API
- 3. Get bundle list
+ *                2. Perform StartContainer() API
+ *                3. Get bundle list
  * @procedure Perform stopBundle() API
  * @post_condition StopContainer
  * @expected Container can stop bundle
@@ -297,21 +479,22 @@ TEST_F(RCResourceContainerTest_btc, StartBundle_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StopBundle_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
 
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
 
-		m_pContainer->startBundle(btcBundleInfo->getID());
-		m_pContainer->stopBundle(btcBundleInfo->getID());
+        m_pContainer->startBundle(g_bundleInfo->getID());
+        m_pContainer->stopBundle(g_bundleInfo->getID());
+        m_pContainer->stopContainer();
 
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StartBundle_P" + std::string(e.what()));
-	}
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartBundle_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -319,7 +502,7 @@ TEST_F(RCResourceContainerTest_btc, StopBundle_SRC_P)
  * @since 2015-07-16
  * @see None
  * @objective Test 'stopBundle' function does not stop bundle without start bundle
- * @target void stopBundle(string bundleId)
+ * @target void stopBundle(string bundleID)
  * @test_data None
  * @pre_condition Get container instance
  * @procedure Perform stopBundle() API
@@ -329,14 +512,41 @@ TEST_F(RCResourceContainerTest_btc, StopBundle_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StopBundle_ESV_N)
 {
-	try
-	{
-		m_pContainer->stopBundle(emptyString);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StartBundle_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->stopBundle(EMPTY_STRING);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartBundle_N" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2015-07-16
+ * @see None
+ * @objective Test 'stopBundle' function with invalid input
+ * @target void stopBundle(string bundleID)
+ * @test_data None
+ * @pre_condition Get container instance
+ * @procedure Perform stopBundle() API
+ * @post_condition None
+ * @expected stop bundle can't stop bundle
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, StopBundle_USV_N)
+{
+    try
+    {
+        m_pContainer->stopBundle(INVALID_INPUT);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartBundle_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -344,7 +554,7 @@ TEST_F(RCResourceContainerTest_btc, StopBundle_ESV_N)
  * @since 2015-07-16
  * @see Get container instance
  * @objective Test 'addBundle' function add bundle data to RCResourceConfig.xml file in positive way
- * @target void addBundle(string bundleId, string bundleUri, string bundlePath, std::map<string, string> btcParams)
+ * @target void addBundle(string bundleID, string bundleUri, string bundlePath, std::map<string, string> btcParams)
  * @test_data Bundle information
  * @pre_condition Get container instance
  * @procedure Perform addBundle() API
@@ -354,16 +564,20 @@ TEST_F(RCResourceContainerTest_btc, StopBundle_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, AddBundle_SRC_P)
 {
-	try
-	{
-		btcParams.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+    try
+    {
+        g_bundles = m_pContainer->listBundles();
 
-		m_pContainer->addBundle(BUNDLE_NAME, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, btcParams);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside AddBundle_P" + std::string(e.what()));
-	}
+        g_params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+
+        m_pContainer->addBundle(BUNDLE_NAME, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, g_params);
+
+        EXPECT_GT(m_pContainer->listBundles().size(), g_bundles.size())<<"New bundle is not added!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside AddBundle_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -371,7 +585,7 @@ TEST_F(RCResourceContainerTest_btc, AddBundle_SRC_P)
  * @since 2015-07-16
  * @see None
  * @objective Test 'addBundle' function does not add bundle without data but not crash
- * @target void addBundle(string bundleId, string bundleUri, string bundlePath, std::map<string, string> params)
+ * @target void addBundle(string bundleID, string bundleUri, string bundlePath, std::map<string, string> params)
  * @test_data None
  * @pre_condition Get container instance
  * @procedure Perform addBundle() API
@@ -379,16 +593,44 @@ TEST_F(RCResourceContainerTest_btc, AddBundle_SRC_P)
  * @expected No crash occurs
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceContainerTest_btc, AddBundle_SRC_N)
+TEST_F(RCResourceContainerTest_btc, AddBundle_ESV_N)
 {
-	try
-	{
-		m_pContainer->addBundle( emptyString, emptyString, emptyString, emptyString, btcParams);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside AddBundle_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->addBundle( EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, g_params);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside AddBundle_N" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2015-07-16
+ * @see None
+ * @objective Test 'addBundle' function does not add bundle without data but not crash
+ * @target void addBundle(string bundleID, string bundleUri, string bundlePath, std::map<string, string> params)
+ * @test_data None
+ * @pre_condition Get container instance
+ * @procedure Perform addBundle() API
+ * @post_condition None
+ * @expected No crash occurs
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, AddBundle_USV_N)
+{
+    try
+    {
+        m_pContainer->addBundle( INVALID_INPUT, INVALID_INPUT, INVALID_INPUT, INVALID_INPUT,
+                g_params);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle size is NOT zero!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside AddBundle_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -396,10 +638,10 @@ TEST_F(RCResourceContainerTest_btc, AddBundle_SRC_N)
  * @since 2015-07-16
  * @see addBundle
  * @objective Test 'removeBundle' function remove bundle in positive way
- * @target void removeBundle(string bundleId)
+ * @target void removeBundle(string bundleID)
  * @test_data None
  * @pre_condition 1. Get container instance
- 2. Add bundle
+ *                2. Add bundle
  * @procedure Perform removeBundle() API
  * @post_condition None
  * @expected Container can remove bundle
@@ -407,18 +649,24 @@ TEST_F(RCResourceContainerTest_btc, AddBundle_SRC_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, RemoveBundle_SRC_P)
 {
-	try
-	{
-		btcParams.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+    try
+    {
+        g_bundles = m_pContainer->listBundles();
 
-		m_pContainer->addBundle(BUNDLE_NAME, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, btcParams);
+        g_params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
 
-		m_pContainer->removeBundle(BUNDLE_NAME);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside RemoveBundle_P" + std::string(e.what()));
-	}
+        m_pContainer->addBundle(BUNDLE_NAME, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, g_params);
+
+        EXPECT_GT(m_pContainer->listBundles().size(), g_bundles.size())<<"New bundle is not added!";
+
+        m_pContainer->removeBundle(BUNDLE_NAME);
+
+        EXPECT_EQ(m_pContainer->listBundles().size(), g_bundles.size())<<"Bundle is not removed!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside RemoveBundle_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -426,7 +674,7 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_SRC_P)
  * @since 2015-07-16
  * @see None
  * @objective Test 'removeBundle' function does not remove bundle without add bundle
- * @target void removeBundle(string bundleId)
+ * @target void removeBundle(string bundleID)
  * @test_data None
  * @pre_condition Get container instance
  * @procedure Perform removeBundle() API
@@ -436,14 +684,41 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, RemoveBundle_ESV_N)
 {
-	try
-	{
-		m_pContainer->removeBundle(emptyString);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside RemoveBundle_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->removeBundle(EMPTY_STRING);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle is removed without bundleID!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside RemoveBundle_N" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2015-07-16
+ * @see None
+ * @objective Test 'removeBundle' function with invalid input
+ * @target void removeBundle(string bundleID)
+ * @test_data None
+ * @pre_condition Get container instance
+ * @procedure Perform removeBundle() API
+ * @post_condition None
+ * @expected remove bundle should not crash occurs
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, RemoveBundle_USV_N)
+{
+    try
+    {
+        m_pContainer->removeBundle(INVALID_INPUT);
+        EXPECT_EQ(m_pContainer->listBundles().size(), ZERO_VALUE)<<"Bundle is removed with invalid bundleID!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside RemoveBundle_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -451,7 +726,7 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_ESV_N)
  * @since 2015-07-16
  * @see None
  * @objective Test 'addResourceConfig' function add resource in positive way
- * @target void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params)
+ * @target void addResourceConfig(string bundleID, string resourceUri, std::map<string, string> params)
  * @test_data Bundle information
  * @pre_condition Get container instance
  * @procedure Perform addResourceConfig() API
@@ -461,16 +736,20 @@ TEST_F(RCResourceContainerTest_btc, RemoveBundle_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, AddResourceConfig_SRC_P)
 {
-	try
-	{
-		btcParams.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        g_params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
 
-		m_pContainer->addResourceConfig(BUNDLE_NAME, BUNDLE_URL, btcParams);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside AddResourceConfig_P" + std::string(e.what()));
-	}
+        m_pContainer->addResourceConfig(BUNDLE_NAME, BUNDLE_URL, g_params);
+
+        EXPECT_GT(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), ZERO_VALUE)
+        << "Resource Config is not added!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside AddResourceConfig_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -478,9 +757,9 @@ TEST_F(RCResourceContainerTest_btc, AddResourceConfig_SRC_P)
  * @since 2015-07-16
  * @see None
  * @objective Test 'addResourceConfig' function does not add resource in a empty string
- * @target void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params)
+ * @target void addResourceConfig(string bundleID, string resourceUri, std::map<string, string> params)
  * @test_data None
- * @pre_condition 1. Get container instance
+ * @pre_condition Get container instance
  * @procedure Perform addResourceConfig() API
  * @post_condition None
  * @expected No crash occurs
@@ -488,14 +767,53 @@ TEST_F(RCResourceContainerTest_btc, AddResourceConfig_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, AddResourceConfig_ESV_N)
 {
-	try
-	{
-		m_pContainer->addResourceConfig(emptyString, emptyString, btcParams);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside AddResourceConfig_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+
+        nValue = m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size();
+
+        m_pContainer->addResourceConfig(EMPTY_STRING, EMPTY_STRING, g_params);
+
+        EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
+                << "Resource Config is added with empty string!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside AddResourceConfig_N" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2015-07-16
+ * @see None
+ * @objective Test 'addResourceConfig' function does not add resource in a invalid input
+ * @target void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params)
+ * @test_data None
+ * @pre_condition Get container instance
+ * @procedure Perform addResourceConfig() API
+ * @post_condition None
+ * @expected No crash occurs
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, AddResourceConfig_USV_N)
+{
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+
+        nValue = m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size();
+
+        m_pContainer->addResourceConfig(INVALID_INPUT, INVALID_INPUT, g_params);
+
+        EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
+                << "Resource Config is added with invalid input!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside AddResourceConfig_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -506,7 +824,7 @@ TEST_F(RCResourceContainerTest_btc, AddResourceConfig_ESV_N)
  * @target void removeResourceConfig(string bundleId)
  * @test_data None
  * @pre_condition 1. Get container instance
- 2. Add resource
+ *                2. Add resource
  * @procedure Perform removeResourceConfig() API
  * @post_condition None
  * @expected Container can remove resource in resourceConfig
@@ -514,18 +832,26 @@ TEST_F(RCResourceContainerTest_btc, AddResourceConfig_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_SRC_P)
 {
-	try
-	{
-		btcParams.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
 
-		m_pContainer->addResourceConfig(BUNDLE_NAME, BUNDLE_URL, btcParams);
+        nValue =
+                m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size();
 
-		m_pContainer->removeResourceConfig(BUNDLE_NAME, BUNDLE_URL);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside RemoveResourceConfig_P" + std::string(e.what()));
-	}
+        g_params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+
+        m_pContainer->addResourceConfig(BUNDLE_NAME, BUNDLE_URL, g_params);
+
+        m_pContainer->removeResourceConfig(BUNDLE_NAME, BUNDLE_URL);
+
+        EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
+                << "Remove resourceConfig does not work that's why before addResourceConfig list bundle size and after addResourceConfig then removeResourceConfig list bundle size is Not equal!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside RemoveResourceConfig_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -535,7 +861,7 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_SRC_P)
  * @objective Test 'removeResourceConfig' function does not remove resource with empty string
  * @target void removeResourceConfig(string bundleId)
  * @test_data None
- * @pre_condition 1. Get container instance
+ * @pre_condition Get container instance
  * @procedure Perform removeResourceConfig() API
  * @post_condition None
  * @expected No crash occurs
@@ -543,14 +869,55 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_ESV_N)
 {
-	try
-	{
-		m_pContainer->removeResourceConfig(emptyString, emptyString);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside RemoveResourceConfig_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+
+        nValue =
+                m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size();
+
+        m_pContainer->removeResourceConfig(EMPTY_STRING, EMPTY_STRING);
+
+        EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
+                        << "Remove resourceConfig with empty string!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside RemoveResourceConfig_N" + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-07-26
+ * @see None
+ * @objective Test 'removeResourceConfig' function does not remove resource with invalid input
+ * @target void removeResourceConfig(string bundleId)
+ * @test_data None
+ * @pre_condition Get container instance
+ * @procedure Perform removeResourceConfig() API
+ * @post_condition None
+ * @expected No crash occurs
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_USV_N)
+{
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+
+                nValue =
+                        m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size();
+
+        m_pContainer->removeResourceConfig(INVALID_INPUT, INVALID_INPUT);
+
+        EXPECT_EQ(m_pContainer->listBundleResources((*m_pContainer->listBundles().begin())->getID()).size(), nValue)
+                                << "Remove resourceConfig with Invalid parameter!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside RemoveResourceConfig_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -561,7 +928,7 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_ESV_N)
  * @target list<string> listBundleResources(void)
  * @test_data None
  * @pre_condition 1. Get container instance
- 2. Start container
+ *                2. Start container
  * @procedure Perform listBundleResources() API
  * @post_condition StopContainer
  * @expected Container can remove resource in resourceConfig
@@ -569,14 +936,13 @@ TEST_F(RCResourceContainerTest_btc, RemoveResourceConfig_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, ListBundleResources_SRC_P)
 {
-	m_pContainer->startContainer(CONFIG_FILE);
+    m_pContainer->startContainer(CONFIG_FILE);
 
-	btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
-	btcBundleID = btcBundleInfo->getID();
-
-	ASSERT_EQ(zeroValue, m_pContainer->listBundleResources(btcBundleID).size());
-
-	m_pContainer->stopContainer();
+    g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
+    s_bundleID = g_bundleInfo->getID();
+    EXPECT_GT(m_pContainer->listBundleResources(s_bundleID).size(), ZERO_VALUE)
+    << "list bundle resource not found!";
+    m_pContainer->stopContainer();
 }
 #endif
 
@@ -587,18 +953,18 @@ TEST_F(RCResourceContainerTest_btc, ListBundleResources_SRC_P)
  * @target list<string> listBundleResources(void)
  * @test_data None
  * @pre_condition Get container instance
- * @procedure Perform listBundleResources() APIASSERT_NE(zeroValue, container->listBundleResources(bundleID).size());
+ * @procedure Perform listBundleResources() API zero value;
  * @post_condition StopContainer
  * @expected No crash occurs
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N01)
 {
-	m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+    m_pContainer->startContainer(CONFIG_EMPTY_FILE);
 
-	ASSERT_EQ(zeroValue, m_pContainer->listBundleResources(btcBundleID).size());
+    EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundleResources(s_bundleID).size())<<"list bundle resource found without start container!";
 
-	m_pContainer->stopContainer();
+    m_pContainer->stopContainer();
 }
 #endif
 
@@ -610,7 +976,7 @@ TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N01)
  * @objective Test 'getID' function provides bundleID in positive way
  * @target string getID(void)
  * @test_data 1. ResourceContainerConfig
- * 			  2. Bundle name
+ *            2. Bundle name
  * @pre_condition set valid bundle name using setID API.
  * @procedure Perform getID() API
  * @post_condition StopContainer
@@ -619,20 +985,20 @@ TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N01)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, GetBundleID_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
 
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
 
-		ASSERT_EQ(zeroValue, btcBundleInfo->getID().size());
+        EXPECT_GT(g_bundleInfo->getID().size(), ZERO_VALUE)<<"bundle ID not found!";
 
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside GetBundleID_P" + std::string(e.what()));
-	}
+        m_pContainer->stopContainer();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside GetBundleID_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -640,7 +1006,7 @@ TEST_F(RCResourceContainerTest_btc, GetBundleID_SRC_P)
  * @since 2015-07-16
  * @see startContainer
  * @see listBundles
- * @objective Test 'getID' function does not provide bundle ID with start startContainer with empty config file
+ * @objective Test 'getID' function provide BMI bundle ID
  * @target string getID(void)
  * @test_data None
  * @pre_condition None
@@ -649,22 +1015,18 @@ TEST_F(RCResourceContainerTest_btc, GetBundleID_SRC_P)
  * @expected No crash occurs
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceContainerTest_btc, GetBundleID_N)
+TEST_F(RCResourceContainerTest_btc, GetBMIBundleID_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
-
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
-
-		btcBundleInfo->getID();
-
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside GetBundleID_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
+        EXPECT_EQ(BMI_BUNDLE_ID,g_bundleInfo->getID());
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside GetBundleID_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -683,19 +1045,19 @@ TEST_F(RCResourceContainerTest_btc, GetBundleID_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, GetBundlePath_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
 
-		ASSERT_EQ(zeroValue, btcBundleInfo->getPath().size());
+        EXPECT_GT(g_bundleInfo->getPath().size(), ZERO_VALUE)<<"bundle path not found!";
 
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside GetBundlePath_P" + std::string(e.what()));
-	}
+        m_pContainer->stopContainer();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside GetBundlePath_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -703,7 +1065,7 @@ TEST_F(RCResourceContainerTest_btc, GetBundlePath_SRC_P)
  * @since 2015-07-16
  * @see startContainer
  * @see listBundles
- * @objective Test 'getPath' function does not provide bundle path without start startContainer with empty config file 
+ * @objective Test 'getPath' function provide BMI bundle path
  * @target string getPath(void)
  * @test_data None
  * @pre_condition None
@@ -712,21 +1074,19 @@ TEST_F(RCResourceContainerTest_btc, GetBundlePath_SRC_P)
  * @expected No crash occurs
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceContainerTest_btc, GetBundlePath_N)
+TEST_F(RCResourceContainerTest_btc, GetBMIBundlePath_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
+        EXPECT_EQ(BMI_BUNDLE_PATH,g_bundleInfo->getPath());
 
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
-		btcBundleInfo->getPath();
-
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside GetBundlePath_N" + std::string(e.what()));
-	}
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside GetBundlePath_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -745,19 +1105,19 @@ TEST_F(RCResourceContainerTest_btc, GetBundlePath_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, GetBundleVersion_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
 
-		ASSERT_EQ(zeroValue, btcBundleInfo->getVersion().size());
+        EXPECT_GT(g_bundleInfo->getVersion().size(), ZERO_VALUE)<<"bundle version not found!";
 
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside GetBundleVersion_P" + std::string(e.what()));
-	}
+        m_pContainer->stopContainer();
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside GetBundleVersion_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -765,7 +1125,7 @@ TEST_F(RCResourceContainerTest_btc, GetBundleVersion_SRC_P)
  * @since 2015-07-16
  * @see startContainer
  * @see listBundles
- * @objective Test 'getVersion' function  does not provide bundle versio without start startContainer in a data config file
+ * @objective Test 'getVersion' function provide BMI bundle versio
  * @target string getVersion()
  * @test_data None
  * @pre_condition None
@@ -774,22 +1134,20 @@ TEST_F(RCResourceContainerTest_btc, GetBundleVersion_SRC_P)
  * @expected No crash occurs
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceContainerTest_btc, GetBundleVersion_N)
+TEST_F(RCResourceContainerTest_btc, GetBMIBundleVersion_SRC_P)
 {
-	try
-	{
-		m_pContainer->startContainer(CONFIG_FILE);
+    try
+    {
+        m_pContainer->startContainer(CONFIG_FILE);
+        g_bundleInfo = std::move(*m_pContainer->listBundles().begin());
 
-		btcBundleInfo = std::move(*m_pContainer->listBundles().begin());
+        EXPECT_EQ(BMI_BUNDLE_VERSION,g_bundleInfo->getVersion());
 
-		btcBundleInfo->getVersion();
-
-		m_pContainer->stopContainer();
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside GetBundleVersion_N" + std::string(e.what()));
-	}
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside GetBundleVersion_N" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -807,14 +1165,16 @@ TEST_F(RCResourceContainerTest_btc, GetBundleVersion_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, StartContainer_RSV_P)
 {
-	try
-	{
-		m_pContainer->startContainer(config_file_address);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside StartContainer_P" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->startContainer(g_config_file_address);
+        EXPECT_GT(m_pContainer->listBundles().size(), ZERO_VALUE)
+                << "Container is Not started !";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside StartContainer_P" + std::string(e.what()));
+    }
 }
 #endif
 
@@ -832,13 +1192,16 @@ TEST_F(RCResourceContainerTest_btc, StartContainer_RSV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N02)
 {
-	try
-	{
-		m_pContainer->listBundleResources(emptyString);
-	}
-	catch (exception& e)
-	{
-		SET_FAILURE("Exception occurred inside ListBundleResources_ESV_N" + std::string(e.what()));
-	}
+    try
+    {
+        m_pContainer->listBundleResources(EMPTY_STRING);
+        EXPECT_EQ(ZERO_VALUE, m_pContainer->listBundleResources(s_bundleID).size())
+                << "list bundle resource found without start container!";
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred inside ListBundleResources_ESV_N" + std::string(e.what()));
+    }
 }
 #endif
+

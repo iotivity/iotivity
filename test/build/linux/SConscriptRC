@@ -163,7 +163,7 @@ RC_LIB_LOCATION = [COMMON_LIB_LOCATION, JAVA_LIB]
 
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 uuid gcov')
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
 
 RC_STATIC_LIBS = [RC_LIB + '/librcs_client.a', RC_LIB + '/librcs_common.a', RC_LIB + '/librcs_container.a', RC_LIB + '/librcs_server.a', RC_LIB + '/libocsrm.a']
 RC_STATIC_RESOURCE_LIBS = []
