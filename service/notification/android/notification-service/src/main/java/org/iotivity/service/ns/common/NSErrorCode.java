@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.ns.consumer;
+package org.iotivity.service.ns.common;
 
-public enum NSErrorCode {
+public enum NSErrorCode
+{
     OK("OK", ""),
     ERROR("ERROR", ""),
     SUCCESS("SUCCESS", ""),
@@ -34,30 +35,37 @@ public enum NSErrorCode {
     private String error;
     private String description;
 
-    private NSErrorCode(String error, String description) {
-        this.error = error;
-        this.description = description;
-    }
+    private NSErrorCode(String error, String description)
+{
+    this.error = error;
+    this.description = description;
+}
 
-    public String getError() {
-        return error;
-    }
+public String getError()
+{
+    return error;
+}
 
-    public String getDescription() {
-        return description;
-    }
+public String getDescription()
+{
+    return description;
+}
 
-    public static NSErrorCode get(String errorCode) {
-        for (NSErrorCode eCode : NSErrorCode.values()) {
-            if (eCode.getError().equals(errorCode)) {
-                return eCode;
-            }
+public static NSErrorCode get(String errorCode)
+{
+    for (NSErrorCode eCode : NSErrorCode.values())
+    {
+        if (eCode.getError().equals(errorCode))
+        {
+            return eCode;
         }
-        throw new IllegalArgumentException("Unexpected NSErrorCode value");
     }
+    throw new IllegalArgumentException("Unexpected NSErrorCode value");
+}
 
-    @Override
-    public String toString() {
-        return error + (description.isEmpty() ? "" : " : " + description);
-    }
+@Override
+public String toString()
+{
+    return error + (description.isEmpty() ? "" : " : " + description);
+}
 }

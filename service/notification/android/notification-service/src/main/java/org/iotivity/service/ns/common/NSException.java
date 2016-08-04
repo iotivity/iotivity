@@ -18,30 +18,34 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.ns.consumer;
+package org.iotivity.service.ns.common;
 
-public class NSException extends Exception {
-
+public class NSException extends Exception
+{
     private NSErrorCode errorCode;
 
-    public NSException(NSErrorCode errorCode, String errMessage) {
+    public NSException(NSErrorCode errorCode, String errMessage)
+    {
         super(errMessage + " " + errorCode.toString());
         this.errorCode = errorCode;
     }
 
-    private NSException(String error, String errMessage) {
+    private NSException(String error, String errMessage)
+    {
         super(errMessage + " " + error);
         this.errorCode = NSErrorCode.get(error);
     }
 
-    public NSErrorCode getErrorCode() {
+    public NSErrorCode getErrorCode()
+    {
         return errorCode;
     }
 
     private static void addStackTrace(Throwable throwable,
                                       String file,
                                       String functionName,
-                                      int line) {
+                                      int line)
+    {
         StackTraceElement[] stack = throwable.getStackTrace();
         StackTraceElement[] newStack = new StackTraceElement[stack.length + 1];
 
@@ -50,8 +54,8 @@ public class NSException extends Exception {
         throwable.setStackTrace(newStack);
     }
 
-    private void setNativeExceptionLocation(String file, String functionName, int line) {
+    private void setNativeExceptionLocation(String file, String functionName, int line)
+    {
         NSException.addStackTrace(this, file, functionName, line);
     }
-
 }

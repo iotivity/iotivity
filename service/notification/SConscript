@@ -68,7 +68,6 @@ if target_os == 'linux':
 if target_os == 'android':
 	notification_env.AppendUnique(CCFLAGS = ['-frtti', '-fexceptions'])
 	notification_env.AppendUnique(LIBS = ['gnustl_shared','log'])
-	notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider.so'])
 
 	if not env.get('RELEASE'):
 		notification_env.AppendUnique(LIBS = ['log'])
@@ -121,5 +120,5 @@ SConscript('examples/SConscript')
 if target_os == 'android':
     SConscript('android/SConscript')
 
- # Go to build c++ wrapper
+# Go to build c++ wrapper
 SConscript('cpp-wrapper/SConscript')

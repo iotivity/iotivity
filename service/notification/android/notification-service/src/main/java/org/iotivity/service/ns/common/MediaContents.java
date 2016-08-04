@@ -18,36 +18,33 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package org.iotivity.service.ns.consumer;
+package org.iotivity.service.ns.common;
 
 import android.util.Log;
 
-public class NSSyncInfo {
+/**
+  * @class   MediaContents
+  * @brief   This class provides implementation of Notification MediaContents object.
+  */
+public class MediaContents
+{
+    private static final String LOG_TAG = "NotificationService_MediaContents";
 
-    private static final String LOG_TAG = "ConsumerService_NSSyncInfo";
+    public String mIconImage = null;
 
-    long messageId              = 0;
-    String providerId           = null;
-    int state                   = 0;
-
-    public NSSyncInfo(long messageId, String providerId, int state) {
-
-        Log.i (LOG_TAG, "NSSyncInfo()");
-
-        this.messageId = messageId;
-        this.providerId = providerId;
-        this.state = state;
+    public MediaContents(String iconImage)
+    {
+        Log.i (LOG_TAG, "MediaContents()");
+        mIconImage = iconImage;
     }
 
-    public long getMessageId() {
-        return messageId;
+    public String getIconImage()
+    {
+        return mIconImage;
     }
 
-    public String getProviderId() {
-        return providerId;
-    }
-
-    public int getState() {
-        return state;
+    public void setIconImage(String iconImage)
+    {
+        mIconImage = iconImage;
     }
 }

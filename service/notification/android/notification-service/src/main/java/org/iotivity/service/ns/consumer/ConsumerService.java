@@ -21,41 +21,90 @@
 package org.iotivity.service.ns.consumer;
 
 import android.util.Log;
+import org.iotivity.service.ns.common.*;
 
-public class ConsumerService {
-
+/**
+  * @class   ConsumerService
+  * @brief   This class provides a set of Java APIs for Notification Consumer.
+  */
+public class ConsumerService
+{
     private static final String LOG_TAG = "ConsumerService";
 
-    static {
+    static
+    {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("oc_logger");
+        System.loadLibrary("connectivity_abstraction");
+        System.loadLibrary("ca-interface");
+        System.loadLibrary("octbstack");
+        System.loadLibrary("oc");
+        System.loadLibrary("ocstack-jni");
+        System.loadLibrary("notification_consumer");
+        System.loadLibrary("notification_consumer_wrapper");
         System.loadLibrary("notification_consumer_jni");
     }
 
-    public ConsumerService() {
+    private static ConsumerService instance;
+    static
+    {
+        instance = new ConsumerService();
+    }
+    public static ConsumerService getInstance()
+    {
+        return instance;
+    }
+
+    public ConsumerService()
+    {
         Log.i (LOG_TAG, "ConsumerService()");
     }
 
-    public native void Start (
-            OnProviderDiscoveredListner onProviderDiscoveredListner,
-            OnSubscriptionAcceptedListener onSubscriptionAcceptedListener
-            ) throws NSException;
-    public native void Stop () throws NSException;
-    public native void RescanProvider() throws NSException;
-    public native NSProvider GetProvider(String providerId) throws NSException;
-
-    public interface OnProviderDiscoveredListner {
-        public void onProviderDiscovered(NSProvider provider);
+    public void Start(
+        OnProviderDiscoveredListner onProviderDiscoveredListner,
+        OnSubscriptionAcceptedListener onSubscriptionAcceptedListener
+    ) throws NSException
+    {
+        nativeStart(onProviderDiscoveredListner, onSubscriptionAcceptedListener);
     }
 
-    public interface OnSubscriptionAcceptedListener {
-        public void onSubscriptionAccepted(NSProvider provider);
+    public void Stop() throws NSException
+    {
+        nativeStop();
     }
 
-    public interface OnMessageReceivedListner {
-        public void onMessageReceived(NSMessage message);
+    public void EnableRemoteService(String serverAddress) throws NSException
+    {
+        nativeEnableRemoteService(serverAddress);
     }
 
-    public interface OnSyncInfoReceivedListner {
-        public void onSyncInfoReceived(NSSyncInfo sync);
+    public void RescanProvider() throws NSException
+    {
+        nativeRescanProvider();
     }
+
+    public Provider GetProvider(String providerId) throws NSException
+    {
+        return nativeGetProvider(providerId);
+    }
+
+    public interface OnProviderDiscoveredListner
+    {
+        public void onProviderDiscovered(Provider provider);
+    }
+
+    public interface OnSubscriptionAcceptedListener
+    {
+        public void onSubscriptionAccepted(Provider provider);
+    }
+
+    private native void nativeStart (
+        OnProviderDiscoveredListner onProviderDiscoveredListner,
+        OnSubscriptionAcceptedListener onSubscriptionAcceptedListener
+    ) throws NSException;
+
+    private native void nativeStop() throws NSException;
+    private native void nativeEnableRemoteService(String serverAddress) throws NSException;
+    private native void nativeRescanProvider() throws NSException;
+    private native Provider nativeGetProvider(String providerId) throws NSException;
 }
-
