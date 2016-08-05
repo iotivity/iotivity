@@ -1206,6 +1206,7 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
 
     char *secure = (endpoint->flags & CA_SECURE) ? "secure " : "";
 
+    (void)secure; // eliminates unused-variable waring when built in release mode
     (void)cast;  // eliminates release warning
     (void)fam;
 

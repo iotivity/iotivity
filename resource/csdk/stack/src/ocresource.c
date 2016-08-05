@@ -342,8 +342,8 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
         securePort = devAddr->port;
     }
 
-    uint16_t tcpPort = 0;
 #ifdef TCP_ADAPTER
+    uint16_t tcpPort = 0;
     if (GetTCPPortInfo(devAddr, &tcpPort) != OC_STACK_OK)
     {
         tcpPort = 0;

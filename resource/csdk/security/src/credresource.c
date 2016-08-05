@@ -1382,6 +1382,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
          * list and updating svr database.
          */
         ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
+        OC_UNUSED(previousMsgId);
 #endif//__WITH_DTLS__
     }
 
