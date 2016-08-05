@@ -185,8 +185,11 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     cborFindResult = cbor_value_map_find_value(&crlCbor, OIC_CBOR_CRL_ID, &crlMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&crlMap))
     {
-        cborFindResult = cbor_value_get_int(&crlMap, (int *) &crl->CrlId);
+        int CrlId;
+
+        cborFindResult = cbor_value_get_int(&crlMap, &CrlId);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CrlId.");
+        crl->CrlId = (uint16_t)CrlId;
     }
 
     cborFindResult = cbor_value_map_find_value(&crlCbor, OIC_CBOR_CRL_THIS_UPDATE, &crlMap);

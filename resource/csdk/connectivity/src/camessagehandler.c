@@ -455,7 +455,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
     OIC_LOG(DEBUG, TAG, "pdu to send :");
     OIC_LOG_BUFFER(DEBUG, TAG,  (uint8_t*)pdu->hdr, pdu->length);
 
-    res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
+    res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length, data->dataType);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
@@ -552,7 +552,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 #endif // WITH_BWT
             CALogPDUInfo(pdu, data->remoteEndpoint);
 
-            res = CASendUnicastData(data->remoteEndpoint, pdu->hdr, pdu->length);
+            OIC_LOG_V(INFO, TAG, "CASendUnicastData type : %d", data->dataType);
+            res = CASendUnicastData(data->remoteEndpoint, pdu->hdr, pdu->length, data->dataType);
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
@@ -574,7 +575,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 #endif
             {
                 // for retransmission
-                res = CARetransmissionSentData(&g_retransmissionContext, data->remoteEndpoint,
+                res = CARetransmissionSentData(&g_retransmissionContext,
+                                               data->remoteEndpoint,
+                                               data->dataType,
                                                pdu->hdr, pdu->length);
                 if ((CA_STATUS_OK != res) && (CA_NOT_SUPPORTED != res))
                 {
@@ -883,7 +886,7 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         cadata->type = request->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
         cadata->requestInfo =  request;
     }
-    else if (CA_RESPONSE_DATA == dataType)
+    else if (CA_RESPONSE_DATA == dataType || CA_RESPONSE_FOR_RES == dataType)
     {
         // clone response info
         CAResponseInfo_t *response = CACloneResponseInfo((CAResponseInfo_t *)sendData);

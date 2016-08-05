@@ -82,6 +82,7 @@ typedef struct
 #endif
     uint8_t triedCount;                 /**< retransmission count */
     uint16_t messageId;                 /**< coap PDU message id */
+    CADataType_t dataType;              /**< data Type (Request/Response) */
     CAEndpoint_t *endpoint;             /**< remote endpoint */
     void *pdu;                          /**< coap PDU */
     uint32_t size;                      /**< coap PDU size */
@@ -196,7 +197,8 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
             {
                 OIC_LOG_V(DEBUG, TAG, "retransmission CON data!!, msgid=%d",
                           retData->messageId);
-                context->dataSendMethod(retData->endpoint, retData->pdu, retData->size);
+                context->dataSendMethod(retData->endpoint, retData->pdu,
+                                        retData->size, retData->dataType);
             }
 
             // #3. increase the retransmission count and update timestamp.
@@ -358,6 +360,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
 
 CAResult_t CARetransmissionSentData(CARetransmission_t *context,
                                     const CAEndpoint_t *endpoint,
+                                    CADataType_t dataType,
                                     const void *pdu, uint32_t size)
 {
     if (NULL == context || NULL == endpoint || NULL == pdu)
@@ -425,6 +428,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     retData->endpoint = remoteEndpoint;
     retData->pdu = pduData;
     retData->size = size;
+    retData->dataType = dataType;
 #ifndef SINGLE_THREAD
     // mutex lock
     ca_mutex_lock(context->threadMutex);

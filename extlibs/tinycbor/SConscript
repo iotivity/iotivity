@@ -37,6 +37,7 @@ if not os.path.exists(cborDir):
 
 cbor_src = [
     os.path.join(cborDir,'src/cborparser.c'),
+    os.path.join(cborDir,'src/cborparser_dup_string.c'),
     os.path.join(cborDir,'src/cborencoder.c'),
     os.path.join(cborDir,'src/cborerrorstrings.c'),
     ]

@@ -29,8 +29,9 @@ lib_env = thread_env.Clone()
 SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 oclib_env = lib_env.Clone()
-secured = lib_env.get('SECURED')
+secured = oclib_env.get('SECURED')
 target_os = oclib_env.get('TARGET_OS')
+with_cloud = oclib_env.get('WITH_CLOUD')
 
 ######################################################################
 # Build flags
@@ -77,7 +78,7 @@ if target_os in ['msys_nt', 'windows']:
 	if secured == '1':
 		oclib_env.AppendUnique(LIBS=['tinydtls'])
 
-if oclib_env.get('WITH_CLOUD'):
+if with_cloud:
 	oclib_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
 
 if 'CLIENT' in oclib_env.get('RD_MODE'):
@@ -101,6 +102,9 @@ oclib_src = [
 		'CAManager.cpp',
 		'OCDirectPairing.cpp'
 	]
+
+if with_cloud:
+	oclib_src = oclib_src + ['OCAccountManager.cpp']
 
 if target_os in ['windows']:
 	oclib_src = oclib_src + ['OCApi.cpp']
@@ -139,6 +143,9 @@ oclib_env.UserInstallTargetHeader(header_dir + 'OCUtilities.h', 'resource', 'OCU
 
 oclib_env.UserInstallTargetHeader(header_dir + 'CAManager.h', 'resource', 'CAManager.h')
 oclib_env.UserInstallTargetHeader(header_dir + 'OCDirectPairing.h', 'resource', 'OCDirectPairing.h')
+
+if with_cloud:
+	oclib_env.UserInstallTargetHeader(header_dir + 'OCAccountManager.h', 'resource', 'OCAccountManager.h')
 
 # Add Provisioning library
 if target_os in ['linux', 'android', 'tizen'] and secured == '1':

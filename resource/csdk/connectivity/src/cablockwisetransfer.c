@@ -875,15 +875,16 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         return CA_STATUS_FAILED;
     }
 
+    CAResult_t res = CA_STATUS_OK;
     CABlockData_t *data = CACheckTheExistOfBlockData(blockDataID, pdu, endpoint,
                                                      COAP_OPTION_BLOCK1);
     if (!data)
     {
         OIC_LOG(ERROR, TAG, "Failed to create or get block data");
+        res = CA_STATUS_FAILED;
         goto exit;
     }
 
-    CAResult_t res = CA_STATUS_OK;
     uint8_t blockWiseStatus = CA_BLOCK_UNKNOWN;
     uint32_t code = pdu->hdr->coap_hdr_udp_t.code;
     if (CA_GET == code || CA_POST == code || CA_PUT == code || CA_DELETE == code)
@@ -1017,15 +1018,16 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         return CA_STATUS_FAILED;
     }
 
+    CAResult_t res = CA_STATUS_OK;
     CABlockData_t *data = CACheckTheExistOfBlockData(blockDataID, pdu, endpoint,
                                                      COAP_OPTION_BLOCK2);
     if (!data)
     {
         OIC_LOG(ERROR, TAG, "Failed to create or get block data");
+        res = CA_STATUS_FAILED;
         goto exit;
     }
 
-    CAResult_t res = CA_STATUS_OK;
     uint8_t blockWiseStatus = CA_BLOCK_UNKNOWN;
     if (0 == block.num && CA_GET == pdu->hdr->coap_hdr_udp_t.code && 0 == block.m)
     {
