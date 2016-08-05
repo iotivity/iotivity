@@ -38,13 +38,6 @@ typedef enum
     SEND_TYPE_UNICAST
 } CASendDataType_t;
 
-typedef enum
-{
-    CA_REQUEST_DATA = 1,
-    CA_RESPONSE_DATA = 2,
-    CA_ERROR_DATA = 3,
-} CADataType_t;
-
 typedef struct
 {
     CASendDataType_t type;

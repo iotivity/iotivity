@@ -1447,7 +1447,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             if(responseInfo->info.type == CA_MSG_CONFIRM)
             {
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0, NULL);
+                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
             }
 
             OCPayloadDestroy(response.payload);
@@ -1497,7 +1497,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             {
                 OIC_LOG(INFO, TAG, "Received a message without callbacks. Sending RESET");
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                                        CA_MSG_RESET, 0, NULL, NULL, 0, NULL);
+                                        CA_MSG_RESET, 0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
             }
         }
 
@@ -1611,7 +1611,8 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
 OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
-        CAToken_t token, uint8_t tokenLength, const char *resourceUri)
+        CAToken_t token, uint8_t tokenLength, const char *resourceUri,
+        CADataType_t dataType)
 {
     OIC_LOG(DEBUG, TAG, "Entering SendDirectStackResponse");
     CAResponseInfo_t respInfo = {
@@ -1635,6 +1636,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     respInfo.info.type = type;
     respInfo.info.resourceUri = OICStrdup (resourceUri);
     respInfo.info.acceptFormat = CA_FORMAT_UNDEFINED;
+    respInfo.info.dataType = dataType;
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     // Add the destination to route option from the endpoint->routeData.
@@ -1870,7 +1872,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
                         requestInfo->info.type, requestInfo->info.numOptions,
                         requestInfo->info.options, requestInfo->info.token,
-                        requestInfo->info.tokenLength, requestInfo->info.resourceUri);
+                        requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                        CA_RESPONSE_DATA);
             OICFree(serverRequest.payload);
             return;
     }
@@ -1889,7 +1892,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
                     requestInfo->info.type, requestInfo->info.numOptions,
                     requestInfo->info.options, requestInfo->info.token,
-                    requestInfo->info.tokenLength, requestInfo->info.resourceUri);
+                    requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                    CA_RESPONSE_DATA);
             OICFree(serverRequest.payload);
             return;
         }
@@ -1940,7 +1944,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                CA_RESPONSE_DATA);
         OICFree(serverRequest.payload);
         OICFree(serverRequest.requestToken);
         return;
@@ -1960,7 +1965,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         if (requestInfo->info.type == CA_MSG_CONFIRM)
         {
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
-                                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
+                                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL,
+                                    CA_RESPONSE_DATA);
         }
     }
     else if(!OCResultToSuccess(requestResult))
@@ -1973,7 +1979,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, stackResponse,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                CA_RESPONSE_DATA);
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.

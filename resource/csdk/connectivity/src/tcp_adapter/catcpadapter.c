@@ -368,9 +368,11 @@ static size_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
 }
 
 int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLength)
+                             const void *data, uint32_t dataLength,
+                             CADataType_t dataType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+    (void)dataType;
 #ifndef SINGLE_THREAD
     return CAQueueTCPData(false, endpoint, data, dataLength);
 #else
@@ -380,8 +382,10 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
 }
 
 int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
-                               const void *data, uint32_t dataLength)
+                               const void *data, uint32_t dataLength,
+                               CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueTCPData(true, endpoint, data, dataLength);
 }
 
