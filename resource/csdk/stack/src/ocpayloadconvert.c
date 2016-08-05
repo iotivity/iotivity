@@ -32,14 +32,21 @@
 #include "ocrandom.h"
 #include "ocresourcehandler.h"
 #include "cbor.h"
+#include "ocendpoint.h"
 
 #define TAG "OIC_RI_PAYLOADCONVERT"
 
 // Arbitrarily chosen size that seems to contain the majority of packages
 #define INIT_SIZE (255)
 
-// Discovery Links Map Length.
-#define LINKS_MAP_LEN 4
+// Discovery Links Map with endpoints Length.
+#define LINKS_MAP_LEN_WITH_EPS (5)
+
+// Discovery Links Map without endpoints Length.
+#define LINKS_MAP_LEN_WITHOUT_EPS (4)
+
+// Endpoint Map length, it contains "ep", "pri".
+#define EP_MAP_LEN (2)
 
 // Functions all return either a CborError, or a negative version of the OC_STACK return values
 static int64_t OCConvertPayloadHelper(OCPayload *payload, uint8_t *outPayload, size_t *size);
@@ -226,10 +233,10 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
             "di": "0685B960-736F-46F7-BEC0-9E6CBD61ADC1",
             links :[                                   // linksArray contains maps of resources
                         {
-                            href, rt, if, policy       // Resource 1
+                            href, rt, if, policy, eps  // Resource 1
                         },
                         {
-                            href, rt, if, policy       // Resource 2
+                            href, rt, if, policy, eps  // Resource 2
                         },
                         .
                         .
@@ -296,8 +303,16 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
             VERIFY_PARAM_NON_NULL(TAG, resource, "Failed retrieving resource");
 
             // resource map inside the links array.
-            err |= cbor_encoder_create_map(&linkArray, &linkMap, LINKS_MAP_LEN);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating links map");
+            if (resource->eps)
+            {
+                err |= cbor_encoder_create_map(&linkArray, &linkMap, LINKS_MAP_LEN_WITH_EPS);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating links map");
+            }
+            else
+            {
+                err |= cbor_encoder_create_map(&linkArray, &linkMap, LINKS_MAP_LEN_WITHOUT_EPS);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating links map");
+            }
 
             // Below are insertions of the resource properties into the map.
             // Uri
@@ -358,10 +373,52 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
             err |= cbor_encode_uint(&policyMap, resource->tcpPort);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding tcp port value");
 #endif
-
             err |= cbor_encoder_close_container(&linkMap, &policyMap);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing policy map");
 
+            // Endpoints
+            size_t epsCount = OCEndpointPayloadGetEndpointCount(resource->eps);
+
+            // Embed Endpoints in discovery response when any endpoint exist on the resource.
+            if (epsCount > 0)
+            {
+                CborEncoder epsArray;
+                err |= cbor_encode_text_string(&linkMap, OC_RSRVD_ENDPOINTS,
+                                                         sizeof(OC_RSRVD_ENDPOINTS) - 1);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting endpoints array tag");
+
+                err |= cbor_encoder_create_array(&linkMap, &epsArray, epsCount);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting endpoints array");
+
+                for (size_t i = 0; i < epsCount; ++i)
+                {
+                    CborEncoder endpointMap;
+                    OCEndpointPayload* endpoint = OCEndpointPayloadGetEndpoint(resource->eps, i);
+                    VERIFY_PARAM_NON_NULL(TAG, endpoint, "Failed retrieving endpoint");
+
+                    char* endpointStr = OCCreateEndpointString(endpoint);
+                    VERIFY_PARAM_NON_NULL(TAG, endpointStr, "Failed creating endpoint string");
+
+                    err |= cbor_encoder_create_map(&epsArray, &endpointMap, EP_MAP_LEN);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating endpoint map");
+
+                    err |= AddTextStringToMap(&endpointMap, OC_RSRVD_ENDPOINT,
+                                              sizeof(OC_RSRVD_ENDPOINT) - 1, endpointStr);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding endpoint to endpoint map");
+
+                    err |= cbor_encode_text_string(&endpointMap, OC_RSRVD_PRIORITY,
+                                                   sizeof(OC_RSRVD_PRIORITY) - 1);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding priority tag to endpoint map");
+                    err |= cbor_encode_uint(&endpointMap, endpoint->pri);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding priority value to endpoint map");
+
+                    err |= cbor_encoder_close_container(&epsArray, &endpointMap);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing endpoint map");
+                }
+
+                err |= cbor_encoder_close_container(&linkMap, &epsArray);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing endpoints map");
+            }
             // Finsihed encoding a resource, close the map.
             err |= cbor_encoder_close_container(&linkArray, &linkMap);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing link map");

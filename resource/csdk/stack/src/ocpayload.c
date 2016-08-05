@@ -31,6 +31,8 @@
 #include "ocstackinternal.h"
 #include "ocresource.h"
 #include "logger.h"
+#include "ocendpoint.h"
+#include "cacommon.h"
 
 #define TAG "OIC_RI_PAYLOAD"
 #define CSV_SEPARATOR ','
@@ -1672,11 +1674,63 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
     return NULL;
 }
 
-#ifndef TCP_ADAPTER
-static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort)
-#else
+size_t OCEndpointPayloadGetEndpointCount(OCEndpointPayload* payload)
+{
+    size_t i = 0;
+    OCEndpointPayload* ep = payload;
+    while (ep)
+    {
+        ++i;
+        ep = ep->next;
+    }
+    return i;
+}
+
+OCEndpointPayload* OCEndpointPayloadGetEndpoint(OCEndpointPayload* payload, size_t index)
+{
+    size_t i = 0;
+    OCEndpointPayload* ep = payload;
+    while (ep)
+    {
+        if (i == index)
+        {
+            return ep;
+        }
+        ++i;
+        ep = ep->next;
+    }
+    return NULL;
+}
+
+void OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload, OCEndpointPayload* endpoint)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    if (!payload->eps)
+    {
+        payload->eps = endpoint;
+    }
+    else
+    {
+        OCEndpointPayload* ep = payload->eps;
+        while (ep->next)
+        {
+            ep = ep->next;
+        }
+        ep->next = endpoint;
+    }
+}
+
 static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t securePort,
-                                         uint16_t tcpPort)
+                                         bool isVirtual, CAEndpoint_t *networkInfo,
+                                         uint32_t infoSize, const OCDevAddr *devAddr
+#ifndef TCP_ADAPTER
+                                                                                    )
+#else
+                                         , uint16_t tcpPort)
 #endif
 {
     OCResourcePayload* pl = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
@@ -1780,6 +1834,84 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
 #ifdef TCP_ADAPTER
     pl->tcpPort = tcpPort;
 #endif
+
+    if (isVirtual || !networkInfo || infoSize == 0 || !devAddr)
+    {
+        pl->eps = NULL;
+    }
+    else
+    {
+        OCEndpointPayload *lastNode = pl->eps;
+        if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
+        {
+            for (uint32_t i = 0; i < infoSize; i++)
+            {
+                CAEndpoint_t *info = networkInfo + i;
+
+                if (info)
+                {
+                    if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
+                        info->ifindex == devAddr->ifindex) ||
+                        info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
+                    {
+                        OCTpsSchemeFlags matchedTps = OC_NO_TPS;
+                        if (OC_STACK_OK != OCGetMatchedTpsFlags(info->adapter,
+                                                                info->flags,
+                                                                &matchedTps))
+                        {
+                            return NULL;
+                        }
+
+                        if ((res->endpointType) & matchedTps)
+                        {
+                            // create payload
+                            OCEndpointPayload* tmpNode = (OCEndpointPayload*)
+                                                          OICCalloc(1, sizeof(OCEndpointPayload));
+                            if (!tmpNode)
+                            {
+                                return NULL;
+                            }
+
+                            OCStackResult ret = OCConvertTpsToString(matchedTps, &(tmpNode->tps));
+                            if (ret != OC_STACK_OK)
+                            {
+                                OCDiscoveryEndpointDestroy(tmpNode);
+                                OCDiscoveryResourceDestroy(pl);
+                                return NULL;
+                            }
+
+                            tmpNode->addr = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
+                            if (!tmpNode->addr)
+                            {
+                                OCDiscoveryEndpointDestroy(tmpNode);
+                                OCDiscoveryResourceDestroy(pl);
+                                return NULL;
+                            }
+
+                            memcpy(tmpNode->addr, info->addr, sizeof(info->addr));
+                            tmpNode->family = (OCTransportFlags)(info->flags);
+                            tmpNode->port = info->port;
+                            tmpNode->pri  = 1;
+                            tmpNode->next = NULL;
+
+                            // store in list
+                            if (!pl->eps)
+                            {
+                                pl->eps = tmpNode;
+                                lastNode = tmpNode;
+                            }
+                            else
+                            {
+                                lastNode->next = tmpNode;
+                                lastNode = tmpNode;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     return pl;
 }
 
@@ -1787,13 +1919,37 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, false, NULL, 0, NULL));
 }
 #else
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort)
 {
-    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, tcpPort));
+    OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, securePort, false, NULL, 0, NULL, tcpPort));
+}
+#endif
+
+#ifndef TCP_ADAPTER
+void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
+                                          uint16_t securePort, bool isVirtual,
+                                          void *networkInfo, uint32_t infoSize,
+                                          const OCDevAddr *devAddr)
+{
+    OCDiscoveryPayloadAddNewResource(payload,
+                                     OCCopyResource(res, securePort, isVirtual,
+                                                    (CAEndpoint_t *)networkInfo,
+                                                    infoSize, devAddr));
+}
+#else
+void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload* payload, const OCResource* res,
+                                          uint16_t securePort, bool isVirtual,
+                                          void *networkInfo, uint32_t infoSize,
+                                          const OCDevAddr *devAddr, uint16_t tcpPort)
+{
+    OCDiscoveryPayloadAddNewResource(payload,
+                                     OCCopyResource(res, securePort, isVirtual,
+                                                    (CAEndpoint_t *)networkInfo,
+                                                    infoSize, devAddr, tcpPort));
 }
 #endif
 
@@ -1850,6 +2006,19 @@ void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePay
     }
 }
 
+void OCDiscoveryEndpointDestroy(OCEndpointPayload* payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    OICFree(payload->tps);
+    OICFree(payload->addr);
+    OCDiscoveryEndpointDestroy(payload->next);
+    OICFree(payload);
+}
+
 void OCDiscoveryResourceDestroy(OCResourcePayload* payload)
 {
     if (!payload)
@@ -1860,9 +2029,9 @@ void OCDiscoveryResourceDestroy(OCResourcePayload* payload)
     OICFree(payload->uri);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
+    OCDiscoveryEndpointDestroy(payload->eps);
     OCDiscoveryResourceDestroy(payload->next);
     OICFree(payload);
-
 }
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
 {

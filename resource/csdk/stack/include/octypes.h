@@ -998,6 +998,9 @@ typedef enum
     OC_STACK_AUTHENTICATION_FAILURE,
     OC_STACK_NOT_ALLOWED_OXM,
 
+    /** Request come from endpoint which is not mapped to the resource. */
+    OC_STACK_BAD_ENDPOINT,
+
     /** Insert all new error codes here!.*/
 #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,

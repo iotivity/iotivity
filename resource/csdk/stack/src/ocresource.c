@@ -52,6 +52,9 @@
 #include "ocpayload.h"
 #include "platform_features.h"
 #include "payload_logging.h"
+#include "ocendpoint.h"
+#include "ocstackinternal.h"
+
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
 #endif
@@ -68,8 +71,10 @@ extern OCResource *headResource;
  * Prepares a Payload for response.
  */
 static OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                                                  OCDiscoveryPayload* payload,
-                                                  OCDevAddr *endpoint);
+                                                  OCDiscoveryPayload *payload,
+                                                  OCDevAddr *endpoint,
+                                                  CAEndpoint_t *networkInfo,
+                                                  uint32_t infoSize);
 
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
@@ -420,9 +425,12 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
 }
 
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
+                                           OCDiscoveryPayload *payload,
+                                           OCDevAddr *devAddr,
+                                           CAEndpoint_t *networkInfo,
+                                           uint32_t infoSize)
 {
-    if (!resourcePtr || !payload)
+    if (!resourcePtr || !payload || !networkInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -435,15 +443,22 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
        }
     }
 
+    bool isVirtual = false;
+    if (GetTypeOfVirtualURI(resourcePtr->uri) != OC_UNKNOWN_URI)
+    {
+        isVirtual = true;
+    }
 #ifdef TCP_ADAPTER
     uint16_t tcpPort = 0;
     if (GetTCPPortInfo(devAddr, &tcpPort) != OC_STACK_OK)
     {
         tcpPort = 0;
     }
-    OCDiscoveryPayloadAddResource(payload, resourcePtr, securePort, tcpPort);
+    OCDiscoveryPayloadAddResourceWithEps(payload, resourcePtr, securePort,
+                                         isVirtual, networkInfo, infoSize, devAddr, tcpPort);
 #else
-    OCDiscoveryPayloadAddResource(payload, resourcePtr, securePort);
+    OCDiscoveryPayloadAddResourceWithEps(payload, resourcePtr, securePort,
+                                         isVirtual, networkInfo, infoSize, devAddr);
 #endif
 
     return OC_STACK_OK;
@@ -484,6 +499,37 @@ OCResource *FindResourceByUri(const char* resourceUri)
     return NULL;
 }
 
+OCStackResult CheckRequestsEndpoint(const OCDevAddr *reqDevAddr,
+                                    OCTpsSchemeFlags resTpsFlags)
+{
+    if (!reqDevAddr)
+    {
+        OIC_LOG(ERROR, TAG, "OCDevAddr* is NULL!!!");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCTpsSchemeFlags reqTpsFlags = OC_NO_TPS;
+    OCStackResult result = OCGetMatchedTpsFlags((CATransportAdapter_t)reqDevAddr->adapter,
+                                  (CATransportFlags_t)reqDevAddr->flags, &reqTpsFlags);
+
+    if (result != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed at get TPS flags. errcode is %d", result);
+        return result;
+    }
+
+    // bit compare between request tps flags and resource tps flags
+    if (reqTpsFlags & resTpsFlags)
+    {
+        OIC_LOG(INFO, TAG, "Request come from registered TPS");
+        return OC_STACK_OK;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Request come from unregistered TPS!!!");
+        return OC_STACK_BAD_ENDPOINT;
+    }
+}
 
 OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          ResourceHandling *handling,
@@ -514,6 +560,27 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
     {
         OCResource *resourcePtr = FindResourceByUri((const char*)request->resourceUrl);
         *resource = resourcePtr;
+
+        // Checking resource TPS flags if resource exist in stack.
+        if (resourcePtr)
+        {
+            OCStackResult result = CheckRequestsEndpoint(&(request->devAddr), resourcePtr->endpointType);
+
+            if (result != OC_STACK_OK)
+            {
+                if (result == OC_STACK_BAD_ENDPOINT)
+                {
+                    OIC_LOG(ERROR, TAG, "Request come from bad endpoint. ignore request!!!");
+                    return OC_STACK_BAD_ENDPOINT;
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, TAG, "Failed at get tps flag errcode: %d", result);
+                    return result;
+                }
+            }
+        }
+
         if (!resourcePtr)
         {
             if(defaultDeviceHandler)
@@ -840,6 +907,28 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             )
     {
+        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
+            request->method == OC_REST_DELETE)
+        {
+            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
+                request->resourceUrl, request->method);
+            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
+            goto exit;
+        }
+
+        char *interfaceQuery = NULL;
+        char *resourceTypeQuery = NULL;
+
+        CAEndpoint_t *networkInfo = NULL;
+        uint32_t infoSize = 0;
+
+        CAResult_t caResult = CAGetNetworkInformation(&networkInfo, &infoSize);
+        if (CA_STATUS_OK != caResult || !networkInfo || infoSize == 0)
+        {
+            OIC_LOG(ERROR, TAG, "CAGetNetworkInformation has error on parsing network infomation");
+            return OC_STACK_ERROR;
+        }
+
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
                 &interfaceQuery, &resourceTypeQuery);
         VERIFY_SUCCESS(discoveryResult);
@@ -881,11 +970,19 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                 // This case will handle when no resource type and it is oic.if.ll.
                 if (!resourceTypeQuery && !baselineQuery && (resource->resourceProperties & prop))
                 {
-                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
+                    discoveryResult = BuildVirtualResourceResponse(resource,
+                                                                   discPayload,
+                                                                   &request->devAddr,
+                                                                   networkInfo,
+                                                                   infoSize);
                 }
                 else if (includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
                 {
-                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
+                    discoveryResult = BuildVirtualResourceResponse(resource,
+                                                                   discPayload,
+                                                                   &request->devAddr,
+                                                                   networkInfo,
+                                                                   infoSize);
                 }
                 else
                 {
@@ -896,6 +993,11 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if (discPayload->resources == NULL)
         {
             discoveryResult = OC_STACK_NO_RESOURCE;
+        }
+
+        if (networkInfo)
+        {
+            OICFree(networkInfo);
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)

@@ -288,6 +288,47 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                uint8_t resourceProperties);
 
 /**
+ * This function creates a resource.
+ *
+ * @param handle                Pointer to handle to newly created resource. Set by ocstack and
+ *                              used to refer to resource.
+ * @param resourceTypeName      Name of resource type.  Example: "core.led".
+ * @param resourceInterfaceName Name of resource interface.  Example: "core.rw".
+ * @param uri                   URI of the resource.  Example:  "/a/led".
+ * @param entityHandler         Entity handler function that is called by ocstack to handle
+ *                              requests, etc.
+ *                              NULL for default entity handler.
+ * @param callbackParam         parameter passed back when entityHandler is called.
+ * @param resourceProperties    Properties supported by resource.
+ *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
+ * @param resourceTpsTypes      Transport Protocol Suites(TPS) types of resource for expose
+                                resource to specific transport adapter (e.g., TCP, UDP)
+                                with messaging protocol (e.g., COAP, COAPS).
+                                Example: "OC_COAP | OC_COAP_TCP"
+ *
+ * @note Only supported TPS types on stack will be mapped to resource.
+         It means "OC_COAPS" and "OC_COAPS_TCP" flags will be ignored if secure option
+         not enabled on stack. Also "COAP_TCP" and "COAPS_TCP" flags will be ignored
+         if stack does not support tcp mode.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+                                     const char *resourceTypeName,
+                                     const char *resourceInterfaceName,
+                                     const char *uri,
+                                     OCEntityHandler entityHandler,
+                                     void *callbackParam,
+                                     uint8_t resourceProperties,
+                                     OCTpsSchemeFlags resourceTpsTypes);
+/*
+ * This function returns flags of supported endpoint TPS on stack.
+ *
+ * @return Bit combinations of supported OCTpsSchemeFlags.
+ */
+OCTpsSchemeFlags OCGetSupportedEndpointTpsFlags();
+
+/**
  * This function adds a resource to a collection resource.
  *
  * @param collectionHandle    Handle to the collection resource.

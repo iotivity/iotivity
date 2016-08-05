@@ -227,8 +227,17 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
  * @param resourceTypeName Name of resource type.
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult BindResourceTypeToResource(OCResource* resource,
+OCStackResult BindResourceTypeToResource(OCResource *resource,
                                             const char *resourceTypeName);
+/**
+ * Bind a Transport Protocol Suites type to a resource.
+ *
+ * @param resource Target resource.
+ * @param resourceTpsTypes Name of transport protocol suites type.
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult BindTpsTypeToResource(OCResource *resource,
+                                    OCTpsSchemeFlags resourceTpsTypes);
 
 /**
  * Convert OCStackResult to CAResponseResult_t.
@@ -316,6 +325,40 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
  */
 void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes);
 
+#ifndef TCP_ADAPTER
+/**
+ * Add resource payload with endpoint payload to discovery payload.
+ *
+ * @param payload       Pointer to discovery payload.
+ * @param res           Pointer to OCresource structure.
+ * @param securePort    Secure port number.
+ * @param isVirtual     true: virtual resource (e.g., oic/res), false: resource.
+ * @param networkInfo   List of CAEndpoint_t.
+ * @param infoSize      Size of CAEndpoint_t list.
+ * @param devAddr       Pointer to OCDevAddr structure.
+ */
+void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
+                                          uint16_t securePort, bool isVirtual,
+                                          void *networkInfo, uint32_t infoSize,
+                                          const OCDevAddr *devAddr);
+#else
+/**
+ * Add resource payload with endpoint payload to discovery payload.
+ *
+ * @param payload       Pointer to discovery payload.
+ * @param res           Pointer to OCresource structure.
+ * @param securePort    Secure port number.
+ * @param isVirtual     true: virtual resource (e.g., oic/res, oic/d), false: resource.
+ * @param networkInfo   List of CAEndpoint_t.
+ * @param infoSize      Size of CAEndpoint_t list.
+ * @param devAddr       Pointer to OCDevAddr structure.
+ * @param tcpPort       TCP port number.
+ */
+void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCResource *res,
+                                          uint16_t securePort, bool isVirtual,
+                                          void *networkInfo, uint32_t infoSize,
+                                          const OCDevAddr *devAddr, uint16_t tcpPort);
+#endif
 #ifdef __cplusplus
 }
 #endif // __cplusplus

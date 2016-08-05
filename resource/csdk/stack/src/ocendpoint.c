@@ -384,7 +384,7 @@ exit:
 
 OCTpsSchemeFlags OCGetSupportedTpsFlags()
 {
-    OCTpsSchemeFlags ret = (OCTpsSchemeFlags)0;
+    OCTpsSchemeFlags ret = OC_NO_TPS;
     CATransportAdapter_t SelectedNetwork = CAGetSelectedNetwork();
 
     if (SelectedNetwork & CA_ADAPTER_IP)
@@ -397,7 +397,7 @@ OCTpsSchemeFlags OCGetSupportedTpsFlags()
         }
     }
 #ifdef TCP_ADAPTER
-    else if (SelectedNetwork & CA_ADAPTER_TCP)
+    if (SelectedNetwork & CA_ADAPTER_TCP)
     {
         ret = (OCTpsSchemeFlags)(ret | OC_COAP_TCP);
 
@@ -408,7 +408,7 @@ OCTpsSchemeFlags OCGetSupportedTpsFlags()
     }
 #endif
 #ifdef EDR_ADAPTER
-    else if (SelectedNetwork & CA_ADAPTER_RFCOMM_BTEDR)
+    if (SelectedNetwork & CA_ADAPTER_RFCOMM_BTEDR)
     {
         ret = (OCTpsSchemeFlags)(ret | OC_COAP_RFCOMM);
     }

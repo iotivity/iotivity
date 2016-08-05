@@ -174,7 +174,7 @@ INLINE_API void OCPayloadLogRepValues(LogLevel level, OCRepPayloadValue* val)
 INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 {
     OIC_LOG(level, (PL_TAG), "Payload Type: Representation");
-    int i = 1;
+    uint32_t i = 1;
     for (OCRepPayload* rep = payload; rep; rep = rep->next, ++i)
     {
         OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
@@ -237,7 +237,7 @@ INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payloa
 
         OCResourcePayload* res = payload->resources;
 
-        int i = 1;
+        uint32_t i = 1;
         while(res)
         {
             OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
@@ -260,6 +260,20 @@ INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payloa
             OIC_LOG_V(level, PL_TAG, "\tBitmap: %u", res->bitmap);
             OIC_LOG_V(level, PL_TAG, "\tSecure?: %s", res->secure ? "true" : "false");
             OIC_LOG_V(level, PL_TAG, "\tPort: %u", res->port);
+
+            uint32_t j = 1;
+            OCEndpointPayload* eps = res->eps;
+            while (eps)
+            {
+                OIC_LOG_V(level, PL_TAG, "\tEndpoint #%d", j);
+                OIC_LOG_V(level, PL_TAG, "\t\ttps: %s", eps->tps);
+                OIC_LOG_V(level, PL_TAG, "\t\taddr: %s", eps->addr);
+                OIC_LOG_V(level, PL_TAG, "\t\tport: %d", eps->port);
+                OIC_LOG_V(level, PL_TAG, "\t\tpri: %d", eps->pri);
+                eps = eps->next;
+                ++j;
+            }
+
             OIC_LOG(level, PL_TAG, "");
             res = res->next;
             ++i;

@@ -39,8 +39,10 @@ OCCancel
 OCCreateOCStringLL
 OCCreateResource
 OCDecodeAddressForRFC6874
+OCCreateResourceWithEp
 OCDeleteResource
 OCDiscoverDirectPairingDevices
+OCDiscoveryEndpointDestroy
 OCDiscoveryPayloadCreate
 OCDiscoveryPayloadDestroy
 OCDiscoveryPayloadGetResourceCount
@@ -48,6 +50,8 @@ OCDoDirectPairing
 OCDoResource
 OCDoResponse
 OCEncodeAddressForRFC6874
+OCEndpointPayloadGetEndpoint
+OCEndpointPayloadGetEndpointCount
 OCFreeOCStringLL
 OCGetDeviceId
 OCGetDirectPairedDevices
@@ -66,6 +70,7 @@ OCGetResourceTypeName
 OCGetResourceUri
 OCGetResourceIns
 OCGetServerInstanceIDString
+OCGetSupportedEndpointTpsFlags
 OCInit
 OCInit1
 OCNotifyAllObservers
@@ -104,6 +109,7 @@ OCRepPayloadSetPropString
 OCRepPayloadSetStringArray
 OCRepPayloadSetStringArrayAsOwner
 OCRepPayloadSetUri
+OCResourcePayloadAddNewEndpoint
 OCResourcePayloadAddStringLL
 OCSecurityPayloadCreate
 OCSetDefaultDeviceEntityHandler

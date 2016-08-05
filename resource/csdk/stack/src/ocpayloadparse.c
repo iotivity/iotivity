@@ -36,6 +36,7 @@
 #include "ocstackinternal.h"
 #include "payload_logging.h"
 #include "platform_features.h"
+#include "ocendpoint.h"
 
 #define TAG "OIC_RI_PAYLOADPARSE"
 
@@ -175,6 +176,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
     OCDiscoveryPayload *temp = NULL;
     OCDiscoveryPayload *rootPayload = NULL;
     OCDiscoveryPayload *curPayload = NULL;
+    OCEndpointPayload *endpoint = NULL;
     size_t len = 0;
     CborError err = CborNoError;
     *outPayload = NULL;
@@ -345,6 +347,64 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                     resource->tcpPort = (uint16_t)tcpPort;
                 }
 #endif
+                // Endpoints
+                CborValue epsMap;
+                err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_ENDPOINTS, &epsMap);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find eps tag");
+
+                if (cbor_value_is_valid(&epsMap))
+                {
+                    CborValue epMap;
+                    err = cbor_value_enter_container(&epsMap, &epMap);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to enter endpoint map");
+
+                    while (cbor_value_is_map(&epMap))
+                    {
+                        endpoint = NULL;
+                        int pri = 0;
+                        char *endpointStr = NULL;
+                        OCStackResult ret = OC_STACK_ERROR;
+                        endpoint = (OCEndpointPayload *)OICCalloc(1, sizeof(OCEndpointPayload));
+                        VERIFY_PARAM_NON_NULL(TAG, endpoint, "Failed allocating endpoint payload");
+
+                        // ep
+                        err = cbor_value_map_find_value(&epMap, OC_RSRVD_ENDPOINT, &curVal);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint tag");
+                        err = cbor_value_dup_text_string(&curVal, &endpointStr, &len, NULL);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint value");
+
+                        ret = OCParseEndpointString(endpointStr, endpoint);
+                        OICFree(endpointStr);
+
+                        if (OC_STACK_OK == ret)
+                        {
+                            // pri
+                            err = cbor_value_map_find_value(&epMap, OC_RSRVD_PRIORITY, &curVal);
+                            VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
+                            err = cbor_value_get_int(&curVal, &pri);
+                            VERIFY_CBOR_SUCCESS(TAG, err, "to find priority value");
+                            endpoint->pri = (uint16_t)pri;
+                            OCResourcePayloadAddNewEndpoint(resource, endpoint);
+                            endpoint = NULL;
+                        }
+                        else
+                        {
+                            if (OC_STACK_ADAPTER_NOT_ENABLED == ret)
+                            {
+                                OIC_LOG(ERROR, TAG, "Ignore unrecognized endpoint info");
+                            }
+                            // destroy endpoint
+                            OCDiscoveryEndpointDestroy(endpoint);
+                            endpoint = NULL;
+                        }
+
+                        err = cbor_value_advance(&epMap);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to advance endpoint map");
+                    }
+
+                    err = cbor_value_leave_container(&epsMap, &epMap);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to leave eps map");
+                }
 
                 err = cbor_value_advance(&resourceMap);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to advance resource map");
@@ -386,6 +446,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
     return OC_STACK_OK;
 
 exit:
+    OCDiscoveryEndpointDestroy(endpoint);
     OCDiscoveryResourceDestroy(resource);
     OCDiscoveryPayloadDestroy(rootPayload);
     return ret;

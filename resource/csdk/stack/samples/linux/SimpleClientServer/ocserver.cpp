@@ -42,12 +42,14 @@
 #include "ocpayload.h"
 #include "ocserver.h"
 #include "common.h"
+#include "oic_string.h"
 
 //string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
 // 9 + 9 + 1 = 19
 const int URI_MAXSIZE = 19;
 
 static int gObserveNotifyType = 3;
+static int gResourceCreateType = ENDPOINT_OPT_NONE;
 
 int gQuitFlag = 0;
 int gLightUnderObservation = 0;
@@ -827,13 +829,41 @@ int createLightResource (char *uri, LightResource *lightResource)
 
     lightResource->state = false;
     lightResource->power= 0;
-    OCStackResult res = OCCreateResource(&(lightResource->handle),
+    OCTpsSchemeFlags endpointFlags = OC_NO_TPS;
+    switch (gResourceCreateType)
+    {
+        case DISPLAY_SUPPORTED_EPS_FLAG:
+        case CREATE_RESOURCE_OC_ALL:
+        // same as OCCreateResource(args...)
+        endpointFlags = OC_ALL;
+        break;
+
+        case CREATE_RESOURCE_OC_COAP:
+        endpointFlags = OC_COAP;
+        break;
+
+#ifdef TCP_ADAPTER
+        case CREATE_RESOURCE_OC_COAP_TCP:
+        endpointFlags = OC_COAP_TCP;
+        break;
+
+        case CREATE_RESOURCE_OC_COAP_WITH_TCP:
+        endpointFlags = (OCTpsSchemeFlags)(OC_COAP | OC_COAP_TCP);
+        break;
+#endif
+        default:
+        endpointFlags = OC_ALL;
+    }
+
+    OCStackResult res = OCCreateResourceWithEp(&(lightResource->handle),
             "core.light",
             "oc.mi.def",
             uri,
             OCEntityHandlerCb,
             NULL,
-            OC_DISCOVERABLE|OC_OBSERVABLE);
+            OC_DISCOVERABLE|OC_OBSERVABLE,
+            endpointFlags);
+
     OIC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 
     return 0;
@@ -986,6 +1016,13 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "Usage : ocserver -o <0|1>");
     OIC_LOG(INFO, TAG, "-o 0 : Notify all observers");
     OIC_LOG(INFO, TAG, "-o 1 : Notify list of observers");
+    OIC_LOG(INFO, TAG, "-e 0 : Display supported endpoint flags");
+    OIC_LOG(INFO, TAG, "-e 1 : Create resource without endpoint flags");
+    OIC_LOG(INFO, TAG, "-e 2 : Create resource with endpoint flag OC_COAP");
+#ifdef TCP_ADAPTER
+    OIC_LOG(INFO, TAG, "-e 3 : Create resource with endpoint flag OC_COAP_TCP");
+    OIC_LOG(INFO, TAG, "-e 4 : Create resource with endpoint flag OC_COAP | OC_COAP_TCP");
+#endif
 }
 
 #ifdef RA_ADAPTER
@@ -1016,12 +1053,15 @@ int main(int argc, char* argv[])
 #endif
 
     int opt = 0;
-    while ((opt = getopt(argc, argv, "o:s:p:d:u:w:r:j:")) != -1)
+    while ((opt = getopt(argc, argv, "o:e:s:p:d:u:w:r:j:")) != -1)
     {
         switch(opt)
         {
             case 'o':
                 gObserveNotifyType = atoi(optarg);
+                break;
+            case 'e':
+                gResourceCreateType = atoi(optarg);
                 break;
 #ifdef RA_ADAPTER
             case 's':
@@ -1052,7 +1092,15 @@ int main(int argc, char* argv[])
         }
     }
 
-    if ((gObserveNotifyType != 0) && (gObserveNotifyType != 1))
+    if ((gObserveNotifyType != 0) && (gObserveNotifyType != 1) &&
+         gResourceCreateType == ENDPOINT_OPT_NONE)
+    {
+        PrintUsage();
+        return -1;
+    }
+
+    if (gResourceCreateType < DISPLAY_SUPPORTED_EPS_FLAG ||
+        gResourceCreateType > ENDPOINT_OPT_NONE)
     {
         PrintUsage();
         return -1;
@@ -1076,6 +1124,39 @@ int main(int argc, char* argv[])
         return 0;
     }
 #endif
+
+    if (DISPLAY_SUPPORTED_EPS_FLAG == gResourceCreateType)
+    {
+        char strBuff[SAMPLE_MAX_STR_BUFF_SIZE] = {0};
+        OCTpsSchemeFlags deviceFlags = OCGetSupportedEndpointTpsFlags();
+
+        if (deviceFlags & OC_COAP)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), "OC_COAP");
+        }
+        if (deviceFlags & OC_COAPS)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAPS");
+        }
+#ifdef TCP_ADAPTER
+        if (deviceFlags & OC_COAP_TCP)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAP_TCP");
+        }
+        if (deviceFlags & OC_COAPS_TCP)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAPS_TCP");
+        }
+#endif
+#ifdef EDR_ADAPTER
+        if (deviceFlags & OC_COAP_RFCOMM)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAP_RFCOMM");
+        }
+#endif
+        OIC_LOG_V(INFO, TAG, "Endpoint flag %s is supported", strBuff);
+        return 0;
+    }
 
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 

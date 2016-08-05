@@ -55,6 +55,8 @@ using namespace std;
 namespace itst = iotivity::test;
 
 #define DEFAULT_CONTEXT_VALUE 0x99
+#define INVALID_TPS_FLAGS (250)
+#define INVALID_TPS_FLAGS_ZERO (0)
 
 //-----------------------------------------------------------------------------
 // Private variables
@@ -869,6 +871,78 @@ TEST(StackResource, CreateResourceGoodResourceType)
                                             0,
                                             NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, CreateResourceWithBadEndpointsFlags)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OIC_LOG(INFO, TAG, "CreateResourceWithEndpointsFlags test");
+
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResourceWithEp(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            (OCTpsSchemeFlags)INVALID_TPS_FLAGS));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, CreateResourceWithGoodEndpointsFlags)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OIC_LOG(INFO, TAG, "CreateResourceWithEndpointsFlags test");
+
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            OC_ALL));
+    OCResourceHandle handle2;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle2,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led2",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            OC_COAP));
+#ifdef TCP_ADAPTER
+    OCResourceHandle handle3;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle3,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led3",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            OC_COAP_TCP));
+
+    OCResourceHandle handle4;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResourceWithEp(&handle4,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led4",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE,
+                                            (OCTpsSchemeFlags)(OC_COAP | OC_COAP_TCP)));
+#endif
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -2140,4 +2214,17 @@ TEST(StackHeaderOption, getHeaderOption)
                                              &actualDataSize));
     EXPECT_EQ(optionData[0], 1);
     EXPECT_EQ(actualDataSize, 8);
+}
+
+TEST(StackEndpoints, OCGetSupportedEndpointTpsFlags)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OIC_LOG(INFO, TAG, "OCGetSupportedEndpointTpsFlags test");
+
+    InitStack(OC_SERVER);
+
+    EXPECT_LE(INVALID_TPS_FLAGS_ZERO, OCGetSupportedEndpointTpsFlags());
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
