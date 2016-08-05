@@ -160,7 +160,8 @@ namespace OIC
             OC::OCRepresentation rep;
 
             std::function< OCStackResult(void) > getStatus = [&]
-            {   return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
+            {
+                return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
                         DEFAULT_INTERFACE, query, std::function<void(const HeaderOptions& headerOptions,
                         const OCRepresentation& rep, const int eCode) >(
                                 std::bind(&EnrolleeResource::onGetStatusResponse, this,
@@ -193,7 +194,8 @@ namespace OIC
             OC::OCRepresentation rep;
 
             std::function< OCStackResult(void) > getConfigurationStatus = [&]
-            {   return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
+            {
+                return m_ocResource->get(m_ocResource->getResourceTypes().at(0),
                         BATCH_INTERFACE, query, std::function<void(const HeaderOptions& headerOptions,
                         const OCRepresentation& rep, const int eCode) >(
                                 std::bind(&EnrolleeResource::onGetConfigurationResponse, this,

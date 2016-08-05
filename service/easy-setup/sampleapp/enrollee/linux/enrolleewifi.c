@@ -66,48 +66,16 @@ void WiFiProvCbInApp(ESWiFiProvData *eventData)
 {
     printf("WiFiProvCbInApp IN\n");
 
-    if(eventData->ssid != NULL)
+    if(eventData == NULL)
     {
-        printf("SSID : %s\n", eventData->ssid);
-    }
-    else
-    {
-        printf("ERROR! SSID IS NULL\n");
-        return;
+        printf("ESWiFiProvData is NULL\n");
+        return ;
     }
 
-    if(eventData->pwd != NULL)
-    {
-        printf("Password : %s\n", eventData->pwd);
-    }
-    else
-    {
-        printf("ERROR! Password IS NULL\n");
-        return;
-    }
-
-    if(eventData->authtype == NONE_AUTH || eventData->authtype == WEP || \
-        eventData->authtype == WPA_PSK || eventData->authtype == WPA2_PSK)
-    {
-        printf("AuthType : %d\n", eventData->authtype);
-    }
-    else
-    {
-        printf("ERROR! AuthType IS NULL\n");
-        return;
-    }
-
-    if(eventData->enctype == NONE_ENC || eventData->enctype == WEP_64 || \
-        eventData->enctype == WEP_128 || eventData->enctype == TKIP || \
-        eventData->enctype == AES || eventData->enctype == TKIP_AES)
-    {
-        printf("EncType : %d\n", eventData->enctype);
-    }
-    else
-    {
-        printf("ERROR! EncType IS NULL\n");
-        return;
-    }
+    printf("SSID : %s\n", eventData->ssid);
+    printf("Password : %s\n", eventData->pwd);
+    printf("AuthType : %d\n", eventData->authtype);
+    printf("EncType : %d\n", eventData->enctype);
 
     if(eventData->userdata != NULL)
     {
@@ -121,25 +89,14 @@ void DevConfProvCbInApp(ESDevConfProvData *eventData)
 {
     printf("DevConfProvCbInApp IN\n");
 
-    if(eventData->language != NULL)
+    if(eventData == NULL)
     {
-        printf("Language : %s\n", eventData->language);
-    }
-    else
-    {
-        printf("ERROR! Language IS NULL\n");
-        return;
+        printf("ESDevConfProvData is NULL\n");
+        return ;
     }
 
-    if(eventData->country != NULL)
-    {
-        printf("Country : %s\n", eventData->country);
-    }
-    else
-    {
-        printf("ERROR! Country IS NULL\n");
-        return;
-    }
+    printf("Language : %s\n", eventData->language);
+    printf("Country : %s\n", eventData->country);
 
     printf("DevConfProvCbInApp OUT\n");
 }
@@ -148,35 +105,15 @@ void CloudDataProvCbInApp(ESCloudProvData *eventData)
 {
     printf("CloudDataProvCbInApp IN\n");
 
-    if(eventData->authCode != NULL)
+    if(eventData == NULL)
     {
-        printf("AuthCode : %s\n", eventData->authCode);
-    }
-    else
-    {
-        printf("ERROR! AuthCode IS NULL\n");
-        return;
+        printf("ESCloudProvData is NULL\n");
+        return ;
     }
 
-    if(eventData->authProvider != NULL)
-    {
-        printf("AuthProvider : %s\n", eventData->authProvider);
-    }
-    else
-    {
-        printf("ERROR! AuthProvider IS NULL\n");
-        return;
-    }
-
-    if(eventData->ciServer != NULL)
-    {
-        printf("CI Server : %s\n", eventData->ciServer);
-    }
-    else
-    {
-        printf("ERROR! CI Server IS NULL\n");
-        return;
-    }
+    printf("AuthCode : %s\n", eventData->authCode);
+    printf("AuthProvider : %s\n", eventData->authProvider);
+    printf("CI Server : %s\n", eventData->ciServer);
 
     printf("CloudDataProvCbInApp OUT\n");
 }
@@ -222,7 +159,7 @@ void StartEasySetup()
     }
     printf("ESInitEnrollee Success\n");
 
-    pthread_t thread_handle;
+    pthread_t thread_handle = NULL;
     if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
     {
         printf("Thread creation failed\n");
@@ -246,7 +183,9 @@ void SetDeviceInfo()
     SetUserProperties(&g_userProperties);
 
     if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
+    {
         printf("ESSetDeviceProperty Error\n");
+    }
 
     printf("SetDeviceInfo OUT\n");
 }
@@ -339,7 +278,7 @@ int main()
                     PrintMenu();
                     break;
             }
-            if (option == 'Q' || option == 'q') break;
+            if (option == 'Q' || option == 'q') { break; }
         }
     }
     return 0;
@@ -348,7 +287,7 @@ int main()
 void *listeningFunc(void * data)
 {
     (void)data;
-    OCStackResult result;
+    OCStackResult result = OC_STACK_ERROR;
 
     while (true)
     {

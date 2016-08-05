@@ -126,7 +126,9 @@ void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
 void getStatus()
 {
     if(!remoteEnrollee)
+    {
         return;
+    }
 
     try
     {
@@ -156,7 +158,9 @@ void getConfigurationCallback(std::shared_ptr< GetConfigurationStatus > getConfi
 void getConfiguration()
 {
     if(!remoteEnrollee)
+    {
         return;
+    }
 
     try
     {
@@ -185,7 +189,9 @@ void deviceProvisioningStatusCallback(std::shared_ptr< DevicePropProvisioningSta
 void provisionDeviceProperty()
 {
     if(!remoteEnrollee)
+    {
         return;
+    }
 
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
@@ -225,7 +231,9 @@ void cloudProvisioningStatusCallback(std::shared_ptr< CloudPropProvisioningStatu
 void provisionCloudProperty()
 {
     if(!remoteEnrollee)
+    {
         return;
+    }
 
     CloudProp cloudProp;
     cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
@@ -357,18 +365,17 @@ int main()
 
     OCPlatform::Configure(config);
 
-#ifdef __WITH_DTLS__
-    //Initializing the provisioning client stack using the db path provided by the application.
-    OCStackResult result = OCSecure::provisionInit("");
-
-    if (result != OC_STACK_OK)
-    {
-        return -1;
-    }
-#endif
-
     try
     {
+#ifdef __WITH_DTLS__
+        //Initializing the provisioning client stack using the db path provided by the application.
+        OCStackResult result = OCSecure::provisionInit("");
+
+        if (result != OC_STACK_OK)
+        {
+            return -1;
+        }
+#endif
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << PROV_RESOURCE_TYPE;
 
         OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
@@ -379,7 +386,7 @@ int main()
 
     }catch(OCException& e)
     {
-        oclog() << "Exception in main: "<<e.what();
+        std::cout << "Exception in main: "<<e.what();
     }
 
     while (true)

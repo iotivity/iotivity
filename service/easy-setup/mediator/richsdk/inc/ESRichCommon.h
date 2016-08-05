@@ -53,7 +53,10 @@ namespace OIC
             /**
              * Constructor
              */
-            EnrolleeStatus(const OCRepresentation& rep) { m_rep = rep; }
+            EnrolleeStatus(const OCRepresentation& rep)
+            {
+                m_rep = rep;
+            }
 
             EnrolleeStatus(const EnrolleeStatus& enrolleeStatus) :
                 m_rep(enrolleeStatus.getRepresentation())
@@ -73,8 +76,10 @@ namespace OIC
             ProvStatus getProvStatus()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_PROVSTATUS))
+                {
                     return static_cast<ProvStatus>(
                                         m_rep.getValue<int>(OC_RSRVD_ES_PROVSTATUS));
+                }
                 return ES_STATE_INIT;
             }
 
@@ -86,8 +91,10 @@ namespace OIC
             ESErrorCode getLastErrCode()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_LAST_ERRORCODE))
+                {
                     return static_cast<ESErrorCode>(
                                         m_rep.getValue<int>(OC_RSRVD_ES_LAST_ERRORCODE));
+                }
                 return ES_ERRCODE_NO_ERROR;
             }
 
@@ -114,7 +121,9 @@ namespace OIC
             /**
              * Constructor
              */
-            CloudProp() {};
+            CloudProp()
+            {
+            };
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
@@ -157,7 +166,9 @@ namespace OIC
             std::string getAuthCode()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHCODE))
+                {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHCODE);
+                }
                 return std::string("");
             }
 
@@ -169,7 +180,9 @@ namespace OIC
             std::string getAuthProvider()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHPROVIDER))
+                {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHPROVIDER);
+                }
                 return std::string("");
             }
 
@@ -181,7 +194,9 @@ namespace OIC
             std::string getCiServer()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_CISERVER))
+                {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_CISERVER);
+                }
                 return std::string("");
             }
 
@@ -225,7 +240,10 @@ namespace OIC
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
              */
-            DeviceProp(const OCRepresentation &rep) { m_rep = rep; }
+            DeviceProp(const OCRepresentation &rep)
+            {
+                m_rep = rep;
+            }
 
             /**
              * Set WiFi resource properties to be delivered to Enrollee
@@ -266,7 +284,9 @@ namespace OIC
             std::string getSsid()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_SSID))
+                {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_SSID);
+                }
                 return std::string("");
             }
 
@@ -278,7 +298,9 @@ namespace OIC
             std::string getPassword()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_CRED))
+                {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_CRED);
+                }
                 return std::string("");
             }
 
@@ -292,7 +314,9 @@ namespace OIC
             WIFI_AUTHTYPE getAuthType()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHTYPE))
+                {
                     return static_cast<WIFI_AUTHTYPE>(m_rep.getValue<int>(OC_RSRVD_ES_AUTHTYPE));
+                }
                 return NONE_AUTH;
             }
 
@@ -306,7 +330,9 @@ namespace OIC
             WIFI_ENCTYPE getEncType()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_ENCTYPE))
+                {
                     return static_cast<WIFI_ENCTYPE>(m_rep.getValue<int>(OC_RSRVD_ES_ENCTYPE));
+                }
                 return NONE_ENC;
             }
 
@@ -319,7 +345,9 @@ namespace OIC
             std::string getLanguage()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_LANGUAGE))
+                {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_LANGUAGE);
+                }
                 return std::string("");
             }
 
@@ -332,7 +360,9 @@ namespace OIC
             std::string getCountry()
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_COUNTRY))
+                {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_COUNTRY);
+                }
                 return std::string("");
             }
 

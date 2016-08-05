@@ -53,7 +53,9 @@ void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void** userdata)
             if (OCRepPayloadGetPropInt(payload, USERPROPERTY_KEY_INT, &value))
             {
                 if(*userdata != NULL)
+                {
                     *userdata = (void*)OICMalloc(sizeof(UserProperties));
+                }
                 OIC_LOG_V(INFO, ESX_ENROLLEE_TAG, "[User specific property] %s : %ld",
                                                                             USERPROPERTY_KEY_INT, value);
                 ((UserProperties*)(*userdata))->userValue_int = value;

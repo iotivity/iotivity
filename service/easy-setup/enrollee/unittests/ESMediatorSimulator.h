@@ -48,9 +48,11 @@ private:
 public:
     ESMediatorSimulator()
     : m_remoteEnrollee(), m_discoveryCb(), m_getConfigurationCb(), m_getStatusCb(),
-    m_DevicePropProvisioningCb(), m_CloudPropProvisioningCb() { };
+    m_DevicePropProvisioningCb(), m_CloudPropProvisioningCb()
+    {
+    };
     ~ESMediatorSimulator() = default;
-    
+
     ESMediatorSimulator(const ESMediatorSimulator &) = delete;
     ESMediatorSimulator & operator = (const ESMediatorSimulator &) = delete;
 
@@ -65,7 +67,7 @@ public:
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCb,
                                                                     this, std::placeholders::_1));
-        
+
     }
 
     void getConfiguration(std::function<void(std::shared_ptr< GetConfigurationStatus >)> cb)
@@ -76,7 +78,7 @@ public:
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetConfiguration,
-                                                                    this, std::placeholders::_1));        
+                                                                    this, std::placeholders::_1));
     }
 
     void getStatus(std::function<void(std::shared_ptr< GetEnrolleeStatus >)> cb)
@@ -87,7 +89,7 @@ public:
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetStatus,
-                                                                    this, std::placeholders::_1));        
+                                                                    this, std::placeholders::_1));
     }
 
     void provisionDeviceProperties(std::function<void(std::shared_ptr< DevicePropProvisioningStatus >)> cb)
@@ -98,7 +100,7 @@ public:
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToProvisionDeviceProperties,
-                                                                    this, std::placeholders::_1));        
+                                                                    this, std::placeholders::_1));
     }
 
     void provisionCloudProperties(std::function<void(std::shared_ptr< CloudPropProvisioningStatus >)> cb)
@@ -109,7 +111,7 @@ public:
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToProvisionCloudProperties,
-                                                                    this, std::placeholders::_1));        
+                                                                    this, std::placeholders::_1));
     }
 
 private:
@@ -121,19 +123,19 @@ private:
             m_discoveryCb(resource);
             m_discoveryCb = NULL;
         }
-    }   
+    }
 
     void getConfigurationCallback(std::shared_ptr< GetConfigurationStatus > getConfigurationStatus)
     {
         if(m_getConfigurationCb != NULL)
         {
             m_getConfigurationCb(getConfigurationStatus);
-            m_getConfigurationCb = NULL;            
+            m_getConfigurationCb = NULL;
         }
     }
 
     void discoverRemoteEnrolleeCbToGetConfiguration(std::shared_ptr<OC::OCResource> resource)
-    {        
+    {
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE) && m_getConfigurationCb
                                                                            && !m_remoteEnrollee)
         {
@@ -142,7 +144,7 @@ private:
             if(m_remoteEnrollee != NULL)
             {
               m_remoteEnrollee->getConfiguration(std::bind(
-                    &ESMediatorSimulator::getConfigurationCallback, this, std::placeholders::_1));                
+                    &ESMediatorSimulator::getConfigurationCallback, this, std::placeholders::_1));
             }
         }
     }
@@ -166,7 +168,7 @@ private:
             if(m_remoteEnrollee != NULL)
             {
                 m_remoteEnrollee->getStatus(std::bind(
-                    &ESMediatorSimulator::getStatusCallback, this, std::placeholders::_1));               
+                    &ESMediatorSimulator::getStatusCallback, this, std::placeholders::_1));
             }
         }
     }
@@ -193,9 +195,9 @@ private:
                 DeviceProp devProp;
                 devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
                 devProp.setDevConfProp("korean", "Korea");
-                                 
-                m_remoteEnrollee->provisionDeviceProperties(devProp, 
-                    std::bind(&ESMediatorSimulator::deviceProvisioningStatusCallback, 
+
+                m_remoteEnrollee->provisionDeviceProperties(devProp,
+                    std::bind(&ESMediatorSimulator::deviceProvisioningStatusCallback,
                                                             this, std::placeholders::_1));
             }
         }
@@ -203,29 +205,31 @@ private:
 
     void cloudProvisioningStatusCallback(std::shared_ptr< CloudPropProvisioningStatus >
                                                                     cloudPropProvisioningStatus)
-    {    
+    {
         if(m_CloudPropProvisioningCb != NULL)
         {
             m_CloudPropProvisioningCb(cloudPropProvisioningStatus);
-            if(cloudPropProvisioningStatus->getESCloudState() == ES_CLOUD_PROVISIONING_SUCCESS)            
+            if(cloudPropProvisioningStatus->getESCloudState() == ES_CLOUD_PROVISIONING_SUCCESS)
+            {
                 m_CloudPropProvisioningCb = NULL;
+            }
         }
     }
 
     void discoverRemoteEnrolleeCbToProvisionCloudProperties(std::shared_ptr<OC::OCResource> resource)
-    {       
+    {
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE) &&
                                                 m_CloudPropProvisioningCb && !m_remoteEnrollee)
         {
             m_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
 
             if(m_remoteEnrollee != NULL)
-            {                
+            {
                 CloudProp cloudProp;
                 cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
 
-                m_remoteEnrollee->provisionCloudProperties(cloudProp, 
-                    std::bind(&ESMediatorSimulator::cloudProvisioningStatusCallback, 
+                m_remoteEnrollee->provisionCloudProperties(cloudProp,
+                    std::bind(&ESMediatorSimulator::cloudProvisioningStatusCallback,
                                                             this, std::placeholders::_1));
             }
         }

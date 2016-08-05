@@ -49,9 +49,12 @@ public:
     MockRepository mocks;
 
 protected:
-    virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test())) {}
+    virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test()))
+    {
+    }
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         try
         {
             mocks.VerifyAll();
@@ -303,9 +306,12 @@ TEST_F(EasysetupEnrolleeTest, ProvisioningPropertiesIsWellConstructedInResponseP
             {
                 EnrolleeStatus enrolleeStatus = status->getEnrolleeStatus();
 
+
                 if(enrolleeStatus.getProvStatus() == ES_STATE_CONNECTED_TO_ENROLLER &&
                    enrolleeStatus.getLastErrCode() == ES_ERRCODE_NO_INTERNETCONNECTION)
+                {
                     isWellConstructed = true;
+                }
             }
         });
     ESResult ret = startEnrollee();
@@ -341,14 +347,18 @@ TEST_F(EasysetupEnrolleeTest, WiFiAndDevConfProperiesProvisionedWithSuccess)
                 !strcmp(data->pwd, "Iotivity_PWD") &&
                 data->authtype == WPA2_PSK &&
                 data->enctype == TKIP_AES)
+            {
                 cntForReceivedCallbackWithSuccess++;
+            }
         });
     mocks.OnCallFunc(DevConfProvCbInApp).Do(
         [& cntForReceivedCallbackWithSuccess](ESDevConfProvData *data)
         {
             if(!strcmp(data->language, "korean") &&
                 !strcmp(data->country, "Korea"))
+            {
                 cntForReceivedCallbackWithSuccess++;
+            }
         });
 
     startEnrollee();
@@ -372,7 +382,9 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
         {
             // Will called twice
             if(status->getESResult() == ES_OK)
+            {
                cntForReceivedCallbackWithSuccess++;
+            }
         });
 
     mocks.OnCallFunc(CloudDataCbInApp).Do(
@@ -381,7 +393,9 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
             if(!strcmp(data->authCode, "authCode") &&
                 !strcmp(data->authProvider, "authProvider") &&
                 !strcmp(data->ciServer, "ciServer"))
+            {
                 cntForReceivedCallbackWithSuccess++;
+            }
         });
 
     startEnrollee();

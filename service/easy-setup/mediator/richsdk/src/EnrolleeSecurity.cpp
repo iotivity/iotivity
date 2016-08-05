@@ -101,7 +101,7 @@ namespace OIC
         {
             size_t outBufSize = B64DECODE_OUT_SAFESIZE((uuidString.length() + 1));
             uint8_t* outKey = (uint8_t*)OICCalloc(1, outBufSize);
-            uint32_t outKeySize;
+            uint32_t outKeySize = 0;
             if(NULL == outKey)
             {
                 OIC_LOG (ERROR, ENROLEE_SECURITY_TAG, "Failed to memoray allocation.");
@@ -165,7 +165,7 @@ namespace OIC
             pOwnedDevList.clear();
             pUnownedDevList.clear();
 
-            OCStackResult result;
+            OCStackResult result = OC_STACK_ERROR;
 
             result = OCSecure::discoverOwnedDevices(ES_SEC_DISCOVERY_TIMEOUT,
                     pOwnedDevList);
@@ -346,7 +346,7 @@ namespace OIC
             char href[] = "*";
             size_t len = strlen(href)+1;  // '1' for null termination
             rsrc->href = (char*) OICCalloc(len, sizeof(char));
-            if(!rsrc)
+            if(!rsrc->href)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
                 OCDeleteACLList(acl);
@@ -354,7 +354,7 @@ namespace OIC
             }
             OICStrcpy(rsrc->href, len, href);
 
-            int arrLen = 1;
+            size_t arrLen = 1;
             rsrc->typeLen = arrLen;
             rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
             rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));

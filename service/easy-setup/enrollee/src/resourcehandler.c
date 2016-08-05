@@ -266,10 +266,17 @@ void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 void updateWiFiResource(OCRepPayload* input)
 {
     ESWiFiProvData* wiFiData = (ESWiFiProvData*)OICMalloc(sizeof(ESWiFiProvData));
+
     if(wiFiData == NULL)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
+        return ;
     }
+
+    memset(wiFiData->ssid, 0, MAX_SSIDLEN);
+    memset(wiFiData->pwd, 0, MAX_CREDLEN);
+    wiFiData->authtype = NONE_AUTH;
+    wiFiData->enctype = NONE_AUTH;
     wiFiData->userdata = NULL;
 
     char* ssid = NULL;
@@ -330,10 +337,16 @@ void updateWiFiResource(OCRepPayload* input)
 void updateCloudResource(OCRepPayload* input)
 {
     ESCloudProvData* cloudData = (ESCloudProvData*)OICMalloc(sizeof(ESCloudProvData));
+
     if(cloudData == NULL)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
+        return;
     }
+
+    memset(cloudData->authCode, 0, OIC_STRING_MAX_VALUE);
+    memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
+    memset(cloudData->ciServer, 0, OIC_STRING_MAX_VALUE);
     cloudData->userdata = NULL;
 
     char *authCode = NULL;
@@ -386,10 +399,14 @@ void updateCloudResource(OCRepPayload* input)
 void updateDevConfResource(OCRepPayload* input)
 {
     ESDevConfProvData* devConfData = (ESDevConfProvData*)OICMalloc(sizeof(ESDevConfProvData));
+
     if(devConfData == NULL)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
+        return;
     }
+    memset(devConfData->language, 0, OIC_STRING_MAX_VALUE);
+    memset(devConfData->country, 0, OIC_STRING_MAX_VALUE);
     devConfData->userdata = NULL;
 
     char *country = NULL;
@@ -446,7 +463,9 @@ OCRepPayload* constructResponseOfWiFi()
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {gWiFiResource.numMode, 0, 0};
     int64_t *modes_64 = (int64_t *)OICMalloc(gWiFiResource.numMode * sizeof(int64_t));
     for(int i = 0 ; i < gWiFiResource.numMode ; ++i)
+    {
         modes_64[i] = gWiFiResource.supportedMode[i];
+    }
     OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, (int64_t *)modes_64, dimensions);
 
     OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, gWiFiResource.supportedFreq);
@@ -536,14 +555,22 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             payload->next = constructResponseOfWiFi();
 
             if(payload->next)
+            {
                 payload->next->next = constructResponseOfCloud();
+            }
             else
+            {
                 return payload;
+            }
 
             if(payload->next->next)
+            {
                 payload->next->next->next = constructResponseOfDevConf();
+            }
             else
+            {
                 return payload;
+            }
         }
     }
 
