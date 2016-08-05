@@ -185,7 +185,7 @@ TEST_F(PMCsdkTest_stc, ProvisionPairwiseDevicesMultipleTime_EG_N)
     }
 
     if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-                    device1, NULL, device2, NULL, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
+            device1, NULL, device2, NULL, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -615,7 +615,7 @@ TEST_F(PMCsdkTest_stc, OCDoOwnershipTransferJustWorksMultipleTimes_EG_N)
  * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
  * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
  * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)*
- * @objective       Test OCProvisionDirectPairing negatively calling it multiple times.
+ * @objective       Test OCProvisionDirectPairing positively calling it multiple times.
  * @target          OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf, OCProvisionResultCB resultCallback)
  * @objective       Test OCProvisionDirectPairing positively.
  * @test_data       Regular data for OCProvisionDirectPairing
@@ -630,10 +630,10 @@ TEST_F(PMCsdkTest_stc, OCDoOwnershipTransferJustWorksMultipleTimes_EG_N)
  *                  8. call OCProvisionDirectPairing
  *                  9. call OCProvisionDirectPairing
  * @post_condition  None
- * @expected        OCProvisionDirectPairing will return OC_STACK_INVALID_PARAM while calling it second time
+ * @expected        OCProvisionDirectPairing will return OC_STACK_OK while calling it second time
  */
 #if defined(__LINUX__)
-TEST_F(PMCsdkTest_stc, OCProvisionDirectPairingMultipleTimes_EG_N)
+TEST_F(PMCsdkTest_stc, OCProvisionDirectPairingMultipleTimes_SQV_P)
 {
     if (!m_PMHelper.initProvisionClient())
     {
@@ -693,7 +693,7 @@ TEST_F(PMCsdkTest_stc, OCProvisionDirectPairingMultipleTimes_EG_N)
     memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN2, DP_PIN_LENGTH);
 
     if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, device1,
-                    &pconf, m_PMHelper.provisionDPCB, OC_STACK_INVALID_PARAM))
+                    &pconf, m_PMHelper.provisionDPCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -945,6 +945,7 @@ TEST_F(PMCsdkTest_stc, RemoveDeviceTimeMultipleTimes_EG_N)
 }
 #endif
 
+
 /**
  * @since           2016-02-19
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
@@ -1026,8 +1027,7 @@ TEST_F(PMCsdkTest_stc, OCGetLinkedStatusBeforenAfterUnlinkDev_RSV_SRC_P)
         return;
     }
 
-    if(0 == numOfDevices)
-    {
+    if(0 == numOfDevices) {
         SET_FAILURE("No Device has been linked.");
         return;
     }
@@ -1050,8 +1050,7 @@ TEST_F(PMCsdkTest_stc, OCGetLinkedStatusBeforenAfterUnlinkDev_RSV_SRC_P)
         return;
     }
 
-    if(tempNumOfDevices > numOfDevices)
-    {
+    if(tempNumOfDevices > numOfDevices) {
         SET_FAILURE("No Device has been unlinked.");
         return;
     }
@@ -1183,3 +1182,4 @@ TEST_F(PMCsdkTest_stc, ProvisionAclPermission_UBV_P)
     }
 }
 #endif
+

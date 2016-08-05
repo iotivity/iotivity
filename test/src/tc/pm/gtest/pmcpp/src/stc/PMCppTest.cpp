@@ -621,7 +621,7 @@ TEST_F(PMCppTest_stc, UnlinkDeviceMultipleTimes_EG_N)
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
 
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -667,7 +667,7 @@ TEST_F(PMCppTest_stc, UnlinkDeviceMultipleTimes_EG_N)
 #if defined(__LINUX__)
 TEST_F(PMCppTest_stc, RemoveDeviceMultipleTimes_EG_N)
 {
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,m_UnownedDevList, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
