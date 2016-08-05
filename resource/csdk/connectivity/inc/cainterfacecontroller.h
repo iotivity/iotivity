@@ -111,19 +111,23 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
  * @param[in]   endpoint       endpoint information where the data has to be sent.
  * @param[in]   data           data that needs to be sent.
  * @param[in]   length         length of the data that needs to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
+CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data,
+                             uint32_t length, CADataType_t dataType);
 
 /**
  * Sends multicast data to all endpoints in the network.
  * @param[in]   endpoint       endpoint information where the data has to be sent.
  * @param[in]   data           data that needs to be sent.
  * @param[in]   length         length of the data that needs to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 
-CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
+CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data,
+                               uint32_t length, CADataType_t dataType);
 
 /**
  * Start listening servers to receive search requests from clients.

@@ -110,11 +110,13 @@ CAResult_t CAStartTCPDiscoveryServer();
  *                              which the unicast data has to be sent.
  * @param[in]   data           Data which is required to be sent.
  * @param[in]   dataLen        Size of data to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @note  dataLen must be > 0.
  * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLen);
+                             const void *data, uint32_t dataLen,
+                             CADataType_t dataType);
 
 /**
  * Send Multicast data to the endpoint using the TCP connectivity.
@@ -122,11 +124,13 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
  *                              port)
  * @param[in]   data           Data which is required to be sent.
  * @param[in]   dataLen        Size of data to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @note  dataLen must be > 0.
  * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
-                               const void *data, uint32_t dataLen);
+                               const void *data, uint32_t dataLen,
+                               CADataType_t dataType);
 
 /**
  * Get TCP Connectivity network information.

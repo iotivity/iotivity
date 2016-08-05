@@ -1,5 +1,6 @@
 %define PREFIX /usr/apps/com.oic.ri.sample
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
+%{!?VERBOSE: %define VERBOSE 1}
 
 Name: com-oic-ri-sample
 Version:    1.1.1
@@ -30,7 +31,7 @@ OIC RIsample application
 %build
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} ROUTING=%{ROUTING}
+scons VERBOSE=%{VERBOSE} TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} ROUTING=%{ROUTING}
 
 %install
 

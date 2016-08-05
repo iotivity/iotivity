@@ -41,6 +41,7 @@ Requires(post): /sbin/ldconfig
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?ES_ROLE: %define ES_ROLE enrollee}
 %{!?ES_SOFTAP_MODE: %define ES_SOFTAP_MODE MEDIATOR_SOFTAP}
+%{!?VERBOSE: %define VERBOSE 1}
 
 %description
 An open source reference implementation of the OIC standard specifications
@@ -106,8 +107,8 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %define RPM_ARCH "x86"
 %endif
 
-#VERBOSE=1
 scons -j2 --prefix=%{_prefix} \
+	VERBOSE=%{VERBOSE} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
 	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \

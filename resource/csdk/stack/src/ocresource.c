@@ -25,11 +25,14 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 
-#ifdef WITH_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#ifdef WITH_STRING_H
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 

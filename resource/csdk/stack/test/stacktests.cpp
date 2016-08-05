@@ -898,7 +898,11 @@ TEST(StackResource, GetResourceProperties)
                                             NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
+#ifdef MQ_PUBLISHER
+    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
+#else
     EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
+#endif
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());

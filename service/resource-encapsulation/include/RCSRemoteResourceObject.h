@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "RCSResourceAttributes.h"
+#include "RCSRepresentation.h"
 
 namespace OC
 {
@@ -248,6 +249,14 @@ namespace OIC
              */
             static RCSRemoteResourceObject::Ptr fromOCResource(
                     std::shared_ptr< OC::OCResource > ocResource);
+
+            /**
+             * Returns an equivalent OCResource using RCSRemoteResourceObject instance.
+             *
+             * @throw RCSInvalidParameterException If rcsResource is nullptr.
+             */
+            static std::shared_ptr< OC::OCResource > toOCResource(
+                    RCSRemoteResourceObject::Ptr rcsResource);
 
             /**
              * Returns whether monitoring is enabled.
@@ -504,6 +513,26 @@ namespace OIC
              * @note The callback will be invoked in an internal thread.
              */
             void set(const RCSQueryParams& queryParams, const RCSResourceAttributes& attributes,
+                    SetCallback cb);
+
+            /**
+             * Sends a set request with resource representation to the server.
+             *
+             * The SetRequest behavior depends on query parameters and the server.
+             *
+             * @param queryParams Query parameters
+             * @param rep Representation to set
+             * @param cb A callback to receive the response.
+             *
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
+             *
+             * @see RCSResourceObject
+             * @see RCSResourceObject::SetRequestHandlerPolicy
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void set(const RCSQueryParams& queryParams, const RCSRepresentation &rep,
                     SetCallback cb);
 
             /**
