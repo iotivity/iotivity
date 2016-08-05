@@ -55,6 +55,16 @@ namespace OIC
              */
             EnrolleeStatus(const OCRepresentation& rep) { m_rep = rep; }
 
+            EnrolleeStatus(const EnrolleeStatus& enrolleeStatus) :
+                m_rep(enrolleeStatus.getRepresentation())
+            {
+            }
+
+            EnrolleeStatus(const EnrolleeStatus&& enrolleeStatus) :
+                m_rep(std::move(enrolleeStatus.getRepresentation()))
+            {
+            }
+
             /**
              * Get a provisioning status property of Enrollee.
              *
@@ -86,7 +96,7 @@ namespace OIC
              *
              * @return OCRepresentation object
              */
-            const OCRepresentation& getRepresentation()
+            const OCRepresentation& getRepresentation() const
             {
                 return m_rep;
             }
