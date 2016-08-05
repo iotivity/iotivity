@@ -269,13 +269,13 @@ namespace OC
 #ifdef WITH_CLOUD
         OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
                                               const std::string& host,
-                                              const QueryParamsList& queryParams,
+                                              const std::vector<std::string>& di,
                                               OCConnectivityType connectivityType,
                                               ObserveCallback callback)
         {
             return OCPlatform_impl::Instance().subscribeDevicePresence(presenceHandle,
                                                                        host,
-                                                                       queryParams,
+                                                                       di,
                                                                        connectivityType,
                                                                        callback);
         }
@@ -306,41 +306,11 @@ namespace OC
                                              pinNumber, resultCallback);
         }
 #ifdef WITH_CLOUD
-        OCStackResult signUp(const std::string& host,
-                             const std::string& authProvider,
-                             const std::string& authCode,
-                             OCConnectivityType connectivityType,
-                             PostCallback cloudConnectHandler)
+        OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType)
         {
-            return OCPlatform_impl::Instance().signUp(host, authProvider, authCode,
-                                                      connectivityType, cloudConnectHandler);
-        }
-
-        OCStackResult signIn(const std::string& host,
-                             const std::string& accessToken,
-                             OCConnectivityType connectivityType,
-                             PostCallback cloudConnectHandler)
-        {
-            return OCPlatform_impl::Instance().signIn(host, accessToken,
-                                                      connectivityType, cloudConnectHandler);
-        }
-
-        OCStackResult signOut(const std::string& host,
-                              const std::string& accessToken,
-                              OCConnectivityType connectivityType,
-                              PostCallback cloudConnectHandler)
-        {
-            return OCPlatform_impl::Instance().signOut(host, accessToken,
-                                                       connectivityType, cloudConnectHandler);
-        }
-
-        OCStackResult refreshAccessToken(const std::string& host,
-                                         const std::string& refreshToken,
-                                         OCConnectivityType connectivityType,
-                                         PostCallback cloudConnectHandler)
-        {
-            return OCPlatform_impl::Instance().refreshAccessToken(host, refreshToken,
-                                                       connectivityType, cloudConnectHandler);
+            return OCPlatform_impl::Instance().constructAccountManagerObject(host,
+                                                                             connectivityType);
         }
 #endif // WITH_CLOUD
 #ifdef RD_CLIENT

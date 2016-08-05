@@ -1,6 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 TARGET_ARCH_ABI := $(APP_ABI)
 SECURED := $(SECURE)
+WITH_MQ_PUB := $(WITH_MQ_PUB)
+WITH_MQ_SUB := $(WITH_MQ_SUB)
+WITH_MQ_BROKER := $(WITH_MQ_BROKER)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
@@ -53,6 +56,19 @@ include $(CLEAR_VARS)
 OIC_SRC_PATH := ../../../resource
 OIC_OUT_PATH := ../../../out
 LOCAL_MODULE    := ocstack-jni
+MQ_FLAG = 0
+ifeq ($(WITH_MQ_PUB), 1)
+LOCAL_CFLAGS += -DWITH_MQ -DMQ_PUBLISHER
+MQ_FLAG = 1
+endif
+ifeq ($(WITH_MQ_SUB), 1)
+LOCAL_CFLAGS += -DWITH_MQ -DMQ_SUBSCRIBER
+MQ_FLAG = 1
+endif
+ifeq ($(WITH_MQ_BROKER), 1)
+LOCAL_CFLAGS += -DWITH_MQ -DMQ_BROKER
+MQ_FLAG = 1
+endif
 LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniUtils.cpp \
                     JniEntityHandler.cpp \
@@ -78,6 +94,11 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOnDPDevicesFoundListener.cpp \
                     JniOnDirectPairingListener.cpp \
                     JniOcDirectPairDevice.cpp
+
+ifeq ($(MQ_FLAG), 1)
+#new listener will be added.
+endif
+
 ifeq ($(SECURED), 1)
     LOCAL_SRC_FILES +=  JniOcSecureResource.cpp \
                         JniOcProvisioning.cpp \
@@ -85,7 +106,7 @@ ifeq ($(SECURED), 1)
                         JniProvisionResultListner.cpp \
                         JniPinCheckListener.cpp \
                         JniDisplayPinListener.cpp
-                        endif
+endif
 
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc

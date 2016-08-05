@@ -43,7 +43,7 @@ IF "%CURRENT_ARG%" == "build" IF "%BUILD_MSYS%" == "" (
 REM We need to append the "PATH" so the octbstack.dll can be found by executables
 IF "%BUILD_MSYS%" == "" (
   set BUILD_DIR=out\windows\amd64\debug
-  set PATH=!PATH!;!BUILD_DIR!;
+  set PATH=!PATH!;!IOTIVITY_DIR!!BUILD_DIR!;
 ) ELSE (
   set BUILD_DIR=out\msys_nt\x86_64\debug
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
@@ -56,22 +56,39 @@ set SECURED=1
 set TEST=1
 set LOGGING=OFF
 set WITH_RD=1
+set ROUTING=EP
+
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD% ROUTING=%ROUTING%
+
 REM *** BUILD OPTIONS ***
 
 if "!CURRENT_ARG!"=="server" (
-  %DEBUG% %BUILD_DIR%\resource\examples\simpleserver.exe
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% simpleserver.exe
 ) else if "!CURRENT_ARG!"=="client" (
-  %DEBUG% %BUILD_DIR%\resource\examples\simpleclient.exe
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% simpleclient.exe
 ) else if "!CURRENT_ARG!"=="mediaclient" (
-  %DEBUG% %BUILD_DIR%\debug\resource\examples\mediaclient.exe
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% mediaclient.exe
 ) else if "!CURRENT_ARG!"=="mediaserver" (
-  %DEBUG% %BUILD_DIR%\resource\examples\mediaserver.exe
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% mediaserver.exe
 ) else if "!CURRENT_ARG!"=="winuiclient" (
-  %DEBUG% %BUILD_DIR%\resource\examples\winuiclient.exe
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% winuiclient.exe
 ) else if "!CURRENT_ARG!"=="occlient" (
-  %DEBUG% %BUILD_DIR%\resource\csdk\stack\samples\linux\SimpleClientServer\occlientbasicops.exe -u 0 -t 3 -c 1
+  cd %BUILD_DIR%\resource\csdk\stack\samples\linux\SimpleClientServer
+  %DEBUG% occlientbasicops.exe -u 0 -t 3 -c 1
 ) else if "!CURRENT_ARG!"=="ocserver" (
-  %DEBUG% %BUILD_DIR%\resource\csdk\stack\samples\linux\SimpleClientServer\ocserverbasicops.exe
+  cd %BUILD_DIR%\resource\csdk\stack\samples\linux\SimpleClientServer
+  %DEBUG% ocserverbasicops.exe
+) else if "!CURRENT_ARG!"=="provclient" (
+  cd %BUILD_DIR%\resource\csdk\security\provisioning\sample
+  %DEBUG% provisioningclient.exe
+) else if "!CURRENT_ARG!"=="justworks" (
+  cd %BUILD_DIR%\resource\csdk\security\provisioning\sample
+  %DEBUG% sampleserver_justworks.exe
 ) else if "!CURRENT_ARG!"=="test" (
   %DEBUG% %BUILD_DIR%\resource\csdk\connectivity\test\catests.exe
   %DEBUG% %BUILD_DIR%\resource\csdk\stack\test\stacktests.exe
@@ -85,11 +102,12 @@ if "!CURRENT_ARG!"=="server" (
   echo   SECURED=%SECURED%
   echo   LOGGING=%LOGGING%
   echo   WITH_RD=%WITH_RD%
+  echo   ROUTING=%ROUTING%
   CL.exe | findstr "Compiler Verison"
-  echo.scons VERBOSE=1 TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD%
-  scons VERBOSE=1 TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD%
+  echo.scons VERBOSE=1 %BUILD_OPTIONS%
+  scons VERBOSE=1 %BUILD_OPTIONS%
 ) else if "!CURRENT_ARG!"=="clean" (
-  scons VERBOSE=1 TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD% -c clean
+  scons VERBOSE=1 %BUILD_OPTIONS% -c clean
   rd /s /q out
   del .sconsign.dblite
 ) else if "!CURRENT_ARG!"=="cleangtest" (
@@ -99,6 +117,8 @@ if "!CURRENT_ARG!"=="server" (
     echo %0 - Script requires a valid argument!
     goto :EOF
 )
+
+cd %IOTIVITY_DIR%
 
 echo Done!
 
