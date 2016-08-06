@@ -552,25 +552,31 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
     {
         if(strstr(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
         {// When Provisioning resource has a GET with BatchInterface
-            payload->next = constructResponseOfWiFi();
+            OCRepPayload* head = payload;
+            OCRepPayload* nextPayload = NULL;
 
-            if(payload->next)
+            nextPayload = constructResponseOfWiFi();
+            if(nextPayload != NULL)
             {
-                payload->next->next = constructResponseOfCloud();
-            }
-            else
-            {
-                return payload;
+                payload->next = nextPayload;
+                payload = payload->next;
             }
 
-            if(payload->next->next)
+            nextPayload = constructResponseOfCloud();
+            if(nextPayload != NULL)
             {
-                payload->next->next->next = constructResponseOfDevConf();
+                payload->next = nextPayload;
+                payload = payload->next;
             }
-            else
+
+            nextPayload = constructResponseOfDevConf();
+            if(nextPayload != NULL)
             {
-                return payload;
+                payload->next = nextPayload;
+                payload = payload->next;
             }
+
+            payload = head;
         }
     }
 
