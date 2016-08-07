@@ -26,6 +26,7 @@
 #include "JniOnDPDevicesFoundListener.h"
 #include "JniOnDirectPairingListener.h"
 #include "JniOnPresenceListener.h"
+#include "JniOnPublishResourceListener.h"
 #include <mutex>
 
 #ifndef _Included_org_iotivity_base_OcPlatform
@@ -51,6 +52,8 @@ void RemoveOnDPDevicesFoundListener(JNIEnv* env, jobject jListener);
 JniOnDirectPairingListener* AddOnDirectPairingListener(JNIEnv* env, jobject jListener);
 void RemoveOnDirectPairingListener(JNIEnv* env, jobject jListener);
 
+JniOnPublishResourceListener* AddOnPublishResourceListener(JNIEnv* env, jobject jListener);
+void RemoveOnPublishResourceListener(JNIEnv* env, jobject jListener);
 
 std::map<jobject, std::pair<JniOnResourceFoundListener*, int>> onResourceFoundListenerMap;
 std::map<jobject, std::pair<JniOnDeviceInfoListener*, int>> onDeviceInfoListenerMap;
@@ -58,6 +61,7 @@ std::map<jobject, std::pair<JniOnPlatformInfoListener*, int>> onPlatformInfoList
 std::map<jobject, std::pair<JniOnPresenceListener*, int>> onPresenceListenerMap;
 std::map<jobject, std::pair<JniOnDPDevicesFoundListener*, int>> onDPDevicesFoundListenerMap;
 std::map<jobject, std::pair<JniOnDirectPairingListener*, int>> directPairingListenerMap;
+std::map<jobject, std::pair<JniOnPublishResourceListener*, int>> onPublishResourceListenerMap;
 
 std::mutex resourceFoundMapLock;
 std::mutex deviceInfoMapLock;
@@ -65,6 +69,7 @@ std::mutex platformInfoMapLock;
 std::mutex presenceMapLock;
 std::mutex dpDevicesFoundListenerMapLock;
 std::mutex directPairingListenerMapLock;
+std::mutex publishResourceListenerMapLock;
 
 #ifdef __cplusplus
 extern "C" {
@@ -325,6 +330,23 @@ extern "C" {
      */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_doDirectPairing0
         (JNIEnv *, jclass, jobject, jint, jstring, jobject);
+
+    /*
+     * Class:     org_iotivity_base_OcPlatform
+     * Method:    publishResourceToRD0
+     * Signature: (Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPublishResourceListener;I)V
+     */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD0
+        (JNIEnv *, jclass, jstring, jint, jobject, jint);
+
+    /*
+     * Class:     org_iotivity_base_OcPlatform
+     * Method:    publishResourceToRD1
+     * Signature: (Ljava/lang/String;I[Lorg/iotivity/base/OcResourceHandle
+     *            ;Lorg/iotivity/base/OcPlatform/OnPublishResourceListener;I)V
+     */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD1
+        (JNIEnv *, jclass, jstring, jint, jobjectArray, jobject, jint);
 #ifdef __cplusplus
 }
 #endif

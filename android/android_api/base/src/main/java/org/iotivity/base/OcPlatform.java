@@ -950,6 +950,160 @@ public final class OcPlatform {
     throws OcException;
 
     /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnPublishResourceListener onPublishResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD0(
+                host,
+                connTypeInt,
+                onPublishResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication.
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnPublishResourceListener onPublishResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD0(
+                host,
+                connTypeInt,
+                onPublishResourceListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void publishResourceToRD0(
+            String host,
+            int connectivityType,
+            OnPublishResourceListener onPublishResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnPublishResourceListener onPublishResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD1(
+                host,
+                connTypeInt,
+                ocResourceHandleList.toArray(
+                        new OcResourceHandle[ocResourceHandleList.size()]),
+                onPublishResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host IP Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnPublishResourceListener onPublishResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD1(
+            host,
+            connTypeInt,
+            ocResourceHandleList.toArray(
+                    new OcResourceHandle[ocResourceHandleList.size()]),
+            onPublishResourceListener,
+            qualityOfService.getValue()
+        );
+    }
+
+    private static native void publishResourceToRD1(
+            String host,
+            int connectivityType,
+            OcResourceHandle[] ocResourceHandleArray,
+            OnPublishResourceListener onPublishResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * An OnPublishResourceListener can be registered via the OcPlatform.publishResourceToRD call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnPublishResourceListener {
+        public void onPublishResourceCompleted(OcRepresentation ocRepresentation);
+        public void onPublishResourceFailed(Throwable ex);
+    }
+
+    /**
      * An FindDirectPairingListener can be registered via the OcPlatform.findDirectPairingDevices call.
      * Event listeners are notified asynchronously
      */

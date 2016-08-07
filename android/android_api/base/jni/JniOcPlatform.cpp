@@ -464,6 +464,89 @@ void RemoveOnDirectPairingListener(JNIEnv* env, jobject jListener)
     directPairingListenerMapLock.unlock();
 }
 
+JniOnPublishResourceListener* AddOnPublishResourceListener(JNIEnv* env, jobject jListener)
+{
+    if (!env)
+    {
+        LOGD("env is null");
+        return nullptr;
+    }
+
+    JniOnPublishResourceListener *onPublishResourceListener = nullptr;
+
+    publishResourceListenerMapLock.lock();
+
+    for (auto it = onPublishResourceListenerMap.begin(); it !=
+            onPublishResourceListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            onPublishResourceListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            onPublishResourceListenerMap.insert(*it);
+            LOGD("onPublishResourceListener: ref. count incremented");
+            break;
+        }
+    }
+    if (!onPublishResourceListener)
+    {
+        onPublishResourceListener = new JniOnPublishResourceListener(env, jListener,
+                RemoveOnPublishResourceListener);
+        jobject jgListener = env->NewGlobalRef(jListener);
+        onPublishResourceListenerMap.insert(
+                std::pair<jobject, std::pair<JniOnPublishResourceListener*, int>>(
+                    jgListener,
+                    std::pair<JniOnPublishResourceListener*, int>(onPublishResourceListener, 1)));
+        LOGI("onPublishResourceListener: new listener");
+    }
+    publishResourceListenerMapLock.unlock();
+    return onPublishResourceListener;
+}
+
+void RemoveOnPublishResourceListener(JNIEnv* env, jobject jListener)
+{
+    if (!env)
+    {
+        ThrowOcException(JNI_EXCEPTION, "env is null");
+        return;
+    }
+
+    publishResourceListenerMapLock.lock();
+    bool isFound = false;
+    for (auto it = onPublishResourceListenerMap.begin(); it !=
+            onPublishResourceListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                onPublishResourceListenerMap.insert(*it);
+                LOGI("onPublishResourceListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnPublishResourceListener* listener = refPair.first;
+                delete listener;
+                onPublishResourceListenerMap.erase(it);
+                LOGI("onPublishResourceListener is removed");
+            }
+            isFound = true;
+            break;
+        }
+    }
+    if (!isFound)
+    {
+        ThrowOcException(JNI_EXCEPTION, "onPublishResourceListener not found");
+    }
+    publishResourceListenerMapLock.unlock();
+}
+
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    configure
@@ -2306,4 +2389,156 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0(
         LOGE("%s", e.reason().c_str());
         ThrowOcException(e.code(), e.reason().c_str());
     }
+}
+
+/*
+ * Class:     org_iotivity_base_OcPlatform
+ * Method:    publishResourceToRD0
+ * Signature: (Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPublishResourceListener;I)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD0(
+        JNIEnv *env,
+        jclass clazz,
+        jstring jHost,
+        jint jConnectivityType,
+        jobject jListener,
+        jint jQoS)
+{
+    LOGD("OcPlatform_publishResourceToRD");
+#ifdef RD_CLIENT
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPublishResourceListener cannot be null");
+        return;
+    }
+    JniOnPublishResourceListener *onPubResListener = AddOnPublishResourceListener(env, jListener);
+
+    PublishResourceCallback pubResCallback = [onPubResListener](
+            const OCRepresentation& ocRepresentation,
+            const int eCode)
+    {
+        onPubResListener->onPublishResourceCallback(ocRepresentation, eCode);
+    };
+
+    try
+    {
+        OCStackResult result = OCPlatform::publishResourceToRD(
+            host,
+            static_cast<OCConnectivityType>(jConnectivityType),
+            pubResCallback,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Publish resource has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_ERROR, "Publish resource has failed");
+    return;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcPlatform
+ * Method:    publishResourceToRD1
+ * Signature: (Ljava/lang/String;I[Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcPlatform/OnPublishResourceListener;I)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD1(
+        JNIEnv *env,
+        jclass clazz,
+        jstring jHost,
+        jint jConnectivityType,
+        jobjectArray jResourceHandleArray,
+        jint jQoS,
+        jobject jListener)
+{
+    LOGD("OcPlatform_publishResourceToRD");
+#ifdef RD_CLIENT
+    if (!env)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "env is null");
+        return;
+    }
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPublishResourceListener cannot be null");
+        return;
+    }
+    if (!jResourceHandleArray)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceHandleList cannot be null");
+        return;
+    }
+    JniOnPublishResourceListener *onPubResListener = AddOnPublishResourceListener(env, jListener);
+
+    PublishResourceCallback pubResCallback = [onPubResListener](
+            const OCRepresentation& ocRepresentation,
+            const int eCode)
+    {
+        onPubResListener->onPublishResourceCallback(ocRepresentation, eCode);
+    };
+
+    std::vector<OCResourceHandle> resourceHandleList;
+    size_t len = env->GetArrayLength(jResourceHandleArray);
+    for (size_t i = 0; i < len; ++i)
+    {
+        jobject jResourceHandle = env->GetObjectArrayElement(jResourceHandleArray, i);
+        if (!jResourceHandle)
+        {
+            ThrowOcException(JNI_EXCEPTION, "resource handle cannot be null");
+            return;
+        }
+
+        JniOcResourceHandle* jniOcResourceHandle =
+            JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceHandle);
+        if (!jniOcResourceHandle)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "resource handle is invalid");
+            return;
+        }
+
+        resourceHandleList.push_back(jniOcResourceHandle->getOCResourceHandle());
+    }
+
+    try
+    {
+        OCStackResult result = OCPlatform::publishResourceToRD(
+            host,
+            static_cast<OCConnectivityType>(jConnectivityType),
+            resourceHandleList,
+            pubResCallback,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Publish resource has failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_ERROR, "Publish resource has failed");
+    return;
+#endif
 }

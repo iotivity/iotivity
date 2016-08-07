@@ -4,6 +4,7 @@ SECURED := $(SECURE)
 WITH_MQ_PUB := $(WITH_MQ_PUB)
 WITH_MQ_SUB := $(WITH_MQ_SUB)
 WITH_MQ_BROKER := $(WITH_MQ_BROKER)
+RD_MODE := $(RD_MODE)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
@@ -93,7 +94,8 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOcSecurity.cpp \
                     JniOnDPDevicesFoundListener.cpp \
                     JniOnDirectPairingListener.cpp \
-                    JniOcDirectPairDevice.cpp
+                    JniOcDirectPairDevice.cpp \
+                    JniOnPublishResourceListener.cpp
 
 ifeq ($(MQ_FLAG), 1)
 #new listener will be added.
@@ -120,6 +122,9 @@ LOCAL_STATIC_LIBRARIES += android-ocprovision
 LOCAL_STATIC_LIBRARIES += android-ocpmapi
 endif
 
+ifeq "$(RD_MODE)" "CLIENT"
+LOCAL_CPPFLAGS += -DRD_CLIENT
+endif
 LOCAL_CPPFLAGS += -std=c++0x
 LOCAL_CPP_FEATURES := rtti exceptions
 LOCAL_C_INCLUDES := $(OIC_SRC_PATH)/include
