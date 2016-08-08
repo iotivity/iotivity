@@ -98,8 +98,8 @@ public class Topic {
 
     public IResponse handleCreateSubtopic(IRequest request) {
 
-        String newTopicName = request.getUriPathSegments().get(
-                request.getUriPathSegments().size() - 1);
+        String newTopicName = request.getUriPathSegments()
+                .get(request.getUriPathSegments().size() - 1);
 
         String newTopicType = new String();
 
@@ -122,7 +122,10 @@ public class Topic {
             mSubtopics.put(newTopicName, newTopic);
         }
 
-        return MessageBuilder.createResponse(request, ResponseStatus.CREATED);
+        IResponse response = MessageBuilder.createResponse(request,
+                ResponseStatus.CREATED);
+        response.setLocationPath(request.getUriPath());
+        return response;
     }
 
     public IResponse handleRemoveSubtopic(IRequest request, String topicName) {
@@ -163,8 +166,8 @@ public class Topic {
         }
 
         synchronized (mSubscribers) {
-            mSubscribers.put(request.getRequestId(), new TopicSubscriber(
-                    srcDevice, request));
+            mSubscribers.put(request.getRequestId(),
+                    new TopicSubscriber(srcDevice, request));
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
@@ -175,8 +178,8 @@ public class Topic {
 
         synchronized (mSubscribers) {
 
-            TopicSubscriber subscriber = mSubscribers.get(request
-                    .getRequestId());
+            TopicSubscriber subscriber = mSubscribers
+                    .get(request.getRequestId());
 
             mSubscribers.remove(subscriber.mRequest.getRequestId());
 
@@ -254,8 +257,8 @@ public class Topic {
         synchronized (mSubscribers) {
             for (TopicSubscriber subscriber : mSubscribers.values()) {
 
-                subscriber.mSubscriber.sendResponse(MessageBuilder
-                        .createResponse(subscriber.mRequest,
+                subscriber.mSubscriber.sendResponse(
+                        MessageBuilder.createResponse(subscriber.mRequest,
                                 ResponseStatus.CONTENT,
                                 ContentFormat.APPLICATION_CBOR, mLatestData));
             }

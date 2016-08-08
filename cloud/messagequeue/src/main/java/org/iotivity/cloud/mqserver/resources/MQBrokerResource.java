@@ -84,7 +84,8 @@ public class MQBrokerResource extends Resource {
     private IResponse handleGetRequest(Device srcDevice, IRequest request) {
 
         // DISCOVER
-        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments()
+                .size()) {
             return discoverTopic(request);
         }
 
@@ -106,9 +107,11 @@ public class MQBrokerResource extends Resource {
     // CREATE topic
     private IResponse handlePutRequest(IRequest request) {
 
-        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments()
+                .size()) {
 
-            throw new BadRequestException("topic name is not included in request uri");
+            throw new BadRequestException(
+                    "topic name is not included in request uri");
         }
 
         return createTopic(request);
@@ -129,7 +132,8 @@ public class MQBrokerResource extends Resource {
     private IResponse createTopic(IRequest request) {
 
         // main topic creation request
-        if (request.getUriPathSegments().size() == getUriPathSegments().size() + 1) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size()
+                + 1) {
             return createMainTopic(request);
         }
 
@@ -158,8 +162,8 @@ public class MQBrokerResource extends Resource {
         String uriPath = request.getUriPath();
 
         String parentName = uriPath.substring(0, uriPath.lastIndexOf('/'));
-        String targetName = request.getUriPathSegments().get(
-                request.getUriPathSegments().size() - 1);
+        String targetName = request.getUriPathSegments()
+                .get(request.getUriPathSegments().size() - 1);
 
         Topic parentTopic = mTopicManager.getTopic(parentName);
 
@@ -230,14 +234,14 @@ public class MQBrokerResource extends Resource {
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
-                ContentFormat.APPLICATION_CBOR, MessageQueueUtils.buildPayload(
-                        Constants.MQ_TOPICLIST, topicList));
+                ContentFormat.APPLICATION_CBOR, MessageQueueUtils
+                        .buildPayload(Constants.MQ_TOPICLIST, topicList));
     }
 
     private IResponse createMainTopic(IRequest request) {
 
-        String topicName = request.getUriPathSegments().get(
-                request.getUriPathSegments().size() - 1);
+        String topicName = request.getUriPathSegments()
+                .get(request.getUriPathSegments().size() - 1);
 
         String type = new String();
 
@@ -267,7 +271,10 @@ public class MQBrokerResource extends Resource {
             throw new InternalServerErrorException("create topic falied");
         }
 
-        return MessageBuilder.createResponse(request, ResponseStatus.CREATED);
+        IResponse response = MessageBuilder.createResponse(request,
+                ResponseStatus.CREATED);
+        response.setLocationPath(request.getUriPath());
+        return response;
     }
 
     private IResponse removeMainTopic(IRequest request) {

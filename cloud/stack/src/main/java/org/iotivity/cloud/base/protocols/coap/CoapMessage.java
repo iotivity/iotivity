@@ -414,4 +414,26 @@ public abstract class CoapMessage extends Message {
 
         return ContentFormat.NO_CONTENT;
     }
+
+    @Override
+    public void setLocationPath(String locationPath) {
+        if (location_path == null) {
+            location_path = new ArrayList<>();
+        } else {
+            location_path.clear();
+        }
+
+        if (locationPath == null || locationPath.length() == 0) {
+            location_path.clear();
+            location_path = null;
+            return;
+        }
+
+        String[] pathSegments = locationPath.split("/");
+        for (String pathSegment : pathSegments) {
+            if (pathSegment.length() == 0)
+                continue;
+            location_path.add(pathSegment.getBytes(StandardCharsets.UTF_8));
+        }
+    }
 }
