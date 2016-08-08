@@ -156,12 +156,27 @@ int main()
         switch (num)
         {
             case 1:
+            {
                 printf("NSStartProvider(Accepter: Provider)");
-                NSStartProvider(true, subscribeRequestCallback, syncCallback);
+                NSProviderConfig config;
+                config.policy = false;
+                config.subRequestCallback = subscribeRequestCallback;
+                config.syncInfoCallback = syncCallback;
+                config.userInfo = OICStrdup("OCF_NOTIFICATION");
+                NSStartProvider(config);
+            }
                 break;
+
             case 2:
+            {
                 printf("NSStartProvider(Accepter: Consumer)");
-                NSStartProvider(false, subscribeRequestCallback, syncCallback);
+                NSProviderConfig config;
+                config.policy = false;
+                config.subRequestCallback = subscribeRequestCallback;
+                config.syncInfoCallback = syncCallback;
+                config.userInfo = OICStrdup("OCF_NOTIFICATION");
+                NSStartProvider(config);
+            }
                 break;
             case 3:
                 printf("NSSendNotification()");

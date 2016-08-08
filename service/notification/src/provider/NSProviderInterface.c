@@ -42,8 +42,7 @@ void initializeMutex()
     nsInitMutex = initMutex;
 }
 
-NSResult NSStartProvider(bool policy, NSSubscribeRequestCallback subscribeRequestCb,
-        NSProviderSyncInfoCallback syncCb)
+NSResult NSStartProvider(NSProviderConfig config)
 {
     NS_LOG(DEBUG, "NSStartProvider - IN");
 
@@ -55,10 +54,10 @@ NSResult NSStartProvider(bool policy, NSSubscribeRequestCallback subscribeReques
     {
         NS_LOG(DEBUG, "Init Provider");
         initProvider = true;
-        NSInitProviderInfo();
-        NSSetSubscriptionAccessPolicy(policy);
-        NSRegisterSubscribeRequestCb(subscribeRequestCb);
-        NSRegisterSyncCb(syncCb);
+        NSInitProviderInfo(config.userInfo);
+        NSSetSubscriptionAccessPolicy(config.policy);
+        NSRegisterSubscribeRequestCb(config.subRequestCallback);
+        NSRegisterSyncCb(config.syncInfoCallback);
         CARegisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
                 (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
 

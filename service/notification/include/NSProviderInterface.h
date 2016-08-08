@@ -73,9 +73,7 @@ typedef struct
  * @param[in]  config   Refer to NSProviderConfig
  * @return ::NS_OK or result code of NSResult
  */
-//TODO next commit, change to NSProviderConfig ..
-NSResult NSStartProvider(bool policy, NSSubscribeRequestCallback subscribeRequestCb,
-        NSProviderSyncInfoCallback syncCb);
+NSResult NSStartProvider(NSProviderConfig config);
 
 /**
  * Terminate notification service for provider
