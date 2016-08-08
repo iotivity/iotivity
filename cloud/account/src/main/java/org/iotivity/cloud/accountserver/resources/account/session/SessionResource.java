@@ -98,7 +98,7 @@ public class SessionResource extends Resource {
 
         String accessToken = payloadData.get(Constants.REQ_ACCESS_TOKEN)
                 .toString();
-        boolean signinRequest = (boolean) payloadData.get(Constants.REQ_STATUS);
+        boolean signinRequest = (boolean) payloadData.get(Constants.REQ_LOGIN);
 
         Boolean res = false;
 
@@ -119,7 +119,7 @@ public class SessionResource extends Resource {
         responsePayload.put(Constants.RESP_EXPIRES_IN,
                 mTokenManager.getRemainExpiredTime(accessToken));
 
-        return MessageBuilder.createResponse(request, ResponseStatus.VALID,
+        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));
     }

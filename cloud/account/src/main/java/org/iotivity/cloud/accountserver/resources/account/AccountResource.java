@@ -157,7 +157,7 @@ public class AccountResource extends Resource {
             throw new InternalServerErrorException("MongoDB is not operating");
         }
 
-        return MessageBuilder.createResponse(request, ResponseStatus.CREATED,
+        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));
     }

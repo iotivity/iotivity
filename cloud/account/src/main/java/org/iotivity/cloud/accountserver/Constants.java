@@ -55,7 +55,7 @@ public class Constants extends OCFConstants {
 
     public static final String REQ_ACCESS_TOKEN    = "accesstoken";
 
-    public static final String REQ_STATUS          = "status";
+    public static final String REQ_LOGIN           = "login";
 
     public static final String REQ_REFRESH_TOKEN   = "refreshtoken";
 

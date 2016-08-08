@@ -23,6 +23,7 @@ package org.iotivity.cloud.ciserver;
 
 import java.util.HashMap;
 
+import org.iotivity.cloud.base.OCFConstants;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
@@ -30,7 +31,6 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -104,6 +104,7 @@ public class DeviceServerSystem extends ServerSystem {
                     ctx.channel().writeAndFlush(MessageBuilder
                             .createResponse((CoapRequest) msg, responseStatus));
                     Log.f(ctx.channel(), t);
+                    ctx.channel().close();
                 }
             }
 
@@ -176,33 +177,30 @@ public class DeviceServerSystem extends ServerSystem {
                 // Once the response is valid, add this to deviceList
                 CoapResponse response = (CoapResponse) msg;
 
-                switch (response.getStatus()) {
-                    // TODO: below section is exceptional case for ping from
-                    // clients
-                    case CREATED:
-                    case CONTENT:
-                        break;
+                if (response.getUriPath()
+                        .equals("/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
+                                + OCFConstants.PREFIX_OCF + "/"
+                                + OCFConstants.ACCOUNT_URI + "/"
+                                + OCFConstants.SESSION_URI)) {
 
-                    case VALID:
-                        if (response.getPayload() != null) {
-                            HashMap<String, Object> payloadData = mCbor
-                                    .parsePayloadFromCbor(response.getPayload(),
-                                            HashMap.class);
-                            int remainTime = (int) payloadData
-                                    .get(Constants.EXPIRES_IN);
+                    if (response.getStatus() != ResponseStatus.CHANGED) {
+                        throw new UnAuthorizedException();
+                    }
 
-                            Device device = ctx.channel().attr(keyDevice).get();
-                            ((CoapDevice) device).setExpiredPolicy(remainTime);
+                    HashMap<String, Object> payloadData = mCbor
+                            .parsePayloadFromCbor(response.getPayload(),
+                                    HashMap.class);
+                    int remainTime = (int) payloadData
+                            .get(Constants.EXPIRES_IN);
 
-                            // Remove current auth handler
-                            ctx.channel().pipeline().remove(this);
+                    Device device = ctx.channel().attr(keyDevice).get();
+                    ((CoapDevice) device).setExpiredPolicy(remainTime);
 
-                            // Raise event that we have Authenticated device
-                            ctx.fireChannelActive();
-                        }
-                        break;
+                    // Remove current auth handler
+                    ctx.channel().pipeline().remove(this);
 
-                    default:
+                    // Raise event that we have Authenticated device
+                    ctx.fireChannelActive();
                 }
 
                 ctx.writeAndFlush(msg);
@@ -225,25 +223,28 @@ public class DeviceServerSystem extends ServerSystem {
 
                 // And check first response is VALID then add or cut
                 CoapRequest request = (CoapRequest) msg;
-                // Check whether first request is about account
-                if (request.getUriPathSegments().size() < 2) {
-                    throw new UnAuthorizedException(
-                            "first request must be about account or keepAlive");
-                }
 
-                // TODO: device sends ping whether not authorized
-                if (request.getUriPathSegments().get(1)
-                        .equals(Constants.KEEP_ALIVE_URI)) {
-                    // Go upperlayer
-                    ctx.fireChannelRead(msg);
-                    return;
-                }
+                switch (request.getUriPath()) {
+                    // Check whether first request is about account
+                    case "/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
+                            + OCFConstants.PREFIX_OCF + "/"
+                            + OCFConstants.ACCOUNT_URI:
 
-                if (request.getUriPathSegments().size() < 3
-                        || request.getUriPathSegments().get(2)
-                                .equals(Constants.ACCOUNT_URI) == false) {
-                    throw new UnAuthorizedException(
-                            "authentication required first");
+                    case "/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
+                            + OCFConstants.PREFIX_OCF + "/"
+                            + OCFConstants.ACCOUNT_URI + "/"
+                            + OCFConstants.SESSION_URI:
+                        break;
+
+                    case "/" + OCFConstants.PREFIX_OIC + "/"
+                            + OCFConstants.KEEP_ALIVE_URI:
+                        // TODO: Pass ping request to upper layer
+                        ctx.fireChannelRead(msg);
+                        return;
+
+                    default:
+                        throw new UnAuthorizedException(
+                                "authentication required first");
                 }
 
                 HashMap<String, Object> authPayload = mCbor

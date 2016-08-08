@@ -31,7 +31,6 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ClientException;
-import org.iotivity.cloud.base.exception.ClientException.BadResponseException;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
@@ -102,9 +101,8 @@ public class ResourceFind extends Resource {
                     break;
 
                 default:
-                    throw new BadResponseException(
-                            response.getStatus().toString()
-                                    + " response type is not supported");
+                    mSrcDevice.sendResponse(MessageBuilder
+                            .createResponse(mRequest, response.getStatus()));
             }
         }
     }
@@ -119,7 +117,7 @@ public class ResourceFind extends Resource {
         uriQuery.append(coapDevice.getAccessToken());
 
         if (request.getUriQueryMap().get("di") != null) {
-            for(String di : request.getUriQueryMap().get("di")){
+            for (String di : request.getUriQueryMap().get("di")) {
                 uriQuery.append("&");
                 uriQuery.append("di" + "=");
                 uriQuery.append(di);

@@ -103,7 +103,6 @@ public class ServerSystem extends ResourceManager {
                 if (msg instanceof CoapRequest) {
                     ctx.channel().writeAndFlush(MessageBuilder.createResponse(
                             msg, ResponseStatus.INTERNAL_SERVER_ERROR));
-                    ctx.channel().close();
                 }
             }
         }
