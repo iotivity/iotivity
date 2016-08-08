@@ -1627,10 +1627,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     }
 
     OCDeviceInfo deviceInfo;
+    memset(&deviceInfo, 0, sizeof(deviceInfo));
     try
     {
         DuplicateString(&deviceInfo.deviceName, env->GetStringUTFChars(jDeviceName, nullptr));
-        deviceInfo.types = NULL;
 
         jsize len = env->GetArrayLength(jDeviceTypes);
         for (jsize i = 0; i < len; ++i)
