@@ -85,6 +85,7 @@ static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
             sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
     responseInfo.result = CA_UNAUTHORIZED_REQ;
+    responseInfo.info.dataType = CA_RESPONSE_DATA;
 
     if (CA_STATUS_OK == CASendResponse(context->amsMgrContext->endpoint, &responseInfo))
     {
@@ -191,6 +192,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
+    responseInfo.info.dataType = CA_RESPONSE_DATA;
 
     VERIFY_NON_NULL(TAG, gRequestHandler, ERROR);
 

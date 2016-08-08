@@ -32,6 +32,7 @@ oclib_env = lib_env.Clone()
 secured = oclib_env.get('SECURED')
 target_os = oclib_env.get('TARGET_OS')
 with_cloud = oclib_env.get('WITH_CLOUD')
+with_mq = oclib_env.get('WITH_MQ')
 
 ######################################################################
 # Build flags
@@ -80,6 +81,15 @@ if target_os in ['msys_nt', 'windows']:
 
 if with_cloud:
 	oclib_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
+
+if 'SUB' in with_mq:
+	oclib_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+
+if 'PUB' in with_mq:
+	oclib_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+
+if 'BROKER' in with_mq:
+	oclib_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
 
 if 'CLIENT' in oclib_env.get('RD_MODE'):
 	oclib_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
