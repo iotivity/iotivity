@@ -67,7 +67,7 @@ bool NSIsRemoteServerAddress(char *serverAddress)
 }
 #endif
 
-void NSInitProviderInfo()
+void NSInitProviderInfo(const char * userInfo)
 {
     NS_LOG(DEBUG, "NSInitProviderInfo");
 
@@ -77,22 +77,32 @@ void NSInitProviderInfo()
     OICStrcpy(providerInfo->providerId, UUID_STRING_SIZE, generatedUuid);
 
     providerInfo->providerName = NULL;
+    providerInfo->userInfo = NULL;
+
+    if(userInfo)
+        providerInfo->userInfo = OICStrdup(userInfo);
 }
 
 void NSDeinitProviderInfo()
 {
     NS_LOG(DEBUG, "NSDeinitProviderInfo");
 
-    if(providerInfo == NULL)
+    if(!providerInfo)
     {
         NS_LOG(DEBUG, "providerInfo is NULL");
         return;
     }
 
-    if(providerInfo->providerName != NULL)
+    if(providerInfo->providerName)
     {
         OICFree(providerInfo->providerName);
         providerInfo->providerName = NULL;
+    }
+
+    if(providerInfo->userInfo)
+    {
+        OICFree(providerInfo->userInfo);
+        providerInfo->userInfo = NULL;
     }
 
     OICFree(providerInfo);
@@ -115,4 +125,11 @@ void NSSetPolicy(bool policy)
 {
     NSPolicy = policy;
 }
+
+const char * NSGetUserInfo()
+{
+    return providerInfo->providerName;
+}
+
+
 
