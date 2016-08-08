@@ -52,10 +52,11 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_notification_IoTNotification_NS
     g_obj_subscriptionListener = (jobject) (*env)->NewGlobalRef(env, jSubscriptionListener);
     g_obj_syncListener = (jobject) (*env)->NewGlobalRef(env, jSyncListener);
 
-    // check access policy
-    bool policy = true;
-
-    if (NSStartProvider(policy, NSSubscribeRequestCb, NSSyncCb) != NS_OK)
+    NSProviderConfig config;
+    config.subRequestCallback = NSSubscribeRequestCb;
+    config.syncInfoCallback = NSSyncCb;
+    config.policy = true;
+    if (NSStartProvider(config) != NS_OK)
     {
         LOGE("Fail to start NSProvider service");
         return (jint) NS_ERROR;

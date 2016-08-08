@@ -111,7 +111,9 @@ int main()
                     NSProviderService::ProviderConfig cfg;
                     cfg.m_subscribeRequestCb = subscribeRequestCallback;
                     cfg.m_syncInfoCb = syncCallback;
-                    NSProviderService::getInstance()->Start(NSProviderService::NSAccessPolicy::NS_ACCESS_ALLOW, cfg);
+                    cfg.policy = (bool) NSProviderService::NSAccessPolicy::NS_ACCESS_ALLOW;
+
+                    NSProviderService::getInstance()->Start(cfg);
                     break;
                 }
             case 2:
@@ -120,7 +122,9 @@ int main()
                     NSProviderService::ProviderConfig cfg;
                     cfg.m_subscribeRequestCb = subscribeRequestCallback;
                     cfg.m_syncInfoCb = syncCallback;
-                    NSProviderService::getInstance()->Start(NSProviderService::NSAccessPolicy::NS_ACCESS_DENY, cfg);
+                    cfg.policy = (bool) NSProviderService::NSAccessPolicy::NS_ACCESS_DENY;
+
+                    NSProviderService::getInstance()->Start(cfg);
                     break;
                 }
             case 3:
@@ -141,12 +145,11 @@ int main()
                     std::cout << "app - mTitle : " << title << std::endl;
                     std::cout << "app - mContentText : " << body << std::endl;
 
-                    OIC::Service::NSMessage *msg = new OIC::Service::NSMessage();
+                    OIC::Service::NSMessage *msg = NSProviderService::getInstance()->CreateMessage();
+
                     msg->setType(OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO);
                     msg->setTitle(title.c_str());
                     msg->setContentText(body.c_str());
-                    msg->setTime("");
-                    msg->setTTL(0);
                     msg->setSourceName("OCF");
 
                     NSProviderService::getInstance()->SendMessage(msg);

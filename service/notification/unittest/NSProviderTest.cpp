@@ -132,9 +132,12 @@ protected:
 
 TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyTrue)
 {
-    NSResult ret = NSStartProvider(true,
-            NSRequestedSubscribeCallbackEmpty,
-            NSSyncCallbackEmpty);
+    NSProviderConfig config;
+    config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
+    config.syncInfoCallback = NSSyncCallbackEmpty;
+    config.policy = true;
+
+    NSResult ret = NSStartProvider(config);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
@@ -154,9 +157,12 @@ TEST_F(NotificationProviderTest, StopProviderPositive)
 
 TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
 {
-    NSResult ret = NSStartProvider(false,
-            NSRequestedSubscribeCallbackEmpty,
-            NSSyncCallbackEmpty);
+    NSProviderConfig config;
+    config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
+    config.syncInfoCallback = NSSyncCallbackEmpty;
+    config.policy = false;
+
+    NSResult ret = NSStartProvider(config);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, std::chrono::milliseconds(3000));
@@ -178,8 +184,12 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
                 responseCon.notify_all();
             });
 
-    NSStartProvider(true,
-            NSRequestedSubscribeCallbackEmpty, NSSyncCallbackEmpty);
+    NSProviderConfig config;
+    config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
+    config.syncInfoCallback = NSSyncCallbackEmpty;
+    config.policy = true;
+
+    NSStartProvider(config);
 
     {
         std::unique_lock< std::mutex > lock{ mutexForCondition };

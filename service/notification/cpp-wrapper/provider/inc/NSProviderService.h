@@ -61,7 +61,7 @@ namespace OIC
 
                 /**
                       * @struct   ProviderConfig
-                      * @brief Provider sets this callback function configuration for registering callbacks
+                      * @brief Provider sets this following configuration for registering callbacks and configs
                       *
                       */
                 typedef struct
@@ -70,6 +70,14 @@ namespace OIC
                     ConsumerSubscribedCallback m_subscribeRequestCb;
                     /** m_syncInfoCb - MessageSynchronizedCallback callback listener.*/
                     MessageSynchronizedCallback m_syncInfoCb;
+
+                    /* Set the policy for notification servcie refering to following
+                                 * if policy is true, provider decides to allow or deny for all the subscribing consumers.
+                                 * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
+                                 */
+                    bool policy;
+                    /* User Information */
+                    std::string userInfo;
                 } ProviderConfig;
 
                 /**
@@ -95,7 +103,7 @@ namespace OIC
                       * and onMessageSynchronized function listeners
                       * @return :: result code of Provider Service
                       */
-                Result Start(NSAccessPolicy policy, ProviderConfig config);
+                Result Start(ProviderConfig config);
 
                 /**
                       * Terminate notification service for provider
@@ -131,6 +139,12 @@ namespace OIC
                       * @param[in]  type  NotificationSyncType of the SyncInfo message
                       */
                 void SendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
+
+                /**
+                     * Initialize NSMessage class, service sets message id and provider(device) id
+                     * @return ::NSMessage *
+                     */
+                NSMessage *CreateMessage();
 
                 /**
                       *  get Provider config values

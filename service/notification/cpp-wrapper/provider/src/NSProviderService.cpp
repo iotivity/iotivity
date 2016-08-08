@@ -78,14 +78,18 @@ namespace OIC
             return &s_instance;
         }
 
-        Result NSProviderService::Start(NSProviderService::NSAccessPolicy policy,
-                                        NSProviderService::ProviderConfig config)
+        Result NSProviderService::Start(NSProviderService::ProviderConfig config)
         {
             NS_LOG(DEBUG, "Start - IN");
 
             m_config = config;
-            Result result = (Result) NSStartProvider((::NSAccessPolicy)policy,
-                            onConsumerSubscribedCallback, onMessageSynchronizedCallback);
+            NSProviderConfig nsConfig;
+            nsConfig.subRequestCallback = onConsumerSubscribedCallback;
+            nsConfig.syncInfoCallback = onMessageSynchronizedCallback;
+            nsConfig.policy = config.policy;
+            nsConfig.userInfo = OICStrdup(config.userInfo.c_str());
+
+            Result result = (Result) NSStartProvider(nsConfig);
             NS_LOG(DEBUG, "Start - OUT");
             return result;
         }
@@ -143,6 +147,20 @@ namespace OIC
             NSProviderSendSyncInfo(messageId, (NSSyncType)type);
             NS_LOG(DEBUG, "SendSyncInfo - OUT");
             return;
+        }
+
+        NSMessage *NSProviderService::CreateMessage()
+        {
+            NS_LOG(DEBUG, "CreateMessage - IN");
+
+            ::NSMessage *message = NSCreateMessage();
+            NSMessage *nsMessage = new NSMessage(message);
+
+            NS_LOG_V(DEBUG, "Message ID : %lld", nsMessage->getMessageId());
+            NS_LOG_V(DEBUG, "Provider ID : %s", nsMessage->getProviderId().c_str());
+            NS_LOG(DEBUG, "CreateMessage - OUT");
+
+            return nsMessage;
         }
 
         NSProviderService::ProviderConfig NSProviderService::getProviderConfig()

@@ -104,16 +104,6 @@ namespace OIC
             return m_mediaContents;
         }
 
-        void NSMessage::setMessageId(const uint64_t &messageId)
-        {
-            m_messageId = messageId;
-        }
-
-        void NSMessage::setProviderId(const std::string &providerId)
-        {
-            m_providerId = providerId;
-        }
-
         void NSMessage::setType(const NSMessageType &type)
         {
             m_type = type;
