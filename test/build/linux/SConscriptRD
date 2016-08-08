@@ -81,11 +81,13 @@ RD_RESOURCE_STACK = RD_RESOURCE_DIR + '/csdk/stack/include'
 RD_RESOURCE_SOCKET = RD_RESOURCE_DIR + '/csdk/ocsocket/include'
 RD_RESOURCE_RANDOM = RD_RESOURCE_DIR + '/csdk/ocrandom/include'
 RD_RESOURCE_LOGGER = RD_RESOURCE_DIR + '/csdk/logger/include'
+RD_RESOURCE_ROUTING = RD_RESOURCE_DIR + '/csdk/routing/include'
 RD_RESOURCE_OC_LOGGER = RD_RESOURCE_DIR + '/oc_logger/include'
 RD_CONNECTIVITY_MALLOC = ORG_SRC_HOME + '/resource/c_common/oic_malloc/include'
 RD_CONNECTIVITY_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
 RD_CONNECTIVITY_STRING = ORG_SRC_HOME + '/resource/c_common/oic_string/include'
 RD_CONNECTIVITY_LOGGER = ORG_SRC_HOME + '/resource/csdk/connectivity/common/inc'
+LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
 
 ######################################################################
 
@@ -110,7 +112,7 @@ TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/rd/gtest/src'
 STC_DIR = TC_DIR + '/stc'
 BTC_DIR = TC_DIR + '/btc'
 TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
-SAMPLE_APP_DIR = '../../../service/resource-directory/samples'
+SAMPLE_APP_DIR = ORG_SRC_HOME + '/service/resource-directory/samples'
 TESTAPP_CINCLUDE = PROJECT_HOME + '/include'
 
 COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
@@ -126,7 +128,8 @@ RD_INCLUDE_DIR = TC_INCLUDE_DIR
 
 COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
 
-TESTAPP_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+TESTAPP_INCLUDE_DIR = PROJECT_HOME +  TARGET + '/iBtestapp/modules/rd/c_cpp/include'
 
 ######################################################################
 
@@ -145,8 +148,8 @@ RD_CFLAGS = [COMMON_FLAGS]
 # Initializing Includes
 ######################################################################
 
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
-RD_CINCLUDE = [COMMON_CINCLUDE, RD_INCLUDE, RD_INCLUDE_DIR, RD_RESOURCE_INCLUDE, RD_INCLUDE_INTERNAL, RD_RESOURCE_OC_LOGGER, RD_RESOURCE_STACK, RD_RESOURCE_SOCKET, RD_RESOURCE_RANDOM, RD_CONNECTIVITY_C_COMMON, RD_CONNECTIVITY_MALLOC, RD_CONNECTIVITY_STRING, RD_RESOURCE_LOGGER]
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
+RD_CINCLUDE = [COMMON_CINCLUDE, RD_INCLUDE,TESTAPP_INCLUDE_DIR, RD_INCLUDE_DIR, RD_RESOURCE_INCLUDE, RD_INCLUDE_INTERNAL, RD_RESOURCE_OC_LOGGER, RD_RESOURCE_STACK, RD_RESOURCE_SOCKET, RD_RESOURCE_RANDOM, RD_CONNECTIVITY_C_COMMON, RD_CONNECTIVITY_MALLOC, RD_CONNECTIVITY_STRING, RD_RESOURCE_LOGGER, RD_RESOURCE_ROUTING]
 
 ######################################################################
 
@@ -176,6 +179,7 @@ RD_TEST_BIN = 'iotivity_rd_test'
 
 RD_SIM_MAIN = 'rd_server'
 RD_SIM_PUB = 'rd_publishingClient'
+RD_TESTAPP_BIN = 'rd_testapp'
 
 ######################################################################
 
@@ -185,6 +189,12 @@ RD_SIM_PUB = 'rd_publishingClient'
 RD_HELPER_CPP = Glob(PROJECT_HOME + '/src/tc/rd/gtest/src/helper/*.cpp')
 
 COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+
+RESOURCE_SERVER_CPP = COMMON_UTIL_DIR + '/ResourceServer.cpp'
+
+SAMPLE_RESOURCE_CPP = COMMON_UTIL_DIR + '/SampleResource.cpp'
+
+RESOURCE_HELPER_CPP = COMMON_UTIL_DIR + '/ResourceHelper.cpp'
 
 TEST_MAIN = [PROJECT_HOME + TARGET + '/common/testcase/gtest/IotivitySECTestMain.cpp'] 
 
@@ -201,6 +211,8 @@ RD_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RD_HELPER_CPP, CALL_GRAPH_CPP]
 
 RD_TC_SRC = [RD_CPP, RD_STC_CPP, RD_BTC_CPP, COMMON_STATIC_LIBS, RD_STATIC_LIBS]
 
+RD_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/rd/c_cpp/src/*.cpp')
+
 ######################################################################
 
 # Initializing Build
@@ -216,6 +228,8 @@ rd_sim_server = env_linux.Program(source = RD_SIMULATOR_SERVER_CPP, target = RD_
 
 rd_sim_pub = env_linux.Program(source = RD_SIMULATOR_PUB_CLIENT_CPP, target = RD_SIM_PUB, CPPPATH = RD_CINCLUDE, LIBS = RD_LIBS, LIBPATH = RD_LIB_LOCATION, CPPFLAGS = RD_CFLAGS)
 
+rd_testapp = env_linux.Program(source = [RD_TESTAPP_SRC, RESOURCE_SERVER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_HELPER_CPP], target = RD_TESTAPP_BIN, CPPPATH = RD_CINCLUDE, LIBS = RD_LIBS, LIBPATH = RD_LIB_LOCATION, CPPFLAGS = RD_CFLAGS)
+
 pre_job = [create_target_dir]
 
 ######################################################################
@@ -225,27 +239,27 @@ pre_job = [create_target_dir]
 
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
+target_test = env_linux.get('TARGET_TEST')
 default_targets = [pre_job]
 install_targets = []
 
 print "target_service = " + target_service
-print "target_tc = " + target_tc
+print "target_test = " + target_test
 print "target_transport = " + target_transport
 
 #SConscript(GTEST + '/SConscript')
 
-print "---------------service--------------" + target_service + target_tc
+print "---------------service--------------" + target_service + target_test
 
 if 'rd' in target_service or 'all' in target_service:
     install_targets += [rd_sim_pub, rd_sim_server]
-    if 'itc' in target_tc or 'all' in target_tc:
-        print '---------------RD STC Build Selected---------------'
+    if 'tc' in target_test or 'all' in target_test:
+        print '---------------RD TC Build Selected---------------'
         install_targets += [rd_tc]
       
-   # if 'utc' in target_tc or 'all' in target_tc:
-    #    print '---------------RD BTC Build Selected---------------'
-     #   install_targets += [rd_btc]
+    if 'app' in target_test or 'all' in target_test:
+        print '---------------RD TESTAPP Build Selected---------------'
+        install_targets += [rd_testapp]
 
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)

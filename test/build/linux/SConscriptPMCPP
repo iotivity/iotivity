@@ -235,6 +235,8 @@ PM_SAMPLE_SERVER_RANDOM = 'sampleserver_randompin'
 TEST_MAIN_BIN = 'test_main_pmcpp.o'
 COMMON_UTIL_BIN = 'common_util_pmcpp.o'
 CALL_GRAPH_BIN = 'call_graph_pmcpp.o'
+PM_TESTAPP_BIN = 'pm_testapp_cpp'
+
 ######################################################################
 
 # Initializing Sources
@@ -245,8 +247,6 @@ TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTes
 
 
 PM_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
-
-
 PM_ITC_CPP = Glob(STC_DIR + '/*.cpp')
 PM_UTC_CPP = Glob(BTC_DIR + '/*.cpp')
 
@@ -256,6 +256,7 @@ PM_UTC_SRC = [PM_CPP, PM_UTC_CPP, PM_ITC_CPP, COMMON_STATIC_LIBS, PM_STATIC_LIBS
 
 SAMPLE_SERVER_JUSTWORKS_CPP = [TESTAPP_DIR + '/justworks_simulator.cpp']
 SAMPLE_SERVER_RANDOMPIN_CPP = [TESTAPP_DIR + '/randompin_simulator.cpp']
+PM_TESTAPP_CPP = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/pm/c_cpp/cpp/PMTestApp.cpp')
 
 ##############Creating object files###############
 obj = []
@@ -282,6 +283,7 @@ obj.append(call_graph )
 
 PM_itc_cpp = env_linux.Program(source =[PM_ITC_CPP, PM_UTC_CPP , GTEST_LIB, PM_HELPER_CPP, obj], target = PM_ITC_BIN, CPPPATH = PM_CINCLUDE, LIBS = PM_LIBS, LIBPATH = PM_LIB_LOCATION, CPPFLAGS = PM_CFLAGS)
 
+PM_testapp_cpp = env_linux.Program(source = PM_TESTAPP_CPP, target = PM_TESTAPP_BIN, CPPPATH = PM_CINCLUDE, LIBS = PM_LIBS, LIBPATH = PM_LIB_LOCATION, CPPFLAGS = PM_CFLAGS)
 
 create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
 
@@ -293,30 +295,50 @@ pre_job = [create_target_dir]
 
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
+target_test = env_linux.get('TARGET_TEST')
 default_targets = []
 install_targets = []
 
 print "target_service = " + target_service
-print "target_tc = " + target_tc
+print "target_test = " + target_test
 print "target_transport = " + target_transport
 
 #SConscript(GTEST + '/SConscript')
 
 
 if 'pmcpp' in target_service or 'all' in target_service:
-    if 'itc' in target_tc or 'all' in target_tc:
-        print '---------------PM ITC Build Selected---------------'
+    if 'tc' in target_test or 'all' in target_test:
+        print '---------------PM TC Build Selected---------------'
         install_targets += [PM_itc_cpp]
-        cert_lib_path = '../IotivitySECTest/res/cert_data'
+        cert_lib_path = 'res/cert_data'
+        pm_resource_path = 'res/pm_resource'
         copy_cert_der1 = env_linux.Command('copy_cert_der1', [], Copy(TARGET, cert_lib_path + '/01.der'))
         copy_cert_der2 = env_linux.Command('copy_cert_der2', [], Copy(TARGET, cert_lib_path + '/CKMInfo.json'))
         copy_cert_der3 = env_linux.Command('copy_cert_der3', [], Copy(TARGET, cert_lib_path + '/cacert.der'))
         copy_cert_der4 = env_linux.Command('copy_cert_der4', [], Copy(TARGET, cert_lib_path + '/capub.der'))
         copy_cert_der5 = env_linux.Command('copy_cert_der5', [], Copy(TARGET, cert_lib_path + '/cert_chain.dat'))
         copy_cert_der6 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, cert_lib_path + '/chain.der'))
-        default_targets += [create_target_dir, copy_cert_der1, copy_cert_der2, copy_cert_der3, copy_cert_der4, copy_cert_der5, copy_cert_der6]
+        
+        copy_cert_der7 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/direct_pairing_c.dat'))
+        copy_cert_der8 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/direct_pairing_cpp.dat'))
+        copy_cert_der9 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/justworks_server_dp_c.dat'))
+        copy_cert_der10 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/justworks_server_dp_cpp.dat'))
+        copy_cert_der11 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_client.dat'))
+        copy_cert_der12 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_client.json'))
+        copy_cert_der13 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server.json'))
+        copy_cert_der14 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_justworks.dat'))
 
+        copy_cert_der15 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_justworks.dat'))
+        copy_cert_der16 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_justworks.json'))
+
+        copy_cert_der17 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_randompin.dat'))
+        copy_cert_der18 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_randompin.json'))
+        default_targets += [create_target_dir, copy_cert_der1, copy_cert_der2, copy_cert_der3, copy_cert_der4, copy_cert_der5, copy_cert_der6, copy_cert_der7, copy_cert_der8, copy_cert_der9, copy_cert_der10, copy_cert_der11, copy_cert_der12, copy_cert_der13, copy_cert_der14, copy_cert_der15, copy_cert_der16, copy_cert_der17, copy_cert_der18]
+
+    if 'app' in target_test or 'all' in target_test:
+        print '---------------PM TESTAPP Build Selected---------------'
+        install_targets += [PM_testapp_cpp]
+        
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 

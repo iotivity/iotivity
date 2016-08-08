@@ -82,7 +82,6 @@ GTEST_LIB = GTEST_BIN + '/libgtest.a'
 RE_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
 RE_RESOURCE_INCLUDE = RE_RESOURCE_DIR + '/include'
 RE_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-RE_RESOURCE_CSDK_LIB = RE_RESOURCE_LIB
 RE_RESOURCE_STACK = RE_RESOURCE_DIR + '/csdk/stack/include'
 RE_RESOURCE_SOCKET = RE_RESOURCE_DIR + '/csdk/ocsocket/include'
 RE_RESOURCE_RANDOM = RE_RESOURCE_DIR + '/csdk/ocrandom/include'
@@ -90,7 +89,6 @@ RE_RESOURCE_LOGGER = RE_RESOURCE_DIR + '/csdk/logger/include'
 RE_RESOURCE_OC_LOGGER = RE_RESOURCE_DIR + '/oc_logger/include'
 RE_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
 RE_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-RE_RESOURCE_OC_LOGGER_LIB = RE_RESOURCE_LIB
 RE_DIR = ORG_SRC_HOME + '/service/resource-encapsulation'
 RE_MODULES_DIR = RE_DIR + '/src'
 RE_INCLUDE = RE_DIR + '/include/'
@@ -103,8 +101,6 @@ RE_CACHE_INCLUDE = RE_MODULES_DIR + '/resourceCache/include/'
 RE_CONTAINER_INCLUDE = RE_MODULES_DIR + '/resourceContainer/include/'
 RE_CONTAINER_BUNDLE_INCLUDE = RE_MODULES_DIR + '/resourceContainer/bundle-api/include/'
 RE_SERVER_BUILDER_INCLUDE = RE_MODULES_DIR + '/serverBuilder/include/'
-RE_LIB = RE_RESOURCE_LIB
-RE_LIB_TIMER = RE_RESOURCE_LIB + '/extlibs/timer/'
 
 ######################################################################
 
@@ -147,8 +143,6 @@ INCLUDE_DIR = PROJECT_HOME + '/src/tc/re/gtest/include'
 TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
 RE_INCLUDE_DIR = INCLUDE_DIR + '/testcase/re'
 
-#COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
-
 COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
 
 TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
@@ -163,31 +157,28 @@ env_linux['CC'] = 'g++'
 
 COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
 
-#PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
-
 RE_CFLAGS = [COMMON_FLAGS]
 
 ######################################################################
 # Initializing Includes
 ######################################################################
 
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
-#RAPIDXML_SUB_INCLUDE,
-RE_CINCLUDE = [ RE_C_COMMON, COMMON_CINCLUDE, RE_RESOURCE_INCLUDE, RE_RESOURCE_STACK, RE_RESOURCE_SOCKET, RE_RESOURCE_RANDOM, RE_RESOURCE_OC_LOGGER, RE_RESOURCE_CEREAL, RE_RESOURCE_TIMER, RE_LIB_TIMER, RE_INCLUDE, RE_COMMON_INCLUDE, RE_COMMON_TIMER_INCLUDE, RE_COMMON_INTERNAL_INCLUDE, RE_BROKER_INCLUDE, RE_CACHE_INCLUDE, RE_CONTAINER_INCLUDE, RE_CONTAINER_BUNDLE_INCLUDE, RE_SERVER_BUILDER_INCLUDE, RE_INCLUDE_DIR]
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, RE_RESOURCE_LOGGER]
+
+RE_CINCLUDE = [ RE_C_COMMON, COMMON_CINCLUDE, RE_RESOURCE_INCLUDE, RE_RESOURCE_STACK, RE_RESOURCE_SOCKET, RE_RESOURCE_RANDOM, RE_RESOURCE_OC_LOGGER, RE_RESOURCE_CEREAL, RE_RESOURCE_TIMER, RE_INCLUDE, RE_COMMON_INCLUDE, RE_COMMON_TIMER_INCLUDE, RE_COMMON_INTERNAL_INCLUDE, RE_BROKER_INCLUDE, RE_CACHE_INCLUDE, RE_CONTAINER_INCLUDE, RE_CONTAINER_BUNDLE_INCLUDE, RE_SERVER_BUILDER_INCLUDE, RE_INCLUDE_DIR]
 
 ######################################################################
 
 # Initializing Libraries
 ######################################################################
-
 COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
 
-RE_LIB_LOCATION = [COMMON_LIB_LOCATION, RE_RESOURCE_LIB, RE_RESOURCE_CSDK_LIB, RE_RESOURCE_OC_LOGGER_LIB, RE_LIB, JAVA_LIB]
+RE_LIB_LOCATION = [COMMON_LIB_LOCATION, RE_RESOURCE_LIB, JAVA_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 uuid gcov')
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
 
-RE_STATIC_LIBS = [RE_LIB + '/librcs_client.a', RE_LIB + '/librcs_common.a', RE_LIB + '/librcs_container.a', RE_LIB + '/librcs_server.a', RE_LIB + '/libocsrm.a']
+RE_STATIC_LIBS = [RE_RESOURCE_LIB + '/librcs_client.a', RE_RESOURCE_LIB + '/librcs_common.a', RE_RESOURCE_LIB + '/librcs_container.a', RE_RESOURCE_LIB + '/librcs_server.a', RE_RESOURCE_LIB + '/libocsrm.a']
 RE_STATIC_RESOURCE_LIBS = []
 RE_SHARED_LIBS = Split('-lHueBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
 RE_LIBS = [COMMON_SHARED_LIBS, RE_SHARED_LIBS]
@@ -202,7 +193,7 @@ RE_TEST_BIN = 'iotivity_re_test'
 RE_TEST_SERVER_BIN = 'retestserver'
 
 RE_HELPER_BIN = 're_helper.o'
-
+RE_TESTAPP_BIN = 're_testapp'
 ######################################################################
 
 # Initializing Sources
@@ -230,7 +221,8 @@ RE_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
 RE_STC_SRC = [RE_CPP, RE_STC_CPP, RE_BTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
 RE_BTC_SRC = [RE_CPP, RE_BTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
 RE_TEST_SERVER_SRC = [RE_TEST_SERVER_CPP, COMMON_UTIL_CPP, RE_HELPER_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
-
+RE_TESTAPP_INC = [PROJECT_HOME +  TARGET + '/iBtestapp/modules/re/c_cpp/include/']
+RE_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/re/c_cpp/src/*.cpp')
 
 ######################################################################
 
@@ -245,6 +237,8 @@ re_stc = env_linux.Program(source = RE_STC_SRC, target = RE_TEST_BIN, CPPPATH = 
 
 re_test_server = env_linux.Program(source = RE_TEST_SERVER_SRC, target = RE_TEST_SERVER_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
 
+re_testapp = env_linux.Program(source = RE_TESTAPP_SRC, target = RE_TESTAPP_BIN, CPPPATH = RE_CINCLUDE + RE_TESTAPP_INC, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+
 pre_job = [create_target_dir]
 
 ######################################################################
@@ -254,26 +248,28 @@ pre_job = [create_target_dir]
 
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
+target_test = env_linux.get('TARGET_TEST')
 default_targets = [pre_job]
 install_targets = []
 
 print "target_service = " + target_service
-print "target_tc = " + target_tc
+print "target_test = " + target_test
 print "target_transport = " + target_transport
 
-#SConscript(GTEST + '/SConscript')
-
 print "---------------service-------------- " + target_service
-print "---------------tc-------------- "+ target_tc
+print "---------------tc-------------- "+ target_test
 
 
 if 're' in target_service or 'all' in target_service:
     install_targets += [re_test_server]
 
-    if 'stc' in target_tc or 'all' in target_tc:
-        print '---------------RE STC Build Selected---------------'
+    if 'tc' in target_test or 'all' in target_test:
+        print '---------------RE TC Build Selected---------------'
         install_targets += re_stc
+
+    if 'app' in target_test or 'all' in target_test:
+        print '---------------RE TESTAPP Build Selected---------------'
+        install_targets += re_testapp
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 

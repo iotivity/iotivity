@@ -69,7 +69,6 @@ CLIENT_SECURITY_FILE_NAME = 'oic_svr_db_client.json'
 IUT_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
 IUT_RESOURCE_INCLUDE = IUT_RESOURCE_DIR + '/include'
 IUT_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-IUT_RESOURCE_CSDK_LIB = IUT_RESOURCE_LIB
 IUT_RESOURCE_STACK = IUT_RESOURCE_DIR + '/csdk/stack/include'
 IUT_RESOURCE_SOCKET = IUT_RESOURCE_DIR + '/csdk/ocsocket/include'
 IUT_RESOURCE_RANDOM = IUT_RESOURCE_DIR + '/csdk/ocrandom/include'
@@ -78,9 +77,6 @@ IUT_RESOURCE_COMMON = IUT_RESOURCE_DIR + '/c_common/'
 IUT_RESOURCE_OC_LOGGER = IUT_RESOURCE_DIR + '/oc_logger/include'
 IUT_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
 IUT_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-IUT_RESOURCE_OC_LOGGER_LIB = IUT_RESOURCE_LIB
-IUT_LIB = IUT_RESOURCE_LIB
-IUT_LIB_TIMER = IUT_RESOURCE_LIB + '/extlibs/timer/'
 
 ######################################################################
 # Initializing Project Dir
@@ -102,7 +98,7 @@ SECURITY_DB_CLIENT = IUT_SOURCE_DIR + '/' + CLIENT_SECURITY_FILE_NAME
 
 env_linux['CC'] = 'g++'
 
-COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__LINUX__ -D __WITH_DTLS__ -finstrument-functions')
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
 
 IUT_CFLAGS = [COMMON_FLAGS]
 
@@ -111,20 +107,19 @@ IUT_CFLAGS = [COMMON_FLAGS]
 ######################################################################
 
 COMMON_CINCLUDE = [INCLUDE_DIR]
-IUT_CINCLUDE = [COMMON_CINCLUDE, IUT_RESOURCE_INCLUDE, IUT_RESOURCE_STACK, IUT_RESOURCE_SOCKET, IUT_RESOURCE_RANDOM, IUT_RESOURCE_OC_LOGGER, IUT_LIB_TIMER, INCLUDE_DIR, IUT_RESOURCE_COMMON]
+IUT_CINCLUDE = [COMMON_CINCLUDE, IUT_RESOURCE_INCLUDE, IUT_RESOURCE_STACK, IUT_RESOURCE_SOCKET, IUT_RESOURCE_RANDOM, IUT_RESOURCE_OC_LOGGER, INCLUDE_DIR, IUT_RESOURCE_COMMON]
 
 ######################################################################
 # Initializing Libraries
 ######################################################################
 
 COMMON_LIB_LOCATION = [RESOURCE_LIB_DIR]
-IUT_LIB_LOCATION = [COMMON_LIB_LOCATION, IUT_RESOURCE_LIB, IUT_RESOURCE_CSDK_LIB, IUT_RESOURCE_OC_LOGGER_LIB, IUT_LIB]
+IUT_LIB_LOCATION = [COMMON_LIB_LOCATION, IUT_RESOURCE_LIB]
 
 COMMON_STATIC_LIBS = []
 COMMON_SHARED_LIBS = Split('libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
 
 
-#IUT_STATIC_RESOURCE_LIBS = [IUT_RESOURCE_LIB + '/liboc.a', IUT_RESOURCE_CSDK_LIB + '/liboctbstack.a', IUT_RESOURCE_OC_LOGGER_LIB + '/liboc_logger.a', IUT_RESOURCE_OC_LOGGER_LIB + '/libcoap.a']
 IUT_STATIC_RESOURCE_LIBS = []
 IUT_LIBS = COMMON_SHARED_LIBS
 
@@ -138,10 +133,10 @@ IUT_APP_BIN = 'IUTSimulator'
 # Initializing Sources
 ######################################################################
 
-RESOURCE_SERVER_CPP = Glob(COMMON_UTIL_DIR + '/ResourceServer.cpp')
-SAMPLE_RESOURCE_CPP = Glob(COMMON_UTIL_DIR + '/SampleResource.cpp')
-RESOURCE_HELPER_CPP = Glob(COMMON_UTIL_DIR + '/ResourceHelper.cpp')
-SOURCE_CPP = Glob(IUT_SOURCE_DIR + '/IUTSimulator.cpp')
+RESOURCE_SERVER_CPP = COMMON_UTIL_DIR + '/ResourceServer.cpp'
+SAMPLE_RESOURCE_CPP = COMMON_UTIL_DIR + '/SampleResource.cpp'
+RESOURCE_HELPER_CPP = COMMON_UTIL_DIR + '/ResourceHelper.cpp'
+SOURCE_CPP = IUT_SOURCE_DIR + '/IUTSimulator.cpp'
 IUT_APP_SRC = [SOURCE_CPP, RESOURCE_SERVER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_HELPER_CPP]
 
 ######################################################################
@@ -164,9 +159,6 @@ install_targets = []
 
 #IUT_APP
 install_targets += [IUT_APP]
-#install_targets += [JUST_WORKS_SECURITY_DB_SERVER]
-#install_targets += [SECURITY_DB_SERVER]
-#install_targets += [SECURITY_DB_CLIENT]
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 

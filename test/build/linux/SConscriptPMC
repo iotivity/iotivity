@@ -123,6 +123,8 @@ PM_CONNECTIVITY_API = PM_DIR + '/connectivity/api'
 PM_CONNECTIVITY_MALLOC = ORG_SRC_HOME + '/resource/c_common/oic_malloc/include'
 PM_CONNECTIVITY_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
 PM_CONNECTIVITY_STRING = ORG_SRC_HOME + '/resource/c_common/oic_string/include'
+PM_CBOR_DP = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src'
+
 
 ######################################################################
 
@@ -144,7 +146,7 @@ PM_CERT_EXT_INCLUDE = ORG_SRC_HOME + '/extlibs/asn1cert'
 PM_CERT_TINY_DTLS = ORG_SRC_HOME + '/extlibs/tinydtls'
 PM_CERT_TINY_DTLS_ECC = ORG_SRC_HOME + '/extlibs/tinydtls/ecc'
 PM_CERT_TINY_DTLS_SHA2 = ORG_SRC_HOME + '/extlibs/tinydtls/sha2'
-
+PM_CERT_EXTLIB = ORG_SRC_HOME + '/extlibs/asn1cert/'
 
 ######################################################################
 
@@ -196,11 +198,11 @@ PM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/pm'
 COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
 
 
-PM_CINCLUDE = [COMMON_CINCLUDE, PM_INCLUDE, PM_INCLUDE_DIR, PM_PROVISION_INCLUDE, PM_RESOURCE_INCLUDE, PM_RESOURCE_STACK, PM_RESOURCE_RANDOM, PM_RESOURCE_LOGGER, PM_RESOURCE_LOGGER, PM_RESOURCE_OC_LOGGER, PM_TINY_DTLS, PM_CJSON, PM_BASE_64, PM_CONNECTIVITY_INC, PM_CONNECTIVITY_COMMON_INC, PM_CONNECTIVITY_COAP, PM_CONNECTIVITY_API, PM_CONNECTIVITY_C_COMMON, PM_CONNECTIVITY_MALLOC, PM_CONNECTIVITY_STRING, PM_PROVISION_INCLUDE_INTERNAL, PM_PROVISION_INCLUDE_OXM, PM_INCLUDE_DIR]
+PM_CINCLUDE = [COMMON_CINCLUDE, PM_INCLUDE, PM_INCLUDE_DIR, PM_PROVISION_INCLUDE, PM_RESOURCE_INCLUDE, PM_RESOURCE_STACK, PM_RESOURCE_RANDOM, PM_RESOURCE_LOGGER, PM_RESOURCE_LOGGER, PM_RESOURCE_OC_LOGGER, PM_TINY_DTLS, PM_CJSON, PM_BASE_64, PM_CONNECTIVITY_INC, PM_CONNECTIVITY_COMMON_INC, PM_CONNECTIVITY_COAP, PM_CONNECTIVITY_API, PM_CONNECTIVITY_C_COMMON, PM_CONNECTIVITY_MALLOC, PM_CONNECTIVITY_STRING, PM_PROVISION_INCLUDE_INTERNAL, PM_PROVISION_INCLUDE_OXM, PM_INCLUDE_DIR, PM_CERT_EXTLIB, PM_CBOR_DP]
 
-PM_CERT_CINCLUDE = [COMMON_CINCLUDE, PM_CERT_INCLUDE, PM_CERT_PROVISIONING_INCLUDE, PM_CERT_PROVISIONING_INCLUDE_INTERNAL, PM_CERT_SECURITY_INCLUDE, PM_CERT_SECURITY_INCLUDE_INTERNAL, PM_CERT_CONNECTIVITY_INC, PM_CERT_CONNECTIVITY_API, PM_CERT_LOGGER, PM_CERT_STACK, PM_CERT_OCLOGGER, PM_CERT_EXT_INCLUDE, PM_CERT_TINY_DTLS, PM_CERT_TINY_DTLS_ECC, PM_CERT_TINY_DTLS_SHA2, PM_CONNECTIVITY_MALLOC, PM_CERT_CONNECTIVITY_PKIX, PM_CONNECTIVITY_C_COMMON]
+PM_CERT_CINCLUDE = [COMMON_CINCLUDE, PM_CERT_INCLUDE, PM_CERT_PROVISIONING_INCLUDE, PM_CERT_PROVISIONING_INCLUDE_INTERNAL, PM_CERT_SECURITY_INCLUDE, PM_CERT_SECURITY_INCLUDE_INTERNAL, PM_CERT_CONNECTIVITY_INC, PM_CERT_CONNECTIVITY_API, PM_CERT_LOGGER, PM_CERT_STACK, PM_CERT_OCLOGGER, PM_CERT_EXT_INCLUDE, PM_CERT_TINY_DTLS, PM_CERT_TINY_DTLS_ECC, PM_CERT_TINY_DTLS_SHA2, PM_CONNECTIVITY_MALLOC, PM_CERT_CONNECTIVITY_PKIX, PM_CONNECTIVITY_C_COMMON, PM_CERT_EXTLIB]
 
-
+PM_TESTAPP_CINCLUDE= PROJECT_HOME +  TARGET + '/iBtestapp/modules/pm/c_cpp/csdk/include/*.h'
 ######################################################################
 
 # Initializing Libraries
@@ -233,6 +235,7 @@ PM_SAMPLE_SERVER_RANDOM = 'sampleserver_randompin'
 TEST_MAIN_BIN = 'test_main_pm.o'
 COMMON_UTIL_BIN = 'common_util_pm.o'
 CALL_GRAPH_BIN = 'call_graph_pm.o'
+PM_TESTAPP_BIN_C = 'pm_testapp_c'
 
 ######################################################################
 
@@ -258,6 +261,8 @@ COMMON_UTIL_CPP = Glob(COMMON_UTIL_DIR + '/CommonUtil.cpp')
 
 SAMPLE_SERVER_JUSTWORKS_CPP = [TESTAPP_DIR + '/justworks_simulator.cpp']
 SAMPLE_SERVER_RANDOMPIN_CPP = [TESTAPP_DIR + '/randompin_simulator.cpp']
+
+PM_TESTAPP_SRC_C = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/pm/c_cpp/csdk/src/*.cpp')
 
 ##############Creating object files###############
 obj = []
@@ -286,6 +291,7 @@ PM_Sample_Server_JustWorks = env_linux.Program(source =[SAMPLE_SERVER_JUSTWORKS_
 
 PM_Sample_Server_Randompin = env_linux.Program(source =[SAMPLE_SERVER_RANDOMPIN_CPP], target = PM_SAMPLE_SERVER_RANDOM, CPPPATH = [PM_CINCLUDE,PM_CERT_CINCLUDE], LIBS = [PM_LIBS, PM_CERT_LIBS], LIBPATH = PM_LIB_LOCATION, CXXFLAGS = PM_CXXFLAGS, CPPFLAGS = PM_CFLAGS)
 
+PM_testapp_c = env_linux.Program(source = PM_TESTAPP_SRC_C, target = PM_TESTAPP_BIN_C, CPPPATH = [PM_CINCLUDE,PM_CERT_CINCLUDE, PM_TESTAPP_CINCLUDE], LIBS = [PM_LIBS, PM_CERT_LIBS], LIBPATH = PM_LIB_LOCATION, CXXFLAGS = PM_CXXFLAGS, CPPFLAGS = PM_CFLAGS)
 
 create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
 
@@ -297,12 +303,12 @@ pre_job = [create_target_dir]
 
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
+target_test = env_linux.get('TARGET_TEST')
 default_targets = []
 install_targets = []
 
 print "target_service = " + target_service
-print "target_tc = " + target_tc
+print "target_test = " + target_test
 print "target_transport = " + target_transport
 
 #SConscript(GTEST + '/SConscript')
@@ -310,16 +316,36 @@ print "target_transport = " + target_transport
 create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
 
 if 'pmc' in target_service or 'all' in target_service:
+    if 'tc' in target_test or 'all' in target_test:
         install_targets += [PM_itc_c, PM_Sample_Server_JustWorks, PM_Sample_Server_Randompin]
         cert_lib_path = 'res/cert_data'
+        pm_resource_path = 'res/pm_resource'
         copy_cert_der1 = env_linux.Command('copy_cert_der1', [], Copy(TARGET, cert_lib_path + '/01.der'))
         copy_cert_der2 = env_linux.Command('copy_cert_der2', [], Copy(TARGET, cert_lib_path + '/CKMInfo.json'))
         copy_cert_der3 = env_linux.Command('copy_cert_der3', [], Copy(TARGET, cert_lib_path + '/cacert.der'))
         copy_cert_der4 = env_linux.Command('copy_cert_der4', [], Copy(TARGET, cert_lib_path + '/capub.der'))
         copy_cert_der5 = env_linux.Command('copy_cert_der5', [], Copy(TARGET, cert_lib_path + '/cert_chain.dat'))
         copy_cert_der6 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, cert_lib_path + '/chain.der'))
-        default_targets += [create_target_dir, copy_cert_der1, copy_cert_der2, copy_cert_der3, copy_cert_der4, copy_cert_der5, copy_cert_der6]
+        
+        copy_cert_der7 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/direct_pairing_c.dat'))
+        copy_cert_der8 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/direct_pairing_cpp.dat'))
+        copy_cert_der9 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/justworks_server_dp_c.dat'))
+        copy_cert_der10 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/justworks_server_dp_cpp.dat'))
+        copy_cert_der11 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_client.dat'))
+        copy_cert_der12 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_client.json'))
+        copy_cert_der13 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server.json'))
+        copy_cert_der14 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_justworks.dat'))
 
+        copy_cert_der15 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_justworks.dat'))
+        copy_cert_der16 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_justworks.json'))
+
+        copy_cert_der17 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_randompin.dat'))
+        copy_cert_der18 = env_linux.Command('copy_cert_der6', [], Copy(TARGET, pm_resource_path + '/oic_svr_db_server_randompin.json'))
+        default_targets += [create_target_dir, copy_cert_der1, copy_cert_der2, copy_cert_der3, copy_cert_der4, copy_cert_der5, copy_cert_der6, copy_cert_der7, copy_cert_der8, copy_cert_der9, copy_cert_der10, copy_cert_der11, copy_cert_der12, copy_cert_der13, copy_cert_der14, copy_cert_der15, copy_cert_der16, copy_cert_der17, copy_cert_der18]
+
+    if 'app' in target_test or 'all' in target_test:
+        print '---------------PM TESTAPP Build Selected---------------'
+        install_targets += [PM_testapp_c]
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 

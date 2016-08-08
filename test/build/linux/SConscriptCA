@@ -19,275 +19,166 @@
 *
 ******************************************************************/
 '''
-##
-# Build script for Linux
-#
-##
-
-print '\n---------------Started Building Connectivity Abstruction Module for Linux---------------\n'
+print '\n---------------Started Building CA Module for Linux---------------\n'
 
 Import('env_linux')
 import os
 
-
-# Initializing Home Dir
-######################################################################
-
-TARGET = env_linux['VARIANT_DIR']
-ENV_HOME = '../../..'
-PROJECT_HOME = '../../'
-EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
-SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
-ORG_SRC = ''
-
-target_source = env_linux.get('TARGET_SOURCE')
-iotivity_directory = env_linux.get('IOTIVITY_DIR')
-
-#print "target source is --------------------------------" + target_source
-print "iotivity root is --------------------------------" + iotivity_directory
-
-if env_linux.get('RELEASE'):
-	target_release = 'release'
-else:
-	target_release = 'debug'
-	
-print "target build is --------------------------------" + target_release
-
-ORG_SRC = env_linux['ORG_SRC']
-ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
-
-print "ORG_SRC_HOME: " + ORG_SRC_HOME 
-
-target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
-COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-######################################################################
-
-######################################################################
-
-# Initializing CA Dir
-######################################################################
-CA_IOT = ENV_HOME + ORG_SRC
-CA_DIR = CA_IOT + '/resource/csdk/connectivity'
-CA_CSDK_STACK_INCLUDE = CA_IOT + '/resource/csdk/stack/include'
-CA_API_INCLUDE = CA_DIR + '/api'
-CA_API_INCLUDE2 = CA_DIR + '/inc'
-CA_API_INCLUDE_COMMON = CA_DIR + '/common/inc'
-CA_API_INCLUDE_EXTERNAL = CA_DIR + '/external/inc'
-CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
-CA_MALLOC_INCLUDE = CA_IOT + '/resource/c_common/oic_malloc/include'
-CA_OIC_STRING_INCLUDE = CA_IOT + '/resource/c_common/oic_string/include'
-CA_RESOURCE_TIMER_HEADER = ORG_SRC_HOME + '/extlibs/timer'
-CA_RESOURCE_TIMER_LIB = CA_LIB_DIR + '/extlibs/timer'
-CA_RESOURCE_C_COMMON = CA_IOT + '/resource/c_common'
-######################################################################
-
-######################################################################
-
-# Initializing Gtest Dir
-######################################################################
-
-GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
-GTEST_INCLUDE = GTEST + '/include'
-GTEST_BIN = GTEST + '/bin/linux'
-GTEST_LIB = GTEST_BIN + '/libgtest.a'
-
-######################################################################
-# Initializing Project Dir
-######################################################################
-
-RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/ca/gtest/src'
-STC_DIR = TC_DIR + '/stc'
-BTC_DIR = TC_DIR + '/btc'
-
-TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp/ca/c_cpp'
-TESTAPP_CINCLUDE = TESTAPP_DIR + '/include'
-
-
-COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
-COMMON_UTIL_DIR = PROJECT_HOME + TARGET + 'common/commonutil/c_cpp'
-CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
-
-TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
-
-INCLUDE_DIR =  PROJECT_HOME + '/src/tc/ca/gtest/include'
-TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
-
-CA_INCLUDE_DIR = INCLUDE_DIR + '/testcase/ca'
-CA_SIMULATOR_INCLUDE_DIR = TESTAPP_CINCLUDE
-
-COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
-
-TESTAPP_CA_DIR = TESTAPP_DIR + '/src'
-
-#TARGET = PROJECT_HOME + '/bin'
-TARGET = env_linux['VARIANT_DIR'] 
-
-######################################################################
-
-# Initializing Flags
-######################################################################
-
 env_linux['CC'] = 'g++'
 
-COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUX__ -D__LINUX__ -finstrument-functions -ftest-coverage -fprofile-arcs')
+PROJECT_HOME = '../../'
 
-PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
+VARIANT_DIR = env_linux['VARIANT_DIR']
+IOTIVITY_ROOT = env_linux['ORG_SRC']
+TARGET_ARCH = env_linux.get('TARGET_ARCH')
+TARGET_TRANSPORT = env_linux.get('TARGET_TRANSPORT')
+TARGET_TEST = env_linux.get('TARGET_TEST')
+SECURED = env_linux.get('SECURED')
 
-CA_CFLAGS = [COMMON_FLAGS]
-
-######################################################################
-
-# Initializing Includes
-######################################################################
-
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
-CA_CINCLUDE = [COMMON_CINCLUDE, CA_API_INCLUDE, CA_API_INCLUDE2, CA_INCLUDE_DIR, CA_API_INCLUDE_COMMON, CA_API_INCLUDE_EXTERNAL, CA_MALLOC_INCLUDE, CA_OIC_STRING_INCLUDE, CA_CSDK_STACK_INCLUDE, CA_RESOURCE_C_COMMON]
-
-CA_SIMULATOR_CINCLUDE = [COMMON_CINCLUDE, CA_API_INCLUDE, CA_API_INCLUDE2, CA_SIMULATOR_INCLUDE_DIR, CA_API_INCLUDE_COMMON, CA_API_INCLUDE_EXTERNAL, CA_MALLOC_INCLUDE, CA_OIC_STRING_INCLUDE]
-
-######################################################################
-
-# Initializing Libraries
-######################################################################
-
-COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
-
-CA_LIB_LOCATION = [COMMON_LIB_LOCATION]
-
-COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 uuid gcov')
-
-CA_STATIC_LIBS = [CA_LIB_DIR + '/libconnectivity_abstraction.a', CA_LIB_DIR + '/libtinydtls.a', CA_LIB_DIR + '/libcoap.a', COMMON_RELEASE_DIR + '/resource/csdk/logger/liblogger.a', CA_RESOURCE_TIMER_LIB + '/timer.o']
-CA_SHARED_LIBS = Split('-lboost_system -lboost_filesystem -ldl -lexpat -lexpat -lcoap -lpthread -lglib-2.0 -lbluetooth -lrt gcov ')
-CA_LIBS = [CA_SHARED_LIBS] + ['rt', 'c_common', 'gio-2.0', 'gobject-2.0', 'glib-2.0', 'uuid']
-
-######################################################################
-
-# Initializing Targets
-######################################################################
-
-CA_SIMULATOR_BIN = 'iotivity_ca_simulator'
-
-TEST_MAIN_BIN = 'test_main.o'
-
-######################################################################
-
-# Initializing Sources
-######################################################################
-
-COMMON_CPP = Glob(COMMON_UTIL_DIR + '/trace.c')
-
-COMMON_UTIL_CPP = Glob(COMMON_UTIL_DIR + '/CommonUtil.cpp')
-
-TEST_MAIN = Glob(PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp')
-
-CA_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
-
-CA_UTC_CPP = Glob(BTC_DIR + '/*.cpp')
-CA_ITC_CPP = Glob(STC_DIR + '/*.cpp')
-
-CA_SIMULATOR_C = [TESTAPP_CA_DIR + '/ca_simulator.c']
-
-CA_CPP = [COMMON_UTIL_CPP, CA_HELPER_CPP, CALL_GRAPH_CPP, TEST_MAIN]
-
-CA_OICTEST_TC_SRC = COMMON_UTIL_CPP + CA_HELPER_CPP + CA_UTC_CPP + CA_ITC_CPP
-
-CA_SIMULATOR_SRC = [CA_SIMULATOR_C, COMMON_STATIC_LIBS, CA_STATIC_LIBS]
-
-######################################################################
-# Initializing Build
-######################################################################
-env_linux.ParseConfig("pkg-config --cflags --libs uuid")
-
-create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
-
+create_target_dir = env_linux.Command('target.out', [], Mkdir(VARIANT_DIR))
 pre_job = [create_target_dir]
-
-target_service = env_linux.get('TARGET_SERVICE')
-target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
-secured = env_linux.get('SECURED')
 default_targets = [pre_job]
 install_targets = []
 
-env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
+if env_linux.get('RELEASE'):
+	RELEASE_DIR = 'release'
+else:
+	RELEASE_DIR = 'debug'
 
-if secured == '1':
-	CA_CFLAGS.append("-D__WITH_DTLS__")	
+TRANSPORT_LIST = [ 'NONE', 'IP', 'TCP' ]
+BINARY_SUBSTRING_LIST = [ '', '_ip', '_tcp' ]
+BIN_NAME_LIST = [ 'iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_tcp_test' ]
+TRANSPORT_CFLAGS_LIST = [ 
+                            ['', ''], 
+                            ['-D__IP__', '-D__ALL_TRANSPORT__'], 
+                            ['-DWITH_TCP', '-DTCP_ADAPTER', '-D__TCP__', '-D__ALL_TRANSPORT__']
+                        ]	
 
-list_of_transport = [ 'NONE', 'IP', 'TCP']
-tranport_binary_substrings = ['', '_ip', '_tcp']
-transport_specific_bins = ['iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_tcp_test']
-list_transport_cflags = [['', ''], ['-D__IP__', '-D__ALL_TRANSPORT__'], ['-DWITH_TCP', '-D__TCP__', '-D__ALL_TRANSPORT__']]
+IOTIVITY_LIB_PATH = IOTIVITY_ROOT + '/out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
 
-i = -1
+IOTIVITY_INCLUDE_PATH = [
+                            IOTIVITY_ROOT + '/resource/csdk/stack/include',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/api',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/inc',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/common/inc',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/external/inc',
+                            IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include',
+                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
+                            IOTIVITY_ROOT + '/extlibs/timer',
+                            IOTIVITY_ROOT + '/resource/c_common',
+                            IOTIVITY_ROOT + '/resource/csdk/logger/include'
+                        ]
+
+TC_INCLUDE_PATH = [
+                    PROJECT_HOME + '/include',
+                    PROJECT_HOME + '/src/tc/ca/gtest/include',
+                    PROJECT_HOME + '/extlibs/gtest-1.7.0/include',
+                    PROJECT_HOME + '/src/tc/ca/gtest/include/testcase/ca'
+                  ]
+
+SIMULATOR_INCLUDE_PATH = [ PROJECT_HOME + '/src/testapp/ca/c_cpp/include' ]
+
+LIB_PATH_LIST = [
+                    IOTIVITY_LIB_PATH,
+                    IOTIVITY_LIB_PATH + '/resource/csdk/logger',
+                    IOTIVITY_LIB_PATH + '/resource/c_common/',
+                    IOTIVITY_LIB_PATH + '/resource/csdk/routing/',
+                    PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux'
+                ]
+
+common_cflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -DLINUX -fpermissive -D__LINUX__ -finstrument-functions -ftest-coverage -fprofile-arcs')
+
+TC_SRC_LIST = Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/CommonUtil.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/helper/*.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/btc/*.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/stc/*.cpp')
+
+lib_list = Split('libboost_system libboost_filesystem libboost_thread rt gio-2.0 gobject-2.0 glib-2.0 uuid libdl libexpat pthread gcov coap octbstack connectivity_abstraction timer ocsrm c_common')
+
+if SECURED == '1':
+	common_cflags.append('-D__WITH_DTLS__')	
+	lib_list.append('tinydtls')
+
+if 'ALL' in TARGET_TRANSPORT or 'TCP' in TARGET_TRANSPORT:
+    lib_list.append('mbedtls') 
+    lib_list.append('mbedx509')
+    lib_list.append('mbedcrypto')
+
+
+if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:    
+    i = -1
 	
-for transport in list_of_transport:
+    for transport in TRANSPORT_LIST:
 
-	i = i + 1
+	    i = i + 1
 	
-	if target_transport != 'ALL':
-		if target_transport != transport:
-			continue
+	    if TARGET_TRANSPORT != 'ALL':
+		    if TARGET_TRANSPORT != transport:
+			    continue
 
-	NETWORK_CA_CFLAGS = CA_CFLAGS[:]
+	    network_common_cflags = common_cflags[:]
 	
-	for transport_cflag in list_transport_cflags[i]:
-		if transport_cflag != '':
-			print 'added cflag: ' + transport_cflag
-			NETWORK_CA_CFLAGS.append(transport_cflag)
-			
-	print 'transport: ' + transport
-	print 'Network_ca_cflags: ' + str(NETWORK_CA_CFLAGS )
+	    for transport_cflag in TRANSPORT_CFLAGS_LIST[i]:
+		    if transport_cflag != '':
+			    network_common_cflags.append(transport_cflag)
 	
-	LIST_OF_SRC = []			
+	    temp_source_list = []			
 
-	trace_object = 'ca' + tranport_binary_substrings[i] + 'trace.o'
-	env_linux.Object(source = COMMON_CPP, target = trace_object, CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = NETWORK_CA_CFLAGS)
-	LIST_OF_SRC.append(trace_object)
+	    trace_object = 'ca' + BINARY_SUBSTRING_LIST[i] + 'trace.o'
+	    env_linux.Object(source = Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/trace.c'), 
+                        target = trace_object, 
+                        CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
+                        LIBS = lib_list, 
+                        LIBPATH = LIB_PATH_LIST, 
+                        CPPFLAGS = network_common_cflags)
+	    temp_source_list.append(trace_object)
 		
-	main_object = 'ca' + tranport_binary_substrings[i] + 'test_main'
-	env_linux.Object(source = [TEST_MAIN], target = main_object, CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = NETWORK_CA_CFLAGS)
-	LIST_OF_SRC.append(main_object)
+	    main_object = 'ca' + BINARY_SUBSTRING_LIST[i] + 'test_main'
+	    env_linux.Object(source = Glob(PROJECT_HOME + '/src/common/testcase/gtest' + '/IotivitySECTestMain.cpp'), 
+                        target = main_object, 
+                        CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
+                        LIBS = lib_list, 
+                        LIBPATH = LIB_PATH_LIST, 
+                        CPPFLAGS = network_common_cflags)
+	    temp_source_list.append(main_object)
 
-	for single_cpp in CA_OICTEST_TC_SRC:
-		temp_single_cpp = str(single_cpp)
-		if not temp_single_cpp.endswith('.cpp'):
-			continue
-		single_object = temp_single_cpp.replace('.cpp', '.o')
-		single_object = 'ca' + tranport_binary_substrings[i] + single_object
-		env_linux.Object(source = single_cpp, target = single_object, CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = NETWORK_CA_CFLAGS)
-		LIST_OF_SRC.append(single_object)
+	    for single_cpp in TC_SRC_LIST:
+		    temp_single_cpp = str(single_cpp)
+		    if not temp_single_cpp.endswith('.cpp'):
+			    continue
+		    single_object = temp_single_cpp.replace('.cpp', '.o')
+		    single_object = 'ca' + BINARY_SUBSTRING_LIST[i] + single_object
+		    env_linux.Object(source = single_cpp, 
+                            target = single_object, 
+                            CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
+                            LIBS = lib_list, 
+                            LIBPATH = LIB_PATH_LIST, 
+                            CPPFLAGS = network_common_cflags)
+		    temp_source_list.append(single_object)
 	
-	ca_tc = env_linux.Program(source = [LIST_OF_SRC, COMMON_STATIC_LIBS, CA_STATIC_LIBS], target = transport_specific_bins[i], CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = NETWORK_CA_CFLAGS)
-	install_targets += ca_tc
+	    ca_tc = env_linux.Program(source = temp_source_list + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ], 
+                            target = BIN_NAME_LIST[i], 
+                            CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
+                            LIBS = lib_list, 
+                            LIBPATH = LIB_PATH_LIST, 
+                            CPPFLAGS = network_common_cflags)
+	    install_targets += ca_tc
 
-SIMULATOR_CA_FLAGS = CA_CFLAGS[:]
 
-if 'ALL' in target_transport or 'TCP' in target_transport:
-	SIMULATOR_CA_FLAGS.append('-DWITH_TCP')
+if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
+    simulator_cflags = common_cflags[:]
+
+    if 'ALL' in TARGET_TRANSPORT or 'TCP' in TARGET_TRANSPORT:
+	    simulator_cflags.append('-DWITH_TCP')
+	    simulator_cflags.append('-DTCP_ADAPTER')
 	
-ca_simulator = env_linux.Program(source = CA_SIMULATOR_SRC, target = CA_SIMULATOR_BIN, CPPPATH = CA_SIMULATOR_CINCLUDE, LIBS = [CA_LIBS], LIBPATH = CA_LIB_LOCATION, CPPFLAGS = SIMULATOR_CA_FLAGS)
+    ca_simulator = env_linux.Program(source = [PROJECT_HOME + '/src/testapp/ca/c_cpp/src/ca_simulator.c'],
+                        target = 'iotivity_ca_simulator', 
+                        CPPPATH = IOTIVITY_INCLUDE_PATH + SIMULATOR_INCLUDE_PATH, 
+                        LIBS = lib_list, 
+                        LIBPATH = LIB_PATH_LIST, 
+                        CPPFLAGS = simulator_cflags)
 
-print "target_service = " + target_service
-print "target_tc = " + target_tc
-print "target_transport = " + target_transport
+    install_targets += [ca_simulator]
 
-#SConscript(GTEST + '/SConscript')
-
-print "---------------service--------------" + target_service + target_tc
-
-if 'ca' in target_service or 'all' in target_service:
-    if 'itc' in target_tc or 'all' in target_tc:
-        print '---------------CA Build Selected---------------'
-        install_targets += [ca_simulator]
-        install_targets += ca_tc
-
-install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+install = env_linux.Install(PROJECT_HOME + VARIANT_DIR, install_targets)
 
 delete_bin = []
 i = 0

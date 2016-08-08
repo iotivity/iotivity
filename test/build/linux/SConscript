@@ -103,19 +103,19 @@ pre_job = [create_target_dir]
 
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
+target_test = env_linux.get('TARGET_TEST')
 default_targets = [pre_job]
 install_targets = []
 
 print "target_service = " + target_service
-print "target_tc = " + target_tc
+print "target_test = " + target_test
 print "target_transport = " + target_transport
 
 SConscript(GTEST + '/SConscript')
 
 #SConscript('SConscriptCommon' , exports = 'env_linux')
 
-print "---------------service--------------" + target_service + target_tc
+print "---------------service--------------" + target_service + target_test
 
 
 if 're' in target_service or 'all' in target_service:

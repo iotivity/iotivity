@@ -40,7 +40,7 @@ Import('env')
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 service = env.get('TARGET_SERVICE')
-tc_type = env.get('TARGET_TC')
+tc_type = env.get('TARGET_TEST')
 target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
 shield = ARGUMENTS.get('SHIELD')
 

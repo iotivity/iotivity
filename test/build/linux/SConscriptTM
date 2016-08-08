@@ -82,6 +82,7 @@ TM_INCLUDE = TM_DIR + '/sdk/inc'
 TM_SDK_INCLUDE = TM_DIR + '/sdk/src'
 TM_LIB = TM_RESOURCE_LIB
 TM_LIB_TIMER = TM_RESOURCE_LIB + '/extlibs/timer/'
+LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
 
 ######################################################################
 
@@ -152,7 +153,7 @@ TM_CFLAGS = [COMMON_FLAGS]
 # Initializing Includes
 ######################################################################
 
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
 
 
 TM_CINCLUDE = [COMMON_CINCLUDE, TM_RESOURCE_INCLUDE, TM_RESOURCE_STACK, TM_RESOURCE_SOCKET, TM_RESOURCE_RANDOM, TM_RESOURCE_OC_LOGGER, TM_INCLUDE, TM_RESOURCE_CEREAL, TM_RESOURCE_TIMER, TM_LIB_TIMER, TM_SDK_INCLUDE, TM_INCLUDE_DIR, TM_C_COMMON]
@@ -166,9 +167,8 @@ TM_CINCLUDE = [COMMON_CINCLUDE, TM_RESOURCE_INCLUDE, TM_RESOURCE_STACK, TM_RESOU
 COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
 TM_LIB_LOCATION = [COMMON_LIB_LOCATION, TM_RESOURCE_LIB, TM_RESOURCE_CSDK_LIB, TM_RESOURCE_OC_LOGGER_LIB, TM_LIB]
 
-
 COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 uuid gcov')
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
 
 TM_STATIC_LIBS = [TM_LIB + '/libTGMSDKLibrary.a']
 TM_STATIC_RESOURCE_LIBS = []
@@ -186,7 +186,7 @@ TEST_SERVER_BIN = 'testserver'
 UNSUPPORTIVE_SERVER_BIN = 'unsupportivetestserver'
 BOOTSTRAP_SERVER_BIN = 'bootstrapserver'
 TEST_COLLECTION_BIN = 'testcollection'
-
+TM_TESTAPP_BIN = "tm_testapp"
 
 
 ######################################################################
@@ -201,6 +201,7 @@ TM_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
 
 
 COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+RESOURCE_HELPER_CPP = COMMON_UTIL_DIR + '/ResourceHelper.cpp'
 
 RESOURCE_SERVER_CPP = COMMON_UTIL_DIR + '/ResourceServer.cpp'
 SAMPLE_RESOURCE_CPP = COMMON_UTIL_DIR + '/SampleResource.cpp'
@@ -225,13 +226,15 @@ TM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, TM_HELPER_CPP, CALL_GRAPH_CPP]
 TM_ITC_SRC = [TM_CPP, TM_ITC_CPP, TM_UTC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
 TM_UTC_SRC = [TM_CPP, TM_UTC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
 
-TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
 
-UNSUPPORTIVE_SERVER_SRC = [UNSUPPORTIVE_TEST_SERVER_CPP, COMMON_UTIL_CPP, UNSUPPORTIVE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+UNSUPPORTIVE_SERVER_SRC = [UNSUPPORTIVE_TEST_SERVER_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, UNSUPPORTIVE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
 
-BOOTSTRAP_SERVER_SRC = [BOOTSTRAP_SERVER_CPP, COMMON_UTIL_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+BOOTSTRAP_SERVER_SRC = [BOOTSTRAP_SERVER_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
 
-TEST_COLLECTION_SRC = [TEST_COLLECTION_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+TEST_COLLECTION_SRC = [TEST_COLLECTION_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
+
+TM_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/tm/c_cpp/bootstrapserver.cpp')
 
 
 ######################################################################
@@ -253,7 +256,7 @@ bootstrap_server = env_linux.Program(source = BOOTSTRAP_SERVER_SRC, target = BOO
 
 test_collection = env_linux.Program(source = TEST_COLLECTION_SRC, target = TEST_COLLECTION_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
 
-
+tm_testapp = env_linux.Program(source = TM_TESTAPP_SRC, target = TM_TESTAPP_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
 
 env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
 
@@ -266,25 +269,28 @@ pre_job = [create_target_dir]
 
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
+target_test = env_linux.get('TARGET_TEST')
 default_targets = [pre_job]
 install_targets = []
 
 print "target_service = " + target_service
-print "target_tc = " + target_tc
+print "target_test = " + target_test
 print "target_transport = " + target_transport
 
 #SConscript(GTEST + '/SConscript')
 
-print "---------------service--------------" + target_service + target_tc
+print "---------------service--------------" + target_service + target_test
 
 
 if 'tm' in target_service or 'all' in target_service:
     install_targets += [test_server, unsupportive_server, bootstrap_server, test_collection]
     
-    if 'itc' in target_tc or 'all' in target_tc:
-        print '---------------TM ITC Build Selected---------------'
+    if 'tc' in target_test or 'all' in target_test:
+        print '---------------TM TC Build Selected---------------'
         install_targets += tm_itc
+    if 'app' in target_test or 'all' in target_test:
+        print '---------------TM TEST APP Build Selected---------------'
+        install_targets += [tm_testapp]
 
 
 

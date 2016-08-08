@@ -37,7 +37,6 @@ TARGET = env_linux['VARIANT_DIR']
 ENV_HOME = '../../..'
 PROJECT_HOME = '../../'
 EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
-SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
 ORG_SRC = ''
 
 target_source = env_linux.get('TARGET_SOURCE')
@@ -65,8 +64,6 @@ COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 ######################################################################
 
 CA_IOT = ENV_HOME + ORG_SRC
-#CA_DIR = SRC_HOME + '/ca/connectivity'
-#CA_DIR = ENV_HOME + '/IotivitySECDevSource/ca/iotivity/resource/csdk/connectivity'
 CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
 
 ######################################################################
@@ -81,14 +78,11 @@ RH_JSON_INCLUDE = ORG_SRC_HOME + '/extlibs/cjson'
 RH_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 RH_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
 RH_RESOURCE_INCLUDE = RH_RESOURCE_DIR + '/include'
-RH_RESOURCE_LIB_DIR = RH_LIB
-RH_RESOURCE_CSDK_LIB = RH_LIB
 RH_RESOURCE_STACK = RH_RESOURCE_DIR + '/csdk/stack/include'
 RH_RESOURCE_SOCKET = RH_RESOURCE_DIR + '/csdk/ocsocket/include'
 RH_RESOURCE_RANDOM = RH_RESOURCE_DIR + '/csdk/ocrandom/include'
 RH_RESOURCE_LOGGER = RH_RESOURCE_DIR + '/csdk/logger/include'
 RH_RESOURCE_OC_LOGGER = RH_RESOURCE_DIR + '/oc_logger/include'
-RH_RESOURCE_OC_LOGGER_LIB = RH_LIB
 
 ######################################################################
 # Initializing Gtest Dir
@@ -109,7 +103,7 @@ TC_DIR = PROJECT_HOME +  TARGET + '/tc/rh/gtest/src'
 ITC_DIR = TC_DIR + '/stc'
 UTC_DIR = TC_DIR + '/btc'
 TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
-SAMPLE_APP_DIR = '../../../service/resource-hosting/SampleApp/linux/'
+SAMPLE_APP_DIR = ORG_SRC+ '/service/resource-hosting/SampleApp/linux/'
 TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
 
 COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
@@ -179,6 +173,7 @@ RH_TEMP_HUM_SENSOR2_BIN = 'rh_temp_hum_sensor2'
 RH_NONHOSTABLE_PROVIDER_BIN = 'rh_non_hostable_provider'
 RH_ITC_BIN = 'iotivity_rh_test'
 RH_UTC_BIN = 'iotivity_rh_utc'
+RH_TEST_APP_BIN = 'rh_test_app'
 ######################################################################
 
 # Initializing Sources
@@ -208,6 +203,10 @@ RH_TEMP_HUM_SENSOR2_SRC = [RH_TEMP_HUM_SENSOR2_CPP, COMMON_STATIC_LIBS, RH_STATI
 RH_NONHOSTABLE_PROVIDER_SRC = [RH_NONHOSTABLE_PROVIDER_CPP, COMMON_STATIC_LIBS, RH_STATIC_LIBS]
 RH_ITC_SRC = [RH_CPP, RH_ITC_CPP, RH_UTC_CPP, COMMON_STATIC_LIBS, RH_STATIC_LIBS]
 
+###################RH test app###############
+
+RH_TEST_APP_SRC =  Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/rh/c_cpp/RHTestApp.cpp')
+
 ######################################################################
 
 # Initializing Build
@@ -225,6 +224,8 @@ rh_test = env_linux.Program(source = RH_ITC_SRC, target = RH_ITC_BIN, CPPPATH = 
 
 pre_job = [] #create_target_dir
 
+rd_testapp = env_linux.Program(source = RH_TEST_APP_SRC, target = RH_TEST_APP_BIN, CPPPATH = RH_CINCLUDE, LIBS = RH_LIBS, LIBPATH = RH_LIB_LOCATION, CPPFLAGS = RH_CFLAGS)
+
 ######################################################################
 
 # Define Build Targets
@@ -232,17 +233,17 @@ pre_job = [] #create_target_dir
 
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
-target_tc = env_linux.get('TARGET_TC')
+target_test = env_linux.get('TARGET_TEST')
 default_targets = [pre_job]
 install_targets = []
 
 print "target_service = " + target_service
-print "target_tc = " + target_tc
+print "target_test = " + target_test
 print "target_transport = " + target_transport
 
 #SConscript(GTEST + '/SConscript')
 
-print "---------------service--------------" + target_service + target_tc
+print "---------------service--------------" + target_service + target_test
 
 
 if 'rh' in target_service or 'all' in target_service:
@@ -250,13 +251,13 @@ if 'rh' in target_service or 'all' in target_service:
     install_targets += [rh_temp_hum_sensor]
     install_targets += [rh_temp_hum_sensor2]
     install_targets += [rh_non_hostable_provider]
-    if 'itc' in target_tc or 'all' in target_tc:
-        print '---------------RH ITC Build Selected---------------'
+    if 'tc' in target_test or 'all' in target_test:
+        print '---------------RH TC Build Selected---------------'
         install_targets += [rh_test]
       
-    #if 'utc' in target_tc or 'all' in target_tc:
-     #   print '---------------RH UTC Build Selected---------------'
-      #  install_targets += [rh_utc]
+    if 'app' in target_test or 'all' in target_test:
+        print '---------------RH APP Build Selected---------------'
+        install_targets += [rd_testapp]
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 
