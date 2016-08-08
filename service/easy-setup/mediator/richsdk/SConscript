@@ -143,6 +143,10 @@ if target_os in ['android']:
 if target_os in ['linux']:
 	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
+if target_os in ['android']:
+	SConscript('../../sampleapp/mediator/android/SConscript')
+
+
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]
 ################################################ ######################
