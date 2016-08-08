@@ -1,3 +1,23 @@
+#//******************************************************************
+#//
+#// Copyright 2016 Samsung Electronics All Rights Reserved.
+#//
+#//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#//
+#// Licensed under the Apache License, Version 2.0 (the "License");
+#// you may not use this file except in compliance with the License.
+#// You may obtain a copy of the License at
+#//
+#//      http://www.apache.org/licenses/LICENSE-2.0
+#//
+#// Unless required by applicable law or agreed to in writing, software
+#// distributed under the License is distributed on an "AS IS" BASIS,
+#// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#// See the License for the specific language governing permissions and
+#// limitations under the License.
+#//
+#//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 import os
 import platform
 Import('env')
@@ -9,19 +29,7 @@ if env.get('RELEASE'):
 	ANDROID_RELEASE="release"
 else:
 	ANDROID_RELEASE="debug"
-ANDROID_SECURED = env.get('SECURED')
-ANDROID_MQ = env.get('WITH_MQ')
-ANDROID_MQ_SUB = 0
-ANDROID_MQ_PUB = 0
-ANDROID_MQ_BROKER = 0
 
-if 'SUB' in ANDROID_MQ:
-	ANDROID_MQ_SUB = 1
-if 'PUB' in ANDROID_MQ:
-	ANDROID_MQ_PUB = 1
-if 'BROKER' in ANDROID_MQ:
-	ANDROID_MQ_BROKER = 1
-	
 os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
 os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
 
@@ -54,19 +62,18 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 '''
     os.system(android_home + '/tools/android')
 
+#SConscript("../../../../../../android/android_api/SConscript")
+
 def ensure_libs(target, source, env):
     return target, [source, env.get('BUILD_DIR') + 'liboc.so', env.get('BUILD_DIR') + 'liboc_logger.so']
 
-# build android_api
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED, ANDROID_SECURED, ANDROID_MQ_PUB, ANDROID_MQ_SUB, ANDROID_MQ_BROKER), emitter = ensure_libs)
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
+    ' build -bservice/easy-setup/mediator/richsdk/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
+    emitter = ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-cmdBuildApi=jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
+cmdBuildEasysetup=jdk_env.Gradle(target="EasySetupCore/objs",
+    source="EasySetupCore/src/main/java/org/iotivity/service/easysetup/mediator/EasySetup.java")
 
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED, ANDROID_SECURED, ANDROID_MQ_PUB, ANDROID_MQ_SUB, ANDROID_MQ_BROKER))
-cmdBuildExamples=jdk_env.Gradle(target="../examples/devicediscoveryclient/apk", source="../examples/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java")
+Depends(cmdBuildEasysetup, env.get('baseAAR'))
 
-# android examples require android api to be built before being invoked
-Depends(cmdBuildExamples, cmdBuildApi)
-
-env.AppendUnique(baseAAR = cmdBuildApi)
