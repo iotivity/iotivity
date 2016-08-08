@@ -37,27 +37,43 @@ extern "C"
 #include <stdint.h>
 
 /**
- * Invoked the subscription request from consumer is received
- * @param[in] consumer  Consumer who subscribes the resource
+ * Provider uses this callback function to receive subscription request of consumer
+ * @param[in] consumer        Consumer who subscribes the resource
  */
 typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
 
 /**
- * Invoked when the synchronization data which has notification message 
- * read/delete event from consumer is received
+ * Provider use this callback function to receive the status of the message
  * synchronization
- * @param[in] syncinfo  Synchronization information of the notification message
+ * @param[in] sync        Synchronization information of the notification message
  */
 typedef void (*NSProviderSyncInfoCallback)(NSSyncInfo *);
 
 /**
- * Initialize notification service for provider
- * @param[in]  policy   Accepter
- * @param[in]  subscribeRequestCallback   Callback function to register for receiving
- * subscription request from consumer
- * @param[in]  syncCallback   Callback function to register for receiving  sync data
+ *  Set provider service with the following configuration
+ */
+typedef struct
+{
+    /* Invoked when the subscription request from consumer is received */
+    NSSubscribeRequestCallback subRequestCallback;
+    /* Invoked when the synchronization data, read and deleted, is sent by consumer is received */
+    NSProviderSyncInfoCallback syncInfoCallback;
+    /* Set the policy for notification servcie refering to following
+     * if policy is true, provider decides to allow or deny for all the subscribing consumers.
+     * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
+     */
+    bool policy;
+    /* User Information */
+    char * userInfo;
+
+} NSProviderConfig;
+
+/**
+ * Initialize notification service for provider service
+ * @param[in]  config   Refer to NSProviderConfig
  * @return ::NS_OK or result code of NSResult
  */
+//TODO next commit, change to NSProviderConfig ..
 NSResult NSStartProvider(bool policy, NSSubscribeRequestCallback subscribeRequestCb,
         NSProviderSyncInfoCallback syncCb);
 
@@ -97,17 +113,23 @@ NSResult NSSendMessage(NSMessage *msg);
 NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted);
 
 /**
- * Send sync type in order to synchronize notification status with other consumers,
- * when provider consumes the notification such as READ, DELETE
- * @param[in]  messageId  Notification message if to synchronize the status
- * @param[in]  type  changed notification status from NSSyncType
+ * Get consumer list that is stored in the cache of notification service
+ * @param[in]  list  Consumer list
+ * @param[in]  size  the number of consumers stored in the cache
+ * @return ::NS_OK or result code of NSResult
+ */
+//TODO will use Function.
+// NSResult NSGetConsumerList(uint8_t *list, uint32_t size);
+
+/**
+ * Send read-check to provider in order to synchronize notification status with other consumers
+ * @param[in]  message  Notification message to synchronize the status
  * @return ::NS_OK or result code of NSResult
  */
 NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 
-
 /**
- * Initialize NSMessage structure with message id and provider(device) id
+ * Initialize NSMessage struct, our service set message id and provider(device) id
  * @return ::NSMessage *
  */
 NSMessage * NSCreateMessage();
