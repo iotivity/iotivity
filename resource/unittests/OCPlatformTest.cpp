@@ -62,6 +62,12 @@ namespace OCPlatformTest
     {
     }
 
+#ifdef WITH_CLOUD
+    void onObserve(const HeaderOptions, const OCRepresentation&, const int&, const int&)
+    {
+    }
+#endif
+
     void directPairHandler(std::shared_ptr<OCDirectPairing> /*dev*/, OCStackResult /*res*/)
     {
     }
@@ -827,6 +833,49 @@ namespace OCPlatformTest
                 OC_MULTICAST_IP, CT_DEFAULT, &presenceHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
+
+#ifdef WITH_CLOUD
+    // SubscribeDevicePresence Test
+    TEST(SubscribeDevicePresenceTest, DISABLED_SubscribeDevicePresenceWithValidParameters)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, di, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullHost)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        nullptr, di, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullOnObserve)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        hostAddress, di, CT_DEFAULT, NULL));
+    }
+
+    TEST(SubscribeDevicePresenceTest, DISABLED_UnsubscribePresenceWithValidHandle)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, di, CT_DEFAULT, &onObserve));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+#endif
 
     TEST(FindDirectPairingTest, FindDirectPairingNullCallback)
     {

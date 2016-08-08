@@ -39,6 +39,10 @@
 #include "OCRepresentation.h"
 #include "OCDirectPairing.h"
 
+#ifdef WITH_CLOUD
+#include "OCAccountManager.h"
+#endif
+
 #include "oc_logger.hpp"
 
 namespace OC
@@ -225,12 +229,44 @@ namespace OC
                         SubscribeCallback presenceHandler);
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
+#ifdef WITH_CLOUD
+        OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                              const std::string& host,
+                                              const std::vector<std::string>& di,
+                                              OCConnectivityType connectivityType,
+                                              ObserveCallback callback);
+#endif
+
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         OCConnectivityType connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
+#ifdef RD_CLIENT
+        OCStackResult publishResourceToRD(const std::string& host,
+                                          OCConnectivityType connectivityType,
+                                          ResourceHandles& resourceHandles,
+                                          PublishResourceCallback callback);
 
+        OCStackResult publishResourceToRD(const std::string& host,
+                                          OCConnectivityType connectivityType,
+                                          ResourceHandles& resourceHandles,
+                                          PublishResourceCallback callback, QualityOfService qos);
+
+        OCStackResult deleteResourceFromRD(const std::string& host,
+                                           OCConnectivityType connectivityType,
+                                           DeleteResourceCallback callback);
+
+        OCStackResult deleteResourceFromRD(const std::string& host,
+                                           OCConnectivityType connectivityType,
+                                           ResourceHandles& resourceHandles,
+                                           DeleteResourceCallback callback);
+
+        OCStackResult deleteResourceFromRD(const std::string& host,
+                                           OCConnectivityType connectivityType,
+                                           ResourceHandles& resourceHandles,
+                                           DeleteResourceCallback callback, QualityOfService qos);
+#endif
         std::weak_ptr<std::recursive_mutex> csdkLock();
 
         OCStackResult findDirectPairingDevices(unsigned short waittime,
@@ -241,7 +277,10 @@ namespace OC
         OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
                                          const std::string& pinNumber,
                                          DirectPairingCallback resultCallback);
-
+#ifdef WITH_CLOUD
+        OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType);
+#endif // WITH_CLOUD
     private:
         PlatformConfig m_cfg;
 

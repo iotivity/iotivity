@@ -2,6 +2,8 @@
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
 %define DEST_INC_DIR  %{buildroot}/%{_includedir}/OICHeaders
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
+%{!?VERBOSE: %define VERBOSE 1}
+
 
 Name: com-oic-ca
 Version:    1.1.1
@@ -35,7 +37,7 @@ SLP oicca application
 echo %{ROOTDIR}
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} LOGGING=%{LOGGING} WITH_TCP=%{WITH_TCP}
+scons VERBOSE=%{VERBOSE} TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} LOGGING=%{LOGGING} WITH_TCP=%{WITH_TCP}
 
 %install
 mkdir -p %{DEST_INC_DIR}

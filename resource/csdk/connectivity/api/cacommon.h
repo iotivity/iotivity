@@ -51,7 +51,7 @@ extern "C"
 #endif
 
 /**
- * IP address Length
+ * IP address Length.
  */
 #define CA_IPADDR_SIZE 16
 
@@ -61,22 +61,22 @@ extern "C"
 #define CA_RAJABBERID_SIZE 256
 
 /**
- * Mac address length for BT port
+ * Mac address length for BT port.
  */
 #define CA_MACADDR_SIZE 18
 
 /**
- * Max header options data length
+ * Max header options data length.
  */
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 20
 
 /**
-* Max token length
+* Max token length.
 */
 #define CA_MAX_TOKEN_LEN (8)
 
 /**
- * Max URI length
+ * Max URI length.
  */
 #ifdef ARDUINO
 #define CA_MAX_URI_LENGTH 128  /* maximum size of URI for embedded platforms*/
@@ -85,7 +85,7 @@ extern "C"
 #endif
 
 /**
- * Max PDU length supported
+ * Max PDU length supported.
  */
 #ifdef ARDUINO
 #define COAP_MAX_PDU_SIZE           320  /* maximum size of a CoAP PDU for embedded platforms*/
@@ -98,12 +98,12 @@ extern "C"
 #endif
 
 /**
- *Maximum length of the remoteEndpoint identity
+ *Maximum length of the remoteEndpoint identity.
  */
 #define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
 
 /**
- * option types - the highest option number 63
+ * option types - the highest option number 63.
  */
 #define CA_OPTION_IF_MATCH 1
 #define CA_OPTION_ETAG 4
@@ -119,7 +119,7 @@ extern "C"
 #define CA_OPTION_LOCATION_QUERY 20
 
 /**
- * Payload information from resource model
+ * Payload information from resource model.
  */
 typedef uint8_t *CAPayload_t;
 
@@ -129,12 +129,12 @@ typedef uint8_t *CAPayload_t;
 typedef char *CAURI_t;
 
 /**
- * Token information for mapping the request and responses by resource model
+ * Token information for mapping the request and responses by resource model.
  */
 typedef char *CAToken_t;
 
 /*
- * Socket types and error definitions
+ * Socket types and error definitions.
  */
 #ifdef HAVE_WINSOCK2_H
 # define OC_SOCKET_ERROR      SOCKET_ERROR
@@ -155,12 +155,12 @@ typedef int    CASocketFd_t;
 #define MAX_ADDR_STR_SIZE_CA (256)
 #else
 /*
- * Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
- * Which is 64, +1 for null terminator => 65
+ * Max Address could be "coaps+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * Which is 65, +1 for null terminator => 66
  * OCDevAddr (defined in OCTypes.h) must be the same
  * as CAEndpoint_t (defined here)
  */
-#define MAX_ADDR_STR_SIZE_CA (65)
+#define MAX_ADDR_STR_SIZE_CA (66)
 #endif
 
 typedef enum
@@ -208,7 +208,6 @@ typedef enum
 #define CA_SCOPE_MASK 0xf     // mask scope bits above
 
 /**
- * @enum CANetworkStatus_t
  * Information about the network status.
  */
 typedef enum
@@ -218,7 +217,7 @@ typedef enum
 } CANetworkStatus_t;
 
 /*
- * remoteEndpoint identity
+ * remoteEndpoint identity.
  */
 typedef struct
 {
@@ -227,8 +226,7 @@ typedef struct
 } CARemoteId_t;
 
 /**
- * @enum CAMessageType_t
- * Message Type for Base source code
+ * Message Type for Base source code.
  */
 typedef enum
 {
@@ -240,8 +238,7 @@ typedef enum
 } CAMessageType_t;
 
 /**
- * @enum CAMethod_t
- * Allowed method to be used by resource model
+ * Allowed method to be used by resource model.
  */
 typedef enum
 {
@@ -252,7 +249,7 @@ typedef enum
 } CAMethod_t;
 
 /**
- * block size
+ * block size.
  * it depends on defined size in libCoAP.
  */
 typedef enum
@@ -267,7 +264,7 @@ typedef enum
 } CABlockSize_t;
 
 /**
- * Endpoint information for connectivities
+ * Endpoint information for connectivities.
  * Must be identical to OCDevAddr.
  */
 typedef struct
@@ -284,7 +281,7 @@ typedef struct
 } CAEndpoint_t;
 
 /**
- * Endpoint information for secure messages
+ * Endpoint information for secure messages.
  */
 typedef struct
 {
@@ -293,8 +290,7 @@ typedef struct
 } CASecureEndpoint_t;
 
 /**
- * @enum CAResult_t
- * Enums for CA return values
+ * Enums for CA return values.
  */
 typedef enum
 {
@@ -319,8 +315,7 @@ typedef enum
 } CAResult_t;
 
 /**
- * @enum CAResponseResult_t
- * Enums for CA Response values
+ * Enums for CA Response values.
  */
 typedef enum
 {
@@ -347,8 +342,20 @@ typedef enum
 } CAResponseResult_t;
 
 /**
- * @enum CATransportProtocolID_t
- * Transport Protocol IDs for additional options
+ * Data type whether the data is Request Message or Response Message.
+ * if there is some failure before send data on network.
+ * Type will be set as error type for error callback.
+ */
+typedef enum
+{
+    CA_REQUEST_DATA = 1,
+    CA_RESPONSE_DATA,
+    CA_ERROR_DATA,
+    CA_RESPONSE_FOR_RES
+} CADataType_t;
+
+/**
+ * Transport Protocol IDs for additional options.
  */
 typedef enum
 {
@@ -357,7 +364,6 @@ typedef enum
 } CATransportProtocolID_t;
 
 /**
- * @enum CAAdapterState_t
  * Adapter State to indicate the network changed notifications.
  */
 typedef enum
@@ -384,7 +390,7 @@ typedef enum
 } CAPayloadFormat_t;
 
 /**
- * Header options structure to be filled
+ * Header options structure to be filled.
  *
  * This structure is used to hold header information.
  */
@@ -398,9 +404,9 @@ typedef struct
 } CAHeaderOption_t;
 
 /**
- * Base Information received
+ * Base Information received.
  *
- * This structure is used to hold request & response base information
+ * This structure is used to hold request & response base information.
  */
 typedef struct
 {
@@ -422,12 +428,13 @@ typedef struct
     CAPayloadFormat_t acceptFormat;     /**< accept format for the response payload */
     CAURI_t resourceUri;        /**< Resource URI information **/
     CARemoteId_t identity;      /**< endpoint identity */
+    CADataType_t dataType;      /**< data type */
 } CAInfo_t;
 
 /**
- * Request Information to be sent
+ * Request Information to be sent.
  *
- * This structure is used to hold request information
+ * This structure is used to hold request information.
  */
 typedef struct
 {
@@ -437,9 +444,9 @@ typedef struct
 } CARequestInfo_t;
 
 /**
- * Response information received
+ * Response information received.
  *
- * This structure is used to hold response information
+ * This structure is used to hold response information.
  */
 typedef struct
 {
@@ -450,9 +457,9 @@ typedef struct
 
 /**
  * Error information from CA
- *        contains error code and message information
+ *        contains error code and message information.
  *
- * This structure holds error information
+ * This structure holds error information.
  */
 typedef struct
 {
@@ -462,7 +469,7 @@ typedef struct
 } CAErrorInfo_t;
 
 /**
- * Hold global variables for CA layer (also used by RI layer)
+ * Hold global variables for CA layer. (also used by RI layer)
  */
 typedef struct
 {
@@ -487,7 +494,7 @@ typedef struct
 } CAHistory_t;
 
 /**
- * Hold interface index for keeping track of comings and goings
+ * Hold interface index for keeping track of comings and goings.
  */
 typedef struct
 {

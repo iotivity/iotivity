@@ -68,6 +68,7 @@
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "oic_malloc.h"
+#include "oic_time.h"
 #include "ocrandom.h"
 #include "logger.h"
 
@@ -81,6 +82,7 @@ typedef struct
 #endif
     uint8_t triedCount;                 /**< retransmission count */
     uint16_t messageId;                 /**< coap PDU message id */
+    CADataType_t dataType;              /**< data Type (Request/Response) */
     CAEndpoint_t *endpoint;             /**< remote endpoint */
     void *pdu;                          /**< coap PDU */
     uint32_t size;                      /**< coap PDU size */
@@ -88,12 +90,6 @@ typedef struct
 
 static const uint64_t USECS_PER_SEC = 1000000;
 static const uint64_t MSECS_PER_SEC = 1000;
-
-/**
- * @brief   getCurrent monotonic time
- * @return  current time in microseconds
- */
-uint64_t getCurrentTimeInMicroSeconds();
 
 #ifndef SINGLE_THREAD
 /**
@@ -105,13 +101,8 @@ uint64_t getCurrentTimeInMicroSeconds();
  */
 static uint64_t CAGetTimeoutValue()
 {
-#ifdef HAVE_SRANDOM
     return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * OCGetRandomByte()) >> 8)) *
             (uint64_t) 1000;
-#else
-    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * OCGetRandomByte()) >> 8)) *
-            (uint64_t) 1000;
-#endif
 }
 
 CAResult_t CARetransmissionStart(CARetransmission_t *context)
@@ -197,7 +188,7 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
             continue;
         }
 
-        uint64_t currentTime = getCurrentTimeInMicroSeconds();
+        uint64_t currentTime = OICGetCurrentTime(TIME_IN_US);
 
         if (CACheckTimeout(currentTime, retData))
         {
@@ -206,7 +197,8 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
             {
                 OIC_LOG_V(DEBUG, TAG, "retransmission CON data!!, msgid=%d",
                           retData->messageId);
-                context->dataSendMethod(retData->endpoint, retData->pdu, retData->size);
+                context->dataSendMethod(retData->endpoint, retData->pdu,
+                                        retData->size, retData->dataType);
             }
 
             // #3. increase the retransmission count and update timestamp.
@@ -368,6 +360,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
 
 CAResult_t CARetransmissionSentData(CARetransmission_t *context,
                                     const CAEndpoint_t *endpoint,
+                                    CADataType_t dataType,
                                     const void *pdu, uint32_t size)
 {
     if (NULL == context || NULL == endpoint || NULL == pdu)
@@ -426,7 +419,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     }
 
     // #2. add additional information. (time stamp, retransmission count...)
-    retData->timeStamp = getCurrentTimeInMicroSeconds();
+    retData->timeStamp = OICGetCurrentTime(TIME_IN_US);
 #ifndef SINGLE_THREAD
     retData->timeout = CAGetTimeoutValue();
 #endif
@@ -435,6 +428,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     retData->endpoint = remoteEndpoint;
     retData->pdu = pduData;
     retData->size = size;
+    retData->dataType = dataType;
 #ifndef SINGLE_THREAD
     // mutex lock
     ca_mutex_lock(context->threadMutex);
@@ -640,39 +634,4 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
     u_arraylist_free(&context->dataList);
 
     return CA_STATUS_OK;
-}
-
-uint64_t getCurrentTimeInMicroSeconds()
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-    uint64_t currentTime = 0;
-
-#ifdef __ANDROID__
-    struct timespec getTs;
-
-    clock_gettime(CLOCK_MONOTONIC, &getTs);
-
-    currentTime = (getTs.tv_sec * (uint64_t)1000000000 + getTs.tv_nsec)/1000;
-    OIC_LOG_V(DEBUG, TAG, "current time = %lld", currentTime);
-#elif defined __ARDUINO__
-    currentTime = millis() * 1000;
-    OIC_LOG_V(DEBUG, TAG, "currtime=%lu", currentTime);
-#else
-#if _POSIX_TIMERS > 0
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    currentTime = ts.tv_sec * USECS_PER_SEC + ts.tv_nsec / 1000;
-#elif defined(_WIN32)
-    struct __timeb64 tb;
-    _ftime64_s(&tb);
-    currentTime = tb.time * USECS_PER_SEC + tb.millitm * MSECS_PER_SEC;
-#else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    currentTime = tv.tv_sec * USECS_PER_SEC + tv.tv_usec;
-#endif
-#endif
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return currentTime;
 }

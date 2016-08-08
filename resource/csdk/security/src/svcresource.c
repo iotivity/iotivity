@@ -241,8 +241,11 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
             // Service Type
             if (0 == strcmp(OIC_JSON_SERVICE_TYPE, name) && cbor_value_is_integer(&svcMap))
             {
-                cborFindResult = cbor_value_get_int(&svcMap, (int *) &svc->svct);
+                int svct;
+
+                cborFindResult = cbor_value_get_int(&svcMap, &svct);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find SVCT.");
+                svc->svct = (OicSecSvcType_t)svct;
             }
 
             // Owners -- Mandatory
@@ -353,7 +356,7 @@ static OCEntityHandlerResult HandleSVCPostRequest(const OCEntityHandlerRequest *
             if (cborPayload && OC_STACK_OK == res &&
                 UpdateSecureResourceInPS(OIC_JSON_SVC_NAME, cborPayload, size) == OC_STACK_OK)
             {
-                ehRet = OC_EH_RESOURCE_CREATED;
+                ehRet = OC_EH_CHANGED;
             }
             OICFree(cborPayload);
         }

@@ -218,11 +218,15 @@ CAInterface_t *CAFindInterfaceChange()
 {
     CAInterface_t *foundNewInterface = NULL;
 #ifdef __linux__
-    char buf[4096];
-    struct nlmsghdr *nh;
-    struct sockaddr_nl sa;
-    struct iovec iov = { buf, sizeof (buf) };
-    struct msghdr msg = { (void *)&sa, sizeof (sa), &iov, 1, NULL, 0, 0 };
+    char buf[4096] = { 0 };
+    struct nlmsghdr *nh = NULL;
+    struct sockaddr_nl sa = { .nl_family = 0 };
+    struct iovec iov = { .iov_base = buf,
+                         .iov_len = sizeof (buf) };
+    struct msghdr msg = { .msg_name = (void *)&sa,
+                          .msg_namelen = sizeof (sa),
+                          .msg_iov = &iov,
+                          .msg_iovlen = 1 };
 
     size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
 

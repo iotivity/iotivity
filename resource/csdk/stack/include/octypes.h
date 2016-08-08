@@ -68,10 +68,21 @@ extern "C" {
 /** Gateway URI.*/
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
 #endif
+
+#ifdef WITH_MQ
+/** MQ Broker URI.*/
+#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/.well-known/ocf/ps"
+#endif
+
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
+
+#ifdef WITH_CLOUD
+/** Presence URI through which the OCF devices advertise their device presence.*/
+#define OCF_RSRVD_DEVICE_PRESENCE_URI         "/.well-known/ocf/prs"
+#endif
 
 /** Sets the default time to live (TTL) for presence.*/
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
@@ -146,8 +157,19 @@ extern "C" {
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES    "oic.wk.res"
 
+#ifdef WITH_MQ
+/** To represent content type with MQ Broker.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER     "ocf.wk.ps"
+
+/** To represent content type with MQ Topic.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC      "ocf.wk.ps.topic"
+#endif
+
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
+
+/** To indicate how long RD should publish this item.*/
+#define OC_RSRVD_DEVICE_TTL             "lt"
 
 /** To represent time to live.*/
 #define OC_RSRVD_TTL                    "ttl"
@@ -198,7 +220,7 @@ extern "C" {
 #define OC_RSRVD_HOSTING_PORT           "port"
 
 /** TCP Port. */
-#define OC_RSRVD_TCP_PORT               "tcp"
+#define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -282,10 +304,10 @@ extern "C" {
 #define MAX_ADDR_STR_SIZE (256)
 #else
 /** Max Address could be
- * "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * "coaps+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
  * +1 for null terminator.
  */
-#define MAX_ADDR_STR_SIZE (65)
+#define MAX_ADDR_STR_SIZE (66)
 #endif
 
 /** Length of MAC address */
@@ -295,7 +317,7 @@ extern "C" {
 #define MAC_ADDR_BLOCKS (6)
 
 /** Max identity size. */
-#define MAX_IDENTITY_SIZE (32)
+#define MAX_IDENTITY_SIZE (37)
 
 /** Universal unique identity size. */
 #define UUID_IDENTITY_SIZE (128/8)
@@ -330,13 +352,51 @@ extern "C" {
 #define OC_RSRVD_TITLE                   "title"
 
 /** Defines URI. */
-#define OC_RSRVD_URI                     "uri"
+#define OC_RSRVD_URI                     "anchor"
 
 /** Defines media type. */
-#define OC_RSRVD_MEDIA_TYPE              "mt"
+#define OC_RSRVD_MEDIA_TYPE              "type"
 
 /** To represent resource type with Publish RD.*/
 #define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdpub"
+
+/** Cloud Account */
+
+/** Account URI.*/
+#define OC_RSRVD_ACCOUNT_URI               "/.well-known/ocf/account"
+
+/** Account session URI.*/
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/.well-known/ocf/account/session"
+
+/** Account token refresh URI.*/
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/.well-known/ocf/account/tokenrefresh"
+
+/** Defines auth provider. */
+#define OC_RSRVD_AUTHPROVIDER              "authprovider"
+
+/** Defines auth code. */
+#define OC_RSRVD_AUTHCODE                  "authcode"
+
+/** Defines session. */
+#define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
+
+/** Defines status. */
+#define OC_RSRVD_LOGIN                     "login"
+
+/** Defines grant type. */
+#define OC_RSRVD_GRANT_TYPE                "granttype"
+
+/** Defines refresh token. */
+#define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
+
+/** Defines user ID. */
+#define OC_RSRVD_USER_ID                   "uid"
+
+/** Defines options. */
+#define OC_RSRVD_OPTIONS                   "options"
+
+/** To represent grant type with refresh token. */
+#define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
 
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
@@ -684,6 +744,16 @@ typedef enum
      *  if discovery request contains an explicit querystring.
      *  Ex: GET /oic/res?rt=oic.sec.acl */
     OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
+
+#ifdef WITH_MQ
+    /** When this bit is set, the resource is allowed to be published */
+    ,OC_MQ_PUBLISHER     = (1 << 6)
+#endif
+
+#ifdef MQ_BROKER
+    /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
+    ,OC_MQ_BROKER        = (1 << 7)
+#endif
 } OCResourceProperty;
 
 /**
@@ -810,7 +880,14 @@ typedef enum
     OC_OBSERVE_DEREGISTER = 1,
 
     /** Others. */
-    OC_OBSERVE_NO_OPTION = 2
+    OC_OBSERVE_NO_OPTION = 2,
+
+//#ifdef WITH_MQ
+    OC_MQ_SUBSCRIBER = 3,
+
+    OC_MQ_UNSUBSCRIBER = 4,
+//#endif
+
 } OCObserveAction;
 
 
@@ -1125,20 +1202,20 @@ typedef struct OCLinksPayload
 {
     /** This is the target relative URI. */
     char *href;
+    /** The relation of the target URI referenced by the link to the context URI;
+     * The default value is null. */
+    char *rel;
     /** Resource Type - A standard OIC specified or vendor defined resource
      * type of the resource referenced by the target URI. */
     OCStringLL *rt;
     /** Interface - The interfaces supported by the resource referenced by the target URI. */
     OCStringLL *itf;
-    /** The relation of the target URI referenced by the link to the context URI;
-     * The default value is null. */
-    char *rel;
-    /** Specifies if the resource referenced by the target URIis observable or not. */
-    bool obs;
+    /** Bitmap - The bitmap holds observable, discoverable, secure option flag. */
+    uint8_t p;
     /** A title for the link relation. Can be used by the UI to provide a context. */
     char *title;
     /** This is used to override the context URI e.g. override the URI of the containing collection. */
-    char *uri;
+    char *anchor;
     /** The instance identifier for this web link in an array of web links - used in links. */
     union
     {
@@ -1149,8 +1226,10 @@ typedef struct OCLinksPayload
         /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
         OCIdentity uniqueUUID;
     };
+    /** Time to keep holding resource.*/
+    uint64_t ttl;
     /** A hint of the media type of the representation of the resource referenced by the target URI. */
-    OCStringLL *mt;
+    OCStringLL *type;
     /** Holding address of the next resource. */
     struct OCLinksPayload *next;
 } OCLinksPayload;
@@ -1162,30 +1241,8 @@ typedef struct
     OCDeviceInfo n;
     /** Device identifier. */
     OCIdentity di;
-    /** The base URI where the resources are hold. */
-    char *baseURI;
-    /** Bitmap holds observable, discoverable, secure option flag.*/
-    uint8_t bitmap;
-    /** Port set in case, the secure flag is set above. */
-    uint16_t port;
-    /** Id for each set of links i.e. tag. */
-    union
-    {
-        /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
-        /** Any unique string including a URI. */
-        char *uniqueStr;
-        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
-        OCIdentity uniqueUUID;
-    };
-    /** Defines the list of allowable resource types (for Target and anchors) in links included
-     * in the collection; new links being created can only be from this list. */
-    char *rts;
-    /** When specified this is the default relationship to use when an OIC Link does not specify
-     * an explicit relationship with *rel* parameter. */
-    char *drel;
     /** Time to keep holding resource.*/
-    uint32_t ttl;
+    uint64_t ttl;
 } OCTagsPayload;
 
 /** Resource collection payload. */
@@ -1195,8 +1252,6 @@ typedef struct OCResourceCollectionPayload
     OCTagsPayload *tags;
     /** Array of links payload. */
     OCLinksPayload *setLinks;
-    /** Holding address of the next resource. */
-    struct OCResourceCollectionPayload *next;
 } OCResourceCollectionPayload;
 
 typedef struct OCDiscoveryPayload

@@ -60,18 +60,23 @@ Java_org_iotivity_ca_CaInterface_initialize
     CANativeJNISetContext(env, context);
 }
 
-void CAManagerConnectionStateChangedCB(CATransportAdapter_t adapter,
-                                       const char *remote_address,
+void CAManagerConnectionStateChangedCB(const CAEndpoint_t *info,
                                        bool connected)
 {
-    LOGI("Callback - CAManagerConnectionStateChangedCB : type(%d), address(%s), connected(%d)",
-         adapter, remote_address, connected);
+    if (!info)
+    {
+        LOGE("info is NULL");
+        return;
+    }
 
     if (!g_listenerObject)
     {
         LOGE("g_listener is NULL, cannot have callback");
         return;
     }
+
+    LOGI("Callback - CAManagerConnectionStateChangedCB : type(%d), address(%s), connected(%d)",
+         info->adapter, info->addr, connected);
 
     bool isAttached = false;
     JNIEnv* env = NULL;
@@ -106,7 +111,7 @@ void CAManagerConnectionStateChangedCB(CATransportAdapter_t adapter,
         goto exit_error;
     }
 
-    jstring jni_address = (*env)->NewStringUTF(env, remote_address);
+    jstring jni_address = (*env)->NewStringUTF(env, info->addr);
     if (!jni_address)
     {
         LOGE("jni_address is null");
@@ -129,7 +134,7 @@ void CAManagerConnectionStateChangedCB(CATransportAdapter_t adapter,
     }
 
     jobject jni_adaptertype = (*env)->CallStaticObjectMethod(env, jni_cls_enum,
-                                                             jni_mid_enum, adapter);
+                                                             jni_mid_enum, info->adapter);
     (*env)->CallVoidMethod(env, g_listenerObject, jni_mid_listener,
                            jni_adaptertype, jni_address,
                            (jboolean)connected);

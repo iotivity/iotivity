@@ -105,6 +105,6 @@
         "deviceuuid": "",
         "devowneruuid": "",
         "rowneruuid": "",
-        "x.com.samsung.dpc": true
+        "x.org.iotivity.dpc": true
     }
 }

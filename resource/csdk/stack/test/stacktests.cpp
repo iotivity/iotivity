@@ -373,7 +373,7 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
     InitStack(OC_CLIENT);
 
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     strcpy(szQueryUri, OC_RSRVD_WELL_KNOWN_URI);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -415,7 +415,7 @@ TEST(StackResource, DISABLED_UpdateResourceNullURI)
     InitStack(OC_CLIENT);
 
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     strcpy(szQueryUri, OC_RSRVD_WELL_KNOWN_URI);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -464,7 +464,7 @@ TEST(StackResource, CreateResourceBadParams)
                                             "/a/led",
                                             0,
                                             NULL,
-                                            128));// invalid bitmask for OCResourceProperty
+                                            255));// invalid bitmask for OCResourceProperty
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -898,7 +898,11 @@ TEST(StackResource, GetResourceProperties)
                                             NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
+#ifdef MQ_PUBLISHER
+    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
+#else
     EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
+#endif
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1758,7 +1762,7 @@ TEST(StackResource, MultipleResourcesDiscovery)
                                             NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     /* Start a discovery query*/
-    char szQueryUri[256] = "/oic/res?if=oic.if.ll";
+    char szQueryUri[MAX_QUERY_LENGTH] = "/oic/res?if=oic.if.ll";
     OCCallbackData cbData;
     cbData.cb = discoveryCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -1804,3 +1808,102 @@ TEST(StackPayload, CloneByteString)
 
     OCRepPayloadDestroy(clone);
 }
+
+TEST(StackUri, Rfc6874_Noop_1)
+{
+    char validIPv6Address[] = "FF01:0:0:0:0:0:0:FB";
+    char bytes[100] = {0};
+    strncpy(bytes, validIPv6Address, sizeof(bytes));
+
+    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+
+    // No % sign, should do nothing
+    EXPECT_STREQ(bytes, validIPv6Address);
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+
+TEST(StackUri, Rfc6874_Noop_2)
+{
+    char validIPv6Address[] = "3812:a61::4:1";
+    char bytes[100] = {0};
+
+    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+
+    // No % sign, should do nothing
+    EXPECT_STREQ(bytes, validIPv6Address);
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+
+TEST(StackUri, Rfc6874_WithEncoding)
+{
+    char validIPv6Address[] =        "fe80::dafe:e3ff:fe00:ebfa%wlan0";
+    char validIPv6AddressEncoded[] = "fe80::dafe:e3ff:fe00:ebfa%25wlan0";
+    char bytes[100] = "";
+    strncpy(bytes, validIPv6Address, sizeof(bytes));
+
+    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+
+    // Encoding should have occured
+    EXPECT_STREQ(bytes, validIPv6AddressEncoded);
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+
+TEST(StackUri, Rfc6874_WithEncoding_ExtraPercent)
+{
+    char validIPv6Address[] = "fe80::dafe:e3ff:fe00:ebfa%%wlan0";
+    char bytes[100] = {0};
+
+    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+
+    // Encoding should have failed due to extra '%' character
+    EXPECT_STREQ(bytes, "");
+    EXPECT_EQ(OC_STACK_ERROR, result);
+}
+
+TEST(StackUri, Rfc6874_AlreadyEncoded)
+{
+    char validIPv6AddressEncoded[] = "fe80::dafe:e3ff:fe00:ebfa%25wlan0";
+    char bytes[100] = {0};
+
+    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6AddressEncoded);
+
+    // Encoding should have failed due to extra '%' character
+    EXPECT_STREQ(bytes, "");
+    EXPECT_EQ(OC_STACK_ERROR, result);
+}
+
+TEST(StackUri, Rfc6874_NoOverflow)
+{
+    char validIPv6Address[] = "fe80::dafe:e3ff:fe00:ebfa%wlan0";
+    char addrBuffer[100];
+    char bytes[100] = {0};
+    memset(addrBuffer, sizeof(addrBuffer), '_');
+
+    // Just enough room to encode
+    addrBuffer[sizeof(addrBuffer) - sizeof(validIPv6Address) - 3] = '\0';
+    strcat(addrBuffer, validIPv6Address);
+
+    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
+
+    // Encoding should have succeeded
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+
+TEST(StackUri, Rfc6874_NoOverflow_2)
+{
+    char validIPv6Address[] = "fe80::dafe:e3ff:fe00:ebfa%wlan0";
+    char addrBuffer[100];
+    char bytes[100] = {0};
+    memset(addrBuffer, sizeof(addrBuffer), '_');
+
+    // Not enough room to encode
+    addrBuffer[sizeof(addrBuffer) - sizeof(validIPv6Address) - 1] = '\0';
+    strcat(addrBuffer, validIPv6Address);
+
+    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
+
+    // Encoding should have failed due to output size limitations
+    EXPECT_STREQ(bytes, "");
+    EXPECT_EQ(OC_STACK_ERROR, result);
+}
+

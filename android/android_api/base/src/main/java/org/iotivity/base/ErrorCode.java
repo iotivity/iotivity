@@ -28,6 +28,7 @@ public enum ErrorCode {
     RESOURCE_CREATED("RESOURCE_CREATED", ""),
     RESOURCE_DELETED("RESOURCE_DELETED", ""),
     CONTINUE("CONTINUE", ""),
+    RESOURCE_CHANGED("RESOURCE_CHANGED", ""),
     /** Success status code - END HERE.*/
     /* Error status code - START HERE */
     INVALID_URI("INVALID_URI", ""),

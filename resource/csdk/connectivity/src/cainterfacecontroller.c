@@ -361,7 +361,8 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
+CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length,
+                             CADataType_t dataType)
 {
     if (endpoint == NULL)
     {
@@ -406,7 +407,7 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
         if (NULL != g_adapterHandler[index].sendData)
         {
             OIC_LOG(DEBUG, TAG, "unicast message to adapter");
-            sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length);
+            sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length, dataType);
         }
 
         if (sentDataLen != (int32_t)length)
@@ -423,7 +424,8 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
     return CA_STATUS_OK;
 }
 
-CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
+CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length,
+                               CADataType_t dataType)
 {
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
@@ -467,7 +469,7 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
                 return CA_MEMORY_ALLOC_FAILED;
             }
             memcpy(payload, data, length);
-            sentDataLen = g_adapterHandler[index].sendDataToAll(endpoint, payload, length);
+            sentDataLen = g_adapterHandler[index].sendDataToAll(endpoint, payload, length, dataType);
             OICFree(payload);
         }
 

@@ -22,6 +22,7 @@
 #include "ocstack.h"
 #include "ocserverrequest.h"
 #include "ocresourcehandler.h"
+#include "ocobserve.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
@@ -518,6 +519,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     responseInfo.info.messageId = serverRequest->coapID;
     responseInfo.info.resourceUri = serverRequest->resourceUrl;
     responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult, serverRequest->method);
+    responseInfo.info.dataType = CA_RESPONSE_DATA;
 
     if(serverRequest->notificationFlag && serverRequest->qos == OC_HIGH_QOS)
     {
@@ -556,8 +558,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
     responseInfo.info.tokenLength = serverRequest->tokenLength;
 
-    // De-register observe option should not be included in the response header
-    if((serverRequest->observeResult == OC_STACK_OK) && (serverRequest->observationOption != OC_OBSERVE_DEREGISTER))
+    if((serverRequest->observeResult == OC_STACK_OK)&&
+       (serverRequest->observationOption != MAX_SEQUENCE_NUMBER + 1))
     {
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
     }

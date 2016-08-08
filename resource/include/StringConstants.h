@@ -76,6 +76,7 @@ namespace OC
                             "and from 2048 to 3000 inclusive.";
         static const char NO_ERROR[]                   = "No Error";
         static const char RESOURCE_CREATED[]           = "Resource Created";
+        static const char RESOURCE_CHANGED[]           = "Resource Changed";
         static const char RESOURCE_DELETED[]           = "Resource Deleted";
         static const char INVALID_URI[]                = "Invalid URI";
         static const char INVALID_IP[]                 = "Invalid IP";
@@ -123,6 +124,7 @@ namespace OC
         static const char DUPLICATE_UUID[]             = "Duplicate UUID in DB";
         static const char INCONSISTENT_DB[]            = "Data in provisioning DB is inconsistent";
         static const char AUTHENTICATION_FAILURE[]     = "Authentication failure";
+        static const char PUBLISH_RESOURCE_FAILED[]    = "Publish Resource failure";
     }
 
     namespace Error

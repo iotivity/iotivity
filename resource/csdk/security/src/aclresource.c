@@ -49,10 +49,10 @@
 #define NUMBER_OF_DEFAULT_SEC_RSCS 2
 #define STRING_UUID_SIZE (UUID_LENGTH * 2 + 5)
 
-static const uint8_t ACL_MAP_SIZE = 2;
+static const uint8_t ACL_MAP_SIZE = 4;
 static const uint8_t ACL_ACLIST_MAP_SIZE = 1;
 static const uint8_t ACL_ACES_MAP_SIZE = 3;
-static const uint8_t ACL_RESOURCE_MAP_SIZE = 4;
+static const uint8_t ACL_RESOURCE_MAP_SIZE = 3;
 
 
 // CborSize is the default cbor payload size being used.
@@ -396,7 +396,13 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             {
 
                 CborEncoder rMap;
-                cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, ACL_RESOURCE_MAP_SIZE);
+                size_t rsrcMapSize = ACL_RESOURCE_MAP_SIZE;
+                if(rsrc->rel)
+                {
+                    rsrcMapSize++;
+                }
+
+                cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, rsrcMapSize);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Map.");
 
                 //href -- Mandatory
@@ -446,14 +452,6 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
                             strlen(OIC_JSON_REL_NAME));
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Name Tag.");
                     cborEncoderResult = cbor_encode_text_string(&rMap, rsrc->rel, strlen(rsrc->rel));
-                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Value.");
-                }
-                else
-                {
-                    cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_REL_NAME,
-                            strlen(OIC_JSON_REL_NAME));
-                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Name Tag.");
-                    cborEncoderResult = cbor_encode_text_string(&rMap, "", 0);
                     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding REL Value.");
                 }
 
@@ -565,6 +563,38 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
         OICFree(rowner);
     }
+
+    //RT -- Mandatory
+    CborEncoder rtArray;
+    cborEncoderResult = cbor_encode_text_string(&aclMap, OIC_JSON_RT_NAME,
+            strlen(OIC_JSON_RT_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&aclMap, &rtArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_ACL,
+                strlen(OIC_RSRC_TYPE_SEC_ACL));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&aclMap, &rtArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+
+    //IF-- Mandatory
+    CborEncoder ifArray;
+    cborEncoderResult = cbor_encode_text_string(&aclMap, OIC_JSON_IF_NAME,
+             strlen(OIC_JSON_IF_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&aclMap, &ifArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    for (size_t i = 0; i < 1; i++)
+    {
+        cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+                strlen(OC_RSRVD_INTERFACE_DEFAULT));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+    }
+    cborEncoderResult = cbor_encoder_close_container(&aclMap, &ifArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
 
     // Close ACL Map
     cborEncoderResult = cbor_encoder_close_container(&encoder, &aclMap);
@@ -949,7 +979,7 @@ exit:
  *     ::OC_STACK_NO_RESOURCE on failure to find the appropriate ACE
  *     ::OC_STACK_INVALID_PARAM on invalid parameter
  */
-static OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource)
+OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource)
 {
     OIC_LOG(DEBUG, TAG, "IN RemoveACE");
 
@@ -1098,6 +1128,203 @@ exit:
    return false;
 }
 
+static size_t GetNumberOfResource(OicSecRsrc_t* resources)
+{
+    size_t ret = 0;
+    if(resources)
+    {
+        OicSecRsrc_t* rsrc = NULL;
+        LL_FOREACH(resources, rsrc)
+        {
+            ret++;
+        }
+    }
+    return ret;
+}
+
+static size_t GetNumberOfValidity(OicSecValidity_t* val)
+{
+    size_t ret = 0;
+
+    if(val)
+    {
+        OicSecValidity_t* temp = NULL;
+        LL_FOREACH(val, temp)
+        {
+            ret++;
+        }
+    }
+    return ret;
+}
+
+
+static bool IsSameStringArray(char** strArr1, size_t strArr1Len,
+                              char** strArr2, size_t strArr2Len)
+{
+
+    if(NULL == strArr1 && NULL == strArr2)
+    {
+        return true;
+    }
+
+    if(strArr1 && strArr2 && NULL == *strArr1 && NULL == *strArr2)
+    {
+        return true;
+    }
+
+    if(strArr1 && strArr2)
+    {
+        if(*strArr1 && *strArr2 && strArr1Len == strArr2Len)
+        {
+            size_t matchedStr = 0;
+            for(size_t i = 0; i < strArr1Len; i++)
+            {
+                for(size_t j = 0; j < strArr2Len; j++)
+                {
+                    if(strcmp(strArr1[i], strArr2[j]) == 0)
+                    {
+                        matchedStr++;
+                    }
+                }
+            }
+            if(matchedStr == strArr1Len)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+static bool IsSameResources(OicSecRsrc_t* resources1, OicSecRsrc_t* resources2)
+{
+    size_t numOfRsrc1 = 0;
+    size_t numOfRsrc2 = 0;
+    size_t numOfMatchedRsrc = 0;
+    OicSecRsrc_t* rsrc1 = NULL;
+    OicSecRsrc_t* rsrc2 = NULL;
+
+    if(NULL == resources1 && NULL == resources2)
+    {
+        return true;
+    }
+
+    if(resources1 && resources2)
+    {
+        numOfRsrc1 = GetNumberOfResource(resources1);
+        numOfRsrc2 = GetNumberOfResource(resources2);
+
+        if(0 == numOfRsrc1 && 0 == numOfRsrc2)
+        {
+            return true;
+        }
+
+        LL_FOREACH(resources1, rsrc1)
+        {
+            rsrc2 = NULL;
+            LL_FOREACH(resources2, rsrc2)
+            {
+                if(rsrc1 && rsrc2)
+                {
+                    if(strcmp(rsrc1->href, rsrc2->href) == 0 &&
+                        IsSameStringArray(rsrc1->interfaces, rsrc1->interfaceLen,
+                                          rsrc2->interfaces, rsrc2->interfaceLen) &&
+                        IsSameStringArray(rsrc1->types, rsrc1->typeLen,
+                                          rsrc2->types, rsrc2->typeLen))
+                    {
+                        // TODO: Update codes to compare 'rel' property
+                        numOfMatchedRsrc++;
+                    }
+                }
+            }
+        }
+
+        if(numOfMatchedRsrc == numOfRsrc1)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool IsSameValidities(OicSecValidity_t* validities1, OicSecValidity_t* validities2)
+{
+    size_t numOfVal1 = 0;
+    size_t numOfVal2 = 0;
+    size_t numOfMatchedVal = 0;
+    OicSecValidity_t* val1 = NULL;
+    OicSecValidity_t* val2 = NULL;
+
+    if(NULL == validities1 && NULL == validities2)
+    {
+        return true;
+    }
+
+    if(validities1 && validities2)
+    {
+        numOfVal1 = GetNumberOfValidity(validities1);
+        numOfVal2 = GetNumberOfValidity(validities2);
+        if(0 == numOfVal1 && 0 == numOfVal2)
+        {
+            return true;
+        }
+
+        if(numOfVal1 == numOfVal2)
+        {
+            LL_FOREACH(validities1, val1)
+            {
+                LL_FOREACH(validities2, val2)
+                {
+                    if(strcmp(val1->period, val2->period) == 0 &&
+                        IsSameStringArray(val1->recurrences, val1->recurrenceLen,
+                                          val2->recurrences, val2->recurrenceLen))
+                    {
+                        numOfMatchedVal++;
+                    }
+                }
+            }
+            if(numOfVal1 == numOfMatchedVal)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
+{
+    if(ace1 && ace2)
+    {
+        if(memcmp(ace1->subjectuuid.id, ace2->subjectuuid.id, sizeof(ace1->subjectuuid.id)) != 0)
+        {
+            return false;
+        }
+
+        if(false == IsSameResources(ace1->resources, ace2->resources))
+        {
+            return false;
+        }
+
+        if(ace1->permission != ace2->permission)
+        {
+            return false;
+        }
+
+        if(false == IsSameValidities(ace1->validities, ace2->validities))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG(INFO, TAG, "HandleACLGetRequest processing the request");
@@ -1179,13 +1406,13 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
 exit:
     // A device should always have a default acl. Therefore, payload should never be NULL.
     ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
+    OIC_LOG(DEBUG, TAG, "ACL payload with GET response");
+    OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
 
-    // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed for HandleACLGetRequest");
-    }
+    //Send payload to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     OICFree(payload);
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
@@ -1195,46 +1422,82 @@ exit:
 static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG(INFO, TAG, "HandleACLPostRequest processing the request");
-    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    OCEntityHandlerResult ehRet = OC_EH_OK;
 
     // Convert CBOR into ACL data and update to SVR buffers. This will also validate the ACL data received.
     uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
     if (payload)
     {
-        OicSecAcl_t *newAcl = CBORPayloadToAcl(payload, size);
+        OicSecAcl_t *newAcl = NULL;
+        OicSecAcl_t newAceList;
+        OIC_LOG(DEBUG, TAG, "ACL payload from POST request << ");
+        OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
+        newAcl = CBORPayloadToAcl(payload, size);
         if (newAcl)
         {
-            // Append the new ACL to existing ACL
+            bool isNewAce = true;
+            OicSecAce_t* existAce = NULL;
             OicSecAce_t* newAce = NULL;
-            OicSecAce_t* tempAce = NULL;
-            LL_FOREACH_SAFE(newAcl->aces, newAce, tempAce)
-            {
-                LL_APPEND(gAcl->aces, newAce);
-            }
-            newAcl->aces = NULL;
+            OicSecAce_t* tempAce1 = NULL;
+            OicSecAce_t* tempAce2 = NULL;
+            newAceList.aces = NULL;
 
-            size_t size = 0;
-            uint8_t *cborPayload = NULL;
-            if (OC_STACK_OK == AclToCBORPayload(gAcl, &cborPayload, &size))
+            LL_FOREACH_SAFE(newAcl->aces, newAce, tempAce1)
             {
-                if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size) == OC_STACK_OK)
+                isNewAce = true;
+                LL_FOREACH_SAFE(gAcl->aces, existAce, tempAce2)
                 {
-                    ehRet = OC_EH_RESOURCE_CREATED;
+                    if(IsSameACE(newAce, existAce))
+                    {
+                        isNewAce = false;
+                    }
                 }
-                OICFree(cborPayload);
+                if(isNewAce)
+                {
+                    OIC_LOG(DEBUG, TAG, "NEW ACE dectected.");
+
+                    OicSecAce_t* insertAce = DuplicateACE(newAce);
+                    if(insertAce)
+                    {
+                        OIC_LOG(DEBUG, TAG, "Appending new ACE..");
+                        LL_PREPEND(gAcl->aces, insertAce);
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to duplicate ACE.");
+                        ehRet = OC_EH_ERROR;
+                    }
+                }
+            }
+
+            DeleteACLList(newAcl);
+
+            if(OC_EH_OK == ehRet)
+            {
+                size_t size = 0;
+                uint8_t *cborPayload = NULL;
+                if (OC_STACK_OK == AclToCBORPayload(gAcl, &cborPayload, &size))
+                {
+                    if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size) == OC_STACK_OK)
+                    {
+                        ehRet = OC_EH_CHANGED;
+                    }
+                    OICFree(cborPayload);
+                }
+
+                if(OC_EH_CHANGED != ehRet)
+                {
+                    ehRet = OC_EH_ERROR;
+                }
             }
         }
-
-        DeleteACLList(newAcl);
     }
 
-    // Send payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleACLPostRequest");
-    }
+    //Send response to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -1260,12 +1523,9 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
     }
 
 exit:
-    // Send payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleACLDeleteRequest");
-    }
+    //Send response to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     return ehRet;
 }
@@ -1301,8 +1561,8 @@ OCEntityHandlerResult ACLEntityHandler(OCEntityHandlerFlag flag, OCEntityHandler
                 break;
 
             default:
-                ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                               OC_EH_OK : OC_EH_ERROR;
         }
     }
 

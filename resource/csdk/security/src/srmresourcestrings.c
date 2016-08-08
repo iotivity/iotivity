@@ -83,6 +83,9 @@ const char * OIC_RSRC_TYPE_SEC_VER = "oic.r.ver";
 const char * OIC_RSRC_VER_URI =  "/oic/sec/ver";
 const char * OIC_JSON_VER_NAME = "ver";
 
+//reset profile
+const char * OIC_JSON_RESET_PF_NAME = "resetpf";
+
 const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_RESOURCES_NAME = "resources";
 const char * OIC_JSON_AMSS_NAME = "amss";
@@ -121,7 +124,7 @@ const char * OIC_JSON_PERIODS_NAME = "prds";
 const char * OIC_JSON_CRMS_NAME = "crms";
 const char * OIC_JSON_RECURRENCES_NAME = "recurrence";
 const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME = "sct";
-const char * OIC_JSON_DPC_NAME = "x.com.samsung.dpc";
+const char * OIC_JSON_DPC_NAME = "x.org.iotivity.dpc";
 const char * OIC_JSON_EDP_NAME = "edp";
 const char * OIC_JSON_PIN_NAME = "pin";
 const char * OIC_JSON_PDACL_NAME = "pdacl";

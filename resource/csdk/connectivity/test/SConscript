@@ -50,9 +50,6 @@ if catest_env.get('SECURED') == '1':
 	catest_env.AppendUnique(LIBS = ['tinydtls'])
 	catest_env.AppendUnique(LIBS = ['timer'])
 
-if catest_env.get('WITH_RD') == '1':
-	catest_env.PrependUnique(LIBS = ['resource_directory'])
-
 if catest_env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
@@ -76,7 +73,8 @@ if (('IP' in target_transport) or ('ALL' in target_transport)):
 		                                         'ca_api_unittest.cpp',
 		                                         'camutex_tests.cpp',
 		                                         'uarraylist_test.cpp',
-		                                         'ulinklist_test.cpp'
+		                                         'ulinklist_test.cpp',
+		                                         'uqueue_test.cpp'
 		                                               ])
 else:
 	# Include all unit test files
@@ -85,7 +83,8 @@ else:
 		                                         'ca_api_unittest.cpp',
 		                                         'camutex_tests.cpp',
 		                                         'uarraylist_test.cpp',
-		                                         'ulinklist_test.cpp'
+		                                         'ulinklist_test.cpp',
+		                                         'uqueue_test.cpp'
 		                                               ])
 
 Alias("test", [catests])

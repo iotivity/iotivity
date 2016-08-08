@@ -22,13 +22,14 @@
 
 #include "JniOcSecureResource.h"
 #include "JniSecureUtils.h"
+#include "aclresource.h"
+#include "oic_malloc.h"
 #include "oic_string.h"
 namespace PH = std::placeholders;
 
 JniOcSecureResource::JniOcSecureResource(std::shared_ptr<OCSecureResource> device)
     : m_sharedSecureResource(device)
-{
-}
+{}
 
 JniOcSecureResource::~JniOcSecureResource()
 {
@@ -212,32 +213,29 @@ OCStackResult JniOcSecureResource::provisionACL(JNIEnv* env, jobject _acl, jobje
 {
     OCStackResult ret;
     JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
-    OicSecAcl_t *acl = new OicSecAcl_t;
+    OicSecAcl_t *acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
 
     if (!acl)
     {
         return OC_STACK_NO_MEMORY;
     }
 
-    acl->next = nullptr;
-
     if (OC_STACK_OK != JniSecureUtils::convertJavaACLToOCAcl(env, _acl, acl))
     {
-        delete acl;
+        DeleteACLList(acl);
         return OC_STACK_ERROR;
     }
 
     ResultCallBack resultCallback = [acl, resultListener](PMResultList_t *result, int hasError)
     {
-        delete acl;
+        DeleteACLList(acl);
         resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::PROVISIONACL);
     };
     ret = m_sharedSecureResource->provisionACL(acl, resultCallback);
 
     if (ret != OC_STACK_OK)
     {
-        delete acl;
-
+        DeleteACLList(acl);
     }
     return ret;
 }
@@ -344,7 +342,7 @@ OCStackResult JniOcSecureResource::provisionPairwiseDevices(JNIEnv* env, jint ty
 
     if (_acl1)
     {
-        acl1 = new OicSecAcl_t;
+        acl1 = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
         if (!acl1)
         {
             return OC_STACK_NO_MEMORY;
@@ -352,34 +350,32 @@ OCStackResult JniOcSecureResource::provisionPairwiseDevices(JNIEnv* env, jint ty
 
         if (OC_STACK_OK != JniSecureUtils::convertJavaACLToOCAcl(env, _acl1, acl1))
         {
-            delete acl1;
+            DeleteACLList(acl1);
             return OC_STACK_ERROR;
         }
-        acl1->next = nullptr;
     }
 
     if (_acl2)
     {
-        acl2 = new OicSecAcl_t;
+        acl2 = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
         if (!acl2)
         {
-            delete acl1;
+            DeleteACLList(acl1);
             return OC_STACK_NO_MEMORY;
         }
 
         if (OC_STACK_OK != JniSecureUtils::convertJavaACLToOCAcl(env, _acl2, acl2))
         {
-            delete acl2;
+            DeleteACLList(acl2);
             return OC_STACK_ERROR;
         }
-        acl2->next = nullptr;
     }
 
     ResultCallBack resultCallback = [acl1, acl2, resultListener](PMResultList_t *result,
             int hasError)
     {
-        delete acl1;
-        delete acl2;
+        DeleteACLList(acl1);
+        DeleteACLList(acl2);
         resultListener->ProvisionResultCallback(result, hasError,
                 ListenerFunc::PROVISIONPAIRWISEDEVICES);
     };
@@ -389,8 +385,8 @@ OCStackResult JniOcSecureResource::provisionPairwiseDevices(JNIEnv* env, jint ty
             *device2->getDevicePtr(), acl2, resultCallback);
     if (ret != OC_STACK_OK)
     {
-        delete acl1;
-        delete acl2;
+        DeleteACLList(acl1);
+        DeleteACLList(acl2);
     }
     return ret;
 }

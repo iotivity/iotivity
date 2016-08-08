@@ -35,7 +35,13 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#ifdef HAVE_ARDUINO_TIME_H
+#include <Time.h>
+#else
 #include <time.h>
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif

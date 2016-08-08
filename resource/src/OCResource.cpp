@@ -47,12 +47,12 @@ using OC::checked_guard;
 
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const OCDevAddr& devAddr, const std::string& uri,
-                        const std::string& serverId, bool observable,
+                        const std::string& serverId, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri), m_devAddr(devAddr),
-    m_isObservable(observable), m_isCollection(false),
+    m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
@@ -72,12 +72,12 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::string& host, const std::string& uri,
                         const std::string& serverId,
-                        OCConnectivityType connectivityType, bool observable,
+                        OCConnectivityType connectivityType, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_isObservable(observable), m_isCollection(false),
+    m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
@@ -376,7 +376,7 @@ OCStackResult OCResource::post(const OCRepresentation& rep,
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
                          m_devAddr, m_uri, rep, queryParametersMap,
-                         m_headerOptions, attributeHandler, QoS);
+                         m_headerOptions, CT_DEFAULT, attributeHandler, QoS);
 }
 
 OCStackResult OCResource::post(const OCRepresentation& rep,
@@ -550,8 +550,15 @@ OCConnectivityType OCResource::connectivityType() const
 
 bool OCResource::isObservable() const
 {
-    return m_isObservable;
+    return (m_property & OC_OBSERVABLE) == OC_OBSERVABLE;
 }
+
+#ifdef WITH_MQ
+bool OCResource::isPublish() const
+{
+    return (m_property & OC_MQ_PUBLISHER) == OC_MQ_PUBLISHER;
+}
+#endif
 
 std::vector<std::string> OCResource::getResourceTypes() const
 {
@@ -572,6 +579,69 @@ std::string OCResource::sid() const
 {
     return this->uniqueIdentifier().m_representation;
 }
+
+#ifdef WITH_MQ
+OCStackResult OCResource::discoveryMQTopics(const QueryParamsMap& queryParametersMap,
+                                            FindCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return checked_guard(m_clientWrapper.lock(),
+                            &IClientWrapper::ListenForMQTopic,
+                            m_devAddr, m_uri,
+                            queryParametersMap, m_headerOptions,
+                            attributeHandler, defaultQos);
+}
+
+OCStackResult OCResource::createMQTopic(const OCRepresentation& rep,
+                                        const std::string& topicUri,
+                                        const QueryParamsMap& queryParametersMap,
+                                        MQCreateTopicCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutMQTopicRepresentation,
+                         m_devAddr, topicUri, rep, queryParametersMap,
+                         m_headerOptions, attributeHandler, defaultQos);
+}
+#endif
+#ifdef MQ_SUBSCRIBER
+OCStackResult OCResource::subscribeMQTopic(ObserveType observeType,
+        const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+
+    return result_guard(observe(observeType, queryParametersMap, observeHandler, defaultQoS));
+}
+
+OCStackResult OCResource::unsubscribeMQTopic()
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+    return result_guard(cancelObserve(defaultQoS));
+}
+
+OCStackResult OCResource::requestMQPublish(const QueryParamsMap& queryParametersMap,
+                                           PostCallback attributeHandler)
+{
+    OCRepresentation rep;
+    rep.setValue(std::string("req_pub"), std::string("true"));
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return result_guard(post(rep, queryParametersMap, attributeHandler, defaultQos));
+}
+#endif
+#ifdef MQ_PUBLISHER
+OCStackResult OCResource::publishMQTopic(const OCRepresentation& rep,
+                                         const QueryParamsMap& queryParametersMap,
+                                         PostCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return result_guard(post(rep, queryParametersMap, attributeHandler, defaultQos));
+}
+#endif
 
 bool OCResource::operator==(const OCResource &other) const
 {

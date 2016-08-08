@@ -50,11 +50,6 @@
 #define TAG "OIC_CA_TCP_SERVER"
 
 /**
- * Server port number for local test.
- */
-#define SERVER_PORT 8000
-
-/**
  * Maximum CoAP over TCP header length
  * to know the total data length.
  */
@@ -481,7 +476,7 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     }
 
     // #3. set socket length.
-    socklen_t socklen;
+    socklen_t socklen = 0;
     if (sa.ss_family == AF_INET6)
     {
         struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sa;
@@ -519,7 +514,7 @@ static int CACreateAcceptSocket(int family, CASocket_t *sock)
         return sock->fd;
     }
 
-    socklen_t socklen;
+    socklen_t socklen = 0;
     struct sockaddr_storage server = { .ss_family = family };
 
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);

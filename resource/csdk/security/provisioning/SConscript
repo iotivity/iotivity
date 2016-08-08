@@ -116,6 +116,6 @@ provisioning_env.UserInstallTargetLib(provisioningserver, 'ocpmapi')
 if provisioning_env.get('DTLS_WITH_X509') == '1':
 	SConscript('ck_manager/SConscript')
 
-if target_os in ['linux', 'msys_nt', 'windows']:
+if target_os in ['linux', 'msys_nt', 'windows', 'tizen']:
 	SConscript('sample/SConscript')
 

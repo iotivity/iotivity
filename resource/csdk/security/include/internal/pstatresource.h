@@ -50,7 +50,7 @@ OCStackResult DeInitPstatResource();
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
  OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **cborPayload,
-                                  size_t *cborSize);
+                                  size_t *cborSize, bool writableOnly);
 
 /**
  * This method converts cbor into PSTAT data.

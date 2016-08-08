@@ -534,6 +534,32 @@ namespace OC
          */
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
+#ifdef WITH_CLOUD
+        /**
+         * Subscribes to a server's device presence change events.
+         *
+         * @param presenceHandle a handle object that can be used to identify this subscription
+         *               request.  It can be used to unsubscribe from these events in the future.
+         *               It will be set upon successful return of this method.
+         * @param host The IP address/addressable name of the server to subscribe to.
+         *               This should be in the format coap://address:port
+         * @param di Vector which can have the devices id.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         * @param observeHandler handles callback
+         *        The callback function will be invoked with a map of attribute name and values.
+         *        The callback function will also have the result from this observe operation
+         *        This will have error codes
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                              const std::string& host,
+                                              const std::vector<std::string>& di,
+                                              OCConnectivityType connectivityType,
+                                              ObserveCallback callback);
+#endif
+
         /**
          * Creates a resource proxy object so that get/put/observe functionality
          * can be used without discovering the object in advance.  Note that the
@@ -554,7 +580,7 @@ namespace OC
          *
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
-         *                           if you want to use specific a Flag like IPv4
+         *                           if you want to use a specific Flag like IPv4,
          *                           you should apply OR operation for the flag in here.
          *                           Example: static_cast<OCConnectivityType>(CT_ADAPTER_TCP
          *                                                                    | OC_IP_USE_V4)
@@ -615,6 +641,121 @@ namespace OC
         OCStackResult doDirectPairing(std::shared_ptr<OCDirectPairing> peer, OCPrm_t pmSel,
                                      const std::string& pinNumber,
                                      DirectPairingCallback resultCallback);
+#ifdef WITH_CLOUD
+        /**
+         * Create an account manager object that can be used for doing request to account server.
+         * You can only create this object if OCPlatform was initialized to be a Client or
+         * Client/Server. Otherwise, this will return an empty shared ptr.
+         *
+         * @note For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
+         *       methods of this object to work since device id is not generated on Client mode.
+         *
+         * @param host Host IP Address of a account server.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+         *                           if you want to use a specific Flag like IPv4,
+         *                           you should apply OR operation for the flag in here.
+         *                           Example: static_cast<OCConnectivityType>(CT_ADAPTER_TCP
+         *                                                                    | OC_IP_USE_V4)
+         *
+         * @return OCAccountManager::Ptr a shared pointer to the new account manager object
+         */
+        OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType);
+#endif // WITH_CLOUD
+#ifdef RD_CLIENT
+        /**
+         * API for Virtual Resource("/oic/d" and "/oic/p") Publish to Resource Directory.
+         * @note This API applies to resource server side only.
+         *
+         * @param host Host IP Address of a service to direct resource publish query.
+         * @param connectivityType ::OCConnectivityType type of connectivity.
+         * @param callback Handles callbacks, success states and failure states.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult publishResourceToRD(const std::string& host,
+                                          OCConnectivityType connectivityType,
+                                          PublishResourceCallback callback);
+
+        /**
+         * API for Resource Publish to Resource Directory.
+         * @note This API applies to resource server side only.
+         *
+         * @param host Host IP Address of a service to direct resource publish query.
+         * @param connectivityType ::OCConnectivityType type of connectivity.
+         * @param resourceHandle resource handle of the resource.
+         * @param callback Handles callbacks, success states and failure states.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult publishResourceToRD(const std::string& host,
+                                          OCConnectivityType connectivityType,
+                                          ResourceHandles& resourceHandles,
+                                          PublishResourceCallback callback);
+
+        /**
+         * @overload
+         *
+         * @param host Host IP Address of a service to direct resource publish query.
+         * @param connectivityType ::OCConnectivityType type of connectivity.
+         * @param resourceHandle resource handle of the resource.
+         * @param callback function to callback with published resources.
+         * @param QoS the quality of communication
+         * @see publishResourceToRD(const std::string&, OCConnectivityType, OCResourceHandle,
+         * uint8_t, PublishResourceCallback)
+         */
+        OCStackResult publishResourceToRD(const std::string& host,
+                                          OCConnectivityType connectivityType,
+                                          ResourceHandles& resourceHandles,
+                                          PublishResourceCallback callback, QualityOfService QoS);
+
+        /**
+         * API for published resource delete from Resource Directory.
+         * @note This API applies to resource server side only.
+         *
+         * @param host Host IP Address of a service to direct resource delete query.
+         * @param connectivityType ::OCConnectivityType type of connectivity.
+         * @param callback Handles callbacks, success states and failure states.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult deleteResourceFromRD(const std::string& host,
+                                           OCConnectivityType connectivityType,
+                                           DeleteResourceCallback callback);
+
+        /**
+         * @overload
+         *
+         * @param host Host IP Address of a service to direct resource delete query.
+         * @param connectivityType ::OCConnectivityType type of connectivity.
+         * @param resourceHandle resource handle of the resource.
+         * @param callback function to callback with published resources.
+         * @param QoS the quality of communication
+         * @see publishResourceToRD(const std::string&, OCConnectivityType, OCResourceHandle,
+         * uint8_t, PublishResourceCallback)
+         */
+        OCStackResult deleteResourceFromRD(const std::string& host,
+                                           OCConnectivityType connectivityType,
+                                           ResourceHandles& resourceHandles,
+                                           DeleteResourceCallback callback);
+
+        /**
+         * @overload
+         *
+         * @param host Host IP Address of a service to direct resource delete query.
+         * @param connectivityType ::OCConnectivityType type of connectivity.
+         * @param resourceHandle resource handle of the resource.
+         * @param callback function to callback with published resources.
+         * @param QoS the quality of communication
+         * @see publishResourceToRD(const std::string&, OCConnectivityType, OCResourceHandle,
+         * uint8_t, PublishResourceCallback)
+         */
+        OCStackResult deleteResourceFromRD(const std::string& host,
+                                           OCConnectivityType connectivityType,
+                                           ResourceHandles& resourceHandles,
+                                           DeleteResourceCallback callback, QualityOfService QoS);
+#endif
     }
 }
 

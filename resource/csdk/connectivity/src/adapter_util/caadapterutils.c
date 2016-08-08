@@ -176,7 +176,7 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
     VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
     VERIFY_NON_NULL_VOID(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null");
 
-    struct addrinfo *addrs;
+    struct addrinfo *addrs = NULL;
     struct addrinfo hints = { .ai_family = AF_UNSPEC,
                               .ai_socktype = SOCK_DGRAM,
                               .ai_flags = AI_NUMERICHOST };

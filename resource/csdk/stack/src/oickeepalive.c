@@ -356,7 +356,7 @@ OCStackResult HandleKeepAliveGETRequest(const CAEndpoint_t* endPoint,
     SendDirectStackResponse(endPoint, requestInfo->info.messageId, result, requestInfo->info.type,
                             requestInfo->info.numOptions, requestInfo->info.options,
                             requestInfo->info.token, requestInfo->info.tokenLength,
-                            requestInfo->info.resourceUri);
+                            requestInfo->info.resourceUri, CA_RESPONSE_DATA);
 
     return OC_STACK_OK;
 }
@@ -396,7 +396,7 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
     SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_CHANGED, requestInfo->info.type,
                             requestInfo->info.numOptions, requestInfo->info.options,
                             requestInfo->info.token, requestInfo->info.tokenLength,
-                            requestInfo->info.resourceUri);
+                            requestInfo->info.resourceUri, CA_RESPONSE_DATA);
 
     return OC_STACK_OK;
 }
