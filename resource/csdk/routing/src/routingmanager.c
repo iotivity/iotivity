@@ -1143,6 +1143,7 @@ rewriteandexit:
             }
 
             responseMessage.info.messageId = info->messageId;
+            responseMessage.info.dataType = CA_RESPONSE_DATA;
 
             CAResult_t caRes = CASendResponse(&nextHop, &responseMessage);
             if (CA_STATUS_OK != caRes)

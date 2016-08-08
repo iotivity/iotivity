@@ -519,6 +519,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     responseInfo.info.messageId = serverRequest->coapID;
     responseInfo.info.resourceUri = serverRequest->resourceUrl;
     responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult, serverRequest->method);
+    responseInfo.info.dataType = CA_RESPONSE_DATA;
 
     if(serverRequest->notificationFlag && serverRequest->qos == OC_HIGH_QOS)
     {
