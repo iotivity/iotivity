@@ -51,9 +51,9 @@
 #define NS_TAG                     "IOT_NOTI"
 
 // SCHEDULE //
-#define THREAD_COUNT               4
+#define THREAD_COUNT               5
 
-// NOTIOBJ // 
+// NOTIOBJ //
 #define NOTIOBJ_TITLE_KEY          "title"
 #define NOTIOBJ_ID_KEY             "id"
 #define NOTOOBJ_CONTENT_KEY        "contentText"
@@ -65,16 +65,19 @@
 #define SCHEDULER_TAG              "NS_PROVIDER_SCHEDULER"
 #define LISTENER_TAG               "NS_PROVIDER_LISTENER"
 #define RESOURCE_TAG               "NS_PROVIDER_RESOURCE"
+#define TOPIC_TAG                  "NS_PROVIDER_TOPIC"
 
 #define NS_ROOT_TYPE               "oic.r.notification"
 #define NS_COLLECTION_MESSAGE_TYPE "oic.r.notification.message"
 #define NS_COLLECTION_SYNC_TYPE    "oic.r.notification.sync"
+#define NS_COLLECTION_TOPIC_TYPE   "oic.r.notification.topic"
 
 #define NS_DEFAULT_INTERFACE       "oic.if.baseline"
 
 #define NS_ROOT_URI                "/notification"
 #define NS_COLLECTION_MESSAGE_URI  "/notification/message"
 #define NS_COLLECTION_SYNC_URI     "/notification/sync"
+#define NS_COLLECTION_TOPIC_URI    "/notification/topic"
 
 #define NS_QUERY_SEPARATOR         "&;"
 #define NS_KEY_VALUE_DELIMITER     "="
@@ -182,6 +185,7 @@ typedef enum eSchedulerType
     DISCOVERY_SCHEDULER = 1,
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,
+    TOPIC_SCHEDULER = 4,
 } NSSchedulerType;
 
 typedef enum eTaskType
@@ -227,6 +231,10 @@ typedef enum eTaskType
     TASK_CB_SUBSCRIPTION = 10000,
     TASK_CB_SYNC = 10001,
 
+    TASK_SEND_TOPICS = 11000,
+    TASK_SELECT_TOPICS = 11001,
+    TASK_SET_TOPICS = 11002,
+
 } NSTaskType;
 
 typedef enum eCache
@@ -240,6 +248,7 @@ typedef enum eCacheType
 {
     NS_PROVIDER_CACHE_SUBSCRIBER = 1000,
     NS_PROVIDER_CACHE_MESSAGE = 1001,
+    NS_PROVIDER_CACHE_TOPIC = 1002,
 
     NS_CONSUMER_CACHE_PROVIDER = 2000,
     NS_CONSUMER_CACHE_MESSAGE = 2001,
@@ -249,6 +258,16 @@ typedef enum eResourceType
 {
     NS_RESOURCE_MESSAGE = 1000,
     NS_RESOURCE_SYNC = 1001,
+    NS_RESOURCE_TOPIC = 1002,
 } NSResourceType;
+
+typedef enum eResponse
+{
+    NS_ALLOW = 1,
+    NS_DENY = 2,
+    NS_TOPIC = 3,
+
+} NSResponse;
+
 
 #endif /* _NS_CONSTANTS_H_ */

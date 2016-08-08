@@ -127,8 +127,8 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         if (OC_REST_POST == entityHandlerRequest->method)
         {
             /** Receive sync data from consumer which read or dismiss notification message.
-                           And broadcast the sync data to all subscribers including provider app
-                           to synchronize the notification message status. */
+                And broadcast the sync data to all subscribers including provider app
+                to synchronize the notification message status. */
 
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
 
@@ -168,6 +168,60 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
     }
 
     NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OUT");
+    return ehResult;
+}
+
+OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *entityHandlerRequest, void* callback)
+{
+    NS_LOG(DEBUG, "NSEntityHandlerTopicCb - IN");
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
+    (void)callback;
+
+    // Validate pointer
+    if (!entityHandlerRequest)
+    {
+        NS_LOG(ERROR, "Invalid request pointer");
+        return OC_EH_ERROR;
+    }
+
+    if (flag & OC_REQUEST_FLAG)
+    {
+        NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
+
+        if (OC_REST_GET == entityHandlerRequest->method)
+        {
+            NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_GET");
+
+            // send consumer's interesting topic list if consumer id exists
+            // otherwise send  created / updated topic list
+
+            NSPushQueue(TOPIC_SCHEDULER, TASK_SEND_TOPICS,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+
+            ehResult = OC_EH_OK;
+        }
+        else if (OC_REST_POST == entityHandlerRequest->method)
+        {
+            // Receive interesting topic list from consumers
+            NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
+
+            // Send topic updated message(id=TOPIC) to the consumer who request to post.
+            NSPushQueue(TOPIC_SCHEDULER, TASK_SELECT_TOPICS,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+
+            ehResult = OC_EH_OK;
+        }
+        else
+        {
+            NS_LOG_V(DEBUG, "Received unsupported method %d from client",
+                    entityHandlerRequest->method);
+            ehResult = OC_EH_OK;
+        }
+    }
+
+    NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OUT");
     return ehResult;
 }
 

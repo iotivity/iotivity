@@ -71,10 +71,19 @@ typedef struct
 
 typedef struct
 {
+    char consumerId[37];
+    NSTopicList ** topicList;
+} NSCacheTopicData;
+
+typedef struct
+{
     OCResourceHandle handle;
     int accepter;
     char * message_uri;
     char * sync_uri;
+
+    //optional
+    char * topic_uri;
 } NSNotificationResource;
 
 typedef struct
@@ -100,6 +109,13 @@ typedef struct
     char * id;
     char * state;
 } NSSyncResource;
+
+typedef struct
+{
+    OCResourceHandle handle;
+    char consumerId[37];
+    NSTopicList ** TopicList;
+} NSTopicResource;
 
 typedef struct
 {

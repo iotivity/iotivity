@@ -29,12 +29,18 @@
 
 #include <stdint.h>
 
+#define NS_UUID_STRING_SIZE 37
+
 #define NS_ATTRIBUTE_POLICY "ACCEPTER"
 #define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
 #define NS_ATTRIBUTE_SYNC "SYNC_URI"
 #define NS_ATTRIBUTE_ACCPETANCE "ACCEPTANCE"
 #define NS_ATTRIBUTE_MESSAGE_ID "MESSAGE_ID"
 #define NS_ATTRIBUTE_PROVIDER_ID "PROVIDER_ID"
+#define NS_ATTRIBUTE_CONSUMER_ID "CONSUMER_ID"
+#define NS_ATTRIBUTE_TOPIC_LIST "TOPIC_LIST"
+#define NS_ATTRIBUTE_TOPIC_NAME "TOPIC_NAME"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "TOPIC_STATE"
 #define NS_ATTRIBUTE_TITLE "TITLE"
 #define NS_ATTRIBUTE_TEXT "CONTENTTEXT"
 #define NS_ATTRIBUTE_SOURCE "SOURCE"
@@ -53,8 +59,6 @@ typedef enum eResult
     NS_ERROR = 200,
     NS_SUCCESS = 300,
     NS_FAIL = 400,
-    NS_ALLOW = 500,
-    NS_DENY = 600,
 
 } NSResult;
 
@@ -98,7 +102,7 @@ typedef enum
  */
 typedef struct
 {
-    char consumerId[37];
+    char consumerId[NS_UUID_STRING_SIZE];
 
 } NSConsumer;
 
@@ -107,7 +111,7 @@ typedef struct
  */
 typedef struct
 {
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
 
 } NSProvider;
 
@@ -127,7 +131,7 @@ typedef struct
 {
     //Mandatory
     uint64_t messageId;
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
 
     //optional
     NSMessageType type;
@@ -146,10 +150,35 @@ typedef struct
 typedef struct
 {
     uint64_t messageId;
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
     NSSyncType state;
 
 } NSSyncInfo;
+
+/**
+ *  Notification topic
+ */
+typedef enum
+{
+    NS_TOPIC_CREATED = 0,
+    NS_TOPIC_SUBSCRIBED = 1,
+    NS_TOPIC_UNSUBSCRIBED = 2,
+
+} NSTopicState;
+
+typedef struct
+{
+    char * topicName;
+    NSTopicState state;
+
+} NSTopic;
+
+typedef struct
+{
+    char consumerId[NS_UUID_STRING_SIZE];
+    NSTopic ** topics;
+
+} NSTopicList;
 
 #endif /* _NS_COMMON_H_ */
 

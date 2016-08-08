@@ -24,6 +24,7 @@
 NSNotificationResource NotificationResource;
 NSMessageResource NotificationMessageResource;
 NSSyncResource NotificationSyncResource;
+NSTopicResource NotificationTopicResource;
 
 #ifdef WITH_CLOUD
 OCStackApplicationResult NSHandlePublishCb(void *ctx, OCDoHandle handle,
@@ -74,6 +75,7 @@ NSResult NSCreateResource(char *uri)
         NotificationResource.accepter = 0;
         NotificationResource.message_uri = NS_COLLECTION_MESSAGE_URI;
         NotificationResource.sync_uri = NS_COLLECTION_SYNC_URI;
+        NotificationResource.topic_uri = NS_COLLECTION_TOPIC_URI;
         NotificationResource.handle = NULL;
 
         if (OCCreateResource(&NotificationResource.handle, NS_ROOT_TYPE, NS_DEFAULT_INTERFACE,
@@ -119,6 +121,20 @@ NSResult NSCreateResource(char *uri)
             return NS_ERROR;
         }
     }
+    else if (strcmp(uri, NS_COLLECTION_TOPIC_URI) == 0)
+    {
+        (NotificationTopicResource.consumerId)[0] = '\0';
+        NotificationTopicResource.TopicList = NULL;
+        NotificationTopicResource.handle = NULL;
+
+        if (OCCreateResource(&(NotificationTopicResource.handle), NS_COLLECTION_TOPIC_TYPE,
+                NS_DEFAULT_INTERFACE, NS_COLLECTION_TOPIC_URI, NSEntityHandlerTopicCb, NULL,
+                OC_DISCOVERABLE) != OC_STACK_OK)
+        {
+            NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");
+            return NS_ERROR;
+        }
+    }
     else
     {
         NS_LOG(ERROR, "Fail to create resource with invalid URI");
@@ -132,6 +148,12 @@ NSResult NSCreateResource(char *uri)
 NSResult NSRegisterResource()
 {
     NS_LOG(DEBUG, "NSRegisterResource - IN");
+
+    if (NSCreateResource(NS_COLLECTION_TOPIC_URI) != NS_OK)
+    {
+        NS_LOG(ERROR, "Fail to register Topic Resource");
+        return NS_ERROR;
+    }
 
     if (NSCreateResource(NS_COLLECTION_SYNC_URI) != NS_OK)
     {
@@ -177,9 +199,16 @@ NSResult NSUnRegisterResource()
         return NS_ERROR;
     }
 
+    if (OCDeleteResource(NotificationTopicResource.handle) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to Delete Notification Topic Resource");
+        return NS_ERROR;
+    }
+
     NotificationResource.handle = NULL;
     NotificationMessageResource.handle = NULL;
     NotificationSyncResource.handle = NULL;
+    NotificationTopicResource.handle = NULL;
 
     NS_LOG(DEBUG, "NSUnRegisterResource - OUT");
     return NS_OK;
@@ -192,6 +221,7 @@ NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle)
     NotificationResource.accepter = accepter;
     NotificationResource.message_uri = NS_COLLECTION_MESSAGE_URI;
     NotificationResource.sync_uri = NS_COLLECTION_SYNC_URI;
+    NotificationResource.topic_uri = NS_COLLECTION_TOPIC_URI;
 
     *handle = NotificationResource.handle;
 
@@ -237,5 +267,17 @@ NSResult NSPutSyncResource(NSSyncInfo *sync, OCResourceHandle * handle)
     *handle = NotificationSyncResource.handle;
 
     NS_LOG(DEBUG, "NSPutSyncResource - OUT");
+    return NS_OK;
+}
+
+NSResult NSPutTopicResource(NSTopicList **topicList, OCResourceHandle * handle)
+{
+    NS_LOG(DEBUG, "NSPutTopicResource - IN");
+
+    (void) topicList;
+
+    *handle = NotificationTopicResource.handle;
+
+    NS_LOG(DEBUG, "NSPutTopicResource - OUT");
     return NS_OK;
 }
