@@ -59,6 +59,8 @@ notification_test_env.AppendUnique(LIBS = [
 if target_os not in ['windows', 'winrt']:
     notification_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
+notification_test_env.AppendUnique(LINKFLAGS = ['-Wl,--no-as-needed'])
+
 notification_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
 notification_test_env.AppendUnique(LIBS = ['pthread'])
 
