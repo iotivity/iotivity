@@ -125,11 +125,11 @@ void OCResource::setHost(const std::string& host)
 {
     size_t prefix_len;
 
-    if(host.compare(0, sizeof(COAP) - 1, COAP) == 0)
+    if (host.compare(0, sizeof(COAP) - 1, COAP) == 0)
     {
         prefix_len = sizeof(COAP) - 1;
     }
-    else if(host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
+    else if (host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
     {
         prefix_len = sizeof(COAPS) - 1;
         m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
@@ -155,11 +155,11 @@ void OCResource::setHost(const std::string& host)
     // remove 'coap://' or 'coaps://' or 'coap+tcp://' or 'coap+gatt://' or 'coap+rfcomm://'
     std::string host_token = host.substr(prefix_len);
 
-    if(host_token[0] == '[') // IPv6
+    if (host_token[0] == '[') // IPv6
     {
         size_t bracket = host_token.find(']');
 
-        if(bracket == std::string::npos || bracket == 0)
+        if (std::string::npos == bracket || 0 == bracket)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
@@ -168,9 +168,15 @@ void OCResource::setHost(const std::string& host)
         std::string ip6Addr = host_token.substr(1, bracket - 1);
 
         // address validity check
+        std::string ip6AddrToValidityCheck(ip6Addr);
+        size_t percent = ip6AddrToValidityCheck.find('%');
+        if (std::string::npos != percent)
+        {
+            ip6AddrToValidityCheck.resize(percent);
+        }
         struct in6_addr buf;
-        const char *cAddr = ip6Addr.c_str();
-        if(0 == inet_pton(AF_INET6, cAddr, &buf))
+        const char *cAddr = ip6AddrToValidityCheck.c_str();
+        if (0 == inet_pton(AF_INET6, cAddr, &buf))
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
@@ -251,7 +257,7 @@ void OCResource::setHost(const std::string& host)
             // address validity check
             struct in_addr buf;
             const char *cAddr = ip4Addr.c_str();
-            if(0 == inet_pton(AF_INET, cAddr, &buf))
+            if (0 == inet_pton(AF_INET, cAddr, &buf))
             {
                 throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                     m_interfaces.empty(), m_clientWrapper.expired(), false, false);
@@ -307,12 +313,12 @@ OCStackResult OCResource::get(const std::string& resourceType, const std::string
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
-    if(!resourceType.empty())
+    if (!resourceType.empty())
     {
         mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
-    if(!resourceInterface.empty())
+    if (!resourceInterface.empty())
     {
         mapCpy[OC::Key::INTERFACESKEY]= resourceInterface;
     }
@@ -357,12 +363,12 @@ OCStackResult OCResource::put(const std::string& resourceType,
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
-    if(!resourceType.empty())
+    if (!resourceType.empty())
     {
         mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
-    if(!resourceInterface.empty())
+    if (!resourceInterface.empty())
     {
         mapCpy[OC::Key::INTERFACESKEY]=resourceInterface;
     }
@@ -407,12 +413,12 @@ OCStackResult OCResource::post(const std::string& resourceType,
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
-    if(!resourceType.empty())
+    if (!resourceType.empty())
     {
         mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
-    if(!resourceInterface.empty())
+    if (!resourceInterface.empty())
     {
         mapCpy[OC::Key::INTERFACESKEY]=resourceInterface;
     }
@@ -438,7 +444,7 @@ OCStackResult OCResource::observe(ObserveType observeType,
         const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler,
         QualityOfService QoS)
 {
-    if(m_observeHandle != nullptr)
+    if (m_observeHandle != nullptr)
     {
         return result_guard(OC_STACK_INVALID_PARAM);
     }
@@ -467,7 +473,7 @@ OCStackResult OCResource::cancelObserve()
 
 OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 {
-    if(m_observeHandle == nullptr)
+    if (m_observeHandle == nullptr)
     {
         return result_guard(OC_STACK_INVALID_PARAM);
     }
@@ -476,7 +482,7 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
             &IClientWrapper::CancelObserveResource,
             m_observeHandle, (const char*)"", m_uri, m_headerOptions, QoS);
 
-    if(result == OC_STACK_OK)
+    if (result == OC_STACK_OK)
     {
         m_observeHandle = nullptr;
     }
