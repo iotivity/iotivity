@@ -43,9 +43,9 @@ extern "C" {
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OC_EXPORT OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
-                                    OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                    OCCallbackData *cbData, OCQualityOfService qos);
+OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
+                          OCResourceHandle *resourceHandles, uint8_t nHandles,
+                          OCCallbackData *cbData, OCQualityOfService qos);
 
 /**
  * Publish RD resource to Resource Directory with a specific id.
@@ -62,10 +62,10 @@ OC_EXPORT OCStackResult OCRDPublish(const char *host, OCConnectivityType connect
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OC_EXPORT OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
-                                                OCConnectivityType connectivityType,
-                                                OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                                OCCallbackData *cbData, OCQualityOfService qos);
+OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
+                                      OCConnectivityType connectivityType,
+                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                      OCCallbackData *cbData, OCQualityOfService qos);
 
 /**
  * Delete RD resource from Resource Directory.
@@ -81,9 +81,9 @@ OC_EXPORT OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OC_EXPORT OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
-                                   OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                   OCCallbackData *cbData, OCQualityOfService qos);
+OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
+                         OCResourceHandle *resourceHandles, uint8_t nHandles,
+                         OCCallbackData *cbData, OCQualityOfService qos);
 
 /**
  * Delete RD resource from Resource Directory.
@@ -100,10 +100,10 @@ OC_EXPORT OCStackResult OCRDDelete(const char *host, OCConnectivityType connecti
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OC_EXPORT OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
-                                               OCConnectivityType connectivityType,
-                                               OCResourceHandle *resourceHandles, uint8_t nHandles,
-                                               OCCallbackData *cbData, OCQualityOfService qos);
+OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
+                                     OCConnectivityType connectivityType,
+                                     OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                     OCCallbackData *cbData, OCQualityOfService qos);
 #endif
 #ifdef __cplusplus
 }

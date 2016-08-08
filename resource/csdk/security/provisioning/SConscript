@@ -107,9 +107,8 @@ provisioning_src = [
 if target_os != 'tizen':
 	provisioning_src = provisioning_src + [root_dir+'/extlibs/sqlite3/sqlite3.c' ]
 
-if target_os == 'windows':
-	# TODO: Add OC_EXPORT annotations and enable generation of Windows DLL
-	# https://jira.iotivity.org/browse/IOT-1188
+if target_os in ['windows', 'msys_nt']:
+	# octbstack.dll is exporting ocpmapi APIs on Windows - there is no ocpmapi.dll.
 	provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 else:
 	provisioningserver = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)

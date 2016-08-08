@@ -59,21 +59,9 @@
 #endif
 
 #ifdef _MSC_VER
-#  ifdef OC_EXPORT_DLL
-#    define OC_EXPORT __declspec(dllexport)
-#  else
-#    define OC_EXPORT __declspec(dllimport)
-#  endif
-#  ifdef ENABLE_TEST_EXPORTS
-#    define OC_EXPORT_TEST OC_EXPORT
-#  else
-#    define OC_EXPORT_TEST
-#  endif
 #  define OC_ANNOTATE_UNUSED
 #else
 #  define OC_ANNOTATE_UNUSED  __attribute__((unused))
-#  define OC_EXPORT
-#  define OC_EXPORT_TEST
 #endif
 
 #ifdef _WIN32

@@ -23,9 +23,6 @@ if env['CC'] == 'cl':
 
     vs_version = env['MSVC_VERSION']
 
-    # Enable special exports for unit test purposes
-    if env.get('TEST') == '1':
-        env.AppendUnique(CPPDEFINES = ['ENABLE_TEST_EXPORTS'])
     # Set release/debug flags
     if env.get('RELEASE'):
         env.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])

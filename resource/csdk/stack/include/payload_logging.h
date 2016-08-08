@@ -47,8 +47,8 @@ extern "C"
 #ifdef TB_LOG
     #define OIC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
-OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
-OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 INLINE_API void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
