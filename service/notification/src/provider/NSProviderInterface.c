@@ -249,7 +249,7 @@ NSTopicList * NSProviderGetTopics(char *consumerId)
 
     NSTopicList * topicList = NSInitializeTopicList();
     OICStrcpy(topicList->consumerId, UUID_STRING_SIZE, consumerId);
-    // OICStrcpy(topicList->topics, sizeof(NSTopic), NSGetTopics(consumerId));
+    OICStrcpy(topicList->topics, sizeof(NSTopic), NSGetTopics(consumerId));
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderGetTopics - OUT");
