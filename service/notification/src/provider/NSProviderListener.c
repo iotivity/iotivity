@@ -208,7 +208,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
 
             // Send topic updated message(id=TOPIC) to the consumer who request to post.
-            NSPushQueue(TOPIC_SCHEDULER, TASK_SELECT_TOPICS,
+            NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPICS,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
             ehResult = OC_EH_OK;

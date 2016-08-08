@@ -424,3 +424,20 @@ NSMessage * NSInitializeMessage()
 
     return msg;
 }
+
+NSTopicList * NSInitializeTopicList()
+{
+    NSTopicList * topicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));
+
+    if(!topicList)
+    {
+        NS_LOG(ERROR, "topicList is NULL");
+        return NULL;
+    }
+
+    (topicList->consumerId)[0] = '\0';
+    topicList->topics = NULL;
+
+    return topicList;
+}
+

@@ -132,6 +132,31 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
  */
 NSMessage * NSCreateMessage();
 
+/**
+ * Request all the topics which has already registered by user
+ * @param[in] consumerid  the id of consumer which subscribes topics
+ * if NULL, all the registered topic list is returned
+ * @return :: list of NSTopic
+ */
+NSTopicList * NSProviderGetTopics(char *consumerId);
+
+/**
+ * Request to register topics to provide to consumers
+ * @param[in]  topicList  List of NSTopic
+ * the consumerId of NSTopicList struct shoud be set NULL
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderSetTopics(NSTopicList *topicList);
+
+/**
+ * Set recommended topics for a consumer
+ * @param[in]  topicList  List of NSTopic recommended by provider
+ * the consumerId of NSTopicList struct should be set consumerId
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderRecommendTopics(NSTopicList *topicList);
+
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

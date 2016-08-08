@@ -26,6 +26,7 @@
 #include "NSProviderCallbackResponse.h"
 #include "NSStorageAdapter.h"
 #include "NSProviderMemoryCache.h"
+#include "NSProviderTopic.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cautilinterface.h"
@@ -207,7 +208,6 @@ NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted)
     pthread_mutex_lock(&nsInitMutex);
 
     NSConsumer * newConsumer = NSDuplicateConsumer(consumer);
-
     if(accepted)
     {
         NS_LOG(DEBUG, "accepted is true - ALLOW");
@@ -236,3 +236,61 @@ NSMessage * NSCreateMessage()
     NS_LOG(DEBUG, "NSCreateMessage - OUT");
     return msg;
 }
+
+NSTopicList * NSProviderGetTopics(char *consumerId)
+{
+    NS_LOG(DEBUG, "NSProviderGetTopics - IN");
+    pthread_mutex_lock(&nsInitMutex);
+
+    if(consumerId == NULL)
+    {
+        NS_LOG(DEBUG, "Get all the topics registered by user");
+    }
+
+    NSTopicList * topicList = NSInitializeTopicList();
+    OICStrcpy(topicList->consumerId, UUID_STRING_SIZE, consumerId);
+    // OICStrcpy(topicList->topics, sizeof(NSTopic), NSGetTopics(consumerId));
+
+    pthread_mutex_unlock(&nsInitMutex);
+    NS_LOG(DEBUG, "NSProviderGetTopics - OUT");
+
+    return topicList;
+}
+
+NSResult NSProviderSetTopics(NSTopicList *topicList)
+{
+    NS_LOG(DEBUG, "NSProviderSetTopics - IN");
+    pthread_mutex_lock(&nsInitMutex);
+
+    if(topicList->consumerId != NULL)
+    {
+        NS_LOG(DEBUG, "consumer id should be set by NULL to register topics");
+        return NS_FAIL;
+    }
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_REGISTER_TOPICS, topicList);
+
+    pthread_mutex_unlock(&nsInitMutex);
+    NS_LOG(DEBUG, "NSProviderSetTopics - OUT");
+    
+    return NS_OK;
+}
+
+NSResult NSProviderRecommendTopics(NSTopicList *topicList)
+{
+    NS_LOG(DEBUG, "NSProviderRecommendTopics - IN");
+    pthread_mutex_lock(&nsInitMutex);
+
+    if(topicList->consumerId == NULL)
+    {
+        NS_LOG(DEBUG, "consumer id should be set for topic subscription");
+        return NS_FAIL;
+    }
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPICS, topicList);
+
+    pthread_mutex_unlock(&nsInitMutex);
+    NS_LOG(DEBUG, "NSProviderRecommendTopics - OUT");
+    return NS_OK;
+}
+
