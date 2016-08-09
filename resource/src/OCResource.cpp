@@ -280,7 +280,7 @@ OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
     return checked_guard(m_clientWrapper.lock(),
                             &IClientWrapper::GetResourceRepresentation,
                             m_devAddr, m_uri,
-                            queryParametersMap, m_headerOptions,
+                            queryParametersMap, m_headerOptions, CT_DEFAULT,
                             attributeHandler, QoS);
 }
 
@@ -423,7 +423,7 @@ OCStackResult OCResource::post(const std::string& resourceType,
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler, QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
-                         m_devAddr, m_uri, m_headerOptions, deleteHandler, QoS);
+                         m_devAddr, m_uri, m_headerOptions, CT_DEFAULT, deleteHandler, QoS);
 }
 
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler)

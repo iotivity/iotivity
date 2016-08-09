@@ -377,11 +377,14 @@ extern "C" {
 /** Defines auth code. */
 #define OC_RSRVD_AUTHCODE                  "authcode"
 
-/** Defines session. */
+/** Defines access token. */
 #define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
 
-/** Defines status. */
+/** Defines login. */
 #define OC_RSRVD_LOGIN                     "login"
+
+/** Defines search. */
+#define OC_RSRVD_SEARCH                    "search"
 
 /** Defines grant type. */
 #define OC_RSRVD_GRANT_TYPE                "granttype"
@@ -389,8 +392,8 @@ extern "C" {
 /** Defines refresh token. */
 #define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
 
-/** Defines user ID. */
-#define OC_RSRVD_USER_ID                   "uid"
+/** Defines user UUID. */
+#define OC_RSRVD_USER_UUID                 "uid"
 
 /** Defines options. */
 #define OC_RSRVD_OPTIONS                   "options"

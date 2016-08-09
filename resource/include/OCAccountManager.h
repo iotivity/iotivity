@@ -88,41 +88,71 @@ namespace OC
         /**
          * Function for sign-in to account server
          *
-         * @param userId Identifier of the user obtained by account registration.
+         * @param userUuid Identifier of the user obtained by account registration.
          * @param accessToken Identifier of the resource obtained by account registration.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult signIn(const std::string& userId,
+        OCStackResult signIn(const std::string& userUuid,
                              const std::string& accessToken,
                              PostCallback cloudConnectHandler);
 
         /**
          * Function for sign-out to account server
          *
-         * @param userId Identifier of the user obtained by account registration.
-         * @param accessToken Identifier of the resource obtained by account registration.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult signOut(const std::string& userId,
-                              const std::string& accessToken,
-                              PostCallback cloudConnectHandler);
+        OCStackResult signOut(PostCallback cloudConnectHandler);
 
         /**
          * Function for refresh access token to account server
          *
-         * @param userId Identifier of the user obtained by account registration.
+         * @param userUuid Identifier of the user obtained by account registration.
          * @param refreshToken Refresh token used for access token refresh.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult refreshAccessToken(const std::string& userId,
+        OCStackResult refreshAccessToken(const std::string& userUuid,
                                          const std::string& refreshToken,
                                          PostCallback cloudConnectHandler);
+
+        /**
+         * Function to get information of the user to account server
+         *
+         * @param userUuid Identifier of the user to get information.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult searchUser(const std::string& userUuid,
+                                 GetCallback cloudConnectHandler);
+
+        /**
+         * Overload
+         *
+         * @param queryParams Map which can have the query key and value for specific users.
+         *                    account server can response information of more than one user.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult searchUser(const QueryParamsMap& queryParams,
+                                 GetCallback cloudConnectHandler);
+
+        /**
+         * Function to delete the device registered on the account signed-in
+         *
+         * @param deviceId Device ID to delete.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult deleteDevice(const std::string& deviceId,
+                                   DeleteCallback cloudConnectHandler);
 
     private:
         std::weak_ptr<IClientWrapper> m_clientWrapper;
@@ -136,10 +166,14 @@ namespace OC
                          const std::string& host,
                          OCConnectivityType connectivityType);
 
-        OCStackResult signInOut(const std::string& userId,
+        OCStackResult signInOut(const std::string& userUuid,
                                 const std::string& accessToken,
                                 bool isSignIn,
                                 PostCallback cloudConnectHandler);
+
+        OCStackResult searchUser(const std::string& userUuid,
+                                 const QueryParamsMap& queryParams,
+                                 GetCallback cloudConnectHandler);
     };
 } // namespace OC
 
