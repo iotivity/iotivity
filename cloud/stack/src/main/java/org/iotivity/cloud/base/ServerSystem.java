@@ -65,8 +65,8 @@ public class ServerSystem extends ResourceManager {
             deviceId.insert(13, '-');
             deviceId.insert(18, '-');
             deviceId.insert(23, '-');
-            Device device = new CoapDevice(ctx, deviceId.toString(), null,
-                    null);
+            CoapDevice device = new CoapDevice(ctx);
+            device.updateDevice(deviceId.toString(), null, null);
             ctx.channel().attr(keyDevice).set(device);
 
             device.onConnected();
@@ -80,7 +80,8 @@ public class ServerSystem extends ResourceManager {
                 Device targetDevice = ctx.channel().attr(keyDevice).get();
 
                 if (targetDevice == null) {
-                    throw new InternalServerErrorException();
+                    throw new InternalServerErrorException(
+                            "Unable to find device");
                 }
 
                 if (msg instanceof CoapRequest) {
@@ -94,7 +95,7 @@ public class ServerSystem extends ResourceManager {
                 }
 
             } catch (ServerException e) {
-                ctx.channel().writeAndFlush(MessageBuilder.createResponse(msg,
+                ctx.writeAndFlush(MessageBuilder.createResponse(msg,
                         e.getErrorResponse()));
                 Log.f(ctx.channel(), e);
             } catch (ClientException e) {
@@ -102,8 +103,8 @@ public class ServerSystem extends ResourceManager {
             } catch (Throwable t) {
                 Log.f(ctx.channel(), t);
                 if (msg instanceof CoapRequest) {
-                    ctx.channel().writeAndFlush(MessageBuilder.createResponse(
-                            msg, ResponseStatus.INTERNAL_SERVER_ERROR));
+                    ctx.writeAndFlush(MessageBuilder.createResponse(msg,
+                            ResponseStatus.INTERNAL_SERVER_ERROR));
                 }
             }
         }

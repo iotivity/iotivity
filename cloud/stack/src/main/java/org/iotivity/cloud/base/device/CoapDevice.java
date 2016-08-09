@@ -39,9 +39,11 @@ public class CoapDevice extends Device {
 
     private static final int INFINITE_TIME  = -1;
 
-    public CoapDevice(ChannelHandlerContext ctx, String did, String uid,
-            String accesstoken) {
+    public CoapDevice(ChannelHandlerContext ctx) {
         super(ctx);
+    }
+
+    public void updateDevice(String did, String uid, String accesstoken) {
         mDeviceId = did;
         mUserId = uid;
         mAccessToken = accesstoken;

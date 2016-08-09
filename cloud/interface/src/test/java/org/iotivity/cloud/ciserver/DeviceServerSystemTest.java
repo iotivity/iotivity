@@ -89,21 +89,24 @@ public class DeviceServerSystemTest {
 
     @Test
     public void testAddDevice() throws Exception {
-        CoapDevice coapDevice = new CoapDevice(null, di, userId, accessToken);
+        CoapDevice coapDevice = new CoapDevice(null);
+        coapDevice.updateDevice(di, userId, accessToken);
         CoapDevicePool devicePool = deviceServerSystem.getDevicePool();
         devicePool.addDevice(coapDevice);
     }
 
     @Test
     public void testRemoveNotRegisteredDevice() throws Exception {
-        CoapDevice coapDevice = new CoapDevice(null, di, userId, accessToken);
+        CoapDevice coapDevice = new CoapDevice(null);
+        coapDevice.updateDevice(di, userId, accessToken);
         CoapDevicePool devicePool = deviceServerSystem.getDevicePool();
         devicePool.removeDevice(coapDevice);
     }
 
     @Test
     public void testRemoveDevice() throws Exception {
-        CoapDevice coapDevice = new CoapDevice(null, di, userId, accessToken);
+        CoapDevice coapDevice = new CoapDevice(null);
+        coapDevice.updateDevice(di, userId, accessToken);
         CoapDevicePool devicePool = deviceServerSystem.getDevicePool();
         devicePool.addDevice(coapDevice);
         devicePool.removeDevice(coapDevice);
@@ -111,7 +114,8 @@ public class DeviceServerSystemTest {
 
     @Test
     public void testQueryDevice() throws Exception {
-        CoapDevice coapDevice = new CoapDevice(null, di, userId, accessToken);
+        CoapDevice coapDevice = new CoapDevice(null);
+        coapDevice.updateDevice(di, userId, accessToken);
         CoapDevicePool devicePool = deviceServerSystem.getDevicePool();
         devicePool.addDevice(coapDevice);
         devicePool.queryDevice(di);

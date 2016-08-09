@@ -31,7 +31,6 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
@@ -92,8 +91,7 @@ public class DeviceServerSystem extends ServerSystem {
                     CoapDevice coapDevice = (CoapDevice) ctx.channel()
                             .attr(keyDevice).get();
 
-                    if (coapDevice.getIssuedTime() != null
-                            && coapDevice.isExpiredTime()) {
+                    if (coapDevice.isExpiredTime()) {
                         throw new UnAuthorizedException("token is expired");
                     }
 
@@ -102,9 +100,9 @@ public class DeviceServerSystem extends ServerSystem {
                     ResponseStatus responseStatus = t instanceof ServerException
                             ? ((ServerException) t).getErrorResponse()
                             : ResponseStatus.INTERNAL_SERVER_ERROR;
-                    ctx.channel().writeAndFlush(MessageBuilder
+                    ctx.writeAndFlush(MessageBuilder
                             .createResponse((CoapRequest) msg, responseStatus));
-                    ctx.channel().close();
+                    ctx.close();
                 }
             }
 
@@ -155,6 +153,8 @@ public class DeviceServerSystem extends ServerSystem {
         }
     }
 
+    CoapLifecycleHandler mLifeCycleHandler = new CoapLifecycleHandler();
+
     @Sharable
     class CoapAuthHandler extends ChannelDuplexHandler {
         private Cbor<HashMap<String, Object>> mCbor = new Cbor<HashMap<String, Object>>();
@@ -169,6 +169,7 @@ public class DeviceServerSystem extends ServerSystem {
                 ChannelPromise promise) {
 
             try {
+
                 if (!(msg instanceof CoapResponse)) {
                     throw new BadRequestException(
                             "this msg type is not CoapResponse");
@@ -177,30 +178,32 @@ public class DeviceServerSystem extends ServerSystem {
                 // Once the response is valid, add this to deviceList
                 CoapResponse response = (CoapResponse) msg;
 
-                if (response.getUriPath()
-                        .equals("/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
-                                + OCFConstants.PREFIX_OCF + "/"
-                                + OCFConstants.ACCOUNT_URI + "/"
-                                + OCFConstants.SESSION_URI)) {
+                switch (response.getUriPath()) {
 
-                    if (response.getStatus() != ResponseStatus.CHANGED) {
-                        throw new UnAuthorizedException();
-                    }
+                    case OCFConstants.ACCOUNT_SESSION_FULL_URI:
 
-                    HashMap<String, Object> payloadData = mCbor
-                            .parsePayloadFromCbor(response.getPayload(),
-                                    HashMap.class);
-                    int remainTime = (int) payloadData
-                            .get(Constants.EXPIRES_IN);
+                        if (response.getStatus() != ResponseStatus.CHANGED) {
+                            throw new UnAuthorizedException();
+                        }
 
-                    Device device = ctx.channel().attr(keyDevice).get();
-                    ((CoapDevice) device).setExpiredPolicy(remainTime);
+                        HashMap<String, Object> payloadData = mCbor
+                                .parsePayloadFromCbor(response.getPayload(),
+                                        HashMap.class);
+                        int remainTime = (int) payloadData
+                                .get(Constants.EXPIRES_IN);
 
-                    // Remove current auth handler
-                    ctx.channel().pipeline().remove(this);
+                        Device device = ctx.channel().attr(keyDevice).get();
+                        ((CoapDevice) device).setExpiredPolicy(remainTime);
 
-                    // Raise event that we have Authenticated device
-                    ctx.fireChannelActive();
+                        // Remove current auth handler and replace to
+                        // LifeCycleHandler
+                        ctx.channel().pipeline().replace(this,
+                                "LifeCycleHandler", mLifeCycleHandler);
+
+                        // Raise event that we have Authenticated device
+                        ctx.fireChannelActive();
+
+                        break;
                 }
 
                 ctx.writeAndFlush(msg);
@@ -224,45 +227,50 @@ public class DeviceServerSystem extends ServerSystem {
                 // And check first response is VALID then add or cut
                 CoapRequest request = (CoapRequest) msg;
 
-                switch (request.getUriPath()) {
-                    // Check whether first request is about account
-                    case "/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
-                            + OCFConstants.PREFIX_OCF + "/"
-                            + OCFConstants.ACCOUNT_URI:
+                HashMap<String, Object> authPayload = null;
+                Device device = null;
 
-                    case "/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
-                            + OCFConstants.PREFIX_OCF + "/"
-                            + OCFConstants.ACCOUNT_URI + "/"
-                            + OCFConstants.SESSION_URI:
+                switch (request.getUriPath()) {
+                    // Check whether request is about account
+                    case OCFConstants.ACCOUNT_FULL_URI:
+                    case OCFConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
+
+                        if (ctx.channel().attr(keyDevice).get() == null) {
+                            // Create device first and pass to upperlayer
+                            device = new CoapDevice(ctx);
+                            ctx.channel().attr(keyDevice).set(device);
+                        }
+
                         break;
 
-                    case "/" + OCFConstants.PREFIX_OIC + "/"
-                            + OCFConstants.KEEP_ALIVE_URI:
+                    case OCFConstants.ACCOUNT_SESSION_FULL_URI:
+
+                        authPayload = mCbor.parsePayloadFromCbor(
+                                request.getPayload(), HashMap.class);
+
+                        device = ctx.channel().attr(keyDevice).get();
+
+                        if (device == null) {
+                            device = new CoapDevice(ctx);
+                            ctx.channel().attr(keyDevice).set(device);
+                        }
+
+                        ((CoapDevice) device).updateDevice(
+                                (String) authPayload.get(Constants.DEVICE_ID),
+                                (String) authPayload.get(Constants.USER_ID),
+                                (String) authPayload
+                                        .get(Constants.ACCESS_TOKEN));
+
+                        break;
+
+                    case OCFConstants.KEEP_ALIVE_FULL_URI:
                         // TODO: Pass ping request to upper layer
-                        ctx.fireChannelRead(msg);
-                        return;
+                        break;
 
                     default:
                         throw new UnAuthorizedException(
                                 "authentication required first");
                 }
-
-                HashMap<String, Object> authPayload = mCbor
-                        .parsePayloadFromCbor(request.getPayload(),
-                                HashMap.class);
-
-                if (authPayload.containsKey("di") == false) {
-                    throw new PreconditionFailedException(
-                            "di property is not included");
-                }
-
-                CoapDevice device = new CoapDevice(ctx,
-                        (String) authPayload.get(Constants.DEVICE_ID),
-                        (String) authPayload.get(Constants.USER_ID),
-                        (String) authPayload.get(Constants.ACCESS_TOKEN));
-
-                // Create device first and pass to upperlayer
-                ctx.channel().attr(keyDevice).set(device);
 
                 ctx.fireChannelRead(msg);
 
@@ -270,7 +278,7 @@ public class DeviceServerSystem extends ServerSystem {
                 ResponseStatus responseStatus = t instanceof ServerException
                         ? ((ServerException) t).getErrorResponse()
                         : ResponseStatus.UNAUTHORIZED;
-                ctx.channel().writeAndFlush(MessageBuilder
+                ctx.writeAndFlush(MessageBuilder
                         .createResponse((CoapRequest) msg, responseStatus));
                 Log.f(ctx.channel(), t);
             }
@@ -289,7 +297,6 @@ public class DeviceServerSystem extends ServerSystem {
     public void addServer(Server server) {
         if (server instanceof CoapServer) {
             server.addHandler(new CoapAuthHandler());
-            server.addHandler(new CoapLifecycleHandler());
         }
 
         if (server instanceof HttpServer) {

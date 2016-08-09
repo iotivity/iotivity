@@ -25,9 +25,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -69,8 +68,6 @@ public class KeepAliveResource extends Resource {
         switch (request.getMethod()) {
             case GET:
                 response = handleGetPingConfig(request);
-                mConnectionPool.put(srcDevice, System.currentTimeMillis()
-                        + (mIntervals[0] * (long) 60000));
                 break;
 
             case PUT:
@@ -113,12 +110,12 @@ public class KeepAliveResource extends Resource {
 
         HashMap<String, Integer> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
-        if (payloadData != null) {
-            if (payloadData.containsKey("in")) {
-                mConnectionPool.put(srcDevice, System.currentTimeMillis()
-                        + (payloadData.get("in") * (long) 60000));
-            }
+
+        if (payloadData.containsKey("in")) {
+            mConnectionPool.put(srcDevice, System.currentTimeMillis()
+                    + (payloadData.get("in") * (long) 60000));
         }
+
         return MessageBuilder.createResponse(request, ResponseStatus.VALID);
     }
 
@@ -131,35 +128,23 @@ public class KeepAliveResource extends Resource {
         public void run() {
             Map<Device, Long> map = Collections
                     .synchronizedMap(mConnectionPool);
-            Set<Device> keySet = map.keySet();
-            ArrayList<Device> deleteList = new ArrayList<>();
-            Iterator<Device> iterator = null;
+
+            List<Device> deleteList = new ArrayList<>();
+
             synchronized (map) {
-                iterator = keySet.iterator();
                 Long currentTime = System.currentTimeMillis();
-                // check interval
-                while (iterator.hasNext()) {
-                    Device key = iterator.next();
-                    if (map.containsKey(key)) {
-                        if (map.get(key) != null) {
-                            Long lifeTime = (Long) map.get(key);
-                            if (lifeTime != null) {
-                                if (lifeTime < currentTime) {
-                                    deleteList.add(key);
-                                }
-                            }
-                        }
+                for (Device device : map.keySet()) {
+                    Long lifeTime = (Long) map.get(device);
+                    if (lifeTime < currentTime) {
+                        deleteList.add(device);
                     }
                 }
-
             }
-            iterator = deleteList.iterator();
-            // remove session
-            while (iterator.hasNext()) {
-                Device key = iterator.next();
-                mConnectionPool.remove(key);
-                key.getCtx().fireChannelInactive();
-                key.getCtx().close();
+
+            for (Device device : deleteList) {
+                mConnectionPool.remove(device);
+                device.getCtx().fireChannelInactive();
+                device.getCtx().close();
             }
         }
     }

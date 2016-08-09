@@ -198,8 +198,8 @@ public class AccountManager {
         } catch (IOException e) {
 
             e.printStackTrace();
-            throw new InternalServerErrorException(
-                    "root cert file read failed!");
+            // throw new InternalServerErrorException(
+            // "root cert file read failed!");
         }
 
         return byteRootCert;

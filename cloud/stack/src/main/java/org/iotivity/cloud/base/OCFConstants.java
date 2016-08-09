@@ -88,4 +88,18 @@ public class OCFConstants {
     /* cloud uuid */
     public static final String CLOUD_UUID          = "2a6085d1-815d-4277-baba-4e4e4df91308";
 
+    public static final String ACCOUNT_FULL_URI              = "/"
+            + PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF + "/"
+            + OCFConstants.ACCOUNT_URI;
+
+    public static final String ACCOUNT_SESSION_FULL_URI      = "/"
+            + PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF + "/"
+            + OCFConstants.ACCOUNT_URI + "/" + OCFConstants.SESSION_URI;
+
+    public static final String ACCOUNT_TOKENREFRESH_FULL_URI = "/"
+            + PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF + "/"
+            + OCFConstants.ACCOUNT_URI + "/" + OCFConstants.TOKEN_REFRESH_URI;
+
+    public static final String KEEP_ALIVE_FULL_URI           = "/" + PREFIX_OIC
+            + "/" + OCFConstants.KEEP_ALIVE_URI;
 }
