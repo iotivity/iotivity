@@ -248,8 +248,7 @@ NSTopicList * NSProviderGetTopics(char *consumerId)
     }
 
     NSTopicList * topicList = NSInitializeTopicList();
-    OICStrcpy(topicList->consumerId, UUID_STRING_SIZE, consumerId);
-    OICStrcpy(topicList->topics, sizeof(NSTopic), NSGetTopics(consumerId));
+    //TODO: copy topic list
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderGetTopics - OUT");
@@ -257,31 +256,26 @@ NSTopicList * NSProviderGetTopics(char *consumerId)
     return topicList;
 }
 
-NSResult NSProviderSetTopics(NSTopicList *topicList)
+NSResult NSProviderRegisterTopics(NSTopicList *topicList)
 {
     NS_LOG(DEBUG, "NSProviderSetTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(topicList->consumerId != NULL)
-    {
-        NS_LOG(DEBUG, "consumer id should be set by NULL to register topics");
-        return NS_FAIL;
-    }
+    NSInitTopicStorage();
 
     NSPushQueue(TOPIC_SCHEDULER, TASK_REGISTER_TOPICS, topicList);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderSetTopics - OUT");
-    
     return NS_OK;
 }
 
-NSResult NSProviderRecommendTopics(NSTopicList *topicList)
+NSResult NSProviderRecommendTopics(char* consumerId, NSTopicList *topicList)
 {
     NS_LOG(DEBUG, "NSProviderRecommendTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(topicList->consumerId == NULL)
+    if(consumerId == NULL)
     {
         NS_LOG(DEBUG, "consumer id should be set for topic subscription");
         return NS_FAIL;

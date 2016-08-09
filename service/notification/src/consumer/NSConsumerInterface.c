@@ -155,6 +155,7 @@ NSMessage * NSConsumerGetMessage(uint64_t messageId)
 
 NSResult NSConsumerGetInterestTopics(NSProvider * provider)
 {
+    /* TODO next commit, modify code.
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
@@ -164,10 +165,12 @@ NSResult NSConsumerGetInterestTopics(NSProvider * provider)
     NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
+    */
 }
 
 NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
 {
+    /* TODO next commit, modify code.
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
@@ -183,6 +186,7 @@ NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
+    */
 }
 
 NSResult NSDropNSMessage(NSMessage * obj)

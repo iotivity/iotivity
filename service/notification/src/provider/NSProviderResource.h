@@ -42,6 +42,6 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle);
 
 NSResult NSPutSyncResource(NSSyncInfo *sync, OCResourceHandle * handle);
 
-NSResult NSPutTopicResource(NSTopicList **topicList, OCResourceHandle * handle);
+NSResult NSPutTopicResource(NSTopicList *topicList, OCResourceHandle * handle);
 
 #endif /* _NS_PROVIDER_RESOURCE_H_ */

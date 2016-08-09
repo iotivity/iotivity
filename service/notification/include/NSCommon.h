@@ -114,23 +114,24 @@ typedef enum
  */
 typedef enum
 {
-    NS_TOPIC_CREATED = 0,
+    NS_TOPIC_UNSUBSCRIBED = 0,
     NS_TOPIC_SUBSCRIBED = 1,
-    NS_TOPIC_UNSUBSCRIBED = 2,
 
 } NSTopicState;
 
-typedef struct
+typedef struct _nsTopic
 {
     char * topicName;
     NSTopicState state;
+    struct _nsTopic * next;
 
 } NSTopic;
 
 typedef struct
 {
-    char consumerId[37];
-    NSTopic ** topics;
+    char consumerId[NS_UUID_STRING_SIZE];
+    NSTopic * head;
+    NSTopic * tail;
 
 } NSTopicList;
 

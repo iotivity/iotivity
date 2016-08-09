@@ -212,10 +212,12 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
             NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
 
+    /* TODO next commit, modify code.
     NS_LOG(DEBUG, "get topic URI");
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TOPIC, & topicUri);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
             NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
+    */
 
     NS_LOG(DEBUG, "get provider connection information");
     NS_VERIFY_NOT_NULL(clientResponse->addr, NULL);

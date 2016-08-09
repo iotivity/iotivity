@@ -20,6 +20,26 @@
 
 #include "NSProviderTopic.h"
 
+static bool isTopicList = false;
+
+NSResult NSInitTopicStorage()
+{
+    NS_LOG(DEBUG, "NSInitTopicList - IN");
+
+    if(isTopicList)
+    {
+        NS_LOG(DEBUG, "topic list has already initiated");
+        return NS_FAIL;
+    }
+
+    topicStorage = NSStorageCreate();
+    topicStorage->cacheType = NS_PROVIDER_CACHE_TOPIC;
+    isTopicList = true;
+
+    NS_LOG(DEBUG, "NSInitTopicList - OUT");
+    return NS_OK;
+}
+
 NSTopicList * NSGetTopics(char *consumerId)
 {
     NS_LOG(DEBUG, "NSGetTopics()");
@@ -37,6 +57,181 @@ NSTopicList * NSGetTopics(char *consumerId)
 
     NS_LOG(DEBUG, "NSGetTopics() NS_OK");
     return topicList;
+}
+
+//TODO: update parameter
+NSResult NSStoreTopics(char * consumerId, NSTopic** topics)
+{
+    NS_LOG(DEBUG, "NSWriteTopicsToStorage()");
+
+    NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+    NSCacheTopicData * topicData = (NSCacheTopicData *) OICMalloc(sizeof(NSCacheTopicData));
+
+    OICStrcpy(topicData->consumerId, UUID_STRING_SIZE, consumerId);
+    NS_LOG_V(DEBUG, "consumer id: %s", topicData->consumerId);
+
+    // TODO: print topic list
+    topicData->topics = topics;
+    NS_LOG(DEBUG, "print topic list");
+
+    element->data = (void*) topicData;
+    element->next = NULL;
+
+    if(NSStorageWrite(topicStorage, element) != NS_OK)
+    {
+        NS_LOG(DEBUG, "fail to write cache");
+    }
+
+    NS_LOG(DEBUG, "NSWriteTopicsToStorage() NS_OK");
+    return NS_OK;
+}
+
+NSResult NSRegisterTopicList(NSTopicList *topicList)
+{
+    NS_LOG(DEBUG, "NSRegisterTopicList()");
+
+    if(!topicList)
+    {
+        NS_LOG(ERROR, "no topics");
+        return NS_ERROR;
+    }
+
+    OCResourceHandle rHandle = NULL;
+    if(NSPutTopicResource(topicList, &rHandle) != NS_OK)
+    {
+        NS_LOG(ERROR, "Fail to put topic resource");
+        return NS_ERROR;
+    }
+
+    if(topicList->consumerId != NULL)
+    {
+        // id should be null to register topic list
+        NS_LOG(ERROR, "invalid consumer id");
+        return NS_ERROR;
+    }
+
+    NSStoreTopics(topicList->consumerId, topicList->head);
+
+    NS_LOG(DEBUG, "NSRegisterTopicList() NS_OK");
+    return NS_OK;
+}
+
+NSResult NSSendTopicUpdation()
+{
+    NS_LOG(DEBUG, "NSSendTopicUpdation - IN");
+
+    OCRepPayload* payload = OCRepPayloadCreate();
+
+    if (!payload)
+    {
+        NS_LOG(ERROR, "fail to create playload");
+        return NS_ERROR;
+    }
+
+    OCResourceHandle rHandle = NULL;
+    if (NSPutMessageResource(NULL, &rHandle) != NS_OK)
+    {
+        NS_LOG(ERROR, "Fail to put message resource");
+        return NS_ERROR;
+    }
+
+    OCRepPayloadSetUri(payload, NS_COLLECTION_MESSAGE_URI);
+    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_TOPIC);
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
+
+    OCObservationId obArray[255] = { 0, };
+    int obCount = 0;
+
+    NSCacheElement * it = consumerSubList->head;
+
+    while (it)
+    {
+        NSCacheSubData * subData = (NSCacheSubData *) it->data;
+
+        if (subData->isWhite)
+        {
+            if(subData->messageObId != 0)
+            {
+                obArray[obCount++] = subData->messageObId;
+            }
+
+#ifdef WITH_CLOUD
+            if(subData->remote_messageObId != 0)
+            {
+                obArray[obCount++] = subData->remote_messageObId;
+            }
+#endif
+
+        }
+        it = it->next;
+    }
+
+    if(!obCount)
+    {
+        NS_LOG(ERROR, "observer count is zero");
+        return NS_ERROR;
+    }
+
+    if (OCNotifyListOfObservers(rHandle, obArray, obCount, payload, OC_HIGH_QOS)
+            != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "fail to send topic updation");
+        OCRepPayloadDestroy(payload);
+        return NS_ERROR;
+
+    }
+    OCRepPayloadDestroy(payload);
+
+    NS_LOG(DEBUG, "NSSendTopicUpdation - OUT");
+    return NS_OK;
+}
+
+NSResult NSSendTopicUpdationToConsumer(char *consumerId)
+{
+    NS_LOG(DEBUG, "NSSendTopicUpdationToConsumer - IN");
+
+    OCRepPayload* payload = OCRepPayloadCreate();
+
+    if (!payload)
+    {
+        NS_LOG(ERROR, "fail to create playload");
+        return NS_ERROR;
+    }
+
+    OCResourceHandle rHandle = NULL;
+    if (NSPutMessageResource(NULL, &rHandle) != NS_OK)
+    {
+        NS_LOG(ERROR, "Fail to put message resource");
+        return NS_ERROR;
+    }
+
+    OCRepPayloadSetUri(payload, NS_COLLECTION_MESSAGE_URI);
+    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_TOPIC);
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
+
+    NSCacheElement * element = NSStorageRead(consumerSubList, consumerId);
+
+    if(element == NULL)
+    {
+        NS_LOG(ERROR, "element is NULL");
+        return NS_ERROR;
+    }
+
+    NSCacheSubData * subData = (NSCacheSubData*) element->data;
+
+    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_HIGH_QOS)
+            != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "fail to send topic updation");
+        OCRepPayloadDestroy(payload);
+        return NS_ERROR;
+
+    }
+
+    OCRepPayloadDestroy(payload);
+
+    NS_LOG(DEBUG, "NSSendTopicUpdationToConsumer - OUT");
+    return NS_OK;
 }
 
 bool NSIsTopicSubscribed(char * consumerId, char * topic)
@@ -72,6 +267,11 @@ void * NSTopicSchedule(void * ptr)
                     break;
                 case TASK_REGISTER_TOPICS:
                     NS_LOG(DEBUG, "CASE TASK_REGISTER_TOPICS : ");
+                    NSTopicList * topicList = (NSTopicList *) node->taskData;
+                    NSRegisterTopicList(topicList);
+                    NSSendTopicUpdation();
+                    // TODO : free NSTopic
+                    // NSFreeTopicList(topicList);
                     break;
                 default:
                     break;

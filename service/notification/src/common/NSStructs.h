@@ -72,7 +72,7 @@ typedef struct
 typedef struct
 {
     char consumerId[37];
-    NSTopicList ** topicList;
+    NSTopic** topics;
 } NSCacheTopicData;
 
 typedef struct

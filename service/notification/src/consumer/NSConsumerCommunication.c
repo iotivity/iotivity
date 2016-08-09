@@ -402,6 +402,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
             connections = connections->next;
         }
     }
+    /* TODO next commit, modify code.
     else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
     {
         NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
@@ -507,23 +508,27 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_STACK_SUCCESS_V(NSOCResultToSuccess(ret));
         NSOICFree(query);
         NSOICFree(topicUri);
-    }
+    }*/
     else
     {
         NS_LOG(ERROR, "Unknown type message");
     }
+
     NSOICFree(task);
 }
 
 void NSGetTopicPostClean(
         char * cId, NSTopicList * tList, size_t dSize)
 {
+    /* TODO next commit, modify code.
     NSOICFree(cId);
     NSRemoveProviderTopicList(tList, dSize);
+    */
 }
 
 NSTopicList * NSGetTopic(OCClientResponse * clientResponse, size_t * topicListSize)
 {
+    /* TODO next commit, modify code.
     NS_LOG(DEBUG, "create NSTopic");
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
 
@@ -591,12 +596,13 @@ NSTopicList * NSGetTopic(OCClientResponse * clientResponse, size_t * topicListSi
 
     NSOICFree(consumerId);
 
-    return topicList;
+    return topicList;*/
 }
 
 OCStackApplicationResult NSIntrospectTopic(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
+/* TODO next commit, modify code.
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
@@ -630,4 +636,5 @@ OCStackApplicationResult NSIntrospectTopic(
     NSRemoveProviderTopicList(newTopicList, topicListSize);
 
     return OC_STACK_KEEP_TRANSACTION;
+    */
 }

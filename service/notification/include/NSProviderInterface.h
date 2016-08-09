@@ -133,6 +133,47 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 NSMessage * NSCreateMessage();
 
 /**
+ * Create empty topic list which is required to set by following APIs
+ * @return ::NSTopicList
+ */
+NSTopicList * NSProviderCreateTopicList();
+
+/**
+ * Add topic to topic list which is able to be created
+ * by NSProviderCreateTopicList function
+ * @param[out]  topicList  Topic list added with topic name
+ * @param[in]  topicName Topic name to add
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderAddTopic(NSTopicList** topicList, char* topicName);
+
+/**
+ * Delete topic from topic list
+ * @param[out]  topicList  Topic list deleted with topic name
+ * @param[in]  topicName Topic name to delete
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderDeleteTopic(NSTopicList** topicList, char* topicName);
+
+/**
+ * Select a topic for consumer
+ * @param[out]  topicList  Topic list with selected and unselected topics for consumer
+ * @param[in]  consumerId  consumer id for which the user on provider selects a topic
+ * @param[in]  topicName Topic name to select
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderSelectTopic(NSTopicList** topicList, char* consumerId, char* topicName);
+
+/**
+ * Unselect a topic from the topic list for consumer
+ * @param[out]  topicList  Topic list with selected and unselected topics for consumer
+ * @param[in]  consumerId  consumer id for which the user on provider unselects a topic
+ * @param[in]  topicName Topic name to unselect
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderUnselectTopic(NSTopicList** topicList, char* consumerId, char* topicName);
+
+/**
  * Request all the topics which has already registered by user
  * @param[in] consumerid  the id of consumer which subscribes topics
  * if NULL, all the registered topic list is returned
@@ -146,7 +187,7 @@ NSTopicList * NSProviderGetTopics(char *consumerId);
  * the consumerId of NSTopicList struct shoud be set NULL
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderSetTopics(NSTopicList *topicList);
+NSResult NSProviderRegisterTopics(NSTopicList *topicList);
 
 /**
  * Set recommended topics for a consumer
@@ -154,8 +195,7 @@ NSResult NSProviderSetTopics(NSTopicList *topicList);
  * the consumerId of NSTopicList struct should be set consumerId
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderRecommendTopics(NSTopicList *topicList);
-
+NSResult NSProviderRecommendTopics(char* consumerId, NSTopicList *topicList);
 
 #ifdef __cplusplus
 }

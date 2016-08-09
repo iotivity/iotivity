@@ -456,8 +456,22 @@ NSTopicList * NSInitializeTopicList()
     }
 
     (topicList->consumerId)[0] = '\0';
-    topicList->topics = NULL;
+    topicList->head = NULL;
+    topicList->tail = NULL;
 
     return topicList;
+}
+
+NSResult NSFreeTopicList(NSTopicList * topicList)
+{
+    if (!topicList)
+    {
+        return NS_ERROR;
+    }
+
+    //TODO:Free Topic List
+
+
+    return NS_OK;
 }
 

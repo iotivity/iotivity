@@ -90,6 +90,8 @@
 #define NS_POLICY_PROVIDER         1
 #define NS_POLICY_CONSUMER         0
 
+#define NS_RD_PUBLISH_QUERY        "/oic/rd?rt=oic.wk.rdpub"
+
 #define NS_VERIFY_NOT_NULL_V(obj) \
     { \
         if ((obj) == NULL) \

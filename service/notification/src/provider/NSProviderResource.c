@@ -48,7 +48,7 @@ NSResult NSPublishResourceToCloud(char *serverAddress)
     NS_LOG(DEBUG, "NSPublishResourceToCloud - IN");
     NS_LOG_V(DEBUG, "Cloud address: %s", serverAddress);
 
-    const char * publishQuery = "/oic/rd?rt=oic.wk.rdpub";
+    const char * publishQuery = NS_RD_PUBLISH_QUERY;
 
     if (NSCloudPublish(serverAddress, publishQuery, &NSHandlePublishCb, 1,
             NotificationResource.handle) != OC_STACK_OK)
@@ -270,7 +270,7 @@ NSResult NSPutSyncResource(NSSyncInfo *sync, OCResourceHandle * handle)
     return NS_OK;
 }
 
-NSResult NSPutTopicResource(NSTopicList **topicList, OCResourceHandle * handle)
+NSResult NSPutTopicResource(NSTopicList *topicList, OCResourceHandle * handle)
 {
     NS_LOG(DEBUG, "NSPutTopicResource - IN");
 
