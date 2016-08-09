@@ -425,6 +425,26 @@ NSMessage * NSInitializeMessage()
     return msg;
 }
 
+OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* name)
+{
+    if (!payload || !name)
+    {
+        return NULL;
+    }
+
+    OCRepPayloadValue* val = payload->values;
+    while(val)
+    {
+        if (0 == strcmp(val->name, name))
+        {
+            return val;
+        }
+        val = val->next;
+    }
+
+    return NULL;
+}
+
 NSTopicList * NSInitializeTopicList()
 {
     NSTopicList * topicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));

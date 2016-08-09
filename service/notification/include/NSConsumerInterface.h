@@ -135,6 +135,20 @@ NSProvider * NSConsumerGetProvider(const char * providerId);
  */
 NSMessage * NSConsumerGetMessage(uint64_t messageId);
 
+/**
+ * Request NSTopicList that is subscribed from provider
+ * @param[in]  provider  the provider that user wants to get
+ * @return NSResult
+ */
+NSResult NSConsumerGetInterestTopics(NSProvider * provider);
+
+/**
+ * Select Topics that is wanted to subscribe from provider
+ * @param[in]  provider  the provider that user wants to set
+ * @return NSResult
+ */
+NSResult NSConsumerSelectInterestTopics(NSProvider * provider);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

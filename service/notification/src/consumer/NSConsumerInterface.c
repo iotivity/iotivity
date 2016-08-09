@@ -153,6 +153,38 @@ NSMessage * NSConsumerGetMessage(uint64_t messageId)
     return (NSMessage *) NSConsumerFindNSMessage(msgId);
 }
 
+NSResult NSConsumerGetInterestTopics(NSProvider * provider)
+{
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
+    NS_VERIFY_NOT_NULL(provider, NS_ERROR);
+
+    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_GET_TOPIC_LIST, (void *) provider);
+    NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
+
+    return NSConsumerPushEvent(topicTask);
+}
+
+NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
+{
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
+    NS_VERIFY_NOT_NULL(provider, NS_ERROR);
+
+    if (!provider->topicList)
+        provider->topicList = (NSTopicList *) OICMalloc(sizeof(NSTopicList));
+    NS_VERIFY_NOT_NULL(provider->topicList, NS_ERROR);
+
+    OICStrcpy(provider->topicList->consumerId, NS_DEVICE_ID_LENGTH, provider->providerId);
+
+    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) provider);
+    NS_VERIFY_NOT_NULL(provider, NS_ERROR);
+
+    return NSConsumerPushEvent(topicTask);
+}
+
 NSResult NSDropNSMessage(NSMessage * obj)
 {
     NS_VERIFY_NOT_NULL(obj, NS_ERROR);

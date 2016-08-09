@@ -61,4 +61,6 @@ NSResult NSFreeMalloc(char ** obj);
 NSResult NSFreeMediaContents(NSMediaContents * obj);
 NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj);
 
+OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* name);
+
 #endif /* _NS_UTIL__H_ */

@@ -220,6 +220,9 @@ void NSConsumerTaskProcessing(NSTask * task)
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE:
         case TASK_SEND_SYNCINFO:
+        case TASK_CONSUMER_REQ_TOPIC_LIST:
+        case TASK_CONSUMER_GET_TOPIC_LIST:
+        case TASK_CONSUMER_SELECT_TOPIC_LIST:
         {
             NSConsumerCommunicationTaskProcessing(task);
             break;
@@ -239,6 +242,8 @@ void NSConsumerTaskProcessing(NSTask * task)
         case TASK_CONSUMER_PROVIDER_DISCOVERED:
         case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
         case TASK_MAKE_SYNCINFO:
+        case TASK_CONSUMER_REQ_TOPIC_URI:
+        case TASK_CONSUMER_RECV_TOPIC_LIST:
         {
             NSConsumerInternalTaskProcessing(task);
             break;

@@ -349,6 +349,34 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
     NSConsumerPushEvent(syncTask);
 }
 
+void NSConsumerHandleGetTopicUri(NSMessage * msg)
+{
+    NS_VERIFY_NOT_NULL_V(msg);
+
+    NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_REQ_TOPIC_LIST, (void *) provider);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(topicTask, NSRemoveProvider(provider));
+
+    NSConsumerPushEvent(topicTask);
+}
+
+void NSConsumerHandleRecvTopicList(NSProvider_internal * provider)
+{
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSResult ret = NSProviderCacheUpdate(provider);
+    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+
+    // call the callback function when consumer is an accepter
+    if (provider->connection->next == NULL)
+    {
+        NS_LOG(DEBUG, "call back to user");
+        NSProviderChanged((NSProvider *) provider, (NSResponse) NS_TOPIC);
+    }
+}
+
 void NSConsumerInternalTaskProcessing(NSTask * task)
 {
     NS_VERIFY_NOT_NULL_V(task);
@@ -389,6 +417,20 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
             NS_LOG(DEBUG, "Make SyncInfo, get Provider's Addr");
             NSConsumerHandleMakeSyncInfo((NSSyncInfo *)task->taskData);
             NSOICFree(task->taskData);
+            break;
+        }
+        case TASK_CONSUMER_REQ_TOPIC_URI:
+        {
+            NS_LOG(DEBUG, "Request Topic Uri");
+            NSConsumerHandleGetTopicUri((NSMessage *)task->taskData);
+            NSRemoveMessage((NSMessage *)task->taskData);
+            break;
+        }
+        case TASK_CONSUMER_RECV_TOPIC_LIST:
+        {
+            NS_LOG(DEBUG, "Receive Topic List");
+            NSConsumerHandleRecvTopicList((NSProvider_internal *)task->taskData);
+            NSRemoveProvider((NSProvider_internal *)task->taskData);
             break;
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
