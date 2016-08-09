@@ -22,7 +22,7 @@
 
 static bool isTopicList = false;
 
-NSResult NSInitTopicStorage()
+NSResult NSInitTopicList()
 {
     NS_LOG(DEBUG, "NSInitTopicList - IN");
 
@@ -32,8 +32,8 @@ NSResult NSInitTopicStorage()
         return NS_FAIL;
     }
 
-    topicStorage = NSStorageCreate();
-    topicStorage->cacheType = NS_PROVIDER_CACHE_TOPIC;
+    consumerTopicList = NSStorageCreate();
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_TOPIC;
     isTopicList = true;
 
     NS_LOG(DEBUG, "NSInitTopicList - OUT");
@@ -77,7 +77,7 @@ NSResult NSStoreTopics(char * consumerId, NSTopic** topics)
     element->data = (void*) topicData;
     element->next = NULL;
 
-    if(NSStorageWrite(topicStorage, element) != NS_OK)
+    if(NSStorageWrite(consumerTopicList, element) != NS_OK)
     {
         NS_LOG(DEBUG, "fail to write cache");
     }

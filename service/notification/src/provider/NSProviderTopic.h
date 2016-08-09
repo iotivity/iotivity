@@ -28,9 +28,9 @@
 #include "NSProviderResource.h"
 #include "NSProviderSubscription.h"
 
-NSCacheList * topicStorage;
+NSCacheList * consumerTopicList;
 
-NSResult NSInitTopicStorage();
+NSResult NSInitTopicList();
 NSTopicList * NSGetTopics(char *consumerId);
 
 bool NSIsTopicSubscribed(char *consumerId, char *topic);

@@ -89,6 +89,7 @@ void NSSetList()
 
     NSInitSubscriptionList();
     NSInitMessageList();
+    NSInitTopicList();
     NS_LOG(DEBUG, "NSSetList - OUT");
 }
 
@@ -96,6 +97,7 @@ void NSDestroyList()
 {
     NSStorageDestroy(consumerSubList);
     NSStorageDestroy(messageList);
+    NSStorageDestroy(consumerTopicList);
 
     pthread_mutex_destroy(&NSCacheMutex);
     pthread_mutexattr_destroy(&NSCacheMutexAttr);
@@ -261,9 +263,7 @@ NSResult NSProviderRegisterTopics(NSTopicList *topicList)
     NS_LOG(DEBUG, "NSProviderSetTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    NSInitTopicStorage();
-
-    NSPushQueue(TOPIC_SCHEDULER, TASK_REGISTER_TOPICS, topicList);
+    NSPushQueue(TOPIC_SCHEDULER, TASK_REGISTER_TOPICS, consumerTopicList);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderSetTopics - OUT");
