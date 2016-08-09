@@ -18,16 +18,18 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "NSConstants.h"
-#include "NSConsumerCommon.h"
 #include "NSConsumerCommunication.h"
+
+#include "NSConstants.h"
+#include "NSUtil.h"
+#include "NSConsumerCommon.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
 
 #define NS_SYNC_URI "/notification/sync"
 
-unsigned long NS_MESSAGE_ACCEPTANCE = 1;
+static unsigned long NS_MESSAGE_ACCEPTANCE = 1;
 
 NSMessage * NSCreateMessage_internal(uint64_t msgId, const char * providerId);
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);

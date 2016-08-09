@@ -166,11 +166,12 @@ OCStackApplicationResult NSIntrospectProvider(
 }
 
 void NSGetProviderPostClean(
-        char * pId, char * mUri, char * sUri, NSProviderConnectionInfo * connection)
+        char * pId, char * mUri, char * sUri, char * tUri, NSProviderConnectionInfo * connection)
 {
     NSOICFree(pId);
     NSOICFree(mUri);
     NSOICFree(sUri);
+    NSOICFree(tUri);
     NSRemoveConnections(connection);
 }
 
@@ -191,6 +192,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     char * providerId = NULL;
     char * messageUri = NULL;
     char * syncUri = NULL;
+    char * topicUri = NULL;
     int64_t accepter = 0;
     NSProviderConnectionInfo * connection = NULL;
 
@@ -205,12 +207,12 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NS_LOG(DEBUG, "get message URI");
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE, & messageUri);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
-            NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
+            NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
 
     NS_LOG(DEBUG, "get sync URI");
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SYNC, & syncUri);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
-            NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
+            NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
 
     /* TODO next commit, modify code.
     NS_LOG(DEBUG, "get topic URI");
@@ -227,12 +229,13 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NSProvider_internal * newProvider
         = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProvider, NULL,
-          NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
+          NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
 
     OICStrcpy(newProvider->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
     NSOICFree(providerId);
     newProvider->messageUri = messageUri;
     newProvider->syncUri = syncUri;
+    newProvider->topicUri = topicUri;
     newProvider->accessPolicy = (NSSelector)accepter;
     newProvider->connection = connection;
 

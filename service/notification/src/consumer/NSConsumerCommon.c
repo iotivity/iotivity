@@ -336,6 +336,50 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
     return retInfo;
 }
 
+void NSRemoveProviderTopicList(NSTopicList * topicList, size_t dimensionSize)
+{
+    NS_VERIFY_NOT_NULL_V(topicList);
+
+    for (int i = -1; i < (int)dimensionSize; i++)
+    {
+        NSOICFree(topicList->topics[i]);
+    }
+    NSOICFree(topicList);
+}
+
+NSTopicList * NSCopyProviderTopicList(NSTopicList * topicList, size_t dimensionSize)
+{
+    NS_VERIFY_NOT_NULL(topicList, NULL);
+
+    NSTopicList * newTopicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));
+    NS_VERIFY_NOT_NULL(newTopicList, NULL);
+
+    OICStrcpy(newTopicList->consumerId, NS_DEVICE_ID_LENGTH, topicList->consumerId);
+
+    newTopicList->topics = (NSTopic **) OICMalloc(sizeof(NSTopic *)*dimensionSize);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicList->topics,
+            NULL, NSRemoveProviderTopicList(newTopicList, -1));
+
+    for (int i = 0; i < (int)dimensionSize; i++)
+    {
+        newTopicList->topics[i] = (NSTopic *) OICMalloc(sizeof(NSTopic));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicList->topics[i],
+            NULL, NSRemoveProviderTopicList(newTopicList, i));
+
+        newTopicList->topics[i]->topicName = OICStrdup(topicList->topics[i]->topicName);
+        newTopicList->topics[i]->state = topicList->topics[i]->state;
+    }
+
+    return newTopicList;
+}
+
+void NSCopyProviderPostClean(
+        NSProviderConnectionInfo * connections, NSProvider_internal * provider)
+{
+    NSRemoveConnections(connections);
+    NSOICFree(provider);
+}
+
 NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
 {
     NS_VERIFY_NOT_NULL(prov, NULL);
@@ -343,13 +387,27 @@ NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
     NSProviderConnectionInfo * connections = NSCopyProviderConnections(prov->connection);
     NS_VERIFY_NOT_NULL(connections, NULL);
 
-    NSProvider_internal * newProv = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
+    NSProvider_internal * newProv = (NSProvider_internal *) OICMalloc(sizeof(NSProvider_internal));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProv, NULL, NSRemoveConnections(connections));
+
+    newProv->topicList = NULL;
+    newProv->topicListSize = 0;
+
+    if (prov->topicList)
+    {
+        NSTopicList * topicList = NSCopyProviderTopicList(prov->topicList, prov->topicListSize);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList, NULL,
+                    NSCopyProviderPostClean(connections, newProv));
+
+        newProv->topicList = topicList;
+        newProv->topicListSize = prov->topicListSize;
+    }
 
     newProv->connection = connections;
     OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
     newProv->messageUri = OICStrdup(prov->messageUri);
     newProv->syncUri = OICStrdup(prov->syncUri);
+    newProv->topicUri = OICStrdup(prov->topicUri);
     newProv->accessPolicy = prov->accessPolicy;
 
     return newProv;
@@ -361,7 +419,9 @@ void NSRemoveProvider(NSProvider_internal * prov)
 
     NSOICFree(prov->messageUri);
     NSOICFree(prov->syncUri);
+    NSOICFree(prov->topicUri);
     NSRemoveConnections(prov->connection);
+    NSRemoveProviderTopicList(prov->topicList, prov->topicListSize);
 
     NSOICFree(prov);
 }

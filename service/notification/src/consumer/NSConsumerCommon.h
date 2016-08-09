@@ -141,6 +141,9 @@ void NSRemoveProvider(NSProvider_internal *);
 NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal *);
 void NSRemoveSyncInfo(NSSyncInfo_internal *);
 
+NSTopicList * NSCopyProviderTopicList(NSTopicList * topicList, size_t dimensionSize);
+void NSRemoveProviderTopicList(NSTopicList * topicList, size_t dimensionSize);
+
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload,
