@@ -593,6 +593,7 @@ static CAResult_t CASendDirectEmptyResponse(const CAEndpoint_t *endpoint, uint16
     };
     respInfo.info.type = CA_MSG_ACKNOWLEDGE;
     respInfo.info.messageId = messageId;
+    respInfo.info.dataType = CA_RESPONSE_DATA;
 
     CAResult_t caResult = CASendResponse(endpoint, &respInfo);
 

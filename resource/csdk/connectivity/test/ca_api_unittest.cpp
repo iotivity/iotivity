@@ -510,6 +510,15 @@ TEST_F (CATests, GetNetworkInformationTest)
     EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
     EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
 
+// @todo: if this api is supported on windows platform, it should be changed.
+#if !defined(_WIN32)
+    for (uint32_t index = 0; index < tempSize; index++)
+    {
+        EXPECT_TRUE(tempInfo[index].adapter != 0);
+        EXPECT_TRUE(strlen(tempInfo[index].addr) != 0);
+    }
+#endif
+
     free(tempInfo);
 }
 
