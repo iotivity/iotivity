@@ -1,32 +1,35 @@
 /*
- *******************************************************************
- *
- * Copyright 2015 Intel Corporation.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//******************************************************************
+//
+// Copyright 2016 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
 package com.sec.notiproviderexample;
 
 import android.app.Notification;
+import android.content.SyncInfo;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+import org.iotivity.service.ns.common.MediaContents;
+import org.iotivity.service.ns.common.Message;
 import java.util.ArrayList;
 
 public class NotiListener extends NotificationListenerService {
@@ -103,8 +106,13 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Title : " + title);
         Log.i(TAG, "Body : " + body);
 
+        Message notiMessage = new Message(title,body,source);
+        notiMessage.setTTL(10);
+        notiMessage.setTime("12:10");
+        MediaContents media = new MediaContents("daasd");
+        notiMessage.setMediaContents(media);
         if (mProviderProxy != null) {
-            mProviderProxy.sendNSMessage(id, title, body, source);
+            mProviderProxy.SendMessage(notiMessage);
         } else {
             Log.i(TAG, "providerExample is NULL");
         }
@@ -126,7 +134,8 @@ public class NotiListener extends NotificationListenerService {
         {
             if(mProviderProxy.getMsgMap().get(sbn.getId()) == 2)
             {
-                mProviderProxy.readCheck(Integer.toString(sbn.getId()));
+                org.iotivity.service.ns.common.SyncInfo.SyncType type = org.iotivity.service.ns.common.SyncInfo.SyncType.READ;
+                mProviderProxy.SendSyncInfo(1,type);
             }
         }
     }

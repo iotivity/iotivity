@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "sample.notification.service.iotivity.org.notificationsample"
-        minSdkVersion 23
+        minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -16,6 +16,6 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:23.0.1'
-    compile project(':iotivity-base-armeabi-release')
-    compile project(':iotivity-armeabi-notification-service-release')
+    compile project(':iotivity-armeabi-notification-service-debug')
+    compile project(':iotivity-base-armeabi-debug')
 }
