@@ -28,8 +28,6 @@
 
 static pthread_mutex_t g_create_mutex;
 
-void NSDestroyThreadHandle(NSConsumerThread *);
-
 NSConsumerThread * NSThreadInit(NSThreadFunc func, void * data)
 {
     NS_VERIFY_NOT_NULL(func, NULL);
@@ -77,6 +75,9 @@ void NSThreadUnlock(NSConsumerThread * handle)
 
 void NSThreadStop(NSConsumerThread * handle)
 {
+    handle->isStarted = false;
+    NSThreadJoin(handle);
+
     NSDestroyThreadHandle(handle);
 }
 
@@ -90,10 +91,6 @@ void NSThreadJoin(NSConsumerThread * handle)
 
 void NSDestroyThreadHandle(NSConsumerThread * handle)
 {
-    handle->isStarted = false;
-
-    NSThreadJoin(handle);
-
     pthread_mutex_destroy(&(handle->mutex));
     pthread_mutexattr_destroy(&(handle->mutex_attr));
 
@@ -102,3 +99,7 @@ void NSDestroyThreadHandle(NSConsumerThread * handle)
     pthread_mutex_unlock(&g_create_mutex);
 }
 
+void NSThreadDetach()
+{
+    pthread_detach(pthread_self());
+}

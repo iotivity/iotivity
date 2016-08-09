@@ -110,6 +110,8 @@ NSResult NSConsumerPushEvent(NSTask * task)
     NSConsumerThread * thread = NSThreadInit(NSConsumerMsgPushThreadFunc, (void *) task);
     NS_VERIFY_NOT_NULL(thread, NS_ERROR);
 
+    NSDestroyThreadHandle(thread);
+
     return NS_OK;
 }
 
@@ -174,16 +176,18 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 
 void * NSConsumerMsgPushThreadFunc(void * data)
 {
+    NSThreadDetach();
+
     NSConsumerQueueObject * obj = NULL;
     NSConsumerQueue * queue = NULL;
 
     NS_LOG(DEBUG, "get queueThread handle");
     NSConsumerThread * msgHandleThread = *(NSGetMsgHandleThreadHandle());
-    NS_VERIFY_NOT_NULL(msgHandleThread, NULL);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(msgHandleThread, NULL, NSOICFree(data));
 
     NS_LOG(DEBUG, "create queue object");
     obj = (NSConsumerQueueObject *)OICMalloc(sizeof(NSConsumerQueueObject));
-    NS_VERIFY_NOT_NULL(obj, NULL);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NULL, NSOICFree(data));
 
     obj->data = data;
     obj->next = NULL;
