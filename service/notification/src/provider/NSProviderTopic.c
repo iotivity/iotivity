@@ -33,7 +33,11 @@ NSResult NSInitTopicList()
     }
 
     consumerTopicList = NSStorageCreate();
-    consumerTopicList->cacheType = NS_PROVIDER_CACHE_TOPIC;
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC;
+
+    registeredTopicList = NSStorageCreate();
+    registeredTopicList->cacheType = NS_PROVIDER_CACHE_REGISTER_TOPIC;
+
     isTopicList = true;
 
     NS_LOG(DEBUG, "NSInitTopicList - OUT");

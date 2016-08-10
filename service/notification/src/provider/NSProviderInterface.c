@@ -98,6 +98,7 @@ void NSDestroyList()
     NSStorageDestroy(consumerSubList);
     NSStorageDestroy(messageList);
     NSStorageDestroy(consumerTopicList);
+    NSStorageDestroy(registeredTopicList);
 
     pthread_mutex_destroy(&NSCacheMutex);
     pthread_mutexattr_destroy(&NSCacheMutexAttr);

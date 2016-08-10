@@ -29,6 +29,7 @@
 #include "NSProviderSubscription.h"
 
 NSCacheList * consumerTopicList;
+NSCacheList * registeredTopicList;
 
 NSResult NSInitTopicList();
 NSTopicList * NSGetTopics(char *consumerId);
