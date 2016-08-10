@@ -129,7 +129,6 @@ typedef struct _nsTopic
 
 typedef struct
 {
-    char consumerId[NS_UUID_STRING_SIZE];
     NSTopic * head;
     NSTopic * tail;
 
