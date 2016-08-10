@@ -162,8 +162,8 @@ NSResult NSSendNotification(NSMessage *msg)
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
+
     OCRepPayloadDestroy(payload);
-    NSFreeMessage(msg);
 
     NS_LOG(DEBUG, "NSSendMessage - OUT");
 
@@ -269,6 +269,7 @@ void * NSNotificationSchedule(void *ptr)
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_NOTIFICATION : ");
                     NSSendNotification((NSMessage *)node->taskData);
+                    NSFreeMessage((NSMessage *)node->taskData);
                     break;
                 }
                 case TASK_SEND_READ:
