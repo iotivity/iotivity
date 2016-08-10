@@ -234,6 +234,59 @@ NSResult NSSendTopicUpdationToConsumer(char *consumerId)
     return NS_OK;
 }
 
+NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
+{
+    NS_LOG(DEBUG, "NSSendTopicList - IN");
+
+    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    if(!id)
+    {
+        NS_LOG(DEBUG, "Send registered topic list");
+        //TODO: get registered topic list
+    }
+    else
+    {
+        NS_LOG(DEBUG, "Send subscribed topic list to consumer");
+        //TODO: get subscribed topic list for consumer
+    }
+
+    // make response for the Get Request
+    OCEntityHandlerResponse response;
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+            sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
+
+    OCRepPayload* payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        NS_LOG(ERROR, "payload is NULL");
+        return NS_ERROR;
+    }
+
+    OCRepPayloadSetUri(payload, NS_COLLECTION_TOPIC_URI);
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
+    // TODO: add PayLoadSet with topic list got above
+
+    response.requestHandle = entityHandlerRequest->requestHandle;
+    response.resourceHandle = entityHandlerRequest->resource;
+    response.persistentBufferFlag = 0;
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload *) payload;
+
+    // Send Response
+    if (OCDoResponse(&response) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to response topic list");
+        return NS_ERROR;
+    }
+    OCRepPayloadDestroy(payload);
+    NSFreeOCEntityHandlerRequest(entityHandlerRequest);
+
+    NS_LOG(DEBUG, "NSSendTopicList - OUT");
+    return NS_OK;
+}
+
 bool NSIsTopicSubscribed(char * consumerId, char * topic)
 {
     //TODO: implement function
@@ -261,6 +314,7 @@ void * NSTopicSchedule(void * ptr)
             {
                 case TASK_SEND_TOPICS:
                     NS_LOG(DEBUG, "CASE TASK_SEND_TOPICS : ");
+                    NSSendTopicList((OCEntityHandlerRequest*) node->taskData);
                     break;
                 case TASK_SUBSCRIBE_TOPICS:
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPICS : ");

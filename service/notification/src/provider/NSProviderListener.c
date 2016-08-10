@@ -195,8 +195,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_GET");
 
             // send consumer's interesting topic list if consumer id exists
-            // otherwise send  created / updated topic list
-
+            // otherwise send  registered topic list
             NSPushQueue(TOPIC_SCHEDULER, TASK_SEND_TOPICS,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
@@ -207,7 +206,8 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             // Receive interesting topic list from consumers
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
 
-            // Send topic updated message(id=TOPIC) to the consumer who request to post.
+            // Send topic notice message(id = TOPIC) to the consumer 
+            // which requests to post.
             NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPICS,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
