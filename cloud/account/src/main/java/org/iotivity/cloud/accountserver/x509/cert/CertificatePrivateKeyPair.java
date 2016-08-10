@@ -25,19 +25,19 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
 public class CertificatePrivateKeyPair {
-    private X509Certificate certificate = null;
-    private PrivateKey      key         = null;
+    private X509Certificate mCertificate = null;
+    private PrivateKey mKey = null;
 
     public CertificatePrivateKeyPair(X509Certificate cert, PrivateKey k) {
-        certificate = cert;
-        key = k;
+        mCertificate = cert;
+        mKey = k;
     }
 
     public X509Certificate getCertificate() {
-        return certificate;
+        return mCertificate;
     }
 
     public PrivateKey getKey() {
-        return key;
+        return mKey;
     }
 }

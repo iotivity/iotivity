@@ -38,6 +38,7 @@ import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Certificate;
 import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
@@ -76,6 +77,7 @@ public class CloudInterfaceServer {
         MessageQueue mqHandler = new MessageQueue();
         Acl aclHandler = new Acl();
         AclGroup aclGroupHandler = new AclGroup();
+        Certificate certHandler = new Certificate();
 
         CoapDevicePool devicePool = deviceServer.getDevicePool();
 
@@ -96,6 +98,8 @@ public class CloudInterfaceServer {
         deviceServer.addResource(aclHandler);
 
         deviceServer.addResource(aclGroupHandler);
+
+        deviceServer.addResource(certHandler);
 
         KeepAliveResource resKeepAlive = new KeepAliveResource(
                 new int[] { 1, 2, 4, 8 });

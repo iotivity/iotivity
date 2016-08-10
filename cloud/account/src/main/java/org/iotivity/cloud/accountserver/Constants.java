@@ -109,6 +109,8 @@ public class Constants extends OCFConstants {
 
     public static final String REQ_GTYPE_PUBLIC      = "Public";
 
+    public static final String REQ_CSR             = "csr";
+
     // Response payload key
 
     public static final String RESP_ACCESS_TOKEN     = "accesstoken";
@@ -132,6 +134,12 @@ public class Constants extends OCFConstants {
     public static final String RESP_USER_INFO        = "uinfo";
 
     public static final String RESP_USER_LIST        = "ulist";
+
+    public static final String RESP_DEVICE_ID      = "di";
+
+    public static final String RESP_CERT           = "cert";
+    
+    public static final String RESP_CACERT         = "cacert";
 
     // static token type
 
