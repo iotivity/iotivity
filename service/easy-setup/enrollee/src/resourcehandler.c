@@ -679,26 +679,66 @@ OCStackResult DeleteProvisioningResource()
 
 OCStackResult DeleteEasySetupResources()
 {
-    OCStackResult res = OCDeleteResource(gWiFiResource.handle);
-    if (res != OC_STACK_OK)
+    OCStackResult res = OC_STACK_ERROR;
+    if (gWiFiResource.handle != NULL)
     {
-        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting WiFi resource error with result: %s", getResult(res));
+        res = OCUnBindResource(gProvResource.handle, gWiFiResource.handle);
+        if(res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind WiFi resource error with result: %s", getResult(res));
+        }
     }
-    res = OCDeleteResource(gCloudResource.handle);
-    if (res != OC_STACK_OK)
+    if (gCloudResource.handle != NULL)
     {
-        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting CloudServer resource error with result: %s", getResult(res));
+        res = OCUnBindResource(gProvResource.handle, gCloudResource.handle);
+        if(res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind CloudServer resource error with result: %s", getResult(res));
+        }
     }
-    res = OCDeleteResource(gDevConfResource.handle);
-    if (res != OC_STACK_OK)
+    if (gDevConfResource.handle != NULL)
     {
-        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting DevConf resource error with result: %s", getResult(res));
+        res = OCUnBindResource(gProvResource.handle, gDevConfResource.handle);
+        if(res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind DevConf resource error with result: %s", getResult(res));
+        }
     }
 
-    res = OCDeleteResource(gProvResource.handle);
-    if (res != OC_STACK_OK)
+    if (gWiFiResource.handle != NULL)
     {
-        OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
+        res = OCDeleteResource(gWiFiResource.handle);
+        if (res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting WiFi resource error with result: %s", getResult(res));
+        }
+    }
+
+    if(gCloudResource.handle != NULL)
+    {
+        res = OCDeleteResource(gCloudResource.handle);
+        if (res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting CloudServer resource error with result: %s", getResult(res));
+        }
+    }
+
+    if(gDevConfResource.handle != NULL)
+    {
+        res = OCDeleteResource(gDevConfResource.handle);
+        if (res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting DevConf resource error with result: %s", getResult(res));
+        }
+    }
+
+    if(gProvResource.handle != NULL)
+    {
+        res = OCDeleteResource(gProvResource.handle);
+        if (res != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
+        }
     }
 
     return res;
