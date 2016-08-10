@@ -18,22 +18,42 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
+#include "iotivity_debug.h"
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
+#endif
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_NET_IF_H
 #include <net/if.h>
+#endif
 #include <errno.h>
+#include <assert.h>
 
-#ifndef WITH_ARDUINO
-#include <sys/socket.h>
-#include <netinet/in.h>
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
 
@@ -97,19 +117,27 @@ static void CATCPDestroyCond();
 static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
 static void CAFindReadyMessage();
+#if !defined(WSA_WAIT_EVENT_0)
 static void CASelectReturned(fd_set *readFds);
-static void CAReceiveMessage(int fd);
+#else
+static void CASocketEventReturned(CASocketFd_t socket);
+#endif
+static void CAReceiveMessage(CASocketFd_t fd);
 static void CAReceiveHandler(void *data);
 static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem);
 
+#if defined(WSA_WAIT_EVENT_0)
+#define CHECKFD(FD)
+#else
 #define CHECKFD(FD) \
     if (FD > caglobals.tcp.maxfd) \
         caglobals.tcp.maxfd = FD;
+#endif
 
 #define CLOSE_SOCKET(TYPE) \
     if (caglobals.tcp.TYPE.fd != OC_INVALID_SOCKET) \
     { \
-        close(caglobals.tcp.TYPE.fd); \
+        OC_CLOSE_SOCKET(caglobals.tcp.TYPE.fd); \
         caglobals.tcp.TYPE.fd = OC_INVALID_SOCKET; \
     }
 
@@ -182,6 +210,8 @@ static void CAReceiveHandler(void *data)
 
     OIC_LOG(DEBUG, TAG, "OUT - CAReceiveHandler");
 }
+
+#if !defined(WSA_WAIT_EVENT_0)
 
 static void CAFindReadyMessage()
 {
@@ -293,6 +323,178 @@ static void CASelectReturned(fd_set *readFds)
     }
 }
 
+#else // if defined(WSA_WAIT_EVENT_0)
+
+/**
+ * Push an exiting socket event to listen on
+ *
+ * @param[in] s              Socket to push
+ * @param[in] socketArray    Array in which to add socket
+ * @param[in] event          Event to push
+ * @param[in] eventArray     Array in which to add event
+ * @param[in/out] eventIndex Current length of arrays
+ * @param[in] arraySize      Maximum length of arrays
+ * @return true on success, false on failure
+ */
+static bool CAPushEvent(CASocketFd_t s, CASocketFd_t* socketArray,
+                        HANDLE event, HANDLE* eventArray, int* eventIndex, int arraySize)
+{
+    if (*eventIndex == arraySize)
+    {
+        return false;
+    }
+
+    assert(*eventIndex >= 0);
+    socketArray[*eventIndex] = s;
+    eventArray[(*eventIndex)++] = event;
+    return true;
+}
+
+/**
+ * Push a new socket event to listen on
+ *
+ * @param[in] s              Socket to push
+ * @param[in] socketArray    Array in which to add socket
+ * @param[in] eventArray     Array in which to add event
+ * @param[in/out] eventIndex Current length of arrays
+ * @param[in] arraySize      Maximum length of arrays
+ * @return true on success, false on failure
+ */
+static bool CAPushSocket(CASocketFd_t s, CASocketFd_t* socketArray,
+                         HANDLE *eventArray, int *eventIndex, int arraySize)
+{
+    if (s == OC_INVALID_SOCKET)
+    {
+        // Nothing to push.
+        return true;
+    }
+
+    WSAEVENT newEvent = WSACreateEvent();
+    if (WSA_INVALID_EVENT == newEvent)
+    {
+        OIC_LOG_V(ERROR, TAG, "WSACreateEvent(NewEvent) failed %u", WSAGetLastError());
+        return false;
+    }
+
+    if (0 != WSAEventSelect(s, newEvent, FD_READ))
+    {
+        OIC_LOG_V(ERROR, TAG, "WSAEventSelect failed %u", WSAGetLastError());
+        OC_VERIFY(WSACloseEvent(newEvent));
+        return false;
+    }
+
+    if (!CAPushEvent(s, socketArray, newEvent, eventArray, eventIndex, arraySize))
+    {
+        OIC_LOG_V(ERROR, TAG, "CAPushEvent failed");
+        OC_VERIFY(WSACloseEvent(newEvent));
+        return false;
+    }
+
+    return true;
+}
+
+#define EVENT_ARRAY_SIZE 64
+
+/**
+ * Process any message that is ready
+ */
+static void CAFindReadyMessage()
+{
+    CASocketFd_t socketArray[EVENT_ARRAY_SIZE] = {0};
+    HANDLE eventArray[_countof(socketArray)];
+    int arraySize = 0;
+    int eventIndex;
+
+    if (OC_INVALID_SOCKET != caglobals.tcp.ipv4.fd)
+    {
+        CAPushSocket(caglobals.tcp.ipv4.fd, socketArray, eventArray, &arraySize, _countof(socketArray));
+    }
+    if (OC_INVALID_SOCKET != caglobals.tcp.ipv6.fd)
+    {
+        CAPushSocket(caglobals.tcp.ipv6.fd, socketArray, eventArray, &arraySize, _countof(socketArray));
+    }
+    if (WSA_INVALID_EVENT != caglobals.tcp.shutdownEvent)
+    {
+        CAPushEvent(OC_INVALID_SOCKET, socketArray,
+                    caglobals.tcp.shutdownEvent, eventArray, &arraySize, _countof(socketArray));
+    }
+
+    uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
+    for (size_t i = 0; (i < length) && (arraySize < EVENT_ARRAY_SIZE); i++)
+    {
+        CATCPSessionInfo_t *svritem =
+                (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
+        if (svritem && OC_INVALID_SOCKET != svritem->fd)
+        {
+            CAPushSocket(svritem->fd, socketArray, eventArray, &arraySize, _countof(socketArray));
+        }
+    }
+
+    // Should not have overflowed buffer
+    assert(arraySize <= (_countof(socketArray)));
+
+    while (!caglobals.tcp.terminate)
+    {
+        DWORD ret = WSAWaitForMultipleEvents(arraySize, eventArray, FALSE, WSA_INFINITE, FALSE);
+        eventIndex = ret - WSA_WAIT_EVENT_0;
+        assert((eventIndex >= 0) && (eventIndex < arraySize));
+
+        if (false == WSAResetEvent(eventArray[eventIndex]))
+        {
+            OIC_LOG_V(ERROR, TAG, "WSAResetEvent failed %u", WSAGetLastError());
+        }
+
+        if ((caglobals.tcp.shutdownEvent != WSA_INVALID_EVENT) &&
+            (caglobals.tcp.shutdownEvent == eventArray[eventIndex]))
+        {
+            continue;
+        }
+
+        // All other events are socket events.
+        CASocketEventReturned(socketArray[eventIndex]);
+    }
+
+    while (arraySize > 0)
+    {
+        arraySize--;
+        OC_VERIFY(WSACloseEvent(eventArray[arraySize]));
+    }
+
+    if (caglobals.tcp.terminate)
+    {
+        caglobals.tcp.shutdownEvent = WSA_INVALID_EVENT;
+        WSACleanup();
+    }
+}
+
+/**
+ * Process an event (accept or receive) that is ready on a socket
+ *
+ * @param[in] s Socket to process
+ */
+static void CASocketEventReturned(CASocketFd_t s)
+{
+    if (caglobals.tcp.terminate)
+    {
+        return;
+    }
+
+    if ((caglobals.tcp.ipv4.fd != OC_INVALID_SOCKET) && (caglobals.tcp.ipv4.fd == s))
+    {
+        CAAcceptConnection(CA_IPV4, &caglobals.tcp.ipv4);
+        return;
+    }
+    if ((caglobals.tcp.ipv6.fd != OC_INVALID_SOCKET) && (caglobals.tcp.ipv6.fd == s))
+    {
+        CAAcceptConnection(CA_IPV6, &caglobals.tcp.ipv6);
+        return;
+    }
+
+    CAReceiveMessage(s);
+}
+
+#endif // WSA_WAIT_EVENT_0
+
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 {
     VERIFY_NON_NULL_VOID(sock, TAG, "sock is NULL");
@@ -312,7 +514,7 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         if (!svritem)
         {
             OIC_LOG(ERROR, TAG, "Out of memory");
-            close(sockfd);
+            OC_CLOSE_SOCKET(sockfd);
             return;
         }
 
@@ -329,7 +531,7 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         if (!result)
         {
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-            close(sockfd);
+            OC_CLOSE_SOCKET(sockfd);
             OICFree(svritem);
             oc_mutex_unlock(g_mutexObjectList);
             return;
@@ -508,7 +710,7 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
     return CA_STATUS_OK;
 }
 
-static void CAReceiveMessage(int fd)
+static void CAReceiveMessage(CASocketFd_t fd)
 {
     CAResult_t res = CA_STATUS_OK;
 
@@ -546,7 +748,7 @@ static void CAReceiveMessage(int fd)
             {
                 OIC_LOG_V(ERROR, TAG, "toal tls length is too big (buffer size : %u)",
                                     sizeof(svritem->tlsdata));
-                return CA_STATUS_FAILED;
+                return;
             }
             nbRead = tlsLength - svritem->tlsLen;
         }
@@ -619,6 +821,7 @@ static void CAReceiveMessage(int fd)
     }
 }
 
+#if !defined(WSA_WAIT_EVENT_0)
 static ssize_t CAWakeUpForReadFdsUpdate(const char *host)
 {
     if (caglobals.tcp.connectionFds[1] != -1)
@@ -637,6 +840,7 @@ static ssize_t CAWakeUpForReadFdsUpdate(const char *host)
     }
     return -1;
 }
+#endif
 
 static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t port,
                                          struct sockaddr_storage *sockaddr)
@@ -650,11 +854,13 @@ static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t 
     int r = getaddrinfo(host, NULL, &hints, &addrs);
     if (r)
     {
+#ifdef EAI_SYSTEM
         if (EAI_SYSTEM == r)
         {
             OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: errno %s", strerror(errno));
         }
         else
+#endif
         {
             OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: %s", gai_strerror(r));
         }
@@ -685,8 +891,8 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
               svritem->sep.endpoint.addr, svritem->sep.endpoint.port);
 
     // #1. create tcp socket.
-    int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
-    if (-1 == fd)
+    CASocketFd_t fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
+    if (OC_INVALID_SOCKET == fd)
     {
         OIC_LOG_V(ERROR, TAG, "create socket failed: %s", strerror(errno));
         return CA_SOCKET_OPERATION_FAILED;
@@ -695,8 +901,8 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 
     // #2. convert address from string to binary.
     struct sockaddr_storage sa = { .ss_family = family };
-    CAResult_t res = CATCPConvertNameToAddr(family, svritem->sep.endpoint.addr,
-                                            svritem->sep.endpoint.port, &sa);
+    CAResult_t res = CAConvertNameToAddr(svritem->sep.endpoint.addr,
+                                         svritem->sep.endpoint.port, &sa);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "convert name to sockaddr failed");
@@ -726,18 +932,20 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     OIC_LOG(DEBUG, TAG, "connect socket success");
     svritem->state = CONNECTED;
     CHECKFD(svritem->fd);
+#if !defined(WSA_WAIT_EVENT_0)
     ssize_t len = CAWakeUpForReadFdsUpdate(svritem->sep.endpoint.addr);
     if (-1 == len)
     {
         OIC_LOG(ERROR, TAG, "wakeup receive thread failed");
         return CA_SOCKET_OPERATION_FAILED;
     }
+#endif
     return CA_STATUS_OK;
 }
 
 static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
 {
-    VERIFY_NON_NULL_RET(sock, TAG, "sock", -1);
+    VERIFY_NON_NULL_RET(sock, TAG, "sock", OC_INVALID_SOCKET);
 
     if (OC_INVALID_SOCKET != sock->fd)
     {
@@ -748,7 +956,7 @@ static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
     socklen_t socklen = 0;
     struct sockaddr_storage server = { .ss_family = family };
 
-    int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
+    CASocketFd_t fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (OC_INVALID_SOCKET == fd)
     {
         OIC_LOG(ERROR, TAG, "Failed to create socket");
@@ -759,7 +967,7 @@ static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
     {
         // the socket is restricted to sending and receiving IPv6 packets only.
         int on = 1;
-        if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof (on)))
+        if (OC_SOCKET_ERROR == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, OPTVAL_T(&on), sizeof (on)))
         {
             OIC_LOG_V(ERROR, TAG, "IPV6_V6ONLY failed: %s", strerror(errno));
             goto exit;
@@ -774,13 +982,13 @@ static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
     }
 
     int reuse = 1;
-    if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
+    if (OC_SOCKET_ERROR == setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, OPTVAL_T(&reuse), sizeof(reuse)))
     {
         OIC_LOG(ERROR, TAG, "setsockopt SO_REUSEADDR");
         goto exit;
     }
 
-    if (-1 == bind(fd, (struct sockaddr *)&server, socklen))
+    if (OC_SOCKET_ERROR == bind(fd, (struct sockaddr *)&server, socklen))
     {
         OIC_LOG_V(ERROR, TAG, "bind socket failed: %s", strerror(errno));
         goto exit;
@@ -794,7 +1002,7 @@ static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
 
     if (!sock->port)  // return the assigned port
     {
-        if (-1 == getsockname(fd, (struct sockaddr *)&server, &socklen))
+        if (OC_SOCKET_ERROR == getsockname(fd, (struct sockaddr *)&server, &socklen))
         {
             OIC_LOG_V(ERROR, TAG, "getsockname failed: %s", strerror(errno));
             goto exit;
@@ -807,13 +1015,14 @@ static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
     return fd;
 
 exit:
-    if (fd >= 0)
+    if (fd != OC_INVALID_SOCKET)
     {
-        close(fd);
+        OC_CLOSE_SOCKET(fd);
     }
     return OC_INVALID_SOCKET;
 }
 
+#if !defined(WSA_WAIT_EVENT_0)
 static void CAInitializePipe(int *fds)
 {
     int ret = pipe(fds);
@@ -844,10 +1053,11 @@ static void CAInitializePipe(int *fds)
         }
     }
 }
+#endif
 
 #define NEWSOCKET(FAMILY, NAME) \
     caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
-    if (caglobals.tcp.NAME.fd == -1) \
+    if (caglobals.tcp.NAME.fd == OC_INVALID_SOCKET) \
     { \
         caglobals.tcp.NAME.port = 0; \
         caglobals.tcp.NAME.fd = CACreateAcceptSocket(FAMILY, &caglobals.tcp.NAME); \
@@ -905,15 +1115,25 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
                   caglobals.tcp.ipv6s.fd, caglobals.tcp.ipv6s.port);
     }
 
-    // create pipe for fast shutdown
+    // create mechanism for fast shutdown
+#ifdef WSA_WAIT_EVENT_0
+    caglobals.tcp.shutdownEvent = WSACreateEvent();
+    if (WSA_INVALID_EVENT == caglobals.tcp.shutdownEvent)
+    {
+        OIC_LOG(ERROR, TAG, "failed to create shutdown event");
+        return res;
+    }
+#else
     CAInitializePipe(caglobals.tcp.shutdownFds);
     CHECKFD(caglobals.tcp.shutdownFds[0]);
     CHECKFD(caglobals.tcp.shutdownFds[1]);
+#endif
 
-    // create pipe for connection event
+#ifndef WSA_WAIT_EVENT_0
     CAInitializePipe(caglobals.tcp.connectionFds);
     CHECKFD(caglobals.tcp.connectionFds[0]);
     CHECKFD(caglobals.tcp.connectionFds[1]);
+#endif
 
     caglobals.tcp.terminate = false;
     res = ca_thread_pool_add_task(threadPool, CAReceiveHandler, NULL);
@@ -942,6 +1162,7 @@ void CATCPStopServer()
     // set terminate flag.
     caglobals.tcp.terminate = true;
 
+#if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.tcp.shutdownFds[1] != -1)
     {
         close(caglobals.tcp.shutdownFds[1]);
@@ -953,6 +1174,13 @@ void CATCPStopServer()
         close(caglobals.tcp.connectionFds[1]);
         caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
     }
+#else
+    // receive thread will stop immediately.
+    if (!WSASetEvent(caglobals.tcp.shutdownEvent))
+    {
+        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %u", GetLastError());
+    }
+#endif
 
     // close accept socket.
     CLOSE_SOCKET(ipv4);
@@ -1056,7 +1284,7 @@ static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
             }
             continue;
         }
-        data += len;
+        data = ((char*)data) + len;
         remainLen -= len;
     } while (remainLen > 0);
 
@@ -1175,7 +1403,7 @@ CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint)
         if (!res)
         {
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-            close(svritem->fd);
+            OC_CLOSE_SOCKET(svritem->fd);
             OICFree(svritem);
             oc_mutex_unlock(g_mutexObjectList);
             return OC_INVALID_SOCKET;
@@ -1211,11 +1439,11 @@ CAResult_t CADisconnectTCPSession(size_t index)
     }
 
     // close the socket and remove session info in list.
-    if (removedData->fd >= 0)
+    if (removedData->fd != OC_INVALID_SOCKET)
     {
         shutdown(removedData->fd, SHUT_RDWR);
-        close(removedData->fd);
-        removedData->fd = -1;
+        OC_CLOSE_SOCKET(removedData->fd);
+        removedData->fd = OC_INVALID_SOCKET;
         OIC_LOG(DEBUG, TAG, "close socket");
         removedData->state = (CONNECTED == removedData->state) ?
                                     DISCONNECTED : removedData->state;
@@ -1325,7 +1553,7 @@ CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint)
     return OC_INVALID_SOCKET;
 }
 
-CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
+CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd, size_t *index)
 {
     oc_mutex_lock(g_mutexObjectList);
 

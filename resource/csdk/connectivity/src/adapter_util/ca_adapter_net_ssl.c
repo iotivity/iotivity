@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
 #define _GNU_SOURCE
 
 #include <stddef.h>
@@ -49,10 +50,16 @@
 #include "mbedtls/version.h"
 #endif
 
-#ifdef __unix__
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -317,43 +324,6 @@ static void DebugSsl(void *ctx, int level, const char *file, int line, const cha
 }
 #endif
 
-#if defined(_WIN32)
-/*
- * Finds the first occurrence of the byte string s in byte string l.
- */
-
-static void * memmem(const void *l, size_t lLen, const void *s, size_t sLen)
-{
-    char *cur;
-    char *last;
-    const char *cl = (const char *)l;
-    const char *cs = (const char *)s;
-
-    if (lLen == 0 || sLen == 0)
-    {
-        return NULL;
-    }
-    if (lLen < sLen)
-    {
-        return NULL;
-    }
-    if (sLen == 1)
-    {
-        return (void *)memchr(l, (int)*cs, lLen);
-    }
-
-    last = (char *)cl + lLen - sLen;
-
-    for (cur = (char *)cl; cur <= last; cur++)
-    {
-        if (cur[0] == cs[0] && memcmp(cur, cs, sLen) == 0)
-        {
-            return cur;
-        }
-    }
-    return NULL;
-}
-#endif
 /**
  * structure to holds the information of cache message and address info.
  */

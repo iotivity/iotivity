@@ -28,12 +28,6 @@
 
 #include "iotivity_config.h"
 
-#ifndef WITH_ARDUINO
-#ifdef TCP_ADAPTER
-#define HAVE_SYS_POLL_H
-#endif
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -573,9 +567,9 @@ typedef struct
 #else
         int netlinkFd;              /**< netlink */
         int shutdownFds[2];         /**< fds used to signal threads to stop */
+        int maxfd;                  /**< highest fd (for select) */
 #endif
         int selectTimeout;          /**< in seconds */
-        int maxfd;                  /**< highest fd (for select) */
         bool started;               /**< the IP adapter has started */
         bool terminate;             /**< the IP adapter needs to stop */
         bool ipv6enabled;           /**< IPv6 enabled by OCInit flags */
@@ -612,9 +606,13 @@ typedef struct
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
+#if defined(_WIN32)
+        WSAEVENT shutdownEvent; /**< Event used to signal threads to stop */
+#else
         int shutdownFds[2];     /**< shutdown pipe */
         int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
+#endif
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */

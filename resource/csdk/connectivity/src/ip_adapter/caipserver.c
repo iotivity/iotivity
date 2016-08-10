@@ -161,14 +161,14 @@ static void CAReceiveHandler(void *data)
     }
 }
 
-#if !defined(WSA_WAIT_EVENT_0)
-
 #define CLOSE_SOCKET(TYPE) \
     if (caglobals.ip.TYPE.fd != OC_INVALID_SOCKET) \
     { \
-        close(caglobals.ip.TYPE.fd); \
+        OC_CLOSE_SOCKET(caglobals.ip.TYPE.fd); \
         caglobals.ip.TYPE.fd = OC_INVALID_SOCKET; \
     }
+
+#if !defined(WSA_WAIT_EVENT_0)
 
 #define SET(TYPE, FDS) \
     if (caglobals.ip.TYPE.fd != OC_INVALID_SOCKET) \
@@ -290,13 +290,6 @@ static void CASelectReturned(fd_set *readFds, int ret)
 }
 
 #else // if defined(WSA_WAIT_EVENT_0)
-
-#define CLOSE_SOCKET(TYPE) \
-    if (caglobals.ip.TYPE.fd != OC_INVALID_SOCKET) \
-    { \
-        closesocket(caglobals.ip.TYPE.fd); \
-        caglobals.ip.TYPE.fd = OC_INVALID_SOCKET; \
-    }
 
 #define PUSH_HANDLE(HANDLE, ARRAY, INDEX) \
 { \
@@ -772,11 +765,7 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
         if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, OPTVAL_T(&on), sizeof (on)))
         {
             OIC_LOG_V(ERROR, TAG, "SO_REUSEADDR failed: %s", CAIPS_GET_ERROR);
-#ifdef _WIN32
-            closesocket(fd);
-#else
-            close(fd);
-#endif
+            OC_CLOSE_SOCKET(fd);
             return OC_INVALID_SOCKET;
         }
     }
@@ -784,11 +773,7 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
     if (OC_SOCKET_ERROR == bind(fd, (struct sockaddr *)&sa, socklen))
     {
         OIC_LOG_V(ERROR, TAG, "bind socket failed: %s", CAIPS_GET_ERROR);
-#ifdef _WIN32
-        closesocket(fd);
-#else
-        close(fd);
-#endif
+        OC_CLOSE_SOCKET(fd);
         return OC_INVALID_SOCKET;
     }
 
@@ -797,11 +782,7 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
         if (OC_SOCKET_ERROR == getsockname(fd, (struct sockaddr *)&sa, &socklen))
         {
             OIC_LOG_V(ERROR, TAG, "getsockname failed: %s", CAIPS_GET_ERROR);
-#ifdef _WIN32
-            closesocket(fd);
-#else
-            close(fd);
-#endif
+            OC_CLOSE_SOCKET(fd);
             return OC_INVALID_SOCKET;
         }
         *port = ntohs(family == AF_INET6 ?
@@ -812,9 +793,14 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
     return fd;
 }
 
+#ifdef _WIN32
+#define CHECKFD(FD)
+#else
 #define CHECKFD(FD) \
     if (FD > caglobals.ip.maxfd) \
         caglobals.ip.maxfd = FD;
+#endif
+
 #define NEWSOCKET(FAMILY, NAME, MULTICAST) \
     caglobals.ip.NAME.fd = CACreateSocket(FAMILY, &caglobals.ip.NAME.port, MULTICAST); \
     if (caglobals.ip.NAME.fd == OC_INVALID_SOCKET) \

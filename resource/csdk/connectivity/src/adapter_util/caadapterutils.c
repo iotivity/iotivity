@@ -131,16 +131,13 @@ CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
 }
 
 #else // not with_arduino
-/*
- * These two conversion functions return void because errors can't happen
- * (because of NI_NUMERIC), and there's nothing to do if they do happen.
- */
-void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
-                         char *host, uint16_t *port)
+CAResult_t CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
+                               char *host, uint16_t *port)
 {
-    VERIFY_NON_NULL_VOID(sockAddr, CA_ADAPTER_UTILS_TAG, "sockAddr is null");
-    VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
-    VERIFY_NON_NULL_VOID(port, CA_ADAPTER_UTILS_TAG, "port is null");
+    VERIFY_NON_NULL_RET(sockAddr, CA_ADAPTER_UTILS_TAG, "sockAddr is null",
+                        CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(host, CA_ADAPTER_UTILS_TAG, "host is null", CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(port, CA_ADAPTER_UTILS_TAG, "port is null", CA_STATUS_INVALID_PARAM);
 
     int r = getnameinfo((struct sockaddr *)sockAddr,
                         sockAddrLen,
@@ -167,19 +164,20 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getnameinfo failed: %s", gai_strerror(r));
 #endif
-        return;
+        return CA_STATUS_FAILED;
     }
     *port = ntohs(((struct sockaddr_in *)sockAddr)->sin_port); // IPv4 and IPv6
+    return CA_STATUS_OK;
 }
 
-void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr)
+CAResult_t CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr)
 {
-    VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
-    VERIFY_NON_NULL_VOID(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null");
+    VERIFY_NON_NULL_RET(host, CA_ADAPTER_UTILS_TAG, "host is null", CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null",
+                        CA_STATUS_INVALID_PARAM);
 
     struct addrinfo *addrs = NULL;
     struct addrinfo hints = { .ai_family = AF_UNSPEC,
-                              .ai_socktype = SOCK_DGRAM,
                               .ai_flags = AI_NUMERICHOST };
 
     int r = getaddrinfo(host, NULL, &hints, &addrs);
@@ -203,7 +201,7 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getaddrinfo failed: %s", gai_strerror(r));
 #endif
-        return;
+        return CA_STATUS_FAILED;
     }
     // assumption: in this case, getaddrinfo will only return one addrinfo
     // or first is the one we want.
@@ -218,6 +216,7 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
         ((struct sockaddr_in *)sockaddr)->sin_port = htons(port);
     }
     freeaddrinfo(addrs);
+    return CA_STATUS_OK;
 }
 #endif // WITH_ARDUINO
 

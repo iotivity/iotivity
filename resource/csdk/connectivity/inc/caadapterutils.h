@@ -206,17 +206,19 @@ void CAClearServerInfoList(u_arraylist_t *serverInfoList);
  * @param[in]    sockAddrLen  size of sockAddr.
  * @param[out]   host         address string (must be CA_IPADDR_SIZE).
  * @param[out]   port         host order port number.
+ * @return CA_STATUS_OK on success, or an appropriate error code on failure.
  */
-void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
-                         char *host, uint16_t *port);
+CAResult_t CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
+                               char *host, uint16_t *port);
 
 /**
  * Convert address from string to binary.
  * @param[in]   host      address string.
  * @param[in]   port      host order port number.
  * @param[out]  ipaddr    IP address info.
+ * @return CA_STATUS_OK on success, or an appropriate error code on failure.
  */
-void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
+CAResult_t CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
 #endif /* WITH_ARDUINO */
 
 #ifdef __JAVA__

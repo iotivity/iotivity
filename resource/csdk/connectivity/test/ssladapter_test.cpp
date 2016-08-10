@@ -32,6 +32,7 @@
 #define CAsetSslHandshakeCallback CAsetSslHandshakeCallbackTest
 #define CAsetTlsCipherSuite CAsetTlsCipherSuiteTest
 #define CAsslGenerateOwnerPsk CAsslGenerateOwnerPskTest
+#define CAcloseSslConnectionAll CAcloseSslConnectionAllTest
 
 #include "../src/adapter_util/ca_adapter_net_ssl.c"
 

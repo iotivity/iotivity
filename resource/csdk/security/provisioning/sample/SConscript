@@ -73,7 +73,6 @@ if target_os not in ['msys_nt', 'windows']:
 	provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:
 	provisioning_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
-	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'advapi32'])
 
 provisioning_env.PrependUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'connectivity_abstraction', 'coap'])
 

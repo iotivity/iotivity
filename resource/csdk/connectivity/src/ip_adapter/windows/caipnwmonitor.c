@@ -416,6 +416,13 @@ BOOL RegisterForIpAddressChange()
 CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
                                    CATransportAdapter_t adapter)
 {
+    if (g_CAIPNetworkMonitorNotificationHandle != NULL)
+    {
+        // The monitor has already been started. This can happen when using both the
+        // IP and TCP transport adapters.
+        return CA_STATUS_OK;
+    }
+
     CAResult_t res = CAIPInitializeNetworkMonitorList();
     if (res != CA_STATUS_OK)
     {
@@ -425,26 +432,28 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
     res = CAIPSetNetworkMonitorCallback(callback, adapter);
     if (res != CA_STATUS_OK)
     {
+        CAIPDestroyNetworkMonitorList();
         return res;
     }
 
-    if (g_CAIPNetworkMonitorNotificationHandle == NULL)
-    {
 #ifdef USE_SOCKET_ADDRESS_CHANGE_EVENT
-        if (!RegisterForIpAddressChange())
-        {
-            return CA_STATUS_FAILED;
-        }
-#else
-        int err = NotifyUnicastIpAddressChange(AF_UNSPEC, IpAddressChangeCallback, NULL,
-                                               true,
-                                               &g_CAIPNetworkMonitorNotificationHandle);
-        if (err != NO_ERROR)
-        {
-            return CA_STATUS_FAILED;
-        }
-#endif
+    if (!RegisterForIpAddressChange())
+    {
+        CAIPDestroyNetworkMonitorList();
+        CAIPUnSetNetworkMonitorCallback(adapter);
+        return CA_STATUS_FAILED;
     }
+#else
+    int err = NotifyUnicastIpAddressChange(AF_UNSPEC, IpAddressChangeCallback, NULL,
+                                           true,
+                                           &g_CAIPNetworkMonitorNotificationHandle);
+    if (err != NO_ERROR)
+    {
+        CAIPDestroyNetworkMonitorList();
+        CAIPUnSetNetworkMonitorCallback(adapter);
+        return CA_STATUS_FAILED;
+    }
+#endif
     return CA_STATUS_OK;
 }
 

@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  * *****************************************************************/
+#include "iotivity_config.h"
 #include "utils.h"
 
 #include "logger.h"
@@ -46,7 +47,9 @@
 #include "mbedtls/version.h"
 #endif
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 
 #define TAG "OIC_CLOUD_CSR"

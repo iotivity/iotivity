@@ -89,10 +89,11 @@ else:
 mbedtls_env = env.Clone()
 mbedtls_env.PrependUnique(CPPPATH = [mbedtls_dir])
 mbedtls_env.AppendUnique(CPPPATH = [mbedtls_dir+'include/'])
-mbedtls_env.AppendUnique(CFLAGS = ['-Wall'])
+if 'g++' in mbedtls_env.get('CXX'):
+    mbedtls_env.AppendUnique(CFLAGS = ['-Wall'])
 
-if mbedtls_env['CC'] != 'cl':
-    mbedtls_env.AppendUnique(CFLAGS = ['-fPIC'])
+    if mbedtls_env['CC'] != 'cl':
+        mbedtls_env.AppendUnique(CFLAGS = ['-fPIC'])
 
 ######################################################################
 # Source files and Target(s)
