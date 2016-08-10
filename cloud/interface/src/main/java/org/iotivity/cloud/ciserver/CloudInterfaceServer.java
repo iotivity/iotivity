@@ -33,12 +33,13 @@ import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
 import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
 import org.iotivity.cloud.ciserver.resources.proxy.account.AclGroup;
+import org.iotivity.cloud.ciserver.resources.proxy.account.AclInvite;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Certificate;
 import org.iotivity.cloud.ciserver.resources.proxy.mq.MessageQueue;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Certificate;
 import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
@@ -56,15 +57,12 @@ public class CloudInterfaceServer {
 
         boolean tlsMode = Integer.parseInt(args[7]) == 1;
 
-        ConnectorPool.addConnection("rd",
-                new InetSocketAddress(args[1], Integer.parseInt(args[2])),
-                tlsMode);
-        ConnectorPool.addConnection("account",
-                new InetSocketAddress(args[3], Integer.parseInt(args[4])),
-                tlsMode);
-        ConnectorPool.addConnection("mq",
-                new InetSocketAddress(args[5], Integer.parseInt(args[6])),
-                tlsMode);
+        ConnectorPool.addConnection("rd", new InetSocketAddress(args[1],
+                Integer.parseInt(args[2])), tlsMode);
+        ConnectorPool.addConnection("account", new InetSocketAddress(args[3],
+                Integer.parseInt(args[4])), tlsMode);
+        ConnectorPool.addConnection("mq", new InetSocketAddress(args[5],
+                Integer.parseInt(args[6])), tlsMode);
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
@@ -78,6 +76,7 @@ public class CloudInterfaceServer {
         Acl aclHandler = new Acl();
         AclGroup aclGroupHandler = new AclGroup();
         Certificate certHandler = new Certificate();
+        AclInvite aclInviteHandler = new AclInvite();
 
         CoapDevicePool devicePool = deviceServer.getDevicePool();
 
@@ -101,15 +100,17 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(certHandler);
 
-        KeepAliveResource resKeepAlive = new KeepAliveResource(
-                new int[] { 1, 2, 4, 8 });
+        deviceServer.addResource(aclInviteHandler);
+
+        KeepAliveResource resKeepAlive = new KeepAliveResource(new int[] { 1,
+                2, 4, 8 });
 
         deviceServer.addResource(resKeepAlive);
 
         deviceServer.addResource(new DiResource(devicePool));
 
-        deviceServer.addServer(new CoapServer(
-                new InetSocketAddress(Integer.parseInt(args[0]))));
+        deviceServer.addServer(new CoapServer(new InetSocketAddress(Integer
+                .parseInt(args[0]))));
 
         // deviceServer.addServer(new HttpServer(new InetSocketAddress(8080)));
 

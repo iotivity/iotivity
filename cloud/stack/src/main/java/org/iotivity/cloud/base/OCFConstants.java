@@ -23,31 +23,31 @@ package org.iotivity.cloud.base;
 
 public class OCFConstants {
     /* resource Interface for keep-alive */
-    public static final String DEFAULT_INTERFACE = "oic.if.baseline";
+    public static final String DEFAULT_INTERFACE   = "oic.if.baseline";
 
-    public static final String LINK_INTERFACE = "oic.if.ll";
+    public static final String LINK_INTERFACE      = "oic.if.ll";
 
-    public static final String PREFIX_WELL_KNOWN = ".well-known";
+    public static final String PREFIX_WELL_KNOWN   = ".well-known";
 
-    public static final String PREFIX_OCF = "ocf";
+    public static final String PREFIX_OCF          = "ocf";
 
-    public static final String PREFIX_OIC = "oic";
+    public static final String PREFIX_OIC          = "oic";
 
-    public static final String RS_INTERFACE = "if";
+    public static final String RS_INTERFACE        = "if";
 
     /* resource url for account */
-    public static final String ACCOUNT_URI = "account";
+    public static final String ACCOUNT_URI         = "account";
 
-    public static final String SESSION_URI = "session";
+    public static final String SESSION_URI         = "session";
 
-    public static final String DEVICE_URI = "device";
+    public static final String DEVICE_URI          = "device";
 
-    public static final String TOKEN_REFRESH_URI = "tokenrefresh";
+    public static final String TOKEN_REFRESH_URI   = "tokenrefresh";
 
     /* resource url for acl */
-    public static final String CREDPROV_URI = "credprov";
+    public static final String CREDPROV_URI        = "credprov";
 
-    public static final String CERT_URI = "cert";
+    public static final String CERT_URI            = "cert";
 
     /* resource url for acl */
     public static final String ACL_URI             = "acl";
@@ -58,31 +58,32 @@ public class OCFConstants {
 
     public static final String ID_URI              = "id";
 
+    public static final String INVITE_URI          = "invite";
+
     /* resource uri to publish, update, delete resource info */
-    public static final String RD_URI = "rd";
+    public static final String RD_URI              = "rd";
 
     /* resource uri for keep-alive */
-    public static final String KEEP_ALIVE_URI = "ping";
+    public static final String KEEP_ALIVE_URI      = "ping";
 
     /* resource uri to discover resource info */
-    public static final String WELL_KNOWN_URI = "res";
+    public static final String WELL_KNOWN_URI      = "res";
 
     /* resource uri for resource presence */
-    public static final String RES_PRESENCE_URI = "ad";
+    public static final String RES_PRESENCE_URI    = "ad";
 
     /* resource uri for device presence */
     public static final String DEVICE_PRESENCE_URI = "prs";
 
     /* resource uri for message queue */
-    public static final String MQ_BROKER_URI = "ps";
-    public static final String MQ_BROKER_RT = "oic.wk.ps";
+    public static final String MQ_BROKER_URI       = "ps";
 
     /* file path for tls communication - Modify filePath to yours */
-    public static final String ROOT_CERT_FILE = "./rootca.crt";
+    public static final String ROOT_CERT_FILE      = "./rootca.crt";
 
-    public static final String CLOUD_CERT_FILE = "./iotivitycloud.crt";
+    public static final String CLOUD_CERT_FILE     = "./iotivitycloud.crt";
 
-    public static final String CLOUD_KEY_FILE = "./iotivitycloud.key";
+    public static final String CLOUD_KEY_FILE      = "./iotivitycloud.key";
 
     /* cloud uuid */
     public static final String CLOUD_UUID          = "2a6085d1-815d-4277-baba-4e4e4df91308";

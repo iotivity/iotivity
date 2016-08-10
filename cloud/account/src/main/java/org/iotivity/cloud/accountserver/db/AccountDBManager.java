@@ -69,6 +69,7 @@ public class AccountDBManager {
         mongoDB.createTable(Constants.USER_TABLE);
         mongoDB.createTable(Constants.TOKEN_TABLE);
         mongoDB.createTable(Constants.GROUP_TABLE);
+        mongoDB.createTable(Constants.INVITE_TABLE);
         mongoDB.createTable(Constants.DEVICE_TABLE);
         mongoDB.createTable(Constants.ACL_TABLE);
         mongoDB.createTable(Constants.ACLTEMPLATE_TABLE);
@@ -94,6 +95,14 @@ public class AccountDBManager {
 
         mongoDB.createIndex(Constants.GROUP_TABLE, keys);
         keyField.put(Constants.GROUP_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_INVITE_USER);
+        keys.add(Constants.KEYFIELD_GID);
+        keys.add(Constants.KEYFIELD_INVITED_USER);
+
+        mongoDB.createIndex(Constants.INVITE_TABLE, keys);
+        keyField.put(Constants.INVITE_TABLE, keys);
 
         keys = new ArrayList<>();
         keys.add(Constants.KEYFIELD_UUID);

@@ -22,6 +22,7 @@
 package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.Device;
@@ -29,32 +30,58 @@ import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
-import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.util.Cbor;
 
-public class Account extends Resource {
+public class AclInvite extends Resource {
+
     IRequestChannel mAuthServer = null;
 
-    public Account() {
+    public AclInvite() {
         super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI));
+                Constants.ACL_URI, Constants.INVITE_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
+
     }
 
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        if (request.getMethod().equals(RequestMethod.DELETE)) {
-            StringBuffer additionalQuery = new StringBuffer();
-            additionalQuery
-                    .append(Constants.USER_ID + "=" + srcDevice.getUserId());
-            String uriQuery = request.getUriQuery() + ";"
-                    + additionalQuery.toString();
-            request = MessageBuilder.modifyRequest(request, null, uriQuery,
-                    null, null);
+
+        switch (request.getMethod()) {
+
+            case POST:
+
+                Cbor<HashMap<String, Object>> cbor = new Cbor<>();
+                HashMap<String, Object> payload = cbor.parsePayloadFromCbor(
+                        request.getPayload(), HashMap.class);
+
+                payload.put(Constants.USER_ID, srcDevice.getUserId());
+
+                request = MessageBuilder.modifyRequest(request, null, null,
+                        ContentFormat.APPLICATION_CBOR,
+                        cbor.encodingPayloadToCbor(payload));
+                break;
+
+            default:
+
+                StringBuffer additionalQuery = new StringBuffer();
+                additionalQuery.append(
+                        Constants.USER_ID + "=" + srcDevice.getUserId());
+
+                String uriQuery = additionalQuery.toString()
+                        + (request.getUriQuery() != null
+                                ? (";" + request.getUriQuery()) : "");
+                request = MessageBuilder.modifyRequest(request, null, uriQuery,
+                        null, null);
+
+                break;
         }
+
         mAuthServer.sendRequest(request, srcDevice);
     }
+
 }

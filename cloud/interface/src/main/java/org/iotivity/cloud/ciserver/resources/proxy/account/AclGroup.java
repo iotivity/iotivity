@@ -62,9 +62,7 @@ public class AclGroup extends Resource {
                     payloadData.put(Constants.REQ_GROUP_MASTER_ID,
                             srcDevice.getUserId());
                 } else {
-                    if (!payloadData.containsKey(Constants.REQ_DEVICE_LIST)
-                            && !payloadData
-                                    .containsKey(Constants.REQ_MEMBER_LIST)) {
+                    if (payloadData.isEmpty()) {
                         payloadData.put(Constants.REQ_MEMBER_LIST,
                                 Arrays.asList(srcDevice.getUserId()));
                     }
@@ -81,13 +79,12 @@ public class AclGroup extends Resource {
                         uriGetQuery.toString(), null, null);
                 break;
             case DELETE:
-                String uriDeleteQuery;
                 StringBuffer additionalQuery = new StringBuffer();
                 if (getUriPathSegments()
                         .containsAll(request.getUriPathSegments())) {
                     additionalQuery.append(Constants.REQ_GROUP_MASTER_ID + "="
                             + srcDevice.getUserId());
-                    uriDeleteQuery = request.getUriQuery() + ";"
+                    String uriDeleteQuery = request.getUriQuery() + ";"
                             + additionalQuery.toString();
                     request = MessageBuilder.modifyRequest(request, null,
                             uriDeleteQuery, null, null);

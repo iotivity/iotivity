@@ -37,6 +37,8 @@ public class Constants extends OCFConstants {
 
     public static final String GROUP_TABLE           = "GROUP_TABLE";
 
+    public static final String INVITE_TABLE          = "INVITE_TABLE";
+
     public static final String DEVICE_TABLE          = "DEVICE_TABLE";
 
     public static final String ACL_TABLE             = "ACL_TABLE";
@@ -70,6 +72,10 @@ public class Constants extends OCFConstants {
     public static final String KEYFIELD_ISSUED_TIME  = "issuedtime";
 
     public static final String KEYFIELD_EXPIRED_TIME = "expiredtime";
+
+    public static final String KEYFIELD_INVITE_USER  = "inviteUser";
+
+    public static final String KEYFIELD_INVITED_USER = "invitedUser";
 
     // Request payload key
 
@@ -109,7 +115,9 @@ public class Constants extends OCFConstants {
 
     public static final String REQ_GTYPE_PUBLIC      = "Public";
 
-    public static final String REQ_CSR             = "csr";
+    public static final String REQ_CSR               = "csr";
+
+    public static final String REQ_INVITE            = "invite";
 
     // Response payload key
 
@@ -135,11 +143,15 @@ public class Constants extends OCFConstants {
 
     public static final String RESP_USER_LIST        = "ulist";
 
-    public static final String RESP_DEVICE_ID      = "di";
+    public static final String RESP_DEVICE_ID        = "di";
 
-    public static final String RESP_CERT           = "cert";
-    
-    public static final String RESP_CACERT         = "cacert";
+    public static final String RESP_CERT             = "cert";
+
+    public static final String RESP_CACERT           = "cacert";
+
+    public static final String RESP_INVITE           = "invite";
+
+    public static final String RESP_INVITED          = "invited";
 
     // static token type
 

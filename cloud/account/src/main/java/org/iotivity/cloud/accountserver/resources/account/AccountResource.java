@@ -145,8 +145,7 @@ public class AccountResource extends Resource {
                     "uid and search query param are null");
         }
 
-
-        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
+        return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));
     }
