@@ -133,7 +133,7 @@ void onDiscoverProvider(OIC::Service::NSProvider *provider)
     return ;
 }
 
-void onSubscriptionAccepted(OIC::Service::NSProvider *provider)
+void onProviderChanged(OIC::Service::NSProvider *provider,OIC::Service::NSResponse response)
 {
     LOGD ("ConsumerService_onSubscriptionAccepted");
 
@@ -187,6 +187,7 @@ void onSubscriptionAccepted(OIC::Service::NSProvider *provider)
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return ;
     }
+    //TODO: Modify to call ProviderChanged Cb adding topic in Java
     jmethodID mid = env->GetMethodID(
                         cls,
                         "onSubscriptionAccepted",
@@ -499,7 +500,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
 
     OIC::Service::NSConsumerService::ConsumerConfig cfg;
     cfg.m_discoverCb = onDiscoverProvider;
-    cfg.m_acceptedCb = onSubscriptionAccepted;
+    cfg.m_changedCb = onProviderChanged;
 
     OIC::Service::NSConsumerService::getInstance()->Start(cfg);
 
@@ -529,10 +530,10 @@ Java_org_iotivity_service_ns_consumer_ConsumerService_nativeEnableRemoteService
     if (!jServerAddress)
     {
         ThrowNSException(NS_ERROR, "EnableRemoteService server address NULL");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
     const char *serverAddress = env->GetStringUTFChars(jServerAddress, 0);
-    OIC::Service::Result res =
+    OIC::Service::NSResult res =
         OIC::Service::NSConsumerService::getInstance()->EnableRemoteService(std::string(serverAddress));
     env->ReleaseStringUTFChars(jServerAddress, serverAddress);
     return (jint) res;

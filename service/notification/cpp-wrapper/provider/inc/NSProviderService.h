@@ -31,7 +31,7 @@
 #include "NSConsumer.h"
 #include "NSSyncInfo.h"
 #include "NSMessage.h"
-#include "NSErrorCode.h"
+#include "NSUtils.h"
 
 namespace OIC
 {
@@ -103,34 +103,34 @@ namespace OIC
                       * and onMessageSynchronized function listeners
                       * @return :: result code of Provider Service
                       */
-                Result Start(ProviderConfig config);
+                NSResult Start(ProviderConfig config);
 
                 /**
                       * Terminate notification service for provider
                       * @return :: result code of Provider Service
                       */
-                Result Stop();
+                NSResult Stop();
 
                 /**
                       * Request to publish resource to cloud server
                       * @param[in]  server address combined with IP address and port number using delimiter :
                       * @return  result code of Provider Service
                       */
-                Result EnableRemoteService(const std::string &serverAddress);
+                NSResult EnableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Request to cancel remote service using cloud server
                       * @param[in]  server address combined with IP address and port number using delimiter :
                       * @return  result code of Provider Service
                       */
-                Result DisableRemoteService(const std::string &serverAddress);
+                NSResult DisableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Send notification message to all subscribers
                       * @param[in]  msg  Notification message including id, title, contentText
                       * @return :: result code of Provider Service
                       */
-                Result SendMessage(NSMessage *msg);
+                NSResult SendMessage(NSMessage *msg);
 
 
                 /**

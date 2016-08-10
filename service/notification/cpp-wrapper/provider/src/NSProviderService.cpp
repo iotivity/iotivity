@@ -78,7 +78,7 @@ namespace OIC
             return &s_instance;
         }
 
-        Result NSProviderService::Start(NSProviderService::ProviderConfig config)
+        NSResult NSProviderService::Start(NSProviderService::ProviderConfig config)
         {
             NS_LOG(DEBUG, "Start - IN");
 
@@ -89,25 +89,25 @@ namespace OIC
             nsConfig.policy = config.policy;
             nsConfig.userInfo = OICStrdup(config.userInfo.c_str());
 
-            Result result = (Result) NSStartProvider(nsConfig);
+            NSResult result = (NSResult) NSStartProvider(nsConfig);
             NS_LOG(DEBUG, "Start - OUT");
             return result;
         }
 
-        Result NSProviderService::Stop()
+        NSResult NSProviderService::Stop()
         {
             NS_LOG(DEBUG, "Stop - IN");
-            Result result = (Result) NSStopProvider();
+            NSResult result = (NSResult) NSStopProvider();
             NS_LOG(DEBUG, "Stop - OUT");
             return result;
         }
 
-        Result NSProviderService::EnableRemoteService(const std::string &serverAddress)
+        NSResult NSProviderService::EnableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "EnableRemoteService - IN");
-            Result result = Result::ERROR;
+            NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
-            result = (Result) NSProviderEnableRemoteService(OICStrdup(serverAddress.c_str()));
+            result = (NSResult) NSProviderEnableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
 #endif
@@ -115,12 +115,12 @@ namespace OIC
             return result;
         }
 
-        Result NSProviderService::DisableRemoteService(const std::string &serverAddress)
+        NSResult NSProviderService::DisableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "DisableRemoteService - IN");
-            Result result = Result::ERROR;
+            NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
-            result = (Result) NSProviderDisableRemoteService(OICStrdup(serverAddress.c_str()));
+            result = (NSResult) NSProviderDisableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
 #endif
@@ -128,12 +128,12 @@ namespace OIC
             return result;
         }
 
-        Result NSProviderService::SendMessage(NSMessage *msg)
+        NSResult NSProviderService::SendMessage(NSMessage *msg)
         {
             NS_LOG(DEBUG, "SendMessage - IN");
-            Result result = Result::ERROR;
+            NSResult result = NSResult::ERROR;
             if (msg != nullptr)
-                result = (Result) NSSendMessage(getNSMessage(msg));
+                result = (NSResult) NSSendMessage(getNSMessage(msg));
             else
                 NS_LOG(DEBUG, "Empty Message");
             NS_LOG(DEBUG, "SendMessage - OUT");

@@ -435,7 +435,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     {
         LOGE("Fail to set listeners");
         ThrowNSException(NS_ERROR, "Listener cannot be null");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
 
     if (g_obj_subscriptionListener != NULL)
@@ -457,8 +457,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     cfg.m_syncInfoCb =  onSyncInfoListenerCb;
     cfg.policy = (bool) jPolicy;
 
-    OIC::Service::Result result = OIC::Service::NSProviderService::getInstance()->Start(cfg);
-    if (result != OIC::Service::Result::OK)
+    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->Start(cfg);
+    if (result != OIC::Service::NSResult::OK)
     {
         LOGE("Fail to start NSProviderService");
 
@@ -473,8 +473,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
 {
     LOGI("JNIProviderService: nativeStop - IN");
 
-    OIC::Service::Result result = OIC::Service::NSProviderService::getInstance()->Stop();
-    if (result !=  OIC::Service::Result::OK)
+    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->Stop();
+    if (result !=  OIC::Service::NSResult::OK)
     {
         LOGI("Fail to stop NSProvider service");
         return (jint) result;
@@ -497,17 +497,17 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     {
         LOGI("Fail to send notification - Message is null");
         ThrowNSException(NS_ERROR, "Message cannot be null");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
     OIC::Service::NSMessage *nsMsg = getMessage(env, jMsg);
     if (nsMsg == nullptr)
     {
         ThrowNSException(NS_ERROR, "Message didn't have a field ID ");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
 
-    OIC::Service::Result result = OIC::Service::NSProviderService::getInstance()->SendMessage(nsMsg);
-    if (result !=  OIC::Service::Result::OK)
+    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->SendMessage(nsMsg);
+    if (result !=  OIC::Service::NSResult::OK)
     {
         LOGI("Fail to send NSProvider Message");
     }
@@ -533,14 +533,14 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService(
     if (!jstr)
     {
         ThrowNSException(NS_ERROR, "Server Address Can't be NULL");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
 
     const char *address = env->GetStringUTFChars( jstr, NULL);
     std::string servAddress(address);
-    OIC::Service::Result result  = OIC::Service::NSProviderService::getInstance()->EnableRemoteService(
+    OIC::Service::NSResult result  = OIC::Service::NSProviderService::getInstance()->EnableRemoteService(
                                        servAddress);
-    if (result !=  OIC::Service::Result::OK)
+    if (result !=  OIC::Service::NSResult::OK)
     {
         LOGE("Fail to Enable Remote Service");
     }
@@ -557,14 +557,14 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
     if (!jstr)
     {
         ThrowNSException(NS_ERROR, "Server Address Can't be NULL");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
 
     const char *address = env->GetStringUTFChars( jstr, NULL);
     std::string servAddress(address);
-    OIC::Service::Result result  = OIC::Service::NSProviderService::getInstance()->DisableRemoteService(
+    OIC::Service::NSResult result  = OIC::Service::NSProviderService::getInstance()->DisableRemoteService(
                                        servAddress);
-    if (result !=  OIC::Service::Result::OK)
+    if (result !=  OIC::Service::NSResult::OK)
     {
         LOGE("Fail to Disable Remote Service");
     }
@@ -583,7 +583,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcce
     if (!consumerClass)
     {
         ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Consumer");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
 
     // Consumer ID
@@ -592,7 +592,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcce
     {
         LOGE("Error: jfieldID for mConsumerId  is null");
         ThrowNSException(NS_ERROR, "ConsumerId not found");
-        return (jint) OIC::Service::Result::ERROR;
+        return (jint) OIC::Service::NSResult::ERROR;
     }
 
     jstring jconId = (jstring)env->GetObjectField( jConsumer, fid_id);

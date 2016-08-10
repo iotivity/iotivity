@@ -54,11 +54,12 @@ void onDiscoverNotificationCb(OIC::Service::NSProvider *provider)
     std::cout << "startSubscribing" << std::endl;
 }
 
-void onSubscriptionAcceptedCb(OIC::Service::NSProvider *provider)
+void onProviderChangedCb(OIC::Service::NSProvider *provider,OIC::Service::NSResponse response)
 {
     std::cout << "Subscription accepted" << std::endl;
     std::cout << "subscribed provider Id : " << provider->getProviderId() << std::endl;
-    provider->setListener(onNotificationPostedCb, onNotificationSyncCb);
+    if(response == OIC::Service::NSResponse::ALLOW)
+        provider->setListener(onNotificationPostedCb, onNotificationSyncCb);
 }
 
 void *OCProcessThread(void *ptr)
@@ -91,7 +92,7 @@ int main(void)
 
     NSConsumerService::ConsumerConfig cfg;
     cfg.m_discoverCb = onDiscoverNotificationCb;
-    cfg.m_acceptedCb = onSubscriptionAcceptedCb;
+    cfg.m_changedCb = onProviderChangedCb;
 
     pthread_create(&OCThread, NULL, OCProcessThread, NULL);
 
