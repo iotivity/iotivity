@@ -318,7 +318,7 @@ namespace OIC
                 throw ESBadRequestException ("Device not created");
             }
 
-            if(!deviceProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_SSID))
+            if(deviceProp.getSsid().empty())
             {
                 throw ESBadRequestException ("Invalid Provisiong Data.");
             }
@@ -381,9 +381,9 @@ namespace OIC
 
             m_cloudPropProvStatusCb = callback;
 
-            if(!cloudProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_AUTHCODE) ||
-                !cloudProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_AUTHPROVIDER) ||
-                !cloudProp.toOCRepresentation().hasAttribute(OC_RSRVD_ES_CISERVER))
+            if(cloudProp.getAuthCode().empty() ||
+                cloudProp.getAuthProvider().empty() ||
+                cloudProp.getCiServer().empty())
             {
                 throw ESBadRequestException ("Invalid Cloud Provisiong Info.");
             }

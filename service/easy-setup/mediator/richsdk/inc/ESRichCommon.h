@@ -163,7 +163,7 @@ namespace OIC
              *
              * @return an auth code to be delivered.
              */
-            std::string getAuthCode()
+            std::string getAuthCode() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHCODE))
                 {
@@ -177,7 +177,7 @@ namespace OIC
              *
              * @return an auth provider which issued an auth code
              */
-            std::string getAuthProvider()
+            std::string getAuthProvider() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHPROVIDER))
                 {
@@ -191,7 +191,7 @@ namespace OIC
              *
              * @return a CI server to be delivered
              */
-            std::string getCiServer()
+            std::string getCiServer() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_CISERVER))
                 {
@@ -281,7 +281,7 @@ namespace OIC
              *
              * @return a SSID of enroller
              */
-            std::string getSsid()
+            std::string getSsid() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_SSID))
                 {
@@ -295,7 +295,7 @@ namespace OIC
              *
              * @return a password of enroller
              */
-            std::string getPassword()
+            std::string getPassword() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_CRED))
                 {
@@ -311,7 +311,7 @@ namespace OIC
              *
              * @see WIFI_AUTHTYPE
              */
-            WIFI_AUTHTYPE getAuthType()
+            WIFI_AUTHTYPE getAuthType() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHTYPE))
                 {
@@ -327,7 +327,7 @@ namespace OIC
              *
              * @see WIFI_ENCTYPE
              */
-            WIFI_ENCTYPE getEncType()
+            WIFI_ENCTYPE getEncType() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_ENCTYPE))
                 {
@@ -342,7 +342,7 @@ namespace OIC
              *
              * @return a language to be set
              */
-            std::string getLanguage()
+            std::string getLanguage() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_LANGUAGE))
                 {
@@ -357,7 +357,7 @@ namespace OIC
              *
              * @return a country to be set
              */
-            std::string getCountry()
+            std::string getCountry() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_COUNTRY))
                 {
@@ -460,7 +460,7 @@ namespace OIC
              *
              * @return a device name of Enrollee
              */
-            std::string getDeviceName()
+            std::string getDeviceName() const
             {
                 if(m_DevConfRep.hasAttribute(OC_RSRVD_ES_DEVNAME))
                     return m_DevConfRep.getValue<std::string>(OC_RSRVD_ES_DEVNAME);
@@ -474,7 +474,7 @@ namespace OIC
              *
              * @see WIFI_MODE
              */
-            vector<WIFI_MODE> getWiFiModes()
+            vector<WIFI_MODE> getWiFiModes() const
             {
                 vector<WIFI_MODE> modes;
                 modes.clear();
@@ -497,7 +497,7 @@ namespace OIC
              *
              * @see WIFI_FREQ
              */
-            WIFI_FREQ getWiFiFreq()
+            WIFI_FREQ getWiFiFreq() const
             {
                 if(m_WiFiRep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
                     return static_cast<WIFI_FREQ>(
@@ -510,7 +510,7 @@ namespace OIC
              *
              * @return an accessibility to cloud server of an Enrollee
              */
-            bool isCloudAccessible()
+            bool isCloudAccessible() const
             {
                 if(m_CloudRep.getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
                 {
