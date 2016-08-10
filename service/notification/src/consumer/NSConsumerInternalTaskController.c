@@ -283,7 +283,7 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 }
 
-void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage * msg)
+void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
@@ -294,7 +294,7 @@ void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage * msg)
     if (provider->connection->next == NULL)
     {
         NS_LOG(DEBUG, "call back to user");
-        NSSubscriptionAccepted((NSProvider *) provider);
+        NSProviderChanged((NSProvider *) provider, (NSResponse) msg->messageId);
     }
 }
 
@@ -384,10 +384,12 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     switch (task->taskType)
     {
-        case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+        //case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+        case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
         {
-            NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
-            NSConsumerHandleRecvSubscriptionConfirmed((NSMessage *)task->taskData);
+            //NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
+            NS_LOG(DEBUG, "Receive Provider Changed");
+            NSConsumerHandleRecvProviderChanged((NSMessage *)task->taskData);
             NSRemoveMessage((NSMessage *)task->taskData);
             break;
         }

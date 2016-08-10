@@ -140,21 +140,21 @@ void NSDiscoveredProvider(NSProvider * provider)
     NS_VERIFY_NOT_NULL_V(thread);
 }
 
-NSSubscriptionAcceptedCallback * NSGetSubscriptionAcceptedCb()
+NSProviderChangedCallback * NSGetProviderChangedCb()
 {
-    static NSSubscriptionAcceptedCallback g_acceptCb = NULL;
+    static NSProviderChangedCallback g_changedCb = NULL;
 
-    return & g_acceptCb;
+    return & g_changedCb;
 }
 
-void NSSetSubscriptionAcceptedCb(NSSubscriptionAcceptedCallback cb)
+void NSSetProviderChangedCb(NSProviderChangedCallback cb)
 {
-    *(NSGetSubscriptionAcceptedCb()) = cb;
+    *(NSGetProviderChangedCb()) = cb;
 }
 
-void NSSubscriptionAccepted(NSProvider * provider)
+void NSProviderChanged(NSProvider * provider, NSResponse response)
 {
-    (*(NSGetSubscriptionAcceptedCb()))(provider);
+    (*(NSGetProviderChangedCb()))(provider, response);
 }
 
 NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
@@ -354,6 +354,7 @@ NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
 
     return newProv;
 }
+
 void NSRemoveProvider(NSProvider_internal * prov)
 {
     NS_VERIFY_NOT_NULL_V(prov);
@@ -363,6 +364,33 @@ void NSRemoveProvider(NSProvider_internal * prov)
     NSRemoveConnections(prov->connection);
 
     NSOICFree(prov);
+}
+
+NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal * syncInfo)
+{
+    NS_VERIFY_NOT_NULL(syncInfo, NULL);
+
+    NSProviderConnectionInfo * connections = NSCopyProviderConnections(syncInfo->connection);
+    NS_VERIFY_NOT_NULL(connections, NULL);
+
+    NSSyncInfo_internal * newSyncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newSyncInfo, NULL, NSRemoveConnections(connections));
+
+    OICStrcpy(newSyncInfo->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, syncInfo->providerId);
+    newSyncInfo->messageId = syncInfo->messageId;
+    newSyncInfo->state = syncInfo->state;
+    newSyncInfo->connection = connections;
+
+    return newSyncInfo;
+}
+
+void NSRemoveSyncInfo(NSSyncInfo_internal * syncInfo)
+{
+    NS_VERIFY_NOT_NULL_V(syncInfo);
+
+    NSRemoveConnections(syncInfo->connection);
+
+    NSOICFree(syncInfo);
 }
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,

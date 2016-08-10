@@ -76,10 +76,14 @@ typedef struct
 
     char * messageUri;
     char * syncUri;
+    char * topicUri;
 
     NSSelector accessPolicy;
 
     NSProviderConnectionInfo * connection;
+
+    NSTopicList * topicList;
+    size_t topicListSize;
 
 } NSProvider_internal;
 
@@ -106,8 +110,8 @@ void NSSetIsStartedConsumer(bool setValue);
 void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb);
 void NSDiscoveredProvider(NSProvider * provider);
 
-void NSSetSubscriptionAcceptedCb(NSSubscriptionAcceptedCallback cb);
-void NSSubscriptionAccepted(NSProvider * provider);
+void NSSetProviderChangedCb(NSProviderChangedCallback cb);
+void NSProviderChanged(NSProvider * provider, NSResponse response);
 
 void NSSetMessagePostedCb(NSMessageReceivedCallback  cb);
 void NSMessagePost(NSMessage * obj);
@@ -133,6 +137,9 @@ void NSRemoveConnections(NSProviderConnectionInfo * connections);
 
 NSProvider_internal * NSCopyProvider(NSProvider_internal *);
 void NSRemoveProvider(NSProvider_internal *);
+
+NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal *);
+void NSRemoveSyncInfo(NSSyncInfo_internal *);
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,

@@ -39,12 +39,12 @@ NSResult NSStartConsumer(NSConsumerConfig config)
     NS_VERIFY_NOT_NULL(config.discoverCb, NS_ERROR);
     NS_VERIFY_NOT_NULL(config.messageCb, NS_ERROR);
     NS_VERIFY_NOT_NULL(config.syncInfoCb, NS_ERROR);
-    NS_VERIFY_NOT_NULL(config.acceptedCb, NS_ERROR);
+    NS_VERIFY_NOT_NULL(config.changedCb, NS_ERROR);
 
     NSSetDiscoverProviderCb(config.discoverCb);
     NSSetMessagePostedCb(config.messageCb);
     NSSetNotificationSyncCb(config.syncInfoCb);
-    NSSetSubscriptionAcceptedCb(config.acceptedCb);
+    NSSetProviderChangedCb(config.changedCb);
     NSSetIsStartedConsumer(true);
 
     NSResult ret = NSConsumerMessageHandlerInit();
@@ -62,7 +62,7 @@ NSResult NSStopConsumer()
     NSSetDiscoverProviderCb(NULL);
     NSSetMessagePostedCb(NULL);
     NSSetNotificationSyncCb(NULL);
-    NSSetSubscriptionAcceptedCb(NULL);
+    NSSetProviderChangedCb(NULL);
     NSSetIsStartedConsumer(false);
 
     NSConsumerMessageHandlerExit();

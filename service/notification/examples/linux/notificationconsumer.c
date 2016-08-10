@@ -46,9 +46,9 @@ void onDiscoverNotification(NSProvider * provider)
     printf("startSubscribing\n");
 }
 
-void onSubscriptionAccepted(NSProvider * provider)
+void onProviderChanged(NSProvider * provider, NSResponse response)
 {
-    printf("Subscription accepted\n");
+    printf("Provider changed: %d\n", response);
     printf("subscribed provider Id : %s\n", provider->providerId);
 }
 
@@ -139,7 +139,7 @@ int main(void)
 
     NSConsumerConfig cfg;
     cfg.discoverCb = onDiscoverNotification;
-    cfg.acceptedCb = onSubscriptionAccepted;
+    cfg.changedCb = onProviderChanged;
     cfg.messageCb = onNotificationPosted;
     cfg.syncInfoCb = onNotificationSync;
 

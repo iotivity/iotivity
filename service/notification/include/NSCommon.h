@@ -34,7 +34,8 @@
 #define NS_ATTRIBUTE_POLICY "ACCEPTER"
 #define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
 #define NS_ATTRIBUTE_SYNC "SYNC_URI"
-#define NS_ATTRIBUTE_ACCPETANCE "ACCEPTANCE"
+#define NS_ATTRIBUTE_TOPIC "TOPIC_URI"
+#define NS_ATTRIBUTE_ACCPETANCE "ACCEPTANCE" // not used
 #define NS_ATTRIBUTE_MESSAGE_ID "MESSAGE_ID"
 #define NS_ATTRIBUTE_PROVIDER_ID "PROVIDER_ID"
 #define NS_ATTRIBUTE_CONSUMER_ID "CONSUMER_ID"
@@ -61,6 +62,17 @@ typedef enum eResult
     NS_FAIL = 400,
 
 } NSResult;
+
+/**
+ * Response code of notification service
+ */
+typedef enum eResponse
+{
+    NS_ALLOW = 1,
+    NS_DENY = 2,
+    NS_TOPIC = 3,
+
+} NSResponse;
 
 /**
  * Access policy exchanged between provider and consumer during subscription process
@@ -96,6 +108,31 @@ typedef enum
     NS_MESSAGE_INFO = 4,
 
 } NSMessageType;
+
+/**
+ *  Notification topic
+ */
+typedef enum
+{
+    NS_TOPIC_CREATED = 0,
+    NS_TOPIC_SUBSCRIBED = 1,
+    NS_TOPIC_UNSUBSCRIBED = 2,
+
+} NSTopicState;
+
+typedef struct
+{
+    char * topicName;
+    NSTopicState state;
+
+} NSTopic;
+
+typedef struct
+{
+    char consumerId[37];
+    NSTopic ** topics;
+
+} NSTopicList;
 
 /**
  *  Consumer information
@@ -154,31 +191,6 @@ typedef struct
     NSSyncType state;
 
 } NSSyncInfo;
-
-/**
- *  Notification topic
- */
-typedef enum
-{
-    NS_TOPIC_CREATED = 0,
-    NS_TOPIC_SUBSCRIBED = 1,
-    NS_TOPIC_UNSUBSCRIBED = 2,
-
-} NSTopicState;
-
-typedef struct
-{
-    char * topicName;
-    NSTopicState state;
-
-} NSTopic;
-
-typedef struct
-{
-    char consumerId[NS_UUID_STRING_SIZE];
-    NSTopic ** topics;
-
-} NSTopicList;
 
 #endif /* _NS_COMMON_H_ */
 

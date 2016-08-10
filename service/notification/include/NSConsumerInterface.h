@@ -41,10 +41,11 @@ extern "C"
 typedef void (* NSProviderDiscoveredCallback)(NSProvider *);
 
 /**
- * Invoked when the response of the subscription is received
+ * Invoked when the provider state is changed
  * @param[in] provider  Provider which has the notification resource
+ * @param[in] response  Response which has the provider state
  */
-typedef void (* NSSubscriptionAcceptedCallback)(NSProvider *);
+typedef void (* NSProviderChangedCallback)(NSProvider *, NSResponse);
 
 /**
  * Invoked when the notification message from provider is received
@@ -54,7 +55,7 @@ typedef void (* NSSubscriptionAcceptedCallback)(NSProvider *);
 typedef void (* NSMessageReceivedCallback)(NSMessage *);
 
 /**
- * Invoked when the synchronization data which has notification message 
+ * Invoked when the synchronization data which has notification message
  * read/delete event from provider/consumer is received
  * synchronization
  * @param[in] syncInfo  Synchronization information of the notification message
@@ -64,7 +65,7 @@ typedef void (* NSSyncInfoReceivedCallback)(NSSyncInfo *);
 typedef struct
 {
     NSProviderDiscoveredCallback discoverCb;
-    NSSubscriptionAcceptedCallback acceptedCb;
+    NSProviderChangedCallback changedCb;
     NSMessageReceivedCallback messageCb;
     NSSyncInfoReceivedCallback syncInfoCb;
 

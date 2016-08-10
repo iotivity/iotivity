@@ -167,10 +167,10 @@ OCStackApplicationResult NSConsumerMessageListener(
 
     NSTaskType type = TASK_CONSUMER_RECV_MESSAGE;
 
-    if (newNoti->messageId == NS_MESSAGE_ACCEPTANCE)
+    if (newNoti->messageId == NS_MESSAGE_ACCEPTANCE || newNoti->messageId == NS_DENY)
     {
-        NS_LOG(DEBUG, "Receive Subscribe confirm");
-        type = TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED;
+        NS_LOG(DEBUG, "Receive subscribe result");
+        type = TASK_CONSUMER_RECV_PROVIDER_CHANGED;
     }
     else if (newNoti->messageId == NS_TOPIC)
     {
