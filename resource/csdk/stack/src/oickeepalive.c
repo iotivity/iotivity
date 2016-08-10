@@ -392,13 +392,14 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
     OIC_LOG_V(DEBUG, TAG, "Received interval is [%d]", entry->interval);
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
 
-    // Send response message.
-    SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_CHANGED, requestInfo->info.type,
-                            requestInfo->info.numOptions, requestInfo->info.options,
-                            requestInfo->info.token, requestInfo->info.tokenLength,
-                            requestInfo->info.resourceUri, CA_RESPONSE_DATA);
+    OCPayloadDestroy(ocPayload);
 
-    return OC_STACK_OK;
+    // Send response message.
+    return SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_CHANGED,
+                                   requestInfo->info.type, requestInfo->info.numOptions,
+                                   requestInfo->info.options, requestInfo->info.token,
+                                   requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                                   CA_RESPONSE_DATA);
 }
 
 OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
