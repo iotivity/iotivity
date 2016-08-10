@@ -24,6 +24,7 @@ package org.iotivity.service.easysetup;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -40,11 +41,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
+import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcPresenceStatus;
 import org.iotivity.base.OcProvisioning;
+import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
@@ -77,12 +82,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 
 
-public class EasysetupActivity extends Activity {
+public class EasysetupActivity extends Activity implements OcPlatform.OnPresenceListener {
     private static final String TAG = "Easysetup Mediator: ";
     PlatformConfig cfg;
+    final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
+    final String samsungCIServer = "coap+tcp://52.69.149.85:5683";
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -90,8 +100,15 @@ public class EasysetupActivity extends Activity {
     public static final String OIC_CLIENT_JSON_DB_FILE =  "oic_svr_db_client.dat";
     public static final String OIC_SQL_DB_FILE =  "PDM.db";
 
-    private boolean isSecurityEnabled = false;
     private boolean isFirstTime = true;
+    String mEnrolleeDeviceID;
+    String mAuthCode;
+    String mAuthProvider;
+    String mRefreshtoken;
+    String mUserID;
+    String mAccessToken;
+    String mEnrolleeAuthCode;
+
 
     ToggleButton mSecurityMode;
 
@@ -219,6 +236,9 @@ public class EasysetupActivity extends Activity {
                         break;
 
                     case R.id.btn_provisionCloudConf:
+                        Log.d(TAG, "Starting login activity");
+                        Intent intent = new Intent(EasysetupActivity.this, LoginActivity.class);
+                        startActivityForResult(intent, 2);
                         mProvisionCloudPropInfo.setVisibility(View.VISIBLE);
                         break;
                 }
@@ -256,6 +276,28 @@ public class EasysetupActivity extends Activity {
         mEasySetup = EasySetup.getInstance(getApplicationContext());
 
         initOICStack();
+
+        SharedPreferences settings =
+                                getApplicationContext().getSharedPreferences("IoTivityCloud", 0);
+        mAccessToken = settings.getString("accesstoken", null);
+        mRefreshtoken = settings.getString("refreshtoken", null);
+        mUserID = settings.getString("uid", null);
+
+        if(mRefreshtoken == null)
+        {
+            Log.d(TAG, "Can not find refresh token");
+        }
+
+        if(mAccessToken == null && mRefreshtoken == null)
+        {
+            Log.d(TAG, "Starting login activity");
+            Intent intent = new Intent(EasysetupActivity.this, LoginActivity.class);
+            startActivityForResult(intent, 1);
+        }
+        else if(mAccessToken != null)
+        {
+            SignInDevice();
+        }
     }
 
     private void initOICStack() {
@@ -340,7 +382,8 @@ public class EasysetupActivity extends Activity {
                             }
 
                             if(ocResource.getHost().contains("coap+tcp")) {
-                                Log.d(TAG, "Recv Found resource event  from tcp port, ignoring URI : " + ocResource.getUri());
+                                Log.d(TAG, "Recv Found resource event  from tcp port," +
+                                    "ignoring URI : " + ocResource.getUri());
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
@@ -361,7 +404,9 @@ public class EasysetupActivity extends Activity {
                                 @Override
                                 public void run() {
                                     mDiscoverResource.setText("Found");
-                                    mConfigureSecProcess.setEnabled(true);
+                                    if(mSecurityMode.isChecked()) {
+                                        mConfigureSecProcess.setEnabled(true);
+                                    }
                                     mGetConfigurationProcess.setEnabled(true);
                                     mProvisionDevPropProcess.setEnabled(true);
                                     mProvisionCloudPropProcess.setEnabled(true);
@@ -369,6 +414,7 @@ public class EasysetupActivity extends Activity {
                             });
                             isFirstTime = false;
                             mRemoteEnrollee = mEasySetup.createRemoteEnrollee(ocResource);
+                            mEnrolleeDeviceID = ocResource.getServerId();
                         }
                     }
                 }
@@ -775,6 +821,231 @@ public class EasysetupActivity extends Activity {
                 }
             }
         });
+    }
+
+    @Override
+    public void onPresence(OcPresenceStatus status, int sequence, String host) {
+        final String strStaus = status.getValue();
+        Log.d(TAG, "Presence response: " + strStaus + " sequence: " + sequence + " host: " + host);
+        runOnUiThread(new Runnable()
+        {
+            public void run() {
+                Toast.makeText(EasysetupActivity.this, "Easy-Setup completed", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==RESULT_OK && requestCode==1){
+            mAuthCode = data.getStringExtra("authCode");
+            mAuthProvider = data.getStringExtra("authProvider");
+            String text = "Received authCode= " + mAuthCode;
+            Log.d(TAG, text);
+            SignUpDevice();
+        }
+        else if(resultCode==RESULT_OK && requestCode==2)
+        {
+            mEnrolleeAuthCode = data.getStringExtra("authCode");
+            mAuthProvider = data.getStringExtra("authProvider");
+            mAuthCodeText.setText(mEnrolleeAuthCode);
+            mAuthProviderText.setText(mAuthProvider);
+            mAuthCodeText.setEnabled(false);
+            mAuthProviderText.setEnabled(false);
+
+            try
+            {
+                OcPlatform.subscribePresence(samsungCIServer, "oic.res&di=" + mEnrolleeDeviceID,
+                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4), this);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    OcResource.OnPostListener onRefreshTokenPost = new OcResource.OnPostListener() {
+        @Override
+        public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+            Log.d(TAG, "onRefreshTokenPost..");
+            try {
+                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+
+                saveCloudTokenAtSharedPreferences();
+            }
+            catch (OcException e)
+            {
+                e.printStackTrace();
+            }
+
+            SignInDevice();
+        }
+
+        @Override
+        public void onPostFailed(Throwable throwable) {
+            Log.d(TAG, "onRefreshTokenPost failed..");
+        }
+    };
+
+    public void RefreshToken() {
+        try {
+            OcResource authResource = OcPlatform.constructResourceObject(samsungCIServer, "/.well-known/ocf/account/tokenrefresh",
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
+                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
+            OcRepresentation rep = new OcRepresentation();
+
+            runOnUiThread(new Runnable()
+            {
+                public void run() {
+                    Toast.makeText(EasysetupActivity.this, "RefreshToken in progress..", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            rep.setValue("di", deviceID);
+            rep.setValue("granttype", "refresh_token");
+            rep.setValue("refreshtoken", mRefreshtoken);
+            rep.setValue("uid", mUserID);
+            authResource.post(rep, new HashMap<String, String>(), onRefreshTokenPost);
+        }
+        catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, "No error while executing login");
+    }
+
+    private void saveCloudTokenAtSharedPreferences() {
+        Log.d(TAG, "accesstoken: " + mAccessToken);
+        SharedPreferences settings = getApplicationContext().getSharedPreferences("IoTivityCloud", 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("accesstoken", mAccessToken);
+        editor.putString("refreshtoken", mRefreshtoken);
+        editor.putString("uid", mUserID);
+
+        if(editor.commit() == true)
+            Log.d(TAG, "accesstoken saved");
+        else
+            Log.d(TAG, "accesstoken not saved");
+    }
+
+    OcResource.OnPostListener onSignUpPost = new OcResource.OnPostListener() {
+        @Override
+        public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+            Log.d(TAG, "onSignUpPost..");
+            try {
+                runOnUiThread(new Runnable()
+                {
+                    public void run() {
+                        Toast.makeText(EasysetupActivity.this, "Sign-up completed", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+                mUserID = ocRepresentation.getValue("uid");
+
+                if(mAccessToken != null)
+                {
+                    saveCloudTokenAtSharedPreferences();
+                    SignInDevice();
+                }
+            }
+            catch (OcException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onPostFailed(Throwable throwable) {
+            Log.d(TAG, "onSignUpPost failed.. : " + throwable.getMessage());
+        }
+    };
+
+    private void SignUpDevice() {
+        try {
+            OcResource authResource = OcPlatform.constructResourceObject(samsungCIServer, "/.well-known/ocf/account",
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
+                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
+            OcRepresentation rep = new OcRepresentation();
+
+            runOnUiThread(new Runnable()
+            {
+                public void run() {
+                    Toast.makeText(EasysetupActivity.this, "SignUpDevice in progress..", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            rep.setValue("di", deviceID);
+            rep.setValue("authprovider", mAuthProvider);
+            rep.setValue("authcode", mAuthCode);
+            authResource.post(rep, new HashMap<String, String>(), onSignUpPost);
+        }
+        catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, "No error while executing SignUp");
+    }
+
+    OcResource.OnPostListener onSignInPost = new OcResource.OnPostListener() {
+        @Override
+        public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+            Log.d(TAG, "onSignInPost..");
+
+            runOnUiThread(new Runnable()
+            {
+                public void run() {
+                    Toast.makeText(EasysetupActivity.this, "Sign-in completed", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @Override
+        public void onPostFailed(Throwable ex) {
+            if (ex instanceof OcException) {
+                OcException ocEx = (OcException) ex;
+                ErrorCode errCode = ocEx.getErrorCode();
+                Log.e(TAG, ocEx.getMessage());
+                if (ErrorCode.UNAUTHORIZED_REQ != errCode) {
+                    RefreshToken();
+                }
+            }
+        }
+    };
+
+    private void SignInDevice() {
+        try {
+            OcResource authResource = OcPlatform.constructResourceObject(samsungCIServer, "/.well-known/ocf/account/session",
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
+                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
+            OcRepresentation rep = new OcRepresentation();
+
+            runOnUiThread(new Runnable()
+            {
+                public void run() {
+                    Toast.makeText(EasysetupActivity.this, "SignInDevice in progress..", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            rep.setValue("di", deviceID);
+            rep.setValue("accesstoken", mAccessToken);
+            rep.setValue("login", true);
+            rep.setValue("uid", mUserID);
+            authResource.post(rep, new HashMap<String, String>(), onSignInPost);
+
+        }
+        catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, "No error while executing login");
     }
 
     @Override
