@@ -108,6 +108,8 @@ NSResult NSSendNotification(NSMessage *msg)
         return NS_ERROR;
     }
 
+    NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
+
     NSCacheElement * it = consumerSubList->head;
 
     while (it)
@@ -124,13 +126,30 @@ NSResult NSSendNotification(NSMessage *msg)
         {
             if(subData->messageObId != 0)
             {
-                obArray[obCount++] = subData->messageObId;
+                if(msg->topic)
+                {
+                    if(NSIsTopicSubscribed(subData->id, msg->topic))
+                    {
+                        obArray[obCount++] = subData->messageObId;
+                    }
+                }
+                else
+                {
+                    obArray[obCount++] = subData->messageObId;
+                }
             }
 
 #ifdef WITH_CLOUD
             if(subData->remote_messageObId != 0)
             {
-                obArray[obCount++] = subData->remote_messageObId;
+                if(NSIsTopicSubscribed(subData->id, msg->topic))
+                {
+                    obArray[obCount++] = subData->remote_messageObId;
+                }
+                else
+                {
+                    obArray[obCount++] = subData->remote_messageObId;
+                }
             }
 #endif
 

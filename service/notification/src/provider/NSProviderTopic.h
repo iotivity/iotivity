@@ -28,4 +28,6 @@
 
 NSTopicList * NSGetTopics(char *consumerId);
 
+bool NSIsTopicSubscribed(char *consumerId, char *topic);
+
 #endif /* _NS_PROVIDER_TOPIC_H_ */

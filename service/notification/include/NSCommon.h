@@ -178,6 +178,7 @@ typedef struct
     char * contentText;
     char * sourceName;
     NSMediaContents * mediaContents;
+    char * topic;
 
 } NSMessage;
 

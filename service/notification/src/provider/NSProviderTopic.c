@@ -39,6 +39,12 @@ NSTopicList * NSGetTopics(char *consumerId)
     return topicList;
 }
 
+bool NSIsTopicSubscribed(char * consumerId, char * topic)
+{
+    //TODO: implement function
+    return true;
+}
+
 void * NSTopicSchedule(void * ptr)
 {
     if (ptr == NULL)
