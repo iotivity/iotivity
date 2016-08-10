@@ -21,7 +21,10 @@
 
 #define MAX_SERVER_ADDRESS 32
 static NSConnectionState NSProviderConnectionState;
+
+#ifdef WITH_CLOUD
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
+#endif
 
 NSProviderInfo * providerInfo;
 bool NSPolicy = true;
@@ -130,6 +133,3 @@ const char * NSGetUserInfo()
 {
     return providerInfo->providerName;
 }
-
-
-
