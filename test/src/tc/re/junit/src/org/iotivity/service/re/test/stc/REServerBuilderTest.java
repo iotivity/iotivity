@@ -25,6 +25,7 @@ import org.iotivity.service.re.test.helper.REAPIHelper;
 import static org.iotivity.service.re.test.helper.ResourceUtil.*;
 
 import org.iotivity.service.RcsException;
+import org.iotivity.service.RcsDestroyedObjectException;
 import org.iotivity.service.RcsResourceAttributes;
 import org.iotivity.service.RcsValue;
 import org.iotivity.service.server.RcsGetResponse;
@@ -33,6 +34,7 @@ import org.iotivity.service.server.RcsResourceObject;
 import org.iotivity.service.server.RcsResourceObject.AutoNotifyPolicy;
 import org.iotivity.service.server.RcsResourceObject.GetRequestHandler;
 import org.iotivity.service.server.RcsResourceObject.SetRequestHandler;
+import org.iotivity.service.server.RcsResourceObject.SetRequestHandlerPolicy;
 import org.iotivity.service.server.RcsSetResponse;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
@@ -42,7 +44,6 @@ public class REServerBuilderTest extends InstrumentationTestCase {
   private RcsResourceObject         m_ResourceObject;
   private static final String       LOG_TAG = "RETest";
   REAPIHelper                       m_REHelper;
-
   int                               m_count = 10;
 
   protected void setUp() throws Exception {
@@ -55,7 +56,7 @@ public class REServerBuilderTest extends InstrumentationTestCase {
       m_REHelper = new REAPIHelper();
 
       m_Builder = new RcsResourceObject.Builder(TEMP_SENSOR_URI,
-          TEMP_SENSOR_TYPE, INTERFACE);
+          TEMP_SENSOR_TYPE, DEFAULT_INTERFACE);
 
       RcsResourceAttributes attributes = new RcsResourceAttributes();
       attributes.put(ATTR_KEY_POWER, ATTR_VALUE_POWER_ON);
@@ -90,37 +91,27 @@ public class REServerBuilderTest extends InstrumentationTestCase {
   }
 
   private GetRequestHandler mGetRequestHandler = new GetRequestHandler() {
-                                                 @Override
-                                                 public RcsGetResponse onGetRequested(
-                                                     RcsRequest request,
-                                                     RcsResourceAttributes attrs) {
-                                                   Log.d(
-                                                       LOG_TAG,
-                                                       "Got a Get request from client, send default response "
-                                                           + "URI : "
-                                                           + request
-                                                               .getResourceUri());
+    @Override
+    public RcsGetResponse onGetRequested(RcsRequest request,
+        RcsResourceAttributes attrs) {
+      Log.d(LOG_TAG, "Got a Get request from client, send default response "
+          + "URI : " + request.getResourceUri());
 
-                                                   return RcsGetResponse
-                                                       .defaultAction();
-                                                 }
-                                               };
+      return RcsGetResponse.defaultAction();
+    }
+  };
 
   private SetRequestHandler mSetRequestHandler = new SetRequestHandler() {
-                                                 @Override
-                                                 public RcsSetResponse onSetRequested(
-                                                     RcsRequest request,
-                                                     RcsResourceAttributes attrs) {
-                                                   Log.d(
-                                                       LOG_TAG,
-                                                       "Got a Set request from client, send default response URI: "
-                                                           + request
-                                                               .getResourceUri());
+    @Override
+    public RcsSetResponse onSetRequested(RcsRequest request,
+        RcsResourceAttributes attrs) {
+      Log.d(LOG_TAG,
+          "Got a Set request from client, send default response URI: "
+              + request.getResourceUri());
 
-                                                   return RcsSetResponse
-                                                       .defaultAction();
-                                                 }
-                                               };
+      return RcsSetResponse.defaultAction();
+    }
+  };
 
   /**
    * @since 2015-11-06
@@ -137,8 +128,8 @@ public class REServerBuilderTest extends InstrumentationTestCase {
     boolean isBuilderNull = true;
     try {
       RcsResourceObject.Builder builder;
-      builder = new RcsResourceObject.Builder(TEMP_SENSOR_URI,
-          TEMP_SENSOR_TYPE, INTERFACE);
+      builder = new RcsResourceObject.Builder(TEMP_SENSOR_URI, TEMP_SENSOR_TYPE,
+          DEFAULT_INTERFACE);
 
       m_REHelper.waitInSecond(2);
 
@@ -356,6 +347,124 @@ public class REServerBuilderTest extends InstrumentationTestCase {
     } catch (RcsException e) {
       fail("Got RcsException while calling containsAttribute API with "
           + ATTR_KEY_POWER + "key. Exception is: " + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2016-07-25
+   * @see None
+   * @objective Test 'containsAttribute' function with empty key
+   * @target boolean containsAttribute(String key)
+   * @test_data key = ""
+   * @pre_condition 1. Builder class should be initialized 2. Resource object
+   *                should be built
+   * @procedure 1. Perform setAttribute() API with empty string value 2. Perform
+   *            containsAttribute() API using empty key
+   * @post_condition None
+   * @expected The API should throw exception
+   **/
+  public void testContainsAttribute_ESV_N() {
+    boolean isException = false;
+
+    try {
+      RcsValue value = new RcsValue(ATTR_VALUE_POWER_ON);
+      m_ResourceObject.setAttribute(DEFAULT_EMPTY_STRING_VALUE, value);
+
+      boolean hasAttribute = m_ResourceObject
+          .containsAttribute(DEFAULT_EMPTY_STRING_VALUE);
+
+      if (hasAttribute == true) {
+        fail("\"" + DEFAULT_EMPTY_STRING_VALUE + "\""
+            + " attribute is not available.");
+      }
+
+    } catch (Exception e) {
+      isException = true;
+
+    } finally {
+      if (!isException)
+        fail("No exception found!");
+    }
+  }
+
+  /**
+   * @since 2016-07-25
+   * @see None
+   * @objective Test 'setAutoNotifyPolicy' & 'getAutoNotifyPolicy' functions
+   *            with sequential validation
+   * @target 1. void setAutoNotifyPolicy(AutoNotifyPolicy policy) 2.
+   *         AutoNotifyPolicy getAutoNotifyPolicy()
+   * @test_data policy = NEVER, ALWAYS and UPDATED
+   * @pre_condition 1. Builder class should be initialized 2. Resource object
+   *                should be built
+   * @procedure 1. Perform setAutoNotifyPolicy() and getAutoNotifyPolicy() API
+   *            with multiple policies
+   * @post_condition None
+   * @expected Should not occur any exception.
+   **/
+  public void testSetGetAutoNotifyPolicy_SQV_P() {
+    try {
+      m_ResourceObject.setAutoNotifyPolicy(AutoNotifyPolicy.NEVER);
+      m_ResourceObject.getAutoNotifyPolicy();
+
+    } catch (Exception e) {
+      fail("Exception occurs when calling setAutoNotifyPolicy API with NEVER.");
+    }
+
+    try {
+      m_ResourceObject.setAutoNotifyPolicy(AutoNotifyPolicy.ALWAYS);
+      m_ResourceObject.getAutoNotifyPolicy();
+
+    } catch (Exception e) {
+      fail(
+          "Exception occurs when calling setAutoNotifyPolicy API with ALWAYS.");
+    }
+
+    try {
+      m_ResourceObject.setAutoNotifyPolicy(AutoNotifyPolicy.UPDATED);
+      m_ResourceObject.getAutoNotifyPolicy();
+
+    } catch (Exception e) {
+      fail(
+          "Exception occurs when calling setAutoNotifyPolicy API with UPDATED.");
+    }
+  }
+
+  /**
+   * @since 2016-07-25
+   * @see None
+   * @objective Test 'setSetRequestHandlerPolicy' and
+   *            'getSetRequestHandlerPolicy' functions with sequential
+   *            validation
+   * @target 1. void setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy)
+   *         2. SetRequestHandlerPolicy getSetRequestHandlerPolicy()
+   * @test_data policy = NEVER, ACCEPT
+   * @pre_condition 1. Builder class should be initialized 2. Resource object
+   *                should be built
+   * @procedure Perform setSetRequestHandlerPolicy() and
+   *            getSetRequestHandlerPolicy() API with multiple policies
+   * @post_condition None
+   * @expected Should not occur exception.
+   **/
+  public void testSetSetGetRequestHandlerPolicy_SQV_P() {
+    try {
+      m_ResourceObject
+      .setSetRequestHandlerPolicy(SetRequestHandlerPolicy.NEVER);
+      m_ResourceObject.getSetRequestHandlerPolicy();
+
+    } catch (Exception e) {
+      fail(
+          "Exception occurs when calling setSetRequestHandlerPolicy API with NEVER.");
+    }
+
+    try {
+      m_ResourceObject
+      .setSetRequestHandlerPolicy(SetRequestHandlerPolicy.ACCEPT);
+      m_ResourceObject.getSetRequestHandlerPolicy();
+
+    } catch (Exception e) {
+      fail(
+          "Exception occurs when calling setSetRequestHandlerPolicy API with ACCEPT.");
     }
   }
 

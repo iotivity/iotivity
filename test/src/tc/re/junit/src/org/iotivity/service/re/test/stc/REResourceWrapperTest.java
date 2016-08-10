@@ -29,8 +29,10 @@ import org.iotivity.service.RcsException;
 import org.iotivity.service.client.RcsAddress;
 import org.iotivity.service.client.RcsDiscoveryManager;
 import org.iotivity.service.client.RcsRemoteResourceObject;
+import org.iotivity.service.client.RcsDiscoveryManager.OnResourceDiscoveredListener;
 import org.iotivity.service.re.test.helper.REAPIHelper;
 import static org.iotivity.service.re.test.helper.ResourceUtil.*;
+import static org.iotivity.service.re.test.helper.ResourceProperties.*;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -46,13 +48,21 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     m_REHelper = new REAPIHelper();
     m_ErrorMsg.setLength(0);
 
-    PlatformConfig platformConfigObj = new PlatformConfig(getInstrumentation()
-        .getTargetContext(), ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
-        "0.0.0.0", 0, QualityOfService.LOW);
+    PlatformConfig platformConfigObj = new PlatformConfig(
+        getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
+        ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
 
     OcPlatform.Configure(platformConfigObj);
     Log.i(LOG_TAG, "Configuration done Successfully");
   }
+
+  private OnResourceDiscoveredListener mOnResourceDiscoveredListener = new OnResourceDiscoveredListener() {
+
+    @Override
+    public void onResourceDiscovered(RcsRemoteResourceObject foundResource) {
+      Log.i(LOG_TAG, "onResourceDiscovered in API test case");
+    }
+  };
 
   protected void tearDown() throws Exception {
     super.tearDown();
@@ -126,7 +136,7 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
         int i = 0;
 
         for (i = 0; i < interfaces.length; i++) {
-          if (interfaces[i].compareTo(INTERFACE) == 0
+          if (interfaces[i].compareTo(DEFAULT_INTERFACE) == 0
               || interfaces[i].compareTo(BASELINE_INTERFACE) == 0) {
             foundInterface = true;
             break;
@@ -134,8 +144,8 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
         }
 
         if (foundInterface == false) {
-          fail("Could not found expected interface: " + INTERFACE + " or "
-              + BASELINE_INTERFACE);
+          fail("Could not found expected interface: " + DEFAULT_INTERFACE
+              + " or " + BASELINE_INTERFACE);
         }
       } else {
         fail("Unable to get interfaces");
@@ -194,6 +204,119 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     } catch (RcsException e) {
       fail("Throws exception when getInterfaces API called. Exception: "
           + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2016-07-25
+   * @see None
+   * @objective Test 'discoverResource' function with null callback
+   * @target public DiscoveryTask discoverResource(RcsAddress address, String
+   *         uri, OnResourceDiscoveredListener listener)
+   * @test_data 1. Resource Address 2. Resource uri 3. null Callback
+   * @pre_condition None
+   * @procedure Perform discoverResource() API with null callback
+   * @post_condition None
+   * @expected API should throw NullPointerException
+   **/
+  public void testDiscoverResourceWithURI_ETC_N() {
+    boolean isNullException = false;
+    try {
+
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResource(RcsAddress.multicast(),
+              OC_RSRVD_WELL_KNOWN_URI, null);
+
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+
+      discoveryTask.cancel();
+
+    } catch (NullPointerException e) {
+      Log.e(LOG_TAG,
+          "Exception occurs at testDiscoverResourceByTypeForMulticast_ETC_N as expected. Exception: "
+              + e.getLocalizedMessage());
+      isNullException = true;
+    } catch (RcsException e) {
+      fail("Throws exception when getInterfaces API called. Exception: "
+          + e.getLocalizedMessage());
+    } finally {
+      if (!isNullException)
+        fail("Should throw NullPointerException");
+    }
+  }
+
+  /**
+   * @since 2016-07-25
+   * @see None
+   * @objective Test 'discoverResource' function with Null Address
+   * @target public DiscoveryTask discoverResource(RcsAddress address, String
+   *         uri, OnResourceDiscoveredListener listener)
+   * @test_data 1. Null Resource Address 2. Resource URI 3.
+   *            OnResourceDiscoveredListener Callback
+   * @pre_condition None
+   * @procedure Perform discoverResource() API with Null Address
+   * @post_condition None
+   * @expected Should throw NullPointerException if address is null
+   **/
+  public void testDiscoverResourceWithURIAddress_ETC_N() {
+    boolean isNullException = false;
+    try {
+
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResource(null, OC_RSRVD_WELL_KNOWN_URI,
+              mOnResourceDiscoveredListener);
+
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+      discoveryTask.cancel();
+
+    } catch (NullPointerException e) {
+      Log.e(LOG_TAG,
+          "Exception occurs at testDiscoverResourceWithURIAddress_ETC_N as expected. Exception: "
+              + e.getLocalizedMessage());
+      isNullException = true;
+    } catch (RcsException e) {
+      fail("Throws exception when getInterfaces API called. Exception: "
+          + e.getLocalizedMessage());
+    } finally {
+      if (!isNullException)
+        fail("Should throw NullPointerException");
+    }
+  }
+
+  /**
+   * @since 2016-07-25
+   * @see None
+   * @objective Test 'discoverResourceByType' function with null callback
+   * @target public DiscoveryTask discoverResourceByType(RcsAddress address,
+   *         String resourceType, OnResourceDiscoveredListener listener)
+   * @test_data 1. Resource Address 2. Resource Type 3. Null Callback
+   * @pre_condition None
+   * @procedure Perform discoverResourceByType() API with null callback
+   * @post_condition None
+   * @expected Should throw NullPointerException if listener is null.
+   **/
+  public void testDiscoverResourceByTypeForMulticast_ETC_N() {
+    boolean isNullException = false;
+    try {
+
+      RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+          .getInstance().discoverResourceByType(RcsAddress.multicast(),
+              RESOURCE_TYPE_TEMPERATURE, null);
+
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
+      discoveryTask.cancel();
+
+    } catch (NullPointerException e) {
+      Log.e(LOG_TAG,
+          "Exception occurs at testDiscoverResourceByTypeForMulticast_ETC_N as expected. Exception: "
+              + e.getLocalizedMessage());
+      isNullException = true;
+    } catch (RcsException e) {
+      fail("Throws exception when getInterfaces API called. Exception: "
+          + e.getLocalizedMessage());
+    } finally {
+      if (!isNullException)
+        fail("Should throw NullPointerException");
     }
   }
 }

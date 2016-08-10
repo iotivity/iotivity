@@ -275,6 +275,7 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
   }
 
   /**
+   * @since 2015-12-31
    * @see None
    * @objective Test 'stopMonitoring' function without performing
    *            startMonitoring()
@@ -295,6 +296,7 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
   }
 
   /**
+   * @since 2015-12-31
    * @see void startMonitoring(ResourceStateChangedCallback callback)
    * @see void stopMonitoring()
    * @objective Test 'getState' function with Sequential validation

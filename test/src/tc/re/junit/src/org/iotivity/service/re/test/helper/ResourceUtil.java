@@ -21,15 +21,15 @@
 package org.iotivity.service.re.test.helper;
 
 public class ResourceUtil {
-  public static final String TEMP_SENSOR_URI      = "/a/TempSensor";
-  public static final String TEMP_SENSOR_TYPE     = "oic.r.temperature.sensor";
-  public static final String INTERFACE            = "oic.if.";
-  public static final String BASELINE_INTERFACE   = "oic.if.baseline";
+  public static final String TEMP_SENSOR_URI    = "/a/TempSensor";
+  public static final String TEMP_SENSOR_TYPE   = "oic.r.temperature.sensor";
+  public static final String DEFAULT_INTERFACE  = "oic.if.";
+  public static final String BASELINE_INTERFACE = "oic.if.baseline";
 
-  public static final String LIGHT_URI            = "/device/tube-light";
-  public static final String LIGHT_TYPE           = "core.light";
-  public static final String FAN_URI              = "/device/table-fan";
-  public static final String FAN_TYPE             = "core.fan";
+  public static final String LIGHT_URI  = "/device/tube-light";
+  public static final String LIGHT_TYPE = "core.light";
+  public static final String FAN_URI    = "/device/table-fan";
+  public static final String FAN_TYPE   = "core.fan";
 
   public static final String ATTR_KEY_POWER       = "power";
   public static final String ATTR_VALUE_POWER_ON  = "on";
@@ -37,7 +37,9 @@ public class ResourceUtil {
   public static final String ATTR_INTENSITY_KEY   = "intensity";
   public static final String ATTR_INTENSITY_VALUE = "10";
 
-  public static final int    CALLBACK_WAIT_ONE    = 1;
-  public static final int    CALLBACK_WAIT_MIN    = 2;
-  public static final int    CALLBACK_WAIT_MAX    = 5;
+  public static final String DEFAULT_EMPTY_STRING_VALUE = "";
+
+  public static final int CALLBACK_WAIT_ONE = 1;
+  public static final int CALLBACK_WAIT_MIN = 2;
+  public static final int CALLBACK_WAIT_MAX = 5;
 }

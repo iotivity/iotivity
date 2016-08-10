@@ -47,15 +47,15 @@ public class REResourceCacheTest extends InstrumentationTestCase {
     m_REHelper = new REAPIHelper();
     m_ErrorMsg.setLength(0);
 
-    PlatformConfig platformConfigObj = new PlatformConfig(getInstrumentation()
-        .getTargetContext(), ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
-        "0.0.0.0", 0, QualityOfService.LOW);
+    PlatformConfig platformConfigObj = new PlatformConfig(
+        getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
+        ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
 
     OcPlatform.Configure(platformConfigObj);
     Log.i(LOG_TAG, "Configuration done Successfully");
 
     if (!m_REHelper.disocverResources(m_ErrorMsg)) {
-      assertTrue(
+      fail(
           "Precondition Failed, No Resource Found!! " + m_ErrorMsg.toString(),
           false);
     } else {
@@ -114,12 +114,11 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @target void stopCaching()
    * @test_data Callback function for receiving cached attribute
    * @pre_condition Remote Resource Object should be instantialized
-   * @procedure 1. Perform startCaching() API 2. Wait for 2 seconds. 3. Perform
-   *            stopCaching() API.
+   * @procedure 1. Perform startCaching() API 2. Perform isCaching() API 3. Perform
+   *            stopCaching() API 4. Again perform isCaching() API
    * @post_condition None
-   * @expected 1. isCaching() should return true. 2. No exception occur.
+   * @expected 1. isCaching() should return true. 2. Should not throw any exception
    **/
-
   public void testStartCachingWithCallback_SCV_P() {
     try {
       m_Resource.startCaching(m_REHelper.mOnCacheUpdatedListener);
@@ -133,8 +132,8 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       assertEquals(
           "isCaching() API returns true, where it should return false.", false,
           isCaching);
-    } catch (RcsException e) {
-      fail("Exception occurred inside testStartCachingWithoutCallback_SQV_P: "
+    } catch (Exception e) {
+      fail("Exception occurred inside estStartCachingWithCallback_SCV_P: "
           + e.getLocalizedMessage());
     }
   }
@@ -149,9 +148,8 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @pre_condition Remote Resource Object should be instantialized
    * @procedure 1. Perform startCaching() API 2. Perform stopCaching() API.
    * @post_condition None
-   * @expected No exception occur.
+   * @expected Should not throw any Exception
    **/
-
   public void testStartCachingWithCallback_SQV_P() {
     try {
       m_Resource.startCaching(m_REHelper.mOnCacheUpdatedListener);
@@ -159,9 +157,47 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
 
       m_Resource.stopCaching();
-    } catch (RcsException e) {
-      fail("Exception occurred inside testStartCachingWithoutCallback_SCV_P: "
+    } catch (Exception e) {
+      fail("Exception occurred inside testStartCachingWithCallback_SQV_P: "
           + e.getLocalizedMessage());
+    }
+  }
+
+  /**
+   * @since 2016-07-25
+   * @see startCaching(OnCacheUpdatedListener)
+   * @objective Test 'startCaching' function with Null Callback
+   * @target void 1. void startCaching() 2. CacheState getCacheState() 3.
+   *         stopCaching()
+   * @test_data Null Callback function
+   * @pre_condition Remote Resource Object should be instantialized
+   * @procedure 1. Perform startCaching() API 2. Perform getCacheState() API 3.
+   *            Perform stopCaching() API 4. Again perform getCacheState() API
+   * @post_condition None
+   * @expected 1. API should return Cachestate as 'Ready' after startcaching 2.
+   *           Should return Cachestate as 'None' after Stopcaching 3. No
+   *           exception should occur
+   **/
+  public void testStartCachingWithNullCallback_SQV_P() {
+    try {
+      m_Resource.startCaching(null);
+      CacheState cacheState = m_Resource.getCacheState();
+      if (cacheState != CacheState.READY) {
+        assertEquals("Cache state should READY after CachingStart. But got "
+            + cacheState);
+      }
+      m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
+
+      m_Resource.stopCaching();
+      cacheState = m_Resource.getCacheState();
+      if (cacheState != CacheState.NONE) {
+        assertEquals(
+            "Cache state should NONE after CachingStop. But got " + cacheState);
+      }
+    } catch (Exception e) {
+      fail(
+          "Exception occurred inside testStartCachingWithNullCallback_SQV_P, exception is: "
+              + e.getLocalizedMessage());
     }
   }
 
@@ -174,12 +210,11 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @target void stopCaching()
    * @test_data None
    * @pre_condition Remote Resource Object should be instantialized
-   * @procedure 1. Perform startCaching() API 2. Wait for 2 seconds. 3. Perform
-   *            stopCaching() API.
+   * @procedure 1. Perform startCaching() API without callback 2. Perform isCaching() API. 3. Perform
+   *            stopCaching() API 4. Perform isCaching() API again.
    * @post_condition None
    * @expected 1. isCaching() should return true. 2. No exception occur.
    **/
-
   public void testStartCachingWithoutCallback_SCV_P() {
     try {
       m_Resource.startCaching();
@@ -193,8 +228,8 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       assertEquals(
           "isCaching() API returns true, where it should return false.", false,
           isCaching);
-    } catch (RcsException e) {
-      fail("Exception occurred inside testStartCachingWithoutCallback_SQV_P: "
+    } catch (Exception e) {
+      fail("Exception occurred inside testStartCachingWithoutCallback_SCV_P: "
           + e.getLocalizedMessage());
     }
   }
@@ -211,7 +246,6 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @post_condition None
    * @expected No exception occur.
    **/
-
   public void testStartCachingWithoutCallback_SQV_P() {
     try {
       m_Resource.startCaching();
@@ -219,7 +253,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
 
       m_Resource.stopCaching();
-    } catch (RcsException e) {
+    } catch (Exception e) {
       fail("Exception occurred inside testStartCachingWithoutCallback_SCV_P: "
           + e.getLocalizedMessage());
     }
@@ -271,8 +305,9 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       fail("Cache is started successfully second time.");
     } catch (RcsException e) {
       if (e.getLocalizedMessage().compareTo("Caching already started.") != 0) {
-        fail("Didn't get proper exception message. \"Cheching Caching already started.\" but got "
-            + e.getLocalizedMessage());
+        fail(
+            "Didn't get proper exception message. \"Cheching Caching already started.\" but got "
+                + e.getLocalizedMessage());
       }
     }
   }
@@ -285,7 +320,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @test_data None
    * @pre_condition 1. Remote Resource Object should be instantialized 2.
    *                Perform startCaching() API
-   * @procedure Perform stopCaching() API
+   * @procedure Perform stopCaching() API with isCaching() API
    * @post_condition None
    * @expected The API should not generate any exception
    **/
@@ -300,7 +335,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       if (m_Resource.isCaching() == true) {
         fail("isCaching() API returns true, where it should return false.");
       }
-    } catch (RcsException e) {
+    } catch (Exception e) {
       fail("Exception occurred inside StopCaching_P: "
           + e.getLocalizedMessage());
     }
@@ -317,15 +352,13 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @post_condition None
    * @expected No crash occurs
    **/
-
   public void testStopCaching_ITLC_P() {
     for (int i = 0; i < 10; i++) {
       try {
         m_Resource.stopCaching();
       } catch (RcsException e) {
-        assertTrue(
-            "Exception occurred inside testStopCaching_ITLC_P: "
-                + e.getLocalizedMessage(), false);
+        assertTrue("Exception occurred inside testStopCaching_ITLC_P: "
+            + e.getLocalizedMessage(), false);
       }
     }
   }
@@ -375,7 +408,6 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @post_condition None
    * @expected Returned Resource Attributes is not null
    **/
-
   public void testGetCachedAttributesWithoutCallback_SQV_P() {
     try {
       m_Resource.startCaching();
@@ -389,7 +421,8 @@ public class REResourceCacheTest extends InstrumentationTestCase {
 
       m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
       if (REAPIHelper.g_IsCasheUpdated == true) {
-        fail("Callback is coming after calling startCaching() without callback.");
+        fail(
+            "Callback is coming after calling startCaching() without callback.");
       }
     } catch (RcsException e) {
       fail("Exception occurred inside GetCachedAttributes_P: "
@@ -420,8 +453,8 @@ public class REResourceCacheTest extends InstrumentationTestCase {
         fail("Can't getCachedAttribute for " + ATTR_KEY_POWER);
       }
 
-      if (!(value.asString().equalsIgnoreCase(ATTR_VALUE_POWER_ON) || value
-          .asString().equalsIgnoreCase(ATTR_VALUE_POWER_OFF))) {
+      if (!(value.asString().equalsIgnoreCase(ATTR_VALUE_POWER_ON)
+          || value.asString().equalsIgnoreCase(ATTR_VALUE_POWER_OFF))) {
         fail("Got " + value.asString() + " for " + ATTR_KEY_POWER
             + " it should be " + ATTR_VALUE_POWER_ON + " or "
             + ATTR_VALUE_POWER_OFF);
@@ -450,8 +483,9 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       fail("Successfully got attribute without starting cache.");
     } catch (RcsException e) {
       if (e.getLocalizedMessage().compareTo("Caching not started.") != 0) {
-        fail("Didn't get proper exception message. \"Cheching Caching not started.\" but got "
-            + e.getLocalizedMessage());
+        fail(
+            "Didn't get proper exception message. \"Cheching Caching not started.\" but got "
+                + e.getLocalizedMessage());
       }
     }
   }
@@ -468,7 +502,6 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @post_condition None
    * @expected No crash occurs
    **/
-
   public void testGetCacheStateWithoutCallback_SQV_P() {
     try {
       CacheState cacheState = m_Resource.getCacheState();
@@ -507,14 +540,14 @@ public class REResourceCacheTest extends InstrumentationTestCase {
   public void testGetRemoteAttributes_SQV_P() {
     try {
       m_Resource
-          .getRemoteAttributes(m_REHelper.mOnRemoteAttributesReceivedListener);
+      .getRemoteAttributes(m_REHelper.mOnRemoteAttributesReceivedListener);
       m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
 
       if (REAPIHelper.g_IsAttributeReceived == false) {
         fail("Callback did not come");
       }
-    } catch (RcsException e) {
-      fail("Exception occurred inside GetRemoteAttributes_SRC_P: "
+    } catch (Exception e) {
+      fail("Exception occurred inside GetRemoteAttributes_SQV_P: "
           + e.getLocalizedMessage());
     }
   }
@@ -593,8 +626,8 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       } else {
         fail("Can't get the proper set value in callback");
       }
-    } catch (RcsException e) {
-      fail("Exception occurred inside SetRemoteAttributes_SRC_P: "
+    } catch (Exception e) {
+      fail("Exception occurred inside testSetRemoteAttributes_SQV_P: "
           + e.getLocalizedMessage());
     }
   }
@@ -615,7 +648,6 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    **/
   public void testSetRemoteAttributes_ECRC_N() {
     REAPIHelper.g_IsAttributeReceived = false;
-
     try {
       RcsResourceAttributes rcsAttributes = new RcsResourceAttributes();
 
