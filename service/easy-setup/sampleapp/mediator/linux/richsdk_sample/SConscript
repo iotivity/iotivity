@@ -61,7 +61,7 @@ mediator_env.PrependUnique(CPPPATH = [
 if env.get('SECURED') == '1':
 	mediator_env.PrependUnique(LIBS = ['tinydtls', 'timer'])
 
-mediator_env.PrependUnique(LIBS = ['ESMediatorRich', 'oc', 'octbstack', 'oc_logger'])
+mediator_env.PrependUnique(LIBS = ['ESMediatorRich', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction'])
 
 if env.get('SECURED') == '1':
 	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])

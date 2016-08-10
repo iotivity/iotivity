@@ -166,6 +166,7 @@ print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
 
 lib_env = env.Clone()
+lib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if env.get('LOGGING'):
 	lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
@@ -173,8 +174,7 @@ if env.get('LOGGING'):
 if ca_os == 'android':
 	lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
-
-if ca_os in ['android', 'tizen']:
+if ca_os in ['android', 'tizen', 'linux']:
 	lib_env.AppendUnique(LIBS = ['coap'])
 	if lib_env.get('SECURED') == '1':
 		lib_env.AppendUnique(LIBS = ['tinydtls'])
