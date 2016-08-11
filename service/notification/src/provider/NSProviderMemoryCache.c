@@ -193,6 +193,20 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         }
 
     }
+    else if(type == NS_PROVIDER_CACHE_REGISTER_TOPIC)
+    {
+        NS_LOG(DEBUG, "Type is REGITSTER TOPIC");
+
+        NSCacheTopicData * topicData = (NSCacheTopicData *) newObj->data;
+        NSCacheElement * it = NSStorageRead(list, topicData->topicName);
+
+        if (it)
+        {
+            NS_LOG(DEBUG, "already registered for topic name");
+            pthread_mutex_unlock(&NSCacheMutex);
+            return NS_FAIL;
+        }
+    }
 
     if (list->head == NULL)
     {
@@ -239,12 +253,13 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
         return false;
     }
 
+    NS_LOG_V(DEBUG, "Data(compData) = [%s]", id);
+
     if (type == NS_PROVIDER_CACHE_SUBSCRIBER)
     {
         NSCacheSubData * subData = (NSCacheSubData *) data;
 
         NS_LOG_V(DEBUG, "Data(subData) = [%s]", subData->id);
-        NS_LOG_V(DEBUG, "Data(compData) = [%s]", id);
 
         if (strcmp(subData->id, id) == 0)
         {
@@ -254,11 +269,24 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
 
         NS_LOG(DEBUG, "Message Data is Not Same");
         return false;
+    }
+    else if (type == NS_PROVIDER_CACHE_REGISTER_TOPIC)
+    {
+        NSCacheTopicData * topicData = (NSCacheTopicData *) data;
 
+        NS_LOG_V(DEBUG, "Data(topicData) = [%s]", topicData->topicName);
+
+        if (strcmp(topicData->topicName, id) == 0)
+        {
+            NS_LOG(DEBUG, "SubData is Same");
+            return true;
+        }
+
+        NS_LOG(DEBUG, "Message Data is Not Same");
+        return false;
     }
 
     NS_LOG(DEBUG, "NSProviderCompareIdCacheData - OUT");
-
     return false;
 }
 

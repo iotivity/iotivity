@@ -271,7 +271,7 @@ NSResult NSProviderAddTopic(char *topicName)
     NS_LOG(DEBUG, "NSProviderAddTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_ADD_TOPIC, topicName);
+    NSPushQueue(TOPIC_SCHEDULER, TASK_ADD_TOPIC, OICStrdup(topicName));
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderAddTopics - OUT");

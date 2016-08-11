@@ -22,6 +22,9 @@
 
 static bool isTopicList = false;
 
+NSResult NSStoreTopics(const char * topicName);
+NSResult NSSendTopicUpdation();
+
 NSResult NSInitTopicList()
 {
     NS_LOG(DEBUG, "NSInitTopicList - IN");
@@ -65,65 +68,25 @@ NSTopicList * NSGetTopics(char *consumerId)
     return topicList;
 }
 
-//TODO: update parameter
-NSResult NSStoreTopics(char *consumerId, NSTopics** topics)
+NSResult NSStoreTopics(const char * topicName)
 {
     NS_LOG(DEBUG, "NSWriteTopicsToStorage()");
 
-    if(!consumerId)
+    NSCacheTopicData * data = (NSCacheTopicData *)OICMalloc(sizeof(NSCacheTopicData));
+    data->topicName = topicName;
+    data->state = NS_TOPIC_UNSUBSCRIBED;
+
+    NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+    element->data = (void *) data;
+    element->next = NULL;
+
+    if(NSStorageWrite(registeredTopicList, element) != NS_OK)
     {
-        NS_LOG(DEBUG, "Store registered topic list");
-        //TODO: store registered topic list
+        NS_LOG(DEBUG, "fail to write cache");
     }
-    else // topic selection for consumer
-    {
-        NS_LOG(DEBUG, "Store subscribed topic list");
-        //TODO: store subscribed topic list for consumer
-
-        //TODO: modiy caching logic
-        NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-        NSCacheTopicData * topicData = (NSCacheTopicData *) OICMalloc(sizeof(NSCacheTopicData));
-
-        OICStrcpy(topicData->consumerId, UUID_STRING_SIZE, consumerId);
-        NS_LOG_V(DEBUG, "consumer id: %s", topicData->consumerId);
-
-        // TODO: print topic list
-        topicData->topics = topics;
-        NS_LOG(DEBUG, "print topic list");
-
-        element->data = (void*) topicData;
-        element->next = NULL;
-
-        if(NSStorageWrite(consumerTopicList, element) != NS_OK)
-        {
-            NS_LOG(DEBUG, "fail to write cache");
-        }
-    }
+    NSSendTopicUpdation();
 
     NS_LOG(DEBUG, "NSWriteTopicsToStorage() NS_OK");
-    return NS_OK;
-}
-
-NSResult NSRegisterTopicList(NSTopicList *topicList)
-{
-    NS_LOG(DEBUG, "NSRegisterTopicList()");
-
-    if(!topicList)
-    {
-        NS_LOG(ERROR, "no topics");
-        return NS_ERROR;
-    }
-
-    OCResourceHandle rHandle = NULL;
-    if(NSPutTopicResource(topicList, &rHandle) != NS_OK)
-    {
-        NS_LOG(ERROR, "Fail to put topic resource");
-        return NS_ERROR;
-    }
-
-    NSStoreTopics(NULL, topicList->head);
-
-    NS_LOG(DEBUG, "NSRegisterTopicList() NS_OK");
     return NS_OK;
 }
 
@@ -150,7 +113,8 @@ NSResult NSSubscribeTopicList(char *consumerId, NSTopicList *topicList)
         return NS_ERROR;
     }
 
-    NSStoreTopics(consumerId, topicList->head);
+    //TODO it will change logic.
+    //NSStoreTopics(consumerId, topicList->head);
 
     NS_LOG(DEBUG, "NSSubscribeTopicList() NS_OK");
     return NS_OK;
@@ -389,12 +353,10 @@ void * NSTopicSchedule(void * ptr)
                     // TODO: implement
                     break;
                 case TASK_ADD_TOPIC:
-                    // TODO: modify to add single topic
+                {
                     NS_LOG(DEBUG, "CASE TASK_ADD_TOPIC : ");
-                    NSTopicList * registeredTopicList = (NSTopicList *) node->taskData;
-                    NSRegisterTopicList(registeredTopicList);
-                    NSSendTopicUpdation();
-                    // TODO : free NSTopic
+                    NSStoreTopics((const char *) node->taskData);
+                }
                     break;
                 case TASK_DELETE_TOPIC:
                     // TODO: implement 
