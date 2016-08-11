@@ -120,6 +120,54 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
     return NS_ERROR;
 }
 
+NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool state)
+{
+    pthread_mutex_lock(&NSCacheMutex);
+
+    NS_LOG(DEBUG, "NSCacheUpdateSubScriptionState - IN");
+
+    if (id == NULL)
+    {
+        NS_LOG(DEBUG, "id is NULL");
+        pthread_mutex_unlock(&NSCacheMutex);
+        return NS_ERROR;
+    }
+
+    NSCacheElement * it = NSStorageRead(list, id);
+
+    if (it)
+    {
+        NSCacheSubData * itData = (NSCacheSubData *) it->data;
+        if (strcmp(itData->id, id) == 0)
+        {
+            NS_LOG(DEBUG, "Update Data - IN");
+
+            NS_LOG_V(DEBUG, "currData_ID = %s", itData->id);
+            NS_LOG_V(DEBUG, "currData_MsgObID = %d", itData->messageObId);
+            NS_LOG_V(DEBUG, "currData_SyncObID = %d", itData->syncObId);
+            NS_LOG_V(DEBUG, "currData_Cloud_MsgObID = %d", itData->remote_messageObId);
+            NS_LOG_V(DEBUG, "currData_Cloud_SyncObID = %d", itData->remote_syncObId);
+            NS_LOG_V(DEBUG, "currData_IsWhite = %d", itData->isWhite);
+
+            NS_LOG_V(DEBUG, "update state = %d", state);
+
+            itData->isWhite = state;
+
+            NS_LOG(DEBUG, "Update Data - OUT");
+            pthread_mutex_unlock(&NSCacheMutex);
+            return NS_OK;
+        }
+    }
+    else
+    {
+        NS_LOG(DEBUG, "Not Found Data");
+    }
+
+    NS_LOG(DEBUG, "NSCacheUpdateSubScriptionState - OUT");
+    pthread_mutex_unlock(&NSCacheMutex);
+    return NS_ERROR;
+}
+
 NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
     pthread_mutex_lock(&NSCacheMutex);
@@ -285,6 +333,21 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
         NS_LOG(DEBUG, "Message Data is Not Same");
         return false;
     }
+    else if (type == NS_PROVIDER_CACHE_CONSUMER_TOPIC)
+    {
+        NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) data;
+
+        NS_LOG_V(DEBUG, "Data(topicData) = [%s]", topicData->topicName);
+
+        if (strcmp(topicData->topicName, id) == 0)
+        {
+            NS_LOG(DEBUG, "SubData is Same");
+            return true;
+        }
+
+        NS_LOG(DEBUG, "Message Data is Not Same");
+        return false;
+    }
 
     NS_LOG(DEBUG, "NSProviderCompareIdCacheData - OUT");
     return false;
@@ -305,6 +368,16 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
         OICFree(subData);
 
         return NS_OK;
+    }
+    else if(type == NS_PROVIDER_CACHE_REGISTER_TOPIC)
+    {
+        NSCacheTopicData * data = (NSCacheTopicData *) data;
+        OICFree(data->topicName);
+    }
+    else if(type == NS_PROVIDER_CACHE_CONSUMER_TOPIC)
+    {
+        NSCacheTopicSubData * data = (NSCacheTopicSubData *) data;
+        OICFree(data->topicName);
     }
 
     return NS_OK;
@@ -385,4 +458,54 @@ NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id)
     }
     pthread_mutex_unlock(&NSCacheMutex);
     return NS_OK;
+}
+
+NSResult NSStorageDelete(NSCacheList * list, const char * delId)
+{
+    pthread_mutex_lock(&NSCacheMutex);
+    NSCacheElement * prev = list->head;
+    NSCacheElement * del = list->head;
+
+    NSCacheType type = list->cacheType;
+
+    if (NSProviderCompareIdCacheData(type, del->data, delId))
+    {
+        if (del == list->head) // first object
+        {
+            if (del == list->tail) // first object (one object)
+            {
+                list->tail = del->next;
+            }
+
+            list->head = del->next;
+
+            NSProviderDeleteCacheData(type, del->data);
+            OICFree(del);
+            pthread_mutex_unlock(&NSCacheMutex);
+            return NS_OK;
+        }
+    }
+
+    del = del->next;
+    while (del)
+    {
+        if (NSProviderCompareIdCacheData(type, del->data, delId))
+        {
+            if (del == list->tail) // delete object same to last object
+            {
+                list->tail = prev;
+            }
+
+            prev->next = del->next;
+            NSProviderDeleteCacheData(type, del->data);
+            OICFree(del);
+            pthread_mutex_unlock(&NSCacheMutex);
+            return NS_OK;
+        }
+
+        prev = del;
+        del = del->next;
+    }
+    pthread_mutex_unlock(&NSCacheMutex);
+    return NS_FAIL;
 }

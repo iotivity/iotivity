@@ -91,7 +91,18 @@ NSResult NSAddTopics(const char * topicName)
 
 NSResult NSDeleteTopics(const char * topicName)
 {
-    // TO-DO
+    NS_LOG(DEBUG, "NSDeleteTopics()");
+
+    if(!topicName)
+    {
+        NS_LOG(ERROR, "topicName is NULL");
+        return NS_ERROR;
+    }
+
+    NSStorageDelete(registeredTopicList, topicName);
+    while(NSStorageDelete(consumerTopicList, topicName) != NS_FAIL);
+
+    return NS_OK;
 }
 
 NSResult NSSubscribeTopicList(char *consumerId, NSTopicList *topicList)
