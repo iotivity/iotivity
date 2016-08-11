@@ -80,7 +80,6 @@ typedef struct
 {
     char id[NS_UUID_STRING_SIZE];
     char * topicName;
-    NSTopicState state;
 
 } NSCacheTopicSubData;
 
