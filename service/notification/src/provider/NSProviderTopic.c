@@ -53,10 +53,12 @@ NSTopicList * NSGetTopics(char *consumerId)
     if(consumerId == NULL)
     {
         NS_LOG(DEBUG, "All registered topic list");
+        //TODO: get registered topic list
     }
     else
     {
         NS_LOG_V(DEBUG, "Subscribed topic list for consumerId(%s)", consumerId);
+        //TODO: get subscribed topic list for consumer
     }
 
     NS_LOG(DEBUG, "NSGetTopics() NS_OK");
@@ -64,26 +66,38 @@ NSTopicList * NSGetTopics(char *consumerId)
 }
 
 //TODO: update parameter
-NSResult NSStoreTopics(char * consumerId, NSTopic** topics)
+NSResult NSStoreTopics(char *consumerId, NSTopics** topics)
 {
     NS_LOG(DEBUG, "NSWriteTopicsToStorage()");
 
-    NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-    NSCacheTopicData * topicData = (NSCacheTopicData *) OICMalloc(sizeof(NSCacheTopicData));
-
-    OICStrcpy(topicData->consumerId, UUID_STRING_SIZE, consumerId);
-    NS_LOG_V(DEBUG, "consumer id: %s", topicData->consumerId);
-
-    // TODO: print topic list
-    topicData->topics = topics;
-    NS_LOG(DEBUG, "print topic list");
-
-    element->data = (void*) topicData;
-    element->next = NULL;
-
-    if(NSStorageWrite(consumerTopicList, element) != NS_OK)
+    if(!consumerId)
     {
-        NS_LOG(DEBUG, "fail to write cache");
+        NS_LOG(DEBUG, "Store registered topic list");
+        //TODO: store registered topic list
+    }
+    else // topic selection for consumer
+    {
+        NS_LOG(DEBUG, "Store subscribed topic list");
+        //TODO: store subscribed topic list for consumer
+
+        //TODO: modiy caching logic
+        NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NSCacheTopicData * topicData = (NSCacheTopicData *) OICMalloc(sizeof(NSCacheTopicData));
+
+        OICStrcpy(topicData->consumerId, UUID_STRING_SIZE, consumerId);
+        NS_LOG_V(DEBUG, "consumer id: %s", topicData->consumerId);
+
+        // TODO: print topic list
+        topicData->topics = topics;
+        NS_LOG(DEBUG, "print topic list");
+
+        element->data = (void*) topicData;
+        element->next = NULL;
+
+        if(NSStorageWrite(consumerTopicList, element) != NS_OK)
+        {
+            NS_LOG(DEBUG, "fail to write cache");
+        }
     }
 
     NS_LOG(DEBUG, "NSWriteTopicsToStorage() NS_OK");
@@ -107,16 +121,38 @@ NSResult NSRegisterTopicList(NSTopicList *topicList)
         return NS_ERROR;
     }
 
-    if(topicList->consumerId != NULL)
+    NSStoreTopics(NULL, topicList->head);
+
+    NS_LOG(DEBUG, "NSRegisterTopicList() NS_OK");
+    return NS_OK;
+}
+
+NSResult NSSubscribeTopicList(char *consumerId, NSTopicList *topicList)
+{
+    NS_LOG(DEBUG, "NSSubscribeTopicList()");
+
+    if(!topicList)
     {
-        // id should be null to register topic list
+        NS_LOG(ERROR, "no topics");
+        return NS_ERROR;
+    }
+
+    if(!consumerId)
+    {
         NS_LOG(ERROR, "invalid consumer id");
         return NS_ERROR;
     }
 
-    NSStoreTopics(topicList->consumerId, topicList->head);
+    OCResourceHandle rHandle = NULL;
+    if(NSPutTopicResource(topicList, &rHandle) != NS_OK)
+    {
+        NS_LOG(ERROR, "Fail to put topic resource");
+        return NS_ERROR;
+    }
 
-    NS_LOG(DEBUG, "NSRegisterTopicList() NS_OK");
+    NSStoreTopics(consumerId, topicList->head);
+
+    NS_LOG(DEBUG, "NSSubscribeTopicList() NS_OK");
     return NS_OK;
 }
 
@@ -247,11 +283,13 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     {
         NS_LOG(DEBUG, "Send registered topic list");
         //TODO: get registered topic list
+        // NSGetTopics(NULL);
     }
     else
     {
         NS_LOG(DEBUG, "Send subscribed topic list to consumer");
         //TODO: get subscribed topic list for consumer
+        // NSGetTopics(consumerid);
     }
 
     // make response for the Get Request
@@ -268,9 +306,28 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
 
+    // set topics to the array of resource property
+    const int TOPIC_MAX_SIZE = 100;
+    int dimensions = 0;
+    OCRepPayload* payloadTopicArray[TOPIC_MAX_SIZE];
+    //TODO: use while(NSTopicList)
+    OCRepPayload* payloadTopic1;
+    OCRepPayload* payloadTopic2;
+
+    OCRepPayloadSetPropString(payloadTopic1, NS_ATTRIBUTE_TOPIC_NAME, "test topic name1");
+    OCRepPayloadSetPropBool(payloadTopic1, NS_ATTRIBUTE_TOPIC_SELECTION, true);
+
+    OCRepPayloadSetPropString(payloadTopic2, NS_ATTRIBUTE_TOPIC_NAME, "test topic name2");
+    OCRepPayloadSetPropBool(payloadTopic2, NS_ATTRIBUTE_TOPIC_SELECTION, false);
+
+    payloadTopicArray[dimensions++] = payloadTopic1;
+    payloadTopicArray[dimensions++] = payloadTopic2;
+    // end of set topics
+
     OCRepPayloadSetUri(payload, NS_COLLECTION_TOPIC_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
     // TODO: add PayLoadSet with topic list got above
+    OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST, (const OCRepPayload**)(payloadTopicArray), dimensions);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
@@ -322,14 +379,17 @@ void * NSTopicSchedule(void * ptr)
                     break;
                 case TASK_SUBSCRIBE_TOPICS:
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPICS : ");
+                    NSTopicList * topicList = (NSTopicList *) node->taskData;
+                    NSSubscribeTopicList(topicList->consumerId, topicList);
+                    NSSendTopicUpdationToConsumer(topicList->consumerId);
+                    // TODO : free NSTopic
                     break;
                 case TASK_REGISTER_TOPICS:
                     NS_LOG(DEBUG, "CASE TASK_REGISTER_TOPICS : ");
-                    NSTopicList * topicList = (NSTopicList *) node->taskData;
-                    NSRegisterTopicList(topicList);
+                    NSTopicList * registeredTopicList = (NSTopicList *) node->taskData;
+                    NSRegisterTopicList(registeredTopicList);
                     NSSendTopicUpdation();
                     // TODO : free NSTopic
-                    // NSFreeTopicList(topicList);
                     break;
                 default:
                     break;

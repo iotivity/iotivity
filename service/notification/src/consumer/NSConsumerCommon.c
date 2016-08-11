@@ -356,13 +356,13 @@ NSTopicList * NSCopyProviderTopicList(NSTopicList * topicList, size_t dimensionS
 
     OICStrcpy(newTopicList->consumerId, NS_DEVICE_ID_LENGTH, topicList->consumerId);
 
-    newTopicList->topics = (NSTopic **) OICMalloc(sizeof(NSTopic *)*dimensionSize);
+    newTopicList->topics = (NSTopics **) OICMalloc(sizeof(NSTopics *)*dimensionSize);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicList->topics,
             NULL, NSRemoveProviderTopicList(newTopicList, -1));
 
     for (int i = 0; i < (int)dimensionSize; i++)
     {
-        newTopicList->topics[i] = (NSTopic *) OICMalloc(sizeof(NSTopic));
+        newTopicList->topics[i] = (NSTopics *) OICMalloc(sizeof(NSTopics));
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicList->topics[i],
             NULL, NSRemoveProviderTopicList(newTopicList, i));
 
