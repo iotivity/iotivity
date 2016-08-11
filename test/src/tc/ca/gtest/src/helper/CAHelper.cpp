@@ -28,6 +28,9 @@ int CAHelper::s_simulatorPort;
 int CAHelper::s_simulatorSecurePort;
 bool CAHelper::s_bufferEmpty;
 TestCaseInfo CAHelper::s_tcInfo;
+#ifdef TCP_ADAPTER
+int CAHelper::keepAliveCount;
+#endif
 
 #ifdef __WITH_DTLS__
 CADtlsPskCredType_t CAHelper::pskCredsBlob = NULL;
@@ -73,6 +76,10 @@ void CAHelper::setupTestCase(MessageInOutType inOutType, MessageDataType validat
     s_tcInfo.numOptions = 0;
 
     s_mapReceiveCount.clear();
+
+#ifdef TCP_ADAPTER
+    keepAliveCount = 0;
+#endif
 
     IOTIVITYTEST_LOG(DEBUG, "[setupTestCase] OUT");
 }
@@ -2056,6 +2063,22 @@ void CAHelper::errorHandler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorI
 
     return;
 }
+
+#ifdef TCP_ADAPTER
+void CAHelper::keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected)
+{
+    keepAliveCount ++;
+    IOTIVITYTEST_LOG(DEBUG, "KeepAliveHandler in");
+    IOTIVITYTEST_LOG(DEBUG, "endpoint address %s   port %d", endpoint->addr, endpoint->port);
+    IOTIVITYTEST_LOG(DEBUG, "isConnected %d", isConnected);
+    IOTIVITYTEST_LOG(DEBUG, "KeepAliveHandler out");    
+}
+
+int CAHelper::getKeepAliveCount()
+{
+    return keepAliveCount;
+}
+#endif
 
 int CAHelper::getAddressSet(const char *uri, addressSet_t* outAddress)
 {

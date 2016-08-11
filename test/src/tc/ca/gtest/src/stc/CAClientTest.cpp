@@ -3174,3 +3174,66 @@ TEST_F(CAClientTest_stc, SendSecureConDeleteRequestWithLargePayload_P)
 #endif
 
 #endif
+
+/**
+ * @since 2016-08-05
+ * @see  CAResult_t CAInitialize()
+ * @see  CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
+ * @see  CAResult_t CACreateEndpoint(CATransportFlags_t flags, CATransportAdapter_t adapter, const char *addr,
+ *         uint16_t port, CAEndpoint_t **object)
+ * @see CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
+ * @see  void CADestroyEndpoint(CAEndpoint_t *object)
+ * @see  void CADestroyToken(CAToken_t token)
+ * @see  void CATerminate()
+ * @objective Test CARegisterKeepAliveHandler functionality by sending message
+ * @target void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
+ * @test_data keepAliveHandler callback function 
+ * @pre_condition  1. [Server] Call CAInitialize to initialize CA
+ *                 2. [Server] Select Network by CASelectNetwork API
+ *                 3. [Server] Call CARegisterHandler to register handler
+ *                 4. [Server] Call CAStartListeningServer to start server
+ *                 5. [Client] Call CAInitialize to initialize CA
+ *                 6. [Client] Select Network by CASelectNetwork API
+ *                 7. [Client] Call CARegisterKeepAliveHandler to register handler
+ *                 8. [Client] Call CAStartDiscoveryServer
+ *                 9. [Client] Call CAGenerateToken to generate tokenl
+ *                 10. [Client] Call CACreateEndpoint to create endpoint for server
+ *                 11. [Client] Set keepAliveCount to zero
+ * @procedure  1. [Client] Attempt to send a request messages to the server
+ *             2. [Client] Wait few seconds
+ *             3. [Client] Increament keepAliveCount in keepAliveHandler callback function
+ * @post_condition  1. [Client] Destroy token
+ *                  2. [Client] Destroy endpoint
+ *                  3. [CLient] Terminate CA
+ * @expected  keepAliveCount should be greater than zero
+ */
+#if (defined(__LINUX__) || defined(__ANDROID__)) && defined(__TCP__)
+TEST_F(CAClientTest_stc, CACheckKeepAliveHandler_P)
+{
+    m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
+
+    if (!m_caHelper.initClientNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }
+
+    CARegisterKeepAliveHandler(CAHelper::keepAliveHandler);
+    
+    if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        CATerminate();
+        return;
+    }
+
+    CommonUtil::waitInSecond(2);
+        
+    if (m_caHelper.getKeepAliveCount()==0)
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+    }
+        
+    CATerminate();    
+}
+#endif

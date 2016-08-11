@@ -2,14 +2,15 @@
 
 # Run Command
 
-# ./build.sh deviceId=android_devices_id adapter=ip,edr,le clean=true source=last
+# ./native_build.sh push=true clean=true android_ndk=ndk-absolute_path 
 
-deviceId=''
 push="false"
 clean="true"
-source=""
-given_adapter=""
-
+total_device=1
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+    
 for i in `seq 1 $#` 
 do
 	eval arg=\$$i
@@ -21,32 +22,50 @@ arg_parts=(${args//=/ })
 len=${#arg_parts[@]}
 
 i=0
+while [ $i -lt $len ]; do    
+    arg_parts[i]=${arg_parts[i],,}
+    let i=i+2
+done
+
+i=0
 while [ $i -lt $len ]; do
-    if [[ "${arg_parts[i]}" = "deviceId" || "${arg_parts[i]}" = "DeviceId" ]]; then
-        deviceId="-s "${arg_parts[i+1]}
-    elif [[ "${arg_parts[i]}" = "push" || "${arg_parts[i]}" = "Push" ]]; then
-        push=${arg_parts[i+1]}
-    elif [[ "${arg_parts[i]}" = "clean" || "${arg_parts[i]}" = "Clean" ]]; then
-        clean=${arg_parts[i+1]}
-    elif [[ "${arg_parts[i]}" = "source" || "${arg_parts[i]}" = "Source" ]]; then
-        source=${arg_parts[i+1]}
-    elif [[ "${arg_parts[i]}" = "adapter" || "${arg_parts[i]}" = "Adapter" ]]; then
-        given_adapter=${arg_parts[i+1]}
+    arg=${arg_parts[i+1]}
+    arg=${arg//+/ }
+    if [[ "${arg_parts[i]}" = "push" ]]; then
+        push=${arg}
+    elif [[ "${arg_parts[i]}" = "clean" ]]; then
+        clean=${arg}
+    elif [[ "${arg_parts[i]}" = "android_ndk" ]]; then
+        ANDROID_NDK=${arg}        
     fi
     let i=i+2
 done
 
 if [[ "${ANDROID_NDK}" = "" ]]; then
-    echo 'ANDROID_NDK NOT DEFINED'
-    echo 'Script Exiting...'
+    echo ${red}'ANDROID_NDK NOT DEFINED'${reset}
+    echo ${red}'Script Exiting...'${reset}
     exit 127
 fi
 
 ndk_file=${ANDROID_NDK}"/ndk-build"
 if [ ! -f "$ndk_file" ]; then
-    echo 'Invalid ANDROID_NDK. No ndk-build found'
-    echo 'Script Exiting...'
+    echo ${red}'Invalid ANDROID_NDK. No ndk-build found'${reset}
+    echo ${red}'Script Exiting...'${reset}
     exit 127
+fi
+
+if [[ "${push}" = "true" || "${push}" = "1" ]]; then
+
+    device_ids=$(adb devices | grep -o '\b[a-f0-9]\+\b')
+    
+    device_list=(${device_ids})
+    total_device=${#device_list[@]}
+
+    if [ $total_device -lt 1 ]; then
+        echo ${red}'No device Found'${reset}
+    fi    
+
+    echo 'total_device: '${total_device}    
 fi
 
 current_path=`pwd`
@@ -57,46 +76,21 @@ current_path=`pwd`
 echo "pwd: "$current_path
 cd ../../../../../
 	
-if [[ "${source}" = "" ]]; then		
-	current_iotivity_path=`pwd`	
-else
-    path=`pwd`
-	current_iotivity_path=${path}"/IotivityOrgSource/"${source}"/iotivity"    
-fi
+current_iotivity_path=`pwd`	
 
 cd $current_path
 
 echo $current_iotivity_path
 
-export SECTEST_PATH=$current_oictest_path
-export IOTIVITY_PATH=$current_iotivity_path
-    
-if [[ "$given_adapter" = "" ]]; then
-    export EDR_ADAPTER_FLAG=EDR_ADAPTER
-    export IP_ADAPTER_FLAG=IP_ADAPTER
-    export LE_ADAPTER_FLAG=LE_ADAPTER    
-else
-    if [[ "$given_adapter" = *"ip"* || "$given_adapter" = *"IP"* ]]; then
-        export IP_ADAPTER_FLAG=IP_ADAPTER
-    else
-        export IP_ADAPTER_FLAG=NO_IP_ADAPTER
-    fi
-    if [[ "$given_adapter" = *"edr"* || "$given_adapter" = *"EDR"* ]]; then
-        export EDR_ADAPTER_FLAG=EDR_ADAPTER
-    else
-        export EDR_ADAPTER_FLAG=NO_EDR_ADAPTER
-    fi
-    if [[ "$given_adapter" = *"le"* || "$given_adapter" = *"LE"* ]]; then
-        export LE_ADAPTER_FLAG=LE_ADAPTER
-    else
-        export LE_ADAPTER_FLAG=NO_LE_ADAPTER
-    fi
-fi
-
-if [[ "${clean}" = "true" ]]; then
-    rm -rf libs
+if [[ "${clean}" = "true" || "${clean}" = "1" ]]; then
     rm -rf obj
 fi
+
+export IP_ADAPTER_FLAG=IP_ADAPTER
+export EDR_ADAPTER_FLAG=NO_EDR_ADAPTER
+export LE_ADAPTER_FLAG=NO_LE_ADAPTER
+export SECTEST_PATH=$current_oictest_path
+export IOTIVITY_PATH=$current_iotivity_path
 
 echo '-----------------------Environment Variable-----------------------'
 echo $OICTEST_PATH
@@ -106,14 +100,50 @@ echo $IP_ADAPTER_FLAG
 echo $EDR_ADAPTER_FLAG
 echo '-----------------------End-----------------------'
 
+rm -rf libs
+
 ${ANDROID_NDK}/ndk-build
 
-if [[ "${push}" = "true" ]]; then
-    adb $deviceId push ../../../../res/ca_resource/runner.sh /data/local/tmp/
-    adb $deviceId push libs/armeabi/libCAInterface.so /data/local/tmp/
-    adb $deviceId push libs/armeabi/libTinyDtls.so /data/local/tmp/
-    adb $deviceId push libs/armeabi/libgnustl_shared.so /data/local/tmp/
-    adb $deviceId push libs/armeabi/iotivity_ca_test /data/local/tmp/
-    adb $deviceId push libs/armeabi/iotivity_ca_simulator /data/local/tmp/
-    adb $deviceId push ../../../../bin/linux/config.ini /data/local/tmp/
+file_list=(libHelperInterface.so libTcpHelperInterface.so libTinyDtls.so libgnustl_shared.so iotivity_ca_test iotivity_ca_ip_test iotivity_ca_tcp_test iotivity_ca_simulator)
+
+total_file=${#file_list[@]}
+
+success="1"
+i=0
+
+while [ $i -lt $total_file ]; do
+  
+    if [ ! -f libs/armeabi/${file_list[i]}  ]; then
+        success="0"
+        echo ${red}'File '${file_list[i]}' isn not created !!!'${reset}
+        echo ${red}'Build Failed'${reset}
+        exit 127
+    fi
+  
+    echo ${green}${file_list[i]}' Build Successful'${reset}
+  
+    let i=i+1
+done
+
+
+if [[ "${push}" = "true" || "${push}" = "1" ]]; then
+    
+    i=0
+    while [ $i -lt $total_device ]; do
+    
+        device_id='-s '${device_list[i]}
+        echo 'device_id: '${device_id}
+        
+        adb $device_id push ../../../../res/ca_resource/runner.sh /data/local/tmp/
+        adb $device_id push ../../../../bin/linux/config.ini /data/local/tmp/
+            
+        j=0    
+        while [ $j -lt $total_file ]; do
+            adb $device_id push libs/armeabi/${file_list[j]} /data/local/tmp/    
+            echo ${green}${file_list[j]}' pushed /data/local/tmp folder in device '${device_id}${reset}
+            let j=j+1
+        done    
+        
+        let i=i+1
+    done    
 fi

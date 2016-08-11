@@ -44,7 +44,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_PATH := $(APP_PATH)
-LOCAL_MODULE := CAInterface
+LOCAL_MODULE := HelperInterface
 LOCAL_STATIC_LIBRARIES := libgtest boostsystemModule boostfilesystemModule CA
 
 LOCAL_C_INCLUDES = $(PROJECT_ROOT_PATH)/api 
@@ -55,30 +55,53 @@ LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include
 LOCAL_C_INCLUDES += $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
 LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(PROJECT_ROOT_PATH)/../stack/include 
 LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../../resource/csdk/logger/include
 LOCAL_C_INCLUDES += $(GTEST_PATH)/include $(GTEST_PATH)
 LOCAL_C_INCLUDES += $(BOOST_PATH)
 
 LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAHelper.cpp $(COMMON_UTIL_SRC_PATH)/CommonUtil.cpp
 
 LOCAL_LDLIBS := -llog
-LOCAL_CFLAGS := -D__WITH_DTLS__ -std=gnu++11 -fpermissive -D__CA__
+LOCAL_CFLAGS := -std=gnu++11 -fpermissive -D__CA__ -D__WITH_DTLS__
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 include $(BUILD_SHARED_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#Build CACommon CACoap CA
 include $(CLEAR_VARS)
-#PROJECT_ROOT_PATH	= ../../../IotivityOrgSource/last/iotivity/resource/csdk/connectivity
-#PROJECT_ROOT_PATH			= ../../..
-#CA_LIB_PATH 				= $(PROJECT_ROOT_PATH)/build/android
-include $(EXTERNAL_PATH)/Android.mk
+LOCAL_PATH := $(APP_PATH)
+LOCAL_MODULE := TcpHelperInterface
+LOCAL_STATIC_LIBRARIES := libgtest boostsystemModule boostfilesystemModule CA
+
+LOCAL_C_INCLUDES = $(PROJECT_ROOT_PATH)/api 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/inc 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/external/inc 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_malloc/include 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include 
+LOCAL_C_INCLUDES += $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(PROJECT_ROOT_PATH)/../stack/include 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../../resource/csdk/logger/include
+LOCAL_C_INCLUDES += $(GTEST_PATH)/include $(GTEST_PATH)
+LOCAL_C_INCLUDES += $(BOOST_PATH)
+
+LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAHelper.cpp $(COMMON_UTIL_SRC_PATH)/CommonUtil.cpp
+
+LOCAL_LDLIBS := -llog
+LOCAL_CFLAGS := -std=gnu++11 -fpermissive -D__CA__ -DTCP_ADAPTER -DWITH_TCP
+LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
+include $(BUILD_SHARED_LIBRARY)
+
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 include $(CLEAR_VARS)
+include $(EXTERNAL_PATH)/Android.mk
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
 LOCAL_MODULE := iotivity_ca_test
-LOCAL_SHARED_LIBRARIES := CAInterface
-LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__
+LOCAL_SHARED_LIBRARIES := HelperInterface
+LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__ANDROID__ 
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 
 LOCAL_C_INCLUDES = $(EXTERNAL_PATH) $(PROJECT_ROOT_PATH)/api 
@@ -91,14 +114,66 @@ LOCAL_C_INCLUDES += $(EXTERNAL_PATH) $(HELPER_HEADER_PATH)
 LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) 
 LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../stack/include 
 LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common    
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../../resource/csdk/logger/include
 
-LOCAL_SRC_FILES := $(COMMON_UTIL_SRC_PATH)/GtestMain.cpp \
+LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAAndroidGtestRunner.cpp \
 					 $(ITC_PATH)/CACommonTest.cpp \
+					 $(UTC_PATH)/CATest.cpp
+
+LOCAL_LDFLAGS := -fPIE -pie
+include $(BUILD_EXECUTABLE)
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
+LOCAL_MODULE := iotivity_ca_ip_test
+LOCAL_SHARED_LIBRARIES := HelperInterface
+LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__ANDROID__ -D__IP__
+LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
+
+LOCAL_C_INCLUDES = $(EXTERNAL_PATH) $(PROJECT_ROOT_PATH)/api 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/inc $(PROJECT_ROOT_PATH)/external/inc 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_malloc/include
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include
+LOCAL_C_INCLUDES += $(GTEST_PATH)/include $(GTEST_PATH)
+LOCAL_C_INCLUDES += $(BOOST_PATH)
+LOCAL_C_INCLUDES += $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../stack/include 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common    
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../../resource/csdk/logger/include
+
+LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAAndroidGtestRunner.cpp \
 					 $(ITC_PATH)/CANetworkCommonTest.cpp  \
 					 $(ITC_PATH)/CAClientTest.cpp \
 					 $(ITC_PATH)/CAMulticastTest.cpp \
-					 $(UTC_PATH)/CANetworkTest.cpp \
-					 $(UTC_PATH)/CATest.cpp
+					 $(UTC_PATH)/CANetworkTest.cpp
+
+LOCAL_LDFLAGS := -fPIE -pie
+include $(BUILD_EXECUTABLE)
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+include $(CLEAR_VARS)
+LOCAL_MODULE := iotivity_ca_tcp_test
+LOCAL_SHARED_LIBRARIES := TcpHelperInterface
+LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -DTCP_ADAPTER -DWITH_TCP -D__ANDROID__ -D__TCP__
+LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
+
+LOCAL_C_INCLUDES = $(EXTERNAL_PATH) $(PROJECT_ROOT_PATH)/api 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/inc $(PROJECT_ROOT_PATH)/external/inc 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_malloc/include
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include
+LOCAL_C_INCLUDES += $(GTEST_PATH)/include $(GTEST_PATH)
+LOCAL_C_INCLUDES += $(BOOST_PATH)
+LOCAL_C_INCLUDES += $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../stack/include 
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common    
+LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../../resource/csdk/logger/include
+
+LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAAndroidGtestRunner.cpp \
+					 $(ITC_PATH)/CANetworkCommonTest.cpp  \
+					 $(ITC_PATH)/CAClientTest.cpp \
+					 $(UTC_PATH)/CANetworkTest.cpp
 
 LOCAL_LDFLAGS := -fPIE -pie
 include $(BUILD_EXECUTABLE)
@@ -107,7 +182,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := iotivity_ca_simulator
 LOCAL_STATIC_LIBRARIES := CA
-LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__TC_PLATFORM_ANDROID_NATIVE__
+LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__TC_PLATFORM_ANDROID_NATIVE__ -DTCP_ADAPTER -DWITH_TCP
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions 
 LOCAL_C_INCLUDES = $(PROJECT_ROOT_PATH)/api $(PROJECT_ROOT_PATH)/inc $(PROJECT_ROOT_PATH)/external/inc $(PROJECT_ROOT_PATH)/../../c_common/oic_malloc/include $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include $(SIMULATOR_INCLUDE_PATH) 
 LOCAL_SRC_FILES := $(SIMULATOR_SRC_PATH)/ca_simulator.c
@@ -119,7 +194,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := iotivity_ca_sample_client
 LOCAL_STATIC_LIBRARIES := CA
-LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__TC_PLATFORM_ANDROID_NATIVE__
+LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__TC_PLATFORM_ANDROID_NATIVE__ -DTCP_ADAPTER -DWITH_TCP
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions 
 LOCAL_C_INCLUDES = $(PROJECT_ROOT_PATH)/api $(PROJECT_ROOT_PATH)/inc $(PROJECT_ROOT_PATH)/external/inc $(PROJECT_ROOT_PATH)/../../c_common/oic_malloc/include $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include 
 LOCAL_SRC_FILES := $(SIMULATOR_SRC_PATH)/sample_client.c
@@ -131,7 +206,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := iotivity_ca_sample_server
 LOCAL_STATIC_LIBRARIES := CA
-LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__TC_PLATFORM_ANDROID_NATIVE__
+LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__TC_PLATFORM_ANDROID_NATIVE__  -DTCP_ADAPTER -DWITH_TCP
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions 
 LOCAL_C_INCLUDES = $(PROJECT_ROOT_PATH)/api $(PROJECT_ROOT_PATH)/inc $(PROJECT_ROOT_PATH)/external/inc $(PROJECT_ROOT_PATH)/../../c_common/oic_malloc/include $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include 
 LOCAL_SRC_FILES := $(SIMULATOR_SRC_PATH)/sample_server.c

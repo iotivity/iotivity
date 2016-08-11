@@ -167,22 +167,22 @@ TEST_F(CANetworkTest_btc, CACreateEndpoint_P)
  * @procedure  1. call the CACreateEndpoint API and pass the invalid value as flags arguments
  *             2. Check it's return value
  * @post_condition none
- * @expected It will fail to create end point and return CA_STATUS_OK
+ * @expected It won't return CA_STATUS_OK
  */
 #if ((defined(__LINUX__) || defined(__TIZEN__)) && (defined(__ALL_TRANSPORT__))) || (defined(__ANDROID__) && (defined(__IP__) || defined(__TCP__)))
 TEST_F(CANetworkTest_btc, CACreateEndpoint_Flag_ECRC_N)
 {
-    CAEndpoint_t* m_endpoint = NULL;
+    CAEndpoint_t* endpoint = NULL;
 
-    CAResult_t m_result = CACreateEndpoint(CA_INVALID_FLAG, m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, &m_endpoint);
-    if (m_result != CA_STATUS_OK)
+    CAResult_t result = CACreateEndpoint(CA_INVALID_FLAG, m_caHelper.m_availableNetwork, ENDPOINT_IP, ENDPOINT_PORT, &endpoint);
+    if (result != CA_STATUS_OK)
     {
-        SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", m_result, CA_STATUS_OK));
+        SET_FAILURE(m_caHelper.getFailureMessage("CACreateEndpoint", result, CA_STATUS_OK));
     }
 
-    if(m_endpoint != NULL)
+    if(endpoint != NULL)
     {
-        CADestroyEndpoint(m_endpoint);
+        CADestroyEndpoint(endpoint);
     }
 }
 #endif
@@ -733,5 +733,322 @@ TEST_F(CANetworkTest_btc, CAGetNetworkInformation_temSize_USV_N)
     }
 
     CATerminate();
+}
+#endif
+
+
+#ifdef TCP_ADAPTER
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork) 
+ * @see void CATerminate()
+ * @objective Test whether CARegisterKeepAliveHandler API can register a valid callback function
+ * @target void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
+ * @test_data A callback function to pass the connection information
+ * @pre_condition 1. Initialize CA using CAInitialize
+ *                2. Call CASelectNetwork to select Coap Over TCP network
+ * @procedure  Call CARegisterKeepAliveHandler with a valid callback function
+ * @post_condition Terminate CA using CATerminate
+ * @expected No abnormal termination of program
+ */
+#if (defined(__LINUX__) || defined(__ANDROID__)) && defined(__TCP__)
+TEST_F(CANetworkTest_btc, CARegisterKeepAliveHandler_P)
+{
+    if (!m_caHelper.initNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }
+
+    CARegisterKeepAliveHandler(CAHelper::keepAliveHandler);
+            
+    CATerminate();
+}
+#endif
+
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork) 
+ * @see void CATerminate()
+ * @objective Test whether CARegisterKeepAliveHandler API can handle an invalid callback function
+ * @target void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
+ * @test_data NULL value as callback function
+ * @pre_condition 1. Initialize CA using CAInitialize
+ *                2. Call CASelectNetwork to select Coap Over TCP network
+ * @procedure  Call CARegisterKeepAliveHandler with null value
+ * @post_condition Terminate CA using CATerminate
+ * @expected No abnormal termination of program
+ */
+#if ((defined(__LINUX__) || defined(__ANDROID__)) && defined(__TCP__)) || (defined(__TIZEN__) && defined(__IP__))
+TEST_F(CANetworkTest_btc, CARegisterKeepAliveHandler_N)
+{
+    if (!m_caHelper.initNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }
+
+    CARegisterKeepAliveHandler(NULL);
+            
+    CATerminate();
+}
+#endif
+
+#endif
+
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
+ * @see CAResult_t  CAStartListeningServer()
+ * @see void CATerminate()
+ * @objective Test whether CAGetAssignedPortNumber API can obtained normal port number
+ * @target uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag)
+ * @test_data CA_IPV4 as flag value
+ * @pre_condition 1. Initialize CA using CAInitialize
+ *                2. Call CASelectNetwork to select the network
+ *                3. Call CAStartListeningServer, If network is Coap Over TCP
+ * @procedure  1. Call CAGetAssignedPortNumber with CA_IPV4 as flag value
+ *             2. Check it's return value
+ * @post_condition Terminate CA using CATerminate
+ * @expected It will return ephemeral port number
+ */
+#if (((defined(__LINUX__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))) || (defined(__TIZEN__) && defined(__IP__)))
+TEST_F(CANetworkTest_btc, CAGetNonSecurePortNumber_P)
+{
+    if (!m_caHelper.initNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }
+    
+#ifdef TCP_ADAPTER    
+    CAResult_t result = CAStartListeningServer();
+    if(result != CA_STATUS_OK)
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage("CAStartListeningServer", result, CA_STATUS_OK));
+    }
+#endif
+    
+    int port = CAGetAssignedPortNumber(m_caHelper.m_availableNetwork, CA_IPV4);
+    
+    if(port <= 0)
+    {
+        SET_FAILURE("Unable to get assigned port number");
+    }
+    
+    CATerminate();
+}
+#endif
+
+#ifdef __WITH_DTLS__
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
+ * @see void CATerminate()
+ * @objective Test whether CAGetAssignedPortNumber API can obtained secure port number
+ * @target uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag)
+ * @test_data Combination of CA_IPV4 and CA_SECURE as flag value
+ * @pre_condition 1. Initialize CA using CAInitialize
+ *                2. Call CASelectNetwork to select the network
+ * @procedure  1. Call CAGetAssignedPortNumber with combination CA_IPV4 and CA_SECURE as flag value
+ *             2. Check it's return value
+ * @post_condition Terminate CA using CATerminate
+ * @expected It will return ephemeral port number
+ */
+#if (((defined(__LINUX__) || defined(__ANDROID__)) && defined(__IP__)) || (defined(__TIZEN__) && defined(__IP__)))
+TEST_F(CANetworkTest_btc, CAGetSecurePortNumber_P)
+{
+    if (!m_caHelper.initNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }    
+    
+    CATransportFlags_t secureflag = CA_IPV4 | CA_SECURE;
+    int port = CAGetAssignedPortNumber(m_caHelper.m_availableNetwork, secureflag);
+    
+    if(port <= 0)
+    {
+        SET_FAILURE("Unable to get assigned secured port number");
+    }
+    
+    CATerminate();
+}
+#endif
+#endif
+
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
+ * @see void CATerminate()
+ * @objective Test whether CAGetAssignedPortNumber API can handle invalid adapter type
+ * @target uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag)
+ * @test_data invalid adapter type
+ * @pre_condition 1. Initialize CA using CAInitialize
+ *                2. Call CASelectNetwork to select the network
+ * @procedure  1. Call CAGetAssignedPortNumber with invalid adapter type
+ *             2. Check it's return value
+ * @post_condition Terminate CA using CATerminate
+ * @expected It will return 0 to indicate that API is failed to get port number
+ */
+#if (((defined(__LINUX__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))) || (defined(__TIZEN__) && defined(__IP__)))
+TEST_F(CANetworkTest_btc, CAGetAssignedPortNumberForInvalidAdapter_N)
+{
+    if (!m_caHelper.initNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }    
+    
+    int port = CAGetAssignedPortNumber(CA_INVALID_ADAPTER, CA_TRANSPORT_FLAG);
+
+    if(port != 0)
+    {
+        SET_FAILURE("Able to get port number for invalid network");        
+    }
+    
+    CATerminate();
+}
+#endif
+
+
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
+ * @see void CATerminate()
+ * @objective Test whether CAGetAssignedPortNumber API can handle invalid flag
+ * @target uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag)
+ * @test_data invalid flag value
+ * @pre_condition 1. Initialize CA using CAInitialize
+ *                2. Call CASelectNetwork to select the network
+ * @procedure  1. Call CAGetAssignedPortNumber with inavlid flag
+ *             2. Check it's return value
+ * @post_condition Terminate CA using CATerminate
+ * @expected It will return 0 to indicate that API is failed to get port number
+ */
+#if (((defined(__LINUX__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))) || (defined(__TIZEN__) && defined(__IP__)))
+TEST_F(CANetworkTest_btc, CAGetAssignedPortNumberForInvalidFlag_N)
+{
+    if (!m_caHelper.initNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }        
+    
+    int port = CAGetAssignedPortNumber(m_caHelper.m_availableNetwork, CA_INVALID_FLAG);
+
+    if(port != 0)
+    {
+        SET_FAILURE("Able to get port number for invalid flag");        
+    }
+    
+    CATerminate();    
+}
+#endif
+
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see void CATerminate()
+ * @objective Test CASetPortNumberToAssign positively
+ * @target CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter, CATransportFlags_t flag, uint16_t port)
+ * @test_data An ephemeral port number
+ * @pre_condition Initialize CA using CAInitialize
+ * @procedure  1. Call CASetPortNumberToAssign with a valid port number
+ *             2. Check it's return value
+ * @post_condition Terminate CA using CATerminate
+ * @expected It will return CA_STATUS_OK
+ */
+#if (((defined(__LINUX__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))) || (defined(__TIZEN__) && defined(__IP__)))
+TEST_F(CANetworkTest_btc, CASetPortNumberToAssign_P)
+{
+    if (!m_caHelper.initNetwork())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }        
+    
+    CAResult_t result = CASetPortNumberToAssign(m_caHelper.m_availableNetwork,
+                                   CA_TRANSPORT_FLAG, ENDPOINT_PORT);
+    
+    if(result != CA_STATUS_OK)
+    {
+        SET_FAILURE("Unable to set port number");
+    }                 
+    
+    CATerminate();
+}
+#endif
+
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see void CATerminate()
+ * @objective Test whether CASetPortNumberToAssign API can handle invalid adapter type
+ * @target CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter, CATransportFlags_t flag, uint16_t port)
+ * @test_data An invalid port number
+ * @pre_condition Initialize CA using CAInitialize
+ * @procedure  1. Call CASetPortNumberToAssign with inavlid adapter type
+ *             2. Check it's return value
+ * @post_condition Terminate CA using CATerminate
+ * @expected It will return CA_NOT_SUPPORTED
+ */
+#if (((defined(__LINUX__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))) || (defined(__TIZEN__) && defined(__IP__)))
+TEST_F(CANetworkTest_btc, CASetPortNumberToAssignWithInvalidAdapter_N)
+{
+    if (!m_caHelper.initialize())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }       
+
+    int invalidAdapterType = 0;
+    
+    CAResult_t result = CASetPortNumberToAssign(invalidAdapterType,
+                                   CA_TRANSPORT_FLAG, ENDPOINT_PORT);
+    
+    if(result != CA_NOT_SUPPORTED)
+    {
+        SET_FAILURE("Able to set port number");
+    }                                   
+}
+#endif
+
+
+/**
+ * @since 2016-08-05
+ * @see CAResult_t CAInitialize()
+ * @see void CATerminate()
+ * @objective Test whether CASetPortNumberToAssign API can handle invalid flag
+ * @target CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter, CATransportFlags_t flag, uint16_t port)
+ * @test_data An invalid port number
+ * @pre_condition Initialize CA using CAInitialize
+ * @procedure  1. Call CASetPortNumberToAssign with inavlid flag
+ *             2. Check it's return value
+ * @post_condition Terminate CA using CATerminate
+ * @expected It will return CA_NOT_SUPPORTED
+ */
+#if (((defined(__LINUX__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))) || (defined(__TIZEN__) && defined(__IP__)))
+TEST_F(CANetworkTest_btc, CASetPortNumberToAssignWithInvalidFlag_N)
+{
+    if (!m_caHelper.initialize())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }    
+    
+    CAResult_t result = CASetPortNumberToAssign(m_caHelper.m_availableNetwork,
+                                   CA_INVALID_FLAG, ENDPOINT_PORT);
+    
+    if(result != CA_NOT_SUPPORTED)
+    {
+        SET_FAILURE("Able to set port number");
+    }                                   
 }
 #endif

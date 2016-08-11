@@ -134,8 +134,9 @@ const uint8_t TOKEN_UOBV_LENGTH = CA_MAX_TOKEN_LEN + 1;
 const char* const VALID_ENDPOINT_URI = (char *) "123.123.123.123:1234/b/light";
 const int ENDPOINT_PORT = 6298;
 const char* const ENDPOINT_IP = (char *) "107.109.214.164";
-const CATransportFlags_t CA_INVALID_FLAG = -1;
-const CATransportAdapter_t CA_INVALID_ADAPTER = -1;
+const CATransportFlags_t CA_TRANSPORT_FLAG = CA_IPV4;
+const CATransportFlags_t CA_INVALID_FLAG = 0;
+const CATransportAdapter_t CA_INVALID_ADAPTER = 0;
 const CATransportAdapter_t CA_INVALID_UOBV_ADAPTER = 4294967296;
 const CAMethod_t CA_INVALID_METHOD = 100;
 
@@ -248,6 +249,10 @@ public:
 
 #endif
 
+#ifdef TCP_ADAPTER
+    static int keepAliveCount;
+#endif
+
     static TestCaseInfo s_tcInfo;
     std::string m_failureMessage;
 
@@ -276,7 +281,7 @@ public:
     void setTotalMessage(int total);
     void setResultStatus(CAResult_t result);
     bool createEndpoint(CATransportFlags_t transportFlags, char* address, int port);
-	bool createEndpoint(CATransportFlags_t transportFlags, CATransportAdapter_t adapter, const char *addr, uint16_t port, CAEndpoint_t* endpointObject, CAResult_t expectedResult);
+    bool createEndpoint(CATransportFlags_t transportFlags, CATransportAdapter_t adapter, const char *addr, uint16_t port, CAEndpoint_t* endpointObject, CAResult_t expectedResult);
 
     void clearBuffer();
     static std::string getRandomString(size_t length);
@@ -388,9 +393,15 @@ public:
 
     int readConfigurationFile();
 
-	bool stopListeningServer();
+    bool stopListeningServer();
     bool stopListeningServer(CAResult_t expectedResult);
     bool setAvailableNetwork(CATransportAdapter_t interestedNetwork);
-    bool establishConnectionWithServer();    
+    bool establishConnectionWithServer(); 
+
+#ifdef TCP_ADAPTER
+    static void keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected);
+    int getKeepAliveCount();
+#endif
+    
 };
 #endif
