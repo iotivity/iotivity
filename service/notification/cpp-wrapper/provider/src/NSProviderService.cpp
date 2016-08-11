@@ -133,7 +133,12 @@ namespace OIC
             NS_LOG(DEBUG, "SendMessage - IN");
             NSResult result = NSResult::ERROR;
             if (msg != nullptr)
-                result = (NSResult) NSSendMessage(getNSMessage(msg));
+            {
+                ::NSMessage * nsMsg = getNSMessage(msg);
+                result = (NSResult) NSSendMessage(nsMsg);
+                delete nsMsg->mediaContents;
+                delete nsMsg;
+            }
             else
                 NS_LOG(DEBUG, "Empty Message");
             NS_LOG(DEBUG, "SendMessage - OUT");

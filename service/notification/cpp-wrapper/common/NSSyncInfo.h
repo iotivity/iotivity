@@ -52,7 +52,7 @@ namespace OIC
                 /**
                         * Constructor of NSSyncInfo.
                         */
-                NSSyncInfo() = default;
+                NSSyncInfo(): m_messageId(0), m_state(NSSyncType::NS_SYNC_UNREAD) { };
 
                 /**
                         * Constructor of NSSyncInfo.

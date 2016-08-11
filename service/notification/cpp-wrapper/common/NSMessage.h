@@ -53,7 +53,8 @@ namespace OIC
                 /**
                         * Constructor of NSMessage.
                         */
-                NSMessage(): m_mediaContents(new NSMediaContents) { }
+                NSMessage(): m_messageId(0), m_type(NSMessageType::NS_MESSAGE_ALERT), m_ttl(0),
+                                            m_mediaContents(new NSMediaContents) { }
 
                 /**
                         * Constructor of NSMessage.
@@ -65,7 +66,7 @@ namespace OIC
                 /**
                         * Destructor of NSMessage.
                         */
-                ~NSMessage() = default;
+                ~NSMessage();
 
                 /**
                      * This method is for getting Message Id from the Notification service Message.

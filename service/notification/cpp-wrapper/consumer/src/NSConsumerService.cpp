@@ -47,17 +47,20 @@ namespace OIC
             NS_LOG_V(DEBUG, "response : %d",(int)response);
             
             NSProvider *nsProvider = new NSProvider(provider);
+            auto changeCallback = NSConsumerService::getInstance()->getConsumerConfig().m_changedCb;
             if(response == NS_ALLOW)
             {
                 NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
+                if (changeCallback != NULL)
+                    changeCallback(nsProvider, (NSResponse) response);
             }
             else if(response == NS_DENY)
             {
                 NSConsumerService::getInstance()->getAcceptedProviders().remove(nsProvider);
+                if (changeCallback != NULL)
+                    changeCallback(nsProvider, (NSResponse) response);
+                delete nsProvider;
             }
-            if (NSConsumerService::getInstance()->getConsumerConfig().m_changedCb != NULL)
-                NSConsumerService::getInstance()->getConsumerConfig().m_changedCb(
-                                                            nsProvider, (NSResponse) response);
             NS_LOG(DEBUG, "onNSProviderChanged - OUT");
         }
 

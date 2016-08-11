@@ -27,6 +27,7 @@
 #ifndef _NS_UTILS_H_
 #define _NS_UTILS_H_
 
+#define NS_UTILS_UUID_STRING_SIZE 37
 
 namespace OIC
 {
