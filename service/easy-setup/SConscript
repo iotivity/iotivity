@@ -24,28 +24,13 @@
 Import('env')
 
 es_target = env.get ('TARGET_OS')
-es_role = env.get('ES_ROLE')
-es_target_enrollee = env.get('ES_TARGET_ENROLLEE')
 
-print "************************************************************************************"
-print "Easysetup device role --> %s " % es_role
-print "Target Platform --> %s " % es_target
-print "Target Enrollee platform --> %s " % es_target_enrollee
-print "************************************************************************************"
+if es_target in ['linux']:
+   SConscript('mediator/SConscript')
+   SConscript('enrollee/SConscript')
 
-#Go to build sample apps
-if ('mediator' in es_role) :
-	print "Building Easysetup mediator SDKs [CSDK & RichSDK]"
+if es_target in ['android']:
+   SConscript('mediator/SConscript')
 
-	if es_target in ['linux','android']:
-		SConscript('mediator/SConscript')
-	else :
-		print "****************************Mediator supports Linux and Android platform****************************"
-
-if ('enrollee' in es_role) :
-	print "Building Easysetup enrollee SDK"
-
-	if es_target in ['linux', 'arduino', 'tizen']:
-		SConscript('enrollee/SConscript')
-	else :
-		print "****************************Enrollee supports linux, tizen and arduino platform****************************"
+if es_target in ['tizen']:
+   SConscript('enrollee/SConscript')
