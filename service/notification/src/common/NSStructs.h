@@ -54,7 +54,7 @@ typedef struct
 
 typedef struct
 {
-    char id[37];
+    char id[NS_UUID_STRING_SIZE];
     int syncObId; // sync resource observer ID for local consumer
     int messageObId; // message resource observer ID for local consumer
     int remote_syncObId; //sync observer ID subscribed through remote server
@@ -78,7 +78,7 @@ typedef struct
 
 typedef struct
 {
-    char id[37];
+    char id[NS_UUID_STRING_SIZE];
     char * topicName;
     NSTopicState state;
 
@@ -100,7 +100,7 @@ typedef struct
     OCResourceHandle handle;
 
     uint64_t messageId;
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
 
     //optional
     NSMessageType type;
@@ -122,13 +122,13 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char consumerId[37];
+    char consumerId[NS_UUID_STRING_SIZE];
     NSTopicList ** TopicList;
 } NSTopicResource;
 
 typedef struct
 {
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
     char * providerName;
     char * userInfo;
 } NSProviderInfo;
