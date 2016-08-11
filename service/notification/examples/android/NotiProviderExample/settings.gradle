@@ -1,0 +1,1 @@
+include ':app', ':iotivity-armeabi-notification-service-release', ':iotivity-base-armeabi-release'
