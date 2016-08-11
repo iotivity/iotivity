@@ -22,6 +22,7 @@
 #define ENROLLEE_SECURITY_H_
 
 #include <functional>
+#include <condition_variable>
 
 #include "ESRichCommon.h"
 #include "OCProvisioningManager.h"
@@ -32,8 +33,10 @@ namespace OIC
     {
 #define ENROLEE_SECURITY_TAG "ENROLEE_SECURITY"
 
-        class RemoteEnrolleeResource;
+        class EnrolleeResource;
         class OCSecureResource;
+
+        typedef std::vector<OCProvisionResult_t> PMResultList_t;
 
         /**
          * This class contains the methods needed for security  layer interaction.
@@ -43,24 +46,33 @@ namespace OIC
         class EnrolleeSecurity
         {
         public:
-            EnrolleeSecurity(std::shared_ptr< RemoteEnrolleeResource > remoteEnrolleeResource,
+            EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
             std::string secDbPath);
-            ESResult registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
+            void registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
-            EasySetupState performOwnershipTransfer();
+            void performOwnershipTransfer();
+            ESResult performACLProvisioningForCloudServer(std::string cloudUuid);
+            std::string getUUID() const;
 
         private:
-            std::shared_ptr< RemoteEnrolleeResource > m_remoteEnrolleeResource;
-            EnrolleeSecStatusCb m_enrolleeSecStatusCb;
+            std::shared_ptr< OC::OCResource > m_ocResource;
+            SecurityProvStatusCb m_securityProvStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
             std::shared_ptr< OC::OCSecureResource > m_unownedDevice;
 
-            EnrolleeSecState m_enrolleeSecState;std::shared_ptr< OC::OCSecureResource > m_securedResource;
+            std::mutex m_mtx;
+            std::condition_variable m_cond;
+            bool aclResult;
 
+            std::shared_ptr< OC::OCSecureResource > m_securedResource;
             std::shared_ptr< OC::OCSecureResource > getEnrollee(OC::DeviceList_t &list);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(OicUuid_t uuid, std::string& uuidString);
+            void convertStringToUUID(OicUuid_t& uuid, std::string uuidString);
+            OicSecAcl_t* createAcl(OicUuid_t cloudUuid);
+
+            void ACLProvisioningCb(PMResultList_t *result, int hasError);
         };
     }
 }

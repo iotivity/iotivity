@@ -69,3 +69,4 @@ cmdBuildExamples=jdk_env.Gradle(target="../examples/devicediscoveryclient/apk", 
 # android examples require android api to be built before being invoked
 Depends(cmdBuildExamples, cmdBuildApi)
 
+env.AppendUnique(baseAAR = cmdBuildApi)
