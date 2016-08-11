@@ -377,19 +377,27 @@ void * NSTopicSchedule(void * ptr)
                     NS_LOG(DEBUG, "CASE TASK_SEND_TOPICS : ");
                     NSSendTopicList((OCEntityHandlerRequest*) node->taskData);
                     break;
-                case TASK_SUBSCRIBE_TOPICS:
-                    NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPICS : ");
+                case TASK_SUBSCRIBE_TOPIC:
+                    //TODO: modify subscription with single topic
+                    NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
                     NSTopicList * topicList = (NSTopicList *) node->taskData;
                     NSSubscribeTopicList(topicList->consumerId, topicList);
                     NSSendTopicUpdationToConsumer(topicList->consumerId);
                     // TODO : free NSTopic
                     break;
-                case TASK_REGISTER_TOPICS:
-                    NS_LOG(DEBUG, "CASE TASK_REGISTER_TOPICS : ");
+                case TASK_UNSUBSCRIBE_TOPIC:
+                    // TODO: implement
+                    break;
+                case TASK_ADD_TOPIC:
+                    // TODO: modify to add single topic
+                    NS_LOG(DEBUG, "CASE TASK_ADD_TOPIC : ");
                     NSTopicList * registeredTopicList = (NSTopicList *) node->taskData;
                     NSRegisterTopicList(registeredTopicList);
                     NSSendTopicUpdation();
                     // TODO : free NSTopic
+                    break;
+                case TASK_DELETE_TOPIC:
+                    // TODO: implement 
                     break;
                 default:
                     break;

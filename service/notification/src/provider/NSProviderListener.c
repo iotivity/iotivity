@@ -208,7 +208,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
 
             // Send topic notice message(id = TOPIC) to the consumer 
             // which requests to post.
-            NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPICS,
+            NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPIC,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
             ehResult = OC_EH_OK;
