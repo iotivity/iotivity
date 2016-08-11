@@ -1594,7 +1594,6 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         response.result = CAResultToOCStackResult(errorInfo->result);
 
         cbNode->callBack(cbNode->context, cbNode->handle, &response);
-        FindAndDeleteClientCB(cbNode);
     }
 
     OIC_LOG(INFO, TAG, "Exit HandleCAErrorResponse");

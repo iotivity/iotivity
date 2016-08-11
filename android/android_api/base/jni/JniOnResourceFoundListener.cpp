@@ -184,7 +184,6 @@ void JniOnResourceFoundListener::findResourceErrorCallback(const std::string& ur
     }
     env->CallVoidMethod(jListener, midL, ex, env->NewStringUTF(uri.c_str()));
 
-    checkExAndRemoveListener(env);
     if (JNI_EDETACHED == ret)
     {
         g_jvm->DetachCurrentThread();
