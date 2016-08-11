@@ -22,7 +22,6 @@
 
 static bool isTopicList = false;
 
-NSResult NSStoreTopics(const char * topicName);
 NSResult NSSendTopicUpdation();
 
 NSResult NSInitTopicList()
@@ -68,7 +67,7 @@ NSTopicList * NSGetTopics(char *consumerId)
     return topicList;
 }
 
-NSResult NSStoreTopics(const char * topicName)
+NSResult NSAddTopics(const char * topicName)
 {
     NS_LOG(DEBUG, "NSWriteTopicsToStorage()");
 
@@ -88,6 +87,11 @@ NSResult NSStoreTopics(const char * topicName)
 
     NS_LOG(DEBUG, "NSWriteTopicsToStorage() NS_OK");
     return NS_OK;
+}
+
+NSResult NSDeleteTopics(const char * topicName)
+{
+    // TO-DO
 }
 
 NSResult NSSubscribeTopicList(char *consumerId, NSTopicList *topicList)
@@ -355,11 +359,14 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_ADD_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_ADD_TOPIC : ");
-                    NSStoreTopics((const char *) node->taskData);
+                    NSAddTopics((const char *) node->taskData);
                 }
                     break;
                 case TASK_DELETE_TOPIC:
-                    // TODO: implement 
+                {
+                    NS_LOG(DEBUG, "CASE_TASK_DELETE_TOPIC : ");
+                    NSDeleteTopics((const char *) node->taskData);
+                }
                     break;
                 default:
                     break;
