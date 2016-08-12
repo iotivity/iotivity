@@ -1601,8 +1601,8 @@ static void setDevProtocol(const OCProvisionDev_t* dev_lst)
     {
         if(2 == secure_protocol)
         {
-            lst->connType &= ~CT_ADAPTER_IP; //reset IP flag
-            lst->connType |= CT_ADAPTER_TCP; //set TCP flag
+            lst->connType ^= CT_ADAPTER_IP;
+            lst->connType ^= CT_ADAPTER_TCP;
             lst->endpoint.adapter = OC_ADAPTER_TCP;
             lst->endpoint.port = lst->tcpPort;
             lst->securePort = lst->tcpPort;
