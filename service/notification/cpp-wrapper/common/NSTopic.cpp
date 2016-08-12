@@ -18,39 +18,30 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains Notification service Utils.
- */
-
-#ifndef _NS_UTILS_H_
-#define _NS_UTILS_H_
-
-#define NS_UTILS_UUID_STRING_SIZE 37
+#include "NSTopic.h"
 
 namespace OIC
 {
     namespace Service
     {
-        /** NSResult - enumeration for NS service Result*/
-        enum class NSResult
+        std::string NSTopic::getTopicName() const
         {
-            OK = 100,
-            ERROR = 200,
-            SUCCESS = 300,
-            FAIL = 400,
-        };
+            return m_topicName;
+        }
 
-        /**
-             * NSResponse code of notification service
-             */
-        enum class NSResponse
+        void NSTopic::setTopicName(const std::string &topicName)
         {
-            ALLOW = 1,
-            DENY = 2,
-            TOPIC = 3,
-        };
+            m_topicName = topicName;
+        }
+
+        NSTopic::NSTopicState NSTopic::getState() const
+        {
+            return m_state;
+        }
+
+        void NSTopic::setState(const NSTopic::NSTopicState state)
+        {
+            m_state = state;
+        }
     }
 }
-#endif /* _NS_UTILS_H_ */

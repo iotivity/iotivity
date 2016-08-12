@@ -33,7 +33,7 @@ namespace OIC
             m_type = NSMessage::NSMessageType::NS_MESSAGE_ALERT;
             m_ttl = 0;
             m_mediaContents = new NSMediaContents();
-            
+
             if (msg != nullptr)
             {
                 m_messageId = msg->messageId;
@@ -59,12 +59,15 @@ namespace OIC
                     if ((msg->mediaContents->iconImage != nullptr) && strlen(msg->mediaContents->iconImage))
                         m_mediaContents->setIconImage(msg->mediaContents->iconImage);
 
+                if ((msg->topic != nullptr) && strlen(msg->topic))
+                    m_topic.assign(msg->topic, strlen(msg->topic));
+
             }
         }
 
         NSMessage::~NSMessage()
         {
-            if(m_mediaContents != nullptr)
+            if (m_mediaContents != nullptr)
                 delete m_mediaContents;
         }
 
@@ -111,6 +114,11 @@ namespace OIC
         NSMediaContents *NSMessage::getMediaContents() const
         {
             return m_mediaContents;
+        }
+
+        std::string NSMessage::getTopic() const
+        {
+            return m_topic;
         }
 
         void NSMessage::setType(const NSMessageType &type)

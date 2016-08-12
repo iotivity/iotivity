@@ -124,4 +124,4 @@ SConscript('examples/SConscript')
 #    SConscript('android/SConscript')
 
 # Go to build c++ wrapper
-#SConscript('cpp-wrapper/SConscript')
+SConscript('cpp-wrapper/SConscript')

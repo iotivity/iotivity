@@ -23,7 +23,6 @@
 #include "NSConsumerInterface.h"
 #include "NSConstants.h"
 #include "NSCommon.h"
-#include "NSUtils.h"
 #include "oic_string.h"
 
 namespace OIC
@@ -34,6 +33,27 @@ namespace OIC
         {
             ::NSProvider *provider = new ::NSProvider;
             OICStrcpy(provider->providerId, NS_UTILS_UUID_STRING_SIZE, m_providerId.c_str());
+
+            provider->topicLL = NULL;
+
+            if (m_topicList != nullptr)
+            {
+                for (auto it : m_topicList->getTopicsList())
+                {
+                    ::NSTopicLL *topic = new ::NSTopicLL;
+                    OICStrcpy(topic->topicName, it->getTopicName().length(),
+                              it->getTopicName().c_str());
+                    topic->state = (::NSTopicState)it->getState();
+                    topic->next = NULL;
+                    if (provider->topicLL == NULL)
+                        provider->topicLL = topic;
+                    else
+                    {
+                        topic->next = provider->topicLL;
+                        provider->topicLL = topic;
+                    }
+                }
+            }
             return provider;
         }
 
@@ -44,12 +64,27 @@ namespace OIC
             if (provider != nullptr)
             {
                 m_providerId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE);
+                if (provider->topicLL != nullptr)
+                    m_topicList = new NSTopicsList(provider->topicLL);
+                else
+                    m_topicList = new NSTopicsList();
             }
+        }
+
+        NSProvider::~NSProvider()
+        {
+            if (m_topicList != nullptr)
+                delete m_topicList;
         }
 
         std::string NSProvider::getProviderId() const
         {
             return m_providerId;
+        }
+
+        NSTopicsList *NSProvider::getTopicList() const
+        {
+            return m_topicList;
         }
 
         void NSProvider::subscribe()
@@ -79,6 +114,17 @@ namespace OIC
         {
             m_messageCb = messageHandle;
             m_syncInfoCb = syncHandle;
+        }
+
+        NSResult NSProvider::selectInterestTopics(NSTopicsList *topicList)
+        {
+            NS_LOG(DEBUG, "selectInterestTopics - IN");
+            NSProvider *provider = new NSProvider(getProviderId(), topicList);
+            NSResult result = (NSResult) NSConsumerSelectInterestTopics(
+                                  provider->getNSProvider());
+            delete provider;
+            NS_LOG(DEBUG, "selectInterestTopics - OUT");
+            return result;
         }
 
         NSProvider::MessageReceivedCallback NSProvider::getMessageReceivedCb()

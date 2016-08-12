@@ -31,6 +31,8 @@
 #include <string>
 #include "NSSyncInfo.h"
 #include "NSMessage.h"
+#include "NSUtils.h"
+#include "NSTopicsList.h"
 
 namespace OIC
 {
@@ -60,7 +62,7 @@ namespace OIC
                 /**
                       * Constructor of NSProvider.
                       */
-                NSProvider(): m_messageCb(NULL), m_syncInfoCb(NULL) {}
+                NSProvider(): m_topicList(new NSTopicsList()), m_messageCb(NULL), m_syncInfoCb(NULL) {}
 
                 /**
                       * Constructor of NSProvider.
@@ -68,7 +70,16 @@ namespace OIC
                       * @param providerId - providerId of the Notification.
                       */
                 NSProvider(const std::string &providerId) : m_providerId(providerId),
-                    m_messageCb(NULL), m_syncInfoCb(NULL) {}
+                    m_topicList(new NSTopicsList()), m_messageCb(NULL), m_syncInfoCb(NULL) {}
+
+                /**
+                      * Constructor of NSProvider.
+                      *
+                      * @param providerId - providerId of the Notification.
+                      * @param topicList - NSTopicsList of interested Topics.
+                      */
+                NSProvider(const std::string &providerId, NSTopicsList *topicList) : m_providerId(
+                        providerId), m_topicList(topicList), m_messageCb(NULL), m_syncInfoCb(NULL) {}
 
                 /**
                       * Constructor of NSProvider.
@@ -81,7 +92,7 @@ namespace OIC
                 /**
                       * Destructor of NSProvider.
                       */
-                ~NSProvider() = default;
+                ~NSProvider();
 
                 /**
                       * This method is for getting ProviderId from the Notification service provider.
@@ -89,6 +100,13 @@ namespace OIC
                       * @return ProviderId as string.
                       */
                 std::string getProviderId() const;
+
+                /**
+                      * This method is for getting NSTopic List from the Notification service provider.
+                      *
+                      * @return NSTopicsList  as pointer.
+                      */
+                NSTopicsList *getTopicList() const;
 
                 /**
                       * This method is for requesting subscription of Notification service.
@@ -120,6 +138,14 @@ namespace OIC
                                  SyncInfoReceivedCallback syncHandle);
 
                 /**
+                     * Select Topic list that is wanted to subscribe from provider
+                     *
+                     * @param topicList - NSTopicsList of interested Topics.
+                     * @return NSResult
+                     */
+                NSResult selectInterestTopics(NSTopicsList *topicList);
+
+                /**
                       * This method is for getting the registered cb of Notification message received.
                       *
                       * @return messageCb - MessageReceivedCallback .
@@ -138,6 +164,7 @@ namespace OIC
 
             private:
                 std::string m_providerId;
+                NSTopicsList *m_topicList;
                 MessageReceivedCallback m_messageCb;
                 SyncInfoReceivedCallback m_syncInfoCb;
 
