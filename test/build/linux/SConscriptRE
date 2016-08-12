@@ -1,0 +1,289 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building Resource Encapsulation Module for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+#JAVA_LIB = os.environ['JAVA_LIB']
+JAVA_LIB = ''
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+iotivity_directory = env_linux.get('IOTIVITY_DIR')
+
+print "target source is --------------------------------" + target_source
+print "iotivity root is --------------------------------" + iotivity_directory
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+######################################################################
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+
+######################################################################
+
+# Initializing RE Dir
+######################################################################
+
+RE_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+RE_RESOURCE_INCLUDE = RE_RESOURCE_DIR + '/include'
+RE_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+RE_RESOURCE_CSDK_LIB = RE_RESOURCE_LIB
+RE_RESOURCE_STACK = RE_RESOURCE_DIR + '/csdk/stack/include'
+RE_RESOURCE_SOCKET = RE_RESOURCE_DIR + '/csdk/ocsocket/include'
+RE_RESOURCE_RANDOM = RE_RESOURCE_DIR + '/csdk/ocrandom/include'
+RE_RESOURCE_LOGGER = RE_RESOURCE_DIR + '/csdk/logger/include'
+RE_RESOURCE_OC_LOGGER = RE_RESOURCE_DIR + '/oc_logger/include'
+RE_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+RE_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+RE_RESOURCE_OC_LOGGER_LIB = RE_RESOURCE_LIB
+RE_DIR = ORG_SRC_HOME + '/service/resource-encapsulation'
+RE_MODULES_DIR = RE_DIR + '/src'
+RE_INCLUDE = RE_DIR + '/include/'
+RE_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
+RE_COMMON_INCLUDE = RE_MODULES_DIR + '/common/primitiveResource/include/'
+RE_COMMON_TIMER_INCLUDE = RE_MODULES_DIR + '/common/expiryTimer/include/'
+RE_COMMON_INTERNAL_INCLUDE = RE_MODULES_DIR + '/common/primitiveResource/include/internal/'
+RE_BROKER_INCLUDE = RE_MODULES_DIR + '/resourceBroker/include/'
+RE_CACHE_INCLUDE = RE_MODULES_DIR + '/resourceCache/include/'
+RE_CONTAINER_INCLUDE = RE_MODULES_DIR + '/resourceContainer/include/'
+RE_CONTAINER_BUNDLE_INCLUDE = RE_MODULES_DIR + '/resourceContainer/bundle-api/include/'
+RE_SERVER_BUILDER_INCLUDE = RE_MODULES_DIR + '/serverBuilder/include/'
+RE_LIB = RE_RESOURCE_LIB
+RE_LIB_TIMER = RE_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+
+# Initializing CA Dir
+######################################################################
+
+CA_IOT = ENV_HOME + ORG_SRC
+CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/re/gtest/src'
+
+STC_DIR = TC_DIR + '/stc'
+BTC_DIR = TC_DIR + '/btc'
+
+TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
+TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
+
+
+COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
+
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+
+
+
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+
+RE_COMMON_DIR = COMMON_DIR + '/testcase/re/gtest'
+
+TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/re/gtest/include'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
+RE_INCLUDE_DIR = INCLUDE_DIR + '/testcase/re'
+
+#COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
+
+COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
+
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
+
+#PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
+
+RE_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+#RAPIDXML_SUB_INCLUDE,
+RE_CINCLUDE = [ RE_C_COMMON, COMMON_CINCLUDE, RE_RESOURCE_INCLUDE, RE_RESOURCE_STACK, RE_RESOURCE_SOCKET, RE_RESOURCE_RANDOM, RE_RESOURCE_OC_LOGGER, RE_RESOURCE_CEREAL, RE_RESOURCE_TIMER, RE_LIB_TIMER, RE_INCLUDE, RE_COMMON_INCLUDE, RE_COMMON_TIMER_INCLUDE, RE_COMMON_INTERNAL_INCLUDE, RE_BROKER_INCLUDE, RE_CACHE_INCLUDE, RE_CONTAINER_INCLUDE, RE_CONTAINER_BUNDLE_INCLUDE, RE_SERVER_BUILDER_INCLUDE, RE_INCLUDE_DIR]
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
+
+RE_LIB_LOCATION = [COMMON_LIB_LOCATION, RE_RESOURCE_LIB, RE_RESOURCE_CSDK_LIB, RE_RESOURCE_OC_LOGGER_LIB, RE_LIB, JAVA_LIB]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 uuid gcov')
+
+RE_STATIC_LIBS = [RE_LIB + '/librcs_client.a', RE_LIB + '/librcs_common.a', RE_LIB + '/librcs_container.a', RE_LIB + '/librcs_server.a', RE_LIB + '/libocsrm.a']
+RE_STATIC_RESOURCE_LIBS = []
+RE_SHARED_LIBS = Split('-lHueBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
+RE_LIBS = [COMMON_SHARED_LIBS, RE_SHARED_LIBS]
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+RE_TEST_BIN = 'iotivity_re_test'
+
+RE_TEST_SERVER_BIN = 'retestserver'
+
+RE_HELPER_BIN = 're_helper.o'
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+
+RE_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
+
+RE_TEST_SERVER_CPP = TESTAPP_DIR + '/re/c_cpp/src/retestservers.cpp'
+
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
+
+
+COMMON_UTIL_CPP = [COMMON_UTIL_DIR + '/CommonUtil.cpp']
+
+
+RE_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RE_HELPER_CPP, CALL_GRAPH_CPP]
+
+RE_STC_CPP = Glob(STC_DIR + '/*.cpp')
+RE_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
+
+
+RE_STC_SRC = [RE_CPP, RE_STC_CPP, RE_BTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
+RE_BTC_SRC = [RE_CPP, RE_BTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
+RE_TEST_SERVER_SRC = [RE_TEST_SERVER_CPP, COMMON_UTIL_CPP, RE_HELPER_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
+
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+env_linux.ParseConfig("pkg-config --cflags --libs uuid")
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+re_stc = env_linux.Program(source = RE_STC_SRC, target = RE_TEST_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+
+re_test_server = env_linux.Program(source = RE_TEST_SERVER_SRC, target = RE_TEST_SERVER_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+
+pre_job = [create_target_dir]
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_tc = env_linux.get('TARGET_TC')
+default_targets = [pre_job]
+install_targets = []
+
+print "target_service = " + target_service
+print "target_tc = " + target_tc
+print "target_transport = " + target_transport
+
+#SConscript(GTEST + '/SConscript')
+
+print "---------------service-------------- " + target_service
+print "---------------tc-------------- "+ target_tc
+
+
+if 're' in target_service or 'all' in target_service:
+    install_targets += [re_test_server]
+
+    if 'stc' in target_tc or 'all' in target_tc:
+        print '---------------RE STC Build Selected---------------'
+        install_targets += re_stc
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)

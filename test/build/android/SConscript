@@ -1,0 +1,61 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# The build script for Android
+#
+##
+
+import os
+import os.path
+
+print '\n---------------Started Building IotivitySecTest for Android---------------\n'
+
+Import('env_android')
+
+target_arch = env_android.get('TARGET_ARCH')
+target_source = env_android.get('TARGET_SOURCE')
+target_service = env_android.get('TARGET_SERVICE')
+tc_type = env_android.get('TARGET_TC')
+variant_dir = env_android.get('VARIANT_DIR')
+rpm_path = env_android.get('RPMS_DIR')
+is_prevent_enabled = env_android.get('PREVENT')
+target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
+target_secured = env_android.get('SECURED')
+
+default_targets = []
+
+if 'iut' in target_service or 'all' in target_service:
+    
+    security_mode = env_android.get('SECURITY_MODE')
+    print('security_mode: ' + security_mode)
+    ndk_path = env_android.get('ANDROID_NDK')
+    print ('ndk_path: ' + ndk_path)
+    push = env_android.get('PUSH') 
+    print 'push: ' + str(push)
+        
+    native_script = "bash build/android/iut/native_build.sh stand_alone=false ndk_path=%s push=%s security_mode=%s" % (ndk_path, push, security_mode)
+    
+    default_targets += [native_script]
+    
+    native_build = env_android.Command('native_build', None, default_targets)
+
+    env_android.Default(native_build)

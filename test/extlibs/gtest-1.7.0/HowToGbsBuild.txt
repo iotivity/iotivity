@@ -1,0 +1,9 @@
+
+Instruction:
+1. Run the gbsbuild.sh with GBS-ROOT RPMS full directory
+   Ex. sudo ./gbsbuild.sh /home/[USER]/GBS-ROOT/local/repos/redwood/armv7l/RPMS
+2. It will extract the generated rpm and copy libgtest.a to bin/tizen folder
+
+NOTE: If you don't provide GBS-ROOT RPMS full directory then it will still build and generate the rpm but can not
+      copy the libgtest.a to the bin/tizen folder. In that case you have to manually extract and copy the libgtest.a
+      to the bin/tizen folder. Otherwise ITC/UTC can not be built.

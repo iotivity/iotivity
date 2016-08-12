@@ -1,0 +1,224 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Tizen
+#
+##
+
+print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
+
+env = Environment(CC='g++')
+
+# Initializing Home Dir
+######################################################################
+
+ENV_HOME = ''
+PROJECT_HOME = 'test'
+EXT_LIB_HOME = 'test/extlibs'
+ORG_SRC_HOME = 'iotivity'
+SRC_HOME = ''
+
+######################################################################
+
+# Initializing RC Dir
+######################################################################
+
+RAPIDXML_SUB_INCLUDE = ORG_SRC_HOME + '/extlibs/'
+RC_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+RC_RESOURCE_INCLUDE = RC_RESOURCE_DIR + '/include'
+RC_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+RC_RESOURCE_CSDK_LIB = RC_RESOURCE_LIB
+RC_RESOURCE_STACK = RC_RESOURCE_DIR + '/csdk/stack/include'
+RC_RESOURCE_SOCKET = RC_RESOURCE_DIR + '/csdk/ocsocket/include'
+RC_RESOURCE_RANDOM = RC_RESOURCE_DIR + '/csdk/ocrandom/include'
+RC_RESOURCE_LOGGER = RC_RESOURCE_DIR + '/csdk/logger/include'
+RC_RESOURCE_OC_LOGGER = RC_RESOURCE_DIR + '/oc_logger/include'
+RC_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+RC_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+RC_RESOURCE_OC_LOGGER_LIB = RC_RESOURCE_LIB
+RC_DIR = ORG_SRC_HOME + '/service/resource-container'
+RC_MODULES_DIR = RC_DIR + '/src'
+RC_INCLUDE = RC_DIR + '/include/'
+RC_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
+RC_COMMON_INCLUDE = RC_MODULES_DIR + '/common/primitiveResource/include/'
+RC_COMMON_TIMER_INCLUDE = RC_MODULES_DIR + '/common/expiryTimer/include/'
+RC_COMMON_INTERNAL_INCLUDE = RC_MODULES_DIR + '/common/primitiveResource/include/internal/'
+#RC_BROKER_INCLUDE = RC_MODULES_DIR + '/resourceBroker/include/'
+#RC_CACHE_INCLUDE = RC_MODULES_DIR + '/resourceCache/include/'
+#RC_CONTAINER_INCLUDE = RC_MODULES_DIR + '/resourceContainer/include/'
+#RC_CONTAINER_BUNDLE_INCLUDE = RE_MODULES_DIR + '/resourceContainer/bundle-api/include/'
+#RC_SERVER_BUILDER_INCLUDE = RE_MODULES_DIR + '/serverBuilder/include/'
+RC_LIB = RC_RESOURCE_LIB
+RC_LIB_TIMER = RC_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/tizen'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RCSOURCE_LIB_DIR = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+
+TC_DIR = PROJECT_HOME + '/src/tc'
+ITC_DIR = TC_DIR + '/rc/gtest/src/stc'
+UTC_DIR = TC_DIR + '/rc/gtest/src/btc'
+TESTAPP_DIR = PROJECT_HOME + '/src/testapp'
+TESTAPP_CINCOUDE = PROJECT_HOME + '/include/testapp'
+
+COMMON_DIR = PROJECT_HOME + '/src/common'
+COMMON_UTIL_DIR = PROJECT_HOME + '/src/common/commonutil/c_cpp'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+RC_COMMON_DIR = TC_DIR + '/rc/gtest/src/helper'
+TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + '/include'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
+RC_INCLUDE_DIR = TC_DIR + '/rc/gtest/include'
+COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
+
+TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
+TESTAPP_CA_DIR = TESTAPP_DIR + '/ca/c_cpp'
+
+TARGET = PROJECT_HOME + '/bin'
+#TARGET = env['VARIANT_DIR'] 
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__ -finstrument-functions')
+
+RC_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+
+RC_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE, RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER, RC_LIB_TIMER, RC_INCLUDE, RC_COMMON_INCLUDE, RC_COMMON_TIMER_INCLUDE, RC_COMMON_INTERNAL_INCLUDE,  RC_INCLUDE_DIR]
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RCSOURCE_LIB_DIR]
+RC_LIB_LOCATION = [COMMON_LIB_LOCATION, RC_RESOURCE_LIB, RC_RESOURCE_CSDK_LIB, RC_RESOURCE_OC_LOGGER_LIB, RC_LIB]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog')
+
+# liboc_logger_core  libcoap
+
+#RC_STATIC_LIBS = [RE_LIB + '/librcs_client.a', RE_LIB + '/librcs_common.a', RE_LIB + '/librcs_container.a', RE_LIB + '/librcs_server.a', RE_LIB + '/libocsrm.a']
+RC_STATIC_RESOURCE_LIBS = []
+RC_STATIC_LIBS = []
+RC_SHARED_LIBS = Split('-lHueBundle -lDISensorBundle -lBMISensorBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
+RC_LIBS = [COMMON_SHARED_LIBS, RC_SHARED_LIBS]
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+RC_ITC_BIN = 'iotivity_rc_test'
+RC_UTC_BIN = 'iotivity_rc_utc'
+#RC_TEST_SERVER_BIN = 'retestserver'
+
+TEST_MAIN_BIN = 'test_main.o'
+COMMON_UTIL_BIN = 'common_util.o'
+RC_HELPER_BIN = 'rc_helper.o'
+
+TC_BINS = [RC_ITC_BIN, RC_UTC_BIN]
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+
+RC_HELPER_CPP = Glob(RC_COMMON_DIR + '/*.cpp')
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+
+
+#RE_TEST_SERVER_CPP = TESTAPP_DIR + '/re/c_cpp/RETestServers.cpp'
+
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+
+TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp'] 
+
+RC_ITC_CPP = Glob(ITC_DIR + '/*.cpp')
+RC_UTC_CPP = Glob(UTC_DIR + '/*.cpp')
+
+RC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RC_HELPER_CPP, CALL_GRAPH_CPP]
+
+RC_ITC_SRC = [RC_CPP, RC_ITC_CPP, RC_UTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
+#RC_UTC_SRC = [RC_CPP, RC_UTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
+
+#RC_TEST_SERVER_SRC = [RC_TEST_SERVER_CPP, COMMON_UTIL_CPP, RC_HELPER_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
+######################################################################
+
+# Initializing Build
+######################################################################
+
+create_target_dir = env.Command('target.out', [], Mkdir(TARGET))
+
+test_main = env.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+
+rc_itc = env.Program(source = RC_ITC_SRC, target = RC_ITC_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
+
+#rc_utc = env.Program(source = RC_UTC_SRC, target = RC_UTC_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
+
+#re_test_server = env.Program(source = RE_TEST_SERVER_SRC, target = RE_TEST_SERVER_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+
+pre_job = [create_target_dir]
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env.get('TARGET_SERVICE')
+target_tc = env.get('TARGET_TC')
+default_targets = []
+
+#default_targets += [rc_test_server]
+default_targets += [rc_itc]
+
+env.Default(default_targets)

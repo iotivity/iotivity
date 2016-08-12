@@ -1,0 +1,311 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building Scene Manager for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+
+print "target source is --------------------------------" + target_source
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+    
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+######################################################################
+######################################################################
+
+# Initializing TM Dir
+######################################################################
+
+SM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+SM_RESOURCE_INCLUDE = SM_RESOURCE_DIR + '/include'
+SM_C_COMMON = SM_RESOURCE_DIR + '/c_common'
+SM_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+SM_RESOURCE_CSDK_LIB = SM_RESOURCE_LIB
+SM_RESOURCE_STACK = SM_RESOURCE_DIR + '/csdk/stack/include'
+SM_RESOURCE_SOCKET = SM_RESOURCE_DIR + '/csdk/ocsocket/include'
+SM_RESOURCE_RANDOM = SM_RESOURCE_DIR + '/csdk/ocrandom/include'
+SM_RESOURCE_LOGGER = SM_RESOURCE_DIR + '/csdk/logger/include'
+SM_RESOURCE_OC_LOGGER = SM_RESOURCE_DIR + '/oc_logger/include'
+SM_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+SM_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+SM_RESOURCE_OC_LOGGER_LIB = SM_RESOURCE_LIB
+SM_DIR = ORG_SRC_HOME + '/service/scene-manager'
+SM_INCLUDE = SM_DIR + '/include'
+SM_SDK_INCLUDE = SM_DIR + '/sdk/src'
+SM_LIB = SM_RESOURCE_LIB
+SM_LIB_TIMER = SM_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+
+# Initializing RE Dir
+######################################################################
+
+RE_DIR = ORG_SRC_HOME + '/service/resource-encapsulation'
+RE_INCLUDE = RE_DIR + '/include/'
+
+######################################################################
+
+######################################################################
+
+# Initializing CA Dir
+######################################################################
+
+CA_IOT = ENV_HOME + ORG_SRC
+CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/sm/gtest/src'
+STC_DIR = TC_DIR + '/stc'
+BTC_DIR = TC_DIR + '/btc'
+TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
+TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
+
+COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+SM_COMMON_DIR = COMMON_DIR + '/testcase/sm/gtest'
+TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/sm/gtest/include'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
+SM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/sm'
+
+COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+
+arch_flag = ''
+target_arch = env_linux.get('TARGET_ARCH')
+if target_arch in ['x86']:
+	print 'Adding -m32 as flag'
+	env_linux.AppendUnique(CCFLAGS = ['-m32'])
+	env_linux.AppendUnique(LINKFLAGS = ['-m32'])
+	arch_flag = '-m32'
+elif target_arch in ['x86_64']:
+	print 'Adding -m64 as flag'
+	env_linux.AppendUnique(CCFLAGS = ['-m64'])
+	env_linux.AppendUnique(LINKFLAGS = ['-m64'])
+	arch_flag = '-m64'
+
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__ -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs  -ftest-coverage -fprofile-arcs')
+
+
+SM_FLAGS = Split('-O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC '+ arch_flag +' -pthread -DNDEBUG -DWITH_POSIX -D__linux__ -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32 -DWITH_TCP')
+SM_CFLAGS = [COMMON_FLAGS + SM_FLAGS]
+
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+
+SM_CINCLUDE = [COMMON_CINCLUDE, SM_RESOURCE_INCLUDE, SM_RESOURCE_STACK, SM_RESOURCE_SOCKET, SM_RESOURCE_RANDOM, SM_RESOURCE_OC_LOGGER, SM_INCLUDE, SM_RESOURCE_CEREAL, SM_RESOURCE_TIMER, SM_LIB_TIMER, SM_SDK_INCLUDE, SM_INCLUDE_DIR, SM_C_COMMON, RE_INCLUDE]
+
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/']
+SM_LIB_LOCATION = [COMMON_LIB_LOCATION, SM_RESOURCE_LIB, SM_RESOURCE_CSDK_LIB, SM_RESOURCE_OC_LOGGER_LIB, SM_LIB]
+
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 gcov uuid')
+
+
+SM_STATIC_LIBS = [SM_LIB + '/libTGMSDKLibrary.a']
+
+SM_STATIC_RESOURCE_LIBS = []
+
+SM_LIBS = [COMMON_SHARED_LIBS, 'scene_manager', 'rcs_client', 'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    'pthread']
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+SM_ITC_BIN = 'iotivity_sm_test'
+SM_UTC_BIN = 'iotivity_sm_utc'
+
+TEST_MAIN_BIN = 'test_main_sm.o'
+COMMON_UTIL_BIN = 'common_util_sm.o'
+CALL_GRAPH_BIN = 'call_graph_sm.o'
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+SM_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
+
+COMMON_UTIL_CPP = [COMMON_UTIL_DIR + '/CommonUtil.cpp']
+
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
+
+
+SM_ITC_CPP = Glob(STC_DIR + '/*.cpp')
+SM_UTC_CPP = Glob(BTC_DIR + '/*.cpp')
+
+SM_CPP = [SM_HELPER_CPP]
+
+SM_ITC_SRC = [SM_CPP, SM_ITC_CPP, SM_UTC_CPP, SM_STATIC_LIBS, SM_STATIC_RESOURCE_LIBS, COMMON_STATIC_LIBS]
+SM_UTC_SRC = [SM_CPP, SM_UTC_CPP, COMMON_STATIC_LIBS, SM_STATIC_LIBS, SM_STATIC_RESOURCE_LIBS]
+
+
+#####################SIMULATORS#######################################
+
+
+SM_SCENE_SERVER_SRC = Glob(TESTAPP_DIR + '/sm/c_cpp/src/sceneserver.cpp')
+
+
+SM_LIGHT_SERVER_BIN = 'lightserver'
+SM_FAN_SERVER_BIN = 'fanserver'
+SM_SCENE_SERVER_BIN = 'sceneserver'
+
+
+#####################################################################
+# Initializing Build
+######################################################################
+
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+test_main = env_linux.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = SM_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+common_util = env_linux.Object(source = COMMON_UTIL_CPP, target = COMMON_UTIL_BIN, CPPPATH = SM_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+call_graph = env_linux.Object(source = CALL_GRAPH_CPP, target = CALL_GRAPH_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+
+
+SM_itc = env_linux.Program(source = [test_main, common_util, call_graph, SM_ITC_SRC], target = SM_ITC_BIN, CPPPATH = SM_CINCLUDE, LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS)
+
+
+
+SM_scene_server = env_linux.Program(source = SM_SCENE_SERVER_SRC, target = SM_SCENE_SERVER_BIN, CPPPATH = SM_CINCLUDE, LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS)
+
+
+pre_job = [create_target_dir]
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_tc = env_linux.get('TARGET_TC')
+default_targets = [pre_job]
+install_targets = []
+
+print "target_service = " + target_service
+print "target_tc = " + target_tc
+print "target_transport = " + target_transport
+
+#SConscript(GTEST + '/SConscript')
+
+print "---------------service--------------" + target_service + target_tc
+
+
+if 'sm' in target_service or 'all' in target_service:
+    if 'itc' in target_tc or 'all' in target_tc:
+        print '---------------SM TC Build Selected---------------'
+        sm_out_path = Dir('.').abspath + '/' + ORG_SRC_HOME + ORG_SRC_OUT_DIR + '/service/scene-manager/sampleapp/linux'
+        copy_sm_fan_server = env_linux.Command('copy_fan_server', [], Copy(TARGET, sm_out_path + '/fanserver'))
+        copy_sm_light_server = env_linux.Command('copy_light_server', [], Copy(TARGET, sm_out_path + '/lightserver'))
+        default_targets += copy_sm_fan_server + copy_sm_light_server
+
+install_targets += SM_scene_server + SM_itc 
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)

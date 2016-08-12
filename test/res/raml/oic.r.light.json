@@ -1,0 +1,39 @@
+{
+  "id": "http://openinterconnect.org/schemas/oic.r.light#",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "OIC Light",
+  "$ref": "#/definitions/oic.r.light",
+  "definitions": {
+    "oic.r.light": {
+      "type": "object",
+      "properties": {
+		"rt": {
+          "type": "string",
+          "description": "Description about resource type",
+          "default": "oic.r.light"
+        },
+		"if": {
+          "type": "string",
+          "description": "Interface supported",
+          "default": "oic.if.baseline"
+        },
+		"power": {
+		  "type": "string",
+		  "description": "Light status",
+		  "default": "on",
+		  "enum": ["on","off"],
+		  "update_frequency": 1000
+		  },
+		"intensity": {
+		  "type": "integer",
+		  "description": "brightness of the light",
+		  "default": 1,
+		  "minimum": 1,
+          "maximum": 9,		  
+		  "update_frequency": 1001
+		  }
+		 }
+		}
+	},	
+  "required": [ "rt","if","power" ]
+}

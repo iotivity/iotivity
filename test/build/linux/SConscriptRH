@@ -1,0 +1,272 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building Resource Directory IotivitySecTest for Linux---------------\n'
+
+Import('env_linux')
+import os
+JAVA_LIB = ''
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+iotivity_directory = env_linux.get('IOTIVITY_DIR')
+
+print "target source is --------------------------------" + target_source
+print "iotivity root is --------------------------------" + iotivity_directory
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+######################################################################
+# Initializing CA Dir
+######################################################################
+
+CA_IOT = ENV_HOME + ORG_SRC
+#CA_DIR = SRC_HOME + '/ca/connectivity'
+#CA_DIR = ENV_HOME + '/IotivitySECDevSource/ca/iotivity/resource/csdk/connectivity'
+CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+# Initializing RH Dir
+######################################################################
+
+C_COMMON_DIR = ORG_SRC_HOME + '/resource/c_common'
+
+RH_DIR = ORG_SRC_HOME + '/service/resource-hosting'
+RH_INCLUDE = RH_DIR + '/include'
+RH_JSON_INCLUDE = ORG_SRC_HOME + '/extlibs/cjson'
+RH_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+RH_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+RH_RESOURCE_INCLUDE = RH_RESOURCE_DIR + '/include'
+RH_RESOURCE_LIB_DIR = RH_LIB
+RH_RESOURCE_CSDK_LIB = RH_LIB
+RH_RESOURCE_STACK = RH_RESOURCE_DIR + '/csdk/stack/include'
+RH_RESOURCE_SOCKET = RH_RESOURCE_DIR + '/csdk/ocsocket/include'
+RH_RESOURCE_RANDOM = RH_RESOURCE_DIR + '/csdk/ocrandom/include'
+RH_RESOURCE_LOGGER = RH_RESOURCE_DIR + '/csdk/logger/include'
+RH_RESOURCE_OC_LOGGER = RH_RESOURCE_DIR + '/oc_logger/include'
+RH_RESOURCE_OC_LOGGER_LIB = RH_LIB
+
+######################################################################
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+TC_DIR = PROJECT_HOME +  TARGET + '/tc/rh/gtest/src'
+ITC_DIR = TC_DIR + '/stc'
+UTC_DIR = TC_DIR + '/btc'
+TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
+SAMPLE_APP_DIR = '../../../service/resource-hosting/SampleApp/linux/'
+TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
+
+COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+
+TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + TARGET + '/tc/rh/gtest/include'
+TC_INCLUDE_DIR = INCLUDE_DIR
+RH_INCLUDE_DIR = INCLUDE_DIR 
+
+COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+TESTAPP_INCLUDE_DIR = PROJECT_HOME + '/include' + '/testapp'
+
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
+
+PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
+
+RH_CFLAGS = [COMMON_FLAGS]
+
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, C_COMMON_DIR]
+
+RH_CINCLUDE = [COMMON_CINCLUDE, RH_INCLUDE, RH_INCLUDE_DIR, RH_JSON_INCLUDE, RH_RESOURCE_INCLUDE, RH_RESOURCE_STACK, RH_RESOURCE_SOCKET, RH_RESOURCE_RANDOM, RH_RESOURCE_LOGGER, RH_RESOURCE_OC_LOGGER]
+RH_CINCLUDE = RH_CINCLUDE
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
+CA_LIB_LOCATION = [COMMON_LIB_LOCATION]
+RH_LIB_LOCATION = [COMMON_LIB_LOCATION]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 uuid gcov')
+
+RH_STATIC_LIBS = [RH_LIB + '/liboctbstack.a', RH_LIB + '/libcoap.a', RH_LIB + '/librcs_client.a', RH_LIB + '/librcs_common.a', RH_LIB + '/librcs_server.a', RH_LIB + '/libocsrm.a']
+RH_SHARED_LIBS = ['resource_hosting', 'pthread', Split('-lrcs_common -lrcs_server -lrcs_client -loc -luuid -loctbstack')]
+RH_LIBS = [COMMON_SHARED_LIBS, RH_SHARED_LIBS]
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+RH_MANAGER_BIN = 'rh_manager'
+RH_TEMP_HUM_SENSOR_BIN = 'rh_temp_hum_sensor'
+RH_TEMP_HUM_SENSOR2_BIN = 'rh_temp_hum_sensor2'
+RH_NONHOSTABLE_PROVIDER_BIN = 'rh_non_hostable_provider'
+RH_ITC_BIN = 'iotivity_rh_test'
+RH_UTC_BIN = 'iotivity_rh_utc'
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+
+TEST_MAIN = [TC_COMMON_DIR + '/gtest/IotivitySECTestMain.cpp'] 
+RH_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp') 
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+RH_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RH_HELPER_CPP, CALL_GRAPH_CPP]
+
+RH_MANAGER_CPP = Glob(SAMPLE_APP_DIR + '/sampleResourceHosting/*.cpp')
+RH_TEMP_HUM_SENSOR_CPP = Glob(TESTAPP_DIR + '/rh/c_cpp/tempHumSensor/*.cpp')
+RH_TEMP_HUM_SENSOR2_CPP = Glob(TESTAPP_DIR + '/rh/c_cpp/tempHumSensor2/*.cpp')
+RH_NONHOSTABLE_PROVIDER_CPP = Glob(TESTAPP_DIR + '/rh/c_cpp/nonHostableProvider/*.cpp')
+
+RH_ITC_CPP = Glob(ITC_DIR + '/*.cpp')
+print '---------------RH source is found---------------'
+RH_UTC_CPP = Glob(UTC_DIR + '/*.cpp')
+
+
+RH_MANAGER_SRC = [RH_MANAGER_CPP, COMMON_STATIC_LIBS, RH_STATIC_LIBS]
+RH_TEMP_HUM_SENSOR_SRC = [RH_TEMP_HUM_SENSOR_CPP, COMMON_STATIC_LIBS, RH_STATIC_LIBS]
+RH_TEMP_HUM_SENSOR2_SRC = [RH_TEMP_HUM_SENSOR2_CPP, COMMON_STATIC_LIBS, RH_STATIC_LIBS]
+RH_NONHOSTABLE_PROVIDER_SRC = [RH_NONHOSTABLE_PROVIDER_CPP, COMMON_STATIC_LIBS, RH_STATIC_LIBS]
+RH_ITC_SRC = [RH_CPP, RH_ITC_CPP, RH_UTC_CPP, COMMON_STATIC_LIBS, RH_STATIC_LIBS]
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+rh_manager = env_linux.Program(source = RH_MANAGER_SRC, target = RH_MANAGER_BIN, CPPPATH = RH_CINCLUDE, LIBS = RH_LIBS, LIBPATH = RH_LIB_LOCATION, CPPFLAGS = RH_CFLAGS)
+
+rh_temp_hum_sensor = env_linux.Program(source = RH_TEMP_HUM_SENSOR_SRC, target = RH_TEMP_HUM_SENSOR_BIN, CPPPATH = RH_CINCLUDE, LIBS = RH_LIBS, LIBPATH = RH_LIB_LOCATION, CPPFLAGS = RH_CFLAGS)
+
+rh_temp_hum_sensor2 = env_linux.Program(source = RH_TEMP_HUM_SENSOR2_SRC, target = RH_TEMP_HUM_SENSOR2_BIN, CPPPATH = RH_CINCLUDE, LIBS = RH_LIBS, LIBPATH = RH_LIB_LOCATION, CPPFLAGS = RH_CFLAGS)
+
+rh_non_hostable_provider = env_linux.Program(source = RH_NONHOSTABLE_PROVIDER_SRC, target = RH_NONHOSTABLE_PROVIDER_BIN, CPPPATH = RH_CINCLUDE, LIBS = RH_LIBS, LIBPATH = RH_LIB_LOCATION, CPPFLAGS = RH_CFLAGS)
+
+rh_test = env_linux.Program(source = RH_ITC_SRC, target = RH_ITC_BIN, CPPPATH = RH_CINCLUDE, LIBS = RH_LIBS, LIBPATH = RH_LIB_LOCATION, CPPFLAGS = RH_CFLAGS)
+
+pre_job = [] #create_target_dir
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_tc = env_linux.get('TARGET_TC')
+default_targets = [pre_job]
+install_targets = []
+
+print "target_service = " + target_service
+print "target_tc = " + target_tc
+print "target_transport = " + target_transport
+
+#SConscript(GTEST + '/SConscript')
+
+print "---------------service--------------" + target_service + target_tc
+
+
+if 'rh' in target_service or 'all' in target_service:
+    install_targets += [rh_manager]
+    install_targets += [rh_temp_hum_sensor]
+    install_targets += [rh_temp_hum_sensor2]
+    install_targets += [rh_non_hostable_provider]
+    if 'itc' in target_tc or 'all' in target_tc:
+        print '---------------RH ITC Build Selected---------------'
+        install_targets += [rh_test]
+      
+    #if 'utc' in target_tc or 'all' in target_tc:
+     #   print '---------------RH UTC Build Selected---------------'
+      #  install_targets += [rh_utc]
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)
