@@ -123,7 +123,17 @@ namespace OIC
              */
             CloudProp()
             {
-            };
+            }
+
+            CloudProp(const CloudProp& cloudProp) :
+                m_rep(cloudProp.toOCRepresentation()), m_cloudID(cloudProp.getCloudID())
+            {
+            }
+
+            CloudProp(const CloudProp&& cloudProp) :
+                m_rep(std::move(cloudProp.toOCRepresentation())), m_cloudID(cloudProp.getCloudID())
+            {
+            }
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
@@ -235,7 +245,19 @@ namespace OIC
             /**
              * Constructor
              */
-            DeviceProp() {}
+            DeviceProp()
+            {
+            }
+
+            DeviceProp(const DeviceProp& deviceProp) :
+                m_rep(deviceProp.toOCRepresentation())
+            {
+            }
+
+            DeviceProp(const DeviceProp&& deviceProp) :
+                m_rep(std::move(deviceProp.toOCRepresentation()))
+            {
+            }
 
             /**
              * Constructor with OCRepresentation object. This is used for JNI communication.
@@ -431,27 +453,19 @@ namespace OIC
              * OCRepresentation object corresponding to WiFi, DevConf, and CloudServer resource's
              * representation.
              */
-            EnrolleeConf(const OCRepresentation& rep)
+            EnrolleeConf(const OCRepresentation& rep) :
+                m_ProvRep(rep)
             {
-                m_ProvRep = rep;
+            }
 
-                std::vector<OCRepresentation> children = rep.getChildren();
+            EnrolleeConf(const EnrolleeConf& enrolleeConf) :
+                m_ProvRep(enrolleeConf.getProvResRep())
+            {
+            }
 
-                for(auto child = children.begin(); child != children.end(); ++child)
-                {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
-                    {
-                        m_WiFiRep = *child;
-                    }
-                    else if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
-                    {
-                        m_DevConfRep = *child;
-                    }
-                    else if(child->getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
-                    {
-                        m_CloudRep = *child;
-                    }
-                }
+            EnrolleeConf(const EnrolleeConf&& enrolleeConf) :
+                m_ProvRep(std::move(enrolleeConf.getProvResRep()))
+            {
             }
 
             /**
@@ -462,8 +476,17 @@ namespace OIC
              */
             std::string getDeviceName() const
             {
-                if(m_DevConfRep.hasAttribute(OC_RSRVD_ES_DEVNAME))
-                    return m_DevConfRep.getValue<std::string>(OC_RSRVD_ES_DEVNAME);
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_DEVNAME))
+                        {
+                            return child->getValue<std::string>(OC_RSRVD_ES_DEVNAME);
+                        }
+                    }
+                }
                 return std::string("");
             }
 
@@ -479,12 +502,19 @@ namespace OIC
                 vector<WIFI_MODE> modes;
                 modes.clear();
 
-                if(m_WiFiRep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    for(auto it : m_WiFiRep.getValue
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                {
+                            for(auto it : child->getValue
                                         <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
                     {
                         modes.push_back(static_cast<WIFI_MODE>(it));
+                            }
+                        }
                     }
                 }
                 return modes;
@@ -499,9 +529,18 @@ namespace OIC
              */
             WIFI_FREQ getWiFiFreq() const
             {
-                if(m_WiFiRep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
-                    return static_cast<WIFI_FREQ>(
-                                        m_WiFiRep.getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
+                        {
+                            return static_cast<WIFI_FREQ>(
+                                        child->getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                        }
+                    }
+                }
                 return WIFI_FREQ_NONE;
             }
 
@@ -512,9 +551,13 @@ namespace OIC
              */
             bool isCloudAccessible() const
             {
-                if(m_CloudRep.getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    return true;
+                    if(child->getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
+                    {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -524,13 +567,13 @@ namespace OIC
              *
              * @return OCRepresentation object
              */
-            const OCRepresentation& getProvResRep()
+            const OCRepresentation& getProvResRep() const
             {
                 return m_ProvRep;
             }
 
         protected:
-            OCRepresentation m_ProvRep, m_WiFiRep, m_DevConfRep, m_CloudRep;
+            OCRepresentation m_ProvRep;
         };
 
         /**
@@ -585,7 +628,7 @@ namespace OIC
                 return m_result;
             }
 
-            const EnrolleeConf& getEnrolleeConf()
+            EnrolleeConf& getEnrolleeConf()
             {
                 return m_enrolleeConf;
             }
@@ -612,7 +655,6 @@ namespace OIC
             {
                 return m_result;
             }
-
 
         private:
             ESResult m_result;
