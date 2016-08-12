@@ -48,22 +48,25 @@ namespace OIC
         #define ES_SEC_DISCOVERY_TIMEOUT 5
 
         EnrolleeSecurity::EnrolleeSecurity(
-        std::shared_ptr< OC::OCResource > resource,
-        std::string secDbPath)
+            std::shared_ptr< OC::OCResource > resource,
+            const std::string secDbPath)
         {
             (void) secDbPath;
             m_ocResource = resource;
         }
 
-        void EnrolleeSecurity::registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
-                SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb)
+        void EnrolleeSecurity::registerCallbackHandler(
+            const SecurityProvStatusCb securityProvStatusCb,
+            const SecurityPinCb securityPinCb,
+            const SecProvisioningDbPathCb secProvisioningDbPathCb)
         {
             m_securityProvStatusCb = securityProvStatusCb;
             m_securityPinCb = securityPinCb;
             m_secProvisioningDbPathCb = secProvisioningDbPathCb;
         }
 
-        std::shared_ptr< OC::OCSecureResource > EnrolleeSecurity::getEnrollee(DeviceList_t &list)
+        std::shared_ptr< OC::OCSecureResource > EnrolleeSecurity::getEnrollee(
+            DeviceList_t &list)
         {
             for (unsigned int i = 0; i < list.size(); i++)
             {
@@ -71,7 +74,8 @@ namespace OIC
                 {
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Device %d ID %s ", i + 1,
                             list[i]->getDeviceID().c_str());
-                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s", list[i]->getDevAddr().c_str());
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s",
+                                                            list[i]->getDevAddr().c_str());
                     return list[i];
                 }
             }
@@ -79,7 +83,8 @@ namespace OIC
             return NULL;
         }
 
-        void EnrolleeSecurity::convertUUIDToString(OicUuid_t uuid, std::string& uuidString)
+        void EnrolleeSecurity::convertUUIDToString(const OicUuid_t uuid,
+                                                              std::string& uuidString)
         {
             char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*) 0)->id)) + 1] =
             { 0, };
@@ -97,7 +102,8 @@ namespace OIC
             uuidString =  deviceId.str();
         }
 
-        void EnrolleeSecurity::convertStringToUUID(OicUuid_t& uuid, std::string uuidString)
+        void EnrolleeSecurity::convertStringToUUID(OicUuid_t& uuid,
+                                                              const std::string uuidString)
         {
             size_t outBufSize = B64DECODE_OUT_SAFESIZE((uuidString.length() + 1));
             uint8_t* outKey = (uint8_t*)OICCalloc(1, outBufSize);
@@ -316,7 +322,7 @@ namespace OIC
             return m_ocResource->sid();
         };
 
-        OicSecAcl_t* EnrolleeSecurity::createAcl(OicUuid_t cloudUuid)
+        OicSecAcl_t* EnrolleeSecurity::createAcl(const OicUuid_t cloudUuid)
         {
             // allocate memory for |acl| struct
             OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));

@@ -46,12 +46,14 @@ namespace OIC
             CloudResource(std::shared_ptr< OC::OCResource > resource);
             ~CloudResource() = default;
 
-            void registerCloudPropProvisioningStatusCallback (CloudPropProvStatusCb callback);
+            void registerCloudPropProvisioningStatusCallback(
+                    const CloudPropProvStatusCb callback);
             void provisionEnrollee(const CloudProp& CloudProp);
 
         private:
-            void onCloudProvResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-                    const int eCode);
+            void onCloudProvResponse(const HeaderOptions& headerOptions,
+                                                const OCRepresentation& rep,
+                                                const int eCode);
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;

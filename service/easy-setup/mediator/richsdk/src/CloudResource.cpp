@@ -75,19 +75,22 @@ namespace OIC
                 }
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(result, ESCloudProvState::ES_CLOUD_PROVISIONING_ERROR);
+                        CloudPropProvisioningStatus >(
+                        result, ESCloudProvState::ES_CLOUD_PROVISIONING_ERROR);
                 m_cloudPropProvStatusCb(provStatus);
             }
             else
             {
                 OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is success ");
-                std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_OK, ESCloudProvState::ES_CLOUD_PROVISIONING_SUCCESS);
+                std::shared_ptr< CloudPropProvisioningStatus > provStatus =
+                    std::make_shared<CloudPropProvisioningStatus >(
+                    ESResult::ES_OK, ESCloudProvState::ES_CLOUD_PROVISIONING_SUCCESS);
                 m_cloudPropProvStatusCb(provStatus);
             }
         }
 
-        void CloudResource::registerCloudPropProvisioningStatusCallback(CloudPropProvStatusCb callback)
+        void CloudResource::registerCloudPropProvisioningStatusCallback(
+            const CloudPropProvStatusCb callback)
         {
             OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter registerCloudPropProvisioningStatusCallback.");
             m_cloudPropProvStatusCb = callback;

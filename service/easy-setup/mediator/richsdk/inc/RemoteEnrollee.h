@@ -65,8 +65,8 @@ namespace OIC
              *
              * @see SecProvisioningResult
              */
-            ESResult registerSecurityCallbackHandler(SecurityPinCb securityPinCb,
-                    SecProvisioningDbPathCb secProvisioningDbPathCb);
+            ESResult registerSecurityCallbackHandler(const SecurityPinCb securityPinCb,
+                    const SecProvisioningDbPathCb secProvisioningDbPathCb);
 #endif //__WITH_DTLS__
 
             /**
@@ -78,7 +78,7 @@ namespace OIC
              *
              * @see GetStatusCb
              */
-            void getStatus(GetStatusCb callback);
+            void getStatus(const GetStatusCb callback);
 
             /**
              * Get an Enrollee's configuration which includes WiFi supported frequency and device name
@@ -89,7 +89,7 @@ namespace OIC
              *
              * @see GetConfigurationStatusCb
              */
-            void getConfiguration(GetConfigurationStatusCb callback);
+            void getConfiguration(const GetConfigurationStatusCb callback);
 
              /**
              * Do security provisioning such as ownership tranfer to Enrollee.
@@ -100,7 +100,7 @@ namespace OIC
              *
              * @see SecurityProvStatusCb
              */
-            void provisionSecurity(SecurityProvStatusCb callback);
+            void provisionSecurity(const SecurityProvStatusCb callback);
 
             /**
              * Provision WiFi AP information and device configuration to Enrollee
@@ -116,7 +116,7 @@ namespace OIC
              * @see DevicePropProvStatusCb
              */
             void provisionDeviceProperties(const DeviceProp& devProp,
-                                               DevicePropProvStatusCb callback);
+                                               const DevicePropProvStatusCb callback);
 
             /**
              * Provision Cloud information to Enrollee, which includes Auth code, auth provider,
@@ -135,20 +135,25 @@ namespace OIC
              * @see CloudPropProvStatusCb
              */
             void provisionCloudProperties(const CloudProp& cloudProp,
-                                              CloudPropProvStatusCb callback);
+                                              const CloudPropProvStatusCb callback);
 
         private:
-            RemoteEnrollee(std::shared_ptr< OC::OCResource > resource);
+            RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource);
 
             ESResult discoverResource();
-            void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
+            void onDeviceDiscovered(const std::shared_ptr<OC::OCResource> resource);
             void initCloudResource();
 
-            void getStatusHandler (std::shared_ptr< GetEnrolleeStatus > status);
-            void getConfigurationStatusHandler (std::shared_ptr< GetConfigurationStatus > status);
-            void devicePropProvisioningStatusHandler (std::shared_ptr< DevicePropProvisioningStatus > status);
-            void cloudPropProvisioningStatusHandler (std::shared_ptr< CloudPropProvisioningStatus > status);
-            void securityStatusHandler(std::shared_ptr< SecProvisioningStatus > status);
+            void getStatusHandler
+                (const std::shared_ptr< GetEnrolleeStatus > status) const;
+            void getConfigurationStatusHandler
+                (const std::shared_ptr< GetConfigurationStatus > status) const;
+            void devicePropProvisioningStatusHandler
+                (const std::shared_ptr< DevicePropProvisioningStatus > status) const;
+            void cloudPropProvisioningStatusHandler
+                (const std::shared_ptr< CloudPropProvisioningStatus > status) const;
+            void securityStatusHandler
+                (const std::shared_ptr< SecProvisioningStatus > status) const;
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;

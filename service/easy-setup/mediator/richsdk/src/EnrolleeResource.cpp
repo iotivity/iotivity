@@ -134,17 +134,20 @@ namespace OIC
             }
         }
 
-        void EnrolleeResource::registerGetStatusCallback(GetStatusCb callback)
+        void EnrolleeResource::registerGetStatusCallback(
+            const GetStatusCb callback)
         {
             m_getStatusCb = callback;
         }
 
-        void EnrolleeResource::registerGetConfigurationStatusCallback(GetConfigurationStatusCb callback)
+        void EnrolleeResource::registerGetConfigurationStatusCallback(
+            const GetConfigurationStatusCb callback)
         {
             m_getConfigurationStatusCb = callback;
         }
 
-        void EnrolleeResource::registerDevicePropProvStatusCallback(DevicePropProvStatusCb callback)
+        void EnrolleeResource::registerDevicePropProvStatusCallback(
+            const DevicePropProvStatusCb callback)
         {
             m_devicePropProvStatusCb = callback;
         }

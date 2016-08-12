@@ -47,11 +47,14 @@ namespace OIC
         {
         public:
             EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
-            std::string secDbPath);
-            void registerCallbackHandler(SecurityProvStatusCb securityProvStatusCb,
-                    SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
+            const std::string secDbPath);
+            void registerCallbackHandler(
+                const SecurityProvStatusCb securityProvStatusCb,
+                const SecurityPinCb securityPinCb,
+                const SecProvisioningDbPathCb secProvisioningDbPathCb);
             void performOwnershipTransfer();
-            ESResult performACLProvisioningForCloudServer(std::string cloudUuid);
+            ESResult performACLProvisioningForCloudServer(
+                const std::string cloudUuid);
             std::string getUUID() const;
 
         private:
@@ -68,9 +71,9 @@ namespace OIC
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
             std::shared_ptr< OC::OCSecureResource > getEnrollee(OC::DeviceList_t &list);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
-            void convertUUIDToString(OicUuid_t uuid, std::string& uuidString);
-            void convertStringToUUID(OicUuid_t& uuid, std::string uuidString);
-            OicSecAcl_t* createAcl(OicUuid_t cloudUuid);
+            void convertUUIDToString(const OicUuid_t uuid, std::string& uuidString);
+            void convertStringToUUID(OicUuid_t& uuid, const std::string uuidString);
+            OicSecAcl_t* createAcl(const OicUuid_t cloudUuid);
 
             void ACLProvisioningCb(PMResultList_t *result, int hasError);
         };

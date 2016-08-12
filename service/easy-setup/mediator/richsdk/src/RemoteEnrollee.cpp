@@ -39,7 +39,7 @@ namespace OIC
         #define ES_REMOTE_ENROLLEE_TAG "ES_REMOTE_ENROLLEE"
         #define DISCOVERY_TIMEOUT 5
 
-        RemoteEnrollee::RemoteEnrollee(std::shared_ptr< OC::OCResource > resource)
+        RemoteEnrollee::RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource)
         {
             m_ocResource = resource;
             m_enrolleeResource = std::make_shared<EnrolleeResource>(m_ocResource);
@@ -54,8 +54,9 @@ namespace OIC
         }
 
 #ifdef __WITH_DTLS__
-        ESResult RemoteEnrollee::registerSecurityCallbackHandler(SecurityPinCb securityPinCb,
-                SecProvisioningDbPathCb secProvisioningDbPathCb)
+        ESResult RemoteEnrollee::registerSecurityCallbackHandler(
+                const SecurityPinCb securityPinCb,
+                const SecProvisioningDbPathCb secProvisioningDbPathCb)
         {
             // No need to check NULL for m_secProvisioningDbPathCB as this is not a mandatory
             // callback function. If m_secProvisioningDbPathCB is NULL, provisioning manager
@@ -69,7 +70,7 @@ namespace OIC
 #endif //__WITH_DTLS__
 
         void RemoteEnrollee::securityStatusHandler(
-                        std::shared_ptr< SecProvisioningStatus > status)
+                const std::shared_ptr< SecProvisioningStatus > status) const
         {
             OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "easySetupStatusCallback status is, UUID = %s,"
                     "Status = %d", status->getDeviceUUID().c_str(),
@@ -92,7 +93,8 @@ namespace OIC
             }
         }
 
-        void RemoteEnrollee::getStatusHandler(std::shared_ptr< GetEnrolleeStatus > status)
+        void RemoteEnrollee::getStatusHandler(
+                const std::shared_ptr< GetEnrolleeStatus > status) const
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering getStatusHandler");
 
@@ -102,7 +104,7 @@ namespace OIC
         }
 
         void RemoteEnrollee::getConfigurationStatusHandler (
-                std::shared_ptr< GetConfigurationStatus > status)
+                const std::shared_ptr< GetConfigurationStatus > status) const
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering getConfigurationStatusHandler");
 
@@ -113,7 +115,7 @@ namespace OIC
         }
 
         void RemoteEnrollee::devicePropProvisioningStatusHandler(
-                std::shared_ptr< DevicePropProvisioningStatus > status)
+                const std::shared_ptr< DevicePropProvisioningStatus > status) const
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering DevicePropProvisioningStatusHandler");
 
@@ -125,7 +127,7 @@ namespace OIC
         }
 
         void RemoteEnrollee::cloudPropProvisioningStatusHandler (
-                std::shared_ptr< CloudPropProvisioningStatus > status)
+                const std::shared_ptr< CloudPropProvisioningStatus > status) const
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering cloudPropProvisioningStatusHandler");
 
@@ -219,9 +221,13 @@ namespace OIC
             return ES_OK;
         }
 
-        void RemoteEnrollee::provisionSecurity(SecurityProvStatusCb callback)
+        void RemoteEnrollee::provisionSecurity(const SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
             m_securityProvStatusCb = callback;
 
             SecurityProvStatusCb securityProvStatusCb = std::bind(
@@ -260,7 +266,7 @@ namespace OIC
 #endif
         }
 
-        void RemoteEnrollee::getStatus(GetStatusCb callback)
+        void RemoteEnrollee::getStatus(const GetStatusCb callback)
         {
             if(!callback)
             {
@@ -281,7 +287,7 @@ namespace OIC
 
         }
 
-        void RemoteEnrollee::getConfiguration(GetConfigurationStatusCb callback)
+        void RemoteEnrollee::getConfiguration(const GetConfigurationStatusCb callback)
         {
             if(!callback)
             {
@@ -302,7 +308,7 @@ namespace OIC
         }
 
         void RemoteEnrollee::provisionDeviceProperties(const DeviceProp& deviceProp,
-                                                            DevicePropProvStatusCb callback)
+                                                            const DevicePropProvStatusCb callback)
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionDeviceProperties");
 
@@ -369,7 +375,7 @@ namespace OIC
         }
 
         void RemoteEnrollee::provisionCloudProperties(const CloudProp& cloudProp,
-                                                            CloudPropProvStatusCb callback)
+                                                            const CloudPropProvStatusCb callback)
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionCloudProperties");
             ESResult res = ES_OK;
