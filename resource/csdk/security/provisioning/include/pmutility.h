@@ -109,7 +109,7 @@ void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev);
  * @return true when deletion is happened, false when no deletion is occured. In case either of
  * two arguments is null it will return false.
  */
-bool PMDeleteFromUUIDList(OCUuidList_t *pUuidList, OicUuid_t *targetId);
+bool PMDeleteFromUUIDList(OCUuidList_t **pUuidList, OicUuid_t *targetId);
 
 #ifdef __cplusplus
 }
