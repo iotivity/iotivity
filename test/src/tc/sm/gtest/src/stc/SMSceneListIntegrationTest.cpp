@@ -113,6 +113,7 @@ TEST_F(SMSceneListIntegrationTest_stc, AddAndGetSceneCollections_GSRV_P)
  * @objective Test getSceneCollections function negatively without adding scene collcetions and check
  *             if no scene collections are returned
  * @target std::vector<SceneCollection::Ptr> getSceneCollections() const;
+ * @test_data none
  * @pre_condition call getInstance method
  * @procedure call getSceneCollections and check if returned list of scene collections is empty
  * @post_condition none
