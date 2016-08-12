@@ -22,6 +22,7 @@
 
 static bool isTopicList = false;
 
+NSResult NSStoreTopics(const char * topicName);
 NSResult NSSendTopicUpdation();
 
 NSResult NSInitTopicList()
@@ -35,7 +36,7 @@ NSResult NSInitTopicList()
     }
 
     consumerTopicList = NSStorageCreate();
-    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC;
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
 
     registeredTopicList = NSStorageCreate();
     registeredTopicList->cacheType = NS_PROVIDER_CACHE_REGISTER_TOPIC;
@@ -357,15 +358,17 @@ void * NSTopicSchedule(void * ptr)
                     NSSendTopicList((OCEntityHandlerRequest*) node->taskData);
                     break;
                 case TASK_SUBSCRIBE_TOPIC:
-                    //TODO: modify subscription with single topic
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
-                    NSTopicList * topicList = (NSTopicList *) node->taskData;
-                    NSSubscribeTopicList(topicList->consumerId, topicList);
-                    NSSendTopicUpdationToConsumer(topicList->consumerId);
-                    // TODO : free NSTopic
+                    NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+                    newObj->data = node->taskData;
+                    newObj->next = NULL;
+                    NSStorageWrite(consumerTopicList, newObj);
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
-                    // TODO: implement
+                    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
+                    NSStorageDelete(consumerTopicList, (const char *) node->taskData);
+                    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
+                    OICFree((char *)node->taskData);
                     break;
                 case TASK_ADD_TOPIC:
                 {

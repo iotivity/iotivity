@@ -42,6 +42,10 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList *, char *, bool);
 
 NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id);
 
+NSTopics * NSProviderGetTopicsCacheData(NSCacheList * regTopicList);
+
+NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char *consumerId);
+
 pthread_mutex_t NSCacheMutex;
 pthread_mutexattr_t NSCacheMutexAttr;
 

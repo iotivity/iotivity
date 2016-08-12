@@ -245,12 +245,17 @@ NSTopics * NSProviderGetConsumerTopics(char *consumerId)
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    //TODO implement get subscribed topics for consumer
+    if(!consumerId)
+    {
+        NS_LOG(DEBUG, "consumer id should be set");
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
+
+    NSTopics * topics = NSProviderGetConsumerTopicsCacheData(consumerTopicList, consumerId);
 
     pthread_mutex_unlock(&nsInitMutex);
-    NS_LOG(DEBUG, "NSProviderGetConsumerTopics - OUT");
-
-    return NULL;
+    return topics;
 }
 
 NSTopics * NSProviderGetTopics()
@@ -258,18 +263,25 @@ NSTopics * NSProviderGetTopics()
     NS_LOG(DEBUG, "NSProviderGetTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    //TODO implement get registered topics for consumer
+    NSTopics * topics = NSProviderGetTopicsCacheData(registeredTopicList);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderGetTopics - OUT");
 
-    return NULL;
+    return topics;
 }
 
 NSResult NSProviderAddTopic(char *topicName)
 {
     NS_LOG(DEBUG, "NSProviderAddTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
+
+    if(!topicName)
+    {
+        pthread_mutex_unlock(&nsInitMutex);
+        NS_LOG(DEBUG, "topic Name should be set");
+        return NS_FAIL;
+    }
 
     NSPushQueue(TOPIC_SCHEDULER, TASK_ADD_TOPIC, OICStrdup(topicName));
 
@@ -283,6 +295,13 @@ NSResult NSProviderDeleteTopic(char *topicName)
     NS_LOG(DEBUG, "NSProviderDeleteTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
+    if(!topicName)
+    {
+        pthread_mutex_unlock(&nsInitMutex);
+        NS_LOG(DEBUG, "topic Name should be set");
+        return NS_FAIL;
+    }
+
     NSPushQueue(TOPIC_SCHEDULER, TASK_DELETE_TOPIC, topicName);
 
     pthread_mutex_unlock(&nsInitMutex);
@@ -295,14 +314,20 @@ NSResult NSProviderSelectTopic(char *consumerId, char *topicName)
     NS_LOG(DEBUG, "NSProviderSelectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId)
+    if(!consumerId || !topicName)
     {
+        pthread_mutex_unlock(&nsInitMutex);
         NS_LOG(DEBUG, "consumer id should be set for topic subscription");
         return NS_FAIL;
     }
 
-    //TODO: add consumerId to task struct
-    NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPIC, topicName);
+    NSCacheTopicSubData * topicSubData =
+            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
+
+    OICStrcpy(topicSubData->id, consumerId, NS_UUID_STRING_SIZE);
+    topicSubData->topicName = OICStrdup(topicName);
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPIC, (void *)topicSubData);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderSelectTopics - OUT");
@@ -314,13 +339,13 @@ NSResult NSProviderUnselectTopic(char *consumerId, char *topicName)
     NS_LOG(DEBUG, "NSProviderUnselectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId)
+    if(!consumerId || !topicName)
     {
         NS_LOG(DEBUG, "consumer id should be set for topic subscription");
+        pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-    
-    //TODO: add consumerId to task struct
+
     NSPushQueue(TOPIC_SCHEDULER, TASK_UNSUBSCRIBE_TOPIC, topicName);
 
     pthread_mutex_unlock(&nsInitMutex);
