@@ -345,6 +345,56 @@ extern "C" {
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_dispose
         (JNIEnv *, jobject);
 
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    subscribeMQTopicImpl
+    * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnObserveListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_subscribeMQTopicImpl
+        (JNIEnv *, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    unsubscribeMQTopicImpl
+    * Signature: (I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_unsubscribeMQTopicImpl
+        (JNIEnv *, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    requestMQPublishImpl
+    * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnPostListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_requestMQPublishImpl
+        (JNIEnv *, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    publishMQTopicImpl
+    * Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/Map
+    *             ;Lorg/iotivity/base/OcResource/OnPostListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_publishMQTopicImpl
+        (JNIEnv *, jobject, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    discoveryMQTopicsImpl
+    * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnMQTopicFoundListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_discoveryMQTopicsImpl
+        (JNIEnv *, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    createMQTopicImpl
+    * Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/String;Ljava/util/Map
+    *             ;Lorg/iotivity/base/OcPlatform/OnMQTopicCreatedListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_createMQTopicImpl
+        (JNIEnv *, jobject, jobject, jstring, jobject, jobject, jint);
+
 #ifdef __cplusplus
 }
 #endif

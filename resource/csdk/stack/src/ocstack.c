@@ -856,7 +856,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
 }
 
 /**
- * Encode an address string to match RFC6874.
+ * Encode an address string to match RFC 6874.
  *
  * @param outputAddress    a char array to be written with the encoded string.
  *
@@ -875,17 +875,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     VERIFY_NON_NULL(inputAddress,  FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(outputAddress, FATAL, OC_STACK_INVALID_PARAM);
 
-    /** @todo Use a max IPv6 string length instead of CA_MAX_URI_LENGTH. */
-#define ENCODE_MAX_INPUT_LENGTH    CA_MAX_URI_LENGTH
-
-    size_t inputLength = strnlen(inputAddress, ENCODE_MAX_INPUT_LENGTH);
-
-    if (inputLength >= ENCODE_MAX_INPUT_LENGTH)
-    {
-        OIC_LOG(ERROR, TAG,
-                "encodeAddressForRFC6874 failed: Invalid input string: too long/unterminated!");
-        return OC_STACK_INVALID_PARAM;
-    }
+    size_t inputLength = strnlen(inputAddress, outputSize);
 
     // inputSize includes the null terminator
     size_t inputSize = inputLength + 1;
@@ -935,11 +925,11 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     // Fail if we don't have room for encoded string's two additional chars
     if (outputSize < (inputSize + 2))
     {
-        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Input string is already encoded");
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: encoded output will not fit!");
         return OC_STACK_ERROR;
     }
 
-    // Restore the null terminator with an escaped '%' character, per RFC6874
+    // Restore the null terminator with an escaped '%' character, per RFC 6874
     OICStrcpy(outputAddress, scopeIdPart - addressPart, addressPart);
     strcat(outputAddress, "%25");
     strcat(outputAddress, scopeIdPart);

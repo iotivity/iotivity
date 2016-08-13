@@ -121,13 +121,8 @@ CAInterface_t *CAFindInterfaceChange()
                 continue;
             }
 
-            // Get address of network interface.
-            char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
-            struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
-            inet_ntop(AF_INET, (void *)&(sa4->sin_addr), addr, sizeof(addr));
-
             foundNewInterface = CANewInterfaceItem(ifitem->index, ifitem->name, ifitem->family,
-                                                   addr, ifitem->flags);
+                                                   ifitem->addr, ifitem->flags);
             break;    // we found the one we were looking for
         }
         u_arraylist_destroy(iflist);

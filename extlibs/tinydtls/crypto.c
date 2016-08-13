@@ -592,9 +592,9 @@ dtls_ecdsa_create_sig_hash(const unsigned char *priv_key, size_t key_size,
 
     // Check the buffers
     if (priv_key == NULL || key_size < 32)
-        return 0;
+        return;
     if (sign_hash == NULL || sign_hash_size < 32)
-        return 0;
+        return;
 
     uECC_sign(priv_key, sign_hash, sign);
 

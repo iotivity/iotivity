@@ -1603,3 +1603,251 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_dispose
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
     delete resource;
 }
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    discoveryMQTopicsImpl
+* Signature: (Ljava/util/Map;Lorg/iotivity/base/OcPlatform/OnResourceFoundListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_discoveryMQTopicsImpl
+(JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_discoveryMQTopicsImpl");
+
+#ifdef WITH_MQ
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "listener cannot be null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    //todo
+    // discoveryMQTopics call
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    createMQTopicImpl
+* Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/String;Ljava/util/Map
+*             ;Lorg/iotivity/base/OcPlatform/OnMQTopicCreatedListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_createMQTopicImpl
+(JNIEnv *env, jobject thiz, jobject jRepresentation, jstring jUri,
+ jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_createMQTopicImpl");
+
+#ifdef WITH_MQ
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "listener cannot be null");
+        return;
+    }
+
+    if (!jRepresentation)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "representation null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    std::string targetUri;
+    if (jUri)
+    {
+        targetUri = env->GetStringUTFChars(jUri, nullptr);
+    }
+
+    OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env,
+                                                                                   jRepresentation);
+    if (!representation)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    //todo
+    // createMQTopic call
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    subscribeMQTopic
+* Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnObserveListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_subscribeMQTopicImpl
+(JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_subscribeMQTopicImpl");
+#ifdef MQ_SUBSCRIBER
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onObserveListener cannot be null");
+        return;
+    }
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    //todo
+    // subscribeMQTopic call
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    unsubscribeMQTopicImpl
+* Signature: (I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_unsubscribeMQTopicImpl
+(JNIEnv *env, jobject thiz, jint jQoS)
+{
+    LOGD("OcResource_unsubscribeMQTopicImpl");
+#ifdef MQ_SUBSCRIBER
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    //todo
+    // unsubscribeMQTopic call
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    requestMQPublishImpl
+* Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnPostListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_requestMQPublishImpl
+(JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_requestMQPublishImpl");
+#ifdef MQ_SUBSCRIBER
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPostListener cannot be null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    //todo
+    // requestMQPublish call
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    publishMQTopicImpl
+* Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/Map;
+*             Lorg/iotivity/base/OcResource/OnPostListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_publishMQTopicImpl
+(JNIEnv *env, jobject thiz, jobject jRepresentation, jobject jQueryParamsMap,
+ jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_publishMQTopicImpl");
+#ifdef MQ_PUBLISHER
+    if (!jRepresentation)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "representation cannot be null");
+        return;
+    }
+
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPostListener cannot be null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env,
+                                                                                   jRepresentation);
+    if (!representation)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    //todo
+    // publishMQTopic call
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}

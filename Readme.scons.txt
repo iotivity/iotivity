@@ -265,6 +265,8 @@ IOS:
  * WITH_RA=true or false (Build with Remote Access module)
  * WITH_RD=1 or 0 (Build including Resource Directory)
  * SIMULATOR=true or false (Build with simulator module)
+ * Possible values for <WITH_MQ> are: PUB,SUB,BROKER (Build including Message Queue)
+   -> PUB : publisher, SUB : subscriber, BROKER : MQ broker(not supported yet)
 
 Note1: Currently most IoTivity project doesn't support Windows, so you can't set
 TARGET_OS to 'windows' except the project support Windows.

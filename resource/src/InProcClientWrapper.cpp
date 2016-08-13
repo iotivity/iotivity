@@ -672,6 +672,7 @@ namespace OC
         const OCDevAddr& devAddr,
         const std::string& resourceUri,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+        OCConnectivityType connectivityType,
         GetCallback& callback, QualityOfService QoS)
     {
         if (!callback)
@@ -700,7 +701,7 @@ namespace OC
                                   nullptr, OC_REST_GET,
                                   uri.c_str(),
                                   &devAddr, nullptr,
-                                  CT_DEFAULT,
+                                  connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),
@@ -957,6 +958,7 @@ namespace OC
         const OCDevAddr& devAddr,
         const std::string& uri,
         const HeaderOptions& headerOptions,
+        OCConnectivityType connectivityType,
         DeleteCallback& callback,
         QualityOfService /*QoS*/)
     {
@@ -984,7 +986,7 @@ namespace OC
             result = OCDoResource(nullptr, OC_REST_DELETE,
                                   uri.c_str(), &devAddr,
                                   nullptr,
-                                  CT_DEFAULT,
+                                  connectivityType,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
                                   &cbdata,
                                   assembleHeaderOptions(options, headerOptions),

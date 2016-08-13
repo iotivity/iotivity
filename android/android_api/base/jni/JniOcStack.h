@@ -38,6 +38,7 @@
 #define JNI_NO_NATIVE_POINTER 1001
 #define JNI_INVALID_VALUE 1002
 #define JNI_NO_SUCH_KEY 1003
+#define JNI_NO_SUPPORT 1004
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName, const int line,
     const int code, const char* message);

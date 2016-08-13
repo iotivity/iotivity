@@ -32,6 +32,10 @@ namespace OCAccountManagerTest
     {
     }
 
+    void deleteHandler(const HeaderOptions& /*headerOptions*/, const int /*eCode*/)
+    {
+    }
+
     // Helper method
     OCAccountManager::Ptr ConstructAccountManagerObject(std::string host)
     {
@@ -123,21 +127,17 @@ namespace OCAccountManagerTest
     TEST(SignOutTest, DISABLED_SignOutForValid)
     {
         std::string host("coap://192.168.1.2:5000");
-        std::string userId("AnyUserId");
-        std::string accessToken("AnyAccessToken");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
-        EXPECT_EQ(OC_STACK_OK, accountManager->signOut(userId, accessToken, &accountHandler));
+        EXPECT_EQ(OC_STACK_OK, accountManager->signOut(&accountHandler));
     }
 
     TEST(SignOutTest, SignOutWithNullCallback)
     {
         std::string host("coap://192.168.1.2:5000");
-        std::string userId("AnyUserId");
-        std::string accessToken("AnyAccessToken");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
-        EXPECT_ANY_THROW(accountManager->signOut(userId, accessToken, nullptr));
+        EXPECT_ANY_THROW(accountManager->signOut(nullptr));
     }
 
     // RefreshAccessToken Test
@@ -160,5 +160,55 @@ namespace OCAccountManagerTest
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_ANY_THROW(accountManager->refreshAccessToken(userId, refreshToken, nullptr));
+    }
+
+    // SearchUser Test
+    TEST(SearchUserTest, DISABLED_SearchUserWithUserUuidForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->searchUser(userId, &accountHandler));
+    }
+
+    TEST(SearchUserTest, DISABLED_SearchUserWithQueryForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string key("AnyKey");
+        std::string value("AnyValue");
+        QueryParamsMap query = {};
+        query.insert(std::pair<std::string, std::string>(key, value));
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->searchUser(query, &accountHandler));
+    }
+
+    TEST(SearchUserTest, SearchUserWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->searchUser(userId, nullptr));
+    }
+
+    // DeleteDevice Test
+    TEST(DeleteDeviceTest, DISABLED_DeleteDeviceForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string deviceId("AnyDeviceId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->deleteDevice(deviceId, &deleteHandler));
+    }
+
+    TEST(DeleteDeviceTest, DeleteDeviceWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string deviceId("AnyDeviceId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->deleteDevice(deviceId, nullptr));
     }
 }

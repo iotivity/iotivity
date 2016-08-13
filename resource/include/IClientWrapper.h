@@ -63,6 +63,7 @@ namespace OC
                         const std::string& uri,
                         const QueryParamsMap& queryParams,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         GetCallback& callback, QualityOfService QoS)=0;
 
         virtual OCStackResult PutResourceRepresentation(
@@ -84,6 +85,7 @@ namespace OC
                         const OCDevAddr& devAddr,
                         const std::string& uri,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         DeleteCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult ObserveResource(
