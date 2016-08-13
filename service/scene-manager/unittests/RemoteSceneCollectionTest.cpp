@@ -29,12 +29,33 @@
 #include "RCSResourceObject.h"
 #include "RCSRemoteResourceObject.h"
 #include "OCPlatform.h"
+#include "RCSDiscoveryManager.h"
+#include "RCSAddress.h"
 
 using namespace std;
 using namespace OIC::Service;
 using namespace OC;
 
 constexpr int DEFAULT_WAITTIME = 2000;
+
+SceneList* g_sceneList = SceneList::getInstance();
+RCSRemoteResourceObject::Ptr pListResource = nullptr;
+RemoteSceneList::Ptr pSceneList = nullptr;
+RemoteSceneCollection::Ptr pSceneCollection = nullptr;
+RemoteScene::Ptr pScene = nullptr;
+
+void discoverSceneListServer()
+{
+    if(pListResource == nullptr)
+    {
+        std::vector< std::string > vecRT{ SCENE_LIST_RT };
+        std::vector< std::string > vecIF{ OC_RSRVD_INTERFACE_DEFAULT, OC::BATCH_INTERFACE };
+
+        pListResource = SceneUtils::createRCSResourceObject(
+                            "coap://" + SceneUtils::getNetAddress() + SCENE_LIST_URI,
+                            SCENE_CONNECTIVITY, vecRT, vecIF);
+    }
+}
 
 class RemoteSceneCollectionTest : public TestWithMock
 {
@@ -43,24 +64,15 @@ protected:
     {
         TestWithMock::SetUp();
 
-        SceneList::getInstance()->getName();
-        createListServer();
+        g_sceneList->getName();
+        discoverSceneListServer();
 
-        RemoteSceneList::createInstance(pListResource, std::bind(
-            &RemoteSceneCollectionTest::onRemoteSceneListCreated, this,
-            placeholders::_1, placeholders::_2));
-
-        waitForCallback();
-    }
-
-    void createListServer()
-    {
-        std::vector< std::string > vecRT{ SCENE_LIST_RT };
-        std::vector< std::string > vecIF{ OC_RSRVD_INTERFACE_DEFAULT, OC::BATCH_INTERFACE };
-
-        pListResource = SceneUtils::createRCSResourceObject(
-            "coap://" + SceneUtils::getNetAddress() + SCENE_LIST_URI,
-            SCENE_CONNECTIVITY, vecRT, vecIF);
+        if(pSceneList == nullptr){
+            RemoteSceneList::createInstance(pListResource, std::bind(
+                &RemoteSceneCollectionTest::onRemoteSceneListCreated, this,
+                placeholders::_1, placeholders::_2));
+            waitForCallback();
+        }
     }
 
     void waitForCallback(int waitingTime = DEFAULT_WAITTIME)
@@ -70,9 +82,6 @@ protected:
     }
 
 public:
-    RCSRemoteResourceObject::Ptr pListResource;
-    RemoteSceneList::Ptr pSceneList;
-    RemoteSceneCollection::Ptr pSceneCollection;
     std::condition_variable cond;
     std::mutex mutex;
 
@@ -88,8 +97,9 @@ public:
         cond.notify_all();
     }
 
-    void onRemoteSceneCreated(RemoteScene::Ptr, int)
+    void onRemoteSceneCreated(RemoteScene::Ptr remoteScene, int)
     {
+        pScene = remoteScene;
         cond.notify_all();
     }
 
@@ -101,17 +111,21 @@ public:
 
 TEST_F(RemoteSceneCollectionTest, addNewRemoteSceneCollection)
 {
-    pSceneList->addNewSceneCollection(std::bind(
-        &RemoteSceneCollectionTest::onRemoteSceneCollectionCreated, this,
-        placeholders::_1, placeholders::_2));
+    if(pSceneCollection == nullptr)
+    {
+        pSceneList->addNewSceneCollection(std::bind(
+            &RemoteSceneCollectionTest::onRemoteSceneCollectionCreated, this,
+            placeholders::_1, placeholders::_2));
+        waitForCallback();
+    }
 
-    waitForCallback();
-
-    pSceneCollection->addNewScene("Default", std::bind(
-        &RemoteSceneCollectionTest::onRemoteSceneCreated, this,
-        placeholders::_1, placeholders::_2));
-
-    waitForCallback();
+    if(pScene == nullptr)
+    {
+        pSceneCollection->addNewScene("Default", std::bind(
+            &RemoteSceneCollectionTest::onRemoteSceneCreated, this,
+            placeholders::_1, placeholders::_2));
+        waitForCallback();
+    }
 
     EXPECT_NE(nullptr, pSceneCollection);
 }
@@ -144,17 +158,21 @@ TEST_F(RemoteSceneCollectionTest, getRemoteSceneCollectionList)
 
 TEST_F(RemoteSceneCollectionTest, setAndGetSceneCollectionName)
 {
-    pSceneList->addNewSceneCollection(std::bind(
-        &RemoteSceneCollectionTest::onRemoteSceneCollectionCreated, this,
-        placeholders::_1, placeholders::_2));
+    if(pSceneCollection == nullptr)
+    {
+        pSceneList->addNewSceneCollection(std::bind(
+            &RemoteSceneCollectionTest::onRemoteSceneCollectionCreated, this,
+            placeholders::_1, placeholders::_2));
+        waitForCallback();
+    }
 
-    waitForCallback();
-
-    pSceneCollection->addNewScene("Default", std::bind(
-        &RemoteSceneCollectionTest::onRemoteSceneCreated, this,
-        placeholders::_1, placeholders::_2));
-
-    waitForCallback();
+    if(pScene == nullptr)
+    {
+        pSceneCollection->addNewScene("Default", std::bind(
+            &RemoteSceneCollectionTest::onRemoteSceneCreated, this,
+            placeholders::_1, placeholders::_2));
+        waitForCallback();
+    }
 
     pSceneCollection->setName("Kitchen", std::bind(
         &RemoteSceneCollectionTest::onSetName, this, placeholders::_1));
