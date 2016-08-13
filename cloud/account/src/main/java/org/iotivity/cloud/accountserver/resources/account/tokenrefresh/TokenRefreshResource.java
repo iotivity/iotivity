@@ -25,14 +25,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.token.Token;
-import org.iotivity.cloud.accountserver.token.TokenManager;
-import org.iotivity.cloud.accountserver.token.TokenPolicy;
+import org.iotivity.cloud.accountserver.resources.account.AccountManager;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
-import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -40,19 +36,17 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
+import org.iotivity.cloud.util.Log;
 
 public class TokenRefreshResource extends Resource {
 
-    private Cbor<HashMap<String, Object>> mCbor         = new Cbor<>();
+    private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
 
-    TokenManager                          mTokenManager = new TokenManager();
+    private AccountManager                mAsManager = new AccountManager();
 
     public TokenRefreshResource() {
         super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
                 Constants.ACCOUNT_URI, Constants.TOKEN_REFRESH_URI));
-
-        // addQueryHandler(Arrays.asList("if=" + Constants.INTERFACE_DEFAULT),
-        // this::onDefaultInterfaceReceived);
     }
 
     @Override
@@ -63,7 +57,6 @@ public class TokenRefreshResource extends Resource {
 
         switch (request.getMethod()) {
             case POST:
-                // Used for token refresh
                 response = handlePostRefreshToken(request);
                 break;
 
@@ -78,44 +71,38 @@ public class TokenRefreshResource extends Resource {
     private IResponse handlePostRefreshToken(IRequest request)
             throws ServerException {
 
-        HashMap<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
-
-        if (payloadData == null) {
+        if (request.getPayload() == null) {
             throw new BadRequestException("payload is null");
         }
 
-        // String deviceId =
-        // payloadData.get(Constants.REQUEST_DEVICE_ID).toString();
-        String refreshToken = payloadData.get(Constants.REQ_REFRESH_TOKEN)
-                .toString();
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        Boolean res = false;
+        // temp code
+        Log.v(payloadData.toString());
 
-        res = mTokenManager.verifyRefreshToken(refreshToken);
-
-        if (!res) {
-            throw new UnAuthorizedException("RefreshToken is unauthorized");
-        }
-
-        Token refreshedToken = mTokenManager.refreshToken(refreshToken);
-
-        if (refreshedToken.getAccessToken() == null
-                || refreshedToken.getRefreshToken() == null) {
-            throw new InternalServerErrorException("MongoDB is not operating");
+        if (payloadData == null) {
+            throw new BadRequestException("CBOR parsing failed");
         }
 
         HashMap<String, Object> responsePayload = null;
 
-        responsePayload = new HashMap<String, Object>();
+        if (checkPayloadException(
+                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID,
+                        Constants.REQ_REFRESH_TOKEN, Constants.REQ_GRANT_TYPE),
+                payloadData)) {
 
-        responsePayload.put(Constants.RESP_ACCESS_TOKEN,
-                refreshedToken.getAccessToken());
-        responsePayload.put(Constants.RESP_REFRESH_TOKEN,
-                refreshedToken.getRefreshToken());
-        responsePayload.put(Constants.RESP_TOKEN_TYPE,
-                TokenPolicy.BEARER_TOKEN);
-        responsePayload.put(Constants.RESP_EXPIRES_IN, TokenPolicy.EXPIRES_IN);
+            String uuid = payloadData.get(Constants.REQ_UUID_ID).toString();
+            String deviceId = payloadData.get(Constants.REQ_DEVICE_ID)
+                    .toString();
+            String refreshToken = payloadData.get(Constants.REQ_REFRESH_TOKEN)
+                    .toString();
+            String grantType = payloadData.get(Constants.REQ_GRANT_TYPE)
+                    .toString();
+
+            responsePayload = mAsManager.refreshToken(uuid, deviceId, grantType,
+                    refreshToken);
+        }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,

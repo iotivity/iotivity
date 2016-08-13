@@ -29,12 +29,17 @@ import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
 import org.iotivity.cloud.ciserver.resources.DiResource;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
-import org.iotivity.cloud.ciserver.resources.proxy.Account;
-import org.iotivity.cloud.ciserver.resources.proxy.DevicePresence;
-import org.iotivity.cloud.ciserver.resources.proxy.MessageQueue;
-import org.iotivity.cloud.ciserver.resources.proxy.ResourceDirectory;
-import org.iotivity.cloud.ciserver.resources.proxy.ResourceFind;
-import org.iotivity.cloud.ciserver.resources.proxy.ResourcePresence;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
+import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
+import org.iotivity.cloud.ciserver.resources.proxy.account.AclGroup;
+import org.iotivity.cloud.ciserver.resources.proxy.account.AclInvite;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Certificate;
+import org.iotivity.cloud.ciserver.resources.proxy.mq.MessageQueue;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
+import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
 import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
@@ -45,36 +50,39 @@ public class CloudInterfaceServer {
         System.out.println("-----CI SERVER-------");
 
         if (args.length != 8) {
-            Log.e(
-                    "coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
-                            + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
+            Log.e("coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
+                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
             return;
         }
 
         boolean tlsMode = Integer.parseInt(args[7]) == 1;
 
-        ConnectorPool.addConnection("rd",
-                new InetSocketAddress(args[1], Integer.parseInt(args[2])),
-                tlsMode);
-        ConnectorPool.addConnection("account",
-                new InetSocketAddress(args[3], Integer.parseInt(args[4])),
-                tlsMode);
-        ConnectorPool.addConnection("mq",
-                new InetSocketAddress(args[5], Integer.parseInt(args[6])),
-                tlsMode);
+        ConnectorPool.addConnection("rd", new InetSocketAddress(args[1],
+                Integer.parseInt(args[2])), tlsMode);
+        ConnectorPool.addConnection("account", new InetSocketAddress(args[3],
+                Integer.parseInt(args[4])), tlsMode);
+        ConnectorPool.addConnection("mq", new InetSocketAddress(args[5],
+                Integer.parseInt(args[6])), tlsMode);
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
         Account acHandler = new Account();
+        AccountSession acSessionHandler = new AccountSession();
         ResourceDirectory rdHandler = new ResourceDirectory();
         ResourceFind resHandler = new ResourceFind();
         ResourcePresence adHandler = new ResourcePresence();
         DevicePresence prsHandler = new DevicePresence();
         MessageQueue mqHandler = new MessageQueue();
+        Acl aclHandler = new Acl();
+        AclGroup aclGroupHandler = new AclGroup();
+        Certificate certHandler = new Certificate();
+        AclInvite aclInviteHandler = new AclInvite();
 
         CoapDevicePool devicePool = deviceServer.getDevicePool();
 
         deviceServer.addResource(acHandler);
+
+        deviceServer.addResource(acSessionHandler);
 
         deviceServer.addResource(rdHandler);
 
@@ -86,15 +94,23 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(mqHandler);
 
-        KeepAliveResource resKeepAlive = new KeepAliveResource(
-                new int[] { 1, 2, 4, 8 });
+        deviceServer.addResource(aclHandler);
+
+        deviceServer.addResource(aclGroupHandler);
+
+        deviceServer.addResource(certHandler);
+
+        deviceServer.addResource(aclInviteHandler);
+
+        KeepAliveResource resKeepAlive = new KeepAliveResource(new int[] { 1,
+                2, 4, 8 });
 
         deviceServer.addResource(resKeepAlive);
 
         deviceServer.addResource(new DiResource(devicePool));
 
-        deviceServer.addServer(new CoapServer(
-                new InetSocketAddress(Integer.parseInt(args[0]))));
+        deviceServer.addServer(new CoapServer(new InetSocketAddress(Integer
+                .parseInt(args[0]))));
 
         // deviceServer.addServer(new HttpServer(new InetSocketAddress(8080)));
 

@@ -22,6 +22,7 @@
 package org.iotivity.cloud.accountserver.oauth;
 
 import java.util.HashMap;
+
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
@@ -33,9 +34,11 @@ import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
-import org.iotivity.cloud.accountserver.Constants;
+import org.iotivity.cloud.accountserver.db.TokenTable;
+import org.iotivity.cloud.accountserver.db.UserTable;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.util.JSONUtil;
-import org.iotivity.cloud.util.Log;
+import org.iotivity.cloud.util.Log;;
 
 /**
  *
@@ -43,7 +46,7 @@ import org.iotivity.cloud.util.Log;
  * provider.
  *
  */
-public class Github implements OAuthServer {
+public class Github implements OAuthProvider {
 
     // do not use 'client_id' and 'secret' variables.
     // should use values that are obtained from github.
@@ -52,10 +55,9 @@ public class Github implements OAuthServer {
     final static private String resource_url = "https://api.github.com/user";
 
     @Override
-    public HashMap<String, String> requestAccessToken(String authCode,
-            String authServerUrl) {
+    public TokenTable requestAccessTokenInfo(String authCode, Object options) {
 
-        HashMap<String, String> authServerInfo = new HashMap<String, String>();
+        TokenTable tokenInfo = new TokenTable();
 
         try {
 
@@ -70,23 +72,34 @@ public class Github implements OAuthServer {
             GitHubTokenResponse oAuthResponse = oAuthClient.accessToken(request,
                     GitHubTokenResponse.class);
 
-            authServerInfo.put(Constants.KEY_ACCESS_TOKEN_GH,
-                    oAuthResponse.getAccessToken());
+            tokenInfo.setAccesstoken(oAuthResponse.getAccessToken());
+            tokenInfo.setRefreshtoken(oAuthResponse.getRefreshToken());
+
+            // in Github, tokens don't have to expire.
+            tokenInfo.setExpiredtime(-1);
 
         } catch (OAuthSystemException | OAuthProblemException e) {
-            authServerInfo.put(Constants.ERROR_MESSAGE, e.getMessage());
+            e.printStackTrace();
+            throw new InternalServerErrorException(
+                    "OAuth provider(Github) error");
         }
 
-        return authServerInfo;
+        return tokenInfo;
     }
 
     @Override
-    public HashMap<String, String> requestGetUserInfo(String accessToken,
-            String apiServerUrl) {
+    public TokenTable requestRefreshTokenInfo(String refreshToken) {
 
-        HashMap<String, String> authServerInfo = new HashMap<String, String>();
+        TokenTable tokenInfo = new TokenTable();
 
-        String userInfo = null;
+        return tokenInfo;
+    }
+
+    @Override
+    public UserTable requestGetUserInfo(String accessToken, Object options) {
+
+        String response = null;
+        UserTable userInfo = new UserTable();
 
         if (accessToken == null) {
             Log.w("accessToken is null!");
@@ -104,20 +117,22 @@ public class Github implements OAuthServer {
             OAuthResourceResponse resourceResponse = oAuthClient.resource(
                     request, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
 
-            userInfo = resourceResponse.getBody();
-            Log.d("userInfo: " + userInfo);
+            response = resourceResponse.getBody();
+            Log.d("response: " + response);
 
         } catch (OAuthSystemException | OAuthProblemException e) {
-            authServerInfo.put(Constants.ERROR_MESSAGE, e.getMessage());
+            e.printStackTrace();
+            throw new InternalServerErrorException(
+                    "OAuth provider(Github) error");
         }
 
         String userIdKey = "login";
-        JSONUtil<HashMap<String, String>> util = new JSONUtil<HashMap<String, String>>();
-        HashMap<String, String> parsedData = util.parseJSON(userInfo,
+        JSONUtil<HashMap<String, String>> util = new JSONUtil<>();
+        HashMap<String, String> parsedData = util.parseJSON(response,
                 HashMap.class);
         String userId = parsedData.get(userIdKey);
-        authServerInfo.put(Constants.KEY_USER_ID, userId);
+        userInfo.setUserid(userId);
 
-        return authServerInfo;
+        return userInfo;
     }
 }
