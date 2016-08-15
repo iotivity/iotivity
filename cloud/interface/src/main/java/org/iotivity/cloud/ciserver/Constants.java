@@ -25,13 +25,22 @@ import org.iotivity.cloud.base.OCFConstants;
 
 public class Constants extends OCFConstants {
 
-    public static final int    MIN_TO_LIVE          = 10;
+    public static final int    MIN_TO_LIVE         = 10;
 
-    public static final String DEVICE_ID            = "di";
-    public static final String PRESENCE_STATE       = "state";
+    public static final String USER_ID             = "uid";
+    public static final String DEVICE_ID           = "di";
+    public static final String PRESENCE_STATE      = "state";
 
-    public static final String SEARCH_ACCESS_TOKEN  = "accesstoken";
-    public static final Object SEARCH_REFRESH_TOKEN = "refreshtoken";
-    public static final Object EXPIRES_IN           = "expiresin";
+    public static final String REQ_LOGIN           = "login";
+
+    public static final String ACCESS_TOKEN        = "accesstoken";
+    public static final Object REFRESH_TOKEN       = "refreshtoken";
+    public static final Object EXPIRES_IN          = "expiresin";
+
+    public static final String REQ_GROUP_MASTER_ID = "gmid";
+    public static final String REQ_MEMBER_ID       = "mid";
+    public static final String REQ_MEMBER_LIST     = "midlist";
+    public static final String REQ_DEVICE_ID       = "di";
+    public static final String REQ_DEVICE_LIST     = "dilist";
 
 }
