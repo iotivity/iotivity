@@ -60,9 +60,6 @@ static const uint16_t CBOR_SIZE = 512;
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
-/** DOXM Map size - Number of mandatory items. */
-static const uint8_t DOXM_MAP_SIZE = 9;
-
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
 
@@ -131,21 +128,12 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     char* strUuid = NULL;
 
     int64_t cborEncoderResult = CborNoError;
-    uint8_t mapSize = DOXM_MAP_SIZE;
-    if (doxm->oxmTypeLen > 0)
-    {
-        mapSize++;
-    }
-    if (doxm->oxmLen > 0)
-    {
-        mapSize++;
-    }
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, mapSize);
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
 
     //OxmType -- Not Mandatory
