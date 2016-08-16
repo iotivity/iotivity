@@ -67,5 +67,5 @@ ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
 ocprovision_env.InstallTarget(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
 
-if target_os in ['linux']:
+if target_os in ['linux', 'tizen']:
     SConscript('examples/SConscript')
