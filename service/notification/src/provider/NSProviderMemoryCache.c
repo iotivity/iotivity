@@ -594,3 +594,23 @@ NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char
 
     return topics;
 }
+
+size_t NSProviderGetListSize(NSCacheElement * firstElement)
+{
+    if(!firstElement)
+    {
+        return 0;
+    }
+
+    int cnt = 0;
+
+    NSCacheElement * iter = firstElement;
+
+    while(iter)
+    {
+        cnt++;
+        iter = iter->next;
+    }
+
+    return cnt;
+}

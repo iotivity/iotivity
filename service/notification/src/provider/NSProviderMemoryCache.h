@@ -46,6 +46,8 @@ NSTopics * NSProviderGetTopicsCacheData(NSCacheList * regTopicList);
 
 NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char *consumerId);
 
+size_t NSProviderGetListSize(NSCacheElement * firstElement);
+
 pthread_mutex_t NSCacheMutex;
 pthread_mutexattr_t NSCacheMutexAttr;
 
