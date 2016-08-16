@@ -35,27 +35,6 @@ NSResult NSInitTopicList()
     return NS_OK;
 }
 
-NSTopicList * NSGetTopics(char *consumerId)
-{
-    NS_LOG(DEBUG, "NSGetTopics()");
-
-    NSTopicList  * topicList;
-
-    if(consumerId == NULL)
-    {
-        NS_LOG(DEBUG, "All registered topic list");
-        //TODO: get registered topic list
-    }
-    else
-    {
-        NS_LOG_V(DEBUG, "Subscribed topic list for consumerId(%s)", consumerId);
-        //TODO: get subscribed topic list for consumer
-    }
-
-    NS_LOG(DEBUG, "NSGetTopics() NS_OK");
-    return topicList;
-}
-
 NSResult NSAddTopics(const char * topicName)
 {
     NS_LOG(DEBUG, "NSWriteTopicsToStorage()");
