@@ -139,7 +139,9 @@ public class InviteResource extends Resource {
 
         HashMap<String, List<String>> queryParams = request.getUriQueryMap();
 
-        checkQueryException(Constants.REQ_GROUP_ID, queryParams);
+        checkQueryException(
+                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_GROUP_ID),
+                queryParams);
 
         String gid = queryParams.get(Constants.REQ_GROUP_ID).get(0);
         String uid = queryParams.get(Constants.REQ_UUID_ID).get(0);
