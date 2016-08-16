@@ -57,6 +57,7 @@ public class Constants extends OICConstants {
 
     // for '/oic/prs' resource
     public static final String       PRESENCE_STATE          = "state";
+    public static final String       PRESENCE_LIST           = "prslist";
 
     public static final String       RS_NON                  = "non";
     public static final String       RS_TRIGGER              = "trg";
