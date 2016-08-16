@@ -925,27 +925,24 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             }
         }
 
-        if (ehRet == OC_EH_OK)
-        {
-            // Format the response.  Note this requires some info about the request
-            response.requestHandle = entityHandlerRequest->requestHandle;
-            response.resourceHandle = entityHandlerRequest->resource;
-            response.ehResult = ehRet;
-            //response uses OCPaylod while all get,put methodes use OCRepPayload
-            response.payload = (OCPayload*) (payload);
-            response.numSendVendorSpecificHeaderOptions = 0;
-            memset(response.sendVendorSpecificHeaderOptions, 0,
-                    sizeof(response.sendVendorSpecificHeaderOptions));
-            memset(response.resourceUri, 0, sizeof(response.resourceUri));
-            // Indicate that response is NOT in a persistent buffer
-            response.persistentBufferFlag = 0;
+        // Format the response.  Note this requires some info about the request
+        response.requestHandle = entityHandlerRequest->requestHandle;
+        response.resourceHandle = entityHandlerRequest->resource;
+        response.ehResult = ehRet;
+        //response uses OCPaylod while all get,put methodes use OCRepPayload
+        response.payload = (OCPayload*) (payload);
+        response.numSendVendorSpecificHeaderOptions = 0;
+        memset(response.sendVendorSpecificHeaderOptions, 0,
+                sizeof(response.sendVendorSpecificHeaderOptions));
+        memset(response.resourceUri, 0, sizeof(response.resourceUri));
+        // Indicate that response is NOT in a persistent buffer
+        response.persistentBufferFlag = 0;
 
-            // Send the response
-            if (OCDoResponse(&response) != OC_STACK_OK)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Error sending response");
-                ehRet = OC_EH_ERROR;
-            }
+        // Send the response
+        if (OCDoResponse(&response) != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Error sending response");
+            ehRet = OC_EH_ERROR;
         }
     }
 
