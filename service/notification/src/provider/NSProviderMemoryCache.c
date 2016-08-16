@@ -256,21 +256,17 @@ NSResult NSStorageDestroy(NSCacheList * list)
 {
     NSCacheElement * iter = list->head;
     NSCacheElement * next = NULL;
-
     NSCacheType type = list->cacheType;
 
     while (iter)
     {
         next = (NSCacheElement *) iter->next;
-
         NSProviderDeleteCacheData(type, iter->data);
         OICFree(iter);
-
         iter = next;
     }
 
     OICFree(list);
-
     return NS_OK;
 }
 
@@ -372,7 +368,8 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
         NSCacheTopicData * data = (NSCacheTopicData *) data;
         OICFree(data->topicName);
     }
-    else if(type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME || NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID)
+    else if(type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME ||
+            type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID)
     {
         NSCacheTopicSubData * data = (NSCacheTopicSubData *) data;
         OICFree(data->topicName);

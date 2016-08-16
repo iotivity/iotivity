@@ -136,6 +136,7 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyTrue)
     config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
     config.syncInfoCallback = NSSyncCallbackEmpty;
     config.policy = true;
+    config.userInfo = NULL;
 
     NSResult ret = NSStartProvider(config);
 
@@ -161,6 +162,7 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
     config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
     config.syncInfoCallback = NSSyncCallbackEmpty;
     config.policy = false;
+    config.userInfo = NULL;
 
     NSResult ret = NSStartProvider(config);
 
@@ -188,6 +190,7 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
     config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
     config.syncInfoCallback = NSSyncCallbackEmpty;
     config.policy = true;
+    config.userInfo = NULL;
 
     NSStartProvider(config);
 

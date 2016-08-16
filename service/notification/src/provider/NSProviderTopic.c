@@ -20,28 +20,16 @@
 
 #include "NSProviderTopic.h"
 
-static bool isTopicList = false;
-
-NSResult NSStoreTopics(const char * topicName);
 NSResult NSSendTopicUpdation();
 
 NSResult NSInitTopicList()
 {
     NS_LOG(DEBUG, "NSInitTopicList - IN");
-
-    if(isTopicList)
-    {
-        NS_LOG(DEBUG, "topic list has already initiated");
-        return NS_FAIL;
-    }
-
     consumerTopicList = NSStorageCreate();
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
 
     registeredTopicList = NSStorageCreate();
     registeredTopicList->cacheType = NS_PROVIDER_CACHE_REGISTER_TOPIC;
-
-    isTopicList = true;
 
     NS_LOG(DEBUG, "NSInitTopicList - OUT");
     return NS_OK;
@@ -102,7 +90,6 @@ NSResult NSDeleteTopics(const char * topicName)
 
     NSStorageDelete(registeredTopicList, topicName);
     while(NSStorageDelete(consumerTopicList, topicName) != NS_FAIL);
-
     return NS_OK;
 }
 
