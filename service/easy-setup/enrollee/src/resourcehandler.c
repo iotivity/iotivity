@@ -111,8 +111,8 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 {
     if (name != NULL && pass != NULL)
     {
-        OICStrcpy(name, MAX_SSIDLEN, gWiFiResource.ssid);
-        OICStrcpy(pass, MAX_CREDLEN, gWiFiResource.cred);
+        OICStrcpy(name, MAX_WEBLINKLEN, gWiFiResource.ssid);
+        OICStrcpy(pass, MAX_WEBLINKLEN, gWiFiResource.cred);
     }
 }
 
@@ -225,6 +225,8 @@ OCStackResult initDevConfResource(bool isSecured)
     OCStackResult res = OC_STACK_ERROR;
 
     OICStrcpy(gDevConfResource.devName, sizeof(gDevConfResource.devName), "");
+    OICStrcpy(gDevConfResource.modelNumber, sizeof(gDevConfResource.modelNumber), "");
+    OICStrcpy(gDevConfResource.location, sizeof(gDevConfResource.location), "");
     OICStrcpy(gDevConfResource.country, sizeof(gDevConfResource.country), "");
     OICStrcpy(gDevConfResource.language, sizeof(gDevConfResource.language), "");
 
@@ -273,8 +275,8 @@ void updateWiFiResource(OCRepPayload* input)
         return ;
     }
 
-    memset(wiFiData->ssid, 0, MAX_SSIDLEN);
-    memset(wiFiData->pwd, 0, MAX_CREDLEN);
+    memset(wiFiData->ssid, 0, MAX_WEBLINKLEN);
+    memset(wiFiData->pwd, 0, MAX_WEBLINKLEN);
     wiFiData->authtype = NONE_AUTH;
     wiFiData->enctype = NONE_AUTH;
     wiFiData->userdata = NULL;
@@ -409,6 +411,14 @@ void updateDevConfResource(OCRepPayload* input)
     memset(devConfData->country, 0, OIC_STRING_MAX_VALUE);
     devConfData->userdata = NULL;
 
+    char *location = NULL;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LOCATION, &location))
+    {
+        OICStrcpy(gDevConfResource.location, sizeof(gDevConfResource.location), location);
+        OICStrcpy(devConfData->location, sizeof(devConfData->location), location);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.location %s", gDevConfResource.location);
+    }
+
     char *country = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_COUNTRY, &country))
     {
@@ -517,6 +527,8 @@ OCRepPayload* constructResponseOfDevConf()
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_DEVCONF);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, gDevConfResource.devName);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_MODELNUMBER, gDevConfResource.modelNumber);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LOCATION, gDevConfResource.location);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LANGUAGE, gDevConfResource.language);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, gDevConfResource.country);
 
@@ -956,8 +968,12 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
     }
     gWiFiResource.numMode = modeIdx;
 
-    OICStrcpy(gDevConfResource.devName, MAX_DEVICELEN, (deviceProperty->DevConf).deviceName);
+    OICStrcpy(gDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO, ES_RH_TAG, "Device Name : %s", gDevConfResource.devName);
+
+    OICStrcpy(gDevConfResource.modelNumber, OIC_STRING_MAX_VALUE,
+                                                            (deviceProperty->DevConf).modelNumber);
+    OIC_LOG_V(INFO, ES_RH_TAG, "Model Number : %s", gDevConfResource.modelNumber);
 
     OIC_LOG(INFO, ES_RH_TAG, "SetDeviceProperty OUT");
     return OC_STACK_OK;

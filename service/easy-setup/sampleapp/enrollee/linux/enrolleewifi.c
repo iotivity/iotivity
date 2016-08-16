@@ -173,7 +173,7 @@ void SetDeviceInfo()
     printf("SetDeviceInfo IN\n");
 
     ESDeviceProperty deviceProperty = {
-        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device"}
+        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device", "Test Model Number"}
     };
 
     // Set user properties if needed
