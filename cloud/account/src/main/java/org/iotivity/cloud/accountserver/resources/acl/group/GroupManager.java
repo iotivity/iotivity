@@ -158,7 +158,7 @@ public class GroupManager {
         return getGroup(gid).removeSubscriber(mid);
     }
 
-    private Group getGroup(String gid) {
+    public Group getGroup(String gid) {
 
         return mGroups.get(gid);
     }

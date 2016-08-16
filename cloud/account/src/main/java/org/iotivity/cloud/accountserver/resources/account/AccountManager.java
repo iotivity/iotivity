@@ -29,6 +29,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,7 +88,8 @@ public class AccountManager {
         // check uuid
         userUuid = findUuid(userInfo.getUserid(), authProvider);
 
-        storeUserTokenInfo(userUuid, userInfo, tokenInfo);
+        storeUserTokenInfo(userUuid, userInfo, tokenInfo, did);
+
         // make response
         HashMap<String, Object> response = makeSignUpResponse(tokenInfo);
 
@@ -95,7 +97,7 @@ public class AccountManager {
     }
 
     private void storeUserTokenInfo(String userUuid, UserTable userInfo,
-            TokenTable tokenInfo) {
+            TokenTable tokenInfo, String did) {
         // store db
         if (userUuid == null) {
             userUuid = generateUuid();
@@ -107,6 +109,10 @@ public class AccountManager {
             // make my private group
             GroupResource.getInstance().createGroup(userInfo.getUuid(),
                     Constants.REQ_GTYPE_PRIVATE);
+
+            // add my device to private group
+            GroupResource.getInstance().getGroup(userInfo.getUuid())
+                    .addDevice(new HashSet<String>(Arrays.asList(did)));
         }
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(
