@@ -21,6 +21,14 @@
  */
 package org.iotivity.cloud.testrdserver;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
+
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
@@ -36,12 +44,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.CountDownLatch;
 
 public class ResourceDirectoryResourceTest {
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
@@ -124,7 +126,7 @@ public class ResourceDirectoryResourceTest {
                 .println("\t------testHandleDeleteRequestByIns_notExistVaule");
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 RDServerTestUtils.RD_REQ_URI,
-                "di=" + RDServerTestUtils.DI + "&ins=1");
+                "di=" + RDServerTestUtils.DI + ";ins=1");
         mRDResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "DELETED" according to the
         // resource publication
@@ -137,7 +139,7 @@ public class ResourceDirectoryResourceTest {
         System.out.println("\t------testHandleDeleteRequestByIns_existVaule");
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 RDServerTestUtils.RD_REQ_URI,
-                "di=" + RDServerTestUtils.DI + "&ins=1");
+                "di=" + RDServerTestUtils.DI + ";ins=1");
         mRDResource.onDefaultRequestReceived(mockDevice,
                 RDServerTestUtils.makePublishRequest());
         mRDResource.onDefaultRequestReceived(mockDevice, request);
