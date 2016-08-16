@@ -139,7 +139,14 @@ NSProvider * NSConsumerGetProvider(const char * providerId)
 
     NS_VERIFY_NOT_NULL(providerId, NULL);
 
-    return (NSProvider *) NSConsumerFindNSProvider(providerId);
+    NSProvider_internal * prov = NSConsumerFindNSProvider(providerId);
+    NS_VERIFY_NOT_NULL(prov, NULL);
+
+    NSProvider * retProv = NSCopyProvider(prov);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retProv, NULL, NSRemoveProvider_internal(prov));
+    NSRemoveProvider_internal(prov);
+
+    return retProv;
 }
 
 NSMessage * NSConsumerGetMessage(uint64_t messageId)
@@ -160,7 +167,11 @@ NSResult NSConsumerGetInterestTopics(NSProvider * provider)
 
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
 
-    NSSelector selector = (NSSelector)((NSProvider_internal *) provider)->accessPolicy;
+    NSProvider_internal * prov = NSConsumerFindNSProvider(provider->providerId);
+    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+    NSSelector selector = prov->accessPolicy;
+    NSRemoveProvider_internal(prov);
+
     NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
     NSTask * topicTask = NSMakeTask(TASK_CONSUMER_GET_TOPIC_LIST, (void *) provider);
@@ -175,16 +186,14 @@ NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
-
-    NSSelector selector = (NSSelector)((NSProvider_internal *) provider)->accessPolicy;
-    NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
-
-    if (!provider->topicLL)
-    {
-        provider->topicLL = (NSTopicLL *) OICMalloc(sizeof(NSTopicLL));
-    }
     NS_VERIFY_NOT_NULL(provider->topicLL, NS_ERROR);
 
+    NSProvider_internal * prov = NSConsumerFindNSProvider(provider->providerId);
+    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+
+    NSSelector selector = prov->accessPolicy;
+    NSRemoveProvider_internal(prov);
+    NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
     NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) provider);
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);

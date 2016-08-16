@@ -109,7 +109,7 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
     NSCacheElement * cacheElement = NSStorageRead(ProviderCache, providerId);
     NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
-    return NSCopyProvider((NSProvider_internal *) cacheElement->data);
+    return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
 }
 
 void NSRemoveCacheElementMessage(NSCacheElement * obj)
@@ -257,19 +257,20 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     if (provider->accessPolicy == NS_SELECTION_CONSUMER && isSubscribing == false)
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
-        NSDiscoveredProvider((NSProvider *) provider);
+        NSProvider * providerForCb = NSCopyProvider(provider);
+        NSDiscoveredProvider(providerForCb);
     }
     else
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
-        NSProvider_internal * subProvider = NSCopyProvider(provider);
+        NSProvider_internal * subProvider = NSCopyProvider_internal(provider);
         NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) subProvider);
         NS_VERIFY_NOT_NULL_V(task);
 
         NSConsumerPushEvent(task);
     }
 
-    NSRemoveProvider(providerCacheData);
+    NSRemoveProvider_internal(providerCacheData);
 }
 
 void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
@@ -357,7 +358,7 @@ void NSConsumerHandleGetTopicUri(NSMessage * msg)
     NS_VERIFY_NOT_NULL_V(provider);
 
     NSTask * topicTask = NSMakeTask(TASK_CONSUMER_REQ_TOPIC_LIST, (void *) provider);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(topicTask, NSRemoveProvider(provider));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(topicTask, NSRemoveProvider_internal(provider));
 
     NSConsumerPushEvent(topicTask);
 }
@@ -403,7 +404,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         {
             NS_LOG(DEBUG, "Receive New Provider is discovered.");
             NSConsumerHandleProviderDiscovered((NSProvider_internal *)task->taskData);
-            NSRemoveProvider((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
             break;
         }
         case TASK_RECV_SYNCINFO:
@@ -431,14 +432,14 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         {
             NS_LOG(DEBUG, "Receive Topic List");
             NSConsumerHandleRecvTopicLL((NSProvider_internal *)task->taskData);
-            NSRemoveProvider((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
             break;
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
         {
             NS_LOG(DEBUG, "Make Subscribe cancel from provider.");
             NSConsumerHandleProviderDeleted((NSProvider_internal *)task->taskData);
-            NSRemoveProvider((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
             break;
         }
         default :

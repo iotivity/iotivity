@@ -610,9 +610,9 @@ OCStackApplicationResult NSIntrospectTopic(
     (void) handle;
 
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(clientResponse, OC_STACK_KEEP_TRANSACTION,
-            NSRemoveProvider((NSProvider_internal *) ctx));
+            NSRemoveProvider_internal((NSProvider_internal *) ctx));
     NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(clientResponse->result),
-            OC_STACK_KEEP_TRANSACTION, NSRemoveProvider((NSProvider_internal *) ctx));
+            OC_STACK_KEEP_TRANSACTION, NSRemoveProvider_internal((NSProvider_internal *) ctx));
 
     NS_LOG_V(DEBUG, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
@@ -627,14 +627,14 @@ OCStackApplicationResult NSIntrospectTopic(
 
     NSTopicLL * newTopicLL = NSGetTopicLL(clientResponse);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicLL, OC_STACK_KEEP_TRANSACTION,
-            NSRemoveProvider((NSProvider_internal *) ctx));
+          NSRemoveProvider_internal((NSProvider_internal *) ctx));
 
     NSProvider_internal * provider = (NSProvider_internal *) ctx;
     provider->topicLL = NSCopyTopicLL(newTopicLL);
 
     NS_LOG(DEBUG, "build NSTask");
     NSTask * task = NSMakeTask(TASK_CONSUMER_RECV_TOPIC_LIST, (void *) provider);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider(provider));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider_internal(provider));
 
     NSConsumerPushEvent(task);
     NSRemoveTopicLL(newTopicLL);

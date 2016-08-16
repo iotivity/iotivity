@@ -131,7 +131,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
             }
             else if (type == NS_CONSUMER_CACHE_PROVIDER)
             {
-                NSRemoveProvider((NSProvider_internal *) del->data);
+                NSRemoveProvider_internal((NSProvider_internal *) del->data);
             }
             NSOICFree(del);
             pthread_mutex_unlock(mutex);
@@ -157,7 +157,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
             }
             else if (type == NS_CONSUMER_CACHE_PROVIDER)
             {
-                NSRemoveProvider((NSProvider_internal *) del->data);
+                NSRemoveProvider_internal((NSProvider_internal *) del->data);
             }
             NSOICFree(del);
             pthread_mutex_unlock(mutex);
@@ -278,7 +278,7 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NS_ERROR, pthread_mutex_unlock(mutex));
 
     NS_LOG_V(DEBUG, "New Object address : %s:%d", newProvObj->connection->addr->addr, newProvObj->connection->addr->port);
-    obj->data = (void *) NSCopyProvider(newProvObj);
+    obj->data = (void *) NSCopyProvider_internal(newProvObj);
 
     NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!2");
     prov = (NSProvider_internal *)obj->data;
@@ -379,7 +379,7 @@ NSResult NSStorageDestroy(NSCacheList * list)
         {
             next = (NSCacheElement *) iter->next;
 
-            NSRemoveProvider((NSProvider_internal *) iter->data);
+            NSRemoveProvider_internal((NSProvider_internal *) iter->data);
             NSOICFree(iter);
 
             iter = next;

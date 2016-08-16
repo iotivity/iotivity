@@ -158,7 +158,7 @@ OCStackApplicationResult NSIntrospectProvider(
 
     NS_LOG(DEBUG, "build NSTask");
     NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DISCOVERED, (void *) newProvider);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider(newProvider));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider_internal(newProvider));
 
     NSConsumerPushEvent(task);
 

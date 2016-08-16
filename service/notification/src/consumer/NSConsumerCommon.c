@@ -134,7 +134,7 @@ void NSDiscoveredProvider(NSProvider * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
 
-    NSProvider * retProvider = (NSProvider *)NSCopyProvider((NSProvider_internal *)provider);
+    NSProvider * retProvider = (NSProvider *)NSCopyProvider_internal((NSProvider_internal *)provider);
     NS_VERIFY_NOT_NULL_V(retProvider);
 
     NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) retProvider);
@@ -428,7 +428,7 @@ void NSCopyProviderPostClean(
     NSOICFree(provider);
 }
 
-NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
+NSProvider_internal * NSCopyProvider_internal(NSProvider_internal * prov)
 {
     NS_VERIFY_NOT_NULL(prov, NULL);
 
@@ -459,7 +459,29 @@ NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
     return newProv;
 }
 
-void NSRemoveProvider(NSProvider_internal * prov)
+NSProvider * NSCopyProvider(NSProvider_internal * prov)
+{
+    NS_VERIFY_NOT_NULL(prov, NULL);
+
+    NSProvider * newProv = (NSProvider *) OICMalloc(sizeof(NSProvider));
+    NS_VERIFY_NOT_NULL(newProv, NULL);
+
+    newProv->topicLL = NULL;
+
+    if (prov->topicLL)
+    {
+        NSTopicLL * topicList = NSCopyTopicLL(prov->topicLL);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList, NULL, NSRemoveProvider(newProv));
+
+        newProv->topicLL = topicList;
+    }
+
+    OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
+
+    return newProv;
+}
+
+void NSRemoveProvider_internal(NSProvider_internal * prov)
 {
     NS_VERIFY_NOT_NULL_V(prov);
 
@@ -467,6 +489,18 @@ void NSRemoveProvider(NSProvider_internal * prov)
     NSOICFree(prov->syncUri);
     NSOICFree(prov->topicUri);
     NSRemoveConnections(prov->connection);
+    if (prov->topicLL)
+    {
+        NSRemoveTopicLL(prov->topicLL);
+    }
+
+    NSOICFree(prov);
+}
+
+void NSRemoveProvider(NSProvider * prov)
+{
+    NS_VERIFY_NOT_NULL_V(prov);
+
     if (prov->topicLL)
     {
         NSRemoveTopicLL(prov->topicLL);

@@ -134,8 +134,10 @@ NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr *);
 NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo *);
 void NSRemoveConnections(NSProviderConnectionInfo *);
 
-NSProvider_internal * NSCopyProvider(NSProvider_internal *);
-void NSRemoveProvider(NSProvider_internal *);
+NSProvider_internal * NSCopyProvider_internal(NSProvider_internal *);
+NSProvider * NSCopyProvider(NSProvider_internal *);
+void NSRemoveProvider_internal(NSProvider_internal *);
+void NSRemoveProvider(NSProvider *);
 
 NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal *);
 void NSRemoveSyncInfo(NSSyncInfo_internal *);

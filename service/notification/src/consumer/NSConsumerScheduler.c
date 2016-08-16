@@ -223,22 +223,54 @@ void NSConsumerTaskProcessing(NSTask * task)
             break;
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE:
+        {
+            NSProvider_internal * prov =
+                    NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
+            NS_VERIFY_NOT_NULL_V(prov);
+            NSTask * subTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, prov);
+            NS_VERIFY_NOT_NULL_V(subTask);
+            NSConsumerCommunicationTaskProcessing(subTask);
+
+            NSRemoveProvider((NSProvider *)task->taskData);
+            NSOICFree(task);
+            break;
+        }
         case TASK_SEND_SYNCINFO:
         case TASK_CONSUMER_REQ_TOPIC_LIST:
-        case TASK_CONSUMER_GET_TOPIC_LIST:
-        case TASK_CONSUMER_SELECT_TOPIC_LIST:
         {
             NSConsumerCommunicationTaskProcessing(task);
             break;
         }
+        case TASK_CONSUMER_GET_TOPIC_LIST:
+        case TASK_CONSUMER_SELECT_TOPIC_LIST:
+        {
+            NSProvider_internal * prov =
+                    NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
+            NS_VERIFY_NOT_NULL_V(prov);
+            NSTask * topTask = NSMakeTask(task->taskType, prov);
+            NS_VERIFY_NOT_NULL_V(topTask);
+            NSConsumerCommunicationTaskProcessing(topTask);
+
+            NSRemoveProvider((NSProvider *)task->taskData);
+            NSOICFree(task);
+            break;
+        }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
         {
-            NSProvider_internal * data = NSCopyProvider((NSProvider_internal *)task->taskData);
+            NSProvider_internal * data =
+                    NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
             NS_VERIFY_NOT_NULL_V(data);
             NSTask * conTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data);
             NS_VERIFY_NOT_NULL_V(conTask);
-            NSConsumerCommunicationTaskProcessing(task);
-            NSConsumerInternalTaskProcessing(conTask);
+            NSConsumerCommunicationTaskProcessing(conTask);
+
+            data = NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
+            NS_VERIFY_NOT_NULL_V(data);
+            NSTask * conTask2 = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data);
+            NSConsumerInternalTaskProcessing(conTask2);
+
+            NSRemoveProvider((NSProvider *)task->taskData);
+            NSOICFree(task);
             break;
         }
         case TASK_RECV_SYNCINFO:
