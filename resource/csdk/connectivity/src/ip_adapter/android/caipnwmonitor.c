@@ -123,8 +123,6 @@ CAInterface_t *CAFindInterfaceChange()
     {
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
-        struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
-        uint32_t ipv4addr = sa4->sin_addr.s_addr;
 
         if (ioctl(s, SIOCGIFFLAGS, item) < 0)
         {
@@ -167,7 +165,12 @@ CAInterface_t *CAFindInterfaceChange()
             continue;
         }
 
-        foundNewInterface = CANewInterfaceItem(ifIndex, name, AF_INET, ipv4addr, flags);
+        // Get address of network interface.
+        char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        struct sockaddr_in *sa = (struct sockaddr_in *)&item->ifr_addr;
+        inet_ntop(AF_INET, (void *)&(sa->sin_addr), addr, sizeof(addr));
+
+        foundNewInterface = CANewInterfaceItem(ifIndex, name, AF_INET, addr, flags);
     }
 
     OICFree(previous);
