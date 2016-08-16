@@ -292,10 +292,11 @@ namespace OIC
              * @param language IETF language tag using ISO 639X
              * @param country ISO Country Code (ISO 3166-1 Alpha-2)
              */
-            void setDevConfProp(string language, string country)
+            void setDevConfProp(string language, string country, string location)
             {
                 m_rep.setValue(OC_RSRVD_ES_LANGUAGE, language);
                 m_rep.setValue(OC_RSRVD_ES_COUNTRY, country);
+                m_rep.setValue(OC_RSRVD_ES_LOCATION, location);
             }
 
             /**
@@ -384,6 +385,20 @@ namespace OIC
                 if(m_rep.hasAttribute(OC_RSRVD_ES_COUNTRY))
                 {
                     return m_rep.getValue<std::string>(OC_RSRVD_ES_COUNTRY);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a location to be set. A location is GPS information
+             *
+             * @return a country to be set
+             */
+            std::string getLocation() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
                 }
                 return std::string("");
             }
@@ -484,6 +499,27 @@ namespace OIC
                         if(child->hasAttribute(OC_RSRVD_ES_DEVNAME))
                         {
                             return child->getValue<std::string>(OC_RSRVD_ES_DEVNAME);
+                        }
+                    }
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a model number of Enrollee.
+             *
+             * @return a model number of Enrollee
+             */
+            std::string getModelNumber() const
+            {
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                        {
+                            return child->getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
                         }
                     }
                 }

@@ -201,10 +201,13 @@ TEST_F(GetConfigurationTest, GetConfigurationSucceed)
                 {
                     if(conf.getWiFiModes().at(0) == WIFI_11G &&
                         conf.getWiFiFreq() == WIFI_5G &&
-                        !strcmp(conf.getDeviceName().c_str(), "Test Device"))
+                        !strcmp(conf.getDeviceName().c_str(), "Test Device") &&
+                        !strcmp(conf.getModelNumber().c_str(), "Test Model Number"))
                     {
                         isWellConstructed = true;
                     }
+                    cout << "getDeviceName : " << conf.getDeviceName().c_str() << endl;
+                    cout << "getModelNumber : " << conf.getModelNumber().c_str() << endl;
                 }
             }
         });
@@ -303,7 +306,7 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea");
+    devProp.setDevConfProp("korean", "Korea", "Location");
 
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp, nullptr));
 }
@@ -313,7 +316,7 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea");
+    devProp.setDevConfProp("korean", "Korea", "Location");
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp,
                                                                  deviceProvisioningStatusCb));
 }
@@ -323,7 +326,7 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea");
+    devProp.setDevConfProp("korean", "Korea", "Location");
 
     int cntForReceivedCallbackWithSuccess = 0;
 
