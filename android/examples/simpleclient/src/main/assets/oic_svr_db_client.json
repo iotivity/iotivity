@@ -22,18 +22,6 @@
                             "rel": "",
                             "rt": ["oic.wk.p"],
                             "if": ["oic.if.baseline", "oic.if.r"]
-                        },
-                        {
-                            "href": "/oic/ad",
-                            "rel": "",
-                            "rt": ["oic.wk.ad"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/sec/amacl",
-                            "rel": "",
-                            "rt": ["oic.r.amacl"],
-                            "if": ["oic.if.baseline"]
                         }
                     ],
                     "permission": 2
