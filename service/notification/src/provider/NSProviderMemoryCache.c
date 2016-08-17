@@ -568,15 +568,14 @@ NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char
 
     while(iter)
     {
-        NSCacheElement * curr = NSStorageRead(iter, consumerId);
+        NSCacheTopicSubData * curr = (NSCacheTopicSubData)iter->data;
 
-        if(!curr)
+        if(curr && strcmp(curr->id, consumerId) == 0)
         {
             NSTopics * topicIter = topics;
-            while(!topicIter)
+            while(topicIter)
             {
-                NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) curr->data;
-                if(strcmp(topicIter->topicName, topicSubData->topicName) == 0)
+                if(strcmp(topicIter->topicName, curr->topicName) == 0)
                 {
                     topicIter->state = NS_TOPIC_SUBSCRIBED;
                     break;
