@@ -326,6 +326,74 @@ void RemoveOnPresenceListener(JNIEnv* env, jobject jListener)
     presenceMapLock.unlock();
 }
 
+JniOnObserveListener* AddOnObserveListener(JNIEnv* env, jobject jListener)
+{
+    JniOnObserveListener *onObserveListener = nullptr;
+
+    observeMapLock.lock();
+
+    for (auto it = onObserveListenerMap.begin(); it != onObserveListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            onObserveListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            onObserveListenerMap.insert(*it);
+            LOGD("OnObserveListener: ref. count incremented");
+            break;
+        }
+    }
+    if (!onObserveListener)
+    {
+        onObserveListener = new JniOnObserveListener(env, jListener, nullptr);
+        jobject jgListener = env->NewGlobalRef(jListener);
+        onObserveListenerMap.insert(
+            std::pair<jobject, std::pair<JniOnObserveListener*, int>>(
+                jgListener,
+                std::pair<JniOnObserveListener*, int>(onObserveListener, 1)));
+        LOGI("OnObserveListener: new listener");
+    }
+    observeMapLock.unlock();
+    return onObserveListener;
+}
+
+void RemoveOnObserveListener(JNIEnv* env, jobject jListener)
+{
+    observeMapLock.lock();
+    bool isFound = false;
+    for (auto it = onObserveListenerMap.begin(); it != onObserveListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                onObserveListenerMap.insert(*it);
+                LOGI("OnObserveListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnObserveListener* listener = refPair.first;
+                delete listener;
+                onObserveListenerMap.erase(it);
+                LOGI("OnObserveListener is removed");
+            }
+            isFound = true;
+            break;
+        }
+    }
+    if (!isFound)
+    {
+        ThrowOcException(JNI_EXCEPTION, "OnObserveListener not found");
+    }
+    observeMapLock.unlock();
+}
+
 JniOnDPDevicesFoundListener* AddOnDPDevicesFoundListener(JNIEnv* env, jobject jListener)
 {
     JniOnDPDevicesFoundListener *onDPDeviceListener = nullptr;
@@ -2355,12 +2423,102 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0(
         {
             RemoveOnPresenceListener(env, jwOnPresenceListener);
         }
+        jweak jwOnObserveListener =
+            jniPresenceHandle->getJniOnObserveListener()->getJWListener();
+        if (jwOnObserveListener)
+        {
+            RemoveOnObserveListener(env, jwOnObserveListener);
+        }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(e.code(), e.reason().c_str());
     }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    subscribeDevicePresence0
+* Signature: (Ljava/lang/String;[Ljava/lang/String;I
+Lorg/iotivity/base/OcResource/OnObserveListener;)Lorg/iotivity/base/OcPresenceHandle;
+*/
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribeDevicePresence0(
+    JNIEnv *env,
+    jclass clazz,
+    jstring jHost,
+    jobjectArray jDiArray,
+    jint jConnectivityType,
+    jobject jListener)
+{
+    LOGD("OcPlatform_subscribeDevicePresence0");
+#ifdef WITH_CLOUD
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, nullptr);
+    }
+
+    if (!jDiArray)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "device id List cannot be null");
+        return nullptr;
+    }
+
+    std::vector<std::string> di;
+    JniUtils::convertJavaStrArrToStrVector(env, jDiArray, di);
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onObserveListener cannot be null");
+        return nullptr;
+    }
+
+    JniOnObserveListener *onObserveListener = AddOnObserveListener(env, jListener);
+
+    ObserveCallback observeCallback = [onObserveListener](const HeaderOptions& opts,
+        const OCRepresentation& rep, const int& eCode, const int& sequenceNumber)
+    {
+        onObserveListener->onObserveCallback(opts, rep, eCode, sequenceNumber);
+    };
+
+    OCPlatform::OCPresenceHandle presenceHandle;
+    try
+    {
+        OCStackResult result = OCPlatform::subscribeDevicePresence(
+            presenceHandle,
+            host,
+            di,
+            static_cast<OCConnectivityType>(jConnectivityType),
+            observeCallback);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "subscribe device presence has failed");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+        return nullptr;
+    }
+
+    JniOcPresenceHandle* jniPresenceHandle =
+        new JniOcPresenceHandle(onObserveListener, presenceHandle);
+    jlong jhandle = reinterpret_cast<jlong>(jniPresenceHandle);
+    jobject jPresenceHandle =
+        env->NewObject(g_cls_OcPresenceHandle, g_mid_OcPresenceHandle_N_ctor, jhandle);
+    if (!jPresenceHandle)
+    {
+        LOGE("Failed to create OcPresenceHandle");
+        delete jniPresenceHandle;
+    }
+    return jPresenceHandle;
+#else
+    ThrowOcException(JNI_EXCEPTION, "Not support");
+    return nullptr;
+#endif
 }
 
 /*
@@ -2547,8 +2705,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD1(
         jstring jHost,
         jint jConnectivityType,
         jobjectArray jResourceHandleArray,
-        jint jQoS,
-        jobject jListener)
+        jobject jListener,
+        jint jQoS)
 {
     LOGD("OcPlatform_publishResourceToRD");
 #ifdef RD_CLIENT
@@ -2697,8 +2855,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD1(
         jstring jHost,
         jint jConnectivityType,
         jobjectArray jResourceHandleArray,
-        jint jQoS,
-        jobject jListener)
+        jobject jListener,
+        jint jQoS)
 {
     LOGD("OcPlatform_deleteResourceFromRD");
 #ifdef RD_CLIENT

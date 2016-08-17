@@ -834,6 +834,43 @@ public final class OcPlatform {
             OcPresenceHandle ocPresenceHandle) throws OcException;
 
     /**
+     * Subscribes to a server's device presence change events.
+     *
+     * @param host                The IP address/addressable name of the server to subscribe to.
+     * @param di                  Vector which can have the devices id.
+     * @param connectivityTypeSet Set of connectivity types, e.g. IP.
+     * @param onObserveListener   The handler method will be invoked with a map
+     *                            of attribute name and values.
+     * @return a handle object that can be used to identify this subscription request.
+     *         It can be used to unsubscribe from these events in the future.
+     * @throws OcException if failure.
+     */
+    public static OcPresenceHandle subscribeDevicePresence(
+            String host,
+            List<String> di,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OcResource.OnObserveListener onObserveListener) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+        return OcPlatform.subscribeDevicePresence0(
+                host,
+                di.toArray(new String[di.size()]),
+                connTypeInt,
+                onObserveListener);
+    }
+
+    private static native OcPresenceHandle subscribeDevicePresence0(
+            String host,
+            String[] di,
+            int connectivityType,
+            OcResource.OnObserveListener onObserveListener) throws OcException;
+
+    /**
      * Creates a resource proxy object so that get/put/observe functionality can be used without
      * discovering the object in advance. Note that the consumer of this method needs to provide
      * all of the details required to correctly contact and observe the object. If the consumer

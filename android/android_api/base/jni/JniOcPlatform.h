@@ -26,6 +26,7 @@
 #include "JniOnDPDevicesFoundListener.h"
 #include "JniOnDirectPairingListener.h"
 #include "JniOnPresenceListener.h"
+#include "JniOnObserveListener.h"
 #include "JniOnPublishResourceListener.h"
 #include "JniOnDeleteResourceListener.h"
 #include <mutex>
@@ -47,6 +48,9 @@ void RemoveOnPlatformInfoListener(JNIEnv* env, jobject jListener);
 JniOnPresenceListener* AddOnPresenceListener(JNIEnv* env, jobject jListener);
 void RemoveOnPresenceListener(JNIEnv* env, jobject jListener);
 
+JniOnObserveListener* AddOnObserveListener(JNIEnv* env, jobject jListener);
+void RemoveOnObserveListener(JNIEnv* env, jobject jListener);
+
 JniOnDPDevicesFoundListener* AddOnDPDevicesFoundListener(JNIEnv* env, jobject jListener);
 void RemoveOnDPDevicesFoundListener(JNIEnv* env, jobject jListener);
 
@@ -63,6 +67,7 @@ std::map<jobject, std::pair<JniOnResourceFoundListener*, int>> onResourceFoundLi
 std::map<jobject, std::pair<JniOnDeviceInfoListener*, int>> onDeviceInfoListenerMap;
 std::map<jobject, std::pair<JniOnPlatformInfoListener*, int>> onPlatformInfoListenerMap;
 std::map<jobject, std::pair<JniOnPresenceListener*, int>> onPresenceListenerMap;
+std::map<jobject, std::pair<JniOnObserveListener*, int>> onObserveListenerMap;
 std::map<jobject, std::pair<JniOnDPDevicesFoundListener*, int>> onDPDevicesFoundListenerMap;
 std::map<jobject, std::pair<JniOnDirectPairingListener*, int>> directPairingListenerMap;
 std::map<jobject, std::pair<JniOnPublishResourceListener*, int>> onPublishResourceListenerMap;
@@ -72,6 +77,7 @@ std::mutex resourceFoundMapLock;
 std::mutex deviceInfoMapLock;
 std::mutex platformInfoMapLock;
 std::mutex presenceMapLock;
+std::mutex observeMapLock;
 std::mutex dpDevicesFoundListenerMapLock;
 std::mutex directPairingListenerMapLock;
 std::mutex publishResourceListenerMapLock;
@@ -295,6 +301,15 @@ extern "C" {
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0
         (JNIEnv *, jclass, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    subscribeDevicePresence0
+    * Signature: (Ljava/lang/String;[Ljava/lang/String;I
+    * Lorg/iotivity/base/OcResource/OnObserveListener;)Lorg/iotivity/base/OcPresenceHandle;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribeDevicePresence0
+        (JNIEnv *, jclass, jstring, jobjectArray, jint, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
