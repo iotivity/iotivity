@@ -155,38 +155,41 @@ NSMessage * NSConsumerGetMessage(uint64_t messageId)
 
 NSResult NSConsumerGetInterestTopics(NSProvider * provider)
 {
-    /* TODO next commit, modify code.
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
+
+    NSSelector selector = (NSSelector)((NSProvider_internal *) provider)->accessPolicy;
+    NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
     NSTask * topicTask = NSMakeTask(TASK_CONSUMER_GET_TOPIC_LIST, (void *) provider);
     NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
-    */
 }
 
 NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
 {
-    /* TODO next commit, modify code.
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
 
-    if (!provider->topicList)
-        provider->topicList = (NSTopicList *) OICMalloc(sizeof(NSTopicList));
-    NS_VERIFY_NOT_NULL(provider->topicList, NS_ERROR);
+    NSSelector selector = (NSSelector)((NSProvider_internal *) provider)->accessPolicy;
+    NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
-    OICStrcpy(provider->topicList->consumerId, NS_DEVICE_ID_LENGTH, provider->providerId);
+    if (!provider->topicLL)
+    {
+        provider->topicLL = (NSTopicLL *) OICMalloc(sizeof(NSTopicLL));
+    }
+    NS_VERIFY_NOT_NULL(provider->topicLL, NS_ERROR);
+
 
     NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) provider);
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
-    */
 }
 
 NSResult NSDropNSMessage(NSMessage * obj)

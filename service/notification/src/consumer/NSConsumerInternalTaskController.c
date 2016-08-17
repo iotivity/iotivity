@@ -291,7 +291,7 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
     NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
     NS_VERIFY_NOT_NULL_V(provider);
 
-    if (provider->connection->next == NULL)
+    if (provider->connection->next == NULL && provider->accessPolicy == NS_SELECTION_CONSUMER)
     {
         NS_LOG(DEBUG, "call back to user");
         NSProviderChanged((NSProvider *) provider, (NSResponse) msg->messageId);
@@ -362,14 +362,13 @@ void NSConsumerHandleGetTopicUri(NSMessage * msg)
     NSConsumerPushEvent(topicTask);
 }
 
-void NSConsumerHandleRecvTopicList(NSProvider_internal * provider)
+void NSConsumerHandleRecvTopicLL(NSProvider_internal * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
 
     NSResult ret = NSProviderCacheUpdate(provider);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
 
-    // call the callback function when consumer is an accepter
     if (provider->connection->next == NULL)
     {
         NS_LOG(DEBUG, "call back to user");
@@ -431,7 +430,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         case TASK_CONSUMER_RECV_TOPIC_LIST:
         {
             NS_LOG(DEBUG, "Receive Topic List");
-            NSConsumerHandleRecvTopicList((NSProvider_internal *)task->taskData);
+            NSConsumerHandleRecvTopicLL((NSProvider_internal *)task->taskData);
             NSRemoveProvider((NSProvider_internal *)task->taskData);
             break;
         }

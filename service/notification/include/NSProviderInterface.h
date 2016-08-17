@@ -167,13 +167,13 @@ NSResult NSProviderUnselectTopic(char* consumerId, char* topicName);
  * @param[in] consumerid  the id of consumer which topic list is subscribed for
  * @return :: Topic list
  */
-NSTopics * NSProviderGetConsumerTopics(char *consumerId);
+NSTopicLL * NSProviderGetConsumerTopics(char *consumerId);
 
 /**
  * Request topics list already registered by provider user
  * @return :: Topic list
  */
-NSTopics * NSProviderGetTopics();
+NSTopicLL * NSProviderGetTopics();
 
 #ifdef __cplusplus
 }

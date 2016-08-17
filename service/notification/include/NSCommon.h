@@ -124,15 +124,15 @@ typedef struct _nsTopic
     NSTopicState state;
     struct _nsTopic * next;
 
-} NSTopics;
+} NSTopicLL;
 
 typedef struct
 {
-    NSTopics * head;
-    NSTopics * tail;
+    NSTopicLL * head;
+    NSTopicLL * tail;
     //TODO: decide struct fields
     char consumerId[NS_UUID_STRING_SIZE];
-    NSTopics ** topics;
+    NSTopicLL ** topics;
 
 } NSTopicList;
 
@@ -151,7 +151,7 @@ typedef struct
 typedef struct
 {
     char providerId[NS_UUID_STRING_SIZE];
-    NSTopicList * topicList;
+    NSTopicLL * topicLL;
 
 } NSProvider;
 

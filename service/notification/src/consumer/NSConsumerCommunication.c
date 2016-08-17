@@ -404,32 +404,8 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
             connections = connections->next;
         }
     }
-    /* TODO next commit, modify code.
-    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
-    {
-        NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
-
-        NSProviderConnectionInfo * connections = provider->connection;
-        NS_VERIFY_NOT_NULL_V(connections);
-
-        char * topicUri = OICStrdup(provider->topicUri);
-
-        OCConnectivityType type = CT_DEFAULT;
-        if (connections->addr->adapter == OC_ADAPTER_TCP)
-        {
-            type = CT_ADAPTER_TCP;
-            if (connections->isCloudConnection == true)
-            {
-                topicUri = NSGetCloudUri(provider->providerId, topicUri);
-            }
-        }
-
-        OCStackResult ret = NSInvokeRequest(NULL, OC_REST_GET, connections->addr,
-                                topicUri, NULL, NSIntrospectTopic, (void *) provider, type);
-        NS_VERIFY_STACK_SUCCESS_V(NSOCResultToSuccess(ret));
-        NSOICFree(topicUri);
-    }
-    else if (task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
+    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST
+                || task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
     {
         NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
 
@@ -450,13 +426,21 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
 
         NS_LOG(DEBUG, "get topic query");
         char * query = NULL;
-        query = NSMakeRequestUriWithConsumerId(topicUri);
+        if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
+        {
+            query = OICStrdup(topicUri);
+        }
+        else if (task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
+        {
+            query = NSMakeRequestUriWithConsumerId(topicUri);
+        }
         NS_VERIFY_NOT_NULL_V(query);
         NS_LOG_V(DEBUG, "topic query : %s", query);
 
         OCStackResult ret = NSInvokeRequest(NULL, OC_REST_GET, connections->addr,
-                                query, NULL, NSIntrospectTopic, NULL, type);
+                                query, NULL, NSIntrospectTopic, (void *) provider, type);
         NS_VERIFY_STACK_SUCCESS_V(NSOCResultToSuccess(ret));
+
         NSOICFree(query);
         NSOICFree(topicUri);
     }
@@ -469,23 +453,45 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
 
         OCRepPayload * payload = OCRepPayloadCreate();
         NS_VERIFY_NOT_NULL_V(payload);
-        OCRepPayload ** topicPayload = (OCRepPayload **) OICMalloc(
-                                        sizeof(OCRepPayload *)*provider->topicListSize);
-        NS_VERIFY_NOT_NULL_V(topicPayload);
+
+        NSTopicLL * topicLL = provider->topicLL;
+        NSTopicLL * iter = topicLL;
+        int topicLLSize = 0;
+        while (iter)
+        {
+            topicLLSize ++;
+            iter = (NSTopicLL *) iter->next;
+        }
 
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, *NSGetConsumerId());
 
-        NSTopic ** topic = provider->topicList->topics;
+        iter = topicLL;
+        int iterSize = 0;
 
-        for (int i = 0; i < (int)provider->topicListSize; i++)
+        OCRepPayload ** topicPayload = NULL;
+        if (topicLLSize > 0)
         {
-            topicPayload[i] = OCRepPayloadCreate();
-            OCRepPayloadSetPropString(topicPayload[i], NS_ATTRIBUTE_TOPIC_NAME, topic[i]->topicName);
-            OCRepPayloadSetPropInt(topicPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, topic[i]->state);
-        }
+            topicPayload = (OCRepPayload **) OICMalloc(sizeof(OCRepPayload *)*topicLLSize);
+            NS_VERIFY_NOT_NULL_V(topicPayload);
 
-        size_t dimensions[3] = {provider->topicListSize, 0, 0};
-        OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST, (const OCRepPayload **)topicPayload, dimensions);
+            while (iter || iterSize < topicLLSize)
+            {
+                topicPayload[iterSize] = OCRepPayloadCreate();
+                OCRepPayloadSetPropString(topicPayload[iterSize], NS_ATTRIBUTE_TOPIC_NAME,
+                                            iter->topicName);
+                OCRepPayloadSetPropInt(topicPayload[iterSize], NS_ATTRIBUTE_TOPIC_SELECTION,
+                                            iter->state);
+                iterSize++;
+                iter = iter->next;
+            }
+            size_t dimensions[3] = {topicLLSize, 0, 0};
+            OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
+                                                    topicPayload, dimensions);
+        }
+        else
+        {
+            OCRepPayloadSetNull(payload, NS_ATTRIBUTE_TOPIC_LIST);
+        }
 
         char * topicUri = OICStrdup(provider->topicUri);
 
@@ -505,12 +511,13 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_V(query);
         NS_LOG_V(DEBUG, "topic query : %s", query);
 
-        OCStackResult ret = NSInvokeRequest(NULL, OC_REST_GET, connections->addr,
+        OCStackResult ret = NSInvokeRequest(NULL, OC_REST_POST, connections->addr,
                                 query, (OCPayload*)payload, NSConsumerCheckPostResult, NULL, type);
         NS_VERIFY_STACK_SUCCESS_V(NSOCResultToSuccess(ret));
+
         NSOICFree(query);
         NSOICFree(topicUri);
-    }*/
+    }
     else
     {
         NS_LOG(ERROR, "Unknown type message");
@@ -519,19 +526,9 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
     NSOICFree(task);
 }
 
-void NSGetTopicPostClean(
-        char * cId, NSTopicList * tList, size_t dSize)
+NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
 {
-    /* TODO next commit, modify code.
-    NSOICFree(cId);
-    NSRemoveProviderTopicList(tList, dSize);
-    */
-}
-
-NSTopicList * NSGetTopic(OCClientResponse * clientResponse, size_t * topicListSize)
-{
-    /* TODO next commit, modify code.
-    NS_LOG(DEBUG, "create NSTopic");
+    NS_LOG(DEBUG, "create NSTopicLL");
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
 
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
@@ -544,71 +541,75 @@ NSTopicList * NSGetTopic(OCClientResponse * clientResponse, size_t * topicListSi
     payload = (OCRepPayload *)clientResponse->payload;
 
     char * consumerId = NULL;
-    OCRepPayload ** topicListPayload = NULL;
-    NSTopicList * topicList = (NSTopicList *) OICMalloc(sizeof(NSTopicList));
-    NS_VERIFY_NOT_NULL(topicList, NULL);
+    OCRepPayload ** topicLLPayload = NULL;
 
     NS_LOG(DEBUG, "get information of consumerId");
-    bool getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, & consumerId); // is NULL possible? (initial getting)
-    NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
-    OICStrcpy(topicList->consumerId, NS_DEVICE_ID_LENGTH, consumerId);
+    bool getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, & consumerId);
+    NSOICFree(consumerId);
 
     OCRepPayloadValue * payloadValue = NULL;
     payloadValue = NSPayloadFindValue(payload, NS_ATTRIBUTE_TOPIC_LIST);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(payloadValue, NULL, NSOICFree(consumerId));
+    NS_VERIFY_NOT_NULL(payloadValue, NULL);
 
     size_t dimensionSize = calcDimTotal(payloadValue->arr.dimensions);
-    size_t dimensions[3] = {dimensionSize, 0, 0};
-    *topicListSize = dimensionSize;
 
-    NS_LOG(DEBUG, "get information of topicList(OCRepPayload)");
-    getResult = OCRepPayloadGetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST, 
-            & topicListPayload, dimensions);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, 
-            NULL, NSOICFree(consumerId));
+    if (dimensionSize == 0 || payloadValue->type == OCREP_PROP_NULL ||
+            payloadValue->arr.objArray == NULL)
+    {
+        NS_LOG(DEBUG, "No TopicLL");
+        return NULL;
+    }
 
-    topicList->topics = (NSTopic **) OICMalloc(sizeof(NSTopic *)*dimensionSize);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList->topics,
-            NULL, NSGetTopicPostClean(consumerId, topicList, -1));
+    topicLLPayload = payloadValue->arr.objArray;
 
+    NSTopicLL * topicLL = NULL;
     for (int i = 0; i < (int)dimensionSize; i++)
     {
         char * topicName = NULL;
         int64_t state = 0;
 
-        topicList->topics[i] = (NSTopic *) OICMalloc(sizeof(NSTopic));
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList->topics[i],
-                NULL, NSGetTopicPostClean(consumerId, topicList, i));
-
-        NS_LOG(DEBUG, "get topic name");
-        getResult = OCRepPayloadGetPropString(topicListPayload[i], NS_ATTRIBUTE_TOPIC_NAME, &topicName);
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL,
-                NULL, NSGetTopicPostClean(consumerId, topicList, i));
-
+        NSTopicLL * topicNode = (NSTopicLL *) OICMalloc(sizeof(NSTopicLL));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicNode, NULL, NSRemoveTopicLL(topicLL));
 
         NS_LOG(DEBUG, "get topic selection");
-        getResult = OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &state);
+        getResult = OCRepPayloadGetPropInt(topicLLPayload[i],
+                NS_ATTRIBUTE_TOPIC_SELECTION, & state);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL,
-                NULL, NSGetTopicPostClean(consumerId, topicList, i));
+                NULL, NSRemoveTopicLL(topicLL));
 
-        topicList->topics[i]->topicName = topicName;
-        topicList->topics[i]->state = state;
+        NS_LOG(DEBUG, "get topic name");
+        getResult = OCRepPayloadGetPropString(topicLLPayload[i],
+                NS_ATTRIBUTE_TOPIC_NAME, & topicName);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL,
+                NULL, NSRemoveTopicLL(topicLL));
+
+        topicNode->topicName = topicName;
+        topicNode->state = state;
+
+        if (i == 0)
+        {
+            topicLL = topicNode;
+            continue;
+        }
+
+        NSResult ret = NSInsertTopicNode(topicLL, topicNode);
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
+                    NULL, NSRemoveTopicLL(topicLL));
     }
 
-    NSOICFree(consumerId);
-
-    return topicList;*/
+    return topicLL;
 }
 
 OCStackApplicationResult NSIntrospectTopic(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-/* TODO next commit, modify code.
     (void) handle;
 
-    NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
-    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(clientResponse, OC_STACK_KEEP_TRANSACTION,
+            NSRemoveProvider((NSProvider_internal *) ctx));
+    NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(clientResponse->result),
+            OC_STACK_KEEP_TRANSACTION, NSRemoveProvider((NSProvider_internal *) ctx));
 
     NS_LOG_V(DEBUG, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
@@ -619,24 +620,21 @@ OCStackApplicationResult NSIntrospectTopic(
     NS_LOG_V(DEBUG, "GET response resource uri : %s",
             clientResponse->resourceUri);
     NS_LOG_V(DEBUG, "GET response Transport Type : %d",
-                    clientResponse->devAddr.adapter);
+            clientResponse->devAddr.adapter);
 
-    size_t topicListSize = 0;
-    NSTopicList * newTopicList = NSGetTopic(clientResponse, &topicListSize);
-    NS_VERIFY_NOT_NULL(newTopicList, OC_STACK_KEEP_TRANSACTION);
+    NSTopicLL * newTopicLL = NSGetTopicLL(clientResponse);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicLL, OC_STACK_KEEP_TRANSACTION,
+            NSRemoveProvider((NSProvider_internal *) ctx));
 
-    // TODO Call the callback function registered at the start
     NSProvider_internal * provider = (NSProvider_internal *) ctx;
-    provider->topicList = NSCopyProviderTopicList(newTopicList, topicListSize);
-    provider->topicListSize = topicListSize;
+    provider->topicLL = NSCopyTopicLL(newTopicLL);
 
     NS_LOG(DEBUG, "build NSTask");
     NSTask * task = NSMakeTask(TASK_CONSUMER_RECV_TOPIC_LIST, (void *) provider);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider(provider));
 
     NSConsumerPushEvent(task);
-    NSRemoveProviderTopicList(newTopicList, topicListSize);
+    NSRemoveTopicLL(newTopicLL);
 
     return OC_STACK_KEEP_TRANSACTION;
-    */
 }

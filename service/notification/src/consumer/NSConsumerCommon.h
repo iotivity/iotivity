@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _NS_CONSUMER_CONSTANTS_H_
-#define _NS_CONSUMER_CONSTANTS_H_
+#ifndef _NS_CONSUMER_COMMON_H_
+#define _NS_CONSUMER_COMMON_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,6 +74,8 @@ typedef struct
 {
     char providerId[NS_DEVICE_ID_LENGTH];
 
+    NSTopicLL * topicLL;
+
     char * messageUri;
     char * syncUri;
     char * topicUri;
@@ -81,9 +83,6 @@ typedef struct
     NSSelector accessPolicy;
 
     NSProviderConnectionInfo * connection;
-
-    NSTopicList * topicList;
-    size_t topicListSize;
 
 } NSProvider_internal;
 
@@ -131,9 +130,9 @@ NSResult NSConsumerPushEvent(NSTask *);
 NSMessage * NSCopyMessage(NSMessage *);
 void NSRemoveMessage(NSMessage *);
 
-NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr * inAddr);
-NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * conn);
-void NSRemoveConnections(NSProviderConnectionInfo * connections);
+NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr *);
+NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo *);
+void NSRemoveConnections(NSProviderConnectionInfo *);
 
 NSProvider_internal * NSCopyProvider(NSProvider_internal *);
 void NSRemoveProvider(NSProvider_internal *);
@@ -141,8 +140,12 @@ void NSRemoveProvider(NSProvider_internal *);
 NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal *);
 void NSRemoveSyncInfo(NSSyncInfo_internal *);
 
-NSTopicList * NSCopyProviderTopicList(NSTopicList * topicList, size_t dimensionSize);
-void NSRemoveProviderTopicList(NSTopicList * topicList, size_t dimensionSize);
+NSTopicLL * NSCopyTopicNode(NSTopicLL *);
+void NSRemoveTopicNode(NSTopicLL *);
+NSResult NSInsertTopicNode(NSTopicLL *, NSTopicLL *);
+
+NSTopicLL * NSCopyTopicLL(NSTopicLL *);
+void NSRemoveTopicLL(NSTopicLL *);
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
@@ -155,4 +158,4 @@ bool NSOCResultToSuccess(OCStackResult ret);
 }
 #endif // __cplusplus
 
-#endif // _NS_CONSUMER_CONSTANTS_H_
+#endif // _NS_CONSUMER_COMMON_H_

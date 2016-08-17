@@ -88,24 +88,24 @@ notification_provider_src = [
 notification_consumer_src = [
 	env.Glob('src/consumer/*.c'), env.Glob('src/common/*.c')]
 
-providersdk = notification_env.SharedLibrary('notification_provider', notification_provider_src)
-notification_env.InstallTarget(providersdk, 'libnotification_provider')
-notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
+#providersdk = notification_env.SharedLibrary('notification_provider', notification_provider_src)
+#notification_env.InstallTarget(providersdk, 'libnotification_provider')
+#notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
 
 consumersdk = notification_env.SharedLibrary('notification_consumer', notification_consumer_src)
 notification_env.InstallTarget(consumersdk, 'libnotification_consumer')
 notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
 
-providersdk = notification_env.StaticLibrary('notification_provider', notification_provider_src)
-notification_env.InstallTarget(providersdk, 'libnotification_provider')
-notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
+#providersdk = notification_env.StaticLibrary('notification_provider', notification_provider_src)
+#notification_env.InstallTarget(providersdk, 'libnotification_provider')
+#notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
 
 consumersdk = notification_env.StaticLibrary('notification_consumer', notification_consumer_src)
 notification_env.InstallTarget(consumersdk, 'libnotification_consumer')
 notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
 
-notification_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
-	'service/notification', 'NSProviderInterface.h')
+#notification_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
+#	'service/notification', 'NSProviderInterface.h')
 notification_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
 	'service/notification', 'NSConsumerInterface.h')
 
@@ -114,11 +114,11 @@ notification_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
 # SConscript('unittest/SConscript')
 
 # Go to build sample apps
-SConscript('examples/SConscript')
+#SConscript('examples/SConscript')
 
 # Go to build jni
-if target_os == 'android':
-    SConscript('android/SConscript')
+#if target_os == 'android':
+#    SConscript('android/SConscript')
 
 # Go to build c++ wrapper
-SConscript('cpp-wrapper/SConscript')
+#SConscript('cpp-wrapper/SConscript')

@@ -1,3 +1,4 @@
+
 //******************************************************************
 //
 // Copyright 2016 Samsung Electronics All Rights Reserved.
@@ -336,41 +337,88 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
     return retInfo;
 }
 
-void NSRemoveProviderTopicList(NSTopicList * topicList, size_t dimensionSize)
+void NSRemoveTopicNode(NSTopicLL * topicNode)
 {
-    NS_VERIFY_NOT_NULL_V(topicList);
+    NS_VERIFY_NOT_NULL_V(topicNode);
 
-    for (int i = -1; i < (int)dimensionSize; i++)
-    {
-        NSOICFree(topicList->topics[i]);
-    }
-    NSOICFree(topicList);
+    NSOICFree(topicNode->topicName);
+    topicNode->next = NULL;
+
+    NSOICFree(topicNode);
 }
 
-NSTopicList * NSCopyProviderTopicList(NSTopicList * topicList, size_t dimensionSize)
+NSTopicLL * NSCopyTopicNode(NSTopicLL * topicNode)
 {
-    NS_VERIFY_NOT_NULL(topicList, NULL);
+    NS_VERIFY_NOT_NULL(topicNode, NULL);
 
-    NSTopicList * newTopicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));
-    NS_VERIFY_NOT_NULL(newTopicList, NULL);
+    NSTopicLL * newTopicNode = (NSTopicLL *)OICMalloc(sizeof(NSTopicLL));
+    NS_VERIFY_NOT_NULL(newTopicNode, NULL);
 
-    OICStrcpy(newTopicList->consumerId, NS_DEVICE_ID_LENGTH, topicList->consumerId);
+    newTopicNode->topicName = OICStrdup(topicNode->topicName);
+    newTopicNode->state = topicNode->state;
+    newTopicNode->next = NULL;
 
-    newTopicList->topics = (NSTopics **) OICMalloc(sizeof(NSTopics *)*dimensionSize);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicList->topics,
-            NULL, NSRemoveProviderTopicList(newTopicList, -1));
+    return newTopicNode;
+}
 
-    for (int i = 0; i < (int)dimensionSize; i++)
+NSResult NSInsertTopicNode(NSTopicLL * topicHead, NSTopicLL * topicNode)
+{
+    NS_VERIFY_NOT_NULL(topicHead, NS_ERROR);
+    NS_VERIFY_NOT_NULL(topicNode, NS_ERROR);
+
+    NSTopicLL * iter = topicHead;
+
+    while (iter)
     {
-        newTopicList->topics[i] = (NSTopics *) OICMalloc(sizeof(NSTopics));
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicList->topics[i],
-            NULL, NSRemoveProviderTopicList(newTopicList, i));
-
-        newTopicList->topics[i]->topicName = OICStrdup(topicList->topics[i]->topicName);
-        newTopicList->topics[i]->state = topicList->topics[i]->state;
+        iter = (NSTopicLL *) iter->next;
     }
 
-    return newTopicList;
+    iter->next = topicNode;
+    topicNode->next = NULL;
+
+    return NS_OK;
+}
+
+void NSRemoveTopicLL(NSTopicLL * topicHead)
+{
+    NS_VERIFY_NOT_NULL_V(topicHead);
+
+    NSTopicLL * iter = topicHead;
+
+    while (iter)
+    {
+        NSRemoveTopicNode(iter);
+
+        iter = (NSTopicLL *) iter->next;
+    }
+
+    NSOICFree(topicHead);
+}
+
+NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
+{
+    NS_VERIFY_NOT_NULL(topicHead, NULL);
+
+    NSTopicLL * iter = topicHead;
+
+    NSTopicLL * newTopicHead = NSCopyTopicNode(iter);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicHead, NULL, NSRemoveTopicLL(newTopicHead));
+
+    iter = (NSTopicLL *) iter->next;
+
+    while (iter)
+    {
+        NSTopicLL * newTopicNode = NSCopyTopicNode(iter);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
+
+        NSResult ret = NSInsertTopicNode(newTopicHead, newTopicNode);
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
+                    NULL, NSRemoveTopicLL(newTopicHead));
+
+        iter = (NSTopicLL *) iter->next;
+    }
+
+    return newTopicHead;
 }
 
 void NSCopyProviderPostClean(
@@ -390,17 +438,15 @@ NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
     NSProvider_internal * newProv = (NSProvider_internal *) OICMalloc(sizeof(NSProvider_internal));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProv, NULL, NSRemoveConnections(connections));
 
-    newProv->topicList = NULL;
-    newProv->topicListSize = 0;
+    newProv->topicLL = NULL;
 
-    if (prov->topicList)
+    if (prov->topicLL)
     {
-        NSTopicList * topicList = NSCopyProviderTopicList(prov->topicList, prov->topicListSize);
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList, NULL,
+        NSTopicLL * newTopicLL = NSCopyTopicLL(prov->topicLL);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicLL, NULL,
                     NSCopyProviderPostClean(connections, newProv));
 
-        newProv->topicList = topicList;
-        newProv->topicListSize = prov->topicListSize;
+        newProv->topicLL = newTopicLL;
     }
 
     newProv->connection = connections;
@@ -421,7 +467,10 @@ void NSRemoveProvider(NSProvider_internal * prov)
     NSOICFree(prov->syncUri);
     NSOICFree(prov->topicUri);
     NSRemoveConnections(prov->connection);
-    NSRemoveProviderTopicList(prov->topicList, prov->topicListSize);
+    if (prov->topicLL)
+    {
+        NSRemoveTopicLL(prov->topicLL);
+    }
 
     NSOICFree(prov);
 }
