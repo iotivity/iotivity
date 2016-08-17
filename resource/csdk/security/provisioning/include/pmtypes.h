@@ -67,6 +67,9 @@ typedef struct OCProvisionDev
     OicSecDoxm_t    *doxm;           /**< Pointer to target's doxm resource. **/
     OCConnectivityType connType;     /**< Connectivity type of endpoint */
     uint16_t        securePort;      /**< secure port **/
+#ifdef WITH_TCP
+    uint16_t        tcpPort;         /**< tcp port **/
+#endif
     char             secVer[MAX_VERSION_LEN];         /**< security version **/
     DeviceStatus    devStatus;       /**< status of device **/
     struct OCProvisionDev  *next;    /**< Next pointer. **/

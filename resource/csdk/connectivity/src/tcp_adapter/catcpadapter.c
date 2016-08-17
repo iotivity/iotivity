@@ -38,7 +38,9 @@
 #include "caremotehandler.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "oic_string.h"
+#ifdef __WITH_TLS__
+#include "ca_adapter_net_tls.h"
+#endif
 
 /**
  * Logging tag for module name.
@@ -163,6 +165,21 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     }
 }
 
+#ifdef __WITH_TLS__
+static void CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
+    VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
+
+    OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
+    OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
+
+    CATCPSendData(endpoint, data, dataLength, false);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+#endif
+
 void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
                        uint32_t dataLength, CAResult_t result)
 {
@@ -244,6 +261,11 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     CATCPSetConnectionChangedCallback(CATCPConnectionHandler);
     CATCPSetPacketReceiveCallback(CATCPPacketReceivedCB);
     CATCPSetErrorHandler(CATCPErrorHandler);
+
+#ifdef __WITH_TLS__
+    CAinitTlsAdapter();
+    CAsetTlsAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, 0);
+#endif
 
     CAConnectivityHandler_t tcpHandler = {
         .startAdapter = CAStartTCP,
@@ -412,6 +434,10 @@ CAResult_t CAStopTCP()
     //Re-initializing the Globals to start them again
     CAInitializeTCPGlobals();
 
+#ifdef __WITH_TLS__
+    CAdeinitTlsAdapter();
+#endif
+
     return CA_STATUS_OK;
 }
 
@@ -441,6 +467,22 @@ void CATCPSendDataThread(void *threadData)
     }
     else
     {
+#ifdef __WITH_TLS__
+         if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
+         {
+             CAResult_t result = CA_STATUS_OK;
+             OIC_LOG(DEBUG, TAG, "CAencryptTls called!");
+             result = CAencryptTls(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+
+             if (CA_STATUS_OK != result)
+             {
+                 OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
+             }
+             OIC_LOG_V(DEBUG, TAG,
+                       "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
+            return;
+         }
+#endif
         //Processing for sending unicast
         CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen, false);
     }

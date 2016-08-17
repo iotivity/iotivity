@@ -33,13 +33,17 @@
 
 #include "cacommon.h"
 
+#ifdef __WITH_TLS__
+#include "byte_array.h"
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * @enum CADtlsPskCredType_t
  * Type of PSK credential required during DTLS handshake
@@ -67,8 +71,10 @@ typedef enum
  *         less than zero on error.
  */
 typedef int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type,
-		      const uint8_t *desc, size_t desc_len,
-		      uint8_t *result, size_t result_length);
+              const uint8_t *desc, size_t desc_len,
+              uint8_t *result, size_t result_length);
+#endif // __WITH_DTLS__ or __WITH_TLS__
+#ifdef __WITH_DTLS__
 
 /**
  * Register callback to receive the result of DTLS handshake.
@@ -85,6 +91,52 @@ CAResult_t CARegisterDTLSHandshakeCallback(CAErrorCallback dtlsHandshakeCallback
 CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials);
 
 #endif //__WITH_DTLS__
+
+
+#ifdef __WITH_TLS__
+/**
+ * Binary structure containing PKIX related info
+ * own certificate chain, public key, CA's and CRL's
+ */
+typedef struct
+{
+    // own certificate chain
+    ByteArray crt;
+    // own public key
+    ByteArray key;
+    // trusted CA's
+    ByteArray ca;
+    // trusted CRL's
+    ByteArray crl;
+} PkiInfo_t;
+
+/**
+ * Register callback to receive the result of TLS handshake.
+ * @param[in] tlsHandshakeCallback callback for get tls handshake result
+ * @return ::CA_STATUS_OK
+ */
+CAResult_t CAregisterTlsHandshakeCallback(CAErrorCallback tlsHandshakeCallback);
+
+/**
+ * Register callback to get TLS PSK credentials.
+ * @param[in]   getTLSCredentials    GetDTLS Credetials callback.
+ * @return  ::CA_STATUS_OK
+ */
+CAResult_t CAregisterTlsCredentialsHandler(CAGetDTLSPskCredentialsHandler getTlsCredentials);
+
+/**
+ * @brief   Callback function type for getting PKIX info
+ *
+ * @param   inf[out]   PKIX related info
+ *
+ * @return  NONE
+ */
+typedef void (*CAgetPkixInfoHandler)(PkiInfo_t * inf);
+
+//TODO
+void GetPkixInfo(PkiInfo_t * inf);
+CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler);
+#endif //__WITH_TLS__
 
 #ifdef __WITH_X509__
 /**
@@ -152,7 +204,7 @@ CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetCrl);
  * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CASelectCipherSuite(const uint16_t cipher);
+CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter);
 
 /**
  * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite in dtls.
@@ -216,6 +268,29 @@ CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint);
 
 #endif /* __WITH_DTLS__ */
 
+#ifdef __WITH_TLS__
+
+/**
+ * Initiate TLS handshake with selected cipher suite.
+ *
+ * @param[in] endpoint information of network address.
+ *
+ * @retval  ::CA_STATUS_OK    Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAinitiateTlsHandshake(const CAEndpoint_t *endpoint);
+
+/**
+ * Close the DTLS session.
+ *
+ * @param[in] endpoint  information of network address.
+ *
+ * @retval  ::CA_STATUS_OK    Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAcloseTlsConnection(const CAEndpoint_t *endpoint);
+
+#endif /* __WITH_TLS__ */
 
 #ifdef __cplusplus
 } /* extern "C" */

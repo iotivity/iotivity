@@ -42,6 +42,7 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../csdk/security/provisioning/include/internal',
 		'../../csdk/stack/include/internal',
 		'../../csdk/connectivity/api',
+		'../../csdk/connectivity/inc/pkix',
 		'../../csdk/connectivity/external/inc',
 		'../../csdk/ocsocket/include',
 		'../../csdk/ocrandom/include',
@@ -71,8 +72,11 @@ else :
 		provisiontests_env.AppendUnique(LIBS = ['ra_xmpp'])
 
 if provisiontests_env.get('SECURED') == '1':
-    provisiontests_env.AppendUnique(LIBS = ['tinydtls'])
-    provisiontests_env.AppendUnique(LIBS = ['timer'])
+	provisiontests_env.AppendUnique(LIBS = ['tinydtls'])
+	provisiontests_env.AppendUnique(LIBS = ['timer'])
+	if provisiontests_env.get('WITH_TCP') == True:
+		provisiontests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+
 if provisiontests_env.get('DTLS_WITH_X509') == '1':
 	provisiontests_env.AppendUnique(LIBS = ['CKManager'])
 	provisiontests_env.AppendUnique(LIBS = ['asn1'])

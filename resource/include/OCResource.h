@@ -549,13 +549,15 @@ namespace OC
         *
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
-
+        * @param qos the quality of communication
+        *
         * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
         * @note OCStackResult is defined in ocstack.h.
         *
         */
         OCStackResult discoveryMQTopics(const QueryParamsMap& queryParametersMap,
-                                        FindCallback attributeHandler);
+                                        MQTopicCallback attributeHandler,
+                                        QualityOfService qos);
         /**
         * Function to create Topic into MQ Broker.
         * SubTopic is also created through this method.
@@ -564,7 +566,8 @@ namespace OC
         * @param topicUri new uri of the topic which want to create
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
-
+        * @param qos the quality of communication
+        *
         * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
         * @note OCStackResult is defined in ocstack.h.
         *
@@ -572,7 +575,8 @@ namespace OC
         OCStackResult createMQTopic(const OCRepresentation& rep,
                                     const std::string& topicUri,
                                     const QueryParamsMap& queryParametersMap,
-                                    MQCreateTopicCallback attributeHandler);
+                                    MQTopicCallback attributeHandler,
+                                    QualityOfService qos);
 #endif
 #ifdef MQ_SUBSCRIBER
         /**
@@ -581,23 +585,27 @@ namespace OC
         * @param observeType allows the client to specify how it wants to observe.
         * @param queryParametersMap map which can have the query parameter name and value
         * @param observeHandler handles callback
-
+        * @param qos the quality of communication
+        *
         * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
         * @note OCStackResult is defined in ocstack.h.
         *
         */
         OCStackResult subscribeMQTopic(ObserveType observeType,
                                        const QueryParamsMap& queryParametersMap,
-                                       ObserveCallback observeHandler);
+                                       ObserveCallback observeHandler,
+                                       QualityOfService qos);
 
         /**
         * Function to unsubscribe Topic to MQ Broker.
+        *
+        * @param qos the quality of communication
         *
         * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
         * @note OCStackResult is defined in ocstack.h.
         *
         */
-        OCStackResult unsubscribeMQTopic();
+        OCStackResult unsubscribeMQTopic(QualityOfService qos);
 
         /**
         * Function to request publish to MQ publisher.
@@ -605,13 +613,15 @@ namespace OC
         *
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
-
+        * @param qos the quality of communication
+        *
         * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
         * @note OCStackResult is defined in ocstack.h.
         *
         */
         OCStackResult requestMQPublish(const QueryParamsMap& queryParametersMap,
-                                       PostCallback attributeHandler);
+                                       PostCallback attributeHandler,
+                                       QualityOfService qos);
 #endif
 #ifdef MQ_PUBLISHER
         /**
@@ -620,14 +630,16 @@ namespace OC
         * @param rep representation of the topic
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
-
+        * @param qos the quality of communication
+        *
         * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
         * @note OCStackResult is defined in ocstack.h.
         *
         */
         OCStackResult publishMQTopic(const OCRepresentation& rep,
                                      const QueryParamsMap& queryParametersMap,
-                                     PostCallback attributeHandler);
+                                     PostCallback attributeHandler,
+                                     QualityOfService qos);
 #endif
         // overloaded operators allow for putting into a 'set'
         // the uniqueidentifier allows for putting into a hash

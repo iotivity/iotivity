@@ -97,21 +97,19 @@ OCStackResult OCAccountManager::signUp(const std::string& authProvider,
                          m_connType, cloudConnectHandler, m_defaultQos);
 }
 
-OCStackResult OCAccountManager::signIn(const std::string& userId,
+OCStackResult OCAccountManager::signIn(const std::string& userUuid,
                                        const std::string& accessToken,
                                        PostCallback cloudConnectHandler)
 {
-    return result_guard(signInOut(userId, accessToken, true, cloudConnectHandler));
+    return result_guard(signInOut(userUuid, accessToken, true, cloudConnectHandler));
 }
 
-OCStackResult OCAccountManager::signOut(const std::string& userId,
-                                        const std::string& accessToken,
-                                        PostCallback cloudConnectHandler)
+OCStackResult OCAccountManager::signOut(PostCallback cloudConnectHandler)
 {
-    return result_guard(signInOut(userId, accessToken, false, cloudConnectHandler));
+    return result_guard(signInOut("", "", false, cloudConnectHandler));
 }
 
-OCStackResult OCAccountManager::signInOut(const std::string& userId,
+OCStackResult OCAccountManager::signInOut(const std::string& userUuid,
                                           const std::string& accessToken,
                                           bool isSignIn,
                                           PostCallback cloudConnectHandler)
@@ -119,9 +117,12 @@ OCStackResult OCAccountManager::signInOut(const std::string& userId,
     std::string uri = m_host + OC_RSRVD_ACCOUNT_SESSION_URI;
 
     OCRepresentation rep;
-    rep.setValue(OC_RSRVD_USER_ID, userId);
-    rep.setValue(OC_RSRVD_DEVICE_ID, m_deviceID);
-    rep.setValue(OC_RSRVD_ACCESS_TOKEN, accessToken);
+    if (isSignIn)
+    {
+        rep.setValue(OC_RSRVD_USER_UUID, userUuid);
+        rep.setValue(OC_RSRVD_DEVICE_ID, m_deviceID);
+        rep.setValue(OC_RSRVD_ACCESS_TOKEN, accessToken);
+    }
     rep.setValue(OC_RSRVD_LOGIN, isSignIn);
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
@@ -129,14 +130,14 @@ OCStackResult OCAccountManager::signInOut(const std::string& userId,
                          m_connType, cloudConnectHandler, m_defaultQos);
 }
 
-OCStackResult OCAccountManager::refreshAccessToken(const std::string& userId,
+OCStackResult OCAccountManager::refreshAccessToken(const std::string& userUuid,
                                                    const std::string& refreshToken,
                                                    PostCallback cloudConnectHandler)
 {
     std::string uri = m_host + OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI;
 
     OCRepresentation rep;
-    rep.setValue(OC_RSRVD_USER_ID, userId);
+    rep.setValue(OC_RSRVD_USER_UUID, userUuid);
     rep.setValue(OC_RSRVD_DEVICE_ID, m_deviceID);
     rep.setValue(OC_RSRVD_GRANT_TYPE, OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN);
     rep.setValue(OC_RSRVD_REFRESH_TOKEN, refreshToken);
@@ -145,4 +146,57 @@ OCStackResult OCAccountManager::refreshAccessToken(const std::string& userId,
                          OCDevAddr(), uri, rep, QueryParamsMap(), HeaderOptions(),
                          m_connType, cloudConnectHandler, m_defaultQos);
 }
+
+OCStackResult OCAccountManager::searchUser(const std::string& userUuid,
+                                           GetCallback cloudConnectHandler)
+{
+    return result_guard(searchUser(userUuid, QueryParamsMap(), cloudConnectHandler));
+}
+
+OCStackResult OCAccountManager::searchUser(const QueryParamsMap& queryParams,
+                                           GetCallback cloudConnectHandler)
+{
+    return result_guard(searchUser("", queryParams, cloudConnectHandler));
+}
+
+OCStackResult OCAccountManager::searchUser(const std::string& userUuid,
+                                           const QueryParamsMap& queryParams,
+                                           GetCallback cloudConnectHandler)
+{
+    std::string uri = m_host + OC_RSRVD_ACCOUNT_URI;
+
+    QueryParamsMap fullQuery = {};
+
+    if (!userUuid.empty())
+    {
+        fullQuery.insert(std::make_pair(OC_RSRVD_USER_UUID, userUuid));
+    }
+
+    if (!queryParams.empty())
+    {
+        std::string searchQuery;
+        for (auto iter : queryParams)
+        {
+            searchQuery.append(iter.first + ":" + iter.second + ",");
+        }
+        searchQuery.resize(searchQuery.size() - 1);
+        fullQuery.insert(std::make_pair(OC_RSRVD_SEARCH, searchQuery));
+    }
+
+    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
+                         OCDevAddr(), uri, fullQuery, HeaderOptions(),
+                         m_connType, cloudConnectHandler, m_defaultQos);
+}
+
+OCStackResult OCAccountManager::deleteDevice(const std::string& deviceId,
+                                             DeleteCallback cloudConnectHandler)
+{
+    std::string uri = m_host + OC_RSRVD_ACCOUNT_URI
+                      + "?" + OC_RSRVD_DEVICE_ID + "=" + deviceId;
+
+    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
+                         OCDevAddr(), uri, HeaderOptions(),
+                         m_connType, cloudConnectHandler, m_defaultQos);
+}
+
 } // namespace OC

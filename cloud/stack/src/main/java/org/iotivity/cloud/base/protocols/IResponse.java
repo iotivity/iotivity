@@ -29,4 +29,6 @@ public interface IResponse {
     public int getPayloadSize();
 
     public byte[] getPayload();
+
+    public void setLocationPath(String locationPath);
 }

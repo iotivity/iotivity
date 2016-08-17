@@ -79,6 +79,9 @@ jclass g_cls_OcOicSecAcl_resr = nullptr;
 jclass g_cls_OcOicSecAcl_validity = nullptr;
 jclass g_cls_OcOicSecPdAcl = nullptr;
 jclass g_cls_OcDirectPairDevice = nullptr;
+#ifdef WITH_CLOUD
+jclass g_cls_OcAccountManager = nullptr;
+#endif
 
 jmethodID g_mid_Integer_ctor = nullptr;
 jmethodID g_mid_Double_ctor = nullptr;
@@ -114,6 +117,9 @@ jmethodID g_mid_OcProvisionResult_ctor = nullptr;
 jmethodID g_mid_OcSecureResource_ctor = nullptr;
 jmethodID g_mid_OcDirectPairDevice_ctor = nullptr;
 jmethodID g_mid_OcDirectPairDevice_dev_ctor = nullptr;
+#ifdef WITH_CLOUD
+jmethodID g_mid_OcAccountManager_ctor = nullptr;
+#endif
 
 jmethodID g_mid_OcOicSecPdAcl_get_resources_cnt = nullptr;
 jmethodID g_mid_OcOicSecPdAcl_get_resources = nullptr;
@@ -477,6 +483,17 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     VERIFY_VARIABLE_NULL(g_mid_OcDirectPairDevice_dev_ctor);
     env->DeleteLocalRef(clazz);
 
+#ifdef WITH_CLOUD
+    //OcAccountManager
+    clazz = env->FindClass("org/iotivity/base/OcAccountManager");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcAccountManager = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcAccountManager_ctor = env->GetMethodID(g_cls_OcAccountManager, "<init>", "(J)V");
+    VERIFY_VARIABLE_NULL(g_mid_OcAccountManager_ctor);
+#endif
+
     //OicSecAcl
     clazz = env->FindClass("org/iotivity/base/OicSecAcl");
     VERIFY_VARIABLE_NULL(clazz);
@@ -619,6 +636,10 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
     env->DeleteGlobalRef(g_cls_OcSecureResource);
     env->DeleteGlobalRef(g_cls_OcProvisionResult);
+    env->DeleteGlobalRef(g_cls_OcDirectPairDevice);
+#ifdef WITH_CLOUD
+    env->DeleteGlobalRef(g_cls_OcAccountManager);
+#endif
     env->DeleteGlobalRef(g_cls_OcOicSecAcl);
     env->DeleteGlobalRef(g_cls_OcOicSecAcl_ace);
     env->DeleteGlobalRef(g_cls_OcOicSecAcl_resr);

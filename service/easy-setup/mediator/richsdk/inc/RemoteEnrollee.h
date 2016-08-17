@@ -21,46 +21,36 @@
 #ifndef REMOTE_ENROLLEE_H_
 #define REMOTE_ENROLLEE_H_
 
+#include <memory>
+#include <iostream>
+#include <condition_variable>
+
 #include "ESRichCommon.h"
+#include "OCApi.h"
+
+using namespace OC;
 
 namespace OIC
 {
     namespace Service
     {
-        class RemoteEnrolleeResource;
+        class OCResource;
+        class EnrolleeResource;
+        class CloudResource;
         class EnrolleeSecurity;
 
         /**
-         * This class represents Remote Enrollee device instance.
-         * It will provide APIs for Mediator to perform operations to enable the Enrollee device
-         * to connect to the Enroller.
+         * This class represents Remote Enrollee device instance. What operation the class provides:
+         * 1) Ownership transfer for enabling secured communication between Mediator and Enrollee
+         * devices.
+         * 2) Provision WiFi AP information used for which Enrollee is going to connect to the AP
+         * 3) Provision Device confiruation setting, i.e. language, country, and etc
+         * 4) Provision Cloud information used for which Enrollee is going to register to the cloud
          */
         class RemoteEnrollee
         {
         public:
-            /**
-             * RemoteEnrollee constructor
-             *
-             * @param enrolleeNWProvInfo Provisioning information for the Enrollee
-             *
-             * @throw ESBadRequestException is thrown if the parameters are invalid
-             */
-            RemoteEnrollee(const ProvConfig& enrolleeNWProvInfo, const WiFiOnboadingConnection& connection) ;
-
             ~RemoteEnrollee() = default;
-
-            typedef std::shared_ptr< RemoteEnrollee > shared_ptr;
-
-            /**
-             * Callback definition to be invoked when EasySetup status is changed.
-             * The same callback will be invoked when there is an error in the
-             * EasySetup process.
-             *
-             * @see registerResourceHandler
-             * @see ResourceState
-             */
-            typedef std::function< void(std::shared_ptr< EasySetupStatus >) >
-                                                                        EasySetupStatusCB;
 
 #ifdef __WITH_DTLS__
             /**
@@ -75,76 +65,117 @@ namespace OIC
              *
              * @see SecProvisioningResult
              */
-            ESResult registerSecurityCallbackHandler(SecurityPinCb securityPinCb,
-                    SecProvisioningDbPathCb secProvisioningDbPathCb);
+            ESResult registerSecurityCallbackHandler(const SecurityPinCb securityPinCb,
+                    const SecProvisioningDbPathCb secProvisioningDbPathCb);
 #endif //__WITH_DTLS__
 
             /**
-             * Register EasySetup status handler.
+             * Get an Enrollee's status which includes provisioning status and last error code
              *
-             * @param callback Callback to get EasySetup status.
-             * @param secProvisioningDbCB Callback to be invoked when the stack expects a
-             *        path for the provisioning db.
-             *
-             * @throws InvalidParameterException If callback is an empty function or null.
-             * @throws ESBadRequestException If registration is already completed.
-             *
-             * @see EasySetupStatus
-             */
-            void registerEasySetupStatusHandler(EasySetupStatusCB callback);
-
-            /**
-             * Start provisioning of target Enrollers information to the Enrollee.
+             * @param callback will give the requested status
              *
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
-             * @see RemoteEnrollee
+             * @see GetStatusCb
              */
-            void startProvisioning();
+            void getStatus(const GetStatusCb callback);
 
             /**
-             * Stop provisioning process that is currently in progress.
+             * Get an Enrollee's configuration which includes WiFi supported frequency and device name
              *
-             * @throws BadRequestException If provisioning is not in progress.
-             */
-            void stopProvisioning();
-
-            /**
-             * Check if the Enrollee device provisioned.
-             */
-            bool isEnrolleeProvisioned();
-
-            /**
-             * Get the Provisioning information provided for the current Enrollee.
+             * @param callback will give the requested configuration
              *
-             * @return ProvConfig Provisioning information provided for the current Enrollee.
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see GetConfigurationStatusCb
              */
-            ProvConfig getProvConfig ();
+            void getConfiguration(const GetConfigurationStatusCb callback);
+
+             /**
+             * Do security provisioning such as ownership tranfer to Enrollee.
+             *
+             * @param callback will give the result if the security provisioning succeeds or fails for some reasons
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see SecurityProvStatusCb
+             */
+            void provisionSecurity(const SecurityProvStatusCb callback);
 
             /**
-             * Get the Onboarding connection information between Mediator and Enrollee.
+             * Provision WiFi AP information and device configuration to Enrollee
+             * 1. WiFi AP information includes a SSID, password, auth type, and encryption type.
+             * 2. Device configuration includes a language (IETF language tags) and country (ISO 3166-1 Alpha-2)
              *
-             * @return WiFiOnboadingConnection information between Mediator and Enrollee.
+             * @param devProp a data structure storing the above information to be delivered
+             * @param callback will give the result if the provisioning succeeds or fails
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see DeviceProp
+             * @see DevicePropProvStatusCb
              */
+            void provisionDeviceProperties(const DeviceProp& devProp,
+                                               const DevicePropProvStatusCb callback);
 
-            WiFiOnboadingConnection getOnboardConn();
+            /**
+             * Provision Cloud information to Enrollee, which includes Auth code, auth provider,
+             * Cloud interface server URL, and etc.
+             * In this function, Discovery for the Enrollee will happen again in a given network.
+             * Because, this function is expected to call *AFTER* the Enrollee disconnects its Soft AP
+             * and successfully connects to the certain WiFi AP. In that case, Mediator should discover
+             * the Enrollee with a certain Device ID in the network.
+             *
+             * @param cloudProp a data structure storing the above information to be delivered
+             * @param callback will give the result if the provisioning succeeds or fails
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see CloudProp
+             * @see CloudPropProvStatusCb
+             */
+            void provisionCloudProperties(const CloudProp& cloudProp,
+                                              const CloudPropProvStatusCb callback);
 
         private:
-            std::shared_ptr< RemoteEnrolleeResource > m_remoteResource;
-            EasySetupStatusCB m_easySetupStatusCb;
-            EnrolleeSecStatusCb m_enrolleeSecStatusCb;
+            RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource);
+
+            ESResult discoverResource();
+            void onDeviceDiscovered(const std::shared_ptr<OC::OCResource> resource);
+            void initCloudResource();
+
+            void getStatusHandler
+                (const std::shared_ptr< GetEnrolleeStatus > status) const;
+            void getConfigurationStatusHandler
+                (const std::shared_ptr< GetConfigurationStatus > status) const;
+            void devicePropProvisioningStatusHandler
+                (const std::shared_ptr< DevicePropProvisioningStatus > status) const;
+            void cloudPropProvisioningStatusHandler
+                (const std::shared_ptr< CloudPropProvisioningStatus > status) const;
+            void securityStatusHandler
+                (const std::shared_ptr< SecProvisioningStatus > status) const;
+
+        private:
+            std::shared_ptr< OC::OCResource > m_ocResource;
+            std::shared_ptr< EnrolleeResource > m_enrolleeResource;
+            std::shared_ptr< EnrolleeSecurity > m_enrolleeSecurity;
+            std::shared_ptr< CloudResource > m_cloudResource;
+
+            std::string  m_deviceId;
+            bool m_discoveryResponse;
+
+            std::mutex m_discoverymtx;
+            std::condition_variable m_cond;
+
+            SecurityProvStatusCb m_securityProvStatusCb;
+            GetStatusCb m_getStatusCb;
+            GetConfigurationStatusCb m_getConfigurationStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
-            ProvConfig m_ProvConfig;
-            WiFiOnboadingConnection m_wifiOnboardingconn;
+            DevicePropProvStatusCb m_devicePropProvStatusCb;
+            CloudPropProvStatusCb m_cloudPropProvStatusCb;
 
-            std::shared_ptr< EnrolleeSecurity > m_enrolleeSecurity;
-            CurrentESState m_currentESState;
-            bool m_isSecured;
-
-            void provisioningStatusHandler (std::shared_ptr< ProvisioningStatus > provStatus);
-            void easySetupSecurityStatusCallback(
-            std::shared_ptr< SecProvisioningResult > secProvisioningResult);
+            friend class EasySetup;
         };
     }
 }

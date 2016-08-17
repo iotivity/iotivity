@@ -69,20 +69,16 @@ extern "C" {
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
 #endif
 
-#ifdef WITH_MQ
 /** MQ Broker URI.*/
-#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/.well-known/ocf/ps"
-#endif
+#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/ocf/ps"
 
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
 
-#ifdef WITH_CLOUD
 /** Presence URI through which the OCF devices advertise their device presence.*/
-#define OCF_RSRVD_DEVICE_PRESENCE_URI         "/.well-known/ocf/prs"
-#endif
+#define OCF_RSRVD_DEVICE_PRESENCE_URI         "/ocf/prs"
 
 /** Sets the default time to live (TTL) for presence.*/
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
@@ -363,13 +359,13 @@ extern "C" {
 /** Cloud Account */
 
 /** Account URI.*/
-#define OC_RSRVD_ACCOUNT_URI               "/.well-known/ocf/account"
+#define OC_RSRVD_ACCOUNT_URI               "/ocf/account"
 
 /** Account session URI.*/
-#define OC_RSRVD_ACCOUNT_SESSION_URI       "/.well-known/ocf/account/session"
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/ocf/account/session"
 
 /** Account token refresh URI.*/
-#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/.well-known/ocf/account/tokenrefresh"
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/ocf/account/tokenrefresh"
 
 /** Defines auth provider. */
 #define OC_RSRVD_AUTHPROVIDER              "authprovider"
@@ -377,11 +373,14 @@ extern "C" {
 /** Defines auth code. */
 #define OC_RSRVD_AUTHCODE                  "authcode"
 
-/** Defines session. */
+/** Defines access token. */
 #define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
 
-/** Defines status. */
+/** Defines login. */
 #define OC_RSRVD_LOGIN                     "login"
+
+/** Defines search. */
+#define OC_RSRVD_SEARCH                    "search"
 
 /** Defines grant type. */
 #define OC_RSRVD_GRANT_TYPE                "granttype"
@@ -389,8 +388,8 @@ extern "C" {
 /** Defines refresh token. */
 #define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
 
-/** Defines user ID. */
-#define OC_RSRVD_USER_ID                   "uid"
+/** Defines user UUID. */
+#define OC_RSRVD_USER_UUID                 "uid"
 
 /** Defines options. */
 #define OC_RSRVD_OPTIONS                   "options"

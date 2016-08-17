@@ -38,6 +38,7 @@
 #define JNI_NO_NATIVE_POINTER 1001
 #define JNI_INVALID_VALUE 1002
 #define JNI_NO_SUCH_KEY 1003
+#define JNI_NO_SUPPORT 1004
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName, const int line,
     const int code, const char* message);
@@ -84,6 +85,9 @@ extern jclass g_cls_OcSecureResource;
 extern jclass g_cls_OcOicSecAcl;
 extern jclass g_cls_OcOicSecPdAcl;
 extern jclass g_cls_OcDirectPairDevice;
+#ifdef WITH_CLOUD
+extern jclass g_cls_OcAccountManager;
+#endif
 
 extern jclass g_cls_OcOicSecAcl_ace;
 extern jclass g_cls_OcOicSecAcl_resr;
@@ -122,6 +126,9 @@ extern jmethodID g_mid_OcProvisionResult_ctor;
 extern jmethodID g_mid_OcSecureResource_ctor;
 extern jmethodID g_mid_OcDirectPairDevice_ctor;
 extern jmethodID g_mid_OcDirectPairDevice_dev_ctor;
+#ifdef WITH_CLOUD
+extern jmethodID g_mid_OcAccountManager_ctor;
+#endif
 
 extern jmethodID g_mid_OcOicSecAcl_get_rownerID;
 extern jmethodID g_mid_OcOicSecAcl_get_aces;

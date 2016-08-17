@@ -34,6 +34,7 @@
 #endif
 #include <inttypes.h>
 #include "rdpayload.h"
+#include "oic_malloc.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -393,8 +394,23 @@ INLINE_API void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)
 
 INLINE_API void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
 {
+    size_t payloadSize = payload->payloadSize;
     OIC_LOG(level, PL_TAG, "Payload Type: Security");
-    OIC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", payload->securityData);
+
+    if (payloadSize > 0)
+    {
+        // Add a zero-character string terminator.
+        char *securityData = (char *)OICMalloc(payloadSize + 1);
+        
+        if (securityData)
+        {
+            memcpy(securityData, payload->securityData, payloadSize);
+            assert(securityData[payloadSize - 1] != '\0');
+            securityData[payloadSize] = '\0';
+            OIC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", securityData);
+            OICFree(securityData);
+        }
+    }
 }
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)

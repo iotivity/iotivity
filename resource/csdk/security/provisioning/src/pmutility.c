@@ -148,23 +148,21 @@ OCProvisionDev_t* GetDevice(OCProvisionDev_t **ppDevicesList, const char* addr, 
  * Add device information to list.
  *
  * @param[in] pList         List of OCProvisionDev_t.
- * @param[in] addr          address of target device.
- * @param[in] port          port of remote server.
- * @param[in] adapter       adapter type of endpoint.
+ * @param[in] endpoint      target device endpoint.
+ * @param[in] connType      connectivity type of endpoint
  * @param[in] doxm          pointer to doxm instance.
- * @param[in] connType  connectivity type of endpoint
  *
- * @return OC_STACK_OK for success and errorcode otherwise.
+ * @return OC_STACK_OK for success and error code otherwise.
  */
-OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, const uint16_t port,
-                        OCTransportAdapter adapter, OCConnectivityType connType, OicSecDoxm_t *doxm)
+OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, OCDevAddr* endpoint,
+                        OCConnectivityType connType, OicSecDoxm_t *doxm)
 {
-    if (NULL == addr)
+    if (NULL == endpoint)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCProvisionDev_t *ptr = GetDevice(ppDevicesList, addr, port);
+    OCProvisionDev_t *ptr = GetDevice(ppDevicesList, endpoint->addr, endpoint->port);
     if(!ptr)
     {
         ptr = (OCProvisionDev_t *)OICCalloc(1, sizeof (OCProvisionDev_t));
@@ -174,11 +172,9 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
             return OC_STACK_NO_MEMORY;
         }
 
-        OICStrcpy(ptr->endpoint.addr, MAX_ADDR_STR_SIZE, addr);
-        ptr->endpoint.port = port;
+        ptr->endpoint = *endpoint;
         ptr->doxm = doxm;
         ptr->securePort = DEFAULT_SECURE_PORT;
-        ptr->endpoint.adapter = adapter;
         ptr->next = NULL;
         ptr->connType = connType;
         ptr->devStatus = DEV_STATUS_ON; //AddDevice is called when discovery(=alive)
@@ -200,8 +196,12 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
  *
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
-OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
-                                       uint16_t port, uint16_t securePort)
+static OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
+                                       uint16_t port, uint16_t securePort
+#ifdef __WITH_TLS__
+                                       ,uint16_t tcpPort
+#endif
+                                       )
 {
     OCProvisionDev_t *ptr = GetDevice(ppDevicesList, addr, port);
 
@@ -212,6 +212,10 @@ OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const c
     }
 
     ptr->securePort = securePort;
+
+#ifdef __WITH_TLS__
+    ptr->tcpPort = tcpPort;
+#endif
 
     return OC_STACK_OK;
 }
@@ -429,6 +433,8 @@ bool PMGenerateQuery(bool isSecure,
 
     switch(connType & CT_MASK_ADAPTER)
     {
+        case CT_ADAPTER_TCP:
+            prefix = (isSecure == true) ? COAPS_TCP_PREFIX : COAP_TCP_PREFIX;
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
@@ -598,11 +604,18 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                 OIC_LOG(INFO, TAG, "Can not find secure port information.");
                 return OC_STACK_DELETE_TRANSACTION;
             }
-
+#ifdef __WITH_TLS__
+            OIC_LOG_V(DEBUG, TAG, "%s: TCP port from discovery = %d", __func__, resPayload->tcpPort);
+#endif
             DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
             OCStackResult res = UpdateSecurePortOfDevice(pDInfo->ppDevicesList,
                                                          clientResponse->devAddr.addr,
-                                                         clientResponse->devAddr.port, securePort);
+                                                         clientResponse->devAddr.port,
+                                                         securePort
+#ifdef __WITH_TLS__
+                                                         ,resPayload->tcpPort
+#endif
+                                                         );
             if (OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Error while getting secure port.");
@@ -712,9 +725,7 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
-                res = AddDevice(ppDevicesList, clientResponse->devAddr.addr,
-                        clientResponse->devAddr.port,
-                        clientResponse->devAddr.adapter,
+                res = AddDevice(ppDevicesList, &clientResponse->devAddr,
                         clientResponse->connType, ptrDoxm);
                 if (OC_STACK_OK != res)
                 {
@@ -929,18 +940,18 @@ void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev)
     }
 }
 
-bool PMDeleteFromUUIDList(OCUuidList_t *pUuidList, OicUuid_t *targetId)
+bool PMDeleteFromUUIDList(OCUuidList_t **pUuidList, OicUuid_t *targetId)
 {
-    if(pUuidList == NULL || targetId == NULL)
+    if(*pUuidList == NULL || targetId == NULL)
     {
         return false;
     }
     OCUuidList_t *tmp1 = NULL,*tmp2=NULL;
-    LL_FOREACH_SAFE(pUuidList, tmp1, tmp2)
+    LL_FOREACH_SAFE(*pUuidList, tmp1, tmp2)
     {
         if(0 == memcmp(tmp1->dev.id, targetId->id, sizeof(targetId->id)))
         {
-            LL_DELETE(pUuidList, tmp1);
+            LL_DELETE(*pUuidList, tmp1);
             OICFree(tmp1);
             return true;
         }

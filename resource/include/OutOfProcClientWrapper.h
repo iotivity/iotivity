@@ -65,6 +65,7 @@ namespace OC
             const std::string& /*uri*/,
             const QueryParamsMap& /*queryParams*/,
             const HeaderOptions& /*headerOptions*/,
+            OCConnectivityType /*connectivityType*/,
             GetCallback& /*callback*/, QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -92,6 +93,7 @@ namespace OC
             const OCDevAddr& /*devAddr*/,
             const std::string& /*uri*/,
             const HeaderOptions& /*headerOptions*/,
+            OCConnectivityType /*connectivityType*/,
             DeleteCallback& /*callback*/, QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -151,7 +153,7 @@ namespace OC
                                                const std::string& /*resourceUri*/,
                                                const QueryParamsMap& /*queryParams*/,
                                                const HeaderOptions& /*headerOptions*/,
-                                               FindCallback& /*callback*/,
+                                               MQTopicCallback& /*callback*/,
                                                QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -160,7 +162,7 @@ namespace OC
                                                        const OCRepresentation& /*rep*/,
                                                        const QueryParamsMap& /*queryParams*/,
                                                        const HeaderOptions& /*headerOptions*/,
-                                                       MQCreateTopicCallback& /*callback*/,
+                                                       MQTopicCallback& /*callback*/,
                                                        QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 #endif

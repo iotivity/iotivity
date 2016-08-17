@@ -53,6 +53,7 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'connectivity/lib/libcoap-4.1.1',
 		'connectivity/common/inc',
 		'connectivity/inc',
+		'connectivity/inc/pkix',
 		'connectivity/api',
 		'connectivity/external/inc',
 		'security/include',
@@ -115,6 +116,8 @@ if target_os == 'android':
 
 if env.get('SECURED') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
+	if env.get('WITH_TCP') == True:
+		liboctbstack_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
