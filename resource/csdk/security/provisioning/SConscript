@@ -41,6 +41,7 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../../extlibs/cjson/',
 		'../../../../extlibs/tinydtls/',
 		'../../connectivity/inc',
+		'../../connectivity/inc/pkix',
 		'../../connectivity/external/inc',
 		'../../connectivity/common/inc',
 		'../../connectivity/lib/libcoap-4.1.1',

@@ -51,6 +51,7 @@ if env.get('SECURED') == '1':
 	env.SConscript(build_dir + 'extlibs/tinydtls/SConscript')
 	env.SConscript(build_dir + 'extlibs/timer/SConscript')
 	env.AppendUnique(CPPPATH = ['#extlibs/timer'])
+	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/connectivity/inc/pkix'])
 
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/caadapterutils.c')])
@@ -69,6 +70,18 @@ if env.get('DTLS_WITH_X509') == '1':
 		env.AppendUnique(CPPDEFINES = ['X509_DEBUG'])
 	pkix_src = Glob('adapter_util/pkix/*.c');
 	env.AppendUnique(CA_SRC = pkix_src)
+
+if ((secured == '1') and (with_tcp == True)):
+	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
+	tls_path = 'extlibs/mbedtls';
+	tls_headers_path = 'mbedtls/include';
+	if ca_os == 'tizen' and os.path.exists(root_dir + '/' + tls_path):
+		env.SConscript(os.path.join(root_dir, tls_path + '/SConscript'))
+		env.AppendUnique(CPPPATH = [os.path.join(root_dir, tls_path + '/' + tls_headers_path)])
+	else:
+		env.SConscript('#' + tls_path + '/SConscript')
+		env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
+		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_tls.c')])
 
 ca_common_src = None
 

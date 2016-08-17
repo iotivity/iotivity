@@ -37,7 +37,9 @@ extern "C"
 #define COAPS_QUERY "coaps://%s:%d%s"
 #define COAP_QUERY "coap://%s:%d%s"
 
-/**
+#define COAP_TCP_PREFIX "coap+tcp://"
+#define COAPS_TCP_PREFIX "coaps+tcp://"
+    /**
  * Discover owned/unowned devices in the same IP subnet. .
  *
  * @param[in] waittime      Timeout in seconds.

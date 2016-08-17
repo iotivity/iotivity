@@ -47,6 +47,7 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',
+		'../../../connectivity/inc/pkix',
 		'../../../connectivity/common/inc',
 		'../../../connectivity/lib/libcoap-4.1.1',
 		'../../../connectivity/api',
@@ -68,6 +69,9 @@ if sptest_env.get('SECURED') == '1':
 if sptest_env.get('DTLS_WITH_X509') == '1':
 	sptest_env.AppendUnique(LIBS = ['CKManager'])
 	sptest_env.AppendUnique(LIBS = ['asn1'])
+
+if sptest_env.get('WITH_TCP') == True:
+	sptest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
