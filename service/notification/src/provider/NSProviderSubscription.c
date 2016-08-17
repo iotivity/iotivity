@@ -263,8 +263,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
 
     OCRepPayloadSetUri(payload, NS_COLLECTION_MESSAGE_URI);
-    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, 1);
-    OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
+    (accepted) ? OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_ALLOW)
+        : OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_DENY);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
 
     NSCacheElement * element = NSStorageRead(consumerSubList, id);
