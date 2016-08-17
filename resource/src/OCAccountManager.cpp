@@ -139,7 +139,7 @@ OCStackResult OCAccountManager::refreshAccessToken(const std::string& userUuid,
     OCRepresentation rep;
     rep.setValue(OC_RSRVD_USER_UUID, userUuid);
     rep.setValue(OC_RSRVD_DEVICE_ID, m_deviceID);
-    rep.setValue(OC_RSRVD_GRANT_TYPE, OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN);
+    rep.setValue(OC_RSRVD_GRANT_TYPE, std::string(OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN));
     rep.setValue(OC_RSRVD_REFRESH_TOKEN, refreshToken);
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
