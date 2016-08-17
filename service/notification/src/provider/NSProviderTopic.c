@@ -72,36 +72,6 @@ NSResult NSDeleteTopics(const char * topicName)
     return NS_OK;
 }
 
-NSResult NSSubscribeTopicList(char *consumerId, NSTopicList *topicList)
-{
-    NS_LOG(DEBUG, "NSSubscribeTopicList()");
-
-    if(!topicList)
-    {
-        NS_LOG(ERROR, "no topics");
-        return NS_ERROR;
-    }
-
-    if(!consumerId)
-    {
-        NS_LOG(ERROR, "invalid consumer id");
-        return NS_ERROR;
-    }
-
-    OCResourceHandle rHandle = NULL;
-    if(NSPutTopicResource(topicList, &rHandle) != NS_OK)
-    {
-        NS_LOG(ERROR, "Fail to put topic resource");
-        return NS_ERROR;
-    }
-
-    //TODO it will change logic.
-    //NSStoreTopics(consumerId, topicList->head);
-
-    NS_LOG(DEBUG, "NSSubscribeTopicList() NS_OK");
-    return NS_OK;
-}
-
 NSResult NSSendTopicUpdation()
 {
     NS_LOG(DEBUG, "NSSendTopicUpdation - IN");
