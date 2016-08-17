@@ -36,6 +36,7 @@ NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, 
 
 NSMessage * NSGetMessage(OCClientResponse * clientResponse);
 NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse);
+NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse);
 
 char * NSGetCloudUri(const char * providerId, char * uri);
 
@@ -224,6 +225,7 @@ NSMessage * NSGetMessage(OCClientResponse * clientResponse)
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TITLE, &retMsg->title);
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TEXT, &retMsg->contentText);
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SOURCE, &retMsg->sourceName);
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TOPIC_NAME, &retMsg->topic);
 
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *)&retMsg->type);
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_DATETIME, &retMsg->dateTime);
@@ -233,6 +235,7 @@ NSMessage * NSGetMessage(OCClientResponse * clientResponse)
     NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
     NS_LOG_V(DEBUG, "Msg Content : %s", retMsg->contentText);
     NS_LOG_V(DEBUG, "Msg Source  : %s", retMsg->sourceName);
+    NS_LOG_V(DEBUG, "Msg Topic   : %s", retMsg->topic);
     NS_LOG_V(DEBUG, "Msg Type    : %d", retMsg->type);
     NS_LOG_V(DEBUG, "Msg Date    : %s", retMsg->dateTime);
     NS_LOG_V(DEBUG, "Msg ttl     : %lld", (long long int)retMsg->ttl);
