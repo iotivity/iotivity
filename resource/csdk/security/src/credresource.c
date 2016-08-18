@@ -2104,39 +2104,49 @@ const unsigned char ca_key[] = {
 0xed, 0xa1, 0x48, 0x3f, 0x88, 0x43, 0x8d, 0x15, 0x81, 0x0a, 0x21, 0x9b, 0x6c, 0xd3, 0xbd, 0x85,
 0x86, 0xe1, 0xa6, 0xda, 0xc5, 0xce
 };
-void GetDerOwnCert(OicSecCert_t * crt)
+
+void GetDerCaCert(ByteArray * crt)
 {
-    crt->data = OICMalloc(sizeof(own_cert));
-    memcpy(crt->data, own_cert, sizeof(own_cert));
-    crt->len = sizeof(own_cert);
+    uint8_t *data = NULL;
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t * cred;
+    OicSecCred_t * temp = NULL;
+    OIC_LOG(DEBUG, TAG, "IN GetDerCaCert");
+    LL_FOREACH(gCred, temp)
+    {
+        if (0==memcmp((temp->credUsage), TRUST_CA, sizeof(TRUST_CA)))
+        {
+            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->optionalData.len, crt->len);
+            if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
+            {
+                size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->optionalData.len + 1));
+                uint8 * buf = OICCalloc(1, bufSize);
+                if(NULL == buf)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    return;
+                }
+                uint32_t outSize;
+                b64Decode(temp->optionalData.data, temp->optionalData.len, buf, bufSize, &outSize);
+                crt->data = OICRealloc(crt->data, crt->len + outSize);
+                memcpy(crt->data + crt->len, buf, outSize);
+                crt->len += outSize;
+                OICFree(buf);
+            }
+            else
+            {
+                crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
+                crt->len += temp->optionalData.len;
+            }
+            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+        }
+    }
+    if(!crt->len) OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
     return;
 }
-void GetDerCaCert(OicSecCert_t * crt)
-{
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    VERIFY_NON_NULL(TAG, crt, ERROR);
-    if (NULL == gCred)
-    {
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == InitCredResource(), ERROR);
-    }
 
-    OicUuid_t  subject;
-    OCStackResult ret = ConvertStrToUuid(CA_SUBJECT_ID, &subject);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
-    OicSecCred_t * cred  = GetCredResourceData(&subject);
-    VERIFY_NON_NULL(TAG, cred, ERROR);
-
-    INIT_BYTE_ARRAY(*crt);
-    crt->data = (uint8_t *) OICCalloc(1, cred->publicData.len);
-    VERIFY_NON_NULL(TAG, cred, ERROR);
-
-    memcpy(crt->data, cred->publicData.data, cred->publicData.len);
-    crt->len = cred->publicData.len;
-
-exit:
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-}
 void GetDerKey(ByteArray * key)
 {
     key->data = OICMalloc(sizeof(ca_key));
