@@ -170,20 +170,18 @@ public class GroupResource extends Resource {
             throws ServerException {
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
 
+            checkQueryException(Arrays.asList(Constants.REQ_GROUP_MASTER_ID,
+                    Constants.REQ_GROUP_ID), request.getUriQueryMap());
+
             String gmid = request.getUriQueryMap()
                     .get(Constants.REQ_GROUP_MASTER_ID).get(0);
             String gid = request.getUriQueryMap().get(Constants.REQ_GROUP_ID)
                     .get(0);
 
-            if (gmid == null || gid == null) {
-                throw new PreconditionFailedException(
-                        "gmid and gid property is invalid");
-            }
             mGrManager.deleteGroup(gmid, gid);
         } else {
             String gid = request.getUriPathSegments()
                     .get(getUriPathSegments().size());
-
             if (request.getUriQueryMap()
                     .containsKey(Constants.REQ_MEMBER_LIST)) {
                 List<String> midList = request.getUriQueryMap()
