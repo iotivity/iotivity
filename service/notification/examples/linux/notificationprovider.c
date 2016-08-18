@@ -36,7 +36,7 @@
 // Input the following values to publish resource to cloud
 char REMOTE_SERVER_ADDRESS[50];
 char REMOTE_SERVER_SESSION[50];
-char mainConsumer[37] = '\0';
+char mainConsumer[37] = {'\0',};
 
 extern char *strdup(const char *s);
 
@@ -119,7 +119,7 @@ FILE* server_fopen(const char *path, const char *mode)
     return fopen("oic_ns_provider_db.dat", mode);
 }
 
-void printTopics(NSTopics * topics)
+void printTopics(NSTopicLL * topics)
 {
     if(!topics)
     {
@@ -127,7 +127,7 @@ void printTopics(NSTopics * topics)
         return;
     }
 
-    NSTopics * iter = topics;
+    NSTopicLL * iter = topics;
 
     while(iter)
     {
@@ -136,7 +136,7 @@ void printTopics(NSTopics * topics)
     }
 }
 
-void removeTopics(NSTopics * topics)
+void removeTopics(NSTopicLL * topics)
 {
     if(!topics)
     {
@@ -144,11 +144,11 @@ void removeTopics(NSTopics * topics)
         return;
     }
 
-    NSTopics * iter = topics;
+    NSTopicLL * iter = topics;
 
     while(iter)
     {
-        NSTopics * del = iter;
+        NSTopicLL * del = iter;
         if(del->topicName)
         {
             OICFree(del->topicName);
@@ -278,29 +278,33 @@ int main()
 
             case 7:
                 printf("NSProviderSelectTopic\n");
-                NSProviderSelectTopic("OCF_TOPIC1");
-                NSProviderSelectTopic("OCF_TOPIC2");
-                NSProviderSelectTopic("OCF_TOPIC3");
-                NSProviderSelectTopic("OCF_TOPIC4");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC2");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC3");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC4");
                 break;
 
             case 8:
                 printf("NSProviderUnSelectTopic\n");
-                NSProviderUnSelectTopic("OCF_TOPIC1");
+                NSProviderUnselectTopic(mainConsumer, "OCF_TOPIC1");
                 break;
 
             case 9:
                 printf("NSProviderGetConsumerTopics\n");
-                NSTopics * topics = NSProviderGetConsumerTopics(mainConsumer);
-                printTopics(topics);
-                removeTopics(topics);
+                {
+                    NSTopicLL * topics = NSProviderGetConsumerTopics(mainConsumer);
+                    printTopics(topics);
+                    removeTopics(topics);
+                }
                 break;
 
             case 10:
                 printf("NSProviderGetConsumerTopics\n");
-                NSTopics * topics = NSProviderGetTopics();
-                printTopics(topics);
-                removeTopics(topics);
+                {
+                    NSTopicLL * topics = NSProviderGetTopics();
+                    printTopics(topics);
+                    removeTopics(topics);
+                }
                 break;
 
             case 11:

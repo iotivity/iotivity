@@ -505,7 +505,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
     return NS_FAIL;
 }
 
-NSTopics * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
+NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
 {
     NS_LOG(DEBUG, "NSProviderGetTopicsCache - IN");
     pthread_mutex_lock(&NSCacheMutex);
@@ -518,15 +518,15 @@ NSTopics * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
         return NULL;
     }
 
-    NSTopics * iterTopic = NULL;
-    NSTopics * newTopic = NULL;
-    NSTopics * topics = NULL;
+    NSTopicLL * iterTopic = NULL;
+    NSTopicLL * newTopic = NULL;
+    NSTopicLL * topics = NULL;
 
     while (iter)
     {
         NSCacheTopicData * curr = (NSCacheTopicData *) iter->data;
 
-        newTopic = (NSTopics *) OICMalloc(sizeof(NSTopics));
+        newTopic = (NSTopicLL *) OICMalloc(sizeof(NSTopicLL));
         newTopic->state = curr->state;
         newTopic->next = NULL;
         newTopic->topicName = OICStrdup(curr->topicName);
@@ -550,12 +550,12 @@ NSTopics * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
     return topics;
 }
 
-NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char *consumerId)
+NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char *consumerId)
 {
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - IN");
 
     pthread_mutex_lock(&NSCacheMutex);
-    NSTopics * topics = NSProviderGetTopics();
+    NSTopicLL * topics = NSProviderGetTopics();
 
     if(!topics)
     {
@@ -572,7 +572,7 @@ NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char
 
         if(curr && strcmp(curr->id, consumerId) == 0)
         {
-            NSTopics * topicIter = topics;
+            NSTopicLL * topicIter = topics;
             while(topicIter)
             {
                 if(strcmp(topicIter->topicName, curr->topicName) == 0)

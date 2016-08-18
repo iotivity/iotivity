@@ -42,9 +42,9 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList *, char *, bool);
 
 NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id);
 
-NSTopics * NSProviderGetTopicsCacheData(NSCacheList * regTopicList);
+NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList);
 
-NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char *consumerId);
+NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char *consumerId);
 
 size_t NSProviderGetListSize(NSCacheElement * firstElement);
 

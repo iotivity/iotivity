@@ -240,7 +240,7 @@ NSMessage * NSCreateMessage()
     return msg;
 }
 
-NSTopics * NSProviderGetConsumerTopics(char *consumerId)
+NSTopicLL * NSProviderGetConsumerTopics(char *consumerId)
 {
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -252,18 +252,18 @@ NSTopics * NSProviderGetConsumerTopics(char *consumerId)
         return NS_FAIL;
     }
 
-    NSTopics * topics = NSProviderGetConsumerTopicsCacheData(consumerTopicList, consumerId);
+    NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(consumerTopicList, consumerId);
 
     pthread_mutex_unlock(&nsInitMutex);
     return topics;
 }
 
-NSTopics * NSProviderGetTopics()
+NSTopicLL * NSProviderGetTopics()
 {
     NS_LOG(DEBUG, "NSProviderGetTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    NSTopics * topics = NSProviderGetTopicsCacheData(registeredTopicList);
+    NSTopicLL * topics = NSProviderGetTopicsCacheData(registeredTopicList);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderGetTopics - OUT");
