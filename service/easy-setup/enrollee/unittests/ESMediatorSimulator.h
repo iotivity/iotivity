@@ -30,6 +30,10 @@
 #include "EasySetup.h"
 #include "ESRichCommon.h"
 
+#include "ocrandom.h"
+#include "cainterface.h"
+#include "OCPlatform.h"
+
 #define PROV_RESOURCE_TYPE "ocf.wk.prov"
 
 using namespace OIC::Service;
@@ -115,9 +119,45 @@ public:
     }
 
 private:
+    bool isValidResourceToTest(std::shared_ptr<OC::OCResource> resource)
+    {
+        if((resource->connectivityType() & CT_ADAPTER_TCP) == CT_ADAPTER_TCP)
+        {
+            return false;
+        }
+
+        CAEndpoint_t *tempInfo = NULL;
+        uint32_t tempSize = 0;
+
+        CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
+        if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
+        {
+            free(tempInfo);
+            return false;
+        }
+
+        for (uint32_t index = 0; index  < tempSize; index++)
+        {
+            if (CA_ADAPTER_IP == tempInfo[index].adapter)
+            {
+                if(resource->host().find(tempInfo[index].addr) != std::string::npos &&
+                    resource->host().find(std::to_string(tempInfo[index].port).c_str()) != std::string::npos)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     void discoverRemoteEnrolleeCb(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE) && m_discoveryCb)
         {
             m_discoveryCb(resource);
@@ -136,6 +176,11 @@ private:
 
     void discoverRemoteEnrolleeCbToGetConfiguration(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE) && m_getConfigurationCb
                                                                            && !m_remoteEnrollee)
         {
@@ -160,6 +205,11 @@ private:
 
     void discoverRemoteEnrolleeCbToGetStatus(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE) && m_getStatusCb
                                                                             && !m_remoteEnrollee)
         {
@@ -185,6 +235,11 @@ private:
 
     void discoverRemoteEnrolleeCbToProvisionDeviceProperties(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE) &&
                                                 m_DevicePropProvisioningCb && !m_remoteEnrollee)
         {
@@ -218,6 +273,11 @@ private:
 
     void discoverRemoteEnrolleeCbToProvisionCloudProperties(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE) &&
                                                 m_CloudPropProvisioningCb && !m_remoteEnrollee)
         {
