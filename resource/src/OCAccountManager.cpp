@@ -201,7 +201,7 @@ OCStackResult OCAccountManager::deleteDevice(const std::string& deviceId,
                          m_connType, cloudConnectHandler, m_defaultQos);
 }
 
-OCStackResult OCAccountManager::createGroup(OCAclGroupType groupType,
+OCStackResult OCAccountManager::createGroup(AclGroupType groupType,
                                             PostCallback cloudConnectHandler)
 {
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI;
@@ -209,10 +209,10 @@ OCStackResult OCAccountManager::createGroup(OCAclGroupType groupType,
     std::string gtype;
     switch (groupType)
     {
-        case GT_PUBLIC:
+        case AclGroupType::PUBLIC:
             gtype = OC_RSRVD_PUBLIC;
             break;
-        case GT_PRIVATE:
+        case AclGroupType::PRIVATE:
             gtype = OC_RSRVD_PRIVATE;
             break;
         default:

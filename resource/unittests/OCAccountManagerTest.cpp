@@ -223,7 +223,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
-        EXPECT_EQ(OC_STACK_OK, accountManager->createGroup(GT_PUBLIC, &accountHandler));
+        EXPECT_EQ(OC_STACK_OK, accountManager->createGroup(AclGroupType::PUBLIC, &accountHandler));
     }
 
     TEST(CreateGroupTest, CreateGroupWithNullCallback)
@@ -231,7 +231,7 @@ namespace OCAccountManagerTest
         std::string host("coap://192.168.1.2:5000");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
-        EXPECT_ANY_THROW(accountManager->createGroup(GT_PUBLIC, nullptr));
+        EXPECT_ANY_THROW(accountManager->createGroup(AclGroupType::PUBLIC, nullptr));
     }
 
     // GetGroupList Test

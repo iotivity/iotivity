@@ -164,7 +164,7 @@ namespace OC
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult createGroup(OCAclGroupType groupType,
+        OCStackResult createGroup(AclGroupType groupType,
                                   PostCallback cloudConnectHandler);
 
         /**

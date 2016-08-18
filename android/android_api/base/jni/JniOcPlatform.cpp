@@ -347,7 +347,7 @@ JniOnObserveListener* AddOnObserveListener(JNIEnv* env, jobject jListener)
     }
     if (!onObserveListener)
     {
-        onObserveListener = new JniOnObserveListener(env, jListener, nullptr);
+        onObserveListener = new JniOnObserveListener(env, jListener, (JniOcResource*)nullptr);
         jobject jgListener = env->NewGlobalRef(jListener);
         onObserveListenerMap.insert(
             std::pair<jobject, std::pair<JniOnObserveListener*, int>>(

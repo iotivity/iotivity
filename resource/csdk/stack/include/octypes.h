@@ -368,10 +368,10 @@ extern "C" {
 #define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/oic/account/tokenrefresh"
 
 /** ACL group URI.*/
-#define OC_RSRVD_ACL_GROUP_URI             "/ocf/acl/group"
+#define OC_RSRVD_ACL_GROUP_URI             "/oic/acl/group"
 
 /** ACL invite URI.*/
-#define OC_RSRVD_ACL_INVITE_URI            "/ocf/acl/invite"
+#define OC_RSRVD_ACL_INVITE_URI            "/oic/acl/invite"
 
 /** Defines auth provider. */
 #define OC_RSRVD_AUTHPROVIDER              "authprovider"
@@ -1538,15 +1538,6 @@ typedef struct OCDPDev
     struct OCDPDev *next;
 } OCDPDev_t;
 //#endif // DIRECT_PAIRING
-
-/**
- * Type of Group for ACL.
- */
-typedef enum
-{
-    GT_PUBLIC = 0,
-    GT_PRIVATE,
-} OCAclGroupType;
 
 /*
  * -------------------------------------------------------------------------------------------
