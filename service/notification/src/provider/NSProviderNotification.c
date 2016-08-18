@@ -53,6 +53,7 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TITLE, msg->title);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
+    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TOPIC_NAME, msg->topic);
 
     NS_LOG(DEBUG, "NSSetMessagePayload - OUT");
     return NS_OK;

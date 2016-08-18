@@ -211,6 +211,12 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         currList = consumerTopicList->head;
     }
 
+    if(!currList)
+    {
+        NS_LOG(DEBUG, "currList is NULL");
+        return NS_ERROR;
+    }
+
     // make response for the Get Request
     OCEntityHandlerResponse response;
     response.numSendVendorSpecificHeaderOptions = 0;
@@ -230,6 +236,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     NSCacheElement * iter = currList;
     size_t dimensionSize = (size_t)NSProviderGetListSize(iter);
 
+    NS_LOG_V(DEBUG, "dimensionSize = %d", dimensionSize);
+
     if(!dimensionSize)
     {
         return NS_ERROR;
@@ -243,6 +251,9 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     {
         NSTopicLL * topic = (NSTopicLL *) iter->data;
 
+        NS_LOG_V(DEBUG, "topicName = %s", topic->topicName);
+        NS_LOG_V(DEBUG, "topicState = %d",(int) topic->state);
+
         payloadTopicArray[i] = OCRepPayloadCreate();
         OCRepPayloadSetPropString(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_NAME, topic->topicName);
         OCRepPayloadSetPropInt(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_SELECTION,
@@ -252,7 +263,10 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     }
 
     OCRepPayloadSetUri(payload, NS_COLLECTION_TOPIC_URI);
-    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
+    if(id)
+    {
+        OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
+    }
     OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
             (const OCRepPayload**)(payloadTopicArray), dimensions);
 
