@@ -319,6 +319,9 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
 
         subData->isWhite = true;
+        subData->remote_messageObId = 0;
+        subData->remote_syncObId = 0;
+        subData->syncObId = 0;
         subData->messageObId = entityHandlerRequest->obsInfo.obsId;
 
         element->data = (void*) subData;

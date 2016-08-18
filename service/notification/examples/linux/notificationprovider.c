@@ -164,7 +164,7 @@ int main()
     int num;
     pthread_t processThread;
 
-    printf("NSStartProvider()");
+    printf("NSStartProvider()\n\n");
 
     // open oic_db
     static OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -212,7 +212,7 @@ int main()
             {
                 printf("NSStartProvider(Accepter: Provider)");
                 NSProviderConfig config;
-                config.policy = false;
+                config.policy = true;
                 config.subRequestCallback = subscribeRequestCallback;
                 config.syncInfoCallback = syncCallback;
                 config.userInfo = OICStrdup("OCF_NOTIFICATION");
