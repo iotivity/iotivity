@@ -1518,8 +1518,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
         return;
     }
-
-    OIC_LOG(INFO, TAG, "Exit OCHandleResponse");
 }
 
 void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)

@@ -130,7 +130,7 @@ void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCRes
 void JniOnResourceFoundListener::findResourceErrorCallback(const std::string& uri, const int eCode)
 {
     LOGI("findResource error callback value : %d", eCode);
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
     if (nullptr == env)
     {

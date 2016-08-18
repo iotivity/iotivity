@@ -165,7 +165,8 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
-        try{
+        try
+        {
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
                                     reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
             // loop to ensure valid construction of all resources
@@ -176,7 +177,8 @@ namespace OC
                 exec.detach();
             }
         }
-        catch (std::exception &e){
+        catch (std::exception &e)
+        {
             oclog() << "Exception in listCallback, ignoring response: "
                     << e.what() << std::flush;
         }
@@ -358,7 +360,8 @@ namespace OC
             return OC_STACK_DELETE_TRANSACTION;
         }
 
-        try{
+        try
+        {
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
                                         (OCRepPayload *) clientResponse->payload);
 
@@ -370,7 +373,8 @@ namespace OC
                 exec.detach();
             }
         }
-        catch (std::exception &e){
+        catch (std::exception &e)
+        {
             oclog() << "Exception in listCallback, ignoring response: "
                     << e.what() << std::flush;
         }
@@ -565,7 +569,8 @@ namespace OC
             return OC_STACK_DELETE_TRANSACTION;
         }
 
-        try{
+        try
+        {
             if (OC_STACK_OK               == result ||
                 OC_STACK_RESOURCE_CREATED == result)
             {
@@ -583,7 +588,8 @@ namespace OC
                 exec.detach();
             }
         }
-        catch (std::exception &e){
+        catch (std::exception &e)
+        {
             oclog() << "Exception in createMQTopicCallback, ignoring response: "
                     << e.what() << std::flush;
         }
