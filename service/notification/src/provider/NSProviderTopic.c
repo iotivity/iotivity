@@ -276,8 +276,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 
 bool NSIsTopicSubscribed(char * consumerId, char * topic)
 {
-    //TODO: implement function
-    return true;
+    return NSProviderIsTopicSubScribed(consumerTopicList->head, consumerId, topic);
 }
 
 NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)

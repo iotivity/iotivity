@@ -108,8 +108,6 @@ NSResult NSSendNotification(NSMessage *msg)
         return NS_ERROR;
     }
 
-    NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
-
     NSCacheElement * it = consumerSubList->head;
 
     while (it)
@@ -128,6 +126,8 @@ NSResult NSSendNotification(NSMessage *msg)
             {
                 if(msg->topic)
                 {
+                    NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
+
                     if(NSIsTopicSubscribed(subData->id, msg->topic))
                     {
                         obArray[obCount++] = subData->messageObId;

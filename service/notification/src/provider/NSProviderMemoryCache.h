@@ -48,6 +48,8 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, cha
 
 size_t NSProviderGetListSize(NSCacheElement * firstElement);
 
+bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char * topicName);
+
 pthread_mutex_t NSCacheMutex;
 pthread_mutexattr_t NSCacheMutexAttr;
 
