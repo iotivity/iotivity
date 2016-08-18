@@ -74,32 +74,41 @@ namespace OIC
 
         std::string SceneUtils::getNetAddress()
         {
-            CAEndpoint_t ** netInfo = (CAEndpoint_t **)OICMalloc(sizeof(CAEndpoint_t*)*5);
-
-            if(netInfo == nullptr)
-            {
-                throw RCSException("memory allocation fail");
-            }
-
+            CAEndpoint_t * netInfo = nullptr;
             uint32_t size = 0;
-            CAGetNetworkInformation(netInfo, &size);
+            CAGetNetworkInformation(&netInfo, &size);
 
             if (size == 0)
             {
                 OICFree(netInfo);
                 throw RCSException("Disabled Network");
             }
+            std::string address_ipv4 = "", address_ipv6 = "";
 
             for (uint32_t i = 0; i < size; ++i)
             {
-                if (netInfo[i]->adapter == CATransportAdapter_t::CA_ADAPTER_IP)
+                if (netInfo[i].adapter == CATransportAdapter_t::CA_ADAPTER_IP)
                 {
-                    std::string retAddress
-                        = std::string(netInfo[i]->addr) + ":" + std::to_string(netInfo[i]->port);
-
-                    OICFree(netInfo);
-                    return retAddress;
+                    if(netInfo[i].flags == CATransportFlags_t::CA_IPV4)
+                    {
+                        address_ipv4 = std::string(netInfo[i].addr) + ":"
+                                            + std::to_string(netInfo[i].port);
+                    } else if(netInfo[i].flags == CATransportFlags_t::CA_IPV6)
+                    {
+                        address_ipv6 = "[" + std::string(netInfo[i].addr) + "]:"
+                                            + std::to_string(netInfo[i].port);
+                    }
                 }
+            }
+
+            if(address_ipv4.length() > 0 && address_ipv6.length() == 0)
+            {
+                OICFree(netInfo);
+                return address_ipv4;
+            } else if(address_ipv6.length() > 0)
+            {
+                OICFree(netInfo);
+                return address_ipv6;
             }
 
             OICFree(netInfo);
@@ -115,9 +124,29 @@ namespace OIC
                 std::string hostaddress, uri;
                 SceneUtils::getHostUriString(address, &hostaddress, &uri);
 
-                OC::OCResource::Ptr pOCResource =
-                    OC::OCPlatform::constructResourceObject(
-                        hostaddress, uri, ct, false, vecRT, vecIF);
+                OC::OCResource::Ptr pOCResource = nullptr;
+
+                if(hostaddress.find("[") != std::string::npos &&
+                            hostaddress.find("]") != std::string::npos)
+                {
+                    pOCResource = OC::OCPlatform::constructResourceObject(
+                                     hostaddress,
+                                     uri,
+                                     (OCConnectivityType)(ct | CT_IP_USE_V6),
+                                     false,
+                                     vecRT,
+                                     vecIF);
+                }
+                else
+                {
+                    pOCResource = OC::OCPlatform::constructResourceObject(
+                                     hostaddress,
+                                     uri,
+                                     (OCConnectivityType)(ct | CT_IP_USE_V4),
+                                     false,
+                                     vecRT,
+                                     vecIF);
+                }
 
                 return RCSRemoteResourceObject::fromOCResource(pOCResource);
             }
