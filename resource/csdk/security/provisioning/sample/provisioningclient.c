@@ -1076,6 +1076,7 @@ static int removeDeviceWithUuid(void)
         return -1;
     }
 
+    g_doneCB = false;
     rst = OCRemoveDeviceWithUuid("RemoveDeviceWithUUID", DISCOVERY_TIMEOUT, &revUuid, removeDeviceCB);
     if(OC_STACK_OK != rst)
     {
@@ -1083,7 +1084,6 @@ static int removeDeviceWithUuid(void)
         return -1;
     }
 
-    g_doneCB = false;
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
         OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid callback error");

@@ -2136,7 +2136,12 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
 {
     OIC_LOG(INFO, TAG, "IN SRPRemoveDeviceWithoutDiscovery");
 
-    if (!pTargetDev  || !pOwnedDevList)
+    if (!pOwnedDevList)
+    {
+        OIC_LOG(WARNING, TAG, "SRPRemoveDeviceWithoutDiscovery : Owned Device List is empty");
+        return OC_STACK_CONTINUE;
+    }
+    if (!pTargetDev)
     {
         OIC_LOG(INFO, TAG, "SRPRemoveDeviceWithoutDiscovery : NULL parameters");
         return OC_STACK_INVALID_PARAM;
@@ -2158,15 +2163,14 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
     res = PDMGetLinkedDevices(&pTargetDev->doxm->deviceID, &pLinkedUuidList, &numOfDevices);
     if (OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to get linked devices information");
-        return res;
+        OIC_LOG(WARNING, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to get linked devices information");
+        return OC_STACK_CONTINUE;
     }
     // if there is no related device, we can skip further process.
     if (0 == numOfDevices)
     {
-        OIC_LOG(DEBUG, TAG, "SRPRemoveDeviceWithoutDiscovery : No linked device found.");
-        res = OC_STACK_CONTINUE;
-        goto error;
+        OIC_LOG(WARNING, TAG, "SRPRemoveDeviceWithoutDiscovery : No linked device found.");
+        return OC_STACK_CONTINUE;
     }
 
     //2. Make a list of devices to send DELETE credential request
@@ -2182,8 +2186,7 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
     if (0 == numOfLinkedDev) // This case means, there is linked device but it's not alive now.
     {                       // So we don't have to send request message.
         OIC_LOG(DEBUG, TAG, "SRPRemoveDeviceWithoutDiscovery : No alived & linked device found.");
-        res = OC_STACK_CONTINUE;
-        goto error;
+        return OC_STACK_CONTINUE;
     }
 
     // 3. Prepare RemoveData Context data.

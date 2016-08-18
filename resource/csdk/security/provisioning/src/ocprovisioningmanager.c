@@ -335,14 +335,14 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
     cred = GetCredResourceData(&pTargetDev->doxm->deviceID);
     if (cred == NULL)
     {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to get credential of remove device.");
+        OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to get credential of remove device.");
         goto error;
     }
 
     res = RemoveCredential(&cred->subject);
     if (res != OC_STACK_RESOURCE_DELETED)
     {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to remove credential.");
+        OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to remove credential.");
         goto error;
     }
 
@@ -458,7 +458,11 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
                             OCProvisionResultCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "IN OCRemoveDeviceWithUuid");
+
     OCStackResult res = OC_STACK_ERROR;
+    OCProvisionDev_t* pTargetDev = NULL;
+    bool discoverdFlag = false;
+
     if (!pTargetUuid || 0 == waitTimeForOwnedDeviceDiscovery)
     {
         OIC_LOG(INFO, TAG, "OCRemoveDeviceWithUuid : Invalied parameters");
@@ -470,6 +474,13 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         return OC_STACK_INVALID_CALLBACK;
     }
 
+    char* strUuid = NULL;
+    if(OC_STACK_OK != ConvertUuidToStr(pTargetUuid, &strUuid))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to covert UUID to String.");
+        goto error;
+    }
+
     OCProvisionDev_t* pOwnedDevList = NULL;
     //2. Find owned device from the network
     res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
@@ -479,7 +490,6 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         goto error;
     }
 
-    OCProvisionDev_t* pTargetDev = NULL;
     LL_FOREACH(pOwnedDevList, pTargetDev)
     {
         if(memcmp(&pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id)) == 0)
@@ -488,66 +498,81 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         }
     }
 
-    char* strUuid = NULL;
-    if(OC_STACK_OK != ConvertUuidToStr(pTargetUuid, &strUuid))
+    if(NULL == pTargetDev)
     {
-        OIC_LOG(WARNING, TAG, "Failed to covert UUID to String.");
-        goto error;
-    }
+        OIC_LOG_V(WARNING, TAG, "Can not find [%s] on the network.", strUuid);
+        OIC_LOG(WARNING, TAG, "Device information will be deleted from local and other devices.");
 
-    if(pTargetDev)
-    {
-        OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
-        OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
-
-        // Send DELETE requests to linked devices
-        OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
-        resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
-        if (OC_STACK_OK != resReq)
+        pTargetDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
+        if(NULL == pTargetDev)
         {
-            if (OC_STACK_CONTINUE == resReq)
-            {
-                OIC_LOG(DEBUG, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
-            }
-            else
-            {
-                OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
-                res = resReq;
-                OICFree(strUuid);
-                goto error;
-            }
-        }
-
-        res = RemoveDeviceInfoFromLocal(pTargetDev);
-        if(OC_STACK_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Filed to remove the device information from local.");
-            OICFree(strUuid);
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
             goto error;
         }
 
-        if(OC_STACK_CONTINUE == resReq)
+        pTargetDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+        if(NULL == pTargetDev->doxm)
         {
-            /**
-              * If there is no linked device, PM does not send any request.
-              * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
-              */
-            if(resultCallback)
-            {
-                resultCallback(ctx, 0, NULL, false);
-            }
-            res = OC_STACK_OK;
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
+            goto error;
         }
+
+        //in case of can't find target device, the device id required only.
+        memcpy(pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id));
     }
     else
     {
-        OIC_LOG_V(WARNING, TAG, "OCRemoveDeviceWithUuid : Failed to find the [%s] on the network.", strUuid);
-        res = OC_STACK_ERROR;
+        discoverdFlag = true;
+        OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
+    }
+
+    OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
+
+    // Send DELETE requests to linked devices
+    OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
+    resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
+    if (OC_STACK_OK != resReq)
+    {
+        if (OC_STACK_CONTINUE == resReq)
+        {
+            OIC_LOG(DEBUG, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
+            res = resReq;
+            goto error;
+        }
+    }
+
+    res = RemoveDeviceInfoFromLocal(pTargetDev);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Filed to remove the device information from local.");
+        goto error;
+    }
+
+    if(OC_STACK_CONTINUE == resReq)
+    {
+        /**
+          * If there is no linked device, PM does not send any request.
+          * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
+          */
+        if(resultCallback)
+        {
+            resultCallback(ctx, 0, NULL, false);
+        }
+        res = OC_STACK_OK;
     }
 
 error:
     OICFree(strUuid);
     PMDeleteDeviceList(pOwnedDevList);
+    if(pTargetDev && false == discoverdFlag)
+    {
+        OICFree(pTargetDev->doxm);
+        OICFree(pTargetDev);
+    }
     OIC_LOG(INFO, TAG, "OUT OCRemoveDeviceWithUuid");
     return res;
 }
