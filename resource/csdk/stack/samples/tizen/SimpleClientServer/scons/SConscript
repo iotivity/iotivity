@@ -68,6 +68,11 @@ else:
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
 
+	if env.get('WITH_TCP'):
+		env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER', 'WITH_TCP'])
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_TCP_ADAPTER'])
+
 #ri_sample_src = [sample_dir + '/occlient.cpp']
 
 #print " ri sample src %s" % ri_sample_src

@@ -1,7 +1,7 @@
 Name: iotivity
 Version: 1.1.1
 Release: 0
-Summary: IoT Connectivity sponsored by the OIC
+Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity/Other
 License: Apache-2.0
 URL: https://www.iotivity.org/
@@ -38,6 +38,7 @@ Requires(post): /sbin/ldconfig
 %{!?SECURED: %define SECURED 1}
 %{!?LOGGING: %define LOGGING True}
 %{!?ROUTING: %define ROUTING EP}
+%{!?WITH_TCP: %define WITH_TCP true}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?VERBOSE: %define VERBOSE 1}
 
@@ -112,6 +113,7 @@ scons -j2 --prefix=%{_prefix} \
 	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
 
 
+
 %install
 rm -rf %{buildroot}
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
@@ -119,6 +121,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
 	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
+
 
 
 # For Example
