@@ -130,13 +130,16 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
         OIC_LOG(ERROR, TAG, "memory allocation failed");
         return NULL;
     }
-
+#ifdef SINGLE_THREAD
+    CAEndpoint_t* ep = endpoint;
+#else
     CAEndpoint_t* ep = CACloneEndpoint(endpoint);
     if (!ep)
     {
         OIC_LOG(ERROR, TAG, "endpoint clone failed");
         goto exit;
     }
+#endif
 
     OIC_LOG_V(DEBUG, TAG, "address : %s", ep->addr);
 
@@ -234,7 +237,9 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
 
 exit:
     OICFree(cadata);
+#ifndef SINGLE_THREAD
     CAFreeEndpoint(ep);
+#endif
     return NULL;
 }
 
@@ -242,20 +247,25 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL_VOID(pdu, TAG, "pdu");
-
+#ifdef SINGLE_THREAD
+    CAEndpoint_t* ep = endpoint;
+#else
     CAEndpoint_t* ep = CACloneEndpoint(endpoint);
     if (!ep)
     {
         OIC_LOG(ERROR, TAG, "clone failed");
         return;
     }
+#endif
 
     CAResponseInfo_t* resInfo = (CAResponseInfo_t*)OICCalloc(1, sizeof(CAResponseInfo_t));
 
     if (!resInfo)
     {
         OIC_LOG(ERROR, TAG, "calloc failed");
+#ifndef SINGLE_THREAD
         CAFreeEndpoint(ep);
+#endif
         return;
     }
 
@@ -269,7 +279,9 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     {
         OIC_LOG(ERROR, TAG, "fail to get Token from retransmission list");
         CADestroyResponseInfoInternal(resInfo);
+#ifndef SINGLE_THREAD
         CAFreeEndpoint(ep);
+#endif
         return;
     }
 
@@ -277,7 +289,9 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     if (NULL == cadata)
     {
         OIC_LOG(ERROR, TAG, "memory allocation failed !");
+#ifndef SINGLE_THREAD
         CAFreeEndpoint(ep);
+#endif
         CADestroyResponseInfoInternal(resInfo);
         return;
     }
@@ -320,11 +334,12 @@ static void CADestroyData(void *data, uint32_t size)
         OIC_LOG(ERROR, TAG, "cadata is NULL");
         return;
     }
-
+#ifndef SINGLE_THREAD
     if (NULL != cadata->remoteEndpoint)
     {
         CAFreeEndpoint(cadata->remoteEndpoint);
     }
+#endif
 
     if (NULL != cadata->requestInfo)
     {
@@ -874,29 +889,33 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
 
     if (CA_REQUEST_DATA == dataType)
     {
+#ifdef SINGLE_THREAD
+        CARequestInfo_t *request = (CARequestInfo_t *)sendData;
+#else
         // clone request info
         CARequestInfo_t *request = CACloneRequestInfo((CARequestInfo_t *)sendData);
-
         if (!request)
         {
             OIC_LOG(ERROR, TAG, "CACloneRequestInfo failed");
             goto exit;
         }
-
+#endif
         cadata->type = request->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
         cadata->requestInfo =  request;
     }
     else if (CA_RESPONSE_DATA == dataType || CA_RESPONSE_FOR_RES == dataType)
     {
+#ifdef SINGLE_THREAD
+        CAResponseInfo_t *response = (CAResponseInfo_t *)sendData;
+#else
         // clone response info
         CAResponseInfo_t *response = CACloneResponseInfo((CAResponseInfo_t *)sendData);
-
         if(!response)
         {
             OIC_LOG(ERROR, TAG, "CACloneResponseInfo failed");
             goto exit;
         }
-
+#endif
         cadata->type = response->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
         cadata->responseInfo = response;
     }
@@ -906,19 +925,26 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         goto exit;
     }
 
+#ifdef SINGLE_THREAD
+    CAEndpoint_t* ep = endpoint;
+#else
     CAEndpoint_t* ep = CACloneEndpoint(endpoint);
     if (!ep)
     {
         OIC_LOG(ERROR, TAG, "endpoint clone failed");
         goto exit;
     }
-
+#endif
     cadata->remoteEndpoint = ep;
     cadata->dataType = dataType;
     return cadata;
 
 exit:
+#ifndef SINGLE_THREAD
     CADestroyData(cadata, sizeof(CAData_t));
+#else
+    OICFree(cadata);
+#endif
     return NULL;
 }
 
@@ -954,11 +980,12 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, TAG, "CAProcessSendData failed");
-        CADestroyData(data, sizeof(CAData_t));
+        OICFree(data);
         return result;
     }
 
-    CADestroyData(data, sizeof(CAData_t));
+    OICFree(data);
+
 #else
 #ifdef WITH_BWT
     if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
