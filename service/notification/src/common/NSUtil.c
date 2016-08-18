@@ -95,6 +95,7 @@ NSResult NSFreeMessage(NSMessage * obj)
     NSFreeMalloc(&(obj->title));
     NSFreeMalloc(&(obj->contentText));
     NSFreeMalloc(&(obj->sourceName));
+    NSFreeMalloc(&(obj->topic));
     NSFreeMediaContents(obj->mediaContents);
 
     OICFree(obj);
@@ -142,6 +143,11 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     if (copyMsg->mediaContents)
     {
        newMsg->mediaContents = NSDuplicateMediaContents(copyMsg->mediaContents);
+    }
+
+    if (copyMsg->topic)
+    {
+        newMsg->topic = OICStrdup(copyMsg->topic);
     }
 
     return newMsg;
@@ -421,6 +427,7 @@ NSMessage * NSInitializeMessage()
     msg->contentText = NULL;
     msg->sourceName = NULL;
     msg->mediaContents = NULL;
+    msg->topic = NULL;
 
     return msg;
 }
