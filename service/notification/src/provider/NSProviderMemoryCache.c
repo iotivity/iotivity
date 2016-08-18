@@ -365,14 +365,21 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
     }
     else if(type == NS_PROVIDER_CACHE_REGISTER_TOPIC)
     {
-        NSCacheTopicData * data = (NSCacheTopicData *) data;
-        OICFree(data->topicName);
+
+        NSCacheTopicData * topicData = (NSCacheTopicData *) data;
+        NS_LOG_V(DEBUG, "topicData->topicName = %s, topicData->state = %d", topicData->topicName,
+                (int)topicData->state);
+
+        OICFree(topicData->topicName);
+
+        NS_LOG_V(DEBUG, "topicData->topicName = %s, topicData->state = %d", "aaa",
+                (int)3);
     }
     else if(type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME ||
             type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID)
     {
-        NSCacheTopicSubData * data = (NSCacheTopicSubData *) data;
-        OICFree(data->topicName);
+        NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) data;
+        OICFree(topicData->topicName);
     }
 
     return NS_OK;
@@ -463,6 +470,12 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 
     NSCacheType type = list->cacheType;
 
+    if(!del)
+    {
+        NS_LOG(DEBUG, "list head is NULL");
+        return NS_FAIL;
+    }
+
     if (NSProviderCompareIdCacheData(type, del->data, delId))
     {
         if (del == list->head) // first object
@@ -473,7 +486,6 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
             }
 
             list->head = del->next;
-
             NSProviderDeleteCacheData(type, del->data);
             OICFree(del);
             pthread_mutex_unlock(&NSCacheMutex);
