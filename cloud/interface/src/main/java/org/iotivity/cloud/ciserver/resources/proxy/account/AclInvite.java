@@ -40,8 +40,8 @@ public class AclInvite extends Resource {
     IRequestChannel mAuthServer = null;
 
     public AclInvite() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.INVITE_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.INVITE_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
 

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -33,11 +32,10 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class ResourceDirectoryTest {
-    private static final String TEST_RD_URI        = OCFConstants.PREFIX_OIC
-            + "/" + OCFConstants.RD_URI;
-    public static final String  DEVICE_PRS_REQ_URI = "/.well-known/ocf/prs";
+    private static final String TEST_RD_URI        = Constants.RD_FULL_URI;
+    public static final String  DEVICE_PRS_REQ_URI = Constants.DEVICE_PRESENCE_FULL_URI;
     public static final String  DEVICE_LIST_KEY    = "devices";
-    public static final String  RES_PRS_URI        = "/oic/ad";
+    public static final String  RES_PRS_URI        = Constants.RESOURCE_PRESENCE_FULL_URI;
     // private DeviceServerSystem deviceServerSystem = new DeviceServerSystem();
     private String              di                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     String                      userId             = "testuser";
@@ -85,10 +83,7 @@ public class ResourceDirectoryTest {
         IRequest request = makeResourcePublishRequest();
         deviceServerSystem.onRequestReceived(mockDevice, request);
         assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriPath()
-                .contains(Constants.PREFIX_WELL_KNOWN + "/"
-                        + Constants.PREFIX_OCF + "/" + Constants.ACL_URI + "/"
-                        + Constants.GROUP_URI + "/"));
+        assertTrue(req.getUriPath().contains(Constants.GROUP_FULL_URI + "/"));
     }
 
     IRequest                                rdPublishRequest      = makeResourcePublishRequest();

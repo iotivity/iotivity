@@ -17,6 +17,7 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -30,7 +31,7 @@ import org.mockito.stubbing.Answer;
 
 public class AccountTest {
     private String             di                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    public static final String ACCOUNT_URI        = "/.well-known/ocf/account";
+    public static final String ACCOUNT_URI        = Constants.ACCOUNT_FULL_URI;
     private String             authProvider       = "github";
     private String             authCode           = "f6b55d8d8a27e0d32ab8";
     String                     userId             = "testuser";

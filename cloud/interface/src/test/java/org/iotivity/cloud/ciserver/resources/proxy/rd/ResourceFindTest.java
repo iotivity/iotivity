@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -24,6 +23,7 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -36,8 +36,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class ResourceFindTest {
-    private static final String TEST_RESOURCE_FIND_URI = "/"
-            + OCFConstants.PREFIX_OIC + "/" + OCFConstants.WELL_KNOWN_URI;
+    private static final String TEST_RESOURCE_FIND_URI = Constants.WELL_KNOWN_FULL_URI;
     private String              di                     = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     private CoapDevice          mockDevice             = mock(CoapDevice.class);
     IResponse                   res                    = null;
@@ -167,7 +166,7 @@ public class ResourceFindTest {
         HashMap<String, List<String>> queryMap = req.getUriQueryMap();
         assertTrue(latch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     @Test
@@ -183,7 +182,7 @@ public class ResourceFindTest {
         // which includes device ID and the accesstoken
         assertTrue(latch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     private IResponse responseFromAccountServer() {

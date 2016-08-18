@@ -54,8 +54,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class SessionResourceTest {
-    private static final String            DEFAULT_AUTH_LOGIN        = "/.well-known/ocf/account/session";
-    private static final String            DEFAULT_AUTH_LOGOUT       = "/.well-known/ocf/account/session";
+    private static final String            DEFAULT_AUTH_LOGIN        = Constants.ACCOUNT_SESSION_FULL_URI;
+    private static final String            DEFAULT_AUTH_LOGOUT       = Constants.ACCOUNT_SESSION_FULL_URI;
     private static final String            DEVICE_ID                 = "d0001";
     private static final String            ACCESS_TOKEN              = "5f5536c896da7dd437316585b86ef9dd03441c40";
     private static final String            REFRESH_TOKEN             = "rt0001";

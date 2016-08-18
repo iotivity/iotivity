@@ -22,6 +22,7 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -34,9 +35,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class DevicePresenceTest {
-    public static final String DEVICE_PRS_REQ_URI = "/.well-known/ocf/prs";
+    public static final String DEVICE_PRS_REQ_URI = Constants.DEVICE_PRESENCE_FULL_URI;
     public static final String DEVICE_LIST_KEY    = "devices";
-    public static final String RES_PRS_URI        = "/oic/ad";
+    public static final String RES_PRS_URI        = Constants.RESOURCE_PRESENCE_FULL_URI;
     private String             di                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     String                     userId             = "testuser";
     private CoapDevice         mockDevice         = mock(CoapDevice.class);
@@ -125,7 +126,7 @@ public class DevicePresenceTest {
         HashMap<String, List<String>> queryMap = req.getUriQueryMap();
         assertTrue(queryMap.containsKey("mid"));
         assertTrue(req.getMethod().equals(RequestMethod.GET));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     // @InjectMocks for testPresenceDeregisterSpecificDeviceOnRequestReceived
@@ -159,7 +160,7 @@ public class DevicePresenceTest {
         assertTrue(req.getMethod().equals(RequestMethod.GET));
         HashMap<String, List<String>> queryMap = req.getUriQueryMap();
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     public IRequest makePresenceEntireDevice() {
@@ -205,7 +206,7 @@ public class DevicePresenceTest {
         midList.add("u0001");
         responsePayload.put("midlist", midList);
         IRequest requestFromCitoAs = MessageBuilder.createRequest(
-                RequestMethod.GET, "/.well-known/ocf/acl/group/g0001",
+                RequestMethod.GET, Constants.GROUP_FULL_URI + "/g0001",
                 "mid=null");
         IResponse response = MessageBuilder.createResponse(requestFromCitoAs,
                 ResponseStatus.CONTENT, ContentFormat.APPLICATION_CBOR,

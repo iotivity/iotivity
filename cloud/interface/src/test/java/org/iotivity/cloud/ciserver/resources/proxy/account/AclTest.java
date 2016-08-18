@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -27,8 +27,7 @@ import org.mockito.stubbing.Answer;
 
 public class AclTest {
     private static final String TEST_RESOURCE_ACI_URI = "/"
-            + OCFConstants.PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF
-            + "/" + OCFConstants.ACL_URI;
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI;
     private CoapDevice          mockDevice            = mock(CoapDevice.class);
     IRequest                    req                   = null;
     ConnectorPool               connectorPool         = null;

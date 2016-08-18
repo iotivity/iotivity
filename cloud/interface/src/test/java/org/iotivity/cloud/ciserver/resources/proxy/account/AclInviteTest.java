@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -19,6 +18,7 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -31,9 +31,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class AclInviteTest {
-    private static final String TEST_RESOURCE_INVITE_URI = "/"
-            + OCFConstants.PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF
-            + "/" + OCFConstants.ACL_URI + "/" + OCFConstants.INVITE_URI;
+    private static final String TEST_RESOURCE_INVITE_URI = Constants.INVITE_FULL_URI;
+
     private CoapDevice          mockDevice               = mock(
             CoapDevice.class);
     IRequest                    req                      = null;

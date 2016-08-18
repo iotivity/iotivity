@@ -28,7 +28,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class TokenRefreshResourceTest {
-    private static final String            REFRESH_TOKEN_URI         = "/.well-known/ocf/account/tokenrefresh";
+    private static final String            REFRESH_TOKEN_URI         = Constants.ACCOUNT_TOKENREFRESH_FULL_URI;
     private static final String            DEVICE_ID                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     private String                         mAuthProvider             = "Samsung";
     private String                         mRefreshToken             = "rt0001";

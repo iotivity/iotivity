@@ -52,7 +52,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class GroupResourceTest {
-    private static final String           GROUP_URI         = "/.well-known/ocf/acl/group";
+    private static final String           GROUP_URI         = Constants.GROUP_FULL_URI;
     private final String                  mUserUuid         = "bc38f243-aab5-44d3-8eb9-4a54ebbaf359";
     private String                        mGroupId          = null;
     final CountDownLatch                  mLatch            = new CountDownLatch(

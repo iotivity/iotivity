@@ -44,8 +44,8 @@ public class SessionResource extends Resource {
     private AccountManager                mAsManager = new AccountManager();
 
     public SessionResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI, Constants.SESSION_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
+                Constants.SESSION_URI));
     }
 
     @Override

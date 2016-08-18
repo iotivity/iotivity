@@ -16,6 +16,7 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -28,7 +29,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class MessageQueueTest {
-    private static final String TEST_MQ_BROKER_URI = "/.well-known/ocf/ps/";
+    private static final String TEST_MQ_BROKER_URI = Constants.MQ_BROKER_FULL_URI;
     String                      userId             = "testuser";
     private CoapDevice          mockDevice         = null;
     IResponse                   res                = null;

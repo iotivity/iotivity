@@ -45,8 +45,8 @@ public class TokenRefreshResource extends Resource {
     private AccountManager                mAsManager = new AccountManager();
 
     public TokenRefreshResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI, Constants.TOKEN_REFRESH_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
+                Constants.TOKEN_REFRESH_URI));
     }
 
     @Override

@@ -48,6 +48,7 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.mqserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +57,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class MQBrokerResourceTest {
-    private final String     MQ_BROKER_URI     = "/.well-known/ocf/ps";
+    private final String     MQ_BROKER_URI     = Constants.MQ_BROKER_FULL_URI;
 
     private MQBrokerResource mMqBrokerResource = null;
     private String           mTopicPrefix      = null;
@@ -105,7 +106,8 @@ public class MQBrokerResourceTest {
 
     @Test
     // test subtopic create
-    public void testSubTopicCreationOnDefaultRequestReceived() throws Exception {
+    public void testSubTopicCreationOnDefaultRequestReceived()
+            throws Exception {
         System.out
                 .println("\t--------------SubTopic Creation Test------------");
         String mainTopic = mTopicPrefix + "Main";
@@ -230,8 +232,8 @@ public class MQBrokerResourceTest {
     // test notify
     public void testTopicSubscribeNofityOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Topic Publish Notify Test------------");
+        System.out.println(
+                "\t--------------Topic Publish Notify Test------------");
         CoapDevice mockSubscriber = mock(CoapDevice.class);
         CountDownLatch latchSubscriber = new CountDownLatch(2);
         AtomicBoolean countTrue = new AtomicBoolean();
@@ -263,8 +265,8 @@ public class MQBrokerResourceTest {
         PublishTopic(mMockDevice, topic);
         // verity if subscriber receives two responses
         assertTrue(latchSubscriber.await(2L, SECONDS));
-        verify(mockSubscriber, timeout(5000).times(2)).sendResponse(
-                Mockito.anyObject());
+        verify(mockSubscriber, timeout(5000).times(2))
+                .sendResponse(Mockito.anyObject());
     }
 
     @Test
@@ -289,9 +291,9 @@ public class MQBrokerResourceTest {
         ArrayList<String> topicList = payloadData.get("topiclist");
         System.out.println("\ttopicList : " + topicList);
         assertTrue(methodCheck);
-        assertTrue(topicList.contains("/.well-known/ocf/ps/" + topic));
-        assertTrue(topicList.contains("/.well-known/ocf/ps/" + topic + "/"
-                + subTopic));
+        assertTrue(topicList.contains(MQ_BROKER_URI + "/" + topic));
+        assertTrue(topicList
+                .contains(MQ_BROKER_URI + "/" + topic + "/" + subTopic));
     }
 
     @Test
@@ -314,8 +316,8 @@ public class MQBrokerResourceTest {
     @Test(expected = NotFoundException.class)
     public void testNotCreatedTopicDeleteOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Not Created Topic Delete Test------------");
+        System.out.println(
+                "\t--------------Not Created Topic Delete Test------------");
         String topic = mTopicPrefix + "NotCreatedTopicDeleteTest";
 
         DeleteTopic(mMockDevice, topic);
@@ -324,8 +326,8 @@ public class MQBrokerResourceTest {
     @Test(expected = NotFoundException.class)
     public void testNotCreatedSubtopicDeleteOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Not Created Subtopic Delete Test------------");
+        System.out.println(
+                "\t--------------Not Created Subtopic Delete Test------------");
         String topic = mTopicPrefix + "Maintopic";
 
         CreateTopic(mMockDevice, topic);
@@ -339,8 +341,8 @@ public class MQBrokerResourceTest {
     // duplicate topic creation
     public void testDuplicatedTopicCreateOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Duplicated Topic Creation Test------------");
+        System.out.println(
+                "\t--------------Duplicated Topic Creation Test------------");
         String topic = mTopicPrefix + "DuplicateTest";
         // create topic
         CreateTopic(mMockDevice, topic);
@@ -352,8 +354,8 @@ public class MQBrokerResourceTest {
     // duplicate subtopic creation
     public void testDuplicatedSubtopicCreateOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Duplicated Subtopic Creation Test------------");
+        System.out.println(
+                "\t--------------Duplicated Subtopic Creation Test------------");
 
         String topic = mTopicPrefix + "DuplicateTest2";
 
@@ -372,8 +374,8 @@ public class MQBrokerResourceTest {
     // publish not created topic
     public void testNotCreatedTopicPublishOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Not Created Topic Publish Test------------");
+        System.out.println(
+                "\t--------------Not Created Topic Publish Test------------");
         String topic = mTopicPrefix + "NotCreatedTopicTest";
         // publish not created topic
         PublishTopic(mMockDevice, topic);
@@ -383,8 +385,8 @@ public class MQBrokerResourceTest {
     // subscribe not created topic
     public void testNotCreatedTopicSubscribeOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Not Created Topic Subscribe Test------------");
+        System.out.println(
+                "\t--------------Not Created Topic Subscribe Test------------");
         String topic = mTopicPrefix + "NotCreatedTopicSubscribeTest";
         SubscribeTopic(mMockDevice, topic, Observe.SUBSCRIBE);
     }
@@ -393,16 +395,16 @@ public class MQBrokerResourceTest {
     // unsubscribe not created topic
     public void testNotCreatedTopicUnSubscribeOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Not Created Topic Unsubscribe Test------------");
+        System.out.println(
+                "\t--------------Not Created Topic Unsubscribe Test------------");
         String topic = mTopicPrefix + "NotCreatedTopicUnSubscribeTest";
         SubscribeTopic(mMockDevice, topic, Observe.UNSUBSCRIBE);
     }
 
     @Test(expected = PreconditionFailedException.class)
     public void testTopicPublishWithoutMessage() throws Exception {
-        System.out
-                .println("\t--------------Topic Publish Without Message Test------------");
+        System.out.println(
+                "\t--------------Topic Publish Without Message Test------------");
         String topic = mTopicPrefix + "ForPubWithoutMessage";
 
         // topic creation
@@ -420,8 +422,8 @@ public class MQBrokerResourceTest {
     // create subtopic under not created maintopic
     public void testSubTopicCreateUnderNotCreatedTopicOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Create Subtopic under Not Created Maintopic  ------------");
+        System.out.println(
+                "\t--------------Create Subtopic under Not Created Maintopic  ------------");
         String mainTopic = mTopicPrefix + "NotCreatedMain";
         String subTopic = mTopicPrefix + "NotCreatedSub";
         // create sub topic
@@ -432,8 +434,8 @@ public class MQBrokerResourceTest {
     // create topic which has 'core.light' rt
     public void testTopicCreationWithRtOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Topic Creation with RT Test------------");
+        System.out.println(
+                "\t--------------Topic Creation with RT Test------------");
         String topicName = mTopicPrefix + "RtTest";
         String rt = "rt=core.light";
         CreateTopicWithRt(mMockDevice, topicName, rt);
@@ -445,8 +447,8 @@ public class MQBrokerResourceTest {
     // create topic which has 'core.light' rt
     public void testSubtopicCreationWithRtOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Subtopic Creation with RT Test------------");
+        System.out.println(
+                "\t--------------Subtopic Creation with RT Test------------");
         String topicName = mTopicPrefix + "RtTest2";
         String rt = "rt=core.light";
 
@@ -464,8 +466,8 @@ public class MQBrokerResourceTest {
     // test discover request with rt
     public void testDiscoverTopicWithRtOnDefaultRequestReceived()
             throws Exception {
-        System.out
-                .println("\t--------------Topic Discover with Rt Test------------");
+        System.out.println(
+                "\t--------------Topic Discover with Rt Test------------");
         String topicName = mTopicPrefix + "DiscoverRtTest";
         String topicNameWithoutRt = mTopicPrefix + "DiscoverRtTestWithoutRt";
         String rt = "rt=core.light";
@@ -485,9 +487,9 @@ public class MQBrokerResourceTest {
         ArrayList<String> topicList = payloadData.get("topiclist");
         System.out.println("\ttopicList : " + topicList);
         assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
-        assertTrue(topicList.contains("/.well-known/ocf/ps/" + topicName));
-        assertFalse(topicList.contains("/.well-known/ocf/ps/"
-                + topicNameWithoutRt));
+        assertTrue(topicList.contains(MQ_BROKER_URI + "/" + topicName));
+        assertFalse(
+                topicList.contains(MQ_BROKER_URI + "/" + topicNameWithoutRt));
     }
 
     private IRequest PublishTopicRequest(String topicName) {
@@ -507,12 +509,13 @@ public class MQBrokerResourceTest {
 
     private IRequest CreateTopicRequest(String topicName) {
         IRequest request = null;
-        request = MessageBuilder.createRequest(RequestMethod.PUT, MQ_BROKER_URI
-                + "/" + topicName, null);
+        request = MessageBuilder.createRequest(RequestMethod.PUT,
+                MQ_BROKER_URI + "/" + topicName, null);
         return request;
     }
 
-    private IRequest CreateSubTopicRequest(String topicName, String subTopicName) {
+    private IRequest CreateSubTopicRequest(String topicName,
+            String subTopicName) {
         IRequest request = null;
         String uri = MQ_BROKER_URI + "/" + topicName + "/" + subTopicName;
         request = MessageBuilder.createRequest(RequestMethod.PUT, uri, null);
@@ -521,8 +524,8 @@ public class MQBrokerResourceTest {
 
     private IRequest CreateTopicWithRtRequest(String topicName, String type) {
         IRequest request = null;
-        request = MessageBuilder.createRequest(RequestMethod.PUT, MQ_BROKER_URI
-                + "/" + topicName, type);
+        request = MessageBuilder.createRequest(RequestMethod.PUT,
+                MQ_BROKER_URI + "/" + topicName, type);
         return request;
     }
 
@@ -542,15 +545,15 @@ public class MQBrokerResourceTest {
 
     private IRequest DiscoverTopicRequest() {
         IRequest request = null;
-        request = MessageBuilder.createRequest(RequestMethod.GET,
-                MQ_BROKER_URI, null);
+        request = MessageBuilder.createRequest(RequestMethod.GET, MQ_BROKER_URI,
+                null);
         return request;
     }
 
     private IRequest DiscoverTopicWithRtRequest(String rt) {
         IRequest request = null;
-        request = MessageBuilder.createRequest(RequestMethod.GET,
-                MQ_BROKER_URI, rt);
+        request = MessageBuilder.createRequest(RequestMethod.GET, MQ_BROKER_URI,
+                rt);
         return request;
     }
 
@@ -647,8 +650,8 @@ public class MQBrokerResourceTest {
 
     private boolean hashmapCheck(IResponse response, String propertyName) {
         Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
-        HashMap<String, Object> payloadData = mCbor.parsePayloadFromCbor(
-                response.getPayload(), HashMap.class);
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(response.getPayload(), HashMap.class);
         if (payloadData.get(propertyName) != null)
             return true;
         else

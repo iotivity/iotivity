@@ -21,9 +21,9 @@
  */
 package org.iotivity.cloud.ciserver;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 
-public class Constants extends OCFConstants {
+public class Constants extends OICConstants {
 
     public static final int    MIN_TO_LIVE         = 10;
 

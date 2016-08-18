@@ -37,8 +37,7 @@ public class Account extends Resource {
     IRequestChannel mAuthServer = null;
 
     public Account() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
     }

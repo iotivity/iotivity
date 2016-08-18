@@ -46,8 +46,8 @@ public class InviteResource extends Resource {
     private Cbor<HashMap<String, Object>> mCbor          = new Cbor<>();
 
     public InviteResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.INVITE_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.INVITE_URI));
     }
 
     @Override
@@ -67,8 +67,8 @@ public class InviteResource extends Resource {
                 response = handleDeleteRequest(request);
                 break;
             default:
-                throw new BadRequestException(request.getMethod()
-                        + " request type is not supported");
+                throw new BadRequestException(
+                        request.getMethod() + " request type is not supported");
         }
 
         srcDevice.sendResponse(response);
@@ -106,8 +106,8 @@ public class InviteResource extends Resource {
     private IResponse handlePostRequest(IRequest request)
             throws ServerException {
 
-        HashMap<String, Object> payload = mCbor.parsePayloadFromCbor(
-                request.getPayload(), HashMap.class);
+        HashMap<String, Object> payload = mCbor
+                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
         checkPayloadException(
                 Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_INVITE),

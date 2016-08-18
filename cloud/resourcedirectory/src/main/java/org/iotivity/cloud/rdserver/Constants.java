@@ -24,9 +24,9 @@ package org.iotivity.cloud.rdserver;
 import java.util.Arrays;
 import java.util.List;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 
-public class Constants extends OCFConstants {
+public class Constants extends OICConstants {
 
     public static final String       RD_DB_NAME              = "RD_DB";
     public static final String       RD_TABLE                = "RD_TABLE";

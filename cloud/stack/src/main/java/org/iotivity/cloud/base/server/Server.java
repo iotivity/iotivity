@@ -29,7 +29,7 @@ import java.util.List;
 
 import javax.net.ssl.SSLException;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.util.Log;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -96,9 +96,9 @@ public abstract class Server {
 
             if (tlsMode == true) {
 
-                File serverCert = new File(OCFConstants.CLOUD_CERT_FILE);
+                File serverCert = new File(OICConstants.CLOUD_CERT_FILE);
 
-                File serverKey = new File(OCFConstants.CLOUD_KEY_FILE);
+                File serverKey = new File(OICConstants.CLOUD_KEY_FILE);
 
                 mSslContext = SslContextBuilder.forServer(serverCert, serverKey)
                         .build();

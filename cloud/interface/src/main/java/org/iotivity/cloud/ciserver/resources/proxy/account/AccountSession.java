@@ -40,8 +40,8 @@ public class AccountSession extends Resource {
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public AccountSession() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI, Constants.SESSION_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
+                Constants.SESSION_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
     }

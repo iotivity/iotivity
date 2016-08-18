@@ -42,8 +42,8 @@ public class AclGroup extends Resource {
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public AclGroup() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.GROUP_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.GROUP_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
     }

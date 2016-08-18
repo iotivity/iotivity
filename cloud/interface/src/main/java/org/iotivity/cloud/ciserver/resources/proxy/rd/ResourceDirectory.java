@@ -85,8 +85,7 @@ public class ResourceDirectory extends Resource {
             throws ServerException {
 
         StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
-        uriPath.append(Constants.PREFIX_OCF + "/");
+        uriPath.append(Constants.PREFIX_OIC + "/");
         uriPath.append(Constants.ACL_URI + "/");
         uriPath.append(Constants.GROUP_URI + "/");
         uriPath.append(srcDevice.getUserId());

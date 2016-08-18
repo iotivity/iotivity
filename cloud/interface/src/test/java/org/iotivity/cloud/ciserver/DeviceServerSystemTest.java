@@ -8,7 +8,7 @@ import static org.mockito.Mockito.mock;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -190,10 +190,7 @@ public class DeviceServerSystemTest {
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapRequest req = (CoapRequest) args[0];
-                assertEquals(req.getUriPath(),
-                        "/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
-                                + OCFConstants.PREFIX_OCF + "/"
-                                + OCFConstants.ACCOUNT_URI);
+                assertEquals(req.getUriPath(), Constants.ACCOUNT_FULL_URI);
                 assertTrue(cbor
                         .parsePayloadFromCbor(req.getPayload(), HashMap.class)
                         .containsKey("di"));
@@ -206,10 +203,8 @@ public class DeviceServerSystemTest {
         payloadData.put("di", "sampleDevice");
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
-                "/" + OCFConstants.PREFIX_WELL_KNOWN + "/"
-                        + OCFConstants.PREFIX_OCF + "/"
-                        + OCFConstants.ACCOUNT_URI,
-                null, ContentFormat.APPLICATION_CBOR,
+                Constants.ACCOUNT_FULL_URI, null,
+                ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));
         coapAuthHandler.channelRead(ctx, request);
     }
@@ -232,8 +227,8 @@ public class DeviceServerSystemTest {
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapRequest req = (CoapRequest) args[0];
-                assertEquals(req.getUriPath(), "/" + OCFConstants.PREFIX_OIC
-                        + "/" + OCFConstants.KEEP_ALIVE_URI);
+                assertEquals(req.getUriPath(), "/" + OICConstants.PREFIX_OIC
+                        + "/" + OICConstants.KEEP_ALIVE_URI);
 
                 latch.countDown();
                 return null;
@@ -242,8 +237,8 @@ public class DeviceServerSystemTest {
 
         IRequest request = MessageBuilder
                 .createRequest(RequestMethod.POST,
-                        "/" + OCFConstants.PREFIX_OIC + "/"
-                                + OCFConstants.KEEP_ALIVE_URI,
+                        "/" + OICConstants.PREFIX_OIC + "/"
+                                + OICConstants.KEEP_ALIVE_URI,
                         null, null, null);
         coapAuthHandler.channelRead(ctx, request);
     }

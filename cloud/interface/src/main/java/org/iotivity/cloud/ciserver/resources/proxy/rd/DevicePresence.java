@@ -45,7 +45,7 @@ public class DevicePresence extends Resource {
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
 
     public DevicePresence() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
+        super(Arrays.asList(Constants.PREFIX_OIC,
                 Constants.DEVICE_PRESENCE_URI));
 
         mASServer = ConnectorPool.getConnection("account");
@@ -145,8 +145,7 @@ public class DevicePresence extends Resource {
         uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
 
         StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
-        uriPath.append(Constants.PREFIX_OCF + "/");
+        uriPath.append(Constants.PREFIX_OIC + "/");
         uriPath.append(Constants.ACL_URI + "/");
         uriPath.append(Constants.GROUP_URI + "/");
         uriPath.append(srcDevice.getUserId());

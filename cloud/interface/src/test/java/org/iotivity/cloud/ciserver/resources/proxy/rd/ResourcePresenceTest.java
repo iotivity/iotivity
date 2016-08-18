@@ -20,6 +20,7 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -32,9 +33,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class ResourcePresenceTest {
-    public static final String DEVICE_PRS_REQ_URI = "/.well-known/ocf/prs";
+    public static final String DEVICE_PRS_REQ_URI = Constants.DEVICE_PRESENCE_FULL_URI;
     public static final String DEVICE_LIST_KEY    = "devices";
-    public static final String RES_PRS_URI        = "/oic/ad";
+    public static final String RES_PRS_URI        = Constants.RESOURCE_PRESENCE_FULL_URI;
     private String             di                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     private CoapDevice         mockDevice         = mock(CoapDevice.class);
     IResponse                  res                = null;
@@ -86,7 +87,7 @@ public class ResourcePresenceTest {
         // which includes the accesstoken and the di
         assertTrue(latch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     @Test
@@ -100,7 +101,7 @@ public class ResourcePresenceTest {
         HashMap<String, List<String>> queryMap = req.getUriQueryMap();
         assertTrue(latch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     IRequest                               requestEntireDevices = MessageBuilder

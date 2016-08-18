@@ -62,7 +62,7 @@ public class DevicePresenceResource extends Resource {
     private HashMap<String, List<String>>                        mSubscribedDevices = null;
 
     public DevicePresenceResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
+        super(Arrays.asList(Constants.PREFIX_OIC,
                 Constants.DEVICE_PRESENCE_URI));
 
         mDeviceSubscriber = new HashMap<>();

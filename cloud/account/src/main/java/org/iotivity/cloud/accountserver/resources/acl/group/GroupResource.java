@@ -46,8 +46,8 @@ public class GroupResource extends Resource {
     private static GroupManager           mGrManager = new GroupManager();
 
     public GroupResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.GROUP_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.GROUP_URI));
     }
 
     public static GroupManager getInstance() {

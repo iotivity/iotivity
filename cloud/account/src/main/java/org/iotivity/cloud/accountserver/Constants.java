@@ -21,9 +21,9 @@
  */
 package org.iotivity.cloud.accountserver;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 
-public class Constants extends OCFConstants {
+public class Constants extends OICConstants {
 
     // Database name
 

@@ -22,20 +22,15 @@
 package org.iotivity.cloud.accountserver.resources.certificate;
 
 import java.security.PublicKey;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.iotivity.cloud.accountserver.Constants;
-
 import org.iotivity.cloud.accountserver.x509.cert.CSRParser;
-import org.iotivity.cloud.accountserver.x509.cert.CertificateIssuerConfig;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateBuilder;
+import org.iotivity.cloud.accountserver.x509.cert.CertificateIssuerConfig;
 import org.iotivity.cloud.accountserver.x509.cert.CertificatePrivateKeyPair;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
@@ -50,13 +45,13 @@ import org.iotivity.cloud.util.Cbor;
 
 public class CertificateResource extends Resource {
     /* resource uri for certificate issuer */
-    private Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
-    private CertificateManager mCertificateManager = new CertificateManager();
-    private static String DEVICE_OU = "OCF Device";
+    private Cbor<HashMap<String, Object>> mCbor               = new Cbor<>();
+    private CertificateManager            mCertificateManager = new CertificateManager();
+    private static String                 DEVICE_OU           = "OCF Device";
 
     public CertificateResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.CREDPROV_URI, Constants.CERT_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.CREDPROV_URI,
+                Constants.CERT_URI));
     }
 
     @Override
@@ -101,13 +96,16 @@ public class CertificateResource extends Resource {
                 throw new BadRequestException("Bad CSR");
             }
 
-            CertificateIssuerConfig ciConfig = CertificateIssuerConfig.getInstance();
+            CertificateIssuerConfig ciConfig = CertificateIssuerConfig
+                    .getInstance();
 
             Date notBefore = ciConfig.getNotBeforeDate();
             Date notAfter = ciConfig.getNotAfterDate();
 
-            CertificateBuilder certBuilder = new CertificateBuilder(parser.getCommonName(), pubKey,
-                    notBefore, notAfter, ciConfig.getNextSerialNumber(), ciConfig.getRootCertificate());
+            CertificateBuilder certBuilder = new CertificateBuilder(
+                    parser.getCommonName(), pubKey, notBefore, notAfter,
+                    ciConfig.getNextSerialNumber(),
+                    ciConfig.getRootCertificate());
 
             certBuilder.setSubjectC(parser.getCountry());
 
@@ -119,17 +117,21 @@ public class CertificateResource extends Resource {
 
             try {
                 devCert = certBuilder.build();
-                //  System.out.println("============================== DEV CERT ===========================");
-                //  System.out.println();
-                //  System.out.println(devCert.getCertificate().toString());
-                //  System.out.println("===================================================================");
+                // System.out.println("============================== DEV CERT
+                // ===========================");
+                // System.out.println();
+                // System.out.println(devCert.getCertificate().toString());
+                // System.out.println("===================================================================");
 
                 if (payloadData.containsKey(Constants.REQ_DEVICE_ID)) {
-                    mCertificateManager.addDeviceId((String) payloadData.get(Constants.RESP_DEVICE_ID));
+                    mCertificateManager.addDeviceId(
+                            (String) payloadData.get(Constants.RESP_DEVICE_ID));
                 }
 
-                responsePayload = mCertificateManager.createPayload(devCert.getCertificate().getEncoded(),
-                        ciConfig.getRootCertificate().getCertificate().getEncoded());
+                responsePayload = mCertificateManager.createPayload(
+                        devCert.getCertificate().getEncoded(),
+                        ciConfig.getRootCertificate().getCertificate()
+                                .getEncoded());
 
             } catch (Exception e) {
                 throw new BadRequestException("Certificate generation error");
@@ -138,7 +140,6 @@ public class CertificateResource extends Resource {
         } else {
             throw new BadRequestException("CSR is null");
         }
-
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
