@@ -596,8 +596,10 @@ NSTopics * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char
 
 size_t NSProviderGetListSize(NSCacheElement * firstElement)
 {
+    pthread_mutex_lock(&NSCacheMutex);
     if(!firstElement)
     {
+        pthread_mutex_unlock(&NSCacheMutex);
         return 0;
     }
 
@@ -611,5 +613,6 @@ size_t NSProviderGetListSize(NSCacheElement * firstElement)
         iter = iter->next;
     }
 
+    pthread_mutex_unlock(&NSCacheMutex);
     return cnt;
 }
