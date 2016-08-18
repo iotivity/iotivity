@@ -64,9 +64,14 @@ OCStackApplicationResult NSConsumerPresenceListener(
     if (payload->trigger == OC_PRESENCE_TRIGGER_DELETE ||
             clientResponse->result == OC_STACK_PRESENCE_STOPPED)
     {
-        // TODO find request and cancel
         NS_LOG(DEBUG, "stopped presence or resource is deleted.");
-        //OCCancel(handle, NS_QOS, NULL, 0);
+        NS_LOG(DEBUG, "build NSTask");
+        OCDevAddr * addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        NS_VERIFY_NOT_NULL(addr, OC_STACK_KEEP_TRANSACTION);
+        memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
+
+        NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DELETED, addr);
+        NS_VERIFY_NOT_NULL(task, OC_STACK_KEEP_TRANSACTION);
     }
 
     else if (payload->trigger == OC_PRESENCE_TRIGGER_CREATE)

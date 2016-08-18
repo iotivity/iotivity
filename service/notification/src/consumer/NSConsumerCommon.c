@@ -572,6 +572,7 @@ bool NSOCResultToSuccess(OCStackResult ret)
         case OC_STACK_RESOURCE_CHANGED:
             return true;
         default:
+            NS_LOG_V(DEBUG, "OCStackResult : %d", (int)ret);
             return false;
     }
 }

@@ -37,6 +37,8 @@ NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj
 NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newObj);
 NSCacheElement * NSPopProviderCacheList(NSCacheList * list);
 
+NSCacheElement * NSGetProviderFromAddr(NSCacheList * list, const char * addr, uint16_t port);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

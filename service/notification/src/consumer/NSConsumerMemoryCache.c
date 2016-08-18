@@ -78,6 +78,43 @@ NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId)
     return NULL;
 }
 
+NSCacheElement * NSGetProviderFromAddr(NSCacheList * list, const char * addr, uint16_t port)
+{
+    NS_VERIFY_NOT_NULL(list, NULL);
+    NS_VERIFY_NOT_NULL(addr, NULL);
+    NS_VERIFY_NOT_NULL(
+            (list->cacheType != NS_CONSUMER_CACHE_PROVIDER) ? NULL : (void *) 1, NULL);
+
+    pthread_mutex_t * mutex = NSGetCacheMutex();
+    pthread_mutex_lock(mutex);
+
+    NSCacheElement * iter = list->head;
+
+    while (iter)
+    {
+        NSProviderConnectionInfo * connection =
+                ((NSProviderConnectionInfo *) iter->data)->next;
+        while (connection)
+        {
+            char * conAddr = connection->addr->addr;
+            uint16_t conPort = connection->addr->port;
+
+            if (!strcmp(conAddr, addr) && conPort == port)
+            {
+                pthread_mutex_unlock(mutex);
+                return iter;
+            }
+            connection = connection->next;
+        }
+
+        iter = iter->next;
+    }
+
+    NS_LOG (DEBUG, "No Cache Element");
+    pthread_mutex_unlock(mutex);
+    return NULL;
+}
+
 NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
     NS_VERIFY_NOT_NULL(list, NS_ERROR);

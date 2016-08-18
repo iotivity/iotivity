@@ -211,6 +211,33 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     return NULL;
 }
 
+void NSProviderDeletedPostClean(
+        NSTask * task, NSProvider_internal * prov1, NSProvider_internal * prov2)
+{
+    if (task && task->taskData)
+    {
+        if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL)
+        {
+            NSRemoveProvider((NSProvider *) task->taskData);
+        }
+        else if (task->taskType == TASK_CONSUMER_PROVIDER_DELETED)
+        {
+            NSOICFree(task->taskData);
+        }
+        NSOICFree(task);
+    }
+
+    if (prov1)
+    {
+        NSRemoveProvider_internal(prov1);
+    }
+
+    if (prov2)
+    {
+        NSRemoveProvider_internal(prov2);
+    }
+}
+
 void NSConsumerTaskProcessing(NSTask * task)
 {
     switch (task->taskType)
@@ -256,21 +283,38 @@ void NSConsumerTaskProcessing(NSTask * task)
             break;
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
+        case TASK_CONSUMER_PROVIDER_DELETED:
         {
-            NSProvider_internal * data =
-                    NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
-            NS_VERIFY_NOT_NULL_V(data);
+            NSProvider_internal * data = NULL;
+
+            if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL)
+            {
+                data = NSConsumerFindNSProvider(((NSProvider *) task->taskData)->providerId);
+                NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
+                        data, NSProviderDeletedPostClean(task, NULL, NULL));
+            }
+            else if (task->taskType == TASK_CONSUMER_PROVIDER_DELETED)
+            {
+                data = NSFindProviderFromAddr((OCDevAddr *) task->taskData);
+                NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
+                        data, NSProviderDeletedPostClean(task, NULL, NULL));
+            }
+
+            NSProvider_internal * data2 = NSCopyProvider_internal(data);
+            NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
+                        data2, NSProviderDeletedPostClean(task, data, NULL));
+
             NSTask * conTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data);
-            NS_VERIFY_NOT_NULL_V(conTask);
+            NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
+                        conTask, NSProviderDeletedPostClean(task, data, data2));
             NSConsumerCommunicationTaskProcessing(conTask);
 
-            data = NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
-            NS_VERIFY_NOT_NULL_V(data);
-            NSTask * conTask2 = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data);
+            NSTask * conTask2 = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, data2);
+            NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
+                        conTask, NSProviderDeletedPostClean(task, NULL, data2));
             NSConsumerInternalTaskProcessing(conTask2);
 
-            NSRemoveProvider((NSProvider *)task->taskData);
-            NSOICFree(task);
+            NSProviderDeletedPostClean(task, NULL, NULL);
             break;
         }
         case TASK_RECV_SYNCINFO:

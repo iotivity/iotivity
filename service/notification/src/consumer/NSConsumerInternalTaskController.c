@@ -112,6 +112,25 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
     return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
 }
 
+NSProvider_internal * NSFindProviderFromAddr(OCDevAddr * addr)
+{
+    NS_VERIFY_NOT_NULL(addr, NULL);
+
+    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
+    if (!ProviderCache)
+    {
+        NS_LOG(DEBUG, "Provider Cache does not intialized.");
+        return NULL;
+    }
+
+    NSCacheElement * cacheElement =
+            NSGetProviderFromAddr(ProviderCache, addr->addr, addr->port);
+
+    NS_VERIFY_NOT_NULL(cacheElement, NULL);
+
+    return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
+}
+
 void NSRemoveCacheElementMessage(NSCacheElement * obj)
 {
     NSRemoveMessage(((NSStoreMessage *)obj->data)->msg);
