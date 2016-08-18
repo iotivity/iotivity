@@ -70,7 +70,11 @@ extern "C"
 /**
  * Max header options data length.
  */
+#ifdef ARDUINO
+#define CA_MAX_HEADER_OPTION_DATA_LENGTH 20
+#else
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 1024
+#endif
 
 /**
 * Max token length.

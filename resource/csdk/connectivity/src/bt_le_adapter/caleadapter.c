@@ -3176,6 +3176,7 @@ static CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress,
                                             g_singleThreadReceiveData->recvDataLen);
         }
         g_singleThreadReceiveData->remoteEndpoint = NULL;
+        OICFree(g_singleThreadReceiveData->defragData);
         g_singleThreadReceiveData->defragData = NULL;
         OICFree(g_singleThreadReceiveData);
         g_singleThreadReceiveData = NULL;

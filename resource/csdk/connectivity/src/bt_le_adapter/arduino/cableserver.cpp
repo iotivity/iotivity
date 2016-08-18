@@ -90,7 +90,7 @@ void CACheckLEDataInternal()
                 return;
             }
 
-            while (CAIsLEDataAvailable())
+            while (CAIsLEDataAvailable() && g_receivedDataLen <= bufSize)
             {
                 g_coapBuffer[g_receivedDataLen++] = CALEReadData();
             }

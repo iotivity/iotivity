@@ -33,13 +33,21 @@
  * Maximum length of the URI supported by client/server while processing
  * REST requests/responses.
  */
+#ifdef ARDUINO
+#define MAX_URI_LENGTH (64)
+#else
 #define MAX_URI_LENGTH (256)
+#endif
 
 /**
  * Maximum length of the query supported by client/server while processing
  * REST requests/responses.
  */
+#ifdef ARDUINO
+#define MAX_QUERY_LENGTH (64)
+#else
 #define MAX_QUERY_LENGTH (256)
+#endif
 
 /**
  * Maximum length of the Manufacturer name supported by the server
