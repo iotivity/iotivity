@@ -26,10 +26,10 @@ Build Procedure
          If needed, same can be modified as per appropriate target.
 
 2) Go to "iotivity/" folder.
-3) Execute following command(s) to start build based on transport selection required :
 
-scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=0 LOGGING=true
-			ES_ROLE=enrollee ES_TARGET_ENROLLEE=android ES_SOFTAP_MODE=ENROLLEE_SOFTAP
+3) Execute following command to build easy setup sample app. :
+
+# sh gbsbuild.sh ES_ON
 
 4) If built for security mode:
         After installing sample RPM on device, copy required .dat files and other applications to the same path where enrollee_wifi(executable) is available

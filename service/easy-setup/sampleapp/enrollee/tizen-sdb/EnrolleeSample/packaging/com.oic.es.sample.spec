@@ -12,6 +12,8 @@ License: Apache-2.0
 Group: Applications/OICSample
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(gio-2.0)
+BuildRequires: pkgconfig(gthread-2.0)
 BuildRequires: boost-devel
 BuildRequires: boost-thread
 BuildRequires: boost-system
@@ -23,6 +25,22 @@ BuildRequires: iotivity
 BuildRequires: iotivity-devel
 BuildRequires: iotivity-service
 
+## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
+## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
+%if 0%{?tizen_build_devel_mode} == 1 || 0%{?tizen_build_binary_release_type_eng} == 1
+%define RELEASE False
+%else
+%define RELEASE True
+%endif
+
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
+%{!?SECURED: %define SECURED 0}
+%{!?LOGGING: %define LOGGING True}
+%{!?ROUTING: %define ROUTING EP}
+%{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
+%{!?ES_ROLE: %define ES_ROLE enrollee}
+%{!?ES_SOFTAP_MODE: %define ES_SOFTAP_MODE MEDIATOR_SOFTAP}
+%{!?VERBOSE: %define VERBOSE 1}
 
 %description
 EasySetup Sample application
