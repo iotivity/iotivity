@@ -285,6 +285,7 @@ NSMessage * NSCreateMessage_internal(uint64_t id, const char * providerId)
     retMsg->title = NULL;
     retMsg->contentText = NULL;
     retMsg->sourceName = NULL;
+    retMsg->topic = NULL;
     retMsg->type = NS_MESSAGE_INFO;
     retMsg->dateTime = NULL;
     retMsg->ttl = 0;
@@ -556,6 +557,7 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL(payloadValue, NULL);
 
     size_t dimensionSize = calcDimTotal(payloadValue->arr.dimensions);
+    NS_LOG_V(DEBUG, "DimensionSize: %d", dimensionSize);
 
     if (dimensionSize == 0 || payloadValue->type == OCREP_PROP_NULL ||
             payloadValue->arr.objArray == NULL)
@@ -586,6 +588,8 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
                 NS_ATTRIBUTE_TOPIC_NAME, & topicName);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL,
                 NULL, NSRemoveTopicLL(topicLL));
+        NS_LOG_V(DEBUG, "topic name: %s", topicName);
+        NS_LOG_V(DEBUG, "topic selection: %d", state);
 
         topicNode->topicName = topicName;
         topicNode->state = state;
@@ -593,12 +597,12 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
         if (i == 0)
         {
             topicLL = topicNode;
+            topicNode->next = NULL;
             continue;
         }
 
         NSResult ret = NSInsertTopicNode(topicLL, topicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
-                    NULL, NSRemoveTopicLL(topicLL));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(topicLL));
     }
 
     return topicLL;

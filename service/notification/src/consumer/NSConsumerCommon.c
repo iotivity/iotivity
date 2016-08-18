@@ -367,13 +367,15 @@ NSResult NSInsertTopicNode(NSTopicLL * topicHead, NSTopicLL * topicNode)
     NS_VERIFY_NOT_NULL(topicNode, NS_ERROR);
 
     NSTopicLL * iter = topicHead;
+    NSTopicLL * prev = NULL;
 
     while (iter)
     {
+        prev = iter;
         iter = (NSTopicLL *) iter->next;
     }
 
-    iter->next = topicNode;
+    prev->next = topicNode;
     topicNode->next = NULL;
 
     return NS_OK;
@@ -384,15 +386,16 @@ void NSRemoveTopicLL(NSTopicLL * topicHead)
     NS_VERIFY_NOT_NULL_V(topicHead);
 
     NSTopicLL * iter = topicHead;
+    NSTopicLL * following = NULL;
 
     while (iter)
     {
+        following = (NSTopicLL *) iter->next;
+
         NSRemoveTopicNode(iter);
 
-        iter = (NSTopicLL *) iter->next;
+        iter = following;
     }
-
-    NSOICFree(topicHead);
 }
 
 NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
@@ -412,8 +415,7 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
 
         NSResult ret = NSInsertTopicNode(newTopicHead, newTopicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
-                    NULL, NSRemoveTopicLL(newTopicHead));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(newTopicHead));
 
         iter = (NSTopicLL *) iter->next;
     }
