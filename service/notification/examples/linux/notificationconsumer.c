@@ -50,6 +50,54 @@ void onProviderChanged(NSProvider * provider, NSResponse response)
 {
     printf("Provider changed: %d\n", response);
     printf("subscribed provider Id : %s\n", provider->providerId);
+
+    if (response == NS_TOPIC)
+    {
+        printf ("Provider Topic Updated\n");
+        if (provider->topicLL)
+        {
+            NSTopicLL * iter = provider->topicLL;
+            while (iter)
+            {
+                printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
+                iter = iter->next;
+            }
+        }
+
+        printf("3. Get Topics\n");
+        printf("4. Select Topics\n");
+        printf("input: ");
+
+        int num = 0;
+        char dummy = '\0';
+        scanf("%d", &num);
+        fflush(stdin);
+        scanf("%c", &dummy);
+        fflush(stdin);
+
+        switch (num)
+        {
+            case 3:
+                printf("3. Get Topics\n");
+                NSConsumerGetInterestTopics(provider);
+                break;
+            case 4:
+                printf("4. Select Topics\n");
+                if (provider->topicLL)
+                {
+                    NSTopicLL * iter = provider->topicLL;
+                    int i = 0;
+                    while (iter)
+                    {
+                        iter->state = (i++)%2;
+                        printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
+                        iter = iter->next;
+                    }
+                }
+                NSConsumerSelectInterestTopics(provider);
+                break;
+        }
+    }
 }
 
 void onNotificationPosted(NSMessage * notification)
@@ -58,6 +106,10 @@ void onNotificationPosted(NSMessage * notification)
     printf("title : %s\n", notification->title);
     printf("content : %s\n", notification->contentText);
     printf("source : %s\n", notification->sourceName);
+    if (notification->topic)
+    {
+        printf("topic : %s\n", notification->topic);
+    }
     NSConsumerSendSyncInfo(notification->providerId, notification->messageId, NS_SYNC_READ);
 }
 
