@@ -914,12 +914,6 @@ typedef enum
     /** Others. */
     OC_OBSERVE_NO_OPTION = 2,
 
-//#ifdef WITH_MQ
-    OC_MQ_SUBSCRIBER = 3,
-
-    OC_MQ_UNSUBSCRIBER = 4,
-//#endif
-
 } OCObserveAction;
 
 
