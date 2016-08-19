@@ -473,6 +473,8 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
     switch (ehResult)
     {
         case OC_EH_OK:
+        case OC_EH_CONTENT:
+        case OC_EH_VALID:
             result = OC_STACK_OK;
             break;
         case OC_EH_SLOW:
