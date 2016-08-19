@@ -557,7 +557,7 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL(payloadValue, NULL);
 
     size_t dimensionSize = calcDimTotal(payloadValue->arr.dimensions);
-    NS_LOG_V(DEBUG, "DimensionSize: %d", dimensionSize);
+    NS_LOG_V(DEBUG, "DimensionSize: %d", (int)dimensionSize);
 
     if (dimensionSize == 0 || payloadValue->type == OCREP_PROP_NULL ||
             payloadValue->arr.objArray == NULL)
@@ -589,7 +589,7 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL,
                 NULL, NSRemoveTopicLL(topicLL));
         NS_LOG_V(DEBUG, "topic name: %s", topicName);
-        NS_LOG_V(DEBUG, "topic selection: %d", state);
+        NS_LOG_V(DEBUG, "topic selection: %d", (int)state);
 
         topicNode->topicName = topicName;
         topicNode->state = state;

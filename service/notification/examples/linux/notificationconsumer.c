@@ -105,7 +105,7 @@ void onNotificationPosted(NSMessage * notification)
     printf("title : %s\n", notification->title);
     printf("content : %s\n", notification->contentText);
     printf("source : %s\n", notification->sourceName);
-    if (notification->topic)
+    if (notification->topic && strlen(notification->topic) > 0)
     {
         printf("topic : %s\n", notification->topic);
     }

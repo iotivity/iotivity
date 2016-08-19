@@ -1,4 +1,3 @@
-
 //******************************************************************
 //
 // Copyright 2016 Samsung Electronics All Rights Reserved.
@@ -134,10 +133,7 @@ void NSDiscoveredProvider(NSProvider * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
 
-    NSProvider * retProvider = (NSProvider *)NSCopyProvider_internal((NSProvider_internal *)provider);
-    NS_VERIFY_NOT_NULL_V(retProvider);
-
-    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) retProvider);
+    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
     NS_VERIFY_NOT_NULL_V(thread);
 }
 
@@ -249,6 +245,11 @@ NSMessage * NSCopyMessage(NSMessage * msg)
     newMsg->sourceName = OICStrdup(msg->sourceName);
     newMsg->dateTime = OICStrdup(msg->dateTime);
     newMsg->type = msg->type;
+    newMsg->topic = NULL;
+    if (msg->topic && strlen(msg->topic) > 0)
+    {
+        newMsg->topic = OICStrdup(msg->topic);
+    }
 
     // TODO change to copy function.
     newMsg->mediaContents = msg->mediaContents;
@@ -264,6 +265,7 @@ void NSRemoveMessage(NSMessage * msg)
     NSOICFree(msg->contentText);
     NSOICFree(msg->sourceName);
     NSOICFree(msg->dateTime);
+    NSOICFree(msg->topic);
 
     // TODO change to remove function.
     NSOICFree(msg->mediaContents);
