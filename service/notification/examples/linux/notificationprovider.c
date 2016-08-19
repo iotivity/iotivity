@@ -237,6 +237,7 @@ int main()
                 printf("NSSendNotification()");
                 char title[100];
                 char body[100];
+                char topic[100];
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
@@ -246,14 +247,23 @@ int main()
                 printf("body : ");
                 gets(body);
 
+                printf("topic : ");
+                gets(topic);
+
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
+                printf("app - topic : %s \n", topic);
 
                 NSMessage * msg = NSCreateMessage();
 
                 msg->title = OICStrdup(title);
                 msg->contentText = OICStrdup(body);
                 msg->sourceName = OICStrdup("OCF");
+
+                if(topic[0] != '\0')
+                {
+                    msg->topic = OICStrdup(topic);
+                }
 
                 NSSendMessage(msg);
             }
