@@ -44,7 +44,8 @@ NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id)
 
 NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList);
 
-NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * conTopicList, char *consumerId);
+NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
+        NSCacheList * conTopicList, char *consumerId);
 
 size_t NSProviderGetListSize(NSCacheElement * firstElement);
 

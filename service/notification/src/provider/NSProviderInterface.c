@@ -252,7 +252,8 @@ NSTopicLL * NSProviderGetConsumerTopics(char *consumerId)
         return NS_FAIL;
     }
 
-    NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(consumerTopicList, consumerId);
+    NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList,
+            consumerTopicList, consumerId);
 
     pthread_mutex_unlock(&nsInitMutex);
     return topics;

@@ -207,7 +207,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     else
     {
         NS_LOG(DEBUG, "Send subscribed topic list to consumer");
-        topics = NSProviderGetConsumerTopicsCacheData(consumerTopicList, id);
+        topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList, consumerTopicList, id);
         currList = consumerTopicList->head;
     }
 
