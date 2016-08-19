@@ -1,0 +1,2 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('iotivity-armeabi-notification-service-debug.aar'))

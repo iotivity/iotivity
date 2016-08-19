@@ -28,6 +28,7 @@ extern "C" {
 #include <stdlib.h>
 
 #include "NSCommon.h"
+#include "NSConsumerInterface.h"
 #include "NSStructs.h"
 #include "ocstack.h"
 
@@ -38,6 +39,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider *);
 OCStackApplicationResult NSConsumerMessageListener(void *, OCDoHandle, OCClientResponse *);
 
 OCStackApplicationResult NSConsumerSyncInfoListener(void *, OCDoHandle, OCClientResponse *);
+
+OCStackApplicationResult NSIntrospectTopic(void *, OCDoHandle, OCClientResponse *);
 
 #ifdef __cplusplus
 }

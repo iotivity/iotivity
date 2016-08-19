@@ -1,23 +1,23 @@
 /*
- *******************************************************************
- *
- * Copyright 2015 Intel Corporation.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//******************************************************************
+//
+// Copyright 2016 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
 package com.sec.notiproviderexample;
@@ -25,6 +25,7 @@ package com.sec.notiproviderexample;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.SyncInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -36,6 +37,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.iotivity.service.ns.common.MediaContents;
 public class MainActivity extends AppCompatActivity {
 
     private final String TAG = "NS_MAIN_ACTIVITY";
@@ -157,8 +159,8 @@ public class MainActivity extends AppCompatActivity {
 
                         TvLog.setText("Start NS-Provider\n");
 
-                        boolean access = true; // ptovider controls the acceptance of consumers
-                        mProviderProxy.startNotificationServer(access);
+                        boolean policy = true; // provider controls the acceptance of consumers
+                        mProviderProxy.Start(policy);
                         isStarted = true;
                     } else {
                         Log.e(TAG, "NS Provider Service had already started");
@@ -172,7 +174,6 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(TAG, "Fail to request Accept");
                         break;
                     }
-                    mProviderProxy.accept("#consumerid", true);
                 }
                 break;
 
@@ -201,6 +202,12 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "#" + notiId + " notified ..");
                     TvLog.append("Send Notitication(Msg ID: " + notiId + ")\n");
                     notiId++;
+                    org.iotivity.service.ns.common.Message notiMessage = new org.iotivity.service.ns.common.Message(title,body,"dss");
+                    notiMessage.setTTL(10);
+                    notiMessage.setTime("12:10");
+                    MediaContents media = new MediaContents("daasd");
+                    notiMessage.setMediaContents(media);
+                    mProviderProxy.SendMessage(notiMessage);
                 }
                 break;
 
@@ -210,7 +217,8 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(TAG, "Fail to send sync");
                         break;
                     }
-                    //mProviderProxy.readCheck(LastMessageId);
+                    org.iotivity.service.ns.common.SyncInfo.SyncType syncType =  org.iotivity.service.ns.common.SyncInfo.SyncType.READ;
+                    mProviderProxy.SendSyncInfo(1,syncType);
                 }
                 break;
 
@@ -221,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     }
 
-                    mProviderProxy.stopNotificationServer();
+                    mProviderProxy.Stop();
                     isStarted = false;
 
                     TvLog.append("Stop NS-Provider\n");

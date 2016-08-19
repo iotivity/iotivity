@@ -20,6 +20,13 @@
 
 
 #include "NSProviderService.h"
+#include <cstring>
+#include "NSCommon.h"
+#include "NSProviderInterface.h"
+#include "oic_string.h"
+#include "NSConsumer.h"
+#include "NSSyncInfo.h"
+#include "NSConstants.h"
 
 namespace OIC
 {
@@ -71,14 +78,18 @@ namespace OIC
             return &s_instance;
         }
 
-        NSResult NSProviderService::Start(NSProviderService::NSAccessPolicy policy,
-                                          NSProviderService::ProviderConfig config)
+        NSResult NSProviderService::Start(NSProviderService::ProviderConfig config)
         {
             NS_LOG(DEBUG, "Start - IN");
 
             m_config = config;
-            NSResult result = NSStartProvider((::NSAccessPolicy)policy, onConsumerSubscribedCallback,
-                                              onMessageSynchronizedCallback);
+            NSProviderConfig nsConfig;
+            nsConfig.subRequestCallback = onConsumerSubscribedCallback;
+            nsConfig.syncInfoCallback = onMessageSynchronizedCallback;
+            nsConfig.policy = config.policy;
+            nsConfig.userInfo = OICStrdup(config.userInfo.c_str());
+
+            NSResult result = (NSResult) NSStartProvider(nsConfig);
             NS_LOG(DEBUG, "Start - OUT");
             return result;
         }
@@ -86,7 +97,7 @@ namespace OIC
         NSResult NSProviderService::Stop()
         {
             NS_LOG(DEBUG, "Stop - IN");
-            NSResult result = NSStopProvider();
+            NSResult result = (NSResult) NSStopProvider();
             NS_LOG(DEBUG, "Stop - OUT");
             return result;
         }
@@ -94,7 +105,12 @@ namespace OIC
         NSResult NSProviderService::EnableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "EnableRemoteService - IN");
-            NSResult result = NSProviderEnableRemoteService(OICStrdup(serverAddress.c_str()));
+            NSResult result = NSResult::ERROR;
+#ifdef WITH_CLOUD
+            result = (NSResult) NSProviderEnableRemoteService(OICStrdup(serverAddress.c_str()));
+#else
+            NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
+#endif
             NS_LOG(DEBUG, "EnableRemoteService - OUT");
             return result;
         }
@@ -102,7 +118,12 @@ namespace OIC
         NSResult NSProviderService::DisableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "DisableRemoteService - IN");
-            NSResult result = NSProviderDisableRemoteService(OICStrdup(serverAddress.c_str()));
+            NSResult result = NSResult::ERROR;
+#ifdef WITH_CLOUD
+            result = (NSResult) NSProviderDisableRemoteService(OICStrdup(serverAddress.c_str()));
+#else
+            NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
+#endif
             NS_LOG(DEBUG, "DisableRemoteService - OUT");
             return result;
         }
@@ -110,9 +131,14 @@ namespace OIC
         NSResult NSProviderService::SendMessage(NSMessage *msg)
         {
             NS_LOG(DEBUG, "SendMessage - IN");
-            NSResult result = NS_ERROR;
+            NSResult result = NSResult::ERROR;
             if (msg != nullptr)
-                result = NSSendMessage(getNSMessage(msg));
+            {
+                ::NSMessage * nsMsg = getNSMessage(msg);
+                result = (NSResult) NSSendMessage(nsMsg);
+                delete nsMsg->mediaContents;
+                delete nsMsg;
+            }
             else
                 NS_LOG(DEBUG, "Empty Message");
             NS_LOG(DEBUG, "SendMessage - OUT");
@@ -126,6 +152,20 @@ namespace OIC
             NSProviderSendSyncInfo(messageId, (NSSyncType)type);
             NS_LOG(DEBUG, "SendSyncInfo - OUT");
             return;
+        }
+
+        NSMessage *NSProviderService::CreateMessage()
+        {
+            NS_LOG(DEBUG, "CreateMessage - IN");
+
+            ::NSMessage *message = NSCreateMessage();
+            NSMessage *nsMessage = new NSMessage(message);
+
+            NS_LOG_V(DEBUG, "Message ID : %lld", nsMessage->getMessageId());
+            NS_LOG_V(DEBUG, "Provider ID : %s", nsMessage->getProviderId().c_str());
+            NS_LOG(DEBUG, "CreateMessage - OUT");
+
+            return nsMessage;
         }
 
         NSProviderService::ProviderConfig NSProviderService::getProviderConfig()

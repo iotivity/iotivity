@@ -27,6 +27,7 @@
 #include "NSProviderListener.h"
 #include "NSProviderResource.h"
 #include "NSProviderSubscription.h"
+#include "NSProviderTopic.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "NSUtil.h"

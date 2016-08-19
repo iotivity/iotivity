@@ -109,7 +109,26 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
     NSCacheElement * cacheElement = NSStorageRead(ProviderCache, providerId);
     NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
-    return NSCopyProvider((NSProvider_internal *) cacheElement->data);
+    return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
+}
+
+NSProvider_internal * NSFindProviderFromAddr(OCDevAddr * addr)
+{
+    NS_VERIFY_NOT_NULL(addr, NULL);
+
+    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
+    if (!ProviderCache)
+    {
+        NS_LOG(DEBUG, "Provider Cache does not intialized.");
+        return NULL;
+    }
+
+    NSCacheElement * cacheElement =
+            NSGetProviderFromAddr(ProviderCache, addr->addr, addr->port);
+
+    NS_VERIFY_NOT_NULL(cacheElement, NULL);
+
+    return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
 }
 
 void NSRemoveCacheElementMessage(NSCacheElement * obj)
@@ -257,19 +276,20 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     if (provider->accessPolicy == NS_SELECTION_CONSUMER && isSubscribing == false)
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
-        NSDiscoveredProvider((NSProvider *) provider);
+        NSProvider * providerForCb = NSCopyProvider(provider);
+        NSDiscoveredProvider(providerForCb);
     }
     else
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
-        NSProvider_internal * subProvider = NSCopyProvider(provider);
+        NSProvider_internal * subProvider = NSCopyProvider_internal(provider);
         NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) subProvider);
         NS_VERIFY_NOT_NULL_V(task);
 
         NSConsumerPushEvent(task);
     }
 
-    NSRemoveProvider(providerCacheData);
+    NSRemoveProvider_internal(providerCacheData);
 }
 
 void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
@@ -283,7 +303,7 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 }
 
-void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage * msg)
+void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
@@ -291,10 +311,10 @@ void NSConsumerHandleRecvSubscriptionConfirmed(NSMessage * msg)
     NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
     NS_VERIFY_NOT_NULL_V(provider);
 
-    if (provider->connection->next == NULL)
+    if (provider->connection->next == NULL && provider->accessPolicy == NS_SELECTION_CONSUMER)
     {
         NS_LOG(DEBUG, "call back to user");
-        NSSubscriptionAccepted((NSProvider *) provider);
+        NSProviderChanged((NSProvider *) provider, (NSResponse) msg->messageId);
     }
 }
 
@@ -349,6 +369,33 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
     NSConsumerPushEvent(syncTask);
 }
 
+void NSConsumerHandleGetTopicUri(NSMessage * msg)
+{
+    NS_VERIFY_NOT_NULL_V(msg);
+
+    NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_REQ_TOPIC_LIST, (void *) provider);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(topicTask, NSRemoveProvider_internal(provider));
+
+    NSConsumerPushEvent(topicTask);
+}
+
+void NSConsumerHandleRecvTopicLL(NSProvider_internal * provider)
+{
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSResult ret = NSProviderCacheUpdate(provider);
+    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+
+    if (provider->connection->next == NULL)
+    {
+        NS_LOG(DEBUG, "call back to user");
+        NSProviderChanged((NSProvider *) provider, (NSResponse) NS_TOPIC);
+    }
+}
+
 void NSConsumerInternalTaskProcessing(NSTask * task)
 {
     NS_VERIFY_NOT_NULL_V(task);
@@ -356,10 +403,12 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     switch (task->taskType)
     {
-        case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+        //case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+        case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
         {
-            NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
-            NSConsumerHandleRecvSubscriptionConfirmed((NSMessage *)task->taskData);
+            //NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
+            NS_LOG(DEBUG, "Receive Provider Changed");
+            NSConsumerHandleRecvProviderChanged((NSMessage *)task->taskData);
             NSRemoveMessage((NSMessage *)task->taskData);
             break;
         }
@@ -374,7 +423,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         {
             NS_LOG(DEBUG, "Receive New Provider is discovered.");
             NSConsumerHandleProviderDiscovered((NSProvider_internal *)task->taskData);
-            NSRemoveProvider((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
             break;
         }
         case TASK_RECV_SYNCINFO:
@@ -391,11 +440,25 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
             NSOICFree(task->taskData);
             break;
         }
+        case TASK_CONSUMER_REQ_TOPIC_URI:
+        {
+            NS_LOG(DEBUG, "Request Topic Uri");
+            NSConsumerHandleGetTopicUri((NSMessage *)task->taskData);
+            NSRemoveMessage((NSMessage *)task->taskData);
+            break;
+        }
+        case TASK_CONSUMER_RECV_TOPIC_LIST:
+        {
+            NS_LOG(DEBUG, "Receive Topic List");
+            NSConsumerHandleRecvTopicLL((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
+            break;
+        }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
         {
             NS_LOG(DEBUG, "Make Subscribe cancel from provider.");
             NSConsumerHandleProviderDeleted((NSProvider_internal *)task->taskData);
-            NSRemoveProvider((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
             break;
         }
         default :

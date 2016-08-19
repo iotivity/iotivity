@@ -49,6 +49,8 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload);
 NSResult NSFreeConsumer(NSConsumer *);
 NSConsumer * NSDuplicateConsumer(NSConsumer *);
 
+NSTopicList * NSInitializeTopicList();
+
 void NSDuplicateSetPropertyString(OCRepPayload **, const char *, const char *);
 void NSDuplicateSetPropertyInt(OCRepPayload ** msgPayload, const char * name, int64_t value);
 NSResult NSGenerateUUIDStr(char uuidStr[UUID_STRING_SIZE]);
@@ -58,5 +60,7 @@ NSResult NSFreeMalloc(char ** obj);
 
 NSResult NSFreeMediaContents(NSMediaContents * obj);
 NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj);
+
+OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* name);
 
 #endif /* _NS_UTIL__H_ */

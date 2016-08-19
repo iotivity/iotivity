@@ -32,6 +32,7 @@ void * NSCallbackResponseSchedule(void *ptr);
 void * NSDiscoverySchedule(void *ptr);
 void * NSSubScriptionSchedule(void *ptr);
 void * NSNotificationSchedule(void *ptr);
+void * NSTopicSchedule(void * ptr);
 
 bool NSInitScheduler()
 {
@@ -89,6 +90,12 @@ bool NSStartScheduler()
             }
                 break;
 
+            case TOPIC_SCHEDULER:
+            {
+                NS_LOG(DEBUG, "CASE TOPIC_SCHEDULER :");
+                pthread_create(&NSThread[i], NULL, NSTopicSchedule, NULL);
+            }
+                break;
             default:
                 break;
 

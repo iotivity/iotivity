@@ -54,11 +54,12 @@ void onDiscoverNotificationCb(OIC::Service::NSProvider *provider)
     std::cout << "startSubscribing" << std::endl;
 }
 
-void onSubscriptionAcceptedCb(OIC::Service::NSProvider *provider)
+void onProviderChangedCb(OIC::Service::NSProvider *provider,OIC::Service::NSResponse response)
 {
     std::cout << "Subscription accepted" << std::endl;
     std::cout << "subscribed provider Id : " << provider->getProviderId() << std::endl;
-    provider->setListener(onNotificationPostedCb, onNotificationSyncCb);
+    if(response == OIC::Service::NSResponse::ALLOW)
+        provider->setListener(onNotificationPostedCb, onNotificationSyncCb);
 }
 
 void *OCProcessThread(void *ptr)
@@ -91,7 +92,7 @@ int main(void)
 
     NSConsumerService::ConsumerConfig cfg;
     cfg.m_discoverCb = onDiscoverNotificationCb;
-    cfg.m_acceptedCb = onSubscriptionAcceptedCb;
+    cfg.m_changedCb = onProviderChangedCb;
 
     pthread_create(&OCThread, NULL, OCProcessThread, NULL);
 
@@ -102,7 +103,9 @@ int main(void)
 
         std::cout << "1. Start Consumer" << std::endl;
         std::cout << "2. Stop Consumer" << std::endl;
+#ifdef WITH_CLOUD
         std::cout << "3. Enable  NS Consumer RemoteService" << std::endl;
+#endif
         std::cout << "5. Exit" << std::endl;
 
         std::cout << "Input: " << std::endl;
@@ -117,6 +120,7 @@ int main(void)
                 std::cout << "2. Stop the Notification Consumer" << std::endl;
                 NSConsumerService::getInstance()->Stop();
                 break;
+#ifdef WITH_CLOUD
             case 3:
                 {
                     std::cout << "3. Enable NS Consumer RemoteService" << std::endl;
@@ -125,6 +129,7 @@ int main(void)
                     NSConsumerService::getInstance()->EnableRemoteService(REMOTE_SERVER_ADDRESS);
                     break;
                 }
+#endif
             case 5:
                 std::cout << "5. Exit" << std::endl;
                 isExit = true;

@@ -19,7 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProvider.h"
+#include <cstring>
 #include "NSConsumerInterface.h"
+#include "NSConstants.h"
+#include "NSCommon.h"
+#include "NSUtils.h"
+#include "oic_string.h"
 
 namespace OIC
 {
@@ -28,7 +33,7 @@ namespace OIC
         ::NSProvider *NSProvider::getNSProvider()
         {
             ::NSProvider *provider = new ::NSProvider;
-            OICStrcpy(provider->providerId, m_providerId.length(), m_providerId.c_str());
+            OICStrcpy(provider->providerId, NS_UTILS_UUID_STRING_SIZE, m_providerId.c_str());
             return provider;
         }
 
@@ -38,8 +43,7 @@ namespace OIC
             m_syncInfoCb = NULL;
             if (provider != nullptr)
             {
-                if ((provider->providerId != nullptr) && strlen(provider->providerId))
-                    m_providerId.assign(provider->providerId, strlen(provider->providerId));
+                m_providerId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE);
             }
         }
 

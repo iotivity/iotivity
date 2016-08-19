@@ -133,28 +133,25 @@ void NSDiscoveredProvider(NSProvider * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
 
-    NSProvider * retProvider = (NSProvider *)NSCopyProvider((NSProvider_internal *)provider);
-    NS_VERIFY_NOT_NULL_V(retProvider);
-
-    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) retProvider);
+    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
     NS_VERIFY_NOT_NULL_V(thread);
 }
 
-NSSubscriptionAcceptedCallback * NSGetSubscriptionAcceptedCb()
+NSProviderChangedCallback * NSGetProviderChangedCb()
 {
-    static NSSubscriptionAcceptedCallback g_acceptCb = NULL;
+    static NSProviderChangedCallback g_changedCb = NULL;
 
-    return & g_acceptCb;
+    return & g_changedCb;
 }
 
-void NSSetSubscriptionAcceptedCb(NSSubscriptionAcceptedCallback cb)
+void NSSetProviderChangedCb(NSProviderChangedCallback cb)
 {
-    *(NSGetSubscriptionAcceptedCb()) = cb;
+    *(NSGetProviderChangedCb()) = cb;
 }
 
-void NSSubscriptionAccepted(NSProvider * provider)
+void NSProviderChanged(NSProvider * provider, NSResponse response)
 {
-    (*(NSGetSubscriptionAcceptedCb()))(provider);
+    (*(NSGetProviderChangedCb()))(provider, response);
 }
 
 NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
@@ -248,6 +245,11 @@ NSMessage * NSCopyMessage(NSMessage * msg)
     newMsg->sourceName = OICStrdup(msg->sourceName);
     newMsg->dateTime = OICStrdup(msg->dateTime);
     newMsg->type = msg->type;
+    newMsg->topic = NULL;
+    if (msg->topic && strlen(msg->topic) > 0)
+    {
+        newMsg->topic = OICStrdup(msg->topic);
+    }
 
     // TODO change to copy function.
     newMsg->mediaContents = msg->mediaContents;
@@ -263,6 +265,7 @@ void NSRemoveMessage(NSMessage * msg)
     NSOICFree(msg->contentText);
     NSOICFree(msg->sourceName);
     NSOICFree(msg->dateTime);
+    NSOICFree(msg->topic);
 
     // TODO change to remove function.
     NSOICFree(msg->mediaContents);
@@ -336,33 +339,205 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
     return retInfo;
 }
 
-NSProvider_internal * NSCopyProvider(NSProvider_internal * prov)
+void NSRemoveTopicNode(NSTopicLL * topicNode)
+{
+    NS_VERIFY_NOT_NULL_V(topicNode);
+
+    NSOICFree(topicNode->topicName);
+    topicNode->next = NULL;
+
+    NSOICFree(topicNode);
+}
+
+NSTopicLL * NSCopyTopicNode(NSTopicLL * topicNode)
+{
+    NS_VERIFY_NOT_NULL(topicNode, NULL);
+
+    NSTopicLL * newTopicNode = (NSTopicLL *)OICMalloc(sizeof(NSTopicLL));
+    NS_VERIFY_NOT_NULL(newTopicNode, NULL);
+
+    newTopicNode->topicName = OICStrdup(topicNode->topicName);
+    newTopicNode->state = topicNode->state;
+    newTopicNode->next = NULL;
+
+    return newTopicNode;
+}
+
+NSResult NSInsertTopicNode(NSTopicLL * topicHead, NSTopicLL * topicNode)
+{
+    NS_VERIFY_NOT_NULL(topicHead, NS_ERROR);
+    NS_VERIFY_NOT_NULL(topicNode, NS_ERROR);
+
+    NSTopicLL * iter = topicHead;
+    NSTopicLL * prev = NULL;
+
+    while (iter)
+    {
+        prev = iter;
+        iter = (NSTopicLL *) iter->next;
+    }
+
+    prev->next = topicNode;
+    topicNode->next = NULL;
+
+    return NS_OK;
+}
+
+void NSRemoveTopicLL(NSTopicLL * topicHead)
+{
+    NS_VERIFY_NOT_NULL_V(topicHead);
+
+    NSTopicLL * iter = topicHead;
+    NSTopicLL * following = NULL;
+
+    while (iter)
+    {
+        following = (NSTopicLL *) iter->next;
+
+        NSRemoveTopicNode(iter);
+
+        iter = following;
+    }
+}
+
+NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
+{
+    NS_VERIFY_NOT_NULL(topicHead, NULL);
+
+    NSTopicLL * iter = topicHead;
+
+    NSTopicLL * newTopicHead = NSCopyTopicNode(iter);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicHead, NULL, NSRemoveTopicLL(newTopicHead));
+
+    iter = (NSTopicLL *) iter->next;
+
+    while (iter)
+    {
+        NSTopicLL * newTopicNode = NSCopyTopicNode(iter);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
+
+        NSResult ret = NSInsertTopicNode(newTopicHead, newTopicNode);
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(newTopicHead));
+
+        iter = (NSTopicLL *) iter->next;
+    }
+
+    return newTopicHead;
+}
+
+void NSCopyProviderPostClean(
+        NSProviderConnectionInfo * connections, NSProvider_internal * provider)
+{
+    NSRemoveConnections(connections);
+    NSOICFree(provider);
+}
+
+NSProvider_internal * NSCopyProvider_internal(NSProvider_internal * prov)
 {
     NS_VERIFY_NOT_NULL(prov, NULL);
 
     NSProviderConnectionInfo * connections = NSCopyProviderConnections(prov->connection);
     NS_VERIFY_NOT_NULL(connections, NULL);
 
-    NSProvider_internal * newProv = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
+    NSProvider_internal * newProv = (NSProvider_internal *) OICMalloc(sizeof(NSProvider_internal));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProv, NULL, NSRemoveConnections(connections));
+
+    newProv->topicLL = NULL;
+
+    if (prov->topicLL)
+    {
+        NSTopicLL * newTopicLL = NSCopyTopicLL(prov->topicLL);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicLL, NULL,
+                    NSCopyProviderPostClean(connections, newProv));
+
+        newProv->topicLL = newTopicLL;
+    }
 
     newProv->connection = connections;
     OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
     newProv->messageUri = OICStrdup(prov->messageUri);
     newProv->syncUri = OICStrdup(prov->syncUri);
+    newProv->topicUri = OICStrdup(prov->topicUri);
     newProv->accessPolicy = prov->accessPolicy;
 
     return newProv;
 }
-void NSRemoveProvider(NSProvider_internal * prov)
+
+NSProvider * NSCopyProvider(NSProvider_internal * prov)
+{
+    NS_VERIFY_NOT_NULL(prov, NULL);
+
+    NSProvider * newProv = (NSProvider *) OICMalloc(sizeof(NSProvider));
+    NS_VERIFY_NOT_NULL(newProv, NULL);
+
+    newProv->topicLL = NULL;
+
+    if (prov->topicLL)
+    {
+        NSTopicLL * topicList = NSCopyTopicLL(prov->topicLL);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList, NULL, NSRemoveProvider(newProv));
+
+        newProv->topicLL = topicList;
+    }
+
+    OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
+
+    return newProv;
+}
+
+void NSRemoveProvider_internal(NSProvider_internal * prov)
 {
     NS_VERIFY_NOT_NULL_V(prov);
 
     NSOICFree(prov->messageUri);
     NSOICFree(prov->syncUri);
+    NSOICFree(prov->topicUri);
     NSRemoveConnections(prov->connection);
+    if (prov->topicLL)
+    {
+        NSRemoveTopicLL(prov->topicLL);
+    }
 
     NSOICFree(prov);
+}
+
+void NSRemoveProvider(NSProvider * prov)
+{
+    NS_VERIFY_NOT_NULL_V(prov);
+
+    if (prov->topicLL)
+    {
+        NSRemoveTopicLL(prov->topicLL);
+    }
+
+    NSOICFree(prov);
+}
+
+NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal * syncInfo)
+{
+    NS_VERIFY_NOT_NULL(syncInfo, NULL);
+
+    NSProviderConnectionInfo * connections = NSCopyProviderConnections(syncInfo->connection);
+    NS_VERIFY_NOT_NULL(connections, NULL);
+
+    NSSyncInfo_internal * newSyncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newSyncInfo, NULL, NSRemoveConnections(connections));
+
+    OICStrcpy(newSyncInfo->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, syncInfo->providerId);
+    newSyncInfo->messageId = syncInfo->messageId;
+    newSyncInfo->state = syncInfo->state;
+    newSyncInfo->connection = connections;
+
+    return newSyncInfo;
+}
+
+void NSRemoveSyncInfo(NSSyncInfo_internal * syncInfo)
+{
+    NS_VERIFY_NOT_NULL_V(syncInfo);
+
+    NSRemoveConnections(syncInfo->connection);
+
+    NSOICFree(syncInfo);
 }
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
@@ -399,6 +574,7 @@ bool NSOCResultToSuccess(OCStackResult ret)
         case OC_STACK_RESOURCE_CHANGED:
             return true;
         default:
+            NS_LOG_V(DEBUG, "OCStackResult : %d", (int)ret);
             return false;
     }
 }

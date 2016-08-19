@@ -19,6 +19,9 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSMessage.h"
+#include "string.h"
+#include "NSUtils.h"
+#include <cstdint>
 
 namespace OIC
 {
@@ -26,12 +29,15 @@ namespace OIC
     {
         NSMessage::NSMessage(::NSMessage *msg)
         {
+            m_messageId = 0;
+            m_type = NSMessage::NSMessageType::NS_MESSAGE_ALERT;
+            m_ttl = 0;
+            m_mediaContents = new NSMediaContents();
+            
             if (msg != nullptr)
             {
                 m_messageId = msg->messageId;
-
-                if ((msg->providerId != nullptr) && strlen(msg->providerId))
-                    m_providerId.assign(msg->providerId, strlen(msg->providerId));
+                m_providerId.assign(msg->providerId, NS_UTILS_UUID_STRING_SIZE);
 
                 m_type = (NSMessageType)msg->type;
 
@@ -49,12 +55,17 @@ namespace OIC
                 if ((msg->sourceName != nullptr) && strlen(msg->sourceName))
                     m_sourceName.assign(msg->sourceName, strlen(msg->sourceName));
 
-                m_mediaContents = new NSMediaContents();
                 if (msg->mediaContents != nullptr)
                     if ((msg->mediaContents->iconImage != nullptr) && strlen(msg->mediaContents->iconImage))
                         m_mediaContents->setIconImage(msg->mediaContents->iconImage);
 
             }
+        }
+
+        NSMessage::~NSMessage()
+        {
+            if(m_mediaContents != nullptr)
+                delete m_mediaContents;
         }
 
         uint64_t NSMessage::getMessageId() const

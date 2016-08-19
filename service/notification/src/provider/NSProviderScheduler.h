@@ -46,6 +46,7 @@ extern void * NSCallbackResponseSchedule(void *ptr);
 extern void * NSDiscoverySchedule(void *ptr);
 extern void * NSSubScriptionSchedule(void *ptr);
 extern void * NSNotificationSchedule(void *ptr);
+extern void * NSTopicSchedule(void * ptr);
 
 void NSSetList();
 bool NSInitScheduler();

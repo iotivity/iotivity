@@ -19,8 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSConsumerService.h"
-#include "NSProvider.h"
+#include <cstring>
+#include "NSConsumerInterface.h"
 #include "NSMessage.h"
+#include "NSCommon.h"
+#include "NSConstants.h"
+#include "oic_string.h"
 
 namespace OIC
 {
@@ -36,15 +40,28 @@ namespace OIC
             NS_LOG(DEBUG, "onNSProviderDiscovered - OUT");
         }
 
-        void onNSAccepted(::NSProvider *provider)
+        void onNSProviderChanged(::NSProvider *provider, ::NSResponse response)
         {
-            NS_LOG(DEBUG, "onNSAccepted - IN");
+            NS_LOG(DEBUG, "onNSProviderChanged - IN");
+            NS_LOG_V(DEBUG, "provider Id : %s",provider->providerId);
+            NS_LOG_V(DEBUG, "response : %d",(int)response);
+            
             NSProvider *nsProvider = new NSProvider(provider);
-            NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
-
-            if (NSConsumerService::getInstance()->getConsumerConfig().m_acceptedCb != NULL)
-                NSConsumerService::getInstance()->getConsumerConfig().m_acceptedCb(nsProvider);
-            NS_LOG(DEBUG, "onNSAccepted - OUT");
+            auto changeCallback = NSConsumerService::getInstance()->getConsumerConfig().m_changedCb;
+            if(response == NS_ALLOW)
+            {
+                NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
+                if (changeCallback != NULL)
+                    changeCallback(nsProvider, (NSResponse) response);
+            }
+            else if(response == NS_DENY)
+            {
+                NSConsumerService::getInstance()->getAcceptedProviders().remove(nsProvider);
+                if (changeCallback != NULL)
+                    changeCallback(nsProvider, (NSResponse) response);
+                delete nsProvider;
+            }
+            NS_LOG(DEBUG, "onNSProviderChanged - OUT");
         }
 
         void onNSMessageReceived(::NSMessage *message)
@@ -90,7 +107,7 @@ namespace OIC
         NSConsumerService::NSConsumerService()
         {
             m_config.m_discoverCb = NULL;
-            m_config.m_acceptedCb = NULL;
+            m_config.m_changedCb = NULL;
         }
 
         NSConsumerService::~NSConsumerService()
@@ -113,7 +130,7 @@ namespace OIC
             m_config = config;
             NSConsumerConfig nsConfig;
             nsConfig.discoverCb = onNSProviderDiscovered;
-            nsConfig.acceptedCb = onNSAccepted;
+            nsConfig.changedCb= onNSProviderChanged;
             nsConfig.messageCb = onNSMessageReceived;
             nsConfig.syncInfoCb = onNSSyncInfoReceived;
 
@@ -133,7 +150,12 @@ namespace OIC
         NSResult NSConsumerService::EnableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "EnableRemoteService - IN");
-            NSResult result = NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
+            NSResult result = NSResult::ERROR;
+#ifdef WITH_CLOUD
+            result = (NSResult) NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
+#else
+            NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
+#endif
             NS_LOG(DEBUG, "EnableRemoteService - OUT");
             return result;
         }

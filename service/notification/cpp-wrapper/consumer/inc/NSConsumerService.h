@@ -28,18 +28,16 @@
 #ifndef _NS_CONSUMER_SERVICE_H_
 #define _NS_CONSUMER_SERVICE_H_
 
-#include "NSCommon.h"
-#include "NSConsumerInterface.h"
 #include <list>
 #include <algorithm>
-#include "NSConstants.h"
+#include "NSProvider.h"
+#include "NSUtils.h"
 
 
 namespace OIC
 {
     namespace Service
     {
-        class NSProvider;
         /**
          * @class   NSConsumerService
          * @brief   This class provides a set of C++APIs for Notification Consumer.
@@ -55,10 +53,11 @@ namespace OIC
                 typedef void (*ProviderDiscoveredCallback)(NSProvider *);
 
                 /**
-                     * Consumer uses this callback function on subscription accepted by provider
-                     * @param[in] provider        Provider who has the notification resource
+                     * Invoked when the provider state is changed
+                     * @param[in] provider  Provider which has the notification resource
+                     * @param[in] response  Response which has the provider state
                      */
-                typedef void (* AcceptedCallback)(NSProvider *);
+                typedef void (* ProviderChangedCallback)(NSProvider *, NSResponse);
 
                 /**
                      * @struct   ConsumerConfig
@@ -69,8 +68,8 @@ namespace OIC
                 {
                     /** m_discoverCb - ProviderDiscoveredCallback callback listener.*/
                     ProviderDiscoveredCallback m_discoverCb;
-                    /** m_acceptedCb - AcceptedCallback callback listener.*/
-                    AcceptedCallback m_acceptedCb;
+                    /** m_changedCb - ProviderChangedCallback callback listener.*/
+                    ProviderChangedCallback m_changedCb;
                 } ConsumerConfig;
 
                 /**
@@ -95,7 +94,7 @@ namespace OIC
                 /**
                      * Request to discover to remote address as parameter.
                      * @param[in]  server address combined with IP address and port number using delimiter :
-                     * @return  result code of NSResult
+                     * @return  NSResult code of Consumer Service
                      */
                 NSResult EnableRemoteService(const std::string &serverAddress);
 
