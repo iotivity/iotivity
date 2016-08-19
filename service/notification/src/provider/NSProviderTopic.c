@@ -111,7 +111,7 @@ NSResult NSSendTopicUpdation()
                 obArray[obCount++] = subData->messageObId;
             }
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
             if(subData->remote_messageObId != 0)
             {
                 obArray[obCount++] = subData->remote_messageObId;

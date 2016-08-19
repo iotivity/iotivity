@@ -22,7 +22,7 @@
 #define MAX_SERVER_ADDRESS 32
 static NSConnectionState NSProviderConnectionState;
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
 #endif
 
@@ -43,7 +43,7 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
 void NSSetRemoteServerAddress(char *serverAddress)
 {
 

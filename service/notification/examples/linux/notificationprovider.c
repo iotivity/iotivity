@@ -35,7 +35,6 @@
 
 // Input the following values to publish resource to cloud
 char REMOTE_SERVER_ADDRESS[50];
-char REMOTE_SERVER_SESSION[50];
 char mainConsumer[37] = {'\0',};
 
 extern char *strdup(const char *s);
@@ -79,39 +78,6 @@ void syncCallback(NSSyncInfo *sync)
 
     printf("NS_APP Sync State: %d\n", sync->state);
 }
-
-#ifdef WITH_CLOUD
-OCStackApplicationResult CloudLoginoutCallback(void *ctx,
-        OCDoHandle handle, OCClientResponse *clientResponse)
-{
-    int CtxValue = 0x99;
-    if (ctx != (void *)CtxValue)
-    {
-        printf("Invalid Cloud Login/out callback received");
-    }
-
-    printf("Login/out response received");
-
-    if (clientResponse->payload != NULL &&
-            clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
-    {
-        printf("PAYLOAD_TYPE_REPRESENTATION received");
-
-        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
-
-        printf("Get payload values");
-        while (val)
-        {
-            printf("key: %s / Value: %s", val->name, val->str);
-            val = val->next;
-        }
-
-        NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);
-    }
-
-    return OC_STACK_KEEP_TRANSACTION;
-}
-#endif
 
 FILE* server_fopen(const char *path, const char *mode)
 {
@@ -194,8 +160,7 @@ int main()
         printf("9.  NSProviderGetConsumerTopics(); \n");
         printf("10. NSProviderGetTopics(); \n");
         printf("11. NSStopProvider() \n");
-        printf("12. NSCloudLogin \n");
-        printf("13. NSCloudLogout \n");
+        printf("12. NSProviderEnableRemoteService \n");
         printf("0. Exit() \n");
         printf("==============================================\n");
 
@@ -322,32 +287,17 @@ int main()
                 break;
 
             case 12:
-                printf("NSCloudLogin");
-
-                printf("Cloud Address: ");
+                printf("Remote Server Address: ");
                 gets(REMOTE_SERVER_ADDRESS);
 
-                printf("Session Code: ");
-                gets(REMOTE_SERVER_SESSION);
-
-#ifdef WITH_CLOUD
-                NSCloudLogin(REMOTE_SERVER_ADDRESS, REMOTE_SERVER_SESSION, CloudLoginoutCallback);
-#endif
-                printf("OCCloudLogin requested");
-                break;
-            case 13:
-                printf("NSCloudLogout");
-#ifdef WITH_CLOUD
-                NSCloudLogout(REMOTE_SERVER_ADDRESS, REMOTE_SERVER_SESSION, CloudLoginoutCallback);
-#endif
-                printf("OCCloudLogout requested");
+                NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);
                 break;
             case 0:
                 NSStopProvider();
                 isExit = true;
                 break;
             default:
-                printf("Under Construction");
+                printf("Under Construction\n");
                 break;
         }
 

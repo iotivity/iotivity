@@ -140,7 +140,7 @@ NSResult NSSendNotification(NSMessage *msg)
                 }
             }
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
             if(subData->remote_messageObId != 0)
             {
                 if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
@@ -224,7 +224,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
                 obArray[obCount++] = subData->syncObId;
             }
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
             if(subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;

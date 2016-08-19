@@ -134,7 +134,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         bool iSRemoteServer = false;
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIEND
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(iSRemoteServer)
         {
@@ -190,7 +190,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(isRemoteServer)
         {

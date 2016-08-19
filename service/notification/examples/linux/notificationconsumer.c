@@ -29,7 +29,6 @@
 #ifdef WITH_CLOUD
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
-#include "cloud_connector.h"
 #include "oic_malloc.h"
 
 #define CLOUD_CONTEXT_VALUE 0x99
@@ -197,7 +196,6 @@ int main(void)
 
 #ifdef WITH_CLOUD
     NS_LOG(DEBUG, "process OCCloudLogin...");
-    OCCloudLogin(CLOUD_HOST_ADDRESS, CLOUD_IOTIVITYNS_SESSION, handleLoginoutCB);
     NS_LOG(DEBUG, "OCCloudLogin return");
 #endif
 
