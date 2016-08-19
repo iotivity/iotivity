@@ -111,6 +111,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
     OCResourcePayload * resource = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
     while (resource)
     {
+        NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
         if (strstr(resource->uri, NS_RESOURCE_URI))
         {
             OCConnectivityType type = CT_DEFAULT;
