@@ -72,6 +72,12 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         return OC_EH_ERROR;
     }
 
+    OCEntityHandlerResponse response;
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+            sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
+
     if (flag & OC_REQUEST_FLAG)
     {
         NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
@@ -102,6 +108,18 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         }
     }
 
+    response.requestHandle = entityHandlerRequest->requestHandle;
+    response.resourceHandle = entityHandlerRequest->resource;
+    response.persistentBufferFlag = 0;
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload *) NULL;
+
+    if (OCDoResponse(&response) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        return NS_ERROR;
+    }
+
     NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OUT");
     return ehResult;
 }
@@ -119,6 +137,12 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         NS_LOG(ERROR, "Invalid request pointer");
         return OC_EH_ERROR;
     }
+
+    OCEntityHandlerResponse response;
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+            sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
 
     if (flag & OC_REQUEST_FLAG)
     {
@@ -165,6 +189,18 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_UNSUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
+    }
+
+    response.requestHandle = entityHandlerRequest->requestHandle;
+    response.resourceHandle = entityHandlerRequest->resource;
+    response.persistentBufferFlag = 0;
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload *) NULL;
+
+    if (OCDoResponse(&response) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        return NS_ERROR;
     }
 
     NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OUT");
