@@ -34,8 +34,8 @@ extern "C"
  */
 typedef struct
 {
-    char ssid[MAX_SSIDLEN];         /**< Ssid of the Enroller**/
-    char pwd[MAX_CREDLEN];          /**< Pwd of the Enroller**/
+    char ssid[OIC_STRING_MAX_VALUE];         /**< Ssid of the Enroller**/
+    char pwd[OIC_STRING_MAX_VALUE];          /**< Pwd of the Enroller**/
     WIFI_AUTHTYPE authtype;         /**< Auth type of the Enroller**/
     WIFI_ENCTYPE enctype;           /**< Encryption type of the Enroller**/
     void *userdata;                 /**< Vender-specific data**/
@@ -46,6 +46,7 @@ typedef struct
  */
 typedef struct
 {
+    char location[OIC_STRING_MAX_VALUE];    /**< GPS information of device. Longitude and latitude in json format **/
     char language[OIC_STRING_MAX_VALUE];    /**< IETF language tag using ISO 639X **/
     char country[OIC_STRING_MAX_VALUE];     /**< ISO Country Code (ISO 3166-1 Alpha-2) **/
     void *userdata;                         /**< Vender-specific data**/
@@ -81,7 +82,8 @@ typedef struct
      */
     struct
     {
-        char deviceName[MAX_DEVICELEN];
+        char deviceName[OIC_STRING_MAX_VALUE];
+        char modelNumber[OIC_STRING_MAX_VALUE];
     } DevConf;
 } ESDeviceProperty;
 

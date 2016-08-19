@@ -101,11 +101,11 @@ namespace OC
         };
 
 #ifdef WITH_MQ
-        struct CreateMQTopicContext
+        struct MQTopicContext
         {
-            MQCreateTopicCallback callback;
+            MQTopicCallback callback;
             std::weak_ptr<IClientWrapper> clientWrapper;
-            CreateMQTopicContext(MQCreateTopicCallback cb, std::weak_ptr<IClientWrapper> cw)
+            MQTopicContext(MQTopicCallback cb, std::weak_ptr<IClientWrapper> cw)
                 : callback(cb), clientWrapper(cw){}
         };
 #endif
@@ -204,14 +204,14 @@ namespace OC
             const OCDevAddr& devAddr,
             const std::string& resourceUri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            FindCallback& callback, QualityOfService QoS);
+            MQTopicCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PutMQTopicRepresentation(
             const OCDevAddr& devAddr,
             const std::string& uri,
             const OCRepresentation& rep,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            MQCreateTopicCallback& callback, QualityOfService QoS);
+            MQTopicCallback& callback, QualityOfService QoS);
 #endif
 
     private:

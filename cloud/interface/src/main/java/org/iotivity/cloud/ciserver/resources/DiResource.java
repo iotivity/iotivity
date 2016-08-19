@@ -49,7 +49,7 @@ public class DiResource extends Resource {
     private CoapDevicePool mDevicePool = null;
 
     public DiResource(CoapDevicePool devicePool) {
-        super(Arrays.asList(Constants.DEVICE_ID));
+        super(Arrays.asList(Constants.REQ_DEVICE_ID));
         mDevicePool = devicePool;
 
         addQueryHandler(
@@ -103,8 +103,8 @@ public class DiResource extends Resource {
             convertedUri = "/di/" + di + "/" + coapResponse.getUriPath();
         }
 
-        return MessageBuilder
-                .modifyResponse(response, convertedUri, null, null);
+        return MessageBuilder.modifyResponse(response, convertedUri, null,
+                null);
     }
 
     class LinkInterfaceHandler implements IResponseEventHandler {
@@ -134,9 +134,8 @@ public class DiResource extends Resource {
 
             mSrcDevice.sendResponse(MessageBuilder.modifyResponse(
                     convertReponseUri(response, mTargetDI),
-                    ContentFormat.APPLICATION_CBOR,
-                    linkPayload != null ? mCbor
-                            .encodingPayloadToCbor(linkPayload) : null));
+                    ContentFormat.APPLICATION_CBOR, linkPayload != null
+                            ? mCbor.encodingPayloadToCbor(linkPayload) : null));
         }
     }
 
@@ -150,8 +149,9 @@ public class DiResource extends Resource {
 
         String deviceId = request.getUriPathSegments().get(1);
 
-        requestChannel.sendRequest(MessageBuilder.modifyRequest(request,
-                extractTargetUriPath(request), null, null, null),
+        requestChannel.sendRequest(
+                MessageBuilder.modifyRequest(request,
+                        extractTargetUriPath(request), null, null, null),
                 new LinkInterfaceHandler(deviceId, srcDevice));
     }
 
@@ -184,8 +184,9 @@ public class DiResource extends Resource {
 
         String deviceId = request.getUriPathSegments().get(1);
 
-        requestChannel.sendRequest(MessageBuilder.modifyRequest(request,
-                extractTargetUriPath(request), null, null, null),
+        requestChannel.sendRequest(
+                MessageBuilder.modifyRequest(request,
+                        extractTargetUriPath(request), null, null, null),
                 new DefaultResponseHandler(deviceId, srcDevice));
     }
 

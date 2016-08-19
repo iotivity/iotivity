@@ -286,7 +286,7 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
     gErrorHandler = errHandler;
 
 
-#if defined(__WITH_DTLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     CARegisterHandler(SRMRequestHandler, SRMResponseHandler, SRMErrorHandler);
 #else
     CARegisterHandler(reqHandler, respHandler, errHandler);
@@ -323,8 +323,15 @@ OCStackResult SRMInitSecureResources()
         OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
         ret = OC_STACK_ERROR;
     }
-
-#endif // (__WITH_DTLS__)
+#endif
+#ifdef __WITH_TLS__
+    if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
+        ret = OC_STACK_ERROR;
+    }
+    CAregisterPkixInfoHandler(GetPkixInfo);
+#endif
 #if defined(__WITH_X509__)
     CARegisterDTLSX509CredentialsHandler(GetDtlsX509Credentials);
     CARegisterDTLSCrlHandler(GetDerCrl);

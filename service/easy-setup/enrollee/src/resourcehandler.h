@@ -56,8 +56,8 @@ typedef struct
     WIFI_MODE supportedMode[NUM_WIFIMODE];
     uint8_t numMode;        // the number of device's supported wifi modes
     WIFI_FREQ supportedFreq;
-    char ssid[MAX_SSIDLEN]; // SSID
-    char cred[MAX_CREDLEN]; // credential information.
+    char ssid[OIC_STRING_MAX_VALUE]; // SSID
+    char cred[OIC_STRING_MAX_VALUE]; // credential information.
     WIFI_AUTHTYPE authType;
     WIFI_ENCTYPE encType;
 } WiFiResource;
@@ -73,7 +73,9 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char devName[MAX_DEVICELEN];
+    char devName[OIC_STRING_MAX_VALUE];
+    char modelNumber[OIC_STRING_MAX_VALUE];
+    char location[OIC_STRING_MAX_VALUE];
     char language[OIC_STRING_MAX_VALUE];
     char country[OIC_STRING_MAX_VALUE];
 } DevConfResource;

@@ -50,4 +50,8 @@ public abstract class Device implements IResponseEventHandler {
     public abstract void onDisconnected();
 
     public abstract String getDeviceId();
+
+    public abstract String getUserId();
+
+    public abstract String getAccessToken();
 }

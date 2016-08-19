@@ -308,6 +308,30 @@
                     android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:id="@+id/layout_modelNumber"
+                    android:weightSum="1"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10dp" >
+
+                    <TextView
+                        android:layout_width="130dp"
+                        android:layout_height="wrap_content"
+                        android:text="modelNumber"
+                        android:id="@+id/textView7"
+                        android:layout_gravity="center_vertical" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="empty"
+                        android:id="@+id/txt_modelNumber" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:id="@+id/layout_Language"
                     android:weightSum="1"
                     android:layout_marginLeft="10dp"
@@ -566,6 +590,31 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/editText_Country"
                         android:text="Test_Country"
+                        android:layout_marginLeft="20dp"
+                        android:layout_gravity="center_vertical" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/layout_InputLocation"
+                    android:weightSum="1"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10dp" >
+
+                    <TextView
+                        android:layout_width="130dp"
+                        android:layout_height="wrap_content"
+                        android:text="location"
+                        android:id="@+id/textView23"
+                        android:layout_gravity="center_vertical" />
+
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/editText_Location"
+                        android:text="Test_Location"
                         android:layout_marginLeft="20dp"
                         android:layout_gravity="center_vertical" />
                 </LinearLayout>

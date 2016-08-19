@@ -55,11 +55,12 @@ public class DeviceProp {
         }
     }
 
-    public void setDevConfProp(String language, String country)
+    public void setDevConfProp(String language, String country, String location)
     {
         try {
             mRep.setValue(ESConstants.OC_RSRVD_ES_LANGUAGE, language);
             mRep.setValue(ESConstants.OC_RSRVD_ES_COUNTRY, country);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_LOCATION, location);
         } catch (OcException e) {
             Log.e(TAG, "setDevConfProp is failed.");
         }
@@ -159,6 +160,22 @@ public class DeviceProp {
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_COUNTRY);
         } catch (OcException e) {
             Log.e(TAG, "getCountry is failed.");
+        }
+        return new String("");
+    }
+
+    /**
+     * Get location info
+     *
+     * @return String location info of GPS
+     */
+    public String getLocation()
+    {
+        try {
+            if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_LOCATION))
+                return mRep.getValue(ESConstants.OC_RSRVD_ES_LOCATION);
+        } catch (OcException e) {
+            Log.e(TAG, "getLocation is failed.");
         }
         return new String("");
     }

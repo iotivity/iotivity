@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 # //******************************************************************
 # //
 # // Copyright 2015 Samsung Electronics All Rights Reserved.
@@ -64,7 +65,8 @@ provisioning_env.AppendUnique(LIBS = ['asn1'])
 if env.get('SECURED') == '1':
     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
 
-provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if provisioning_env.get('LOGGING'):
+    provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################
 # Source files and Targets

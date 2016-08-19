@@ -185,3 +185,8 @@ void JniOnObserveListener::checkExAndRemoveListener(JNIEnv* env)
         m_ownerResource->removeOnObserveListener(env, m_jwListener);
     }
 }
+
+jweak JniOnObserveListener::getJWListener()
+{
+    return this->m_jwListener;
+}

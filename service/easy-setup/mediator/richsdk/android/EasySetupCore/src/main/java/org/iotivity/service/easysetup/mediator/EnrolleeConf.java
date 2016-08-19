@@ -89,6 +89,24 @@ public class EnrolleeConf
     }
 
     /**
+     * Get Model Number property in DevConf resource
+     *
+     * @return modelNumber
+     */
+    public String getModelNumber()
+    {
+        try
+        {
+            if(mDevConfRep != null && mDevConfRep.hasAttribute(ESConstants.OC_RSRVD_ES_MODELNUMBER)) {
+                return (String) mDevConfRep.getValue(ESConstants.OC_RSRVD_ES_MODELNUMBER);
+            }
+        } catch (OcException e) {
+                Log.e(TAG, "getModelNumber is failed.");
+        }
+        return new String("");
+    }
+
+    /**
      * Get Supported WiFi Modes property in WiFi resource
      *
      * @return a list of WiFi modes

@@ -44,6 +44,22 @@ public class OCFConstants {
 
     public static final String TOKEN_REFRESH_URI   = "tokenrefresh";
 
+    /* resource url for acl */
+    public static final String CREDPROV_URI        = "credprov";
+
+    public static final String CERT_URI            = "cert";
+
+    /* resource url for acl */
+    public static final String ACL_URI             = "acl";
+
+    public static final String GROUP_URI           = "group";
+
+    public static final String VERIFY_URI          = "verify";
+
+    public static final String ID_URI              = "id";
+
+    public static final String INVITE_URI          = "invite";
+
     /* resource uri to publish, update, delete resource info */
     public static final String RD_URI              = "rd";
 
@@ -61,7 +77,6 @@ public class OCFConstants {
 
     /* resource uri for message queue */
     public static final String MQ_BROKER_URI       = "ps";
-    public static final String MQ_BROKER_RT        = "oic.wk.ps";
 
     /* file path for tls communication - Modify filePath to yours */
     public static final String ROOT_CERT_FILE      = "./rootca.crt";
@@ -70,4 +85,21 @@ public class OCFConstants {
 
     public static final String CLOUD_KEY_FILE      = "./iotivitycloud.key";
 
+    /* cloud uuid */
+    public static final String CLOUD_UUID          = "2a6085d1-815d-4277-baba-4e4e4df91308";
+
+    public static final String ACCOUNT_FULL_URI              = "/"
+            + PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF + "/"
+            + OCFConstants.ACCOUNT_URI;
+
+    public static final String ACCOUNT_SESSION_FULL_URI      = "/"
+            + PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF + "/"
+            + OCFConstants.ACCOUNT_URI + "/" + OCFConstants.SESSION_URI;
+
+    public static final String ACCOUNT_TOKENREFRESH_FULL_URI = "/"
+            + PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF + "/"
+            + OCFConstants.ACCOUNT_URI + "/" + OCFConstants.TOKEN_REFRESH_URI;
+
+    public static final String KEEP_ALIVE_FULL_URI           = "/" + PREFIX_OIC
+            + "/" + OCFConstants.KEEP_ALIVE_URI;
 }

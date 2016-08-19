@@ -413,6 +413,26 @@ TEST(InitForOTM, NullParam)
     g_callbackResult = false;
 }
 
+TEST(PerformSecureResourceDiscovery, NullParam)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    OCProvisionDev_t* foundDevice = NULL;
+
+    OIC_LOG(INFO, TAG, "Discovering Owned/Unowned Device using multicast\n");
+    result = OCDiscoverSecureResource(DISCOVERY_TIMEOUT, "", CT_DEFAULT, &foundDevice);
+    EXPECT_EQ(OC_STACK_OK, result);
+
+    int NumOfFoundDevice = 0;
+    OCProvisionDev_t* tempDev = foundDevice;
+    while(tempDev)
+    {
+        NumOfFoundDevice++;
+        tempDev = tempDev->next;
+    }
+    PMDeleteDeviceList(foundDevice);
+
+    EXPECT_EQ(true, NumOfFoundDevice > 0);
+}
 
 TEST(PerformUnownedDeviceDiscovery, NullParam)
 {

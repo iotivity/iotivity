@@ -27,6 +27,11 @@ JniOcPresenceHandle::JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCP
 {
 }
 
+JniOcPresenceHandle::JniOcPresenceHandle(JniOnObserveListener* jniListener, OCPresenceHandle presenceHandle)
+    : m_jniObserveListener(jniListener), m_presenceHandle(presenceHandle)
+{
+}
+
 JniOcPresenceHandle::~JniOcPresenceHandle()
 {
     LOGD("~JniOcPresenceHandle()");
@@ -58,6 +63,11 @@ OCPresenceHandle JniOcPresenceHandle::getOCPresenceHandle()
 JniOnPresenceListener* JniOcPresenceHandle::getJniOnPresenceListener()
 {
     return this->m_jniListener;
+}
+
+JniOnObserveListener* JniOcPresenceHandle::getJniOnObserveListener()
+{
+    return this->m_jniObserveListener;
 }
 
 /*

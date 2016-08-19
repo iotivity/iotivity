@@ -153,7 +153,7 @@ namespace OC
                                                const std::string& /*resourceUri*/,
                                                const QueryParamsMap& /*queryParams*/,
                                                const HeaderOptions& /*headerOptions*/,
-                                               FindCallback& /*callback*/,
+                                               MQTopicCallback& /*callback*/,
                                                QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -162,7 +162,7 @@ namespace OC
                                                        const OCRepresentation& /*rep*/,
                                                        const QueryParamsMap& /*queryParams*/,
                                                        const HeaderOptions& /*headerOptions*/,
-                                                       MQCreateTopicCallback& /*callback*/,
+                                                       MQTopicCallback& /*callback*/,
                                                        QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 #endif

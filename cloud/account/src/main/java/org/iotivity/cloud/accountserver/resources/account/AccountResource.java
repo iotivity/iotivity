@@ -23,16 +23,12 @@ package org.iotivity.cloud.accountserver.resources.account;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
-import org.iotivity.cloud.accountserver.AccountServerManager;
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.token.Token;
-import org.iotivity.cloud.accountserver.token.TokenPolicy;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
-import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -52,14 +48,12 @@ public class AccountResource extends Resource {
 
     private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
 
-    private AccountServerManager          mAsManager = new AccountServerManager();
+    private AccountManager                mAsManager = new AccountManager();
 
     public AccountResource() {
         super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
                 Constants.ACCOUNT_URI));
 
-        // addQueryHandler(Arrays.asList("if=" + Constants.INTERFACE_DEFAULT),
-        // this::onDefaultInterfaceReceived);
     }
 
     @Override
@@ -71,8 +65,15 @@ public class AccountResource extends Resource {
         switch (request.getMethod()) {
 
             case POST:
-                // Used for user sign-up
                 response = handlePostSignUp(request);
+                break;
+
+            case GET:
+                response = handleGetSearch(request);
+                break;
+
+            case DELETE:
+                response = handleDeleteDevice(request);
                 break;
 
             default:
@@ -93,107 +94,75 @@ public class AccountResource extends Resource {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        exceptionPayloadCheck(payloadData);
-
-        String deviceId = payloadData.get(Constants.REQ_DEVICE_ID).toString();
-        String authCode = payloadData.get(Constants.REQ_AUTH_CODE).toString();
-        String authProvider = payloadData.get(Constants.REQ_AUTH_PROVIDER)
-                .toString();
-
-        Log.d("authCode: " + authCode);
-
-        @SuppressWarnings("unchecked")
-        HashMap<String, String> options = (HashMap<String, String>) payloadData
-                .get(Constants.REQ_AUTH_OPTIONS);
-
-        String authServerUrl = null;
-        String apiServerUrl = null;
-
-        if (options != null) {
-            authServerUrl = (String) options.get(Constants.REQ_AUTH_SERVER_URL);
-            apiServerUrl = (String) options.get(Constants.REQ_API_SERVER_URL);
-        }
-
-        boolean res = false;
-
-        res = mAsManager.loadAuthServer(authProvider);
-
-        if (!res) {
-            throw new InternalServerErrorException(
-                    authProvider + " library is not loaded");
-        }
-
-        String userId = mAsManager.requestUserId(authCode, authProvider,
-                authServerUrl, apiServerUrl);
-
-        if (userId == null) {
-            throw new BadRequestException("authCode is invalid");
-        }
-
-        Token token = new Token();
-        token = mAsManager.registerUserAccount(userId);
-
-        String accessToken = token.getAccessToken();
-        String refreshToken = token.getRefreshToken();
-
-        if (accessToken == null || refreshToken == null) {
-            throw new InternalServerErrorException("MongoDB is not operating");
+        if (payloadData == null) {
+            throw new BadRequestException("CBOR parsing failed");
         }
 
         HashMap<String, Object> responsePayload = null;
 
-        responsePayload = new HashMap<String, Object>();
+        if (checkPayloadException(Arrays.asList(Constants.REQ_DEVICE_ID,
+                Constants.REQ_AUTH_CODE, Constants.REQ_AUTH_PROVIDER),
+                payloadData)) {
 
-        responsePayload.put(Constants.RESP_ACCESS_TOKEN, accessToken);
-        responsePayload.put(Constants.RESP_REFRESH_TOKEN, refreshToken);
-        responsePayload.put(Constants.RESP_TOKEN_TYPE,
-                TokenPolicy.BEARER_TOKEN);
-        responsePayload.put(Constants.RESP_EXPIRES_IN, TokenPolicy.EXPIRES_IN);
-        responsePayload.put(Constants.RESP_USER_ID, userId);
+            String did = payloadData.get(Constants.REQ_DEVICE_ID).toString();
+            String authCode = payloadData.get(Constants.REQ_AUTH_CODE)
+                    .toString();
+            String authProvider = payloadData.get(Constants.REQ_AUTH_PROVIDER)
+                    .toString();
 
-        res = mAsManager.registerUserAccount(userId, deviceId);
+            Log.d("authCode: " + authCode);
 
-        if (!res) {
-            throw new InternalServerErrorException("MongoDB is not operating");
+            Object options = payloadData.get(Constants.REQ_AUTH_OPTIONS);
+
+            responsePayload = mAsManager.signUp(did, authCode, authProvider,
+                    options);
         }
 
-        return MessageBuilder.createResponse(request, ResponseStatus.CREATED,
+        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));
     }
 
-    private void exceptionPayloadCheck(HashMap<String, Object> payloadData)
-            throws ServerException {
-        if (payloadData == null) {
-            throw new BadRequestException("payload is null");
+    private IResponse handleGetSearch(IRequest request) {
+        HashMap<String, Object> responsePayload = null;
+
+        HashMap<String, List<String>> queryData = request.getUriQueryMap();
+
+        if (queryData == null) {
+            throw new BadRequestException("query is null");
+        }
+        List<String> suid = queryData.get(Constants.REQ_UUID_ID);
+        List<String> criteria = queryData.get(Constants.REQ_SEARCH_CRITERIA);
+
+        if (suid != null) {
+            responsePayload = mAsManager.searchUserAboutUuid(suid.get(0));
+        } else if (criteria != null) {
+            responsePayload = mAsManager
+                    .searchUserAboutCriteria(criteria.get(0));
+
+        } else {
+            throw new BadRequestException(
+                    "uid and search query param are null");
         }
 
-        // check if mandatory properties exist
-        if (!payloadData.containsKey(Constants.REQ_DEVICE_ID)) {
-            throw new PreconditionFailedException("di property is not include");
+        return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(responsePayload));
+    }
+
+    private IResponse handleDeleteDevice(IRequest request) {
+
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
+
+        if (checkQueryException(
+                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID),
+                queryMap)) {
+
+            String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+            String did = queryMap.get(Constants.REQ_DEVICE_ID).get(0);
+            mAsManager.deleteDevice(uid, did);
         }
 
-        if (!payloadData.containsKey(Constants.REQ_AUTH_CODE)) {
-            throw new PreconditionFailedException(
-                    "authcode property is not include");
-        }
-
-        if (!payloadData.containsKey(Constants.REQ_AUTH_PROVIDER)) {
-            throw new PreconditionFailedException(
-                    "authprovider property is not include");
-        }
-
-        // check if mandatory properties have null values
-        if (payloadData.get(Constants.REQ_DEVICE_ID) == null) {
-            throw new PreconditionFailedException("di param is null");
-        }
-
-        if (payloadData.get(Constants.REQ_AUTH_CODE) == null) {
-            throw new PreconditionFailedException("authcode param is null");
-        }
-
-        if (payloadData.get(Constants.REQ_AUTH_PROVIDER) == null) {
-            throw new PreconditionFailedException("authprovider param is null");
-        }
+        return MessageBuilder.createResponse(request, ResponseStatus.DELETED);
     }
 }

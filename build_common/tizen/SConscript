@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 ##
 # This script set linux specific flags (GNU GCC)
 #
@@ -14,7 +15,7 @@ if env.get('RELEASE'):
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 env['CCFLAGS'] = SCons.Util.CLVar(os.environ.get('CFLAGS', ""))
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
