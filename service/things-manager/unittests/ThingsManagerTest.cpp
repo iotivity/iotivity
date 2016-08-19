@@ -921,6 +921,11 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
 {
     for (auto rsrc = listOfResource.begin(); rsrc != listOfResource.end(); ++rsrc)
     {
+        if(((*rsrc)->connectivityType() & CT_ADAPTER_TCP) == CT_ADAPTER_TCP)
+        {
+            continue;
+        }
+
         std::string resourceURI = (*rsrc)->uri();
         std::string hostAddress = (*rsrc)->host();
 
@@ -950,6 +955,11 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
 
 void foundGroupResource(std::shared_ptr< OCResource > resource)
 {
+    if((resource->connectivityType() & CT_ADAPTER_TCP) == CT_ADAPTER_TCP)
+    {
+        return ;
+    }
+
     std::string resourceURI;
     resourceURI = resource->uri();
     if (resourceURI == "/core/a/collection")
