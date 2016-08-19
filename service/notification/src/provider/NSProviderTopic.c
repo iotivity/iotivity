@@ -288,11 +288,6 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     return NS_OK;
 }
 
-bool NSIsTopicSubscribed(char * consumerId, char * topic)
-{
-    return NSProviderIsTopicSubScribed(consumerTopicList->head, consumerId, topic);
-}
-
 NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSPostConsumerTopics() - IN");
@@ -373,10 +368,10 @@ void * NSTopicSchedule(void * ptr)
                     NSStorageWrite(consumerTopicList, newObj);
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
-                    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
-                    NSStorageDelete(consumerTopicList, (const char *) node->taskData);
-                    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
-                    OICFree((char *)node->taskData);
+                    NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
+                    NSProviderDeleteConsumerTopic(consumerTopicList,
+                            (NSCacheTopicSubData *) node->taskData);
+                    NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC AFter: ");
                     break;
                 case TASK_ADD_TOPIC:
                 {

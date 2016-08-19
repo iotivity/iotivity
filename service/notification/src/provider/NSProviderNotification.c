@@ -129,7 +129,7 @@ NSResult NSSendNotification(NSMessage *msg)
                 {
                     NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
 
-                    if(NSIsTopicSubscribed(subData->id, msg->topic))
+                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
                     {
                         obArray[obCount++] = subData->messageObId;
                     }
@@ -143,7 +143,7 @@ NSResult NSSendNotification(NSMessage *msg)
 #ifdef WITH_CLOUD
             if(subData->remote_messageObId != 0)
             {
-                if(NSIsTopicSubscribed(subData->id, msg->topic))
+                if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
                 {
                     obArray[obCount++] = subData->remote_messageObId;
                 }
@@ -172,7 +172,7 @@ NSResult NSSendNotification(NSMessage *msg)
     }
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray, obCount, payload,
-            OC_HIGH_QOS);
+            OC_LOW_QOS);
 
     NS_LOG_V(DEBUG, "Message ocstackResult = %d", ocstackResult);
 
@@ -249,7 +249,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
     }
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray,
-            obCount, payload, OC_HIGH_QOS);
+            obCount, payload, OC_LOW_QOS);
 
     NS_LOG_V(DEBUG, "Sync ocstackResult = %d", ocstackResult);
 

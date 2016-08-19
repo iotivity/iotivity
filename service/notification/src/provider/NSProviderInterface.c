@@ -324,7 +324,7 @@ NSResult NSProviderSelectTopic(char *consumerId, char *topicName)
     NSCacheTopicSubData * topicSubData =
             (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
 
-    OICStrcpy(topicSubData->id, consumerId, NS_UUID_STRING_SIZE);
+    OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
     topicSubData->topicName = OICStrdup(topicName);
 
     NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPIC, (void *)topicSubData);
@@ -346,7 +346,13 @@ NSResult NSProviderUnselectTopic(char *consumerId, char *topicName)
         return NS_FAIL;
     }
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_UNSUBSCRIBE_TOPIC, topicName);
+    NSCacheTopicSubData * topicSubData =
+            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
+
+    OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
+    topicSubData->topicName = OICStrdup(topicName);
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_UNSUBSCRIBE_TOPIC, (void *)topicSubData);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderUnselectTopics - OUT");

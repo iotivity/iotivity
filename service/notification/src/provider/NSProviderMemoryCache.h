@@ -50,6 +50,9 @@ size_t NSProviderGetListSize(NSCacheElement * firstElement);
 
 bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char * topicName);
 
+NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
+        NSCacheTopicSubData * topicSubData);
+
 pthread_mutex_t NSCacheMutex;
 pthread_mutexattr_t NSCacheMutexAttr;
 
