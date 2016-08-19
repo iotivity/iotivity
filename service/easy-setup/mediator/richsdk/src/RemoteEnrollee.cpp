@@ -378,7 +378,6 @@ namespace OIC
                                                             const CloudPropProvStatusCb callback)
         {
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Enter provisionCloudProperties");
-            ESResult res = ES_OK;
 
             if(!callback)
             {
@@ -414,6 +413,7 @@ namespace OIC
 #ifdef __WITH_DTLS__
             try
             {
+                ESResult res = ES_OK;
                 m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
                 if(cloudProp.getCloudID().empty())

@@ -138,6 +138,7 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP[] = "coap+tcp:";
+static const char COAPS_TCP[] = "coaps+tcp:";
 static const char CORESPEC[] = "core";
 
 //-----------------------------------------------------------------------------
@@ -2361,6 +2362,8 @@ CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
  *  optionally one of
  *      CoAP over UDP prefix    "coap://"
  *      CoAP over TCP prefix    "coap+tcp://"
+ *      CoAP over DTLS prefix   "coaps://"
+ *      CoAP over TLS prefix    "coaps+tcp://"
  *  optionally one of
  *      IPv6 address            "[1234::5678]"
  *      IPv4 address            "192.168.1.1"
@@ -2415,7 +2418,8 @@ static OCStackResult ParseRequestUri(const char *fullUri,
     bool istcp = false;
     if (prefixLen)
     {
-        if ((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
+        if (((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
+        || ((prefixLen == sizeof(COAPS_TCP) - 1) && (!strncmp(fullUri, COAPS_TCP, prefixLen))))
         {
             istcp = true;
         }
@@ -2510,7 +2514,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         da->port = port;
         da->adapter = adapter;
         da->flags = flags;
-        if (!strncmp(fullUri, "coaps:", 6))
+        if (!strncmp(fullUri, "coaps", 5))
         {
             da->flags = (OCTransportFlags)(da->flags|CA_SECURE);
         }

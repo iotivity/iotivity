@@ -72,7 +72,7 @@ public abstract class Message implements IRequest, IResponse {
         for (byte[] querySegment : uri_query) {
             uriQuery.append(new String(querySegment, StandardCharsets.UTF_8));
             if (--nItem > 0) {
-                uriQuery.append('&');
+                uriQuery.append(';');
             }
         }
         return uriQuery.toString();

@@ -26,6 +26,7 @@ import org.iotivity.cloud.base.OCFConstants;
 public class Constants extends OCFConstants {
 
     public static final String MQ_TOPICLIST            = "topiclist";
+    public static final String MQ_MESSAGE              = "message";
 
     // For Kafka
     public static final int    KAFKA_SESSION_TIMEOUT   = 10000;

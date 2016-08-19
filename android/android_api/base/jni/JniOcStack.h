@@ -85,6 +85,9 @@ extern jclass g_cls_OcSecureResource;
 extern jclass g_cls_OcOicSecAcl;
 extern jclass g_cls_OcOicSecPdAcl;
 extern jclass g_cls_OcDirectPairDevice;
+#ifdef WITH_CLOUD
+extern jclass g_cls_OcAccountManager;
+#endif
 
 extern jclass g_cls_OcOicSecAcl_ace;
 extern jclass g_cls_OcOicSecAcl_resr;
@@ -123,6 +126,9 @@ extern jmethodID g_mid_OcProvisionResult_ctor;
 extern jmethodID g_mid_OcSecureResource_ctor;
 extern jmethodID g_mid_OcDirectPairDevice_ctor;
 extern jmethodID g_mid_OcDirectPairDevice_dev_ctor;
+#ifdef WITH_CLOUD
+extern jmethodID g_mid_OcAccountManager_ctor;
+#endif
 
 extern jmethodID g_mid_OcOicSecAcl_get_rownerID;
 extern jmethodID g_mid_OcOicSecAcl_get_aces;

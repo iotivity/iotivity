@@ -25,67 +25,143 @@ import org.iotivity.cloud.base.OCFConstants;
 
 public class Constants extends OCFConstants {
 
-    // MongoDB
+    // Database name
 
-    public static final String DB_NAME             = "ACCOUNTSERVER_DB";
+    public static final String DB_NAME               = "ACCOUNTSERVER_DB";
 
-    public static final String DEVICE_TABLE        = "USER_DEVICE";
+    // Database table
 
-    public static final String TOKEN_TABLE         = "USER_TOKEN";
+    public static final String USER_TABLE            = "USER_TABLE";
 
-    public static final String KEY_USER_ID         = "userId";
+    public static final String TOKEN_TABLE           = "TOKEN_TABLE";
 
-    public static final String KEY_DEVICE_ID       = "deviceId";
+    public static final String GROUP_TABLE           = "GROUP_TABLE";
 
-    public static final String KEY_ACCESS_TOKEN    = "accesstoken";
+    public static final String INVITE_TABLE          = "INVITE_TABLE";
 
-    public static final String KEY_REFRESH_TOKEN   = "refreshtoken";
+    public static final String DEVICE_TABLE          = "DEVICE_TABLE";
 
-    public static final String KEY_ISSUED_TIME     = "issuedTime";
+    public static final String ACL_TABLE             = "ACL_TABLE";
 
-    // request payload key
+    public static final String ACLTEMPLATE_TABLE     = "ACLTEMPLATE_TABLE";
 
-    public static final String REQ_DEVICE_ID       = "di";
+    // Database table key
 
-    public static final String REQ_AUTH_CODE       = "authcode";
+    public static final String KEYFIELD_UUID         = "uuid";
 
-    public static final String REQ_AUTH_PROVIDER   = "authprovider";
+    public static final String KEYFIELD_ACCESSTOKEN  = "accesstoken";
 
-    public static final String REQ_ACCESS_TOKEN    = "accesstoken";
+    public static final String KEYFIELD_GID          = "gid";
 
-    public static final String REQ_STATUS          = "status";
+    public static final String KEYFIELD_DID          = "did";
 
-    public static final String REQ_REFRESH_TOKEN   = "refreshtoken";
+    public static final String KEYFIELD_ACLID        = "aclid";
 
-    public static final String REQ_AUTH_OPTIONS    = "options";
+    public static final String KEYFIELD_GTYPE        = "gtype";
 
-    public static final String REQ_AUTH_SERVER_URL = "auth_server_url";
+    public static final String KEYFIELD_GIDLIST      = "gidlist";
 
-    public static final String REQ_API_SERVER_URL  = "api_server_url";
+    public static final String KEYFIELD_MIDLIST      = "midlist";
 
-    // response payload key
+    public static final String KEYFIELD_GACL         = "gacl";
 
-    public static final String RESP_ACCESS_TOKEN   = "accesstoken";
+    public static final String KEYFIELD_USERID       = "userid";
 
-    public static final String RESP_REFRESH_TOKEN  = "refreshtoken";
+    public static final String KEYFIELD_PROVIDER     = "provider";
 
-    public static final String RESP_TOKEN_TYPE     = "tokentype";
+    public static final String KEYFIELD_ISSUED_TIME  = "issuedtime";
 
-    public static final String RESP_EXPIRES_IN     = "expiresin";
+    public static final String KEYFIELD_EXPIRED_TIME = "expiredtime";
 
-    public static final String RESP_DEVICES        = "devices";
+    public static final String KEYFIELD_INVITE_USER  = "inviteUser";
 
-    public static final String RESP_USER_ID        = "uid";
+    public static final String KEYFIELD_INVITED_USER = "invitedUser";
+
+    // Request payload key
+
+    public static final String REQ_DEVICE_ID         = "di";
+
+    public static final String REQ_DEVICE_ID_LIST    = "dilist";
+
+    public static final String REQ_UUID_ID           = "uid";
+
+    public static final String REQ_AUTH_CODE         = "authcode";
+
+    public static final String REQ_AUTH_PROVIDER     = "authprovider";
+
+    public static final String REQ_ACCESS_TOKEN      = "accesstoken";
+
+    public static final String REQ_LOGIN             = "login";
+
+    public static final String REQ_REFRESH_TOKEN     = "refreshtoken";
+
+    public static final String REQ_GRANT_TYPE        = "granttype";
+
+    public static final String REQ_AUTH_OPTIONS      = "options";
+
+    public static final String REQ_SEARCH_CRITERIA   = "search";
+
+    public static final String REQ_GROUP_ID          = "gid";
+
+    public static final String REQ_GROUP_MASTER_ID   = "gmid";
+
+    public static final String REQ_GROUP_TYPE        = "gtype";
+
+    public static final String REQ_MEMBER            = "mid";
+
+    public static final String REQ_MEMBER_LIST       = "midlist";
+
+    public static final String REQ_GTYPE_PRIVATE     = "Private";
+
+    public static final String REQ_GTYPE_PUBLIC      = "Public";
+
+    public static final String REQ_CSR               = "csr";
+
+    public static final String REQ_INVITE            = "invite";
+
+    // Response payload key
+
+    public static final String RESP_ACCESS_TOKEN     = "accesstoken";
+
+    public static final String RESP_REFRESH_TOKEN    = "refreshtoken";
+
+    public static final String RESP_TOKEN_TYPE       = "tokentype";
+
+    public static final String RESP_EXPIRES_IN       = "expiresin";
+
+    public static final String RESP_REDIRECT_URI     = "redirecturi";
+
+    public static final String RESP_CERTIFICATE      = "certificate";
+
+    public static final String RESP_SERVER_ID        = "sid";
+
+    public static final String RESP_DEVICES          = "devices";
+
+    public static final String RESP_UUID             = "uid";
+
+    public static final String RESP_USER_INFO        = "uinfo";
+
+    public static final String RESP_USER_LIST        = "ulist";
+
+    public static final String RESP_DEVICE_ID        = "di";
+
+    public static final String RESP_CERT             = "cert";
+
+    public static final String RESP_CACERT           = "cacert";
+
+    public static final String RESP_INVITE           = "invite";
+
+    public static final String RESP_INVITED          = "invited";
+
+    // static token type
+
+    public static final String TOKEN_TYPE_BEARER     = "bearer";
+
+    public static final int    TOKEN_INFINITE        = -1;
 
     // auth servers
 
-    public static final String GITHUB              = "Github";
+    public static final String GITHUB                = "Github";
 
-    public static final String SAMSUNG             = "Samsung";
-
-    public static final String KEY_ACCESS_TOKEN_GH = "access_token";
-
-    // etc
-
-    public static final String ERROR_MESSAGE       = "error_message";
+    public static final String SAMSUNG               = "Samsung";
 }

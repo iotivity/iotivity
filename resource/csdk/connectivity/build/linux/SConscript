@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 ##
 # This script set linux specific flags (GNU GCC)
 #
@@ -14,7 +15,7 @@ else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])

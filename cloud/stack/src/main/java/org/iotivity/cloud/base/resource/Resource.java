@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.base.resource;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -28,8 +29,11 @@ import java.util.Map.Entry;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestEventHandler;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
+import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
+import org.iotivity.cloud.util.Cbor;
 
 public class Resource implements IRequestEventHandler {
 
@@ -79,5 +83,49 @@ public class Resource implements IRequestEventHandler {
             throws ServerException {
         // No default handlers registered, send error
         throw new NotFoundException("No handlers registered");
+    }
+
+    public boolean checkQueryException(String property,
+            HashMap<String, List<String>> queryData) {
+        return checkQueryException(Arrays.asList(property), queryData);
+    }
+
+    public boolean checkQueryException(List<String> propertyList,
+            HashMap<String, List<String>> queryData) {
+
+        if (queryData == null)
+            throw new BadRequestException("queryData is null");
+
+        for (String property : propertyList) {
+            if (!queryData.containsKey(property))
+                throw new PreconditionFailedException(
+                        property + " property is not include");
+            if (queryData.get(property) == null)
+                throw new PreconditionFailedException(
+                        property + " param is null");
+        }
+        return true;
+    }
+
+    public boolean checkPayloadException(String property,
+            HashMap<String, Object> payloadData) {
+        return checkPayloadException(Arrays.asList(property), payloadData);
+    }
+
+    public boolean checkPayloadException(List<String> propertyList,
+            HashMap<String, Object> payloadData) {
+
+        if (payloadData == null)
+            throw new BadRequestException("payloadData is null");
+
+        for (String property : propertyList) {
+            if (!payloadData.containsKey(property))
+                throw new PreconditionFailedException(
+                        property + " property is not include");
+            if (payloadData.get(property) == null)
+                throw new PreconditionFailedException(
+                        property + " param is null");
+        }
+        return true;
     }
 }

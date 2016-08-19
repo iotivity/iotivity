@@ -21,6 +21,8 @@ public class ESConstants {
     public static final String OC_RSRVD_ES_DEVNAME = "dn";
     public static final String OC_RSRVD_ES_LANGUAGE = "lang";
     public static final String OC_RSRVD_ES_COUNTRY = "ctry";
+    public static final String OC_RSRVD_ES_MODELNUMBER = "mnmo";
+    public static final String OC_RSRVD_ES_LOCATION = "loc";
 
 /**
 * Easysetup defined resoruce types and uris
@@ -33,5 +35,5 @@ public class ESConstants {
     public static final String OC_RSRVD_ES_URI_CLOUDSERVER = "/CloudServerProvisioningResURI";
     public static final String OC_RSRVD_ES_RES_TYPE_DEVCONF = "ocf.wk.devconf";
     public static final String OC_RSRVD_ES_URI_DEVCONF = "/DevConfProvisioningResURI";
-    
+
 }

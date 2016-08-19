@@ -52,4 +52,16 @@ public class HttpDevice extends Device {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public String getUserId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getAccessToken() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

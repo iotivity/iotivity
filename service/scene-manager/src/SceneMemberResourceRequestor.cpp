@@ -104,7 +104,7 @@ namespace OIC
             // TODO error code
             int result = SCENE_CLIENT_BADREQUEST;
 
-            if (eCode == OC_STACK_OK)
+            if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
             {
                 try
                 {

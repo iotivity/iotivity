@@ -90,7 +90,7 @@ public class DiscoveryResource extends Resource {
 
         List<String> listRT = queryMap.get(Constants.RESOURCE_TYPE);
         List<String> listITF = queryMap.get(Constants.INTERFACE);
-        String key, value = null;
+        String key = null, value = null;
         ArrayList<HashMap<Object, Object>> foundResList = null;
 
         // TODO: Multiple RT or ITF support required
@@ -100,14 +100,16 @@ public class DiscoveryResource extends Resource {
         } else if (listITF != null) {
             key = Constants.INTERFACE;
             value = listITF.get(0);
-        } else {
-            throw new PreconditionFailedException(
-                    "rt or if property is not included");
         }
 
-        for (String deviceId : deviceList) {
-            foundResList = DBManager.getInstance().findResourceAboutDi(deviceId,
-                    key, value);
+        for (String deviceId : deviceList) {            
+            if(key != null && value != null){
+                foundResList = DBManager.getInstance().findResourceAboutDiAndFilter(deviceId,
+                        key, value);
+            } else {            
+                foundResList = DBManager.getInstance().findResourceAboutDi(deviceId);
+            }
+            
             if (foundResList != null) {
                 resourceList.add(makeDiscoveryPayloadSegment(foundResList));
             }

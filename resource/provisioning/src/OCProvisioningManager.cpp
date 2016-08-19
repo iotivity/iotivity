@@ -121,6 +121,47 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::discoverSecureResource(unsigned short timeout,
+            const std::string& host,
+            OCConnectivityType connType,
+            DeviceList_t &list)
+    {
+        OCStackResult result;
+        OCProvisionDev_t *pDevList = nullptr, *pCurDev = nullptr, *tmp = nullptr;
+        auto csdkLock = OCPlatform_impl::Instance().csdkLock();
+        auto cLock = csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDiscoverSecureResource(timeout, host.c_str(), connType, &pDevList);
+            if (result == OC_STACK_OK)
+            {
+                pCurDev = pDevList;
+                while (pCurDev)
+                {
+                    tmp = pCurDev;
+                    list.push_back(std::shared_ptr<OCSecureResource>(
+                                new OCSecureResource(csdkLock, pCurDev)));
+                    pCurDev = pCurDev->next;
+                    tmp->next = nullptr;
+                }
+            }
+            else
+            {
+                oclog() <<"Secure resource discovery failed!";
+                result = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
     OCStackResult OCSecure::setOwnerTransferCallbackData(OicSecOxm_t oxm,
             OTMCallbackData_t* callbackData, InputPinCallback inputPin)
     {

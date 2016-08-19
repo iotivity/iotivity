@@ -51,6 +51,18 @@ namespace OCProvisioningTest
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
     }
 
+    TEST(DiscoveryTest, SecureResource)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverSecureResource(TIMEOUT, "", CT_DEFAULT, list));
+    }
+
+    TEST(DiscoveryTest, SecureResourceZeroTimeout)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverSecureResource(0, "", CT_DEFAULT, list));
+    }
+
     TEST(DiscoveryTest, UnownedDevices)
     {
         DeviceList_t list;

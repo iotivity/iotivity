@@ -66,6 +66,28 @@ OCStackResult OCInitPM(const char* dbPath)
 }
 
 /**
+ * The function is responsible for discovery of owned/unowned device is specified endpoint.
+ * It will return when found one or more device even though timeout is not exceeded
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the list of devices.
+ * @param[in] host               address of target endpoint
+ * @param[in] connType           connectivity type of endpoint
+ * @param[out] ppList            List of device.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverSecureResource(unsigned short timeout, const char* host,
+                             OCConnectivityType connType, OCProvisionDev_t **ppList)
+{
+    if( ppList == NULL || *ppList != NULL || 0 == timeout || host == NULL)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMSingleDeviceDiscovery(timeout, host, connType, ppList);
+}
+
+/**
  * The function is responsible for discovery of device is current subnet. It will list
  * all the device in subnet which are not yet owned. Please call OCInit with OC_CLIENT_SERVER as
  * OCMode.
@@ -891,7 +913,7 @@ OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
     size_t deleteCnt = 0;
     while (pCurDev)
     {
-        if(true == PMDeleteFromUUIDList(uuidList, &pCurDev->doxm->deviceID))
+        if(true == PMDeleteFromUUIDList(&uuidList, &pCurDev->doxm->deviceID))
         {
             deleteCnt++;
         }

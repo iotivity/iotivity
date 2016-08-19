@@ -30,14 +30,9 @@ extern "C"
 #endif
 
 // Defines
-#define OIC_STRING_MAX_VALUE    100
-#define IPV4_ADDR_SIZE          16
-#define IP_PORT                 55555
-
-/**
- * @brief Mac address length for BT port
- */
-#define NET_MACADDR_SIZE 18
+#define OIC_STRING_MAX_VALUE    64
+#define MAX_WEBLINKLEN          3
+#define NUM_WIFIMODE            5
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
@@ -58,6 +53,8 @@ extern "C"
 #define OC_RSRVD_ES_DEVNAME                "dn"
 #define OC_RSRVD_ES_LANGUAGE               "lang"
 #define OC_RSRVD_ES_COUNTRY                "ctry"
+#define OC_RSRVD_ES_MODELNUMBER            "mnmo"
+#define OC_RSRVD_ES_LOCATION               "loc"
 
 /**
  * Easysetup defined resoruce types and uris.
@@ -71,12 +68,6 @@ extern "C"
 #define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.wk.devconf"
 #define OC_RSRVD_ES_URI_DEVCONF           "/DevConfProvisioningResURI"
 
-#define NUM_WIFIMODE    10
-#define MAX_SSIDLEN     33
-#define MAX_CREDLEN     20
-
-#define MAX_DEVICELEN   100
-#define MAX_WEBLINKLEN  100
 
 /**
  * @brief  Supported WIFI frequency like 2.4G and 5G

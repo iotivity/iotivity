@@ -191,7 +191,7 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
     (gESDeviceProperty.WiFi).freq = (deviceProperty->WiFi).freq;
     OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "WiFi Freq : %d", (gESDeviceProperty.WiFi).freq);
 
-    OICStrcpy((gESDeviceProperty.DevConf).deviceName, MAX_DEVICELEN, (deviceProperty->DevConf).deviceName);
+    OICStrcpy((gESDeviceProperty.DevConf).deviceName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetDeviceProperty OUT");

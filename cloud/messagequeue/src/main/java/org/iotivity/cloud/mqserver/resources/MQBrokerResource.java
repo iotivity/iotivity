@@ -28,6 +28,10 @@ import java.util.List;
 
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+import org.iotivity.cloud.base.exception.ServerException.ForbiddenException;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
+import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -80,7 +84,8 @@ public class MQBrokerResource extends Resource {
     private IResponse handleGetRequest(Device srcDevice, IRequest request) {
 
         // DISCOVER
-        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments()
+                .size()) {
             return discoverTopic(request);
         }
 
@@ -95,20 +100,18 @@ public class MQBrokerResource extends Resource {
                 return unsubscribeTopic(request);
 
             default:
-                break;
+                throw new BadRequestException("observe type not supported");
         }
-
-        return MessageBuilder.createResponse(request,
-                ResponseStatus.BAD_REQUEST);
     }
 
     // CREATE topic
     private IResponse handlePutRequest(IRequest request) {
 
-        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments()
+                .size()) {
 
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new BadRequestException(
+                    "topic name is not included in request uri");
         }
 
         return createTopic(request);
@@ -129,7 +132,8 @@ public class MQBrokerResource extends Resource {
     private IResponse createTopic(IRequest request) {
 
         // main topic creation request
-        if (request.getUriPathSegments().size() == getUriPathSegments().size() + 1) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size()
+                + 1) {
             return createMainTopic(request);
         }
 
@@ -140,8 +144,7 @@ public class MQBrokerResource extends Resource {
         Topic targetTopic = mTopicManager.getTopic(uriPath);
 
         if (targetTopic == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("main topic doesn't exist");
         }
 
         return targetTopic.handleCreateSubtopic(request);
@@ -159,14 +162,13 @@ public class MQBrokerResource extends Resource {
         String uriPath = request.getUriPath();
 
         String parentName = uriPath.substring(0, uriPath.lastIndexOf('/'));
-        String targetName = request.getUriPathSegments().get(
-                request.getUriPathSegments().size() - 1);
+        String targetName = request.getUriPathSegments()
+                .get(request.getUriPathSegments().size() - 1);
 
         Topic parentTopic = mTopicManager.getTopic(parentName);
 
         if (parentTopic == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("main topic doesn't exist");
         }
 
         return parentTopic.handleRemoveSubtopic(request, targetName);
@@ -177,8 +179,7 @@ public class MQBrokerResource extends Resource {
         Topic topic = mTopicManager.getTopic(request.getUriPath());
 
         if (topic == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("topic doesn't exist");
         }
 
         return topic.handleSubscribeTopic(srcDevice, request);
@@ -189,8 +190,7 @@ public class MQBrokerResource extends Resource {
         Topic topic = mTopicManager.getTopic(request.getUriPath());
 
         if (topic == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("topic doesn't exist");
         }
 
         return topic.handleUnsubscribeTopic(request);
@@ -201,8 +201,7 @@ public class MQBrokerResource extends Resource {
         Topic topic = mTopicManager.getTopic(request.getUriPath());
 
         if (topic == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("topic doesn't exist");
         }
 
         return topic.handlePublishMessage(request);
@@ -213,8 +212,7 @@ public class MQBrokerResource extends Resource {
         Topic topic = mTopicManager.getTopic(request.getUriPath());
 
         if (topic == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("topic doesn't exist");
         }
 
         return topic.handleReadMessage(request);
@@ -236,24 +234,19 @@ public class MQBrokerResource extends Resource {
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
-                ContentFormat.APPLICATION_CBOR, MessageQueueUtils.buildPayload(
-                        Constants.MQ_TOPICLIST, topicList));
+                ContentFormat.APPLICATION_CBOR, MessageQueueUtils
+                        .buildPayload(Constants.MQ_TOPICLIST, topicList));
     }
 
     private IResponse createMainTopic(IRequest request) {
 
-        String topicName = request.getUriPathSegments().get(
-                request.getUriPathSegments().size() - 1);
+        String topicName = request.getUriPathSegments()
+                .get(request.getUriPathSegments().size() - 1);
 
         String type = new String();
 
         if (request.getUriQueryMap() != null) {
             type = request.getUriQueryMap().get("rt").get(0);
-        }
-
-        if (topicName == null) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
         }
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -269,19 +262,19 @@ public class MQBrokerResource extends Resource {
         topicName = stringBuilder.toString();
 
         if (mTopicManager.getTopic(topicName) != null) {
-            // Topic already exists
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new ForbiddenException("topic already exist");
         }
 
         Topic newTopic = new Topic(topicName, type, mTopicManager);
 
         if (mTopicManager.createTopic(newTopic) == false) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.INTERNAL_SERVER_ERROR);
+            throw new InternalServerErrorException("create topic falied");
         }
 
-        return MessageBuilder.createResponse(request, ResponseStatus.CREATED);
+        IResponse response = MessageBuilder.createResponse(request,
+                ResponseStatus.CREATED);
+        response.setLocationPath(request.getUriPath());
+        return response;
     }
 
     private IResponse removeMainTopic(IRequest request) {
@@ -291,16 +284,13 @@ public class MQBrokerResource extends Resource {
         Topic targetTopic = mTopicManager.getTopic(topicName);
 
         if (targetTopic == null) {
-            // Topic doesn't exist
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.BAD_REQUEST);
+            throw new NotFoundException("topic doesn't exist");
         }
 
         targetTopic.cleanup();
 
         if (mTopicManager.removeTopic(targetTopic) == false) {
-            return MessageBuilder.createResponse(request,
-                    ResponseStatus.INTERNAL_SERVER_ERROR);
+            throw new InternalServerErrorException("remove topic failed");
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);

@@ -52,9 +52,13 @@ public class DBManager {
         return mMongoDB.createRDResource(pubResourceList, Constants.RD_TABLE);
     }
 
-    public ArrayList<HashMap<Object, Object>> findResourceAboutDi(String di,
+    public ArrayList<HashMap<Object, Object>> findResourceAboutDi(String di) {
+        return mMongoDB.readResourceAboutDid(di, Constants.RD_TABLE);
+    }
+    
+    public ArrayList<HashMap<Object, Object>> findResourceAboutDiAndFilter(String di,
             String key, String value) {
-        return mMongoDB.readResourceAboutDid(di, key, value,
+        return mMongoDB.readResourceAboutDidAndFilter(di, key, value,
                 Constants.RD_TABLE);
     }
 
