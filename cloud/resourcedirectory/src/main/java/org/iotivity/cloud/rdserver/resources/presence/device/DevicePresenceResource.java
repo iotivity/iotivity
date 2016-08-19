@@ -95,8 +95,8 @@ public class DevicePresenceResource extends Resource {
                 break;
 
             default:
-                throw new BadRequestException(
-                        request.getMethod() + " request type is not supported");
+                throw new BadRequestException(request.getMethod()
+                        + " request type is not supported");
         }
 
         srcDevice.sendResponse(response);
@@ -123,8 +123,8 @@ public class DevicePresenceResource extends Resource {
         for (String deviceId : deviceList) {
             HashMap<String, String> payloadSegment = new HashMap<String, String>();
             payloadSegment.put(Constants.DEVICE_ID, deviceId);
-            payloadSegment.put(Constants.PRESENCE_STATE,
-                    DBManager.getInstance().findDeviceState(deviceId));
+            payloadSegment.put(Constants.PRESENCE_STATE, DBManager
+                    .getInstance().findDeviceState(deviceId));
             getPayload.add(payloadSegment);
         }
 
@@ -157,8 +157,8 @@ public class DevicePresenceResource extends Resource {
         for (String deviceId : deviceList) {
             HashMap<String, String> payloadSegment = new HashMap<String, String>();
             payloadSegment.put(Constants.DEVICE_ID, deviceId);
-            payloadSegment.put(Constants.PRESENCE_STATE,
-                    DBManager.getInstance().findDeviceState(deviceId));
+            payloadSegment.put(Constants.PRESENCE_STATE, DBManager
+                    .getInstance().findDeviceState(deviceId));
             getPayload.add(payloadSegment);
         }
         Log.i("Get observe response" + getPayload.toString());
@@ -168,13 +168,21 @@ public class DevicePresenceResource extends Resource {
                 mCbor.encodingPayloadToCbor(getPayload));
     }
 
-    public IResponse handlePostRequest(IRequest request)
-            throws ServerException {
+    public IResponse handlePostRequest(IRequest request) throws ServerException {
         // check payload
         byte[] payload = request.getPayload();
 
-        HashMap<String, Object> parsedPayload = mCbor
-                .parsePayloadFromCbor(payload, HashMap.class);
+        if (payload == null) {
+            throw new PreconditionFailedException("payload is null");
+        }
+
+        HashMap<String, Object> parsedPayload = mCbor.parsePayloadFromCbor(
+                payload, HashMap.class);
+
+        checkPayloadException(
+                Arrays.asList(Constants.DEVICE_ID, Constants.PRESENCE_STATE),
+                parsedPayload);
+
         String deviceId = parsedPayload.get(Constants.DEVICE_ID).toString();
         String state = parsedPayload.get(Constants.PRESENCE_STATE).toString();
         DeviceState deviceState = new DeviceState();
@@ -205,8 +213,8 @@ public class DevicePresenceResource extends Resource {
                 mDeviceSubscriber.put(deviceId, subscribers);
             }
 
-            subscribers.put(request.getRequestId(),
-                    new PresenceSubscriber(srcDevice, request));
+            subscribers.put(request.getRequestId(), new PresenceSubscriber(
+                    srcDevice, request));
         }
 
         mSubscribedDevices.put(request.getRequestId(), deviceIdList);
@@ -214,8 +222,8 @@ public class DevicePresenceResource extends Resource {
 
     private void removeObserver(IRequest request) {
 
-        List<String> deviceIdList = mSubscribedDevices
-                .get(request.getRequestId());
+        List<String> deviceIdList = mSubscribedDevices.get(request
+                .getRequestId());
 
         if (deviceIdList == null) {
             return;
@@ -246,8 +254,8 @@ public class DevicePresenceResource extends Resource {
         if (tokenNSubscribers != null) {
             for (PresenceSubscriber subscriber : tokenNSubscribers.values()) {
 
-                subscriber.mSubscriber.sendResponse(
-                        MessageBuilder.createResponse(subscriber.mRequest,
+                subscriber.mSubscriber.sendResponse(MessageBuilder
+                        .createResponse(subscriber.mRequest,
                                 ResponseStatus.CONTENT,
                                 ContentFormat.APPLICATION_CBOR,
                                 mCbor.encodingPayloadToCbor(response)));
