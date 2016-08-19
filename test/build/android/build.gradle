@@ -44,6 +44,12 @@ ext.secTestRootDirectoryFromModules = "../../../.."
 ext.binDirectory ="${secTestRootDirectoryFromModules}/bin/android"
 ext.commonText = "${moduleName}"
 
+if(project.hasProperty('app')){
+    ext.iotivityRootDirectoryFromModules = "../../../../../.."
+    ext.secTestRootDirectoryFromModules = "../../../../.."
+    ext.testAppFrameworkSrcDir = "../../../common/android" 
+}
+
 /*
  *Set IoTivity library type from cmd arguments if provided
  *Value can be debug or release
@@ -86,9 +92,11 @@ def dexmakermockitoJarFile = "${androidLibFileDirFromMainBuild}/dexmaker-mockito
 /*
  *IoTivity common libraries path definition
 */
+
 def baseAAROutDirectory = "android/android_api/base/build/outputs/aar"
 ext.baseAARFileDirFromModules = "${iotivityRootDirectoryFromModules}/${baseAAROutDirectory}"
 ext.baseAARFile ="iotivity-base-armeabi-${buildmode}"
+
 def baseAARFileDirFromMainBuild = "${iotivityRootDirectoryFromBuild}/${baseAAROutDirectory}"
 def baseAARFileFromMainBuild = "${baseAARFileDirFromMainBuild}/iotivity-base-armeabi-${buildmode}"
 
@@ -96,15 +104,20 @@ def baseAARFileFromMainBuild = "${baseAARFileDirFromMainBuild}/iotivity-base-arm
  *Module gradle build file path definition
 */
 def moduleBuildFileDir = "${secTestRootDirectoryFromBuild}/src/tc"
-def phyModuleBuildFileDir = "${moduleBuildFileDir}/phy/junit/build.gradle"
+def esModuleBuildFileDir = "${moduleBuildFileDir}/es/junit/build.gradle"
 def rcModuleBuildFileDir = "${moduleBuildFileDir}/rc/junit/build.gradle"
-def tmModuleBuildFileDir = "${moduleBuildFileDir}/tm/junit/build.gradle"
-def tmJarFile = "${secTestRootDirectoryFromBuild}/extlibs/android/tm/tm.jar"
-def rhModuleBuildFileDir = "${moduleBuildFileDir}/rh/junit/build.gradle"
-def rhJarFile = "${secTestRootDirectoryFromBuild}/extlibs/android/rh/rh.jar"
 def reModuleBuildFileDir = "${moduleBuildFileDir}/re/junit/build.gradle"
 def pmModuleBuildFileDir = "${moduleBuildFileDir}/pm/junit/build.gradle"
 def caModuleBuildFileDir = "${moduleBuildFileDir}/ca/junit/build.gradle"
+
+if(project.hasProperty('app')){
+    def testAppBaseDirectory = "${secTestRootDirectoryFromBuild}/src/iBtestapp/modules"
+    esModuleBuildFileDir = "${testAppBaseDirectory}/phy/android/build.gradle"
+    pmModuleBuildFileDir = "${testAppBaseDirectory}/pm/android/build.gradle"
+    rcModuleBuildFileDir = "${testAppBaseDirectory}/rc/android/build.gradle"
+    reModuleBuildFileDir = "${testAppBaseDirectory}/re/android/build.gradle"
+    caModuleBuildFileDir = "${testAppBaseDirectory}/ca/android/build.gradle"
+}
 
 ext.easySetupNDkBuildDir = "${iotivityRootDirectoryFromBuild}/service/easy-setup/mediator/richsdk/android"
 ext.easySetupCoreDir = "${iotivityRootDirectoryFromBuild}/service/easy-setup/mediator/richsdk/android/EasySetupCore"
@@ -146,24 +159,6 @@ task checkBaseAARFile {
 }
 
 /*
- * create library jar for tm module
-*/
-task createTMLibrary(type: Exec) {
-    commandLine './lib_maker.sh'
-    def argsList = ["tm", "${buildmode}","${iotivityRootDirectoryFromBuild}"]
-    args = argsList
-}
-
-/*
- * create library jar for rh module
-*/
-task createRHLibrary(type: Exec) {
-    commandLine './lib_maker.sh'
-    def argsList = ["rh", "${buildmode}","${iotivityRootDirectoryFromBuild}"]
-    args = argsList
-}
-
-/*
  * create library jar for phy module
 */
 task createPhyLibrary(type: Exec) {
@@ -178,7 +173,7 @@ task createPhyLibrary(type: Exec) {
 /*
  * task to perform ndk build for easy setup
 */
-task phyNDKBuild(type: Exec){
+task esNDKBuild(type: Exec){
      workingDir "${easySetupNDkBuildDir}"
      commandLine 'ndk-build'
 }
@@ -199,18 +194,18 @@ public void writeToFile() {
 /*
  * task to build phy 
 */
-task phy(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile', 'phyNDKBuild', 'createPhyLibrary'])  {
-    buildFile = phyModuleBuildFileDir
-    tasks = ['phybuild']
+task es(type: GradleBuild, dependsOn: [checkCommonLibFiles, 'checkBaseAARFile'])  {
+    buildFile = esModuleBuildFileDir
+    tasks = ['esbuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
 /*
  * task to build phy  without make library
 */
-task phyWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'])  {
-    buildFile = phyModuleBuildFileDir
-    tasks = ['phybuild']
+task esWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'])  {
+    buildFile = esModuleBuildFileDir
+    tasks = ['esbuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
@@ -231,57 +226,6 @@ task re(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'
     tasks = ['rebuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
-
-task checkRHLibFiles {
-
-    doFirst {
-           
-        if( !file(rhJarFile).exists() ) {
-            throw new GradleException("RH Jar file does not exist in ${rhJarFileDir}")
-        }
-  
-    }
-}
-
-/*
- * task to build rh 
-*/
-task rh(type: GradleBuild, dependsOn: ['checkCommonLibFiles','checkRHLibFiles', 'checkBaseAARFile', 'createRHLibrary']) {
-    buildFile = rhModuleBuildFileDir
-    tasks = ['rhbuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
-}
-checkRHLibFiles.mustRunAfter(createRHLibrary)
-
-/*
- * task to build rh 
-*/
-task rhWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles','checkRHLibFiles', 'checkBaseAARFile']) {
-    buildFile = rhModuleBuildFileDir
-    tasks = ['rhbuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
-}
-
-task checkTMLibFiles {
-
-    doFirst {
-
-        if( !file(tmJarFile).exists() ) {
-            throw new GradleException("TM Jar file does not exist in ${tmJarFileDir}")
-        }
-  
-    }
-}
-
-/*
- * task to build tm 
-*/
-task tm(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkTMLibFiles', 'checkBaseAARFile', 'createTMLibrary']) {
-    buildFile = tmModuleBuildFileDir
-    tasks = ['tmbuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
-} 
-checkTMLibFiles.mustRunAfter(createTMLibrary)
 
 task checkRCLibFiles {
 
@@ -311,6 +255,13 @@ task rc(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'
     tasks = ['rcbuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
+
+task rcWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
+    buildFile = rcModuleBuildFileDir
+    tasks = ['rcbuild']
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
+}
+
 checkRCLibFiles.mustRunAfter(createRCLibrary)
 
 /*
@@ -334,7 +285,6 @@ task ca(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'
 /*
  * task to build all modules 
 */
-task all(dependsOn:['phy', 'pm', 'rh', 'tm', 're', 'ca']){
+task all(dependsOn:['phy', 'pm', 're', 'rc', 'ca']){
 
 }
-
