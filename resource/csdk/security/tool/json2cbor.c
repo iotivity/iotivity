@@ -880,7 +880,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
     ret = OC_STACK_OK;
 
 exit:
-
+    cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
         DeleteCredList(headCred);
