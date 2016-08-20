@@ -65,6 +65,8 @@ mediator_env.PrependUnique(LIBS = ['ESMediatorRich', 'oc', 'octbstack', 'oc_logg
 
 if env.get('SECURED') == '1':
 	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
+	if env.get('WITH_TCP') == True:
+		mediator_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 mediator = mediator_env.Program('mediator_rich', 'mediator_cpp.cpp')
 

@@ -50,6 +50,8 @@ linux_sample_env.AppendUnique(LIBS = ['pthread'])
 
 if env.get('SECURED') == '1':
     linux_sample_env.AppendUnique(LIBS = ['tinydtls'])
+    if env.get('WITH_TCP') == True:
+    	linux_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 # On some platforms link order can miss functions so librt needs to be
 # re-scanned at the end if present. gcc 4.6 is one with this issue.

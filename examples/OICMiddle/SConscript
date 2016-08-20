@@ -58,6 +58,8 @@ examples_env.AppendUnique(LIBS = ['rt'])
 
 if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
+    if env.get('WITH_TCP') == True:
+		examples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
