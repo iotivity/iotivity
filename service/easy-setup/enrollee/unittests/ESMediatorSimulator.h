@@ -424,7 +424,7 @@ private:
         if(m_CloudPropProvisioningCb != NULL)
         {
             m_CloudPropProvisioningCb(cloudPropProvisioningStatus);
-            if(cloudPropProvisioningStatus->getESCloudState() == ES_CLOUD_PROVISIONING_SUCCESS)
+            if(cloudPropProvisioningStatus->getESResult() == ES_OK)
             {
                 m_CloudPropProvisioningCb = NULL;
             }

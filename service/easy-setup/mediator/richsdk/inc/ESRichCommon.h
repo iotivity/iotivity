@@ -418,17 +418,6 @@ namespace OIC
         };
 
         /**
-         * @brief Provisioning state in cloud server property provisioning.
-         */
-        typedef enum
-        {
-            ES_CLOUD_PROVISIONING_ERROR = -1,   /**< An error in cloud provisioning happens **/
-            ES_CLOUD_PROVISIONING_SUCCESS,      /**< Cloud provisioning is successfully done **/
-            ES_CLOUD_ENROLLEE_FOUND,            /**< An enrollee is found in a given network **/
-            ES_CLOUD_ENROLLEE_NOT_FOUND         /**< NO enrollee is found in a given network **/
-        }ESCloudProvState;
-
-        /**
          * Security Provisioning Status
          */
         class SecProvisioningStatus
@@ -706,8 +695,8 @@ namespace OIC
         class CloudPropProvisioningStatus
         {
         public:
-            CloudPropProvisioningStatus(ESResult result, ESCloudProvState state) :
-                    m_result(result), m_esCloudState(state)
+            CloudPropProvisioningStatus(ESResult result) :
+                    m_result(result)
             {
             }
 
@@ -716,14 +705,8 @@ namespace OIC
                 return m_result;
             }
 
-            ESCloudProvState getESCloudState()
-            {
-                return m_esCloudState;
-            }
-
         private:
             ESResult m_result;
-            ESCloudProvState m_esCloudState;
         };
 
         /**

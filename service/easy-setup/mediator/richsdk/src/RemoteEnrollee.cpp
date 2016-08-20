@@ -224,6 +224,7 @@ namespace OIC
         void RemoteEnrollee::provisionSecurity(const SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
+            std::cout << __func__ << std::endl;
             if(!callback)
             {
                 throw ESInvalidParameterException("Callback is empty");
@@ -261,7 +262,7 @@ namespace OIC
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                      std::make_shared< SecProvisioningStatus >
-                                                        ("", ES_UNSUPPORTED_OPERATION);
+                                   ("", ESResult::ES_SEC_OPERATION_IS_NOT_SUPPORTED);
             m_securityProvStatusCb(securityProvisioningStatus);
 #endif
         }
@@ -362,8 +363,7 @@ namespace OIC
                     m_cloudResource = std::make_shared<CloudResource>(m_ocResource);
 
                     std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_OK,
-                                                        ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
+                        CloudPropProvisioningStatus >(ESResult::ES_FOUND_ENROLLEE);
 
                     m_cloudPropProvStatusCb(provStatus);
                 }
@@ -404,8 +404,7 @@ namespace OIC
                     "Exception caught in provisionCloudProperties = %s", e.what());
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_ERROR,
-                                                    ESCloudProvState::ES_CLOUD_ENROLLEE_NOT_FOUND);
+                        CloudPropProvisioningStatus >(ESResult::ES_NOT_FOUND_ENROLLEE);
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }
@@ -438,8 +437,7 @@ namespace OIC
                 m_cloudResource = nullptr;
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_ERROR,
-                                                    ESCloudProvState::ES_CLOUD_PROVISIONING_ERROR);
+                        CloudPropProvisioningStatus >(ESResult::ES_ERROR);
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }

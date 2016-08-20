@@ -80,7 +80,7 @@ namespace OIC
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
+                    result = ESResult::ES_UNAUTHORIZED_REQ;
                 }
 
                 EnrolleeStatus enrolleeStatus(rep);
@@ -116,7 +116,7 @@ namespace OIC
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
+                    result = ESResult::ES_UNAUTHORIZED_REQ;
                 }
 
                 EnrolleeConf enrolleeConf(rep);
