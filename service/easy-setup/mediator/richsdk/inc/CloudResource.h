@@ -48,7 +48,7 @@ namespace OIC
 
             void registerCloudPropProvisioningStatusCallback(
                     const CloudPropProvStatusCb callback);
-            void provisionEnrollee(const CloudProp& CloudProp);
+            void provisionProperties(const CloudProp& CloudProp);
 
         private:
             void onCloudProvResponse(const HeaderOptions& headerOptions,

@@ -40,9 +40,9 @@ namespace OIC
             m_ocResource = resource;
         }
 
-        void CloudResource::provisionEnrollee(const CloudProp& cloudProp)
+        void CloudResource::provisionProperties(const CloudProp& cloudProp)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter provisionEnrollee.");
+            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter provisionProperties.");
 
             OCRepresentation provisioningRepresentation = cloudProp.toOCRepresentation();
 
@@ -57,10 +57,10 @@ namespace OIC
         }
 
         void CloudResource::onCloudProvResponse(const HeaderOptions& /*headerOptions*/,
-                const OCRepresentation& rep, const int eCode)
+                const OCRepresentation& /*rep*/, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : %s, eCode = %d",
-                    rep.getUri().c_str(), eCode);
+            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
