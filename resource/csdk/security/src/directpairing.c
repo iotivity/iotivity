@@ -245,12 +245,16 @@ bool DPGenerateQuery(bool isSecure,
 
     static char QPREFIX_COAP[] =  "coap://";
     static char QPREFIX_COAPS[] = "coaps://";
+    static char QPREFIX_COAP_TCP[] =  "coap+tcp://";
+    static char QPREFIX_COAPS_TCP[] = "coaps+tcp://";
 
     int snRet = 0;
     char* prefix = (isSecure == true) ? QPREFIX_COAPS : QPREFIX_COAP;
 
     switch(connType & CT_MASK_ADAPTER)
     {
+        case CT_ADAPTER_TCP:
+            prefix = (isSecure == true) ? QPREFIX_COAPS_TCP : QPREFIX_COAP_TCP;
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
@@ -374,7 +378,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
                 OIC_LOG(INFO, TAG, "Fail to close temporary dtls session");
             }
 
-            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
+            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL, CA_ADAPTER_IP);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
@@ -614,7 +618,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             caresult = CAEnableAnonECDHCipherSuite(false);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
-            caresult = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
+            caresult = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
             //Register proceeding peer info. & DTLS event handler to catch the dtls event while handshake

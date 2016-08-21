@@ -45,6 +45,9 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
 OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback);
 
+OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *entityHandlerRequest, void* callback);
+
 void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool isConnected);
 
 void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled);

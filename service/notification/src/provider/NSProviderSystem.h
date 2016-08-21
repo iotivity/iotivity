@@ -32,8 +32,9 @@
 void NSSetProviderConnectionState(NSConnectionState state);
 NSConnectionState NSGetProviderConnectionState();
 
-void NSInitProviderInfo();
+void NSInitProviderInfo(const char * userInfo);
 void NSDeinitProviderInfo();
 NSProviderInfo * NSGetProviderInfo();
+const char * NSGetUserInfo();
 
 #endif /* _NS_PROVIDER_SYSTEM__H_ */

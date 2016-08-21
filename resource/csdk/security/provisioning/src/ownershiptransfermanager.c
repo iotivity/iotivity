@@ -243,6 +243,12 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
         //Revert psk_info callback and new deivce uuid in case of random PIN OxM
         if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
         {
+#ifdef __WITH_TLS__
+            if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+            {
+                OIC_LOG(WARNING, TAG, "Failed to revert  is TLS credential handler.");
+            }
+#endif
             if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
             {
                 OIC_LOG(WARNING, TAG, "Failed to revert  is DTLS credential handler.");
@@ -396,6 +402,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
     endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
     endpoint.port = selectedDeviceInfo->securePort;
+    endpoint.adapter = selectedDeviceInfo->endpoint.adapter;
 
     OicUuid_t ptDeviceID = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&ptDeviceID))
@@ -729,7 +736,17 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             //Close the temporal secure session to verify the owner credential
             CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
             endpoint->port = otmCtx->selectedDeviceInfo->securePort;
-            CAResult_t caResult = CACloseDtlsSession(endpoint);
+            CAResult_t caResult = CA_STATUS_OK;
+            if(CA_ADAPTER_IP == endpoint->adapter)
+            {
+                caResult = CACloseDtlsSession(endpoint);
+            }
+#ifdef __WITH_TLS__
+            else
+            {
+                caResult = CAcloseTlsConnection(endpoint);
+            }
+#endif
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to close DTLS session");
@@ -741,7 +758,16 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
              * If we select NULL cipher,
              * client will select appropriate cipher suite according to server's cipher-suite list.
              */
-            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
+            if(CA_ADAPTER_IP == endpoint->adapter)
+            {
+                caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL, endpoint->adapter);
+            }
+            else
+            {
+                // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
+                caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+            }
+
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
@@ -758,14 +784,27 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
                 OicUuid_t emptyUuid = { .id={0}};
                 SetUuidForRandomPinOxm(&emptyUuid);
 
-                if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+                if(CA_ADAPTER_IP == endpoint->adapter)
+                {
+                    caResult = CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials);
+                }
+#ifdef __WITH_TLS__
+                else
+                {
+                    caResult = CAregisterTlsCredentialsHandler(GetDtlsPskCredentials);
+                }
+#endif
+
+                if(CA_STATUS_OK != caResult)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
                     SetResult(otmCtx, OC_STACK_INVALID_CALLBACK);
                     return OC_STACK_DELETE_TRANSACTION;
                 }
             }
-
+#ifdef __WITH_TLS__
+           otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
+#endif
             //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
             res = PostOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
@@ -1318,7 +1357,13 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     {
         OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register DTLS handshake callback.");
     }
-
+#ifdef __WITH_TLS__
+    //Register TLS event handler to catch the tls event while handshake
+    if(CA_STATUS_OK != CAregisterTlsHandshakeCallback(DTLSHandshakeCB))
+    {
+        OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register TLS handshake callback.");
+    }
+#endif
     OIC_LOG(INFO, TAG, "OUT StartOwnershipTransfer");
 
     return res;

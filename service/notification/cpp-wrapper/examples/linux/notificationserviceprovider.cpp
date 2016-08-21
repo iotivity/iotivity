@@ -92,8 +92,10 @@ int main()
         std::cout << "2. Start the Notification Provider(Accepter: Consumer)" << std::endl;
         std::cout << "3. SendMessage " << std::endl;
         std::cout << "4. SendSyncInfo" << std::endl;
+#ifdef WITH_CLOUD
         std::cout << "5. Enable NS Provider RemoteService" << std::endl;
         std::cout << "6. Disable NS Provider RemoteService" << std::endl;
+#endif
         std::cout << "9. Stop the Notification Provider" << std::endl;
         std::cout << "0. Exit()" << std::endl;
 
@@ -109,7 +111,9 @@ int main()
                     NSProviderService::ProviderConfig cfg;
                     cfg.m_subscribeRequestCb = subscribeRequestCallback;
                     cfg.m_syncInfoCb = syncCallback;
-                    NSProviderService::getInstance()->Start(NSProviderService::NSAccessPolicy::NS_ACCESS_ALLOW, cfg);
+                    cfg.policy = (bool) NSProviderService::NSAccessPolicy::NS_ACCESS_ALLOW;
+
+                    NSProviderService::getInstance()->Start(cfg);
                     break;
                 }
             case 2:
@@ -118,7 +122,9 @@ int main()
                     NSProviderService::ProviderConfig cfg;
                     cfg.m_subscribeRequestCb = subscribeRequestCallback;
                     cfg.m_syncInfoCb = syncCallback;
-                    NSProviderService::getInstance()->Start(NSProviderService::NSAccessPolicy::NS_ACCESS_DENY, cfg);
+                    cfg.policy = (bool) NSProviderService::NSAccessPolicy::NS_ACCESS_DENY;
+
+                    NSProviderService::getInstance()->Start(cfg);
                     break;
                 }
             case 3:
@@ -139,12 +145,11 @@ int main()
                     std::cout << "app - mTitle : " << title << std::endl;
                     std::cout << "app - mContentText : " << body << std::endl;
 
-                    OIC::Service::NSMessage *msg = new OIC::Service::NSMessage();
+                    OIC::Service::NSMessage *msg = NSProviderService::getInstance()->CreateMessage();
+
                     msg->setType(OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO);
                     msg->setTitle(title.c_str());
                     msg->setContentText(body.c_str());
-                    msg->setTime("");
-                    msg->setTTL(0);
                     msg->setSourceName("OCF");
 
                     NSProviderService::getInstance()->SendMessage(msg);
@@ -158,6 +163,7 @@ int main()
                             OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
                     break;
                 }
+#ifdef WITH_CLOUD
             case 5:
                 {
                     std::cout << "3. Enable NS Provider RemoteService" << std::endl;
@@ -173,6 +179,7 @@ int main()
                     NSProviderService::getInstance()->DisableRemoteService(REMOTE_SERVER_ADDRESS);
                     break;
                 }
+#endif
             case 9:
                 NSProviderService::getInstance()->Stop();
                 break;

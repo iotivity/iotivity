@@ -37,6 +37,7 @@ stacktest_env.PrependUnique(CPPPATH = [
 		'../../stack/include',
 		'../../stack/include/internal',
 		'../../connectivity/api',
+		'../../connectivity/inc/pkix',
 		'../../connectivity/external/inc',
 		'../../extlibs/cjson',
 		'../../../oc_logger/include',
@@ -51,7 +52,9 @@ if target_os != 'darwin':
     stacktest_env.PrependUnique(LIBS = ['oc_logger'])
 
 if stacktest_env.get('SECURED') == '1':
-    stacktest_env.AppendUnique(LIBS = ['tinydtls'])
+	stacktest_env.AppendUnique(LIBS = ['tinydtls'])
+	if stacktest_env.get('WITH_TCP') == True:
+		stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if stacktest_env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

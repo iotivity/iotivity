@@ -42,6 +42,10 @@ randomtest_env.PrependUnique(LIBS = ['octbstack',
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])
 
+if randomtest_env.get('SECURED') == '1':
+	if randomtest_env.get('WITH_TCP') == True:
+		randomtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+
 if randomtest_env.get('LOGGING'):
 	randomtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 

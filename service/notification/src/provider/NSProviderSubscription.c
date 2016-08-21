@@ -84,6 +84,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetPolicy());
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, NS_COLLECTION_MESSAGE_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, NS_COLLECTION_SYNC_URI);
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_TOPIC, NS_COLLECTION_TOPIC_URI);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
@@ -133,7 +134,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         bool iSRemoteServer = false;
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIEND
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(iSRemoteServer)
         {
@@ -189,7 +190,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(isRemoteServer)
         {
@@ -263,8 +264,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
 
     OCRepPayloadSetUri(payload, NS_COLLECTION_MESSAGE_URI);
-    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, 1);
-    OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_ACCPETANCE, accepted);
+    (accepted) ? OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_ALLOW)
+        : OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_DENY);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
 
     NSCacheElement * element = NSStorageRead(consumerSubList, id);
@@ -276,7 +277,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
-    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_HIGH_QOS)
+    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_LOW_QOS)
             != OC_STACK_OK)
     {
         NS_LOG(ERROR, "fail to send Acceptance");
@@ -318,6 +319,9 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
 
         subData->isWhite = true;
+        subData->remote_messageObId = 0;
+        subData->remote_syncObId = 0;
+        subData->syncObId = 0;
         subData->messageObId = entityHandlerRequest->obsInfo.obsId;
 
         element->data = (void*) subData;

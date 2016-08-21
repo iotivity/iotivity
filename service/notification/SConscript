@@ -49,15 +49,6 @@ notification_env.AppendUnique(CPPPATH = ['src/consumer'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
 
-if target_os == 'linux':
-    notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
-    notification_env.AppendUnique(CPPPATH = ['src/consumer/cache/linux'])
-
-# [TO-DO] change to android DB. 
-if target_os == 'android': 
-    notification_env.AppendUnique(CPPPATH = ['src/provider/cache/linux'])
-    notification_env.AppendUnique(CPPPATH = ['src/consumer/cache/linux'])
-
 notification_env.PrependUnique(LIBS = [
 	'octbstack',
 	'oc_logger',
@@ -77,7 +68,6 @@ if target_os == 'linux':
 if target_os == 'android':
 	notification_env.AppendUnique(CCFLAGS = ['-frtti', '-fexceptions'])
 	notification_env.AppendUnique(LIBS = ['gnustl_shared','log'])
-	notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider.so'])
 
 	if not env.get('RELEASE'):
 		notification_env.AppendUnique(LIBS = ['log'])
@@ -85,6 +75,9 @@ if target_os == 'android':
 if not env.get('RELEASE'):
     notification_env.PrependUnique(LIBS = ['gcov'])
     notification_env.AppendUnique(CCFLAGS = ['--coverage'])
+
+if 'CLIENT' in notification_env.get('RD_MODE'):
+    notification_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
     
 if env.get('WITH_CLOUD') == True:	
 	notification_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])    
@@ -93,20 +86,10 @@ if env.get('WITH_CLOUD') == True:
 # Source files and Targets
 ######################################################################
 
-if target_os == 'linux':
-    PROVIDER_CACHE = File('src/provider/cache/linux/NSProviderMemoryCache.c')
-    CONSUMER_CACHE = File('src/consumer/cache/linux/NSConsumerMemoryCache.c')
-
-if target_os == 'android':
-    PROVIDER_CACHE = File('src/provider/cache/linux/NSProviderMemoryCache.c')
-    CONSUMER_CACHE = File('src/consumer/cache/linux/NSConsumerMemoryCache.c')
-
 notification_provider_src = [
-	env.Glob('src/provider/*.c'),
-	env.Glob('src/common/*.c'), PROVIDER_CACHE]
+	env.Glob('src/provider/*.c'), env.Glob('src/common/*.c')]
 notification_consumer_src = [
-	env.Glob('src/consumer/*.c'),
-	env.Glob('src/common/*.c'), CONSUMER_CACHE]
+	env.Glob('src/consumer/*.c'), env.Glob('src/common/*.c')]
 
 providersdk = notification_env.SharedLibrary('notification_provider', notification_provider_src)
 notification_env.InstallTarget(providersdk, 'libnotification_provider')
@@ -130,15 +113,15 @@ notification_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
 	'service/notification', 'NSConsumerInterface.h')
 
 # Go to build Unit test
-if target_os == 'linux':
- SConscript('unittest/SConscript')
+#if target_os == 'linux':
+# SConscript('unittest/SConscript')
 
 # Go to build sample apps
 SConscript('examples/SConscript')
 
 # Go to build jni
-if target_os == 'android':
-    SConscript('android/SConscript')
+#if target_os == 'android':
+#    SConscript('android/SConscript')
 
- # Go to build c++ wrapper
+# Go to build c++ wrapper
 #SConscript('cpp-wrapper/SConscript')

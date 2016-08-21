@@ -50,8 +50,8 @@ public class ResourceDirectoryResource extends Resource {
     private TypeCastingManager<PublishTags>  mPublishTagsTypeManager  = new TypeCastingManager<>();
     private TypeCastingManager<PublishLinks> mPublishLinksTypeManager = new TypeCastingManager<>();
     private InsManager                       mInsManager              = new InsManager();
-    private String                           notiDeviceId             = null;
-    private ArrayList<ResPresencePayload>    notiPayloadList          = new ArrayList<ResPresencePayload>();
+    private String                           mNotiDeviceId            = null;
+    private ArrayList<ResPresencePayload>    mNotiPayloadList         = new ArrayList<ResPresencePayload>();
 
     public ResourceDirectoryResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
@@ -79,8 +79,8 @@ public class ResourceDirectoryResource extends Resource {
 
         srcDevice.sendResponse(response);
 
-        ResPresenceManager.getInstance().notifyToObservers(notiDeviceId,
-                notiPayloadList);
+        ResPresenceManager.getInstance().notifyToObservers(mNotiDeviceId,
+                mNotiPayloadList);
 
     }
 
@@ -104,14 +104,14 @@ public class ResourceDirectoryResource extends Resource {
             PublishPayload pubPayload = parsingPublishPayload(
                     request.getPayload());
 
-            notiDeviceId = pubPayload.getTags().getDi();
+            mNotiDeviceId = pubPayload.getTags().getDi();
 
             PublishPayload copyPubPayload = pubPayload.copy();
 
             ArrayList<HashMap<Object, Object>> storeResList = creatDBStoreResource(
                     changeResourceUri(copyPubPayload));
 
-            notiPayloadList = DBManager.getInstance()
+            mNotiPayloadList = DBManager.getInstance()
                     .registerResource(storeResList);
 
             encodedPayload = createPublishResponse(pubPayload);
@@ -256,15 +256,15 @@ public class ResourceDirectoryResource extends Resource {
                         "di property is not include");
             } else {
                 String di = diList.get(0);
-                notiDeviceId = di;
+                mNotiDeviceId = di;
 
                 if (insList == null) {
-                    notiPayloadList = DBManager.getInstance()
+                    mNotiPayloadList = DBManager.getInstance()
                             .deleteResourceAboutDi(di);
 
                 } else {
                     String ins = insList.get(0);
-                    notiPayloadList = DBManager.getInstance()
+                    mNotiPayloadList = DBManager.getInstance()
                             .deleteResourceAboutDiAandIns(di, ins);
                 }
             }

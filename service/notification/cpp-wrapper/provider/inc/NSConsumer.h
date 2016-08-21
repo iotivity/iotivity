@@ -29,10 +29,7 @@
 
 
 #include <string>
-#include <cstring>
 #include "NSCommon.h"
-#include "oic_string.h"
-#include "NSConstants.h"
 
 namespace OIC
 {

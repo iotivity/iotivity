@@ -27,14 +27,11 @@
 #ifndef _NS_PROVIDER_SERVICE_H_
 #define _NS_PROVIDER_SERVICE_H_
 
-#include "NSCommon.h"
-#include "NSProviderInterface.h"
-#include "NSMessage.h"
-#include "oic_string.h"
+#include <string>
 #include "NSConsumer.h"
 #include "NSSyncInfo.h"
-#include "NSConstants.h"
-#include <cstring>
+#include "NSMessage.h"
+#include "NSUtils.h"
 
 namespace OIC
 {
@@ -64,7 +61,7 @@ namespace OIC
 
                 /**
                       * @struct   ProviderConfig
-                      * @brief Provider sets this callback function configuration for registering callbacks
+                      * @brief Provider sets this following configuration for registering callbacks and configs
                       *
                       */
                 typedef struct
@@ -73,6 +70,14 @@ namespace OIC
                     ConsumerSubscribedCallback m_subscribeRequestCb;
                     /** m_syncInfoCb - MessageSynchronizedCallback callback listener.*/
                     MessageSynchronizedCallback m_syncInfoCb;
+
+                    /* Set the policy for notification servcie refering to following
+                                 * if policy is true, provider decides to allow or deny for all the subscribing consumers.
+                                 * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
+                                 */
+                    bool policy;
+                    /* User Information */
+                    std::string userInfo;
                 } ProviderConfig;
 
                 /**
@@ -96,34 +101,34 @@ namespace OIC
                       * @param[in]  policy   Accepter
                       * @param[in]  config   ProviderConfig Callback function pointers to onConsumerSubscribed,
                       * and onMessageSynchronized function listeners
-                      * @return :: result code of NSResult
+                      * @return :: result code of Provider Service
                       */
-                NSResult Start(NSAccessPolicy policy, ProviderConfig config);
+                NSResult Start(ProviderConfig config);
 
                 /**
                       * Terminate notification service for provider
-                      * @return :: result code of NSResult
+                      * @return :: result code of Provider Service
                       */
                 NSResult Stop();
 
                 /**
                       * Request to publish resource to cloud server
                       * @param[in]  server address combined with IP address and port number using delimiter :
-                      * @return  result code of NSResult
+                      * @return  result code of Provider Service
                       */
                 NSResult EnableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Request to cancel remote service using cloud server
                       * @param[in]  server address combined with IP address and port number using delimiter :
-                      * @return  result code of NSResult
+                      * @return  result code of Provider Service
                       */
                 NSResult DisableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Send notification message to all subscribers
                       * @param[in]  msg  Notification message including id, title, contentText
-                      * @return :: result code of NSResult
+                      * @return :: result code of Provider Service
                       */
                 NSResult SendMessage(NSMessage *msg);
 
@@ -132,9 +137,14 @@ namespace OIC
                       * Send read-check to provider in order to synchronize notification status with other consumers
                       * @param[in]  messageId  Notification message to synchronize the status
                       * @param[in]  type  NotificationSyncType of the SyncInfo message
-                      * @return :: result code of NSResult
                       */
                 void SendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
+
+                /**
+                     * Initialize NSMessage class, service sets message id and provider(device) id
+                     * @return ::NSMessage *
+                     */
+                NSMessage *CreateMessage();
 
                 /**
                       *  get Provider config values

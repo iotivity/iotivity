@@ -35,7 +35,7 @@
 
 // Input the following values to publish resource to cloud
 char REMOTE_SERVER_ADDRESS[50];
-char REMOTE_SERVER_SESSION[50];
+char mainConsumer[37] = {'\0',};
 
 extern char *strdup(const char *s);
 
@@ -64,6 +64,11 @@ void subscribeRequestCallback(NSConsumer *consumer)
 
     printf("NS_APP Consumer Device ID: %s\n", consumer->consumerId);
 
+    if(mainConsumer[0] == '\0')
+    {
+        OICStrcpy(mainConsumer, 37, consumer->consumerId);
+    }
+
     NSAcceptSubscription(consumer, true);
 }
 
@@ -74,43 +79,50 @@ void syncCallback(NSSyncInfo *sync)
     printf("NS_APP Sync State: %d\n", sync->state);
 }
 
-#ifdef WITH_CLOUD
-OCStackApplicationResult CloudLoginoutCallback(void *ctx,
-        OCDoHandle handle, OCClientResponse *clientResponse)
-{
-    int CtxValue = 0x99;
-    if (ctx != (void *)CtxValue)
-    {
-        printf("Invalid Cloud Login/out callback received");
-    }
-
-    printf("Login/out response received");
-
-    if (clientResponse->payload != NULL &&
-            clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
-    {
-        printf("PAYLOAD_TYPE_REPRESENTATION received");
-
-        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
-
-        printf("Get payload values");
-        while (val)
-        {
-            printf("key: %s / Value: %s", val->name, val->str);
-            val = val->next;
-        }
-
-        NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);
-    }
-
-    return OC_STACK_KEEP_TRANSACTION;
-}
-#endif
-
 FILE* server_fopen(const char *path, const char *mode)
 {
     (void)path;
     return fopen("oic_ns_provider_db.dat", mode);
+}
+
+void printTopics(NSTopicLL * topics)
+{
+    if(!topics)
+    {
+        printf("topics is null\n");
+        return;
+    }
+
+    NSTopicLL * iter = topics;
+
+    while(iter)
+    {
+        printf("tName = %s, tState = %d\n", iter->topicName, (int)iter->state);
+        iter = iter->next;
+    }
+}
+
+void removeTopics(NSTopicLL * topics)
+{
+    if(!topics)
+    {
+        printf("topics is null\n");
+        return;
+    }
+
+    NSTopicLL * iter = topics;
+
+    while(iter)
+    {
+        NSTopicLL * del = iter;
+        if(del->topicName)
+        {
+            OICFree(del->topicName);
+        }
+        iter = iter->next;
+
+        OICFree(del);
+    }
 }
 
 int main()
@@ -118,7 +130,7 @@ int main()
     int num;
     pthread_t processThread;
 
-    printf("NSStartProvider()");
+    printf("NSStartProvider()\n\n");
 
     // open oic_db
     static OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -136,15 +148,21 @@ int main()
     {
         char dummy;
 
-        printf("1. NSStartProvider(Accepter: Provider) \n");
-        printf("2. NSStartProvider(Accepter: Consumer) \n");
-        printf("3. NSSendNotification() \n");
-        printf("4. NSRead \n");
-        printf("5. NSStopProvider() \n");
-
-        printf("11. NSCloudLogin \n");
-        printf("12. NSCloudLogout \n");
+        printf("==============================================\n");
+        printf("1.  NSStartProvider(Accepter: Provider) \n");
+        printf("2.  NSStartProvider(Accepter: Consumer) \n");
+        printf("3.  NSSendNotification() \n");
+        printf("4.  NSRead() \n");
+        printf("5.  NSProviderAddTopic(); \n");
+        printf("6.  NSProviderDeleteTopic(); \n");
+        printf("7.  NSProviderSelectTopic(); \n");
+        printf("8.  NSProviderUnselectTopic(); \n");
+        printf("9.  NSProviderGetConsumerTopics(); \n");
+        printf("10. NSProviderGetTopics(); \n");
+        printf("11. NSStopProvider() \n");
+        printf("12. NSProviderEnableRemoteService \n");
         printf("0. Exit() \n");
+        printf("==============================================\n");
 
         printf("input : ");
 
@@ -156,18 +174,35 @@ int main()
         switch (num)
         {
             case 1:
+            {
                 printf("NSStartProvider(Accepter: Provider)");
-                NSStartProvider(true, subscribeRequestCallback, syncCallback);
+                NSProviderConfig config;
+                config.policy = true;
+                config.subRequestCallback = subscribeRequestCallback;
+                config.syncInfoCallback = syncCallback;
+                config.userInfo = OICStrdup("OCF_NOTIFICATION");
+                NSStartProvider(config);
+            }
                 break;
-            case 2:
-                printf("NSStartProvider(Accepter: Consumer)");
-                NSStartProvider(false, subscribeRequestCallback, syncCallback);
-                break;
-            case 3:
-                printf("NSSendNotification()");
 
+            case 2:
+            {
+                printf("NSStartProvider(Accepter: Consumer)");
+                NSProviderConfig config;
+                config.policy = false;
+                config.subRequestCallback = subscribeRequestCallback;
+                config.syncInfoCallback = syncCallback;
+                config.userInfo = OICStrdup("OCF_NOTIFICATION");
+                NSStartProvider(config);
+            }
+                break;
+
+            case 3:
+            {
+                printf("NSSendNotification()");
                 char title[100];
                 char body[100];
+                char topic[100];
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
@@ -177,8 +212,12 @@ int main()
                 printf("body : ");
                 gets(body);
 
+                printf("topic : ");
+                gets(topic);
+
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
+                printf("app - topic : %s \n", topic);
 
                 NSMessage * msg = NSCreateMessage();
 
@@ -186,45 +225,79 @@ int main()
                 msg->contentText = OICStrdup(body);
                 msg->sourceName = OICStrdup("OCF");
 
-                NSSendMessage(msg);
+                if(topic[0] != '\0')
+                {
+                    msg->topic = OICStrdup(topic);
+                }
 
+                NSSendMessage(msg);
+            }
                 break;
 
             case 4:
-                printf("NSRead");
+                printf("NSRead\n");
                 break;
 
             case 5:
-                NSStopProvider();
+                printf("NSProviderAddTopic\n");
+                NSProviderAddTopic("OCF_TOPIC1");
+                NSProviderAddTopic("OCF_TOPIC2");
+                NSProviderAddTopic("OCF_TOPIC3");
+                NSProviderAddTopic("OCF_TOPIC4");
+                break;
+
+            case 6:
+                printf("NSProviderDeleteTopic\n");
+                NSProviderDeleteTopic("OCF_TOPIC2");
+                break;
+
+            case 7:
+                printf("NSProviderSelectTopic\n");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC2");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC3");
+                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC4");
+                break;
+
+            case 8:
+                printf("NSProviderUnSelectTopic\n");
+                NSProviderUnselectTopic(mainConsumer, "OCF_TOPIC1");
+                break;
+
+            case 9:
+                printf("NSProviderGetConsumerTopics\n");
+                {
+                    NSTopicLL * topics = NSProviderGetConsumerTopics(mainConsumer);
+                    printTopics(topics);
+                    removeTopics(topics);
+                }
+                break;
+
+            case 10:
+                printf("NSProviderGetConsumerTopics\n");
+                {
+                    NSTopicLL * topics = NSProviderGetTopics();
+                    printTopics(topics);
+                    removeTopics(topics);
+                }
                 break;
 
             case 11:
-                printf("NSCloudLogin");
+                NSStopProvider();
+                break;
 
-                printf("Cloud Address: ");
+            case 12:
+                printf("Remote Server Address: ");
                 gets(REMOTE_SERVER_ADDRESS);
 
-                printf("Session Code: ");
-                gets(REMOTE_SERVER_SESSION);
-
-#ifdef WITH_CLOUD
-                NSCloudLogin(REMOTE_SERVER_ADDRESS, REMOTE_SERVER_SESSION, CloudLoginoutCallback);
-#endif
-                printf("OCCloudLogin requested");
-                break;
-            case 12:
-                printf("NSCloudLogout");
-#ifdef WITH_CLOUD
-                NSCloudLogout(REMOTE_SERVER_ADDRESS, REMOTE_SERVER_SESSION, CloudLoginoutCallback);
-#endif
-                printf("OCCloudLogout requested");
+                NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);
                 break;
             case 0:
                 NSStopProvider();
                 isExit = true;
                 break;
             default:
-                printf("Under Construction");
+                printf("Under Construction\n");
                 break;
         }
 

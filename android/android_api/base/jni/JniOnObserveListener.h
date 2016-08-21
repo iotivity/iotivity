@@ -35,6 +35,7 @@ public:
     ~JniOnObserveListener();
     void onObserveCallback(const HeaderOptions headerOptions, const OCRepresentation& rep,
         const int& eCode, const int& sequenceNumber);
+    jweak getJWListener();
 private:
     jweak m_jwListener;
     JniOcResource* m_ownerResource;

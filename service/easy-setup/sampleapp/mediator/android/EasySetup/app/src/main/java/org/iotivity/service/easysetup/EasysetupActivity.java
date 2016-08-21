@@ -126,6 +126,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
 
     TextView mGetconfigurationStateText;
     TextView mDevNameText;
+    TextView mModelNumberText;
     TextView mLanguageText;
     TextView mCountryText;
     TextView mWifiModeText;
@@ -140,6 +141,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
     EditText mEnrollerPWText;
     EditText mInputLanguageText;
     EditText mInputCountryText;
+    EditText mInputLocationText;
     EditText mAuthCodeText;
     EditText mAuthProviderText;
     EditText mCIServerText;
@@ -186,6 +188,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
         mGetconfigurationStateText =
                 (TextView) findViewById(R.id.txt_getConfigurationState);
         mDevNameText = (TextView) findViewById(R.id.txt_devName);
+        mModelNumberText = (TextView) findViewById(R.id.txt_modelNumber);
         mLanguageText = (TextView) findViewById(R.id.txt_language);
         mCountryText = (TextView) findViewById(R.id.txt_country);
         mWifiModeText = (TextView) findViewById(R.id.txt_wifiMode);
@@ -201,6 +204,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
         mEnrollerPWText = (EditText) findViewById(R.id.editText_EnrollerPW);
         mInputLanguageText = (EditText) findViewById(R.id.editText_Language);
         mInputCountryText = (EditText) findViewById(R.id.editText_Country);
+        mInputLocationText = (EditText) findViewById(R.id.editText_Location);
         mAuthCodeText = (EditText) findViewById(R.id.editText_authcode);
         mAuthProviderText = (EditText) findViewById(R.id.editText_authprovider);
         mCIServerText = (EditText) findViewById(R.id.editText_ciserver);
@@ -543,6 +547,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                                             public void run() {
                                                 mGetconfigurationStateText.setText("Success");
                                                 mDevNameText.setText(enrolleeConf.getDeviceName());
+                                                mModelNumberText.setText(enrolleeConf.getModelNumber());
                                                 setWifiModes(enrolleeConf.getWiFiModes());
                                                 setWifiFreq(enrolleeConf.getWiFiFreq());
 
@@ -609,10 +614,11 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                                     WIFI_ENCTYPE.fromInt(mEncType.getSelectedItemPosition());
                             String inputLanguage = mInputLanguageText.getText().toString();
                             String inputCountry = mInputCountryText.getText().toString();
+                            String inputLocation = mInputLocationText.getText().toString();
 
                             DeviceProp deviceProp = new DeviceProp();
                             deviceProp.setWiFiProp(enrollerSSID, enrollerPW, authType, encType);
-                            deviceProp.setDevConfProp(inputLanguage, inputCountry);
+                            deviceProp.setDevConfProp(inputLanguage, inputCountry, inputLocation);
 
                             mRemoteEnrollee.provisionDeviceProperties(deviceProp, new DevicePropProvisioningCallback() {
                                 @Override

@@ -31,6 +31,9 @@ csdktest_env.PrependUnique(CPPPATH = [
 csdktest_env.PrependUnique(LIBS = [
     'octbstack',
 ])
+if env.get('SECURED') == '1':
+	if env.get('WITH_TCP') == True:
+		csdktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 csdktest_env.AppendUnique(LIBPATH = [
     csdktest_env.get('BUILD_DIR'),

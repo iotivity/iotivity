@@ -247,6 +247,28 @@ public class MongoDB {
         return deviceState;
     }
 
+    public ArrayList<HashMap<Object, Object>> readResourceAboutDid(String di, String tableName) {
+        MongoCollection<Document> collection = db.getCollection(tableName);
+        ArrayList<HashMap<Object, Object>> resList = null;
+        MongoCursor<Document> cursor = collection
+                .find(Filters.eq(Constants.DEVICE_ID, di))
+                .iterator();
+
+        if (cursor.hasNext()) {
+            resList = new ArrayList<>();
+            try {
+                while (cursor.hasNext()) {
+                    Document doc = cursor.next();
+                    resList.add(convertDocumentToHashMap(doc));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return resList;
+    }
+
     /**
      * API for finding resources matched filterValue of filterKey and a
      * particular device ID in collection
@@ -262,7 +284,7 @@ public class MongoDB {
      * @return ArrayList<PublishPayloadFormat> - array list of resource
      *         information
      */
-    public ArrayList<HashMap<Object, Object>> readResourceAboutDid(String di,
+    public ArrayList<HashMap<Object, Object>> readResourceAboutDidAndFilter(String di,
             String filterKey, String filterValue, String tableName) {
         MongoCollection<Document> collection = db.getCollection(tableName);
         ArrayList<HashMap<Object, Object>> resList = null;
@@ -273,14 +295,14 @@ public class MongoDB {
 
         if (cursor.hasNext()) {
             resList = new ArrayList<>();
-        }
-        try {
-            while (cursor.hasNext()) {
-                Document doc = cursor.next();
-                resList.add(convertDocumentToHashMap(doc));
+            try {
+                while (cursor.hasNext()) {
+                    Document doc = cursor.next();
+                    resList.add(convertDocumentToHashMap(doc));
+                }
+            } finally {
+                cursor.close();
             }
-        } finally {
-            cursor.close();
         }
 
         return resList;

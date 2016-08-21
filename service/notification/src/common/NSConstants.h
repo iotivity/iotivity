@@ -51,9 +51,9 @@
 #define NS_TAG                     "IOT_NOTI"
 
 // SCHEDULE //
-#define THREAD_COUNT               4
+#define THREAD_COUNT               5
 
-// NOTIOBJ // 
+// NOTIOBJ //
 #define NOTIOBJ_TITLE_KEY          "title"
 #define NOTIOBJ_ID_KEY             "id"
 #define NOTOOBJ_CONTENT_KEY        "contentText"
@@ -65,16 +65,19 @@
 #define SCHEDULER_TAG              "NS_PROVIDER_SCHEDULER"
 #define LISTENER_TAG               "NS_PROVIDER_LISTENER"
 #define RESOURCE_TAG               "NS_PROVIDER_RESOURCE"
+#define TOPIC_TAG                  "NS_PROVIDER_TOPIC"
 
 #define NS_ROOT_TYPE               "oic.r.notification"
 #define NS_COLLECTION_MESSAGE_TYPE "oic.r.notification.message"
 #define NS_COLLECTION_SYNC_TYPE    "oic.r.notification.sync"
+#define NS_COLLECTION_TOPIC_TYPE   "oic.r.notification.topic"
 
 #define NS_DEFAULT_INTERFACE       "oic.if.baseline"
 
 #define NS_ROOT_URI                "/notification"
 #define NS_COLLECTION_MESSAGE_URI  "/notification/message"
 #define NS_COLLECTION_SYNC_URI     "/notification/sync"
+#define NS_COLLECTION_TOPIC_URI    "/notification/topic"
 
 #define NS_QUERY_SEPARATOR         "&;"
 #define NS_KEY_VALUE_DELIMITER     "="
@@ -86,6 +89,8 @@
 
 #define NS_POLICY_PROVIDER         1
 #define NS_POLICY_CONSUMER         0
+
+#define NS_RD_PUBLISH_QUERY        "/oic/rd?rt=oic.wk.rdpub"
 
 #define NS_VERIFY_NOT_NULL_V(obj) \
     { \
@@ -182,6 +187,7 @@ typedef enum eSchedulerType
     DISCOVERY_SCHEDULER = 1,
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,
+    TOPIC_SCHEDULER = 4,
 } NSSchedulerType;
 
 typedef enum eTaskType
@@ -214,11 +220,18 @@ typedef enum eTaskType
     TASK_CONSUMER_REQ_SUBSCRIBE = 8002,
     TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL = 8003,
     TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED = 8004,
+    TASK_CONSUMER_RECV_PROVIDER_CHANGED = 8005,
     TASK_CONSUMER_RECV_MESSAGE = 8101,
 
     TASK_CONSUMER_PROVIDER_DISCOVERED = 8201,
     TASK_CONSUMER_PROVIDER_DELETED = 8202,
     TASK_CONSUMER_RECV_CONFIRM = 8206,
+
+    TASK_CONSUMER_REQ_TOPIC_URI = 8299,
+    TASK_CONSUMER_REQ_TOPIC_LIST = 8300,
+    TASK_CONSUMER_RECV_TOPIC_LIST = 8031,
+    TASK_CONSUMER_GET_TOPIC_LIST = 8302,
+    TASK_CONSUMER_SELECT_TOPIC_LIST = 8303,
 
     TASK_EVENT_CONNECTED = 9000,
     TASK_EVENT_CONNECTED_TCP = 9001,
@@ -226,6 +239,13 @@ typedef enum eTaskType
 
     TASK_CB_SUBSCRIPTION = 10000,
     TASK_CB_SYNC = 10001,
+
+    TASK_SEND_TOPICS = 11000,
+    TASK_ADD_TOPIC = 11001,
+    TASK_DELETE_TOPIC = 11002,
+    TASK_SUBSCRIBE_TOPIC = 11003,
+    TASK_UNSUBSCRIBE_TOPIC = 11004,
+    TASK_POST_TOPIC = 11005
 
 } NSTaskType;
 
@@ -240,6 +260,9 @@ typedef enum eCacheType
 {
     NS_PROVIDER_CACHE_SUBSCRIBER = 1000,
     NS_PROVIDER_CACHE_MESSAGE = 1001,
+    NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME = 1002,
+    NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID = 1003,
+    NS_PROVIDER_CACHE_REGISTER_TOPIC = 1004,
 
     NS_CONSUMER_CACHE_PROVIDER = 2000,
     NS_CONSUMER_CACHE_MESSAGE = 2001,
@@ -249,6 +272,7 @@ typedef enum eResourceType
 {
     NS_RESOURCE_MESSAGE = 1000,
     NS_RESOURCE_SYNC = 1001,
+    NS_RESOURCE_TOPIC = 1002,
 } NSResourceType;
 
 #endif /* _NS_CONSTANTS_H_ */

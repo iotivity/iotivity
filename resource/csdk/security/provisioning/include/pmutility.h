@@ -37,6 +37,23 @@ extern "C"
 #define COAPS_QUERY "coaps://%s:%d%s"
 #define COAP_QUERY "coap://%s:%d%s"
 
+#define COAP_TCP_PREFIX "coap+tcp://"
+#define COAPS_TCP_PREFIX "coaps+tcp://"
+
+/**
+ * Discover owned/unowned devices in the specified endpoint.
+ * It will return when found one or more device even though timeout is not exceeded
+ *
+ * @param[in] waittime           Timeout in seconds
+ * @param[in] host               address of target endpoint
+ * @param[in] connType           connectivity type of endpoint
+ * @param[out] ppDevicesList      List of OCProvisionDev_t
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ */
+OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
+                                 OCConnectivityType connType, OCProvisionDev_t **ppDevicesList);
+
 /**
  * Discover owned/unowned devices in the same IP subnet. .
  *
@@ -109,7 +126,7 @@ void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev);
  * @return true when deletion is happened, false when no deletion is occured. In case either of
  * two arguments is null it will return false.
  */
-bool PMDeleteFromUUIDList(OCUuidList_t *pUuidList, OicUuid_t *targetId);
+bool PMDeleteFromUUIDList(OCUuidList_t **pUuidList, OicUuid_t *targetId);
 
 #ifdef __cplusplus
 }

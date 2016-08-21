@@ -29,17 +29,13 @@
 
 
 #include <string>
-#include <cstring>
-#include "oic_string.h"
 #include "NSSyncInfo.h"
-#include "NSConstants.h"
+#include "NSMessage.h"
 
 namespace OIC
 {
     namespace Service
     {
-        class NSMessage;
-        class NSSyncInfo;
         /**
          * @class   NSProvider
          * @brief   This class provides a set of Notification service Provider representation APIs.

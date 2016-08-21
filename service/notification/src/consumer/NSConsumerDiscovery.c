@@ -64,9 +64,14 @@ OCStackApplicationResult NSConsumerPresenceListener(
     if (payload->trigger == OC_PRESENCE_TRIGGER_DELETE ||
             clientResponse->result == OC_STACK_PRESENCE_STOPPED)
     {
-        // TODO find request and cancel
         NS_LOG(DEBUG, "stopped presence or resource is deleted.");
-        //OCCancel(handle, NS_QOS, NULL, 0);
+        NS_LOG(DEBUG, "build NSTask");
+        OCDevAddr * addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        NS_VERIFY_NOT_NULL(addr, OC_STACK_KEEP_TRANSACTION);
+        memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
+
+        NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DELETED, addr);
+        NS_VERIFY_NOT_NULL(task, OC_STACK_KEEP_TRANSACTION);
     }
 
     else if (payload->trigger == OC_PRESENCE_TRIGGER_CREATE)
@@ -106,6 +111,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
     OCResourcePayload * resource = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
     while (resource)
     {
+        NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
         if (strstr(resource->uri, NS_RESOURCE_URI))
         {
             OCConnectivityType type = CT_DEFAULT;
@@ -158,7 +164,7 @@ OCStackApplicationResult NSIntrospectProvider(
 
     NS_LOG(DEBUG, "build NSTask");
     NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DISCOVERED, (void *) newProvider);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider(newProvider));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, NS_ERROR, NSRemoveProvider_internal(newProvider));
 
     NSConsumerPushEvent(task);
 
@@ -166,11 +172,12 @@ OCStackApplicationResult NSIntrospectProvider(
 }
 
 void NSGetProviderPostClean(
-        char * pId, char * mUri, char * sUri, NSProviderConnectionInfo * connection)
+        char * pId, char * mUri, char * sUri, char * tUri, NSProviderConnectionInfo * connection)
 {
     NSOICFree(pId);
     NSOICFree(mUri);
     NSOICFree(sUri);
+    NSOICFree(tUri);
     NSRemoveConnections(connection);
 }
 
@@ -191,6 +198,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     char * providerId = NULL;
     char * messageUri = NULL;
     char * syncUri = NULL;
+    char * topicUri = NULL;
     int64_t accepter = 0;
     NSProviderConnectionInfo * connection = NULL;
 
@@ -205,12 +213,15 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NS_LOG(DEBUG, "get message URI");
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_MESSAGE, & messageUri);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
-            NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
+            NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
 
     NS_LOG(DEBUG, "get sync URI");
     getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_SYNC, & syncUri);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(getResult == true ? (void *) 1 : NULL, NULL,
-            NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
+            NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
+
+    NS_LOG(DEBUG, "get topic URI");
+    getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_TOPIC, & topicUri);
 
     NS_LOG(DEBUG, "get provider connection information");
     NS_VERIFY_NOT_NULL(clientResponse->addr, NULL);
@@ -220,14 +231,20 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NSProvider_internal * newProvider
         = (NSProvider_internal *)OICMalloc(sizeof(NSProvider_internal));
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProvider, NULL,
-          NSGetProviderPostClean(providerId, messageUri, syncUri, connection));
+          NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
 
     OICStrcpy(newProvider->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
     NSOICFree(providerId);
     newProvider->messageUri = messageUri;
     newProvider->syncUri = syncUri;
+    newProvider->topicUri = NULL;
+    if (topicUri && strlen(topicUri) > 0)
+    {
+        newProvider->topicUri = topicUri;
+    }
     newProvider->accessPolicy = (NSSelector)accepter;
     newProvider->connection = connection;
+    newProvider->topicLL = NULL;
 
     return newProvider;
 }

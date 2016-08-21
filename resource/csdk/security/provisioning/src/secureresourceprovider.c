@@ -135,6 +135,7 @@ struct UnlinkData {
 
 //Example of DELETE cred request -> coaps://0.0.0.0:5684/oic/sec/cred?sub=(BASE64 ENCODED UUID)
 const char * SRP_FORM_DELETE_CREDENTIAL = "coaps://[%s]:%d%s?%s=%s";
+const char * SRP_FORM_DELETE_CREDENTIAL_TCP = "coaps+tcp://[%s]:%d%s?%s=%s";
 
 // Structure to carry remove APIs data to callback.
 typedef struct RemoveData RemoveData_t;
@@ -1142,7 +1143,14 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/cred?subjectid=(Canonical ENCODED UUID)
-    snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,
+    char *srpUri = SRP_FORM_DELETE_CREDENTIAL;
+#ifdef __WITH_TLS__
+    if(CA_ADAPTER_TCP == destDev->endpoint.adapter)
+    {
+        srpUri = SRP_FORM_DELETE_CREDENTIAL_TCP;
+    }
+#endif
+    snRet = snprintf(reqBuf, sizeof(reqBuf), srpUri, destDev->endpoint.addr,
                      destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECTID_NAME, subID);
     OICFree(subID);
     if (snRet < 0)

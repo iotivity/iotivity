@@ -48,6 +48,8 @@ NSMessage * NSMessageCacheFind(const char *);
 
 NSProvider_internal * NSProviderCacheFind(const char *);
 
+NSProvider_internal * NSFindProviderFromAddr(OCDevAddr * addr);
+
 void NSConsumerInternalTaskProcessing(NSTask *);
 
 #ifdef __cplusplus

@@ -91,7 +91,7 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
-    caresult  = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256);
+    caresult  = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256, otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256");
@@ -109,19 +109,24 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     OIC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
 
     OCProvisionDev_t *selDevInfo = otmCtx->selectedDeviceInfo;
-    CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-    if(NULL == endpoint)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-    memcpy(endpoint, &selDevInfo->endpoint, sizeof(CAEndpoint_t));
-    endpoint->port = selDevInfo->securePort;
+    CAEndpoint_t endpoint;
+    memcpy(&endpoint, &selDevInfo->endpoint, sizeof(CAEndpoint_t));
 
-    caresult = CAInitiateHandshake(endpoint);
-    OICFree(endpoint);
+    if(CA_ADAPTER_IP == endpoint.adapter)
+    {
+        endpoint.port = selDevInfo->securePort;
+        caresult = CAInitiateHandshake(&endpoint);
+    }
+#ifdef __WITH_TLS__
+    else
+    {
+        endpoint.port = selDevInfo->tcpPort;
+        caresult = CAinitiateTlsHandshake(&endpoint);
+    }
+#endif
     if (CA_STATUS_OK != caresult)
     {
-        OIC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
+        OIC_LOG_V(ERROR, TAG, "DTLS/TLS handshake failure.");
         return OC_STACK_ERROR;
     }
 

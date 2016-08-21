@@ -19,7 +19,11 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSConsumer.h"
+#include <cstring>
 #include "NSProviderInterface.h"
+#include "NSConstants.h"
+#include "NSUtils.h"
+#include "oic_string.h"
 
 namespace OIC
 {
@@ -28,7 +32,7 @@ namespace OIC
         ::NSConsumer *NSConsumer::getNSConsumer()
         {
             ::NSConsumer *nsCon = new ::NSConsumer;
-            OICStrcpy(nsCon->consumerId, m_consumerId.length(), m_consumerId.c_str());
+            OICStrcpy(nsCon->consumerId, NS_UTILS_UUID_STRING_SIZE, m_consumerId.c_str());
             return nsCon;
         }
 
@@ -36,8 +40,7 @@ namespace OIC
         {
             if (consumer != nullptr)
             {
-                if ((consumer->consumerId != nullptr) && strlen(consumer->consumerId))
-                    m_consumerId.assign(consumer->consumerId, strlen(consumer->consumerId));
+                m_consumerId.assign(consumer->consumerId, NS_UTILS_UUID_STRING_SIZE);
             }
         }
 

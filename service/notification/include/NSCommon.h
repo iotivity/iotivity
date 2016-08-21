@@ -29,12 +29,18 @@
 
 #include <stdint.h>
 
+#define NS_UUID_STRING_SIZE 37
+
 #define NS_ATTRIBUTE_POLICY "ACCEPTER"
 #define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
 #define NS_ATTRIBUTE_SYNC "SYNC_URI"
-#define NS_ATTRIBUTE_ACCPETANCE "ACCEPTANCE"
+#define NS_ATTRIBUTE_TOPIC "TOPIC_URI"
 #define NS_ATTRIBUTE_MESSAGE_ID "MESSAGE_ID"
 #define NS_ATTRIBUTE_PROVIDER_ID "PROVIDER_ID"
+#define NS_ATTRIBUTE_CONSUMER_ID "CONSUMER_ID"
+#define NS_ATTRIBUTE_TOPIC_LIST "TOPIC_LIST"
+#define NS_ATTRIBUTE_TOPIC_NAME "TOPIC_NAME"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "TOPIC_STATE"
 #define NS_ATTRIBUTE_TITLE "TITLE"
 #define NS_ATTRIBUTE_TEXT "CONTENTTEXT"
 #define NS_ATTRIBUTE_SOURCE "SOURCE"
@@ -53,10 +59,19 @@ typedef enum eResult
     NS_ERROR = 200,
     NS_SUCCESS = 300,
     NS_FAIL = 400,
-    NS_ALLOW = 500,
-    NS_DENY = 600,
 
 } NSResult;
+
+/**
+ * Response code of notification service
+ */
+typedef enum eResponse
+{
+    NS_ALLOW = 1,
+    NS_DENY = 2,
+    NS_TOPIC = 3,
+
+} NSResponse;
 
 /**
  * Access policy exchanged between provider and consumer during subscription process
@@ -94,11 +109,39 @@ typedef enum
 } NSMessageType;
 
 /**
+ *  Notification topic
+ */
+typedef enum
+{
+    NS_TOPIC_UNSUBSCRIBED = 0,
+    NS_TOPIC_SUBSCRIBED = 1,
+
+} NSTopicState;
+
+typedef struct _nsTopic
+{
+    char * topicName;
+    NSTopicState state;
+    struct _nsTopic * next;
+
+} NSTopicLL;
+
+typedef struct
+{
+    NSTopicLL * head;
+    NSTopicLL * tail;
+    //TODO: decide struct fields
+    char consumerId[NS_UUID_STRING_SIZE];
+    NSTopicLL ** topics;
+
+} NSTopicList;
+
+/**
  *  Consumer information
  */
 typedef struct
 {
-    char consumerId[37];
+    char consumerId[NS_UUID_STRING_SIZE];
 
 } NSConsumer;
 
@@ -107,7 +150,8 @@ typedef struct
  */
 typedef struct
 {
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
+    NSTopicLL * topicLL;
 
 } NSProvider;
 
@@ -127,7 +171,7 @@ typedef struct
 {
     //Mandatory
     uint64_t messageId;
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
 
     //optional
     NSMessageType type;
@@ -137,6 +181,7 @@ typedef struct
     char * contentText;
     char * sourceName;
     NSMediaContents * mediaContents;
+    char * topic;
 
 } NSMessage;
 
@@ -146,7 +191,7 @@ typedef struct
 typedef struct
 {
     uint64_t messageId;
-    char providerId[37];
+    char providerId[NS_UUID_STRING_SIZE];
     NSSyncType state;
 
 } NSSyncInfo;

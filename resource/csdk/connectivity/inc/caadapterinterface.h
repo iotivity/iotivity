@@ -213,3 +213,4 @@ typedef void (*CAErrorHandleCallback)(const CAEndpoint_t *endpoint,
 
 #endif  /* CA_ADAPTER_INTERFACE_H_ */
 
+

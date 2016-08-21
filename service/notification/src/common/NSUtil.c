@@ -95,6 +95,7 @@ NSResult NSFreeMessage(NSMessage * obj)
     NSFreeMalloc(&(obj->title));
     NSFreeMalloc(&(obj->contentText));
     NSFreeMalloc(&(obj->sourceName));
+    NSFreeMalloc(&(obj->topic));
     NSFreeMediaContents(obj->mediaContents);
 
     OICFree(obj);
@@ -142,6 +143,11 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     if (copyMsg->mediaContents)
     {
        newMsg->mediaContents = NSDuplicateMediaContents(copyMsg->mediaContents);
+    }
+
+    if (copyMsg->topic)
+    {
+        newMsg->topic = OICStrdup(copyMsg->topic);
     }
 
     return newMsg;
@@ -421,6 +427,58 @@ NSMessage * NSInitializeMessage()
     msg->contentText = NULL;
     msg->sourceName = NULL;
     msg->mediaContents = NULL;
+    msg->topic = NULL;
 
     return msg;
 }
+
+OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* name)
+{
+    if (!payload || !name)
+    {
+        return NULL;
+    }
+
+    OCRepPayloadValue* val = payload->values;
+    while(val)
+    {
+        if (0 == strcmp(val->name, name))
+        {
+            return val;
+        }
+        val = val->next;
+    }
+
+    return NULL;
+}
+
+NSTopicList * NSInitializeTopicList()
+{
+    NSTopicList * topicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));
+
+    if(!topicList)
+    {
+        NS_LOG(ERROR, "topicList is NULL");
+        return NULL;
+    }
+
+    (topicList->consumerId)[0] = '\0';
+    topicList->head = NULL;
+    topicList->tail = NULL;
+
+    return topicList;
+}
+
+NSResult NSFreeTopicList(NSTopicList * topicList)
+{
+    if (!topicList)
+    {
+        return NS_ERROR;
+    }
+
+    //TODO:Free Topic List
+
+
+    return NS_OK;
+}
+

@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSSyncInfo.h"
+#include "string.h"
+#include "NSUtils.h"
 
 namespace OIC
 {
@@ -26,13 +28,12 @@ namespace OIC
     {
         NSSyncInfo::NSSyncInfo(::NSSyncInfo *syncInfo)
         {
+            m_messageId = 0;
+            m_state = NSSyncInfo::NSSyncType::NS_SYNC_UNREAD;
             if (syncInfo != nullptr)
             {
                 m_messageId = syncInfo->messageId;
-
-                if ((syncInfo->providerId != nullptr) && strlen(syncInfo->providerId))
-                    m_providerId.assign(syncInfo->providerId, strlen(syncInfo->providerId));
-
+                m_providerId.assign(syncInfo->providerId, NS_UTILS_UUID_STRING_SIZE);
                 m_state = (NSSyncType) syncInfo->state;
             }
         }

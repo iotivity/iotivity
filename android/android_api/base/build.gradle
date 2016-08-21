@@ -43,9 +43,14 @@ android {
         versionCode 1
         versionName "1.1.1"
         buildConfigField 'int', 'SECURED', SECURED
+        buildConfigField 'int', 'WITH_CLOUD', WITH_CLOUD
         buildConfigField "int", 'WITH_MQ_PUB', WITH_MQ_PUB
         buildConfigField "int", 'WITH_MQ_SUB', WITH_MQ_SUB
         buildConfigField "int", 'WITH_MQ_BROKER', WITH_MQ_BROKER
+        buildConfigField "String", 'RD_MODE', "\"RD_MODE\""
+        buildConfigField "int", 'WITH_TRANSPORT_EDR', WITH_TRANSPORT_EDR
+        buildConfigField "int", 'WITH_TRANSPORT_BLE', WITH_TRANSPORT_BLE
+        buildConfigField "int", 'WITH_TRANSPORT_NFC', WITH_TRANSPORT_NFC
     }
     buildTypes {
         release {
@@ -62,6 +67,22 @@ android {
             manifest.srcFile 'src/main/AndroidManifest.xml'
             jniLibs.srcDir 'libs'
             jni.srcDirs = [] //disable automatic ndk-build call
+            java{
+                if (WITH_TRANSPORT_EDR == "0") {
+                    exclude "**/ca/CaBtPairingInterface.java"
+                    exclude "**/ca/CaEdrInterface.java"
+                    println 'excluded EDR interface'
+                    }
+                if (WITH_TRANSPORT_BLE == "0") {
+                    exclude "**/ca/CaLeClientInterface.java"
+                    exclude "**/ca/CaLeServerInterface.java"
+                    println 'excluded BLE interface'
+                    }
+                if (WITH_TRANSPORT_NFC == "0") {
+                    exclude "**/ca/CaNfcInterface.java"
+                    println 'excluded NFC interface'
+                    }
+            }
         }
     }
 }
@@ -98,7 +119,7 @@ task buildNative(type: Exec) {
         //for windows use 'ndk-build.cmd'
         //def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
-        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED", "WITH_MQ_PUB=$WITH_MQ_PUB", "WITH_MQ_SUB=$WITH_MQ_SUB", "WITH_MQ_BROKER=$WITH_MQ_BROKER"
+        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED", "WITH_CLOUD=$WITH_CLOUD", "RD_MODE=$RD_MODE", "WITH_MQ_PUB=$WITH_MQ_PUB", "WITH_MQ_SUB=$WITH_MQ_SUB", "WITH_MQ_BROKER=$WITH_MQ_BROKER"
     } else {
         println '##################'
         println 'Skipping NDK build'

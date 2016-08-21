@@ -29,8 +29,6 @@
 
 #include <string>
 #include "NSCommon.h"
-#include "oic_string.h"
-#include "string.h"
 
 namespace OIC
 {
@@ -54,7 +52,7 @@ namespace OIC
                 /**
                         * Constructor of NSSyncInfo.
                         */
-                NSSyncInfo() = default;
+                NSSyncInfo(): m_messageId(0), m_state(NSSyncType::NS_SYNC_UNREAD) { };
 
                 /**
                         * Constructor of NSSyncInfo.

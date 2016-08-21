@@ -72,6 +72,12 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         return OC_EH_ERROR;
     }
 
+    OCEntityHandlerResponse response;
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+            sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
+
     if (flag & OC_REQUEST_FLAG)
     {
         NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
@@ -102,6 +108,18 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         }
     }
 
+    response.requestHandle = entityHandlerRequest->requestHandle;
+    response.resourceHandle = entityHandlerRequest->resource;
+    response.persistentBufferFlag = 0;
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload *) NULL;
+
+    if (OCDoResponse(&response) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        return NS_ERROR;
+    }
+
     NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OUT");
     return ehResult;
 }
@@ -120,6 +138,12 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         return OC_EH_ERROR;
     }
 
+    OCEntityHandlerResponse response;
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+            sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
+
     if (flag & OC_REQUEST_FLAG)
     {
         NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
@@ -127,8 +151,8 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         if (OC_REST_POST == entityHandlerRequest->method)
         {
             /** Receive sync data from consumer which read or dismiss notification message.
-                           And broadcast the sync data to all subscribers including provider app
-                           to synchronize the notification message status. */
+                And broadcast the sync data to all subscribers including provider app
+                to synchronize the notification message status. */
 
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
 
@@ -167,7 +191,73 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
         }
     }
 
+    response.requestHandle = entityHandlerRequest->requestHandle;
+    response.resourceHandle = entityHandlerRequest->resource;
+    response.persistentBufferFlag = 0;
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload *) NULL;
+
+    if (OCDoResponse(&response) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        return NS_ERROR;
+    }
+
     NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OUT");
+    return ehResult;
+}
+
+OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *entityHandlerRequest, void* callback)
+{
+    NS_LOG(DEBUG, "NSEntityHandlerTopicCb - IN");
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
+    (void)callback;
+
+    // Validate pointer
+    if (!entityHandlerRequest)
+    {
+        NS_LOG(ERROR, "Invalid request pointer");
+        return OC_EH_ERROR;
+    }
+
+    if (flag & OC_REQUEST_FLAG)
+    {
+        NS_LOG(DEBUG, "Flag includes OC_REQUEST_FLAG");
+
+        if (OC_REST_GET == entityHandlerRequest->method)
+        {
+            NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_GET");
+
+            // send consumer's interesting topic list if consumer id exists
+            // otherwise send  registered topic list
+            NSPushQueue(TOPIC_SCHEDULER, TASK_SEND_TOPICS,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+
+            ehResult = OC_EH_OK;
+        }
+        else if (OC_REST_POST == entityHandlerRequest->method)
+        {
+            // Receive interesting topic list from consumers
+            NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
+
+            // Send topic notice message(id = TOPIC) to the consumer 
+            // which requests to post.
+            NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
+                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+
+            ehResult = OC_EH_OK;
+        }
+        else
+        {
+            NS_LOG_V(DEBUG, "Received unsupported method %d from client",
+                    entityHandlerRequest->method);
+            ehResult = OC_EH_OK;
+        }
+    }
+
+    NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OUT");
     return ehResult;
 }
 

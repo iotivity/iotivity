@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">NotificationConsumerExample</string>
+    <string name="btn_title">Title</string>
+    <string name="btn_body">Body</string>
+    <string name="btn_send">Send Notification</string>
+    <string name="btn_create_noti">Create Notification</string>
+</resources>

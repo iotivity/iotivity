@@ -85,7 +85,6 @@ if target_os == 'tizen':
    enrollee_env.AppendUnique(RPATH = [enrollee_env.get('BUILD_DIR')])
    enrollee_env.AppendUnique(CXXFLAGS = ['-pthread'])
    enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
-   enrollee_env.AppendUnique(CPPPATH = [enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi'])
 
 ######################################################################
 # Arduino Enrollee

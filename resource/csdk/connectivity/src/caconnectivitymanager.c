@@ -37,6 +37,9 @@
 
 #ifdef TCP_ADAPTER
 #include "catcpadapter.h"
+#ifdef __WITH_TLS__
+#include "ca_adapter_net_tls.h"
+#endif
 #endif
 
 CAGlobals_t caglobals = { .clientFlags = 0,
@@ -58,6 +61,12 @@ extern void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCall
 extern void CADTLSSetX509CredentialsCallback(CAGetDTLSX509CredentialsHandler credCallback);
 extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 #endif
+
+#ifdef __WITH_TLS__
+extern void CAsetPkixInfoCallback(CAgetPkixInfoHandler infCallback);
+extern void CAsetTlsCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
+#endif
+
 
 CAResult_t CAInitialize()
 {
@@ -174,6 +183,56 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDT
     return CA_STATUS_OK;
 }
 #endif //__WITH_DTLS__
+#ifdef __WITH_TLS__
+CAResult_t CAregisterTlsHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterTlsHandshakeCallback");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CAsetTlsHandshakeCallback(tlsHandshakeCallback);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAregisterTlsCredentialsHandler(CAGetDTLSPskCredentialsHandler getTlsCredentialsHandler)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CAsetTlsCredentialsCallback(getTlsCredentialsHandler);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+
+void GetPkixInfo(PkiInfo_t * inf)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    GetDerOwnCert(&inf->crt);
+    GetDerKey(&inf->key);
+    GetDerCaCert(&inf->ca);
+    GetDerCrl(&inf->crl);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
+CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CAsetPkixInfoCallback(getPkixInfoHandler);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+#endif
 
 #ifdef __WITH_X509__
 CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetDTLSX509CredentialsHandler)
@@ -468,19 +527,48 @@ CAResult_t CAHandleRequestResponse()
     return CA_STATUS_OK;
 }
 
-#ifdef __WITH_DTLS__
-CAResult_t CASelectCipherSuite(const uint16_t cipher)
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
+CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
 {
     OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite");
-
-    return CADtlsSelectCipherSuite(cipher);
+    if(CA_ADAPTER_IP == adapter)
+    {
+        if (CA_STATUS_OK != CADtlsSelectCipherSuite(cipher))
+        {
+            return CA_STATUS_FAILED;
+        }
+    }
+#ifdef __WITH_TLS__
+    else if(CA_ADAPTER_TCP == adapter)
+    {
+        if (CA_STATUS_OK != CAsetTlsCipherSuite(cipher))
+        {
+            return CA_STATUS_FAILED;
+        }
+    }
+#endif
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
 
-    return CADtlsEnableAnonECDHCipherSuite(enable);
+#ifdef __WITH_DTLS__
+    if (CA_STATUS_OK != CADtlsEnableAnonECDHCipherSuite(enable))
+    {
+        return CA_STATUS_FAILED;
+    }
+#endif
+#ifdef __WITH_TLS__
+    // TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256    0xFF00 replaces 0xC018
+    // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
+    if (CA_STATUS_OK != CAsetTlsCipherSuite(enable ? 0xFF00 : 0xC037))
+    {
+        return CA_STATUS_FAILED;
+    }
+#endif
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
@@ -499,10 +587,20 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
         return CA_STATUS_INVALID_PARAM;
     }
 
-    res = CADtlsGenerateOwnerPSK(endpoint, label, labelLen,
-                                  rsrcServerDeviceID, rsrcServerDeviceIDLen,
-                                  provServerDeviceID, provServerDeviceIDLen,
-                                  ownerPSK, ownerPSKSize);
+    if(CA_ADAPTER_IP == endpoint->adapter)
+    {
+        res = CADtlsGenerateOwnerPSK(endpoint, label, labelLen,
+                                      rsrcServerDeviceID, rsrcServerDeviceIDLen,
+                                      provServerDeviceID, provServerDeviceIDLen,
+                                      ownerPSK, ownerPSKSize);
+    }
+#ifdef __WITH_TLS__
+    else
+    {
+        res = CAtlsGenerateOwnerPSK(endpoint, ownerPSK, ownerPSKSize,
+                rsrcServerDeviceID, rsrcServerDeviceIDLen);
+    }
+#endif
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);

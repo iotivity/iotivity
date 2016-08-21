@@ -50,15 +50,30 @@ typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
 typedef void (*NSProviderSyncInfoCallback)(NSSyncInfo *);
 
 /**
- * Initialize notification service for provider
- * @param[in]  policy   Accepter
- * @param[in]  subscribeRequestCallback   Callback function to register for receiving
- * subscription request from consumer
- * @param[in]  syncCallback   Callback function to register for receiving  sync data
+ *  Set provider service with the following configuration
+ */
+typedef struct
+{
+    /* Invoked when the subscription request from consumer is received */
+    NSSubscribeRequestCallback subRequestCallback;
+    /* Invoked when the synchronization data, read and deleted, is sent by consumer is received */
+    NSProviderSyncInfoCallback syncInfoCallback;
+    /* Set the policy for notification servcie refering to following
+     * if policy is true, provider decides to allow or deny for all the subscribing consumers.
+     * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
+     */
+    bool policy;
+    /* User Information */
+    char * userInfo;
+
+} NSProviderConfig;
+
+/**
+ * Initialize notification service for provider service
+ * @param[in]  config   Refer to NSProviderConfig
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSStartProvider(bool policy, NSSubscribeRequestCallback subscribeRequestCb,
-        NSProviderSyncInfoCallback syncCb);
+NSResult NSStartProvider(NSProviderConfig config);
 
 /**
  * Terminate notification service for provider
@@ -101,6 +116,7 @@ NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted);
  * @param[in]  size  the number of consumers stored in the cache
  * @return ::NS_OK or result code of NSResult
  */
+//TODO will use Function.
 // NSResult NSGetConsumerList(uint8_t *list, uint32_t size);
 
 /**
@@ -110,12 +126,54 @@ NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted);
  */
 NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 
-
 /**
  * Initialize NSMessage struct, our service set message id and provider(device) id
  * @return ::NSMessage *
  */
 NSMessage * NSCreateMessage();
+
+/**
+ * Add topic to topic list which is located in provider service storage
+ * @param[in]  topicName Topic name to add
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderAddTopic(char* topicName);
+
+/**
+ * Delete topic from topic list
+ * @param[in]  topicName Topic name to delete
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderDeleteTopic(char* topicName);
+
+/**
+ * Select a topic name for a consumer
+ * @param[in]  consumerId  consumer id for which the user on provider selects a topic
+ * @param[in]  topicName Topic name to select
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderSelectTopic(char* consumerId, char* topicName);
+
+/**
+ * Unselect a topic from the topic list for consumer
+ * @param[in]  consumerId  consumer id for which the user on provider unselects a topic
+ * @param[in]  topicName Topic name to unselect
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderUnselectTopic(char* consumerId, char* topicName);
+
+/**
+ * Request topic list with selection state for the consumer
+ * @param[in] consumerid  the id of consumer which topic list is subscribed for
+ * @return :: Topic list
+ */
+NSTopicLL * NSProviderGetConsumerTopics(char *consumerId);
+
+/**
+ * Request topics list already registered by provider user
+ * @return :: Topic list
+ */
+NSTopicLL * NSProviderGetTopics();
 
 #ifdef __cplusplus
 }

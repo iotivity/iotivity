@@ -53,6 +53,7 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TITLE, msg->title);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
+    NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TOPIC_NAME, msg->topic);
 
     NS_LOG(DEBUG, "NSSetMessagePayload - OUT");
     return NS_OK;
@@ -124,13 +125,32 @@ NSResult NSSendNotification(NSMessage *msg)
         {
             if(subData->messageObId != 0)
             {
-                obArray[obCount++] = subData->messageObId;
+                if(msg->topic)
+                {
+                    NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
+
+                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                    {
+                        obArray[obCount++] = subData->messageObId;
+                    }
+                }
+                else
+                {
+                    obArray[obCount++] = subData->messageObId;
+                }
             }
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
             if(subData->remote_messageObId != 0)
             {
-                obArray[obCount++] = subData->remote_messageObId;
+                if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                {
+                    obArray[obCount++] = subData->remote_messageObId;
+                }
+                else
+                {
+                    obArray[obCount++] = subData->remote_messageObId;
+                }
             }
 #endif
 
@@ -152,7 +172,7 @@ NSResult NSSendNotification(NSMessage *msg)
     }
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray, obCount, payload,
-            OC_HIGH_QOS);
+            OC_LOW_QOS);
 
     NS_LOG_V(DEBUG, "Message ocstackResult = %d", ocstackResult);
 
@@ -162,8 +182,8 @@ NSResult NSSendNotification(NSMessage *msg)
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
+
     OCRepPayloadDestroy(payload);
-    NSFreeMessage(msg);
 
     NS_LOG(DEBUG, "NSSendMessage - OUT");
 
@@ -204,7 +224,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
                 obArray[obCount++] = subData->syncObId;
             }
 
-#ifdef WITH_CLOUD
+#ifdef RD_CLIENT
             if(subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;
@@ -229,7 +249,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
     }
 
     OCStackResult ocstackResult = OCNotifyListOfObservers(rHandle, obArray,
-            obCount, payload, OC_HIGH_QOS);
+            obCount, payload, OC_LOW_QOS);
 
     NS_LOG_V(DEBUG, "Sync ocstackResult = %d", ocstackResult);
 
@@ -269,8 +289,9 @@ void * NSNotificationSchedule(void *ptr)
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_NOTIFICATION : ");
                     NSSendNotification((NSMessage *)node->taskData);
-                    break;
+                    NSFreeMessage((NSMessage *)node->taskData);
                 }
+                    break;
                 case TASK_SEND_READ:
                     NS_LOG(DEBUG, "CASE TASK_SEND_READ : ");
                     NSSendSync((NSSyncInfo*) node->taskData);

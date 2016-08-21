@@ -35,6 +35,10 @@
 #include "ESEnrolleeCommon.h"
 #include "easysetup.h"
 
+#include "ocrandom.h"
+#include "cainterface.h"
+#include "OCPlatform.h"
+
 #define PROV_RESOURCE_TYPE "ocf.wk.prov"
 
 using namespace OC;
@@ -134,8 +138,45 @@ protected:
     }
 
 private:
+    bool isValidResourceToTest(std::shared_ptr<OC::OCResource> resource)
+    {
+        if((resource->connectivityType() & CT_ADAPTER_TCP) == CT_ADAPTER_TCP)
+        {
+            return false;
+        }
+
+        CAEndpoint_t *tempInfo = NULL;
+        uint32_t tempSize = 0;
+
+        CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
+        if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
+        {
+            free(tempInfo);
+            return false;
+        }
+
+        for (uint32_t index = 0; index  < tempSize; index++)
+        {
+            if (CA_ADAPTER_IP == tempInfo[index].adapter)
+            {
+                if(resource->host().find(tempInfo[index].addr) != std::string::npos &&
+                    resource->host().find(std::to_string(tempInfo[index].port).c_str()) != std::string::npos)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     void discoverRemoteEnrolleeCb(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE))
         {
             m_enrolleeResource = resource;
@@ -201,10 +242,13 @@ TEST_F(GetConfigurationTest, GetConfigurationSucceed)
                 {
                     if(conf.getWiFiModes().at(0) == WIFI_11G &&
                         conf.getWiFiFreq() == WIFI_5G &&
-                        !strcmp(conf.getDeviceName().c_str(), "Test Device"))
+                        !strcmp(conf.getDeviceName().c_str(), "Test Device") &&
+                        !strcmp(conf.getModelNumber().c_str(), "Test Model Number"))
                     {
                         isWellConstructed = true;
                     }
+                    cout << "getDeviceName : " << conf.getDeviceName().c_str() << endl;
+                    cout << "getModelNumber : " << conf.getModelNumber().c_str() << endl;
                 }
             }
         });
@@ -303,7 +347,7 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea");
+    devProp.setDevConfProp("korean", "Korea", "Location");
 
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp, nullptr));
 }
@@ -313,7 +357,7 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea");
+    devProp.setDevConfProp("korean", "Korea", "Location");
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionDeviceProperties(devProp,
                                                                  deviceProvisioningStatusCb));
 }
@@ -323,7 +367,7 @@ TEST_F(ProvisionDevicePropertiesTest,
 {
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("korean", "Korea");
+    devProp.setDevConfProp("korean", "Korea", "Location");
 
     int cntForReceivedCallbackWithSuccess = 0;
 
