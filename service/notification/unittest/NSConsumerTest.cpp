@@ -104,7 +104,7 @@ public:
         std::cout << __func__ << std::endl;
     }
 
-    static void NSSubscriptionAcceptedCallback(NSProvider *)
+    static void NSProviderChangedCallback(NSProvider *,  NSResponse)
     {
         std::cout << __func__ << std::endl;
     }
@@ -152,7 +152,7 @@ TEST_F(NotificationConsumerTest, StartConsumerPositive)
 {
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
+    cfg.changedCb = NSProviderChangedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     EXPECT_EQ(NS_OK, NSStartConsumer(cfg));
@@ -174,7 +174,7 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
+    cfg.changedCb = NSProviderChangedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
@@ -208,7 +208,7 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
+    cfg.changedCb = NSProviderChangedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
@@ -283,7 +283,7 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider
 
     NSConsumerConfig cfg;
     cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.acceptedCb = NSSubscriptionAcceptedCallback;
+    cfg.changedCb = NSProviderChangedCallback;
     cfg.messageCb = NSNotificationReceivedCallbackEmpty;
     cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
