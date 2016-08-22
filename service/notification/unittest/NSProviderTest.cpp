@@ -244,7 +244,6 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
     NSAcceptSubscription(g_consumer, true);
 }
 
-/* TODO coap+tcp case is ERROR, After, will be change code.
 TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 {
     int msgID;
@@ -252,16 +251,18 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
     mocks.ExpectCallFunc(NSMessageCallbackFromConsumerEmpty).Do(
             [&msgID](const int &id, const std::string&, const std::string&, const std::string&)
             {
+                std::cout << "id : " << id << std::endl;
                 if (id == msgID)
                 {
                     std::cout << "ExpectCallNotifyOnConsumerByAcceptIsTrue" << std::endl;
                 }
+                responseCon.notify_all();
             });
 
     NSAcceptSubscription(g_consumer, true);
 
     NSMessage * msg = new NSMessage();
-    msgID = (int)msg->messageId;
+    msgID = 10;
     msg->title = strdup(std::string("Title").c_str());
     msg->contentText = strdup(std::string("ContentText").c_str());
     msg->sourceName = strdup(std::string("OCF").c_str());
@@ -269,7 +270,7 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait(lock);
-}*/
+}
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
 {
