@@ -23,6 +23,7 @@ package org.iotivity.cloud.accountserver.x509.crl;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 public final class CrlStore {
@@ -35,29 +36,45 @@ public final class CrlStore {
     private static final String CRL_FILE_NAME = "crl";
 
     public static void saveCrl(byte[] crl) {
+
+        FileOutputStream out = null;
         try {
-            FileOutputStream out = new FileOutputStream(CRL_FILE_NAME);
+            out = new FileOutputStream(CRL_FILE_NAME);
             out.write(crl);
-            out.close();
         } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            if (out != null)
+                out.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static byte[] loadCrl() {
 
+        InputStream f = null;
         try {
-            InputStream f = new FileInputStream(CRL_FILE_NAME);
+            f = new FileInputStream(CRL_FILE_NAME);
             int size = f.available();
             byte data[] = new byte[size];
 
-            if(f.read(data) != data.length) {
+            if (f.read(data) != data.length) {
                 System.err.println("couldn't read crl");
             }
             f.close();
             return data;
 
         } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            if (f != null)
+                f.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 

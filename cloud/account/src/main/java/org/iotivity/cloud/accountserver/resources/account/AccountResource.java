@@ -86,15 +86,11 @@ public class AccountResource extends Resource {
     private IResponse handlePostSignUp(IRequest request)
             throws ServerException {
 
-        if (request.getPayload() == null) {
-            throw new BadRequestException("payload is null");
-        }
-
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
         if (payloadData == null) {
-            throw new BadRequestException("CBOR parsing failed");
+            throw new BadRequestException("payload is null");
         }
 
         HashMap<String, Object> responsePayload = null;

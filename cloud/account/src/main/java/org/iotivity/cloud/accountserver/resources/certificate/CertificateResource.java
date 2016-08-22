@@ -78,6 +78,10 @@ public class CertificateResource extends Resource {
         Map<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
+        if (payloadData == null) {
+            throw new BadRequestException("CBOR parsing failed");
+        }
+
         Map<String, Object> responsePayload = null;
 
         if (payloadData.containsKey(Constants.REQ_CSR)) {

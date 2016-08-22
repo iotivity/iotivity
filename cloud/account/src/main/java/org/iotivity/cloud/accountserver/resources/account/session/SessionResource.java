@@ -71,16 +71,11 @@ public class SessionResource extends Resource {
     private IResponse handlePostSigninout(IRequest request)
             throws ServerException {
 
-        // exception handle before getting payload
-        if (request.getPayload() == null) {
-            throw new BadRequestException("payload is empty");
-        }
-
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
         if (payloadData == null) {
-            throw new BadRequestException("CBOR parsing failed");
+            throw new BadRequestException("payload is null");
         }
 
         HashMap<String, Object> responsePayload = null;

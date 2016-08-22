@@ -87,6 +87,10 @@ public class GroupResource extends Resource {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
+        if (payloadData == null) {
+            throw new BadRequestException("payload is null");
+        }
+
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
             String uuid = payloadData.get(Constants.REQ_GROUP_MASTER_ID)
                     .toString();
