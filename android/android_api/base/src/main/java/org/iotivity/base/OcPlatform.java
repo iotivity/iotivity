@@ -1291,7 +1291,6 @@ public final class OcPlatform {
      */
     public interface OnDeleteResourceListener {
         public void onDeleteResourceCompleted(int result);
-        public void onDeleteResourceFailed(Throwable ex);
     }
 
     /**

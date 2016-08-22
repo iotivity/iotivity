@@ -77,7 +77,7 @@ void JniOnDeleteResourceListener::onDeleteResourceCallback(const int eCode)
     }
 
     jint jres = static_cast<jint>(eCode);
-    jmethodID midL = env->GetMethodID(clsL, "onDeleteResource", "(I)V");
+    jmethodID midL = env->GetMethodID(clsL, "onDeleteResourceCompleted", "(I)V");
     if (!midL)
     {
         checkExAndRemoveListener(env);
