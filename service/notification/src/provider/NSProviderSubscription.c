@@ -173,7 +173,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         else if (currPolicy == NS_POLICY_CONSUMER)
         {
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_CONSUMER");
-            NSSendSubscriptionResponse(entityHandlerRequest, true);
+            NSSendConsumerSubResponse(entityHandlerRequest);
         }
     }
     else if (resourceType == NS_RESOURCE_SYNC)
@@ -291,7 +291,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     return NS_OK;
 }
 
-NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest, bool accepted)
+NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - IN");
 
@@ -310,33 +310,9 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         return NS_ERROR;
     }
 
-    if (accepted)
-    {
-        NS_LOG(DEBUG, "accepted is true");
-        NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-        NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-
-        OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-
-        subData->isWhite = true;
-        subData->remote_messageObId = 0;
-        subData->remote_syncObId = 0;
-        subData->syncObId = 0;
-        subData->messageObId = entityHandlerRequest->obsInfo.obsId;
-
-        element->data = (void*) subData;
-        element->next = NULL;
-
-        if (NSStorageWrite(consumerSubList, element) != NS_OK)
-        {
-            NS_LOG(ERROR, "fail to write consumer white list");
-        }
-    }
-
-    NSSendResponse(id, accepted);
-
+    NSCacheUpdateSubScriptionState(consumerSubList, id, true);
+    NSSendResponse(id, true);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
-
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;
 }
