@@ -68,7 +68,7 @@
 /**
  *  Maximum Length of the vendor specific header option
  */
-#define MAX_HEADER_OPTION_DATA_LENGTH (20)
+#define MAX_HEADER_OPTION_DATA_LENGTH (1024)
 
 /**
  * Sets the time to live (TTL) for response callback(s).
