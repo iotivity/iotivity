@@ -29,7 +29,7 @@
 #include "caleinterface.h"
 #include "caadapterutils.h"
 
-#include "camutex.h"
+#include "octhread.h"
 
 #include "org_iotivity_ca_CaLeClientInterface.h"
 #include "org_iotivity_ca_CaLeServerInterface.h"

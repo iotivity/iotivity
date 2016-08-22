@@ -26,8 +26,7 @@
  * This file provides APIs related to mutex with no operation
  * for Singlethread implementation.
  */
-
-#include "camutex.h"
+#include "octhread.h"
 
 /**
  * TAG
@@ -37,17 +36,16 @@
 
 typedef struct _tagMutexInfo_t
 {
-#if defined(_MSC_VER)
-    uint8_t unused; //VS doesnt like empty structs
-#endif
 } ca_mutex_internal;
 
 typedef struct _tagEventInfo_t
 {
-#if defined(_MSC_VER)
-    uint8_t unused; //VS doesnt like empty structs
-#endif
 } ca_cond_internal;
+
+typedef struct _tagThreadInfo_t
+{
+} ca_thread_internal;
+
 
 /**
  * @var g_mutexInfo
@@ -60,6 +58,21 @@ static ca_mutex_internal g_mutexInfo = { 0 };
  * @brief This is used to return a non NULL value for ca_cond_new().
  */
 static ca_cond_internal g_condInfo = { 0 };
+
+CAThreadResult_t ca_thread_new(ca_thread *t, void *(*start_routine)(void *), void *arg)
+{
+    return CA_THREAD_CREATE_FAILURE;
+}
+
+CAThreadResult_t ca_thread_free(ca_thread t)
+{
+    return CA_THREAD_INVALID;
+}
+
+CAThreadResult_t ca_thread_wait(ca_thread t)
+{
+    return CA_THREAD_INVALID;
+}
 
 ca_mutex ca_mutex_new(void)
 {

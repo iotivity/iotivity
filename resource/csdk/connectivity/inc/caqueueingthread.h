@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uqueue.h"
 #include "cacommon.h"
 #ifdef __cplusplus

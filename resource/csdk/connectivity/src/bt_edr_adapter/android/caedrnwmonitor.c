@@ -27,7 +27,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "cathreadpool.h" /* for thread pool */
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
 #include "caedrserver.h"

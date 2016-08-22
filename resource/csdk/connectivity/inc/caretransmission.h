@@ -29,7 +29,7 @@
 #include <stdint.h>
 
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "cacommon.h"
 

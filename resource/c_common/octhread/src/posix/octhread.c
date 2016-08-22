@@ -37,6 +37,7 @@
 #endif
 
 #include "iotivity_config.h"
+#include "octhread.h"
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -52,14 +53,10 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef HAVE_WINSOCK2_H
-#include <winsock2.h>
-#endif
 #include <stdio.h>
 #include <errno.h>
 #include <assert.h>
 #include <oic_malloc.h>
-#include "camutex.h"
 #include "logger.h"
 
 /**
@@ -90,22 +87,78 @@ static const uint64_t NANOSECS_PER_SEC      = 1000000000L;
 
 typedef struct _tagMutexInfo_t
 {
-#if defined(_WIN32)
-    CRITICAL_SECTION mutex;
-#else
     pthread_mutex_t mutex;
-#endif
 } ca_mutex_internal;
 
 typedef struct _tagEventInfo_t
 {
-#if defined(_WIN32)
-    CONDITION_VARIABLE cond;
-#else
     pthread_cond_t cond;
     pthread_condattr_t condattr;
-#endif
 } ca_cond_internal;
+
+typedef struct _tagThreadInfo_t
+{
+    pthread_t thread;
+    pthread_attr_t  threadattr;
+} ca_thread_internal;
+
+CAThreadResult_t ca_thread_new(ca_thread *t, void *(*start_routine)(void *), void *arg)
+{
+    CAThreadResult_t res = CA_THREAD_SUCCESS;
+    ca_thread_internal *threadInfo = (ca_thread_internal*)OICMalloc(sizeof(ca_thread_internal));
+    if (NULL != threadInfo)
+    {
+        int result = pthread_create(&threadInfo->thread, NULL, start_routine, arg);
+        if (result != 0)
+        {
+            res = CA_THREAD_CREATE_FAILURE;
+            *t = NULL;
+            OICFree(threadInfo);
+            OIC_LOG_V(ERROR, TAG, "%s: pthread_create failed", __func__);
+        }
+        else
+        {
+            *t = (ca_thread)threadInfo;
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Failed to allocate thread!", __func__);
+        *t = NULL;
+        res = CA_THREAD_ALLOCATION_FAILURE;
+    }
+    return res;
+}
+
+CAThreadResult_t ca_thread_free(ca_thread t)
+{
+    CAThreadResult_t res = CA_THREAD_SUCCESS;
+    ca_thread_internal *threadInfo = (ca_thread_internal*) t;
+    if (threadInfo)
+    {
+        OICFree(threadInfo);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s Invalid thread !", __func__);
+        res = CA_THREAD_INVALID;
+    }
+    return res;
+}
+
+CAThreadResult_t ca_thread_wait(ca_thread t)
+{
+    CAThreadResult_t res = CA_THREAD_SUCCESS;
+    ca_thread_internal *threadInfo = (ca_thread_internal*) t;
+    int joinres = pthread_join(threadInfo->thread, NULL);
+    if (0 != joinres)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to join thread with error %d", joinres);
+        res = CA_THREAD_WAIT_FAILURE;
+    }
+
+    return res;
+}
 
 ca_mutex ca_mutex_new(void)
 {
@@ -113,10 +166,6 @@ ca_mutex ca_mutex_new(void)
     ca_mutex_internal *mutexInfo = (ca_mutex_internal*) OICMalloc(sizeof(ca_mutex_internal));
     if (NULL != mutexInfo)
     {
-#if defined(_WIN32)
-        InitializeCriticalSection(&mutexInfo->mutex);
-        retVal = (ca_mutex)mutexInfo;
-#else
         // create the mutex with the attributes set
         int ret=pthread_mutex_init(&(mutexInfo->mutex), PTHREAD_MUTEX_DEFAULT);
         if (0 == ret)
@@ -128,7 +177,6 @@ ca_mutex ca_mutex_new(void)
             OIC_LOG_V(ERROR, TAG, "%s Failed to initialize mutex !", __func__);
             OICFree(mutexInfo);
         }
-#endif
     }
     else
     {
@@ -141,15 +189,9 @@ ca_mutex ca_mutex_new(void)
 bool ca_mutex_free(ca_mutex mutex)
 {
     bool bRet=false;
-
     ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
     if (mutexInfo)
     {
-#if defined(_WIN32)
-        DeleteCriticalSection(&mutexInfo->mutex);
-        OICFree(mutexInfo);
-        bRet=true;
-#else
         int ret = pthread_mutex_destroy(&mutexInfo->mutex);
         if (0 == ret)
         {
@@ -160,7 +202,6 @@ bool ca_mutex_free(ca_mutex mutex)
         {
             OIC_LOG_V(ERROR, TAG, "%s Failed to free mutex !", __func__);
         }
-#endif
     }
     else
     {
@@ -175,21 +216,16 @@ void ca_mutex_lock(ca_mutex mutex)
     ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
     if (mutexInfo)
     {
-#if defined(_WIN32)
-        EnterCriticalSection(&mutexInfo->mutex);
-#else
         int ret = pthread_mutex_lock(&mutexInfo->mutex);
         if(ret != 0)
         {
             OIC_LOG_V(ERROR, TAG, "Pthread Mutex lock failed: %d", ret);
             exit(ret);
         }
-#endif
     }
     else
     {
         OIC_LOG_V(ERROR, TAG, "%s Invalid mutex !", __func__);
-        return;
     }
 }
 
@@ -198,9 +234,6 @@ void ca_mutex_unlock(ca_mutex mutex)
     ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
     if (mutexInfo)
     {
-#if defined(_WIN32)
-        LeaveCriticalSection(&mutexInfo->mutex);
-#else
         int ret = pthread_mutex_unlock(&mutexInfo->mutex);
         if(ret != 0)
         {
@@ -208,12 +241,10 @@ void ca_mutex_unlock(ca_mutex mutex)
             exit(ret);
         }
         (void)ret;
-#endif
     }
     else
     {
         OIC_LOG_V(ERROR, TAG, "%s: Invalid mutex !", __func__);
-        return;
     }
 }
 
@@ -223,10 +254,6 @@ ca_cond ca_cond_new(void)
     ca_cond_internal *eventInfo = (ca_cond_internal*) OICMalloc(sizeof(ca_cond_internal));
     if (NULL != eventInfo)
     {
-#if defined(_WIN32)
-        InitializeConditionVariable(&eventInfo->cond);
-        retVal = (ca_cond) eventInfo;
-#else
         int ret = pthread_condattr_init(&(eventInfo->condattr));
         if(0 != ret)
         {
@@ -266,7 +293,6 @@ ca_cond ca_cond_new(void)
             pthread_condattr_destroy(&(eventInfo->condattr));
             OICFree(eventInfo);
         }
-#endif
     }
     else
     {
@@ -281,9 +307,6 @@ void ca_cond_free(ca_cond cond)
     ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
     if (eventInfo != NULL)
     {
-#if defined(_WIN32)
-        OICFree(cond);
-#else
         int ret = pthread_cond_destroy(&(eventInfo->cond));
         int ret2 = pthread_condattr_destroy(&(eventInfo->condattr));
         if (0 == ret && 0 == ret2)
@@ -295,7 +318,6 @@ void ca_cond_free(ca_cond cond)
             OIC_LOG_V(ERROR, TAG, "%s: Failed to destroy condition variable %d, %d",
                     __func__, ret, ret2);
         }
-#endif
     }
     else
     {
@@ -308,15 +330,11 @@ void ca_cond_signal(ca_cond cond)
     ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
     if (eventInfo != NULL)
     {
-#if defined(_WIN32)
-        WakeConditionVariable(&eventInfo->cond);
-#else
         int ret = pthread_cond_signal(&(eventInfo->cond));
         if (0 != ret)
         {
             OIC_LOG_V(ERROR, TAG, "%s: Failed to signal condition variable", __func__);
         }
-#endif
     }
     else
     {
@@ -329,15 +347,11 @@ void ca_cond_broadcast(ca_cond cond)
     ca_cond_internal* eventInfo = (ca_cond_internal*) cond;
     if (eventInfo != NULL)
     {
-#if defined(_WIN32)
-        WakeAllConditionVariable(&eventInfo->cond);
-#else
         int ret = pthread_cond_broadcast(&(eventInfo->cond));
         if (0 != ret)
         {
             OIC_LOG_V(ERROR, TAG, "%s: failed to signal condition variable", __func__);
         }
-#endif
     }
     else
     {
@@ -357,7 +371,6 @@ void ca_cond_wait(ca_cond cond, ca_mutex mutex)
 }
 #endif
 
-#if !defined(_WIN32)
 struct timespec ca_get_current_time()
 {
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
@@ -383,7 +396,6 @@ void ca_add_microseconds_to_timespec(struct timespec* ts, uint64_t microseconds)
     ts->tv_nsec = (totalNs)% NANOSECS_PER_SEC;
     ts->tv_sec += secPart + secOfNs;
 }
-#endif
 
 CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseconds)
 {
@@ -406,25 +418,6 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
 
     if (microseconds > 0)
     {
-#if defined(_WIN32)
-        // Wait for the given time
-        DWORD milli = (DWORD)(microseconds / 1000);
-        if (!SleepConditionVariableCS(&eventInfo->cond, &mutexInfo->mutex, milli))
-        {
-            if (GetLastError() == ERROR_TIMEOUT)
-            {
-                retVal = CA_WAIT_TIMEDOUT;
-            }
-            else
-            {
-                OIC_LOG_V(ERROR, TAG, "SleepConditionVariableCS() with Timeout failed %i", GetLastError());
-                retVal = CA_WAIT_INVAL;
-            }
-        }else
-        {
-            retVal = CA_WAIT_SUCCESS;
-        }
-#else
         int ret = 0;
         struct timespec abstime = { .tv_sec = 0 };
 
@@ -463,25 +456,12 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
                 retVal = CA_WAIT_INVAL;
                 break;
         }
-#endif
     }
     else
     {
-#if defined(_WIN32)
-        // Wait forever
-        if (!SleepConditionVariableCS(&eventInfo->cond, &mutexInfo->mutex, INFINITE))
-        {
-            OIC_LOG_V(ERROR, TAG, "SleepConditionVariableCS() w/o Timeout failed %i", GetLastError());
-            retVal = CA_WAIT_INVAL;
-        }else
-        {
-            retVal = CA_WAIT_SUCCESS;
-        }
-#else
         // Wait forever
         int ret = pthread_cond_wait(&eventInfo->cond, &mutexInfo->mutex);
         retVal = ret == 0 ? CA_WAIT_SUCCESS : CA_WAIT_INVAL;
-#endif
     }
     return retVal;
 }

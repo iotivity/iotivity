@@ -21,7 +21,7 @@
 #include "caleserver.h"
 #include "cacommon.h"
 #include "cacommonutil.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "caqueueingthread.h"
 #include "cagattservice.h"
 #include "oic_string.h"

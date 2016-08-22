@@ -26,7 +26,7 @@
 #include "caleautoconnector.h"
 #include "cacommonutil.h"
 #include "logger.h"
-#include "camutex.h"
+#include "octhread.h"
 
 #define TAG "OIC_CA_LE_AUTO_CONN"
 

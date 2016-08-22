@@ -24,7 +24,7 @@
 #include "cacommonutil.h"
 #include "camanagerleutil.h"
 #include "uarraylist.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "camanagerdevice.h"
 #include "oic_malloc.h"
 

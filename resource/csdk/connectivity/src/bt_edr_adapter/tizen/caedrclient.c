@@ -30,7 +30,7 @@
 #include <bluetooth_internal.h>
 
 #include "caedrinterface.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "caedrendpoint.h"
 #include "caadapterutils.h"
 #include "caedrutils.h"

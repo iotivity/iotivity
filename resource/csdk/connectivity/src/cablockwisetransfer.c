@@ -41,7 +41,7 @@
 #include "cablockwisetransfer.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "logger.h"
 
 #define TAG "OIC_CA_BWT"

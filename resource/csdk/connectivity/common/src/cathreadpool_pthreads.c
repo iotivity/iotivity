@@ -29,9 +29,6 @@
 #endif
 #include "iotivity_config.h"
 #include <errno.h>
-#if defined HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
 #if defined HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
@@ -39,7 +36,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "uarraylist.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "platform_features.h"
 
 #define TAG PCF("UTHREADPOOL")
@@ -162,22 +159,23 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     info->func = method;
     info->data = data;
 
-    pthread_t threadHandle;
-    int result = pthread_create(&threadHandle, NULL, ca_thread_pool_pthreads_delegate, info);
-
-    if(result != 0)
+    ca_thread thread;
+    int thrRet = ca_thread_new(&thread, ca_thread_pool_pthreads_delegate, info);
+    if (thrRet != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", result);
+        OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", thrRet);
+        OICFree(info);
         return CA_STATUS_FAILED;
     }
 
     ca_mutex_lock(thread_pool->details->list_lock);
-    bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)threadHandle);
+    bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)thread);
     ca_mutex_unlock(thread_pool->details->list_lock);
 
     if(!addResult)
     {
         OIC_LOG_V(ERROR, TAG, "Arraylist Add failed, may not be properly joined: %d", addResult);
+        ca_thread_free(thread);
         return CA_STATUS_FAILED;
     }
 
@@ -199,21 +197,9 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
 
     for(uint32_t i = 0; i<u_arraylist_length(thread_pool->details->threads_list); ++i)
     {
-        pthread_t tid = (pthread_t)u_arraylist_get(thread_pool->details->threads_list, i);
-#if defined(_WIN32)
-        DWORD joinres = WaitForSingleObject(tid, INFINITE);
-        if (WAIT_OBJECT_0 != joinres)
-        {
-            OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
-        }
-        CloseHandle(tid);
-#else
-        int joinres = pthread_join(tid, NULL);
-        if(0 != joinres)
-        {
-            OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
-        }
-#endif
+        ca_thread thr = (ca_thread)u_arraylist_get(thread_pool->details->threads_list, i);
+        ca_thread_wait(thr);
+        ca_thread_free(thr);
     }
 
     u_arraylist_free(&(thread_pool->details->threads_list));

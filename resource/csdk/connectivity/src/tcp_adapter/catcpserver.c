@@ -40,7 +40,7 @@
 #include "catcpinterface.h"
 #include <coap/pdu.h>
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "oic_malloc.h"
 
 #ifdef __WITH_TLS__

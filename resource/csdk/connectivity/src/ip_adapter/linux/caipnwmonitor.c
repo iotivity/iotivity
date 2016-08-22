@@ -39,7 +39,7 @@
 #include <linux/rtnetlink.h>
 #endif
 
-#include "camutex.h"
+#include "octhread.h"
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"

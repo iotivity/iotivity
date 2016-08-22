@@ -15,6 +15,7 @@ ca_common_path = root_dir + 'common/'
 ca_common_src_path = ca_common_path + 'src/'
 
 env.AppendUnique(CPPPATH = [
+	'#resource/c_common/octhread/include/',
 	'common/inc/',
 	src_dir + '/resource/csdk/logger/include/',
 	])
@@ -29,16 +30,12 @@ ca_common_src = [
 		ca_common_src_path + 'caremotehandler.c'
 	]
 
-if env['POSIX_SUPPORTED'] or (ca_os in ['windows']):
+if env['POSIX_SUPPORTED'] or ca_os in ['windows']:
 	platform_src = [
 		ca_common_src_path + 'cathreadpool_pthreads.c',
-		ca_common_src_path + 'camutex_pthreads.c'
 	]
 else:
-	platform_src = [
-		ca_common_src_path + 'camutex_noop.c'
-		]
-
+	platform_src = []
 
 env.AppendUnique(CA_SRC = ca_common_src)
 env.AppendUnique(CA_SRC = platform_src)

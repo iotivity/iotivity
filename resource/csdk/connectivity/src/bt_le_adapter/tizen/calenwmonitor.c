@@ -32,7 +32,7 @@
 #include <bluetooth_internal.h>
 #include <bluetooth_type.h>
 
-#include "camutex.h"
+#include "octhread.h"
 #include "caleadapter.h"
 #include "caadapterutils.h"
 #include "oic_string.h"

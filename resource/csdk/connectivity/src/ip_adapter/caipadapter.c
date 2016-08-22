@@ -30,7 +30,7 @@
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
 #endif
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
 #include "logger.h"

@@ -22,7 +22,7 @@
 
 #include "dtls.h"
 #include "uarraylist.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "caadapterutils.h"
 #include "cainterface.h"
 #include "cacommon.h"

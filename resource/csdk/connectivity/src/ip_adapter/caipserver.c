@@ -63,7 +63,7 @@
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
 #endif
-#include "camutex.h"
+#include "octhread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 

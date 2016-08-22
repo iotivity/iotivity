@@ -24,10 +24,13 @@
  * This file provides APIs related to mutex and semaphores.
  */
 
-#ifndef CA_MUTEX_H_
-#define CA_MUTEX_H_
+#ifndef OC_THREAD_H_
+#define OC_THREAD_H_
 
-#include "cacommon.h"
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+
 
 #ifdef __cplusplus
 extern "C"
@@ -36,6 +39,7 @@ extern "C"
 
 typedef struct ca_mutex_internal *ca_mutex;
 typedef struct ca_cond_internal *ca_cond;
+typedef struct ca_thread_internal *ca_thread;
 
 /**
  * Enums for ca_cond_wait_for return values.
@@ -46,6 +50,52 @@ typedef enum
    CA_WAIT_INVAL = -1,     /**< Invalid Condition. */
    CA_WAIT_TIMEDOUT = -2   /**< Condition Timed Out. */
 } CAWaitResult_t;
+
+typedef enum
+{
+    CA_THREAD_SUCCESS = 0,
+    CA_THREAD_ALLOCATION_FAILURE = 1,
+    CA_THREAD_CREATE_FAILURE=2,
+    CA_THREAD_INVALID=3,
+    CA_THREAD_WAIT_FAILURE=4,
+    CA_THREAD_INVALID_PARAMETER=5
+} CAThreadResult_t;
+
+/**
+ * Allocates, and starts a new thread
+ *
+ * @param[out] t  The thread that will refer to a newly allocated, and started thread
+ * @param[in] start_routine The function that will execute in a new thread
+ * @param[in] arg The information passed to the start_routine
+ * @return CAThreadResult_t An enumeration of possible outcomes
+ * @retval CA_THREAD_SUCCESS If a thread was successfully allocated and started.
+ * @retval CA_THREAD_ALLOCATION_FAILURE If a thread was unable to be allocated
+ * @retval CA_THREAD_CREATE_FAILURE If a thread was unable to be started
+ *
+ */
+CAThreadResult_t ca_thread_new(ca_thread *t, void *(*start_routine)(void *), void *arg);
+
+/**
+ * Frees a thread previously allocated with ca_thread_new()
+ *
+ * @param[in] t The thread to be unallocated
+ * @return CAThreadResult_t An enumeration of possible outcomes
+ * @retval CA_THREAD_SUCCESS If a thread was successfully unallocated
+ * @retval CA_THREAD_INVALID_PARAMETER If param t is NULL
+ *
+ */
+CAThreadResult_t ca_thread_free(ca_thread t);
+
+/**
+ * Block until a thread's execution has been completed
+ *
+ * @param[in] t The thread to be waited on
+ * @return CAThreadResult_t An enumeration of possible outcomes
+ * @retval CA_THREAD_SUCCESS If the thread successfully completed execution
+ * @retval CA_THREAD_WAIT_FAILURE If a problem occured while waiting for execution of the thread to complete
+ *
+ */
+CAThreadResult_t ca_thread_wait(ca_thread t);
 
 /**
  * Creates new mutex.
@@ -75,6 +125,9 @@ void ca_mutex_unlock(ca_mutex mutex);
  * Free the mutex.
  *
  * @param  mutex  The mutex to be freed.
+ * @return bool to indicate success or failure
+ * @retval true if mutex was freed successfully
+ * @retval false if mutex parameter is invalid
  *
  */
 bool ca_mutex_free(ca_mutex mutex);
@@ -82,7 +135,7 @@ bool ca_mutex_free(ca_mutex mutex);
 /**
  * Creates new condition.
  *
- * @return  Reference to newly created ::ca_cond, otherwise NULL.
+ * @return  Reference to newly created ca_cond, otherwise NULL.
  *
  */
 ca_cond ca_cond_new(void);

@@ -30,7 +30,7 @@
 #include <pthread.h>
 #include <gio/gio.h>
 
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"

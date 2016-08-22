@@ -23,7 +23,7 @@
 
 #include <jni.h>
 #include "uarraylist.h"
-#include "camutex.h"
+#include "octhread.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -31,7 +31,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeServerInterface.h"
 

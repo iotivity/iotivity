@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "logger.h"
 #include "oic_malloc.h"

@@ -138,7 +138,8 @@ env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
             os.path.join(Dir('.').abspath, 'oic_string', 'include'),
             os.path.join(Dir('.').abspath, 'oic_time', 'include'),
-            os.path.join(Dir('.').abspath, 'ocrandom', 'include')
+            os.path.join(Dir('.').abspath, 'ocrandom', 'include'),
+            os.path.join(Dir('.').abspath, 'octhread', 'include')
         ])
 
 if target_os == 'tizen':
@@ -166,8 +167,16 @@ common_src = [
 	'oic_string/src/oic_string.c',
 	'oic_malloc/src/oic_malloc.c',
 	'oic_time/src/oic_time.c',
-	'ocrandom/src/ocrandom.c',
+	'ocrandom/src/ocrandom.c'
 	]
+
+if env['POSIX_SUPPORTED']:
+	common_src.append('octhread/src/posix/octhread.c')
+elif target_os  in ['windows']:
+	common_src.append('octhread/src/windows/octhread.c')
+else:
+	common_src.append('octhread/src/noop/octhread.c')
+
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')

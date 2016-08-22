@@ -33,7 +33,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cathreadpool.h" /* for thread pool */
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeClientInterface.h"
 

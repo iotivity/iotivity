@@ -26,7 +26,7 @@
 
 #include "caleinterface.h"
 #include "cacommon.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "caadapterutils.h"
 #ifndef SINGLE_THREAD
 #include "caqueueingthread.h"

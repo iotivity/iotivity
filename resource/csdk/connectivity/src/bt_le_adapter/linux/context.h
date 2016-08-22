@@ -20,7 +20,7 @@
 #define CA_BLE_LINUX_CONTEXT_H
 
 #include "caadapterinterface.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "cathreadpool.h"
 #include "caleinterface.h"
 

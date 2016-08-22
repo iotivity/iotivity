@@ -36,7 +36,7 @@
 #include "iotivity_config.h"
 #include "gtest/gtest.h"
 
-#include <camutex.h>
+#include "octhread.h"
 #include <cathreadpool.h>
 
 #ifdef HAVE_TIME_H
