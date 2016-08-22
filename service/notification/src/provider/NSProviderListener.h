@@ -34,7 +34,6 @@
 #include "oic_malloc.h"
 #include "NSUtil.h"
 #include "NSStorageAdapter.h"
-#include "NSCloudConnector.h"
 
 OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback);

@@ -28,17 +28,26 @@
 
 #ifdef WITH_CLOUD
 #include "NSConstants.h"
-#include "NSConsumerCommon.h"
 #include "oic_malloc.h"
+#include "cloud_connector.h"
 
 #define CLOUD_CONTEXT_VALUE 0x99
-#define CLOUD_PRESENCE_SUBSCRIBE_QUERY ""          // refer to IoTivity Cloud Module Sample
 
-#define CLOUD_HOST_ADDRESS ""                      // refer to IoTivity Cloud Module Sample
-#define CLOUD_IOTIVITYNS_SESSION ""                // refer to IoTivity Cloud Module Sample
+char CLOUD_ADDRESS[50];
+char CLOUD_AUTH_PROVIDER[50];
+char CLOUD_AUTH_CODE[50];
+char CLOUD_UID[50];
+char CLOUD_ACCESS_TOKEN[50];
 #endif
 
+
 NSProvider * g_provider = NULL;
+
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen("oic_ns_provider_db.dat", mode);
+}
 
 void onDiscoverNotification(NSProvider * provider)
 {
@@ -94,46 +103,6 @@ void onNotificationSync(NSSyncInfo * sync)
     printf("Sync STATE : %d\n", sync->state);
 }
 
-#ifdef WITH_CLOUD
-OCStackApplicationResult handleLoginoutCB(void *ctx,
-        OCDoHandle handle,
-        OCClientResponse *clientResponse)
-{
-    (void)handle;
-    if (ctx != (void *)CLOUD_CONTEXT_VALUE)
-    {
-        NS_LOG(DEBUG, "Invalid Login/out callback received");
-    }
-
-    NS_LOG(DEBUG, "Login/out response received");
-
-    if (clientResponse->payload != NULL &&
-        clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
-    {
-        NS_LOG(DEBUG, "PAYLOAD_TYPE_REPRESENTATION received");
-
-        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
-
-        while (val)
-        {
-            val = val->next;
-        }
-        NS_LOG(DEBUG, "Get payload values");
-
-        OCDevAddr * addr = NULL;
-        addr = (OCDevAddr *) OICMalloc(sizeof(OCDevAddr));
-        memcpy(addr, clientResponse->addr, sizeof(OCDevAddr));
-
-        NSTask * task = NSMakeTask(TASK_EVENT_CONNECTED_TCP, addr);
-
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task, OC_STACK_KEEP_TRANSACTION, NSOICFree(addr));
-        NSConsumerPushEvent(task);
-    }
-
-    return OC_STACK_KEEP_TRANSACTION;
-}
-#endif
-
 void* OCProcessThread(void * ptr)
 {
     (void) ptr;
@@ -157,7 +126,12 @@ int main(void)
     pthread_t OCThread = NULL;
 
     printf("start Iotivity\n");
-    if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
+
+    // open oic_db
+    static OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCRegisterPersistentStorageHandler(&ps);
+
+    if (OCInit1(OC_CLIENT_SERVER, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
     {
         printf("OCInit fail\n");
         return 0;
@@ -168,11 +142,6 @@ int main(void)
     cfg.changedCb = onProviderChanged;
     cfg.messageCb = onNotificationPosted;
     cfg.syncInfoCb = onNotificationSync;
-
-#ifdef WITH_CLOUD
-    NS_LOG(DEBUG, "process OCCloudLogin...");
-    NS_LOG(DEBUG, "OCCloudLogin return");
-#endif
 
     pthread_create(&OCThread, NULL, OCProcessThread, NULL);
 
@@ -187,6 +156,12 @@ int main(void)
         printf("3. Get Topics\n");
         printf("4. Select Topics\n");
         printf("5. Exit\n");
+#ifdef WITH_CLOUD
+        printf("21. Enable Remote Service (after login)\n");
+        printf("31. Cloud Signup\n");
+        printf("32. Cloud Login\n");
+        printf("33. Cloud Logout\n");
+#endif
 
         printf("Input: ");
 
@@ -232,6 +207,49 @@ int main(void)
                 printf("5. Exit");
                 isExit = true;
                 break;
+#ifdef WITH_CLOUD
+            case 21:
+                printf("Enable Remote Service");
+                if(!IsCloudLoggedin())
+                {
+                    printf("Cloud Login required");
+                    break;
+                }
+                NSConsumerEnableRemoteService(CLOUD_ADDRESS);
+                break;
+            case 31:
+                printf("Remote Server Address: ");
+                gets(CLOUD_ADDRESS);
+
+                printf("Auth Provider(eg. github): ");
+                gets(CLOUD_AUTH_PROVIDER);
+
+                printf("Auth Code: ");
+                gets(CLOUD_AUTH_CODE);
+
+                OCCloudSignup(CLOUD_ADDRESS, OCGetServerInstanceIDString(),
+                    CLOUD_AUTH_PROVIDER, CLOUD_AUTH_CODE, CloudSignupCallback);
+                printf("OCCloudSignup requested");
+                break;
+            case 32:
+                printf("Remote Server Address: ");
+                gets(CLOUD_ADDRESS);
+
+                printf("UID: ");
+                gets(CLOUD_UID);
+
+                printf("ACCESS_TOKEN: ");
+                gets(CLOUD_ACCESS_TOKEN);
+
+                OCCloudLogin(CLOUD_ADDRESS, CLOUD_UID, OCGetServerInstanceIDString(),
+                    CLOUD_ACCESS_TOKEN, CloudLoginoutCallback);
+                printf("OCCloudLogin requested");
+                break;
+            case 33:
+                OCCloudLogout(CLOUD_ADDRESS, CloudLoginoutCallback);
+                printf("OCCloudLogin requested");
+                break;
+#endif
             default:
                 break;
         }

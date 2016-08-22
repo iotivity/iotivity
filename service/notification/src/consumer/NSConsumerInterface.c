@@ -75,7 +75,10 @@ NSResult NSConsumerEnableRemoteService(char *serverAddress)
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, (void *)serverAddress);
+    char * queryAddr = OICStrdup(serverAddress);
+    NS_VERIFY_NOT_NULL(queryAddr, NS_ERROR);
+
+    NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, (void *)queryAddr);
     NS_VERIFY_NOT_NULL(discoverTask, NS_ERROR);
 
     return NSConsumerPushEvent(discoverTask);

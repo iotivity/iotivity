@@ -33,8 +33,17 @@
 
 #define TAG "NSProviderExample"
 
+#ifdef WITH_CLOUD
+#include "cloud_connector.h"
+
 // Input the following values to publish resource to cloud
 char REMOTE_SERVER_ADDRESS[50];
+char AUTH_PROVIDER[50];
+char AUTH_CODE[50];
+char UID[50];
+char ACCESS_TOKEN[50];
+#endif
+
 char mainConsumer[37] = {'\0',};
 
 extern char *strdup(const char *s);
@@ -160,7 +169,13 @@ int main()
         printf("9.  NSProviderGetConsumerTopics(); \n");
         printf("10. NSProviderGetTopics(); \n");
         printf("11. NSStopProvider() \n");
-        printf("12. NSProviderEnableRemoteService \n");
+#ifdef WITH_CLOUD
+        printf("21. NSProviderEnableRemoteService (after login) \n");
+        printf("22. NSProviderDisableRemoteService (after login) \n");
+        printf("31. Cloud Signup \n");
+        printf("32. Cloud Login \n");
+        printf("33. Cloud Logout \n");
+#endif
         printf("0. Exit() \n");
         printf("==============================================\n");
 
@@ -285,19 +300,65 @@ int main()
             case 11:
                 NSStopProvider();
                 break;
+#ifdef WITH_CLOUD
+            case 21:
+                printf("Enable Remote Service");
+                if(!IsCloudLoggedin())
+                {
+                    printf("Login required");
+                    break;
+                }
+                NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);                
+                break;
 
-            case 12:
+            case 22:
+                printf("Disable Remote Service");
+                if(!IsCloudLoggedin())
+                {
+                    printf("Login required");
+                    break;
+                }
+                NSProviderDisableRemoteService(REMOTE_SERVER_ADDRESS);
+                break;
+
+            case 31:
                 printf("Remote Server Address: ");
                 gets(REMOTE_SERVER_ADDRESS);
 
-                NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);
+                printf("Auth Provider(eg. github): ");
+                gets(AUTH_PROVIDER);
+
+                printf("Auth Code: ");
+                gets(AUTH_CODE);
+
+                OCCloudSignup(REMOTE_SERVER_ADDRESS, OCGetServerInstanceIDString(),
+                    AUTH_PROVIDER, AUTH_CODE, CloudSignupCallback);
+                printf("OCCloudSignup requested");
                 break;
+            case 32:
+                printf("Remote Server Address: ");
+                gets(REMOTE_SERVER_ADDRESS);
+
+                printf("UID: ");
+                gets(UID);
+
+                printf("ACCESS_TOKEN: ");
+                gets(ACCESS_TOKEN);
+
+                OCCloudLogin(REMOTE_SERVER_ADDRESS, UID, OCGetServerInstanceIDString(),
+                    ACCESS_TOKEN, CloudLoginoutCallback);
+                printf("OCCloudLogin requested");
+                break;
+            case 33:
+                OCCloudLogout(REMOTE_SERVER_ADDRESS, CloudLoginoutCallback);
+                printf("OCCloudLogin requested");
+                break;
+#endif
             case 0:
                 NSStopProvider();
                 isExit = true;
                 break;
             default:
-                printf("Under Construction\n");
                 break;
         }
 
