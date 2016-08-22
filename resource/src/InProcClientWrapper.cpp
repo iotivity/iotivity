@@ -1214,7 +1214,7 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
             std::ostringstream os;
-            os << host << OCF_RSRVD_DEVICE_PRESENCE_URI;
+            os << host << OC_RSRVD_DEVICE_PRESENCE_URI;
             QueryParamsList queryParams({{OC_RSRVD_DEVICE_ID, di}});
             std::string url = assembleSetResourceUri(os.str(), queryParams);
 

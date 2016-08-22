@@ -70,15 +70,15 @@ extern "C" {
 #endif
 
 /** MQ Broker URI.*/
-#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/ocf/ps"
+#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/oic/ps"
 
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
 
-/** Presence URI through which the OCF devices advertise their device presence.*/
-#define OCF_RSRVD_DEVICE_PRESENCE_URI         "/ocf/prs"
+/** Presence URI through which the OIC devices advertise their device presence.*/
+#define OC_RSRVD_DEVICE_PRESENCE_URI         "/oic/prs"
 
 /** Sets the default time to live (TTL) for presence.*/
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
@@ -155,10 +155,10 @@ extern "C" {
 
 #ifdef WITH_MQ
 /** To represent content type with MQ Broker.*/
-#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER     "ocf.wk.ps"
+#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER     "oic.wk.ps"
 
 /** To represent content type with MQ Topic.*/
-#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC      "ocf.wk.ps.topic"
+#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC      "oic.wk.ps.topic"
 #endif
 
 /** To represent interface.*/
@@ -359,13 +359,13 @@ extern "C" {
 /** Cloud Account */
 
 /** Account URI.*/
-#define OC_RSRVD_ACCOUNT_URI               "/ocf/account"
+#define OC_RSRVD_ACCOUNT_URI               "/oic/account"
 
 /** Account session URI.*/
-#define OC_RSRVD_ACCOUNT_SESSION_URI       "/ocf/account/session"
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"
 
 /** Account token refresh URI.*/
-#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/ocf/account/tokenrefresh"
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/oic/account/tokenrefresh"
 
 /** ACL group URI.*/
 #define OC_RSRVD_ACL_GROUP_URI             "/ocf/acl/group"
