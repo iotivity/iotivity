@@ -549,8 +549,15 @@ OCStackResult SendDisconnectMessage(const KeepAliveEntry_t *entry)
      * Send empty message to disconnect a connection.
      * If CA get the empty message from RI, CA will disconnect a connection.
      */
+
+    OCStackResult result = RemoveKeepAliveEntry(&entry->remoteAddr);
+    if (result != OC_STACK_OK)
+    {
+        return result;
+    }
+
     CARequestInfo_t requestInfo = { .method = CA_PUT };
-    CAResult_t result = CASendRequest(&entry->remoteAddr, &requestInfo);
+    result = CASendRequest(&entry->remoteAddr, &requestInfo);
     return CAResultToOCResult(result);
 }
 
@@ -744,7 +751,6 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
         OCStackResult result = RemoveKeepAliveEntry(endpoint);
         if(result != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, TAG, "Failed to remove entry");
             return;
         }
     }
