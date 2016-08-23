@@ -34,6 +34,7 @@ import org.iotivity.cloud.accountserver.db.GroupTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.protocols.IRequest;
 
 public class GroupManager {
@@ -107,6 +108,14 @@ public class GroupManager {
             getGroupTable = mTypeGroup.convertMaptoObject(element,
                     getGroupTable);
 
+            if (getGroupTable.getGtype() == null) {
+                throw new InternalServerErrorException("gtype is empty");
+            }
+
+            if (getGroupTable.getMidlist() == null) {
+                throw new BadRequestException("midList is invalid in Group");
+            }
+
             HashSet<String> midListSet = new HashSet<String>(
                     (Collection<? extends String>) getGroupTable.getMidlist());
 
@@ -158,7 +167,7 @@ public class GroupManager {
         return getGroup(gid).removeSubscriber(mid);
     }
 
-    private Group getGroup(String gid) {
+    public Group getGroup(String gid) {
 
         return mGroups.get(gid);
     }

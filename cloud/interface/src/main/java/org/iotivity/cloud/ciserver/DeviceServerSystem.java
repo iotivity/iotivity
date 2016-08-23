@@ -23,7 +23,7 @@ package org.iotivity.cloud.ciserver;
 
 import java.util.HashMap;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
@@ -50,6 +50,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
 public class DeviceServerSystem extends ServerSystem {
+
+    IRequestChannel mRDServer = null;
+
+    public DeviceServerSystem() {
+        mRDServer = ConnectorPool.getConnection("rd");
+    }
 
     public class CoapDevicePool {
         HashMap<String, Device> mMapDevice = new HashMap<>();
@@ -135,18 +141,16 @@ public class DeviceServerSystem extends ServerSystem {
             }
         }
 
-        private void sendDevicePresence(String deviceId, String state) {
+        public void sendDevicePresence(String deviceId, String state) {
 
             Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-            IRequestChannel RDServer = ConnectorPool.getConnection("rd");
             HashMap<String, Object> payload = new HashMap<String, Object>();
             payload.put(Constants.REQ_DEVICE_ID, deviceId);
             payload.put(Constants.PRESENCE_STATE, state);
             StringBuffer uriPath = new StringBuffer();
-            uriPath.append("/" + Constants.PREFIX_WELL_KNOWN);
-            uriPath.append("/" + Constants.PREFIX_OCF);
+            uriPath.append("/" + Constants.PREFIX_OIC);
             uriPath.append("/" + Constants.DEVICE_PRESENCE_URI);
-            RDServer.sendRequest(MessageBuilder.createRequest(
+            mRDServer.sendRequest(MessageBuilder.createRequest(
                     RequestMethod.POST, uriPath.toString(), null,
                     ContentFormat.APPLICATION_CBOR,
                     cbor.encodingPayloadToCbor(payload)), null);
@@ -180,15 +184,18 @@ public class DeviceServerSystem extends ServerSystem {
 
                 switch (response.getUriPath()) {
 
-                    case OCFConstants.ACCOUNT_SESSION_FULL_URI:
+                    case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                        HashMap<String, Object> payloadData = mCbor
+                                .parsePayloadFromCbor(response.getPayload(),
+                                        HashMap.class);
 
                         if (response.getStatus() != ResponseStatus.CHANGED) {
                             throw new UnAuthorizedException();
                         }
 
-                        HashMap<String, Object> payloadData = mCbor
-                                .parsePayloadFromCbor(response.getPayload(),
-                                        HashMap.class);
+                        if (payloadData == null) {
+                            throw new BadRequestException("payload is empty");
+                        }
                         int remainTime = (int) payloadData
                                 .get(Constants.EXPIRES_IN);
 
@@ -227,32 +234,34 @@ public class DeviceServerSystem extends ServerSystem {
                 // And check first response is VALID then add or cut
                 CoapRequest request = (CoapRequest) msg;
 
-                HashMap<String, Object> authPayload = null;
-                Device device = null;
-
                 switch (request.getUriPath()) {
                     // Check whether request is about account
-                    case OCFConstants.ACCOUNT_FULL_URI:
-                    case OCFConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
+                    case OICConstants.ACCOUNT_FULL_URI:
+                    case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
 
                         if (ctx.channel().attr(keyDevice).get() == null) {
                             // Create device first and pass to upperlayer
-                            device = new CoapDevice(ctx);
+                            Device device = new CoapDevice(ctx);
                             ctx.channel().attr(keyDevice).set(device);
                         }
 
                         break;
 
-                    case OCFConstants.ACCOUNT_SESSION_FULL_URI:
+                    case OICConstants.ACCOUNT_SESSION_FULL_URI:
 
-                        authPayload = mCbor.parsePayloadFromCbor(
-                                request.getPayload(), HashMap.class);
+                        HashMap<String, Object> authPayload = mCbor
+                                .parsePayloadFromCbor(request.getPayload(),
+                                        HashMap.class);
 
-                        device = ctx.channel().attr(keyDevice).get();
+                        Device device = ctx.channel().attr(keyDevice).get();
 
                         if (device == null) {
                             device = new CoapDevice(ctx);
                             ctx.channel().attr(keyDevice).set(device);
+                        }
+
+                        if (authPayload == null) {
+                            throw new BadRequestException("payload is empty");
                         }
 
                         ((CoapDevice) device).updateDevice(
@@ -263,7 +272,7 @@ public class DeviceServerSystem extends ServerSystem {
 
                         break;
 
-                    case OCFConstants.KEEP_ALIVE_FULL_URI:
+                    case OICConstants.KEEP_ALIVE_FULL_URI:
                         // TODO: Pass ping request to upper layer
                         break;
 

@@ -24,9 +24,9 @@ package org.iotivity.cloud.rdserver;
 import java.util.Arrays;
 import java.util.List;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 
-public class Constants extends OCFConstants {
+public class Constants extends OICConstants {
 
     public static final String       RD_DB_NAME              = "RD_DB";
     public static final String       RD_TABLE                = "RD_TABLE";
@@ -57,6 +57,7 @@ public class Constants extends OCFConstants {
 
     // for '/oic/prs' resource
     public static final String       PRESENCE_STATE          = "state";
+    public static final String       PRESENCE_LIST           = "prslist";
 
     public static final String       RS_NON                  = "non";
     public static final String       RS_TRIGGER              = "trg";

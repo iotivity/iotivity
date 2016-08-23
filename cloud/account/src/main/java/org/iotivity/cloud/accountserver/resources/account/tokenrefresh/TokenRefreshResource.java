@@ -36,7 +36,6 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 public class TokenRefreshResource extends Resource {
 
@@ -45,8 +44,8 @@ public class TokenRefreshResource extends Resource {
     private AccountManager                mAsManager = new AccountManager();
 
     public TokenRefreshResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI, Constants.TOKEN_REFRESH_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
+                Constants.TOKEN_REFRESH_URI));
     }
 
     @Override
@@ -71,18 +70,11 @@ public class TokenRefreshResource extends Resource {
     private IResponse handlePostRefreshToken(IRequest request)
             throws ServerException {
 
-        if (request.getPayload() == null) {
-            throw new BadRequestException("payload is null");
-        }
-
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        // temp code
-        Log.v(payloadData.toString());
-
         if (payloadData == null) {
-            throw new BadRequestException("CBOR parsing failed");
+            throw new BadRequestException("payload is null");
         }
 
         HashMap<String, Object> responsePayload = null;

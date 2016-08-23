@@ -45,10 +45,11 @@ public class TypeCastingManager<T> {
     }
 
     public HashMap<Object, Object> convertObjectToMap(T objClass) {
-        try {
 
+        HashMap<Object, Object> map = new HashMap<Object, Object>();
+
+        try {
             Field[] fieldList = objClass.getClass().getDeclaredFields();
-            HashMap<Object, Object> map = new HashMap<Object, Object>();
 
             for (Field field : fieldList) {
                 field.setAccessible(true);
@@ -61,12 +62,11 @@ public class TypeCastingManager<T> {
                     map.put(fieldName, value);
                 }
             }
-
-            return map;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+
+        return map;
     }
 
     public T convertMaptoObject(HashMap<Object, Object> map, T objClass) {

@@ -33,15 +33,135 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-
-#include "cloud_connector.h"
+#include "oicresourcedirectory.h"
 
 #define DEFAULT_CONTEXT_VALUE 0x99
-#define DEFAULT_PUBLISH_QUERY "/oic/rd?rt=oic.wk.rdpub"
-#define DEFAULT_DISCOVER_QUERY "/oic/res?rt=core.light"
+#define DEFAULT_AUTH_SIGNUP "/oic/account"
+#define DEFAULT_AUTH_SESSION "/oic/account/session"
+#define DEFAULT_AUTH_REFRESH "/oic/account/tokenrefresh"
+
+
+OCStackResult OCCloudSignup(const char *host, const char *deviceId,
+                            const char *authprovider,
+                            const char *authcode, OCClientResponseHandler response)
+{
+    char    targetUri[MAX_URI_LENGTH * 2] = { 0, };
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "%s%s", host, DEFAULT_AUTH_SIGNUP);
+
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(OCCallbackData));
+    cbData.cb = response;
+    cbData.cd = NULL;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+
+    OCRepPayload *registerPayload = OCRepPayloadCreate();
+    if (!registerPayload)
+    {
+        goto no_memory;
+    }
+
+    OCRepPayloadSetPropString(registerPayload, "di", deviceId);
+    OCRepPayloadSetPropString(registerPayload, "authprovider", authprovider);
+    OCRepPayloadSetPropString(registerPayload, "authcode", authcode);
+
+    return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)registerPayload,
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+
+no_memory:
+    OCRepPayloadDestroy(registerPayload);
+    return OC_STACK_NO_MEMORY;
+}
+
+OCStackResult OCCloudSession(const char *host, const char *query, const char *uId,
+                             const char *deviceId,
+                             const char *accesstoken,
+                             bool isLogin, OCClientResponseHandler response)
+{
+    char    targetUri[MAX_URI_LENGTH * 2] = { 0, };
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "%s%s", host, query);
+
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(OCCallbackData));
+    cbData.cb = response;
+    cbData.cd = NULL;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+
+    OCRepPayload *loginoutPayload = OCRepPayloadCreate();
+    if (!loginoutPayload)
+    {
+        goto no_memory;
+    }
+
+    if (uId != NULL)
+    {
+        OCRepPayloadSetPropString(loginoutPayload, "uid", uId);
+    }
+
+    if (deviceId != NULL)
+    {
+        OCRepPayloadSetPropString(loginoutPayload, "di", deviceId);
+    }
+
+    if (accesstoken != NULL)
+    {
+        OCRepPayloadSetPropString(loginoutPayload, "accesstoken", accesstoken);
+    }
+    OCRepPayloadSetPropBool(loginoutPayload, "login", isLogin);
+
+    return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)loginoutPayload,
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+
+no_memory:
+    OCRepPayloadDestroy(loginoutPayload);
+    return OC_STACK_NO_MEMORY;
+}
+
+//Client should call refresh before expiresin or when receive 4.01 during sign-in
+OCStackResult OCCloudRefresh(const char *host, const char *query, const char *uId,
+                             const char *deviceId, const char *refreshtoken, OCClientResponseHandler response)
+{
+    char    targetUri[MAX_URI_LENGTH * 2] = { 0, };
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "%s%s", host, query);
+
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(OCCallbackData));
+    cbData.cb = response;
+    cbData.cd = NULL;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+
+    OCRepPayload *refreshPayload = OCRepPayloadCreate();
+    if (!refreshPayload)
+    {
+        goto no_memory;
+    }
+
+    OCRepPayloadSetPropString(refreshPayload, "uid", uId);
+    OCRepPayloadSetPropString(refreshPayload, "di", deviceId);
+    OCRepPayloadSetPropString(refreshPayload, "granttype", "refresh_token");
+    OCRepPayloadSetPropString(refreshPayload, "refreshtoken", refreshtoken);
+
+    return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)refreshPayload,
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+
+no_memory:
+    OCRepPayloadDestroy(refreshPayload);
+    return OC_STACK_NO_MEMORY;
+}
+
+OCStackResult OCCloudLogin(const char *host, const char *uId, const char *deviceId,
+                           const char *accesstoken, OCClientResponseHandler response)
+{
+    return OCCloudSession(host, DEFAULT_AUTH_SESSION, uId, deviceId, accesstoken, true, response);
+}
+
+OCStackResult OCCloudLogout(const char *host, OCClientResponseHandler response)
+{
+    return OCCloudSession(host, DEFAULT_AUTH_SESSION, NULL, NULL, NULL, false, response);
+}
 
 ////////////////////////////////////////Device Sample
-#define SAMPLE_MAX_NUM_POST_INSTANCE  2
+
+#define SAMPLE_MAX_NUM_POST_INSTANCE  1
 typedef struct LIGHTRESOURCE
 {
     OCResourceHandle handle;
@@ -336,337 +456,96 @@ OCStackApplicationResult handlePublishCB(void *ctx,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-void PublishResources(std::string host, std::string additionalQuery)
+void PublishResources(std::string host)
 {
-    std::cout << "Running as Server mode" << std::endl;
-
-    std::string requestQuery = DEFAULT_PUBLISH_QUERY;
-    requestQuery += additionalQuery;
-
     std::cout << "Publishing resources..." << std::endl;
-    std::cout << host.c_str() << requestQuery.c_str() << std::endl;
 
     if (createLightResource((char *)"/a/light/0", &gLightInstance[0]) != 0)
     {
         std::cout << "Unable to create sample resource" << std::endl;
     }
 
-    if (createLightResource((char *)"/a/light/1", &gLightInstance[1]) != 0)
-    {
-        std::cout << "Unable to create sample resource" << std::endl;
-    }
-
-    if (OCCloudPublish(host.c_str(), requestQuery.c_str(), &handlePublishCB, 2,
-                       gLightInstance[0].handle, gLightInstance[1].handle) != OC_STACK_OK)
-    {
-        std::cout << "Unable to publish resources to cloud" << std::endl;
-    }
-}
-
-////////////////////////////////////////Client Sample
-std::string g_host = "coap+tcp://";
-
-void PrintRepresentation(OCRepPayloadValue *val)
-{
-    while (val)
-    {
-        std::cout << "Key: " << val->name << " Value: ";
-        switch (val->type)
-        {
-            case OCREP_PROP_NULL:
-                std::cout << "NULL" << std::endl;
-                break;
-
-            case OCREP_PROP_INT:
-                std::cout << val->i << std::endl;
-                break;
-
-            case OCREP_PROP_DOUBLE:
-                std::cout << val->d << std::endl;
-                break;
-
-            case OCREP_PROP_BOOL:
-                std::cout << val->b << std::endl;
-                break;
-
-            case OCREP_PROP_STRING:
-                std::cout << val->str << std::endl;
-                break;
-
-            case OCREP_PROP_BYTE_STRING:
-                std::cout << "[ByteString]" << std::endl;
-                break;
-
-            case OCREP_PROP_OBJECT:
-                std::cout << "[Object]" << std::endl;
-                break;
-
-            case OCREP_PROP_ARRAY:
-                std::cout << "[Array]" << std::endl;
-                break;
-        }
-
-        val = val->next;
-    }
-}
-
-
-int gNumObserveNotifies = 0;
-
-OCStackApplicationResult obsReqCB(void *ctx, OCDoHandle handle,
-                                  OCClientResponse *clientResponse)
-{
-    std::cout << "Observe response received from " << clientResponse->resourceUri << std::endl;
-
-    if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
-    {
-        std::cout << "Invalid Put callback received" << std::endl;
-    }
-
-    if (clientResponse)
-    {
-        if (clientResponse->payload == NULL)
-        {
-            std::cout << "No payload received" << std::endl;
-        }
-
-        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
-
-        PrintRepresentation(val);
-
-        gNumObserveNotifies++;
-        if (gNumObserveNotifies > 5) //large number to test observing in DELETE case.
-        {
-            std::cout << "Cancelling with OC_HIGH_QOS" << std::endl;
-            if (OCCancel(handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
-            {
-                std::cout << "Observe cancel error" << std::endl;
-            }
-        }
-        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
-        {
-            std::cout << "This also serves as a registration confirmation" << std::endl;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            std::cout << "This also serves as a deregistration confirmation" << std::endl;
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
-        {
-            std::cout << "This also tells you that registration/deregistration failed" << std::endl;
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-    }
-    else
-    {
-        std::cout << "obsReqCB received Null clientResponse" << std::endl;
-    }
-
-    return OC_STACK_KEEP_TRANSACTION;
-}
-
-void ObserveResource(std::string uri, std::string additionalQuery)
-{
+    OCResourceHandle    resourceHandles[1] = { gLightInstance[0].handle,
+                                             };
     OCCallbackData cbData;
-    cbData.cb = obsReqCB;
+    cbData.cb = handlePublishCB;
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    uri += additionalQuery;
+    std::cout << "Publish default resources" << std::endl;
 
-    std::cout << "Request OBSERVE to resource " << uri.c_str() << std::endl;
+    OCDeviceInfo        devInfoRoomLight;
+    OCStringLL          deviceType;
 
-    OCStackResult res = OCDoResource(NULL, OC_REST_OBSERVE, uri.c_str(), NULL, NULL,
-                                     CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    deviceType.value = "oic.d.light";
+    deviceType.next = NULL;
+    devInfoRoomLight.deviceName = "Living Room Light";
+    devInfoRoomLight.types = &deviceType;
+    devInfoRoomLight.specVersion = NULL;
+    devInfoRoomLight.dataModelVersions = NULL;
 
-    std::cout << "Requesting OBSERVE res=" << res << std::endl;
-}
+    OCStackResult res = OCSetDeviceInfo(devInfoRoomLight);
 
-OCStackApplicationResult putReqCB(void *ctx, OCDoHandle /*handle*/,
-                                  OCClientResponse *clientResponse)
-{
-    std::cout << "Put response received from " << clientResponse->resourceUri << std::endl;
-
-    if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
+    if (res != OC_STACK_OK)
     {
-        std::cout << "Invalid Put callback received" << std::endl;
+        std::cout << "Setting device info failed" << std::endl;
     }
 
-    if (clientResponse->payload == NULL)
+    res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, NULL, 0, &cbData,
+                      OC_LOW_QOS);
+    if (res != OC_STACK_OK)
     {
-        std::cout << "No payload received" << std::endl;
+        std::cout << "Unable to publish default resources to cloud" << std::endl;
     }
 
-    OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
+    std::cout << "Publish user resources" << std::endl;
 
-    PrintRepresentation(val);
-
-    std::string requestUri = g_host;
-    requestUri += clientResponse->resourceUri;
-
-    ObserveResource(requestUri, "");
-
-    return OC_STACK_KEEP_TRANSACTION;
-}
-
-OCPayload *putRequestPayload()
-{
-    OCRepPayload *payload = OCRepPayloadCreate();
-
-    if (!payload)
+    res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, resourceHandles, 1, &cbData,
+                      OC_LOW_QOS);
+    if (res != OC_STACK_OK)
     {
-        std::cout << "Failed to create put payload object" << std::endl;
-        std::exit(1);
-    }
-
-    OCRepPayloadSetPropInt(payload, "power", 15);
-    OCRepPayloadSetPropBool(payload, "state", true);
-
-    return (OCPayload *)payload;
-}
-
-void PutResource(std::string uri, std::string additionalQuery)
-{
-    OCCallbackData cbData;
-    cbData.cb = putReqCB;
-    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
-    cbData.cd = NULL;
-
-    uri += additionalQuery;
-
-    std::cout << "Request PUT to resource " << uri.c_str() << std::endl;
-
-    OCStackResult res = OCDoResource(NULL, OC_REST_PUT, uri.c_str(), NULL, putRequestPayload(),
-                                     CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
-
-    std::cout << "Requesting PUT res=" << res << std::endl;
-}
-
-OCStackApplicationResult handleGetCB(void *ctx,
-                                     OCDoHandle /*handle*/,
-                                     OCClientResponse *clientResponse)
-{
-    std::cout << "Get response received from " << clientResponse->resourceUri << std::endl;
-
-    if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
-    {
-        std::cout << "Invalid Get callback received" << std::endl;
-    }
-
-    if (clientResponse->payload == NULL)
-    {
-        std::cout << "No payload received" << std::endl;
-    }
-
-    if (clientResponse->payload != NULL &&
-        clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
-    {
-        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
-
-        PrintRepresentation(val);
-
-        std::string requestUri = g_host;
-        requestUri += clientResponse->resourceUri;
-
-        PutResource(requestUri, "");
-    }
-
-    return OC_STACK_KEEP_TRANSACTION;
-}
-
-void GetResource(std::string uri, std::string additionalQuery)
-{
-    OCCallbackData cbData;
-    cbData.cb = handleGetCB;
-    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
-    cbData.cd = NULL;
-
-    uri += additionalQuery;
-
-    std::cout << "Request GET to resource " << uri.c_str() << std::endl;
-
-    OCStackResult res = OCDoResource(NULL, OC_REST_GET, uri.c_str(), NULL, NULL,
-                                     CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
-
-    std::cout << "Requesting GET res=" << res << std::endl;
-}
-
-// This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void *ctx, OCDoHandle /*handle*/,
-                                        OCClientResponse *clientResponse)
-{
-    if (ctx == (void *)DEFAULT_CONTEXT_VALUE)
-    {
-        std::cout << "Callback Context for DISCOVER query recvd successfully" << std::endl;
-    }
-
-    if (clientResponse)
-    {
-        std::cout << "StackResult: " << clientResponse->result << std::endl;
-
-        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)clientResponse->payload;
-        if (!payload)
-        {
-            std::cout << "Empty payload" << std::endl;
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-
-        OCResourcePayload *resource = (OCResourcePayload *)payload->resources;
-        if (!resource)
-        {
-            std::cout << "No resources in payload" << std::endl;
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-
-        while (resource)
-        {
-            std::cout << "Found Resource " << resource->uri << std::endl;
-
-            std::string requestUri = g_host;
-            requestUri += resource->uri;
-
-            GetResource(requestUri, "");
-
-            resource = resource->next;
-        }
-    }
-    else
-    {
-        std::cout << "discoveryReqCB received Null clientResponse" << std::endl;
-    }
-    return OC_STACK_KEEP_TRANSACTION;
-}
-
-void DiscoverResources(std::string host, std::string additionalQuery)
-{
-    std::cout << "Running as Client mode" << std::endl;
-
-    std::string requestQuery = host;
-    requestQuery += DEFAULT_DISCOVER_QUERY;
-    requestQuery += additionalQuery;
-
-    std::cout << "Finding resources..." << std::endl;
-    std::cout << requestQuery.c_str() << std::endl;
-
-    OCCallbackData cbData;
-
-    cbData.cb = discoveryReqCB;
-    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
-    cbData.cd = NULL;
-
-    if (OCDoResource(NULL, OC_REST_DISCOVER, requestQuery.c_str(), NULL, 0, CT_ADAPTER_TCP,
-                     OC_LOW_QOS, &cbData, NULL, 0) != OC_STACK_OK)
-    {
-        std::cout << "Unable to find resources from cloud" << std::endl;
+        std::cout << "Unable to publish user resources to cloud" << std::endl;
     }
 }
-
-
 
 /////////////////////////////////////////////Common sample
+void printRepresentation(OCRepPayloadValue *value)
+{
+    while (value)
+    {
+        std::cout << "Key: " << value->name;
+        switch (value->type)
+        {
+            case OCREP_PROP_NULL:
+                std::cout << " Value: None" << std::endl;
+                break;
+            case OCREP_PROP_INT:
+                std::cout << " Value: " << value->i << std::endl;
+                break;
+            case OCREP_PROP_DOUBLE:
+                std::cout << " Value: " << value->d << std::endl;
+                break;
+            case OCREP_PROP_BOOL:
+                std::cout << " Value: " << value->b << std::endl;
+                break;
+            case OCREP_PROP_STRING:
+                std::cout << " Value: " << value->str << std::endl;
+                break;
+            case OCREP_PROP_BYTE_STRING:
+                std::cout << " Value: Byte String" << std::endl;
+                break;
+            case OCREP_PROP_OBJECT:
+                std::cout << " Value: Object" << std::endl;
+                break;
+            case OCREP_PROP_ARRAY:
+                std::cout << " Value: Array" << std::endl;
+                break;
+        }
+        value = value->next;
+    }
+}
 
-int g_runningMode = 0;
+std::string g_host = "coap+tcp://";
 
 OCStackApplicationResult handleLoginoutCB(void *ctx,
         OCDoHandle /*handle*/,
@@ -686,21 +565,12 @@ OCStackApplicationResult handleLoginoutCB(void *ctx,
 
         OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
 
-        while (val)
-        {
-            std::cout << "Key: " << val->name << " Value: " << val->str << std::endl;
-            val = val->next;
-        }
+        printRepresentation(val);
+    }
 
-        if (g_runningMode == 1)
-        {
-            PublishResources(g_host, "");
-        }
-        else if (g_runningMode == 2)
-        {
-            DiscoverResources(g_host, "");
-        }
-
+    if (clientResponse->result < 5)
+    {
+        PublishResources(g_host);
     }
 
     return OC_STACK_KEEP_TRANSACTION;
@@ -721,16 +591,12 @@ OCStackApplicationResult handleRegisterCB(void *ctx,
         clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
     {
         std::cout << "PAYLOAD_TYPE_REPRESENTATION received" << std::endl;
-        std::cout << "You can login using received session variable after disconnected or reboot" <<
+        std::cout << "You can Sign-In using retrieved accesstoken when disconnected or reboot" <<
                   std::endl;
 
         OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
 
-        while (val)
-        {
-            std::cout << "Key: " << val->name << " Value: " << val->str << std::endl;
-            val = val->next;
-        }
+        printRepresentation(val);
     }
 
     return OC_STACK_KEEP_TRANSACTION;
@@ -739,30 +605,30 @@ OCStackApplicationResult handleRegisterCB(void *ctx,
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : cloud_device <addr:port> <session> <mode>\n";
+    std::cout << "Usage : thin_cloud_device <addr:port> <uid> <accesstoken>\n";
     std::cout << "<addr:port>: Cloud Address, \"127.0.0.1:5683\"\n";
     std::cout <<
-              "<session>: String value, Provided by response of onboarding scenario\n\tor kind of registration portal\n\n";
+              "<accesstoken>: String value, Provided by response of onboarding scenario\n\tor kind of registration portal\n\n";
     std::cout <<
-              "<mode>: String value, 's' for publish resource, 'c' for start discovery\n\n";
+              "sample: \"cloud_device 127.0.0.1:5683\"\n\t-Sign-Up mode\n\n";
     std::cout <<
-              "If you want to get session key using OAuth 2 auth code,\n\tleave blank to <session>, <mode> fields\n";
-    std::cout <<
-              "sample: \"cloud_device 127.0.0.1:5683\"\n\t-OAuth 2 registration mode\n\n";
-    std::cout <<
-              "sample: \"cloud_device 127.0.0.1:5683 1234567890123456 s\"\n\t-Publish resource under registered session\n\n";
-    std::cout <<
-              "sample: \"cloud_device 127.0.0.1:5683 1234567890123456 c\"\n\t-Discover resource under registered session\n\n";
+              "sample: \"cloud_device 127.0.0.1:5683 abcdefg 1234567890123456\"\n\t-Sign-in and Publish resource to registered account\n\n";
+}
+
+static FILE *client_open(const char * /*path*/, const char *mode)
+{
+    return fopen("./thin_resource_server.dat", mode);
 }
 
 int main(int argc, char *argv[])
 {
-    std::string session;
+    std::string uId;
+    std::string accessToken;
 
     std::string authProvider;
     std::string authCode;
 
-    OCMode      stackMode = OC_CLIENT;
+    OCMode      stackMode = OC_CLIENT_SERVER;
 
     switch (argc)
     {
@@ -774,26 +640,8 @@ int main(int argc, char *argv[])
             break;
 
         case 4:
-            session = argv[2];
-            if (strlen(argv[3]) != 1)
-            {
-                std::cout << "OCStack init error" << std::endl;
-                return 0;
-            }
-            if (strcmp(argv[3], "s") == 0)
-            {
-                stackMode = OC_CLIENT_SERVER;
-                g_runningMode = 1;
-            }
-            else if (strcmp(argv[3], "c") == 0)
-            {
-                g_runningMode = 2;
-            }
-            else
-            {
-                std::cout << "Invalid <mode>, 's' or 'c' required" << std::endl;
-                return 0;
-            }
+            uId = argv[2];
+            accessToken = argv[3];
             break;
 
         default:
@@ -804,6 +652,13 @@ int main(int argc, char *argv[])
     g_host += argv[1];
 
     std::cout << "Host " << g_host.c_str() << std::endl;
+
+    OCPersistentStorage ps{ client_open, fread, fwrite, fclose, unlink };
+    if (OCRegisterPersistentStorageHandler(&ps) != OC_STACK_OK)
+    {
+        std::cout << "OCStack init persistent storage error" << std::endl;
+        return 0;
+    }
 
     if (OCInit(NULL, 0, stackMode) != OC_STACK_OK)
     {
@@ -816,14 +671,16 @@ int main(int argc, char *argv[])
     switch (argc)
     {
         case 2:
-            std::cout << "Register account to cloud using " << authProvider << " " << authCode << std::endl;
-            res = OCCloudRegisterLogin(g_host.c_str(), authProvider.c_str(), authCode.c_str(),
-                                       handleRegisterCB);
-            std::cout << "OCCloudRegisterLogin return " << res << std::endl;
+            std::cout << "Sign-Up to cloud using " << authProvider << " " << authCode << std::endl;
+            res = OCCloudSignup(g_host.c_str(), OCGetServerInstanceIDString(), authProvider.c_str(),
+                                authCode.c_str(), handleRegisterCB);
+            std::cout << "OCCloudSignup return " << res << std::endl;
             break;
 
         case 4:
-            res = OCCloudLogin(g_host.c_str(), session.c_str(), handleLoginoutCB);
+            std::cout << "Sign-In to cloud using " << accessToken << std::endl;
+            res = OCCloudLogin(g_host.c_str(), uId.c_str(), OCGetServerInstanceIDString(), accessToken.c_str(),
+                               handleLoginoutCB);
             std::cout << "OCCloudLogin return " << res << std::endl;
             break;
 
@@ -831,6 +688,8 @@ int main(int argc, char *argv[])
             PrintUsage();
             return 0;
     }
+
+
 
     std::cout << "Waiting response.." << std::endl;
 

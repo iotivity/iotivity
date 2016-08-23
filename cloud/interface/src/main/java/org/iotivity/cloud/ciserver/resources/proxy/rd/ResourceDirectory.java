@@ -29,35 +29,34 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ClientException;
-import org.iotivity.cloud.base.exception.ClientException.BadResponseException;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
 public class ResourceDirectory extends Resource {
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
+    IRequestChannel                       mRDServer = null;
     IRequestChannel                       mASServer = null;
 
     public ResourceDirectory() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
-
+        mRDServer = ConnectorPool.getConnection("rd");
         mASServer = ConnectorPool.getConnection("account");
     }
 
     class AccountReceiveHandler implements IResponseEventHandler {
-
-        IRequestChannel  mRDServer = null;
         private Device   mSrcDevice;
         private IRequest mRequest;
 
         public AccountReceiveHandler(IRequest request, Device srcDevice) {
-            mRDServer = ConnectorPool.getConnection("rd");
             mSrcDevice = srcDevice;
             mRequest = request;
         }
@@ -68,14 +67,12 @@ public class ResourceDirectory extends Resource {
 
             switch (response.getStatus()) {
                 case CHANGED:
-
                     mRDServer.sendRequest(mRequest, mSrcDevice);
                     break;
 
                 default:
-                    throw new BadResponseException(
-                            response.getStatus().toString()
-                                    + " response type is not supported");
+                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                            mRequest, ResponseStatus.BAD_REQUEST));
             }
         }
     }
@@ -83,27 +80,39 @@ public class ResourceDirectory extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
+        switch (request.getMethod()) {
+            case POST:
+                HashMap<String, Object> payloadData = mCbor
+                        .parsePayloadFromCbor(request.getPayload(),
+                                HashMap.class);
 
-        StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
-        uriPath.append(Constants.PREFIX_OCF + "/");
-        uriPath.append(Constants.ACL_URI + "/");
-        uriPath.append(Constants.GROUP_URI + "/");
-        uriPath.append(srcDevice.getUserId());
+                StringBuffer uriPath = new StringBuffer();
+                uriPath.append(Constants.PREFIX_OIC + "/");
+                uriPath.append(Constants.ACL_URI + "/");
+                uriPath.append(Constants.GROUP_URI + "/");
+                uriPath.append(srcDevice.getUserId());
 
-        HashMap<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+                String di = payloadData.get(Constants.REQ_DEVICE_ID).toString();
 
-        String di = payloadData.get(Constants.REQ_DEVICE_ID).toString();
+                HashMap<String, Object> requestPayload = new HashMap<>();
 
-        HashMap<String, Object> requestPayload = new HashMap<>();
+                requestPayload.put(Constants.REQ_DEVICE_LIST,
+                        Arrays.asList(di));
+                IRequest requestToAS = MessageBuilder.createRequest(
+                        RequestMethod.POST, uriPath.toString(), null,
+                        ContentFormat.APPLICATION_CBOR,
+                        mCbor.encodingPayloadToCbor(requestPayload));
 
-        requestPayload.put(Constants.REQ_DEVICE_LIST, Arrays.asList(di));
-        IRequest requestToAS = MessageBuilder.createRequest(RequestMethod.POST,
-                uriPath.toString(), null, ContentFormat.APPLICATION_CBOR,
-                mCbor.encodingPayloadToCbor(requestPayload));
+                mASServer.sendRequest(requestToAS,
+                        new AccountReceiveHandler(request, srcDevice));
+                break;
 
-        mASServer.sendRequest(requestToAS,
-                new AccountReceiveHandler(request, srcDevice));
+            case DELETE:
+                mRDServer.sendRequest(request, srcDevice);
+                break;
+            default:
+                throw new BadRequestException(
+                        request.getMethod() + " request type is not support");
+        }
     }
 }

@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -10,8 +32,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
-import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -19,6 +39,7 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -31,29 +52,27 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class AclInviteTest {
-    private static final String TEST_RESOURCE_INVITE_URI = "/"
-            + OCFConstants.PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF
-            + "/" + OCFConstants.ACL_URI + "/" + OCFConstants.INVITE_URI;
-    private CoapDevice          mockDevice               = mock(
+    private static final String  TEST_RESOURCE_INVITE_URI = Constants.INVITE_FULL_URI;
+
+    private CoapDevice           mMockDevice              = mock(
             CoapDevice.class);
-    IRequest                    req                      = null;
-    ConnectorPool               connectorPool            = null;
-    DeviceServerSystem          deviceServerSystem       = new DeviceServerSystem();
-    final CountDownLatch        latch                    = new CountDownLatch(
+    private IRequest             mReq                     = null;
+    private DeviceServerSystem   mDeviceServerSystem      = new DeviceServerSystem();
+    private final CountDownLatch mLatch                   = new CountDownLatch(
             1);
 
     @Mock
-    IRequestChannel             requestChannel;
+    private IRequestChannel      mRequestChannel;
 
     @InjectMocks
-    AclInvite                   aclInviteHandler         = new AclInvite();
+    private AclInvite            mAclInviteHandler        = new AclInvite();
 
     @Before
     public void setUp() throws Exception {
-        req = null;
-        Mockito.doReturn("mockUserId").when(mockDevice).getUserId();
+        mReq = null;
+        Mockito.doReturn("mockUserId").when(mMockDevice).getUserId();
         MockitoAnnotations.initMocks(this);
-        deviceServerSystem.addResource(aclInviteHandler);
+        mDeviceServerSystem.addResource(mAclInviteHandler);
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -67,11 +86,11 @@ public class AclInviteTest {
                         "\t----------uripath : " + request.getUriPath());
                 System.out.println(
                         "\t---------uriquery : " + request.getUriQuery());
-                req = request;
-                latch.countDown();
+                mReq = request;
+                mLatch.countDown();
                 return null;
             }
-        }).when(requestChannel).sendRequest(Mockito.any(IRequest.class),
+        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
     }
 
@@ -89,19 +108,19 @@ public class AclInviteTest {
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
                 TEST_RESOURCE_INVITE_URI, null, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));
-        aclInviteHandler.onRequestReceived(mockDevice, request);
+        mAclInviteHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(cbor.parsePayloadFromCbor(req.getPayload(), HashMap.class)
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .containsKey("uid"));
-        assertTrue(cbor.parsePayloadFromCbor(req.getPayload(), HashMap.class)
+        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .containsKey("invite"));
         ArrayList<HashMap<String, Object>> getinvite = (ArrayList<HashMap<String, Object>>) cbor
-                .parsePayloadFromCbor(req.getPayload(), HashMap.class)
+                .parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .get("invite");
         assertTrue(getinvite.get(0).containsKey("gid"));
         assertTrue(getinvite.get(0).containsKey("mid"));
-        assertEquals(req.getUriPath(), TEST_RESOURCE_INVITE_URI);
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_INVITE_URI);
     }
 
     @Test
@@ -111,11 +130,11 @@ public class AclInviteTest {
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 TEST_RESOURCE_INVITE_URI, null, null, null);
-        aclInviteHandler.onRequestReceived(mockDevice, request);
+        mAclInviteHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriQueryMap().containsKey("uid"));
-        assertEquals(req.getUriPath(), TEST_RESOURCE_INVITE_URI);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_INVITE_URI);
     }
 
     @Test
@@ -125,11 +144,11 @@ public class AclInviteTest {
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 TEST_RESOURCE_INVITE_URI, "gid=g0001", null, null);
-        aclInviteHandler.onRequestReceived(mockDevice, request);
+        mAclInviteHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriQueryMap().containsKey("gid"));
-        assertTrue(req.getUriQueryMap().containsKey("uid"));
-        assertEquals(req.getUriPath(), TEST_RESOURCE_INVITE_URI);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("gid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_INVITE_URI);
     }
 }

@@ -48,8 +48,7 @@ public class MQBrokerResource extends Resource {
     private TopicManager mTopicManager = new TopicManager();
 
     public MQBrokerResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.MQ_BROKER_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.MQ_BROKER_URI));
     }
 
     public void setKafkaInformation(String zookeeper, String broker) {

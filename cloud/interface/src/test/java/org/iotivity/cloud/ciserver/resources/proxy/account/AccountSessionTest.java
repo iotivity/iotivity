@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -17,6 +39,7 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -29,38 +52,38 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class AccountSessionTest {
-    private String             di                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    public static final String SESSION_URI        = "/.well-known/ocf/account/session";
-    private CoapDevice         mockDevice         = mock(CoapDevice.class);
-    IResponse                  res                = null;
-    IRequest                   req                = null;
-    ConnectorPool              connectorPool      = null;
-    DeviceServerSystem         deviceServerSystem = new DeviceServerSystem();
-    final CountDownLatch       latch              = new CountDownLatch(1);
+    private String               mDi                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
+    public static final String   SESSION_URI         = Constants.ACCOUNT_SESSION_FULL_URI;
+    private CoapDevice           mMockDevice         = mock(CoapDevice.class);
+    private IResponse            mRes                = null;
+    private IRequest             mReq                = null;
+    private ConnectorPool        mConnectorPool      = null;
+    private DeviceServerSystem   mDeviceServerSystem = new DeviceServerSystem();
+    private final CountDownLatch mLatch              = new CountDownLatch(1);
     @Mock
-    IRequestChannel            requestChannel;
+    private IRequestChannel      mRequestChannel;
 
     @InjectMocks
-    AccountSession             acSessionHandler   = new AccountSession();
+    private AccountSession       mAcSessionHandler   = new AccountSession();
 
     @Before
     public void setUp() throws Exception {
-        res = null;
-        req = null;
-        Mockito.doReturn(di).when(mockDevice).getDeviceId();
-        Mockito.doReturn("mockDeviceUser").when(mockDevice).getUserId();
-        Mockito.doReturn("1689c70ffa245effc563017fee36d250").when(mockDevice)
+        mRes = null;
+        mReq = null;
+        Mockito.doReturn(mDi).when(mMockDevice).getDeviceId();
+        Mockito.doReturn("mockDeviceUser").when(mMockDevice).getUserId();
+        Mockito.doReturn("1689c70ffa245effc563017fee36d250").when(mMockDevice)
                 .getAccessToken();
         MockitoAnnotations.initMocks(this);
-        deviceServerSystem.addResource(acSessionHandler);
+        mDeviceServerSystem.addResource(mAcSessionHandler);
         Mockito.doAnswer(new Answer<Object>() {
             @Override
             public CoapRequest answer(InvocationOnMock invocation)
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapRequest request = (CoapRequest) args[0];
-                req = request;
-                latch.countDown();
+                mReq = request;
+                mLatch.countDown();
                 System.out.println(
                         "\t----------payload : " + request.getPayloadString());
                 System.out.println(
@@ -69,7 +92,7 @@ public class AccountSessionTest {
                         "\t---------uriquery : " + request.getUriQuery());
                 return null;
             }
-        }).when(requestChannel).sendRequest(Mockito.any(IRequest.class),
+        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
     }
 
@@ -78,8 +101,8 @@ public class AccountSessionTest {
         System.out.println(
                 "\t--------------OnRequestReceived Sign In Test------------");
         IRequest request = makeSignInRequest();
-        deviceServerSystem.onRequestReceived(mockDevice, request);
-        assertTrue(latch.await(1L, SECONDS));
+        mDeviceServerSystem.onRequestReceived(mMockDevice, request);
+        assertTrue(mLatch.await(1L, SECONDS));
         assertEquals(request, request);
     }
 
@@ -89,24 +112,25 @@ public class AccountSessionTest {
                 "\t--------------OnRequestReceived Sign Out Test------------");
         // sign up request from the client
         IRequest request = makeSignOutRequest();
-        deviceServerSystem.onRequestReceived(mockDevice, request);
+        mDeviceServerSystem.onRequestReceived(mMockDevice, request);
         // assertion : request msg to the AS is identical to the request msg
         // from the client
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(hashmapCheck(req, "uid"));
-        assertTrue(hashmapCheck(req, "di"));
-        assertTrue(hashmapCheck(req, "accesstoken"));
-        assertTrue(hashmapCheck(req, "login"));
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(hashmapCheck(mReq, Constants.USER_ID));
+        assertTrue(hashmapCheck(mReq, Constants.DEVICE_ID));
+        assertTrue(hashmapCheck(mReq, Constants.ACCESS_TOKEN));
+        assertTrue(hashmapCheck(mReq, Constants.REQ_LOGIN));
     }
 
     private IRequest makeSignInRequest() {
         Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<>();
-        payloadData.put("uid", "u0001");
-        payloadData.put("di", di);
-        payloadData.put("accesstoken", "1689c70ffa245effc563017fee36d250");
-        payloadData.put("login", true);
+        payloadData.put(Constants.USER_ID, "u0001");
+        payloadData.put(Constants.DEVICE_ID, mDi);
+        payloadData.put(Constants.ACCESS_TOKEN,
+                "1689c70ffa245effc563017fee36d250");
+        payloadData.put(Constants.REQ_LOGIN, true);
         request = MessageBuilder.createRequest(RequestMethod.POST, SESSION_URI,
                 null, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));
@@ -117,7 +141,7 @@ public class AccountSessionTest {
         Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<>();
-        payloadData.put("login", false);
+        payloadData.put(Constants.REQ_LOGIN, false);
         request = MessageBuilder.createRequest(RequestMethod.POST, SESSION_URI,
                 null, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));

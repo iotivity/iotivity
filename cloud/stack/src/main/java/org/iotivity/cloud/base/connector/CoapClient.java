@@ -23,6 +23,7 @@ package org.iotivity.cloud.base.connector;
 
 import java.util.HashMap;
 
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ClientException;
@@ -90,7 +91,8 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
                 default:
                     // We create temp token
                     // TODO: temporal handling
-                    if (request.getUriPath().equals("/oic/ad")) {
+                    if (request.getUriPath()
+                            .equals(OICConstants.RESOURCE_PRESENCE_FULL_URI)) {
                         mSubscription.put(Bytes.bytesToLong(token), newToken);
                         observe = Observe.SUBSCRIBE;
                     }

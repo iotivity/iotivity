@@ -40,8 +40,8 @@ public class AclInvite extends Resource {
     IRequestChannel mAuthServer = null;
 
     public AclInvite() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.INVITE_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.INVITE_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
 
@@ -56,14 +56,16 @@ public class AclInvite extends Resource {
             case POST:
 
                 Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-                HashMap<String, Object> payload = cbor.parsePayloadFromCbor(
+                HashMap<String, Object> payloadData = cbor.parsePayloadFromCbor(
                         request.getPayload(), HashMap.class);
 
-                payload.put(Constants.USER_ID, srcDevice.getUserId());
+                checkPayloadException(Constants.REQ_INVITE, payloadData);
+
+                payloadData.put(Constants.USER_ID, srcDevice.getUserId());
 
                 request = MessageBuilder.modifyRequest(request, null, null,
                         ContentFormat.APPLICATION_CBOR,
-                        cbor.encodingPayloadToCbor(payload));
+                        cbor.encodingPayloadToCbor(payloadData));
                 break;
 
             default:
