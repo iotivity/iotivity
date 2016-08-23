@@ -320,6 +320,7 @@ void NSConsumerTaskProcessing(NSTask * task)
         case TASK_RECV_SYNCINFO:
         case TASK_CONSUMER_RECV_MESSAGE:
         case TASK_CONSUMER_PROVIDER_DISCOVERED:
+        case TASK_CONSUMER_SENT_REQ_OBSERVE:
         case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
         case TASK_MAKE_SYNCINFO:
         case TASK_CONSUMER_REQ_TOPIC_URI:

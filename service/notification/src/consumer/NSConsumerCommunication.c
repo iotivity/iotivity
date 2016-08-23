@@ -108,6 +108,13 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         connections = connections->next;
     }
 
+    NSProvider_internal * taskProvider = NSCopyProvider_internal(provider_internal);
+    NSTask * task = NSMakeTask(TASK_CONSUMER_SENT_REQ_OBSERVE, (void *) taskProvider);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task,
+                    NS_ERROR, NSRemoveProvider_internal(taskProvider));
+
+    NSConsumerPushEvent(task);
+
     return NS_OK;
 }
 

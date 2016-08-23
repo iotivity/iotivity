@@ -72,6 +72,8 @@ OCStackApplicationResult NSConsumerPresenceListener(
 
         NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DELETED, addr);
         NS_VERIFY_NOT_NULL(task, OC_STACK_KEEP_TRANSACTION);
+
+        NSConsumerPushEvent(task);
     }
 
     else if (payload->trigger == OC_PRESENCE_TRIGGER_CREATE)

@@ -303,6 +303,14 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 }
 
+void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
+{
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSResult ret = NSProviderCacheUpdate(provider);
+    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+}
+
 void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
@@ -403,10 +411,15 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     switch (task->taskType)
     {
-        //case TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED:
+        case TASK_CONSUMER_SENT_REQ_OBSERVE:
+        {
+            NS_LOG(DEBUG, "Receive Subscribe succeed from provider.");
+            NSConsumerHandleSubscribeSucceed((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
+            break;
+        }
         case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
         {
-            //NS_LOG(DEBUG, "Receive Subscribe confirm from provider.");
             NS_LOG(DEBUG, "Receive Provider Changed");
             NSConsumerHandleRecvProviderChanged((NSMessage *)task->taskData);
             NSRemoveMessage((NSMessage *)task->taskData);
