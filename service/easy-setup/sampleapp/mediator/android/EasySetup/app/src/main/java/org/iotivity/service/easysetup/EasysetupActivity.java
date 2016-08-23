@@ -54,6 +54,7 @@ import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+import org.iotivity.service.easysetup.mediator.ESConstants;
 import org.iotivity.service.easysetup.mediator.CloudProp;
 import org.iotivity.service.easysetup.mediator.CloudPropProvisioningCallback;
 import org.iotivity.service.easysetup.mediator.CloudPropProvisioningStatus;
@@ -440,7 +441,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                         });
 
                         try {
-                            String requestUri = OcPlatform.WELL_KNOWN_QUERY + "?rt=ocf.wk.prov";
+                            String requestUri = OcPlatform.WELL_KNOWN_QUERY + "?rt=" + ESConstants.OC_RSRVD_ES_RES_TYPE_PROV;
                             OcPlatform.findResource("",
                                     requestUri,
                                     EnumSet.of(OcConnectivityType.CT_DEFAULT),

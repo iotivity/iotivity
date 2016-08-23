@@ -31,8 +31,6 @@
 #include "ESEnrolleeCommon.h"
 #include "easysetup.h"
 
-#define PROV_RESOURCE_TYPE "ocf.wk.prov"
-
 class ESEnrolleeSimulator
 {
 public:
