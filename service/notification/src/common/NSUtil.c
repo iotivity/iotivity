@@ -419,6 +419,7 @@ NSMessage * NSInitializeMessage()
     }
 
     msg->messageId = OICGetCurrentTime(TIME_IN_MS);
+    msg->messageId = msg->messageId & 0x000000007FFFFFFF;
     (msg->providerId)[0] = '\0';
     msg->type = 0;
     msg->dateTime = NULL;
