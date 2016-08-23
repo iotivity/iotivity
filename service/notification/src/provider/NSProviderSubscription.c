@@ -229,7 +229,11 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
 
-    NSProviderDeleteSubDataFromObId(consumerSubList, entityHandlerRequest->obsInfo.obsId);
+    consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
+
+    while(NSStorageDelete(consumerSubList, (unsigned char *)
+            &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
+    consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 
