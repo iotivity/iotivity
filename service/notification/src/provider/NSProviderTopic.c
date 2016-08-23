@@ -301,6 +301,10 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
 
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
+    while(NSStorageDelete(consumerTopicList, consumerId) != NS_FAIL);
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
+
     OCRepPayload ** topicListPayload = NULL;
     OCRepPayloadValue * payloadValue = NULL;
     payloadValue = NSPayloadFindValue(payload, NS_ATTRIBUTE_TOPIC_LIST);
