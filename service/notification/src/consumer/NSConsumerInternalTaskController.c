@@ -319,13 +319,10 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
     NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
     NS_VERIFY_NOT_NULL_V(provider);
 
-    if (provider->connection->next == NULL && provider->accessPolicy == NS_SELECTION_CONSUMER)
-    {
-        NS_LOG(DEBUG, "call back to user");
-        NSProvider * prov = NSCopyProvider(provider);
-        NSProviderChanged(prov, (NSResponse) msg->messageId);
-        NSRemoveProvider_internal(provider);
-    }
+    NS_LOG(DEBUG, "call back to user");
+    NSProvider * prov = NSCopyProvider(provider);
+    NSProviderChanged(prov, (NSResponse) msg->messageId);
+    NSRemoveProvider_internal(provider);
 }
 
 void NSConsumerHandleRecvMessage(NSMessage * msg)
