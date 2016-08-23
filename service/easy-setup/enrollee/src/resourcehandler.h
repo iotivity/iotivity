@@ -87,7 +87,6 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty);
 OCStackResult SetEnrolleeState(ESEnrolleeState esState);
 OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode);
 
-void GetTargetNetworkInfoFromProvResource(char *, char *);
 void RegisterWifiRsrcEventCallBack(ESWiFiCB);
 void RegisterCloudRsrcEventCallBack(ESCloudCB);
 void RegisterDevConfRsrcEventCallBack(ESDevConfCB);

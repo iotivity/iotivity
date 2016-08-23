@@ -110,32 +110,3 @@ int convertNativeWifiModeToInt(WIFI_MODE wifiMode)
             return 4;
     }
 }
-
-int convertNativeDeviceProvResultToInt(ESResult nativeResult)
-{
-    switch (nativeResult)
-    {
-        case ESResult::ES_ERROR:
-            return -1;
-        case ESResult::ES_OK:
-            return 0;
-        case ESResult::ES_NETWORKFOUND:
-            return 1;
-        case ESResult::ES_NETWORKCONNECTED:
-            return 2;
-        case ESResult::ES_NETWORKNOTCONNECTED:
-            return 3;
-        case ESResult::ES_RESOURCECREATED:
-            return 11;
-        case ESResult::ES_RECVREQOFPROVRES:
-            return 21;
-        case ESResult::ES_RECVREQOFNETRES:
-            return 22;
-        case ESResult::ES_RECVUPDATEOFPROVRES:
-            return 23;
-        case ESResult::ES_RECVTRIGGEROFPROVRES:
-            return 24;
-        case ESResult::ES_UNAUTHORIZED:
-            return 31;
-    }
-}

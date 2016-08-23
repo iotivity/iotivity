@@ -80,14 +80,14 @@ void JniDevicePropProvisioningStatusListener::onDevicePropProvisioningStatusCall
         return;
     }
 
-    int nativeESResult = convertNativeDeviceProvResultToInt(devicePropProvStatusCb->getESResult());
+    ESResult esResult = devicePropProvStatusCb->getESResult();
 
     jobject jDevicePropProvisioningStatus = NULL;
     jDevicePropProvisioningStatus = env->NewObject(g_cls_DevicePropProvisioningStatus,
                                                 g_mid_DevicePropProvisioningStatus_ctor,
-                                                (jint)nativeESResult);
+                                                (jint)esResult);
 
-    ES_LOGI("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus - %d", nativeESResult);
+    ES_LOGI("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus - %d", esResult);
     if (!jDevicePropProvisioningStatus)
     {
         ES_LOGE("JniDevicePropProvisioningStatus::onDevicePropProvisioningStatus Unable to create the java object");

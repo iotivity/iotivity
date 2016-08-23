@@ -40,6 +40,9 @@ resourcehosting_sample_env.AppendUnique(LIBS = [
 if env.get('SECURED') == '1':
     resourcehosting_env.AppendUnique(LIBS = ['tinydtls'])
     resourcehosting_sample_env.AppendUnique(LIBS = ['tinydtls'])
+    if env.get('WITH_TCP') == True:
+    	resourcehosting_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    	resourcehosting_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 if 'rt' in resourcehosting_env.get('LIBS'):
     resourcehosting_env.Append(LIBS = ['rt'])
 if 'rt' in resourcehosting_sample_env.get('LIBS'):

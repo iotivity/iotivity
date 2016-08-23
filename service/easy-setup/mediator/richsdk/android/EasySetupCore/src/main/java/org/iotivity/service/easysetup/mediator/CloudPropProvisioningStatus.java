@@ -30,7 +30,6 @@ import org.iotivity.service.easysetup.mediator.enums.ESResult;
 public class CloudPropProvisioningStatus
 {
     private ESResult m_result;
-    private ESCloudProvState m_esCloudState;
 
     /**
      * Constructor
@@ -42,10 +41,9 @@ public class CloudPropProvisioningStatus
      *
      * @see ESCloudProvState
      */
-    public CloudPropProvisioningStatus(int result, int state)
+    public CloudPropProvisioningStatus(int result)
     {
         m_result = ESResult.fromInt(result);
-        m_esCloudState = ESCloudProvState.fromInt(state);
     }
 
     /**
@@ -56,17 +54,5 @@ public class CloudPropProvisioningStatus
     public ESResult getESResult()
     {
         return m_result;
-    }
-
-    /**
-     * Get a state of cloud property provisioning
-     *
-     * @result ESCloudProvState a state of cloud property provisioning
-     *
-     * @see ESCloudProvState
-     */
-    public ESCloudProvState getESCloudState()
-    {
-        return m_esCloudState;
     }
 };

@@ -113,6 +113,10 @@ resource_container_env.AppendUnique(LIBS = ['boost_system'])
 resource_container_env.AppendUnique(LIBS = ['boost_date_time'])
 resource_container_env.AppendUnique(LIBS = ['boost_thread'])
 
+if resource_container_env.get('SECURED') == '1':
+	if resource_container_env.get('WITH_TCP') == True:
+		resource_container_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
 if int(containerJavaSupport):
     try:
         print 'Java Lib: ', os.environ['JAVA_LIB']

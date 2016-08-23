@@ -181,6 +181,7 @@ cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-test
 %endif
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
+cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}

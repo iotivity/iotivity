@@ -81,7 +81,7 @@ namespace OIC
                 OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Ownership and ACL are successful. "
                         "Continue with Network information provisioning");
 
-                OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before ProvisionEnrollee");
+                OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before provisionProperties");
 
                 m_securityProvStatusCb(status);
             }
@@ -224,6 +224,7 @@ namespace OIC
         void RemoteEnrollee::provisionSecurity(const SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
+            std::cout << __func__ << std::endl;
             if(!callback)
             {
                 throw ESInvalidParameterException("Callback is empty");
@@ -258,11 +259,14 @@ namespace OIC
             }
 #else
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured.");
-
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                      std::make_shared< SecProvisioningStatus >
-                                                        ("", ES_UNSUPPORTED_OPERATION);
-            m_securityProvStatusCb(securityProvisioningStatus);
+                                   ("", ESResult::ES_SEC_OPERATION_IS_NOT_SUPPORTED);
+            callback(securityProvisioningStatus);
 #endif
         }
 
@@ -334,7 +338,7 @@ namespace OIC
                     this, std::placeholders::_1);
 
             m_enrolleeResource->registerDevicePropProvStatusCallback(devicePropProvStatusCb);
-            m_enrolleeResource->provisionEnrollee(deviceProp);
+            m_enrolleeResource->provisionProperties(deviceProp);
         }
 
         void RemoteEnrollee::initCloudResource()
@@ -362,8 +366,7 @@ namespace OIC
                     m_cloudResource = std::make_shared<CloudResource>(m_ocResource);
 
                     std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_OK,
-                                                        ESCloudProvState::ES_CLOUD_ENROLLEE_FOUND);
+                        CloudPropProvisioningStatus >(ESResult::ES_FOUND_ENROLLEE);
 
                     m_cloudPropProvStatusCb(provStatus);
                 }
@@ -404,8 +407,7 @@ namespace OIC
                     "Exception caught in provisionCloudProperties = %s", e.what());
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_ERROR,
-                                                    ESCloudProvState::ES_CLOUD_ENROLLEE_NOT_FOUND);
+                        CloudPropProvisioningStatus >(ESResult::ES_NOT_FOUND_ENROLLEE);
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }
@@ -438,8 +440,7 @@ namespace OIC
                 m_cloudResource = nullptr;
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_ERROR,
-                                                    ESCloudProvState::ES_CLOUD_PROVISIONING_ERROR);
+                        CloudPropProvisioningStatus >(ESResult::ES_ERROR);
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }
@@ -455,7 +456,7 @@ namespace OIC
                                     this, std::placeholders::_1);
 
             m_cloudResource->registerCloudPropProvisioningStatusCallback(cloudPropProvStatusCb);
-            m_cloudResource->provisionEnrollee(cloudProp);
+            m_cloudResource->provisionProperties(cloudProp);
         }
     }
 }

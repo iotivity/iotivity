@@ -633,7 +633,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                                             else if(result.equals(ESResult.ES_ERROR)) {
                                                 mProvisionDevPropState.setText("Failed");
                                             }
-                                            else if(result.equals(ESResult.ES_UNAUTHORIZED)) {
+                                            else if(result.equals(ESResult.ES_UNAUTHORIZED_REQ)) {
                                                 mProvisionDevPropState.setText("Failed. Need SecProv");
                                             }
                                             mStartProvisionDevProp.setEnabled(true);
@@ -687,26 +687,20 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                                 @Override
                                 public void onProgress(CloudPropProvisioningStatus cloudProvisioningStatus) {
                                     final ESResult result = cloudProvisioningStatus.getESResult();
-                                    final ESCloudProvState state = cloudProvisioningStatus.getESCloudState();
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            if(result.equals(ESResult.ES_OK)) {
-                                                if(state.equals(ESCloudProvState.ES_CLOUD_ENROLLEE_FOUND)) {
-                                                    mProvisionCloudPropState.setText("Found Resource");
-                                                }
-                                                else if(state.equals(ESCloudProvState.ES_CLOUD_PROVISIONING_SUCCESS)) {
-                                                    mProvisionCloudPropState.setText("Success");
-                                                }
+                                            if(result.equals(ESResult.ES_FOUND_ENROLLEE)) {
+                                                mProvisionCloudPropState.setText("Found Resource");
+                                            }
+                                            else if(result.equals(ESResult.ES_NOT_FOUND_ENROLLEE)) {
+                                                mProvisionCloudPropState.setText("Not Found Resource");
+                                            }
+                                            else if(result.equals(ESResult.ES_OK)) {
+                                                mProvisionCloudPropState.setText("Cloud Provisioning succeeds");
                                             }
                                             else {
-                                                if(state.equals(ESCloudProvState.ES_CLOUD_ENROLLEE_NOT_FOUND)) {
-                                                    mProvisionCloudPropState.setText("Not Found Resource");
-                                                }
-                                                else if(state.equals(ESCloudProvState.ES_CLOUD_PROVISIONING_ERROR)) {
-                                                    mProvisionCloudPropState.setText("Failed");
-                                                }
-                                                mStartProvisionCloudProp.setEnabled(true);
+                                                mProvisionCloudPropState.setText("Cloud Provisioning fails");
                                             }
                                         }
                                     });

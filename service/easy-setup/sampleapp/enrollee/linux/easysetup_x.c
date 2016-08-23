@@ -23,6 +23,7 @@
 #include "string.h"
 #include "oic_malloc.h"
 #include "logger.h"
+#include "ocpayload.h"
 
 /**
  * @var ESX_ENROLLEE_TAG

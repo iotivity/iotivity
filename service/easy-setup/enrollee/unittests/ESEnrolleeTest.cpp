@@ -88,6 +88,26 @@ public:
         std::cout << __func__ << std::endl;
     }
 
+    static void onGetWifiRsrc(const OCRepresentation& )
+    {
+        std::cout << __func__ << std::endl;
+    }
+
+    static void onGetCloudRsrc(const OCRepresentation& )
+    {
+        std::cout << __func__ << std::endl;
+    }
+
+    static void onGetDeviceConf(const OCRepresentation& )
+    {
+        std::cout << __func__ << std::endl;
+    }
+
+    static void onPutRequest(const OCRepresentation& )
+    {
+        std::cout << __func__ << std::endl;
+    }
+
     static void deviceProvisioningStatusCallback(std::shared_ptr< DevicePropProvisioningStatus >)
     {
         std::cout << __func__ << std::endl;
@@ -126,13 +146,28 @@ public:
         return ESInitEnrollee(false, resourcemMask, callbacks);
     }
 
+    ESResult startEnrolleeWithInvalidRsrcMask()
+    {
+        ESProvisioningCallbacks callbacks;
+        callbacks.WiFiProvCb = &EasysetupEnrolleeTest::WiFiProvCbInApp;
+        callbacks.DevConfProvCb = &EasysetupEnrolleeTest::DevConfProvCbInApp;
+        callbacks.CloudDataProvCb = &EasysetupEnrolleeTest::CloudDataCbInApp;
+
+        return ESInitEnrollee(false, (ESResourceMask)0, callbacks);
+    }
+
     ESResult setDeviceProperty()
     {
         ESDeviceProperty deviceProperty = {
-            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device"}
+            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device", "Test Model Number"}
         };
 
         return ESSetDeviceProperty(&deviceProperty);
+    }
+
+    ESResult setCallabckForUserDataNULL()
+    {
+        return ESSetCallbackForUserdata(NULL, NULL);
     }
 
 protected:
@@ -164,6 +199,13 @@ TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeSuccess)
 {
     ESResult ret = startEnrollee();
     EXPECT_EQ(ret, ES_OK);
+    ESTerminateEnrollee();
+}
+
+TEST_F(EasysetupEnrolleeTest, ESInitEnrolleeFailedInvalidRsrcMask)
+{
+    ESResult ret = startEnrolleeWithInvalidRsrcMask();
+    EXPECT_EQ(ret, ES_ERROR);
     ESTerminateEnrollee();
 }
 
@@ -410,4 +452,93 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
     ESTerminateEnrollee();
 }
 
+TEST_F(EasysetupEnrolleeTest, GetWifiRsrcTest)
+{
+    bool isRepFlag = false;
+    mocks.ExpectCallFunc(onGetWifiRsrc).Do(
+        [& isRepFlag](const OCRepresentation& /*rep*/)
+        {
 
+            isRepFlag = true;
+        });
+
+    ESResult ret = startEnrollee();
+    g_mediatorSimul.getWifiRsrc(onGetWifiRsrc);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(ret, ES_OK);
+
+    ESTerminateEnrollee();
+}
+
+TEST_F(EasysetupEnrolleeTest, GetCloudRsrcTest)
+{
+    bool isRepFlag = false;
+    mocks.ExpectCallFunc(onGetCloudRsrc).Do(
+        [& isRepFlag](const OCRepresentation& /*rep*/)
+        {
+            isRepFlag = true;
+        });
+
+    ESResult ret = startEnrollee();
+    g_mediatorSimul.getCloudRsrc(onGetCloudRsrc);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(ret, ES_OK);
+
+    ESTerminateEnrollee();
+}
+
+TEST_F(EasysetupEnrolleeTest, GetDevConfTest)
+{
+    bool isRepFlag = false;
+    mocks.ExpectCallFunc(onGetDeviceConf).Do(
+        [& isRepFlag](const OCRepresentation& /*rep*/)
+        {
+            isRepFlag = true;
+        });
+
+    ESResult ret = startEnrollee();
+    ret = setDeviceProperty();
+
+    g_mediatorSimul.getDevConfiguration(onGetDeviceConf);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(ret, ES_OK);
+
+    ESTerminateEnrollee();
+}
+
+TEST_F(EasysetupEnrolleeTest, PutRequestTest)
+{
+    bool isRepFlag = false;
+    mocks.ExpectCallFunc(onPutRequest).Do(
+        [& isRepFlag](const OCRepresentation& /*rep*/)
+        {
+            isRepFlag = true;
+        });
+
+    ESResult ret = startEnrollee();
+
+    g_mediatorSimul.putProvRsrc(onPutRequest);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(ret, ES_OK);
+
+    ESTerminateEnrollee();
+}
+
+TEST_F(EasysetupEnrolleeTest, ESSetCallabckForUserDataFailed)
+{
+    ESResult ret = setCallabckForUserDataNULL();
+    EXPECT_EQ(ret, ES_ERROR);
+    ESTerminateEnrollee();
+}

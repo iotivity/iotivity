@@ -42,8 +42,6 @@ static std::shared_ptr<OC::OCResource> curResource = nullptr;
 static std::mutex g_discoverymtx;
 static std::condition_variable g_cond;
 
-#define PROV_RESOURCE_TYPE "ocf.wk.prov"
-
 typedef void (*Runner)();
 
 Runner g_currentRun;
@@ -106,7 +104,15 @@ void provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus> secP
 
 void provisionSecurity()
 {
-    remoteEnrollee->provisionSecurity(provisionSecurityStatusCallback);
+    try
+    {
+        remoteEnrollee->provisionSecurity(provisionSecurityStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during provisionSecurity call" << e.reason();
+        return;
+    }
 }
 
 void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
@@ -200,7 +206,6 @@ void provisionDeviceProperty()
 
     try
     {
-        //remoteEnrollee->provisionDeviceProperties(deviceProp, deviceProvisioningStatusCallback);
         remoteEnrollee->provisionDeviceProperties(devProp, deviceProvisioningStatusCallback);
     }
     catch (OCException &e)
@@ -212,19 +217,19 @@ void provisionDeviceProperty()
 
 void cloudProvisioningStatusCallback(std::shared_ptr< CloudPropProvisioningStatus > provStatus)
 {
-    switch (provStatus->getESCloudState())
+    switch (provStatus->getESResult())
     {
-        case ES_CLOUD_PROVISIONING_ERROR:
-            cout << "Cloud Provisioning is failed." << endl;
-            break;
-        case ES_CLOUD_PROVISIONING_SUCCESS:
+        case ES_OK:
             cout << "Cloud Provisioning is success." << endl;
             break;
-        case ES_CLOUD_ENROLLEE_FOUND:
+        case ES_FOUND_ENROLLEE:
             cout << "Enrollee is found in a given network." << endl;
             break;
-        case ES_CLOUD_ENROLLEE_NOT_FOUND:
+        case ES_NOT_FOUND_ENROLLEE:
             cout << "Enrollee is not found in a given network." << endl;
+            break;
+        default:
+            cout << "Cloud Provisioning is failed." << endl;
             break;
     }
 }
@@ -301,7 +306,7 @@ void foundResource(std::shared_ptr<OC::OCResource> resource)
         // Do some operations with resource object.
         if(resource &&
            !curResource &&
-           resource->getResourceTypes().at(0) == PROV_RESOURCE_TYPE)
+           resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_PROV)
         {
             std::cout<<"DISCOVERED Resource:"<<std::endl;
             // Get the resource URI
@@ -377,7 +382,7 @@ int main()
             return -1;
         }
 #endif
-        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << PROV_RESOURCE_TYPE;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_PROV;
 
         OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;

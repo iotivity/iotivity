@@ -107,15 +107,6 @@ void UnRegisterResourceEventCallBack()
     }
 }
 
-void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
-{
-    if (name != NULL && pass != NULL)
-    {
-        OICStrcpy(name, MAX_WEBLINKLEN, gWiFiResource.ssid);
-        OICStrcpy(pass, MAX_WEBLINKLEN, gWiFiResource.cred);
-    }
-}
-
 OCStackResult initProvResource(bool isSecured)
 {
     gProvResource.status = ES_STATE_INIT;
