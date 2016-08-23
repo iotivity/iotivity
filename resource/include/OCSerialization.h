@@ -19,12 +19,19 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <StringConstants.h>
+#include <sstream>
+#include <cstring>
 #include "ocpayload.h"
 #include "ocrandom.h"
 #include "oic_string.h"
 
 namespace OC
 {
+    static const char EP_ADDR_SPLIT[]   = "://";
+    static const char EP_PORT_SPLIT[]   = ":";
+    static const char EP_BRAKET_START[] = "[";
+    static const char EP_BRAKET_END[]   = "]";
+
     class ListenOCContainer
     {
         private:
@@ -35,6 +42,40 @@ namespace OC
                 {
                     strs.push_back(ll->value);
                     ll = ll->next;
+                }
+                return strs;
+            }
+
+            static std::vector<std::string> EpsLLToVector(OCEndpointPayload* head)
+            {
+                std::vector<std::string> strs;
+                while (head)
+                {
+                    std::ostringstream endpoint;
+                    endpoint << head->tps << EP_ADDR_SPLIT;
+
+                    switch (head->family)
+                    {
+                        case OC_DEFAULT_FLAGS:
+                            // mac
+                            endpoint << head->addr;
+                            break;
+
+                        case OC_IP_USE_V4:
+                            endpoint << head->addr << EP_PORT_SPLIT << head->port;
+                            break;
+
+                        case OC_IP_USE_V6:
+                            endpoint << EP_BRAKET_START << head->addr << EP_BRAKET_END
+                                     << EP_PORT_SPLIT << head->port;
+                            break;
+                        default:
+                            head = head->next;
+                            continue;
+                    }
+
+                    strs.push_back(endpoint.str());
+                    head = head->next;
                 }
                 return strs;
             }
@@ -56,6 +97,14 @@ namespace OC
 
                         currentDevAddr.port = (res->port != 0) ? res->port : devAddr.port;
 
+                        OCEndpointPayload* eps = res->eps;
+                        std::vector<std::string> epsVector;
+                        if (eps)
+                        {
+                            //parsing eps from payload
+                            epsVector = EpsLLToVector(eps);
+                        }
+
                         if (payload->baseURI)
                         {
                             OCDevAddr rdPubAddr = currentDevAddr;
@@ -73,7 +122,8 @@ namespace OC
                                             std::string(payload->sid),
                                             res->bitmap,
                                             StringLLToVector(res->types),
-                                            StringLLToVector(res->interfaces)
+                                            StringLLToVector(res->interfaces),
+                                            epsVector
                                             )));
                         }
                         else
@@ -84,7 +134,8 @@ namespace OC
                                         std::string(payload->sid),
                                         res->bitmap,
                                         StringLLToVector(res->types),
-                                        StringLLToVector(res->interfaces)
+                                        StringLLToVector(res->interfaces),
+                                        epsVector
                                         )));
 
 #ifdef TCP_ADAPTER
@@ -99,7 +150,8 @@ namespace OC
                                                 std::string(payload->sid),
                                                 res->bitmap,
                                                 StringLLToVector(res->types),
-                                                StringLLToVector(res->interfaces)
+                                                StringLLToVector(res->interfaces),
+                                                epsVector
                                                 )));
                             }
 #endif

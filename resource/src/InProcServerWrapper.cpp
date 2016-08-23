@@ -435,7 +435,19 @@ namespace OC
                     const std::string& resourceInterface,
                     EntityHandler& eHandler,
                     uint8_t resourceProperties)
+    {
+        return registerResourceWithTps(resourceHandle, resourceURI, resourceTypeName,
+                                       resourceInterface, eHandler, resourceProperties, OC_ALL);
+    }
 
+    OCStackResult InProcServerWrapper::registerResourceWithTps(
+                    OCResourceHandle& resourceHandle,
+                    std::string& resourceURI,
+                    const std::string& resourceTypeName,
+                    const std::string& resourceInterface,
+                    EntityHandler& eHandler,
+                    uint8_t resourceProperties,
+                    OCTpsSchemeFlags resourceTpsTypes)
     {
         OCStackResult result = OC_STACK_ERROR;
 
@@ -447,25 +459,27 @@ namespace OC
 
             if(NULL != eHandler)
             {
-                result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
+                result = OCCreateResourceWithEp(&resourceHandle, // OCResourceHandle *handle
                             resourceTypeName.c_str(), // const char * resourceTypeName
-                            resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+                            //const char * resourceInterfaceName //TODO fix this
+                            resourceInterface.c_str(),
                             resourceURI.c_str(), // const char * uri
                             EntityHandlerWrapper, // OCEntityHandler entityHandler
                             NULL,
-                            resourceProperties // uint8_t resourceProperties
-                            );
+                            resourceProperties, // uint8_t resourceProperties
+                            resourceTpsTypes);  // OCTpsSchemeFlags resourceTpsTypes
             }
             else
             {
-                result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
+                result = OCCreateResourceWithEp(&resourceHandle, // OCResourceHandle *handle
                             resourceTypeName.c_str(), // const char * resourceTypeName
-                            resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+                            //const char * resourceInterfaceName //TODO fix this
+                            resourceInterface.c_str(),
                             resourceURI.c_str(), // const char * uri
                             NULL, // OCEntityHandler entityHandler
                             NULL,
-                            resourceProperties // uint8_t resourceProperties
-                            );
+                            resourceProperties, // uint8_t resourceProperties
+                            resourceTpsTypes);  // OCTpsSchemeFlags resourceTpsTypes
             }
 
             if(result != OC_STACK_OK)
@@ -687,6 +701,23 @@ namespace OC
             OCPayloadDestroy(response.payload);
             return result;
         }
+    }
+
+    OCStackResult InProcServerWrapper::getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            supportedTps = OCGetSupportedEndpointTpsFlags();
+
+            if (OC_NO_TPS != supportedTps)
+            {
+                result = OC_STACK_OK;
+            }
+        }
+        return result;
     }
 
     InProcServerWrapper::~InProcServerWrapper()

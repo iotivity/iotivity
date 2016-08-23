@@ -131,6 +131,7 @@ namespace OC
         static const char PUBLISH_RESOURCE_FAILED[]    = "Publish Resource failure";
         static const char FORBIDDEN_REQ[]              = "Forbidden request";
         static const char INTERNAL_SERVER_ERROR[]      = "Internal server error";
+        static const char BAD_ENDPOINT[]               = "Bad Endpoint";
     }
 
     namespace Error

@@ -429,6 +429,14 @@ static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, boo
  */
 static void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
                                        CAConnectionStateChangedCB connectionHandler);
+/**
+ * Map zoneId to endpoint address which scope is ipv6 link-local.
+ * @param payload Discovery payload which has Endpoint information.
+ * @param ifindex index which indicate network interface.
+ */
+#ifndef WITH_ARDUINO
+static OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex);
+#endif
 
 //-----------------------------------------------------------------------------
 // Internal functions
@@ -1311,6 +1319,61 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
     return OC_STACK_INVALID_PARAM;
 }
 
+#ifndef WITH_ARDUINO
+OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex)
+{
+    if (!payload)
+    {
+        OIC_LOG(ERROR, TAG, "Given argument payload is NULL!!");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCResourcePayload *curRes = payload->resources;
+
+    while (curRes != NULL)
+    {
+        OCEndpointPayload* eps = curRes->eps;
+
+        while (eps != NULL)
+        {
+            if (eps->family & OC_IP_USE_V6)
+            {
+                CATransportFlags_t scopeLevel;
+                if (CA_STATUS_OK == CAGetIpv6AddrScope(eps->addr, &scopeLevel))
+                {
+                    if (CA_SCOPE_LINK == scopeLevel)
+                    {
+                        char *zoneId = NULL;
+                        if (OC_STACK_OK == OCGetLinkLocalZoneId(ifindex, &zoneId))
+                        {
+                            assert(zoneId != NULL);
+                            // put zoneId to end of addr
+                            OICStrcat(eps->addr, OC_MAX_ADDR_STR_SIZE, "%");
+                            OICStrcat(eps->addr, OC_MAX_ADDR_STR_SIZE, zoneId);
+                            OICFree(zoneId);
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "failed at parse zone-id for link-local address");
+                            return OC_STACK_ERROR;
+                        }
+                    }
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "failed at parse ipv6 scope level");
+                    return OC_STACK_ERROR;
+                }
+            }
+            eps = eps->next;
+        }
+        curRes = curRes->next;
+    }
+
+    return OC_STACK_OK;
+}
+#endif
+
 void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "Enter OCHandleResponse");
@@ -1558,6 +1621,22 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         OCPayloadDestroy(response->payload);
                         return;
                     }
+
+                    // Check endpoints has link-local ipv6 address.
+                    // if there is, map zone-id which parsed from ifindex
+#ifndef WITH_ARDUINO
+                    if (PAYLOAD_TYPE_DISCOVERY == response->payload->type)
+                    {
+                        OCDiscoveryPayload *disPayload = (OCDiscoveryPayload*)(response->payload);
+                        if (OC_STACK_OK !=
+                            OCMapZoneIdToLinkLocalEndpoint(disPayload, response->devAddr.ifindex))
+                        {
+                            OIC_LOG(ERROR, TAG, "failed at map zone-id for link-local address");
+                            OCPayloadDestroy(response->payload);
+                            return;
+                        }
+                    }
+#endif
                 }
                 else
                 {

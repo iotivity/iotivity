@@ -355,6 +355,11 @@ namespace OC
                              host, platformURI, connectivityType, platformInfoHandler, QoS);
     }
 
+    OCStackResult OCPlatform_impl::getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps)
+    {
+        return checked_guard(m_server, &IServerWrapper::getSupportedTransportsInfo, supportedTps);
+    }
+
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             std::string& resourceURI,
                                             const std::string& resourceTypeName,
@@ -365,6 +370,20 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::registerResource,
                              std::ref(resourceHandle), resourceURI, resourceTypeName,
                              resourceInterface, entityHandler, resourceProperty);
+    }
+
+    OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
+                                            std::string& resourceURI,
+                                            const std::string& resourceTypeName,
+                                            const std::string& resourceInterface,
+                                            EntityHandler entityHandler,
+                                            uint8_t resourceProperty,
+                                            OCTpsSchemeFlags resourceTpsTypes)
+    {
+        return checked_guard(m_server, &IServerWrapper::registerResourceWithTps,
+                             std::ref(resourceHandle), resourceURI, resourceTypeName,
+                             resourceInterface, entityHandler, resourceProperty,
+                             resourceTpsTypes);
     }
 
     OCStackResult OCPlatform_impl::registerDeviceInfo(const OCDeviceInfo deviceInfo)
