@@ -282,7 +282,6 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
     OCRepPayloadDestroy(payload);
-    NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSSendTopicList - OUT");
     return NS_OK;
@@ -359,6 +358,7 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_SEND_TOPICS:
                     NS_LOG(DEBUG, "CASE TASK_SEND_TOPICS : ");
                     NSSendTopicList((OCEntityHandlerRequest*) node->taskData);
+                    NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) node->taskData);
                     break;
                 case TASK_SUBSCRIBE_TOPIC:
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
@@ -389,6 +389,7 @@ void * NSTopicSchedule(void * ptr)
                 {
                     NS_LOG(DEBUG, "TASK_POST_TOPIC : ");
                     NSPostConsumerTopics((OCEntityHandlerRequest*) node->taskData);
+                    NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) node->taskData);
                 }
                     break;
                 default:
