@@ -255,14 +255,14 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
                 if (id == msgID)
                 {
                     std::cout << "ExpectCallNotifyOnConsumerByAcceptIsTrue" << std::endl;
+                    responseCon.notify_all();
                 }
-                responseCon.notify_all();
             });
 
     NSAcceptSubscription(g_consumer, true);
 
-    NSMessage * msg = new NSMessage();
-    msgID = 10;
+    NSMessage * msg = NSCreateMessage();
+    msgID = (int)msg->messageId;
     msg->title = strdup(std::string("Title").c_str());
     msg->contentText = strdup(std::string("ContentText").c_str());
     msg->sourceName = strdup(std::string("OCF").c_str());
