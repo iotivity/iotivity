@@ -33,10 +33,7 @@ env.ParseConfig("pkg-config --cflags --libs capi-network-wifi dlog gobject-2.0 g
 env.AppendUnique(CPPFLAGS = ['-std=c++0x', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG','`pkg-config', '--cflags', '--libs','dlog','capi-network-wifi',
                 'gobject-2.0', 'gio-2.0', 'gthread-2.0', 'glib-2.0`'])
 
-#env.AppendUnique(CPPFLAGS = ['-std=c++0x', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG','`pkg-config', '--cflags', '--libs','dlog','capi-network-wifi',
-#				'gobject-2.0','glib-2.0`'])
-
-env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
