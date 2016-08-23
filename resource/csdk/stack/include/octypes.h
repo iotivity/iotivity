@@ -1581,12 +1581,60 @@ typedef struct OCCallbackData
 /**
  * Application server implementations must implement this callback to consume requests OTA.
  * Entity handler callback needs to fill the resPayload of the entityHandlerRequest.
+ *
+ * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+ * OC_EH_SLOW and etc in entity handler callback,
+ * ocstack will be not send response automatically to client
+ * except for error return value like OC_EH_ERROR.
+ *
+ * If you want to send response to client with specific result,
+ * OCDoResponse API should be called with the result value.
+ *
+ * e.g)
+ *
+ * OCEntityHandlerResponse response;
+ *
+ * ..
+ *
+ * response.ehResult = OC_EH_CHANGED;
+ *
+ * ..
+ *
+ * OCDoResponse(&response)
+ *
+ * ..
+ *
+ * return OC_EH_OK;
  */
 typedef OCEntityHandlerResult (*OCEntityHandler)
 (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, void* callbackParam);
 
 /**
  * Device Entity handler need to use this call back instead of OCEntityHandler.
+ *
+ * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+ * OC_EH_SLOW and etc in entity handler callback,
+ * ocstack will be not send response automatically to client
+ * except for error return value like OC_EH_ERROR.
+ *
+ * If you want to send response to client with specific result,
+ * OCDoResponse API should be called with the result value.
+ *
+ * e.g)
+ *
+ * OCEntityHandlerResponse response;
+ *
+ * ..
+ *
+ * response.ehResult = OC_EH_CHANGED;
+ *
+ * ..
+ *
+ * OCDoResponse(&response)
+ *
+ * ..
+ *
+ * return OC_EH_OK;
  */
 typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri, void* callbackParam);
