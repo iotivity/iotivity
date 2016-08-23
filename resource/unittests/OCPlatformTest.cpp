@@ -163,10 +163,7 @@ namespace OCPlatformTest
         return resourceHandle;
     }
 
-    //Configure
-    // Enable it when the stack throw an exception
-    // https://jira.iotivity.org/browse/IOT-428
-    TEST(ConfigureTest, DISABLED_ConfigureInvalidModeType)
+    TEST(ConfigureTest, ConfigureInvalidModeType)
     {
         PlatformConfig cfg {
              OC::ServiceType::InProc,
@@ -179,9 +176,7 @@ namespace OCPlatformTest
          EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
      }
 
-    // Enable it when the stack throw an exception
-    // https://jira.iotivity.org/browse/IOT-428
-    TEST(ConfigureTest, DISABLED_ConfigureInvalidServiceType)
+    TEST(ConfigureTest, ConfigureInvalidServiceType)
     {
         PlatformConfig cfg {
              (OC::ServiceType)99,
@@ -194,9 +189,7 @@ namespace OCPlatformTest
          EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
      }
 
-    // Enable it when the stack throw an exception
-    // https://jira.iotivity.org/browse/IOT-428
-    TEST(ConfigureTest, DISABLED_ConfigureClientOutProc)
+    TEST(ConfigureTest, ConfigureClientOutProc)
     {
         PlatformConfig cfg {
             OC::ServiceType::OutOfProc,
