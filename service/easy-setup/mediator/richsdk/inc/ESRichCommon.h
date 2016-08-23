@@ -533,11 +533,11 @@ namespace OIC
                     if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
                     {
                         if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
-                {
+                        {
                             for(auto it : child->getValue
                                         <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
-                    {
-                        modes.push_back(static_cast<WIFI_MODE>(it));
+                            {
+                                modes.push_back(static_cast<WIFI_MODE>(it));
                             }
                         }
                     }
