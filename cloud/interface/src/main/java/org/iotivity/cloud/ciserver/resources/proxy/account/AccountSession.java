@@ -51,6 +51,9 @@ public class AccountSession extends Resource {
             throws ServerException {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+
+        checkPayloadException(Constants.REQ_LOGIN, payloadData);
+
         if (payloadData.get(Constants.REQ_LOGIN).toString().equals("false")) {
             payloadData.put(Constants.USER_ID, srcDevice.getUserId());
             payloadData.put(Constants.DEVICE_ID, srcDevice.getDeviceId());

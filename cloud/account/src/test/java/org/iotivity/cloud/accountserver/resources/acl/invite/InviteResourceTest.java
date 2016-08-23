@@ -52,7 +52,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class InviteResourceTest {
-    private static final String           INVITE_URI        = "/.well-known/ocf/acl/invite";
+    private static final String           INVITE_URI        = Constants.INVITE_FULL_URI;
 
     private static final String           TEST_INVITE_USER  = "u0001";
     private static final String           TEST_INVITED_USER = "u0002";
@@ -141,7 +141,8 @@ public class InviteResourceTest {
                 if (latchInviteUser.getCount() == 0) {
 
                     assertEquals(resp.getStatus(), ResponseStatus.CONTENT);
-                    assertTrue(checkResponsePayload(resp, Constants.RESP_INVITE));
+                    assertTrue(
+                            checkResponsePayload(resp, Constants.RESP_INVITE));
                     assertTrue(checkInviteInfo(resp.getPayload(),
                             Constants.RESP_INVITE, TEST_GROUP_ID,
                             TEST_INVITED_USER));
@@ -178,8 +179,8 @@ public class InviteResourceTest {
                 if (latchInvitedUser.getCount() == 0) {
 
                     assertEquals(resp.getStatus(), ResponseStatus.CONTENT);
-                    assertTrue(checkResponsePayload(resp,
-                            Constants.RESP_INVITED));
+                    assertTrue(
+                            checkResponsePayload(resp, Constants.RESP_INVITED));
                     assertTrue(checkInviteInfo(resp.getPayload(),
                             Constants.RESP_INVITED, TEST_GROUP_ID,
                             TEST_INVITE_USER));
@@ -277,8 +278,8 @@ public class InviteResourceTest {
     private void deleteInvitation(String gid, String uid, String mid) {
 
         String uriQuery = Constants.REQ_GROUP_ID + "=" + gid + ";"
-                + Constants.REQ_UUID_ID + "=" + uid + ";"
-                + Constants.REQ_MEMBER + "=" + mid;
+                + Constants.REQ_UUID_ID + "=" + uid + ";" + Constants.REQ_MEMBER
+                + "=" + mid;
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 INVITE_URI, uriQuery);
@@ -286,7 +287,8 @@ public class InviteResourceTest {
         mInviteResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    private void getInvitation(String uid, CoapDevice device, Observe observeOpt) {
+    private void getInvitation(String uid, CoapDevice device,
+            Observe observeOpt) {
 
         String uriQuery = Constants.REQ_UUID_ID + "=" + uid;
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
@@ -314,10 +316,11 @@ public class InviteResourceTest {
                 mCbor.encodingPayloadToCbor(payload));
     }
 
-    private boolean checkResponsePayload(IResponse response, String propertyName) {
+    private boolean checkResponsePayload(IResponse response,
+            String propertyName) {
 
-        HashMap<String, Object> payloadData = mCbor.parsePayloadFromCbor(
-                response.getPayload(), HashMap.class);
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(response.getPayload(), HashMap.class);
 
         return payloadData.get(propertyName) != null ? true : false;
     }
@@ -325,8 +328,8 @@ public class InviteResourceTest {
     private boolean checkInviteInfo(byte[] payload, String propertyKey,
             String gid, String mid) {
 
-        HashMap<String, Object> paredPayload = mCbor.parsePayloadFromCbor(
-                payload, HashMap.class);
+        HashMap<String, Object> paredPayload = mCbor
+                .parsePayloadFromCbor(payload, HashMap.class);
 
         @SuppressWarnings("unchecked")
         ArrayList<HashMap<String, Object>> invitationList = (ArrayList<HashMap<String, Object>>) paredPayload

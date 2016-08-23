@@ -71,6 +71,12 @@ public class ResourceFind extends Resource {
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
 
+                    if (payloadData == null) {
+                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                                mRequest, ResponseStatus.BAD_REQUEST));
+                        return;
+                    }
+
                     if (mRequest.getUriQuery() != null
                             && mRequest.getUriQueryMap()
                                     .containsKey(Constants.REQ_DEVICE_ID)) {

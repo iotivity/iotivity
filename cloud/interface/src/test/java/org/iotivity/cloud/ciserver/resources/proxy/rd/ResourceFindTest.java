@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -11,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ClientException;
@@ -39,25 +60,24 @@ public class ResourceFindTest {
     private static final String TEST_RESOURCE_FIND_URI = Constants.WELL_KNOWN_FULL_URI;
     private String              di                     = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     private CoapDevice          mockDevice             = mock(CoapDevice.class);
-    IResponse                   res                    = null;
-    IRequest                    req                    = null;
-    ConnectorPool               connectorPool          = null;
-    DeviceServerSystem          deviceServerSystem     = new DeviceServerSystem();
-    final CountDownLatch        latch                  = new CountDownLatch(1);
+    private IResponse           mRes                   = null;
+    private IRequest            mReq                   = null;
+    private DeviceServerSystem  mDeviceServerSystem    = new DeviceServerSystem();
+    final CountDownLatch        mLatch                 = new CountDownLatch(1);
 
     @Mock
-    IRequestChannel             requestChannel;
+    private IRequestChannel     mRequestChannel;
 
     @InjectMocks
-    ResourceFind                resHandler             = new ResourceFind();
+    private ResourceFind        mResHandler            = new ResourceFind();
 
     @Before
     public void setUp() throws Exception {
-        res = null;
-        req = null;
+        mRes = null;
+        mReq = null;
         Mockito.doReturn("mockDeviceId").when(mockDevice).getDeviceId();
         MockitoAnnotations.initMocks(this);
-        deviceServerSystem.addResource(resHandler);
+        mDeviceServerSystem.addResource(mResHandler);
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -65,7 +85,7 @@ public class ResourceFindTest {
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapResponse resp = (CoapResponse) args[0];
-                res = resp;
+                mRes = resp;
                 return resp;
             }
         }).when(mockDevice).sendResponse(Mockito.anyObject());
@@ -81,11 +101,11 @@ public class ResourceFindTest {
                         "\t----------uripath : " + request.getUriPath());
                 System.out.println(
                         "\t---------uriquery : " + request.getUriQuery());
-                req = request;
-                latch.countDown();
+                mReq = request;
+                mLatch.countDown();
                 return null;
             }
-        }).when(requestChannel).sendRequest(Mockito.any(IRequest.class),
+        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
     }
 
@@ -94,7 +114,7 @@ public class ResourceFindTest {
             .createRequest(RequestMethod.GET, TEST_RESOURCE_FIND_URI,
                     "rt=core.light;di=" + "device1");
     @InjectMocks
-    ResourceFind.AccountReceiveHandler specificDeviceHandler = resHandler.new AccountReceiveHandler(
+    ResourceFind.AccountReceiveHandler specificDeviceHandler = mResHandler.new AccountReceiveHandler(
             requestSpecificDevice, mockDevice);
 
     @Test
@@ -104,8 +124,8 @@ public class ResourceFindTest {
                 "\t--------------onResponseReceived(RD) Resource Find (specific deivce) Test------------");
         IResponse response = responseFromAccountServer();
         specificDeviceHandler.onResponseReceived(response);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
-        assertTrue(req.getMethod() == RequestMethod.GET);
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
+        assertTrue(mReq.getMethod() == RequestMethod.GET);
         assertTrue(queryMap.get("rt").contains("core.light"));
         assertTrue(queryMap.get("di").contains("device1"));
         assertFalse(queryMap.get("di").contains("device2"));
@@ -117,7 +137,7 @@ public class ResourceFindTest {
             .createRequest(RequestMethod.GET, TEST_RESOURCE_FIND_URI,
                     "rt=core.light");
     @InjectMocks
-    ResourceFind.AccountReceiveHandler handler              = resHandler.new AccountReceiveHandler(
+    ResourceFind.AccountReceiveHandler handler              = mResHandler.new AccountReceiveHandler(
             requestEntireDevices, mockDevice);
 
     @Test
@@ -126,8 +146,8 @@ public class ResourceFindTest {
                 "\t--------------onResponseReceived(RD) Resource Find (entire deivces) Test------------");
         IResponse response = responseFromAccountServer();
         handler.onResponseReceived(response);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
-        assertTrue(req.getMethod() == RequestMethod.GET);
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
+        assertTrue(mReq.getMethod() == RequestMethod.GET);
         assertTrue(queryMap.get("rt").contains("core.light"));
         assertTrue(queryMap.get("di").contains("device1"));
         assertTrue(queryMap.get("di").contains("device2"));
@@ -138,7 +158,7 @@ public class ResourceFindTest {
     IRequest                           requestEntireDevicesNoQuery = MessageBuilder
             .createRequest(RequestMethod.GET, TEST_RESOURCE_FIND_URI, null);
     @InjectMocks
-    ResourceFind.AccountReceiveHandler entireDevicesNoQueryHandler = resHandler.new AccountReceiveHandler(
+    ResourceFind.AccountReceiveHandler entireDevicesNoQueryHandler = mResHandler.new AccountReceiveHandler(
             requestEntireDevicesNoQuery, mockDevice);
 
     @Test
@@ -148,8 +168,8 @@ public class ResourceFindTest {
                 "\t--------------onResponseReceived(RD) Resource Find (entire deivces, No Query) Test------------");
         IResponse response = responseFromAccountServer();
         entireDevicesNoQueryHandler.onResponseReceived(response);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
-        assertTrue(req.getMethod() == RequestMethod.GET);
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
+        assertTrue(mReq.getMethod() == RequestMethod.GET);
         assertTrue(queryMap.get("di").contains("device1"));
         assertTrue(queryMap.get("di").contains("device2"));
         assertTrue(queryMap.get("di").contains("device3"));
@@ -162,11 +182,11 @@ public class ResourceFindTest {
                 "\t--------------OnRequestReceived(RD) Resource Find (entire deivces) Test------------");
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 TEST_RESOURCE_FIND_URI, "rt=core.light;di=" + di);
-        resHandler.onRequestReceived(mockDevice, request);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
-        assertTrue(latch.await(1L, SECONDS));
+        mResHandler.onRequestReceived(mockDevice, request);
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
+        assertTrue(mLatch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     @Test
@@ -176,13 +196,13 @@ public class ResourceFindTest {
                 "\t--------------OnRequestReceived(RD) Resource Find (specific deivce) Test------------");
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 TEST_RESOURCE_FIND_URI, "rt=core.light;di=" + di);
-        resHandler.onRequestReceived(mockDevice, request);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
+        mResHandler.onRequestReceived(mockDevice, request);
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         // assertion: if the request packet from the CI contains the query
         // which includes device ID and the accesstoken
-        assertTrue(latch.await(1L, SECONDS));
+        assertTrue(mLatch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     private IResponse responseFromAccountServer() {

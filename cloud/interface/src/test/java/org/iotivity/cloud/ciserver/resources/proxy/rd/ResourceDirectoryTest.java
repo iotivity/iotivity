@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -9,11 +31,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.protocols.IRequest;
-import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
@@ -32,81 +52,112 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class ResourceDirectoryTest {
-    private static final String TEST_RD_URI        = Constants.RD_FULL_URI;
-    public static final String  DEVICE_PRS_REQ_URI = Constants.DEVICE_PRESENCE_FULL_URI;
-    public static final String  DEVICE_LIST_KEY    = "devices";
-    public static final String  RES_PRS_URI        = Constants.RESOURCE_PRESENCE_FULL_URI;
+    private static final String TEST_RD_URI         = Constants.RD_FULL_URI;
+    public static final String  DEVICE_PRS_REQ_URI  = Constants.DEVICE_PRESENCE_FULL_URI;
+    public static final String  DEVICE_LIST_KEY     = "devices";
+    public static final String  RES_PRS_URI         = Constants.RESOURCE_PRESENCE_FULL_URI;
     // private DeviceServerSystem deviceServerSystem = new DeviceServerSystem();
-    private String              di                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    String                      userId             = "testuser";
-    private CoapDevice          mockDevice         = null;
-    IResponse                   res                = null;
-    IRequest                    req                = null;
-    ConnectorPool               connectorPool      = null;
-    DeviceServerSystem          deviceServerSystem = new DeviceServerSystem();
-    final CountDownLatch        latch              = new CountDownLatch(1);
-    @Mock
-    IRequestChannel             requestChannel;
+    private String              mDi                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
+    String                      mUserId             = "testuser";
+    private CoapDevice          mMockDevice         = null;
+    IRequest                    mReqRDServer        = null;
+    IRequest                    mReqASServer        = null;
+    DeviceServerSystem          mDeviceServerSystem = new DeviceServerSystem();
+    final CountDownLatch        mLatch              = new CountDownLatch(1);
+    @Mock(name = "mRDServer")
+    IRequestChannel             mRequestChannelRDServer;
+    @Mock(name = "mASServer")
+    IRequestChannel             mRequestChannelASServer;
 
     @InjectMocks
-    ResourceDirectory           rdHandler          = new ResourceDirectory();
+    ResourceDirectory           mRdHandler          = new ResourceDirectory();
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        deviceServerSystem.addResource(rdHandler);
-        mockDevice = mock(CoapDevice.class);
-        // callback requestmsg mock from (IRequestChannel) server
+        mDeviceServerSystem.addResource(mRdHandler);
+        mMockDevice = mock(CoapDevice.class);
+        Mockito.doReturn(mUserId).when(mMockDevice).getUserId();
+
         Mockito.doAnswer(new Answer<Object>() {
             @Override
             public CoapRequest answer(InvocationOnMock invocation)
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapRequest request = (CoapRequest) args[0];
+                System.out.println("\t----------mRDServer --------------");
                 System.out.println(
                         "\t----------payload : " + request.getPayloadString());
-                System.out.println(
-                        "\t----------uripath : " + request.getUriPath());
+                System.out.println("\t----------uripath : "
+                        + request.getMethod() + " " + request.getUriPath());
                 System.out.println(
                         "\t---------uriquery : " + request.getUriQuery());
-                req = request;
-                latch.countDown();
+                mReqRDServer = request;
+                mLatch.countDown();
                 return request;
             }
-        }).when(requestChannel).sendRequest(Mockito.any(IRequest.class),
-                Mockito.any(CoapDevice.class));
+        }).when(mRequestChannelRDServer).sendRequest(
+                Mockito.any(IRequest.class), Mockito.any(CoapDevice.class));
+
+        Mockito.doAnswer(new Answer<Object>() {
+            @Override
+            public CoapRequest answer(InvocationOnMock invocation)
+                    throws Throwable {
+                Object[] args = invocation.getArguments();
+                CoapRequest request = (CoapRequest) args[0];
+                System.out.println("\t----------mASServer --------------");
+                System.out.println(
+                        "\t----------payload : " + request.getPayloadString());
+                System.out.println("\t----------uripath : "
+                        + request.getMethod() + " " + request.getUriPath());
+                System.out.println(
+                        "\t---------uriquery : " + request.getUriQuery());
+                mReqASServer = request;
+                mLatch.countDown();
+                return request;
+            }
+        }).when(mRequestChannelASServer).sendRequest(
+                Mockito.any(IRequest.class), Mockito.any(CoapDevice.class));
 
     }
 
     @Test
-    public void testRDResourceOnRequestReceived() throws Exception {
+    public void testRDResourcePublishOnRequestReceived() throws Exception {
         IRequest request = makeResourcePublishRequest();
-        deviceServerSystem.onRequestReceived(mockDevice, request);
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriPath().contains(Constants.GROUP_FULL_URI + "/"));
+        mDeviceServerSystem.onRequestReceived(mMockDevice, request);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReqASServer.getMethod().equals(RequestMethod.POST));
+        assertTrue(mReqASServer.getUriPath()
+                .contains(Constants.GROUP_FULL_URI + "/"));
+    }
+
+    @Test
+    public void testRDResourceDeleteOnRequestReceived() throws Exception {
+        IRequest request = makeResourceDeleteRequest();
+        mDeviceServerSystem.onRequestReceived(mMockDevice, request);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReqRDServer.getMethod().equals(RequestMethod.DELETE));
+        assertTrue(mReqRDServer.getUriPath().contains(TEST_RD_URI));
     }
 
     IRequest                                rdPublishRequest      = makeResourcePublishRequest();
 
     @InjectMocks
-    ResourceDirectory.AccountReceiveHandler accountReceiveHandler = rdHandler.new AccountReceiveHandler(
-            rdPublishRequest, mockDevice);
+    ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
+            rdPublishRequest, mMockDevice);
 
     @Test
-    public void testRDResourceOnResponseReceived() throws Exception {
+    public void testRDResourcePublishOnResponseReceived() throws Exception {
         IRequest request = makeResourcePublishRequest();
-        deviceServerSystem.onRequestReceived(mockDevice, request);
-        // assertion : request msg to the AS is identical to the request msg
-        // from the client
         accountReceiveHandler.onResponseReceived(
                 MessageBuilder.createResponse(request, ResponseStatus.CHANGED));
-        assertEquals(req, rdPublishRequest);
-        assertTrue(latch.await(1L, SECONDS));
+        assertEquals(mReqRDServer, rdPublishRequest);
+        assertTrue(mLatch.await(1L, SECONDS));
     }
 
     private IRequest makeResourcePublishRequest() {
         HashMap<Object, Object> payload = new HashMap<>();
-        payload.put(Constants.DEVICE_ID, di);
+        payload.put(Constants.DEVICE_ID, mDi);
         ArrayList<HashMap<Object, Object>> publishLinks = new ArrayList<>();
         HashMap<Object, Object> link = new HashMap<>();
         link.put("href", "/a/light");
@@ -126,6 +177,13 @@ public class ResourceDirectoryTest {
                 TEST_RD_URI, "rt" + "=" + "oic.wk.rdpub",
                 ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payload));
+        return request;
+    }
+
+    private IRequest makeResourceDeleteRequest() {
+        IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
+                TEST_RD_URI, "di" + "=" + mDi + ";" + "ins" + "=" + "1234",
+                null, null);
         return request;
     }
 
