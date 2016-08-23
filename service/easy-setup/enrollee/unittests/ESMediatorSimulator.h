@@ -35,24 +35,31 @@
 #include "OCPlatform.h"
 
 #define PROV_RESOURCE_TYPE "ocf.wk.prov"
+#define WIFI_RESOURCE_TYPE "ocf.wk.wifi"
+#define DEV_RESOURCE_TYPE  "ocf.wk.devconf"
+#define CLOUD_RESOURCE_TYPE "ocf.wk.cloudserver"
 
 using namespace OIC::Service;
 
 class ESMediatorSimulator
 {
 private:
+    std::shared_ptr<RemoteEnrollee> m_remoteEnrollee;
     std::function<void(std::shared_ptr<OC::OCResource> resource)> m_discoveryCb;
     std::function<void(std::shared_ptr< GetConfigurationStatus > status)> m_getConfigurationCb;
     std::function<void(std::shared_ptr< GetEnrolleeStatus >)> m_getStatusCb;
     std::function<void(std::shared_ptr< DevicePropProvisioningStatus >)> m_DevicePropProvisioningCb;
     std::function<void(std::shared_ptr< CloudPropProvisioningStatus >)> m_CloudPropProvisioningCb;
-
-    std::shared_ptr<RemoteEnrollee> m_remoteEnrollee;
+    std::function<void(const OCRepresentation&)> m_getWifiCb;
+    std::function<void(const OCRepresentation&)> m_getCloudCb;
+    std::function<void(const OCRepresentation&)> m_getDevConfCb;
+    std::function<void(const OCRepresentation&)> m_provPutCb;
 
 public:
     ESMediatorSimulator()
     : m_remoteEnrollee(), m_discoveryCb(), m_getConfigurationCb(), m_getStatusCb(),
-    m_DevicePropProvisioningCb(), m_CloudPropProvisioningCb()
+    m_DevicePropProvisioningCb(), m_CloudPropProvisioningCb(),
+    m_getWifiCb(), m_getCloudCb(), m_getDevConfCb(), m_provPutCb()
     {
     };
     ~ESMediatorSimulator() = default;
@@ -82,6 +89,36 @@ public:
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetConfiguration,
+                                                                    this, std::placeholders::_1));
+    }
+
+    void getWifiRsrc(std::function<void(const OCRepresentation& rep)> cb)
+    {
+        m_getWifiCb = cb;
+        std::string uri = std::string("/oic/res?rt=") + WIFI_RESOURCE_TYPE;
+        OC::OCPlatform::findResource("", uri,
+                OCConnectivityType::CT_DEFAULT,
+                std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetWifiRsrc,
+                                                                    this, std::placeholders::_1));
+    }
+
+    void getCloudRsrc(std::function<void(const OCRepresentation& rep)> cb)
+    {
+        m_getCloudCb = cb;
+        std::string uri = std::string("/oic/res?rt=") + CLOUD_RESOURCE_TYPE;
+        OC::OCPlatform::findResource("", uri,
+                OCConnectivityType::CT_DEFAULT,
+                std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetCloudRsrc,
+                                                                    this, std::placeholders::_1));
+    }
+
+    void getDevConfiguration(std::function<void(const OCRepresentation& rep)> cb)
+    {
+        m_getDevConfCb = cb;
+        std::string uri = std::string("/oic/res?rt=") + DEV_RESOURCE_TYPE;
+        OC::OCPlatform::findResource("", uri,
+                OCConnectivityType::CT_DEFAULT,
+                std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToGetDevConf,
                                                                     this, std::placeholders::_1));
     }
 
@@ -115,6 +152,17 @@ public:
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToProvisionCloudProperties,
+                                                                    this, std::placeholders::_1));
+    }
+
+    void putProvRsrc(std::function<void(const OCRepresentation& rep)> cb)
+    {
+        m_provPutCb = cb;
+        m_remoteEnrollee = NULL;
+        std::string uri = std::string("/oic/res?rt=") + PROV_RESOURCE_TYPE;
+        OC::OCPlatform::findResource("", uri,
+                OCConnectivityType::CT_DEFAULT,
+                std::bind(&ESMediatorSimulator::discoverRemoteEnrolleeCbToPutProvRsrc,
                                                                     this, std::placeholders::_1));
     }
 
@@ -194,6 +242,118 @@ private:
         }
     }
 
+    void getWifiRsrcCallback(const HeaderOptions& , const OCRepresentation& rep, const int eCode)
+    {
+        try
+        {
+            if(eCode == OC_STACK_OK)
+            {
+                std::cout << "GET request was successful" << std::endl;
+                std::cout << "Resource URI: " << rep.getUri() << std::endl;
+                if(m_getWifiCb != NULL)
+                {
+                    m_getWifiCb(rep);
+                    m_getWifiCb = NULL;
+                }
+            }
+            else
+            {
+                std::cout << "onGET Response error: " << eCode << std::endl;
+                std::exit(-1);
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Exception: " << e.what() << " in onGet" << std::endl;
+        }
+    }
+
+    void discoverRemoteEnrolleeCbToGetWifiRsrc(std::shared_ptr<OC::OCResource> resource)
+    {
+        if(!resource->getResourceTypes().at(0).compare(WIFI_RESOURCE_TYPE) && m_getWifiCb)
+        {
+            QueryParamsMap test;
+            resource->get(test, std::bind(
+                    &ESMediatorSimulator::getWifiRsrcCallback, this, std::placeholders::_1,
+                                            std::placeholders::_2, std::placeholders::_3));
+        }
+    }
+
+    void getCloudRsrcCallback(const HeaderOptions& , const OCRepresentation& rep, const int eCode)
+    {
+        try
+        {
+            if(eCode == OC_STACK_OK)
+            {
+                std::cout << "GET request was successful" << std::endl;
+                std::cout << "Resource URI: " << rep.getUri() << std::endl;
+                if(m_getCloudCb != NULL)
+                {
+                    m_getCloudCb(rep);
+                    m_getCloudCb = NULL;
+                }
+            }
+            else
+            {
+                std::cout << "onGET Response error: " << eCode << std::endl;
+                std::exit(-1);
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Exception: " << e.what() << " in onGet" << std::endl;
+        }
+    }
+
+
+    void discoverRemoteEnrolleeCbToGetCloudRsrc(std::shared_ptr<OC::OCResource> resource)
+    {
+        if(!resource->getResourceTypes().at(0).compare(CLOUD_RESOURCE_TYPE) && m_getCloudCb)
+        {
+            QueryParamsMap test;
+            resource->get(test, std::bind(
+                    &ESMediatorSimulator::getCloudRsrcCallback, this, std::placeholders::_1,
+                                            std::placeholders::_2, std::placeholders::_3));
+        }
+    }
+
+    void getDevConfCallback(const HeaderOptions&, const OCRepresentation& rep, const int eCode)
+    {
+        try
+        {
+            if(eCode == OC_STACK_OK)
+            {
+                std::cout << "GET request was successful" << std::endl;
+                std::cout << "Resource URI: " << rep.getUri() << std::endl;
+                if(m_getDevConfCb != NULL)
+                {
+                    m_getDevConfCb(rep);
+                    m_getDevConfCb = NULL;
+                }
+            }
+            else
+            {
+                std::cout << "onGET Response error: " << eCode << std::endl;
+                std::exit(-1);
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Exception: " << e.what() << " in onGet" << std::endl;
+        }
+    }
+
+    void discoverRemoteEnrolleeCbToGetDevConf(std::shared_ptr<OC::OCResource> resource)
+    {
+        if(!resource->getResourceTypes().at(0).compare(DEV_RESOURCE_TYPE) && m_getDevConfCb)
+        {
+            QueryParamsMap test;
+            resource->get(test, std::bind(
+                    &ESMediatorSimulator::getDevConfCallback, this, std::placeholders::_1,
+                                            std::placeholders::_2, std::placeholders::_3));
+        }
+    }
+
     void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
     {
         if(m_getStatusCb != NULL)
@@ -264,7 +424,7 @@ private:
         if(m_CloudPropProvisioningCb != NULL)
         {
             m_CloudPropProvisioningCb(cloudPropProvisioningStatus);
-            if(cloudPropProvisioningStatus->getESCloudState() == ES_CLOUD_PROVISIONING_SUCCESS)
+            if(cloudPropProvisioningStatus->getESResult() == ES_OK)
             {
                 m_CloudPropProvisioningCb = NULL;
             }
@@ -294,6 +454,37 @@ private:
             }
         }
     }
+
+    void putProvRsrcCallabck(const HeaderOptions&, const OCRepresentation& rep, const int )
+    {
+        cout << "putProvRsrcCallback is called" << endl;
+
+        if(m_provPutCb != NULL){
+            m_provPutCb(rep);
+            m_provPutCb = NULL;
+        }
+
+    }
+
+    void discoverRemoteEnrolleeCbToPutProvRsrc(std::shared_ptr<OC::OCResource> resource)
+    {
+        m_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
+
+        if(m_remoteEnrollee != NULL)
+        {
+            if(m_provPutCb)
+            {
+                OCRepresentation rep;
+                QueryParamsMap test;
+                resource->put(rep, test, std::bind(
+                        &ESMediatorSimulator::putProvRsrcCallabck, this, std::placeholders::_1,
+                                                std::placeholders::_2, std::placeholders::_3));
+                }
+
+        }
+
+    }
+
 };
 
 

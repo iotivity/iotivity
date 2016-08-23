@@ -48,6 +48,9 @@ android {
         buildConfigField "int", 'WITH_MQ_SUB', WITH_MQ_SUB
         buildConfigField "int", 'WITH_MQ_BROKER', WITH_MQ_BROKER
         buildConfigField "String", 'RD_MODE', "\"RD_MODE\""
+        buildConfigField "int", 'WITH_TRANSPORT_EDR', WITH_TRANSPORT_EDR
+        buildConfigField "int", 'WITH_TRANSPORT_BLE', WITH_TRANSPORT_BLE
+        buildConfigField "int", 'WITH_TRANSPORT_NFC', WITH_TRANSPORT_NFC
     }
     buildTypes {
         release {
@@ -64,6 +67,22 @@ android {
             manifest.srcFile 'src/main/AndroidManifest.xml'
             jniLibs.srcDir 'libs'
             jni.srcDirs = [] //disable automatic ndk-build call
+            java{
+                if (WITH_TRANSPORT_EDR == "0") {
+                    exclude "**/ca/CaBtPairingInterface.java"
+                    exclude "**/ca/CaEdrInterface.java"
+                    println 'excluded EDR interface'
+                    }
+                if (WITH_TRANSPORT_BLE == "0") {
+                    exclude "**/ca/CaLeClientInterface.java"
+                    exclude "**/ca/CaLeServerInterface.java"
+                    println 'excluded BLE interface'
+                    }
+                if (WITH_TRANSPORT_NFC == "0") {
+                    exclude "**/ca/CaNfcInterface.java"
+                    println 'excluded NFC interface'
+                    }
+            }
         }
     }
 }

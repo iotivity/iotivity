@@ -802,13 +802,8 @@ namespace OC
         {
             for (auto& paramList : param.second)
             {
-                paramsList << param.first << '=' << paramList;
-                if (paramList != param.second.back())
-                {
-                    paramsList << '&';
-                }
+                paramsList << param.first << '=' << paramList << ';';
             }
-            paramsList << ';';
         }
 
         std::string queryString = paramsList.str();

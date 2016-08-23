@@ -301,21 +301,6 @@ static void CASelectReturned(fd_set *readFds)
         FD_CLR(caglobals.tcp.connectionFds[0], readFds);
         return;
     }
-    else if (-1 != caglobals.tcp.connectionFds[0] &&
-            FD_ISSET(caglobals.tcp.connectionFds[0], readFds))
-    {
-        // new connection was created from remote device.
-        // exit the function to update read file descriptor.
-        char buf[MAX_ADDR_STR_SIZE_CA] = {0};
-        ssize_t len = read(caglobals.tcp.connectionFds[0], buf, sizeof (buf));
-        if (-1 == len)
-        {
-            return;
-        }
-        OIC_LOG_V(DEBUG, TAG, "Received new connection event with [%s]", buf);
-        FD_CLR(caglobals.tcp.connectionFds[0], readFds);
-        return;
-    }
     else
     {
         uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);

@@ -64,6 +64,9 @@ if target_os in ['android']:
     server_builder_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
+if server_builder_env.get('SECURED') == '1':
+	if server_builder_env.get('WITH_TCP') == True:
+		server_builder_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Source files and Targets
 ######################################################################

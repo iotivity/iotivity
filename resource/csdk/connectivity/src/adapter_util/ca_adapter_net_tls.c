@@ -65,6 +65,11 @@
  * @brief uuid prefix in certificate subject field
  */
 #define UUID_PREFIX "uuid:"
+/**
+ * @def USERID_PREFIX
+ * @brief userid prefix in certificate alternative subject name field
+ */
+#define USERID_PREFIX "userid:"
 
 /**
  * @def NET_TLS_TAG
@@ -1274,6 +1279,7 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 {
                     char uuid[UUID_LENGTH * 2 + 5] = {0};
                     void * uuidPos = NULL;
+                    void * userIdPos = NULL;
                     const mbedtls_x509_crt * peerCert = mbedtls_ssl_get_peer_cert(&peer->ssl);
                     ret = (NULL == peerCert ? -1 : 0);
                     TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to retrieve subject",
@@ -1292,6 +1298,20 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                     ret = ConvertStrToUuid(uuid, &peer->sep.identity);
                     TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to convert subject",
                                                                                1, CA_STATUS_FAILED);
+
+                    userIdPos = memmem((void *) peerCert->subject_raw.p, peerCert->subject_raw.len,
+                                                 (void *) USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
+                    if (NULL != userIdPos)
+                    {
+                        memcpy(uuid, userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
+                        ret = ConvertStrToUuid(uuid, &peer->sep.userId);
+                        TLS_CHECK_HANDSHAKE_FAIL(peer, ret,
+                                 "Failed to convert subject alternative name", 1, CA_STATUS_FAILED);
+                    }
+                    else
+                    {
+                        OIC_LOG(DEBUG, NET_TLS_TAG, "Subject alternative name not found");
+                    }
                 }
             }
             ca_mutex_unlock(g_tlsContextMutex);

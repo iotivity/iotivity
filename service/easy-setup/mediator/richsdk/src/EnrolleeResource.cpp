@@ -38,17 +38,16 @@ namespace OIC
             m_ocResource = resource;
         }
 
-        void EnrolleeResource::checkProvInformationCb(const HeaderOptions& /*headerOptions*/,
-                const OCRepresentation& rep, const int eCode)
+        void EnrolleeResource::onProvisioningResponse(const HeaderOptions& /*headerOptions*/,
+                const OCRepresentation& /*rep*/, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
-                    rep.getUri().c_str(),
-                    eCode);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onProvisioningResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "checkProvInformationCb : Provisioning is failed ");
+                        "onProvisioningResponse : Provisioning is failed ");
                 std::shared_ptr< DevicePropProvisioningStatus > provStatus = std::make_shared<
                         DevicePropProvisioningStatus >(ESResult::ES_ERROR);
                 m_devicePropProvStatusCb(provStatus);
@@ -56,7 +55,7 @@ namespace OIC
             }
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                    "checkProvInformationCb : Provisioning is success. ");
+                    "onProvisioningResponse : Provisioning is success. ");
 
             std::shared_ptr< DevicePropProvisioningStatus > provStatus = std::make_shared<
                     DevicePropProvisioningStatus >(ESResult::ES_OK);
@@ -66,8 +65,8 @@ namespace OIC
         void EnrolleeResource::onGetStatusResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetStatusResponse : %s, eCode = %d",
-                    rep.getUri().c_str(), eCode);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetStatusResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
@@ -80,7 +79,7 @@ namespace OIC
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
+                    result = ESResult::ES_UNAUTHORIZED_REQ;
                 }
 
                 EnrolleeStatus enrolleeStatus(rep);
@@ -102,8 +101,8 @@ namespace OIC
         void EnrolleeResource::onGetConfigurationResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : %s, eCode = %d",
-                    rep.getUri().c_str(), eCode);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
@@ -116,7 +115,7 @@ namespace OIC
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
+                    result = ESResult::ES_UNAUTHORIZED_REQ;
                 }
 
                 EnrolleeConf enrolleeConf(rep);
@@ -218,7 +217,7 @@ namespace OIC
             }
         }
 
-        void EnrolleeResource::provisionEnrollee(const DeviceProp& deviceProp)
+        void EnrolleeResource::provisionProperties(const DeviceProp& deviceProp)
         {
             if (m_ocResource == nullptr)
             {
@@ -233,7 +232,7 @@ namespace OIC
                     std::function<
                             void(const HeaderOptions& headerOptions,
                                     const OCRepresentation& rep, const int eCode) >(
-                    std::bind(&EnrolleeResource::checkProvInformationCb, this,
+                    std::bind(&EnrolleeResource::onProvisioningResponse, this,
                     std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3)));
         }

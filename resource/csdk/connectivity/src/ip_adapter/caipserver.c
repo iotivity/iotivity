@@ -1503,7 +1503,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     }
 
     *info = eps;
-    *size = len;
+    *size = length;
 
     u_arraylist_destroy(iflist);
 

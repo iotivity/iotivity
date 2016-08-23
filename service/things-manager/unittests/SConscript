@@ -71,6 +71,9 @@ ThingsManager_gtest_env.PrependUnique(LIBS = [
     'oc',
     'octbstack'])
 
+if ThingsManager_gtest_env.get('SECURED') == '1':
+	if ThingsManager_gtest_env.get('WITH_TCP') == True:
+		ThingsManager_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################

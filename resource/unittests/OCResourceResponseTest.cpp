@@ -129,9 +129,9 @@ namespace OCResourceResponseTest
         std::string resourceInterface = DEFAULT_INTERFACE;
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
-        EXPECT_EQ(OC_STACK_OK, OCCreateResource(&resHandle, resourceTypeName.c_str(),
-                resourceInterface.c_str(), resourceURI.c_str(), nullptr, nullptr,
-                resourceProperty));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(resHandle, resourceURI,
+                                         resourceTypeName, resourceInterface, nullptr,
+                                         resourceProperty));
         EXPECT_EQ(NULL, response.getResourceHandle());
         EXPECT_NO_THROW(response.setResourceHandle(resHandle));
         EXPECT_NE(static_cast<OCResourceHandle>(NULL), response.getResourceHandle());
