@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderTopic.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 NSResult NSSendTopicUpdation();
 
@@ -301,6 +303,8 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
 
+    NS_LOG_V(DEBUG, "TOPIC consumer ID = %s", consumerId);
+
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
     while(NSStorageDelete(consumerTopicList, consumerId) != NS_FAIL);
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
@@ -315,7 +319,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
     for(int i = 0; i <(int)dimensionSize; i++)
     {
         char * topicName = NULL;
-        int topicState = 0;
+        int64_t topicState = 0;
 
         OCRepPayloadGetPropString(topicListPayload[i], NS_ATTRIBUTE_TOPIC_NAME, &topicName);
         OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &topicState);
@@ -323,8 +327,8 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
 
         if(NS_TOPIC_SUBSCRIBED == (NSTopicState)topicState)
         {
-            NSCacheTopicSubData * topicSubData =
-            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
+            NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *)
+                    OICMalloc(sizeof(NSCacheTopicSubData));
 
             OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
             topicSubData->topicName = OICStrdup(topicName);
