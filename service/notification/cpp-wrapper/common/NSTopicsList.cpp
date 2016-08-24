@@ -36,15 +36,6 @@ namespace OIC
                 topicsNode = topicsNode->next;
             }
 
-            topicsNode = topics;
-            while (topicsNode != nullptr)
-            {
-                topics = topics->next;
-                if (topicsNode->topicName)
-                    OICFree(topicsNode->topicName);
-                OICFree(topicsNode);
-                topicsNode = topics;
-            }
         }
 
         NSTopicsList::~NSTopicsList()

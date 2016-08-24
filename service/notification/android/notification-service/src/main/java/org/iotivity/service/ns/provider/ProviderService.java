@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package org.iotivity.service.ns.provider;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 /**
   * @class   ProviderService
   * @brief   This class provides a set of Java APIs for Notification ProviderService.
@@ -39,14 +40,6 @@ public class ProviderService
         System.loadLibrary("notification_provider_wrapper");
         System.loadLibrary("notification_provider_jni");
     }
-    public native int  nativeStart(boolean policy,
-                                   OnSubscriptionListener   subscriptionListener,
-                                   OnSyncInfoListener   syncInfoListener);
-    public native int  nativeStop();
-    public native int  nativeSendMessage(Message message);
-    public native void  nativeSendSyncInfo( long messageId , int type);
-    public native int  nativeEnableRemoteService(String servAdd);
-    public native int  nativeDisableRemoteService(String servAdd);
 
     private static ProviderService instance;
 
@@ -72,38 +65,57 @@ public class ProviderService
                      OnSyncInfoListener  syncInfoListener) throws NSException
     {
 
-    int result = nativeStart(policy, subscriptionListener, syncInfoListener);
-        return result;
+        return nativeStart(policy, subscriptionListener, syncInfoListener);
     }
 
     public int Stop() throws NSException
     {
-        int result = nativeStop();
-        return result;
+        return nativeStop();
     }
 
     public int   SendMessage(Message message) throws NSException
     {
-        int result = nativeSendMessage(message);
-        return result;
+        return nativeSendMessage(message);
     }
 
     public void SendSyncInfo ( long messageId , SyncInfo.SyncType syncType) throws NSException
     {
         nativeSendSyncInfo(messageId, syncType.ordinal());
-        return ;
+        return;
     }
 
     public int   EnableRemoteService(String servAdd) throws NSException
     {
-        int result = nativeEnableRemoteService(servAdd);
-        return result;
+        return nativeEnableRemoteService(servAdd);
     }
 
     public int  DisableRemoteService(String servAdd) throws NSException
     {
-        int result = nativeDisableRemoteService(servAdd);
-        return result;
+        return nativeDisableRemoteService(servAdd);
     }
 
+    public int AddTopic(String topicName) throws NSException
+    {
+        return nativeAddTopic(topicName);
+    }
+    public int DeleteTopic(String topicName) throws NSException
+    {
+        return nativeDeleteTopic(topicName);
+    }
+    public TopicsList GetTopics() throws NSException
+    {
+        return nativeGetTopics();
+    }
+
+    public native int  nativeStart(boolean policy,
+                               OnSubscriptionListener   subscriptionListener,
+                               OnSyncInfoListener   syncInfoListener);
+    public native int  nativeStop();
+    public native int  nativeSendMessage(Message message);
+    public native void  nativeSendSyncInfo( long messageId , int type);
+    public native int  nativeEnableRemoteService(String servAdd);
+    public native int  nativeDisableRemoteService(String servAdd);
+    public native int  nativeAddTopic(String topicName);
+    public native int  nativeDeleteTopic(String topicName);
+    public native TopicsList  nativeGetTopics();
 }

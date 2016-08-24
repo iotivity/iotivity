@@ -47,7 +47,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
 /*
  * Class:     org_iotivity_service_ns_consumer_ConsumerService
  * Method:    nativeEnableRemoteService
- * Signature: (Ljava/lang/String;)jint
+ * Signature: (Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL
 Java_org_iotivity_service_ns_consumer_ConsumerService_nativeEnableRemoteService
@@ -68,6 +68,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
  */
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nativeGetProvider
 (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_consumer_ConsumerService
+ * Method:    nativeGetMessage
+ * Signature: (J)Lorg/iotivity/service/ns/common/Message;
+ */
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nativeGetMessage
+(JNIEnv *, jobject, jlong);
 
 /*
  * Class:     org_iotivity_service_ns_consumer_Provider
@@ -100,6 +108,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSend
  */
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetListener
 (JNIEnv *, jobject, jobject, jobject);
+
+/*
+ * Class:     org_iotivity_service_ns_consumer_Provider
+ * Method:    nativeSelectInterestTopics
+ * Signature: (Lorg/iotivity/service/ns/common/TopicsList;)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSelectInterestTopics
+(JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus
 }

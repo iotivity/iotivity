@@ -189,7 +189,7 @@ namespace OIC
             return NULL;
         }
 
-        NSMessage *getMessage(uint64_t messageId)
+        NSMessage *NSConsumerService::getMessage(uint64_t messageId)
         {
             NS_LOG(DEBUG, "getMessage - IN");
             ::NSMessage *message = NSConsumerGetMessage(messageId);
