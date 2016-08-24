@@ -132,7 +132,7 @@ namespace OIC
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering cloudPropProvisioningStatusHandler");
 
             OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"CloudProvStatus = %d",
-                                                    status->getESCloudState());
+                                                    status->getESResult());
 
             m_cloudPropProvStatusCb(status);
             return;
