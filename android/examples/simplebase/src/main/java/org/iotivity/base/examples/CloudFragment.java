@@ -70,7 +70,9 @@ import java.util.regex.Pattern;
 public class CloudFragment extends Fragment implements
         View.OnClickListener, CompoundButton.OnCheckedChangeListener,
         OcAccountManager.OnPostListener, OcAccountManager.OnGetListener,
-        OcAccountManager.OnDeleteListener, OcResource.OnObserveListener {
+        OcAccountManager.OnDeleteListener, OcResource.OnObserveListener,
+        OcResource.OnMQTopicFoundListener, OcResource.OnMQTopicCreatedListener,
+        OcResource.OnMQTopicSubscribeListener {
 
     private static final String TAG = "OIC_SIMPLE_CLOUD";
     private final String EOL = System.getProperties().getProperty("line.separator");
@@ -123,6 +125,14 @@ public class CloudFragment extends Fragment implements
     private String mAuthCode;
     private int mRequestCode;
     private final int REQUEST_LOGIN = 1;
+
+    private OcResource MQbrokerResource = null;
+    private OcResource currentTopicResource = null;
+    private boolean switchingFlag = true;
+    private int subFlag = -1;
+    private int roomNum = 1;
+    private String defaultTopicFullName = Common.MQ_DEFAULT_TOPIC_URI;
+    private int cancelSubScribe = 0xffffff;
 
     private OcResourceHandle localLightResourceHandle = null;
     private List<OcResourceHandle> mResourceHandleList = new LinkedList<>();
@@ -401,6 +411,286 @@ public class CloudFragment extends Fragment implements
     // End of the Resource Directory specific code
     // ******************************************************************************
 
+    void getMQBroker() {
+        List<String> resourceTypeList = new ArrayList<String>();
+        List<String> resourceInterfaceList = new ArrayList<String>();
+        resourceInterfaceList.add(Common.RESOURCE_INTERFACE);
+        resourceTypeList.add("ocf.wk.ps");
+        try {
+            MQbrokerResource = OcPlatform.constructResourceObject(
+                    "coap+tcp://" + Common.TCP_ADDRESS + ":" + Common.TCP_PORT,
+                    Common.MQ_BROKER_URI,
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
+                    false,
+                    resourceTypeList, resourceInterfaceList);
+
+            msg("found MQ broker : " + MQbrokerResource.getHost());
+
+            discoveryMQTopics();
+
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void discoveryMQTopics() {
+        try {
+            if (null != MQbrokerResource) {
+                MQbrokerResource.discoveryMQTopics(
+                        new HashMap<String, String>(),
+                        this, QualityOfService.LOW);
+            }
+
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    synchronized public void onTopicDiscoveried(OcResource ocResource) {
+        synchronized (this) {
+            String resourceUri = ocResource.getUri();
+
+            Log.d(TAG, "onTopicDiscoveried : " + resourceUri + " found");
+            msg("onTopicDiscoveried : " + resourceUri + " found");
+        }
+    }
+
+    @Override
+    public void onDiscoveryTopicFailed(Throwable ex, String uri) {
+        Log.e(TAG, "onFindTopicFailed : ", ex);
+
+        if (ex instanceof OcException) {
+            OcException ocEx = (OcException) ex;
+            ErrorCode errCode = ocEx.getErrorCode();
+            Log.d(TAG, "onFindTopicFailed Code: " + errCode);
+            Log.d(TAG, "onFindTopicFailed Code: " + errCode.ordinal());
+            Log.d(TAG, "onFindTopicFailed uri: " + uri);
+
+        } else {
+            Log.e(TAG, ex.getMessage());
+        }
+    }
+
+    void createMQTopic() {
+        try {
+            if (null != MQbrokerResource) {
+                Map<String, String> queryParameters = new HashMap<String, String>();
+                queryParameters.put("rt", "light");
+                MQbrokerResource.createMQTopic(
+                        new OcRepresentation(),
+                        defaultTopicFullName,
+                        queryParameters,
+                        this,
+                        QualityOfService.LOW);
+            }
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    synchronized public void onTopicResourceCreated(OcResource ocResource) {
+        synchronized (this) {
+            Log.d(TAG, "onTopicResourceCreated");
+            String resourceUri = ocResource.getUri();
+            currentTopicResource = ocResource;
+            Log.d(TAG, "onTopicResourceCreated : " + resourceUri + " found");
+
+            msg("onTopicCreated : " + currentTopicResource.getUri());
+        }
+    }
+
+    @Override
+    public void onCreateTopicFailed(Throwable ex, String uri) {
+        Log.e(TAG, "onCreateTopicFailed : ", ex);
+
+        if (ex instanceof OcException) {
+            OcException ocEx = (OcException) ex;
+            ErrorCode errCode = ocEx.getErrorCode();
+            Log.d(TAG, "onCreateTopicFailed error Code: " + errCode);
+            Log.d(TAG, "onCreateTopicFailed error Code: " + errCode.ordinal());
+            Log.d(TAG, "onCreateTopicFailed error uri: " + uri);
+
+            // retry to create after increase room number
+            defaultTopicFullName = Common.MQ_DEFAULT_TOPIC_URI + (roomNum++);
+            createMQTopic();
+        } else {
+            Log.e(TAG, ex.getMessage());
+        }
+    }
+
+    void subscribeMQTopic() {
+        Map<String, String> queryParameters = new HashMap<String, String>();
+        queryParameters.put("rt", "light");
+
+        try {
+            if (null != currentTopicResource) {
+                currentTopicResource.subscribeMQTopic(
+                        queryParameters,
+                        this,
+                        QualityOfService.LOW);
+            }
+
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    synchronized public void onSubScribeCompleted(List<OcHeaderOption> headerOptionList,
+                                                  OcRepresentation ocRepresentation,
+                                                  int sequenceNumber) {
+        synchronized (this) {
+            String resourceUri = ocRepresentation.getUri();
+            Log.d(TAG, "onSubScribeCompleted sequenceNumber : " + sequenceNumber);
+
+            try {
+                OcRepresentation val = ocRepresentation.getValue("message");
+
+                if (sequenceNumber == 0) {
+                    Log.d(TAG, "onSubScribeCompleted : " + resourceUri);
+                    subFlag = 0;
+                } else {
+                    subFlag = 1;
+                }
+
+                if (subFlag == 0) {
+                    msg("onSubScribeCompleted : " + resourceUri);
+                } else {
+                    Log.d(TAG, "onSubScribeCompleted : " + resourceUri);
+                    Log.d(TAG, "onSubScribeCompleted : " + val.getValue("blue"));
+                    Log.d(TAG, "onSubScribeCompleted : " + val.getValue("red"));
+
+                    msg("onSubScribeCompleted : " + resourceUri + ", blue light is "
+                            + val.getValue("blue").toString());
+                    msg("onSubScribeCompleted : " + resourceUri + ", red light is "
+                            + val.getValue("red").toString());
+                }
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    synchronized public void onUnsubScribeCompleted(OcRepresentation ocRepresentation,
+                                                    int sequenceNumber) {
+        synchronized (this) {
+            String resourceUri = ocRepresentation.getUri();
+            Log.d(TAG, "onUnsubScribeCompleted sequenceNumber : " + sequenceNumber);
+
+            if (sequenceNumber == cancelSubScribe + 1) {
+                Log.d(TAG, "onUnsubScribeCompleted : " + resourceUri);
+                msg("onUnsubScribeCompleted : " + resourceUri);
+            }
+        }
+    }
+
+    @Override
+    public void onSubScribeFailed(Throwable ex) {
+        Log.d(TAG, "onSubScribeFailed : ", ex);
+
+        if (ex instanceof OcException) {
+            OcException ocEx = (OcException) ex;
+            ErrorCode errCode = ocEx.getErrorCode();
+            Log.d(TAG, "onSubScribeFailed error Code: " + errCode);
+            Log.d(TAG, "onSubScribeFailed error Code: " + errCode.ordinal());
+
+
+        } else {
+            Log.e(TAG, ex.getMessage());
+        }
+    }
+
+
+    void unsubscribeMQTopic() {
+
+        try {
+            if (null != currentTopicResource) {
+                currentTopicResource.unsubscribeMQTopic(QualityOfService.LOW);
+            }
+
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void publishMQTopic() {
+
+        try {
+            OcRepresentation rep = new OcRepresentation();
+            OcRepresentation msg = new OcRepresentation();
+
+            if (switchingFlag) {
+                msg.setValue("blue", "on");
+                msg.setValue("red", "off");
+                switchingFlag = false;
+            } else {
+                msg.setValue("blue", "off");
+                msg.setValue("red", "on");
+                switchingFlag = true;
+            }
+            rep.setValue("message", msg);
+
+            if (null != currentTopicResource) {
+                currentTopicResource.publishMQTopic(rep,
+                        new HashMap<String, String>(),
+                        mqPublishListener,
+                        QualityOfService.LOW);
+            }
+
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    OcResource.OnPostListener mqPublishListener =
+            new OcResource.OnPostListener() {
+                @Override
+                public void onPostCompleted(List<OcHeaderOption> list,
+                                            OcRepresentation ocRepresentation) {
+                    Log.i(TAG, "onPublish completed");
+                    msg("onPublish completed");
+                }
+
+                @Override
+                public void onPostFailed(Throwable throwable) {
+                    Log.e(TAG, "onPublish failed");
+                    msg("onPublish failed");
+                }
+            };
+
+    void requestMQPublish() {
+
+        try {
+            if (null != currentTopicResource) {
+                currentTopicResource.requestMQPublish(
+                        new HashMap<String, String>(),
+                        mqReqPubListener,
+                        QualityOfService.LOW);
+            }
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    OcResource.OnPostListener mqReqPubListener =
+            new OcResource.OnPostListener() {
+                @Override
+                public void onPostCompleted(List<OcHeaderOption> list,
+                                            OcRepresentation ocRepresentation) {
+                    Log.i(TAG, "onRequestPublish completed");
+                    msg("onPublish completed");
+                }
+
+                @Override
+                public void onPostFailed(Throwable throwable) {
+                    Log.e(TAG, "onRequestPublish failed");
+                    msg("onRequestPublish failed");
+                }
+            };
+
 
     // ******************************************************************************
     // End of the Message Queue specific code
@@ -589,15 +879,24 @@ public class CloudFragment extends Fragment implements
 
             // MQ
             case R.id.mqget_button:
+                mActionLog.append("Get MQ Broker" + EOL);
+                getMQBroker();
+                break;
             case R.id.mqcreate_button:
+                mActionLog.append("Create MQ Topic" + EOL);
+                createMQTopic();
+                break;
             case R.id.mqsub_button:
+                mActionLog.append("Subscribe MQ Topic" + EOL);
+                subscribeMQTopic();
+                break;
             case R.id.mqunsub_button:
+                mActionLog.append("Un-subscribe MQ Topic" + EOL);
+                unsubscribeMQTopic();
+                break;
             case R.id.mqpub_button:
-                mMQText.setText("MQ");
-                mActionLog.setText("[Action Log]" + EOL);
-                mActionLog.append("MQ" + EOL);
-                Toast.makeText(mContext, "MQ", Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "MQ");
+                mActionLog.append("Publish MQ Topic" + EOL);
+                publishMQTopic();
                 break;
         }
     }
@@ -668,3 +967,4 @@ public class CloudFragment extends Fragment implements
     }
 
 }
+

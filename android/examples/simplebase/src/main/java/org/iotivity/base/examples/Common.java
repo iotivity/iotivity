@@ -58,14 +58,18 @@ public class Common {
     public static final EnumSet<ResourceProperty> RESOURCE_PROPERTIES =
             EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE);
 
+    // MQ
+    public final static String MQ_DEFAULT_TOPIC_URI = "/oic/ps/cleanroom";
+    public final static String MQ_BROKER_URI = "/oic/ps";
+
     public static String getDateCurrentTimeZone() {
         StringBuilder sb = new StringBuilder();
         try {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
             DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.DEFAULT,
-                                                                   DateFormat.DEFAULT,
-                                                                   Locale.getDefault());
+                    DateFormat.DEFAULT,
+                    Locale.getDefault());
             Date currentTimeZone = calendar.getTime();
             sb.append(dateFormat.format(currentTimeZone));
         } catch (Exception e) {
@@ -78,3 +82,4 @@ public class Common {
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
     }
 }
+
