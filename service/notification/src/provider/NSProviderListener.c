@@ -215,12 +215,6 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
 
     (void)callback;
 
-    OCEntityHandlerResponse response;
-    response.numSendVendorSpecificHeaderOptions = 0;
-    memset(response.sendVendorSpecificHeaderOptions, 0,
-            sizeof response.sendVendorSpecificHeaderOptions);
-    memset(response.resourceUri, 0, sizeof response.resourceUri);
-
     if (!entityHandlerRequest)
     {
         NS_LOG(ERROR, "Invalid request pointer");
@@ -264,20 +258,8 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
         {
             NS_LOG_V(DEBUG, "Received unsupported method %d from client",
                     entityHandlerRequest->method);
-            ehResult = OC_EH_OK;
+            ehResult = OC_EH_ERROR;
         }
-    }
-
-    response.requestHandle = entityHandlerRequest->requestHandle;
-    response.resourceHandle = entityHandlerRequest->resource;
-    response.persistentBufferFlag = 0;
-    response.ehResult = ehResult;
-    response.payload = (OCPayload *) NULL;
-
-    if (OCDoResponse(&response) != OC_STACK_OK)
-    {
-        NS_LOG(ERROR, "Fail to AccessPolicy send response");
-        return NS_ERROR;
     }
 
     NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OUT");
