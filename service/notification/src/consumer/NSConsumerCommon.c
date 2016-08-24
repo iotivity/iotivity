@@ -412,6 +412,7 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
 
     NSTopicLL * iter = topicHead;
 
+    NS_LOG_V(DEBUG, "[NSCopyTopicLL] Name:%s\t State:%d", iter->topicName, iter->state);
     NSTopicLL * newTopicHead = NSCopyTopicNode(iter);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicHead, NULL, NSRemoveTopicLL(newTopicHead));
 
@@ -419,6 +420,7 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
 
     while (iter)
     {
+        NS_LOG_V(DEBUG, "[NSCopyTopicLL] Name:%s\t State:%d", iter->topicName, iter->state);
         NSTopicLL * newTopicNode = NSCopyTopicNode(iter);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
 

@@ -167,6 +167,7 @@ NSResult NSConsumerGetInterestTopics(NSProvider * provider)
 
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
 
+    NS_LOG_V(DEBUG, "NSProvider ID: %s", provider->providerId);
     NSProvider_internal * prov = NSConsumerFindNSProvider(provider->providerId);
     NS_VERIFY_NOT_NULL(prov, NS_ERROR);
     NSSelector selector = prov->accessPolicy;

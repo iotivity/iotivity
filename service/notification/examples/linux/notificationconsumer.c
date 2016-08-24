@@ -38,11 +38,27 @@
 #define CLOUD_IOTIVITYNS_SESSION ""                // refer to IoTivity Cloud Module Sample
 #endif
 
+NSProvider * g_provider = NULL;
+
 void onDiscoverNotification(NSProvider * provider)
 {
     printf("notification resource discovered\n");
     printf("subscribe result %d\n", NSSubscribe(provider));
     printf("startSubscribing\n");
+}
+
+void printProviderTopicList(NSProvider *provider)
+{
+    printf("printProviderTopicList\n");
+    if (provider->topicLL)
+    {
+        NSTopicLL * iter = provider->topicLL;
+        while (iter)
+        {
+            printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
+            iter = iter->next;
+        }
+    }
 }
 
 void onProviderChanged(NSProvider * provider, NSResponse response)
@@ -53,49 +69,9 @@ void onProviderChanged(NSProvider * provider, NSResponse response)
     if (response == NS_TOPIC)
     {
         printf ("Provider Topic Updated\n");
-        if (provider->topicLL)
-        {
-            NSTopicLL * iter = provider->topicLL;
-            while (iter)
-            {
-                printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
-                iter = iter->next;
-            }
-        }
 
-        printf("3. Get Topics\n");
-        printf("4. Select Topics\n");
-        printf("input: ");
-
-        int num = 0;
-        char dummy = '\0';
-        scanf("%d", &num);
-        fflush(stdin);
-        scanf("%c", &dummy);
-        fflush(stdin);
-
-        switch (num)
-        {
-            case 3:
-                printf("3. Get Topics\n");
-                NSConsumerGetInterestTopics(provider);
-                break;
-            case 4:
-                printf("4. Select Topics\n");
-                if (provider->topicLL)
-                {
-                    NSTopicLL * iter = provider->topicLL;
-                    int i = 0;
-                    while (iter)
-                    {
-                        iter->state = (i++)%2;
-                        printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
-                        iter = iter->next;
-                    }
-                }
-                NSConsumerSelectInterestTopics(provider);
-                break;
-        }
+        printProviderTopicList(provider);
+        g_provider = provider;
     }
 }
 
@@ -117,7 +93,6 @@ void onNotificationSync(NSSyncInfo * sync)
     printf("Sync ID : %lld\n", (long long int)sync->messageId);
     printf("Sync STATE : %d\n", sync->state);
 }
-
 
 #ifdef WITH_CLOUD
 OCStackApplicationResult handleLoginoutCB(void *ctx,
@@ -209,6 +184,8 @@ int main(void)
 
         printf("1. Start Consumer\n");
         printf("2. Stop Consumer\n");
+        printf("3. Get Topics\n");
+        printf("4. Select Topics\n");
         printf("5. Exit\n");
 
         printf("Input: ");
@@ -228,6 +205,29 @@ int main(void)
                 printf("2. Stop Consumer");
                 NSStopConsumer();
                 break;
+            case 3:
+                printf("3. Get Topics\n");
+                if(g_provider)
+                {
+                    NSConsumerGetInterestTopics(g_provider);
+                }
+                break;
+            case 4:
+                printf("4. Select Topics\n");
+
+                if (g_provider && g_provider->topicLL)
+                {
+                    NSTopicLL * iter = g_provider->topicLL;
+                    int i = 0;
+                    while (iter)
+                    {
+                        iter->state = (i++)%2;
+                        printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
+                        iter = iter->next;
+                    }
+                    NSConsumerSelectInterestTopics(g_provider);
+                }
+                break;
             case 5:
                 printf("5. Exit");
                 isExit = true;
@@ -236,6 +236,5 @@ int main(void)
                 break;
         }
     }
-
     return 0;
 }

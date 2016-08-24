@@ -471,13 +471,17 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         while (iter)
         {
             topicLLSize ++;
+            NS_LOG_V(DEBUG, "[%d] Topic Name:%s\tTopic State:%d",
+                                        topicLLSize, iter->topicName, iter->state);
             iter = (NSTopicLL *) iter->next;
         }
 
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, *NSGetConsumerId());
+        NS_LOG_V(DEBUG, "NS_ATTRIBUTE_CONSUMER_ID: %s", *NSGetConsumerId());
 
         iter = topicLL;
         int iterSize = 0;
+        NS_LOG_V(DEBUG, "DimensionSize: %d", topicLLSize);
 
         OCRepPayload ** topicPayload = NULL;
         if (topicLLSize > 0)
@@ -492,10 +496,13 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
                                             iter->topicName);
                 OCRepPayloadSetPropInt(topicPayload[iterSize], NS_ATTRIBUTE_TOPIC_SELECTION,
                                             iter->state);
+                NS_LOG_V(DEBUG, "NS_ATTRIBUTE_TOPIC_NAME: %s", iter->topicName);
+                NS_LOG_V(DEBUG, "NS_ATTRIBUTE_TOPIC_SELECTION: %d", iter->state);
                 iterSize++;
                 iter = iter->next;
             }
             size_t dimensions[3] = {topicLLSize, 0, 0};
+
             OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
                                                     topicPayload, dimensions);
         }

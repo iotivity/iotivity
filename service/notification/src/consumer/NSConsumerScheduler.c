@@ -271,9 +271,16 @@ void NSConsumerTaskProcessing(NSTask * task)
         case TASK_CONSUMER_GET_TOPIC_LIST:
         case TASK_CONSUMER_SELECT_TOPIC_LIST:
         {
+            NSProvider * provider = (NSProvider *)task->taskData;
             NSProvider_internal * prov =
-                    NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
+                    NSConsumerFindNSProvider(provider->providerId);
             NS_VERIFY_NOT_NULL_V(prov);
+            if (task->taskType == TASK_CONSUMER_SELECT_TOPIC_LIST)
+            {
+                NSRemoveTopicLL(prov->topicLL);
+                prov->topicLL = NSCopyTopicLL((NSTopicLL *)provider->topicLL);
+            }
+
             NSTask * topTask = NSMakeTask(task->taskType, prov);
             NS_VERIFY_NOT_NULL_V(topTask);
             NSConsumerCommunicationTaskProcessing(topTask);
