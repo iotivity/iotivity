@@ -118,14 +118,47 @@ typedef enum
     TKIP_AES            /**< TKIP-AES **/
 } WIFI_ENCTYPE;
 
+/**
+ * @brief A result of Easy Setup
+ */
 typedef enum
 {
+    /**
+     * Provisioning succeeds.
+     */
     ES_OK = 0,
+
+    /**
+     * Successfully found Enrollee in a given network. This will be given in Cloud provisioning step.
+     */
     ES_FOUND_ENROLLEE = 1,
+
+    /**
+     * Not found Enrollee in a give network. This will be given in Cloud provisioning step.
+     */
     ES_NOT_FOUND_ENROLLEE = 11,
+
+    /**
+     * Security opertion is not supported because it is built as unsecured mode.
+     */
     ES_SEC_OPERATION_IS_NOT_SUPPORTED = 20,
+
+    /**
+     * A previous request is denied due to its unauthority. It means, Mediator is not unauthroized
+     * to Enrollee for some reaons.
+     */
     ES_UNAUTHORIZED_REQ = 21,
+
+    /**
+     * Security provisioning fails. The reasons would be: a packet loss for unowned/owned device
+     * discovery request or ownership transfer request, or a denial to ownership transfer by Enrollee
+     * for some reason.
+     */
     ES_SEC_PROVISION_FAILS = 22,
+
+    /**
+     * Provisioning fails for some reason.
+     */
     ES_ERROR = 255,
 } ESResult;
 
