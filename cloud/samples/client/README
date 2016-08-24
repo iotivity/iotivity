@@ -4,7 +4,7 @@ ex) scons WITH_TCP=yes TARGET_TRANSPORT=IP WITH_CLOUD=yes
 
 Cloud client runs using CoAP over TCP transport. So you should add WITH_TCP option.
 
-Once you get sample which file name is 'cloud_device', you need 'Auth Code' to register resources on cloud with account scenario.
+Once you get sample which file name is 'aircon_controlee' and 'aircon_controller', you need 'Auth Code' to register resources on cloud with account scenario.
 
 Cloud stack has sample github oauth2 adaptor.
 
@@ -20,6 +20,4 @@ http://www.example.com/oauth_callback/?code=bf9beb5db17ea476fa46
 
 You can get 'Auth Code', value of '?code' query string.
 
-The 'Auth Code' is one time token. So you need other token to run other device.
-
-Account server has pre-coded admin credential which session is '00000000'. You can use this credential for immediate tests.
+The 'Auth Code' is one time token. So you need other token to run each sample.
