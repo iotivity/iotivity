@@ -203,6 +203,8 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         if (it)
         {
             NS_LOG(DEBUG, "already registered for topic name");
+            OICFree(topicData->topicName);
+            OICFree(topicData);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_FAIL;
         }
@@ -217,6 +219,8 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         if (it)
         {
             NS_LOG(DEBUG, "already registered for topic name");
+            OICFree(topicData->topicName);
+            OICFree(topicData);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_FAIL;
         }
@@ -231,6 +235,8 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         if (it)
         {
             NS_LOG(DEBUG, "already registered for topic name");
+            OICFree(topicData->topicName);
+            OICFree(topicData);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_FAIL;
         }
