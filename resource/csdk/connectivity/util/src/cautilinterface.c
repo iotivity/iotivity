@@ -185,6 +185,12 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
         res = CA_STATUS_FAILED;
     }
 #endif
+
+#if !defined(LE_ADAPTER) && !defined(EDR_ADAPTER)
+    (void)env;
+    (void)jvm;
+    (void)context;
+#endif
     return res;
 }
 
@@ -255,6 +261,8 @@ CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
     CAManagerLESetScanInterval(intervalTime, workingCount);
     return CA_STATUS_OK;
 #else
+    (void)intervalTime;
+    (void)workingCount;
     OIC_LOG(DEBUG, TAG, "it is not supported");
     return CA_NOT_SUPPORTED;
 #endif

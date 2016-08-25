@@ -708,6 +708,9 @@ CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
 
 CAResult_t CALEClientStartUnicastServer(const char* address)
 {
+#ifndef TB_LOG
+    (void)address;
+#endif
     OIC_LOG_V(DEBUG, TAG, "it is not needed in this platform (%s)", address);
 
     return CA_NOT_SUPPORTED;
