@@ -43,23 +43,34 @@ namespace OIC
         void onNSProviderChanged(::NSProvider *provider, ::NSResponse response)
         {
             NS_LOG(DEBUG, "onNSProviderChanged - IN");
-            NS_LOG_V(DEBUG, "provider Id : %s",provider->providerId);
-            NS_LOG_V(DEBUG, "response : %d",(int)response);
-            
+            NS_LOG_V(DEBUG, "provider Id : %s", provider->providerId);
+            NS_LOG_V(DEBUG, "response : %d", (int)response);
+
             NSProvider *nsProvider = new NSProvider(provider);
             auto changeCallback = NSConsumerService::getInstance()->getConsumerConfig().m_changedCb;
-            if(response == NS_ALLOW)
+            if (response == NS_ALLOW)
             {
                 NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
                 if (changeCallback != NULL)
                     changeCallback(nsProvider, (NSResponse) response);
             }
-            else if(response == NS_DENY)
+            else if (response == NS_DENY)
             {
                 NSConsumerService::getInstance()->getAcceptedProviders().remove(nsProvider);
                 if (changeCallback != NULL)
                     changeCallback(nsProvider, (NSResponse) response);
                 delete nsProvider;
+            }
+            else if (response == NS_TOPIC)
+            {
+                NSProvider *oldProvider = NSConsumerService::getInstance()->getProvider(
+                                              nsProvider->getProviderId());
+                if (oldProvider != nullptr)
+                {
+                    NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
+                    NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
+                    delete oldProvider;
+                }
             }
             NS_LOG(DEBUG, "onNSProviderChanged - OUT");
         }
@@ -130,7 +141,7 @@ namespace OIC
             m_config = config;
             NSConsumerConfig nsConfig;
             nsConfig.discoverCb = onNSProviderDiscovered;
-            nsConfig.changedCb= onNSProviderChanged;
+            nsConfig.changedCb = onNSProviderChanged;
             nsConfig.messageCb = onNSMessageReceived;
             nsConfig.syncInfoCb = onNSSyncInfoReceived;
 
@@ -176,6 +187,18 @@ namespace OIC
                     return it;
             }
             return NULL;
+        }
+
+        NSMessage *NSConsumerService::getMessage(uint64_t messageId)
+        {
+            NS_LOG(DEBUG, "getMessage - IN");
+            ::NSMessage *message = NSConsumerGetMessage(messageId);
+            NSMessage *nsMessage = new NSMessage(message);
+
+            delete message->mediaContents;
+            delete message;
+            NS_LOG(DEBUG, "getMessage - OUT");
+            return nsMessage;
         }
 
         NSConsumerService::ConsumerConfig NSConsumerService::getConsumerConfig()

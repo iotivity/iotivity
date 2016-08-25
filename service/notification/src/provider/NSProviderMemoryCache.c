@@ -268,6 +268,18 @@ NSResult NSStorageDestroy(NSCacheList * list)
     return NS_OK;
 }
 
+
+bool NSIsSameObId(NSCacheSubData * data, OCObservationId id)
+{
+    if (id == data->messageObId || id == data->syncObId || id == data->remote_messageObId ||
+                id == data->remote_syncObId)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id)
 {
     NS_LOG(DEBUG, "NSProviderCompareIdCacheData - IN");
@@ -286,6 +298,23 @@ bool NSProviderCompareIdCacheData(NSCacheType type, void * data, const char * id
         NS_LOG_V(DEBUG, "Data(subData) = [%s]", subData->id);
 
         if (strcmp(subData->id, id) == 0)
+        {
+            NS_LOG(DEBUG, "SubData is Same");
+            return true;
+        }
+
+        NS_LOG(DEBUG, "Message Data is Not Same");
+        return false;
+    }
+    else if (type == NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID)
+    {
+        NSCacheSubData * subData = (NSCacheSubData *) data;
+
+        NS_LOG_V(DEBUG, "Data(subData) = [%s]", subData->id);
+
+        OCObservationId currID = *id;
+
+        if (NSIsSameObId(subData, currID))
         {
             NS_LOG(DEBUG, "SubData is Same");
             return true;
@@ -352,7 +381,7 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
         return NS_ERROR;
     }
 
-    if (type == NS_PROVIDER_CACHE_SUBSCRIBER)
+    if (type == NS_PROVIDER_CACHE_SUBSCRIBER || type == NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID)
     {
         NSCacheSubData * subData = (NSCacheSubData *) data;
 
@@ -379,83 +408,6 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
     return NS_OK;
 }
 
-bool NSIsSameObId(NSCacheSubData * data, OCObservationId id)
-{
-    if (id == data->messageObId || id == data->syncObId || id == data->remote_messageObId ||
-                id == data->remote_syncObId)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id)
-{
-    if(!list || !list->head)
-    {
-        NS_LOG(INFO, "list is NULL");
-        return NS_FAIL;
-    }
-
-    pthread_mutex_lock(&NSCacheMutex);
-    NSCacheElement * prev = list->head;
-    NSCacheElement * del = list->head;
-
-    NSCacheType type = list->cacheType;
-
-    bool isDelete = true;
-
-    while(isDelete)
-    {
-        NSCacheSubData * curr = (NSCacheSubData *)del->data;
-
-        isDelete = false;
-
-        if (NSIsSameObId(curr, id))
-        {
-            if (del == list->head) // first object
-            {
-                if (del == list->tail) // first object (one object)
-                {
-                    list->tail = del->next;
-                }
-
-                list->head = del->next;
-
-                NSProviderDeleteCacheData(type, del->data);
-                OICFree(del);
-                isDelete = true;
-            }
-        }
-        else
-        {
-            del = del->next;
-            while (del)
-            {
-                if (NSIsSameObId(curr, id))
-                {
-                    if (del == list->tail) // delete object same to last object
-                    {
-                        list->tail = prev;
-                    }
-
-                    prev->next = del->next;
-                    NSProviderDeleteCacheData(type, del->data);
-                    OICFree(del);
-                    isDelete = true;
-                    break;
-                }
-
-                prev = del;
-                del = del->next;
-            }
-        }
-    }
-    pthread_mutex_unlock(&NSCacheMutex);
-    return NS_OK;
-}
-
 NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 {
     pthread_mutex_lock(&NSCacheMutex);
@@ -467,6 +419,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
     if(!del)
     {
         NS_LOG(DEBUG, "list head is NULL");
+        pthread_mutex_unlock(&NSCacheMutex);
         return NS_FAIL;
     }
 

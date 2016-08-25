@@ -22,6 +22,7 @@ package org.iotivity.service.ns.consumer;
 
 import android.util.Log;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 
 /**
   * @class   Provider
@@ -32,6 +33,7 @@ public class Provider
     private static final String LOG_TAG = "ConsumerService_Provider";
 
     public String mProviderId        = null;
+    TopicsList mTopicsList = new TopicsList();
     private long mNativeHandle       = 0;
 
     public Provider(String providerId)
@@ -44,6 +46,11 @@ public class Provider
     public String getProviderId()
     {
         return mProviderId ;
+    }
+
+    public TopicsList  getTopicsList()
+    {
+        return mTopicsList ;
     }
 
     public void Subscribe() throws NSException
@@ -67,6 +74,11 @@ public class Provider
         nativeSetListener(onMessageReceivedListner, onSyncInfoReceivedListner);
     }
 
+    public int SelectInterestTopics(Vector<Topic> topicsList) throws NSException
+    {
+        return nativeSelectInterestTopics(topicsList);
+    }
+
     public interface OnMessageReceivedListner
     {
         public void onMessageReceived(Message message);
@@ -84,4 +96,5 @@ public class Provider
         OnMessageReceivedListner onMessageReceivedListner,
         OnSyncInfoReceivedListner onSyncInfoReceivedListner
     ) throws NSException;
+    private native int nativeSelectInterestTopics(Vector<Topic> topicsList) throws NSException;
 }

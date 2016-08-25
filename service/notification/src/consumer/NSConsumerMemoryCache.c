@@ -93,7 +93,7 @@ NSCacheElement * NSGetProviderFromAddr(NSCacheList * list, const char * addr, ui
     while (iter)
     {
         NSProviderConnectionInfo * connection =
-                ((NSProviderConnectionInfo *) iter->data)->next;
+                ((NSProvider_internal *) iter->data)->connection;
         while (connection)
         {
             char * conAddr = connection->addr->addr;

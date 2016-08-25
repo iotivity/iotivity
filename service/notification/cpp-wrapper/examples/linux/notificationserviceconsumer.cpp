@@ -24,6 +24,7 @@
 #include "NSConsumerService.h"
 #include "NSMessage.h"
 #include "NSProvider.h"
+#include "NSTopicsList.h"
 #include "ocstack.h"
 
 #define TAG "NotiConsumerWrapperExample"
@@ -32,6 +33,7 @@ using namespace OIC::Service;
 
 bool isExit = false;
 std::string REMOTE_SERVER_ADDRESS;
+std::string mainProvider;
 
 void onNotificationPostedCb(OIC::Service::NSMessage *notification)
 {
@@ -39,6 +41,7 @@ void onNotificationPostedCb(OIC::Service::NSMessage *notification)
     std::cout << "title : " << notification->getTitle() << std::endl;
     std::cout << "content : " <<  notification->getContentText() << std::endl;
     std::cout << "source : " <<  notification->getSourceName() << std::endl;
+    std::cout << "topic : " <<  notification->getTopic() << std::endl;
 }
 
 void onNotificationSyncCb(OIC::Service::NSSyncInfo *sync)
@@ -54,12 +57,68 @@ void onDiscoverNotificationCb(OIC::Service::NSProvider *provider)
     std::cout << "startSubscribing" << std::endl;
 }
 
-void onProviderChangedCb(OIC::Service::NSProvider *provider,OIC::Service::NSResponse response)
+void onProviderChangedCb(OIC::Service::NSProvider *provider, OIC::Service::NSResponse response)
 {
     std::cout << "Subscription accepted" << std::endl;
     std::cout << "subscribed provider Id : " << provider->getProviderId() << std::endl;
-    if(response == OIC::Service::NSResponse::ALLOW)
+    if (response == OIC::Service::NSResponse::ALLOW)
+    {
         provider->setListener(onNotificationPostedCb, onNotificationSyncCb);
+        if (mainProvider.empty())
+            mainProvider = provider->getProviderId();
+    }
+    else if (response == OIC::Service::NSResponse::TOPIC)
+    {
+        std::cout << "Provider Topic Updated" << std::endl;
+        for (auto it : provider->getTopicList()->getTopicsList())
+        {
+            std::cout << "Topic Name: " << it->getTopicName() << std::endl;
+            std::cout << "Topic state: " << (int) it->getState() << std::endl;
+        }
+
+        std::cout << "7. Get Topics" << std::endl;
+        std::cout << "8. Select Topics" << std::endl;
+        std::cout << "0. Exit" << std::endl;
+        std::cout << "input: " << std::endl;
+
+        int num = 0;
+        std::cin >> num;
+        switch (num)
+        {
+            case 7:
+                {
+                    std::cout <<  "getInterestTopics" << std::endl;
+                    if (provider != nullptr)
+                    {
+                        auto topicList = provider->getTopicList();
+                        if (topicList != nullptr)
+                            for (auto it : topicList->getTopicsList())
+                            {
+                                std::cout << "Topic Name: " << it->getTopicName() << std::endl;
+                                std::cout << "Topic state: " << (int) it->getState() << std::endl;
+                            }
+                    }
+                }
+                break;
+            case 8:
+                {
+                    std::cout <<  "selectInterestTopics" << std::endl;
+                    if (provider != nullptr)
+                    {
+                        NSTopicsList *topicList = new NSTopicsList();
+                        topicList->addTopic("OCF_TOPIC1", NSTopic::NSTopicState::UNSUBSCRIBED);
+                        topicList->addTopic("OCF_TOPIC2", NSTopic::NSTopicState::UNSUBSCRIBED);
+                        topicList->addTopic("OCF_TOPIC3", NSTopic::NSTopicState::UNSUBSCRIBED);
+
+                        provider->selectInterestTopics(topicList);
+                    }
+                }
+                break;
+            case 0:
+            default:
+                break;
+        }
+    }
 }
 
 void *OCProcessThread(void *ptr)
@@ -103,10 +162,12 @@ int main(void)
 
         std::cout << "1. Start Consumer" << std::endl;
         std::cout << "2. Stop Consumer" << std::endl;
+        std::cout << "3. getInterestTopics" << std::endl;
+        std::cout << "4. selectInterestTopics" << std::endl;
 #ifdef WITH_CLOUD
-        std::cout << "3. Enable  NS Consumer RemoteService" << std::endl;
+        std::cout << "5. Enable  NS Consumer RemoteService" << std::endl;
 #endif
-        std::cout << "5. Exit" << std::endl;
+        std::cout << "6. Exit" << std::endl;
 
         std::cout << "Input: " << std::endl;
         std::cin >> num;
@@ -120,18 +181,49 @@ int main(void)
                 std::cout << "2. Stop the Notification Consumer" << std::endl;
                 NSConsumerService::getInstance()->Stop();
                 break;
-#ifdef WITH_CLOUD
             case 3:
                 {
-                    std::cout << "3. Enable NS Consumer RemoteService" << std::endl;
+                    std::cout <<  "getInterestTopics" << std::endl;
+                    OIC::Service::NSProvider *provider = NSConsumerService::getInstance()->getProvider(mainProvider);
+                    if (provider != nullptr)
+                    {
+                        auto topicList = provider->getTopicList();
+                        if (topicList != nullptr)
+                            for (auto it : topicList->getTopicsList())
+                            {
+                                std::cout << "Topic Name: " << it->getTopicName() << std::endl;
+                                std::cout << "Topic state: " << (int) it->getState() << std::endl;
+                            }
+                    }
+                }
+                break;
+            case 4:
+                {
+                    std::cout <<  "selectInterestTopics" << std::endl;
+                    OIC::Service::NSProvider *provider = NSConsumerService::getInstance()->getProvider(mainProvider);
+                    if (provider != nullptr)
+                    {
+                        NSTopicsList *topicList = new NSTopicsList();
+                        topicList->addTopic("OCF_TOPIC1", NSTopic::NSTopicState::UNSUBSCRIBED);
+                        topicList->addTopic("OCF_TOPIC2", NSTopic::NSTopicState::UNSUBSCRIBED);
+                        topicList->addTopic("OCF_TOPIC3", NSTopic::NSTopicState::UNSUBSCRIBED);
+
+                        provider->selectInterestTopics(topicList);
+                    }
+                }
+                break;
+#ifdef WITH_CLOUD
+            case 5:
+                {
+                    std::cout << "5. Enable NS Consumer RemoteService" << std::endl;
                     std::cout << "Input the Server Address :";
                     std::cin >> REMOTE_SERVER_ADDRESS;
                     NSConsumerService::getInstance()->EnableRemoteService(REMOTE_SERVER_ADDRESS);
                     break;
                 }
 #endif
-            case 5:
-                std::cout << "5. Exit" << std::endl;
+            case 6:
+                std::cout << "6. Exit" << std::endl;
                 isExit = true;
                 break;
             default:

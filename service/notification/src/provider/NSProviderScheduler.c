@@ -262,6 +262,34 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
                 break;
         }
     }
-
+    else if (type == TOPIC_SCHEDULER)
+    {
+        switch (task->taskType)
+        {
+            case TASK_SUBSCRIBE_TOPIC:
+            case TASK_UNSUBSCRIBE_TOPIC:
+            {
+                NSCacheTopicSubData * data = task->taskData;
+                OICFree(data->topicName);
+                OICFree(data);
+            }
+                break;
+            case TASK_ADD_TOPIC:
+            case TASK_DELETE_TOPIC:
+            {
+                OICFree(task->taskData);
+            }
+                break;
+            case TASK_SEND_TOPICS:
+            case TASK_POST_TOPIC:
+            {
+                NS_LOG(DEBUG, "TASK_POST_TOPIC : ");
+                NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) task->taskData);
+            }
+                break;
+            default:
+                break;
+        }
+    }
     NS_LOG(DEBUG, "NSFreeData - OUT");
 }

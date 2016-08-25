@@ -39,14 +39,14 @@ public class Message
         private int type;
 
         private MessageType(int type)
-    {
-        this.type = type;
-    }
+        {
+            this.type = type;
+        }
 
-    public int getMessageType()
-    {
-        return this.type;
-    }
+        public int getMessageType()
+        {
+            return this.type;
+        }
     };
     public long mMessageId                     = 0;
     public String mProviderId                  = null;
@@ -58,6 +58,7 @@ public class Message
     public String mTitle                       = null;
     public String mContentText                 = null;
     public MediaContents mMediaContents        = null;
+    public String mTopic                  = null;
 
     private long mNativeHandle                 = 0;
 
@@ -115,6 +116,10 @@ public class Message
         return mMediaContents;
     }
 
+    public String getTopic()
+    {
+        return mTopic;
+    }
     public void setSourceName (String sourceName)
     {
         mSourceName = sourceName;
@@ -148,5 +153,10 @@ public class Message
     public void setMediaContents(MediaContents mediaContents)
     {
         mMediaContents = mediaContents;
+    }
+
+    public void setTopic(String topic)
+    {
+        mTopic = topic;
     }
 }

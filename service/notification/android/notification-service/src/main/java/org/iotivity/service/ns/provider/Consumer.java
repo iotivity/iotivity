@@ -19,15 +19,15 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package org.iotivity.service.ns.provider;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 /**
   * @class   Consumer
   * @brief   This class provides implementation of Notification Consumer object.
   */
 public class Consumer
 {
-    public native int  nativeAcceptSubscription(Consumer consumer, boolean accepted);
 
-    public String mConsumerId;
+    public String mConsumerId = null;
 
     public Consumer(final String consumerId)
     {
@@ -44,4 +44,22 @@ public class Consumer
         return -1;
     }
 
+    public int SelectTopic(String topicName) throws NSException
+    {
+        return nativeSelectTopic(mConsumerId, topicName);
+    }
+    public int UnselectTopic(String topicName) throws NSException
+    {
+        return nativeUnselectTopic(mConsumerId, topicName);
+    }
+
+    public TopicsList GetConsumerTopics() throws NSException
+    {
+        return nativeGetConsumerTopics(mConsumerId);
+    }
+
+    public native int  nativeAcceptSubscription(Consumer consumer, boolean accepted);
+    public native int  nativeSelectTopic(String consumerId, String topicName);
+    public native int  nativeUnselectTopic(String consumerId, String topicName);
+    public native TopicsList  nativeGetConsumerTopics(String consumerId);
 }

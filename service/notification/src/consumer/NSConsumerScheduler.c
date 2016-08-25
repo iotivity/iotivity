@@ -271,9 +271,16 @@ void NSConsumerTaskProcessing(NSTask * task)
         case TASK_CONSUMER_GET_TOPIC_LIST:
         case TASK_CONSUMER_SELECT_TOPIC_LIST:
         {
+            NSProvider * provider = (NSProvider *)task->taskData;
             NSProvider_internal * prov =
-                    NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
+                    NSConsumerFindNSProvider(provider->providerId);
             NS_VERIFY_NOT_NULL_V(prov);
+            if (task->taskType == TASK_CONSUMER_SELECT_TOPIC_LIST)
+            {
+                NSRemoveTopicLL(prov->topicLL);
+                prov->topicLL = NSCopyTopicLL((NSTopicLL *)provider->topicLL);
+            }
+
             NSTask * topTask = NSMakeTask(task->taskType, prov);
             NS_VERIFY_NOT_NULL_V(topTask);
             NSConsumerCommunicationTaskProcessing(topTask);
@@ -320,6 +327,7 @@ void NSConsumerTaskProcessing(NSTask * task)
         case TASK_RECV_SYNCINFO:
         case TASK_CONSUMER_RECV_MESSAGE:
         case TASK_CONSUMER_PROVIDER_DISCOVERED:
+        case TASK_CONSUMER_SENT_REQ_OBSERVE:
         case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
         case TASK_MAKE_SYNCINFO:
         case TASK_CONSUMER_REQ_TOPIC_URI:

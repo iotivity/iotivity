@@ -22,6 +22,7 @@ package org.iotivity.service.ns.consumer;
 
 import android.util.Log;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 
 /**
   * @class   ConsumerService
@@ -45,6 +46,24 @@ public class ConsumerService
         System.loadLibrary("notification_consumer_jni");
     }
 
+    public enum Response
+    {
+        ALLOW(1),
+        DENY(2),
+        TOPIC(3);
+        private int type;
+
+        private Response(int type)
+        {
+            this.type = type;
+        }
+
+        public int getResponseType()
+        {
+            return this.type;
+        }
+    };
+
     private static ConsumerService instance;
     static
     {
@@ -62,10 +81,10 @@ public class ConsumerService
 
     public void Start(
         OnProviderDiscoveredListner onProviderDiscoveredListner,
-        OnSubscriptionAcceptedListener onSubscriptionAcceptedListener
+        OnProviderChangedListener onProviderChangedListener
     ) throws NSException
     {
-        nativeStart(onProviderDiscoveredListner, onSubscriptionAcceptedListener);
+        nativeStart(onProviderDiscoveredListner, onProviderChangedListener);
     }
 
     public void Stop() throws NSException
@@ -88,23 +107,29 @@ public class ConsumerService
         return nativeGetProvider(providerId);
     }
 
+    public Message GetMessage(long  messageId) throws NSException
+    {
+        return nativeGetMessage(messageId);
+    }
+
     public interface OnProviderDiscoveredListner
     {
         public void onProviderDiscovered(Provider provider);
     }
 
-    public interface OnSubscriptionAcceptedListener
+    public interface OnProviderChangedListener
     {
-        public void onSubscriptionAccepted(Provider provider);
+        public void onProviderChanged(Provider provider , Response response);
     }
 
     private native void nativeStart (
         OnProviderDiscoveredListner onProviderDiscoveredListner,
-        OnSubscriptionAcceptedListener onSubscriptionAcceptedListener
+        OnProviderChangedListener onProviderChangedListener
     ) throws NSException;
 
     private native void nativeStop() throws NSException;
     private native void nativeEnableRemoteService(String serverAddress) throws NSException;
     private native void nativeRescanProvider() throws NSException;
     private native Provider nativeGetProvider(String providerId) throws NSException;
+    private native Message nativeGetMessage(long messageId) throws NSException;
 }

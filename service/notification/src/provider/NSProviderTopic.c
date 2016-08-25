@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderTopic.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 NSResult NSSendTopicUpdation();
 
@@ -282,7 +284,6 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
     OCRepPayloadDestroy(payload);
-    NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 
     NS_LOG(DEBUG, "NSSendTopicList - OUT");
     return NS_OK;
@@ -302,6 +303,12 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
 
+    NS_LOG_V(DEBUG, "TOPIC consumer ID = %s", consumerId);
+
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
+    while(NSStorageDelete(consumerTopicList, consumerId) != NS_FAIL);
+    consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
+
     OCRepPayload ** topicListPayload = NULL;
     OCRepPayloadValue * payloadValue = NULL;
     payloadValue = NSPayloadFindValue(payload, NS_ATTRIBUTE_TOPIC_LIST);
@@ -312,7 +319,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
     for(int i = 0; i <(int)dimensionSize; i++)
     {
         char * topicName = NULL;
-        int topicState = 0;
+        int64_t topicState = 0;
 
         OCRepPayloadGetPropString(topicListPayload[i], NS_ATTRIBUTE_TOPIC_NAME, &topicName);
         OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &topicState);
@@ -320,8 +327,8 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
 
         if(NS_TOPIC_SUBSCRIBED == (NSTopicState)topicState)
         {
-            NSCacheTopicSubData * topicSubData =
-            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
+            NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *)
+                    OICMalloc(sizeof(NSCacheTopicSubData));
 
             OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
             topicSubData->topicName = OICStrdup(topicName);
@@ -359,6 +366,7 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_SEND_TOPICS:
                     NS_LOG(DEBUG, "CASE TASK_SEND_TOPICS : ");
                     NSSendTopicList((OCEntityHandlerRequest*) node->taskData);
+                    NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) node->taskData);
                     break;
                 case TASK_SUBSCRIBE_TOPIC:
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
@@ -389,6 +397,7 @@ void * NSTopicSchedule(void * ptr)
                 {
                     NS_LOG(DEBUG, "TASK_POST_TOPIC : ");
                     NSPostConsumerTopics((OCEntityHandlerRequest*) node->taskData);
+                    NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) node->taskData);
                 }
                     break;
                 default:

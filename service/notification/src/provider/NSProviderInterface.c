@@ -132,7 +132,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-if(!initProvider)
+    if(!initProvider)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
         pthread_mutex_unlock(&nsInitMutex);
@@ -320,10 +320,11 @@ NSResult NSProviderSelectTopic(char *consumerId, char *topicName)
     NS_LOG(DEBUG, "NSProviderSelectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId || !topicName)
+    if(!consumerId || !topicName || !NSGetPolicy())
     {
+        NS_LOG(DEBUG, "consumer id should be set for topic subscription or "
+                "Configuration must set to true.");
         pthread_mutex_unlock(&nsInitMutex);
-        NS_LOG(DEBUG, "consumer id should be set for topic subscription");
         return NS_FAIL;
     }
 
@@ -345,9 +346,10 @@ NSResult NSProviderUnselectTopic(char *consumerId, char *topicName)
     NS_LOG(DEBUG, "NSProviderUnselectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId || !topicName)
+    if(!consumerId || !topicName || !NSGetPolicy())
     {
-        NS_LOG(DEBUG, "consumer id should be set for topic subscription");
+        NS_LOG(DEBUG, "consumer id should be set for topic subscription or "
+                "Configuration must set to true.");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }

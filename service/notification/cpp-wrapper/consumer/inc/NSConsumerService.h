@@ -111,6 +111,14 @@ namespace OIC
                       */
                 NSProvider *getProvider(const std::string &id);
 
+
+                /**
+                     * Request NSMessage that is matched by message id
+                     * @param[in]  messageId  the id of message that user wants to get
+                     * @return NSMessage
+                     */
+                NSMessage *getMessage(uint64_t messageId);
+
                 /**
                       *  get consumer config values
                       * @return ConsumerConfig callbaks set

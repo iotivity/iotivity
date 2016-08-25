@@ -22,8 +22,8 @@
 #include <cstring>
 #include "NSProviderInterface.h"
 #include "NSConstants.h"
-#include "NSUtils.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
 
 namespace OIC
 {
@@ -56,6 +56,34 @@ namespace OIC
                 return NSAcceptSubscription(consumer->getNSConsumer(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
             return NS_ERROR;
+        }
+
+        NSResult NSConsumer::selectTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "selectTopic - IN");
+            NSResult result = (NSResult) NSProviderSelectTopic(OICStrdup(getConsumerId().c_str()),
+                              OICStrdup(topicName.c_str()));
+            NS_LOG(DEBUG, "selectTopic - OUT");
+            return result;
+        }
+
+        NSResult NSConsumer::unselectTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "unselectTopic - IN");
+            NSResult result = (NSResult) NSProviderUnselectTopic(OICStrdup(getConsumerId().c_str()),
+                              OICStrdup(topicName.c_str()));
+            NS_LOG(DEBUG, "unselectTopic - OUT");
+            return result;
+        }
+
+        NSTopicsList *NSConsumer::getConsumerTopics()
+        {
+            NS_LOG(DEBUG, "getConsumerTopics - IN");
+            ::NSTopicLL *topics = NSProviderGetConsumerTopics(OICStrdup(getConsumerId().c_str()));
+
+            NSTopicsList *nsTopics = new NSTopicsList(topics);
+            NS_LOG(DEBUG, "getConsumerTopics - OUT");
+            return nsTopics;
         }
     }
 }

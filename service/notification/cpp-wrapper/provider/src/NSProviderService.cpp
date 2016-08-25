@@ -23,10 +23,11 @@
 #include <cstring>
 #include "NSCommon.h"
 #include "NSProviderInterface.h"
-#include "oic_string.h"
 #include "NSConsumer.h"
 #include "NSSyncInfo.h"
 #include "NSConstants.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 namespace OIC
 {
@@ -38,7 +39,7 @@ namespace OIC
             NSConsumer *nsConsumer = new NSConsumer(consumer);
             if (NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb != NULL)
                 NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb(nsConsumer);
-            delete nsConsumer;
+            NSProviderService::getInstance()->getAcceptedConsumers().push_back(nsConsumer);
             NS_LOG(DEBUG, "onConsumerSubscribedCallback - OUT");
         }
 
@@ -70,6 +71,15 @@ namespace OIC
             else
                 nsMsg->mediaContents->iconImage = nullptr;
             return nsMsg;
+        }
+
+        NSProviderService::~NSProviderService()
+        {
+            for (auto it : getAcceptedConsumers())
+            {
+                delete it;
+            }
+            getAcceptedConsumers().clear();
         }
 
         NSProviderService *NSProviderService::getInstance()
@@ -134,7 +144,7 @@ namespace OIC
             NSResult result = NSResult::ERROR;
             if (msg != nullptr)
             {
-                ::NSMessage * nsMsg = getNSMessage(msg);
+                ::NSMessage *nsMsg = getNSMessage(msg);
                 result = (NSResult) NSSendMessage(nsMsg);
                 delete nsMsg->mediaContents;
                 delete nsMsg;
@@ -168,9 +178,50 @@ namespace OIC
             return nsMessage;
         }
 
+        NSConsumer *NSProviderService::getConsumer(const std::string &id)
+        {
+            for (auto it : getAcceptedConsumers())
+            {
+                if (it->getConsumerId() == id)
+                    return it;
+            }
+            return NULL;
+        }
+
+        NSResult NSProviderService::AddTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "AddTopic - IN");
+            NSResult result = (NSResult) NSProviderAddTopic(OICStrdup(topicName.c_str()));
+            NS_LOG(DEBUG, "AddTopic - OUT");
+            return result;
+        }
+
+        NSResult NSProviderService::DeleteTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "DeleteTopic - IN");
+            NSResult result = (NSResult) NSProviderDeleteTopic(OICStrdup(topicName.c_str()));
+            NS_LOG(DEBUG, "DeleteTopic - OUT");
+            return result;
+        }
+
+        NSTopicsList *NSProviderService::GetTopics()
+        {
+            NS_LOG(DEBUG, "GetTopics - IN");
+            ::NSTopicLL *topics = NSProviderGetTopics();
+
+            NSTopicsList *nsTopics = new NSTopicsList(topics);
+            NS_LOG(DEBUG, "GetTopics - OUT");
+            return nsTopics;
+        }
+
         NSProviderService::ProviderConfig NSProviderService::getProviderConfig()
         {
             return m_config;
+        }
+
+        std::list<NSConsumer *> NSProviderService::getAcceptedConsumers()
+        {
+            return m_acceptedConsumers;
         }
     }
 }

@@ -18,39 +18,41 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+package org.iotivity.service.ns.common;
+import android.util.Log;
+import java.util.Vector;
+import java.util.Iterator;
 /**
- * @file
- *
- * This file contains Notification service Utils.
- */
-
-#ifndef _NS_UTILS_H_
-#define _NS_UTILS_H_
-
-#define NS_UTILS_UUID_STRING_SIZE 37
-
-namespace OIC
+  * @class   TopicsList
+  * @brief   This class provides implementation of Topics List
+  */
+public class TopicsList
 {
-    namespace Service
-    {
-        /** NSResult - enumeration for NS service Result*/
-        enum class NSResult
-        {
-            OK = 100,
-            ERROR = 200,
-            SUCCESS = 300,
-            FAIL = 400,
-        };
+    private static final String LOG_TAG = "NotificationService_TopicList";
 
-        /**
-             * NSResponse code of notification service
-             */
-        enum class NSResponse
-        {
-            ALLOW = 1,
-            DENY = 2,
-            TOPIC = 3,
-        };
+    public Vector<Topic> mTopicsList = new  Vector<Topic>();
+
+    public void addTopic(String topicname, Topic.TopicState state)
+    {
+        mTopicsList.add(new Topic(topicname,state));
     }
+
+    public void removeTopic(String topicName)
+    {
+        Iterator <Topic> it = getTopicsList().iterator();
+        while(it.hasNext())
+        {
+            if(it.next().getTopicName().equals(topicName))
+            {
+                mTopicsList.remove(it.next());
+            }
+        }
+    }
+
+    public Vector<Topic>  getTopicsList()
+    {
+        return mTopicsList;
+    }
+
 }
-#endif /* _NS_UTILS_H_ */
+

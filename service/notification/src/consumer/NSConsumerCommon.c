@@ -320,20 +320,26 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
 
     NSProviderConnectionInfo * retInfo = NSCreateProviderConnections(tmp->addr);
     NS_VERIFY_NOT_NULL(retInfo, NULL);
+    retInfo->messageHandle = tmp->messageHandle;
+    retInfo->syncHandle = tmp->syncHandle;
+    retInfo->isCloudConnection = tmp->isCloudConnection;
+    retInfo->isSubscribing = tmp->isSubscribing;
+
     tmp = tmp->next;
     NSProviderConnectionInfo * copyInfo = retInfo;
 
     while(tmp)
     {
-        copyInfo = NSCreateProviderConnections(tmp->addr);
-        NS_VERIFY_NOT_NULL(copyInfo, NULL);
+        NSProviderConnectionInfo * tmpInfo = NSCreateProviderConnections(tmp->addr);
+        NS_VERIFY_NOT_NULL(tmpInfo, NULL);
 
-        copyInfo->messageHandle = tmp->messageHandle;
-        copyInfo->syncHandle = tmp->syncHandle;
-        copyInfo->isCloudConnection = tmp->isCloudConnection;
-        copyInfo->isSubscribing = tmp->isSubscribing;
+        tmpInfo->messageHandle = tmp->messageHandle;
+        tmpInfo->syncHandle = tmp->syncHandle;
+        tmpInfo->isCloudConnection = tmp->isCloudConnection;
+        tmpInfo->isSubscribing = tmp->isSubscribing;
         tmp = tmp->next;
-        copyInfo = copyInfo->next;
+        copyInfo->next = tmpInfo;
+        copyInfo = tmpInfo;
     }
 
     return retInfo;
@@ -406,6 +412,7 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
 
     NSTopicLL * iter = topicHead;
 
+    NS_LOG_V(DEBUG, "[NSCopyTopicLL] Name:%s\t State:%d", iter->topicName, iter->state);
     NSTopicLL * newTopicHead = NSCopyTopicNode(iter);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicHead, NULL, NSRemoveTopicLL(newTopicHead));
 
@@ -413,6 +420,7 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
 
     while (iter)
     {
+        NS_LOG_V(DEBUG, "[NSCopyTopicLL] Name:%s\t State:%d", iter->topicName, iter->state);
         NSTopicLL * newTopicNode = NSCopyTopicNode(iter);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
 
@@ -570,6 +578,7 @@ bool NSOCResultToSuccess(OCStackResult ret)
         case OC_STACK_OK:
         case OC_STACK_RESOURCE_CREATED:
         case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_PRESENCE_STOPPED:
         case OC_STACK_CONTINUE:
         case OC_STACK_RESOURCE_CHANGED:
             return true;

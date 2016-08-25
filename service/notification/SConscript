@@ -77,7 +77,7 @@ if not env.get('RELEASE'):
     notification_env.AppendUnique(CCFLAGS = ['--coverage'])
 
 if 'CLIENT' in notification_env.get('RD_MODE'):
-    notification_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+        notification_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
     
 if env.get('WITH_CLOUD') == True:	
 	notification_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])    
@@ -124,4 +124,4 @@ SConscript('examples/SConscript')
 #    SConscript('android/SConscript')
 
 # Go to build c++ wrapper
-#SConscript('cpp-wrapper/SConscript')
+SConscript('cpp-wrapper/SConscript')

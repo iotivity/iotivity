@@ -32,6 +32,7 @@
 #include "NSSyncInfo.h"
 #include "NSMessage.h"
 #include "NSUtils.h"
+#include "NSTopicsList.h"
 
 namespace OIC
 {
@@ -79,15 +80,6 @@ namespace OIC
                     /* User Information */
                     std::string userInfo;
                 } ProviderConfig;
-
-                /**
-                     * Access policy exchanged between provider and consumer during subscription process
-                     */
-                enum class NSAccessPolicy
-                {
-                    NS_ACCESS_ALLOW = 0,
-                    NS_ACCESS_DENY = 1,
-                };
 
                 /**
                       * API for starting the NS Provider
@@ -147,13 +139,48 @@ namespace OIC
                 NSMessage *CreateMessage();
 
                 /**
+                      *  request to get NSConsumer pointer
+                      * @param id -id as string
+                      *
+                      * @return pointer to NSConsumer
+                      */
+                NSConsumer *getConsumer(const std::string &id);
+
+                /**
+                     * Add topic to topic list which is located in provider service storage
+                     * @param[in]  topicName Topic name to add
+                     * @return :: OK or result code of NSResult
+                     */
+                NSResult AddTopic(const std::string &topicName);
+
+                /**
+                     * Delete topic from topic list
+                     * @param[in]  topicName Topic name to delete
+                     * @return :: OK or result code of NSResult
+                     */
+                NSResult DeleteTopic(const std::string &topicName);
+
+                /**
+                     * Request topics list already registered by provider user
+                     * @return :: Topic list
+                     */
+                NSTopicsList *GetTopics();
+
+                /**
                       *  get Provider config values
                       * @return ProviderConfig callbaks set
                       */
                 ProviderConfig getProviderConfig();
 
+                /**
+                      *  get list of Consumers accepted.
+                      * @return m_acceptedConsumers -list of accepted Consumers
+                      */
+                std::list<NSConsumer *> getAcceptedConsumers();
+
             private :
                 ProviderConfig m_config;
+                std::list<NSConsumer *> m_acceptedConsumers;
 
             private:
                 NSProviderService()
@@ -161,7 +188,7 @@ namespace OIC
                     m_config.m_subscribeRequestCb = NULL;
                     m_config.m_syncInfoCb = NULL;
                 }
-                ~NSProviderService() = default;
+                ~NSProviderService();
                 NSProviderService(const NSProviderService &) = delete;
                 NSProviderService &operator=(const NSProviderService &) = delete;
                 NSProviderService(const NSProviderService &&) = delete;

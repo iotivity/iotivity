@@ -78,6 +78,33 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
 (JNIEnv *, jobject, jstring);
 
 /*
+ * Class:     org_iotivity_service_ns_provider_ProviderService
+ * Method:    nativeAddTopic
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeAddTopic
+(JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_provider_ProviderService
+ * Method:    nativeDeleteTopic
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeDeleteTopic
+(JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_provider_ProviderService
+ * Method:    nativeGetTopics
+ * Signature: ()Lorg/iotivity/service/ns/common/TopicsList;
+ */
+JNIEXPORT jobject JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeGetTopics
+(JNIEnv *, jobject);
+
+/*
  * Class:     org_iotivity_service_ns_provider_Consumer
  * Method:    nativeAcceptSubscription
  * Signature: (Lorg/iotivity/service/ns/provider/Consumer;Z)I
@@ -85,6 +112,30 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcceptSubscription
 (JNIEnv *, jobject, jobject, jboolean);
 
+/*
+ * Class:     org_iotivity_service_ns_provider_Consumer
+ * Method:    nativeSelectTopic
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSelectTopic
+(JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_provider_Consumer
+ * Method:    nativeUnselectTopic
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnselectTopic
+(JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_provider_Consumer
+ * Method:    nativeGetConsumerTopics
+ * Signature: (Ljava/lang/String;)Lorg/iotivity/service/ns/common/TopicsList;
+ */
+JNIEXPORT jobject JNICALL
+Java_org_iotivity_service_ns_provider_Consumer_nativeGetConsumerTopics
+(JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus
 }

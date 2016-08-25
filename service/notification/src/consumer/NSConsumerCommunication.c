@@ -40,6 +40,20 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse);
 
 char * NSGetCloudUri(const char * providerId, char * uri);
 
+NSResult NSUpdateObserveResult(NSProvider_internal * prov, char * query)
+{
+    NSOICFree(query);
+
+    NSProvider_internal * taskProvider = NSCopyProvider_internal(prov);
+    NSTask * task = NSMakeTask(TASK_CONSUMER_SENT_REQ_OBSERVE, (void *) taskProvider);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task,
+                    NS_ERROR, NSRemoveProvider_internal(taskProvider));
+
+    NSConsumerPushEvent(task);
+
+    return NS_OK;
+}
+
 NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 {
     NSProvider_internal * provider_internal = (NSProvider_internal *) provider;
@@ -84,8 +98,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         OCStackResult ret = NSInvokeRequest(&(connections->messageHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
                               NSConsumerMessageListener, NULL, type);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(
-                NSOCResultToSuccess(ret), NS_ERROR, NSOICFree(query));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
+                            NS_ERROR, NSUpdateObserveResult(provider_internal, query));
         NSOICFree(query);
         NSOICFree(msgUri);
 
@@ -98,8 +112,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         ret = NSInvokeRequest(&(connections->syncHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
                               NSConsumerSyncInfoListener, NULL, type);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(
-                NSOCResultToSuccess(ret), NS_ERROR, NSOICFree(query));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
+                            NS_ERROR, NSUpdateObserveResult(provider_internal, query));
         NSOICFree(query);
         NSOICFree(syncUri);
 
@@ -107,6 +121,13 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 
         connections = connections->next;
     }
+
+    NSProvider_internal * taskProvider = NSCopyProvider_internal(provider_internal);
+    NSTask * task = NSMakeTask(TASK_CONSUMER_SENT_REQ_OBSERVE, (void *) taskProvider);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task,
+                    NS_ERROR, NSRemoveProvider_internal(taskProvider));
+
+    NSConsumerPushEvent(task);
 
     return NS_OK;
 }
@@ -464,13 +485,17 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         while (iter)
         {
             topicLLSize ++;
+            NS_LOG_V(DEBUG, "[%d] Topic Name:%s\tTopic State:%d",
+                                        topicLLSize, iter->topicName, iter->state);
             iter = (NSTopicLL *) iter->next;
         }
 
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, *NSGetConsumerId());
+        NS_LOG_V(DEBUG, "NS_ATTRIBUTE_CONSUMER_ID: %s", *NSGetConsumerId());
 
         iter = topicLL;
         int iterSize = 0;
+        NS_LOG_V(DEBUG, "DimensionSize: %d", topicLLSize);
 
         OCRepPayload ** topicPayload = NULL;
         if (topicLLSize > 0)
@@ -485,10 +510,13 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
                                             iter->topicName);
                 OCRepPayloadSetPropInt(topicPayload[iterSize], NS_ATTRIBUTE_TOPIC_SELECTION,
                                             iter->state);
+                NS_LOG_V(DEBUG, "NS_ATTRIBUTE_TOPIC_NAME: %s", iter->topicName);
+                NS_LOG_V(DEBUG, "NS_ATTRIBUTE_TOPIC_SELECTION: %d", iter->state);
                 iterSize++;
                 iter = iter->next;
             }
             size_t dimensions[3] = {topicLLSize, 0, 0};
+
             OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
                                                     topicPayload, dimensions);
         }
