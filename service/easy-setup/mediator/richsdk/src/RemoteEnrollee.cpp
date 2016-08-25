@@ -243,7 +243,7 @@ namespace OIC
 
             try
             {
-                m_enrolleeSecurity->performOwnershipTransfer();
+                m_enrolleeSecurity->provisionOwnership();
             }
             catch (const std::exception& e)
             {
@@ -423,7 +423,7 @@ namespace OIC
                     throw ESBadRequestException("Invalid Cloud Server UUID.");
                 }
 
-                res = m_enrolleeSecurity->performACLProvisioningForCloudServer(cloudProp.getCloudID());
+                res = m_enrolleeSecurity->provisionACLForCloudServer(cloudProp.getCloudID());
 
                 if(res == ESResult::ES_ERROR)
                 {

@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "ESException.h"
 #include "oic_malloc.h"
+#include "provisioningdatabasemanager.h"
 #include "oic_string.h"
 #include "utlist.h"
 
@@ -41,6 +42,7 @@ namespace OIC
         #define DELETE (8)
         #define NOTIFY (16)
         #define DASH '-'
+        #define DISCOVERY_TIMEOUT (10)
 
         //TODO : Currently discovery timeout for owned and unowned devices is fixed as 5
         // The value should be accepted from the application as a parameter during ocplatform
@@ -65,7 +67,7 @@ namespace OIC
             m_secProvisioningDbPathCb = secProvisioningDbPathCb;
         }
 
-        std::shared_ptr< OC::OCSecureResource > EnrolleeSecurity::getEnrollee(
+        std::shared_ptr< OC::OCSecureResource > EnrolleeSecurity::findEnrolleeSecurityResource(
             DeviceList_t &list)
         {
             for (unsigned int i = 0; i < list.size(); i++)
@@ -83,23 +85,24 @@ namespace OIC
             return NULL;
         }
 
-        void EnrolleeSecurity::convertUUIDToString(const OicUuid_t uuid,
+        void EnrolleeSecurity::convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                               std::string& uuidString)
         {
-            char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*) 0)->id)) + 1] =
-            { 0, };
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-            std::ostringstream deviceId("");
+            char uuidArray[UUID_STRING_SIZE] = {'\0',};
+            int ret = snprintf(uuidArray, UUID_STRING_SIZE,
+                    "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                    uuid[0], uuid[1], uuid[2], uuid[3],
+                    uuid[4], uuid[5], uuid[6], uuid[7],
+                    uuid[8], uuid[9], uuid[10], uuid[11],
+                    uuid[12], uuid[13], uuid[14], uuid[15]
+                    );
 
-            b64Ret = b64Encode(uuid.id, sizeof(uuid.id),
-                    base64Buff, sizeof(base64Buff), &outLen);
-
-            if (B64_OK == b64Ret)
+            if (ret != UUID_STRING_SIZE - 1)
             {
-                deviceId << base64Buff;
+                return;
             }
-            uuidString =  deviceId.str();
+
+            uuidString = uuidArray;
         }
 
         void EnrolleeSecurity::convertStringToUUID(OicUuid_t& uuid,
@@ -138,7 +141,7 @@ namespace OIC
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! in OwnershipTransfer");
 
                 std::string uuid;
-                convertUUIDToString(result->at(0).deviceId, uuid);
+                convertUUIDToString(result->at(0).deviceId.id, uuid);
                 std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                         std::make_shared< SecProvisioningStatus >(uuid, ES_ERROR);
                 m_securityProvStatusCb(securityProvisioningStatus);
@@ -151,7 +154,7 @@ namespace OIC
                 {
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device",result->at(i).res);
                     std::string uuid;
-                    convertUUIDToString(result->at(0).deviceId, uuid);
+                    convertUUIDToString(result->at(0).deviceId.id, uuid);
 
                     OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "UUID : %s",uuid.c_str());
                     std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
@@ -164,7 +167,7 @@ namespace OIC
             }
         }
 
-        void EnrolleeSecurity::performOwnershipTransfer()
+        void EnrolleeSecurity::provisionOwnership()
         {
             OC::DeviceList_t pUnownedDevList, pOwnedDevList;
 
@@ -185,7 +188,7 @@ namespace OIC
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
                         pOwnedDevList.size());
-                std::shared_ptr< OC::OCSecureResource > ownedDevice = getEnrollee(pOwnedDevList);
+                std::shared_ptr< OC::OCSecureResource > ownedDevice = findEnrolleeSecurityResource(pOwnedDevList);
 
                 if (ownedDevice)
                 {
@@ -208,29 +211,25 @@ namespace OIC
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found Unowned devices. Count =%d",
                         pUnownedDevList.size());
 
-                m_unownedDevice = getEnrollee(pUnownedDevList);
+                m_unownedDevice = findEnrolleeSecurityResource(pUnownedDevList);
                 if (m_unownedDevice)
                 {
-                    OTMCallbackData_t justWorksCBData;
-                    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-                    justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-                    justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-                    justWorksCBData.createOwnerTransferPayloadCB =
-                            CreateJustWorksOwnerTransferPayload;
-                    OCSecure::setOwnerTransferCallbackData(OIC_JUST_WORKS, &justWorksCBData, NULL);
-
-                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
-                            m_unownedDevice->getDeviceID().c_str());
-
-                    OC::ResultCallBack ownershipTransferCb = std::bind(
-                            &EnrolleeSecurity::ownershipTransferCb, this, std::placeholders::_1,
-                            std::placeholders::_2);
-
-                    result = m_unownedDevice->doOwnershipTransfer(ownershipTransferCb);
-                    if (result != OC_STACK_OK)
+                    if(isOwnedDeviceRegisteredInSVRDB())
                     {
-                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransferCallback is failed");
-                        throw ESPlatformException(result);
+                        OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                            "Found Unowned device's DevID at DB of ownedDevices list");
+
+                        OC::ResultCallBack removeDeviceWithUuidCB = std::bind(
+                                &EnrolleeSecurity::removeDeviceWithUuidCB,
+                                this, std::placeholders::_1, std::placeholders::_2);
+
+                        OCSecure::removeDeviceWithUuid(DISCOVERY_TIMEOUT,
+                                                       m_ocResource->sid(),
+                                                       removeDeviceWithUuidCB);
+                    }
+                    else
+                    {
+                        performOwnershipTransfer();
                     }
                 }
                 else
@@ -246,7 +245,90 @@ namespace OIC
             }
         }
 
-        ESResult EnrolleeSecurity::performACLProvisioningForCloudServer(std::string cloudUuid)
+        void EnrolleeSecurity::performOwnershipTransfer()
+        {
+            OCStackResult result = OC_STACK_ERROR;
+
+            OTMCallbackData_t justWorksCBData;
+            justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
+            justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
+            justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
+            justWorksCBData.createOwnerTransferPayloadCB =
+                    CreateJustWorksOwnerTransferPayload;
+            OCSecure::setOwnerTransferCallbackData(OIC_JUST_WORKS, &justWorksCBData, NULL);
+
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
+                    m_unownedDevice->getDeviceID().c_str());
+
+            OC::ResultCallBack ownershipTransferCb = std::bind(
+                    &EnrolleeSecurity::ownershipTransferCb, this, std::placeholders::_1,
+                    std::placeholders::_2);
+
+            result = m_unownedDevice->doOwnershipTransfer(ownershipTransferCb);
+            if (result != OC_STACK_OK)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "doOwnershipTransfer is failed");
+                throw ESPlatformException(result);
+            }
+        }
+
+        void EnrolleeSecurity::removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError)
+        {
+            if (hasError)
+            {
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in removeDeviceWithUuid operation!");
+               throw ESException("removeDeviceWithUuid Error");
+            }
+
+            else
+            {
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received provisioning results: ");
+
+               for (unsigned int i = 0; i < result->size(); i++)
+               {
+                    std::string uuid;
+                    convertUUIDToString(result->at(i).deviceId.id, uuid);
+
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG,
+                        "Result is = %d for device %s",  result->at(i).res, uuid.c_str());
+               }
+               performOwnershipTransfer();
+            }
+        }
+
+        bool EnrolleeSecurity::isOwnedDeviceRegisteredInSVRDB()
+        {
+            OCStackResult res = OC_STACK_ERROR;
+
+            OCUuidList_t *uuidList = NULL;
+            size_t numOfDevices = 0;
+
+            res = PDMGetOwnedDevices(&uuidList, &numOfDevices);
+            if (OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Error while getting info from DB");
+                return false;
+            }
+
+            OCUuidList_t *pUuidList = uuidList;
+
+            while (pUuidList)
+            {
+                std::string uuid;
+                convertUUIDToString(pUuidList->dev.id, uuid);
+                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG,
+                    "m_ocResource->sid(): %s, cur DB UUID %s",
+                    m_ocResource->sid().c_str(), uuid.c_str());
+                if(m_ocResource->sid() == uuid.c_str())
+                {
+                    return true;
+                }
+                pUuidList = pUuidList->next;
+            }
+            return false;
+        }
+
+        ESResult EnrolleeSecurity::provisionACLForCloudServer(std::string cloudUuid)
         {
             ESResult res = ESResult::ES_ERROR;
 
@@ -273,7 +355,7 @@ namespace OIC
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
                         pOwnedDevList.size());
-                ownedDevice = getEnrollee(pOwnedDevList);
+                ownedDevice = findEnrolleeSecurityResource(pOwnedDevList);
 
                 if (!ownedDevice)
                 {
@@ -388,7 +470,7 @@ namespace OIC
                std::string devUuid;
                for (unsigned int i = 0; i < result->size(); i++)
                {
-                   convertUUIDToString(result->at(i).deviceId, devUuid);
+                   convertUUIDToString(result->at(i).deviceId.id, devUuid);
                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d  for device %s",
                                                            result->at(i).res, devUuid.c_str());
                }
