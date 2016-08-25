@@ -885,7 +885,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     {
         OIC_LOG_V(ERROR, TAG,
                   "encodeAddressForRFC6874 failed: "
-                  "outputSize (%d) < inputSize (%d)",
+                  "outputSize (%zu) < inputSize (%zu)",
                   outputSize, inputSize);
 
         return OC_STACK_ERROR;

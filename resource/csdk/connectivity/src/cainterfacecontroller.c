@@ -141,6 +141,7 @@ static void CAAdapterChangedCallback(CATransportAdapter_t adapter, CANetworkStat
     OIC_LOG_V(DEBUG, TAG, "[%d]adapter status is changed to [%d]", adapter, status);
 }
 
+#if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER)
 static void CAConnectionChangedCallback(const CAEndpoint_t *info, bool isConnected)
 {
     // Call the callback.
@@ -150,6 +151,7 @@ static void CAConnectionChangedCallback(const CAEndpoint_t *info, bool isConnect
     }
     OIC_LOG_V(DEBUG, TAG, "[%s] connection status is changed to [%d]", info->addr, isConnected);
 }
+#endif
 
 static void CAAdapterErrorHandleCallback(const CAEndpoint_t *endpoint,
                                          const void *data, uint32_t dataLen,
@@ -298,7 +300,7 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
 
             OIC_LOG_V(DEBUG,
                       TAG,
-                      "%zu adapter network info size is %" PRIu32 " res:%d",
+                      "%" PRIu32 " adapter network info size is %" PRIu32 " res:%d",
                       index,
                       tempSize[index],
                       res);

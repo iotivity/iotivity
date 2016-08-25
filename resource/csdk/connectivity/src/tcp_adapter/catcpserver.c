@@ -1051,6 +1051,9 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         remainLen -= len;
     } while (remainLen > 0);
 
+#ifndef TB_LOG
+    (void)fam;
+#endif
     OIC_LOG_V(INFO, TAG, "unicast %stcp sendTo is successful: %zu bytes", fam, dlen);
 }
 

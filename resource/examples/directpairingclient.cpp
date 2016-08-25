@@ -35,7 +35,6 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
-#define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
 #define CREATE (1)
 #define READ (2)
