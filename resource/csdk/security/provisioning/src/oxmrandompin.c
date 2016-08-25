@@ -92,6 +92,13 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
      * Credential should not be saved into SVR.
      * For this reason, We will use a temporary get_psk_info callback to random PIN OxM.
      */
+#ifdef __WITH_TLS__
+    if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskForRandomPinOxm))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to register TLS credentials handler for random PIN OxM.");
+        res = OC_STACK_ERROR;
+    }
+#endif
     if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm))
     {
         OIC_LOG(ERROR, TAG, "Failed to register DTLS credentials handler for random PIN OxM.");
@@ -121,7 +128,7 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
 
-    caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
+    caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
@@ -130,15 +137,21 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
     OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
 
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
-    CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-    if (NULL == endpoint)
+    CAEndpoint_t endpoint;
+    memcpy(&endpoint, &selDevInfo->endpoint, sizeof(CAEndpoint_t));
+
+    if(CA_ADAPTER_IP == endpoint.adapter)
     {
-        return OC_STACK_NO_MEMORY;
+        endpoint.port = selDevInfo->securePort;
+        caresult = CAInitiateHandshake(&endpoint);
     }
-    memcpy(endpoint,&selDevInfo->endpoint,sizeof(CAEndpoint_t));
-    endpoint->port = selDevInfo->securePort;
-    caresult = CAInitiateHandshake(endpoint);
-    OICFree(endpoint);
+#ifdef __WITH_TLS__
+    else
+    {
+        endpoint.port = selDevInfo->tcpPort;
+        caresult = CAinitiateTlsHandshake(&endpoint);
+    }
+#endif
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "DTLS handshake failure.");

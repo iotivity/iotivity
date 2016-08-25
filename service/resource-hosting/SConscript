@@ -94,8 +94,8 @@ resourcehosting_env.UserInstallTargetHeader('include/Hosting.h',\
 	'service/resource-hosting', 'Hosting.h')
 
 # Go to build Unit test
-if target_os in ['linux']:
-	SConscript('unittest/SConscript')
+#if target_os in ['linux']:
+#	SConscript('unittest/SConscript')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

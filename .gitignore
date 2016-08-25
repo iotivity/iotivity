@@ -49,6 +49,11 @@ service/things-manager/build/linux/release
 service/things-manager/build/linux/debug
 service/things-manager/sdk/build/linux/
 
+service/notification/android/.gradle/
+service/notification/android/build/
+service/notification/android/notification-service/build/
+service/notification/android/notification-service/src/main/obj/
+
 # Ignore any object files
 *.o
 *.os
@@ -84,6 +89,7 @@ config.log
 os
 out/
 platform
+iotivity.pc
 
 # Ignore downloaded dependencies
 extlibs/gtest/gtest-*
@@ -111,6 +117,9 @@ extlibs/bluez/bluez
 *~
 *#*#
 *.orig
+.cproject
+.gradle/
+.project
 
 # Ignore byte-compiled Python scripts
 *.pyc

@@ -473,6 +473,8 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
     switch (ehResult)
     {
         case OC_EH_OK:
+        case OC_EH_CONTENT:
+        case OC_EH_VALID:
             result = OC_STACK_OK;
             break;
         case OC_EH_SLOW:
@@ -827,6 +829,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     if ((virtualUriInRequest == OC_PRESENCE) &&
         (resource->resourceProperties & OC_ACTIVE))
     {
+        // Need to send ACK when the request is CON.
+        if (request->qos == OC_HIGH_QOS)
+        {
+            CAEndpoint_t endpoint = { .adapter = CA_DEFAULT_ADAPTER };
+            CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
+            SendDirectStackResponse(&endpoint, request->coapID, CA_EMPTY, CA_MSG_ACKNOWLEDGE,
+                                    0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
+        }
+
         // Presence uses observer notification api to respond via SendPresenceNotification.
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }

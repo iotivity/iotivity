@@ -460,7 +460,7 @@ static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerReq
 
             // Prepare to establish a secure channel with Pin-based PSK cipher suite
             if (CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false) ||
-                CA_STATUS_OK != CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256))
+                CA_STATUS_OK != CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, CA_ADAPTER_IP))
             {
                 OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
                 goto exit;

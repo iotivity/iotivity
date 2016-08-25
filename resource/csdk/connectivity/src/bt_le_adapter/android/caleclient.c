@@ -3984,6 +3984,11 @@ CAResult_t CAStartLEGattClient()
         g_threadWriteCharacteristicCond = ca_cond_new();
     }
 
+    if (!g_threadScanIntervalCond)
+    {
+        g_threadScanIntervalCond = ca_cond_new();
+    }
+
     CAResult_t ret = CALEClientStartScanWithInterval();
     if (CA_STATUS_OK != ret)
     {

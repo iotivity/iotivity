@@ -67,7 +67,22 @@ namespace OCResourceTest
         return ret;
     }
 
-     //Get Test
+    //ConstructResourceObject Test
+    TEST(ConstructResourceTest, ConstructResourceObjectWithValidHost)
+    {
+        EXPECT_NO_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectWithValidHost2)
+    {
+        EXPECT_NO_THROW(ConstructResourceObject("coap://[ffff::ffff]:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectWithValidHost3)
+    {
+        EXPECT_NO_THROW(ConstructResourceObject("coap://[ffff::ffff%eth0]:5000", "/resource"));
+    }
+
     TEST(ConstructResourceTest, ConstructResourceObject)
     {
         EXPECT_ANY_THROW(ConstructResourceObject(std::string(""), std::string("")));
@@ -103,6 +118,11 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject("coap://:5000", "/resource"));
     }
 
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost3)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://[ffff:::ffff]:5000", "/resource"));
+    }
+
     TEST(ConstructResourceTest, ConstructResourceObjectInvalidUri)
     {
         EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "/"));
@@ -113,6 +133,7 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "resource"));
     }
 
+    //Get Test
     TEST(ResourceGetTest, DISABLED_ResourceGetForValidUri)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");

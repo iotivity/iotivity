@@ -24,7 +24,7 @@
 #include "logger.h"
 #include "ocstack.h"
 #include "escommon.h"
-#include "networkhandler.h"
+#include "ESEnrolleeCommon.h"
 #include "octypes.h"
 
 #ifndef ES_RESOURCE_HANDLER_H_
@@ -34,35 +34,64 @@
 extern "C" {
 #endif
 
-typedef void (*ESEnrolleeResourceEventCallback)(ESResult);
+typedef void (*ESWiFiCB) (ESResult, ESWiFiProvData *);
+typedef void (*ESCloudCB) (ESResult, ESCloudProvData *);
+typedef void (*ESDevConfCB) (ESResult, ESDevConfProvData *);
+
+typedef void (*ESWriteUserdataCb)(OCRepPayload* payload, char* resourceType);
+typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void** userdata);
 
 /* Structure to represent a Light resource */
 typedef struct PROVRESOURCE
 {
     OCResourceHandle handle;
-    int64_t ps; // provisiong status, 1 : need to provisioning, 2 : Connected to Enroller.
-    int64_t tr; // Trigger network connection, 0 : Init value, 1 : Connected to the target network.
-    int64_t tnt; // target network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
-    char tnn[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
-    char cd[MAXNETCREDLEN]; // credential information.
+    ProvStatus status; // provisiong status
+    ESErrorCode lastErrCode;
+    char ocfWebLinks[MAX_WEBLINKLEN];
 } ProvResource;
 
-/* Structure to represent a Light resource */
-typedef struct NETRESOURCE
+typedef struct
 {
     OCResourceHandle handle;
-    int64_t cnt; // current network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
-    int64_t ant[MAXNUMTYPE]; // available network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
-    char ipaddr[MAXADDRLEN]; // ip address.
-    char cnn[MAXSSIDLEN]; // current network name.
-} NetResource;
+    WIFI_MODE supportedMode[NUM_WIFIMODE];
+    uint8_t numMode;        // the number of device's supported wifi modes
+    WIFI_FREQ supportedFreq;
+    char ssid[OIC_STRING_MAX_VALUE]; // SSID
+    char cred[OIC_STRING_MAX_VALUE]; // credential information.
+    WIFI_AUTHTYPE authType;
+    WIFI_ENCTYPE encType;
+} WiFiResource;
 
-OCStackResult CreateProvisioningResource(bool isSecured);
-OCStackResult DeleteProvisioningResource();
+typedef struct
+{
+    OCResourceHandle handle;
+    char authCode[OIC_STRING_MAX_VALUE];
+    char authProvider[OIC_STRING_MAX_VALUE];
+    char ciServer[OIC_STRING_MAX_VALUE];
+} CloudResource;
 
-void GetTargetNetworkInfoFromProvResource(char *, char *);
-void RegisterResourceEventCallBack(ESEnrolleeResourceEventCallback);
+typedef struct
+{
+    OCResourceHandle handle;
+    char devName[OIC_STRING_MAX_VALUE];
+    char modelNumber[OIC_STRING_MAX_VALUE];
+    char location[OIC_STRING_MAX_VALUE];
+    char language[OIC_STRING_MAX_VALUE];
+    char country[OIC_STRING_MAX_VALUE];
+} DevConfResource;
+
+OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
+OCStackResult DeleteEasySetupResources();
+
+OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty);
+OCStackResult SetEnrolleeState(ESEnrolleeState esState);
+OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode);
+
+void RegisterWifiRsrcEventCallBack(ESWiFiCB);
+void RegisterCloudRsrcEventCallBack(ESCloudCB);
+void RegisterDevConfRsrcEventCallBack(ESDevConfCB);
 void UnRegisterResourceEventCallBack(void);
+ESResult SetCallbackForUserData(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb);
 
 #ifdef __cplusplus
 }

@@ -41,10 +41,10 @@
 static CAIPConnectionStateChangeCallback g_networkChangeCallback;
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
-                                         uint32_t addr, int flags);
+                                         const char *addr, int flags);
 
 static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
-                            const char *name, int family, uint32_t addr, int flags);
+                                     const char *name, int family, const char *addr, int flags);
 
 CAResult_t CAIPJniInit();
 
@@ -123,8 +123,6 @@ CAInterface_t *CAFindInterfaceChange()
     {
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
-        struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
-        uint32_t ipv4addr = sa4->sin_addr.s_addr;
 
         if (ioctl(s, SIOCGIFFLAGS, item) < 0)
         {
@@ -167,7 +165,12 @@ CAInterface_t *CAFindInterfaceChange()
             continue;
         }
 
-        foundNewInterface = CANewInterfaceItem(ifIndex, name, AF_INET, ipv4addr, flags);
+        // Get address of network interface.
+        char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        struct sockaddr_in *sa = (struct sockaddr_in *)&item->ifr_addr;
+        inet_ntop(AF_INET, (void *)&(sa->sin_addr), addr, sizeof(addr));
+
+        foundNewInterface = CANewInterfaceItem(ifIndex, name, AF_INET, addr, flags);
     }
 
     OICFree(previous);
@@ -215,8 +218,6 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     {
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
-        struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
-        uint32_t ipv4addr = sa4->sin_addr.s_addr;
 
         if (ioctl(s, SIOCGIFFLAGS, item) < 0)
         {
@@ -243,15 +244,13 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
             continue;
         }
 
-        // Add IPv4 interface
-        CAResult_t result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
-        if (CA_STATUS_OK != result)
-        {
-            goto exit;
-        }
+        // Get address of network interface.
+        char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        struct sockaddr_in *sa = (struct sockaddr_in *)&item->ifr_addr;
+        inet_ntop(AF_INET, (void *)&(sa->sin_addr), addr, sizeof(addr));
 
-        // Add IPv6 interface
-        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET6, ipv4addr, flags);
+        // Add IPv4 interface
+        CAResult_t result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, addr, flags);
         if (CA_STATUS_OK != result)
         {
             goto exit;
@@ -265,7 +264,7 @@ exit:
 }
 
 static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
-                            const char *name, int family, uint32_t addr, int flags)
+                                     const char *name, int family, const char *addr, int flags)
 {
     CAInterface_t *ifitem = CANewInterfaceItem(index, name, family, addr, flags);
     if (!ifitem)
@@ -284,7 +283,7 @@ static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
 }
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
-                                         uint32_t addr, int flags)
+                                         const char *addr, int flags)
 {
     CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof (CAInterface_t));
     if (!ifitem)
@@ -296,7 +295,7 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     OICStrcpy(ifitem->name, sizeof (ifitem->name), name);
     ifitem->index = index;
     ifitem->family = family;
-    ifitem->ipv4addr = addr;
+    OICStrcpy(ifitem->addr, sizeof (ifitem->addr), addr);
     ifitem->flags = flags;
 
     return ifitem;

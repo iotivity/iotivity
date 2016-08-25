@@ -65,10 +65,16 @@ mediator_env.PrependUnique(LIBS = ['ESMediatorRich', 'oc', 'octbstack', 'oc_logg
 
 if env.get('SECURED') == '1':
 	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
+	if env.get('WITH_TCP') == True:
+		mediator_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 mediator = mediator_env.Program('mediator_rich', 'mediator_cpp.cpp')
 
 i_mediator = mediator_env.Install(env.get('BUILD_DIR'), mediator)
 
-Alias('mediator_rich', i_mediator)
+clientdat = mediator_env.Install(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample',
+                                    env.get('SRC_DIR') + '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample/oic_svr_db_client.dat')
+
+
+Alias('mediator_rich', [i_mediator, clientdat])
 env.AppendTarget('mediator_rich')

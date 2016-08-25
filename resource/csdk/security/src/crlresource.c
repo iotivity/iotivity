@@ -27,10 +27,8 @@
 #include "doxmresource.h"
 #include "ocpayload.h"
 #include "oic_malloc.h"
-#ifdef __WITH_X509__
 #include "crlresource.h"
 #include "crl.h"
-#endif /* __WITH_X509__ */
 
 #define TAG  "SRM-CRL"
 

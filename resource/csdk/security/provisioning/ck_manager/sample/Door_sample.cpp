@@ -438,7 +438,7 @@ void SendGetRequest()
     OIC_LOG(INFO, TAG, "Send Get REQ to Light server");
 
     //select ciphersuite for certificates
-    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, CA_ADAPTER_IP);
 
     initAddress();
 
@@ -536,7 +536,7 @@ int main()
     PrintUsage();
 
     //select ciphersuite for certificates
-    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, CA_ADAPTER_IP);
 
     struct timespec timeout;
     timeout.tv_sec  = 0;

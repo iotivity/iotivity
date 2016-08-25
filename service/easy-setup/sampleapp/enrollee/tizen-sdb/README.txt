@@ -21,22 +21,22 @@
 Build Procedure
 ===============
 
-1) If you are building first time, then delete GBS-ROOT folder from home directory.
+1) If you are building first time, then delete GBS-ROOT-OIC folder from home directory.
    Note: Default build server URL for Tizen is set in gbs configuration file @ iotivity/tools/tizen/.gbs.conf.
          If needed, same can be modified as per appropriate target.
 
 2) Go to "iotivity/" folder.
-3) Execute following command(s) to start build based on transport selection required :
 
-scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=0 LOGGING=true
-			ES_ROLE=enrollee ES_TARGET_ENROLLEE=android ES_SOFTAP_MODE=ENROLLEE_SOFTAP
+3) Execute following command(s) to start build based on some build flags required :
+
+# scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=0 LOGGING=true ES_TARGET_ENROLLEE=tizen
 
 4) If built for security mode:
         After installing sample RPM on device, copy required .dat files and other applications to the same path where enrollee_wifi(executable) is available
 
 (If needed, modify the parameters accordingly)
 Note :- Upon successful execution of above command(s) RI library and sample console application(for tizen enrollee)
-        will be generated at path "~/GBS-ROOT/local/repos/<target>/armv7l/RPMS".
+        will be generated at path "~/GBS-ROOT-OIC/local/repos/<target>/armv7l/RPMS".
 
 Procedure to Execute Sample App:
 ================================

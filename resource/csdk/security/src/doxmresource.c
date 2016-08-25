@@ -797,7 +797,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
 
 #ifdef __WITH_X509__
 #define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
-                        CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+                        CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+                                            ehRequest->devAddr.adapter);
 #endif //__WITH_X509__
 #endif //__WITH_DTLS__
                     }
@@ -830,12 +831,14 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                         OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
-                        caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
+                        caRes = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256,
+                                                    ehRequest->devAddr.adapter);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 
-                        if(previousMsgId != ehRequest->messageID)
+                        char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
+                         //TODO ehRequest->messageID for copa over TCP always is null. Find reason why.
+                        if(ehRequest->devAddr.adapter == OC_ADAPTER_IP && previousMsgId != ehRequest->messageID)
                         {
-                            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
                             if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
                             {
                                 //Set the device id to derive temporal PSK
@@ -855,6 +858,31 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                 OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
                                 ehRet = OC_EH_ERROR;
                             }
+                        }
+                        else
+                        {
+                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                            {
+                                //Set the device id to derive temporal PSK
+                                SetUuidForRandomPinOxm(&gDoxm->deviceID);
+
+                                /**
+                                 * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
+                                 * Credential should not be saved into SVR.
+                                 * For this reason, use a temporary get_psk_info callback to random PIN OxM.
+                                 */
+#ifdef __WITH_TLS__
+                                caRes = CAregisterTlsCredentialsHandler(GetDtlsPskForRandomPinOxm);
+#endif
+                                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                                ehRet = OC_EH_OK;
+                            }
+                            else
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
+                                ehRet = OC_EH_ERROR;
+                            }
+
                         }
 #endif //__WITH_DTLS__
                     }

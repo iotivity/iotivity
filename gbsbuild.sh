@@ -46,6 +46,8 @@ cp ./LICENSE.md ./tmp
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp
+cp ./tools/tizen/*.rpm $sourcedir/tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+cp ./tools/tizen/.gbs.conf ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
 
 cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
@@ -67,12 +69,13 @@ echo "Calling core gbs build command"
 gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
-   echo "Build is successful"
+    echo "Build is successful"
 else
-   echo "Build failed!"
-   exit 1
+    echo "Build failed!"
+    exit 1
 fi
 
+rm -rf tmp
 cd $sourcedir
 rm -rf $sourcedir/tmp
 

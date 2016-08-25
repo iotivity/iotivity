@@ -108,7 +108,7 @@ if target_os not in ['windows']:
     container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])
 
 container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_client', 'rcs_server', 'rcs_common',
-  'oc','octbstack', 'oc_logger', 'oc_logger_core', 
+  'oc','octbstack', 'oc_logger', 'oc_logger_core',
   'connectivity_abstraction'])
 
 if target_os in ['android']:
@@ -123,7 +123,7 @@ if int(containerJavaSupport):
     except KeyError:
         print ''
 container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_client', 'rcs_server', 'rcs_common',
-  'oc','octbstack', 'oc_logger', 'oc_logger_core', 
+  'oc','octbstack', 'oc_logger', 'oc_logger_core',
   'connectivity_abstraction',
   'gtest', 'gtest_main'])
 
@@ -133,6 +133,10 @@ if int(containerJavaSupport):
         container_gtest_env.AppendUnique(LIBS = ['jvm'])
     except KeyError:
         print ''
+
+if container_gtest_env.get('SECURED') == '1':
+	if container_gtest_env.get('WITH_TCP') == True:
+		container_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # build test bundle

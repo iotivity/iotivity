@@ -32,6 +32,15 @@ namespace OCAccountManagerTest
     {
     }
 
+    void deleteHandler(const HeaderOptions& /*headerOptions*/, const int /*eCode*/)
+    {
+    }
+
+    void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& /*rep*/,
+                        const int& /*eCode*/, const int& /*sequenceNumber*/)
+    {
+    }
+
     // Helper method
     OCAccountManager::Ptr ConstructAccountManagerObject(std::string host)
     {
@@ -123,21 +132,17 @@ namespace OCAccountManagerTest
     TEST(SignOutTest, DISABLED_SignOutForValid)
     {
         std::string host("coap://192.168.1.2:5000");
-        std::string userId("AnyUserId");
-        std::string accessToken("AnyAccessToken");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
-        EXPECT_EQ(OC_STACK_OK, accountManager->signOut(userId, accessToken, &accountHandler));
+        EXPECT_EQ(OC_STACK_OK, accountManager->signOut(&accountHandler));
     }
 
     TEST(SignOutTest, SignOutWithNullCallback)
     {
         std::string host("coap://192.168.1.2:5000");
-        std::string userId("AnyUserId");
-        std::string accessToken("AnyAccessToken");
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
-        EXPECT_ANY_THROW(accountManager->signOut(userId, accessToken, nullptr));
+        EXPECT_ANY_THROW(accountManager->signOut(nullptr));
     }
 
     // RefreshAccessToken Test
@@ -160,5 +165,365 @@ namespace OCAccountManagerTest
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
         EXPECT_ANY_THROW(accountManager->refreshAccessToken(userId, refreshToken, nullptr));
+    }
+
+    // SearchUser Test
+    TEST(SearchUserTest, DISABLED_SearchUserWithUserUuidForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->searchUser(userId, &accountHandler));
+    }
+
+    TEST(SearchUserTest, DISABLED_SearchUserWithQueryForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string key("AnyKey");
+        std::string value("AnyValue");
+        QueryParamsMap query = {};
+        query.insert(std::pair<std::string, std::string>(key, value));
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->searchUser(query, &accountHandler));
+    }
+
+    TEST(SearchUserTest, SearchUserWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->searchUser(userId, nullptr));
+    }
+
+    // DeleteDevice Test
+    TEST(DeleteDeviceTest, DISABLED_DeleteDeviceForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string deviceId("AnyDeviceId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->deleteDevice(deviceId, &deleteHandler));
+    }
+
+    TEST(DeleteDeviceTest, DeleteDeviceWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string deviceId("AnyDeviceId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->deleteDevice(deviceId, nullptr));
+    }
+
+    // CreateGroup Test
+    TEST(CreateGroupTest, DISABLED_CreateGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->createGroup(AclGroupType::PUBLIC, &accountHandler));
+    }
+
+    TEST(CreateGroupTest, CreateGroupWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->createGroup(AclGroupType::PUBLIC, nullptr));
+    }
+
+    // GetGroupList Test
+    TEST(GetGroupListTest, DISABLED_GetGroupListForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->getGroupList(&accountHandler));
+    }
+
+    TEST(GetGroupListTest, GetGroupListWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->getGroupList(nullptr));
+    }
+
+    // DeleteGroup Test
+    TEST(DeleteGroupTest, DISABLED_DeleteGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->deleteGroup(groupId, &deleteHandler));
+    }
+
+    TEST(DeleteGroupTest, DeleteGroupWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->deleteGroup(groupId, nullptr));
+    }
+
+    // JoinGroup Test
+    TEST(JoinGroupTest, DISABLED_JoinGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->joinGroup(groupId, &accountHandler));
+    }
+
+    TEST(JoinGroupTest, JoinGroupWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->joinGroup(groupId, nullptr));
+    }
+
+    // AddDeviceToGroup Test
+    TEST(AddDeviceToGroupTest, DISABLED_AddDeviceToGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::vector<std::string> deviceId = {"AnyDevideId"};
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->addDeviceToGroup(groupId, deviceId,
+                                                                &accountHandler));
+    }
+
+    TEST(AddDeviceToGroupTest, AddDeviceToGroupWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::vector<std::string> deviceId = {"AnyDevideId"};
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->addDeviceToGroup(groupId, deviceId, nullptr));
+    }
+
+    TEST(AddDeviceToGroupTest, AddDeviceToGroupWithEmptyDeviceID)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::vector<std::string> deviceId = {};
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->addDeviceToGroup(groupId, deviceId, &accountHandler));
+    }
+
+    // GetGroupInfo Test
+    TEST(GetGroupInfoTest, DISABLED_GetGroupInfoForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->getGroupInfo(groupId, &accountHandler));
+    }
+
+    TEST(GetGroupInfoTest, GetGroupInfoWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->getGroupInfo(groupId, nullptr));
+    }
+
+    // LeaveGroup Test
+    TEST(LeaveGroupTest, DISABLED_LeaveGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->leaveGroup(groupId, &deleteHandler));
+    }
+
+    TEST(LeaveGroupTest, LeaveGroupWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->leaveGroup(groupId, nullptr));
+    }
+
+    // DeleteDeviceFromGroup Test
+    TEST(DeleteDeviceFromGroupTest, DISABLED_DeleteDeviceFromGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::vector<std::string> deviceId = {"AnyDevideId"};
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->deleteDeviceFromGroup(groupId, deviceId,
+                                                                     &deleteHandler));
+    }
+
+    TEST(DeleteDeviceFromGroupTest, DeleteDeviceFromGroupWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::vector<std::string> deviceId = {"AnyDevideId"};
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->deleteDeviceFromGroup(groupId, deviceId, nullptr));
+    }
+
+    TEST(DeleteDeviceFromGroupTest, DeleteDeviceFromGroupEmptyDeviceID)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::vector<std::string> deviceId = {};
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->deleteDeviceFromGroup(groupId, deviceId,
+                                                               &deleteHandler));
+    }
+
+    // ObserveGroup Test
+    TEST(ObserveGroupTest, DISABLED_ObserveGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->observeGroup(groupId, &onObserve));
+    }
+
+    TEST(ObserveGroupTest, ObserveGroupWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->observeGroup(groupId, nullptr));
+    }
+
+    // CancelObserveGroup Test
+    TEST(CancelObserveGroupTest, DISABLED_CancelObserveGroupForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->observeGroup(groupId, &onObserve));
+        EXPECT_EQ(OC_STACK_OK, accountManager->cancelObserveGroup(groupId));
+    }
+
+    TEST(CancelObserveGroupTest, CancelObserveGroupWithoutObserve)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->cancelObserveGroup(groupId));
+    }
+
+    // ObserveInvitation Test
+    TEST(ObserveInvitationTest, DISABLED_ObserveInvitationForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->observeInvitation(&onObserve));
+    }
+
+    TEST(ObserveInvitationTest, ObserveInvitationWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->observeInvitation(nullptr));
+    }
+
+    // CancelObserveInvitation Test
+    TEST(CancelObserveInvitationTest, DISABLED_CancelObserveInvitationForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->observeInvitation(&onObserve));
+        EXPECT_EQ(OC_STACK_OK, accountManager->cancelObserveInvitation());
+    }
+
+    TEST(CancelObserveInvitationTest, CancelObserveInvitationWithoutObserve)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->cancelObserveInvitation());
+    }
+
+    // SendInvitation Test
+    TEST(SendInvitationTest, DISABLED_SendInvitationForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->sendInvitation(groupId, userId, &accountHandler));
+    }
+
+    TEST(SendInvitationTest, SendInvitationWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->sendInvitation(groupId, userId, nullptr));
+    }
+
+    // CancelInvitation Test
+    TEST(CancelInvitationTest, DISABLED_CancelInvitationForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->cancelInvitation(groupId, userId, &deleteHandler));
+    }
+
+    TEST(CancelInvitationTest, CancelInvitationWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        std::string userId("AnyUserId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->cancelInvitation(groupId, userId, nullptr));
+    }
+
+    // DeleteInvitation Test
+    TEST(DeleteInvitationTest, DISABLED_DeleteInvitationForValid)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_EQ(OC_STACK_OK, accountManager->deleteInvitation(groupId, &deleteHandler));
+    }
+
+    TEST(DeleteInvitationTest, DeleteInvitationWithNullCallback)
+    {
+        std::string host("coap://192.168.1.2:5000");
+        std::string groupId("AnyGroupId");
+        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
+        EXPECT_TRUE(NULL != accountManager);
+        EXPECT_ANY_THROW(accountManager->deleteInvitation(groupId, nullptr));
     }
 }

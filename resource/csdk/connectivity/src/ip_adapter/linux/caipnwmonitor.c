@@ -24,7 +24,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/select.h>
 #include <ifaddrs.h>
 #include <unistd.h>
@@ -38,8 +37,6 @@
 #ifdef __linux__
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #endif
 
 #include "camutex.h"
@@ -65,7 +62,7 @@ static CAIPConnectionStateChangeCallback g_networkChangeCallback = NULL;
 static CAResult_t CAIPInitializeNetworkMonitorList();
 static void CAIPDestroyNetworkMonitorList();
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
-                                         uint32_t addr, int flags);
+                                         const char *addr, int flags);
 
 static CAResult_t CAIPInitializeNetworkMonitorList()
 {
@@ -196,7 +193,7 @@ void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
 }
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
-                                         uint32_t addr, int flags)
+                                         const char *addr, int flags)
 {
     CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof (CAInterface_t));
     if (!ifitem)
@@ -208,7 +205,7 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     OICStrcpy(ifitem->name, sizeof (ifitem->name), name);
     ifitem->index = index;
     ifitem->family = family;
-    ifitem->ipv4addr = addr;
+    OICStrcpy(ifitem->addr, sizeof (ifitem->addr), addr);
     ifitem->flags = flags;
 
     return ifitem;
@@ -277,7 +274,7 @@ CAInterface_t *CAFindInterfaceChange()
             }
 
             foundNewInterface = CANewInterfaceItem(ifitem->index, ifitem->name, ifitem->family,
-                                                   ifitem->ipv4addr, ifitem->flags);
+                                                   ifitem->addr, ifitem->flags);
             break;    // we found the one we were looking for
         }
         u_arraylist_destroy(iflist);
@@ -358,8 +355,20 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         OICStrcpy(ifitem->name, INTERFACE_NAME_MAX, ifa->ifa_name);
         ifitem->index = ifindex;
         ifitem->family = family;
-        ifitem->ipv4addr = ((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr.s_addr;
         ifitem->flags = ifa->ifa_flags;
+
+        if (ifitem->family == AF_INET6)
+        {
+            struct sockaddr_in6 *in6 = (struct sockaddr_in6*) ifa->ifa_addr;
+            inet_ntop(ifitem->family, (void *)&(in6->sin6_addr), ifitem->addr,
+                      sizeof(ifitem->addr));
+        }
+        else if (ifitem->family == AF_INET)
+        {
+            struct sockaddr_in *in = (struct sockaddr_in*) ifa->ifa_addr;
+            inet_ntop(ifitem->family, (void *)&(in->sin_addr), ifitem->addr,
+                      sizeof(ifitem->addr));
+        }
 
         bool result = u_arraylist_add(iflist, ifitem);
         if (!result)
@@ -372,7 +381,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         if (!isFound)
         {
             CAInterface_t *newifitem = CANewInterfaceItem(ifitem->index, ifitem->name, ifitem->family,
-                                                          ifitem->ipv4addr, ifitem->flags);
+                                                          ifitem->addr, ifitem->flags);
             CAResult_t ret = CAAddNetworkMonitorList(newifitem);
             if (CA_STATUS_OK != ret)
             {

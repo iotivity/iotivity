@@ -69,20 +69,16 @@ extern "C" {
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
 #endif
 
-#ifdef WITH_MQ
 /** MQ Broker URI.*/
-#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/.well-known/ocf/ps"
-#endif
+#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/oic/ps"
 
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
 
-#ifdef WITH_CLOUD
-/** Presence URI through which the OCF devices advertise their device presence.*/
-#define OCF_RSRVD_DEVICE_PRESENCE_URI         "/.well-known/ocf/prs"
-#endif
+/** Presence URI through which the OIC devices advertise their device presence.*/
+#define OC_RSRVD_DEVICE_PRESENCE_URI         "/oic/prs"
 
 /** Sets the default time to live (TTL) for presence.*/
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
@@ -159,10 +155,10 @@ extern "C" {
 
 #ifdef WITH_MQ
 /** To represent content type with MQ Broker.*/
-#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER     "ocf.wk.ps"
+#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER     "oic.wk.ps"
 
 /** To represent content type with MQ Topic.*/
-#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC      "ocf.wk.ps.topic"
+#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC      "oic.wk.ps.topic"
 #endif
 
 /** To represent interface.*/
@@ -363,13 +359,19 @@ extern "C" {
 /** Cloud Account */
 
 /** Account URI.*/
-#define OC_RSRVD_ACCOUNT_URI               "/.well-known/ocf/account"
+#define OC_RSRVD_ACCOUNT_URI               "/oic/account"
 
 /** Account session URI.*/
-#define OC_RSRVD_ACCOUNT_SESSION_URI       "/.well-known/ocf/account/session"
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"
 
 /** Account token refresh URI.*/
-#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/.well-known/ocf/account/tokenrefresh"
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/oic/account/tokenrefresh"
+
+/** ACL group URI.*/
+#define OC_RSRVD_ACL_GROUP_URI             "/oic/acl/group"
+
+/** ACL invite URI.*/
+#define OC_RSRVD_ACL_INVITE_URI            "/oic/acl/invite"
 
 /** Defines auth provider. */
 #define OC_RSRVD_AUTHPROVIDER              "authprovider"
@@ -377,11 +379,14 @@ extern "C" {
 /** Defines auth code. */
 #define OC_RSRVD_AUTHCODE                  "authcode"
 
-/** Defines session. */
+/** Defines access token. */
 #define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
 
-/** Defines status. */
+/** Defines login. */
 #define OC_RSRVD_LOGIN                     "login"
+
+/** Defines search. */
+#define OC_RSRVD_SEARCH                    "search"
 
 /** Defines grant type. */
 #define OC_RSRVD_GRANT_TYPE                "granttype"
@@ -389,8 +394,35 @@ extern "C" {
 /** Defines refresh token. */
 #define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
 
+/** Defines user UUID. */
+#define OC_RSRVD_USER_UUID                 "uid"
+
 /** Defines user ID. */
-#define OC_RSRVD_USER_ID                   "uid"
+#define OC_RSRVD_USER_ID                   "userid"
+
+/** Defines group ID. */
+#define OC_RSRVD_GROUP_ID                  "gid"
+
+/** Defines group Master ID. */
+#define OC_RSRVD_GROUP_MASTER_ID           "gmid"
+
+/** Defines group type. */
+#define OC_RSRVD_GROUP_TYPE                "gtype"
+
+/** Defines member of group ID. */
+#define OC_RSRVD_MEMBER_ID                 "mid"
+
+/** Defines device ID list. */
+#define OC_RSRVD_DEVICE_ID_LIST            "dilist"
+
+/** Defines public. */
+#define OC_RSRVD_PUBLIC                    "Public"
+
+/** Defines private. */
+#define OC_RSRVD_PRIVATE                   "Private"
+
+/** Defines options. */
+#define OC_RSRVD_INVITE                    "invite"
 
 /** Defines options. */
 #define OC_RSRVD_OPTIONS                   "options"
@@ -881,12 +913,6 @@ typedef enum
 
     /** Others. */
     OC_OBSERVE_NO_OPTION = 2,
-
-//#ifdef WITH_MQ
-    OC_MQ_SUBSCRIBER = 3,
-
-    OC_MQ_UNSUBSCRIBER = 4,
-//#endif
 
 } OCObserveAction;
 

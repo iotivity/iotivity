@@ -1478,10 +1478,8 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         {
             eps[j].flags = CA_IPV4;
             eps[j].port = caglobals.ip.u4.port;
-            /** @todo eps[j].addr not populated with IPv4 address string.
-             * it was using ifitem->ipv4addr to accomplish this.
-             * Need to understand what ipv4addr means to whom*/
         }
+        OICStrcpy(eps[j].addr, sizeof(eps[j].addr), ifitem->addr);
 
 #ifdef __WITH_DTLS__
         j++;
@@ -1498,14 +1496,14 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         {
             eps[j].flags = CA_IPV4 | CA_SECURE;
             eps[j].port = caglobals.ip.u4s.port;
-            inet_ntop(AF_INET, &(ifitem->ipv4addr), eps[j].addr, MAX_ADDR_STR_SIZE_CA);
         }
+        OICStrcpy(eps[j].addr, sizeof(eps[j].addr), ifitem->addr);
 #endif
         j++;
     }
 
     *info = eps;
-    *size = len;
+    *size = length;
 
     u_arraylist_destroy(iflist);
 

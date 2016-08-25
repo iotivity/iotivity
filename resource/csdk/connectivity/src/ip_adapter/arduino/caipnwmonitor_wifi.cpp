@@ -57,7 +57,7 @@ CAResult_t CAIPStopNetworkMonitor()
 }
 
 /// Retrieves the IP address assigned to Arduino WiFi shield
-void CAArduinoGetInterfaceAddress(uint32_t *address)
+void CAArduinoGetInterfaceAddress(char *address, size_t len)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (WiFi.status() != WL_CONNECTED)
@@ -69,9 +69,9 @@ void CAArduinoGetInterfaceAddress(uint32_t *address)
     VERIFY_NON_NULL_VOID(address, TAG, "Invalid address");
 
     IPAddress ip = WiFi.localIP();
-    *address = (uint32_t) ip;
+    snprintf(address, len, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
-    OIC_LOG_V(DEBUG, TAG, "Wifi shield address is: %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    OIC_LOG_V(DEBUG, TAG, "Wifi shield address is: %s", address);
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
@@ -99,7 +99,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     ifitem->index = 1;
     ifitem->family = AF_INET;
     ifitem->flags = 0;
-    CAArduinoGetInterfaceAddress(&ifitem->ipv4addr);
+    CAArduinoGetInterfaceAddress(ifitem->addr, sizeof(ifitem->addr));
 
     result = u_arraylist_add(iflist, ifitem);
     if (!result)

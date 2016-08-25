@@ -1118,7 +1118,7 @@ int main(void)
 
                         ask = 0;
 
-                        if (pOwnedDevList[index]->removeDeviceWithUuid(DISCOVERY_TIMEOUT,
+                        if (OCSecure::removeDeviceWithUuid(DISCOVERY_TIMEOUT,
                                                                        pOwnedDevList[index]->getDeviceID(),
                                                                        provisionCB)
                                 != OC_STACK_OK)

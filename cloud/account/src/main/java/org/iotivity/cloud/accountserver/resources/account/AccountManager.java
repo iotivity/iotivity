@@ -109,11 +109,10 @@ public class AccountManager {
             // make my private group
             GroupResource.getInstance().createGroup(userInfo.getUuid(),
                     Constants.REQ_GTYPE_PRIVATE);
-
-            // add my device to private group
-            GroupResource.getInstance().getGroup(userInfo.getUuid())
-                    .addDevice(new HashSet<String>(Arrays.asList(did)));
         }
+        // add my device to private group
+        GroupResource.getInstance().getGroup(userInfo.getUuid())
+                .addDevice(new HashSet<String>(Arrays.asList(did)));
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(
                 Constants.TOKEN_TABLE, castTokenTableToMap(tokenInfo));

@@ -512,7 +512,8 @@ exit:
 }
 
 #ifdef RD_CLIENT
-OCRDPayload *OCRDPublishPayloadCreate(OCResourceHandle resourceHandles[], uint8_t nHandles,
+OCRDPayload *OCRDPublishPayloadCreate(const unsigned char *id,
+                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
                                       uint64_t ttl)
 {
     OCTagsPayload *tagsPayload = NULL;
@@ -529,7 +530,6 @@ OCRDPayload *OCRDPublishPayloadCreate(OCResourceHandle resourceHandles[], uint8_
         return NULL;
     }
 
-    const unsigned char *id = (const unsigned char *) OCGetServerInstanceIDString();
     tagsPayload = OCCopyTagsResources(NULL, id, ttl);
     if (!tagsPayload)
     {

@@ -25,355 +25,779 @@
 #include <string>
 #ifndef WITH_ARDUINO
 #include <memory>
+#include <vector>
 #endif
 
+#include "OCPlatform.h"
 #include "ocstack.h"
 #include "octypes.h"
 
+#include "escommon.h"
+
+using namespace OC;
 using namespace std;
-
-// Defines
-#define OIC_STRING_MAX_VALUE    100
-#define IPV4_ADDR_SIZE          16
-#define IP_PORT                 55555
-#define NET_WIFI_SSID_SIZE      100
-#define NET_WIFI_PWD_SIZE       100
-
-/**
- * @brief Mac address length for BT port
- */
-#define NET_MACADDR_SIZE 18
-
-/**
- * Attributes used to form a proper easysetup conforming JSON message.
- */
-#define OC_RSRVD_ES_PS                     "ps"
-#define OC_RSRVD_ES_TNN                    "tnn"
-#define OC_RSRVD_ES_CD                     "cd"
-#define OC_RSRVD_ES_TR                     "tr"
-#define OC_RSRVD_ES_TNT                    "tnt"
-#define OC_RSRVD_ES_ANT                    "ant"
-
-/**
- * Easysetup defined resoruce types and uris.
- */
-#define OC_RSRVD_ES_PROV_RES_TYPE           "oic.r.prov"
-#define OC_RSRVD_ES_URI_PROV               "/oic/prov"
-#define OC_RSRVD_ES_URI_NET                "/oic/net"
-
-/**
- * @brief Defines for Provisioning status accepted values
- */
-#define ES_PS_NEED_PROVISIONING         1
-#define ES_PS_PROVISIONING_COMPLETED    2
-#define ES_PS_TRIGGER_INIT_VALUE        0
-#define ES_PS_TRIGGER_CONNECTION        1
 
 #ifndef WITH_ARDUINO
 namespace OIC
 {
     namespace Service
     {
-
         /**
-        * Device Roles defined for each device type used in easy setup
-        */
-        typedef enum
-        {
-            ENROLLEE,
-            MEDIATOR,
-            ENROLLER,
-        } DeviceRole;
-
-        /**
-        * On-boarding connection to create Adhoc network.
-        */
-        typedef enum
-        {
-            SOFTAP,
-            BLE,
-        } OBConnection;
-
-        typedef enum
-        {
-            ES_ERROR = -1,
-            ES_OK = 0,
-            ES_NETWORKFOUND = 1,
-            ES_NETWORKCONNECTED,
-            ES_NETWORKNOTCONNECTED,
-            ES_RESOURCECREATED = 11,
-            ES_RECVREQOFPROVRES = 21,
-            ES_RECVREQOFNETRES,
-            ES_RECVUPDATEOFPROVRES,
-            ES_RECVTRIGGEROFPROVRES,
-        } ESResult;
-
-        typedef enum
-        {
-            /**
-             * Default state of the device
-             */
-            ES_INIT_STATE,
-
-            /**
-             * Device will move to this state once the on boarding begins
-             */
-            ES_ON_BOARDING_STATE,
-
-            /**
-             * Device will move to this state after successful on-boarding of the device
-             */
-            ES_ON_BOARDED_STATE,
-
-            /**
-             * Device will move to this state once the on boarding is done
-             */
-            ES_PROVISIONING_STATE,
-
-            /**
-             * Easy setup process is successful.
-             */
-            ES_PROVISIONED_STATE,
-
-            /**
-             * This state is arbitrary one, any time device can come into this state
-             * Device will move to this state if the ownership transfer initiated  by the Application
-             */
-            ES_OWNERSHIP_TRANSFERRING_STATE,
-
-            /**
-             * This state is arbitrary one, any time device can come into this state
-             * Device will move to this state if the ownership transfer is completed
-             */
-            ES_OWNERSHIP_TRANSFERRED_STATE,
-
-            /**
-             * This state is arbitrary one, any time device can come into this state
-             * Device will move to this state once the Application factory reset the device
-             */
-            ES_FACTORY_RESET_STATE,
-
-            /**
-             * Enrollee moves to this state after connecting to target network
-             */
-            ES_ON_BOARDED_TARGET_NETWORK_STATE,
-        }EnrolleeState;
-
-        /**
-         * Provisioning Device Status
+         * @brief Properties of provisioning resource. It includes a provisioning status and last
+         *        error code.
          */
-        typedef struct
+        class EnrolleeStatus
         {
-            // Address of remote server
-            OCDevAddr * addr;
-            // Indicates adaptor type on which the response was received
-            OCConnectivityType connType;
-        } EasySetupDeviceInfo;
+        public:
 
-        /**
-         * Provosioning Status
-         */
-        typedef enum
-        {
-            DEVICE_PROVISIONED = 0,
-            DEVICE_NOT_PROVISIONED,
-            DEVICE_OWNED,
-            DEVICE_NOT_OWNED
-        } EasySetupState, ProvStatus;
-
-        /**
-         * Response from queries to remote servers.
-         */
-        typedef struct
-        {
-            // EasySetup Status
-            EasySetupState provStatus;
-            // EasySetup Device Info
-            EasySetupDeviceInfo provDeviceInfo;
-        } EasySetupInfo, ProvisioningInfo;
-
-        /**
-         * @brief  Network information of the Enroller
-         */
-        typedef union
-        {
             /**
-             * @brief BT Mac Information
+             * Constructor
              */
-            struct
+            EnrolleeStatus(const OCRepresentation& rep)
             {
-                char btMacAddress[NET_MACADDR_SIZE];   /**< BT mac address **/
-            } BT;
+                m_rep = rep;
+            }
+
+            EnrolleeStatus(const EnrolleeStatus& enrolleeStatus) :
+                m_rep(enrolleeStatus.getRepresentation())
+            {
+            }
+
+            EnrolleeStatus(const EnrolleeStatus&& enrolleeStatus) :
+                m_rep(std::move(enrolleeStatus.getRepresentation()))
+            {
+            }
 
             /**
-             * @brief LE MAC Information
+             * Get a provisioning status property of Enrollee.
+             *
+             * @return a provisioning status property of Enrollee
              */
-            struct
+            ProvStatus getProvStatus()
             {
-                char leMacAddress[NET_MACADDR_SIZE];   /**< BLE mac address **/
-            } LE;
+                if(m_rep.hasAttribute(OC_RSRVD_ES_PROVSTATUS))
+                {
+                    return static_cast<ProvStatus>(
+                                        m_rep.getValue<int>(OC_RSRVD_ES_PROVSTATUS));
+                }
+                return ES_STATE_INIT;
+            }
 
             /**
-             * @brief IP Information
+             * Get a last error code property of Enrollee.
+             *
+             * @return a last error code property of Enrollee.
              */
-            struct
+            ESErrorCode getLastErrCode()
             {
-                char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
-                char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
-            } WIFI;
-        } ProvData;
+                if(m_rep.hasAttribute(OC_RSRVD_ES_LAST_ERRORCODE))
+                {
+                    return static_cast<ESErrorCode>(
+                                        m_rep.getValue<int>(OC_RSRVD_ES_LAST_ERRORCODE));
+                }
+                return ES_ERRCODE_NO_ERROR;
+            }
+
+            /**
+             * Get OCRepresentation object
+             *
+             * @return OCRepresentation object
+             */
+            const OCRepresentation& getRepresentation() const
+            {
+                return m_rep;
+            }
+        protected:
+            OCRepresentation m_rep;
+        };
 
         /**
-         * @brief Network Information
+         * @brief Data class stored for Cloud server property provisioning
          */
-        typedef struct
+        class CloudProp
         {
-            ProvData provData;    /**< Enroller Network Info**/
-            OCConnectivityType connType;    /**< Connectivity Type**/
-        } ProvConfig;
+        public:
+
+            /**
+             * Constructor
+             */
+            CloudProp()
+            {
+            }
+
+            CloudProp(const CloudProp& cloudProp) :
+                m_rep(cloudProp.toOCRepresentation()), m_cloudID(cloudProp.getCloudID())
+            {
+            }
+
+            CloudProp(const CloudProp&& cloudProp) :
+                m_rep(std::move(cloudProp.toOCRepresentation())), m_cloudID(cloudProp.getCloudID())
+            {
+            }
+
+            /**
+             * Constructor with OCRepresentation object. This is used for JNI communication.
+             */
+            CloudProp(const OCRepresentation &rep)
+            {
+                m_rep = rep;
+                m_cloudID = "";
+            }
+
+            /**
+             * Set CloudServer resource properties to be delivered to Enrollee
+             *
+             * @param authCode  Auth code issued by OAuth2.0-compatible account server
+             * @param authProvider Auth provider ID
+             * @param ciServer Cloud interface server URL which an Enrollee is going to registered
+             */
+            void setCloudProp(string authCode, string authProvider, string ciServer)
+            {
+                m_rep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
+                m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+                m_rep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
+            }
+
+            /**
+             * Set CloudServer's UUID
+             *
+             * @param cloudID Cloud Interface server's UUID
+             */
+            void setCloudID(string cloudID)
+            {
+                m_cloudID = cloudID;
+            }
+
+            /**
+             * Get an auth code to be delivered.
+             *
+             * @return an auth code to be delivered.
+             */
+            std::string getAuthCode() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHCODE))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHCODE);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get an auth provider which issued an auth code
+             *
+             * @return an auth provider which issued an auth code
+             */
+            std::string getAuthProvider() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHPROVIDER))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHPROVIDER);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a CI server to be delivered
+             *
+             * @return a CI server to be delivered
+             */
+            std::string getCiServer() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_CISERVER))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_CISERVER);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a CI server's Uuid to be delivered
+             *
+             * @return a CI server's Uuid to be delivered
+             */
+            std::string getCloudID() const
+            {
+                return m_cloudID;
+            }
+
+            /**
+             * Get OCRepresentation object
+             *
+             * @return OCRepresentation object
+             */
+            const OCRepresentation &toOCRepresentation() const
+            {
+                return m_rep;
+            }
+        protected:
+            OCRepresentation m_rep;
+            std::string m_cloudID;
+        };
 
         /**
-         * Client applications implement this callback to consume responses received from Servers.
+         * @brief Data class stored for Device property provisioning which includes a WiFi
+         *        and device configuration provisioning
          */
-        typedef void (*OCProvisioningStatusCB)(EasySetupInfo *easySetupInfo);
-
-        /**
-         * @brief This structure represent configuration information to create wifi onboarding SoftAP or connection.
-        */
-
-        // Note : Below structure is not currently used but added for future purpose.
-        typedef struct
+        class DeviceProp
         {
-            char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the onboarding Adhoc Wifi network**/
-            char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the onboarding Adhoc wifi network**/
-            bool isSecured;                 /**< Secure connection**/
-        }WiFiOnboardingConfig;
+        public:
 
-        /**
-         * @brief This structure represent onboarding connection instance.
-        */
-        typedef struct
-        {
-         /*Actual use of ipAddress is for unicast discovery, but also used to identify the Enrollee device as of now,
-            device identification should be based on DeviceID in next release.*/
-           char ipAddress[IPV4_ADDR_SIZE]; /**< IP Address of the Enrollee **/
-           bool isSecured;                 /**< Secure connection**/
-        }WiFiOnboadingConnection;
+            /**
+             * Constructor
+             */
+            DeviceProp()
+            {
+            }
 
-        typedef enum
-        {
-            ES_PROVISIONING_ERROR = -1,
-            ES_NEED_PROVISIONING,
-            ES_PROVISIONED_ALREADY,
-            ES_PROVISIONING_SUCCESS
-        } ESState;
+            DeviceProp(const DeviceProp& deviceProp) :
+                m_rep(deviceProp.toOCRepresentation())
+            {
+            }
 
-        typedef enum
-        {
-            ES_UNKNOWN = 0,
-            ES_ONBOARDED,
-            ES_OWNED,
-            ES_PROVISIONED
-        } CurrentESState;
+            DeviceProp(const DeviceProp&& deviceProp) :
+                m_rep(std::move(deviceProp.toOCRepresentation()))
+            {
+            }
 
-        typedef enum
-        {
-            ES_SEC_UNKNOWN = 0,
-            ES_SEC_OWNED,
-            ES_SEC_ACL_PROVISIONED,
-            ES_SEC_CREDS_PROVISIONED
-        } EnrolleeSecState;
+            /**
+             * Constructor with OCRepresentation object. This is used for JNI communication.
+             */
+            DeviceProp(const OCRepresentation &rep)
+            {
+                m_rep = rep;
+            }
+
+            /**
+             * Set WiFi resource properties to be delivered to Enrollee
+             *
+             * @param ssid Ssid of the Enroller
+             * @param pwd Pwd of the Enrolle
+             * @param authtype Auth type of the Enroller
+             * @param enctype Encryption type of the Enroller
+             *
+             * @see WIFI_AUTHTYPE
+             * @see WIFI_ENCTYPE
+             */
+            void setWiFiProp(string ssid, string pwd, WIFI_AUTHTYPE authtype, WIFI_ENCTYPE enctype)
+            {
+                m_rep.setValue(OC_RSRVD_ES_SSID, ssid);
+                m_rep.setValue(OC_RSRVD_ES_CRED, pwd);
+                m_rep.setValue(OC_RSRVD_ES_AUTHTYPE, authtype);
+                m_rep.setValue(OC_RSRVD_ES_ENCTYPE, enctype);
+            }
+
+            /**
+             * Set DevConf resource properties to be delivered to Enrollee
+             *
+             * @param language IETF language tag using ISO 639X
+             * @param country ISO Country Code (ISO 3166-1 Alpha-2)
+             */
+            void setDevConfProp(string language, string country, string location)
+            {
+                m_rep.setValue(OC_RSRVD_ES_LANGUAGE, language);
+                m_rep.setValue(OC_RSRVD_ES_COUNTRY, country);
+                m_rep.setValue(OC_RSRVD_ES_LOCATION, location);
+            }
+
+            /**
+             * Get a SSID of Enroller
+             *
+             * @return a SSID of enroller
+             */
+            std::string getSsid() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_SSID))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_SSID);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a password of Enroller
+             *
+             * @return a password of enroller
+             */
+            std::string getPassword() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_CRED))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_CRED);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get an auth type of Enroller
+             *
+             * @return an auth type of enroller
+             *
+             * @see WIFI_AUTHTYPE
+             */
+            WIFI_AUTHTYPE getAuthType() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHTYPE))
+                {
+                    return static_cast<WIFI_AUTHTYPE>(m_rep.getValue<int>(OC_RSRVD_ES_AUTHTYPE));
+                }
+                return NONE_AUTH;
+            }
+
+            /**
+             * Get an encryption type of Enroller
+             *
+             * @return an encryption type of enroller
+             *
+             * @see WIFI_ENCTYPE
+             */
+            WIFI_ENCTYPE getEncType() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_ENCTYPE))
+                {
+                    return static_cast<WIFI_ENCTYPE>(m_rep.getValue<int>(OC_RSRVD_ES_ENCTYPE));
+                }
+                return NONE_ENC;
+            }
+
+            /**
+             * Get a language to be set. A language is expressed in IETF language tag
+             * using ISO 639X.
+             *
+             * @return a language to be set
+             */
+            std::string getLanguage() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_LANGUAGE))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_LANGUAGE);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a country to be set. A country is expressed in ISO Country Code
+             * (ISO 3166-1 Alpha-2)
+             *
+             * @return a country to be set
+             */
+            std::string getCountry() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_COUNTRY))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_COUNTRY);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a location to be set. A location is GPS information
+             *
+             * @return a country to be set
+             */
+            std::string getLocation() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get OCRepresentation object
+             *
+             * @return OCRepresentation object
+             */
+            const OCRepresentation &toOCRepresentation() const
+            {
+                return m_rep;
+            }
+
+        protected:
+            OCRepresentation m_rep;
+        };
 
         /**
          * Security Provisioning Status
          */
-        class SecProvisioningResult
+        class SecProvisioningStatus
         {
         public:
-            std::shared_ptr< SecProvisioningResult > shared_ptr;
-            SecProvisioningResult(std::string deviceUUID, ESResult result) :
+            SecProvisioningStatus(string deviceUUID, ESResult result) :
                 m_devUUID(deviceUUID), m_result(result)
             {
-
             }
 
-            std::string getDeviceUUID()
+            const string getDeviceUUID()
             {
                 return m_devUUID;
-            }
-
-            ESResult getResult()
-            {
-                return m_result;
-            }
-        private:
-            std::string m_devUUID;
-            ESResult m_result;
-        };
-
-        /**
-         * Callback function definition for providing Enrollee security status .
-         */
-        typedef std::function< void(std::shared_ptr<SecProvisioningResult>) > EnrolleeSecStatusCb;
-
-        /**
-         * Callback definition to be invoked when the security stack expects a pin from application.
-         */
-        typedef std::function< void(std::string&) > SecurityPinCb;
-
-        /**
-         * Callback definition to be invoked when the stack expects a db path.
-         */
-        typedef std::function< void(std::string&) > SecProvisioningDbPathCb;
-
-        class ProvisioningStatus
-        {
-        public:
-            std::shared_ptr< ProvisioningStatus > shared_ptr;
-            ProvisioningStatus(ESResult result, ESState esState) :
-                    m_result(result), m_esState(esState)
-            {
-
             }
 
             ESResult getESResult()
             {
                 return m_result;
             }
-
-            ESState getESState()
-            {
-                return m_esState;
-            }
         private:
+            string m_devUUID;
             ESResult m_result;
-            ESState m_esState;
         };
 
-        class EasySetupStatus
+        /**
+         * @breif This provide a set of getter APIs from received response for getConfiguration().
+         *        Received information includes a device name, WiFi supported mode, and frequency.
+         *        Additionally, you can know if Enrollee can be access to cloud server with this
+         *        object.
+         */
+        class EnrolleeConf
         {
         public:
-            std::shared_ptr< EasySetupStatus > shared_ptr;
-            EasySetupStatus(const EasySetupState& easySetupState,
-                    const ProvConfig& provConfig) :
-                    m_easySetupState(easySetupState), m_ProvConfig(provConfig)
+            /**
+             * Constructor
+             * The expected OCRepresentation is one for collection resource and has several child
+             * OCRepresentation object corresponding to WiFi, DevConf, and CloudServer resource's
+             * representation.
+             */
+            EnrolleeConf(const OCRepresentation& rep) :
+                m_ProvRep(rep)
             {
-
             }
 
-            ProvConfig getProvConfig()
+            EnrolleeConf(const EnrolleeConf& enrolleeConf) :
+                m_ProvRep(enrolleeConf.getProvResRep())
             {
-                return m_ProvConfig;
             }
 
-            EasySetupState getEasySetupState()
+            EnrolleeConf(const EnrolleeConf&& enrolleeConf) :
+                m_ProvRep(std::move(enrolleeConf.getProvResRep()))
             {
-                return m_easySetupState;
             }
-        private:
-            EasySetupState m_easySetupState;
-            ProvConfig m_ProvConfig;
+
+            /**
+             * Get a device name of Enrollee. It is Device's human-friendly name like device model
+             * name.
+             *
+             * @return a device name of Enrollee
+             */
+            std::string getDeviceName() const
+            {
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_DEVNAME))
+                        {
+                            return child->getValue<std::string>(OC_RSRVD_ES_DEVNAME);
+                        }
+                    }
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a model number of Enrollee.
+             *
+             * @return a model number of Enrollee
+             */
+            std::string getModelNumber() const
+            {
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                        {
+                            return child->getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
+                        }
+                    }
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get a set of WiFi supported modes of Enrollee
+             *
+             * @return a set of WiFi supported modes of Enrollee
+             *
+             * @see WIFI_MODE
+             */
+            vector<WIFI_MODE> getWiFiModes() const
+            {
+                vector<WIFI_MODE> modes;
+                modes.clear();
+
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                        {
+                            for(auto it : child->getValue
+                                        <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                            {
+                                modes.push_back(static_cast<WIFI_MODE>(it));
+                            }
+                        }
+                    }
+                }
+                return modes;
+            }
+
+            /**
+             * Get a WiFi supported frequency of Enrollee
+             *
+             * @return a WiFi supported frequency of Enrollee
+             *
+             * @see WIFI_FREQ
+             */
+            WIFI_FREQ getWiFiFreq() const
+            {
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    {
+                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
+                        {
+                            return static_cast<WIFI_FREQ>(
+                                        child->getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                        }
+                    }
+                }
+                return WIFI_FREQ_NONE;
+            }
+
+            /**
+             * Get an accessibility to cloud server of an Enrollee
+             *
+             * @return an accessibility to cloud server of an Enrollee
+             */
+            bool isCloudAccessible() const
+            {
+                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            /**
+             * Get OCRepresentation object
+             *
+             * @return OCRepresentation object
+             */
+            const OCRepresentation& getProvResRep() const
+            {
+                return m_ProvRep;
+            }
+
+        protected:
+            OCRepresentation m_ProvRep;
         };
+
+        /**
+         * Status object for getStatus API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the API and requested data delivered in the response which includes
+         * a provisioning status and last error code stored in Enrollee.
+         *
+         * @see EnrolleeStatus
+         */
+        class GetEnrolleeStatus
+        {
+        public:
+            /**
+             * Constructor
+             */
+            GetEnrolleeStatus(ESResult result, const EnrolleeStatus& status) :
+                m_result(result), m_enrolleeStatus(status)
+            {
+            }
+
+            /**
+             * Get a result of getting provisioning status and last error code of Enrollee
+             *
+             * @return a result of getting provisioning status and last error code of Enrollee
+             *
+             * @see ESResult
+             */
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+            /**
+             * Get Enrollee's status and last error code properties
+             *
+             * @return Enrollee's status and last error code properties
+             *
+             * @see EnrolleeStatus
+             */
+            const EnrolleeStatus& getEnrolleeStatus()
+            {
+                return m_enrolleeStatus;
+            }
+
+        private:
+            ESResult m_result;
+            EnrolleeStatus m_enrolleeStatus;
+        };
+
+        /**
+         * Status object for getConfiguration API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the API and requested data delivered in the response which includes
+         * WiFi configuration and device configuration stored in Enrollee.
+         *
+         * @see EnrolleeConf
+         */
+        class GetConfigurationStatus
+        {
+        public:
+            /**
+             * Constructor
+             */
+            GetConfigurationStatus(ESResult result, const EnrolleeConf& conf) :
+                    m_result(result), m_enrolleeConf(conf)
+            {
+            }
+
+            /**
+             * Get a result of getting preconfiguration of Enrollee
+             *
+             * @return a result of preconfiguration of Enrollee
+             *
+             * @see ESResult
+             */
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+            /**
+             * Get Enrollee's pre-configuration properties
+             *
+             * @return Enrollee's pre-configuration properties
+             *
+             * @see EnrolleeConf
+             */
+            EnrolleeConf& getEnrolleeConf()
+            {
+                return m_enrolleeConf;
+            }
+
+        private:
+            ESResult m_result;
+            EnrolleeConf m_enrolleeConf;
+        };
+
+        /**
+         * Status object for provisionDeviceProperties API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the request.
+         */
+        class DevicePropProvisioningStatus
+        {
+        public:
+            /**
+             * Constructor
+             */
+            DevicePropProvisioningStatus(ESResult result) :
+                    m_result(result)
+            {
+            }
+
+            /**
+             * Get a result of Device property provisioning
+             *
+             * @return a result of Device property provisioning
+             *
+             * @see ESResult
+             */
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+        private:
+            ESResult m_result;
+        };
+
+        /**
+         * Status object for provisionCloudProperties API. This object is given to application
+         * when a response for GET request to provisioning resource at Enrollee is arrived.
+         * It returns a result of the request and status of this provisioning. The status provides
+         * an information if the enrollee is found in a given network and the provisioning is
+         * successfully done.
+         */
+        class CloudPropProvisioningStatus
+        {
+        public:
+            /**
+             * Constructor
+             */
+            CloudPropProvisioningStatus(ESResult result) :
+                    m_result(result)
+            {
+            }
+
+            /**
+             * Get a result of Cloud property provisioning
+             *
+             * @return a result of Cloud property provisioning
+             *
+             * @see ESResult
+             */
+            ESResult getESResult()
+            {
+                return m_result;
+            }
+
+        private:
+            ESResult m_result;
+        };
+
+        /**
+         * Callback function definition for providing Enrollee status
+         */
+        typedef function< void(shared_ptr< GetEnrolleeStatus >) > GetStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee configuration status
+         */
+        typedef function< void(shared_ptr< GetConfigurationStatus >) > GetConfigurationStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee device property provisioning status
+         */
+        typedef function< void(shared_ptr< DevicePropProvisioningStatus >) > DevicePropProvStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee cloud property provisioning status
+         */
+        typedef function< void(shared_ptr< CloudPropProvisioningStatus >) > CloudPropProvStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee security provisioning status
+         */
+        typedef function< void(shared_ptr<SecProvisioningStatus>) > SecurityProvStatusCb;
+
+        /**
+         * Callback definition to be invoked when the security stack expects a pin from application
+         */
+        typedef function< void(string&) > SecurityPinCb;
+
+        /**
+         * Callback definition to be invoked when the stack expects a db path
+         */
+        typedef function< void(string&) > SecProvisioningDbPathCb;
+
     }
 }
 #endif //WITH_ARDUINO

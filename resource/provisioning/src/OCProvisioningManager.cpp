@@ -121,6 +121,47 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::discoverSecureResource(unsigned short timeout,
+            const std::string& host,
+            OCConnectivityType connType,
+            DeviceList_t &list)
+    {
+        OCStackResult result;
+        OCProvisionDev_t *pDevList = nullptr, *pCurDev = nullptr, *tmp = nullptr;
+        auto csdkLock = OCPlatform_impl::Instance().csdkLock();
+        auto cLock = csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDiscoverSecureResource(timeout, host.c_str(), connType, &pDevList);
+            if (result == OC_STACK_OK)
+            {
+                pCurDev = pDevList;
+                while (pCurDev)
+                {
+                    tmp = pCurDev;
+                    list.push_back(std::shared_ptr<OCSecureResource>(
+                                new OCSecureResource(csdkLock, pCurDev)));
+                    pCurDev = pCurDev->next;
+                    tmp->next = nullptr;
+                }
+            }
+            else
+            {
+                oclog() <<"Secure resource discovery failed!";
+                result = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
     OCStackResult OCSecure::setOwnerTransferCallbackData(OicSecOxm_t oxm,
             OTMCallbackData_t* callbackData, InputPinCallback inputPin)
     {
@@ -229,6 +270,46 @@ namespace OC
 
         return result;
     }
+
+    OCStackResult OCSecure::removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
+            std::string uuid,
+            ResultCallBack resultCallback)
+    {
+        if (!resultCallback)
+        {
+            oclog() << "Result calback can't be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            ProvisionContext* context = new ProvisionContext(resultCallback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+
+            OicUuid_t targetDev;
+            result = ConvertStrToUuid(uuid.c_str(), &targetDev);
+            if(OC_STACK_OK == result)
+            {
+                result = OCRemoveDeviceWithUuid(static_cast<void*>(context), waitTimeForOwnedDeviceDiscovery,
+                        &targetDev, &OCSecureResource::callbackWrapper);
+            }
+            else
+            {
+                oclog() <<"Can not convert struuid to uuid";
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
 
     void OCSecureResource::callbackWrapper(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
     {
@@ -449,45 +530,6 @@ namespace OC
 
             result = OCRemoveDevice(static_cast<void*>(context), waitTimeForOwnedDeviceDiscovery,
                     devPtr, &OCSecureResource::callbackWrapper);
-        }
-        else
-        {
-            oclog() <<"Mutex not found";
-            result = OC_STACK_ERROR;
-        }
-        return result;
-    }
-
-    OCStackResult OCSecureResource::removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
-            std::string uuid,
-            ResultCallBack resultCallback)
-    {
-        if (!resultCallback)
-        {
-            oclog() << "Result calback can't be null";
-            return OC_STACK_INVALID_CALLBACK;
-        }
-
-        OCStackResult result;
-        auto cLock = m_csdkLock.lock();
-
-        if (cLock)
-        {
-            ProvisionContext* context = new ProvisionContext(resultCallback);
-
-            std::lock_guard<std::recursive_mutex> lock(*cLock);
-
-            OicUuid_t targetDev;
-            result = ConvertStrToUuid(uuid.c_str(), &targetDev);
-            if(OC_STACK_OK == result)
-            {
-                result = OCRemoveDeviceWithUuid(static_cast<void*>(context), waitTimeForOwnedDeviceDiscovery,
-                        &targetDev, &OCSecureResource::callbackWrapper);
-            }
-            else
-            {
-                oclog() <<"Can not convert struuid to uuid";
-            }
         }
         else
         {

@@ -25,9 +25,6 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-# Build easy-setup Mediator C SDK
-SConscript('csdk/SConscript')
-
 # Build easy-setup Mediator Rich [C++] SDK
 SConscript('richsdk/SConscript')
 

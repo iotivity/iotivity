@@ -303,7 +303,7 @@ int main()
      */
     createLightResource(gResourceUri, &Light);
 
-    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, CA_ADAPTER_IP);
 
     struct timespec timeout;
     timeout.tv_sec  = 0;

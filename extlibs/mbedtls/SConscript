@@ -1,0 +1,87 @@
+#******************************************************************
+#
+# Copyright 2016 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Import('env')
+
+import os
+import sys
+
+def run(cmd):
+    """Run a command and decipher the return code. Exit by default."""
+    res = os.system(cmd)
+    # Assumes that if a process doesn't call exit, it was successful
+    if (os.WIFEXITED(res)):
+        code = os.WEXITSTATUS(res)
+        if code != 0:
+            print "Error: return code: " + str(code)
+            if SCons.Script.keep_going_on_error == 0:
+                sys.exit(code)
+
+root_dir = env.get('SRC_DIR')
+
+tls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls')
+
+if not os.path.exists(tls_dir):
+    print '''
+*********************************** Error: ****************************************
+* Please download mbedtls using the following command:                            *
+*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *
+***********************************************************************************
+'''
+    Exit(1)
+
+start_dir = os.getcwd()
+os.chdir(tls_dir)
+
+#Apply patch to enable TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 ciphersuite and server identity hint
+cmd = 'git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd && git apply ../ocf.patch'
+run(cmd)
+
+build_dir = env.get('BUILD_DIR')
+libs_list = ['libmbedcrypto.so', 'libmbedtls.so', 'libmbedx509.so']
+
+if env.GetOption('clean'):
+	print 'Clean-up mbedtls...'
+	run('make clean')
+
+	#Delete copied libs from out folder
+	for file_name in libs_list:
+		run("rm -f " + build_dir + file_name + "*")
+else:
+	#Pass to make proper debug option
+	if env.get('RELEASE'): debug = ''
+	else: debug = 'DEBUG=1 '
+
+	cmd = 'export SHARED=1 ' + debug + '&& make no_test'
+
+	print 'Making mbedtls libraries...'
+	print cmd
+	run(cmd)
+	
+	#Copy libs to out folder
+	if not os.path.exists(build_dir): os.makedirs(build_dir)
+	for file_name in libs_list:
+		run("cp -d " + tls_dir + '/library/' + file_name + " " + build_dir)
+		run("cp " + tls_dir + '/library/' + file_name + ".* " + build_dir)
+
+os.chdir(start_dir)
+
+
+

@@ -71,6 +71,15 @@ def build_linux_unsecured(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
+def build_linux_unsecured_with_tcp(flag, extra_option_str):
+    print ("*********** Build for linux with TCP ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'WITH_TCP': 1,
+                        'TARGET_TRANSPORT': 'IP',
+                    }
+    call_scons(build_options, extra_option_str)
+
 def build_linux_unsecured_with_rm(flag, extra_option_str):
     print ("*********** Build for linux with RoutingManager************")
     build_options = {

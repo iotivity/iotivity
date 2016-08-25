@@ -326,6 +326,17 @@ namespace OC
 
         OCStackResult publishResourceToRD(const std::string& host,
                                           OCConnectivityType connectivityType,
+                                          PublishResourceCallback callback,
+                                          QualityOfService QoS)
+        {
+            ResourceHandles resourceHandles;
+            return OCPlatform_impl::Instance().publishResourceToRD(host, connectivityType,
+                                                                   resourceHandles,
+                                                                   callback, QoS);
+        }
+
+        OCStackResult publishResourceToRD(const std::string& host,
+                                          OCConnectivityType connectivityType,
                                           ResourceHandles& resourceHandles,
                                           PublishResourceCallback callback)
         {
@@ -351,6 +362,16 @@ namespace OC
             ResourceHandles resourceHandles;
             return OCPlatform_impl::Instance().deleteResourceFromRD(host, connectivityType,
                                                                     resourceHandles, callback);
+        }
+
+        OCStackResult deleteResourceFromRD(const std::string& host,
+                                           OCConnectivityType connectivityType,
+                                           DeleteResourceCallback callback,
+                                           QualityOfService QoS)
+        {
+            ResourceHandles resourceHandles;
+            return OCPlatform_impl::Instance().deleteResourceFromRD(host, connectivityType,
+                                                                    resourceHandles, callback, QoS);
         }
 
         OCStackResult deleteResourceFromRD(const std::string& host,

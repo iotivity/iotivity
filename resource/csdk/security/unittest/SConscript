@@ -33,6 +33,7 @@ target_os = srmtest_env.get('TARGET_OS')
 srmtest_env.PrependUnique(CPPPATH = [
 		'../../../c_common/oic_malloc/include',
 		'../../connectivity/inc',
+		'../../connectivity/inc/pkix',
 		'../../connectivity/api',
 		'../../connectivity/external/inc',
 		'../../connectivity/lib/libcoap-4.1.1',
@@ -55,6 +56,9 @@ srmtest_env.PrependUnique(LIBS = ['ocsrm',
 
 if srmtest_env.get('SECURED') == '1':
     srmtest_env.AppendUnique(LIBS = ['tinydtls', 'timer'])
+    
+if srmtest_env.get('WITH_TCP') == True:
+		srmtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if srmtest_env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

@@ -1,4 +1,5 @@
-#######################################################################
+#******************************************************************
+#
 # Copyright 2016 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -17,73 +18,75 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-import os
-import os.path
+##
+# Notification Unit Test build script
+##
 
-# SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-enrollee_test_env = gtest_env.Clone()
-src_dir = enrollee_test_env.get('SRC_DIR')
-target_os = enrollee_test_env.get('TARGET_OS')
+Import('env')
+
+if env.get('RELEASE'):
+	env.AppendUnique(CCFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+else:
+	env.AppendUnique(CCFLAGS = ['-g'])
+
+if env.get('LOGGING'):
+	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+######################################################################
+#unit test setting
+######################################################################
+src_dir = lib_env.get('SRC_DIR')
+gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+
+easysetup_test_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
+GTest = File(gtest_dir + '/lib/.libs/libgtest.a')
+GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-enrollee_test_env.PrependUnique(CPPPATH = [
-		enrollee_test_env.get('SRC_DIR') + '/resource/c_common/ocrandom/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/stack/include/internal',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
-		enrollee_test_env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/logger/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/oc_logger/include',
-     	enrollee_test_env.get('SRC_DIR') + '/resource/csdk/stack/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/stack/include/internal',
-        enrollee_test_env.get('SRC_DIR') + '/resource/csdk/logger/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/security/include',
-		enrollee_test_env.get('SRC_DIR') + '/extlibs/cjson',
-		enrollee_test_env.get('SRC_DIR') + '/extlibs/sqlite3',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/inc',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
+easysetup_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
+easysetup_test_env.PrependUnique(LIBS = [
+    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap',
+    GTest_Main, GTest])
 
-enrollee_test_env.AppendUnique(LIBPATH = [enrollee_test_env.get('BUILD_DIR')])
-enrollee_test_env.PrependUnique(LIBS = [ 'octbstack',
-                                    'ocsrm',
-                                    'connectivity_abstraction',
-                                    'coap'])
-if target_os not in ['windows']:
-    enrollee_test_env.AppendUnique(LIBS = ['m'])
+if target_os not in ['windows', 'winrt']:
+    easysetup_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-if target_os != 'darwin':
-    enrollee_test_env.PrependUnique(LIBS = ['oc_logger'])
+easysetup_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
+easysetup_test_env.AppendUnique(LIBS = ['pthread'])
 
-if enrollee_test_env.get('SECURED') == '1':
-    enrollee_test_env.AppendUnique(LIBS = ['tinydtls'])
+easysetup_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master', gtest_dir + '/include'])
 
-if enrollee_test_env.get('LOGGING'):
-	enrollee_test_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+easysetup_test_env.AppendUnique(CPPPATH = [src_dir + '/resource/include',
+					   src_dir + '/resource/csdk/connectivity/api',
+					   src_dir + '/service/easy-setup/inc',
+					   src_dir + '/service/easy-setup/enrollee/inc',
+					   src_dir + '/service/easy-setup/mediator/richsdk/inc'])
 
-if enrollee_test_env.get('ES_SOFTAP_MODE') == 'ENROLLEE_SOFTAP':
-	print "ES_SOFTAP_MODE == ENROLLEE_SOFTAP"
-	enrollee_test_env.AppendUnique(CPPDEFINES = ['ENROLLEE_SOFTAP'])
-
-enrollee_test_env.PrependUnique(LIBS = ['ESEnrolleeSDK'])
+if easysetup_test_env.get('SECURED') == '1':
+	if easysetup_test_env.get('WITH_TCP') == True:
+		easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
-# Source files and Targets
+# Build Test
 ######################################################################
-enrolleetests = enrollee_test_env.Program('enrolleetests', ['enrolleetests.cpp'])
 
-Alias("test", [enrolleetests])
+easysetup_enrollee_test_env = easysetup_test_env.Clone()
+easysetup_enrollee_test_env.AppendUnique(LIBS = ['ESEnrolleeSDK', 'ESMediatorRich'])
 
-enrolleetests.AppendTarget('test')
-if enrollee_test_env.get('TEST') == '1':
-	if target_os in ['linux']:
-                from tools.scons.RunTest import *
-                run_test(enrollee_test_env,
-                         '',
-                         'service/easy-setup/enrollee/unittests/enrolleetests')
+easysetup_enrollee_test_src = env.Glob('./ESEnrolleeTest.cpp')
+easysetup_enrollee_test = easysetup_enrollee_test_env.Program('easysetup_enrollee_test', easysetup_enrollee_test_src)
+Alias("easysetup_enrollee_test", easysetup_enrollee_test)
+env.AppendTarget('easysetup_enrollee_test')
 
+if env.get('TEST') == '1':
+    if target_os == 'linux':
+            from tools.scons.RunTest import *
+            run_test(easysetup_enrollee_test_env, '', 'service/easy-setup/enrollee/unittests/easysetup_enrollee_test')

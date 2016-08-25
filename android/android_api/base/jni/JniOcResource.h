@@ -29,6 +29,10 @@
 #include "JniOnDeleteListener.h"
 #include "JniOnObserveListener.h"
 #include "JniOcResourceIdentifier.h"
+#ifdef WITH_MQ
+#include "JniOnMQTopicFoundListener.h"
+#include "JniOnMQSubscribeListener.h"
+#endif
 
 #ifndef _Included_org_iotivity_base_OcResource
 #define _Included_org_iotivity_base_OcResource
@@ -84,8 +88,8 @@ public:
     std::string uri();
     OCConnectivityType connectivityType() const;
     bool isObservable();
-    std::vector< std::string > 	getResourceTypes() const;
-    std::vector< std::string > 	getResourceInterfaces(void) const;
+    std::vector< std::string >  getResourceTypes() const;
+    std::vector< std::string >  getResourceInterfaces(void) const;
     OCResourceIdentifier uniqueIdentifier() const;
     std::string sid() const;
 
@@ -105,12 +109,43 @@ public:
 
     static JniOcResource* getJniOcResourcePtr(JNIEnv *env, jobject thiz);
 
+#ifdef WITH_MQ
+    JniOnMQTopicFoundListener* addOnTopicFoundListener(JNIEnv* env, jobject jListener);
+    void removeOnTopicFoundListener(JNIEnv* env, jobject jListener);
+
+    JniOnMQSubscribeListener* addOnMQTopicSubscribeListener(JNIEnv* env, jobject jListener);
+    void removeOnMQTopicSubscribeListener(JNIEnv* env, jobject jListener);
+
+    OCStackResult discoveryMQTopics(JNIEnv* env, const QueryParamsMap &queryParametersMap,
+                                    jobject jListener, QualityOfService QoS);
+    OCStackResult createMQTopic(JNIEnv* env, const OCRepresentation &representation,
+                                const std::string &targetUri,
+                                const QueryParamsMap &queryParametersMap,
+                                jobject jListener, QualityOfService QoS);
+#endif
+#ifdef MQ_SUBSCRIBER
+    OCStackResult subscribeMQTopic(JNIEnv* env, const QueryParamsMap &queryParametersMap,
+                                   jobject jListener, QualityOfService QoS);
+    OCStackResult unsubscribeMQTopic(QualityOfService QoS);
+    OCStackResult requestMQPublish(JNIEnv* env, const QueryParamsMap &queryParametersMap,
+                                   jobject jListener, QualityOfService QoS);
+#endif
+#ifdef MQ_PUBLISHER
+    OCStackResult publishMQTopic(JNIEnv* env, const OCRepresentation &representation,
+                                 const QueryParamsMap &queryParametersMap,
+                                 jobject jListener, QualityOfService QoS);
+#endif
+
 private:
     JniListenerManager<JniOnGetListener> m_onGetManager;
     JniListenerManager<JniOnPutListener> m_onPutManager;
     JniListenerManager<JniOnPostListener> m_onPostManager;
     JniListenerManager<JniOnDeleteListener> m_onDeleteManager;
     JniListenerManager<JniOnObserveListener> m_onObserveManager;
+#ifdef WITH_MQ
+    JniListenerManager<JniOnMQTopicFoundListener> m_onFoundTopicResourceManager;
+    JniListenerManager<JniOnMQSubscribeListener> m_onSubcribeTopicManager;
+#endif
 
     std::shared_ptr<OCResource> m_sharedResource;
 };
@@ -344,6 +379,56 @@ extern "C" {
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_dispose
         (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    subscribeMQTopicImpl
+    * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnObserveListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_subscribeMQTopicImpl
+        (JNIEnv *, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    unsubscribeMQTopicImpl
+    * Signature: (I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_unsubscribeMQTopicImpl
+        (JNIEnv *, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    requestMQPublishImpl
+    * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnPostListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_requestMQPublishImpl
+        (JNIEnv *, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    publishMQTopicImpl
+    * Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/Map
+    *             ;Lorg/iotivity/base/OcResource/OnPostListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_publishMQTopicImpl
+        (JNIEnv *, jobject, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    discoveryMQTopicsImpl
+    * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnMQTopicFoundListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_discoveryMQTopicsImpl
+        (JNIEnv *, jobject, jobject, jobject, jint);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    createMQTopicImpl
+    * Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/String;Ljava/util/Map
+    *             ;Lorg/iotivity/base/OcPlatform/OnMQTopicCreatedListener;I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_createMQTopicImpl
+        (JNIEnv *, jobject, jobject, jstring, jobject, jobject, jint);
 
 #ifdef __cplusplus
 }

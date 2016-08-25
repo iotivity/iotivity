@@ -37,10 +37,8 @@ Requires(post): /sbin/ldconfig
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?SECURED: %define SECURED 1}
 %{!?LOGGING: %define LOGGING True}
-%{!?ROUTING: %define ROUTING GW}
+%{!?ROUTING: %define ROUTING EP}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
-%{!?ES_ROLE: %define ES_ROLE enrollee}
-%{!?ES_SOFTAP_MODE: %define ES_SOFTAP_MODE MEDIATOR_SOFTAP}
 %{!?VERBOSE: %define VERBOSE 1}
 
 %description
@@ -111,8 +109,7 @@ scons -j2 --prefix=%{_prefix} \
 	VERBOSE=%{VERBOSE} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
-	LIB_INSTALL_DIR=%{_libdir}
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
 
 
 %install
@@ -121,8 +118,7 @@ CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
-	LIB_INSTALL_DIR=%{_libdir}
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
 
 
 # For Example
@@ -181,6 +177,7 @@ cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-test
 %endif
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
+cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}

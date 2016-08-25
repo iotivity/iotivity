@@ -23,12 +23,27 @@
 #include "JniOcResource.h"
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
+#ifdef WITH_CLOUD
+#include "JniOcAccountManager.h"
+#endif
 
 JniOnGetListener::JniOnGetListener(JNIEnv *env, jobject jListener, JniOcResource* owner)
     : m_ownerResource(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
+#ifdef WITH_CLOUD
+    m_ownerAccountManager = nullptr;
+#endif
 }
+
+#ifdef WITH_CLOUD
+JniOnGetListener::JniOnGetListener(JNIEnv *env, jobject jListener, JniOcAccountManager* owner)
+    : m_ownerAccountManager(owner)
+{
+    m_jwListener = env->NewWeakGlobalRef(jListener);
+    m_ownerResource = nullptr;
+}
+#endif
 
 JniOnGetListener::~JniOnGetListener()
 {
@@ -169,11 +184,33 @@ void JniOnGetListener::checkExAndRemoveListener(JNIEnv* env)
     {
         jthrowable ex = env->ExceptionOccurred();
         env->ExceptionClear();
+#ifndef WITH_CLOUD
         m_ownerResource->removeOnGetListener(env, m_jwListener);
+#else
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnGetListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerAccountManager)
+        {
+            m_ownerAccountManager->removeOnGetListener(env, m_jwListener);
+        }
+#endif
         env->Throw((jthrowable)ex);
     }
     else
     {
+#ifndef WITH_CLOUD
         m_ownerResource->removeOnGetListener(env, m_jwListener);
+#else
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnGetListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerAccountManager)
+        {
+            m_ownerAccountManager->removeOnGetListener(env, m_jwListener);
+        }
+#endif
     }
 }

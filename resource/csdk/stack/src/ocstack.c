@@ -138,6 +138,7 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP[] = "coap+tcp:";
+static const char COAPS_TCP[] = "coaps+tcp:";
 static const char CORESPEC[] = "core";
 
 //-----------------------------------------------------------------------------
@@ -856,7 +857,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
 }
 
 /**
- * Encode an address string to match RFC6874.
+ * Encode an address string to match RFC 6874.
  *
  * @param outputAddress    a char array to be written with the encoded string.
  *
@@ -875,17 +876,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     VERIFY_NON_NULL(inputAddress,  FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(outputAddress, FATAL, OC_STACK_INVALID_PARAM);
 
-    /** @todo Use a max IPv6 string length instead of CA_MAX_URI_LENGTH. */
-#define ENCODE_MAX_INPUT_LENGTH    CA_MAX_URI_LENGTH
-
-    size_t inputLength = strnlen(inputAddress, ENCODE_MAX_INPUT_LENGTH);
-
-    if (inputLength >= ENCODE_MAX_INPUT_LENGTH)
-    {
-        OIC_LOG(ERROR, TAG,
-                "encodeAddressForRFC6874 failed: Invalid input string: too long/unterminated!");
-        return OC_STACK_INVALID_PARAM;
-    }
+    size_t inputLength = strnlen(inputAddress, outputSize);
 
     // inputSize includes the null terminator
     size_t inputSize = inputLength + 1;
@@ -935,11 +926,11 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     // Fail if we don't have room for encoded string's two additional chars
     if (outputSize < (inputSize + 2))
     {
-        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Input string is already encoded");
+        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: encoded output will not fit!");
         return OC_STACK_ERROR;
     }
 
-    // Restore the null terminator with an escaped '%' character, per RFC6874
+    // Restore the null terminator with an escaped '%' character, per RFC 6874
     OICStrcpy(outputAddress, scopeIdPart - addressPart, addressPart);
     strcat(outputAddress, "%25");
     strcat(outputAddress, scopeIdPart);
@@ -2371,6 +2362,8 @@ CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
  *  optionally one of
  *      CoAP over UDP prefix    "coap://"
  *      CoAP over TCP prefix    "coap+tcp://"
+ *      CoAP over DTLS prefix   "coaps://"
+ *      CoAP over TLS prefix    "coaps+tcp://"
  *  optionally one of
  *      IPv6 address            "[1234::5678]"
  *      IPv4 address            "192.168.1.1"
@@ -2425,7 +2418,8 @@ static OCStackResult ParseRequestUri(const char *fullUri,
     bool istcp = false;
     if (prefixLen)
     {
-        if ((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
+        if (((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
+        || ((prefixLen == sizeof(COAPS_TCP) - 1) && (!strncmp(fullUri, COAPS_TCP, prefixLen))))
         {
             istcp = true;
         }
@@ -2520,7 +2514,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         da->port = port;
         da->adapter = adapter;
         da->flags = flags;
-        if (!strncmp(fullUri, "coaps:", 6))
+        if (!strncmp(fullUri, "coaps", 5))
         {
             da->flags = (OCTransportFlags)(da->flags|CA_SECURE);
         }
@@ -4777,6 +4771,7 @@ bool OCResultToSuccess(OCStackResult ocResult)
         case OC_STACK_RESOURCE_DELETED:
         case OC_STACK_CONTINUE:
         case OC_STACK_RESOURCE_CHANGED:
+        case OC_STACK_SLOW_RESOURCE:
             return true;
         default:
             return false;

@@ -1,0 +1,1 @@
+include ':app', ':iotivity-base-armeabi-debug', ':iotivity-armeabi-notification-service-debug'

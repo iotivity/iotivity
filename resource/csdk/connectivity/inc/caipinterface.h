@@ -170,7 +170,7 @@ typedef struct
     uint32_t index;
     uint32_t flags;
     uint16_t family;
-    uint32_t ipv4addr;        /**< used for IPv4 only. */
+    char addr[MAX_ADDR_STR_SIZE_CA];
 } CAInterface_t;
 
 

@@ -103,11 +103,16 @@ if target_os in ['android','linux']:
 			env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
 	                env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
+		if env.get('WITH_TCP') == True:
+			easy_setup_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if not env.get('RELEASE'):
+    easy_setup_env.PrependUnique(LIBS = ['gcov'])
+    easy_setup_env.AppendUnique(CCFLAGS = ['--coverage'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-
 
 print"easysetup_path %s" % easysetup_path
 
@@ -118,7 +123,8 @@ if target_os in ['android','linux']:
 		env.AppendUnique(es_src = [os.path.join(easysetup_path, 'src/EnrolleeSecurity.cpp')])
 
 	es_common_src =	['src/RemoteEnrollee.cpp',
-		'src/RemoteEnrolleeResource.cpp',
+		'src/EnrolleeResource.cpp',
+		'src/CloudResource.cpp',
 		'src/EasySetup.cpp',
 		'src/ESException.cpp']
 
@@ -126,8 +132,15 @@ if target_os in ['android','linux']:
 
 	es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich', env.get('es_src'))
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESMediatorRich')
+	easy_setup_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libESMediatorRich.so'])
 
 print "Files path is %s" % env.get('es_src')
+
+######################################################################
+# Generate RichSDK Mediator AAR
+################################################ ######################
+if target_os in ['android']:
+	SConscript('android/SConscript')
 
 ######################################################################
 # Build RichSDK Mediator Sample App
@@ -135,9 +148,14 @@ print "Files path is %s" % env.get('es_src')
 if target_os in ['linux']:
 	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
+if target_os in ['android']:
+	SConscript('../../sampleapp/mediator/android/SConscript')
+
+
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]
 ################################################ ######################
-if target_os in ['linux']:
-    SConscript('unittests/SConscript')
+if env.get('SECURED') == '0':
+   if target_os == 'linux':
+       SConscript('unittests/SConscript')
 

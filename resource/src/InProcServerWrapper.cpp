@@ -602,7 +602,7 @@ namespace OC
 #ifdef RD_CLIENT
     OCRepresentation parseRDResponseCallback(OCClientResponse* clientResponse)
     {
-        if (nullptr == clientResponse->payload ||
+        if (nullptr == clientResponse || nullptr == clientResponse->payload ||
                     PAYLOAD_TYPE_RD != clientResponse->payload->type)
         {
             return OCRepresentation();

@@ -42,6 +42,10 @@ sample_env.AppendUnique(LIBS = [
     ])
 sample_env.AppendUnique(CPPPATH = ['../../../include'])
 
+if env.get('SECURED') == '1':
+	if env.get('WITH_TCP') == True:
+		sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])
 

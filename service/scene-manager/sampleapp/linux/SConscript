@@ -32,6 +32,8 @@ scenemanager_sample_env.AppendUnique(LIBS = [
 
 if env.get('SECURED') == '1':
     scenemanager_sample_env.AppendUnique(LIBS = ['tinydtls'])
+    if env.get('WITH_TCP') == True:
+    	scenemanager_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'rt' in scenemanager_sample_env.get('LIBS'):
     scenemanager_sample_env.Append(LIBS = ['rt'])

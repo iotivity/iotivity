@@ -213,7 +213,13 @@ namespace OC
         Observe,
         ObserveAll
     };
-
+#ifdef WITH_CLOUD
+    enum class AclGroupType
+    {
+        PUBLIC,
+        PRIVATE
+    };
+#endif
     // Typedef for list of resource handles.
     typedef std::vector<OCResourceHandle> ResourceHandles;
 
@@ -297,9 +303,8 @@ namespace OC
 
     typedef std::function<void(const PairedDevices&)> GetDirectPairedCallback;
 
-    typedef std::function<void(const HeaderOptions&,
-                               const OCRepresentation&, const int,
-                               std::shared_ptr<OCResource>)> MQCreateTopicCallback;
+    typedef std::function<void(const int, const std::string&,
+                               std::shared_ptr<OCResource>)> MQTopicCallback;
 #ifdef RD_CLIENT
     typedef std::function<void(const OCRepresentation&, const int)> PublishResourceCallback;
 

@@ -48,7 +48,10 @@ else:
 	samples_env.PrependUnique(LIBS = ['m'])
 samples_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'coap'])
 if env.get('SECURED') == '1':
-    samples_env.AppendUnique(LIBS = ['tinydtls'])
+	samples_env.AppendUnique(LIBS = ['tinydtls'])
+	if env.get('WITH_TCP') == True:
+		samples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+
 
 if target_os == 'android':
 	samples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])

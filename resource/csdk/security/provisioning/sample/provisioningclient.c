@@ -58,6 +58,7 @@ extern "C"
 #define _52_RESET_SELEC_DEV_        52
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
+#define _70_SELECT_PROTOCOL_        70
 #define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -88,7 +89,10 @@ static OCProvisionDev_t* g_unown_list;
 static int g_own_cnt;
 static int g_unown_cnt;
 static bool g_doneCB;
-
+#ifdef __WITH_TLS__
+static int secure_protocol = 1;
+static void setDevProtocol(const OCProvisionDev_t* dev_lst);
+#endif
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
 static OicSecPdAcl_t* createPdAcl(const int);
@@ -357,7 +361,10 @@ static int discoverAllDevices(void)
     g_own_cnt = printDevList(g_own_list);
     printf("   > Discovered Unowned Devices\n");
     g_unown_cnt = printDevList(g_unown_list);
-
+#ifdef __WITH_TLS__
+    setDevProtocol(g_own_list);
+    setDevProtocol(g_unown_list);
+#endif
     return 0;
 }
 
@@ -382,7 +389,9 @@ static int discoverUnownedDevices(void)
     // display the discovered unowned list
     printf("   > Discovered Unowned Devices\n");
     g_unown_cnt = printDevList(g_unown_list);
-
+#ifdef __WITH_TLS__
+    setDevProtocol(g_unown_list);
+#endif
     return 0;
 }
 
@@ -406,7 +415,9 @@ static int discoverOwnedDevices(void)
     // display the discovered owned list
     printf("   > Discovered Owned Devices\n");
     g_own_cnt = printDevList(g_own_list);
-
+#ifdef __WITH_TLS__
+    setDevProtocol(g_own_list);
+#endif
     return 0;
 }
 
@@ -1065,6 +1076,7 @@ static int removeDeviceWithUuid(void)
         return -1;
     }
 
+    g_doneCB = false;
     rst = OCRemoveDeviceWithUuid("RemoveDeviceWithUUID", DISCOVERY_TIMEOUT, &revUuid, removeDeviceCB);
     if(OC_STACK_OK != rst)
     {
@@ -1072,7 +1084,6 @@ static int removeDeviceWithUuid(void)
         return -1;
     }
 
-    g_doneCB = false;
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
         OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid callback error");
@@ -1574,6 +1585,55 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
     return -1;
 }
 
+#ifdef __WITH_TLS__
+
+static void setDevProtocol(const OCProvisionDev_t* dev_lst)
+{
+    if(!dev_lst)
+    {
+        printf("     Device List is Empty..\n\n");
+        return;
+    }
+
+    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
+
+    for( ; lst; )
+    {
+        if(2 == secure_protocol)
+        {
+            lst->connType &= ~CT_ADAPTER_IP; //reset IP flag
+            lst->connType |= CT_ADAPTER_TCP; //set TCP flag
+            lst->endpoint.adapter = OC_ADAPTER_TCP;
+            lst->endpoint.port = lst->tcpPort;
+            lst->securePort = lst->tcpPort;
+        }
+        lst = lst->next;
+    }
+}
+
+static void selectSecureProtocol()
+{
+    printf("   Select protocol\n");
+    printf("   1 - DTLS(Default)\n");
+    printf("   2 - TLS\n");
+
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%d",&secure_protocol);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+        // '0x20<=code' is character region
+    }
+
+    if(0 >= secure_protocol || 2 < secure_protocol)
+    {
+        secure_protocol = 1;
+    }
+
+    setDevProtocol(g_own_list);
+    setDevProtocol(g_unown_list);
+}
+#endif
+
 static void printMenu(void)
 {
     printf("************************************************************\n");
@@ -1606,7 +1666,10 @@ static void printMenu(void)
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
     printf("** 61. Get the ACL resources of the Selected Device\n\n");
-
+#ifdef __WITH_TLS__
+    printf("** [F] SELECT SECURE PROTOCOL DTLS/TLS\n");
+    printf("** 70. Select secure protocol(default DTLS)\n\n");
+#endif
     printf("** [F] EXIT PROVISIONING CLIENT\n");
     printf("** 99. Exit Provisionong Client\n\n");
 
@@ -1749,6 +1812,11 @@ int main()
                 OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
             }
             break;
+#ifdef __WITH_TLS__
+        case  _70_SELECT_PROTOCOL_:
+            selectSecureProtocol();
+            break;
+#endif
         case _99_EXIT_PRVN_CLT_:
             goto PMCLT_ERROR;
         default:

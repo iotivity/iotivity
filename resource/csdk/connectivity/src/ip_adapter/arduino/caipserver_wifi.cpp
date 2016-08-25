@@ -299,9 +299,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         {
             continue;
         }
-        unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
-        snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
-
+        OICStrcpy(eps[j].addr, MAX_ADDR_STR_SIZE_CA, ifitem->addr);
         eps[j].flags = CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
         eps[j].ifindex = 0;

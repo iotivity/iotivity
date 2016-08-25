@@ -286,7 +286,9 @@ typedef struct
 typedef struct
 {
     CAEndpoint_t endpoint;      /**< endpoint */
-    CARemoteId_t identity;      /**< endpoint identity */
+    // TODO change name to deviceId
+    CARemoteId_t identity;      /**< endpoint device uuid */
+    CARemoteId_t userId;        /**< endpoint user uuid */
 } CASecureEndpoint_t;
 
 /**

@@ -1,9 +1,11 @@
 LOCAL_PATH := $(call my-dir)
 TARGET_ARCH_ABI := $(APP_ABI)
 SECURED := $(SECURE)
+WITH_CLOUD := $(WITH_CLOUD)
 WITH_MQ_PUB := $(WITH_MQ_PUB)
 WITH_MQ_SUB := $(WITH_MQ_SUB)
 WITH_MQ_BROKER := $(WITH_MQ_BROKER)
+RD_MODE := $(RD_MODE)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
@@ -56,6 +58,11 @@ include $(CLEAR_VARS)
 OIC_SRC_PATH := ../../../resource
 OIC_OUT_PATH := ../../../out
 LOCAL_MODULE    := ocstack-jni
+
+ifeq ($(WITH_CLOUD), 1)
+    LOCAL_CPPFLAGS += -DWITH_CLOUD
+endif
+
 MQ_FLAG = 0
 ifeq ($(WITH_MQ_PUB), 1)
 LOCAL_CFLAGS += -DWITH_MQ -DMQ_PUBLISHER
@@ -69,6 +76,7 @@ ifeq ($(WITH_MQ_BROKER), 1)
 LOCAL_CFLAGS += -DWITH_MQ -DMQ_BROKER
 MQ_FLAG = 1
 endif
+
 LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniUtils.cpp \
                     JniEntityHandler.cpp \
@@ -93,10 +101,13 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOcSecurity.cpp \
                     JniOnDPDevicesFoundListener.cpp \
                     JniOnDirectPairingListener.cpp \
-                    JniOcDirectPairDevice.cpp
+                    JniOcDirectPairDevice.cpp \
+                    JniOnPublishResourceListener.cpp \
+                    JniOnDeleteResourceListener.cpp
 
 ifeq ($(MQ_FLAG), 1)
-#new listener will be added.
+    LOCAL_SRC_FILES +=  JniOnMQTopicFoundListener.cpp \
+                        JniOnMQSubscribeListener.cpp
 endif
 
 ifeq ($(SECURED), 1)
@@ -106,6 +117,10 @@ ifeq ($(SECURED), 1)
                         JniProvisionResultListner.cpp \
                         JniPinCheckListener.cpp \
                         JniDisplayPinListener.cpp
+endif
+
+ifeq ($(WITH_CLOUD), 1)
+    LOCAL_SRC_FILES +=  JniOcAccountManager.cpp
 endif
 
 LOCAL_LDLIBS := -llog
@@ -120,6 +135,9 @@ LOCAL_STATIC_LIBRARIES += android-ocprovision
 LOCAL_STATIC_LIBRARIES += android-ocpmapi
 endif
 
+ifeq "$(RD_MODE)" "CLIENT"
+LOCAL_CPPFLAGS += -DRD_CLIENT
+endif
 LOCAL_CPPFLAGS += -std=c++0x
 LOCAL_CPP_FEATURES := rtti exceptions
 LOCAL_C_INCLUDES := $(OIC_SRC_PATH)/include

@@ -63,6 +63,7 @@ namespace OC
                         const std::string& uri,
                         const QueryParamsMap& queryParams,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         GetCallback& callback, QualityOfService QoS)=0;
 
         virtual OCStackResult PutResourceRepresentation(
@@ -84,6 +85,7 @@ namespace OC
                         const OCDevAddr& devAddr,
                         const std::string& uri,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         DeleteCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult ObserveResource(
@@ -133,14 +135,14 @@ namespace OC
             const OCDevAddr& devAddr,
             const std::string& resourceUri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            FindCallback& callback, QualityOfService QoS) = 0;
+            MQTopicCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult PutMQTopicRepresentation(
             const OCDevAddr& devAddr,
             const std::string& uri,
             const OCRepresentation& rep,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            MQCreateTopicCallback& callback, QualityOfService QoS) = 0;
+            MQTopicCallback& callback, QualityOfService QoS) = 0;
 #endif
         virtual ~IClientWrapper(){}
     };

@@ -144,6 +144,22 @@ namespace OC
                     DeviceList_t &list);
 
             /**
+             * API is responsible for discovery of devices in specified endpoint.
+             * It will return when found one or more device even though timeout is not exceeded
+             *
+             * @param timeout Timeout in seconds, time until which function will listen to
+             *                    responses from server before returning the list of devices.
+             * @param host        address of target endpoint
+             * @param connType    connectivity type of endpoint
+             * @param list List of devices.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult discoverSecureResource(unsigned short timeout,
+                    const std::string& host,
+                    OCConnectivityType connType,
+                    DeviceList_t &list);
+
+            /**
              * API for registering Ownership transfer methods for a particular transfer Type.
              *
              * @param oxm Ownership transfer method.
@@ -177,6 +193,21 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin);
+
+            /**
+             * API to remove device credential and ACL from all devices in subnet.
+             *
+             * @param resultCallback Callback provided by API user, callback will be called when
+             *            credential revocation is finished.
+             * @param uuid Device uuid to be revoked.
+             * @param waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device
+             *            discovery in seconds.
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
+                    std::string uuid,
+                    ResultCallBack resultCallback);
+
     };
 
     /**
@@ -268,20 +299,6 @@ namespace OC
                     ResultCallBack resultCallback);
 
             /**
-             * API to remove device credential and ACL from all devices in subnet.
-             *
-             * @param resultCallback Callback provided by API user, callback will be called when
-             *            credential revocation is finished.
-             * @param uuid Device uuid to be revoked.
-             * @param waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device
-             *            discovery in seconds.
-             * @return  ::OC_STACK_OK in case of success and other value otherwise.
-             */
-            OCStackResult removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
-                    std::string uuid,
-                    ResultCallBack resultCallback);
-
-            /**
              * API to provision DirectPairing to devices.
              *
              * @param pconf pointer to PCONF (Pairing Configuration).
@@ -330,13 +347,14 @@ namespace OC
              */
             bool getOwnedStatus();
 
-        private:
+
             /**
              * Common callback wrapper, which will be called from OC-APIs.
              */
             static void callbackWrapper(void* ctx, int nOfRes,
                     OCProvisionResult_t *arr, bool hasError);
 
+        private:
             void validateSecureResource();
     };
 

@@ -42,6 +42,20 @@ extern "C" {
 OCStackResult OCInitPM(const char* dbPath);
 
 /**
+ * The function is responsible for discovery of owned/unowned device is specified endpoint.
+ * It will return when found one or more device even though timeout is not exceeded
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the list of devices.
+ * @param[in] host               address of target endpoint
+ * @param[in] connType           connectivity type of endpoint
+ * @param[out] ppList            List of device.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverSecureResource(unsigned short timeout, const char* host,
+                             OCConnectivityType connType, OCProvisionDev_t **ppList);
+
+/**
  * The function is responsible for discovery of device is current subnet. It will list
  * all the device in subnet which are not yet owned. Please call OCInit with OC_CLIENT_SERVER as
  * OCMode.
@@ -279,7 +293,7 @@ void OCDeleteACLList(OicSecAcl_t* pAcl);
  */
 void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
 
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
 /**
  * this function sends CRL information to resource.
  *
@@ -292,7 +306,34 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
  */
 OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
                              OCProvisionResultCB resultCallback);
-#endif // __WITH_X509__
+
+/**
+ * function to provision Trust certificate chain to devices.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] credId CredId of trust certificate chain to be provisioned to the device.
+ * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+                                      const OCProvisionDev_t *selectedDeviceInfo,
+                                      OCProvisionResultCB resultCallback);
+/**
+ * function to save Trust certificate chain into Cred of SVR.
+ *
+ * @param[in] trustCertChain Trust certificate chain to be saved in Cred of SVR.
+ * @param[in] chainSize Size of trust certificate chain to be saved in Cred of SVR
+ * @param[in] encodingType Encoding type of trust certificate chain to be saved in Cred of SVR
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                        OicEncodingType_t encodingType, uint16_t *credId);
+
+#endif // __WITH_X509__ || __WITH_TLS__
 
 
 #ifdef __cplusplus

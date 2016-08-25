@@ -87,7 +87,7 @@ help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map
 help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 help_vars.Add(BoolVariable('WITH_TCP', 'Build with TCP adapter', False))
 help_vars.Add(ListVariable('WITH_MQ', 'Build with MQ publisher/broker', 'OFF', ['OFF', 'SUB', 'PUB', 'BROKER']))
-help_vars.Add(BoolVariable('WITH_CLOUD', 'Build including Cloud Connector and Cloud Client sample', False))
+help_vars.Add(BoolVariable('WITH_CLOUD', 'Build including AccountManager class and Cloud Client sample', False))
 help_vars.Add(ListVariable('RD_MODE', 'Resource Directory build mode', 'CLIENT', ['CLIENT', 'SERVER']))
 
 help_vars.Add(BoolVariable('SIMULATOR', 'Build with simulator module', False))
@@ -112,12 +112,6 @@ help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Ard
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
-#ES_TARGET_ENROLLEE is for specifying what is our target enrollee (Arduino or rest of platforms which support Multicast)
-help_vars.Add(EnumVariable('ES_TARGET_ENROLLEE', 'Target Enrollee', 'arduino', allowed_values=('arduino', 'tizen', 'linux')))
-#ES_ROLE is for specifying the role (Enrollee or Mediator) for which scons is being executed
-help_vars.Add(EnumVariable('ES_ROLE', 'Target build mode', 'mediator', allowed_values=('mediator', 'enrollee')))
-#ES_SOFT_MODE is for specifying MODE (Mode 1 : Enrollee with  Soft AP or Mode 2  : Mediator with Soft AP)
-help_vars.Add(EnumVariable('ES_SOFTAP_MODE', 'Target build mode', 'ENROLLEE_SOFTAP', allowed_values=('ENROLLEE_SOFTAP', 'MEDIATOR_SOFTAP')))
 
 AddOption('--prefix',
                   dest='prefix',

@@ -47,6 +47,7 @@ typedef std::map<OCResourceIdentifier, std::shared_ptr<OCResource>> DiscoveredRe
 DiscoveredResourceMap discoveredResources;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+static OCConnectivityType TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
 std::mutex curResourceLock;
 
 class Light
@@ -392,9 +393,15 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
             if(resourceURI == "/a/light")
             {
-                curResource = resource;
-                // Call a local function which will internally invoke get API on the resource pointer
-                getLightRepresentation(resource);
+                if (resource->connectivityType() & TRANSPORT_TYPE_TO_USE)
+                {
+                    curResource = resource;
+                    // Get the resource host address
+                    std::cout << "\tAddress of selected resource: " << resource->host() << std::endl;
+
+                    // Call a local function which will internally invoke get API on the resource pointer
+                    getLightRepresentation(resource);
+                }
             }
         }
         else
@@ -414,9 +421,11 @@ void printUsage()
 {
     std::cout << std::endl;
     std::cout << "---------------------------------------------------------------------\n";
-    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
+    std::cout << "Usage : simpleclient <ObserveType> <TransportType>" << std::endl;
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
+    std::cout << "   TransportType : 1 - IP" << std::endl;
+    std::cout << "   TransportType : 2 - TCP" << std::endl;
     std::cout << "---------------------------------------------------------------------\n\n";
 }
 
@@ -439,6 +448,25 @@ void checkObserverValue(int value)
     }
 }
 
+void checkTransportValue(int value)
+{
+    if (1 == value)
+    {
+        TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
+        std::cout << "<===Setting TransportType to IP===>\n\n";
+    }
+    else if (2 == value)
+    {
+        TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_TCP;
+        std::cout << "<===Setting TransportType to TCP===>\n\n";
+    }
+    else
+    {
+        std::cout << "<===Invalid TransportType selected."
+                  <<" Setting TransportType to IP===>\n\n";
+    }
+}
+
 static FILE* client_open(const char* /*path*/, const char *mode)
 {
     return fopen(SVR_DB_FILE_NAME, mode);
@@ -458,6 +486,11 @@ int main(int argc, char* argv[]) {
         else if (argc == 2)
         {
             checkObserverValue(std::stoi(argv[1]));
+        }
+        else if (argc == 3)
+        {
+            checkObserverValue(std::stoi(argv[1]));
+            checkTransportValue(std::stoi(argv[2]));
         }
         else
         {

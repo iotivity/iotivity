@@ -43,9 +43,8 @@ typedef struct
 {
     CASecureEndpoint_t sep;             /**< secure endpoint information */
     int fd;                             /**< file descriptor info */
-    void *recvData;                     /**< received data from remote device*/
-    size_t recvDataLen;                 /**< received data length */
-    size_t totalDataLen;                /**< total data length */
+    unsigned char* data;                /**< received data from remote device */
+    size_t len;                         /**< received data length */
 } CATCPSessionInfo_t;
 
 /**

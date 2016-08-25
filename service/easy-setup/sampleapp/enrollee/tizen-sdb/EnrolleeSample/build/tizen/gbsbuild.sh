@@ -1,7 +1,6 @@
 #!/bin/sh
 
 cur_dir="./service/easy-setup"
-
 spec=`ls ./service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/packaging/*.spec`
 version=`rpm --query --queryformat '%{version}\n' --specfile $spec`
 
@@ -24,6 +23,7 @@ mkdir ./tmp
 mkdir ./tmp/con/
 mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
+mkdir ./tmp/logger
 cp -R ./build_common $sourcedir/tmp
 cp -R ./examples $sourcedir/tmp
 
@@ -32,6 +32,7 @@ cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
+cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
@@ -54,8 +55,11 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 cd $sourcedir/tmp
 
 echo `pwd`
+rm -rf ./extlibs/tinycbor/tinycbor/.git*
 
 whoami
+
+# Build IoTivity
 # Initialize Git repository
 if [ ! -d .git ]; then
    git init ./
@@ -65,8 +69,9 @@ if [ ! -d .git ]; then
    git commit -m "Initial commit"
 fi
 
+buildoption="--define 'TARGET_TRANSPORT '$1 --define 'SECURED '$2 --define 'ROUTING '$3 --define 'RELEASE '$4 --define 'LOGGING '$5 --define 'ES_TARGET_ENROLLEE '$6"
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $5' --define 'LOGGING $6' --define 'ES_ROLE $7' --define 'ES_TARGET_ENROLLEE $8' --define 'ES_SOFTAP_MODE $9'"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC $buildoption --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
@@ -77,6 +82,7 @@ else
    exit 1
 fi
 
+# Build Enrollee Sample App
 cd service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
 echo `pwd`
 # Initialize Git repository
@@ -88,7 +94,7 @@ if [ ! -d .git ]; then
   git commit -m "Initial commit"
 fi
 echo "Calling sample gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'ROUTING $4' --define 'RELEASE $5' --define 'LOGGING $6' --define 'ES_ROLE $7' --define 'ES_TARGET_ENROLLEE $8' --define 'ES_SOFTAP_MODE $9'"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC $buildoption --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
   echo "Sample build is successful"
