@@ -1,0 +1,259 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building IotivitySecTest for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+iotivity_directory = env_linux.get('IOTIVITY_DIR')
+
+print "target source is --------------------------------" + target_source
+print "iotivity root is --------------------------------" + iotivity_directory
+
+if env_linux.get('RELEASE'):
+    target_release = 'release'
+else:
+    target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+# Initializing IC Dir
+######################################################################
+
+IC_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+IC_RESOURCE_INCLUDE = IC_RESOURCE_DIR + '/include'
+IC_C_COMMON = IC_RESOURCE_DIR + '/c_common'
+IC_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+IC_RESOURCE_STACK = IC_RESOURCE_DIR + '/csdk/stack/include'
+IC_RESOURCE_SOCKET = IC_RESOURCE_DIR + '/csdk/ocsocket/include'
+IC_RESOURCE_RANDOM = IC_RESOURCE_DIR + '/csdk/ocrandom/include'
+IC_RESOURCE_LOGGER = IC_RESOURCE_DIR + '/csdk/logger/include'
+IC_RESOURCE_OC_LOGGER = IC_RESOURCE_DIR + '/oc_logger/include'
+IC_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+IC_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+IC_DIR = ORG_SRC_HOME + '/service/things-manager'
+IC_INCLUDE = IC_DIR + '/sdk/inc'
+IC_SDK_INCLUDE = IC_DIR + '/sdk/src'
+
+######################################################################
+
+# Initializing CA Dir
+######################################################################
+
+CA_IOT = ENV_HOME + ORG_SRC
+CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/ic/gtest/src'
+STC_DIR = TC_DIR + '/stc'
+BTC_DIR = TC_DIR + '/btc'
+TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
+TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
+
+
+COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/ic/gtest'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/include'
+
+
+COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+
+TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
+
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
+
+PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
+
+IC_CFLAGS = [COMMON_FLAGS]
+IC_CPPDEFINES = ['WITH_CLOUD', 'RD_CLIENT','MQ_BROKER', 'WITH_MQ', 'MQ_PUBLISHER', 'MQ_SUBSCRIBER']
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, IC_RESOURCE_LOGGER]
+
+
+IC_CINCLUDE = [COMMON_CINCLUDE, IC_RESOURCE_INCLUDE, IC_RESOURCE_STACK, IC_RESOURCE_SOCKET, IC_RESOURCE_RANDOM, IC_RESOURCE_OC_LOGGER, IC_INCLUDE, IC_RESOURCE_CEREAL, IC_RESOURCE_TIMER, IC_SDK_INCLUDE, IC_C_COMMON]
+
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
+IC_LIB_LOCATION = [COMMON_LIB_LOCATION, IC_RESOURCE_LIB]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
+
+IC_STATIC_RESOURCE_LIBS = []
+IC_LIBS = COMMON_SHARED_LIBS
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+
+IC_ITC_BIN = 'iotivity_IC_test'
+
+TEST_SERVER_BIN = 'testserver'
+UNSUPPORTIVE_SERVER_BIN = 'unsupportivetestserver'
+BOOTSTRAP_SERVER_BIN = 'bootstrapserver'
+TEST_COLLECTION_BIN = 'testcollection'
+IC_TESTAPP_BIN = "IC_testapp"
+
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+
+IC_HELPER_CPP = Glob(PROJECT_HOME + '/src/tc/ic/gtest/src/helper/*.cpp')
+
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp']
+
+IC_STC_CPP = Glob(STC_DIR + '/*.cpp')
+IC_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
+
+IC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, IC_HELPER_CPP, CALL_GRAPH_CPP]
+
+IC_TC_SRC = [IC_CPP, IC_STC_CPP, IC_BTC_CPP, COMMON_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+env_linux.ParseConfig("pkg-config --cflags --libs uuid")
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+IC_itc = env_linux.Program(source = IC_TC_SRC, target = IC_ITC_BIN,CPPDEFINES =IC_CPPDEFINES, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
+
+env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
+
+pre_job = [create_target_dir]
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_test = env_linux.get('TARGET_TEST')
+default_targets = [pre_job]
+install_targets = []
+
+print "target_service = " + target_service
+print "target_test = " + target_test
+print "target_transport = " + target_transport
+
+
+print "---------------service--------------" + target_service + target_test
+
+
+if 'cloud' in target_service or 'all' in target_service:
+    if 'tc' in target_test or 'all' in target_test:
+        print '---------------IC Build Selected---------------'
+        #install_targets += [ca_simulator]
+        install_targets += IC_itc
+    #if 'app' in target_test or 'all' in target_test:
+     #   print '---------------IC TEST APP Build Selected---------------'
+     #   install_targets += [IC_testapp]
+
+
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)
