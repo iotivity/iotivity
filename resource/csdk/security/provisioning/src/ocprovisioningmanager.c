@@ -933,6 +933,36 @@ OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
         return res;
     }
 
+    // Code to compare devices in unowned list and deviceid from DB
+    // (In case of hard reset of the device)
+    OCProvisionDev_t* pUnownedList = unownedDevice;
+    while (pUnownedList && uuidList)
+    {
+        OCUuidList_t *tmp1 = NULL,*tmp2=NULL;
+        LL_FOREACH_SAFE(uuidList, tmp1, tmp2)
+        {
+            if(0 == memcmp(tmp1->dev.id, pUnownedList->doxm->deviceID.id,
+                            sizeof(pUnownedList->doxm->deviceID.id)))
+            {
+                OIC_LOG_V(INFO, TAG, "OCGetDevInfoFromNetwork : \
+                            Removing device id = %s in PDM and dat.", pUnownedList->doxm->deviceID.id);
+                if (OC_STACK_OK != PDMDeleteDevice(&pUnownedList->doxm->deviceID))
+                {
+                    OIC_LOG(ERROR, TAG, "OCGetDevInfoFromNetwork : \
+                            Failed to remove device in PDM.");
+                }
+                //remove the cred entry from dat file
+                if (OC_STACK_OK != RemoveDeviceInfoFromLocal(pUnownedList))
+                {
+                    OIC_LOG(ERROR, TAG, "OCGetDevInfoFromNetwork : \
+                            Failed to remove cred entry device in dat file.");
+                }
+                LL_DELETE(uuidList, tmp1);
+                OICFree(tmp1);
+            }
+        }
+        pUnownedList = pUnownedList->next;
+    }
     // Code to compare devices in owned list and deviceid from DB.
     OCProvisionDev_t* pCurDev = ownedDevice;
     size_t deleteCnt = 0;
