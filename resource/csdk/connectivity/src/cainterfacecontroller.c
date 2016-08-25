@@ -55,9 +55,9 @@ static uint32_t g_numberOfAdapters = 0;
 
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
-static CAAdapterChangeCallback g_adapterChangeCallback = NULL;
+static CAAdapterStateChangedCB g_adapterChangeCallback = NULL;
 
-static CAConnectionChangeCallback g_connChangeCallback = NULL;
+static CAConnectionStateChangedCB g_connChangeCallback = NULL;
 
 static CAErrorHandleCallback g_errorHandleCallback = NULL;
 
@@ -129,7 +129,14 @@ static void CAAdapterChangedCallback(CATransportAdapter_t adapter, CANetworkStat
     // Call the callback.
     if (g_adapterChangeCallback != NULL)
     {
-        g_adapterChangeCallback(adapter, status);
+        if (CA_INTERFACE_UP == status)
+        {
+            g_adapterChangeCallback(adapter, true);
+        }
+        else if (CA_INTERFACE_DOWN == status)
+        {
+            g_adapterChangeCallback(adapter, false);
+        }
     }
     OIC_LOG_V(DEBUG, TAG, "[%d]adapter status is changed to [%d]", adapter, status);
 }
@@ -200,8 +207,8 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)
     g_networkPacketReceivedCallback = callback;
 }
 
-void CASetNetworkMonitorCallbacks(CAAdapterChangeCallback adapterCB,
-                                  CAConnectionChangeCallback connCB)
+void CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                  CAConnectionStateChangedCB connCB)
 {
     OIC_LOG(DEBUG, TAG, "Set network monitoring callback");
 
