@@ -618,7 +618,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
             {
-                OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
                 return NULL;
             }
 
@@ -630,7 +630,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
             if(!resourceType || !resourceInterface)
             {
-                OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
                 return NULL;
             }
 
@@ -652,7 +652,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
             {
-                OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
                 return NULL;
             }
 
@@ -664,7 +664,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
             if(!resourceType || !resourceInterface)
             {
-                OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
                 return NULL;
             }
 
@@ -686,7 +686,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
             {
-                OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
                 return NULL;
             }
 
@@ -698,7 +698,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
             if(!resourceType || !resourceInterface)
             {
-                OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
                 return NULL;
             }
 
