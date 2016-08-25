@@ -470,7 +470,7 @@ static int64_t ConditionalAddTextStringToMap(CborEncoder* map, const char* key, 
 static int64_t ConditionalAddIntToMap(CborEncoder *map, const char *tags, const uint64_t *value)
 {
     int64_t err = CborNoError;
-    if (*value)
+    if (value)
     {
         err |= cbor_encode_text_string(map, tags, strlen(tags));
         VERIFY_CBOR_SUCCESS(TAG, err, "failed setting value");
