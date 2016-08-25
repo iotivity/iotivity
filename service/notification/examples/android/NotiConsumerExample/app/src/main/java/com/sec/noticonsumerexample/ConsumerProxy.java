@@ -39,7 +39,7 @@ import java.util.HashMap;
 
 public class ConsumerProxy
     implements ConsumerService.OnProviderDiscoveredListner,
-    ConsumerService.OnSubscriptionAcceptedListener,
+    ConsumerService.OnProviderChangedListener,
     Provider.OnMessageReceivedListner, Provider.OnSyncInfoReceivedListner
 {
 
@@ -232,7 +232,7 @@ public class ConsumerProxy
     }
 
     @Override
-    public void onSubscriptionAccepted(Provider provider)
+    public void onProviderChanged(Provider provider , ConsumerService.Response response)
     {
         Log.i(TAG, "onSubscriptionAccepted");
 
