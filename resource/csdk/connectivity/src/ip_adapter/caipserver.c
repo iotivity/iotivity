@@ -1008,7 +1008,7 @@ static void applyMulticastToInterface4(uint32_t ifindex)
                              .imr_address.s_addr = htonl(INADDR_ANY),
                              .imr_ifindex = ifindex };
 #else
-    struct ip_mreq mreq  = { .imr_multiaddr = IPv4MulticastAddress,
+    struct ip_mreq mreq  = { .imr_multiaddr.s_addr = IPv4MulticastAddress.s_addr,
                              .imr_interface.s_addr = htonl(ifindex) };
 #endif
 
@@ -1040,8 +1040,12 @@ static void applyMulticastToInterface4(uint32_t ifindex)
 
 static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
 {
-    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = *addr,
+    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = {0},
                              .ipv6mr_interface = ifindex };
+
+    // VS2013 has problems with struct copies inside struct initializers, so copy separately.
+    mreq.ipv6mr_multiaddr = *addr;
+
     int ret = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, OPTVAL_T(&mreq), sizeof (mreq));
     if (OC_SOCKET_ERROR == ret)
     {
@@ -1338,7 +1342,7 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
                              .imr_address.s_addr = htonl(INADDR_ANY),
                              .imr_ifindex = 0};
 #else
-    struct ip_mreq mreq  = { .imr_multiaddr = IPv4MulticastAddress,
+    struct ip_mreq mreq  = { .imr_multiaddr.s_addr = IPv4MulticastAddress.s_addr,
                              .imr_interface = {0}};
 #endif
 

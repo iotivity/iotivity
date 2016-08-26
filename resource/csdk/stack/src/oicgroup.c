@@ -436,11 +436,13 @@ void DeleteAction(OCAction** action)
 
 void DeleteActionSet(OCActionSet** actionset)
 {
+    OCAction* pointer = NULL;
+    OCAction* pDel = NULL;
+
     if(*actionset == NULL)
         return;
 
-    OCAction* pointer = (*actionset)->head;
-    OCAction* pDel = NULL;
+    pointer = (*actionset)->head;
 
     while (pointer)
     {
