@@ -220,6 +220,35 @@ void PMCsdkHelper::provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr
     g_CBInvoked = true;
 }
 
+void PMCsdkHelper::getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if (!hasError)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Get ACL Req Failed- ctx: %s\n", (char* ) ctx);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "Get ACL Req Success- ctx: %s", (char* ) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+
+    g_CBInvoked = true;
+}
+
+void PMCsdkHelper::getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if (!hasError)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Get Credential Req SUCCEEDED - ctx: %s\n", (char* ) ctx);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "Get Credential Req - ctx: %s", (char* ) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+
+    g_CBInvoked = true;
+}
 void PMCsdkHelper::provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if (!hasError)
@@ -659,6 +688,70 @@ bool PMCsdkHelper::provisionPairwiseDevices(void* ctx, OicSecCredType_t type, si
 }
 
 /**
+ * Helper Method for OCGetCredResource
+ */
+bool PMCsdkHelper::getCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCProvisionResultCB resultCallback, OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getCredResource IN");
+
+    g_CBInvoked = false;
+
+    OCStackResult res = OCGetCredResource(ctx, selectedDeviceInfo, resultCallback);
+    IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCGetACLResource API returns: %s\n", getOCStackResult(res));
+
+    if (expectedResult != res)
+    {
+        m_failureMessage = setFailureMessage(res, expectedResult);
+        return false;
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+        {
+            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            return false;
+        }
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getCredResource OUT");
+    return true;
+}
+
+/**
+ * Helper Method for OCGetACLResource
+ */
+bool PMCsdkHelper::getACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCProvisionResultCB resultCallback, OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getACLResource IN");
+
+    g_CBInvoked = false;
+
+    OCStackResult res = OCGetACLResource(ctx, selectedDeviceInfo, resultCallback);
+    IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCGetACLResource API returns: %s\n", getOCStackResult(res));
+
+    if (expectedResult != res)
+    {
+        m_failureMessage = setFailureMessage(res, expectedResult);
+        return false;
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+        {
+            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            return false;
+        }
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getACLResource OUT");
+    return true;
+}
+
+/**
  * Helper Method for OCGetLinkedStatus
  */
 bool PMCsdkHelper::getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
@@ -783,9 +876,11 @@ OTMCallbackData_t otmCbRegister(int otmType)
 OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl IN");
+
     printDevList(*m_own_list);
 
     OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+
     OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
 
     LL_APPEND(acl->aces, ace);
@@ -860,7 +955,6 @@ OicSecPdAcl_t* createPdAcl(int nPermission)
     if (!pdAcl->resources)
     {
         IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-        goto CRPDACL_ERROR;
     }
 
     for (int i = 0; num > i; ++i)
@@ -870,7 +964,6 @@ OicSecPdAcl_t* createPdAcl(int nPermission)
         if (!rsrc)
         {
             IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-            goto CRPDACL_ERROR;
         }
         OICStrcpy(rsrc, len, rsrc_in[i]);
         pdAcl->resources[i] = rsrc; // after here, |rsrc| points nothing
@@ -881,11 +974,6 @@ OicSecPdAcl_t* createPdAcl(int nPermission)
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createPdAcl OUT");
     return pdAcl;
-
-    CRPDACL_ERROR: OCDeletePdAclList(pdAcl);
-
-    IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl OUT");
-    return NULL;
 }
 
 char *getOCStackResult(OCStackResult ocstackresult)

@@ -185,7 +185,7 @@ TEST_F(PMCsdkTest_stc, ProvisionPairwiseDevicesMultipleTime_EG_N)
     }
 
     if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
-            device1, NULL, device2, NULL, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
+                    device1, NULL, device2, NULL, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
         return;
@@ -945,7 +945,6 @@ TEST_F(PMCsdkTest_stc, RemoveDeviceTimeMultipleTimes_EG_N)
 }
 #endif
 
-
 /**
  * @since           2016-02-19
  * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
@@ -1027,7 +1026,8 @@ TEST_F(PMCsdkTest_stc, OCGetLinkedStatusBeforenAfterUnlinkDev_RSV_SRC_P)
         return;
     }
 
-    if(0 == numOfDevices) {
+    if(0 == numOfDevices)
+    {
         SET_FAILURE("No Device has been linked.");
         return;
     }
@@ -1050,7 +1050,8 @@ TEST_F(PMCsdkTest_stc, OCGetLinkedStatusBeforenAfterUnlinkDev_RSV_SRC_P)
         return;
     }
 
-    if(tempNumOfDevices > numOfDevices) {
+    if(tempNumOfDevices > numOfDevices)
+    {
         SET_FAILURE("No Device has been unlinked.");
         return;
     }
@@ -1182,4 +1183,3 @@ TEST_F(PMCsdkTest_stc, ProvisionAclPermission_UBV_P)
     }
 }
 #endif
-

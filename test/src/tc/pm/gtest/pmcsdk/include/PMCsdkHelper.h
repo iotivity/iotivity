@@ -179,6 +179,10 @@ public:
             const OCProvisionDev_t *pDev1, OicSecAcl_t *pDev1Acl, const OCProvisionDev_t *pDev2,
             OicSecAcl_t *pDev2Acl, OCProvisionResultCB resultCallback,
             OCStackResult expectedResult);
+    bool getCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool getACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
     bool unlinkDevices(void* ctx, const OCProvisionDev_t* pTargetDev1,
             const OCProvisionDev_t* pTargetDev2, OCProvisionResultCB resultCallback,
             OCStackResult expectedResult);
@@ -196,6 +200,8 @@ public:
     static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
     static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
     static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+    static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+    static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
     static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
     static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
 

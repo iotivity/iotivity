@@ -56,7 +56,7 @@ using namespace OC;
 #define CBOR_DB_PATH "./oic_svr_db_client.dat"
 #define RANDOM_PIN_TEXT_FILE "server_pincode.txt"
 #define PIN_MAX_SIZE 9
-
+#define DP_PIN_LENGTH 8
 /*
  * Time Releated Resources
  */
@@ -86,10 +86,14 @@ using namespace OC;
 #define LIGHT_RESOURCE_URI_02 "/rsrc/light2"
 #define ACL_ROWNER_UUID_01 "OwnerDeviceID01"
 #define ACL_ROWNER_UUID_02 "OwnerDeviceID02"
+#define ACL_RESRC_MAX_NUM   16
+#define ACL_RESRC_MAX_LEN   128
+#define ACL_PEMISN_CNT      5
 #define FULL_PERMISSION 31
 #define DEFAULT_PERMISSION 31
 #define NO_PERMISSION 0
 #define MAX_PERMISSION_RANGE 65535
+#define DEFAULT_DP_PROVSIONING_PIN "00000000"
 #define DEVICE_INDEX_ONE 1
 #define DEVICE_INDEX_TWO 1
 
@@ -142,11 +146,15 @@ using namespace OC;
 #define DATABASE_PDM "./PDM.db"
 #define PRVN_DATABASE "./oic_prvn_mng.db"
 
+static const OicSecPrm_t SUPPORTED_PRMS[1] =
+{ PRM_PRE_CONFIGURED, };
+
 const char *getResult(OCStackResult result);
 void InputPinCB(char* pinBuf, size_t bufSize);
 std::string setFailureMessage(OCStackResult expectedResult, OCStackResult actualResult);
 std::string getOCStackResultCPP(OCStackResult ocstackresult);
 OicSecAcl_t* createAcl(const int dev_num, int nPermission, DeviceList_t &m_OwnedDevList);
+OicSecPdAcl_t* createPdAcl(int nPermission);
 
 class PMCppHelper
 {
@@ -172,6 +180,8 @@ public:
             OCStackResult expectedResult);
     bool provisionPairwiseDevices(DeviceList_t& deviceList, const Credential &cred,
             const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool provisionDirectPairing(DeviceList_t& deviceList, const OicSecPconf_t pconf,
             ResultCallBack resultCallback, OCStackResult expectedResult);
     bool getLinkedDevices(DeviceList_t& deviceList, UuidList_t &uuidList,
             OCStackResult expectedResult);

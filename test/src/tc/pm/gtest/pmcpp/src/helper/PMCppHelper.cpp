@@ -406,6 +406,37 @@ bool PMCppHelper::provisionPairwiseDevices(DeviceList_t& deviceList, const Crede
     return true;
 }
 
+bool PMCppHelper::provisionDirectPairing(DeviceList_t& deviceList, const OicSecPconf_t pconf,
+        ResultCallBack resultCallback, OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionDirectPairing IN");
+
+    g_cbInvoked = CALLBACK_NOT_INVOKED;
+
+    OCStackResult res = deviceList[1]->provisionDirectPairing(&pconf, resultCallback);
+    IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionDirectPairing returns : %s",
+            getOCStackResultCPP(res).c_str());
+
+    if (res != expectedResult)
+    {
+        m_failureMessage = setFailureMessage(expectedResult, res);
+        return false;
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+        {
+            m_failureMessage = "provisionDirectPairing Callback Not Invoked";
+            return false;
+
+        }
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionDirectPairing OUT");
+    return true;
+}
+
 bool PMCppHelper::getLinkedDevices(DeviceList_t& deviceList, UuidList_t &uuidList,
         OCStackResult expectedResult)
 {
@@ -491,6 +522,52 @@ bool PMCppHelper::removeDevice(DeviceList_t& deviceList,
     return true;
 }
 
+OicSecPdAcl_t* createPdAcl(int nPermission)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] createPdAcl IN");
+
+    OicSecPdAcl_t* pdAcl = (OicSecPdAcl_t*) OICCalloc(1, sizeof(OicSecPdAcl_t));
+
+    if (!pdAcl)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[PMCppHelper] createPdAcl: OICCalloc error return");
+        return NULL; // not need to 'goto' |ERROR| before allocating |acl|
+    }
+
+    // number of resources
+    char rsrc_in[][ACL_RESRC_MAX_LEN + 1] =
+    { "*", "/rsrc/*" };
+    pdAcl->resourcesLen = 1;
+
+    // resource
+    int num = pdAcl->resourcesLen;
+    pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
+
+    if (!pdAcl->resources)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[PMCppHelper] createPdAcl: OICCalloc error return");
+    }
+
+    for (int i = 0; num > i; ++i)
+    {
+        size_t len = strlen(rsrc_in[i]) + 1; // '1' for null termination
+        char* rsrc = (char*) OICCalloc(len, sizeof(char));
+        if (!rsrc)
+        {
+            IOTIVITYTEST_LOG(ERROR, "[PMCppHelper] createPdAcl: OICCalloc error return");
+            IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] createPdAcl OUT");
+            return NULL;
+        }
+        OICStrcpy(rsrc, len, rsrc_in[i]);
+        pdAcl->resources[i] = rsrc; // after here, |rsrc| points nothing
+    }
+
+    // permission
+    pdAcl->permission = nPermission;
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] createPdAcl OUT");
+    return pdAcl;
+}
 /**
  * Callback function for doOwnership Transfer
  *

@@ -1805,6 +1805,85 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesAcl2_NV_P)
  * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
  * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
  * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
+ * @objective       test provisionPairwiseDevices positively
+ * @target          OCStackResult provisionPairwiseDevices(const Credential &cred, const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2, ResultCallBack resultCallback)
+ * @test_data       Regular data for provisionPairwiseDevices
+ * @pre_condition   start two justworks simulators
+ * @procedure       1. call provisionInit
+ *                  2. call discoverUnownedDevices
+ *                  3. call setOwnerTransferCallbackData
+ *                  4. call doOwnershipTransfer
+ *                  5. call discoverOwnedDevices
+ *                  6. call provisionPairwiseDevices
+ * @post_condition  None
+ * @expected        provisionPairwiseDevices will return OC_STACK_OK
+ */
+#if defined(__LINUX__)
+TEST_F(PMCppTest_btc, ProvisionDirectPairing_SRC_LBV_P)
+{
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    OTMCallbackData_t justWorksCBData;
+    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
+    justWorksCBData.createSecureSessionCB =
+    CreateSecureSessionJustWorksCallback;
+    justWorksCBData.createSelectOxmPayloadCB =
+    CreateJustWorksSelectOxmPayload;
+    justWorksCBData.createOwnerTransferPayloadCB =
+    CreateJustWorksOwnerTransferPayload;
+
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    OicSecPconf_t g_pconf;
+    g_pconf.edp = true;
+    g_pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
+    if(g_pconf.prm)
+    {
+        for (size_t i=0; i < g_pconf.prmLen; i++)
+        {
+            g_pconf.prm[i] = SUPPORTED_PRMS[i];
+        }
+    }
+
+    memcpy(g_pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
+
+    g_pconf.pdacls = createPdAcl(DEFAULT_PERMISSION);
+
+    if(!m_PMCppHelper.provisionDirectPairing(m_OwnedDevList, g_pconf, PMCppHelper::provisionCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+}
+#endif
+
+/**
+ * @since           2015-11-30
+ * @see             static OCStackResult provisionInit(const std::string& dbPath)
+ * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+ * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
+ * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
+ * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
  * @see             OCStackResult provisionPairwiseDevices(const Credential &cred, const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2, ResultCallBack resultCallback)
  * @objective       test getLinkedDevices positively
  * @target          OCStackResult getLinkedDevices(UuidList_t &uuidList)

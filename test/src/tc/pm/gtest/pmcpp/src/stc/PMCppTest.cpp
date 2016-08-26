@@ -582,7 +582,7 @@ TEST_F(PMCppTest_stc, ProvisionPairwiseDevicesMultipleTimes_EG_N)
 #if defined(__LINUX__)
 TEST_F(PMCppTest_stc, UnlinkDeviceMultipleTimes_EG_N)
 {
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -667,7 +667,7 @@ TEST_F(PMCppTest_stc, UnlinkDeviceMultipleTimes_EG_N)
 #if defined(__LINUX__)
 TEST_F(PMCppTest_stc, RemoveDeviceMultipleTimes_EG_N)
 {
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
