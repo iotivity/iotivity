@@ -63,12 +63,14 @@ if 'g++' in provisioning_env.get('CXX'):
     provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
 
 provisioning_env.AppendUnique(LIBPATH = [provisioning_env.get('BUILD_DIR')])
-provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'ocsrm'])
 
 provisioning_env.AppendUnique(LIBS = ['tinydtls'])
 
 if provisioning_env.get('DTLS_WITH_X509') == '1':
 	provisioning_env.AppendUnique(LIBS = ['CKManager', 'asn1'])
+if provisioning_env.get('WITH_TCP') == True:
+	provisioning_env.AppendUnique(LIBS = ['mbedtls'])
 
 if target_os not in ['msys_nt', 'windows', 'android']:
 	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')

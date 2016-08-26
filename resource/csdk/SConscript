@@ -83,6 +83,12 @@ if target_os not in ['windows']:
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 liboctbstack_env.PrependUnique(LIBS = ['ocsrm', 'coap'])
+
+if env.get('SECURED') == '1':
+	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
+	if env.get('WITH_TCP') == True:
+		liboctbstack_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+
 if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
 	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
 
@@ -113,11 +119,6 @@ if target_os not in ['arduino', 'windows']:
 	liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 if target_os == 'android':
     liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,liboctbstack.so'])
-
-if env.get('SECURED') == '1':
-	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
-	if env.get('WITH_TCP') == True:
-		liboctbstack_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

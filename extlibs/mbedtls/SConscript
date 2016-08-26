@@ -23,6 +23,11 @@ Import('env')
 import os
 import sys
 
+target_os = env.get('TARGET_OS')
+root_dir = env.get('SRC_DIR')
+mbedtls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls/')
+libs_list = ['libmbedcrypto','libmbedtls','libmbedx509']
+
 def run(cmd):
     """Run a command and decipher the return code. Exit by default."""
     res = os.system(cmd)
@@ -34,54 +39,122 @@ def run(cmd):
             if SCons.Script.keep_going_on_error == 0:
                 sys.exit(code)
 
-root_dir = env.get('SRC_DIR')
 
-tls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls')
-
-if not os.path.exists(tls_dir):
+if not os.path.exists(mbedtls_dir):
     print '''
 *********************************** Error: ****************************************
 * Please download mbedtls using the following command:                            *
 *     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *
 ***********************************************************************************
-'''
+ '''
     Exit(1)
-
-start_dir = os.getcwd()
-os.chdir(tls_dir)
-
 #Apply patch to enable TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 ciphersuite and server identity hint
+start_dir = os.getcwd()
+os.chdir(mbedtls_dir)
 cmd = 'git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd && git apply ../ocf.patch'
 run(cmd)
-
-build_dir = env.get('BUILD_DIR')
-libs_list = ['libmbedcrypto.so', 'libmbedtls.so', 'libmbedx509.so']
-
-if env.GetOption('clean'):
-	print 'Clean-up mbedtls...'
-	run('make clean')
-
-	#Delete copied libs from out folder
-	for file_name in libs_list:
-		run("rm -f " + build_dir + file_name + "*")
-else:
-	#Pass to make proper debug option
-	if env.get('RELEASE'): debug = ''
-	else: debug = 'DEBUG=1 '
-
-	cmd = 'export SHARED=1 ' + debug + '&& make no_test'
-
-	print 'Making mbedtls libraries...'
-	print cmd
-	run(cmd)
-	
-	#Copy libs to out folder
-	if not os.path.exists(build_dir): os.makedirs(build_dir)
-	for file_name in libs_list:
-		run("cp -d " + tls_dir + '/library/' + file_name + " " + build_dir)
-		run("cp " + tls_dir + '/library/' + file_name + ".* " + build_dir)
-
 os.chdir(start_dir)
 
 
+mbedtls_env = env.Clone()
+mbedtls_env.PrependUnique(CPPPATH = [mbedtls_dir])
+mbedtls_env.AppendUnique(CPPPATH = [mbedtls_dir+'include/'])
+mbedtls_env.AppendUnique(CFLAGS = ['-fPIC', '-Wall', '-Wextra', '-W', '-Wdeclaration-after-statement', '-Wwrite-strings'])
+
+######################################################################
+# Source files and Target(s)
+######################################################################
+mbedtls_src = [
+                'mbedtls/library/debug.c',
+                'mbedtls/library/net.c',
+                'mbedtls/library/ssl_cache.c',
+                'mbedtls/library/ssl_ciphersuites.c',
+                'mbedtls/library/ssl_cli.c',
+                'mbedtls/library/ssl_cookie.c',
+                'mbedtls/library/ssl_srv.c',
+                'mbedtls/library/ssl_ticket.c',
+                'mbedtls/library/ssl_tls.c'
+        ]
+
+
+mbedcrypto_src = [
+                    'mbedtls/library/aes.c',
+                    'mbedtls/library/aesni.c',
+                    'mbedtls/library/arc4.c',
+                    'mbedtls/library/asn1parse.c',
+                    'mbedtls/library/asn1write.c',
+                    'mbedtls/library/base64.c',
+                    'mbedtls/library/bignum.c',
+                    'mbedtls/library/blowfish.c',
+                    'mbedtls/library/camellia.c',
+                    'mbedtls/library/ccm.c',
+                    'mbedtls/library/cipher.c',
+                    'mbedtls/library/cipher_wrap.c',
+                    'mbedtls/library/ctr_drbg.c',
+                    'mbedtls/library/des.c',
+                    'mbedtls/library/dhm.c',
+                    'mbedtls/library/ecdh.c',
+                    'mbedtls/library/ecdsa.c',
+                    'mbedtls/library/ecjpake.c',
+                    'mbedtls/library/ecp.c',
+                    'mbedtls/library/ecp_curves.c',
+                    'mbedtls/library/entropy.c',
+                    'mbedtls/library/entropy_poll.c',
+                    'mbedtls/library/error.c',
+                    'mbedtls/library/gcm.c',
+                    'mbedtls/library/havege.c',
+                    'mbedtls/library/hmac_drbg.c',
+                    'mbedtls/library/md.c',
+                    'mbedtls/library/md2.c',
+                    'mbedtls/library/md4.c',
+                    'mbedtls/library/md5.c',
+                    'mbedtls/library/md_wrap.c',
+                    'mbedtls/library/memory_buffer_alloc.c',
+                    'mbedtls/library/oid.c',
+                    'mbedtls/library/padlock.c',
+                    'mbedtls/library/pem.c',
+                    'mbedtls/library/pk.c',
+                    'mbedtls/library/pk_wrap.c',
+                    'mbedtls/library/pkcs12.c',
+                    'mbedtls/library/pkcs5.c',
+                    'mbedtls/library/pkparse.c',
+                    'mbedtls/library/pkwrite.c',
+                    'mbedtls/library/platform.c',
+                    'mbedtls/library/ripemd160.c',
+                    'mbedtls/library/rsa.c',
+                    'mbedtls/library/sha1.c',
+                    'mbedtls/library/sha256.c',
+                    'mbedtls/library/sha512.c',
+                    'mbedtls/library/threading.c',
+                    'mbedtls/library/timing.c',
+                    'mbedtls/library/version.c',
+                    'mbedtls/library/version_features.c',
+                    'mbedtls/library/xtea.c'
+        ]
+
+mbeX509_src = [
+                'mbedtls/library/certs.c',
+                'mbedtls/library/pkcs11.c',
+                'mbedtls/library/x509.c',
+                'mbedtls/library/x509_create.c',
+                'mbedtls/library/x509_crl.c',
+                'mbedtls/library/x509_crt.c',
+                'mbedtls/library/x509_csr.c',
+                'mbedtls/library/x509write_crt.c',
+                'mbedtls/library/x509write_csr.c'
+        ]
+
+mbedcrypto_env = mbedtls_env.Clone()
+static_libmbedcrypto = mbedcrypto_env.StaticLibrary('mbedcrypto', mbedcrypto_src)
+mbedcrypto_env.InstallTarget(static_libmbedcrypto, 'mbedcrypto')
+
+mbex509_env = mbedtls_env.Clone()
+mbex509_env.AppendUnique(LIBS = ['mbedcrypto'])
+static_libmbedx509 = mbex509_env.StaticLibrary('mbedx509', mbeX509_src)
+mbex509_env.InstallTarget(static_libmbedx509, 'mbedx509')
+
+
+mbedtls_env.AppendUnique(LIBS = ['mbedx509', 'mbedcrypto'])
+static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
+mbedtls_env.InstallTarget(static_libmbedtls, 'mbedtls')
 
