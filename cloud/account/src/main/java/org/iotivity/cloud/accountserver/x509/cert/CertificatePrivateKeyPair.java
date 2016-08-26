@@ -25,19 +25,33 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
 public class CertificatePrivateKeyPair {
-    private X509Certificate mCertificate = null;
-    private PrivateKey mKey = null;
 
-    public CertificatePrivateKeyPair(X509Certificate cert, PrivateKey k) {
-        mCertificate = cert;
-        mKey = k;
+    private final X509Certificate x509Certificate;
+
+    private final PrivateKey privateKey;
+
+    /**
+     * Constructs new CertificatePrivateKeyPair with help of X509Certificate and PrivateKey instances.
+     * @param x509Certificate specified certificate
+     * @param privateKey specified private key.
+     */
+    public CertificatePrivateKeyPair(X509Certificate x509Certificate, PrivateKey privateKey) {
+        this.x509Certificate = x509Certificate;
+        this.privateKey = privateKey;
     }
 
-    public X509Certificate getCertificate() {
-        return mCertificate;
+    /**
+     * Returns private key.
+     */
+    public PrivateKey getPrivateKey() {
+        return privateKey;
     }
 
-    public PrivateKey getKey() {
-        return mKey;
+    /**
+     * Returns certificate.
+     */
+    public X509Certificate getX509Certificate() {
+        return x509Certificate;
     }
 }
+

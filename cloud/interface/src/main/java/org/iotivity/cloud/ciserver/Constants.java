@@ -48,4 +48,5 @@ public class Constants extends OICConstants {
     public static final String REQ_PING_ARRAY      = "inarray";
     public static final String REQ_PING            = "in";
 
+    public static final String REQ_CRL = "crl";
 }

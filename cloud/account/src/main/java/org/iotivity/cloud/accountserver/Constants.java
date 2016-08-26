@@ -21,15 +21,24 @@
  */
 package org.iotivity.cloud.accountserver;
 
+import java.io.File;
+
 import org.iotivity.cloud.base.OICConstants;
 
 public class Constants extends OICConstants {
+
+    public static final String PROPERTIES_FILE_NAME  = "properties"
+            + File.separator + "config.properties";
 
     // Database name
 
     public static final String DB_NAME               = "ACCOUNTSERVER_DB";
 
     // Database table
+
+    public static final String CRL_TABLE             = "CRL_TABLE";
+
+    public static final String CERTIFICATE_TABLE     = "CERTIFICATE_TABLE";
 
     public static final String USER_TABLE            = "USER_TABLE";
 
@@ -46,6 +55,14 @@ public class Constants extends OICConstants {
     public static final String ACLTEMPLATE_TABLE     = "ACLTEMPLATE_TABLE";
 
     // Database table key
+
+    public static final String KEYFIELD_SN           = "serialNumber";
+
+    public static final String KEYFIELD_NA           = "notAfter";
+
+    public static final String KEYFIELD_NB           = "notBefore";
+
+    public static final String KEYFIELD_REVOKED      = "revoked";
 
     public static final String KEYFIELD_UUID         = "uuid";
 
@@ -109,6 +126,16 @@ public class Constants extends OICConstants {
 
     public static final String REQ_MEMBER            = "mid";
 
+    public static final String REQ_LAST_UPDATE       = "lu";
+
+    public static final String REQ_THIS_UPDATE       = "tu";
+
+    public static final String REQ_NEXT_UPDATE       = "nu";
+
+    public static final String REQ_CRL               = "crl";
+
+    public static final String REQ_SERIAL_NUMBER     = "rcsn";
+
     public static final String REQ_MEMBER_LIST       = "midlist";
 
     public static final String REQ_GTYPE_PRIVATE     = "Private";
@@ -152,6 +179,22 @@ public class Constants extends OICConstants {
     public static final String RESP_INVITE           = "invite";
 
     public static final String RESP_INVITED          = "invited";
+
+    public static final String CSR_ENCODING          = "csr.encoding";
+
+    public static final String CSR_DATA              = "csr.data";
+
+    public static final String CERT_ENCODING         = "cert.encoding";
+
+    public static final String CERT_DATA             = "cert.data";
+
+    public static final String CERTCHAIN_ENCODING    = "certchain.encoding";
+
+    public static final String CERTCHAIN_DATA        = "certchain.data";
+
+    public static final String CRL_ENCODING          = "crl.encoding";
+
+    public static final String CRL_DATA              = "crl.data";
 
     // static token type
 

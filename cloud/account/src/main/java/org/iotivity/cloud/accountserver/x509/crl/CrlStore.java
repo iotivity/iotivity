@@ -21,46 +21,36 @@
  */
 package org.iotivity.cloud.accountserver.x509.crl;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
+import org.iotivity.cloud.util.Log;
+
+import java.io.*;
+import java.text.MessageFormat;
+import java.util.Date;
 
 public final class CrlStore {
 
     private CrlStore() {
-        throw new AssertionError(); // to get rid of security issue, connected
-                                    // with Java Reflection API
+        throw new AssertionError();
     }
 
-    private static final String CRL_FILE_NAME = "crl";
+    private static final File CRL_FILE = new File(MessageFormat.format(CertificateStorage.PROPERTIES.getProperty("crlLocation"), File.separator));
 
-    public static void saveCrl(byte[] crl) {
-
-        FileOutputStream out = null;
+    public static void save(byte[] crl) {
         try {
-            out = new FileOutputStream(CRL_FILE_NAME);
+            FileOutputStream out = new FileOutputStream(CRL_FILE);
             out.write(crl);
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            if (out != null)
-                out.close();
+            out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(e.getMessage());
         }
     }
 
-    public static byte[] loadCrl() {
-
-        InputStream f = null;
+    public static byte[] load() {
         try {
-            f = new FileInputStream(CRL_FILE_NAME);
+            InputStream f = new FileInputStream(CRL_FILE);
             int size = f.available();
             byte data[] = new byte[size];
-
             if (f.read(data) != data.length) {
                 System.err.println("couldn't read crl");
             }
@@ -68,16 +58,21 @@ public final class CrlStore {
             return data;
 
         } catch (java.io.IOException e) {
-            e.printStackTrace();
+            Log.e(e.getMessage());
         }
-
-        try {
-            if (f != null)
-                f.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         return null;
+    }
+
+    public static boolean checkLastUpdate(Date lastUpdate) {
+        boolean result = false;
+        try {
+            if (CRL_FILE.isFile()) {
+                Date current = new Date(CRL_FILE.lastModified());
+                result = current.after(lastUpdate);
+            }
+        } catch (Exception e) {
+            Log.e(e.getMessage());
+        }
+        return result;
     }
 }

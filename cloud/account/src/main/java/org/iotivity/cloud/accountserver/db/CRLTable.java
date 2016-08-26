@@ -19,29 +19,23 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-package org.iotivity.cloud.accountserver.x509.crl;
+package org.iotivity.cloud.accountserver.db;
 
-import java.math.BigInteger;
 import java.util.Date;
 
-public class CrlInfo {
+public class CRLTable {
 
-    private BigInteger serialNumber;
-    private Date       revocationDate;
+    private Date thisUpdate;
 
-    public void setSerialNumber(BigInteger serialNumber) {
-        this.serialNumber = serialNumber;
+    public CRLTable(Date thisUpdate) {
+        this.thisUpdate = thisUpdate;
     }
 
-    public BigInteger getSerialNumber() {
-        return serialNumber;
+    public Date getThisUpdate() {
+        return thisUpdate;
     }
 
-    public void setRevocationDate(Date date) {
-        this.revocationDate = date;
-    }
-
-    public Date getRevocationDate() {
-        return new Date(revocationDate.getTime());
+    public void setThisUpdate(Date thisUpdate) {
+        this.thisUpdate = thisUpdate;
     }
 }

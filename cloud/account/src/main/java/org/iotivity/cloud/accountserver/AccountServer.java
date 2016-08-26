@@ -29,7 +29,8 @@ import org.iotivity.cloud.accountserver.resources.account.session.SessionResourc
 import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.TokenRefreshResource;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
 import org.iotivity.cloud.accountserver.resources.acl.invite.InviteResource;
-import org.iotivity.cloud.accountserver.resources.certificate.CertificateResource;
+import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateResource;
+import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlResource;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.util.Log;
@@ -63,10 +64,12 @@ public class AccountServer {
 
         serverSystem.addResource(new CertificateResource());
 
+        serverSystem.addResource(new CrlResource());
+
         serverSystem.addResource(new InviteResource());
 
-        serverSystem.addServer(new CoapServer(new InetSocketAddress(Integer
-                .parseInt(args[0]))));
+        serverSystem.addServer(new CoapServer(
+                new InetSocketAddress(Integer.parseInt(args[0]))));
 
         boolean tlsMode = Integer.parseInt(args[1]) == 1;
 
