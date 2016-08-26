@@ -37,11 +37,11 @@
 
 #include <stdarg.h>
 
-#ifdef __TC_PLATFORM_LINUX__
+#ifdef __LINUX__
 #include <unistd.h>
 #endif
 
-#ifdef __TC_PLATFORM_TIZEN__
+#ifdef __TIZEN__
 #include <unistd.h>
 #include <glib.h>
 #include <pthread.h>
@@ -53,7 +53,7 @@
 #include "casimulator.h"
 #include "cautilinterface.h"
 
-#ifdef __TC_PLATFORM_ARDUINO__
+#ifdef ARDUINO
 #include "Arduino.h"
 #ifdef ARDUINOWIFI
 #include "WiFi.h"
@@ -62,7 +62,7 @@
 #endif
 #endif
 
-#ifdef __TC_PLATFORM_TIZEN__
+#ifdef __TIZEN__
 static GMainLoop *g_mainloop = NULL;
 pthread_t thread;
 #endif
@@ -74,7 +74,7 @@ typedef enum
 
 typedef enum
 {
-    MESSAGE_RESPONSE = 0, MESSAGE_REQUEST
+    MESSAGE_RESPONSE = 0
 } MessageCommandType;
 
 typedef struct
@@ -103,8 +103,7 @@ int g_client = 1;
 
 void output(const char *format, ...)
 {
-//#ifdef __TC_PLATFORM_LINUX__
-#if defined (__TC_PLATFORM_LINUX__) || defined (__TC_PLATFORM_ANDROID_NATIVE__) || defined (__TC_PLATFORM_TIZEN__)
+#if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__)
     va_list arg;
 
     va_start (arg, format);
@@ -114,13 +113,13 @@ void output(const char *format, ...)
     va_end (arg);
 #endif
 
-#ifdef __TC_PLATFORM_ARDUINO__
+#ifdef ARDUINO
     Serial.print(format);
 #endif
 
 }
 
-#ifdef __TC_PLATFORM_ARDUINO__
+#ifdef ARDUINO
 char* getData()
 {
     char readInput[MAX_BUF_LEN+1];
@@ -159,26 +158,26 @@ char* getData()
 
 void customWait(int seconds)
 {
-#ifdef __TC_PLATFORM_LINUX__
+#ifdef __LINUX__
     sleep(seconds);
 #endif
 
-#ifdef __TC_PLATFORM_ARDUINO__
+#ifdef ARDUINO
     delay(seconds);
 #endif
 }
 
 void clearDisplay()
 {
-#ifdef __TC_PLATFORM_LINUX__
+#ifdef __LINUX__
     system("clear");
 #endif
 
-#ifdef __TC_PLATFORM_ARDUINO__
+#ifdef ARDUINO
 #endif
 }
 
-#ifdef __TC_PLATFORM_TIZEN__
+#ifdef __TIZEN__
 void GMainLoopThread()
 {
     g_main_loop_run(g_mainloop);
@@ -283,22 +282,28 @@ int registerDtlsHandler()
 
 #endif
 
-int selectNetwork()
+int selectNetwork(int argc, char *argv[])
 {
     int number;
     int ret = 0;
 
-    output("\n=============================================\n");
+    if (argc < 2)
+    {
+        output("\n=============================================\n");
 
-    output("\tSelect Network\n");
-    output("IP     : 0\n");
-    output("GATT   : 1\n");
-    output("RFCOMM : 2\n");
-    output("TCP    : 4\n");
-    output("Select : ");
+        output("\tSelect Network\n");
+        output("IP     : 0\n");
+        output("GATT   : 1\n");
+        output("RFCOMM : 2\n");
+        output("TCP    : 4\n");
+        output("Select : ");
 
-    scanf("%d", &number);
-//    number = 0;
+        scanf("%d", &number);
+    }
+    else
+    {
+        number = argv[1][0] - '0';
+    }
 
     if (number >= 0 && number <= 4)
     {
@@ -321,70 +326,8 @@ int selectNetwork()
     }
     else
     {
-        output("Invalid selection\n");
+        output("Invalid network number\n");
         ret = 0;
-    }
-
-    output("\n=============================================\n");
-
-    return ret;
-}
-
-int selectAndStartServerOrClient()
-{
-    output("\n=============================================\n");
-
-    output("\tSelect Server/Client\n");
-    output("Server\t\t: 0\n");
-    output("Client\t\t: 1\n");
-
-    int ret = 0;
-    CAResult_t result;
-
-#if defined (__TC_PLATFORM_LINUX__) || defined (__TC_PLATFORM_ANDROID_NATIVE__) || defined (__TC_PLATFORM_TIZEN__)
-    output("Select\t\t: ");
-    scanf("%d", &g_mode);
-//    g_mode = 0;
-#endif
-
-#ifdef __TC_PLATFORM_ARDUINO__
-
-    while(1)
-    {
-        output("Select\t\t: \n");
-        if (Serial.available() > 0)
-        {
-            char* buffer = getData();
-
-            if (buffer[0] == '0' || buffer[0] == '1')
-            {
-                g_mode = atoi(buffer);
-                break;
-            }
-            else
-            {
-                Serial.println("Select Server/Client (0/1)");
-            }
-        }
-
-        delay(500);
-    }
-
-#endif
-
-    if (g_mode < 0 || g_mode > 1)
-    {
-        output("Invalid Selection\n");
-    }
-    else if (g_mode == g_server)
-    {
-        output("Server is starting ...\n");
-        ret = startServer();
-    }
-    else if (g_mode == g_client)
-    {
-        output("Client is starting ...\n");
-        ret = startClient();
     }
 
     output("\n=============================================\n");
@@ -436,54 +379,6 @@ int handleMessage()
     return 1;
 }
 
-int returnRequest(const CAEndpoint_t* endPoint, char* resourceUri, char* payload, int payloadSize,
-        CAMessageType_t type, CAMethod_t method, CAToken_t token, uint8_t tokenLength,
-        CAHeaderOption_t *options, uint8_t numOptions)
-{
-    output("[returnRequest] in\n");
-
-    CAInfo_t requestData =
-    { 0 };
-    requestData.token = token;
-    requestData.tokenLength = tokenLength;
-    requestData.payload = payload;
-    if (payload != NULL)
-    {
-        requestData.payloadSize = payloadSize;
-    }
-    else
-    {
-        requestData.payloadSize = 0;
-    }
-
-    requestData.messageId = 0;
-    requestData.type = type;
-    requestData.resourceUri = (CAURI_t) resourceUri;
-    requestData.options = options;
-    requestData.numOptions = numOptions;
-
-    CARequestInfo_t requestInfo =
-    { 0 };
-    requestInfo.method = method;
-    requestInfo.info = requestData;
-    requestInfo.isMulticast = false;
-
-    CAResult_t res = CASendRequest(endPoint, &requestInfo);
-    if (res != CA_STATUS_OK)
-    {
-        output("send request error\n");
-        return 0;
-    }
-    else
-    {
-        output("send request success\n");
-    }
-
-    output("[returnRequest] out\n");
-
-    return 1;
-}
-
 int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payload, int payloadSize,
         CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId, CAToken_t token,
         uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
@@ -511,6 +406,7 @@ int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payloa
     responseData.tokenLength = tokenLength;
     responseData.options = options;
     responseData.numOptions = numOptions;
+    responseData.dataType = CA_RESPONSE_DATA;
 
     CAResponseInfo_t responseInfo =
     { 0 };
@@ -602,15 +498,6 @@ void returnMessage(const CAEndpoint_t* endPoint, TestConfiguration* testConfig)
             {
                 returnResponse(endPoint, testConfig->resourceUri, testConfig->payload,
                         testConfig->payloadSize, CA_MSG_NONCONFIRM, CA_VALID, testConfig->messageId,
-                        testConfig->token, testConfig->tokenLength, NULL, 0);
-                customWait(testConfig->interval);
-            }
-            break;
-        case MESSAGE_REQUEST:
-            for (index = 0; index < testConfig->numberOfTimes; index++)
-            {
-                returnRequest(endPoint, testConfig->resourceUri, testConfig->payload,
-                        testConfig->payloadSize, CA_MSG_NONCONFIRM, testConfig->caMethod,
                         testConfig->token, testConfig->tokenLength, NULL, 0);
                 customWait(testConfig->interval);
             }
@@ -816,7 +703,8 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
 void responseHandler(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
-    output("responseHandler in\n");
+    output("Something Wrong!!! Response Handler shouldn't be called for CA Simulator\n");
+    output("Check whether message comes from CA testcases or somewhere else\n");
 
     if (!endPoint)
     {
@@ -826,111 +714,11 @@ void responseHandler(const CAEndpoint_t* endPoint, const CAResponseInfo_t* respo
 
     if (!responseInfo)
     {
-        output("responseInfo is NULL\n");
+        output("requestInfo is NULL\n");
         return;
     }
 
     output("IP %s, Port %d\n", endPoint->addr, endPoint->port);
-    output("MessageId: %d\n", responseInfo->info.messageId);
-
-    if (responseInfo->info.options)
-    {
-        output("Header Option Found\n");
-
-        uint32_t len = responseInfo->info.numOptions;
-        uint32_t i;
-        for (i = 0; i < len; i++)
-        {
-            output("Option ID: %d\n", responseInfo->info.options[i].optionID);
-            output("Option Data[%d]: %s\n", responseInfo->info.options[i].optionLength,
-                    responseInfo->info.options[i].optionData);
-        }
-    }
-    else
-    {
-        output("No Header Option Found\n");
-    }
-
-    if (responseInfo->info.type == CA_MSG_RESET)
-    {
-        char str[12];
-
-        output("Message Type: CA_MSG_RESET\n");
-
-        sprintf(str, "%d", responseInfo->info.messageId);
-
-        output("calling returnRequest ...\n");
-
-        returnRequest(endPoint, SIM_REQ_ACK, str, strlen(str), CA_MSG_NONCONFIRM, CA_GET,
-                responseInfo->info.token, responseInfo->info.tokenLength,
-                responseInfo->info.options, responseInfo->info.numOptions);
-
-        output("returnRequest called\n");
-
-        return;
-    }
-
-    char *payload;
-
-    if (responseInfo->info.payload)
-    {
-        payload = getString(responseInfo->info.payload, responseInfo->info.payloadSize);
-        output("Payload: %s\n", payload);
-    }
-    else
-    {
-        output("Payload is NULL\n");
-    }
-
-    if (!responseInfo->info.resourceUri)
-    {
-        output("ResourceUri is NULL\n");
-        return;
-    }
-
-    output("ResourceUri: %s\n", responseInfo->info.resourceUri);
-
-    if (strstr(responseInfo->info.resourceUri, SIM_RES_ACK) != NULL)
-    {
-        CAMessageType_t messageType;
-
-        if (responseInfo->info.type == CA_MSG_NONCONFIRM)
-        {
-            output("Message Type: CA_MSG_NONCONFIRM\n");
-            messageType = CA_MSG_NONCONFIRM;
-        }
-        else if (responseInfo->info.type == CA_MSG_CONFIRM)
-        {
-            output("Message Type: CA_MSG_CONFIRM\n");
-            messageType = CA_MSG_ACKNOWLEDGE;
-
-            if (g_firstMessage == true)
-            {
-                output("Ignoring first time\n");
-                g_firstMessage = false;
-                return;
-            }
-
-            g_firstMessage = true;
-        }
-        else
-        {
-            output("Message Type: Unknown\n");
-        }
-
-        output("calling returnRequest ...\n");
-
-        returnRequest(endPoint, responseInfo->info.resourceUri, responseInfo->info.payload,
-                responseInfo->info.payloadSize, messageType, CA_GET, responseInfo->info.token,
-                responseInfo->info.tokenLength, responseInfo->info.options,
-                responseInfo->info.numOptions);
-
-        output("returnRequest called\n");
-    }
-    else
-    {
-        output("Unknown ResourceUri Type\n");
-    }
 }
 
 void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
@@ -1024,7 +812,7 @@ int registerMessageHandler()
     return 1;
 }
 
-#ifdef __TC_PLATFORM_ARDUINO__
+#ifdef ARDUINO
 
 void setup()
 {
@@ -1099,13 +887,7 @@ void setup()
         Serial.println("Network Selection Successful");
     }
 
-//    result = CAStartListeningServer();
-//    if (result == CA_STATUS_OK)
-//    {
-//        Serial.println("Listening Server Started");
-//    }
-
-    selectAndStartServerOrClient();
+    startServer();
 
     registerMessageHandler();
     Serial.println("Callbacks registered");
@@ -1166,8 +948,8 @@ void loop()
 
 #endif
 
-#if defined (__TC_PLATFORM_LINUX__) || defined (__TC_PLATFORM_ANDROID_NATIVE__) || defined (__TC_PLATFORM_TIZEN__)
-int main()
+#if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__)
+int main(int argc, char *argv[])
 {
     CAResult_t result;
     CAEndpoint_t *tempInfo = NULL;
@@ -1177,7 +959,7 @@ int main()
 
     output("[CASimulator] IN\n");
 
-#ifdef __TC_PLATFORM_TIZEN__
+#ifdef __TIZEN__
     g_mainloop = g_main_loop_new(NULL, FALSE);
     if(!g_mainloop)
     {
@@ -1206,12 +988,12 @@ int main()
     }
 #endif
 
-    if(!selectNetwork())
+    if(!selectNetwork(argc, argv))
     {
         return -1;
     }
 
-    if(!selectAndStartServerOrClient())
+    if(!startServer())
     {
         return -1;
     }
@@ -1244,7 +1026,7 @@ int main()
 
     output("[CASimulator] out\n");
 
-#ifdef __TC_PLATFORM_TIZEN__
+#ifdef __TIZEN__
     g_main_loop_quit(g_mainloop);
 #endif
 

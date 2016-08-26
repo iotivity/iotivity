@@ -1219,6 +1219,7 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
     }
 
     requestData.type = type;
+    requestData.dataType = CA_REQUEST_DATA;
     getOptionData(&requestData);
 
     CARequestInfo_t requestInfo =
@@ -1305,6 +1306,7 @@ bool CAHelper::sendRequestToAll(char* uri, char* hidden_payload, CAMethod_t meth
     requestData.token = m_token;
     requestData.tokenLength = CA_MAX_TOKEN_LEN;
     requestData.resourceUri = (CAURI_t) resourceURI;
+    requestData.dataType = CA_REQUEST_DATA;
 
     if (hidden_payload == NULL)
     {
@@ -1480,6 +1482,7 @@ bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t 
     responseData.type = type;
     responseData.resourceUri = (CAURI_t) resourceURI;
     responseData.payload = NULL;
+    responseData.dataType = CA_RESPONSE_DATA;
 
     char payload[MAX_BUF_LEN] =
     { 0 };
