@@ -587,6 +587,7 @@ test(SendRequestWithNullPayload_P)
  * @see  void CATerminate()
  * @objective Test unicast message retransmission functionality using message type CA_MSG_CONFIRM
  * @target CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo)
+ * @test_data Confirm type message
  * @pre_condition  1. [Server] Initialize CA by CAInitialize
  *                 2. [Server] Register the handlers by CARegisterHandler
  *                 3. [Server] Select network
