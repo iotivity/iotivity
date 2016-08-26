@@ -53,12 +53,15 @@ namespace OC
             m_requestHandlerFlag{0},
             m_messageID{0},
             m_representation{OCRepresentation()},
-            m_observationInfo{ObserveAction::ObserveRegister, 0, OCConnectivityType::CT_DEFAULT,
-                              "", 0},
             m_headerOptions{HeaderOptions()},
             m_requestHandle{nullptr},
             m_resourceHandle{nullptr}
         {
+            m_observationInfo.action = ObserveAction::ObserveRegister;
+            m_observationInfo.obsId = 0;
+            m_observationInfo.connectivityType = OCConnectivityType::CT_DEFAULT;
+            m_observationInfo.address = "";
+            m_observationInfo.port = 0;
         }
 
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
