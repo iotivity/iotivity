@@ -155,5 +155,10 @@ namespace OIC
         {
             m_mediaContents = mediaContents;
         }
+
+        void NSMessage::setTopic(const std::string &topic)
+        {
+            m_topic = topic;
+        }
     }
 }

@@ -187,6 +187,13 @@ namespace OIC
                      */
                 std::string getTopic() const;
 
+                /**
+                     * This method is for setting Topic for the Notification service Message.
+                     *
+                     * @return Topic as string.
+                     */
+                void setTopic(const std::string &topic);
+
             private:
                 uint64_t m_messageId;
                 std::string m_providerId;
