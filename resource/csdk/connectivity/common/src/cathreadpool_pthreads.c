@@ -27,6 +27,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "iotivity_config.h"
 #include <errno.h>
 #if defined HAVE_PTHREAD_H
 #include <pthread.h>

@@ -20,6 +20,7 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#include "iotivity_config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

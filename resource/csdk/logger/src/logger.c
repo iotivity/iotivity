@@ -30,6 +30,8 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#include "iotivity_config.h"
+
 // Pull in _POSIX_TIMERS feature test macro to check for
 // clock_gettime() support.
 #ifdef HAVE_UNISTD_H
@@ -52,7 +54,6 @@
 #include "logger.h"
 #include "string.h"
 #include "logger_types.h"
-#include "platform_features.h"
 
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;

@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -41,7 +42,6 @@
 #include "ocpayload.h"
 #include "ocserver.h"
 #include "common.h"
-#include "platform_features.h"
 
 //string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
 // 9 + 9 + 1 = 19

@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +38,6 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "common.h"
-#include "platform_features.h"
 
 #ifdef ROUTING_GATEWAY
 /**

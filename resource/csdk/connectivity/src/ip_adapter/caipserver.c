@@ -25,6 +25,7 @@
 #define _GNU_SOURCE // for in6_pktinfo
 #endif
 
+#include "iotivity_config.h"
 #include <sys/types.h>
 #if !defined(_WIN32)
 #include <sys/socket.h>
@@ -65,7 +66,6 @@
 #include "camutex.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "platform_features.h"
 
 #define USE_IP_MREQN
 #if defined(_WIN32)

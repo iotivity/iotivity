@@ -41,6 +41,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +56,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#if HAVE_SYS_TIMEB_H
+#ifdef HAVE_SYS_TIMEB_H
 #include <sys/timeb.h>
 #endif
 #ifdef HAVE_TIME_H

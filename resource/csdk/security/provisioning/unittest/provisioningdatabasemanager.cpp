@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  * *****************************************************************/
+#include "iotivity_config.h"
 #include "gtest/gtest.h"
 #include "provisioningdatabasemanager.h"
 

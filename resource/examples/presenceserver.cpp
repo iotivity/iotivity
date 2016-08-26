@@ -23,9 +23,12 @@
 /// (properties and methods) and host this resource on the server.
 ///
 
+#include "iotivity_config.h"
 #include <functional>
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <array>
 #include <mutex>
 #include <condition_variable>
@@ -36,7 +39,6 @@
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
-#include "platform_features.h"
 
 using namespace OC;
 using namespace std;

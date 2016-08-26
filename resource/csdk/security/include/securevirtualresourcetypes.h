@@ -41,13 +41,13 @@
 #ifndef OC_SECURITY_RESOURCE_TYPES_H
 #define OC_SECURITY_RESOURCE_TYPES_H
 
+#include "iotivity_config.h"
+
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
 #if defined(__WITH_X509__) || defined(__WITH_TLS__)
 #include "byte_array.h"
 #endif /* __WITH_X509__  or __WITH_TLS__*/
-
-#include "platform_features.h"
 
 #ifdef __cplusplus
 extern "C" {
