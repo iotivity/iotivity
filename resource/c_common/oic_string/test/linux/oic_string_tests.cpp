@@ -191,12 +191,15 @@ TEST(StringTests, StrcpyZeroSource)
 // tests a copy where the destination is of length 0
 TEST(StringTests, StrcpyZeroDestination)
 {
-    char target[0];
+    char target[1] = { (char)0xde };
     char source[] = "123456789";
+    char beforeValue = target[0];
 
-    char *result = OICStrcpy(target, sizeof(target), source);
+    char *result = OICStrcpy(target, 0, source);
 
+    char afterValue = target[0];
     EXPECT_EQ(target, result);
+    EXPECT_EQ(beforeValue, afterValue);
 }
 
 // tests a copy where the destination is of length 0
@@ -398,11 +401,15 @@ TEST(StringTests, StrcatZeroSource)
 // Tests a cat where the Destination is zero length
 TEST(StringTests, StrcatZeroDestination)
 {
-    char target[0];
+    char target[1] = { (char)0xde };
     char source[] = "12345";
+    char beforeValue = target[0];
 
-    char *result = OICStrcat(target, sizeof(target), source);
+    char *result = OICStrcat(target, 0, source);
+
+    char afterValue = target[0];
     EXPECT_EQ(target, result);
+    EXPECT_EQ(beforeValue, afterValue);
 }
 
 // Tests a cat where the Destination is zero length

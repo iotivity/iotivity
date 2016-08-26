@@ -84,7 +84,6 @@ if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-    sptest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
     sptest_env.AppendUnique(LIBS = ['ws2_32',
                                     'advapi32',
                                     'iphlpapi'])

@@ -547,12 +547,15 @@ namespace OCRepresentationTest
         rep[AttrName] = nullptr;
         EXPECT_TRUE(rep.isNULL(AttrName));
 
+// @todo: Re-enable this part of the unit test. MSVC can't assign to nullptr_t.
+#ifndef _MSC_VER
         std::nullptr_t repout = rep[AttrName];
         std::nullptr_t repout2;
         repout2 = rep[AttrName];
 
         EXPECT_EQ(nullptr, repout);
         EXPECT_EQ(nullptr, repout2);
+#endif
 
         double badout;
         EXPECT_FALSE(rep.getValue<double>(AttrName, badout));

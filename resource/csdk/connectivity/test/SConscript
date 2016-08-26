@@ -59,7 +59,6 @@ if catest_env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-	catest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
 	catest_env.AppendUnique(LIBS = ['ws2_32',
                                         'advapi32',
                                         'iphlpapi'])

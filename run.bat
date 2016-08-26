@@ -90,6 +90,11 @@ if "!CURRENT_ARG!"=="server" (
   %DEBUG% %BUILD_DIR%\resource\csdk\stack\test\cbortests.exe
   %DEBUG% %BUILD_DIR%\resource\csdk\security\unittest\unittest.exe
   %DEBUG% %BUILD_DIR%\resource\csdk\security\provisioning\unittest\unittest.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\ocrandom\test\randomtests.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\oic_malloc\test\malloctests.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\oic_string\test\stringtests.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\oic_time\test\timetests.exe
+  %DEBUG% %BUILD_DIR%\resource\unittests\unittests.exe
 ) else if "!CURRENT_ARG!"=="build" (
   echo Starting IoTivity build with these options:
   echo   TARGET_OS=%TARGET_OS%

@@ -39,6 +39,9 @@ OCCreateOCStringLL
 OCCreateResource
 OCDeleteResource
 OCDiscoverDirectPairingDevices
+OCDiscoveryPayloadCreate
+OCDiscoveryPayloadDestroy
+OCDiscoveryPayloadGetResourceCount
 OCDoDirectPairing
 OCDoResource
 OCDoResponse
@@ -61,6 +64,8 @@ OCInit1
 OCNotifyAllObservers
 OCNotifyListOfObservers
 OCPayloadDestroy
+OCPlatformPayloadCreate
+OCPresencePayloadCreate
 OCProcess
 OCRDDelete
 OCRDDeleteWithDeviceId

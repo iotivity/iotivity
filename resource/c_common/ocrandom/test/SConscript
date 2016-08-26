@@ -59,7 +59,7 @@ Alias("test", [randomtests])
 
 randomtest_env.AppendTarget('test')
 if randomtest_env.get('TEST') == '1':
-	if target_os in ['linux']:
+	if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(randomtest_env,
                          'resource_csdk_random_test.memcheck',

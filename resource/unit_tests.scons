@@ -29,7 +29,7 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 build_dir = env.get('BUILD_DIR')
 
-if target_os in ['linux']:
+if target_os in ['linux', 'windows']:
 	# Verify that 'google unit test' library is installed.  If not,
 	# get it and install it
 	SConscript('#extlibs/gtest/SConscript')
@@ -59,24 +59,9 @@ if target_os in ['linux']:
 	# Build Provisioning API unit test
 	if env.get('SECURED') == '1':
 		SConscript('csdk/security/provisioning/unittest/SConscript')
-		SConscript('provisioning/unittests/SConscript')
-
-elif target_os == 'windows' and env.get('TEST') == '1':
-	# Verify that 'google unit test' library is installed.  If not,
-	# get it and install it
-	SConscript('#extlibs/gtest/SConscript')
-
-	# Build C stack's unit tests.
-	SConscript('csdk/stack/test/SConscript')
-	SConscript('csdk/connectivity/test/SConscript')
-
-	# Build Security Resource Manager unit tests
-	if env.get('SECURED') == '1':
-		SConscript('csdk/security/unittest/SConscript')
-
-	# Build Provisioning API unit test
-	if env.get('SECURED') == '1':
-		SConscript('csdk/security/provisioning/unittest/SConscript')
+		# TODO: Enable provisioning and associated unit tests for Windows
+		if target_os != 'windows':
+			SConscript('provisioning/unittests/SConscript')
 
 elif target_os in ['darwin', 'msys_nt']:
 	# Verify that 'google unit test' library is installed.  If not,

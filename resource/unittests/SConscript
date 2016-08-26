@@ -46,6 +46,10 @@ unittests_env.PrependUnique(CPPPATH = [
 		'#extlibs/hippomocks-master/HippoMocksTest'
 		])
 
+if target_os in ['windows']:
+	unittests_env.AppendUnique(LIBS = ['ws2_32'])
+	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
+
 unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
 unittests_env.PrependUnique(LIBS = [
 		'oc',
@@ -81,6 +85,14 @@ unittests_src = [
 		'OCHeaderOptionTest.cpp'
 	]
 
+# TODO: Fix errors in the following Windows tests.
+if target_os in ['windows']:
+	unittests_src.remove('OCPlatformTest.cpp')
+	unittests_src.remove('OCRepresentationEncodingTest.cpp')
+	if '12.0' == unittests_env['MSVC_VERSION']:
+		unittests_src.remove('OCRepresentationTest.cpp')
+		unittests_src.remove('OCResourceTest.cpp')
+
 if (('SUB' in with_mq) or ('PUB' in with_mq) or ('BROKER' in with_mq)):
 	unittests_src = unittests_src + ['OCMQResourceTest.cpp']
 
@@ -93,7 +105,9 @@ Alias("unittests", [unittests])
 
 unittests_env.AppendTarget('unittests')
 if unittests_env.get('TEST') == '1':
-	if target_os in ['linux']:
+	if target_os in ['windows']:
+		unittests_env.AppendENVPath('PATH', unittests_env.get('BUILD_DIR'))
+	if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(unittests_env,
                          'resource_unittests_unittests.memcheck',

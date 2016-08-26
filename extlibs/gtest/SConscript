@@ -124,5 +124,7 @@ if target_os in targets_need_gtest:
 			gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
 			gtest_env.PrependUnique(LIBS = ['pthread'])
 	gtest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
+	if target_os in ['windows']:
+		gtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
 
 Return('gtest_env')
