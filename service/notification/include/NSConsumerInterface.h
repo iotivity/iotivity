@@ -35,17 +35,11 @@ extern "C"
 #include "NSCommon.h"
 
 /**
- * Invoked when the discovered provider is received
- * @param[in] provider  Provider who has the notification resource
- */
-typedef void (* NSProviderDiscoveredCallback)(NSProvider *);
-
-/**
  * Invoked when the provider state is changed
  * @param[in] provider  Provider which has the notification resource
  * @param[in] response  Response which has the provider state
  */
-typedef void (* NSProviderChangedCallback)(NSProvider *, NSResponse);
+typedef void (* NSProviderStateCallback)(NSProvider *, NSResponse);
 
 /**
  * Invoked when the notification message from provider is received
@@ -64,8 +58,7 @@ typedef void (* NSSyncInfoReceivedCallback)(NSSyncInfo *);
 
 typedef struct
 {
-    NSProviderDiscoveredCallback discoverCb;
-    NSProviderChangedCallback changedCb;
+    NSProviderStateCallback changedCb;
     NSMessageReceivedCallback messageCb;
     NSSyncInfoReceivedCallback syncInfoCb;
 

@@ -67,6 +67,7 @@ typedef enum eResult
  */
 typedef enum eResponse
 {
+    NS_DISCOVERED = 0,
     NS_ALLOW = 1,
     NS_DENY = 2,
     NS_TOPIC = 3,

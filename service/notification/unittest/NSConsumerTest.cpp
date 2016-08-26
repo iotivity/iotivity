@@ -51,6 +51,7 @@ namespace
         NS_SELECTION_PROVIDER = 1
     };
 
+    NSConsumerConfig cfg;
 }
 
 class TestWithMock: public testing::Test
@@ -84,11 +85,6 @@ public:
     NotificationConsumerTest() = default;
     ~NotificationConsumerTest() = default;
 
-    static void NSProviderDiscoveredCallbackEmpty(NSProvider *)
-    {
-        std::cout << __func__ << std::endl;
-    }
-
     static void NSNotificationReceivedCallbackEmpty(NSMessage *)
     {
         std::cout << __func__ << std::endl;
@@ -117,7 +113,7 @@ protected:
 
         if (g_isStartedStack == false)
         {
-            OC::PlatformConfig cfg
+            OC::PlatformConfig occfg
             {
                 OC::ServiceType::InProc,
                 OC::ModeType::Both,
@@ -125,7 +121,7 @@ protected:
                 0,
                 OC::QualityOfService::LowQos
             };
-            OC::OCPlatform::Configure(cfg);
+            OC::OCPlatform::Configure(occfg);
 
             try
             {
@@ -137,6 +133,10 @@ protected:
             }
 
             g_isStartedStack = true;
+
+            cfg.changedCb = NSProviderChangedCallback;
+            cfg.messageCb = NSNotificationReceivedCallbackEmpty;
+            cfg.syncInfoCb = NSSyncCallbackEmpty;
         }
 
     }
@@ -150,11 +150,6 @@ protected:
 
 TEST_F(NotificationConsumerTest, StartConsumerPositive)
 {
-    NSConsumerConfig cfg;
-    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.changedCb = NSProviderChangedCallback;
-    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
-    cfg.syncInfoCb = NSSyncCallbackEmpty;
     EXPECT_EQ(NS_OK, NSStartConsumer(cfg));
 }
 
@@ -165,18 +160,13 @@ TEST_F(NotificationConsumerTest, StopConsumerPositive)
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsumerFirst)
 {
-    mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty).Do(
-            [this](NSProvider *)
+    mocks.ExpectCallFunc(NSProviderChangedCallback).Do(
+            [this](NSProvider *, NSResponse)
             {
                 std::cout << "Call Discovered" << std::endl;
                 responseCon.notify_all();
             });
 
-    NSConsumerConfig cfg;
-    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.changedCb = NSProviderChangedCallback;
-    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
-    cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
 
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
@@ -198,19 +188,14 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
         responseCon.wait_for(lock, g_waitForResponse);
     }
 
-    mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty).Do(
-            [this](NSProvider * provider)
+    mocks.ExpectCallFunc(NSProviderChangedCallback).Do(
+            [this](NSProvider * provider, NSResponse)
             {
                 std::cout << "Call Discovered" << std::endl;
                 g_provider = provider;
                 responseCon.notify_all();
             });
 
-    NSConsumerConfig cfg;
-    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.changedCb = NSProviderChangedCallback;
-    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
-    cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
@@ -221,8 +206,8 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 {
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
-    mocks.ExpectCallFunc(NSProviderDiscoveredCallbackEmpty).Do(
-            [this](NSProvider * provider)
+    mocks.ExpectCallFunc(NSProviderChangedCallback).Do(
+            [this](NSProvider * provider, NSResponse)
             {
                 std::cout << "Call Discovered" << std::endl;
                 g_provider = provider;
@@ -281,11 +266,6 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider
 
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_PROVIDER);
 
-    NSConsumerConfig cfg;
-    cfg.discoverCb = NSProviderDiscoveredCallbackEmpty;
-    cfg.changedCb = NSProviderChangedCallback;
-    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
-    cfg.syncInfoCb = NSSyncCallbackEmpty;
     NSStartConsumer(cfg);
     {
         std::unique_lock< std::mutex > lock{ mutexForCondition };

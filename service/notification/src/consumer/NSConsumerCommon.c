@@ -105,46 +105,14 @@ bool NSIsStartedConsumer()
     return * NSGetBoneIsStartedConsumer();
 }
 
-NSProviderDiscoveredCallback * NSGetBoneDiscoverCb()
+NSProviderStateCallback * NSGetProviderChangedCb()
 {
-    static NSProviderDiscoveredCallback g_discoverCb = NULL;
-
-    return & g_discoverCb;
-}
-
-void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb)
-{
-    * NSGetBoneDiscoverCb() = cb;
-}
-
-NSProviderDiscoveredCallback NSGetDiscoverCb()
-{
-    return * NSGetBoneDiscoverCb();
-}
-
-void * NSDiscoveredProviderFunc(void * provider)
-{
-    NSGetDiscoverCb()((NSProvider *) provider);
-
-    return NULL;
-}
-
-void NSDiscoveredProvider(NSProvider * provider)
-{
-    NS_VERIFY_NOT_NULL_V(provider);
-
-    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
-    NS_VERIFY_NOT_NULL_V(thread);
-}
-
-NSProviderChangedCallback * NSGetProviderChangedCb()
-{
-    static NSProviderChangedCallback g_changedCb = NULL;
+    static NSProviderStateCallback g_changedCb = NULL;
 
     return & g_changedCb;
 }
 
-void NSSetProviderChangedCb(NSProviderChangedCallback cb)
+void NSSetProviderChangedCb(NSProviderStateCallback cb)
 {
     *(NSGetProviderChangedCb()) = cb;
 }
@@ -398,7 +366,7 @@ void NSRemoveTopicLL(NSTopicLL * topicHead)
 
     while (iter)
     {
-        following = (NSTopicLL *) iter->next;
+        following = iter->next;
 
         NSRemoveTopicNode(iter);
 

@@ -36,12 +36,10 @@ NSResult NSStartConsumer(NSConsumerConfig config)
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == false ? (void *) 1 : NULL, NS_OK);
 
-    NS_VERIFY_NOT_NULL(config.discoverCb, NS_ERROR);
     NS_VERIFY_NOT_NULL(config.messageCb, NS_ERROR);
     NS_VERIFY_NOT_NULL(config.syncInfoCb, NS_ERROR);
     NS_VERIFY_NOT_NULL(config.changedCb, NS_ERROR);
 
-    NSSetDiscoverProviderCb(config.discoverCb);
     NSSetMessagePostedCb(config.messageCb);
     NSSetNotificationSyncCb(config.syncInfoCb);
     NSSetProviderChangedCb(config.changedCb);
@@ -59,7 +57,6 @@ NSResult NSStopConsumer()
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NSSetDiscoverProviderCb(NULL);
     NSSetMessagePostedCb(NULL);
     NSSetNotificationSyncCb(NULL);
     NSSetProviderChangedCb(NULL);

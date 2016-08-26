@@ -222,7 +222,11 @@ void NSCancelAllSubscription()
     while ((obj = NSPopProviderCacheList(ProviderCache)))
     {
         NS_LOG(DEBUG, "build NSTask");
-        NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) obj->data);
+        NSProvider * prov = NSCopyProvider((NSProvider_internal *) obj->data);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(prov,
+                    NSRemoveProvider_internal((NSProvider_internal *) obj->data));
+
+        NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, prov);
         NS_VERIFY_NOT_NULL_V(task);
 
         NSConsumerPushEvent(task);
@@ -284,7 +288,7 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
         NSProvider * providerForCb = NSCopyProvider(provider);
-        NSDiscoveredProvider(providerForCb);
+        NSProviderChanged(providerForCb, NS_DISCOVERED);
     }
     else
     {

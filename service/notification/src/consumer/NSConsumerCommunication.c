@@ -29,8 +29,6 @@
 
 #define NS_SYNC_URI "/notification/sync"
 
-static unsigned long NS_MESSAGE_ACCEPTANCE = 1;
-
 NSMessage * NSCreateMessage_internal(uint64_t msgId, const char * providerId);
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);
 
@@ -191,7 +189,7 @@ OCStackApplicationResult NSConsumerMessageListener(
 
     NSTaskType type = TASK_CONSUMER_RECV_MESSAGE;
 
-    if (newNoti->messageId == NS_MESSAGE_ACCEPTANCE || newNoti->messageId == NS_DENY)
+    if (newNoti->messageId == NS_ALLOW || newNoti->messageId == NS_DENY)
     {
         NS_LOG(DEBUG, "Receive subscribe result");
         type = TASK_CONSUMER_RECV_PROVIDER_CHANGED;

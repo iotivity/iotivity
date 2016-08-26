@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include "pthread.h"
 
 #include "ocstack.h"
@@ -138,7 +139,6 @@ int main(void)
     }
 
     NSConsumerConfig cfg;
-    cfg.discoverCb = onDiscoverNotification;
     cfg.changedCb = onProviderChanged;
     cfg.messageCb = onNotificationPosted;
     cfg.syncInfoCb = onNotificationSync;

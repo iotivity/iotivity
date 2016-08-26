@@ -106,10 +106,7 @@ typedef struct
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 
-void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb);
-void NSDiscoveredProvider(NSProvider * provider);
-
-void NSSetProviderChangedCb(NSProviderChangedCallback cb);
+void NSSetProviderChangedCb(NSProviderStateCallback cb);
 void NSProviderChanged(NSProvider * provider, NSResponse response);
 
 void NSSetMessagePostedCb(NSMessageReceivedCallback  cb);
