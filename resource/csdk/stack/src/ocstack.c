@@ -4701,20 +4701,20 @@ CAResult_t OCSelectNetwork()
         };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 
-    for(int i = 0; i<numConnTypes; i++)
+    for(int i = 0; i < numConnTypes; i++)
     {
-        // Ignore CA_NOT_SUPPORTED error. The CA Layer may have not compiled in the interface.
-        if(caResult == CA_STATUS_OK || caResult == CA_NOT_SUPPORTED)
+        // If CA status is not initialized, CASelectNetwork() will not be called.
+        if (caResult != CA_STATUS_NOT_INITIALIZED)
         {
            caResult = CASelectNetwork(connTypes[i]);
-           if(caResult == CA_STATUS_OK)
+           if (caResult == CA_STATUS_OK)
            {
                retResult = CA_STATUS_OK;
            }
         }
     }
 
-    if(retResult != CA_STATUS_OK)
+    if (retResult != CA_STATUS_OK)
     {
         return caResult; // Returns error of appropriate transport that failed fatally.
     }
