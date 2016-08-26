@@ -35,7 +35,10 @@ namespace OIC
             NS_LOG(DEBUG, "onNSProviderDiscovered - IN");
             NSProvider *nsProvider = new NSProvider(provider);
             if (NSConsumerService::getInstance()->getConsumerConfig().m_discoverCb != NULL)
+            {
+                NS_LOG(DEBUG, "initiating the callback");
                 NSConsumerService::getInstance()->getConsumerConfig().m_discoverCb(nsProvider);
+            }
             delete nsProvider;
             NS_LOG(DEBUG, "onNSProviderDiscovered - OUT");
         }
@@ -52,13 +55,19 @@ namespace OIC
             {
                 NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
                 if (changeCallback != NULL)
+                {
+                    NS_LOG(DEBUG, "initiating the callback for Response : ALLOW");
                     changeCallback(nsProvider, (NSResponse) response);
+                }
             }
             else if (response == NS_DENY)
             {
                 NSConsumerService::getInstance()->getAcceptedProviders().remove(nsProvider);
                 if (changeCallback != NULL)
+                {
+                    NS_LOG(DEBUG, "initiating the callback for Response : NS_DENY");
                     changeCallback(nsProvider, (NSResponse) response);
+                }
                 delete nsProvider;
             }
             else if (response == NS_TOPIC)
@@ -67,8 +76,15 @@ namespace OIC
                                               nsProvider->getProviderId());
                 if (oldProvider != nullptr)
                 {
+                    NS_LOG(DEBUG, "Provider with same Id exists. updating the Topics data");
+                    nsProvider->setListener(oldProvider->getMessageReceivedCb(), oldProvider->getSyncInfoReceivedCb());
                     NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
                     NSConsumerService::getInstance()->getAcceptedProviders().push_back(nsProvider);
+                    if (changeCallback != NULL)
+                    {
+                        NS_LOG(DEBUG, "initiating the callback for Response : NS_TOPIC");
+                        changeCallback(nsProvider, (NSResponse) response);
+                    }
                     delete oldProvider;
                 }
             }
@@ -83,9 +99,11 @@ namespace OIC
             {
                 if (it->getProviderId() == nsMessage->getProviderId())
                 {
+                    NS_LOG(DEBUG, "Found Provider with given ID");
                     auto callback = it->getMessageReceivedCb();
                     if (callback != NULL)
                     {
+                        NS_LOG(DEBUG, "initiating the callback for messageReceived");
                         callback(nsMessage);
                     }
                     break;
@@ -103,9 +121,11 @@ namespace OIC
             {
                 if (it->getProviderId() == nsSyncInfo->getProviderId())
                 {
+                    NS_LOG(DEBUG, "Found Provider with given ID");
                     auto callback = it->getSyncInfoReceivedCb();
                     if (callback != NULL)
                     {
+                        NS_LOG(DEBUG, "initiating the callback for SyncInfoReceived");
                         callback(nsSyncInfo);
                     }
                     break;
@@ -184,8 +204,12 @@ namespace OIC
             for (auto it : getAcceptedProviders())
             {
                 if (it->getProviderId() == id)
+                {
+                    NS_LOG(DEBUG, "getProvider : Found Provider with given ID");
                     return it;
+                }
             }
+            NS_LOG(DEBUG, "getProvider : Not Found Provider with given ID");
             return NULL;
         }
 
@@ -206,7 +230,7 @@ namespace OIC
             return m_config;
         }
 
-        std::list<NSProvider *> NSConsumerService::getAcceptedProviders()
+        std::list<NSProvider *>& NSConsumerService::getAcceptedProviders()
         {
             return m_acceptedProviders;
         }

@@ -37,9 +37,12 @@ namespace OIC
         {
             NS_LOG(DEBUG, "onConsumerSubscribedCallback - IN");
             NSConsumer *nsConsumer = new NSConsumer(consumer);
-            if (NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb != NULL)
-                NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb(nsConsumer);
             NSProviderService::getInstance()->getAcceptedConsumers().push_back(nsConsumer);
+            if (NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb != NULL)
+            {
+                NS_LOG(DEBUG, "initiating the callback");
+                NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb(nsConsumer);
+            }
             NS_LOG(DEBUG, "onConsumerSubscribedCallback - OUT");
         }
 
@@ -48,7 +51,10 @@ namespace OIC
             NS_LOG(DEBUG, "onMessageSynchronizedCallback - IN");
             NSSyncInfo *nsSyncInfo = new NSSyncInfo(syncInfo);
             if (NSProviderService::getInstance()->getProviderConfig().m_syncInfoCb != NULL)
+            {
+                NS_LOG(DEBUG, "initiating the callback");
                 NSProviderService::getInstance()->getProviderConfig().m_syncInfoCb(nsSyncInfo);
+            }
             delete nsSyncInfo;
             NS_LOG(DEBUG, "onMessageSynchronizedCallback - OUT");
         }
@@ -64,6 +70,7 @@ namespace OIC
             nsMsg->ttl = msg->getTTL();
             nsMsg->title = OICStrdup(msg->getTitle().c_str());
             nsMsg->contentText = OICStrdup(msg->getContentText().c_str());
+            nsMsg->topic = OICStrdup(msg->getTopic().c_str());
 
             nsMsg->mediaContents = new ::NSMediaContents;
             if (msg->getMediaContents() != nullptr)
@@ -183,8 +190,12 @@ namespace OIC
             for (auto it : getAcceptedConsumers())
             {
                 if (it->getConsumerId() == id)
+                {
+                    NS_LOG(DEBUG, "getConsumer : Found Consumer with given ID");
                     return it;
+                }
             }
+            NS_LOG(DEBUG, "getConsumer : Not Found Consumer with given ID");
             return NULL;
         }
 
@@ -219,7 +230,7 @@ namespace OIC
             return m_config;
         }
 
-        std::list<NSConsumer *> NSProviderService::getAcceptedConsumers()
+        std::list<NSConsumer *>& NSProviderService::getAcceptedConsumers()
         {
             return m_acceptedConsumers;
         }
