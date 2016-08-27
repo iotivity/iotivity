@@ -209,6 +209,22 @@ OCStackResult JniOcSecureResource::provisionCredentials(JNIEnv* env, jint type, 
             resultCallback);
 }
 
+#if defined(__WITH_TLS__)
+OCStackResult JniOcSecureResource::provisionTrustCertChain(JNIEnv* env, jint type, jint credId,
+        jobject jListener)
+{
+    JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
+
+    ResultCallBack resultCallback = [resultListener](PMResultList_t *result, int hasError)
+    {
+        resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::PROVISIONTRUSTCERTCHAIN);
+    };
+
+    return m_sharedSecureResource->provisionTrustCertChain((OicSecCredType_t)type, credId,
+            resultCallback);
+}
+#endif
+
 OCStackResult JniOcSecureResource::provisionACL(JNIEnv* env, jobject _acl, jobject jListener)
 {
     OCStackResult ret;
@@ -524,7 +540,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
  * Method:    provisionCredentials1
  * Signature: (Lorg/iotivity/base/OcSecureResource/provisionCredentials;)V
  */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredentials1
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredentials1
 (JNIEnv *env, jobject thiz, jint type, jint keySize, jobject device2, jobject jListener)
 {
     LOGD("OcSecureResource_provisionCredentials");
@@ -561,6 +577,49 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredenti
         LOGE("%s", e.reason().c_str());
         ThrowOcException(e.code(), e.reason().c_str());
     }
+}
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    provisionTrustCertChain1
+ * Signature: (Lorg/iotivity/base/OcSecureResource/provisionTrustCertChain1;)V
+ */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionTrustCertChain1
+(JNIEnv *env, jobject thiz, jint type, jint credId, jobject jListener)
+{
+    LOGD("OcSecureResource_provisionTrustCertChain1");
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionTrustCertChainListener cannot be null");
+        return;
+    }
+
+    JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
+    if (!secureResource)
+    {
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = secureResource->provisionTrustCertChain(env, type, credId,
+                jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcSecureResource_provisionTrustCertChain1");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
+    return;
+#endif // __WITH_X509__ || __WITH_TLS__
 }
 
 /*

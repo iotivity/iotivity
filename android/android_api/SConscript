@@ -16,6 +16,11 @@ if env.get('WITH_CLOUD'):
 else:
 	ANDROID_CLOUD=0
 
+if env.get('WITH_TCP'):
+	ANDROID_TCP=1
+else:
+	ANDROID_TCP=0
+
 ANDROID_MQ = env.get('WITH_MQ')
 ANDROID_MQ_SUB = 0
 ANDROID_MQ_PUB = 0
@@ -83,11 +88,11 @@ def ensure_libs(target, source, env):
 
 # build android_api
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s --stacktrace' %(ANDROID_TRANSPORT_EDR, ANDROID_TRANSPORT_BLE, ANDROID_TRANSPORT_NFC, ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED, ANDROID_SECURED, ANDROID_CLOUD, ANDROID_RD_MODE, ANDROID_MQ_PUB, ANDROID_MQ_SUB, ANDROID_MQ_BROKER), emitter = ensure_libs)
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s --stacktrace' %(ANDROID_TRANSPORT_EDR, ANDROID_TRANSPORT_BLE, ANDROID_TRANSPORT_NFC, ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED, ANDROID_SECURED, ANDROID_CLOUD, ANDROID_RD_MODE, ANDROID_MQ_PUB, ANDROID_MQ_SUB, ANDROID_MQ_BROKER, ANDROID_TCP), emitter = ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildApi=jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
 
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/build.gradle -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s --stacktrace' %(ANDROID_TRANSPORT_EDR, ANDROID_TRANSPORT_BLE, ANDROID_TRANSPORT_NFC, ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED, ANDROID_SECURED, ANDROID_CLOUD, ANDROID_RD_MODE, ANDROID_MQ_PUB, ANDROID_MQ_SUB, ANDROID_MQ_BROKER))
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/build.gradle -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s --stacktrace' %(ANDROID_TRANSPORT_EDR, ANDROID_TRANSPORT_BLE, ANDROID_TRANSPORT_NFC, ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED, ANDROID_SECURED, ANDROID_CLOUD, ANDROID_RD_MODE, ANDROID_MQ_PUB, ANDROID_MQ_SUB, ANDROID_MQ_BROKER, ANDROID_TCP))
 cmdBuildExamples=jdk_env.Gradle(target="../examples/devicediscoveryclient/apk", source="../examples/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java")
 
 # android examples require android api to be built before being invoked

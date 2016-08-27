@@ -112,6 +112,11 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
             calledFunc = "provisionCredentialsListener";
         }
         break;
+        case ListenerFunc::PROVISIONTRUSTCERTCHAIN:
+        {
+            calledFunc = "provisionTrustCertChainListener";
+        }
+        break;
         case ListenerFunc::UNLINKDEVICES:
         {
             calledFunc = "unlinkDevicesListener";

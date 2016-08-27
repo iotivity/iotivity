@@ -112,4 +112,17 @@ public class OcProvisioning {
         return Arrays.asList(OcProvisioning.getDeviceStatusList1(timeout));
     }
     private static native OcSecureResource[] getDeviceStatusList1(int timeout) throws OcException;
+
+    /**
+     *  Method to save the Trust certificate chain to SVR.
+     *
+     *  @param byte[]            trustCertChain
+     *  @param EncodingType                          encodingType
+     *  @throws OcException
+     */
+    public static int saveTrustCertChain(byte[] trustCertChain, EncodingType encodingType) throws OcException {
+        return saveTrustCertChain1(trustCertChain,encodingType.getValue());
+    }
+    private static native int saveTrustCertChain1(byte[] trustCertChain, int encodingType)
+        throws OcException;
 }
