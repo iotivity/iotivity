@@ -26,19 +26,6 @@ import sys
 target_os = env.get('TARGET_OS')
 root_dir = env.get('SRC_DIR')
 mbedtls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls/')
-libs_list = ['libmbedcrypto','libmbedtls','libmbedx509']
-
-def run(cmd):
-    """Run a command and decipher the return code. Exit by default."""
-    res = os.system(cmd)
-    # Assumes that if a process doesn't call exit, it was successful
-    if (os.WIFEXITED(res)):
-        code = os.WEXITSTATUS(res)
-        if code != 0:
-            print "Error: return code: " + str(code)
-            if SCons.Script.keep_going_on_error == 0:
-                sys.exit(code)
-
 
 if not os.path.exists(mbedtls_dir):
     print '''
@@ -49,11 +36,13 @@ if not os.path.exists(mbedtls_dir):
  '''
     Exit(1)
 #Apply patch to enable TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 ciphersuite and server identity hint
-start_dir = os.getcwd()
-os.chdir(mbedtls_dir)
-cmd = 'git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd && git apply ../ocf.patch'
-run(cmd)
-os.chdir(start_dir)
+#For tizen platform patch is applied by gbsbuild script
+if target_os != 'tizen':
+    start_dir = os.getcwd()
+    os.chdir(mbedtls_dir)
+    cmd = 'git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd && git apply ../ocf.patch'
+    os.system(cmd)
+    os.chdir(start_dir)
 
 
 mbedtls_env = env.Clone()
@@ -157,4 +146,3 @@ mbex509_env.InstallTarget(static_libmbedx509, 'mbedx509')
 mbedtls_env.AppendUnique(LIBS = ['mbedx509', 'mbedcrypto'])
 static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
 mbedtls_env.InstallTarget(static_libmbedtls, 'mbedtls')
-
