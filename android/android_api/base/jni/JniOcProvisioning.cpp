@@ -288,3 +288,39 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
     }
 }
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    saveTrustCertChain1
+ * Signature: (Lorg/iotivity/base/OcProvisioning/provisionTrustCertChain1;)V
+ */
+    JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
+(JNIEnv *env, jobject thiz, jbyteArray trustCertChain, jint encodingType)
+{
+    LOGD("OcProvisioning_saveTrustCertChain1");
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+    jbyte* trustCertChainBytes = env->GetByteArrayElements(trustCertChain, 0);
+    jsize arrayLength = env->GetArrayLength(trustCertChain);
+    uint16_t credId;
+    unsigned char* trustedCertChar = new unsigned char[arrayLength];
+    try
+    {
+        env->GetByteArrayRegion (trustCertChain, 0, arrayLength, reinterpret_cast<jbyte*>(trustedCertChar));
+        OCStackResult result = OCSecure::saveTrustCertChain((uint8_t*)trustedCertChar, arrayLength,
+                (OicEncodingType_t)encodingType, &credId);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcProvisioning_saveTrustCertChain1");
+            return -1;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+    return (jint)credId;
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
+    return -1;
+#endif // __WITH_X509__ || __WITH_TLS__
+}

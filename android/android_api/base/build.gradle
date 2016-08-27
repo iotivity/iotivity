@@ -43,6 +43,7 @@ android {
         versionCode 1
         versionName "1.2.0"
         buildConfigField 'int', 'SECURED', SECURED
+        buildConfigField 'int', 'WITH_TCP', WITH_TCP
         buildConfigField 'int', 'WITH_CLOUD', WITH_CLOUD
         buildConfigField "int", 'WITH_MQ_PUB', WITH_MQ_PUB
         buildConfigField "int", 'WITH_MQ_SUB', WITH_MQ_SUB
@@ -119,7 +120,7 @@ task buildNative(type: Exec) {
         //for windows use 'ndk-build.cmd'
         //def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
-        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED", "WITH_CLOUD=$WITH_CLOUD", "RD_MODE=$RD_MODE", "WITH_MQ_PUB=$WITH_MQ_PUB", "WITH_MQ_SUB=$WITH_MQ_SUB", "WITH_MQ_BROKER=$WITH_MQ_BROKER"
+        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED", "WITH_CLOUD=$WITH_CLOUD", "RD_MODE=$RD_MODE", "WITH_MQ_PUB=$WITH_MQ_PUB", "WITH_MQ_SUB=$WITH_MQ_SUB", "WITH_MQ_BROKER=$WITH_MQ_BROKER", "WITH_TCP=$WITH_TCP"
     } else {
         println '##################'
         println 'Skipping NDK build'

@@ -85,7 +85,13 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
  */
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceStatusList1
   (JNIEnv *, jclass, jint);
-
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    saveTrustCertChain1
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
+    (JNIEnv *, jobject, jbyteArray, jint);
 #ifdef __cplusplus
 }
 #endif

@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.iotivity.base.CredType;
+import org.iotivity.base.EncodingType;
 import org.iotivity.base.DeviceStatus;
 import org.iotivity.base.KeySize;
 import org.iotivity.base.ModeType;
@@ -50,6 +51,7 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
 
     private static final String TAG = "Provisioning Client: ";
     private static final int BUFFER_SIZE = 1024;
+    private int credId=0;
     int unownedDevCount = StringConstants.NUMBER_ZERO;
     OcProvisioning.PinCallbackListener pinCallbackListener =
         new OcProvisioning.PinCallbackListener() {
@@ -96,7 +98,7 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                         logMessage("Error: ACL Provision failed !!");
                     } else {
                         logMessage("ACL Provision Done !!");
-                        new DeviceRevocationAsyncTask().execute();
+                        provisionCertChain();
                     }
                 }
         };
@@ -114,6 +116,22 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                     }
                 }
         };
+
+    OcSecureResource.ProvisionTrustCertChainListener provisionTrustCertListener =
+        new OcSecureResource.ProvisionTrustCertChainListener() {
+            @Override
+                public void provisionTrustCertChainListener(List<ProvisionResult> provisionResults,
+                        int hasError) {
+                    Log.d(TAG, "Inside provisionTrustCertChainListener ");
+                    if (hasError == StringConstants.ERROR_CODE) {
+                        logMessage("Error: Provision TrustCertChain failed !!");
+                    } else {
+                        logMessage("Provision TrustCertChain Done !!");
+                        new DeviceRevocationAsyncTask().execute();
+                    }
+                }
+        };
+
     OcSecureResource.UnlinkDevicesListener unlinkDevicesListener =
         new OcSecureResource.UnlinkDevicesListener() {
             @Override
@@ -163,6 +181,7 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                 editor.commit();
             }
             initOICStack();
+            saveCertChain();
         }
 
     /**
@@ -313,6 +332,59 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                 doDPProvisioning();
             }
         }
+    /**
+     * get cert from asset folder & save trusted cert chain
+     */
+    private void saveCertChain() {
+        InputStream inputStream = null;
+        try {
+
+            inputStream = getAssets().open(StringConstants.CRT_FILE);
+            byte[] fileBytes = new byte[inputStream.available()+1];
+            inputStream.read(fileBytes);
+            fileBytes[inputStream.available()]=0x00;
+            credId = OcProvisioning.saveTrustCertChain(fileBytes,
+                    EncodingType.OIC_ENCODING_PEM);
+            logMessage(TAG + "saveTrustCertChain return credId = " + credId);
+        } catch (IOException e) {
+            logMessage(TAG + "Cert file not exist in Assets" + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } catch (OcException e) {
+            logMessage(TAG + "saveTrustCertChain failed " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+
+        }
+    }
+
+    /**
+     * Provision cert chain
+     */
+    private void provisionCertChain() {
+
+        if (ownedDeviceList.size() > 0) {
+            try {
+                OcSecureResource ocSecureResource = ownedDeviceList.get(0);
+                logMessage(TAG + "Initiate provision cert chain credId = "
+                        + credId);
+                ocSecureResource.provisionTrustCertChain(
+                        EnumSet.of(CredType.SIGNED_ASYMMETRIC_KEY), credId,
+                        provisionTrustCertListener);
+            } catch (OcException e) {
+                logMessage(TAG + "Provision cert chain error: "
+                        + e.getMessage());
+                Log.e(TAG, e.getMessage());
+            }
+        }
+
+    }
 
     /**
      * Copy svr db CBOR dat file from assets folder to app data files dir
