@@ -63,7 +63,7 @@ namespace OIC
             m_syncInfoCb = NULL;
             if (provider != nullptr)
             {
-                m_providerId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE);
+                m_providerId = provider->providerId;
                 if (provider->topicLL != nullptr)
                     m_topicList = new NSTopicsList(provider->topicLL);
                 else
