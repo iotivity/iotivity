@@ -151,6 +151,9 @@ if 'sm' in target_service or 'all' in target_service:
 if 'iut' in target_service or 'all' in target_service:
     SConscript('SConscriptIUT', exports = 'env_linux')
 
+if 'iori' in target_service or 'all' in target_service:
+    SConscript('SConscriptRIApp', exports = 'env_linux')
+
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 
 delete_bin = []

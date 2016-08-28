@@ -625,7 +625,7 @@ void createAirConDevice(bool isSecured)
         range.clear();
         range.push_back(AIRFLOW_SPEED_RANGE_START_VALUE);
         range.push_back(AIRFLOW_SPEED_RANGE_END_VALUE);
-        key = AIRFLOW_RANGE_KEY
+        key = AIRFLOW_RANGE_KEY;
         airFlowRep.setValue(key, range);
         g_acAirFlowResource->setAsReadOnly(key);
         g_acAirFlowResource->setResourceRepresentation(airFlowRep);
