@@ -37,7 +37,7 @@ namespace OIC
             if (msg != nullptr)
             {
                 m_messageId = msg->messageId;
-                m_providerId.assign(msg->providerId, NS_UTILS_UUID_STRING_SIZE);
+                m_providerId = msg->providerId;
 
                 m_type = (NSMessageType)msg->type;
 

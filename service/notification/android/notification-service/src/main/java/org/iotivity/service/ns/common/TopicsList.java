@@ -42,9 +42,10 @@ public class TopicsList
         Iterator <Topic> it = getTopicsList().iterator();
         while(it.hasNext())
         {
-            if(it.next().getTopicName().equals(topicName))
+            Topic element = it.next();
+            if(element.getTopicName().equals(topicName))
             {
-                mTopicsList.remove(it.next());
+                mTopicsList.remove(element);
             }
         }
     }

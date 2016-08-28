@@ -74,7 +74,7 @@ public class Provider
         nativeSetListener(onMessageReceivedListner, onSyncInfoReceivedListner);
     }
 
-    public int SelectInterestTopics(Vector<Topic> topicsList) throws NSException
+    public int SelectInterestTopics(TopicsList topicsList) throws NSException
     {
         return nativeSelectInterestTopics(topicsList);
     }
@@ -96,5 +96,5 @@ public class Provider
         OnMessageReceivedListner onMessageReceivedListner,
         OnSyncInfoReceivedListner onSyncInfoReceivedListner
     ) throws NSException;
-    private native int nativeSelectInterestTopics(Vector<Topic> topicsList) throws NSException;
+    private native int nativeSelectInterestTopics(TopicsList topicsList) throws NSException;
 }
