@@ -84,6 +84,11 @@ public class ProviderService
         return;
     }
 
+    public Message CreateMessage () throws NSException
+    {
+        return nativeCreateMessage();
+    }
+
     public int   EnableRemoteService(String servAdd) throws NSException
     {
         return nativeEnableRemoteService(servAdd);
@@ -113,6 +118,7 @@ public class ProviderService
     public native int  nativeStop();
     public native int  nativeSendMessage(Message message);
     public native void  nativeSendSyncInfo( long messageId , int type);
+    public native Message nativeCreateMessage();
     public native int  nativeEnableRemoteService(String servAdd);
     public native int  nativeDisableRemoteService(String servAdd);
     public native int  nativeAddTopic(String topicName);

@@ -448,27 +448,27 @@ jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType t
     {
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_ALERT:
             {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "ALERT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
             }
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_NOTICE:
             {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "NOTICE", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
             }
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_EVENT:
             {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "EVENT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
             }
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO:
             {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "INFO", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
             }
         default:
             return NULL;

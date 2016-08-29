@@ -61,11 +61,18 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
+ * Method:    nativeCreateMessage
+ * Signature: ()Lorg/iotivity/service/ns/common/Message;
+ */
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeCreateMessage
+(JNIEnv *, jobject);
+
+/*
+ * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeEnableRemoteService
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL
-Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService
 (JNIEnv *, jobject, jstring);
 
 /*
@@ -73,8 +80,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService
  * Method:    nativeDisableRemoteService
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL
-Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
 (JNIEnv *, jobject, jstring);
 
 /*
@@ -82,8 +88,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
  * Method:    nativeAddTopic
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL
-Java_org_iotivity_service_ns_provider_ProviderService_nativeAddTopic
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeAddTopic
 (JNIEnv *, jobject, jstring);
 
 /*
@@ -91,8 +96,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeAddTopic
  * Method:    nativeDeleteTopic
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL
-Java_org_iotivity_service_ns_provider_ProviderService_nativeDeleteTopic
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeDeleteTopic
 (JNIEnv *, jobject, jstring);
 
 /*
@@ -100,8 +104,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDeleteTopic
  * Method:    nativeGetTopics
  * Signature: ()Lorg/iotivity/service/ns/common/TopicsList;
  */
-JNIEXPORT jobject JNICALL
-Java_org_iotivity_service_ns_provider_ProviderService_nativeGetTopics
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeGetTopics
 (JNIEnv *, jobject);
 
 /*
