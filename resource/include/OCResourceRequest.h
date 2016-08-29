@@ -47,15 +47,15 @@ namespace OC
         typedef std::shared_ptr<OCResourceRequest> Ptr;
 
         OCResourceRequest():
-            m_requestType{""},
-            m_resourceUri{""},
-            m_queryParameters{QueryParamsMap()},
-            m_requestHandlerFlag{0},
-            m_messageID{0},
-            m_representation{OCRepresentation()},
-            m_headerOptions{HeaderOptions()},
-            m_requestHandle{nullptr},
-            m_resourceHandle{nullptr}
+            m_requestType(""),
+            m_resourceUri(""),
+            m_queryParameters(QueryParamsMap()),
+            m_requestHandlerFlag(0),
+            m_messageID(0),
+            m_representation(OCRepresentation()),
+            m_headerOptions(HeaderOptions()),
+            m_requestHandle(nullptr),
+            m_resourceHandle(nullptr)
         {
             m_observationInfo.action = ObserveAction::ObserveRegister;
             m_observationInfo.obsId = 0;
