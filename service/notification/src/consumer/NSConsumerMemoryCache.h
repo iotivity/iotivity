@@ -31,8 +31,10 @@ extern "C" {
 #include "NSStorageAdapter.h"
 #include "NSConsumerCommon.h"
 
+pthread_mutex_t * NSGetCacheMutex();
 
 bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id);
+
 NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj);
 NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newObj);
 NSCacheElement * NSPopProviderCacheList(NSCacheList * list);

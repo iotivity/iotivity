@@ -326,6 +326,11 @@ void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
 
     NSCacheElement * cacheElement = NSStorageRead(ProviderCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(cacheElement);
+
+    pthread_mutex_t * mutex = NSGetCacheMutex();
+    pthread_mutex_lock(mutex);
+
+    NS_VERIFY_NOT_NULL_V(cacheElement);
     NSProvider_internal * prov = (NSProvider_internal *)cacheElement->data;
     NSProviderConnectionInfo *infos = prov->connection;
     while(infos)
@@ -333,6 +338,8 @@ void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
         infos->isSubscribing = true;
         infos = infos->next;
     }
+
+    pthread_mutex_unlock(mutex);
 }
 
 void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
