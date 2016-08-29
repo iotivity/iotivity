@@ -20,17 +20,6 @@
 
 #include "NSProviderNotification.h"
 
-NSResult NSInitMessageList()
-{
-    NS_LOG(DEBUG, "NSInitMessageList - IN");
-
-    messageList = NSStorageCreate();
-    messageList->cacheType = NS_PROVIDER_CACHE_MESSAGE;
-
-    NS_LOG(DEBUG, "NSInitMessageList - OUT");
-    return NS_OK;
-}
-
 NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
     NS_LOG(DEBUG, "NSSetMessagePayload - IN");

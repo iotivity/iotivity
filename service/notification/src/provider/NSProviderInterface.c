@@ -88,7 +88,6 @@ void NSSetList()
     pthread_mutex_init(&NSCacheMutex, &NSCacheMutexAttr);
 
     NSInitSubscriptionList();
-    NSInitMessageList();
     NSInitTopicList();
     NS_LOG(DEBUG, "NSSetList - OUT");
 }
@@ -96,7 +95,6 @@ void NSSetList()
 void NSDestroyList()
 {
     NSStorageDestroy(consumerSubList);
-    NSStorageDestroy(messageList);
     NSStorageDestroy(consumerTopicList);
     NSStorageDestroy(registeredTopicList);
 
