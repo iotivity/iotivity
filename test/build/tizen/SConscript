@@ -95,6 +95,13 @@ if 'rc' in target_service or 'all' in target_service:
     gbs_script_rc = "sh build/tizen/rc/gbsbuild_rc.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
     default_targets += [gbs_script_rc]
 
+if 'iori' in target_service or 'all' in target_service:
+    rpms_dir = env_tizen.get('RPMS_DIR') 
+    push = env_tizen.get('PUSH')     
+    security_mode = env_tizen.get('SECURITY_MODE')
+
+    gbs_script_iori = "bash build/tizen/iori/gbsbuild.sh stand_alone=false rpms_dir=%s push=%s security_mode=%s" % (rpms_dir, push, security_mode)
+    default_targets += [gbs_script_iori]
     
 if 'iut' in target_service or 'all' in target_service:
 
