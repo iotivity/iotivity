@@ -36,7 +36,9 @@ def call_scons(build_options, extra_option_str):
     cmd_line += " " + str(extra_option_str)
 
     print ("Running : " + cmd_line)
-    subprocess.Popen([cmd_line], shell=True).wait()
+    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+    if exit_code != 0:
+        exit(exit_code)
 
 def build_all(flag, extra_option_str):
     if platform.system() == "Linux":
