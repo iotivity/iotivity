@@ -19,13 +19,12 @@ set -e
 
 [ ! -z ${EXEC_MODE} ] || EXEC_MODE=false
 
-
-# Right now this script assumes packageRevision is a tag; 
-# comment out the second clause if packageRevision becomes a branch or a specific commit.
-package="mbedtls"
-packageRevision='mbedtls-2.4.0'
-packageUrl="https://github.com/ARMmbed/mbedtls"
-packageDir="extlibs/${package}/${package}"
+package="gtest"
+packageRevision='1.7.0'
+packageUrl='http://pkgs.fedoraproject.org/repo/pkgs/gtest/gtest-1.7.0.zip/2d6ec8ccdf5c46b05ba54a9fd1d130d7/gtest-1.7.0.zip'
+packageArchive=$(basename -- "${packageUrl}")
+packageDir="extlibs/${package}/${package}-${packageRevision}"
+packageSourceFile="${packageDir}/CMakeLists.txt"
 
 
 do_()
@@ -47,24 +46,11 @@ EOF
 
 main_()
 {
-    if [ ! -d "${packageDir}" ]; then
-        do_ "git clone ${packageUrl} ${packageDir} -b ${packageRevision}"
-    elif [ ! -z $(git tag -l "${packageRevision}") ]; then
-        cat<<EOF
-error: $packageDir is unaligned with supported release of ${package}
-Please update ${package} using "cd ${packageDir} && git fetch"
-For more support please refer to:
-https://wiki.iotivity.org/build
-EOF
-        exit 2
-    elif [ -d "${packageDir}/.git" ]; then
-        cd "${packageDir}"
-        git reset --hard "${packageRevision}"
-        git apply --whitespace=fix "../ocf.patch"
-        cd -
-        rm -rf -- "${packageDir}/.git"
-    else
-        echo "log: Assuming ${package} is already on correct revision: \"${packageRevision}\""
+    echo "# Checking for gtest presence:"
+    if [ ! -e "${packageSourceFile}" ] ; then
+        which wget 2>/dev/null
+        which unzip 2>/dev/null
+        do_ "cd extlibs/${package} && wget -nc -O ${packageArchive} ${packageUrl} && unzip ${packageArchive}"
     fi
 }
 
