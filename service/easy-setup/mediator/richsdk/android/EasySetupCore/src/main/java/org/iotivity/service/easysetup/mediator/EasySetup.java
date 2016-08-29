@@ -93,15 +93,13 @@ public class EasySetup {
      */
     public synchronized RemoteEnrollee createRemoteEnrollee(OcResource enrolleeResource)
     {
-        // native call
-        if(!enrolleeResource.getResourceTypes().contains(ESConstants.OC_RSRVD_ES_RES_TYPE_PROV)
-                || !enrolleeResource.getResourceInterfaces().contains(OcPlatform.BATCH_INTERFACE))
-        {
-            Log.e(TAG, "Validation check for OcResource is failed.");
-            return null;
-        }
         mRemoteEnrollee = nativeCreateRemoteEnrollee(enrolleeResource);
-        mRemoteEnrolleeList.add(mRemoteEnrollee);
-        return mRemoteEnrollee;
+
+        if(mRemoteEnrollee)
+        {
+            mRemoteEnrolleeList.add(mRemoteEnrollee);
+            return mRemoteEnrollee;
+        }
+        return null;
     }
 }

@@ -53,13 +53,23 @@ namespace OIC
         {
             if(resource)
             {
-                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV)
+                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV ||
+                   resource->connectivityType() & CT_ADAPTER_TCP)
                 {
-                    OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid reousrce");
+                    OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
                     return nullptr;
                 }
-                return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
+
+                auto interfaces = resource->getResourceInterfaces();
+                for(auto interface : interfaces)
+                {
+                    if(interface.compare(BATCH_INTERFACE) == 0)
+                    {
+                        return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
+                    }
+                }
             }
+            OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
             return nullptr;
         }
     }
