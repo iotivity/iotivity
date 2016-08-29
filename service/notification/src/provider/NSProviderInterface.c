@@ -127,7 +127,7 @@ NSResult NSStopProvider()
     return NS_OK;
 }
 
-NSResult NSProviderEnableRemoteService(char *serverAddress)
+NSResult NSProviderEnableRemoteService(char * serverAddress)
 {
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -171,7 +171,7 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
     return NS_OK;
 }
 
-NSResult NSSendMessage(NSMessage *msg)
+NSResult NSSendMessage(NSMessage * msg)
 {
     NS_LOG(DEBUG, "NSSendNotification - IN");
 
@@ -209,22 +209,22 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
     return NS_OK;
 }
 
-NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted)
+NSResult NSAcceptSubscription(const char * consumerId, bool accepted)
 {
     NS_LOG(DEBUG, "NSAccept - IN");
 
     pthread_mutex_lock(&nsInitMutex);
 
-    NSConsumer * newConsumer = NSDuplicateConsumer(consumer);
+    char * newConsumerId = OICStrdup(consumerId);
     if(accepted)
     {
         NS_LOG(DEBUG, "accepted is true - ALLOW");
-        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, newConsumer);
+        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_ALLOW, newConsumerId);
     }
     else
     {
         NS_LOG(DEBUG, "accepted is false - DENY");
-        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_DENY, newConsumer);
+        NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_DENY, newConsumerId);
     }
 
     pthread_mutex_unlock(&nsInitMutex);
@@ -245,7 +245,7 @@ NSMessage * NSCreateMessage()
     return msg;
 }
 
-NSTopicLL * NSProviderGetConsumerTopics(char *consumerId)
+NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
 {
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -277,7 +277,7 @@ NSTopicLL * NSProviderGetTopics()
     return topics;
 }
 
-NSResult NSProviderAddTopic(char *topicName)
+NSResult NSProviderRegisterTopic(const char * topicName)
 {
     NS_LOG(DEBUG, "NSProviderAddTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -296,7 +296,7 @@ NSResult NSProviderAddTopic(char *topicName)
     return NS_OK;
 }
 
-NSResult NSProviderDeleteTopic(char *topicName)
+NSResult NSProviderUnregisterTopic(const char * topicName)
 {
     NS_LOG(DEBUG, "NSProviderDeleteTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -315,7 +315,7 @@ NSResult NSProviderDeleteTopic(char *topicName)
     return NS_OK;
 }
 
-NSResult NSProviderSelectTopic(char *consumerId, char *topicName)
+NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicName)
 {
     NS_LOG(DEBUG, "NSProviderSelectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -341,7 +341,7 @@ NSResult NSProviderSelectTopic(char *consumerId, char *topicName)
     return NS_OK;
 }
 
-NSResult NSProviderUnselectTopic(char *consumerId, char *topicName)
+NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topicName)
 {
     NS_LOG(DEBUG, "NSProviderUnselectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);

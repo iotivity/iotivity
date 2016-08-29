@@ -40,7 +40,7 @@ namespace
     std::mutex mutexForCondition;
 
     NSConsumerSimulator g_consumerSimul;
-    NSConsumer * g_consumer;
+    char * g_consumerID;
 }
 
 class TestWithMock: public testing::Test
@@ -177,13 +177,12 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
 
 TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAccepterProvider)
 {
-    g_consumer = NULL;
+    g_consumerID = NULL;
     mocks.OnCallFunc(NSRequestedSubscribeCallbackEmpty).Do(
             [](NSConsumer * consumer)
             {
                 std::cout << "NSRequestedSubscribeCallback" << std::endl;
-                g_consumer = (NSConsumer *)malloc(sizeof(NSConsumer));
-                strncpy(g_consumer->consumerId , consumer->consumerId, 37);
+                g_consumerID = strdup(consumer->consumerId);
                 responseCon.notify_all();
             });
 
@@ -207,7 +206,7 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, std::chrono::milliseconds(1000));
 
-    EXPECT_NE((void*)g_consumer, (void*)NULL);
+    EXPECT_NE((void*)g_consumerID, (void*)NULL);
 }
 
 TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
@@ -225,7 +224,7 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
                 }
             });
 
-    NSAcceptSubscription(g_consumer, false);
+    NSAcceptSubscription(g_consumerID, false);
 
     NSMessage * msg = NSCreateMessage();
     msgID = (int)msg->messageId;
@@ -244,7 +243,7 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
 
     EXPECT_EQ(expectTrue, true);
 
-    NSAcceptSubscription(g_consumer, true);
+    NSAcceptSubscription(g_consumerID, true);
 }
 
 TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
@@ -262,7 +261,7 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
                 }
             });
 
-    NSAcceptSubscription(g_consumer, true);
+    NSAcceptSubscription(g_consumerID, true);
 
     NSMessage * msg = NSCreateMessage();
     msgID = (int)msg->messageId;

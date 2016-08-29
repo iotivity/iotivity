@@ -78,7 +78,7 @@ void subscribeRequestCallback(NSConsumer *consumer)
         OICStrcpy(mainConsumer, 37, consumer->consumerId);
     }
 
-    NSAcceptSubscription(consumer, true);
+    NSAcceptSubscription(consumer->consumerId, true);
 }
 
 void syncCallback(NSSyncInfo *sync)
@@ -255,28 +255,28 @@ int main()
 
             case 5:
                 printf("NSProviderAddTopic\n");
-                NSProviderAddTopic("OCF_TOPIC1");
-                NSProviderAddTopic("OCF_TOPIC2");
-                NSProviderAddTopic("OCF_TOPIC3");
-                NSProviderAddTopic("OCF_TOPIC4");
+                NSProivderRegisterTopic("OCF_TOPIC1");
+                NSProivderRegisterTopic("OCF_TOPIC2");
+                NSProivderRegisterTopic("OCF_TOPIC3");
+                NSProivderRegisterTopic("OCF_TOPIC4");
                 break;
 
             case 6:
                 printf("NSProviderDeleteTopic\n");
-                NSProviderDeleteTopic("OCF_TOPIC2");
+                NSProviderUnregisterTopic("OCF_TOPIC2");
                 break;
 
             case 7:
                 printf("NSProviderSelectTopic\n");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC1");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC2");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC3");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC4");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC2");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC3");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC4");
                 break;
 
             case 8:
                 printf("NSProviderUnSelectTopic\n");
-                NSProviderUnselectTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderUnsetConsumerTopic(mainConsumer, "OCF_TOPIC1");
                 break;
 
             case 9:

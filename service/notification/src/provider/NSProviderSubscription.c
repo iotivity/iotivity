@@ -359,21 +359,21 @@ void * NSSubScriptionSchedule(void *ptr)
                 case TASK_SEND_ALLOW:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_ALLOW : ");
-                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    char * consumerId = (char *) node->taskData;
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, true);
-                    NSSendResponse(consumer->consumerId, true);
-                    NSFreeConsumer(consumer);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumerId, true);
+                    NSSendResponse(consumerId, true);
+                    OICFree(consumerId);
                     break;
                 }
                 case TASK_SEND_DENY:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_DENY : ");
-                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    char * consumerId = (char *) node->taskData;
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, false);
-                    NSSendResponse(consumer->consumerId, false);
-                    NSFreeConsumer(consumer);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumerId, false);
+                    NSSendResponse(consumerId, false);
+                    NSFreeConsumer(consumerId);
 
                     break;
                 }
