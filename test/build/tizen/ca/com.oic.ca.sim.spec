@@ -7,9 +7,8 @@ Release: 1
 License: To be filled
 Summary: Connectivity Abstruction Test
 Packager: Razib Chandra Deb <razib.deb@samsung.com>
-Group: Applications/OICSample
+Group: Applications/CATest
 Source: %{name}-%{version}.tar.gz
-
 
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(glib-2.0)
@@ -17,14 +16,11 @@ BuildRequires: boost-devel
 BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
-#BuildRequires: oic-core
 BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: scons
-BuildRequires: com-oic-ca
+BuildRequires: com-oic-ri
 BuildRequires: expat-devel
-
-
 
 %description
 Platform Project
@@ -36,7 +32,6 @@ Platform Project
 scons TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED}
 
 %install
-#make install DESTDIR=$RPM_BUILD_ROOT/usr
 mkdir -p %{buildroot}%{_datadir}/packages
 mkdir -p %{buildroot}/%{_sysconfdir}/smack/accesses2.d
 mkdir -p %{buildroot}/usr/apps/com.oic.ca.sim/bin/
@@ -55,9 +50,5 @@ cp -rf %{ROOTDIR}/iotivity_ca_*test %{buildroot}/usr/apps/com.oic.ca.sim/bin/
 /usr/apps/com.oic.ca.sim/bin/iotivity_ca_simulator
 /usr/apps/com.oic.ca.sim/bin/iotivity_ca_*test
 
-#/usr/apps/com.oic.ca.sim/bin/sampletc
 /%{_datadir}/packages/com.oic.ca.sim.xml
-
-#%defattr(644, root, root)
-#%attr(755, root, root) /usr/bin
 

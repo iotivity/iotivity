@@ -19,154 +19,121 @@
 *
 ******************************************************************/
 '''
-##
-# Build script for Tizen
-#
-##
-
 print '\n---------------Started Building IotivitySecTest CA for Tizen---------------\n'
-
 
 env = Environment(CC='g++')
 
-ENV_HOME = '.'
-PROJECT_HOME = 'test'
-EXT_LIB_HOME = 'test/extlibs'
-
-IOTIVITY_ROOT_DIR = 'iotivity'
-
-#CA path
-CA_DIR = IOTIVITY_ROOT_DIR + '/resource/csdk/connectivity'
-CA_API_INCLUDE = CA_DIR + '/api'
-CA_API_INCLUDE2 = CA_DIR + '/inc'
-CA_API_INCLUDE_COMMON = CA_DIR + '/common/inc'
-CA_API_INCLUDE_EXTERNAL = CA_DIR + '/external/inc'
-CA_CSDK_STACK_INCLUDE = IOTIVITY_ROOT_DIR + '/resource/csdk/stack/include'
-CA_C_COMMON = IOTIVITY_ROOT_DIR + '/resource/c_common'
-
-# gtest path
-GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
-GTEST_INCLUDE = GTEST + '/include'
-GTEST_BIN = GTEST + '/bin/tizen'
-GTEST_LIB = GTEST_BIN + '/libgtest.a'
-
-
-# Project Directories -------------------------- 
-LIB_DIR = PROJECT_HOME + '/lib'
-TC_DIR = PROJECT_HOME + '/src/tc/ca/gtest/src'
-ITC_DIR = TC_DIR + '/stc'
-UTC_DIR = TC_DIR + '/btc'
-TESTAPP_DIR = PROJECT_HOME + '/src/testapp'
-COMMON_DIR = PROJECT_HOME + '/src/common'
-COMMON_UTIL_DIR = PROJECT_HOME + '/src/common/commonutil/c_cpp'
-
-INCLUDE_DIR = PROJECT_HOME + '/include'
-TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
-CA_INCLUDE_DIR = PROJECT_HOME + '/src/tc/ca/gtest/include'
-COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
-TESTAPP_CA_DIR = TESTAPP_DIR + '/ca/c_cpp'
-CA_MALLOC_INCLUDE = IOTIVITY_ROOT_DIR + '/resource/c_common/oic_malloc/include'
-CA_STRING_INCLUDE = IOTIVITY_ROOT_DIR + '/resource/c_common/oic_string/include'
-CA_SIMULATOR_CINCLUDE = TESTAPP_CA_DIR + '/include'
-##TARGET = '/usr/bin/'
-
-
-env['CC'] = 'g++'
-
-COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZENTEMP__ -finstrument-functions')
-
-TC_CINCLUDE = [GTEST_INCLUDE, INCLUDE_DIR, TC_INCLUDE_DIR]
-
-CA_CINCLUDE = [GTEST_INCLUDE, INCLUDE_DIR, COMMON_UTIL_INCLUDE_DIR, CA_API_INCLUDE, CA_API_INCLUDE2, CA_INCLUDE_DIR, CA_API_INCLUDE_EXTERNAL, CA_API_INCLUDE_COMMON, CA_MALLOC_INCLUDE, CA_STRING_INCLUDE, CA_SIMULATOR_CINCLUDE, CA_CSDK_STACK_INCLUDE, CA_C_COMMON ]
-
-
-#COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR]
-
-
-# Source Files --------------------------
-
-CA_HELPER_CPP = Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/helper/CAHelper.cpp')
-COMMON_UTIL_CPP = Glob(COMMON_UTIL_DIR + '/CommonUtil.cpp')
-TEST_MAIN = PROJECT_HOME + '/src/common/testcase/gtest/IotivitySECTestMain.cpp'
-
-CA_UTC_CPP = Glob(UTC_DIR + '/*.cpp')
-CA_ITC_CPP = Glob(ITC_DIR + '/*.cpp')
-
-CA_SIMULATOR_C = [TESTAPP_CA_DIR + '/src/ca_simulator.c']
-
-CA_TC_SRC = CA_UTC_CPP + CA_ITC_CPP + CA_HELPER_CPP + COMMON_UTIL_CPP
-
-CA_SIMULATOR_SRC = [CA_SIMULATOR_C]
-
-CA_SIMULATOR_BIN = 'iotivity_ca_simulator'
-
-CA_LIBS = Split('-lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth -lconnectivity_abstraction -lcoap -lexpat -lboost_system -lboost_filesystem -lboost_thread -ldl')
-
-CA_CFLAGS = Split('-D__TIZEN__  -D__TC_PLATFORM_TIZEN__ -s -pthread -finstrument-functions -fpermissive -fPIC -DWITH_POSIX -Wall -DSLP_SDK_LOG -g -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG -std=gnu++0x `pkg-config --cflags --libs dlog com.oic.ca capi-network-wifi gobject-2.0 glib-2.0` -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth -lconnectivity_abstraction -lcoap')
-
-CIMULATOR_FLAGS = Split('-D__TIZEN__  -D__TC_PLATFORM_TIZEN__ -s -pthread -finstrument-functions -fpermissive -fPIC -DWITH_POSIX -Wall -DSLP_SDK_LOG -g -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG -std=c99 `pkg-config --cflags --libs dlog com.oic.ca capi-network-wifi gobject-2.0 glib-2.0` -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth -lconnectivity_abstraction -lcoap')
-
-CA_LIB_LOCATION = [GTEST_BIN]
-
-target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
-target_tc = env.get('TARGET_TC')
 secured = env.get('SECURED')
+target_test = env.get('TARGET_TEST')
+target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
 
 print 'target_transport: ' + target_transport
 
-if secured == '1':
-	CA_CFLAGS.append("-D__WITH_DTLS__")
-	
+ENV_HOME = '.'
+PROJECT_HOME = 'test'
+IOTIVITY_ROOT = 'iotivity'
+
 CA_TC_BIN = 'iotivity_ca_test'
 
-list_of_transport = [ 'None', 'IP', 'BT', 'BLE']
-tranport_binary_substrings = ['', '_ip', '_edr', '_ble']
-transport_specific_bins = ['iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_edr_test', 'iotivity_ca_ble_test']
-list_transport_cflags = [['', ''], ['-D__IP__', '-D__ALL_TRANSPORT__'], ['-D__EDR__', '-D__ALL_TRANSPORT__'], ['-D__BLE__', '-D__ALL_TRANSPORT__']]
+list_of_transport = [ 'None', 'IP', 'BT', 'BLE', 'TCP' ]
+tranport_binary_substrings = [ '', '_ip', '_edr', '_ble', '_tcp' ]
+transport_specific_bins = [ 'iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_edr_test', 'iotivity_ca_ble_test', 'iotivity_ca_tcp_test' ]
+list_transport_cflags = [
+                            ['', ''], 
+                            ['-D__IP__', '-D__ALL_TRANSPORT__'], 
+                            ['-D__EDR__', '-D__ALL_TRANSPORT__'], 
+                            ['-D__BLE__', '-D__ALL_TRANSPORT__'], 
+                            ['-D__TCP__', '-DTCP_ADAPTER', '-D__ALL_TRANSPORT__']
+                        ]
+
+COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -Wall -DTIZEN -fpermissive -finstrument-functions')
+
+IOTIVITY_INCLUDE_PATH = [ 
+                            IOTIVITY_ROOT + '/resource/c_common',
+                            IOTIVITY_ROOT + '/resource/csdk/stack/include',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/api', 
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/inc',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/external/inc', 
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/common/inc', 
+                            IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include', 
+                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include'
+                        ]
+
+TC_INCLUDE_PATH = [
+                    PROJECT_HOME + '/include',
+                    PROJECT_HOME + '/extlibs/include',
+                    PROJECT_HOME + '/include/testcase',
+                    PROJECT_HOME + '/include/commonutil',
+                    PROJECT_HOME + '/src/tc/ca/gtest/include',
+                    PROJECT_HOME + '/extlibs/gtest-1.7.0/include'
+                ]
+
+SIMULATOR_INCLUDE_PATH = [ PROJECT_HOME + '/src/testapp/ca/c_cpp/include']
+
+CA_TC_SRC = Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/stc/*.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/btc/*.cpp') + Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/CommonUtil.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/helper/CAHelper.cpp')
+
+CA_LIBS = Split('-lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth -lconnectivity_abstraction -lcoap -lexpat -lboost_system -lboost_filesystem -lboost_thread -ldl')
+
+COMMON_CFLAGS = Split('-D__TIZEN__  -D__TC_PLATFORM_TIZEN__ -s -pthread -finstrument-functions -fpermissive -fPIC -DWITH_POSIX -Wall -DSLP_SDK_LOG -g -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG -std=gnu++0x `pkg-config --cflags --libs dlog com.oic.ri capi-network-wifi gobject-2.0 glib-2.0` -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth -lconnectivity_abstraction -lcoap')
+
+TC_LIB_PATH = [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/tizen' ]
+
+if secured == '1':
+    COMMON_CFLAGS.append('-D__WITH_DTLS__')
 
 i = -1
-	
+    
 for transport in list_of_transport:
 
-	i = i + 1
-	
-	if target_transport != 'ALL':
-		if target_transport != transport:
-			continue
+    i = i + 1
+    
+    if target_transport != 'ALL':
+        if target_transport != transport:
+            continue
 
-	NETWORK_CA_CFLAGS = CA_CFLAGS[:]
-	
-	for transport_cflag in list_transport_cflags[i]:
-		if transport_cflag != '':
-			print 'added cflag: ' + transport_cflag
-			NETWORK_CA_CFLAGS.append(transport_cflag)
-			
-	print 'transport: ' + transport
-	print 'Network_ca_cflags: ' + str(NETWORK_CA_CFLAGS )
-	
-	LIST_OF_SRC = []
-		
-	main_object = 'ca' + tranport_binary_substrings[i] + 'test_main'
-	env.Object(source = [TEST_MAIN], target = main_object, CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = NETWORK_CA_CFLAGS)
-	LIST_OF_SRC.append(main_object)
+    network_cflags = COMMON_CFLAGS[:]
+    
+    for transport_cflag in list_transport_cflags[i]:
+        if transport_cflag != '':
+            network_cflags.append(transport_cflag)
+    
+    list_of_src = []
 
-	for single_cpp in CA_TC_SRC:
-		temp_single_cpp = str(single_cpp)
-		if not temp_single_cpp.endswith('.cpp'):
-			continue
-		single_object = temp_single_cpp.replace('.cpp', '.o')
-		single_object = 'ca' + tranport_binary_substrings[i] + single_object
-		env.Object(source = single_cpp, target = single_object, CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = NETWORK_CA_CFLAGS)
-		LIST_OF_SRC.append(single_object)
-	
-	env.Program(source = [LIST_OF_SRC, GTEST_LIB], target = transport_specific_bins[i], CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = NETWORK_CA_CFLAGS)
-#	install_targets += ca_tc
-	
-#env.AppendUnique(CPPFLAGS = PKG_FLAGS)
+    env.Object(source = PROJECT_HOME + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
+                target = 'ca' + tranport_binary_substrings[i] + 'test_main', 
+                CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
+                LIBS = CA_LIBS, 
+                LIBPATH = TC_LIB_PATH, 
+                CPPFLAGS = network_cflags)
 
-#env.Program(source = CA_TC_SRC, target = CA_TC_BIN, CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = CA_CFLAGS)
-#ca_tc = env.Program(source = CA_TC_SRC, target = CA_TC_BIN, CPPPATH = CA_CINCLUDE, LIBS = CA_LIBS, LIBPATH = CA_LIB_LOCATION, CPPFLAGS = CA_CFLAGS)
+    list_of_src.append('ca' + tranport_binary_substrings[i] + 'test_main')
 
-ca_simulator = env.Program(source = CA_SIMULATOR_SRC, target = CA_SIMULATOR_BIN, CPPPATH = CA_SIMULATOR_CINCLUDE, LIBS = [CA_LIBS], LIBPATH = CA_LIB_LOCATION, CPPFLAGS = [CA_CFLAGS])
+    for single_cpp in CA_TC_SRC:
+        temp_single_cpp = str(single_cpp)
+        if not temp_single_cpp.endswith('.cpp'):
+            continue
+        single_object = temp_single_cpp.replace('.cpp', '.o')
+        single_object = 'ca' + tranport_binary_substrings[i] + single_object
+
+        env.Object(source = single_cpp, 
+                target = single_object, 
+                CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
+                LIBS = CA_LIBS, 
+                LIBPATH = TC_LIB_PATH, 
+                CPPFLAGS = network_cflags)
+
+        list_of_src.append(single_object)
+    
+    env.Program (source = list_of_src + [PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/tizen/libgtest.a'], 
+                target = transport_specific_bins[i], 
+                CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
+                LIBS = CA_LIBS, 
+                LIBPATH = TC_LIB_PATH, 
+                CPPFLAGS = network_cflags)
 
 
+env.Program (source = PROJECT_HOME + '/src/testapp/ca/c_cpp/src/ca_simulator.c', 
+            target = 'iotivity_ca_simulator', 
+            CPPPATH = SIMULATOR_INCLUDE_PATH + IOTIVITY_INCLUDE_PATH, 
+            LIBS = CA_LIBS, 
+            CPPFLAGS = COMMON_CFLAGS)

@@ -1,7 +1,6 @@
 #----------------------------------------------------------------------
 # Main Script For Building CA for Tizen
 #----------------------------------------------------------------------
-
 echo "Creating Temporary Directory CA"
 echo "Please wait. It will take a few seconds..."
 echo " "
@@ -9,54 +8,37 @@ echo " "
 cd build/
 homeDir='../..'
 
-tmpDirName='tmpCA'
-tmpDir=$homeDir'/'$tmpDirName
-orgSource='IotivityOrgSource'
-devSourceDir='IotivitySECDevSource'
-caSourceDir='CA'
-orgTarget='target'
-secTestDir='test'
-extLibDir='extlibs'
+tmp_dirName='tmpCA'
+tmp_dir=$homeDir'/'$tmp_dirName
+ext_lib_dir='extlibs'
 target_arch=$1
-rpmPath=$4
-target_source=$6
-rpmName="com-oic-ca-sim-0.0.1-1.armv7l.rpm"
-targetDir=$secTestDir'/bin/tizen'
-buildScriptDir='tizen/ca'
+rpm_path=$4
+test_dir='test'
+rpm_name="com-oic-ca-sim-0.0.1-1.armv7l.rpm"
+target_dir=$test_dir'/bin/tizen'
+build_script_dir='tizen/ca'
 
 target_tranport=$2
 target_secured=$3
 
-mkdir $tmpDir
-mkdir $tmpDir/packaging
-mkdir $tmpDir/$secTestDir
+mkdir $tmp_dir
+mkdir $tmp_dir/packaging
+mkdir $tmp_dir/$test_dir
+mkdir -p $tmp_dir/iotivity/resource/csdk/connectivity
+mkdir $tmp_dir/iotivity
+mkdir -p $tmp_dir/iotivity/resource
 
-
-mkdir -p $tmpDir/iotivity/resource/csdk/connectivity
-
-pwd
-echo $tmpDir
-echo $homeDir
-
-
-
-mkdir $tmpDir/iotivity
-mkdir -p $tmpDir/iotivity/resource
-
-cp -R $homeDir/resource/* $tmpDir/iotivity/resource/
-
-cp -R $homeDir/$secTestDir/* $tmpDir/$secTestDir
-
-cp $buildScriptDir/com.oic.ca.sim.spec $tmpDir/packaging
-cp $buildScriptDir/com.oic.ca.sim.manifest $tmpDir
-cp $buildScriptDir/com.oic.ca.sim.xml $tmpDir
-#cp $buildScriptDir/SConscript $tmpDir
-cp $buildScriptDir/SConstruct $tmpDir
+cp -R $homeDir/resource/* $tmp_dir/iotivity/resource/
+cp -R $homeDir/$test_dir/* $tmp_dir/$test_dir
+cp $build_script_dir/com.oic.ca.sim.spec $tmp_dir/packaging
+cp $build_script_dir/com.oic.ca.sim.manifest $tmp_dir
+cp $build_script_dir/com.oic.ca.sim.xml $tmp_dir
+cp $build_script_dir/SConstruct $tmp_dir
 
 echo "Initializing Git repository"
 echo " "
 
-cd $tmpDir
+cd $tmp_dir
 
 echo `pwd`
 
@@ -70,28 +52,28 @@ fi
 
 echo "Calling core gbs build command"
 
-gbscommand="gbs build -A "$target_arch" -B ~/GBS-ROOT-OIC --include-all --define 'TARGET_TRANSPORT $2' --define 'SECURED $3'"
+gbscommand="gbs build -A "$target_arch" -B ~/GBS-ROOT-RI-OIC --include-all --define 'TARGET_TRANSPORT $2' --define 'SECURED $3'"
 echo $gbscommand
 
 if eval $gbscommand; then
    echo "GBS build is successful"
    
    echo "Extracting RPM"
-   extractCommand="rpm2cpio "$rpmPath/$rpmName" | cpio -idmv"
+   extractCommand="rpm2cpio "$rpm_path/$rpm_name" | cpio -idmv"
    echo $extractCommand
 
-   chmod 777 $rpmPath/$rpmName
+   chmod 777 $rpm_path/$rpm_name
    sleep 1
    eval $extractCommand
    echo $(pwd)
    echo "Copying binary files"
-   mkdir -p ../$targetDir
-   cp usr/apps/com.oic.ca.sim/bin/* ../$targetDir
+   mkdir -p ../$target_dir
+   cp usr/apps/com.oic.ca.sim/bin/* ../$target_dir
 
     echo "Copying RPM"
-    cp $rpmPath/$rpmName ../$targetDir
+    cp $rpm_path/$rpm_name ../$target_dir
 
-   chmod 777 -R ../$targetDir
+   chmod 777 -R ../$target_dir
 else
    echo "GBS build failed."
 fi
@@ -99,4 +81,4 @@ echo ""
 echo "Deleting Tmp Directory"
 
 cd ..
-rm -rf $tmpDirName/
+rm -rf $tmp_dirName/

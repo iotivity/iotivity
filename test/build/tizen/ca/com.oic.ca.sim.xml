@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns="http://tizen.org/ns/packages" package="com.oic.ca.sim" version="0.0.1" install-location="internal-only">
-	<label>casim</label>
-	<author email="oic" href="www.iotivity.org">OIC</author>
-	<description>casim</description>
-	<ui-application appid="com.oic.ca.sim" exec="/usr/apps/com.oic.ca.sim/bin/iotivity_ca_edr_itc_client" nodisplay="false" multiple="false" type="capp" taskmanage="true">
-		<icon>com.oic.ca.sample.png</icon>
-		<label>casim</label>
-		<label xml:lang="en-us">casim</label>
-		<label xml:lang="nl-nl">casim</label>
-	</ui-application>
-	<privileges>
-         	<privilege>http://tizen.org/privilege/socket</privilege>
-	</privileges>
+    <label>casim</label>
+    <author email="oic" href="www.iotivity.org">OIC</author>
+    <description>casim</description>
+    <ui-application appid="com.oic.ca.sim" exec="/usr/apps/com.oic.ca.sim/bin/iotivity_ca_edr_test" nodisplay="false" multiple="false" type="capp" taskmanage="true">
+        <icon>com.oic.ca.sim.png</icon>
+        <label>casim</label>
+        <label xml:lang="en-us">casim</label>
+        <label xml:lang="nl-nl">casim</label>
+    </ui-application>
+    <privileges>
+             <privilege>http://tizen.org/privilege/socket</privilege>
+    </privileges>
 
 </manifest>
 
