@@ -161,7 +161,6 @@ OCStackApplicationResult NSIntrospectProvider(
     if (ctx && *((NSConsumerDiscoverType *)ctx) == NS_DISCOVER_CLOUD )
     {
         newProvider->connection->isCloudConnection = true;
-        NSOICFree(ctx);
     }
 
     NS_LOG(DEBUG, "build NSTask");
@@ -293,14 +292,13 @@ OCDevAddr * NSChangeAddress(const char * address)
 
 void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType rType)
 {
-    OCConnectivityType type = CT_DEFAULT;
+    OCConnectivityType type = CT_ADAPTER_IP;
     NSConsumerDiscoverType * callbackData = NULL;
 
     if (address)
     {
         if (address->adapter == OC_ADAPTER_IP)
         {
-            type = CT_ADAPTER_IP;
             NS_LOG(DEBUG, "Request discover [UDP]");
         }
         else if (address->adapter == OC_ADAPTER_TCP)
@@ -313,7 +311,6 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
 
             if (rType == NS_DISCOVER_CLOUD)
             {
-                callbackData = (NSConsumerDiscoverType *)OICMalloc(sizeof(NSConsumerDiscoverType));
                 *callbackData = NS_DISCOVER_CLOUD;
             }
         }
