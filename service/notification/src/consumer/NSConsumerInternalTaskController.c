@@ -235,6 +235,13 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
 
     bool isAdded = true;
     bool isSubscribing = false;
+
+    NSProvider_internal * providerCacheDataFromAddr
+        = NSFindProviderFromAddr(provider->connection->addr);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
+        (providerCacheDataFromAddr == NULL) ? (void *)1 : NULL,
+        NSRemoveProvider_internal(providerCacheDataFromAddr));
+
     NSProvider_internal * providerCacheData = NSProviderCacheFind(provider->providerId);
 
     if (providerCacheData == NULL)
@@ -307,8 +314,17 @@ void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
 
-    NSResult ret = NSProviderCacheUpdate(provider);
-    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
+
+    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, provider->providerId);
+    NS_VERIFY_NOT_NULL_V(cacheElement);
+    NSProvider_internal * prov = (NSProvider_internal *)cacheElement->data;
+    NSProviderConnectionInfo *infos = prov->connection;
+    while(infos)
+    {
+        infos->isSubscribing = true;
+        infos = infos->next;
+    }
 }
 
 void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
@@ -392,6 +408,9 @@ void NSConsumerHandleGetTopicUri(NSMessage * msg)
 void NSConsumerHandleRecvTopicLL(NSProvider_internal * provider)
 {
     NS_VERIFY_NOT_NULL_V(provider);
+
+    NSRemoveConnections(provider->connection);
+    provider->connection = NULL;
 
     NSResult ret = NSProviderCacheUpdate(provider);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);

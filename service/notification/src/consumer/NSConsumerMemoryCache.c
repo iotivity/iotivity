@@ -291,20 +291,31 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     NSProvider_internal * newProvObj = (NSProvider_internal *) newObj->data;
 
     NSCacheElement * it = NSStorageRead(list, newProvObj->providerId);
+
     pthread_mutex_lock(mutex);
 
     if (it)
     {
-        NSProvider_internal * provObj = (NSProvider_internal *) it->data;
-
-        NSProviderConnectionInfo * infos = provObj->connection;
-        NSProviderConnectionInfo * lastConn = infos->next;
-        while(lastConn)
+        if (newProvObj->connection)
         {
-            infos = lastConn;
-            lastConn = lastConn->next;
+            NSProvider_internal * provObj = (NSProvider_internal *) it->data;
+
+            NSProviderConnectionInfo * infos = provObj->connection;
+            NSProviderConnectionInfo * lastConn = infos->next;
+            while(lastConn)
+            {
+                infos = lastConn;
+                lastConn = lastConn->next;
+            }
+            infos->next = NSCopyProviderConnections(newProvObj->connection);
         }
-        infos->next = NSCopyProviderConnections(newProvObj->connection);
+
+        if (newProvObj->topicLL)
+        {
+            NSProvider_internal * provObj = (NSProvider_internal *) it->data;
+            NSRemoveTopicLL(provObj->topicLL);
+            provObj->topicLL = NSCopyTopicLL(newProvObj->topicLL);
+        }
 
         pthread_mutex_unlock(mutex);
 
