@@ -188,7 +188,8 @@ namespace OIC
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
                         pOwnedDevList.size());
-                std::shared_ptr< OC::OCSecureResource > ownedDevice = findEnrolleeSecurityResource(pOwnedDevList);
+                std::shared_ptr< OC::OCSecureResource > ownedDevice =
+                    findEnrolleeSecurityResource(pOwnedDevList);
 
                 if (ownedDevice)
                 {
@@ -328,13 +329,9 @@ namespace OIC
             return false;
         }
 
-        ESResult EnrolleeSecurity::provisionACLForCloudServer(std::string cloudUuid)
+        void EnrolleeSecurity::provisionSecurityForCloudServer(
+            std::string cloudUuid, int credId)
         {
-            ESResult res = ESResult::ES_ERROR;
-
-            OicUuid_t uuid;
-            convertStringToUUID(uuid, cloudUuid);
-
             // Need to discover Owned device in a given network, again
             OC::DeviceList_t pOwnedDevList;
             std::shared_ptr< OC::OCSecureResource > ownedDevice = NULL;
@@ -359,15 +356,80 @@ namespace OIC
 
                 if (!ownedDevice)
                 {
-                    OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Not found owned devices.");
-                    return res;
+                    OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Not found matched owned device.");
+                    throw ESException("Not found matched owned device.");
                 }
             }
             else
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Not found owned devices.");
+                throw ESException("Not found owned devices.");
+            }
+
+            if(performACLProvisioningForCloudServer(ownedDevice, cloudUuid) != ESResult::ES_OK)
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performACLProvisioningForCloudServer");
+                throw ESException("error performACLProvisioningForCloudServer");
+            }
+
+            if(performCertProvisioningForCloudServer(ownedDevice, credId) != ESResult::ES_OK)
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performCertProvisioningForCloudServer");
+                throw ESException("error performCertProvisioningForCloudServer");
+            }
+        }
+
+        ESResult EnrolleeSecurity::performCertProvisioningForCloudServer(
+            std::shared_ptr< OC::OCSecureResource > ownedDevice, int credId)
+        {
+            ESResult res = ESResult::ES_ERROR;
+
+            if(!ownedDevice)
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Invalid param");
                 return res;
             }
+            OC::ResultCallBack CertProvisioningCb = std::bind(
+                            &EnrolleeSecurity::CertProvisioningCb, this, std::placeholders::_1,
+                            std::placeholders::_2);
+            OCStackResult rst = ownedDevice->provisionTrustCertChain(SIGNED_ASYMMETRIC_KEY,
+                                                                    static_cast<uint16_t>(credId),
+                                                                    CertProvisioningCb);
+            if(OC_STACK_OK != rst)
+            {
+                OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "provisionTrustCertChain error: %d", rst);
+                return res;
+            }
+
+            std::unique_lock<std::mutex> lck(m_mtx);
+            m_cond.wait_for(lck, std::chrono::seconds(ES_SEC_DISCOVERY_TIMEOUT));
+
+            if(certResult)
+            {
+                res = ESResult::ES_OK;
+            }
+
+            return res;
+        }
+
+        ESResult EnrolleeSecurity::performACLProvisioningForCloudServer(
+            std::shared_ptr< OC::OCSecureResource > ownedDevice, std::string& cloudUuid)
+        {
+            ESResult res = ESResult::ES_ERROR;
+
+            if(!ownedDevice)
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Invalid param");
+                return res;
+            }
+            if(cloudUuid.empty())
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Invalid param");
+                return res;
+            }
+
+            OicUuid_t uuid;
+            convertStringToUUID(uuid, cloudUuid);
 
             // Create Acl for Cloud Server to be provisioned to Enrollee
             OicSecAcl_t* acl = createAcl(uuid);
@@ -476,6 +538,30 @@ namespace OIC
                }
                delete result;
                aclResult = true;
+            }
+            m_cond.notify_all();
+        }
+
+        void EnrolleeSecurity::CertProvisioningCb(PMResultList_t *result, int hasError)
+        {
+            if (hasError)
+            {
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in provisioning operation!");
+               aclResult = false;
+            }
+            else
+            {
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received provisioning results: ");
+
+               std::string devUuid;
+               for (unsigned int i = 0; i < result->size(); i++)
+               {
+                   convertUUIDToString(result->at(i).deviceId.id, devUuid);
+                   OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d  for device %s",
+                                                           result->at(i).res, devUuid.c_str());
+               }
+               delete result;
+               certResult= true;
             }
             m_cond.notify_all();
         }

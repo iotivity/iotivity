@@ -32,6 +32,7 @@ public class CloudProp {
     private static final String TAG = CloudProp.class.getName();
     protected OcRepresentation mRep = null;
     protected String mCloudID = null;
+    protected int mCredID ;
 
     /**
      * Constructor
@@ -57,6 +58,10 @@ public class CloudProp {
         mCloudID = cloudID;
     }
 
+    public void setCredID(int credID)
+    {
+        mCredID = credID;
+    }
     /**
      * This method returns the authCode used for the first registration to IoTivity cloud
      * @return AuthCode for sign-up to IoTivity cloud
@@ -133,6 +138,15 @@ public class CloudProp {
     public String getCloudID()
     {
         return mCloudID;
+    }
+
+    /**
+     * This method returns the Cloud Certificate's Cred ID
+     * @return CI server's Credential ID of Certificate
+     */
+    public int getCredID()
+    {
+        return mCredID;
     }
 
     public OcRepresentation toOCRepresentation()

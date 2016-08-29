@@ -22,6 +22,7 @@
 #define ENROLLEE_SECURITY_H_
 
 #include <functional>
+#include <atomic>
 #include <condition_variable>
 
 #include "ESRichCommon.h"
@@ -56,8 +57,8 @@ namespace OIC
                 const SecurityPinCb securityPinCb,
                 const SecProvisioningDbPathCb secProvisioningDbPathCb);
             void provisionOwnership();
-            ESResult provisionACLForCloudServer(
-                const std::string cloudUuid);
+            void provisionSecurityForCloudServer(
+                std::string cloudUuid, int credId);
             std::string getUUID() const;
 
         private:
@@ -69,7 +70,15 @@ namespace OIC
 
             std::mutex m_mtx;
             std::condition_variable m_cond;
-            bool aclResult;
+            std::atomic<bool>  aclResult;
+            std::atomic<bool>  certResult;
+
+            ESResult performCertProvisioningForCloudServer(
+                std::shared_ptr< OC::OCSecureResource > ownedDevice,
+                int credId);
+            ESResult performACLProvisioningForCloudServer(
+                std::shared_ptr< OC::OCSecureResource > ownedDevice,
+                std::string& cloudUuid);
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
             std::shared_ptr< OC::OCSecureResource > findEnrolleeSecurityResource(
@@ -84,6 +93,7 @@ namespace OIC
             OicSecAcl_t* createAcl(const OicUuid_t cloudUuid);
 
             void ACLProvisioningCb(PMResultList_t *result, int hasError);
+            void CertProvisioningCb(PMResultList_t *result, int hasError);
         };
     }
 }

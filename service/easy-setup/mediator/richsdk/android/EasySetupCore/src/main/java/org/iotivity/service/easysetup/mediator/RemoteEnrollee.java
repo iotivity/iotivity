@@ -46,7 +46,7 @@ public class RemoteEnrollee{
     private native void nativeProvisionDeviceProperties(OcRepresentation deviceProp,
                                                         DevicePropProvisioningCallback callback);
     private native void nativeProvisionCloudProperties(OcRepresentation cloudProp, String cloudID,
-                                                       CloudPropProvisioningCallback callback);
+                                                       int CredID, CloudPropProvisioningCallback callback);
 
     /* constructor will be invoked from the native layer */
     private RemoteEnrollee(long nativeHandle){
@@ -158,6 +158,7 @@ public class RemoteEnrollee{
         {
             nativeProvisionCloudProperties(cloudProp.toOCRepresentation(),
                                             cloudProp.getCloudID(),
+                                            cloudProp.getCredID(),
                                             callback);
             return;
         }

@@ -169,6 +169,16 @@ namespace OIC
             }
 
             /**
+             * Set CloudServer's credential ID of certificate
+             *
+             * @param credID Cloud Interface server's credential ID of certificate
+             */
+            void setCredID(int credID)
+            {
+                m_credID = credID;
+            }
+
+            /**
              * Get an auth code to be delivered.
              *
              * @return an auth code to be delivered.
@@ -221,6 +231,16 @@ namespace OIC
             }
 
             /**
+             * Get a CI server's credential ID of certificate
+             *
+             * @return a CI server's credential ID of certificated
+             */
+            int getCredID() const
+            {
+                return m_credID;
+            }
+
+            /**
              * Get OCRepresentation object
              *
              * @return OCRepresentation object
@@ -232,6 +252,7 @@ namespace OIC
         protected:
             OCRepresentation m_rep;
             std::string m_cloudID;
+            int m_credID;
         };
 
         /**
