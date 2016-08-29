@@ -5,7 +5,6 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <pthread.h>
 #include <unistd.h>
 
 #include "ocstack.h"
@@ -14,8 +13,6 @@
 
 #include <OCApi.h>
 #include <OCPlatform.h>
-
-#define DEFAULT_CONTEXT_VALUE 0x99
 
 using namespace OC;
 using namespace std;
@@ -438,50 +435,11 @@ void onPublish(const OCRepresentation &, const int &eCode)
     g_callbackLock.notify_all();
 }
 
-void printRepresentation(OCRepPayloadValue *value)
+void printRepresentation(OCRepresentation rep)
 {
-    while (value)
+    for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
-        std::cout << "Key: " << value->name;
-        switch (value->type)
-        {
-            case OCREP_PROP_NULL:
-                std::cout << " Value: None" << std::endl;
-                break;
-            case OCREP_PROP_INT:
-                std::cout << " Value: " << value->i << std::endl;
-                break;
-            case OCREP_PROP_DOUBLE:
-                std::cout << " Value: " << value->d << std::endl;
-                break;
-            case OCREP_PROP_BOOL:
-                std::cout << " Value: " << value->b << std::endl;
-                break;
-            case OCREP_PROP_STRING:
-                std::cout << " Value: " << value->str << std::endl;
-                break;
-            case OCREP_PROP_BYTE_STRING:
-                std::cout << " Value: Byte String" << std::endl;
-                break;
-            case OCREP_PROP_OBJECT:
-                std::cout << " Value: Object" << std::endl;
-                break;
-            case OCREP_PROP_ARRAY:
-                std::cout << " Value: Array" << std::endl;
-                break;
-        }
-
-        if (strcmp(value->name, "accesstoken") == 0)
-        {
-            g_accesstoken = value->str;
-        }
-
-        if (strcmp(value->name, "uid") == 0)
-        {
-            g_uid = value->str;
-        }
-
-        value = value->next;
+        cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
     }
 }
 
@@ -492,7 +450,14 @@ void handleLoginoutCB(const HeaderOptions &,
 
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
+    }
+
+    if (ecode == 4)
+    {
+        g_accesstoken = rep.getValueToString("accesstoken");
+
+        g_uid = rep.getValueToString("uid");
     }
 
     g_callbackLock.notify_all();
@@ -500,7 +465,7 @@ void handleLoginoutCB(const HeaderOptions &,
 
 static FILE *client_open(const char * /*path*/, const char *mode)
 {
-    return fopen("./resource_server.dat", mode);
+    return fopen("./aircon_controlee.dat", mode);
 }
 
 int main(int argc, char *argv[])
