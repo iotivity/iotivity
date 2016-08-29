@@ -74,11 +74,6 @@ public class ConsumerService
         return instance;
     }
 
-    public ConsumerService()
-    {
-        Log.i (LOG_TAG, "ConsumerService()");
-    }
-
     public void Start(
         OnProviderDiscoveredListner onProviderDiscoveredListner,
         OnProviderChangedListener onProviderChangedListener
