@@ -2826,6 +2826,10 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         // Assign full presence uri as coap://ip:port/oic/ad to add to callback list.
         // Presence notification will form a canonical uri to
         // look for callbacks into the application.
+        if (resourceUri)
+        {
+            OICFree(resourceUri);
+        }
         resourceUri = presenceUri;
     }
 #endif
