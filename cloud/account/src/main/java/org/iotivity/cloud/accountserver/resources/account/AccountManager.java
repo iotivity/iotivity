@@ -29,7 +29,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,10 +59,27 @@ public class AccountManager {
     private TypeCastingManager<UserTable>  mUserTableCastingManager  = new TypeCastingManager<>();
     private TypeCastingManager<TokenTable> mTokenTableCastingManager = new TypeCastingManager<>();
 
+    /**
+     * API to return a sign-up response payload
+     * 
+     * @param did
+     *            Device id registered under user account
+     * @param authCode
+     *            Unique identifier of the resource which is obtained from an
+     *            auth provider or a single sign-on (SSO) client
+     * @param authProvider
+     *            Provider name user for authentication (e.g., "Github")
+     * @param options
+     *            Optional field (e.g., region authserver url, apiserver url)
+     * 
+     * @return Sign-up response payload
+     */
+
     public HashMap<String, Object> signUp(String did, String authCode,
             String authProvider, Object options) {
-
         boolean res = false;
+
+        // check auth provider name not to be case-sensitive
         authProvider = checkAuthProviderName(authProvider);
         res = loadAuthProviderLibrary(authProvider);
 
@@ -88,6 +104,8 @@ public class AccountManager {
         // check uuid
         userUuid = findUuid(userInfo.getUserid(), authProvider);
 
+        // store token information and user information to the DB
+        // private group creation and store group information to the DB
         storeUserTokenInfo(userUuid, userInfo, tokenInfo, did);
 
         // make response
@@ -96,9 +114,110 @@ public class AccountManager {
         return response;
     }
 
+    /**
+     * API to return a sign-in or sign-out response payload
+     * 
+     * @param uuid
+     *            User id which is provided by Sign-up process
+     * @param did
+     *            Device id registered under user account
+     * @param accessToken
+     *            Access token used for communication with cloud
+     * @return Sign-in or sign-out response payload
+     */
+    public HashMap<String, Object> signInOut(String uuid, String did,
+            String accessToken) {
+
+        // find token information corresponding to the uuid and did
+        HashMap<String, Object> condition = new HashMap<>();
+        condition.put(Constants.KEYFIELD_UUID, uuid);
+
+        ArrayList<HashMap<String, Object>> recordList = findRecord(
+                AccountDBManager.getInstance()
+                        .selectRecord(Constants.TOKEN_TABLE, condition),
+                Constants.KEYFIELD_DID, did);
+
+        if (recordList.isEmpty()) {
+            throw new UnAuthorizedException("access token doesn't exist");
+        }
+
+        HashMap<String, Object> record = recordList.get(0);
+
+        TokenTable tokenInfo = castMapToTokenTable(record);
+
+        // token verification to check if the accesstoken is expired
+        if (verifyToken(tokenInfo, accessToken)) {
+            long remainedSeconds = getRemainedSeconds(
+                    tokenInfo.getExpiredtime(), tokenInfo.getIssuedtime());
+
+            return makeSignInResponse(remainedSeconds);
+        } else {
+            throw new UnAuthorizedException("AccessToken is unauthorized");
+        }
+    }
+
+    /**
+     * API to return a token refresh response payload
+     * 
+     * @param uuid
+     *            user id which is provided by Sign-up process
+     * @param did
+     *            device id registered under user account
+     * @param grantType
+     *            token type to be granted
+     * @param refreshToken
+     *            Refresh token used to refresh the access token in cloud before
+     *            getting expired
+     * @return Token refresh response payload
+     */
+
+    public HashMap<String, Object> refreshToken(String uuid, String did,
+            String grantType, String refreshToken) {
+
+        // find record about uuid and did
+        HashMap<String, Object> condition = new HashMap<>();
+        condition.put(Constants.KEYFIELD_UUID, uuid);
+        condition.put(Constants.KEYFIELD_DID, did);
+
+        ArrayList<HashMap<String, Object>> recordList = findRecord(
+                AccountDBManager.getInstance()
+                        .selectRecord(Constants.TOKEN_TABLE, condition),
+                Constants.KEYFIELD_DID, did);
+
+        if (recordList.isEmpty()) {
+            throw new NotFoundException("refresh token doesn't exist");
+        }
+
+        HashMap<String, Object> record = recordList.get(0);
+
+        TokenTable oldTokenInfo = castMapToTokenTable(record);
+        String provider = oldTokenInfo.getProvider();
+
+        if (!checkRefreshTokenInDB(oldTokenInfo, refreshToken)) {
+            throw new NotFoundException("refresh token is not correct");
+        }
+        // call 3rd party refresh token method
+        TokenTable newTokenInfo = requestRefreshToken(refreshToken, provider);
+
+        // record change
+        oldTokenInfo.setAccesstoken(newTokenInfo.getAccesstoken());
+        oldTokenInfo.setRefreshtoken(newTokenInfo.getRefreshtoken());
+
+        // insert record
+        AccountDBManager.getInstance().insertAndReplaceRecord(
+                Constants.TOKEN_TABLE, castTokenTableToMap(oldTokenInfo));
+
+        // make response
+        HashMap<String, Object> response = makeRefreshTokenResponse(
+                oldTokenInfo);
+
+        return response;
+    }
+
     private void storeUserTokenInfo(String userUuid, UserTable userInfo,
             TokenTable tokenInfo, String did) {
         // store db
+        // the user table is created
         if (userUuid == null) {
             userUuid = generateUuid();
             userInfo.setUuid(userUuid);
@@ -110,9 +229,6 @@ public class AccountManager {
             GroupResource.getInstance().createGroup(userInfo.getUuid(),
                     Constants.REQ_GTYPE_PRIVATE);
         }
-        // add my device to private group
-        GroupResource.getInstance().getGroup(userUuid)
-                .addDevice(new HashSet<String>(Arrays.asList(did)));
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(
                 Constants.TOKEN_TABLE, castTokenTableToMap(tokenInfo));
@@ -244,36 +360,6 @@ public class AccountManager {
         return userUuid;
     }
 
-    public HashMap<String, Object> signInOut(String uuid, String did,
-            String accessToken) {
-
-        // find record about uuid and did
-        HashMap<String, Object> condition = new HashMap<>();
-        condition.put(Constants.KEYFIELD_UUID, uuid);
-
-        ArrayList<HashMap<String, Object>> recordList = findRecord(
-                AccountDBManager.getInstance()
-                        .selectRecord(Constants.TOKEN_TABLE, condition),
-                Constants.KEYFIELD_DID, did);
-
-        if (recordList.isEmpty()) {
-            throw new UnAuthorizedException("access token doesn't exist");
-        }
-
-        HashMap<String, Object> record = recordList.get(0);
-
-        TokenTable tokenInfo = castMapToTokenTable(record);
-
-        if (verifyToken(tokenInfo, accessToken)) {
-            long remainedSeconds = getRemainedSeconds(
-                    tokenInfo.getExpiredtime(), tokenInfo.getIssuedtime());
-
-            return makeSignInResponse(remainedSeconds);
-        } else {
-            throw new UnAuthorizedException("AccessToken is unauthorized");
-        }
-    }
-
     private ArrayList<HashMap<String, Object>> findRecord(
             ArrayList<HashMap<String, Object>> recordList, String fieldName,
             String value) {
@@ -370,49 +456,6 @@ public class AccountManager {
         Log.d("accessToken elasped time: " + elaspedSeconds + "s");
 
         return elaspedSeconds;
-    }
-
-    public HashMap<String, Object> refreshToken(String uuid, String did,
-            String grantType, String refreshToken) {
-
-        // find record about uuid and did
-        HashMap<String, Object> condition = new HashMap<>();
-        condition.put(Constants.KEYFIELD_UUID, uuid);
-        condition.put(Constants.KEYFIELD_DID, did);
-
-        ArrayList<HashMap<String, Object>> recordList = findRecord(
-                AccountDBManager.getInstance()
-                        .selectRecord(Constants.TOKEN_TABLE, condition),
-                Constants.KEYFIELD_DID, did);
-
-        if (recordList.isEmpty()) {
-            throw new NotFoundException("refresh token doesn't exist");
-        }
-
-        HashMap<String, Object> record = recordList.get(0);
-
-        TokenTable oldTokenInfo = castMapToTokenTable(record);
-        String provider = oldTokenInfo.getProvider();
-
-        if (!checkRefreshTokenInDB(oldTokenInfo, refreshToken)) {
-            throw new NotFoundException("refresh token is not correct");
-        }
-        // call 3rd party refresh token method
-        TokenTable newTokenInfo = requestRefreshToken(refreshToken, provider);
-
-        // record change
-        oldTokenInfo.setAccesstoken(newTokenInfo.getAccesstoken());
-        oldTokenInfo.setRefreshtoken(newTokenInfo.getRefreshtoken());
-
-        // insert record
-        AccountDBManager.getInstance().insertAndReplaceRecord(
-                Constants.TOKEN_TABLE, castTokenTableToMap(oldTokenInfo));
-
-        // make response
-        HashMap<String, Object> response = makeRefreshTokenResponse(
-                oldTokenInfo);
-
-        return response;
     }
 
     private HashMap<String, Object> makeRefreshTokenResponse(
@@ -515,7 +558,18 @@ public class AccountManager {
         HashSet<String> diSet = new HashSet<String>();
         diSet.add(di);
 
-        // the group that gid is uid is my group.
-        GroupResource.getInstance().removeGroupDevice(uid, diSet);
+        // token table search criteria
+        HashMap<String, Object> condition = new HashMap<>();
+        condition.put(Constants.KEYFIELD_UUID, uid);
+        condition.put(Constants.KEYFIELD_DID, di);
+
+        // delete Token information from the DB
+        AccountDBManager.getInstance().deleteRecord(Constants.TOKEN_TABLE,
+                condition);
+        // delete device ID from all groups in the DB
+        GroupResource.getInstance().removeGroupDeviceinEveryGroup(uid, di);
+
+        // TODO remove device record from the ACL table
     }
+
 }

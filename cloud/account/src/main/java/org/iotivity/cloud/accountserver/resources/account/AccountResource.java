@@ -64,6 +64,7 @@ public class AccountResource extends Resource {
         switch (request.getMethod()) {
 
             case POST:
+                // make sign-up response message
                 response = handlePostSignUp(request);
                 break;
 
@@ -79,7 +80,7 @@ public class AccountResource extends Resource {
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-
+        // send sign-up response to the source device
         srcDevice.sendResponse(response);
     }
 
@@ -95,6 +96,8 @@ public class AccountResource extends Resource {
 
         HashMap<String, Object> responsePayload = null;
 
+        // payload verification if the mandatory properties are
+        // included in the payload
         if (checkPayloadException(Arrays.asList(Constants.REQ_DEVICE_ID,
                 Constants.REQ_AUTH_CODE, Constants.REQ_AUTH_PROVIDER),
                 payloadData)) {

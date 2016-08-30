@@ -61,6 +61,7 @@ public class InviteResource extends Resource {
                 response = handleGetRequest(srcDevice, request);
                 break;
             case POST:
+                // handle send-invitation message
                 response = handlePostRequest(request);
                 break;
             case DELETE:
@@ -109,10 +110,12 @@ public class InviteResource extends Resource {
         HashMap<String, Object> payload = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
+        // check properties in payload
         checkPayloadException(
                 Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_INVITE),
                 payload);
 
+        // get user uid
         String uid = (String) payload.get(Constants.REQ_UUID_ID);
         ArrayList<HashMap<String, String>> inviteList = (ArrayList<HashMap<String, String>>) payload
                 .get(Constants.REQ_INVITE);

@@ -37,6 +37,12 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to handle token refresh requests
+ *
+ */
+
 public class TokenRefreshResource extends Resource {
 
     private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
@@ -56,6 +62,7 @@ public class TokenRefreshResource extends Resource {
 
         switch (request.getMethod()) {
             case POST:
+                // make token refresh response message
                 response = handlePostRefreshToken(request);
                 break;
 
@@ -63,7 +70,7 @@ public class TokenRefreshResource extends Resource {
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-
+        // send sign-up response to the source device
         srcDevice.sendResponse(response);
     }
 
@@ -79,6 +86,7 @@ public class TokenRefreshResource extends Resource {
 
         HashMap<String, Object> responsePayload = null;
 
+        // check if the payload has mandatory properties
         if (checkPayloadException(
                 Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID,
                         Constants.REQ_REFRESH_TOKEN, Constants.REQ_GRANT_TYPE),
@@ -95,7 +103,7 @@ public class TokenRefreshResource extends Resource {
             responsePayload = mAsManager.refreshToken(uuid, deviceId, grantType,
                     refreshToken);
         }
-
+        // return token refresh response message
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));
