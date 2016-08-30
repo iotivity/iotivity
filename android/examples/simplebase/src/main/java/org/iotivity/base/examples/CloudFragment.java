@@ -42,6 +42,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.iotivity.base.AclGroupType;
+import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcAccountManager;
 import org.iotivity.base.OcConnectivityType;
@@ -59,8 +61,10 @@ import org.iotivity.base.ServiceType;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -108,7 +112,9 @@ public class CloudFragment extends Fragment implements
     private Button mSignUpButton;
     private Button mSignInButton;
     private Button mSignOutButton;
+    private Button mCreateGroupButton;
     private Button mInviteButton;
+    private Button mLeaveGroupButton;
     private Button mRdPubButton;
     private Button mRdDelButton;
     private Button mDevicePresenceButton;
@@ -123,6 +129,13 @@ public class CloudFragment extends Fragment implements
     private String mRefreshtoken;
     private String mUserUuid;
     private String mAuthCode;
+    private String mGroupId;
+    private String mGroupMasterId;
+    private String mInviterUuid;
+    private String mInviterUserId;
+    private String mInviteeUuid;
+    private String mInviteeUserId;
+
     private int mRequestCode;
     private final int REQUEST_LOGIN = 1;
 
@@ -160,7 +173,6 @@ public class CloudFragment extends Fragment implements
     }
 
     private void signUp() {
-        mRequestCode = 0;
         try {
             mAccountManager = OcPlatform.constructAccountManagerObject(
                     Common.HOST,
@@ -176,7 +188,8 @@ public class CloudFragment extends Fragment implements
     private void signIn() {
         mRequestCode = 1;
         try {
-            mAccountManager.signIn(mUserUuid, mAccesstoken, this);
+            msg("signIn");
+            mAccountManager.signIn(mUserUuid, mAccesstoken, onSignIn);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -185,24 +198,43 @@ public class CloudFragment extends Fragment implements
     private void signOut() {
         mRequestCode = 2;
         try {
+            msg("signOut");
             mAccountManager.signOut(this);
         } catch (OcException e) {
             e.printStackTrace();
         }
     }
 
-    private void refreshAccessToken() {
-        mRequestCode = 3;
+    private void createGroup() {
         try {
-            mAccountManager.refreshAccessToken(mUserUuid, mRefreshtoken, this);
+            msg("createGroup");
+            mAccountManager.createGroup(AclGroupType.PUBLIC, onCreateGroup);
         } catch (OcException e) {
             e.printStackTrace();
         }
     }
 
     private void inviteUser() {
-        mRequestCode = 4;
-        showInviteUser();
+        if (mGroupId == null){
+            msg("there is no any group");
+        }
+        else {
+            showInviteUser();
+        }
+    }
+
+    private void leaveGroup() {
+        try {
+            if (mGroupId == null){
+                msg("there is no any group");
+            }
+            else {
+                msg("leaveGroup");
+                mAccountManager.leaveGroup(mGroupId, onLeaveGroup);
+            }
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
     }
 
     // FOR WEB-VIEW
@@ -215,7 +247,7 @@ public class CloudFragment extends Fragment implements
 
             try {
                 msg("Sign Up");
-                mAccountManager.signUp("github", mAuthCode, this);
+                mAccountManager.signUp("github", mAuthCode, onSignUp);
             } catch (OcException e) {
                 e.printStackTrace();
             }
@@ -225,28 +257,20 @@ public class CloudFragment extends Fragment implements
     @Override
     public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
         try {
-            if (mRequestCode == 0) {
-                msg("\tSign Up Success");
-                if (ocRepresentation.hasAttribute("uid")) {
-                    mUserUuid = ocRepresentation.getValue("uid");
-                    msg("\tuserID: " + mUserUuid);
-                }
-                if (ocRepresentation.hasAttribute("accesstoken")) {
-                    mAccesstoken = ocRepresentation.getValue("accesstoken");
-                    msg("\taccessToken: " + mAccesstoken);
-                }
-                if (ocRepresentation.hasAttribute("refreshtoken")) {
-                    mRefreshtoken = ocRepresentation.getValue("refreshtoken");
-                    msg("\trefreshtoken: " + mRefreshtoken);
-                }
-            } else if (mRequestCode == 1) {
+            if (mRequestCode == 1) {
                 msg("\tSign In Success");
+                int expiresIn = ocRepresentation.getValue("expiresin");
+                msg("\texpiresin: " + expiresIn);
             } else if (mRequestCode == 2) {
                 msg("\tSign Out Success");
             } else if (mRequestCode == 3) {
                 msg("\tRefresh AccessToken Success");
-            } else if (mRequestCode == 4) {
-                msg("\tDelete Device Success");
+
+                mAccesstoken = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+                msg("\tuserID: " + mUserUuid);
+                msg("\taccessToken: " + mAccesstoken);
+                msg("\trefreshtoken: " + mRefreshtoken);
             }
         } catch (OcException e) {
             e.printStackTrace();
@@ -282,6 +306,406 @@ public class CloudFragment extends Fragment implements
 
     }
 
+    OcAccountManager.OnPostListener onSignUp = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            msg("signUp was successful");
+            try {
+                mUserUuid        = ocRepresentation.getValue("uid");
+                mAccesstoken     = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken    = ocRepresentation.getValue("refreshtoken");
+                String tokenType = ocRepresentation.getValue("tokentype");
+                msg("\tuserID: " + mUserUuid);
+                msg("\taccessToken: " + mAccesstoken);
+                msg("\trefreshToken: " + mRefreshtoken);
+                msg("\ttokenType: " + tokenType);
+
+                if (ocRepresentation.hasAttribute("expiresin"))
+                {
+                    int expiresIn = ocRepresentation.getValue("expiresin");
+                    msg("\texpiresIn: " + expiresIn);
+                }
+            } catch (OcException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            msg("Failed to signUp");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnPostListener onSignIn = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            msg("signIn was successful");
+            try {
+                msg("observeInvitation");
+                mAccountManager.observeInvitation(onObserveInvitation);
+                msg("getGroupList");
+                mAccountManager.getGroupList(onGetGrouptList);
+            } catch (OcException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            msg("Failed to signIn");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnGetListener onGetGrouptList = new OcAccountManager.OnGetListener() {
+        @Override
+        public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+            msg("getGroupList was successful");
+            try {
+                String[] gidlist = ocRepresentation.getValue("gidlist");
+                if (gidlist == null) {
+                    msg("\tgroup list is empty");
+                    mGroupId = null;
+                }
+                else{
+                    msg("\tgroup list");
+                    for (String group : gidlist) {
+                        msg("\t\t" + group);
+                        mGroupId = group;
+                    }
+                    msg("\tcurrent group is " + mGroupId);
+                }
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onGetFailed(Throwable throwable) {
+            msg("Failed to getGroupList");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnObserveListener onObserveInvitation = new OcAccountManager.OnObserveListener() {
+        @Override
+        public void onObserveCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation, int i) {
+            msg("observeInvitation was successful");
+            try {
+                if (this.REGISTER == i) {
+                    msg("REGISTER was successful");
+
+                    OcRepresentation[] sendInvitationList = ocRepresentation.getValue("invite");
+                    if (sendInvitationList != null) {
+                        msg("\tList of invitation that I sent");
+                        for (OcRepresentation invitation : sendInvitationList) {
+                            String gid = invitation.getValue("gid");
+                            String mid = invitation.getValue("mid");
+                            msg("\t\t-GroupID : " + gid);
+                            msg("\t\t InviteeID : " + mid);
+                        }
+                    }
+
+                    OcRepresentation[] receivInvitationList = ocRepresentation.getValue("invited");
+                    if (receivInvitationList != null) {
+                        msg("\tList of invitation that I received");
+                        for (OcRepresentation invitation : receivInvitationList) {
+                            String gid = invitation.getValue("gid");
+                            String mid = invitation.getValue("mid");
+                            msg("\t\t-GroupID : " + gid);
+                            msg("\t\t InviterID : " + mid);
+                        }
+                    }
+                } else if (this.DEREGISTER == i) {
+                    msg("DEREGISTER was successful");
+                } else {
+                    OcRepresentation[] sendInvitationList = ocRepresentation.getValue("invite");
+                    if (sendInvitationList != null) {
+                        msg("\tList of invitation that I sent");
+                        for (OcRepresentation invitation : sendInvitationList) {
+                            String gid = invitation.getValue("gid");
+                            String mid = invitation.getValue("mid");
+                            msg("\t\t-GroupID : " + gid);
+                            msg("\t\t InviteeID : " + mid);
+                        }
+                    }
+
+                    OcRepresentation[] receivInvitationList = ocRepresentation.getValue("invited");
+                    if (receivInvitationList != null) {
+                        msg("\tList of invitation that I received");
+                        for (OcRepresentation invitation : receivInvitationList) {
+                            mGroupId = invitation.getValue("gid");
+                            mGroupMasterId = invitation.getValue("mid");
+                            msg("\t\t-GroupID : " + mGroupId);
+                            msg("\t\t InviterID : " + mGroupMasterId);
+                        }
+                        msg("searchUser");
+                        mAccountManager.searchUser(mGroupMasterId, onSearchUserForInvitee);
+                    }
+                }
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onObserveFailed(Throwable throwable) {
+            msg("Failed to observeInvitation");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnGetListener onSearchUserForInvitee = new OcAccountManager.OnGetListener() {
+        @Override
+        public synchronized void onGetCompleted(List<OcHeaderOption> list,
+                                                OcRepresentation ocRepresentation) {
+            msg("searchUser was successful");
+            try {
+                OcRepresentation[] userList = ocRepresentation.getValue("ulist");
+                for (OcRepresentation user : userList) {
+                    mInviterUuid = user.getValue("uid");
+                    OcRepresentation userInfo = user.getValue("uinfo");
+                    mInviterUserId = userInfo.getValue("userid");
+                }
+
+                mActivity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        showInviteMsg(mInviterUserId);
+                    }
+                });
+
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public synchronized void onGetFailed(Throwable throwable) {
+            msg("Failed to searchUser");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnPostListener onJoinGroup = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            msg("joinGroup was successful");
+            try {
+                msg("observeGroup");
+                mAccountManager.observeGroup(mGroupId, onObserveGroup);
+            } catch (OcException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            msg("Failed to joinGroup");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnDeleteListener onDeleteInvitation = new OcAccountManager.OnDeleteListener() {
+        @Override
+        public void onDeleteCompleted(List<OcHeaderOption> list) {
+            msg("deleteInvitation was successful");
+            try {
+                mAccountManager.getGroupList(onGetGrouptList);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onDeleteFailed(Throwable throwable) {
+            msg("Failed to deleteInvitation");
+        }
+    };
+
+    OcAccountManager.OnGetListener onSearchUserForInviter = new OcAccountManager.OnGetListener() {
+        @Override
+        public synchronized void onGetCompleted(List<OcHeaderOption> list,
+                                                OcRepresentation ocRepresentation) {
+            msg("searchUser was successful");
+            try {
+                OcRepresentation[] userList = ocRepresentation.getValue("ulist");
+                for (OcRepresentation user : userList) {
+                    mInviteeUuid = user.getValue("uid");
+                    OcRepresentation userInfo = user.getValue("uinfo");
+                    mInviteeUserId = userInfo.getValue("userid");
+                }
+                msg("sendInvitation");
+                mAccountManager.sendInvitation(mGroupId, mInviteeUuid, onSendInvitation);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public synchronized void onGetFailed(Throwable throwable) {
+            msg("Failed to searchUser");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnPostListener onCreateGroup = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            msg("createGroup was successful");
+            try {
+                mGroupId = ocRepresentation.getValue("gid");
+                msg("\tgroupId: " + mGroupId);
+
+                msg("observeGroup");
+                mAccountManager.observeGroup(mGroupId, onObserveGroup);
+            } catch (OcException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            msg("Failed to createGroup");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnObserveListener onObserveGroup = new OcAccountManager.OnObserveListener() {
+        @Override
+        public void onObserveCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation, int i) {
+            msg("observeGroup was successful");
+            try {
+                if (this.REGISTER == i) {
+                    msg("REGISTER was successful");
+                } else if (this.DEREGISTER == i) {
+                    msg("DEREGISTER was successful");
+                } else {
+                    String gid = ocRepresentation.getValue("gid");
+                    msg("\tGroupID: " + gid);
+
+                    String gmid = ocRepresentation.getValue("gmid");
+                    msg("\tGroupMasterID: " + gmid);
+
+                    String[] midlist = ocRepresentation.getValue("midlist");
+                    if (midlist == null){
+                        msg("\tMember List is empty");
+                    }
+                    else {
+                        msg("\tMember List(" + midlist.length + ")");
+                        for (String mid : midlist) {
+                            msg("\t : " + mid);
+                        }
+                    }
+
+                    String[] dilist = ocRepresentation.getValue("dilist");
+                    if (dilist == null){
+                        msg("\tDevice List is empty");
+                    }
+                    else {
+                        msg("\tDevice List(" + dilist.length + ")");
+                        for (String di : dilist) {
+                            msg("\t : " + di);
+                        }
+                    }
+                }
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onObserveFailed(Throwable throwable) {
+            msg("Failed to observeGroup");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnPostListener onSendInvitation = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            msg("sendInvitation was successful");
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            msg("Failed to sendInvitation");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnDeleteListener onLeaveGroup = new OcAccountManager.OnDeleteListener() {
+        @Override
+        public void onDeleteCompleted(List<OcHeaderOption> list) {
+            msg("leaveGroup was successful");
+            try {
+                msg("getGroupList");
+                mAccountManager.getGroupList(onGetGrouptList);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onDeleteFailed(Throwable throwable) {
+            msg("Failed to leaveGroup");
+        }
+    };
     // ******************************************************************************
     // End of the Account Manager specific code
     // ******************************************************************************
@@ -752,7 +1176,7 @@ public class CloudFragment extends Fragment implements
         alertDialogBuilder.setView(inputView);
 
         final TextView textView = (TextView) inputView.getRootView().findViewById(R.id.inputView);
-        textView.setText("Please enter user id to invite.");
+        textView.setText("Please enter user ID to invite.");
         final EditText editText = (EditText) inputView.getRootView().findViewById(R.id.inputText);
 
         alertDialogBuilder
@@ -761,7 +1185,16 @@ public class CloudFragment extends Fragment implements
                     public void onClick(DialogInterface dialog, int id) {
                         if (editText.getText().length() != 0) {
                             final String userID = editText.getText().toString();
-                            msg("User ID: " + userID);
+
+                            try {
+                                Map<String, String> option = new HashMap<String, String>();
+                                option.put("userid", userID);
+
+                                msg("searchUser (User ID: " + userID + ")");
+                                mAccountManager.searchUser(option, onSearchUserForInviter);
+                            } catch (OcException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 })
@@ -785,17 +1218,30 @@ public class CloudFragment extends Fragment implements
         sb.append(EOL);
         sb.append("Accept?");
         alertDialogBuilder.setMessage(sb.toString());
-
         alertDialogBuilder
                 .setCancelable(true)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        msg("OK");
+                        try {
+                            msg("joinGroup");
+                            mAccountManager.joinGroup(mGroupId, onJoinGroup);
+                            msg("deleteInvitation");
+                            mAccountManager.deleteInvitation(mGroupId, onDeleteInvitation);
+                        } catch (OcException e) {
+                            e.printStackTrace();
+                        }
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
+                        try {
+                            msg("gid: " +mGroupId);
+                            msg("deleteInvitation");
+                            mAccountManager.deleteInvitation(mGroupId, onDeleteInvitation);
+                        } catch (OcException e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
 
@@ -840,7 +1286,16 @@ public class CloudFragment extends Fragment implements
     @Override
     public void onClick(View view) {
         mActionLog.setText("[Action Log]" + EOL);
-        switch (view.getId()) {
+
+        int viewID = view.getId();
+        if (mAccountManager == null &&
+                (viewID == R.id.signin_button || viewID == R.id.signout_button || viewID == R.id.creategroup_button
+                || viewID == R.id.invite_button || viewID == R.id.leavegroup_button)){
+            mActionLog.append("Do 'SignUp' first" + EOL);
+            return;
+        }
+
+        switch (viewID) {
             // Account
             case R.id.setip_button:
                 mActionLog.append("Set IP" + EOL);
@@ -858,9 +1313,17 @@ public class CloudFragment extends Fragment implements
                 mActionLog.append("Sign Out" + EOL);
                 signOut();
                 break;
+            case R.id.creategroup_button:
+                mActionLog.append("Create Group" + EOL);
+                createGroup();
+                break;
             case R.id.invite_button:
-                mActionLog.append("Refresh Access Token" + EOL);
-                refreshAccessToken();
+                mActionLog.append("Invite User" + EOL);
+                inviteUser();
+                break;
+            case R.id.leavegroup_button:
+                mActionLog.append("Leave Group" + EOL);
+                leaveGroup();
                 break;
 
             // RD
@@ -928,12 +1391,16 @@ public class CloudFragment extends Fragment implements
         mSignUpButton = (Button) rootView.findViewById(R.id.signup_button);
         mSignInButton = (Button) rootView.findViewById(R.id.signin_button);
         mSignOutButton = (Button) rootView.findViewById(R.id.signout_button);
+        mCreateGroupButton = (Button) rootView.findViewById(R.id.creategroup_button);
         mInviteButton = (Button) rootView.findViewById(R.id.invite_button);
+        mLeaveGroupButton = (Button) rootView.findViewById(R.id.leavegroup_button);
         mSetIPButton.setOnClickListener(this);
         mSignUpButton.setOnClickListener(this);
         mSignInButton.setOnClickListener(this);
         mSignOutButton.setOnClickListener(this);
+        mCreateGroupButton.setOnClickListener(this);
         mInviteButton.setOnClickListener(this);
+        mLeaveGroupButton.setOnClickListener(this);
 
         mRdPubButton = (Button) rootView.findViewById(R.id.rdpub_button);
         mRdDelButton = (Button) rootView.findViewById(R.id.rddel_button);
