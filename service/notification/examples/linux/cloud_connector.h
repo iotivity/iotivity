@@ -21,9 +21,9 @@ extern "C" {
 #endif // __cplusplus
 
 #define DEFAULT_CONTEXT_VALUE 0x99
-#define DEFAULT_AUTH_SIGNUP "/.well-known/ocf/account"
-#define DEFAULT_AUTH_SESSION "/.well-known/ocf/account/session"
-#define DEFAULT_AUTH_REFRESH "/.well-known/ocf/account/tokenrefresh"
+#define DEFAULT_AUTH_SIGNUP "/oic/account"
+#define DEFAULT_AUTH_SESSION "/oic/account/session"
+#define DEFAULT_AUTH_REFRESH "/oic/account/tokenrefresh"
 
 OCStackResult OCCloudSignup(const char *host, const char *deviceId,
         const char *authprovider, const char *authcode,
