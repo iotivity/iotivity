@@ -958,7 +958,7 @@ TEST_F(RCResourceContainerTest_btc, ListBundleResources_SRC_P)
  * @expected No crash occurs
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N01)
+TEST_F(RCResourceContainerTest_btc, ListBundleResourcesWithEmptyConfigFile_ESV_N)
 {
     m_pContainer->startContainer(CONFIG_EMPTY_FILE);
 
@@ -1190,7 +1190,7 @@ TEST_F(RCResourceContainerTest_btc, StartContainer_RSV_P)
  * @expected No crash occurs
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N02)
+TEST_F(RCResourceContainerTest_btc, ListBundleResources_ESV_N)
 {
     try
     {

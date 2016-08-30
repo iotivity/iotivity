@@ -2,8 +2,8 @@
 <container>    
     <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
-        <path>data/data/org.iotivity.service.rc.utc/files/libDISensorBundle.so</path>
-        <libraryPath>data/data/org.iotivity.service.rc.utc/files/libDISensorBundle.so</libraryPath>
+        <path>data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</path>
+        <libraryPath>data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</libraryPath>
         <activator>disensor</activator>
         <version>1.0.0</version>
         <resources>
