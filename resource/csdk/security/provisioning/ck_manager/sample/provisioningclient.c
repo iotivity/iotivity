@@ -35,7 +35,6 @@
 #include "ckm_info.h"
 #include "crlresource.h"
 
-#define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
 #define MAX_ACE_LENGTH (100)
 #define MAX_INTERFACE_LENGTH (10)
@@ -213,7 +212,7 @@ static int InputACL(OicSecAcl_t *acl)
         return -1;
     }
     printf("-URI of resource\n");
-    printf("ex) /a/light (Max_URI_Length: 64 Byte )\n");
+    printf("ex) /a/light (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
 
     for(size_t i = 0; i < inputLen; i++)
     {
