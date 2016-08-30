@@ -86,7 +86,10 @@ NSResult NSSubscribe(NSProvider * provider)
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) provider);
+    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+
+    NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) prov);
     NS_VERIFY_NOT_NULL(subscribeTask, NS_ERROR);
 
     return NSConsumerPushEvent(subscribeTask);
@@ -97,7 +100,10 @@ NSResult NSUnsubscribe(NSProvider * provider)
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NSTask * unsubscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) provider);
+    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+
+    NSTask * unsubscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) prov);
     NS_VERIFY_NOT_NULL(unsubscribeTask, NS_ERROR);
 
     return NSConsumerPushEvent(unsubscribeTask);
@@ -172,10 +178,12 @@ NSResult NSConsumerGetInterestTopics(NSProvider * provider)
     NS_VERIFY_NOT_NULL(prov, NS_ERROR);
     NSSelector selector = prov->accessPolicy;
     NSRemoveProvider_internal(prov);
-
     NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
-    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_GET_TOPIC_LIST, (void *) provider);
+    prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+
+    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_GET_TOPIC_LIST, (void *) prov);
     NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
@@ -196,8 +204,11 @@ NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
     NSRemoveProvider_internal(prov);
     NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
-    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) provider);
-    NS_VERIFY_NOT_NULL(provider, NS_ERROR);
+    prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+
+    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) prov);
+    NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
 }
