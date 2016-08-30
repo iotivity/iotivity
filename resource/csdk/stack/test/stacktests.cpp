@@ -1907,3 +1907,47 @@ TEST(StackUri, Rfc6874_NoOverflow_2)
     EXPECT_EQ(OC_STACK_ERROR, result);
 }
 
+TEST(StackHeaderOption, setHeaderOption)
+{
+    uint8_t optionValue1[MAX_HEADER_OPTION_DATA_LENGTH] =
+    { 1 };
+    OCHeaderOption options[MAX_HEADER_OPTIONS] =
+    {
+    { OC_COAP_ID, 6, 8, optionValue1 }, };
+    uint8_t optionData = 255;
+    size_t optionDataSize = sizeof(optionData);
+    size_t numOptions = 1;
+    uint16_t optionID = 2048;
+    EXPECT_EQ(OC_STACK_OK, OCSetHeaderOption(options,
+                                             &numOptions,
+                                             optionID,
+                                             &optionData,
+                                             optionDataSize));
+    EXPECT_EQ(options[1].optionID, optionID);
+    EXPECT_EQ(options[1].optionData[0], 255);
+}
+
+TEST(StackHeaderOption, getHeaderOption)
+{
+    uint8_t optionValue1[MAX_HEADER_OPTION_DATA_LENGTH] =
+    { 1 };
+    uint8_t optionValue2[MAX_HEADER_OPTION_DATA_LENGTH] =
+    { 255 };
+    OCHeaderOption options[MAX_HEADER_OPTIONS] =
+    {
+    { OC_COAP_ID, 6, 8, optionValue1 },
+    { OC_COAP_ID, 2048, 16, optionValue2 }, };
+    uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
+    size_t optionDataSize = sizeof(optionData);
+    size_t numOptions = 2;
+    uint16_t optionID = 6;
+    uint16_t actualDataSize = 0;
+    EXPECT_EQ(OC_STACK_OK, OCGetHeaderOption(options,
+                                             numOptions,
+                                             optionID,
+                                             optionData,
+                                             optionDataSize,
+                                             &actualDataSize));
+    EXPECT_EQ(optionData[0], 1);
+    EXPECT_EQ(actualDataSize, 8);
+}
