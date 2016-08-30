@@ -95,7 +95,7 @@ public class EasySetup {
     {
         mRemoteEnrollee = nativeCreateRemoteEnrollee(enrolleeResource);
 
-        if(mRemoteEnrollee)
+        if(mRemoteEnrollee != null)
         {
             mRemoteEnrolleeList.add(mRemoteEnrollee);
             return mRemoteEnrollee;
