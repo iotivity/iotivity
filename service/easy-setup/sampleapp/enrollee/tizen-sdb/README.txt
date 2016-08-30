@@ -29,7 +29,7 @@ Build Procedure
 
 3) Execute following command(s) to start build based on some build flags required :
 
-# scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=0 LOGGING=true ES_TARGET_ENROLLEE=tizen
+# scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=0 LOGGING=true ES_TARGET_ENROLLEE=tizen SECURED=1 WITH_TCP=false WITH_CLOUD=false
 
 4) If built for security mode:
         After installing sample RPM on device, copy required .dat files and other applications to the same path where enrollee_wifi(executable) is available
