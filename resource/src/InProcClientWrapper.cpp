@@ -346,7 +346,7 @@ namespace OC
                     << std::flush;
 
             std::thread exec(context->callback, clientResponse->result,
-                             clientResponse->resourceUri, nullptr);
+                             std::string(clientResponse->resourceUri), nullptr);
             exec.detach();
 
             return OC_STACK_DELETE_TRANSACTION;
@@ -369,7 +369,7 @@ namespace OC
             for (auto resource : container.Resources())
             {
                 std::thread exec(context->callback, clientResponse->result,
-                                 clientResponse->resourceUri, resource);
+                                 std::string(clientResponse->resourceUri), resource);
                 exec.detach();
             }
         }
@@ -557,7 +557,7 @@ namespace OC
 
         if (!isLocationOption)
         {
-            createdUri = clientResponse->resourceUri;
+            createdUri = std::string(clientResponse->resourceUri);
         }
 
         auto clientWrapper = context->clientWrapper.lock();
@@ -578,13 +578,17 @@ namespace OC
                                             createdUri);
                 for (auto resource : container.Resources())
                 {
-                    std::thread exec(context->callback, result, createdUri, resource);
+                    std::thread exec(context->callback, result,
+                                     createdUri,
+                                     resource);
                     exec.detach();
                 }
             }
             else
             {
-                std::thread exec(context->callback, result, createdUri, nullptr);
+                std::thread exec(context->callback, result,
+                                 createdUri,
+                                 nullptr);
                 exec.detach();
             }
         }
