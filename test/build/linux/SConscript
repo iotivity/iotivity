@@ -117,6 +117,8 @@ SConscript(GTEST + '/SConscript')
 
 print "---------------service--------------" + target_service + target_test
 
+if 'ic' in target_service or 'all' in target_service:
+    SConscript('SConscriptCloud', exports = 'env_linux')
 
 if 're' in target_service or 'all' in target_service:
     SConscript('SConscriptRE', exports = 'env_linux')
