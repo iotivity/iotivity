@@ -557,29 +557,6 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
     return topics;
 }
 
-size_t NSProviderGetListSize(NSCacheElement * firstElement)
-{
-    pthread_mutex_lock(&NSCacheMutex);
-    if(!firstElement)
-    {
-        pthread_mutex_unlock(&NSCacheMutex);
-        return 0;
-    }
-
-    int cnt = 0;
-
-    NSCacheElement * iter = firstElement;
-
-    while(iter)
-    {
-        cnt++;
-        iter = iter->next;
-    }
-
-    pthread_mutex_unlock(&NSCacheMutex);
-    return cnt;
-}
-
 bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char * topicName)
 {
     pthread_mutex_lock(&NSCacheMutex);

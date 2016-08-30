@@ -47,8 +47,6 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList);
 NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
         NSCacheList * conTopicList, char *consumerId);
 
-size_t NSProviderGetListSize(NSCacheElement * firstElement);
-
 bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char * topicName);
 
 NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,

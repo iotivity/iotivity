@@ -255,10 +255,10 @@ int main()
 
             case 5:
                 printf("NSProviderAddTopic\n");
-                NSProivderRegisterTopic("OCF_TOPIC1");
-                NSProivderRegisterTopic("OCF_TOPIC2");
-                NSProivderRegisterTopic("OCF_TOPIC3");
-                NSProivderRegisterTopic("OCF_TOPIC4");
+                NSProviderRegisterTopic("OCF_TOPIC1");
+                NSProviderRegisterTopic("OCF_TOPIC2");
+                NSProviderRegisterTopic("OCF_TOPIC3");
+                NSProviderRegisterTopic("OCF_TOPIC4");
                 break;
 
             case 6:
