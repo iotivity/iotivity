@@ -39,7 +39,6 @@
 #include "aclresource.h"
 #include "utlist.h"
 
-//#define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
 #define ACL_RESRC_ARRAY_SIZE (3)
 #define CREATE (1)
@@ -402,7 +401,7 @@ static int InputACL(OicSecAcl_t *acl)
         return -1;
     }
     printf("-URI of resource\n");
-    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
+    printf("ex)/oic/sh/temp/0 (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
     for(size_t i = 0; i < resourcesLen; i++)
     {
         OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
@@ -658,7 +657,7 @@ static OicSecPdAcl_t* InputPdACL()
         return NULL;
     }
     printf("-URI of resource\n");
-    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
+    printf("ex)/oic/sh/temp/0 (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
     if (NULL == acl->resources)
     {
