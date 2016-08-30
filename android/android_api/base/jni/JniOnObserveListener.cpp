@@ -166,7 +166,18 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
             env->DeleteLocalRef(jHeaderOptionList);
             jthrowable ex = env->ExceptionOccurred();
             env->ExceptionClear();
+#ifndef WITH_CLOUD
             m_ownerResource->removeOnObserveListener(env, m_jwListener);
+#else
+            if (nullptr != m_ownerResource)
+            {
+                m_ownerResource->removeOnObserveListener(env, m_jwListener);
+            }
+            if (nullptr != m_ownerAccountManager)
+            {
+                m_ownerAccountManager->removeOnObserveListener(env, m_jwListener);
+            }
+#endif
             env->Throw((jthrowable)ex);
         }
 
