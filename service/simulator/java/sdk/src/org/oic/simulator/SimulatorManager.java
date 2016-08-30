@@ -28,6 +28,7 @@ import org.oic.simulator.server.SimulatorResource;
 public class SimulatorManager {
 
     static {
+        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc_logger");
         System.loadLibrary("octbstack");
         System.loadLibrary("oc");

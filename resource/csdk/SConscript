@@ -84,6 +84,9 @@ liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 liboctbstack_env.PrependUnique(LIBS = ['ocsrm', 'coap'])
 
+if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
+    liboctbstack_env.Append( RPATH = liboctbstack_env.Literal('\\$$ORIGIN'))
+
 if env.get('SECURED') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
 	if env.get('WITH_TCP') == True:
