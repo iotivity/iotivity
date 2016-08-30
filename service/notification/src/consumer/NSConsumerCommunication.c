@@ -360,11 +360,11 @@ OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
 
 char * NSGetCloudUri(const char * providerId, char * uri)
 {
-    size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1;
+    size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1 + 3;
     char * retUri = (char *)OICMalloc(uriLen);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retUri, NULL, NSOICFree(uri));
 
-    snprintf(retUri, uriLen, "/%s%s", providerId, uri);
+    snprintf(retUri, uriLen, "/di/%s%s", providerId, uri);
     NSOICFree(uri);
     NS_LOG_V(DEBUG, "Cloud uri : %s", retUri);
 

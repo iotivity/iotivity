@@ -43,6 +43,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
     NS_VERIFY_STACK_SUCCESS(
             NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
@@ -111,6 +112,8 @@ OCStackApplicationResult NSProviderDiscoverListener(
     }
 
     OCResourcePayload * resource = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
+    NS_LOG_V(DEBUG, "Discovered resource uri : %s",
+                        resource->uri);
     while (resource)
     {
         NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
@@ -158,7 +161,7 @@ OCStackApplicationResult NSIntrospectProvider(
 
     NSProvider_internal * newProvider = NSGetProvider(clientResponse);
     NS_VERIFY_NOT_NULL(newProvider, OC_STACK_KEEP_TRANSACTION);
-    if (ctx && *((NSConsumerDiscoverType *)ctx) == NS_DISCOVER_CLOUD )
+    if (ctx && ctx == (void *)NS_DISCOVER_CLOUD )
     {
         newProvider->connection->isCloudConnection = true;
     }
@@ -271,7 +274,7 @@ OCDevAddr * NSChangeAddress(const char * address)
     }
 
     int tmp = index + 1;
-    uint16_t port = address[tmp++];
+    uint16_t port = address[tmp++] - '0';
 
     while(address[tmp] != '\0')
     {
@@ -283,9 +286,15 @@ OCDevAddr * NSChangeAddress(const char * address)
     NS_VERIFY_NOT_NULL(retAddr, NULL);
 
     retAddr->adapter = OC_ADAPTER_TCP;
-    OICStrcpy(retAddr->addr, index - 1, address);
+    OICStrcpy(retAddr->addr, index + 1, address);
     retAddr->addr[index] = '\0';
     retAddr->port = port;
+    retAddr->flags = OC_IP_USE_V6;
+
+    NS_LOG(DEBUG, "Change Address for TCP request");
+    NS_LOG_V(DEBUG, "Origin : %s", address);
+    NS_LOG_V(DEBUG, "Changed Addr : %s", retAddr->addr);
+    NS_LOG_V(DEBUG, "Changed Port : %d", retAddr->port);
 
     return retAddr;
 }
@@ -311,7 +320,7 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
 
             if (rType == NS_DISCOVER_CLOUD)
             {
-                *callbackData = NS_DISCOVER_CLOUD;
+                callbackData = (void *) NS_DISCOVER_CLOUD;
             }
         }
         else
