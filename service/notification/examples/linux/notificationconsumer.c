@@ -71,7 +71,7 @@ void printProviderTopicList(NSProvider *provider)
     }
 }
 
-void onProviderChanged(NSProvider * provider, NSResponse response)
+void onProviderChanged(NSProvider * provider, NSProviderState response)
 {
     printf("Provider changed: %d\n", response);
     printf("subscribed provider Id : %s\n", provider->providerId);

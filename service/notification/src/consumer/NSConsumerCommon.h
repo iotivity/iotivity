@@ -107,7 +107,7 @@ bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 
 void NSSetProviderChangedCb(NSProviderStateCallback cb);
-void NSProviderChanged(NSProvider * provider, NSResponse response);
+void NSProviderChanged(NSProvider * provider, NSProviderState response);
 
 void NSSetMessagePostedCb(NSMessageReceivedCallback  cb);
 void NSMessagePost(NSMessage * obj);

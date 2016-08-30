@@ -63,16 +63,16 @@ typedef enum eResult
 } NSResult;
 
 /**
- * Response code of notification service
+ * Provider state of notification consumer service
  */
-typedef enum eResponse
+typedef enum
 {
-    NS_DISCOVERED = 0,
     NS_ALLOW = 1,
     NS_DENY = 2,
     NS_TOPIC = 3,
-
-} NSResponse;
+    NS_DISCOVERED = 11,
+    NS_STOPPED = 12
+} NSProviderState;
 
 /**
  * Notification message status to synchronize

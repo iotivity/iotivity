@@ -100,7 +100,7 @@ public:
         std::cout << __func__ << std::endl;
     }
 
-    static void NSProviderChangedCallback(NSProvider *,  NSResponse)
+    static void NSProviderChangedCallback(NSProvider *,  NSProviderState)
     {
         std::cout << __func__ << std::endl;
     }
@@ -161,7 +161,7 @@ TEST_F(NotificationConsumerTest, StopConsumerPositive)
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsumerFirst)
 {
     mocks.ExpectCallFunc(NSProviderChangedCallback).Do(
-            [this](NSProvider *, NSResponse)
+            [this](NSProvider *, NSProviderState)
             {
                 std::cout << "Call Discovered" << std::endl;
                 responseCon.notify_all();
@@ -189,7 +189,7 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
     }
 
     mocks.ExpectCallFunc(NSProviderChangedCallback).Do(
-            [this](NSProvider * provider, NSResponse)
+            [this](NSProvider * provider, NSProviderState)
             {
                 std::cout << "Call Discovered" << std::endl;
                 g_provider = provider;
@@ -207,7 +207,7 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 {
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
     mocks.ExpectCallFunc(NSProviderChangedCallback).Do(
-            [this](NSProvider * provider, NSResponse)
+            [this](NSProvider * provider, NSProviderState)
             {
                 std::cout << "Call Discovered" << std::endl;
                 g_provider = provider;

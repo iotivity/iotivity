@@ -43,7 +43,7 @@ namespace OIC
             NS_LOG(DEBUG, "onNSProviderDiscovered - OUT");
         }
 
-        void onNSProviderChanged(::NSProvider *provider, ::NSResponse response)
+        void onNSProviderChanged(::NSProvider *provider, ::NSProviderState response)
         {
             NS_LOG(DEBUG, "onNSProviderChanged - IN");
             NS_LOG_V(DEBUG, "provider Id : %s", provider->providerId);
@@ -160,7 +160,9 @@ namespace OIC
             NS_LOG(DEBUG, "Start - IN");
             m_config = config;
             NSConsumerConfig nsConfig;
-            nsConfig.discoverCb = onNSProviderDiscovered;
+
+            // TODO Check to changed c layer ConsumerConfig.
+            //nsConfig.discoverCb = onNSProviderDiscovered;
             nsConfig.changedCb = onNSProviderChanged;
             nsConfig.messageCb = onNSMessageReceived;
             nsConfig.syncInfoCb = onNSSyncInfoReceived;

@@ -312,6 +312,10 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
 
     NSResult ret = NSStorageDelete(providerCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
+
+    NS_LOG_V(DEBUG, "Stopped Provider : %s", provider->providerId);
+    NSProvider * providerForCb = NSCopyProvider(provider);
+    NSProviderChanged(providerForCb, NS_STOPPED);
 }
 
 void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
@@ -341,7 +345,7 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 
     NS_LOG(DEBUG, "call back to user");
     NSProvider * prov = NSCopyProvider(provider);
-    NSProviderChanged(prov, (NSResponse) msg->messageId);
+    NSProviderChanged(prov, (NSProviderState) msg->messageId);
     NSRemoveProvider_internal(provider);
 }
 
@@ -421,7 +425,7 @@ void NSConsumerHandleRecvTopicLL(NSProvider_internal * provider)
 
     NS_LOG(DEBUG, "call back to user");
     NSProvider * prov = NSCopyProvider(provider);
-    NSProviderChanged((NSProvider *) prov, (NSResponse) NS_TOPIC);
+    NSProviderChanged((NSProvider *) prov, (NSProviderState) NS_TOPIC);
 }
 
 void NSConsumerInternalTaskProcessing(NSTask * task)

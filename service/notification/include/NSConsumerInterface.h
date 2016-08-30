@@ -37,9 +37,9 @@ extern "C"
 /**
  * Invoked when the provider state is changed
  * @param[in] provider  Provider which has the notification resource
- * @param[in] response  Response which has the provider state
+ * @param[in] state  Response which has the provider state
  */
-typedef void (* NSProviderStateCallback)(NSProvider *, NSResponse);
+typedef void (* NSProviderStateCallback)(NSProvider *, NSProviderState);
 
 /**
  * Invoked when the notification message from provider is received

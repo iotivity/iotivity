@@ -117,7 +117,7 @@ void NSSetProviderChangedCb(NSProviderStateCallback cb)
     *(NSGetProviderChangedCb()) = cb;
 }
 
-void NSProviderChanged(NSProvider * provider, NSResponse response)
+void NSProviderChanged(NSProvider * provider, NSProviderState response)
 {
     (*(NSGetProviderChangedCb()))(provider, response);
 }
