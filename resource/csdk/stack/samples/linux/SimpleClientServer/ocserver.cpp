@@ -618,17 +618,48 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                             MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
-                OCHeaderOption * sendOptions = response.sendVendorSpecificHeaderOptions;
-                uint8_t option2[] = {21,22,23,24,25,26,27,28,29,30};
-                uint8_t option3[] = {31,32,33,34,35,36,37,38,39,40};
-                sendOptions[0].protocolID = OC_COAP_ID;
-                sendOptions[0].optionID = 2248;
-                memcpy(sendOptions[0].optionData, option2, sizeof(option2));
-                sendOptions[0].optionLength = 10;
-                sendOptions[1].protocolID = OC_COAP_ID;
-                sendOptions[1].optionID = 2600;
-                memcpy(sendOptions[1].optionData, option3, sizeof(option3));
-                sendOptions[1].optionLength = 10;
+
+                OCHeaderOption* sendOptions = response.sendVendorSpecificHeaderOptions;
+                size_t numOptions = response.numSendVendorSpecificHeaderOptions;
+                // Check if the option header has already existed before adding it in.
+                uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
+                size_t optionDataSize = sizeof(optionData);
+                uint16_t actualDataSize = 0;
+                OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
+                                  response.numSendVendorSpecificHeaderOptions,
+                                  2248,
+                                  optionData,
+                                  optionDataSize,
+                                  &actualDataSize);
+                if (actualDataSize == 0)
+                {
+                    uint8_t option2[] = {21,22,23,24,25,26,27,28,29,30};
+                    uint16_t optionID2 = 2248;
+                    size_t optionDataSize2 = sizeof(option2);
+                    OCSetHeaderOption(sendOptions,
+                                      &numOptions,
+                                      optionID2,
+                                      option2,
+                                      optionDataSize2);
+                }
+
+                OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
+                                  response.numSendVendorSpecificHeaderOptions,
+                                  2600,
+                                  optionData,
+                                  optionDataSize,
+                                  &actualDataSize);
+                if (actualDataSize == 0)
+                {
+                    uint8_t option3[] = {31,32,33,34,35,36,37,38,39,40};
+                    uint16_t optionID3 = 2600;
+                    size_t optionDataSize3 = sizeof(option3);
+                    OCSetHeaderOption(sendOptions,
+                                      &numOptions,
+                                      optionID3,
+                                      option3,
+                                      optionDataSize3);
+                }
                 response.numSendVendorSpecificHeaderOptions = 2;
             }
 

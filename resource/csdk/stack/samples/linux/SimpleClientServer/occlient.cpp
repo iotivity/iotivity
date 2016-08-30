@@ -707,17 +707,25 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 
     if (withVendorSpecificHeaderOptions)
     {
+        memset(options, 0, sizeof(OCHeaderOption)* MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
         uint8_t option0[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        uint16_t optionID = 2048;
+        size_t optionDataSize = sizeof(option0);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option0,
+                          optionDataSize);
+
         uint8_t option1[] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
-        options[0].protocolID = OC_COAP_ID;
-        options[0].optionID = 2048;
-        memcpy(options[0].optionData, option0, sizeof(option0));
-        options[0].optionLength = 10;
-        options[1].protocolID = OC_COAP_ID;
-        options[1].optionID = 3000;
-        memcpy(options[1].optionData, option1, sizeof(option1));
-        options[1].optionLength = 10;
+        optionID = 3000;
+        optionDataSize = sizeof(option1);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option1,
+                          optionDataSize);
     }
     if (withVendorSpecificHeaderOptions)
     {

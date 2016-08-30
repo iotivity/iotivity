@@ -1141,7 +1141,6 @@ typedef struct OCHeaderOption
 #endif
 } OCHeaderOption;
 
-
 /**
  * This structure describes the platform properties. All non-Null properties will be
  * included in a platform discovery request.

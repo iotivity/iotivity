@@ -4917,6 +4917,85 @@ OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
     }
     return OC_STACK_ERROR;
 }
+
+OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, uint16_t optionID,
+        void* optionData, size_t optionDataLength)
+{
+    if (!ocHdrOpt)
+    {
+        OIC_LOG (INFO, TAG, "Header options are NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (!optionData)
+    {
+        OIC_LOG (INFO, TAG, "optionData are NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (!numOptions)
+    {
+        OIC_LOG (INFO, TAG, "numOptions is NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (*numOptions >= MAX_HEADER_OPTIONS)
+    {
+        OIC_LOG (INFO, TAG, "Exceeding MAX_HEADER_OPTIONS");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    ocHdrOpt += *numOptions;
+    ocHdrOpt->protocolID = OC_COAP_ID;
+    ocHdrOpt->optionID = optionID;
+    ocHdrOpt->optionLength =
+            optionDataLength < MAX_HEADER_OPTION_DATA_LENGTH ?
+                    optionDataLength : MAX_HEADER_OPTION_DATA_LENGTH;
+    memcpy(ocHdrOpt->optionData, (const void*) optionData, ocHdrOpt->optionLength);
+    *numOptions += 1;
+
+    return OC_STACK_OK;
+}
+OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOptions, uint16_t optionID,
+        void* optionData, size_t optionDataLength, uint16_t* receivedDataLength)
+{
+    if (!ocHdrOpt || !numOptions)
+    {
+        OIC_LOG (INFO, TAG, "No options present");
+        return OC_STACK_OK;
+    }
+
+    if (!optionData)
+    {
+        OIC_LOG (INFO, TAG, "optionData are NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (!receivedDataLength)
+    {
+        OIC_LOG (INFO, TAG, "receivedDataLength is NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    for (uint8_t i = 0; i < numOptions; i++)
+    {
+        if (ocHdrOpt[i].optionID == optionID)
+        {
+            if (optionDataLength >= ocHdrOpt->optionLength)
+            {
+                memcpy(optionData, ocHdrOpt->optionData, ocHdrOpt->optionLength);
+                *receivedDataLength = ocHdrOpt->optionLength;
+                return OC_STACK_OK;
+            }
+            else
+            {
+                OIC_LOG (ERROR, TAG, "optionDataLength is less than the length of received data");
+                return OC_STACK_ERROR;
+            }
+        }
+    }
+    return OC_STACK_OK;
+}
 #endif
 
 void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled)
