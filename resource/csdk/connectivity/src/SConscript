@@ -128,11 +128,30 @@ ca_common_src = [
 env.AppendUnique(CA_SRC = ca_common_src)
 
 if 'ALL' in ca_transport:
-		transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter']
+		transports = []
+
 		if with_ra:
-				transports.append ('ra_adapter')
-		if ca_os in ['android']:
-				transports.append ('nfc_adapter')
+				transports.append('ra_adapter')
+
+		if ca_os in ['linux']: 
+				transports.append('ip_adapter')
+				transports.append('bt_le_adapter')
+		elif ca_os in ['tizen']: 
+				transports.append('ip_adapter')
+				transports.append('bt_edr_adapter')
+				transports.append('bt_le_adapter')
+		elif ca_os in ['android']: 
+				transports.append('ip_adapter')
+				transports.append('bt_edr_adapter')
+				transports.append('bt_le_adapter')
+				transports.append('nfc_adapter')
+		elif ca_os in['darwin','ios', 'msys_nt', 'windows']:
+				transports.append('ip_adapter')
+		else:
+				transports.append('ip_adapter')
+				transports.append('bt_edr_adapter')
+				transports.append('bt_le_adapter')
+
 		env.SConscript(dirs = [
 				os.path.join(ca_path, d) for d in transports ])
 
