@@ -32,27 +32,35 @@ import org.iotivity.cloud.accountserver.db.UserTable;
 public abstract interface OAuthProvider {
 
     /**
-     * API for requesting access token
+     * API to request access token
      * 
      * @param authCode
      *            authorization code
-     * @param authServerUrl
-     *            authorization server url
-     * @return access token and error message if error occur
+     * @param options
+     *            option field of region authserver url, apiserver url
+     * @return token information or error message if error occurs
      */
     public abstract TokenTable requestAccessTokenInfo(String authCode,
             Object options);
 
+    /**
+     * API to request refresh token
+     * 
+     * @param refreshToken
+     *            Refresh token used to refresh the access token in cloud before
+     *            getting expired
+     * @return token information or error message if error occurs
+     */
     public abstract TokenTable requestRefreshTokenInfo(String refreshToken);
 
     /**
-     * API for getting user's information
+     * API to get user information
      * 
      * @param accessToken
      *            access token
-     * @param apiServerUrl
-     *            api server url
-     * @return access token and error message if error occur
+     * @param options
+     *            option field of region authserver url, apiserver url
+     * @return user information or error message if error occurs
      */
     public abstract UserTable requestGetUserInfo(String accessToken,
             Object options);
