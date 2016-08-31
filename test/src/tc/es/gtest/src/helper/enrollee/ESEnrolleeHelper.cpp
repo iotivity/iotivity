@@ -27,10 +27,11 @@
 
 bool ESEnrolleeHelper::isCallbackInvoked = false;
 const int g_timeout = 15;
-
+ESEnrolleeHelper m_esEnrolleeHelper;
 ESEnrolleeHelper::ESEnrolleeHelper()
 {
 }
+
 
 void ESEnrolleeHelper::waitForResponse()
 {

@@ -38,9 +38,6 @@
 #include <pthread.h>
 using namespace std;
 
-static ESResult s_result;
-static bool s_isSecured;
-
 class ESEnrolleeTest_stc: public ::testing::Test
 {
 public:
@@ -51,9 +48,6 @@ protected:
 
     virtual void SetUp()
     {
-        //m_esEnrolleeHelper = new ESEnrolleeHelper();
-        //bool isCallbackProvInvoked =  false;
-        s_result = ES_ERROR;
         OCStackResult r = OC_STACK_ERROR;
         CommonUtil::runCommonTCSetUpPart();
         m_callBacks.WiFiProvCb = &m_esEnrolleeHelper.wiFiProvCbInApp;
@@ -61,13 +55,10 @@ protected:
         m_callBacks.CloudDataProvCb = &m_esEnrolleeHelper.cloudDataProvCbInApp;
 
     }
-
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
-
     }
-
 };
 
 /**
@@ -86,7 +77,7 @@ protected:
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuccessCallBack_SRC_P)
 {
 
-    s_isSecured= false;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -94,12 +85,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuc
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+
+
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callBacks);
+
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
+
+     m_esEnrolleeHelper.waitForResponse();
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
@@ -123,7 +119,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecuredSuc
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSuccessCallBack_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -131,16 +127,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSucces
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callBacks);
+    m_esEnrolleeHelper.waitForResponse();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 }
 #endif
@@ -158,10 +155,10 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSucces
  * @expected ES_OK is returned
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSuccessCallBack_SRC_P)
 {
-    s_isSecured= false;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_CLOUD_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -169,16 +166,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSu
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callBacks);
+    m_esEnrolleeHelper.waitForResponse();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 }
 #endif
@@ -196,10 +194,10 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecuredSu
  * @expected ES_OK is returned
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecuredSuccessCallBack_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_CLOUD_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -207,16 +205,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecuredSucce
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callBacks);
+    m_esEnrolleeHelper.waitForResponse();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 }
 #endif
@@ -233,10 +232,10 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecuredSucce
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecuredSuccessCallback_SRC_P)
 {
-    s_isSecured= false;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -244,16 +243,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callBacks);
+    m_esEnrolleeHelper.waitForResponse();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 }
 #endif
@@ -270,10 +270,10 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecuredSuccessCallback_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -281,16 +281,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecuredSuc
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callBacks);
+    m_esEnrolleeHelper.waitForResponse();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 }
 #endif
@@ -307,10 +308,10 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecuredSuc
  * @post_condition None
  * @expected ES_OK is returned
  **/
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallback_SRC_P)
 {
-    s_isSecured= false;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -318,16 +319,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallbac
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callBacks);
+    m_esEnrolleeHelper.waitForResponse();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 }
 #endif
@@ -345,10 +347,10 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllNonSecuredSuccesscallbac
  * @expected ES_OK is returned
  **/
 
-#if defined(__LINUX__) || defined(__TIZEN__) || defined(__TIZEN__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -356,16 +358,17 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_S
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    ESEnrolleeHelper::waitForResponse();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callBacks);
+    m_esEnrolleeHelper.waitForResponse();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 }
 #endif
@@ -385,7 +388,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskAllSecuredSuccessCallBack_S
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecured_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -393,11 +396,11 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecure
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    s_result = m_esEnrolleeHelper.setDeviceProperty();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callBacks);
+    m_result = m_esEnrolleeHelper.setDeviceProperty();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 
 }
@@ -418,8 +421,7 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessSecure
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSecured_SRC_P)
 {
-
-    s_isSecured= false;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -427,11 +429,11 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSec
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    s_result = m_esEnrolleeHelper.setDeviceProperty();
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callBacks);
+    m_result = m_esEnrolleeHelper.setDeviceProperty();
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -452,8 +454,7 @@ TEST_F(ESEnrolleeTest_stc, ESSetDevicePropertySetDevicePropertyWithSuccessNonSec
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_stc, ESTerminateEnrolleeWorkProperly_SRC_N)
 {
-
-    s_isSecured= false;
+    ESResult m_result;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -461,18 +462,19 @@ TEST_F(ESEnrolleeTest_stc, ESTerminateEnrolleeWorkProperly_SRC_N)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callBacks);
-    s_result = ESTerminateEnrollee();
-    ESEnrolleeHelper::waitForResponse();
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callBacks);
+    m_result = ESTerminateEnrollee();
+    //m_esEnrolleeHelper.waitForResponse();
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
+        return;
     }
 
     if (ESEnrolleeHelper::isCallbackInvoked)
     {
-        SET_FAILURE("Failed to invoke callback. s_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
+        SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
     }
 
 }

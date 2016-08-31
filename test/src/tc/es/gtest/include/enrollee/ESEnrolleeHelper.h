@@ -33,6 +33,9 @@
 #include "IotivityTest_Logger.h"
 using namespace std;
 
+static bool s_secured = true;
+static bool s_nonSecured = false;
+
 class ESEnrolleeHelper
 {
 public:
@@ -43,5 +46,5 @@ public:
     static void cloudDataProvCbInApp(ESCloudProvData *eventData);
     ESResult setDeviceProperty();
     static void *listeningFunc(void * data);
-    static void waitForResponse();
+    void waitForResponse();
 };

@@ -32,27 +32,20 @@
 #include <iostream>
 using namespace std;
 
-static ESResult s_result;
-static bool s_isSecured;
 
 class ESEnrolleeTest_btc: public ::testing::Test
 {
 public:
     ESProvisioningCallbacks m_callbacks;
     ESEnrolleeHelper esEnrolleeHelper;
-
 protected:
-
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
-        s_result = ES_ERROR;
         m_callbacks.WiFiProvCb = &ESEnrolleeHelper::wiFiProvCbInApp;
         m_callbacks.DevConfProvCb = &ESEnrolleeHelper::devConfProvCbInApp;
         m_callbacks.CloudDataProvCb = &ESEnrolleeHelper::cloudDataProvCbInApp;
-
     }
-
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
@@ -74,7 +67,7 @@ protected:
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecured_SRC_P)
 {
-    s_isSecured = false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -82,11 +75,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecured_SR
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -106,7 +99,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCENonSecured_SR
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecured_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -114,11 +107,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecured_SRC_P
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -138,8 +131,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecured_SRC_P
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecured_SRC_P)
 {
-
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_CLOUD_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -147,11 +139,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecured_S
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -171,7 +163,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCENonSecured_S
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecured_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_CLOUD_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -179,11 +171,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecured_SRC_
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -203,8 +195,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESCLOUDRESOURCESecured_SRC_
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured_SRC_P)
 {
-    ESResult s_result = ES_ERROR;
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -212,11 +203,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -236,7 +227,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCENonSecured
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecured_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -244,11 +235,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecured_SR
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -268,7 +259,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskESDEVCONFRESOURCESecured_SR
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllNonSecured_SRC_P)
 {
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -276,11 +267,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllNonSecured_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -300,7 +291,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllNonSecured_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllSecured_SRC_P)
 {
-    s_isSecured= true;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -308,11 +299,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllSecured_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -332,7 +323,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeResourceMaskAllSecured_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeWorkWithAllCallback_SRC_P)
 {
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -340,10 +331,10 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeWorkWithAllCallback_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    if (s_result != ES_OK)
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -363,8 +354,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeWorkWithAllCallback_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrollee_WiFiProvCb_Null_NV_N)
 {
-    s_result = ES_OK;
-    s_isSecured= true;
+    ESResult m_result = ES_OK;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
     m_callbacks.WiFiProvCb = NULL;
 
@@ -373,11 +363,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrollee_WiFiProvCb_Null_NV_N)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_ERROR)
+    if (m_result != ES_ERROR)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -397,8 +387,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrollee_WiFiProvCb_Null_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeDevConfProvCbInApp_Null_NV_N)
 {
-    s_result = ES_OK;
-    s_isSecured= false;
+    ESResult m_result = ES_OK;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
     m_callbacks.DevConfProvCb = NULL;
 
@@ -407,10 +396,10 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeDevConfProvCbInApp_Null_NV_N)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    if (s_result != ES_ERROR)
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    if (m_result != ES_ERROR)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -430,8 +419,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeDevConfProvCbInApp_Null_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeCloudDataProvCbInApp_Null_NV_N)
 {
-    s_result = ES_OK;
-    s_isSecured= true;
+    ESResult m_result = ES_OK;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
     m_callbacks.CloudDataProvCb = NULL;
 
@@ -440,11 +428,11 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeCloudDataProvCbInApp_Null_NV_N)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
 
-    if (s_result != ES_ERROR)
+    if (m_result != ES_ERROR)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -464,8 +452,7 @@ TEST_F(ESEnrolleeTest_btc, ESInitEnrolleeCloudDataProvCbInApp_Null_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertyNonSecured_SRC_P)
 {
-    s_result = ES_OK;
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE); // | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -473,12 +460,12 @@ TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertyNonSecured_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    s_result = esEnrolleeHelper.setDeviceProperty();
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    m_result = esEnrolleeHelper.setDeviceProperty();
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -498,8 +485,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertyNonSecured_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertySecured_SRC_P)
 {
-    s_result = ES_OK;
-    s_isSecured= true;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE); // | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -507,12 +493,12 @@ TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertySecured_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    s_result = esEnrolleeHelper.setDeviceProperty();
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
+    m_result = esEnrolleeHelper.setDeviceProperty();
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -532,8 +518,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetDevicePropertySetDevicePropertySecured_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateNonSecured_SRC_P)
 {
-    s_result = ES_OK;
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -541,12 +526,12 @@ TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateNonSecured_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    s_result = ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    m_result = ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -566,8 +551,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateNonSecured_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateSecured_SRC_P)
 {
-    s_result = ES_OK;
-    s_isSecured= true;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -575,12 +559,12 @@ TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateSecured_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    s_result = ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
+    m_result = ESInitEnrollee(s_secured, resourcemMask, m_callbacks);
+    m_result = ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -599,8 +583,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetStateSetStateSecured_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeWithSuccess_SRC_P)
 {
-    s_result = ES_ERROR;
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -608,12 +591,12 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeWithSuccess_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    s_result = ESSetErrorCode(ES_ERRCODE_PW_WRONG);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    m_result = ESSetErrorCode(ES_ERRCODE_PW_WRONG);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -633,7 +616,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeWithSuccess_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeUnknownWithSuccess_SRC_P)
 {
-    s_isSecured= false;
+    ESResult m_result = ES_ERROR;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -641,12 +624,12 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeUnknownWithSuccess_SRC_P)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    s_result = ESSetErrorCode(ES_ERRCODE_UNKNOWN);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    m_result = ESSetErrorCode(ES_ERRCODE_UNKNOWN);
 
-    if (s_result != ES_OK)
+    if (m_result != ES_OK)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -666,8 +649,7 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorCodeUnknownWithSuccess_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorEmptyCode_USV_N)
 {
-    s_result = ES_OK;
-    s_isSecured= false;
+    ESResult m_result = ES_OK;
     ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -675,12 +657,12 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorEmptyCode_USV_N)
         SET_FAILURE("OCStack init error!!\n");
         return;
     }
-    s_result = ESInitEnrollee(s_isSecured, resourcemMask, m_callbacks);
-    s_result = ESSetErrorCode(100);
+    m_result = ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    m_result = ESSetErrorCode(100);
 
-    if (s_result != ES_ERROR)
+    if (m_result != ES_ERROR)
     {
-        SET_FAILURE("Failed to find resources. result is: " + std::to_string(s_result));
+        SET_FAILURE("Failed to find resources. result is: " + std::to_string(m_result));
     }
 }
 #endif
@@ -698,11 +680,19 @@ TEST_F(ESEnrolleeTest_btc, ESSetErrorCodeSetErrorEmptyCode_USV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ESEnrolleeTest_btc, ESTerminateEnrolleeSuccess_SRC_P)
 {
-    s_result = ESTerminateEnrollee();
-
-    if (s_result != ES_OK)
+    ESResult m_result = ES_ERROR;
+    ESResourceMask resourcemMask = (ESResourceMask)(ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(s_result));
+        SET_FAILURE("OCStack init error!!\n");
+        return;
+    }
+    ESInitEnrollee(s_nonSecured, resourcemMask, m_callbacks);
+    m_result = ESTerminateEnrollee();
+
+    if (m_result != ES_OK)
+    {
+        SET_FAILURE("Failed to find resources. s_result is: " + std::to_string(m_result));
     }
 }
 #endif
