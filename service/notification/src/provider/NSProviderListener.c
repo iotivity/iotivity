@@ -247,7 +247,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             ehResult = OC_EH_ERROR;
 
             // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
-            if(!NSGetPolicy())
+            if(NSGetPolicy() == false)
             {
                 NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
                         NSCopyOCEntityHandlerRequest(entityHandlerRequest));

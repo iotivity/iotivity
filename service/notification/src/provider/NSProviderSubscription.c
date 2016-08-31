@@ -231,7 +231,7 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
 
-    while(NSStorageDelete(consumerSubList, (unsigned char *)
+    while(NSStorageDelete(consumerSubList, (char *)
             &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
@@ -373,7 +373,7 @@ void * NSSubScriptionSchedule(void *ptr)
 
                     NSCacheUpdateSubScriptionState(consumerSubList, consumerId, false);
                     NSSendResponse(consumerId, false);
-                    NSFreeConsumer(consumerId);
+                    OICFree(consumerId);
 
                     break;
                 }

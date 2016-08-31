@@ -516,7 +516,7 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
 }
 
 NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
-        NSCacheList * conTopicList, char *consumerId)
+        NSCacheList * conTopicList, const char * consumerId)
 {
     NS_LOG(DEBUG, "NSProviderGetConsumerTopicsCacheData - IN");
 

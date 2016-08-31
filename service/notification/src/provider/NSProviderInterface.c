@@ -84,7 +84,7 @@ void NSSetList()
     NS_LOG(DEBUG, "NSSetList - IN");
 
     pthread_mutexattr_init(&NSCacheMutexAttr);
-    int pthreadResult = pthread_mutexattr_settype(&NSCacheMutexAttr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutexattr_settype(&NSCacheMutexAttr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&NSCacheMutex, &NSCacheMutexAttr);
 
     NSInitSubscriptionList();
@@ -252,7 +252,7 @@ NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
     {
         NS_LOG(DEBUG, "consumer id should be set");
         pthread_mutex_unlock(&nsInitMutex);
-        return NS_FAIL;
+        return NULL;
     }
 
     NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList,
@@ -306,7 +306,7 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
         return NS_FAIL;
     }
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_DELETE_TOPIC, topicName);
+    NSPushQueue(TOPIC_SCHEDULER, TASK_DELETE_TOPIC, (void *) topicName);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDeleteTopics - OUT");

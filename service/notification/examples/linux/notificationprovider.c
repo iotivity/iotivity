@@ -30,6 +30,7 @@
 #include "pthread.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include "ocstack.h"
 
 #define TAG "NSProviderExample"
 
@@ -221,14 +222,13 @@ int main()
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
-
-                gets(title);
+                fgets(title, sizeof(title), stdin);
 
                 printf("body : ");
-                gets(body);
+                fgets(body, sizeof(body), stdin);
 
                 printf("topic : ");
-                gets(topic);
+                fgets(topic, sizeof(topic), stdin);
 
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
