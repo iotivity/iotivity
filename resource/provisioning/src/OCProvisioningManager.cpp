@@ -150,7 +150,6 @@ namespace OC
             else
             {
                 oclog() <<"Secure resource discovery failed!";
-                result = OC_STACK_ERROR;
             }
         }
         else
