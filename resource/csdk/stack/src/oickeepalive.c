@@ -532,7 +532,7 @@ void IncreaseInterval(KeepAliveEntry_t *entry)
 {
     VERIFY_NON_NULL_NR(entry, FATAL);
 
-    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %d", entry->intervalSize);
+    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %zu", entry->intervalSize);
     if (entry->intervalSize > (size_t)entry->currIndex + 1)
     {
         entry->currIndex++;

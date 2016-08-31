@@ -63,7 +63,7 @@ INLINE_API void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
         {
             OIC_LOG_V(level, PL_TAG, " Device ID : %s ", tags->di.id);
         }
-        OIC_LOG_V(level, PL_TAG, " lt : %lld ",tags->ttl);
+        OIC_LOG_V(level, PL_TAG, " lt : %" PRIu64 ,tags->ttl);
     }
     else
     {
@@ -116,10 +116,10 @@ INLINE_API void OCLinksLog(const LogLevel level, const OCLinksPayload *links)
         }
         if (links->type)
         {
-            OIC_LOG_V(level, PL_TAG, "   %s", links->type);
+            OIC_LOG_V(level, PL_TAG, "   %s", links->type->value);
         }
         OIC_LOG_V(level, PL_TAG, "   INS: %d", links->ins);
-        OIC_LOG_V(level, PL_TAG, "   TTL: %d", links->ttl);
+        OIC_LOG_V(level, PL_TAG, "   TTL: %" PRIu64 , links->ttl);
         OIC_LOG_V(level, PL_TAG, "   P: %d", links->p);
         if (links->rel)
         {
