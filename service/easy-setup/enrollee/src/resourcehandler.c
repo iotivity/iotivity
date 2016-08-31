@@ -70,7 +70,9 @@ bool CompareResourceInterface(char *from, char *iface)
     char *ptr = strtok(str, ";");
 
     if(ptr == NULL)
+    {
         return false;
+    }
 
     do
     {
