@@ -581,7 +581,7 @@ void RemoveOnPublishResourceListener(JNIEnv* env, jobject jListener)
 {
     if (!env)
     {
-        ThrowOcException(JNI_EXCEPTION, "env is null");
+        LOGE("env is null");
         return;
     }
 
@@ -664,7 +664,7 @@ void RemoveOnDeleteResourceListener(JNIEnv* env, jobject jListener)
 {
     if (!env)
     {
-        ThrowOcException(JNI_EXCEPTION, "env is null");
+        LOGE("env is null");
         return;
     }
 
@@ -2712,7 +2712,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD1(
 #ifdef RD_CLIENT
     if (!env)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "env is null");
+        LOGE("env is null");
         return;
     }
     std::string host;
@@ -2862,7 +2862,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD1(
 #ifdef RD_CLIENT
     if (!env)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "env is null");
+        LOGE("env is null");
         return;
     }
     std::string host;
