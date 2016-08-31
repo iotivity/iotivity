@@ -137,7 +137,7 @@ NSMessage * NSCreateMessage();
  * @param[in]  topicName Topic name to add
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProivderRegisterTopic(const char * topicName);
+NSResult NSProviderRegisterTopic(const char * topicName);
 
 /**
  * Delete topic from topic list

@@ -327,6 +327,42 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
     responseCon.wait_for(lock, std::chrono::milliseconds(5000));
 }
 
+TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
+{
+    std::string str("TEST1");
+    std::string str2("TEST2");
+    NSProviderRegisterTopic(str.c_str());
+    NSProviderRegisterTopic(str2.c_str());
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
+
+    bool isSame = true;
+    NSTopicLL * topics = NSProviderGetTopics();
+
+    if(!topics)
+    {
+        printf("topic is NULL\n");
+        isSame = false;
+    }
+    else
+    {
+        NSTopicLL * iter = topics;
+        std::string compStr(iter->topicName);
+        std::string compStr2(iter->next->topicName);
+
+        printf("str = %s, compStr = %s\n", str.c_str(), iter->topicName);
+        printf("str2 = %s, compStr2 = %s\n", str2.c_str(), iter->next->topicName);
+
+        if(str.compare(compStr) == 0 && str2.compare(compStr2) == 0)
+        {
+            isSame = true;
+        }
+    }
+
+    EXPECT_EQ(isSame, true);
+}
+
 TEST_F(NotificationProviderTest, CancelObserves)
 {
     bool ret = g_consumerSimul.cancelObserves();
