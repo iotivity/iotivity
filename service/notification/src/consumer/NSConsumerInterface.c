@@ -174,13 +174,14 @@ NSResult NSConsumerGetInterestTopics(NSProvider * provider)
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
 
     NS_LOG_V(DEBUG, "NSProvider ID: %s", provider->providerId);
-    NSProvider_internal * prov = NSConsumerFindNSProvider(provider->providerId);
-    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
-    NSSelector selector = prov->accessPolicy;
-    NSRemoveProvider_internal(prov);
+    NSProvider_internal * prov_internal = NSConsumerFindNSProvider(provider->providerId);
+    NS_VERIFY_NOT_NULL(prov_internal, NS_ERROR);
+
+    NSSelector selector = prov_internal->accessPolicy;
+    NSRemoveProvider_internal(prov_internal);
     NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
-    prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
     NS_VERIFY_NOT_NULL(prov, NS_ERROR);
 
     NSTask * topicTask = NSMakeTask(TASK_CONSUMER_GET_TOPIC_LIST, (void *) prov);
@@ -197,14 +198,14 @@ NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
     NS_VERIFY_NOT_NULL(provider, NS_ERROR);
     NS_VERIFY_NOT_NULL(provider->topicLL, NS_ERROR);
 
-    NSProvider_internal * prov = NSConsumerFindNSProvider(provider->providerId);
-    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+    NSProvider_internal * prov_internal = NSConsumerFindNSProvider(provider->providerId);
+    NS_VERIFY_NOT_NULL(prov_internal, NS_ERROR);
 
-    NSSelector selector = prov->accessPolicy;
-    NSRemoveProvider_internal(prov);
+    NSSelector selector = prov_internal->accessPolicy;
+    NSRemoveProvider_internal(prov_internal);
     NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
 
-    prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
     NS_VERIFY_NOT_NULL(prov, NS_ERROR);
 
     NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) prov);
