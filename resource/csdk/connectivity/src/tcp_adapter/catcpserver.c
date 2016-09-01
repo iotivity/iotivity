@@ -361,15 +361,15 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 }
 
 #ifdef __WITH_TLS__
-static bool CAIsTlsMessage(const CATCPSessionInfo_t * recvinfo)
+static bool CAIsTlsMessage(const unsigned char* data, size_t length)
 {
-    if (recvinfo->data == NULL || recvinfo->len == 0)
+    if (NULL == data || 0 == length)
     {
         OIC_LOG_V(ERROR, TAG, "%s: null input param", __func__);
         return false;
     }
 
-    unsigned char first_byte = recvinfo->data[0];
+    unsigned char first_byte = data[0];
 
     //TLS Plaintext has four types: change_cipher_spec = [14], alert = [15],
     //handshake = [16], application_data = [17] in HEX
@@ -450,7 +450,7 @@ static CAResult_t CAReadHeader(CATCPSessionInfo_t *svritem)
 
     //if enough data received - parse header
 #ifdef __WITH_TLS__
-    if (CAIsTlsMessage(svritem))
+    if (CAIsTlsMessage(svritem->data, svritem->len))
     {
         svritem->protocol = TLS;
 
@@ -1003,7 +1003,7 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
 
     // #2. check payload length
 #ifdef __WITH_TLS__
-    if (false == CAIsTlsMessage(svritem))
+    if (false == CAIsTlsMessage(data, dlen))
 #endif
     {
         size_t payloadLen = CACheckPayloadLength(data, dlen);
