@@ -41,6 +41,9 @@ namespace
 
     NSConsumerSimulator g_consumerSimul;
     char * g_consumerID;
+    char g_title[100];
+    char g_body[100];
+    char g_sourceName[100];
 }
 
 class TestWithMock: public testing::Test
@@ -119,6 +122,10 @@ protected:
             }
 
             g_isStartedStack = true;
+
+            strcpy(g_title, "Title");
+            strcpy(g_body, "ContentText");
+            strcpy(g_sourceName, "OIC");
         }
 
     }
@@ -228,9 +235,9 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
 
     NSMessage * msg = NSCreateMessage();
     msgID = (int)msg->messageId;
-    msg->title = strdup(std::string("Title").c_str());
-    msg->contentText = strdup(std::string("ContentText").c_str());
-    msg->sourceName = strdup(std::string("OCF").c_str());
+    msg->title = g_title;
+    msg->contentText = g_body;
+    msg->sourceName = g_sourceName;
 
     NSSendMessage(msg);
     {
@@ -265,9 +272,9 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 
     NSMessage * msg = NSCreateMessage();
     msgID = (int)msg->messageId;
-    msg->title = strdup(std::string("Title").c_str());
-    msg->contentText = strdup(std::string("ContentText").c_str());
-    msg->sourceName = strdup(std::string("OCF").c_str());
+    msg->title = g_title;
+    msg->contentText = g_body;
+    msg->sourceName = g_sourceName;
     NSSendMessage(msg);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
@@ -292,9 +299,9 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
 
     NSMessage * msg = NSCreateMessage();
     id = (int)msg->messageId;
-    msg->title = strdup(std::string("Title").c_str());
-    msg->contentText = strdup(std::string("ContentText").c_str());
-    msg->sourceName = strdup(std::string("OCF").c_str());
+    msg->title = g_title;
+    msg->contentText = g_body;
+    msg->sourceName = g_sourceName;
 
     NSProviderSendSyncInfo(msg->messageId, NS_SYNC_READ);
     std::unique_lock< std::mutex > lock{ mutexForCondition };
@@ -318,9 +325,9 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
 
     NSMessage * msg = NSCreateMessage();
     id = (int)msg->messageId;
-    msg->title = strdup(std::string("Title").c_str());
-    msg->contentText = strdup(std::string("ContentText").c_str());
-    msg->sourceName = strdup(std::string("OCF").c_str());
+    msg->title = g_title;
+    msg->contentText = g_body;
+    msg->sourceName = g_sourceName;
 
     g_consumerSimul.syncToProvider(type, id, msg->providerId);
     std::unique_lock< std::mutex > lock{ mutexForCondition };
