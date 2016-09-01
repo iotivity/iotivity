@@ -436,6 +436,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_V(connections);
 
         char * topicUri = OICStrdup(provider->topicUri);
+        NS_VERIFY_NOT_NULL_V(topicUri);
 
         OCConnectivityType type = CT_DEFAULT;
         if (connections->addr->adapter == OC_ADAPTER_TCP)
@@ -524,6 +525,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         }
 
         char * topicUri = OICStrdup(provider->topicUri);
+        NS_VERIFY_NOT_NULL_V(topicUri);
 
         OCConnectivityType type = CT_DEFAULT;
         if (connections->addr->adapter == OC_ADAPTER_TCP)
@@ -628,7 +630,8 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
         }
 
         NSResult ret = NSInsertTopicNode(topicLL, topicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(topicLL));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *)1 : NULL,
+                                                    NULL, NSRemoveTopicLL(topicLL));
     }
 
     return topicLL;

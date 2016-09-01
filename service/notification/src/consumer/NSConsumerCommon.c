@@ -393,7 +393,8 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
 
         NSResult ret = NSInsertTopicNode(newTopicHead, newTopicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(newTopicHead));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *)1 : NULL,
+                                                    NULL, NSRemoveTopicLL(newTopicHead));
 
         iter = (NSTopicLL *) iter->next;
     }
