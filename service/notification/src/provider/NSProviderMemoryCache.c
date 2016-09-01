@@ -612,6 +612,7 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
     if(!del)
     {
         NS_LOG(DEBUG, "list head is NULL");
+        pthread_mutex_unlock(&NSCacheMutex);
         return NS_FAIL;
     }
 
