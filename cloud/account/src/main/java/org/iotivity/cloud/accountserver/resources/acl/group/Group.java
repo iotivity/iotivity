@@ -120,7 +120,7 @@ public class Group {
             throw new InternalServerErrorException("group master is empty");
         }
         if (uuid.contains(groupTable.getGmid())) {
-            GroupResource.getInstance().deleteGroup(groupTable.getGmid(), mGid);
+            GroupManager.getInstance().deleteGroup(groupTable.getGmid(), mGid);
             notifyToSubscriber(getResponsePayload(false));
         } else {
             if (groupTable.getMidlist() == null) {
