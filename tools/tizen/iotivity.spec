@@ -38,6 +38,7 @@ Requires(post): /sbin/ldconfig
 %{!?SECURED: %define SECURED 0}
 %{!?LOGGING: %define LOGGING 1}
 %{!?ROUTING: %define ROUTING EP}
+%{!?WITH_CLOUD: %define WITH_CLOUD 0}
 %{!?WITH_TCP: %define WITH_TCP 1}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_MQ: %define WITH_MQ OFF}
