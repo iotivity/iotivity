@@ -1,0 +1,293 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building IotivitySecTest for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+iotivity_directory = env_linux.get('IOTIVITY_DIR')
+
+print "target source is --------------------------------" + target_source
+print "iotivity root is --------------------------------" + iotivity_directory
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is --------------------------------" + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+######################################################################
+# Initializing ES Dir
+######################################################################
+
+ES_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+ES_RESOURCE_INCLUDE = ES_RESOURCE_DIR + '/include'
+ES_C_COMMON = ES_RESOURCE_DIR + '/c_common'
+ES_OIC_STRING = ES_RESOURCE_DIR + '/c_common/oic_string/include'
+ES_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+ES_RESOURCE_CSDK_LIB = ES_RESOURCE_LIB
+ES_RESOURCE_STACK = ES_RESOURCE_DIR + '/csdk/stack/include'
+ES_RESOURCE_SOCKET = ES_RESOURCE_DIR + '/csdk/ocsocket/include'
+ES_RESOURCE_RANDOM = ES_RESOURCE_DIR + '/csdk/ocrandom/include'
+ES_RESOURCE_LOGGER = ES_RESOURCE_DIR + '/csdk/logger/include'
+ES_RESOURCE_OC_LOGGER = ES_RESOURCE_DIR + '/oc_logger/include'
+ES_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+ES_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+ES_RESOURCE_OC_LOGGER_LIB = ES_RESOURCE_LIB
+ES_DIR = ORG_SRC_HOME + '/service/things-manager'
+ES_INCLUDE = ES_DIR + '/sdk/inc'
+ES_SDK_INCLUDE = ES_DIR + '/sdk/src'
+ES_LIB = ES_RESOURCE_LIB
+ES_LIB_TIMER = ES_RESOURCE_LIB + '/extlibs/timer/'
+ES_SOURCE_INCLUDE =  ORG_SRC_HOME + '/service/easy-setup/inc'
+ES_ENROLLEE_INCLUDE =  ORG_SRC_HOME + '/service/easy-setup/enrollee/inc'
+ES_MEDIATOR_INCLUDE =  ORG_SRC_HOME + '/service/easy-setup/mediator/richsdk/inc' 
+ES_ENROLLEE_INCLUDE_SRC =  ORG_SRC_HOME + '/service/easy-setup/enrollee/src'
+ES_MEDIATOR_INCLUDE_SRC = ORG_SRC_HOME + '/service/easy-setup/mediator/richsdk/src'
+ES_RESOURCE_CSDK_SECURITY_INC = ES_RESOURCE_DIR  + '/csdk/security/include'
+ES_RESOURCE_CSDK_CONNECTIVITY_INC = ES_RESOURCE_DIR + '/csdk/connectivity/api'
+ES_RESOURCE_CSDK_PROVISIONING_INC = ES_RESOURCE_DIR + '/csdk/security/provisioning/include'
+ES_RESOURCE_PROVISIONING_INTERNAL_INC = ES_RESOURCE_DIR + '/csdk/security/provisioning/include/internal'
+######################################################################
+
+# Initializing CA Dir
+######################################################################
+
+CA_IOT = ENV_HOME + ORG_SRC
+CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/es/gtest'
+ENROLLEE_TC_INCLUDE_DIR = TC_DIR + '/include/enrollee'
+ENROLLEE_TC_INCLUDE_CPP_DIR = TC_DIR + '/src/helper/enrollee'
+
+ENROLLEE_STC_DIR = TC_DIR + '/src/stc/enrollee'
+ENROLLEE_BTC_DIR = TC_DIR + '/src/btc/enrollee'
+
+MEDIATOR_TC_INCLUDE_DIR = TC_DIR + '/include/mediator'
+MEDIATOR_TC_INCLUDE_CPP_DIR = TC_DIR + '/src/helper/mediator'
+
+MEDIATOR_STC_DIR = TC_DIR + '/src/stc/mediator'
+MEDIATOR_BTC_DIR = TC_DIR + '/src/btc/mediator'
+
+TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
+TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
+
+
+COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+#TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/es/gtest/include'
+
+COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
+
+PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
+
+ES_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, ES_RESOURCE_LOGGER]
+
+
+ES_CINCLUDE = [COMMON_CINCLUDE, ES_RESOURCE_INCLUDE, ES_RESOURCE_STACK, ES_RESOURCE_SOCKET, ES_RESOURCE_RANDOM, ES_RESOURCE_OC_LOGGER, ES_INCLUDE, ES_RESOURCE_CEREAL, ES_RESOURCE_TIMER, ES_LIB_TIMER, ES_SDK_INCLUDE, ES_C_COMMON, ES_OIC_STRING, ES_SOURCE_INCLUDE, ES_ENROLLEE_INCLUDE, ES_ENROLLEE_INCLUDE_SRC, ES_MEDIATOR_INCLUDE, ES_MEDIATOR_INCLUDE_SRC, ENROLLEE_TC_INCLUDE_DIR, ENROLLEE_TC_INCLUDE_CPP_DIR, MEDIATOR_TC_INCLUDE_DIR, MEDIATOR_TC_INCLUDE_CPP_DIR, ES_RESOURCE_CSDK_SECURITY_INC, ES_RESOURCE_CSDK_CONNECTIVITY_INC, ES_RESOURCE_CSDK_PROVISIONING_INC, ES_RESOURCE_PROVISIONING_INTERNAL_INC]
+
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
+ES_LIB_LOCATION = [COMMON_LIB_LOCATION, ES_RESOURCE_LIB, ES_RESOURCE_CSDK_LIB, ES_RESOURCE_OC_LOGGER_LIB, ES_LIB]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
+
+#ES_STATIC_LIBS = [ES_LIB + '/libTGMSDKLibrary.a']
+ES_ENROLLEE_LIB =  [ES_LIB + '/service/easy-setup/enrollee/libESEnrolleeSDK.so']
+ES_MEDIATOR_LIB = [ES_LIB + '/service/easy-setup/mediator/richsdk/libESMediatorRich.so']
+ES_STATIC_RESOURCE_LIBS = []
+ES_LIBS = COMMON_SHARED_LIBS
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+
+ES_ENROLLEE_ITC_BIN = 'iotivity_es_enrollee_test'
+ES_MEDIATOR_ITC_BIN = 'iotivity_es_mediator_test'
+TEST_SERVER_BIN = 'testserver'
+UNSUPPORTIVE_SERVER_BIN = 'unsupportivetestserver'
+BOOTSTRAP_SERVER_BIN = 'bootstrapserver'
+TEST_COLLECTION_BIN = 'testcollection'
+ES_TESTAPP_BIN = "ES_testapp"
+
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+
+ES_ENROLLEE_HELPER_CPP = Glob(TC_DIR + '/src/helper/enrollee/*.cpp')
+ES_MEDIATOR_HELPER_CPP = Glob(TC_DIR + '/src/helper/mediator/*.cpp')
+
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
+
+
+ES_ENROLLEE_STC_CPP = Glob(ENROLLEE_STC_DIR + '/*.cpp')
+ES_ENROLLEE_BTC_CPP = Glob(ENROLLEE_BTC_DIR + '/*.cpp')
+
+
+ES_MEDIATOR_STC_CPP = Glob(MEDIATOR_STC_DIR + '/*.cpp')
+ES_MEDIATOR_BTC_CPP = Glob(MEDIATOR_BTC_DIR + '/*.cpp')
+
+ES_ENROLLEE_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP, ES_ENROLLEE_HELPER_CPP]
+ES_MEDIATOR_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP, ES_MEDIATOR_HELPER_CPP]
+
+ES_ENROLLEE_TC_SRC = [ES_ENROLLEE_CPP, ES_ENROLLEE_STC_CPP, ES_ENROLLEE_BTC_CPP, COMMON_STATIC_LIBS, ES_ENROLLEE_LIB, ES_STATIC_RESOURCE_LIBS]
+ES_MEDIATOR_TC_SRC = [ES_MEDIATOR_CPP, ES_MEDIATOR_STC_CPP, ES_MEDIATOR_BTC_CPP, COMMON_STATIC_LIBS, ES_MEDIATOR_LIB, ES_STATIC_RESOURCE_LIBS]
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+env_linux.ParseConfig("pkg-config --cflags --libs uuid")
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+es_enrollee_itc = env_linux.Program(source = ES_ENROLLEE_TC_SRC, target = ES_ENROLLEE_ITC_BIN, CPPPATH = ES_CINCLUDE, LIBS = ES_LIBS, LIBPATH = ES_LIB_LOCATION, CPPFLAGS = ES_CFLAGS)
+
+es_mediator_itc = env_linux.Program(source = ES_MEDIATOR_TC_SRC, target = ES_MEDIATOR_ITC_BIN, CPPPATH = ES_CINCLUDE, LIBS = ES_LIBS, LIBPATH = ES_LIB_LOCATION, CPPFLAGS = ES_CFLAGS)
+
+env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
+
+pre_job = [create_target_dir]
+
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_test = env_linux.get('TARGET_TEST')
+es_role = env_linux.get('ES_ROLE')
+default_targets = [pre_job]
+install_targets = []
+
+print "target_service = " + target_service
+print "target_test = " + target_test
+print "target_transport = " + target_transport
+
+#SConscript(GTEST + '/SConscript')
+
+print "---------------service--------------" + target_service + target_test
+
+
+if 'es' in target_service or 'all' in target_service:
+    if 'tc' in target_test or 'all' in target_test:
+        if 'enrollee' in es_role or 'all' in es_role:
+	    print '---------------ES Enrollee TC Build Selected---------------'
+            install_targets += es_enrollee_itc
+
+if 'es' in target_service or 'all' in target_service:
+    if 'tc' in target_test or 'all' in target_test:
+        if 'mediator' in es_role or 'all' in es_role:
+	    print '---------------ES Mediator TC Build Selected---------------'
+            install_targets += es_mediator_itc
+
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)

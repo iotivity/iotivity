@@ -104,11 +104,13 @@ pre_job = [create_target_dir]
 target_service = env_linux.get('TARGET_SERVICE')
 target_transport = env_linux.get('TARGET_TRANSPORT')
 target_test = env_linux.get('TARGET_TEST')
+es_role = env_linux.get('ES_ROLE')
 default_targets = [pre_job]
 install_targets = []
 
 print "target_service = " + target_service
 print "target_test = " + target_test
+print "es_role = " + es_role
 print "target_transport = " + target_transport
 
 SConscript(GTEST + '/SConscript')
@@ -117,8 +119,6 @@ SConscript(GTEST + '/SConscript')
 
 print "---------------service--------------" + target_service + target_test
 
-if 'ic' in target_service or 'all' in target_service:
-    SConscript('SConscriptCloud', exports = 'env_linux')
 
 if 're' in target_service or 'all' in target_service:
     SConscript('SConscriptRE', exports = 'env_linux')
@@ -150,11 +150,20 @@ if 'phy' in target_service or 'all' in target_service:
 if 'sm' in target_service or 'all' in target_service:
     SConscript('SConscriptSM', exports = 'env_linux')
 
-if 'iut' in target_service or 'all' in target_service:
-    SConscript('SConscriptIUT', exports = 'env_linux')
+if 'ricpp' in target_service or 'all' in target_service:
+    SConscript('SConscriptRICPP', exports = 'env_linux')
+    
+if 'ricsdk' in target_service or 'all' in target_service:
+    SConscript('SConscriptRICSDK', exports = 'env_linux')
 
-if 'iori' in target_service or 'all' in target_service:
-    SConscript('SConscriptRIApp', exports = 'env_linux')
+if 'ns' in target_service or 'all' in target_service:
+    SConscript('SConscriptNS', exports = 'env_linux')
+
+if 'es' in target_service or 'all' in target_service:
+    SConscript('SConscriptES', exports = 'env_linux')
+
+if 'cloud' in target_service or 'all' in target_service:
+    SConscript('SConscriptIC', exports = 'env_linux')
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 
