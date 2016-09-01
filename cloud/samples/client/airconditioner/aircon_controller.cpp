@@ -20,8 +20,8 @@ using namespace std;
 
 
 condition_variable  g_callbackLock;
-std::string         g_uid;
-std::string         g_accesstoken;
+string         g_uid;
+string         g_accesstoken;
 
 string              g_host;
 OC::OCResource::Ptr g_binaryswitchResource;
@@ -31,6 +31,40 @@ void printRepresentation(OCRepresentation rep)
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
         cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+        if (itr->type() == AttributeType::Vector)
+        {
+            switch (itr->base_type())
+            {
+                case AttributeType::OCRepresentation:
+                    for (auto itr2 : (*itr).getValue<vector<OCRepresentation> >())
+                    {
+                        printRepresentation(itr2);
+                    }
+                    break;
+
+                case AttributeType::Integer:
+                    for (auto itr2 : (*itr).getValue<vector<int> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                case AttributeType::String:
+                    for (auto itr2 : (*itr).getValue<vector<string> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                default:
+                    cout << "Unhandled base type " << itr->base_type() << endl;
+                    break;
+            }
+        }
+        else if (itr->type() == AttributeType::OCRepresentation)
+        {
+            printRepresentation((*itr).getValue<OCRepresentation>());
+        }
     }
 }
 
@@ -92,13 +126,13 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
             }
 
             cout << "OBSERVE RESULT:" << endl;
-            printResource(rep);
+            printRepresentation(rep);
         }
         else
         {
             if (eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration failed or de-registration action failed/succeeded" << std::endl;
+                cout << "Observe registration failed or de-registration action failed/succeeded" << endl;
             }
             else
             {
@@ -113,11 +147,11 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
     }
 }
 
-void onPut(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep, const int eCode)
+void onPost(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep, const int eCode)
 {
-    cout << "PUT response: " << eCode << endl;
+    cout << "POST response: " << eCode << endl;
 
-    printResource(rep);
+    printRepresentation(rep);
 }
 
 void turnOnOffSwitch(bool toTurn)
@@ -126,7 +160,8 @@ void turnOnOffSwitch(bool toTurn)
     binarySwitch.setValue("value", toTurn);
 
     QueryParamsMap      query;
-    g_binaryswitchResource->post("oic.r.switch.binary", DEFAULT_INTERFACE, binarySwitch, query, &onPut);
+    g_binaryswitchResource->post("oic.r.switch.binary", DEFAULT_INTERFACE, binarySwitch, query,
+                                 &onPost);
 }
 
 void getCollectionResource(const HeaderOptions &,
@@ -215,7 +250,7 @@ void foundDevice(shared_ptr<OC::OCResource> resource)
     }
 }
 
-void presenceDevice(OCStackResult , const unsigned int i, const std::string &str)
+void presenceDevice(OCStackResult , const unsigned int i, const string &str)
 {
     cout << "Presence received, i=" << i << " str=" << str << endl;
 }
@@ -260,7 +295,7 @@ int main(int argc, char *argv[])
 
 
     mutex blocker;
-    unique_lock<std::mutex> lock(blocker);
+    unique_lock<mutex> lock(blocker);
 
     if (argc == 5)
     {

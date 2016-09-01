@@ -35,6 +35,8 @@
 #include "ocpayload.h"
 #include "oicresourcedirectory.h"
 
+using namespace std;
+
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define DEFAULT_AUTH_SIGNUP "/oic/account"
 #define DEFAULT_AUTH_SESSION "/oic/account/session"
@@ -176,7 +178,7 @@ OCRepPayload *responsePayload(int64_t power, bool state)
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
     {
-        std::cout << "Failed to allocate Payload" << std::endl;
+        cout << "Failed to allocate Payload" << endl;
         return nullptr;
     }
 
@@ -190,7 +192,7 @@ OCRepPayload *constructResponse(OCEntityHandlerRequest *ehRequest)
 {
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        std::cout << "Incoming payload not a representation" << std::endl;
+        cout << "Incoming payload not a representation" << endl;
         return nullptr;
     }
 
@@ -232,7 +234,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)
     {
-        std::cout << "constructResponse failed" << std::endl;
+        cout << "constructResponse failed" << endl;
         return OC_EH_ERROR;
     }
 
@@ -249,7 +251,7 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
 
     if (!putResp)
     {
-        std::cout << "Failed to construct Json response" << std::endl;
+        cout << "Failed to construct Json response" << endl;
         return OC_EH_ERROR;
     }
 
@@ -284,13 +286,13 @@ void *ChangeLightRepresentation(void *param)
 
         if (gLightUnderObservation)
         {
-            std::cout << " =====> Notifying stack of new power level " << gLightInstance[0].power << std::endl;
-            std::cout << " =====> Notifying stack of new power level " << gLightInstance[1].power << std::endl;
+            cout << " =====> Notifying stack of new power level " << gLightInstance[0].power << endl;
+            cout << " =====> Notifying stack of new power level " << gLightInstance[1].power << endl;
             // Notifying all observers
             result = OCNotifyAllObservers(gLightInstance[0].handle, OC_NA_QOS);
             result = OCNotifyAllObservers(gLightInstance[1].handle, OC_NA_QOS);
 
-            std::cout << " =====> Notifying result " << result << std::endl;
+            cout << " =====> Notifying result " << result << endl;
         }
     }
     return NULL;
@@ -298,8 +300,8 @@ void *ChangeLightRepresentation(void *param)
 
 void ProcessObserveRegister(OCEntityHandlerRequest *ehRequest)
 {
-    std::cout << "Received observation registration request with observation Id " <<
-              ehRequest->obsInfo.obsId << std::endl;
+    cout << "Received observation registration request with observation Id " <<
+         ehRequest->obsInfo.obsId << endl;
 
     if (!observeThreadStarted)
     {
@@ -322,8 +324,8 @@ void ProcessObserveDeregister(OCEntityHandlerRequest *ehRequest)
 {
     bool clientStillObserving = false;
 
-    std::cout << "Received observation deregistration request for observation Id " <<
-              ehRequest->obsInfo.obsId << std::endl;
+    cout << "Received observation deregistration request for observation Id " <<
+         ehRequest->obsInfo.obsId << endl;
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
         if (interestedObservers[i].observationId == ehRequest->obsInfo.obsId)
@@ -350,7 +352,7 @@ OCEntityHandlerCb(OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        std::cout << "Invalid request pointer" << std::endl;
+        cout << "Invalid request pointer" << endl;
         return OC_EH_ERROR;
     }
 
@@ -363,22 +365,22 @@ OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        std::cout << "Flag includes OC_REQUEST_FLAG" << std::endl;
+        cout << "Flag includes OC_REQUEST_FLAG" << endl;
 
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            std::cout << "Received OC_REST_GET from client" << std::endl;
+            cout << "Received OC_REST_GET from client" << endl;
             ehResult = ProcessGetRequest(entityHandlerRequest, &payload);
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            std::cout << "Received OC_REST_PUT from client" << std::endl;
+            cout << "Received OC_REST_PUT from client" << endl;
             ehResult = ProcessPutRequest(entityHandlerRequest, &payload);
         }
         else
         {
-            std::cout << "Received unsupported method %d from client " << entityHandlerRequest->method <<
-                      std::endl;
+            cout << "Received unsupported method %d from client " << entityHandlerRequest->method <<
+                 endl;
             ehResult = OC_EH_ERROR;
         }
         // If the result isn't an error or forbidden, send response
@@ -395,7 +397,7 @@ OCEntityHandlerCb(OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                std::cout << "Error sending response" << std::endl;
+                cout << "Error sending response" << endl;
                 ehResult = OC_EH_ERROR;
             }
         }
@@ -403,15 +405,15 @@ OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_OBSERVE_FLAG)
     {
-        std::cout << "Flag includes OC_OBSERVE_FLAG" << std::endl;
+        cout << "Flag includes OC_OBSERVE_FLAG" << endl;
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            std::cout << "Received OC_OBSERVE_REGISTER from client" << std::endl;
+            cout << "Received OC_OBSERVE_REGISTER from client" << endl;
             ProcessObserveRegister(entityHandlerRequest);
         }
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
-            std::cout << "Received OC_OBSERVE_DEREGISTER from client" << std::endl;
+            cout << "Received OC_OBSERVE_DEREGISTER from client" << endl;
             ProcessObserveDeregister(entityHandlerRequest);
         }
     }
@@ -424,7 +426,7 @@ int createLightResource(char *uri, LightResource *lightResource)
 {
     if (!uri)
     {
-        std::cout << "Resource URI cannot be NULL" << std::endl;
+        cout << "Resource URI cannot be NULL" << endl;
         return -1;
     }
 
@@ -437,7 +439,7 @@ int createLightResource(char *uri, LightResource *lightResource)
                                          OCEntityHandlerCb,
                                          NULL,
                                          OC_DISCOVERABLE | OC_OBSERVABLE);
-    std::cout << "Created Light resource with result:" << res << std::endl;
+    cout << "Created Light resource with result:" << res << endl;
 
     return res;
 }
@@ -448,21 +450,21 @@ OCStackApplicationResult handlePublishCB(void *ctx,
 {
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
-        std::cout << "Invalid Publish callback received" << std::endl;
+        cout << "Invalid Publish callback received" << endl;
     }
 
-    std::cout << "Publish resource response received, code: " << clientResponse->result << std::endl;
+    cout << "Publish resource response received, code: " << clientResponse->result << endl;
 
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-void PublishResources(std::string host)
+void PublishResources(string host)
 {
-    std::cout << "Publishing resources..." << std::endl;
+    cout << "Publishing resources..." << endl;
 
     if (createLightResource((char *)"/a/light/0", &gLightInstance[0]) != 0)
     {
-        std::cout << "Unable to create sample resource" << std::endl;
+        cout << "Unable to create sample resource" << endl;
     }
 
     OCResourceHandle    resourceHandles[1] = { gLightInstance[0].handle,
@@ -472,7 +474,7 @@ void PublishResources(std::string host)
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    std::cout << "Publish default resources" << std::endl;
+    cout << "Publish default resources" << endl;
 
     OCDeviceInfo        devInfoRoomLight;
     OCStringLL          deviceType;
@@ -488,23 +490,23 @@ void PublishResources(std::string host)
 
     if (res != OC_STACK_OK)
     {
-        std::cout << "Setting device info failed" << std::endl;
+        cout << "Setting device info failed" << endl;
     }
 
     res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, NULL, 0, &cbData,
                       OC_LOW_QOS);
     if (res != OC_STACK_OK)
     {
-        std::cout << "Unable to publish default resources to cloud" << std::endl;
+        cout << "Unable to publish default resources to cloud" << endl;
     }
 
-    std::cout << "Publish user resources" << std::endl;
+    cout << "Publish user resources" << endl;
 
     res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, resourceHandles, 1, &cbData,
                       OC_LOW_QOS);
     if (res != OC_STACK_OK)
     {
-        std::cout << "Unable to publish user resources to cloud" << std::endl;
+        cout << "Unable to publish user resources to cloud" << endl;
     }
 }
 
@@ -513,39 +515,39 @@ void printRepresentation(OCRepPayloadValue *value)
 {
     while (value)
     {
-        std::cout << "Key: " << value->name;
+        cout << "Key: " << value->name;
         switch (value->type)
         {
             case OCREP_PROP_NULL:
-                std::cout << " Value: None" << std::endl;
+                cout << " Value: None" << endl;
                 break;
             case OCREP_PROP_INT:
-                std::cout << " Value: " << value->i << std::endl;
+                cout << " Value: " << value->i << endl;
                 break;
             case OCREP_PROP_DOUBLE:
-                std::cout << " Value: " << value->d << std::endl;
+                cout << " Value: " << value->d << endl;
                 break;
             case OCREP_PROP_BOOL:
-                std::cout << " Value: " << value->b << std::endl;
+                cout << " Value: " << value->b << endl;
                 break;
             case OCREP_PROP_STRING:
-                std::cout << " Value: " << value->str << std::endl;
+                cout << " Value: " << value->str << endl;
                 break;
             case OCREP_PROP_BYTE_STRING:
-                std::cout << " Value: Byte String" << std::endl;
+                cout << " Value: Byte String" << endl;
                 break;
             case OCREP_PROP_OBJECT:
-                std::cout << " Value: Object" << std::endl;
+                cout << " Value: Object" << endl;
                 break;
             case OCREP_PROP_ARRAY:
-                std::cout << " Value: Array" << std::endl;
+                cout << " Value: Array" << endl;
                 break;
         }
         value = value->next;
     }
 }
 
-std::string g_host = "coap+tcp://";
+string g_host = "coap+tcp://";
 
 OCStackApplicationResult handleLoginoutCB(void *ctx,
         OCDoHandle /*handle*/,
@@ -553,15 +555,15 @@ OCStackApplicationResult handleLoginoutCB(void *ctx,
 {
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
-        std::cout << "Invalid Login/out callback received" << std::endl;
+        cout << "Invalid Login/out callback received" << endl;
     }
 
-    std::cout << "Login/out response received code: " << clientResponse->result << std::endl;
+    cout << "Login/out response received code: " << clientResponse->result << endl;
 
     if (clientResponse->payload != NULL &&
         clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
     {
-        std::cout << "PAYLOAD_TYPE_REPRESENTATION received" << std::endl;
+        cout << "PAYLOAD_TYPE_REPRESENTATION received" << endl;
 
         OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
 
@@ -582,17 +584,17 @@ OCStackApplicationResult handleRegisterCB(void *ctx,
 {
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
-        std::cout << "Invalid Register callback received" << std::endl;
+        cout << "Invalid Register callback received" << endl;
     }
 
-    std::cout << "Register response received code: " << clientResponse->result << std::endl;
+    cout << "Register response received code: " << clientResponse->result << endl;
 
     if (clientResponse->payload != NULL &&
         clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
     {
-        std::cout << "PAYLOAD_TYPE_REPRESENTATION received" << std::endl;
-        std::cout << "You can Sign-In using retrieved accesstoken when disconnected or reboot" <<
-                  std::endl;
+        cout << "PAYLOAD_TYPE_REPRESENTATION received" << endl;
+        cout << "You can Sign-In using retrieved accesstoken when disconnected or reboot" <<
+             endl;
 
         OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
 
@@ -604,15 +606,15 @@ OCStackApplicationResult handleRegisterCB(void *ctx,
 
 void PrintUsage()
 {
-    std::cout << std::endl;
-    std::cout << "Usage : thin_cloud_device <addr:port> <uid> <accesstoken>\n";
-    std::cout << "<addr:port>: Cloud Address, \"127.0.0.1:5683\"\n";
-    std::cout <<
-              "<accesstoken>: String value, Provided by response of onboarding scenario\n\tor kind of registration portal\n\n";
-    std::cout <<
-              "sample: \"cloud_device 127.0.0.1:5683\"\n\t-Sign-Up mode\n\n";
-    std::cout <<
-              "sample: \"cloud_device 127.0.0.1:5683 abcdefg 1234567890123456\"\n\t-Sign-in and Publish resource to registered account\n\n";
+    cout << endl;
+    cout << "Usage : thin_cloud_device <addr:port> <uid> <accesstoken>\n";
+    cout << "<addr:port>: Cloud Address, \"127.0.0.1:5683\"\n";
+    cout <<
+         "<accesstoken>: String value, Provided by response of onboarding scenario\n\tor kind of registration portal\n\n";
+    cout <<
+         "sample: \"cloud_device 127.0.0.1:5683\"\n\t-Sign-Up mode\n\n";
+    cout <<
+         "sample: \"cloud_device 127.0.0.1:5683 abcdefg 1234567890123456\"\n\t-Sign-in and Publish resource to registered account\n\n";
 }
 
 static FILE *client_open(const char * /*path*/, const char *mode)
@@ -622,21 +624,21 @@ static FILE *client_open(const char * /*path*/, const char *mode)
 
 int main(int argc, char *argv[])
 {
-    std::string uId;
-    std::string accessToken;
+    string uId;
+    string accessToken;
 
-    std::string authProvider;
-    std::string authCode;
+    string authProvider;
+    string authCode;
 
     OCMode      stackMode = OC_CLIENT_SERVER;
 
     switch (argc)
     {
         case 2:
-            std::cout << "Put auth provider name(ex: github)" << std::endl;
-            std::cin >> authProvider;
-            std::cout << "Put auth code(provided by auth provider)" << std::endl;
-            std::cin >> authCode;
+            cout << "Put auth provider name(ex: github)" << endl;
+            cin >> authProvider;
+            cout << "Put auth code(provided by auth provider)" << endl;
+            cin >> authCode;
             break;
 
         case 4:
@@ -651,18 +653,18 @@ int main(int argc, char *argv[])
 
     g_host += argv[1];
 
-    std::cout << "Host " << g_host.c_str() << std::endl;
+    cout << "Host " << g_host.c_str() << endl;
 
     OCPersistentStorage ps{ client_open, fread, fwrite, fclose, unlink };
     if (OCRegisterPersistentStorageHandler(&ps) != OC_STACK_OK)
     {
-        std::cout << "OCStack init persistent storage error" << std::endl;
+        cout << "OCStack init persistent storage error" << endl;
         return 0;
     }
 
     if (OCInit(NULL, 0, stackMode) != OC_STACK_OK)
     {
-        std::cout << "OCStack init error" << std::endl;
+        cout << "OCStack init error" << endl;
         return 0;
     }
 
@@ -671,17 +673,17 @@ int main(int argc, char *argv[])
     switch (argc)
     {
         case 2:
-            std::cout << "Sign-Up to cloud using " << authProvider << " " << authCode << std::endl;
+            cout << "Sign-Up to cloud using " << authProvider << " " << authCode << endl;
             res = OCCloudSignup(g_host.c_str(), OCGetServerInstanceIDString(), authProvider.c_str(),
                                 authCode.c_str(), handleRegisterCB);
-            std::cout << "OCCloudSignup return " << res << std::endl;
+            cout << "OCCloudSignup return " << res << endl;
             break;
 
         case 4:
-            std::cout << "Sign-In to cloud using " << accessToken << std::endl;
+            cout << "Sign-In to cloud using " << accessToken << endl;
             res = OCCloudLogin(g_host.c_str(), uId.c_str(), OCGetServerInstanceIDString(), accessToken.c_str(),
                                handleLoginoutCB);
-            std::cout << "OCCloudLogin return " << res << std::endl;
+            cout << "OCCloudLogin return " << res << endl;
             break;
 
         default:
@@ -691,13 +693,13 @@ int main(int argc, char *argv[])
 
 
 
-    std::cout << "Waiting response.." << std::endl;
+    cout << "Waiting response.." << endl;
 
     while (true)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            std::cout << "OCProcess process error" << std::endl;
+            cout << "OCProcess process error" << endl;
         }
 
         sleep(1);
@@ -705,7 +707,7 @@ int main(int argc, char *argv[])
 
     if (OCStop() != OC_STACK_OK)
     {
-        std::cout << "OCStop process error" << std::endl;
+        cout << "OCStop process error" << endl;
     }
 
     return 0;

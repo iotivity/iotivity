@@ -52,32 +52,66 @@ void printRepresentation(OCRepresentation rep)
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
         cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+        if (itr->type() == AttributeType::Vector)
+        {
+            switch (itr->base_type())
+            {
+                case AttributeType::OCRepresentation:
+                    for (auto itr2 : (*itr).getValue<vector<OCRepresentation> >())
+                    {
+                        printRepresentation(itr2);
+                    }
+                    break;
+
+                case AttributeType::Integer:
+                    for (auto itr2 : (*itr).getValue<vector<int> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                case AttributeType::String:
+                    for (auto itr2 : (*itr).getValue<vector<string> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                default:
+                    cout << "Unhandled base type " << itr->base_type() << endl;
+                    break;
+            }
+        }
+        else if (itr->type() == AttributeType::OCRepresentation)
+        {
+            printRepresentation((*itr).getValue<OCRepresentation>());
+        }
     }
 }
 
 ////////////////////////////////////////Publisher Sample
 
-void createTopicCB(const int ecode, const std::string &originUri,
-                   std::shared_ptr<OC::OCResource> topic)
+void createTopicCB(const int ecode, const string &originUri,
+                   shared_ptr<OC::OCResource> topic)
 {
-    std::cout << "Create topic response received, code: " << ecode << std::endl;
+    cout << "Create topic response received, code: " << ecode << endl;
 
     if (ecode == OCStackResult::OC_STACK_RESOURCE_CREATED)
     {
-        std::cout << "Created topic : " << topic->uri() << std::endl;
+        cout << "Created topic : " << topic->uri() << endl;
     }
     else
     {
-        std::cout << "Topic creation failed : " << originUri << std::endl;
+        cout << "Topic creation failed : " << originUri << endl;
     }
 }
 
 void publishMessageCB(const HeaderOptions &, const OCRepresentation &, const int eCode)
 {
-    std::cout << "Publish message response received, code: " << eCode << std::endl;
+    cout << "Publish message response received, code: " << eCode << endl;
 }
 
-void discoverTopicCB(const int ecode, const std::string &, std::shared_ptr<OC::OCResource> topic)
+void discoverTopicCB(const int ecode, const string &, shared_ptr<OC::OCResource> topic)
 {
     cout << "Topic discovered code: " << ecode << endl;
     gTopicList.push_back(topic);
@@ -85,9 +119,9 @@ void discoverTopicCB(const int ecode, const std::string &, std::shared_ptr<OC::O
 }
 ////////////////////////////////////////End of Publisher Sample
 
-std::condition_variable g_callbackLock;
-std::string             g_uid;
-std::string             g_accesstoken;
+condition_variable g_callbackLock;
+string             g_uid;
+string             g_accesstoken;
 
 void handleLoginoutCB(const HeaderOptions &,
                       const OCRepresentation &rep, const int ecode)
@@ -148,7 +182,7 @@ int main(int argc, char *argv[])
                                        CT_ADAPTER_TCP);
 
     mutex blocker;
-    unique_lock<std::mutex> lock(blocker);
+    unique_lock<mutex> lock(blocker);
 
     if (argc == 5)
     {

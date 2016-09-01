@@ -44,36 +44,40 @@ void printRepresentation(OCRepresentation rep)
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
         cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
-    }
-}
-
-void onSearchUser(const HeaderOptions & /*headerOptions*/,
-                  const OCRepresentation &rep, const int eCode)
-{
-    if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
-    {
-        cout << "\tSearchUser request was successful" << endl;
-
-        std::vector<OCRepresentation> userList = rep.getValue<std::vector<OCRepresentation>>("ulist");
-
-        for (auto user : userList)
+        if (itr->type() == AttributeType::Vector)
         {
-            // Mandatory field
-            cout << "\tuid: " << user.getValue<string>("uid") << endl;
-
-            // Optional field
-            cout << "\tuinfo: " << endl;
-            OCRepresentation uinfo = user.getValue<OCRepresentation>("uinfo");
-            for (auto itr = uinfo.begin(); itr != uinfo.end(); ++itr)
+            switch (itr->base_type())
             {
-                cout << "\t\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+                case AttributeType::OCRepresentation:
+                    for (auto itr2 : (*itr).getValue<vector<OCRepresentation> >())
+                    {
+                        printRepresentation(itr2);
+                    }
+                    break;
+
+                case AttributeType::Integer:
+                    for (auto itr2 : (*itr).getValue<vector<int> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                case AttributeType::String:
+                    for (auto itr2 : (*itr).getValue<vector<string> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                default:
+                    cout << "Unhandled base type " << itr->base_type() << endl;
+                    break;
             }
-            cout << endl;
         }
-    }
-    else
-    {
-        cout << "\tSearchUser Response error: " << eCode << endl;
+        else if (itr->type() == AttributeType::OCRepresentation)
+        {
+            printRepresentation((*itr).getValue<OCRepresentation>());
+        }
     }
 }
 
@@ -83,13 +87,13 @@ void ocPost(const HeaderOptions & /*headerOptions*/,
 {
     if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
     {
-        std::cout << "\tRequest was successful: " << eCode << std::endl;
+        cout << "\tRequest was successful: " << eCode << endl;
 
         printRepresentation(rep);
     }
     else
     {
-        std::cout << "\tResponse error: " << eCode << std::endl;
+        cout << "\tResponse error: " << eCode << endl;
     }
 }
 
@@ -112,7 +116,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
         {
             if (eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration failed or de-registration action failed/succeeded" << std::endl;
+                cout << "Observe registration failed or de-registration action failed/succeeded" << endl;
             }
             else
             {
@@ -140,9 +144,9 @@ void onDelete(const HeaderOptions & /*headerOptions*/,
     }
 }
 
-std::condition_variable g_callbackLock;
-std::string             g_uid;
-std::string             g_accesstoken;
+condition_variable g_callbackLock;
+string             g_uid;
+string             g_accesstoken;
 
 void handleLoginoutCB(const HeaderOptions &,
                       const OCRepresentation &rep, const int ecode)
@@ -195,7 +199,7 @@ int main(int argc, char *argv[])
                                        CT_ADAPTER_TCP);
 
     mutex blocker;
-    unique_lock<std::mutex> lock(blocker);
+    unique_lock<mutex> lock(blocker);
 
     if (argc == 5)
     {
@@ -211,24 +215,26 @@ int main(int argc, char *argv[])
     }
 
     cout << "---Group & Invite sample---" << endl;
-    cout << "     1 - searchUser" << endl;
-    cout << "     2 - deleteDevice" << endl;
-    cout << "     3 - createGroup" << endl;
-    cout << "     4 - observeGroup" << endl;
-    cout << "     5 - getGroupList" << endl;
-    cout << "     6 - deleteGroup" << endl;
-    cout << "     7 - joinGroup" << endl;
-    cout << "     8 - addDeviceToGroup" << endl;
-    cout << "     9 - getGroupInfo" << endl;
-    cout << "    10 - leaveGroup" << endl;
-    cout << "    11 - deleteDeviceFromGroup" << endl;
-    cout << "    12 - observeInvitation" << endl;
-    cout << "    13 - sendInvitation" << endl;
-    cout << "    14 - cancelInvitation" << endl;
-    cout << "    15 - deleteInvitation" << endl;
-    cout << "    16 - cancelObserveGroup" << endl;
-    cout << "    17 - cancelObserveInvitation" << endl;
-    cout << "    18 - exit" << endl;
+    cout << "     1 - searchUser using user UUID" << endl;
+    cout << "     2 - searchUser using email" << endl;
+    cout << "     3 - searchUser using phone" << endl;
+    cout << "     4 - deleteDevice" << endl;
+    cout << "     5 - createGroup" << endl;
+    cout << "     6 - observeGroup" << endl;
+    cout << "     7 - getGroupList" << endl;
+    cout << "     8 - deleteGroup" << endl;
+    cout << "     9 - joinGroup" << endl;
+    cout << "    10 - addDeviceToGroup" << endl;
+    cout << "    11 - getGroupInfo" << endl;
+    cout << "    12 - leaveGroup" << endl;
+    cout << "    13 - deleteDeviceFromGroup" << endl;
+    cout << "    14 - observeInvitation" << endl;
+    cout << "    15 - sendInvitation" << endl;
+    cout << "    16 - cancelInvitation" << endl;
+    cout << "    17 - deleteInvitation" << endl;
+    cout << "    18 - cancelObserveGroup" << endl;
+    cout << "    19 - cancelObserveInvitation" << endl;
+    cout << "    20 - exit" << endl;
 
     string cmd;
     string cmd2;
@@ -245,82 +251,96 @@ int main(int argc, char *argv[])
             case 1:
                 cout << "Put userUUID to search:" << endl;
                 cin >> cmd;
-                result = accountMgr->searchUser(cmd, &onSearchUser);
+                result = accountMgr->searchUser(cmd, &ocPost);
                 break;
 
             case 2:
+                cout << "Put email to search:" << endl;
+                cin >> cmd;
+                query["email"] = cmd;
+                result = accountMgr->searchUser(query, &ocPost);
+                break;
+
+            case 3:
+                cout << "Put phone number to search:" << endl;
+                cin >> cmd;
+                query["phone"] = cmd;
+                result = accountMgr->searchUser(query, &ocPost);
+                break;
+
+            case 4:
                 cout << "PUT deviceID to delete:";
                 cin >> cmd;
                 result = accountMgr->deleteDevice(cmd, &onDelete);
                 break;
 
-            case 3:
+            case 5:
                 result = accountMgr->createGroup(OC::AclGroupType::PUBLIC, &ocPost);
                 break;
 
-            case 4:
+            case 6:
                 cout << "PUT groupId to observe:";
                 cin >> cmd;
                 result = accountMgr->observeGroup(cmd, &onObserve);
                 break;
 
-            case 5:
+            case 7:
                 result = accountMgr->getGroupList(&ocPost);
                 break;
 
-            case 6:
+            case 8:
                 cout << "PUT groupId to delete:";
                 cin >> cmd;
                 result = accountMgr->deleteGroup(cmd, &onDelete);
                 break;
 
-            case 7:
+            case 9:
                 cout << "PUT groupId to join:";
                 cin >> cmd;
                 result = accountMgr->joinGroup(cmd, &ocPost);
                 break;
 
-            case 8:
+            case 10:
                 cout << "PUT groupId to add device:";
                 cin >> cmd;
                 cout << "PUT deviceId to add to group:";
                 cin >> cmd2;
                 {
-                    std::vector<std::string> deviceIds;
+                    vector<string> deviceIds;
                     deviceIds.push_back(cmd2);
                     result = accountMgr->addDeviceToGroup(cmd, deviceIds, &ocPost);
                 }
                 break;
 
-            case 9:
+            case 11:
                 cout << "PUT groupId to get info:";
                 cin >> cmd;
                 result = accountMgr->getGroupInfo(cmd, &ocPost);
                 break;
 
-            case 10:
+            case 12:
                 cout << "PUT groupId to leave:";
                 cin >> cmd;
                 result = accountMgr->leaveGroup(cmd, &onDelete);
                 break;
 
-            case 11:
+            case 13:
                 cout << "PUT groupId to remove device:";
                 cin >> cmd;
                 cout << "PUT deviceId to remove from group:";
                 cin >> cmd2;
                 {
-                    std::vector<std::string> deviceIds;
+                    vector<string> deviceIds;
                     deviceIds.push_back(cmd2);
                     result = accountMgr->deleteDeviceFromGroup(cmd, deviceIds, &onDelete);
                 }
                 break;
 
-            case 12:
+            case 14:
                 result = accountMgr->observeInvitation(&onObserve);
                 break;
 
-            case 13:
+            case 15:
                 cout << "PUT groupId to invite:";
                 cin >> cmd;
                 cout << "PUT userUUID to invite:";
@@ -328,7 +348,7 @@ int main(int argc, char *argv[])
                 result = accountMgr->sendInvitation(cmd, cmd2, &ocPost);
                 break;
 
-            case 14:
+            case 16:
                 cout << "PUT groupId to cancel invitation:";
                 cin >> cmd;
                 cout << "PUT userUUID to cancel invitation:";
@@ -336,24 +356,23 @@ int main(int argc, char *argv[])
                 result = accountMgr->cancelInvitation(cmd, cmd2, &onDelete);
                 break;
 
-            case 15:
+            case 17:
                 cout << "PUT groupId to delete invitation:";
                 cin >> cmd;
                 result = accountMgr->deleteInvitation(cmd, &onDelete);
                 break;
 
-            case 16:
+            case 18:
                 cout << "PUT groupId to cancel observe:";
                 cin >> cmd;
                 result = accountMgr->cancelObserveGroup(cmd);
                 break;
 
-            case 17:
+            case 19:
                 result = accountMgr->cancelObserveInvitation();
                 break;
 
-            //113 is q
-            case 18:
+            case 20:
                 goto exit;
                 break;
         }

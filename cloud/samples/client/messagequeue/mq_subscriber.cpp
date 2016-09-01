@@ -53,6 +53,40 @@ void printRepresentation(OCRepresentation rep)
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
         cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+        if (itr->type() == AttributeType::Vector)
+        {
+            switch (itr->base_type())
+            {
+                case AttributeType::OCRepresentation:
+                    for (auto itr2 : (*itr).getValue<vector<OCRepresentation> >())
+                    {
+                        printRepresentation(itr2);
+                    }
+                    break;
+
+                case AttributeType::Integer:
+                    for (auto itr2 : (*itr).getValue<vector<int> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                case AttributeType::String:
+                    for (auto itr2 : (*itr).getValue<vector<string> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                default:
+                    cout << "Unhandled base type " << itr->base_type() << endl;
+                    break;
+            }
+        }
+        else if (itr->type() == AttributeType::OCRepresentation)
+        {
+            printRepresentation((*itr).getValue<OCRepresentation>());
+        }
     }
 }
 
@@ -76,7 +110,7 @@ void subscribeCB(const HeaderOptions &,
         {
             if (eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration failed or de-registration action failed/succeeded" << std::endl;
+                cout << "Observe registration failed or de-registration action failed/succeeded" << endl;
             }
             else
             {
@@ -91,8 +125,8 @@ void subscribeCB(const HeaderOptions &,
     }
 }
 
-void discoverTopicCB(const int ecode, const std::string &brokerUri,
-                     std::shared_ptr<OC::OCResource> topic)
+void discoverTopicCB(const int ecode, const string &brokerUri,
+                     shared_ptr<OC::OCResource> topic)
 {
     cout << "Topic discovered from " << brokerUri << " code: " << ecode << endl;
     gTopicList.push_back(topic);
@@ -101,8 +135,8 @@ void discoverTopicCB(const int ecode, const std::string &brokerUri,
 ////////////////////////////////////////Subscriber Sample
 
 condition_variable  g_callbackLock;
-std::string             g_uid;
-std::string             g_accesstoken;
+string             g_uid;
+string             g_accesstoken;
 
 void handleLoginoutCB(const HeaderOptions &,
                       const OCRepresentation &rep, const int ecode)
@@ -163,7 +197,7 @@ int main(int argc, char *argv[])
                                        CT_ADAPTER_TCP);
 
     mutex blocker;
-    unique_lock<std::mutex> lock(blocker);
+    unique_lock<mutex> lock(blocker);
 
     if (argc == 5)
     {

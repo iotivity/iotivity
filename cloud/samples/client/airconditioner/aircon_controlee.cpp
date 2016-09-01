@@ -59,9 +59,9 @@ class Resource
             return OCPlatform::bindResource(m_handle, childResource->m_handle);
         }
 
-        OCStackResult sendRepresentation(std::shared_ptr<OCResourceRequest> pRequest)
+        OCStackResult sendRepresentation(shared_ptr<OCResourceRequest> pRequest)
         {
-            auto pResponse = std::make_shared<OC::OCResourceResponse>();
+            auto pResponse = make_shared<OC::OCResourceResponse>();
             pResponse->setRequestHandle(pRequest->getRequestHandle());
             pResponse->setResourceHandle(pRequest->getResourceHandle());
 
@@ -95,8 +95,8 @@ class Resource
         {
             if (m_interestedObservers.size() > 0)
             {
-                std::shared_ptr<OCResourceResponse> resourceResponse =
-                { std::make_shared<OCResourceResponse>() };
+                shared_ptr<OCResourceResponse> resourceResponse =
+                { make_shared<OCResourceResponse>() };
 
                 resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
@@ -109,7 +109,7 @@ class Resource
             return OC_STACK_OK;
         }
 
-        virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request) = 0;
+        virtual OCEntityHandlerResult entityHandler(shared_ptr<OCResourceRequest> request) = 0;
 
     protected:
         OCRepresentation    m_representation;
@@ -143,7 +143,7 @@ class BinarySwitchResource : public Resource //oic.r.switch.binary
             }
         }
 
-        OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+        OCEntityHandlerResult entityHandler(shared_ptr<OCResourceRequest> request)
         {
             cout << "\tIn Server Binaryswitch entity handler:\n";
             OCEntityHandlerResult ehResult = OC_EH_ERROR;
@@ -151,7 +151,7 @@ class BinarySwitchResource : public Resource //oic.r.switch.binary
             if (request)
             {
                 // Get the request type and request flag
-                std::string requestType = request->getRequestType();
+                string requestType = request->getRequestType();
                 int requestFlag = request->getRequestHandlerFlag();
 
                 if (requestFlag & RequestHandlerFlag::RequestFlag)
@@ -202,7 +202,7 @@ class BinarySwitchResource : public Resource //oic.r.switch.binary
                     }
                     else if (ObserveAction::ObserveUnregister == observationInfo.action)
                     {
-                        m_interestedObservers.erase(std::remove(
+                        m_interestedObservers.erase(remove(
                                                         m_interestedObservers.begin(),
                                                         m_interestedObservers.end(),
                                                         observationInfo.obsId),
@@ -212,7 +212,7 @@ class BinarySwitchResource : public Resource //oic.r.switch.binary
             }
             else
             {
-                std::cout << "Request invalid" << std::endl;
+                cout << "Request invalid" << endl;
             }
 
             return ehResult;
@@ -262,7 +262,7 @@ class TemperatureResource : public Resource //oic.r.temperature
             }
         }
 
-        OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+        OCEntityHandlerResult entityHandler(shared_ptr<OCResourceRequest> request)
         {
             cout << "\tIn Server Temperature entity handler:\n";
             OCEntityHandlerResult ehResult = OC_EH_ERROR;
@@ -270,7 +270,7 @@ class TemperatureResource : public Resource //oic.r.temperature
             if (request)
             {
                 // Get the request type and request flag
-                std::string requestType = request->getRequestType();
+                string requestType = request->getRequestType();
                 int requestFlag = request->getRequestHandlerFlag();
 
                 if (requestFlag & RequestHandlerFlag::RequestFlag)
@@ -321,7 +321,7 @@ class TemperatureResource : public Resource //oic.r.temperature
                     }
                     else if (ObserveAction::ObserveUnregister == observationInfo.action)
                     {
-                        m_interestedObservers.erase(std::remove(
+                        m_interestedObservers.erase(remove(
                                                         m_interestedObservers.begin(),
                                                         m_interestedObservers.end(),
                                                         observationInfo.obsId),
@@ -331,7 +331,7 @@ class TemperatureResource : public Resource //oic.r.temperature
             }
             else
             {
-                std::cout << "Request invalid" << std::endl;
+                cout << "Request invalid" << endl;
             }
 
             return ehResult;
@@ -349,7 +349,7 @@ class AirConditionerResource : public Resource // oic.d.airconditioner
 
         }
 
-        OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+        OCEntityHandlerResult entityHandler(shared_ptr<OCResourceRequest> request)
         {
             cout << "\tIn Server Airconditioner entity handler:\n";
             OCEntityHandlerResult ehResult = OC_EH_ERROR;
@@ -357,7 +357,7 @@ class AirConditionerResource : public Resource // oic.d.airconditioner
             if (request)
             {
                 // Get the request type and request flag
-                std::string requestType = request->getRequestType();
+                string requestType = request->getRequestType();
                 int requestFlag = request->getRequestHandlerFlag();
 
                 if (requestFlag & RequestHandlerFlag::RequestFlag)
@@ -417,20 +417,20 @@ class AirConditionerResource : public Resource // oic.d.airconditioner
             }
             else
             {
-                std::cout << "Request invalid" << std::endl;
+                cout << "Request invalid" << endl;
             }
 
             return ehResult;
         }
 };
 
-std::condition_variable g_callbackLock;
-std::string             g_uid;
-std::string             g_accesstoken;
+condition_variable g_callbackLock;
+string             g_uid;
+string             g_accesstoken;
 
 void onPublish(const OCRepresentation &, const int &eCode)
 {
-    std::cout << "Publish resource response received, code: " << eCode << std::endl;
+    cout << "Publish resource response received, code: " << eCode << endl;
 
     g_callbackLock.notify_all();
 }
@@ -440,6 +440,40 @@ void printRepresentation(OCRepresentation rep)
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
         cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+        if (itr->type() == AttributeType::Vector)
+        {
+            switch (itr->base_type())
+            {
+                case AttributeType::OCRepresentation:
+                    for (auto itr2 : (*itr).getValue<vector<OCRepresentation> >())
+                    {
+                        printRepresentation(itr2);
+                    }
+                    break;
+
+                case AttributeType::Integer:
+                    for (auto itr2 : (*itr).getValue<vector<int> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                case AttributeType::String:
+                    for (auto itr2 : (*itr).getValue<vector<string> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                default:
+                    cout << "Unhandled base type " << itr->base_type() << endl;
+                    break;
+            }
+        }
+        else if (itr->type() == AttributeType::OCRepresentation)
+        {
+            printRepresentation((*itr).getValue<OCRepresentation>());
+        }
     }
 }
 
@@ -502,7 +536,7 @@ int main(int argc, char *argv[])
                                        CT_ADAPTER_TCP);
 
     mutex blocker;
-    unique_lock<std::mutex> lock(blocker);
+    unique_lock<mutex> lock(blocker);
 
     if (argc == 5)
     {
@@ -534,8 +568,8 @@ int main(int argc, char *argv[])
                                           uri,
                                           rt,
                                           itf,
-                                          std::bind(&AirConditionerResource::entityHandler
-                                                  , &airConditioner, std::placeholders::_1),
+                                          bind(&AirConditionerResource::entityHandler
+                                                  , &airConditioner, placeholders::_1),
                                           OC_DISCOVERABLE);
 
     if (result != OC_STACK_OK)
@@ -570,8 +604,8 @@ int main(int argc, char *argv[])
                                           uri,
                                           rt,
                                           itf,
-                                          std::bind(&BinarySwitchResource::entityHandler
-                                                  , &binarySwitch, std::placeholders::_1),
+                                          bind(&BinarySwitchResource::entityHandler
+                                                  , &binarySwitch, placeholders::_1),
                                           OC_OBSERVABLE);
 
     uri = temperature.getResourceUri();
@@ -582,8 +616,8 @@ int main(int argc, char *argv[])
                                           uri,
                                           rt,
                                           itf,
-                                          std::bind(&TemperatureResource::entityHandler
-                                                  , &temperature, std::placeholders::_1),
+                                          bind(&TemperatureResource::entityHandler
+                                                  , &temperature, placeholders::_1),
                                           OC_OBSERVABLE);
 
     result = airConditioner.addChildResource(&binarySwitch);
