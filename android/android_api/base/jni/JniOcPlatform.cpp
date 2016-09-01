@@ -2417,17 +2417,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0(
             ThrowOcException(result, "unsubscribe presence has failed");
             return;
         }
-        jweak jwOnPresenceListener =
-            jniPresenceHandle->getJniOnPresenceListener()->getJWListener();
-        if (jwOnPresenceListener)
+
+        JniOnPresenceListener* jniPresenceListener = jniPresenceHandle->getJniOnPresenceListener();
+        if (jniPresenceListener)
         {
-            RemoveOnPresenceListener(env, jwOnPresenceListener);
-        }
-        jweak jwOnObserveListener =
-            jniPresenceHandle->getJniOnObserveListener()->getJWListener();
-        if (jwOnObserveListener)
-        {
-            RemoveOnObserveListener(env, jwOnObserveListener);
+            jweak jwOnPresenceListener = jniPresenceListener->getJWListener();
+            if (jwOnPresenceListener)
+            {
+                RemoveOnPresenceListener(env, jwOnPresenceListener);
+            }
         }
     }
     catch (OCException& e)
