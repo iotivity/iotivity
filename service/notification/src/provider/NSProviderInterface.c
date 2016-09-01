@@ -56,7 +56,7 @@ NSResult NSStartProvider(NSProviderConfig config)
         NS_LOG(DEBUG, "Init Provider");
         initProvider = true;
         NSInitProviderInfo(config.userInfo);
-        NSSetSubscriptionAccessPolicy(config.policy);
+        NSSetSubscriptionAccessPolicy(config.subControllability);
         NSRegisterSubscribeRequestCb(config.subRequestCallback);
         NSRegisterSyncCb(config.syncInfoCallback);
         CARegisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
@@ -375,4 +375,3 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
     NS_LOG(DEBUG, "NSProviderUnselectTopics - OUT");
     return NS_OK;
 }
-

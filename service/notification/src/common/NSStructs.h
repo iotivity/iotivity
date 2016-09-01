@@ -95,7 +95,9 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    int accepter;
+    char providerId[NS_UUID_STRING_SIZE];
+    char * version;
+    bool policy;
     char * message_uri;
     char * sync_uri;
 
@@ -117,6 +119,7 @@ typedef struct
     char * title;
     char * contentText;
     char * sourceName;
+    char * topicName;
     NSMediaContents * mediaContents;
 } NSMessageResource;
 
@@ -124,12 +127,14 @@ typedef struct
 {
     OCResourceHandle handle;
     char * id;
+    char providerId[NS_UUID_STRING_SIZE];
     char * state;
 } NSSyncResource;
 
 typedef struct
 {
     OCResourceHandle handle;
+    char providerId[NS_UUID_STRING_SIZE];
     char consumerId[NS_UUID_STRING_SIZE];
     NSTopicList ** TopicList;
 } NSTopicResource;

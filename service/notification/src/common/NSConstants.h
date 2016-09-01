@@ -173,6 +173,9 @@
         } \
     }
 
+#define VERSION        "1.2.0"
+
+#define NS_ATTRIBUTE_VERSION "VERSION"
 #define NS_ATTRIBUTE_POLICY "ACCEPTER"
 #define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
 #define NS_ATTRIBUTE_SYNC "SYNC_URI"

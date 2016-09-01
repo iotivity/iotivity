@@ -36,7 +36,7 @@ NSResult NSRegisterResource();
 
 NSResult NSUnRegisterResource();
 
-NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle);
+NSResult NSPutNotificationResource(bool policy, OCResourceHandle * handle);
 
 NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle);
 

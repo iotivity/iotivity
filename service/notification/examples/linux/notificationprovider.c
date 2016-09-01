@@ -193,7 +193,7 @@ int main()
             {
                 printf("NSStartProvider(Accepter: Provider)");
                 NSProviderConfig config;
-                config.policy = true;
+                config.subControllability = true;
                 config.subRequestCallback = subscribeRequestCallback;
                 config.syncInfoCallback = syncCallback;
                 config.userInfo = OICStrdup("OCF_NOTIFICATION");
@@ -205,7 +205,7 @@ int main()
             {
                 printf("NSStartProvider(Accepter: Consumer)");
                 NSProviderConfig config;
-                config.policy = false;
+                config.subControllability = false;
                 config.subRequestCallback = subscribeRequestCallback;
                 config.syncInfoCallback = syncCallback;
                 config.userInfo = OICStrdup("OCF_NOTIFICATION");

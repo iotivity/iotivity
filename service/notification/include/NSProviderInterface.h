@@ -62,7 +62,7 @@ typedef struct
      * if policy is true, provider decides to allow or deny for all the subscribing consumers.
      * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
      */
-    bool policy;
+    bool subControllability;
     /* User Information */
     char * userInfo;
 

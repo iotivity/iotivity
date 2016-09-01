@@ -285,6 +285,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     {
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
     }
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID,
+        NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
             (const OCRepPayload**)(payloadTopicArray), dimensions);
 

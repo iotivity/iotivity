@@ -207,7 +207,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NSProviderConnectionInfo * connection = NULL;
 
     NS_LOG(DEBUG, "get information of accepter");
-    bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, & accepter);
+    bool getResult = OCRepPayloadGetPropBool(payload, NS_ATTRIBUTE_POLICY, & accepter);
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "get provider ID");
