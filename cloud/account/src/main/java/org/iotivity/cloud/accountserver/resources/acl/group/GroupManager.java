@@ -44,8 +44,16 @@ import org.iotivity.cloud.base.protocols.IRequest;
  */
 
 public class GroupManager {
+    private static GroupManager            mGrManager = new GroupManager();
     public HashMap<String, Group>          mGroups    = new HashMap<>();
     private TypeCastingManager<GroupTable> mTypeGroup = new TypeCastingManager<GroupTable>();
+
+    private GroupManager() {
+    }
+
+    public static GroupManager getInstance() {
+        return mGrManager;
+    }
 
     /**
      * API to create a public or private group
@@ -131,7 +139,7 @@ public class GroupManager {
     public void removeGroupDeviceinEveryGroup(String uid, String di) {
         // check if the device is the resource server (i.e., device ID exists in
         // the private group table
-        if (GroupResource.getInstance().verifyDeviceInGroup(uid, di)) {
+        if (verifyDeviceInGroup(uid, di)) {
             // token table search criteria
             HashMap<String, Object> condition = new HashMap<>();
             condition.put(Constants.REQ_DEVICE_ID_LIST, di);
@@ -144,7 +152,7 @@ public class GroupManager {
                 String gid = (String) record.get(Constants.KEYFIELD_GID);
                 HashSet<String> diSet = new HashSet<>();
                 diSet.add(di);
-                GroupResource.getInstance().removeGroupDevice(gid, diSet);
+                removeGroupDevice(gid, diSet);
             }
         }
     }
