@@ -207,4 +207,6 @@ public class Constants extends OICConstants {
     public static final String GITHUB                = "Github";
 
     public static final String SAMSUNG               = "Samsung";
+
+    public static final String GOOGLE                = "Google";
 }
