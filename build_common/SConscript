@@ -320,14 +320,14 @@ if not user_lib:
 if user_prefix:
 	pc_vars = {'\@PREFIX\@': user_prefix,
 				'\@EXEC_PREFIX\@':user_prefix,
-				'\@VERSION\@': '1.1.1',
+				'\@VERSION\@': '1.2.0',
 				'\@LIB_INSTALL_DIR\@': user_lib,
 				'\@ROUTING_DEFINE\@': routing_define
 				}
 else:
 	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
 				'\@EXEC_PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@VERSION\@': '1.1.1',
+				'\@VERSION\@': '1.2.0',
 				'\@LIB_INSTALL_DIR\@': user_lib,
 				'\@ROUTING_DEFINE\@': routing_define
 				}

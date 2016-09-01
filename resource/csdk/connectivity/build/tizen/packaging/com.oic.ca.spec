@@ -6,7 +6,7 @@
 
 
 Name: com-oic-ca
-Version:    1.1.1
+Version:    1.2.0
 Release:    0
 Summary: Tizen oicca application
 URL: http://slp-source.sec.samsung.net
