@@ -37,6 +37,15 @@ typedef struct _nsTask
     struct _nsTask * nextTask;
 } NSTask;
 
+typedef struct
+{
+    NSTopicLL * head;
+    NSTopicLL * tail;
+    char consumerId[NS_UUID_STRING_SIZE];
+    NSTopicLL ** topics;
+
+} NSTopicList;
+
 typedef void * NSCacheData;
 
 typedef struct _NSCacheElement

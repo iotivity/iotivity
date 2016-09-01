@@ -31,25 +31,6 @@
 
 #define NS_UUID_STRING_SIZE 37
 
-#define NS_ATTRIBUTE_POLICY "ACCEPTER"
-#define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
-#define NS_ATTRIBUTE_SYNC "SYNC_URI"
-#define NS_ATTRIBUTE_TOPIC "TOPIC_URI"
-#define NS_ATTRIBUTE_MESSAGE_ID "MESSAGE_ID"
-#define NS_ATTRIBUTE_PROVIDER_ID "PROVIDER_ID"
-#define NS_ATTRIBUTE_CONSUMER_ID "CONSUMER_ID"
-#define NS_ATTRIBUTE_TOPIC_LIST "TOPIC_LIST"
-#define NS_ATTRIBUTE_TOPIC_NAME "TOPIC_NAME"
-#define NS_ATTRIBUTE_TOPIC_SELECTION "TOPIC_STATE"
-#define NS_ATTRIBUTE_TITLE "TITLE"
-#define NS_ATTRIBUTE_TEXT "CONTENTTEXT"
-#define NS_ATTRIBUTE_SOURCE "SOURCE"
-#define NS_ATTRIBUTE_STATE "STATE"
-#define NS_ATTRIBUTE_DEVICE "DEVICE"
-#define NS_ATTRIBUTE_TYPE "TYPE"
-#define NS_ATTRIBUTE_DATETIME "DATE_TIME"
-#define NS_ATTRIBUTE_TTL "TTL"
-
 /**
  * Result code of notification service
  */
@@ -82,6 +63,7 @@ typedef enum
     NS_SYNC_UNREAD = 0,
     NS_SYNC_READ = 1,
     NS_SYNC_DELETED = 2,
+
 } NSSyncType;
 
 /**
@@ -101,7 +83,7 @@ typedef enum
 } NSMessageType;
 
 /**
- *  Notification topic
+ *  Notification topic state
  */
 typedef enum
 {
@@ -110,6 +92,9 @@ typedef enum
 
 } NSTopicState;
 
+/**
+ * Topic linked list
+ */
 typedef struct _nsTopic
 {
     char * topicName;
@@ -117,16 +102,6 @@ typedef struct _nsTopic
     struct _nsTopic * next;
 
 } NSTopicLL;
-
-typedef struct
-{
-    NSTopicLL * head;
-    NSTopicLL * tail;
-    //TODO: decide struct fields
-    char consumerId[NS_UUID_STRING_SIZE];
-    NSTopicLL ** topics;
-
-} NSTopicList;
 
 /**
  *  Consumer information
