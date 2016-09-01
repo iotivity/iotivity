@@ -341,6 +341,7 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 
         svritem->fd = sockfd;
         svritem->sep.endpoint.flags = flag;
+        svritem->sep.endpoint.adapter = CA_ADAPTER_TCP;
         CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
                             svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
