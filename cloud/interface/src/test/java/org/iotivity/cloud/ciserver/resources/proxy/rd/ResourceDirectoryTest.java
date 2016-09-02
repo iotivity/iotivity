@@ -34,8 +34,10 @@ import java.util.concurrent.CountDownLatch;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.protocols.IRequest;
+import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
+import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
@@ -56,7 +58,7 @@ public class ResourceDirectoryTest {
     public static final String  DEVICE_PRS_REQ_URI  = Constants.DEVICE_PRESENCE_FULL_URI;
     public static final String  DEVICE_LIST_KEY     = "devices";
     public static final String  RES_PRS_URI         = Constants.RESOURCE_PRESENCE_FULL_URI;
-    // private DeviceServerSystem deviceServerSystem = new DeviceServerSystem();
+
     private String              mDi                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     String                      mUserId             = "testuser";
     private CoapDevice          mMockDevice         = null;
@@ -78,6 +80,7 @@ public class ResourceDirectoryTest {
         mDeviceServerSystem.addResource(mRdHandler);
         mMockDevice = mock(CoapDevice.class);
         Mockito.doReturn(mUserId).when(mMockDevice).getUserId();
+        Mockito.doReturn(mDi).when(mMockDevice).getDeviceId();
 
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -140,19 +143,64 @@ public class ResourceDirectoryTest {
         assertTrue(mReqRDServer.getUriPath().contains(TEST_RD_URI));
     }
 
-    IRequest                                rdPublishRequest      = makeResourcePublishRequest();
-
-    @InjectMocks
-    ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
-            rdPublishRequest, mMockDevice);
+    IRequest  rdPublishRequest  = makeResourcePublishRequest();
+    IResponse rdPublishResponse = makeResourcePublishResponse();
 
     @Test
     public void testRDResourcePublishOnResponseReceived() throws Exception {
+
+        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
+                rdPublishRequest, mMockDevice);
+
         IRequest request = makeResourcePublishRequest();
-        accountReceiveHandler.onResponseReceived(
-                MessageBuilder.createResponse(request, ResponseStatus.CHANGED));
+        accountReceiveHandler.onResponseReceived(MessageBuilder.createResponse(
+                request, ResponseStatus.CHANGED));
+
         assertEquals(mReqRDServer, rdPublishRequest);
         assertTrue(mLatch.await(1L, SECONDS));
+    }
+
+    @Test
+    public void testRDResourcePublishPayloadConverted() throws Exception {
+
+        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
+                rdPublishRequest, mMockDevice);
+
+        IRequest request = makeResourcePublishRequest();
+        accountReceiveHandler.onResponseReceived(MessageBuilder.createResponse(
+                request, ResponseStatus.CHANGED));
+
+        assertEquals(getHrefInTestPublishPayload(mReqRDServer.getPayload()),
+                "/di/" + mDi + "/a/light");
+    }
+
+    @Test
+    public void testRDResourcePublishResponse() throws Exception {
+
+        ResourceDirectory.PublishResponseHandler publishResponseHandler = mRdHandler.new PublishResponseHandler(
+                mMockDevice);
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Mockito.doAnswer(new Answer<Object>() {
+            @Override
+            public CoapResponse answer(InvocationOnMock invocation)
+                    throws Throwable {
+                Object[] args = invocation.getArguments();
+                CoapResponse resp = (CoapResponse) args[0];
+
+                assertEquals(getHrefInTestPublishPayload(resp.getPayload()),
+                        "/a/light");
+
+                latch.countDown();
+                return resp;
+            }
+        }).when(mMockDevice).sendResponse(Mockito.anyObject());
+
+        publishResponseHandler
+                .onResponseReceived(makeResourcePublishResponse());
+
+        assertTrue(latch.await(1L, SECONDS));
     }
 
     private IRequest makeResourcePublishRequest() {
@@ -180,11 +228,48 @@ public class ResourceDirectoryTest {
         return request;
     }
 
+    private IResponse makeResourcePublishResponse() {
+        HashMap<Object, Object> payload = new HashMap<>();
+        payload.put(Constants.DEVICE_ID, mDi);
+        ArrayList<HashMap<Object, Object>> publishLinks = new ArrayList<>();
+        HashMap<Object, Object> link = new HashMap<>();
+        link.put("href", "/di/" + mDi + "/a/light");
+        ArrayList<String> rt = new ArrayList<String>();
+        rt.add("core.light");
+        ArrayList<String> itf = new ArrayList<String>();
+        itf.add("oic.if.baseline");
+        HashMap<String, Object> policy = new HashMap<>();
+        policy.put("bm", 5);
+        link.put("rt", rt);
+        link.put("if", itf);
+        link.put("p", policy);
+        publishLinks.add(link);
+        payload.put("links", publishLinks);
+
+        Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
+        return MessageBuilder.createResponse(makeResourcePublishRequest(),
+                ResponseStatus.CHANGED, ContentFormat.APPLICATION_CBOR,
+                cbor.encodingPayloadToCbor(payload));
+    }
+
     private IRequest makeResourceDeleteRequest() {
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 TEST_RD_URI, "di" + "=" + mDi + ";" + "ins" + "=" + "1234",
                 null, null);
         return request;
+    }
+
+    private String getHrefInTestPublishPayload(byte[] payload) {
+
+        Cbor<HashMap<String, Object>> cbor = new Cbor<>();
+        HashMap<String, Object> parsedPayload = cbor.parsePayloadFromCbor(
+                payload, HashMap.class);
+
+        @SuppressWarnings("unchecked")
+        ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) parsedPayload
+                .get(Constants.REQ_LINKS);
+
+        return (String) links.get(0).get(Constants.REQ_HREF);
     }
 
 }

@@ -70,3 +70,34 @@ aircon_controller_src = [
         'airconditioner/aircon_controller.cpp'
         ]
 cc_sample_app_env.Program('aircon_controller', aircon_controller_src)
+
+
+######################################################################
+# Samples for message queue
+######################################################################
+mqOption = env.get('WITH_MQ')
+if mqOption[0] is not 'OFF':
+	cc_sample_app_env.AppendUnique(CPPDEFINES = ['WITH_MQ'])
+	if set(['PUB']) == set(mqOption):
+		cc_sample_app_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER'])
+		mq_publisher_src = ['messagequeue/mq_publisher.cpp']
+		cc_sample_app_env.Program('mq_publisher', mq_publisher_src)
+	elif set(['SUB']) == set(mqOption):
+		cc_sample_app_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER'])
+		mq_subscriber_src = ['messagequeue/mq_subscriber.cpp']
+		cc_sample_app_env.Program('mq_subscriber', mq_subscriber_src)
+	else:
+		cc_sample_app_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER'])
+		mq_publisher_src = ['messagequeue/mq_publisher.cpp']
+		cc_sample_app_env.Program('mq_publisher', mq_publisher_src)
+		cc_sample_app_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER'])
+		mq_subscriber_src = ['messagequeue/mq_subscriber.cpp']
+		cc_sample_app_env.Program('mq_subscriber', mq_subscriber_src)
+
+######################################################################
+# Samples for group and invite
+######################################################################
+group_invite_src = [
+        'group_invite/group_invite.cpp'
+        ]
+cc_sample_app_env.Program('group_invite_sample', group_invite_src)

@@ -25,7 +25,9 @@
 
 #include <functional>
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <mutex>
 #include <condition_variable>
 

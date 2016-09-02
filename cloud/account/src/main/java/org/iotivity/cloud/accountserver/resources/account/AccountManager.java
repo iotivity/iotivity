@@ -111,7 +111,7 @@ public class AccountManager {
                     Constants.REQ_GTYPE_PRIVATE);
         }
         // add my device to private group
-        GroupResource.getInstance().getGroup(userInfo.getUuid())
+        GroupResource.getInstance().getGroup(userUuid)
                 .addDevice(new HashSet<String>(Arrays.asList(did)));
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(

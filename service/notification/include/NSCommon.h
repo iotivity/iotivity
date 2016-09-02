@@ -74,15 +74,6 @@ typedef enum eResponse
 } NSResponse;
 
 /**
- * Access policy exchanged between provider and consumer during subscription process
- */
-typedef enum eAccessPolicy
-{
-    NS_ACCESS_ALLOW = 0,
-    NS_ACCESS_DENY = 1,
-} NSAccessPolicy;  // not used , this structure will be deleted.
-
-/**
  * Notification message status to synchronize
  */
 typedef enum

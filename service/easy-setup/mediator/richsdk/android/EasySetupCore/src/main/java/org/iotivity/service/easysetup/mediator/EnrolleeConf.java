@@ -63,6 +63,11 @@ public class EnrolleeConf
      */
     public String getDeviceName()
     {
+        if(mProvRep == null)
+        {
+            return null;
+        }
+
         List<OcRepresentation> children = mProvRep.getChildren();
 
         for (OcRepresentation child : children) {
@@ -78,8 +83,7 @@ public class EnrolleeConf
                 }
             }
         }
-
-        return new String("");
+        return null;
     }
 
     /**
@@ -89,6 +93,11 @@ public class EnrolleeConf
      */
     public String getModelNumber()
     {
+        if(mProvRep == null)
+        {
+            return null;
+        }
+
         List<OcRepresentation> children = mProvRep.getChildren();
 
         for (OcRepresentation child : children) {
@@ -104,8 +113,7 @@ public class EnrolleeConf
                 }
             }
         }
-
-        return new String("");
+        return null;
     }
 
     /**
@@ -115,6 +123,11 @@ public class EnrolleeConf
      */
     public ArrayList<WIFI_MODE> getWiFiModes()
     {
+        if(mProvRep == null)
+        {
+            return null;
+        }
+
         List<OcRepresentation> children = mProvRep.getChildren();
         ArrayList<WIFI_MODE> modes = new ArrayList<WIFI_MODE>();
         for (OcRepresentation child : children) {
@@ -132,7 +145,6 @@ public class EnrolleeConf
                 }
             }
         }
-
         return modes;
     }
 
@@ -143,6 +155,11 @@ public class EnrolleeConf
      */
     public WIFI_FREQ getWiFiFreq()
     {
+        if(mProvRep == null)
+        {
+            return WIFI_FREQ.WIFI_FREQ_NONE;
+        }
+
         List<OcRepresentation> children = mProvRep.getChildren();
 
         for (OcRepresentation child : children) {
@@ -157,7 +174,7 @@ public class EnrolleeConf
                 }
             }
         }
-        return WIFI_FREQ.WIFI_FREQ_NONE;
+        return null;
     }
 
     /**
@@ -168,6 +185,11 @@ public class EnrolleeConf
      */
     public boolean isCloudAccessible()
     {
+        if(mProvRep == null)
+        {
+            return false;
+        }
+
         List<OcRepresentation> children = mProvRep.getChildren();
 
         for (OcRepresentation child : children) {

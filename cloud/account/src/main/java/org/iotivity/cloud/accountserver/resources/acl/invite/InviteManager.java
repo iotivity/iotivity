@@ -133,7 +133,7 @@ public class InviteManager {
 
         List<InviteTable> invitedList = getInviteTableList(
                 Constants.KEYFIELD_INVITED_USER, uid);
-        if (inviteList.isEmpty()) {
+        if (!invitedList.isEmpty()) {
             invitedPayloadData = new ArrayList<>();
             for (InviteTable invited : invitedList) {
                 HashMap<String, String> invitedElement = new HashMap<>();

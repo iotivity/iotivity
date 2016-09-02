@@ -265,6 +265,12 @@ private:
 
     void discoverRemoteEnrolleeCbToGetWifiRsrc(std::shared_ptr<OC::OCResource> resource)
     {
+
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_WIFI) && m_getWifiCb)
         {
             QueryParamsMap test;
@@ -303,6 +309,11 @@ private:
 
     void discoverRemoteEnrolleeCbToGetCloudRsrc(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER) && m_getCloudCb)
         {
             QueryParamsMap test;
@@ -340,6 +351,11 @@ private:
 
     void discoverRemoteEnrolleeCbToGetDevConf(std::shared_ptr<OC::OCResource> resource)
     {
+        if(!isValidResourceToTest(resource))
+        {
+            return ;
+        }
+
         if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_DEVCONF) && m_getDevConfCb)
         {
             QueryParamsMap test;

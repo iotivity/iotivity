@@ -1355,6 +1355,14 @@ public final class OcPlatform {
     /**
      * An EntityHandler can be registered via the OcPlatform.registerResource call.
      * Event listeners are notified asynchronously
+     *
+     * @note entityhandler callback :
+     * When you set specific return value like EntityHandlerResult.OK, SLOW
+     * and etc in entity handler callback,
+     * ocstack will be not send response automatically to client
+     * except for error return value like EntityHandlerResult.ERROR
+     * If you want to send response to client with specific result,
+     * sendResponse API should be called with the result value.
      */
     public interface EntityHandler {
         public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest);

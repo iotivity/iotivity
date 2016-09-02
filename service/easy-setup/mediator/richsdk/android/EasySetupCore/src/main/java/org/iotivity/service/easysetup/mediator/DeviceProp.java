@@ -33,7 +33,7 @@ import org.iotivity.base.OcRepresentation;
  */
 public class DeviceProp {
     private static final String TAG = DeviceProp.class.getName();
-    protected OcRepresentation mRep;
+    protected OcRepresentation mRep = null;
 
     /**
      * Constructor
@@ -73,13 +73,21 @@ public class DeviceProp {
      */
     public String getSsid()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if(mRep.hasAttribute(ESConstants.OC_RSRVD_ES_SSID))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_SSID);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getSsid is failed.");
         }
-        return new String("");
+        return null;
     }
 
     /**
@@ -89,13 +97,21 @@ public class DeviceProp {
      */
     public String getPassword()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if(mRep.hasAttribute(ESConstants.OC_RSRVD_ES_CRED))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_CRED);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getPassword is failed.");
         }
-        return new String("");
+        return null;
     }
 
     /**
@@ -106,10 +122,18 @@ public class DeviceProp {
      */
     public WIFI_AUTHTYPE getAuthType()
     {
-        try {
+        if(mRep == null)
+        {
+            return WIFI_AUTHTYPE.NONE_AUTH;
+        }
+
+        try
+        {
             if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_AUTHTYPE))
                 return WIFI_AUTHTYPE.fromInt((int)mRep.getValue(ESConstants.OC_RSRVD_ES_AUTHTYPE));
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getAuthType is failed.");
         }
         return WIFI_AUTHTYPE.NONE_AUTH;
@@ -123,10 +147,18 @@ public class DeviceProp {
      */
     public WIFI_ENCTYPE getEncType()
     {
-        try {
+        if(mRep == null)
+        {
+            return WIFI_ENCTYPE.NONE_ENC;
+        }
+
+        try
+        {
             if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_ENCTYPE))
                 return WIFI_ENCTYPE.fromInt((int)mRep.getValue(ESConstants.OC_RSRVD_ES_ENCTYPE));
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getEncType is failed.");
         }
         return WIFI_ENCTYPE.NONE_ENC;
@@ -139,13 +171,21 @@ public class DeviceProp {
      */
     public String getLanguage()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if(mRep.hasAttribute(ESConstants.OC_RSRVD_ES_LANGUAGE))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_LANGUAGE);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getLanguage is failed.");
         }
-        return new String("");
+        return null;
     }
 
     /**
@@ -155,13 +195,21 @@ public class DeviceProp {
      */
     public String getCountry()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_COUNTRY))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_COUNTRY);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getCountry is failed.");
         }
-        return new String("");
+        return null;
     }
 
     /**
@@ -171,13 +219,21 @@ public class DeviceProp {
      */
     public String getLocation()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_LOCATION))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_LOCATION);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getLocation is failed.");
         }
-        return new String("");
+        return null;
     }
 
     public OcRepresentation toOCRepresentation()

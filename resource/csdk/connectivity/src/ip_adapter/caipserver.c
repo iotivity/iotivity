@@ -1204,8 +1204,6 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
         return;
     }
 
-    char *secure = (endpoint->flags & CA_SECURE) ? "secure " : "";
-
     (void)cast;  // eliminates release warning
     (void)fam;
 
@@ -1222,6 +1220,10 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     {
         socklen = sizeof(struct sockaddr_in);
     }
+
+#ifdef TB_LOG
+    const char *secure = (endpoint->flags & CA_SECURE) ? "secure " : "";
+#endif
 #if !defined(_WIN32)
     ssize_t len = sendto(fd, data, dlen, 0, (struct sockaddr *)&sock, socklen);
     if (OC_SOCKET_ERROR == len)

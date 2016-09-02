@@ -286,6 +286,7 @@ public class Light implements OcPlatform.EntityHandler {
                 ErrorCode errorCode = e.getErrorCode();
                 if (ErrorCode.NO_OBSERVERS == errorCode) {
                     msg("No more observers, stopping notifications");
+                    mObserverNotifier = null;
                 }
                 return;
             }

@@ -30,6 +30,7 @@ cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
+cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
@@ -54,7 +55,23 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 cd $sourcedir/tmp
 
 echo `pwd`
+if [ -d ./extlibs/mbedtls/mbedtls ];then
+    cd ./extlibs/mbedtls/mbedtls
+    git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd ; git apply ../ocf.patch
+    cd -
+    rm -rf ./extlibs/mbedtls/mbedtls/.git*
+
+else
+    echo ""
+    echo "*********************************** Error: ****************************************"
+    echo "* Please download mbedtls using the following command:                            *"
+    echo "*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *"
+    echo "***********************************************************************************"
+    echo ""
+    exit
+fi
 rm -rf ./extlibs/tinycbor/tinycbor/.git*
+
 
 # Initialize Git repository
 if [ ! -d .git ]; then
@@ -65,8 +82,17 @@ if [ ! -d .git ]; then
    git commit -m "Initial commit"
 fi
 
+withtcp=0
+withcloud=0
+if [ "WITH_TCP" = "$1" ] || [ "WITH_TCP" = "$2" ];then
+    withtcp=1
+fi
+if [ "WITH_CLOUD" = "$1" ] || [ "WITH_CLOUD" = "$2" ];then
+    withcloud=1
+fi
+
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --repository ./"
+gbscommand="gbs build -A armv7l --define 'WITH_TCP $withtcp' --define 'WITH_CLOUD $withcloud' -B ~/GBS-ROOT-OIC --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
     echo "Build is successful"
@@ -74,6 +100,7 @@ else
     echo "Build failed!"
     exit 1
 fi
+
 
 rm -rf tmp
 cd $sourcedir

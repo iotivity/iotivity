@@ -581,7 +581,7 @@ void RemoveOnPublishResourceListener(JNIEnv* env, jobject jListener)
 {
     if (!env)
     {
-        ThrowOcException(JNI_EXCEPTION, "env is null");
+        LOGE("env is null");
         return;
     }
 
@@ -664,7 +664,7 @@ void RemoveOnDeleteResourceListener(JNIEnv* env, jobject jListener)
 {
     if (!env)
     {
-        ThrowOcException(JNI_EXCEPTION, "env is null");
+        LOGE("env is null");
         return;
     }
 
@@ -2417,17 +2417,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0(
             ThrowOcException(result, "unsubscribe presence has failed");
             return;
         }
-        jweak jwOnPresenceListener =
-            jniPresenceHandle->getJniOnPresenceListener()->getJWListener();
-        if (jwOnPresenceListener)
+
+        JniOnPresenceListener* jniPresenceListener = jniPresenceHandle->getJniOnPresenceListener();
+        if (jniPresenceListener)
         {
-            RemoveOnPresenceListener(env, jwOnPresenceListener);
-        }
-        jweak jwOnObserveListener =
-            jniPresenceHandle->getJniOnObserveListener()->getJWListener();
-        if (jwOnObserveListener)
-        {
-            RemoveOnObserveListener(env, jwOnObserveListener);
+            jweak jwOnPresenceListener = jniPresenceListener->getJWListener();
+            if (jwOnPresenceListener)
+            {
+                RemoveOnPresenceListener(env, jwOnPresenceListener);
+            }
         }
     }
     catch (OCException& e)
@@ -2516,7 +2514,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribeDevicePrese
     }
     return jPresenceHandle;
 #else
-    ThrowOcException(JNI_EXCEPTION, "Not support");
+    ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return nullptr;
 #endif
 }
@@ -2689,7 +2687,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD0(
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
-    ThrowOcException(OC_STACK_ERROR, "Publish resource has failed");
+    ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return;
 #endif
 }
@@ -2712,7 +2710,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD1(
 #ifdef RD_CLIENT
     if (!env)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "env is null");
+        LOGE("env is null");
         return;
     }
     std::string host;
@@ -2782,7 +2780,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_publishResourceToRD1(
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
-    ThrowOcException(OC_STACK_ERROR, "Publish resource has failed");
+    ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return;
 #endif
 }
@@ -2839,7 +2837,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD0(
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
-    ThrowOcException(OC_STACK_ERROR, "Delete resource has failed");
+    ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return;
 #endif
 }
@@ -2862,7 +2860,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD1(
 #ifdef RD_CLIENT
     if (!env)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "env is null");
+        LOGE("env is null");
         return;
     }
     std::string host;
@@ -2930,7 +2928,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_deleteResourceFromRD1(
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
-    ThrowOcException(OC_STACK_ERROR, "Delete resource has failed");
+    ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return;
 #endif
 }

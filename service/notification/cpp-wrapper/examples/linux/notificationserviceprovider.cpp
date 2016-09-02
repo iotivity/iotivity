@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <cstdint>
 #include "NSCommon.h"
 #include "NSProviderService.h"
 #include "NSUtils.h"
@@ -35,6 +36,7 @@
 using namespace std;
 using namespace OIC::Service;
 std::string mainConsumer;
+uint64_t mainMessageId;
 
 extern char *strdup(const char *s);
 
@@ -168,6 +170,8 @@ int main()
                     msg->setTitle(title.c_str());
                     msg->setContentText(body.c_str());
                     msg->setSourceName("OCF");
+                    msg->setTopic(topic);
+                    mainMessageId = msg->getMessageId();
 
                     NSProviderService::getInstance()->SendMessage(msg);
 
@@ -176,7 +180,7 @@ int main()
             case 4:
                 {
                     std::cout <<  "SendSyncInfo" << std::endl;
-                    NSProviderService::getInstance()->SendSyncInfo(1,
+                    NSProviderService::getInstance()->SendSyncInfo(mainMessageId,
                             OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
                     break;
                 }

@@ -143,9 +143,13 @@ NSResult NSSendNotification(NSMessage *msg)
 #ifdef RD_CLIENT
             if(subData->remote_messageObId != 0)
             {
-                if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                if(msg->topic)
                 {
-                    obArray[obCount++] = subData->remote_messageObId;
+                    NS_LOG_V(DEBUG, "this is topic message via remote server: %s", msg->topic);
+                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                    {
+                        obArray[obCount++] = subData->remote_messageObId;
+                    }
                 }
                 else
                 {

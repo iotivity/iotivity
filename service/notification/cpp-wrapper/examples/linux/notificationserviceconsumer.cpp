@@ -42,6 +42,9 @@ void onNotificationPostedCb(OIC::Service::NSMessage *notification)
     std::cout << "content : " <<  notification->getContentText() << std::endl;
     std::cout << "source : " <<  notification->getSourceName() << std::endl;
     std::cout << "topic : " <<  notification->getTopic() << std::endl;
+
+    auto provider = NSConsumerService::getInstance()->getProvider(notification->getProviderId());
+    provider->SendSyncInfo(notification->getMessageId(), OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
 }
 
 void onNotificationSyncCb(OIC::Service::NSSyncInfo *sync)
@@ -74,49 +77,6 @@ void onProviderChangedCb(OIC::Service::NSProvider *provider, OIC::Service::NSRes
         {
             std::cout << "Topic Name: " << it->getTopicName() << std::endl;
             std::cout << "Topic state: " << (int) it->getState() << std::endl;
-        }
-
-        std::cout << "7. Get Topics" << std::endl;
-        std::cout << "8. Select Topics" << std::endl;
-        std::cout << "0. Exit" << std::endl;
-        std::cout << "input: " << std::endl;
-
-        int num = 0;
-        std::cin >> num;
-        switch (num)
-        {
-            case 7:
-                {
-                    std::cout <<  "getInterestTopics" << std::endl;
-                    if (provider != nullptr)
-                    {
-                        auto topicList = provider->getTopicList();
-                        if (topicList != nullptr)
-                            for (auto it : topicList->getTopicsList())
-                            {
-                                std::cout << "Topic Name: " << it->getTopicName() << std::endl;
-                                std::cout << "Topic state: " << (int) it->getState() << std::endl;
-                            }
-                    }
-                }
-                break;
-            case 8:
-                {
-                    std::cout <<  "selectInterestTopics" << std::endl;
-                    if (provider != nullptr)
-                    {
-                        NSTopicsList *topicList = new NSTopicsList();
-                        topicList->addTopic("OCF_TOPIC1", NSTopic::NSTopicState::UNSUBSCRIBED);
-                        topicList->addTopic("OCF_TOPIC2", NSTopic::NSTopicState::UNSUBSCRIBED);
-                        topicList->addTopic("OCF_TOPIC3", NSTopic::NSTopicState::UNSUBSCRIBED);
-
-                        provider->selectInterestTopics(topicList);
-                    }
-                }
-                break;
-            case 0:
-            default:
-                break;
         }
     }
 }

@@ -120,7 +120,7 @@ TEST_F(ULinkListF, LengthMulti)
     int dummy[1000] = {0};
     size_t cap = sizeof(dummy) / sizeof(dummy[0]);
 
-    for (int i = 0; i < cap; ++i)
+    for (size_t i = 0; i < cap; ++i)
     {
         dummy[i] = i;
         EXPECT_EQ(CA_STATUS_OK, u_linklist_add(list, &dummy[i]));

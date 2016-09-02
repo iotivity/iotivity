@@ -28,4 +28,4 @@ SConscript('consumer/SConscript')
 SConscript('examples/linux/SConscript')
 
 # Go to build Unit test
-SConscript('unittest/SConscript')
+#SConscript('unittest/SConscript')

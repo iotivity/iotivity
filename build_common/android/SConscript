@@ -222,6 +222,8 @@ env.AppendUnique(LIBS = ['log', 'coap'])
 
 if env.get('SECURED') == '1':
 	env.AppendUnique(LIBS = ['tinydtls'])
+	if env.get('WITH_TCP'):
+		env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 
 # From android-5 (API > 20), all application must be built with flags '-fPIE' '-pie'.
 # Due to the limitation of Scons, it's required to added it into the command line

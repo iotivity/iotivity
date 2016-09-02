@@ -72,6 +72,7 @@ public class Account extends Resource {
                             mSrcDevice);
                     break;
                 case CHANGED:
+                case CONTENT:
                     mSrcDevice.sendResponse(response);
                     break;
                 default:

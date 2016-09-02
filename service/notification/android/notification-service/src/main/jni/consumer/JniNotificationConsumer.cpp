@@ -31,6 +31,7 @@ static jobject g_obj_acceptListener = NULL;
 jclass g_cls_Message;
 jclass g_cls_Provider;
 jclass g_cls_SyncInfo;
+jclass g_cls_SyncType;
 jclass g_cls_MediaContents;
 jclass g_cls_TopicState;
 jclass g_cls_Message_Type;
@@ -65,213 +66,6 @@ static JNIEnv *GetJNIEnv(jint *ret)
     }
 }
 
-jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType type)
-{
-    LOGD ("ConsumerService_getJavaMessageType - IN");
-    switch (type)
-    {
-        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_ALERT:
-            {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
-                                          "ALERT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
-            }
-        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_NOTICE:
-            {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
-                                          "NOTICE", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
-            }
-        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_EVENT:
-            {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
-                                          "EVENT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
-            }
-        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO:
-            {
-                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
-                                          "INFO", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message, fieldID);
-            }
-        default:
-            return NULL;
-    }
-    LOGD ("ConsumerService_getJavaMessageType - OUT");
-    return NULL;
-}
-
-jobject getJavaState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsState)
-{
-    LOGD ("ConsumerService_getJavaState - IN");
-
-    // TopicState
-    jclass cls_topicState = (jclass) (env->NewLocalRef(g_cls_TopicState));
-    if (!cls_topicState)
-    {
-        LOGE ("Failed to Get ObjectClass for TopicState Type");
-        return nullptr;
-    }
-
-    jobject obj_topicState;
-    switch (nsState)
-    {
-        case OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED:
-            {
-                static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
-                                          "UNSUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
-            }
-        case OIC::Service::NSTopic::NSTopicState::SUBSCRIBED:
-            {
-                static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
-                                          "SUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
-            }
-
-    }
-    if (obj_topicState == NULL)
-    {
-        LOGE("Error: object of field  TopicState  is null");
-        return NULL;
-    }
-
-    env->DeleteLocalRef(cls_topicState);
-    LOGD ("ConsumerService_getJavaState - OUT");
-    return obj_topicState;
-}
-
-
-jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
-{
-    LOGD ("ConsumerService_getJavaTopicsList - IN");
-    jclass cls_topicList = (jclass) (env->NewLocalRef(g_cls_TopicsList));
-    if (!cls_topicList)
-    {
-        LOGE ("Failed to Get ObjectClass for TopicsList");
-        return NULL;
-    }
-    jmethodID mid_topicList = env->GetMethodID(cls_topicList, "<init>", "()V");
-    if (!mid_topicList)
-    {
-        LOGE ("Failed to Get MethodID for TopicsList<init>");
-        return NULL;
-    }
-    jobject obj_topicList = env->NewObject(cls_topicList, mid_topicList);
-    jmethodID mid_addTopic =
-        env->GetMethodID(cls_topicList, "addTopic", "(Lorg/iotivity/service/ns/common/Topic;)V");
-    for (auto it : topicList->getTopicsList())
-    {
-        jobject jState = getJavaState(env, it->getState());
-        std::string topicName = it->getTopicName();
-        jstring jTopicName = env->NewStringUTF(topicName.c_str());
-        env->CallVoidMethod(obj_topicList, mid_addTopic, jTopicName, jState);
-    }
-    env->DeleteLocalRef(cls_topicList);
-    LOGD ("ConsumerService_getJavaTopicsList - OUT");
-    return obj_topicList;
-}
-
-OIC::Service::NSTopic::NSTopicState getNativeState(JNIEnv *env,  jobject jTopic)
-{
-    LOGD ("ConsumerService_getNativeState - IN");
-
-    jclass cls_topic = env->GetObjectClass( jTopic);
-    // TopicState
-    jclass cls_TopicState = (jclass) (env->NewLocalRef(g_cls_TopicState));
-    if (!cls_TopicState)
-    {
-        LOGE ("Failed to Get ObjectClass for cls_TopicState Type");
-        ThrowNSException(NS_ERROR, "TopicState class  not found ");
-        return OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED;
-    }
-    jmethodID mid = env->GetMethodID(cls_TopicState, "ordinal", "()I");
-    jfieldID fid_state = env->GetFieldID( cls_TopicState, "mState",
-                                          "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-    if (fid_state == NULL)
-    {
-        LOGE("Error: jfieldID for state type  is null");
-        ThrowNSException(NS_ERROR, "TopicState fid  not found ");
-        return OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED;
-    }
-    jobject jobj = env->GetObjectField( jTopic, fid_state);
-    if (jobj == NULL)
-    {
-        LOGE("Error: object of field  state Type is null");
-        ThrowNSException(NS_ERROR, "TopicState obj  is null ");
-        return OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED;
-    }
-    jint jState = env->CallIntMethod(jobj, mid);
-    OIC::Service::NSTopic::NSTopicState  state = (OIC::Service::NSTopic::NSTopicState) jState;
-    LOGD ("ConsumerService_getNativeState - OUT");
-    return state;
-
-}
-
-const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
-{
-    LOGD ("ConsumerService_getNativeTopicName - IN");
-    jclass cls_topic = env->GetObjectClass( jTopic);
-    jfieldID fid_name = env->GetFieldID( cls_topic, "mTopicname",
-                                         "Ljava/lang/String;");
-    if (fid_name == NULL)
-    {
-        LOGE("Error: jfieldID for Topic Name  is null");
-        return nullptr;
-    }
-    jstring jTopicName = (jstring) env->GetObjectField( jTopic, fid_name);
-    const char *topicName;
-    if (jTopicName)
-    {
-        topicName = env->GetStringUTFChars( jTopicName, NULL);
-    }
-    else
-    {
-        LOGI("Info: topicName is null");
-    }
-    LOGD ("ConsumerService_getNativeTopicName - OUT");
-    return topicName;
-
-}
-
-OIC::Service::NSTopicsList *getNativeTopicsList(JNIEnv *env, jobject jTopicList)
-{
-    LOGD ("ConsumerService_getNativeTopicsList - IN");
-
-    jclass cls_topicList = env->GetObjectClass( jTopicList);
-    jfieldID fid_list = env->GetFieldID( cls_topicList, "mTopicsList",
-                                         "Ljava/util/Vector;");
-    if (fid_list == NULL)
-    {
-        LOGE("Error: jfieldID for Topic List  is null");
-        return nullptr;
-    }
-    jobject jobj = env->GetObjectField( jTopicList, fid_list);
-    if (jobj == NULL)
-    {
-        LOGE("Error: object of field  Topic List is null");
-        return nullptr;
-    }
-    jclass cls_vec = env->FindClass("java/util/Vector");
-    jmethodID sizeMethod = env->GetMethodID(cls_vec,  "size", "()I;");
-    int size = env->CallIntMethod(jobj, sizeMethod);
-    jmethodID getMethod = env->GetMethodID(cls_vec,  "get", "(I)Ljava/lang/Object;");
-    OIC::Service::NSTopicsList *nsTopicList = new OIC::Service::NSTopicsList();
-    for (int index = 0; index < size; index++)
-    {
-        jobject topicObj = env->CallObjectMethod(jobj, getMethod, index);
-        const char *name =  getNativeTopicName(env, topicObj);
-        std::string topicName(name);
-        OIC::Service::NSTopic::NSTopicState state = getNativeState(env, topicObj);
-        nsTopicList->addTopic(topicName, state);
-    }
-
-    env->DeleteLocalRef(cls_vec);
-    env->DeleteLocalRef(cls_topicList);
-    LOGD ("ConsumerService_getNativeTopicsList - OUT");
-    return nsTopicList;
-}
-
 jobject getJavaResponse(JNIEnv *env, OIC::Service::NSResponse response)
 {
     LOGD ("ConsumerService_getJavaResponse - IN");
@@ -300,6 +94,264 @@ jobject getJavaResponse(JNIEnv *env, OIC::Service::NSResponse response)
     }
     LOGD ("ConsumerService_getJavaResponse - OUT");
     return NULL;
+}
+
+jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType)
+{
+    LOGD ("ConsumerService_getJavaSyncType - IN");
+
+    // SyncType
+    jclass cls_SyncType = (jclass) (env->NewLocalRef(g_cls_SyncType));
+    if (!cls_SyncType)
+    {
+        LOGE ("Failed to Get ObjectClass for SyncType");
+        return NULL;
+    }
+    jobject syncType;
+    switch (nsType)
+    {
+        case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_UNREAD:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
+                                          "UNREAD", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
+                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+            }
+        case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ :
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
+                                          "READ", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
+                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+            }
+        case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED :
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
+                                          "DELETED", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
+                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+            }
+
+    }
+
+    if (syncType == NULL)
+    {
+        LOGD("Error: object of field  Synctype  is null");
+    }
+
+    env->DeleteLocalRef(cls_SyncType);
+    LOGD ("ConsumerService_getJavaSyncType - OUT");
+    return syncType;
+}
+
+jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsState)
+{
+    LOGD ("ConsumerService_getJavaTopicState - IN");
+
+    // TopicState
+    jclass cls_topicState = (jclass) (env->NewLocalRef(g_cls_TopicState));
+    if (!cls_topicState)
+    {
+        LOGE ("Failed to Get ObjectClass for TopicState Type");
+        return NULL;
+    }
+
+    jobject obj_topicState;
+    switch (nsState)
+    {
+        case OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
+                                          "UNSUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
+                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+            }
+        case OIC::Service::NSTopic::NSTopicState::SUBSCRIBED:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
+                                          "SUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
+                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+            }
+
+    }
+    if (obj_topicState == NULL)
+    {
+        LOGD("Error: object of field  TopicState  is null");
+    }
+
+    env->DeleteLocalRef(cls_topicState);
+    LOGD ("ConsumerService_getJavaTopicState - OUT");
+    return obj_topicState;
+}
+
+jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
+{
+    LOGD ("ConsumerService_getJavaTopicsList - IN");
+    jclass cls_topicList = (jclass) (env->NewLocalRef(g_cls_TopicsList));
+    if (!cls_topicList)
+    {
+        LOGE ("Failed to Get ObjectClass for TopicsList");
+        return NULL;
+    }
+    jmethodID mid_topicList = env->GetMethodID(cls_topicList, "<init>", "()V");
+    if (!mid_topicList)
+    {
+        LOGE ("Failed to Get MethodID for TopicsList<init>");
+        return NULL;
+    }
+    jobject obj_topicList = env->NewObject(cls_topicList, mid_topicList);
+    if (!obj_topicList)
+    {
+        LOGE ("Failed to Get object for TopicsList");
+        return NULL;
+    }
+    jmethodID mid_addTopic = env->GetMethodID(cls_topicList, "addTopic",
+                             "(Ljava/lang/String;Lorg/iotivity/service/ns/common/Topic$TopicState;)V");
+    if (!mid_addTopic)
+    {
+        LOGE ("Failed to Get MethodID for addTopic");
+        return NULL;
+    }
+    for (auto it : topicList->getTopicsList())
+    {
+        jobject jState = getJavaTopicState(env, it->getState());
+        std::string topicName = it->getTopicName();
+        jstring jTopicName = env->NewStringUTF(topicName.c_str());
+        env->CallVoidMethod(obj_topicList, mid_addTopic, jTopicName, jState);
+    }
+    env->DeleteLocalRef(cls_topicList);
+    LOGD ("ConsumerService_getJavaTopicsList - OUT");
+    return obj_topicList;
+}
+
+bool getNativeTopicState(JNIEnv *env,  jobject jTopic , OIC::Service::NSTopic::NSTopicState &state )
+{
+    LOGD ("ConsumerService_getNativeTopicState - IN");
+
+    jclass cls_topic = env->GetObjectClass( jTopic);
+    // TopicState
+    jclass cls_TopicState = (jclass) (env->NewLocalRef(g_cls_TopicState));
+    if (!cls_TopicState)
+    {
+        LOGE ("Failed to Get ObjectClass for cls_TopicState Type");
+        return false;
+    }
+    jmethodID mid = env->GetMethodID(cls_TopicState, "ordinal", "()I");
+    jfieldID fid_state = env->GetFieldID( cls_topic, "mState",
+                                          "Lorg/iotivity/service/ns/common/Topic$TopicState;");
+    if (fid_state == NULL)
+    {
+        LOGE("Error: jfieldID for state type  is null");
+        return false;
+    }
+    jobject jobj = env->GetObjectField( jTopic, fid_state);
+    if (jobj == NULL)
+    {
+        LOGE("Error: object of field  state Type is null");
+        return false;
+    }
+    jint jState = env->CallIntMethod(jobj, mid);
+    state = (OIC::Service::NSTopic::NSTopicState) jState;
+    LOGD ("ConsumerService_getNativeTopicState - OUT");
+    return true;
+
+}
+
+const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
+{
+    LOGD ("ConsumerService_getNativeTopicName - IN");
+    jclass cls_topic = env->GetObjectClass( jTopic);
+    if (cls_topic == NULL)
+    {
+        LOGE("Error: Class for Topic is null");
+        return nullptr;
+    }
+    jfieldID fid_name = env->GetFieldID( cls_topic, "mTopicName", "Ljava/lang/String;");
+    if (fid_name == NULL)
+    {
+        LOGE("Error: jfieldID for Topic Name  is null");
+        return nullptr;
+    }
+    jstring jTopicName = (jstring) env->GetObjectField( jTopic, fid_name);
+    const char *topicName;
+    if (jTopicName)
+    {
+        topicName = env->GetStringUTFChars( jTopicName, NULL);
+    }
+    else
+    {
+        LOGI("Info: topicName is null");
+    }
+    LOGD ("ConsumerService_getNativeTopicName - OUT");
+    return topicName;
+
+}
+
+OIC::Service::NSTopicsList *getNativeTopicsList(JNIEnv *env, jobject jTopicList)
+{
+    LOGD ("ConsumerService_getNativeTopicsList - IN");
+
+    jclass cls_topicList = env->GetObjectClass( jTopicList);
+    if (cls_topicList == NULL)
+    {
+        LOGE("Error: Class for Topic List  is null");
+        return nullptr;
+    }
+    jfieldID fid_list = env->GetFieldID( cls_topicList, "mTopicsList", "Ljava/util/Vector;");
+    if (fid_list == NULL)
+    {
+        LOGE("Error: jfieldID for Topic List  is null");
+        return nullptr;
+    }
+    jobject jobj = env->GetObjectField( jTopicList, fid_list);
+    if (jobj == NULL)
+    {
+        LOGE("Error: object of field  Topic List is null");
+        return nullptr;
+    }
+    jclass cls_vec = env->FindClass("java/util/Vector");
+    if (cls_vec == NULL)
+    {
+        LOGE("Error: Class for Vector not found");
+        return nullptr;
+    }
+    jmethodID sizeMethod = env->GetMethodID(cls_vec,  "size", "()I");
+    if (sizeMethod == NULL)
+    {
+        LOGE("Error: MethodId for Vector Size  not found");
+        return nullptr;
+    }
+    int size = env->CallIntMethod(jobj, sizeMethod);
+    jmethodID getMethod = env->GetMethodID(cls_vec,  "get", "(I)Ljava/lang/Object;");
+    if (getMethod == NULL)
+    {
+        LOGE("Error: MethodId for Vector get  not found");
+        return nullptr;
+    }
+    OIC::Service::NSTopicsList *nsTopicList = new OIC::Service::NSTopicsList();
+    for (int index = 0; index < size; index++)
+    {
+        jobject topicObj = env->CallObjectMethod(jobj, getMethod, index);
+        if (topicObj == NULL)
+        {
+            LOGE("Error: object of field  Topic  is null");
+            return nullptr;
+        }
+        const char *name =  getNativeTopicName(env, topicObj);
+        if (name == nullptr)
+        {
+            LOGE("Error: Couldn't find topic Name");
+            return nullptr;
+        }
+        std::string topicName(name);
+        OIC::Service::NSTopic::NSTopicState state;
+        if (!getNativeTopicState(env, topicObj, state))
+        {
+            return nullptr;
+        }
+        nsTopicList->addTopic(topicName, state);
+    }
+
+    env->DeleteLocalRef(cls_vec);
+    env->DeleteLocalRef(cls_topicList);
+    LOGD ("ConsumerService_getNativeTopicsList - OUT");
+    return nsTopicList;
 }
 
 OIC::Service::NSProvider *getNativeProvider(JNIEnv *env, jobject jObj)
@@ -361,6 +413,11 @@ jobject getJavaProvider(JNIEnv *env, OIC::Service::NSProvider *provider)
         return NULL;
     }
     jobject obj_provider = env->NewObject(cls_provider, mid_provider, jProviderId);
+    if (!obj_provider)
+    {
+        LOGE("Failed to create new Object for Provider");
+        return NULL;
+    }
 
     jfieldID nativeHandle = env->GetFieldID(cls_provider, "mNativeHandle", "J");
     if (!nativeHandle)
@@ -371,10 +428,10 @@ jobject getJavaProvider(JNIEnv *env, OIC::Service::NSProvider *provider)
     env->SetLongField(obj_provider, nativeHandle, pProvider);
 
     jfieldID fid_topic = env->GetFieldID(cls_provider, "mTopicsList",
-                                         "Lorg/iotivity/service/ns/common/TopicsList");
+                                         "Lorg/iotivity/service/ns/common/TopicsList;");
     if (!fid_topic)
     {
-        LOGE("Failed to get nativeHandle for Provider");
+        LOGE("Failed to get TopicList for Provider");
         return NULL;
     }
     jobject topicList = getJavaTopicsList(env, provider->getTopicList());
@@ -384,6 +441,41 @@ jobject getJavaProvider(JNIEnv *env, OIC::Service::NSProvider *provider)
     return obj_provider;
 }
 
+jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType type)
+{
+    LOGD ("ConsumerService_getJavaMessageType - IN");
+    switch (type)
+    {
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_ALERT:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                                          "ALERT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message, fieldID);
+            }
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_NOTICE:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                                          "NOTICE", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message, fieldID);
+            }
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_EVENT:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                                          "EVENT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message, fieldID);
+            }
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message,
+                                          "INFO", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message, fieldID);
+            }
+        default:
+            return NULL;
+    }
+    LOGD ("ConsumerService_getJavaMessageType - OUT");
+    return NULL;
+}
 
 jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
 {
@@ -422,7 +514,11 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     }
     jobject obj_message = env->NewObject(cls_message, mid_message,
                                          jTitle, jContentText, jSourceName);
-
+    if (!obj_message)
+    {
+        LOGE ("Failed to Get Java Object for Message");
+        return NULL;
+    }
     jfieldID fid_nativeHandle = env->GetFieldID(cls_message, "mNativeHandle", "J");
     if (!fid_nativeHandle)
     {
@@ -503,19 +599,18 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     }
 
     jobject jType = getJavaMessageType(env, message->getType());
-    if (!jType)
+    if (jType)
     {
-        LOGE("Failed to get Type value for Message");
-        return NULL;
+        jfieldID fid_type = env->GetFieldID(cls_message, "mType",
+                                            "Lorg/iotivity/service/ns/common/Message$MessageType;");
+        if (!fid_type)
+        {
+            LOGE("Failed to get field Type for Message");
+            return NULL;
+        }
+        env->SetObjectField(obj_message, fid_type, jType);
     }
-    jfieldID fid_type = env->GetFieldID(cls_message, "mType",
-                                        "Lorg/iotivity/service/ns/common/Message$MessageType;");
-    if (!fid_type)
-    {
-        LOGE("Failed to get field Type for Message");
-        return NULL;
-    }
-    env->SetObjectField(obj_message, fid_type, jType);
+
     env->DeleteLocalRef(cls_message);
     LOGD ("ConsumerService_getJavaMessage - OUT");
     return obj_message;
@@ -573,7 +668,7 @@ void onDiscoverProvider(OIC::Service::NSProvider *provider)
 
 void onProviderChanged(OIC::Service::NSProvider *provider, OIC::Service::NSResponse response)
 {
-    LOGD ("ConsumerService_onSubscriptionAccepted -IN");
+    LOGD ("ConsumerService_onProviderChanged -IN");
 
     jint envRet;
     JNIEnv *env = GetJNIEnv(&envRet);
@@ -616,7 +711,7 @@ void onProviderChanged(OIC::Service::NSProvider *provider, OIC::Service::NSRespo
 
     env->DeleteLocalRef(jAcceptListener);
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
-    LOGD ("ConsumerService_onSubscriptionAccepted -OUT");
+    LOGD ("ConsumerService_onProviderChanged -OUT");
     return ;
 
 }
@@ -692,25 +787,39 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
 
     jlong jMessageId = (jlong) sync->getMessageId();
     jstring jProviderId = env->NewStringUTF(sync->getProviderId().c_str());
-    jint jState = (jint) sync->getState();
-
-    jclass cls_sync = (jclass) (env->NewLocalRef(g_cls_SyncInfo));
-    if (!cls_sync)
+    jobject syncType = getJavaSyncType(env, sync->getState());
+    if (!syncType)
+    {
+        LOGE ("Failed to Get syncType for SyncInfo");
+        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        return ;
+    }
+    jclass cls_SyncInfo = (jclass) (env->NewLocalRef(g_cls_SyncInfo));
+    if (!cls_SyncInfo)
     {
         LOGE ("Failed to Get ObjectClass for SyncInfo");
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return ;
     }
-    jmethodID mid_sync = env->GetMethodID(
-                             cls_sync, "<init>", "(JLjava/lang/String;I)V");
-    if (!mid_sync)
+    jmethodID mid_syncInfo = env->GetMethodID(
+                                 cls_SyncInfo,
+                                 "<init>",
+                                 "(JLjava/lang/String;Lorg/iotivity/service/ns/common/SyncInfo$SyncType;)V");
+    if (!mid_syncInfo)
     {
-        LOGE ("Failed to Get MethodID for SyncInfo<init>");
+        LOGE ("Failed to Get MethodID for SyncInfo");
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return ;
     }
-    jobject obj_sync = env->NewObject(cls_sync, mid_sync,
-                                      jMessageId, jProviderId, jState);
+
+    jobject obj_syncInfo = env->NewObject( cls_SyncInfo, mid_syncInfo,
+                                           jMessageId, jProviderId, syncType);
+    if (!obj_syncInfo)
+    {
+        LOGE ("Failed to Get Object for SyncInfo");
+        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        return ;
+    }
 
     jclass cls = env->GetObjectClass(jSyncListener);
     if (!cls)
@@ -730,10 +839,10 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
         return ;
     }
 
-    env->CallVoidMethod(jSyncListener, mid, obj_sync);
+    env->CallVoidMethod(jSyncListener, mid, obj_syncInfo);
 
     env->DeleteLocalRef(jSyncListener);
-    env->DeleteLocalRef(cls_sync);
+    env->DeleteLocalRef(cls_SyncInfo);
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
     LOGD ("ConsumerService_onSyncInfoReceived - OUT");
     return ;
@@ -828,6 +937,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_
     }
 
     const char *providerId = env->GetStringUTFChars(jProviderId, 0);
+    LOGD ("java_ProviderId : %s\n", providerId);
 
     OIC::Service::NSProvider *provider =
         OIC::Service::NSConsumerService::getInstance()->getProvider(std::string(providerId));
@@ -836,8 +946,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_
         ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
         return NULL;
     }
-
-    LOGD ("ProviderId : %s\n", provider->getProviderId().c_str());
+    LOGD ("native_ProviderId : %s\n", provider->getProviderId().c_str());
 
     jProviderId = env->NewStringUTF(provider->getProviderId().c_str());
     jlong pProvider = (long)provider;
@@ -846,6 +955,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_
     if (!cls_provider)
     {
         LOGE ("Failed to Get ObjectClass for Provider");
+        ThrowNSException(NS_ERROR, "Couldn't find objectClass for Provider");
         return NULL;
     }
     jmethodID mid_provider = env->GetMethodID(
@@ -853,6 +963,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_
     if (!mid_provider)
     {
         LOGE ("Failed to Get MethodID for Provider<init>");
+        ThrowNSException(NS_ERROR, "Couldn't find MethodID for Provider<init>");
         return NULL;
     }
     jobject obj_provider = env->NewObject(cls_provider, mid_provider,
@@ -1055,8 +1166,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetL
         {
             env->DeleteGlobalRef(g_obj_syncListener);
         }
-        g_obj_syncListener = NULL;
-        g_obj_acceptListener = NULL;
         g_obj_postListener = (jobject) env->NewGlobalRef(jPostListener);
         g_obj_syncListener = (jobject) env->NewGlobalRef(jSyncListener);
 
@@ -1080,8 +1189,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetL
         {
             env->DeleteGlobalRef(g_obj_syncListener);
         }
-        g_obj_syncListener = NULL;
-        g_obj_acceptListener = NULL;
         g_obj_postListener = (jobject) env->NewGlobalRef(jPostListener);
         g_obj_syncListener = (jobject) env->NewGlobalRef(jSyncListener);
 
@@ -1202,6 +1309,20 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
         return JNI_ERR;
     }
 
+    jclass localSyncType = env->FindClass(
+                               "org/iotivity/service/ns/common/SyncInfo$SyncType");
+    if (!localSyncType)
+    {
+        LOGE("Failed to get local SyncType enum");
+        return JNI_ERR;
+    }
+    g_cls_SyncType = (jclass) (env->NewGlobalRef(localSyncType));
+    if (!g_cls_SyncType)
+    {
+        LOGE("Failed to set Global SyncType reference");
+        return JNI_ERR;
+    }
+
     jclass localMediaContents = env->FindClass(
                                     "org/iotivity/service/ns/common/MediaContents");
     if (!localMediaContents)
@@ -1287,6 +1408,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     env->DeleteLocalRef(localMessage);
     env->DeleteLocalRef(localProvider);
     env->DeleteLocalRef(localSyncInfo);
+    env->DeleteLocalRef(localSyncType);
     env->DeleteLocalRef(localMediaContents);
     env->DeleteLocalRef(localTopicState);
     env->DeleteLocalRef(localMessageType);
@@ -1311,6 +1433,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
     env->DeleteGlobalRef(g_cls_Message);
     env->DeleteGlobalRef(g_cls_Provider);
     env->DeleteGlobalRef(g_cls_SyncInfo);
+    env->DeleteGlobalRef(g_cls_SyncType);
     env->DeleteGlobalRef(g_cls_MediaContents);
     env->DeleteGlobalRef(g_cls_TopicState);
     env->DeleteGlobalRef(g_cls_Message_Type);

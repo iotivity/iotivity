@@ -130,7 +130,7 @@ void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCRes
 void JniOnResourceFoundListener::findResourceErrorCallback(const std::string& uri, const int eCode)
 {
     LOGI("findResource error callback value : %d", eCode);
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
     if (nullptr == env)
     {
@@ -184,7 +184,6 @@ void JniOnResourceFoundListener::findResourceErrorCallback(const std::string& ur
     }
     env->CallVoidMethod(jListener, midL, ex, env->NewStringUTF(uri.c_str()));
 
-    checkExAndRemoveListener(env);
     if (JNI_EDETACHED == ret)
     {
         g_jvm->DetachCurrentThread();

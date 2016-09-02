@@ -30,23 +30,26 @@ namespace OCMQResourceTest
     using namespace OC;
 
 #ifdef MQ_SUBSCRIBER
-    void onObserve(const HeaderOptions, const OCRepresentation&, const int&, const int&)
+    void onSubscribe(const HeaderOptions, const OCRepresentation&, const int&, const int&)
+    {
+    }
+
+    void onReqPub(const HeaderOptions&, const OCRepresentation&, const int)
     {
     }
 #endif
 
 #ifdef MQ_PUBLISHER
-    void onGetPut(const HeaderOptions&, const OCRepresentation& , const int eCode)
+    void onPublish(const HeaderOptions&, const OCRepresentation&, const int)
     {
     }
 #endif
 
-    void foundResource(std::shared_ptr<OCResource>)
+    void foundResource(const int, const std::string, std::shared_ptr<OCResource>)
     {
     }
 
-    void createdTopic(const HeaderOptions &, const OCRepresentation &, const int,
-                      std::shared_ptr<OCResource>)
+    void createdTopic(const int, const std::string, std::shared_ptr<OCResource>)
     {
     }
 
@@ -54,7 +57,7 @@ namespace OCMQResourceTest
     OCResource::Ptr ConstructResourceObject(std::string host, std::string uri)
     {
         OCConnectivityType connectivityType = CT_DEFAULT;
-        std::vector<std::string> types = {"tkss.wk"};
+        std::vector<std::string> types = {"oic.ps"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
 
         auto ret = OCPlatform::constructResourceObject(host, uri,
@@ -75,7 +78,8 @@ namespace OCMQResourceTest
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
         QueryParamsMap query = {};
-        EXPECT_EQ(OC_STACK_OK, resource->discoveryMQTopics(query, &foundResource));
+        EXPECT_EQ(OC_STACK_OK, resource->discoveryMQTopics(query, &foundResource,
+                                                           QualityOfService::LowQos));
     }
 
     TEST(MessageQueueTest, CreateMQTopicValid)
@@ -84,7 +88,8 @@ namespace OCMQResourceTest
         EXPECT_TRUE(resource != NULL);
         OCRepresentation rep;
         QueryParamsMap query = {};
-        EXPECT_EQ(OC_STACK_OK, resource->createMQTopic(rep, "/ps/nweTopic", query, &createdTopic));
+        EXPECT_EQ(OC_STACK_OK, resource->createMQTopic(rep, "/lightTopic", query, &createdTopic,
+                                                       QualityOfService::LowQos));
     }
 
 #ifdef MQ_PUBLISHER
@@ -94,7 +99,8 @@ namespace OCMQResourceTest
         EXPECT_TRUE(resource != NULL);
         OCRepresentation rep;
         QueryParamsMap query = {};
-        EXPECT_EQ(OC_STACK_OK, resource->publishMQTopic(rep, query, &onGetPut));
+        EXPECT_EQ(OC_STACK_OK, resource->publishMQTopic(rep, query, &onPublish,
+                                                        QualityOfService::LowQos));
     }
 #endif
 
@@ -104,7 +110,8 @@ namespace OCMQResourceTest
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
         QueryParamsMap query = {};
-        EXPECT_EQ(OC_STACK_OK, resource->subscribeMQTopic(ObserveType::Observe, query, &onObserve));
+        EXPECT_EQ(OC_STACK_OK, resource->subscribeMQTopic(ObserveType::Observe, query,
+                                                          &onSubscribe, QualityOfService::LowQos));
     }
 
     TEST(MessageQueueTest, RequestMQPublishValid)
@@ -112,7 +119,8 @@ namespace OCMQResourceTest
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
         QueryParamsMap query = {};
-        EXPECT_EQ(OC_STACK_OK, resource->requestMQPublish(query, &onGetPut));
+        EXPECT_EQ(OC_STACK_OK, resource->requestMQPublish(query, &onReqPub,
+                                                          QualityOfService::LowQos));
     }
 #endif
 }

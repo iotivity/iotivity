@@ -70,6 +70,8 @@ void coap_pdu_clear(coap_pdu_t *pdu, size_t size, coap_transport_type transport,
         /* data is NULL unless explicitly set by coap_add_data() */
         pdu->length = length;
     }
+#else
+    (void)length;
 #endif
 }
 
@@ -204,6 +206,9 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
 coap_pdu_t *
 coap_new_pdu(coap_transport_type transport, unsigned int size)
 {
+#ifndef WITH_TCP
+    (void)size;
+#endif
     coap_pdu_t *pdu;
 
 #ifndef WITH_CONTIKI

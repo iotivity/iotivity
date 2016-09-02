@@ -46,6 +46,7 @@ void handleSigInt(int signum) {
 // This is a function called back when a device is discovered
 OCStackApplicationResult applicationDiscoverCB(
         OCClientResponse * clientResponse) {
+    (void)clientResponse;
     OIC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
     OIC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
                                     clientResponse->resourceUri,

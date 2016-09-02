@@ -40,7 +40,7 @@ namespace OIC
         {
             if (consumer != nullptr)
             {
-                m_consumerId.assign(consumer->consumerId, NS_UTILS_UUID_STRING_SIZE);
+                m_consumerId = consumer->consumerId;
             }
         }
 

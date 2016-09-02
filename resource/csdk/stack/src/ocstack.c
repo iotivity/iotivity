@@ -885,7 +885,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     {
         OIC_LOG_V(ERROR, TAG,
                   "encodeAddressForRFC6874 failed: "
-                  "outputSize (%d) < inputSize (%d)",
+                  "outputSize (%zu) < inputSize (%zu)",
                   outputSize, inputSize);
 
         return OC_STACK_ERROR;
@@ -944,14 +944,19 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
  * requestUri must be a char array of size CA_MAX_URI_LENGTH
  */
 static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resourceUri,
-        char *presenceUri)
+                                    char *presenceUri, bool isMulticast)
 {
     VERIFY_NON_NULL(endpoint   , FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(resourceUri, FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(presenceUri, FATAL, OC_STACK_INVALID_PARAM);
 
-    CAEndpoint_t *ep = (CAEndpoint_t *)endpoint;
+    if (isMulticast)
+    {
+        OIC_LOG(DEBUG, TAG, "Make Multicast Presence URI");
+        return snprintf(presenceUri, CA_MAX_URI_LENGTH, "%s", OC_RSRVD_PRESENCE_URI);
+    }
 
+    CAEndpoint_t *ep = (CAEndpoint_t *)endpoint;
     if (ep->adapter == CA_ADAPTER_IP)
     {
         if ((ep->flags & CA_IPV6) && !(ep->flags & CA_IPV4))
@@ -1019,39 +1024,6 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         return OC_STACK_ERROR;
     }
 
-    // check for unicast presence
-    uriLen = FormCanonicalPresenceUri(endpoint, OC_RSRVD_PRESENCE_URI, presenceUri);
-    if (uriLen < 0 || (size_t)uriLen >= sizeof (presenceUri))
-    {
-        return OC_STACK_INVALID_URI;
-    }
-
-    cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
-    if (cbNode)
-    {
-        presenceSubscribe = 1;
-    }
-    else
-    {
-        // check for multiicast presence
-        CAEndpoint_t ep = { .adapter = endpoint->adapter,
-                            .flags = endpoint->flags };
-
-        uriLen = FormCanonicalPresenceUri(&ep, OC_RSRVD_PRESENCE_URI, presenceUri);
-
-        cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
-        if (cbNode)
-        {
-            multicastPresenceSubscribe = 1;
-        }
-    }
-
-    if (!presenceSubscribe && !multicastPresenceSubscribe)
-    {
-        OIC_LOG(ERROR, TAG, "Received a presence notification, but no callback, ignoring");
-        goto exit;
-    }
-
     response.payload = NULL;
     response.result = OC_STACK_OK;
 
@@ -1079,6 +1051,36 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         response.sequenceNumber = ((OCPresencePayload*)response.payload)->sequenceNumber;
         resourceTypeName = ((OCPresencePayload*)response.payload)->resourceType;
         maxAge = ((OCPresencePayload*)response.payload)->maxAge;
+    }
+
+    // check for unicast presence
+    uriLen = FormCanonicalPresenceUri(endpoint, OC_RSRVD_PRESENCE_URI, presenceUri,
+                                      responseInfo->isMulticast);
+    if (uriLen < 0 || (size_t)uriLen >= sizeof (presenceUri))
+    {
+        return OC_STACK_INVALID_URI;
+    }
+    OIC_LOG(ERROR, TAG, "check for unicast presence");
+    cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
+    if (cbNode)
+    {
+        presenceSubscribe = 1;
+    }
+    else
+    {
+        // check for multicast presence
+        OIC_LOG(ERROR, TAG, "check for multicast presence");
+        cbNode = GetClientCB(NULL, 0, NULL, OC_RSRVD_PRESENCE_URI);
+        if (cbNode)
+        {
+            multicastPresenceSubscribe = 1;
+        }
+    }
+
+    if (!presenceSubscribe && !multicastPresenceSubscribe)
+    {
+        OIC_LOG(ERROR, TAG, "Received a presence notification, but no callback, ignoring");
+        goto exit;
     }
 
     if (presenceSubscribe)
@@ -1185,15 +1187,19 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
             // presence node now owns uri
         }
 
+
+
         // Ensure that a filter is actually applied.
         if(resourceTypeName && cbNode->filterResourceType)
         {
+            OIC_LOG_V(INFO, TAG, "find resource type : %s", resourceTypeName);
             if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
             {
                 goto exit;
             }
         }
     }
+    OIC_LOG(INFO, TAG, "Callback for presence");
 
     cbResult = cbNode->callBack(cbNode->context, cbNode->handle, &response);
 
@@ -1518,8 +1524,6 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
         return;
     }
-
-    OIC_LOG(INFO, TAG, "Exit OCHandleResponse");
 }
 
 void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
@@ -1596,7 +1600,6 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         response.result = CAResultToOCStackResult(errorInfo->result);
 
         cbNode->callBack(cbNode->context, cbNode->handle, &response);
-        FindAndDeleteClientCB(cbNode);
     }
 
     OIC_LOG(INFO, TAG, "Exit HandleCAErrorResponse");
@@ -2580,11 +2583,13 @@ error:
 }
 
 static OCStackResult OCPreparePresence(CAEndpoint_t *endpoint,
-                                        char *resourceUri, char **requestUri)
+                                       char *resourceUri,
+                                       char **requestUri,
+                                       bool isMulticast)
 {
     char uri[CA_MAX_URI_LENGTH];
 
-    FormCanonicalPresenceUri(endpoint, resourceUri, uri);
+    FormCanonicalPresenceUri(endpoint, resourceUri, uri, isMulticast);
 
     *requestUri = OICStrdup(uri);
     if (!*requestUri)
@@ -2641,7 +2646,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     flags = (OCTransportFlags)(connectivityType & CT_MASK_FLAGS);
 
     result = ParseRequestUri(requestUri, adapter, flags, &devAddr, &resourceUri, &resourceType);
-
     if (result != OC_STACK_OK)
     {
         OIC_LOG_V(DEBUG, TAG, "Unable to parse uri: %s", requestUri);
@@ -2667,6 +2671,9 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         break;
     case OC_REST_DISCOVER:
         qos = OC_LOW_QOS;
+#ifdef WITH_PRESENCE
+    case OC_REST_PRESENCE:
+#endif
         if (destination || devAddr)
         {
             requestInfo.isMulticast = false;
@@ -2678,16 +2685,11 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             destination = &tmpDevAddr;
             requestInfo.isMulticast = true;
         }
-        // CA_DISCOVER will become GET and isMulticast
+        // OC_REST_DISCOVER: CA_DISCOVER will become GET and isMulticast.
+        // OC_REST_PRESENCE: Since "presence" is a stack layer only implementation.
+        //                   replacing method type with GET.
         requestInfo.method = CA_GET;
         break;
-#ifdef WITH_PRESENCE
-    case OC_REST_PRESENCE:
-        // Replacing method type with GET because "presence"
-        // is a stack layer only implementation.
-        requestInfo.method = CA_GET;
-        break;
-#endif
     default:
         result = OC_STACK_INVALID_METHOD;
         goto exit;
@@ -2777,7 +2779,8 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     if (method == OC_REST_PRESENCE)
     {
         char *presenceUri = NULL;
-        result = OCPreparePresence(&endpoint, resourceUri, &presenceUri);
+        result = OCPreparePresence(&endpoint, resourceUri, &presenceUri,
+                                   requestInfo.isMulticast);
         if (OC_STACK_OK != result)
         {
             goto exit;
@@ -4465,6 +4468,7 @@ OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char *
         OCResourceType * rtPointer = resourceTypeList;
         while(resourceTypeName && rtPointer)
         {
+            OIC_LOG_V(DEBUG, TAG, "current resourceType : %s", rtPointer->resourcetypename);
             if(rtPointer->resourcetypename &&
                     strcmp(resourceTypeName, (const char *)
                     (rtPointer->resourcetypename)) == 0)
@@ -4704,20 +4708,20 @@ CAResult_t OCSelectNetwork()
         };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 
-    for(int i = 0; i<numConnTypes; i++)
+    for(int i = 0; i < numConnTypes; i++)
     {
-        // Ignore CA_NOT_SUPPORTED error. The CA Layer may have not compiled in the interface.
-        if(caResult == CA_STATUS_OK || caResult == CA_NOT_SUPPORTED)
+        // If CA status is not initialized, CASelectNetwork() will not be called.
+        if (caResult != CA_STATUS_NOT_INITIALIZED)
         {
            caResult = CASelectNetwork(connTypes[i]);
-           if(caResult == CA_STATUS_OK)
+           if (caResult == CA_STATUS_OK)
            {
                retResult = CA_STATUS_OK;
            }
         }
     }
 
-    if(retResult != CA_STATUS_OK)
+    if (retResult != CA_STATUS_OK)
     {
         return caResult; // Returns error of appropriate transport that failed fatally.
     }

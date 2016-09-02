@@ -27,6 +27,8 @@
 using namespace std;
 using namespace OC;
 
+static const char* SVR_DB_FILE_NAME = "./oic_svr_db_server.dat";
+
 string rdAddress;
 OCConnectivityType connectivityType = CT_ADAPTER_TCP;
 
@@ -157,7 +159,7 @@ void onPublish(const OCRepresentation& rep, const int& eCode)
 
     try
     {
-        if (OC_STACK_RESOURCE_CREATED == eCode)
+        if (OC_STACK_RESOURCE_CHANGED == eCode)
         {
             cout << "=========== Published Resource ===========" << endl;
             if (rep.hasAttribute("di"))
@@ -209,6 +211,11 @@ static void printUsage()
     std::cout<<"Usage: rdserver <coap+tcp://10.11.12.13:5683>\n";
 }
 
+static FILE* client_open(const char* /*path*/, const char *mode)
+{
+    return fopen(SVR_DB_FILE_NAME, mode);
+}
+
 int main(int argc, char* argv[])
 {
     ostringstream requestURI;
@@ -223,8 +230,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
     PlatformConfig config
-    { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
+    { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos, &ps};
 
     try
     {

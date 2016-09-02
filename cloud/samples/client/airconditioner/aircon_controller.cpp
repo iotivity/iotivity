@@ -5,7 +5,6 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <pthread.h>
 #include <unistd.h>
 
 #include "ocstack.h"
@@ -14,8 +13,6 @@
 #include <OCApi.h>
 #include <OCPlatform.h>
 
-#define DEFAULT_CONTEXT_VALUE 0x99
-
 #define maxSequenceNumber 0xFFFFFF
 
 using namespace OC;
@@ -23,56 +20,51 @@ using namespace std;
 
 
 condition_variable  g_callbackLock;
-std::string         g_uid;
-std::string         g_accesstoken;
+string         g_uid;
+string         g_accesstoken;
 
 string              g_host;
 OC::OCResource::Ptr g_binaryswitchResource;
 
-void printRepresentation(OCRepPayloadValue *value)
+void printRepresentation(OCRepresentation rep)
 {
-    while (value)
+    for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
-        std::cout << "Key: " << value->name;
-        switch (value->type)
+        cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+        if (itr->type() == AttributeType::Vector)
         {
-            case OCREP_PROP_NULL:
-                std::cout << " Value: None" << std::endl;
-                break;
-            case OCREP_PROP_INT:
-                std::cout << " Value: " << value->i << std::endl;
-                break;
-            case OCREP_PROP_DOUBLE:
-                std::cout << " Value: " << value->d << std::endl;
-                break;
-            case OCREP_PROP_BOOL:
-                std::cout << " Value: " << value->b << std::endl;
-                break;
-            case OCREP_PROP_STRING:
-                std::cout << " Value: " << value->str << std::endl;
-                break;
-            case OCREP_PROP_BYTE_STRING:
-                std::cout << " Value: Byte String" << std::endl;
-                break;
-            case OCREP_PROP_OBJECT:
-                std::cout << " Value: Object" << std::endl;
-                break;
-            case OCREP_PROP_ARRAY:
-                std::cout << " Value: Array" << std::endl;
-                break;
-        }
+            switch (itr->base_type())
+            {
+                case AttributeType::OCRepresentation:
+                    for (auto itr2 : (*itr).getValue<vector<OCRepresentation> >())
+                    {
+                        printRepresentation(itr2);
+                    }
+                    break;
 
-        if (strcmp(value->name, "accesstoken") == 0)
+                case AttributeType::Integer:
+                    for (auto itr2 : (*itr).getValue<vector<int> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                case AttributeType::String:
+                    for (auto itr2 : (*itr).getValue<vector<string> >())
+                    {
+                        cout << "\t\t" << itr2 << endl;
+                    }
+                    break;
+
+                default:
+                    cout << "Unhandled base type " << itr->base_type() << endl;
+                    break;
+            }
+        }
+        else if (itr->type() == AttributeType::OCRepresentation)
         {
-            g_accesstoken = value->str;
+            printRepresentation((*itr).getValue<OCRepresentation>());
         }
-
-        if (strcmp(value->name, "uid") == 0)
-        {
-            g_uid = value->str;
-        }
-
-        value = value->next;
     }
 }
 
@@ -83,13 +75,20 @@ void handleLoginoutCB(const HeaderOptions &,
 
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
+    }
+
+    if (ecode == 4)
+    {
+        g_accesstoken = rep.getValueToString("accesstoken");
+
+        g_uid = rep.getValueToString("uid");
     }
 
     g_callbackLock.notify_all();
 }
 
-void printRepresentation(const OCRepresentation &rep)
+void printResource(const OCRepresentation &rep)
 {
     cout << "URI: " << rep.getUri() << endl;
 
@@ -110,7 +109,7 @@ void printRepresentation(const OCRepresentation &rep)
     for (auto it = children.begin();
          it != children.end(); it++)
     {
-        printRepresentation(*it);
+        printResource(*it);
     }
 }
 
@@ -133,7 +132,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
         {
             if (eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration failed or de-registration action failed/succeeded" << std::endl;
+                cout << "Observe registration failed or de-registration action failed/succeeded" << endl;
             }
             else
             {
@@ -148,9 +147,9 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
     }
 }
 
-void onPut(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep, const int eCode)
+void onPost(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep, const int eCode)
 {
-    cout << "PUT response: " << eCode << endl;
+    cout << "POST response: " << eCode << endl;
 
     printRepresentation(rep);
 }
@@ -161,7 +160,8 @@ void turnOnOffSwitch(bool toTurn)
     binarySwitch.setValue("value", toTurn);
 
     QueryParamsMap      query;
-    g_binaryswitchResource->post("oic.r.switch.binary", DEFAULT_INTERFACE, binarySwitch, query, &onPut);
+    g_binaryswitchResource->post("oic.r.switch.binary", DEFAULT_INTERFACE, binarySwitch, query,
+                                 &onPost);
 }
 
 void getCollectionResource(const HeaderOptions &,
@@ -169,7 +169,7 @@ void getCollectionResource(const HeaderOptions &,
 {
     cout << "Resource get: " << ecode << endl;
 
-    printRepresentation(rep);
+    printResource(rep);
 
     vector<OCRepresentation> children = rep.getChildren();
 
@@ -238,18 +238,26 @@ void foundDevice(shared_ptr<OC::OCResource> resource)
             OCPlatform::findResource(g_host, searchQuery,
                                      static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4),
                                      &foundAirconditionerResource);
+
+            OCPlatform::OCPresenceHandle    handle;
+            if (OCPlatform::subscribeDevicePresence(handle, g_host, { resource->sid() },
+                                                    static_cast<OCConnectivityType>
+                                                    (CT_ADAPTER_TCP | CT_IP_USE_V4), &onObserve) != OC_STACK_OK)
+            {
+                cout << "Device presence failed" << endl;
+            }
         }
     }
 }
 
-void presenceDevice(OCStackResult , const unsigned int i, const std::string &str)
+void presenceDevice(OCStackResult , const unsigned int i, const string &str)
 {
     cout << "Presence received, i=" << i << " str=" << str << endl;
 }
 
 static FILE *client_open(const char * /*path*/, const char *mode)
 {
-    return fopen("./resource_controller.dat", mode);
+    return fopen("./aircon_controller.dat", mode);
 }
 
 int main(int argc, char *argv[])
@@ -287,7 +295,7 @@ int main(int argc, char *argv[])
 
 
     mutex blocker;
-    unique_lock<std::mutex> lock(blocker);
+    unique_lock<mutex> lock(blocker);
 
     if (argc == 5)
     {

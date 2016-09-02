@@ -46,6 +46,7 @@ import org.iotivity.base.ModeType;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
+import org.iotivity.base.ObserveType;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcPresenceStatus;
 import org.iotivity.base.OcProvisioning;
@@ -54,6 +55,7 @@ import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+import org.iotivity.base.OcAccountManager;
 import org.iotivity.service.easysetup.mediator.ESConstants;
 import org.iotivity.service.easysetup.mediator.CloudProp;
 import org.iotivity.service.easysetup.mediator.CloudPropProvisioningCallback;
@@ -89,11 +91,14 @@ import java.util.HashMap;
 import java.util.List;
 
 
-public class EasysetupActivity extends Activity implements OcPlatform.OnPresenceListener {
+public class EasysetupActivity extends Activity
+                                implements OcPlatform.OnPresenceListener,
+                                           OcResource.OnObserveListener{
     private static final String TAG = "Easysetup Mediator: ";
     PlatformConfig cfg;
+    OcAccountManager m_accountManager = null;
     final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
-    final String samsungCIServer = "coap+tcp://52.69.149.85:5683";
+    final String CIServer = "coap+tcp://52.69.149.85:5683";
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -102,6 +107,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
     public static final String OIC_SQL_DB_FILE =  "PDM.db";
 
     private boolean isFirstTime = true;
+
     String mEnrolleeDeviceID;
     String mAuthCode;
     String mAuthProvider;
@@ -109,7 +115,8 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
     String mUserID;
     String mAccessToken;
     String mEnrolleeAuthCode;
-
+    byte[] mCertificate;
+    int mCredID;
 
     ToggleButton mSecurityMode;
 
@@ -282,6 +289,16 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
 
         initOICStack();
 
+        try {
+            m_accountManager = OcPlatform.constructAccountManagerObject(
+                    CIServer,
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+
+            Log.e(TAG, "constructAccountManagerObject is successful");
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+            Log.e(TAG,"Failed to constructAccountManagerObject");
+        }
         SharedPreferences settings =
                                 getApplicationContext().getSharedPreferences("IoTivityCloud", 0);
         mAccessToken = settings.getString("accesstoken", null);
@@ -683,6 +700,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                             CloudProp cloudProp = new CloudProp();
                             cloudProp.setCloudProp(authCode, authProvider, ciserver);
                             cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
+                            cloudProp.setCredID(1);
 
                             mRemoteEnrollee.provisionCloudProperties(cloudProp, new CloudPropProvisioningCallback() {
                                 @Override
@@ -855,15 +873,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
             mAuthCodeText.setEnabled(false);
             mAuthProviderText.setEnabled(false);
 
-            try
-            {
-                OcPlatform.subscribePresence(samsungCIServer, "oic.res&di=" + mEnrolleeDeviceID,
-                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4), this);
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
+            subscribeDevicePresence();
         }
     }
 
@@ -893,7 +903,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
 
     public void RefreshToken() {
         try {
-            OcResource authResource = OcPlatform.constructResourceObject(samsungCIServer, "/.well-known/ocf/account/tokenrefresh",
+            OcResource authResource = OcPlatform.constructResourceObject(CIServer, "/.well-known/ocf/account/tokenrefresh",
                     EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
                     false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
             OcRepresentation rep = new OcRepresentation();
@@ -933,7 +943,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
             Log.d(TAG, "accesstoken not saved");
     }
 
-    OcResource.OnPostListener onSignUpPost = new OcResource.OnPostListener() {
+    OcAccountManager.OnPostListener onSignUpPost = new OcAccountManager.OnPostListener() {
         @Override
         public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
             Log.d(TAG, "onSignUpPost..");
@@ -954,6 +964,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                     saveCloudTokenAtSharedPreferences();
                     SignInDevice();
                 }
+                //TODO : save certificate
             }
             catch (OcException e)
             {
@@ -969,10 +980,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
 
     private void SignUpDevice() {
         try {
-            OcResource authResource = OcPlatform.constructResourceObject(samsungCIServer, "/.well-known/ocf/account",
-                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
-                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
-            OcRepresentation rep = new OcRepresentation();
+            Log.d(TAG, "SignUpDevice..");
 
             runOnUiThread(new Runnable()
             {
@@ -981,10 +989,9 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                 }
             });
 
-            rep.setValue("di", deviceID);
-            rep.setValue("authprovider", mAuthProvider);
-            rep.setValue("authcode", mAuthCode);
-            authResource.post(rep, new HashMap<String, String>(), onSignUpPost);
+            if(m_accountManager != null) {
+                m_accountManager.signUp(mAuthProvider, mAuthCode, onSignUpPost);
+            }
         }
         catch(OcException e)
         {
@@ -994,7 +1001,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
         Log.d(TAG, "No error while executing SignUp");
     }
 
-    OcResource.OnPostListener onSignInPost = new OcResource.OnPostListener() {
+    OcAccountManager.OnPostListener onSignInPost = new OcAccountManager.OnPostListener() {
         @Override
         public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
             Log.d(TAG, "onSignInPost..");
@@ -1022,10 +1029,7 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
 
     private void SignInDevice() {
         try {
-            OcResource authResource = OcPlatform.constructResourceObject(samsungCIServer, "/.well-known/ocf/account/session",
-                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
-                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
-            OcRepresentation rep = new OcRepresentation();
+            Log.d(TAG, "SignInDevice..");
 
             runOnUiThread(new Runnable()
             {
@@ -1033,13 +1037,9 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
                     Toast.makeText(EasysetupActivity.this, "SignInDevice in progress..", Toast.LENGTH_SHORT).show();
                 }
             });
-
-            rep.setValue("di", deviceID);
-            rep.setValue("accesstoken", mAccessToken);
-            rep.setValue("login", true);
-            rep.setValue("uid", mUserID);
-            authResource.post(rep, new HashMap<String, String>(), onSignInPost);
-
+            if(m_accountManager != null) {
+                m_accountManager.signIn(mUserID, mAccessToken, onSignInPost);
+            }
         }
         catch(OcException e)
         {
@@ -1047,6 +1047,32 @@ public class EasysetupActivity extends Activity implements OcPlatform.OnPresence
         }
 
         Log.d(TAG, "No error while executing login");
+    }
+
+    @Override
+    public void onObserveCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation, int i) {
+        Log.d(TAG,"onObserveCompleted");
+    }
+
+    @Override
+    public void onObserveFailed(Throwable throwable) {
+        Log.d(TAG,"onObserveFailed");
+    }
+
+    public void subscribeDevicePresence()
+    {
+        List<String> deviceIDs = new ArrayList<String>();
+        deviceIDs.add(mEnrolleeDeviceID);
+
+        try {
+
+            OcPlatform.subscribeDevicePresence(CIServer, deviceIDs, EnumSet.of(OcConnectivityType.
+                                               CT_ADAPTER_TCP), this);
+        } catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
     }
 
     @Override

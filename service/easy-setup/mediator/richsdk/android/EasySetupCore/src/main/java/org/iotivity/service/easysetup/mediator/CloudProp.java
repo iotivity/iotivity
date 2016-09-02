@@ -30,8 +30,9 @@ import org.iotivity.base.OcRepresentation;
  */
 public class CloudProp {
     private static final String TAG = CloudProp.class.getName();
-    protected OcRepresentation mRep;
-    protected String mCloudID;
+    protected OcRepresentation mRep = null;
+    protected String mCloudID = null;
+    protected int mCredID ;
 
     /**
      * Constructor
@@ -57,19 +58,31 @@ public class CloudProp {
         mCloudID = cloudID;
     }
 
+    public void setCredID(int credID)
+    {
+        mCredID = credID;
+    }
     /**
      * This method returns the authCode used for the first registration to IoTivity cloud
      * @return AuthCode for sign-up to IoTivity cloud
      */
     public String getAuthCode()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_AUTHCODE))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_AUTHCODE);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getAuthCode is failed.");
         }
-        return new String("");
+        return null;
     }
 
     /**
@@ -78,13 +91,21 @@ public class CloudProp {
      */
     public String getAuthProvider()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_AUTHPROVIDER))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getAuthProvider is failed.");
         }
-        return new String("");
+        return null;
     }
 
 	/**
@@ -93,13 +114,21 @@ public class CloudProp {
      */
     public String getCiServer()
     {
-        try {
+        if(mRep == null)
+        {
+            return null;
+        }
+
+        try
+        {
             if (mRep.hasAttribute(ESConstants.OC_RSRVD_ES_CISERVER))
                 return mRep.getValue(ESConstants.OC_RSRVD_ES_CISERVER);
-        } catch (OcException e) {
+        }
+        catch (OcException e)
+        {
             Log.e(TAG, "getCiServer is failed.");
         }
-        return new String("");
+        return null;
     }
 
     /**
@@ -109,6 +138,15 @@ public class CloudProp {
     public String getCloudID()
     {
         return mCloudID;
+    }
+
+    /**
+     * This method returns the Cloud Certificate's Cred ID
+     * @return CI server's Credential ID of Certificate
+     */
+    public int getCredID()
+    {
+        return mCredID;
     }
 
     public OcRepresentation toOCRepresentation()

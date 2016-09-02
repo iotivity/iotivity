@@ -55,9 +55,9 @@ static uint32_t g_numberOfAdapters = 0;
 
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
-static CAAdapterChangeCallback g_adapterChangeCallback = NULL;
+static CAAdapterStateChangedCB g_adapterChangeCallback = NULL;
 
-static CAConnectionChangeCallback g_connChangeCallback = NULL;
+static CAConnectionStateChangedCB g_connChangeCallback = NULL;
 
 static CAErrorHandleCallback g_errorHandleCallback = NULL;
 
@@ -129,11 +129,19 @@ static void CAAdapterChangedCallback(CATransportAdapter_t adapter, CANetworkStat
     // Call the callback.
     if (g_adapterChangeCallback != NULL)
     {
-        g_adapterChangeCallback(adapter, status);
+        if (CA_INTERFACE_UP == status)
+        {
+            g_adapterChangeCallback(adapter, true);
+        }
+        else if (CA_INTERFACE_DOWN == status)
+        {
+            g_adapterChangeCallback(adapter, false);
+        }
     }
     OIC_LOG_V(DEBUG, TAG, "[%d]adapter status is changed to [%d]", adapter, status);
 }
 
+#if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER)
 static void CAConnectionChangedCallback(const CAEndpoint_t *info, bool isConnected)
 {
     // Call the callback.
@@ -143,6 +151,7 @@ static void CAConnectionChangedCallback(const CAEndpoint_t *info, bool isConnect
     }
     OIC_LOG_V(DEBUG, TAG, "[%s] connection status is changed to [%d]", info->addr, isConnected);
 }
+#endif
 
 static void CAAdapterErrorHandleCallback(const CAEndpoint_t *endpoint,
                                          const void *data, uint32_t dataLen,
@@ -200,8 +209,8 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)
     g_networkPacketReceivedCallback = callback;
 }
 
-void CASetNetworkMonitorCallbacks(CAAdapterChangeCallback adapterCB,
-                                  CAConnectionChangeCallback connCB)
+void CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                  CAConnectionStateChangedCB connCB)
 {
     OIC_LOG(DEBUG, TAG, "Set network monitoring callback");
 
@@ -291,7 +300,7 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
 
             OIC_LOG_V(DEBUG,
                       TAG,
-                      "%zu adapter network info size is %" PRIu32 " res:%d",
+                      "%" PRIu32 " adapter network info size is %" PRIu32 " res:%d",
                       index,
                       tempSize[index],
                       res);

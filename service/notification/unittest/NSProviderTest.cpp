@@ -177,7 +177,8 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
 
 TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAccepterProvider)
 {
-    mocks.ExpectCallFunc(NSRequestedSubscribeCallbackEmpty).Do(
+    g_consumer = NULL;
+    mocks.OnCallFunc(NSRequestedSubscribeCallbackEmpty).Do(
             [](NSConsumer * consumer)
             {
                 std::cout << "NSRequestedSubscribeCallback" << std::endl;
@@ -205,6 +206,8 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, std::chrono::milliseconds(1000));
+
+    EXPECT_NE((void*)g_consumer, (void*)NULL);
 }
 
 TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)

@@ -16,6 +16,7 @@ sourcedir=`pwd`
 
 echo `pwd`
 
+# Clean tmp directory.
 rm -rf ./tmp
 
 # Create directory structure for GBS Build
@@ -32,9 +33,10 @@ cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
+cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
-cp -R ./extlibs/sqlite3 $sourcedir/tmp/extlibs
+cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
 cp -R ./resource $sourcedir/tmp
@@ -50,14 +52,29 @@ cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp
 cp ./tools/tizen/*.rpm $sourcedir/tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
 cp ./tools/tizen/.gbs.conf ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+
 cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
 cd $sourcedir/tmp
 
 echo `pwd`
+if [ -d ./extlibs/mbedtls/mbedtls ];then
+    cd ./extlibs/mbedtls/mbedtls
+    git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd ; git apply ../ocf.patch
+    cd -
+    rm -rf ./extlibs/mbedtls/mbedtls/.git*
+
+else
+    echo ""
+    echo "*********************************** Error: ****************************************"
+    echo "* Please download mbedtls using the following command:                            *"
+    echo "*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *"
+    echo "***********************************************************************************"
+    echo ""
+    exit
+fi
 rm -rf ./extlibs/tinycbor/tinycbor/.git*
 
-whoami
 
 # Build IoTivity
 # Initialize Git repository
@@ -69,7 +86,7 @@ if [ ! -d .git ]; then
    git commit -m "Initial commit"
 fi
 
-buildoption="--define 'TARGET_TRANSPORT '$1 --define 'SECURED '$2 --define 'ROUTING '$3 --define 'RELEASE '$4 --define 'LOGGING '$5 --define 'ES_TARGET_ENROLLEE '$6"
+buildoption="--define 'TARGET_TRANSPORT '$1 --define 'SECURED '$2 --define 'ROUTING '$3 --define 'RELEASE '$4 --define 'LOGGING '$5 --define 'ES_TARGET_ENROLLEE '$6 --define 'WITH_TCP '$7 --define 'WITH_CLOUD '$8" 
 echo "Calling core gbs build command"
 gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC $buildoption --include-all --repository ./"
 echo $gbscommand

@@ -176,7 +176,7 @@ namespace OIC
                       *  get list of Consumers accepted.
                       * @return m_acceptedConsumers -list of accepted Consumers
                       */
-                std::list<NSConsumer *> getAcceptedConsumers();
+                std::list<NSConsumer *> &getAcceptedConsumers();
 
             private :
                 ProviderConfig m_config;

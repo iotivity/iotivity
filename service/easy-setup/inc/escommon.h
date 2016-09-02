@@ -55,6 +55,7 @@ extern "C"
 #define OC_RSRVD_ES_COUNTRY                "ctry"
 #define OC_RSRVD_ES_MODELNUMBER            "mnmo"
 #define OC_RSRVD_ES_LOCATION               "loc"
+#define OC_RSRVD_ES_HREF                   "href"
 
 /**
  * Easysetup defined resoruce types and uris.
