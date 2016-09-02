@@ -345,11 +345,6 @@ namespace OIC
         {
             ESResult result = ES_ERROR;
 
-            if (m_cloudResource != nullptr)
-            {
-                throw ESBadRequestException ("Already created");
-            }
-
             result = discoverResource();
 
             if (result == ES_ERROR)
