@@ -475,6 +475,7 @@ OCStackResult OCCloudCertificateIssueRequest(void* ctx,
     snprintf(uri, MAX_URI_QUERY, DEFAULT_QUERY,
              endPoint->addr, endPoint->port,
              OC_RSRVD_PROV_CERT_URI);
+    OIC_LOG_V(DEBUG, TAG, "Certificate Request Query: %s", uri);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, HandleCertificateIssueRequest, NULL);

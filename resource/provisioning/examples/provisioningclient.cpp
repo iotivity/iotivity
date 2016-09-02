@@ -39,7 +39,7 @@
 #include "aclresource.h"
 #include "utlist.h"
 
-#define MAX_URI_LENGTH (64)
+//#define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
 #define ACL_RESRC_ARRAY_SIZE (3)
 #define CREATE (1)

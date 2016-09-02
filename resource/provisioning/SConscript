@@ -44,7 +44,9 @@ ocprovision_env.AppendUnique(CPPPATH = [
 		'../csdk/security/provisioning/include',
 		'../csdk/security/provisioning/include/oxm',
 		'../csdk/security/provisioning/include/internal',
-		'../../extlibs/cjson/'
+		'../csdk/security/provisioning/include/cloud',
+        '../csdk/connectivity/lib/libcoap-4.1.1/',
+        '../../extlibs/cjson/'
 		])
 
 target_os = ocprovision_env.get('TARGET_OS')
@@ -69,6 +71,11 @@ if target_os in ['darwin', 'ios']:
 ######################################################################
 ocprovision_src = [
 		'src/OCProvisioningManager.cpp'
+	]
+
+if ocprovision_env.get('WITH_TCP') == True:
+	ocprovision_src = ocprovision_src + [
+	'src/OCCloudProvisioning.cpp'
 	]
 
 ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
