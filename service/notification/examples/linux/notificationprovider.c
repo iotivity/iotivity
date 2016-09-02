@@ -222,13 +222,13 @@ int main()
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
-                fgets(title, sizeof(title), stdin);
+                gets(title);
 
                 printf("body : ");
-                fgets(body, sizeof(body), stdin);
+                gets(body);
 
                 printf("topic : ");
-                fgets(topic, sizeof(topic), stdin);
+                gets(topic);
 
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
