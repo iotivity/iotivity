@@ -50,13 +50,6 @@ FILE* server_fopen(const char *path, const char *mode)
     return fopen("oic_ns_provider_db.dat", mode);
 }
 
-void onDiscoverNotification(NSProvider * provider)
-{
-    printf("notification resource discovered\n");
-    printf("subscribe result %d\n", NSSubscribe(provider));
-    printf("startSubscribing\n");
-}
-
 void printProviderTopicList(NSProvider *provider)
 {
     printf("printProviderTopicList\n");
@@ -76,7 +69,13 @@ void onProviderChanged(NSProvider * provider, NSProviderState response)
     printf("Provider changed: %d\n", response);
     printf("subscribed provider Id : %s\n", provider->providerId);
 
-    if (response == NS_TOPIC)
+    if (response == NS_DISCOVERED)
+    {
+        printf("notification resource discovered\n");
+        printf("subscribe result %d\n", NSSubscribe(provider));
+        printf("startSubscribing\n");
+
+    } else if (response == NS_TOPIC)
     {
         printf ("Provider Topic Updated\n");
 
