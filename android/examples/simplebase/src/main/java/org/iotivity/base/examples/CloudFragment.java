@@ -34,6 +34,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -73,8 +74,7 @@ import java.util.regex.Pattern;
  */
 public class CloudFragment extends Fragment implements
         View.OnClickListener, CompoundButton.OnCheckedChangeListener,
-        OcAccountManager.OnPostListener, OcAccountManager.OnGetListener,
-        OcAccountManager.OnDeleteListener, OcResource.OnObserveListener,
+        OcResource.OnObserveListener,
         OcResource.OnMQTopicFoundListener, OcResource.OnMQTopicCreatedListener,
         OcResource.OnMQTopicSubscribeListener {
 
@@ -86,20 +86,17 @@ public class CloudFragment extends Fragment implements
                     "\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)" +
                     "\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)" +
                     "\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])" +
-                    "\\:([0-9]{1,5}))");
+                    ":([0-9]{1,5}))");
 
     private Activity mActivity;
     private Context mContext;
 
     private QualityOfService mQos = QualityOfService.LOW;
+    private boolean mSecured = false;
 
     private LinearLayout mAccountLayout;
     private LinearLayout mRDLayout;
     private LinearLayout mMQLayout;
-
-    private Switch mAccountSwitch;
-    private Switch mRDSwitch;
-    private Switch mMQSwitch;
 
     private TextView mAccountText;
     private TextView mRDText;
@@ -108,49 +105,28 @@ public class CloudFragment extends Fragment implements
     private TextView mActionLog;
     private TextView mResultLog;
 
-    private Button mSetIPButton;
-    private Button mSignUpButton;
-    private Button mSignInButton;
-    private Button mSignOutButton;
-    private Button mCreateGroupButton;
-    private Button mInviteButton;
-    private Button mLeaveGroupButton;
-    private Button mRdPubButton;
-    private Button mRdDelButton;
-    private Button mDevicePresenceButton;
-    private Button mMqBrokerButton;
-    private Button mCreateTopicButton;
-    private Button mSubTopicButton;
-    private Button mUnsubTopicButton;
-    private Button mPubToicButton;
-
     private OcAccountManager mAccountManager;
-    private String mAccesstoken;
-    private String mRefreshtoken;
+    private String mAccessToken;
+    private String mRefreshToken;
     private String mUserUuid;
-    private String mAuthCode;
     private String mGroupId;
     private String mGroupMasterId;
-    private String mInviterUuid;
     private String mInviterUserId;
     private String mInviteeUuid;
-    private String mInviteeUserId;
-
-    private int mRequestCode;
     private final int REQUEST_LOGIN = 1;
+
+    private OcResourceHandle localLightResourceHandle = null;
+    private List<OcResourceHandle> mResourceHandleList = new LinkedList<>();
+    private OcPresenceHandle mOcPresenceHandle = null;
+    private Button mDevicePresenceButton;
 
     private OcResource MQbrokerResource = null;
     private OcResource currentTopicResource = null;
     private boolean switchingFlag = true;
-    private int subFlag = -1;
     private int roomNum = 1;
     private String defaultTopicFullName = Common.MQ_DEFAULT_TOPIC_URI;
-    private int cancelSubScribe = 0xffffff;
 
-    private OcResourceHandle localLightResourceHandle = null;
-    private List<OcResourceHandle> mResourceHandleList = new LinkedList<>();
-    private OcPresenceHandle mOcPresenceHandle;
-    //variables related observer
+    // variables related observer
     private int maxSequenceNumber = 0xFFFFFF;
 
     @Override
@@ -186,20 +162,18 @@ public class CloudFragment extends Fragment implements
     }
 
     private void signIn() {
-        mRequestCode = 1;
         try {
             msg("signIn");
-            mAccountManager.signIn(mUserUuid, mAccesstoken, onSignIn);
+            mAccountManager.signIn(mUserUuid, mAccessToken, onSignIn);
         } catch (OcException e) {
             e.printStackTrace();
         }
     }
 
     private void signOut() {
-        mRequestCode = 2;
         try {
             msg("signOut");
-            mAccountManager.signOut(this);
+            mAccountManager.signOut(onSignOut);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -215,20 +189,18 @@ public class CloudFragment extends Fragment implements
     }
 
     private void inviteUser() {
-        if (mGroupId == null){
+        if (mGroupId == null) {
             msg("there is no any group");
-        }
-        else {
+        } else {
             showInviteUser();
         }
     }
 
     private void leaveGroup() {
         try {
-            if (mGroupId == null){
+            if (mGroupId == null) {
                 msg("there is no any group");
-            }
-            else {
+            } else {
                 msg("leaveGroup");
                 mAccountManager.leaveGroup(mGroupId, onLeaveGroup);
             }
@@ -242,68 +214,16 @@ public class CloudFragment extends Fragment implements
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_LOGIN) {
-            mAuthCode = data.getStringExtra("authCode");
-            msg("\tauthCode: " + mAuthCode);
+            String authCode = data.getStringExtra("authCode");
+            msg("\tauthCode: " + authCode);
 
             try {
                 msg("Sign Up");
-                mAccountManager.signUp("github", mAuthCode, onSignUp);
+                mAccountManager.signUp("github", authCode, onSignUp);
             } catch (OcException e) {
                 e.printStackTrace();
             }
         }
-    }
-
-    @Override
-    public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
-        try {
-            if (mRequestCode == 1) {
-                msg("\tSign In Success");
-                int expiresIn = ocRepresentation.getValue("expiresin");
-                msg("\texpiresin: " + expiresIn);
-            } else if (mRequestCode == 2) {
-                msg("\tSign Out Success");
-            } else if (mRequestCode == 3) {
-                msg("\tRefresh AccessToken Success");
-
-                mAccesstoken = ocRepresentation.getValue("accesstoken");
-                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
-                msg("\tuserID: " + mUserUuid);
-                msg("\taccessToken: " + mAccesstoken);
-                msg("\trefreshtoken: " + mRefreshtoken);
-            }
-        } catch (OcException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onPostFailed(Throwable throwable) {
-        msg("onPostFailed");
-        if (throwable instanceof OcException) {
-            OcException ocEx = (OcException) throwable;
-            Log.e(TAG, ocEx.toString());
-        }
-    }
-
-    @Override
-    public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
-
-    }
-
-    @Override
-    public void onGetFailed(Throwable throwable) {
-
-    }
-
-    @Override
-    public void onDeleteCompleted(List<OcHeaderOption> list) {
-
-    }
-
-    @Override
-    public void onDeleteFailed(Throwable throwable) {
-
     }
 
     OcAccountManager.OnPostListener onSignUp = new OcAccountManager.OnPostListener() {
@@ -312,17 +232,16 @@ public class CloudFragment extends Fragment implements
                                                  OcRepresentation ocRepresentation) {
             msg("signUp was successful");
             try {
-                mUserUuid        = ocRepresentation.getValue("uid");
-                mAccesstoken     = ocRepresentation.getValue("accesstoken");
-                mRefreshtoken    = ocRepresentation.getValue("refreshtoken");
+                mUserUuid = ocRepresentation.getValue("uid");
+                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mRefreshToken = ocRepresentation.getValue("refreshtoken");
                 String tokenType = ocRepresentation.getValue("tokentype");
                 msg("\tuserID: " + mUserUuid);
-                msg("\taccessToken: " + mAccesstoken);
-                msg("\trefreshToken: " + mRefreshtoken);
+                msg("\taccessToken: " + mAccessToken);
+                msg("\trefreshToken: " + mRefreshToken);
                 msg("\ttokenType: " + tokenType);
 
-                if (ocRepresentation.hasAttribute("expiresin"))
-                {
+                if (ocRepresentation.hasAttribute("expiresin")) {
                     int expiresIn = ocRepresentation.getValue("expiresin");
                     msg("\texpiresIn: " + expiresIn);
                 }
@@ -352,7 +271,7 @@ public class CloudFragment extends Fragment implements
                 msg("observeInvitation");
                 mAccountManager.observeInvitation(onObserveInvitation);
                 msg("getGroupList");
-                mAccountManager.getGroupList(onGetGrouptList);
+                mAccountManager.getGroupList(onGetGroupList);
             } catch (OcException e) {
                 Log.e(TAG, e.toString());
             }
@@ -370,7 +289,26 @@ public class CloudFragment extends Fragment implements
         }
     };
 
-    OcAccountManager.OnGetListener onGetGrouptList = new OcAccountManager.OnGetListener() {
+    OcAccountManager.OnPostListener onSignOut = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            msg("signOut was successful");
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            msg("Failed to signOut");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnGetListener onGetGroupList = new OcAccountManager.OnGetListener() {
         @Override
         public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
             msg("getGroupList was successful");
@@ -379,8 +317,7 @@ public class CloudFragment extends Fragment implements
                 if (gidlist == null) {
                     msg("\tgroup list is empty");
                     mGroupId = null;
-                }
-                else{
+                } else {
                     msg("\tgroup list");
                     for (String group : gidlist) {
                         msg("\t\t" + group);
@@ -405,78 +342,84 @@ public class CloudFragment extends Fragment implements
         }
     };
 
-    OcAccountManager.OnObserveListener onObserveInvitation = new OcAccountManager.OnObserveListener() {
-        @Override
-        public void onObserveCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation, int i) {
-            msg("observeInvitation was successful");
-            try {
-                if (this.REGISTER == i) {
-                    msg("REGISTER was successful");
+    OcAccountManager.OnObserveListener onObserveInvitation =
+            new OcAccountManager.OnObserveListener() {
+                @Override
+                public void onObserveCompleted(List<OcHeaderOption> list,
+                                               OcRepresentation ocRepresentation, int i) {
+                    msg("observeInvitation was successful");
+                    try {
+                        if (REGISTER == i) {
+                            msg("REGISTER was successful");
 
-                    OcRepresentation[] sendInvitationList = ocRepresentation.getValue("invite");
-                    if (sendInvitationList != null) {
-                        msg("\tList of invitation that I sent");
-                        for (OcRepresentation invitation : sendInvitationList) {
-                            String gid = invitation.getValue("gid");
-                            String mid = invitation.getValue("mid");
-                            msg("\t\t-GroupID : " + gid);
-                            msg("\t\t InviteeID : " + mid);
-                        }
-                    }
+                            OcRepresentation[] sendInvitationList =
+                                    ocRepresentation.getValue("invite");
+                            if (sendInvitationList != null) {
+                                msg("\tList of invitation that I sent");
+                                for (OcRepresentation invitation : sendInvitationList) {
+                                    String gid = invitation.getValue("gid");
+                                    String mid = invitation.getValue("mid");
+                                    msg("\t\t-GroupID : " + gid);
+                                    msg("\t\t InviteeID : " + mid);
+                                }
+                            }
 
-                    OcRepresentation[] receivInvitationList = ocRepresentation.getValue("invited");
-                    if (receivInvitationList != null) {
-                        msg("\tList of invitation that I received");
-                        for (OcRepresentation invitation : receivInvitationList) {
-                            String gid = invitation.getValue("gid");
-                            String mid = invitation.getValue("mid");
-                            msg("\t\t-GroupID : " + gid);
-                            msg("\t\t InviterID : " + mid);
-                        }
-                    }
-                } else if (this.DEREGISTER == i) {
-                    msg("DEREGISTER was successful");
-                } else {
-                    OcRepresentation[] sendInvitationList = ocRepresentation.getValue("invite");
-                    if (sendInvitationList != null) {
-                        msg("\tList of invitation that I sent");
-                        for (OcRepresentation invitation : sendInvitationList) {
-                            String gid = invitation.getValue("gid");
-                            String mid = invitation.getValue("mid");
-                            msg("\t\t-GroupID : " + gid);
-                            msg("\t\t InviteeID : " + mid);
-                        }
-                    }
+                            OcRepresentation[] receiveInvitationList =
+                                    ocRepresentation.getValue("invited");
+                            if (receiveInvitationList != null) {
+                                msg("\tList of invitation that I received");
+                                for (OcRepresentation invitation : receiveInvitationList) {
+                                    String gid = invitation.getValue("gid");
+                                    String mid = invitation.getValue("mid");
+                                    msg("\t\t-GroupID : " + gid);
+                                    msg("\t\t InviterID : " + mid);
+                                }
+                            }
+                        } else if (DEREGISTER == i) {
+                            msg("DEREGISTER was successful");
+                        } else {
+                            OcRepresentation[] sendInvitationList =
+                                    ocRepresentation.getValue("invite");
+                            if (sendInvitationList != null) {
+                                msg("\tList of invitation that I sent");
+                                for (OcRepresentation invitation : sendInvitationList) {
+                                    String gid = invitation.getValue("gid");
+                                    String mid = invitation.getValue("mid");
+                                    msg("\t\t-GroupID : " + gid);
+                                    msg("\t\t InviteeID : " + mid);
+                                }
+                            }
 
-                    OcRepresentation[] receivInvitationList = ocRepresentation.getValue("invited");
-                    if (receivInvitationList != null) {
-                        msg("\tList of invitation that I received");
-                        for (OcRepresentation invitation : receivInvitationList) {
-                            mGroupId = invitation.getValue("gid");
-                            mGroupMasterId = invitation.getValue("mid");
-                            msg("\t\t-GroupID : " + mGroupId);
-                            msg("\t\t InviterID : " + mGroupMasterId);
+                            OcRepresentation[] receivInvitationList =
+                                    ocRepresentation.getValue("invited");
+                            if (receivInvitationList != null) {
+                                msg("\tList of invitation that I received");
+                                for (OcRepresentation invitation : receivInvitationList) {
+                                    mGroupId = invitation.getValue("gid");
+                                    mGroupMasterId = invitation.getValue("mid");
+                                    msg("\t\t-GroupID : " + mGroupId);
+                                    msg("\t\t InviterID : " + mGroupMasterId);
+                                }
+                                msg("searchUser");
+                                mAccountManager.searchUser(mGroupMasterId, onSearchUserForInvitee);
+                            }
                         }
-                        msg("searchUser");
-                        mAccountManager.searchUser(mGroupMasterId, onSearchUserForInvitee);
+                    } catch (OcException e) {
+                        e.printStackTrace();
                     }
                 }
-            } catch (OcException e) {
-                e.printStackTrace();
-            }
-        }
 
-        @Override
-        public void onObserveFailed(Throwable throwable) {
-            msg("Failed to observeInvitation");
-            if (throwable instanceof OcException) {
-                OcException ocEx = (OcException) throwable;
-                Log.e(TAG, ocEx.toString());
-                ErrorCode errCode = ocEx.getErrorCode();
-                msg("Error code: " + errCode);
-            }
-        }
-    };
+                @Override
+                public void onObserveFailed(Throwable throwable) {
+                    msg("Failed to observeInvitation");
+                    if (throwable instanceof OcException) {
+                        OcException ocEx = (OcException) throwable;
+                        Log.e(TAG, ocEx.toString());
+                        ErrorCode errCode = ocEx.getErrorCode();
+                        msg("Error code: " + errCode);
+                    }
+                }
+            };
 
     OcAccountManager.OnGetListener onSearchUserForInvitee = new OcAccountManager.OnGetListener() {
         @Override
@@ -486,7 +429,9 @@ public class CloudFragment extends Fragment implements
             try {
                 OcRepresentation[] userList = ocRepresentation.getValue("ulist");
                 for (OcRepresentation user : userList) {
-                    mInviterUuid = user.getValue("uid");
+                    String inviterUuid = user.getValue("uid");
+                    Log.d(TAG, "inviterUuid : " + inviterUuid);
+
                     OcRepresentation userInfo = user.getValue("uinfo");
                     mInviterUserId = userInfo.getValue("userid");
                 }
@@ -544,7 +489,7 @@ public class CloudFragment extends Fragment implements
         public void onDeleteCompleted(List<OcHeaderOption> list) {
             msg("deleteInvitation was successful");
             try {
-                mAccountManager.getGroupList(onGetGrouptList);
+                mAccountManager.getGroupList(onGetGroupList);
             } catch (OcException e) {
                 e.printStackTrace();
             }
@@ -566,7 +511,8 @@ public class CloudFragment extends Fragment implements
                 for (OcRepresentation user : userList) {
                     mInviteeUuid = user.getValue("uid");
                     OcRepresentation userInfo = user.getValue("uinfo");
-                    mInviteeUserId = userInfo.getValue("userid");
+                    String inviteeUserId = userInfo.getValue("userid");
+                    Log.d(TAG, "inviteeUserId : " + inviteeUserId);
                 }
                 msg("sendInvitation");
                 mAccountManager.sendInvitation(mGroupId, mInviteeUuid, onSendInvitation);
@@ -617,12 +563,13 @@ public class CloudFragment extends Fragment implements
 
     OcAccountManager.OnObserveListener onObserveGroup = new OcAccountManager.OnObserveListener() {
         @Override
-        public void onObserveCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation, int i) {
+        public void onObserveCompleted(List<OcHeaderOption> list,
+                                       OcRepresentation ocRepresentation, int i) {
             msg("observeGroup was successful");
             try {
-                if (this.REGISTER == i) {
+                if (REGISTER == i) {
                     msg("REGISTER was successful");
-                } else if (this.DEREGISTER == i) {
+                } else if (DEREGISTER == i) {
                     msg("DEREGISTER was successful");
                 } else {
                     String gid = ocRepresentation.getValue("gid");
@@ -632,10 +579,9 @@ public class CloudFragment extends Fragment implements
                     msg("\tGroupMasterID: " + gmid);
 
                     String[] midlist = ocRepresentation.getValue("midlist");
-                    if (midlist == null){
+                    if (midlist == null) {
                         msg("\tMember List is empty");
-                    }
-                    else {
+                    } else {
                         msg("\tMember List(" + midlist.length + ")");
                         for (String mid : midlist) {
                             msg("\t : " + mid);
@@ -643,10 +589,9 @@ public class CloudFragment extends Fragment implements
                     }
 
                     String[] dilist = ocRepresentation.getValue("dilist");
-                    if (dilist == null){
+                    if (dilist == null) {
                         msg("\tDevice List is empty");
-                    }
-                    else {
+                    } else {
                         msg("\tDevice List(" + dilist.length + ")");
                         for (String di : dilist) {
                             msg("\t : " + di);
@@ -695,7 +640,7 @@ public class CloudFragment extends Fragment implements
             msg("leaveGroup was successful");
             try {
                 msg("getGroupList");
-                mAccountManager.getGroupList(onGetGrouptList);
+                mAccountManager.getGroupList(onGetGroupList);
             } catch (OcException e) {
                 e.printStackTrace();
             }
@@ -706,6 +651,7 @@ public class CloudFragment extends Fragment implements
             msg("Failed to leaveGroup");
         }
     };
+
     // ******************************************************************************
     // End of the Account Manager specific code
     // ******************************************************************************
@@ -795,9 +741,16 @@ public class CloudFragment extends Fragment implements
 
     private void subscribeDevicePresence() {
         try {
-            List<String> di = new ArrayList<>();
-            mOcPresenceHandle = OcPlatform.subscribeDevicePresence(
-                    Common.HOST, di, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP), this);
+            if (null == mOcPresenceHandle) {
+                List<String> di = new ArrayList<>();
+                mOcPresenceHandle = OcPlatform.subscribeDevicePresence(
+                        Common.HOST, di, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP), this);
+                mDevicePresenceButton.setText(R.string.unsub_presence);
+            } else {
+                OcPlatform.unsubscribePresence(mOcPresenceHandle);
+                mOcPresenceHandle = null;
+                mDevicePresenceButton.setText(R.string.sub_presence);
+            }
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -823,6 +776,8 @@ public class CloudFragment extends Fragment implements
             } catch (OcException e) {
                 e.printStackTrace();
             }
+        } else {
+            msg("Successful unsubscribePresence");
         }
     }
 
@@ -836,13 +791,13 @@ public class CloudFragment extends Fragment implements
     // ******************************************************************************
 
     void getMQBroker() {
-        List<String> resourceTypeList = new ArrayList<String>();
-        List<String> resourceInterfaceList = new ArrayList<String>();
+        List<String> resourceTypeList = new ArrayList<>();
+        List<String> resourceInterfaceList = new ArrayList<>();
         resourceInterfaceList.add(Common.RESOURCE_INTERFACE);
         resourceTypeList.add("ocf.wk.ps");
         try {
             MQbrokerResource = OcPlatform.constructResourceObject(
-                    "coap+tcp://" + Common.TCP_ADDRESS + ":" + Common.TCP_PORT,
+                    Common.HOST,
                     Common.MQ_BROKER_URI,
                     EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
                     false,
@@ -875,7 +830,6 @@ public class CloudFragment extends Fragment implements
         synchronized (this) {
             String resourceUri = ocResource.getUri();
 
-            Log.d(TAG, "onTopicDiscoveried : " + resourceUri + " found");
             msg("onTopicDiscoveried : " + resourceUri + " found");
         }
     }
@@ -899,7 +853,7 @@ public class CloudFragment extends Fragment implements
     void createMQTopic() {
         try {
             if (null != MQbrokerResource) {
-                Map<String, String> queryParameters = new HashMap<String, String>();
+                Map<String, String> queryParameters = new HashMap<>();
                 queryParameters.put("rt", "light");
                 MQbrokerResource.createMQTopic(
                         new OcRepresentation(),
@@ -917,11 +871,9 @@ public class CloudFragment extends Fragment implements
     synchronized public void onTopicResourceCreated(OcResource ocResource) {
         synchronized (this) {
             Log.d(TAG, "onTopicResourceCreated");
-            String resourceUri = ocResource.getUri();
             currentTopicResource = ocResource;
-            Log.d(TAG, "onTopicResourceCreated : " + resourceUri + " found");
 
-            msg("onTopicCreated : " + currentTopicResource.getUri());
+            msg("onTopicResourceCreated : " + currentTopicResource.getUri());
         }
     }
 
@@ -945,7 +897,7 @@ public class CloudFragment extends Fragment implements
     }
 
     void subscribeMQTopic() {
-        Map<String, String> queryParameters = new HashMap<String, String>();
+        Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("rt", "light");
 
         try {
@@ -970,6 +922,7 @@ public class CloudFragment extends Fragment implements
             Log.d(TAG, "onSubScribeCompleted sequenceNumber : " + sequenceNumber);
 
             try {
+                int subFlag;
                 OcRepresentation val = ocRepresentation.getValue("message");
 
                 if (sequenceNumber == 0) {
@@ -1004,7 +957,7 @@ public class CloudFragment extends Fragment implements
             String resourceUri = ocRepresentation.getUri();
             Log.d(TAG, "onUnsubScribeCompleted sequenceNumber : " + sequenceNumber);
 
-            if (sequenceNumber == cancelSubScribe + 1) {
+            if (sequenceNumber == maxSequenceNumber + 1) {
                 Log.d(TAG, "onUnsubScribeCompleted : " + resourceUri);
                 msg("onUnsubScribeCompleted : " + resourceUri);
             }
@@ -1115,7 +1068,6 @@ public class CloudFragment extends Fragment implements
                 }
             };
 
-
     // ******************************************************************************
     // End of the Message Queue specific code
     // ******************************************************************************
@@ -1123,16 +1075,22 @@ public class CloudFragment extends Fragment implements
     private void showTCPInput() {
 
         LayoutInflater layoutInflater = LayoutInflater.from(mContext);
-        View inputView = layoutInflater.inflate(R.layout.tcp_input, null);
+        View inputView = layoutInflater.inflate(R.layout.input, null);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mActivity);
         alertDialogBuilder.setView(inputView);
 
         final EditText editText = (EditText) inputView.getRootView().findViewById(R.id.inputText);
+        final CheckBox isSecured = (CheckBox) inputView.getRootView().findViewById(R.id.secured);
+
         StringBuilder sb = new StringBuilder();
         sb.append(Common.TCP_ADDRESS);
         sb.append(Common.PORT_SEPARATOR);
         sb.append(Common.TCP_PORT);
         editText.setText(sb.toString());
+
+        isSecured.setVisibility(View.VISIBLE);
+        isSecured.setChecked(mSecured);
+
         alertDialogBuilder
                 .setCancelable(true)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -1144,9 +1102,14 @@ public class CloudFragment extends Fragment implements
                                 final String host[] = hosts.split(Common.PORT_SEPARATOR);
                                 Common.TCP_ADDRESS = host[0];
                                 Common.TCP_PORT = host[1];
+                                mSecured = isSecured.isChecked();
 
                                 StringBuilder sb = new StringBuilder();
-                                sb.append(Common.COAP_TCP);
+                                if (mSecured) {
+                                    sb.append(Common.COAPS_TCP);
+                                } else {
+                                    sb.append(Common.COAP_TCP);
+                                }
                                 sb.append(Common.TCP_ADDRESS);
                                 sb.append(Common.PORT_SEPARATOR);
                                 sb.append(Common.TCP_PORT);
@@ -1171,7 +1134,7 @@ public class CloudFragment extends Fragment implements
     private void showInviteUser() {
 
         LayoutInflater layoutInflater = LayoutInflater.from(mContext);
-        View inputView = layoutInflater.inflate(R.layout.tcp_input, null);
+        View inputView = layoutInflater.inflate(R.layout.input, null);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mActivity);
         alertDialogBuilder.setView(inputView);
 
@@ -1187,7 +1150,7 @@ public class CloudFragment extends Fragment implements
                             final String userID = editText.getText().toString();
 
                             try {
-                                Map<String, String> option = new HashMap<String, String>();
+                                Map<String, String> option = new HashMap<>();
                                 option.put("userid", userID);
 
                                 msg("searchUser (User ID: " + userID + ")");
@@ -1236,7 +1199,7 @@ public class CloudFragment extends Fragment implements
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
                         try {
-                            msg("gid: " +mGroupId);
+                            msg("gid: " + mGroupId);
                             msg("deleteInvitation");
                             mAccountManager.deleteInvitation(mGroupId, onDeleteInvitation);
                         } catch (OcException e) {
@@ -1288,9 +1251,9 @@ public class CloudFragment extends Fragment implements
         mActionLog.setText("[Action Log]" + EOL);
 
         int viewID = view.getId();
-        if (mAccountManager == null &&
-                (viewID == R.id.signin_button || viewID == R.id.signout_button || viewID == R.id.creategroup_button
-                || viewID == R.id.invite_button || viewID == R.id.leavegroup_button)){
+        if (mAccountManager == null && (viewID == R.id.signin_button
+                || viewID == R.id.signout_button || viewID == R.id.creategroup_button
+                || viewID == R.id.invite_button || viewID == R.id.leavegroup_button)) {
             mActionLog.append("Do 'SignUp' first" + EOL);
             return;
         }
@@ -1361,6 +1324,10 @@ public class CloudFragment extends Fragment implements
                 mActionLog.append("Publish MQ Topic" + EOL);
                 publishMQTopic();
                 break;
+            case R.id.mqreq_button:
+                mActionLog.append("Request MQ Publish" + EOL);
+                requestMQPublish();
+                break;
         }
     }
 
@@ -1373,12 +1340,12 @@ public class CloudFragment extends Fragment implements
         mRDLayout = (LinearLayout) rootView.findViewById(R.id.rd_layout);
         mMQLayout = (LinearLayout) rootView.findViewById(R.id.mq_layout);
 
-        mAccountSwitch = (Switch) rootView.findViewById(R.id.account_switch);
-        mRDSwitch = (Switch) rootView.findViewById(R.id.rd_switch);
-        mMQSwitch = (Switch) rootView.findViewById(R.id.mq_switch);
-        mAccountSwitch.setOnCheckedChangeListener(this);
-        mRDSwitch.setOnCheckedChangeListener(this);
-        mMQSwitch.setOnCheckedChangeListener(this);
+        Switch accountSwitch = (Switch) rootView.findViewById(R.id.account_switch);
+        Switch RDSwitch = (Switch) rootView.findViewById(R.id.rd_switch);
+        Switch MQSwitch = (Switch) rootView.findViewById(R.id.mq_switch);
+        accountSwitch.setOnCheckedChangeListener(this);
+        RDSwitch.setOnCheckedChangeListener(this);
+        MQSwitch.setOnCheckedChangeListener(this);
 
         mAccountText = (TextView) rootView.findViewById(R.id.account_view);
         mRDText = (TextView) rootView.findViewById(R.id.rd_view);
@@ -1387,38 +1354,38 @@ public class CloudFragment extends Fragment implements
         mActionLog = (TextView) rootView.findViewById(R.id.action_log_view);
         mResultLog = (TextView) rootView.findViewById(R.id.result_log_view);
 
-        mSetIPButton = (Button) rootView.findViewById(R.id.setip_button);
-        mSignUpButton = (Button) rootView.findViewById(R.id.signup_button);
-        mSignInButton = (Button) rootView.findViewById(R.id.signin_button);
-        mSignOutButton = (Button) rootView.findViewById(R.id.signout_button);
-        mCreateGroupButton = (Button) rootView.findViewById(R.id.creategroup_button);
-        mInviteButton = (Button) rootView.findViewById(R.id.invite_button);
-        mLeaveGroupButton = (Button) rootView.findViewById(R.id.leavegroup_button);
-        mSetIPButton.setOnClickListener(this);
-        mSignUpButton.setOnClickListener(this);
-        mSignInButton.setOnClickListener(this);
-        mSignOutButton.setOnClickListener(this);
-        mCreateGroupButton.setOnClickListener(this);
-        mInviteButton.setOnClickListener(this);
-        mLeaveGroupButton.setOnClickListener(this);
+        Button setIPButton = (Button) rootView.findViewById(R.id.setip_button);
+        Button signUpButton = (Button) rootView.findViewById(R.id.signup_button);
+        Button signInButton = (Button) rootView.findViewById(R.id.signin_button);
+        Button signOutButton = (Button) rootView.findViewById(R.id.signout_button);
+        Button createGroupButton = (Button) rootView.findViewById(R.id.creategroup_button);
+        Button inviteButton = (Button) rootView.findViewById(R.id.invite_button);
+        Button leaveGroupButton = (Button) rootView.findViewById(R.id.leavegroup_button);
+        setIPButton.setOnClickListener(this);
+        signUpButton.setOnClickListener(this);
+        signInButton.setOnClickListener(this);
+        signOutButton.setOnClickListener(this);
+        createGroupButton.setOnClickListener(this);
+        inviteButton.setOnClickListener(this);
+        leaveGroupButton.setOnClickListener(this);
 
-        mRdPubButton = (Button) rootView.findViewById(R.id.rdpub_button);
-        mRdDelButton = (Button) rootView.findViewById(R.id.rddel_button);
+        Button rdPubButton = (Button) rootView.findViewById(R.id.rdpub_button);
+        Button rdDelButton = (Button) rootView.findViewById(R.id.rddel_button);
         mDevicePresenceButton = (Button) rootView.findViewById(R.id.rddp_button);
-        mRdPubButton.setOnClickListener(this);
-        mRdDelButton.setOnClickListener(this);
+        rdPubButton.setOnClickListener(this);
+        rdDelButton.setOnClickListener(this);
         mDevicePresenceButton.setOnClickListener(this);
 
-        mMqBrokerButton = (Button) rootView.findViewById(R.id.mqget_button);
-        mCreateTopicButton = (Button) rootView.findViewById(R.id.mqcreate_button);
-        mSubTopicButton = (Button) rootView.findViewById(R.id.mqsub_button);
-        mUnsubTopicButton = (Button) rootView.findViewById(R.id.mqunsub_button);
-        mPubToicButton = (Button) rootView.findViewById(R.id.mqpub_button);
-        mMqBrokerButton.setOnClickListener(this);
-        mCreateTopicButton.setOnClickListener(this);
-        mSubTopicButton.setOnClickListener(this);
-        mUnsubTopicButton.setOnClickListener(this);
-        mPubToicButton.setOnClickListener(this);
+        Button mqBrokerButton = (Button) rootView.findViewById(R.id.mqget_button);
+        Button createTopicButton = (Button) rootView.findViewById(R.id.mqcreate_button);
+        Button subTopicButton = (Button) rootView.findViewById(R.id.mqsub_button);
+        Button unsubTopicButton = (Button) rootView.findViewById(R.id.mqunsub_button);
+        Button pubToicButton = (Button) rootView.findViewById(R.id.mqpub_button);
+        mqBrokerButton.setOnClickListener(this);
+        createTopicButton.setOnClickListener(this);
+        subTopicButton.setOnClickListener(this);
+        unsubTopicButton.setOnClickListener(this);
+        pubToicButton.setOnClickListener(this);
 
         return rootView;
     }
@@ -1434,4 +1401,3 @@ public class CloudFragment extends Fragment implements
     }
 
 }
-

@@ -7,7 +7,7 @@
 
     <TextView
         android:id="@+id/inputView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Input Server IP and Port"
         android:textAppearance="?android:attr/textAppearanceMedium" />
@@ -17,5 +17,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/activity_vertical_margin" />
+
+    <CheckBox
+        android:id="@+id/secured"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SECURED"
+        android:visibility="gone" />
 
 </LinearLayout>
