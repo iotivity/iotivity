@@ -129,12 +129,16 @@ NSResult NSSendNotification(NSMessage *msg)
                 }
             }
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
             if(subData->remote_messageObId != 0)
             {
-                if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                if(msg->topic)
                 {
-                    obArray[obCount++] = subData->remote_messageObId;
+                    NS_LOG_V(DEBUG, "this is topic message via remote server: %s", msg->topic);
+                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                    {
+                        obArray[obCount++] = subData->remote_messageObId;
+                    }
                 }
                 else
                 {
@@ -213,7 +217,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
                 obArray[obCount++] = subData->syncObId;
             }
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
             if(subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;

@@ -125,8 +125,9 @@ NSResult NSStopProvider()
     return NS_OK;
 }
 
-NSResult NSProviderEnableRemoteService(char * serverAddress)
+NSResult NSProviderEnableRemoteService(char *serverAddress)
 {
+#if(defined WITH_CLOUD && defined RD_CLIENT)
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
@@ -136,20 +137,21 @@ NSResult NSProviderEnableRemoteService(char * serverAddress)
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-    NS_LOG(DEBUG, "Check the remote server login");
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
-#ifdef RD_CLIENT
     NS_LOG(DEBUG, "Request to publish resource");
     NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
-#endif
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - OUT");
     return NS_OK;
+#endif
+    NS_LOG_V(DEBUG, "Not logged in remote server: %s", serverAddress);
+    return NS_FAIL;
 }
 
 NSResult NSProviderDisableRemoteService(char *serverAddress)
 {
+#if(defined WITH_CLOUD && defined RD_CLIENT)
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
@@ -159,14 +161,16 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
         return NS_FAIL;
     }
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
-#ifdef RD_CLIENT
+
     NS_LOG(DEBUG, "Delete remote server info");
     NSDeleteRemoteServerAddress(serverAddress);
-#endif
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
     return NS_OK;
+#endif
+    NS_LOG_V(DEBUG, "Not logged in remote server : %s", serverAddress);
+    return NS_FAIL;
 }
 
 NSResult NSSendMessage(NSMessage * msg)

@@ -26,7 +26,7 @@ NSMessageResource NotificationMessageResource;
 NSSyncResource NotificationSyncResource;
 NSTopicResource NotificationTopicResource;
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
 #define DEFAULT_CONTEXT_VALUE 0x99
 
 OCStackApplicationResult NSHandlePublishCb(void *ctx, OCDoHandle handle,
