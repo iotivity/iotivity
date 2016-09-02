@@ -573,10 +573,7 @@ int InitPresence()
     {
         if (result == OC_STACK_OK)
         {
-            std::ostringstream multicastPresenceQuery;
-            multicastPresenceQuery.str("");
-            multicastPresenceQuery << "coap://" << OC_MULTICAST_PREFIX << OC_RSRVD_PRESENCE_URI;
-            result = InvokeOCDoResource(multicastPresenceQuery, &serverAddr, OC_REST_PRESENCE, OC_LOW_QOS,
+            result = InvokeOCDoResource(query, NULL, OC_REST_PRESENCE, OC_LOW_QOS,
                     presenceCB, NULL, 0);
         }
     }
