@@ -600,8 +600,8 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
 
     if(!conTopicList || !cId || !topicName)
     {
-        return NS_ERROR;
         pthread_mutex_unlock(&NSCacheMutex);
+        return NS_ERROR;
     }
 
     NSCacheElement * prev = conTopicList->head;
