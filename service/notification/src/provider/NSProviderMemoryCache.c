@@ -490,8 +490,8 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
     while (iter)
     {
         NSCacheTopicData * curr = (NSCacheTopicData *) iter->data;
-
         newTopic = (NSTopicLL *) OICMalloc(sizeof(NSTopicLL));
+
         newTopic->state = curr->state;
         newTopic->next = NULL;
         newTopic->topicName = OICStrdup(curr->topicName);
@@ -536,11 +536,11 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
     {
         NSCacheTopicSubData * curr = (NSCacheTopicSubData *)iter->data;
 
-        NS_LOG_V(DEBUG, "curr->id = %s", curr->id);
-        NS_LOG_V(DEBUG, "curr->topicName = %s", curr->topicName);
-
         if(curr && strcmp(curr->id, consumerId) == 0)
         {
+            NS_LOG_V(DEBUG, "curr->id = %s", curr->id);
+            NS_LOG_V(DEBUG, "curr->topicName = %s", curr->topicName);
+
             NSTopicLL * topicIter = topics;
             while(topicIter)
             {
