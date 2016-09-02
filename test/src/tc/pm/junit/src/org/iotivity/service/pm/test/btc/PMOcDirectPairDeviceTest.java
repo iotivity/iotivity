@@ -89,7 +89,7 @@ public class PMOcDirectPairDeviceTest extends InstrumentationTestCase {
   public void testFindDirectPairingDevices_SRC_RV_P() {
     assertTrue(PMConstants.mErrorMessage,
         mOCPlatformHelper.findDirectPairingDevices(
-            PMConstants.DISCOVERY_TIMEOUT_10,
+            PMConstants.DISCOVERY_TIMEOUT_05,
             OCPlatformHelper.finddirectPairing));
   }
 

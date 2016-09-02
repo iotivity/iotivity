@@ -61,7 +61,6 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
     // Variable for Creating Access Control List (ACL)
     static List<String> mResources = new ArrayList<String>();
     static List<String> mPeriods = new ArrayList<String>();
-    ;
     static List<String> mRecurrences = new ArrayList<String>();
 
     protected void setUp() throws Exception {
@@ -129,7 +128,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testDoOwnershipTransfer_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -159,7 +158,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
     public void testDoOwnershipTransferCB_NV_N() {
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -198,7 +197,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionPairwiseDevicesKeySize_SRC_LBV_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -207,7 +206,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -249,7 +248,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionPairwiseDevicesKeySize_UBV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -258,7 +257,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -334,7 +333,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionPairwiseDevicesAcl1_NV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -343,7 +342,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -386,7 +385,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionPairwiseDevicesAcl2_NV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -395,7 +394,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -439,7 +438,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionPairwiseDevicesCB_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -448,7 +447,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -493,7 +492,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testDoProvisionDirectPairing_SRC_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -502,7 +501,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -551,7 +550,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testDoProvisionDirectPairingOicSecPdAcl_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -560,7 +559,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -617,7 +616,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testDoProvisionDirectPairingOcPrmType_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -626,7 +625,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -683,7 +682,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testDoProvisionDirectPairingPin_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -692,7 +691,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -748,7 +747,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testDoProvisionDirectPairingCb_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -757,7 +756,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -814,7 +813,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionCredentialsKeySize_SRC_LBV_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -823,7 +822,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -863,7 +862,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionCredentialsKeySize_UBV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -872,7 +871,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -940,7 +939,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testProvisionCredentialsCB_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -949,7 +948,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -988,7 +987,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testProvisionACL_SRC_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -997,7 +996,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1033,7 +1032,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
     public void testProvisionACLAcl_NV_N() {
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1042,7 +1041,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1078,7 +1077,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testProvisionACLCB_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1087,7 +1086,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1131,7 +1130,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testUnlinkDevices_SRC_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1140,7 +1139,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1190,7 +1189,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testUnlinkDevicesDevice2_ETC_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1199,7 +1198,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1252,7 +1251,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testUnlinkDevicesCB_NV_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1261,7 +1260,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1313,7 +1312,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testRemoveDevice_SRC_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1322,7 +1321,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1338,7 +1337,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 ownedDevice02, aclArrayList.get(1), mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.removeDevice(ownedDevice01,
-                PMConstants.DISCOVERY_TIMEOUT_10, PMHelper.removeDeviceListener));
+                PMConstants.DISCOVERY_TIMEOUT_05, PMHelper.removeDeviceListener));
     }
 
     /**
@@ -1372,7 +1371,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testRemoveDevice_LBV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1381,7 +1380,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1431,7 +1430,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      */
     public void testRemoveDevice_LOBV_ETC_N() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1440,7 +1439,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1495,7 +1494,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
     public void testRemoveDeviceCB_NV_N() {
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1504,7 +1503,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1520,7 +1519,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 ownedDevice02, aclArrayList.get(1), mPMHelper));
 
         assertFalse(PMConstants.mErrorMessage, mPMHelper.removeDevice(
-                ownedDevice01, PMConstants.DISCOVERY_TIMEOUT_10, null));
+                ownedDevice01, PMConstants.DISCOVERY_TIMEOUT_05, null));
 
         assertTrue(PMConstants.WRONG_ERROR_CODE,
                 PMConstants.mErrorMessage.contains(PMConstants.ERROR_INVALID_CALLBACK));
@@ -1555,7 +1554,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testGetLinkedDevices_SRC_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
                 OxmType.OIC_JUST_WORKS, PMHelper.pinCallbackListener));
@@ -1564,7 +1563,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
                 mPMHelper.doOwnershipTransfer(mPMHelper));
 
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1600,7 +1599,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testGetIpAddr_SRC_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1625,7 +1624,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testGetDeviceID_SRC_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1650,7 +1649,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testGetDeviceStatusOn_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1722,7 +1721,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testGetOwnedStatusUnowned_SRC_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource unOwnedDevice01 = PMHelper.mUnownedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);
@@ -1748,7 +1747,7 @@ public class PMOcSecureResourceTest extends InstrumentationTestCase implements
      **/
     public void testGetOwnedStatusOwned_SRC_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
 
         OcSecureResource ownedDevice01 = PMHelper.mOwnedDeviceList
                 .get(PMConstants.DEVICE_INDEX_ZERO);

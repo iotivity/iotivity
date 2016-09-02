@@ -27,7 +27,7 @@ public class PMConstants {
     public static final int BUFFER_SIZE = 1024;
 
     public static final int DELAY_SHORT = 1000;                                  // millisecond
-    public static final int DISCOVERY_TIMEOUT_10 = 10;
+    public static final int DISCOVERY_TIMEOUT_05 = 5;
     public static final int DISCOVERY_TIMEOUT_ZERO = 0;
     public static final int DISCOVERY_TIMEOUT_ONE = 1;
     public static final int DISCOVERY_TIMEOUT_TWO = 2;

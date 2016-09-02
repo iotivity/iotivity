@@ -73,33 +73,33 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Discover Unowned Devices
      * @target List<OcSecureResource> discoverUnwnedDevices(int timeout)
      * @test_data none
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call discoverUnownedDevices() API
      * @post_condition none
      * @expected Should not throw any exception
-     * @see none
-     * @since 2015-11-16
      */
     public void testDiscoverUnownedDevice_SRC_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Discover Unowned Devices with Lower Boundary value of time
      * @target List<OcSecureResource> discoverUnwnedDevices(int timeout)
      * @test_data timeout = 1
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call discoverUnownedDevices() API
      * @post_condition none
      * @expected Should not throw any exception
-     * @see none
-     * @since 2015-11-16
      */
     public void testDiscoverUnownedDevice_LBV_P() {
         assertTrue(PMConstants.mErrorMessage,
@@ -107,51 +107,53 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Discover Unowned Devices with Lower Outer Boundary value of time
      * @target List<OcSecureResource> discoverUnwnedDevices(int timeout)
      * @test_data timeout = 0
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call discoverUnownedDevices() API with negative time
      * @post_condition none
      * @expected Should throw ErrorCode.INVALID_PARAM
-     * @see none
-     * @since 2015-11-16
      */
     public void testDiscoverUnownedDevice_LOBV_ETC_N() {
         assertFalse(PMConstants.mErrorMessage,
                 mPMHelper.discoverUnownedDevices(PMConstants.DISCOVERY_TIMEOUT_ZERO));
+        assertTrue(PMConstants.WRONG_ERROR_CODE,PMConstants.mErrorMessage.equals(PMConstants.ERROR_INVALID_PARAM));
+        
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Discover Owned Devices positively
      * @target List<OcSecureResource> discoverOwnedDevices(int timeout)
      * @test_data none
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call discoverOwnedDevices() API
      * @post_condition none
      * @expected Should not throw any exception
-     * @see none
-     * @since 2015-11-16
      */
     public void testDiscoverOwnedDevice_SRC_RV_P() {
         assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_10));
+                mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_05));
     }
 
     /**
+     * @since 2015-03-01
+     * @see none
      * @objective Discover Owned Devices positively with Lower Boundary Value of
-     * time
+     *            time
      * @target List<OcSecureResource> discoverOwnedDevices(int timeout)
      * @test_data timeout = 1
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call discoverOwnedDevices() API
      * @post_condition none
      * @expected Should not throw any exception
-     * @see none
-     * @since 2015-03-01
      */
     public void testDiscoverOwnedDevice_LBV_P() {
         assertTrue(PMConstants.mErrorMessage,
@@ -159,34 +161,35 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Discover Owned Devices with Lower Outer Boundary value of time
      * @target List<OcSecureResource> discoverOwnedDevices(int timeout)
      * @test_data timeout = 0
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call discoverOwnedDevices() API with negative time
      * @post_condition none
      * @expected Should throw ErrorCode.INVALID_PARAM
-     * @see none
-     * @since 2015-11-16
      */
     public void testDiscoverOwnedDevice_LOBV_ETC_N() {
         assertFalse(PMConstants.mErrorMessage,
                 mPMHelper.discoverOwnedDevices(PMConstants.DISCOVERY_TIMEOUT_ZERO));
+        assertTrue(PMConstants.WRONG_ERROR_CODE,PMConstants.mErrorMessage.equals(PMConstants.ERROR_INVALID_PARAM));
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Set Ownership Transfer Callback Data
      * @target void SetownershipTransferCBdata(OxmType type, PinCallbackListener
-     * pinCallbackListener)
+     *         pinCallbackListener)
      * @test_data type = OxmType.OIC_JUST_WORKS
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call SetownershipTransferCBdata() API
      * @post_condition none
      * @expected Should not throw any exception
-     * @see none
-     * @since 2015-11-16
      */
     public void testSetownershipTransferCBdataOxm0_CLU_P() {
         assertTrue(PMConstants.mErrorMessage,
@@ -194,17 +197,17 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2016-03-31
+     * @see none
      * @objective Set Ownership Transfer Callback Data
      * @target void SetownershipTransferCBdata(OxmType type, PinCallbackListener
-     * pinCallbackListener)
+     *         pinCallbackListener)
      * @test_data type = OxmType.OIC_RANDOM_DEVICE_PIN
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call SetownershipTransferCBdata() API
      * @post_condition none
      * @expected Should not throw any exception
-     * @see none
-     * @since 2016-03-31
      */
     public void testSetownershipTransferCBdataOxm1_CLU_P() {
         assertTrue(PMConstants.mErrorMessage, mPMHelper.setOwnershipTransferCBdata(
@@ -212,74 +215,72 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2016-03-31
+     * @see none
      * @objective Set Ownership Transfer Callback Data
      * @target void SetownershipTransferCBdata(OxmType type, PinCallbackListener
-     * pinCallbackListener)
+     *         pinCallbackListener)
      * @test_data type = OxmType.OIC_OXM_COUNT
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call SetownershipTransferCBdata() API
      * @post_condition none
      * @expected Should throw ErrorCode.ERROR
-     * @see none
-     * @since 2016-03-31
      */
     public void testSetownershipTransferCBdataOxm3_CLU_N() {
         assertFalse(PMConstants.mErrorMessage,
                 mPMHelper.setOwnershipTransferCBdata(OxmType.OIC_OXM_COUNT, null));
-        assertEquals(PMConstants.WRONG_ERROR_CODE, ErrorCode.ERROR,
-                PMConstants.mErrorMessage);
+        assertTrue(PMConstants.WRONG_ERROR_CODE, PMConstants.mErrorMessage.contentEquals(PMConstants.ERROR_ERROR));
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Set Ownership Transfer Callback Data
      * @target void SetownershipTransferCBdata(OxmType type, PinCallbackListener
-     * pinCallbackListener)
+     *         pinCallbackListener)
      * @test_data none
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call SetownershipTransferCBdata() API with null pinListener
      * @post_condition none
-     * @expected Should throw ErrorCode.ERROR
-     * @see none
-     * @since 2015-11-16
+     * @expected Should throw ErrorCode.INVALID_CALLBACK
      */
     public void testSetownershipTransferCB_NV_ETC_N() {
         assertFalse(PMConstants.mErrorMessage,
                 mPMHelper.setOwnershipTransferCBdata(OxmType.OIC_RANDOM_DEVICE_PIN,
                         null));
-        assertEquals(PMConstants.WRONG_ERROR_CODE, ErrorCode.ERROR.name(),
-                PMConstants.mErrorMessage);
+        assertEquals(PMConstants.ERROR_INVALID_CALLBACK, PMConstants.mErrorMessage);
     }
 
     /**
-     * @objective Get Device Status List positively
-     * @target List<OcSecureResource> getDeviceStatusList(int timeout)
-     * @test_data none
-     * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
-     * @procedure Call getDeviceStatusList() API
-     * @post_condition none
-     * @expected Should not throw any exception
-     * @see none
      * @since 2015-11-16
-     */
-    public void testGetDeviceStatusList_SRC_RV_P() {
-        assertTrue(PMConstants.mErrorMessage,
-                mPMHelper.getDeviceStatusList(PMConstants.DISCOVERY_TIMEOUT_10));
-    }
-
-    /**
+     * @see none
      * @objective Get Device Status List with Lower Boundary Value of time
      * @target List<OcSecureResource> getDeviceStatusList(int timeout)
      * @test_data timeout = 2
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call getDeviceStatusList() API
      * @post_condition none
      * @expected Should not throw any exception
-     * @see none
+     */
+    public void testGetDeviceStatusList_SRC_RV_P() {
+        assertTrue(PMConstants.mErrorMessage,
+                mPMHelper.getDeviceStatusList(PMConstants.DISCOVERY_TIMEOUT_05));
+    }
+
+    /**
      * @since 2015-11-16
+     * @see none
+     * @objective Get Device Status List with Lower Boundary Value of time
+     * @target List<OcSecureResource> getDeviceStatusList(int timeout)
+     * @test_data timeout = 2
+     * @pre_condition Start Two JustWork Simulators and Initialize provisioning
+     *                manager
+     * @procedure Call getDeviceStatusList() API
+     * @post_condition none
+     * @expected Should not throw any exception
      */
     public void testGetDeviceStatusList_LBV_P() {
         assertTrue(PMConstants.mErrorMessage,
@@ -287,16 +288,16 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2015-11-16
+     * @see none
      * @objective Get Device Status List with Lower Outer Boundary Value of time
      * @target List<OcSecureResource> getDeviceStatusList(int timeout)
      * @test_data timeout = 1
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call getDeviceStatusList() API
      * @post_condition none
      * @expected Should throw ErrorCode.INVALID_PARAM
-     * @see none
-     * @since 2015-11-16
      */
     public void testGetDeviceStatusList_LOBV_ETC_N() {
         assertFalse(PMConstants.mErrorMessage,
@@ -306,16 +307,16 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2016-03-01
+     * @see none
      * @objective Set Display Pin Listener
      * @target setDisplayPinListener(DisplayPinListener displayPinListener)
      * @test_data none
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call setDisplayPinListener() API
      * @post_condition none
      * @expected Should not throw any expection
-     * @see none
-     * @since 2016-03-01
      */
     public void testSetDisplayPinListener_SRC_P() {
         try {
@@ -326,24 +327,23 @@ public class PMOcProvisioningTest extends InstrumentationTestCase {
     }
 
     /**
+     * @since 2016-03-01
+     * @see none
      * @objective Set Display Pin Listener
      * @target setDisplayPinListener(DisplayPinListener displayPinListener)
      * @test_data displayPinListener = Null
      * @pre_condition Start Two JustWork Simulators and Initialize provisioning
-     * manager
+     *                manager
      * @procedure Call setDisplayPinListener() API
      * @post_condition none
-     * @expected Should throw ErrorCode.INVALID_PARAM
-     * @see none
-     * @since 2016-03-01
+     * @expected Should throw ErrorCode.INVALID_CALLBACK
      */
     public void testSetDisplayPinListenerCB_NV_N() {
         try {
             OcProvisioning.setDisplayPinListener(null);
             fail();
         } catch (OcException e) {
-            assertEquals(PMConstants.WRONG_ERROR_CODE, ErrorCode.INVALID_PARAM,
-                    e.getErrorCode());
+            assertEquals(PMConstants.ERROR_INVALID_CALLBACK, e.getErrorCode().name());
         }
     }
 }
