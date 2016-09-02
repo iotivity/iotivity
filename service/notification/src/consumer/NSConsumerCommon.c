@@ -436,6 +436,7 @@ NSProvider_internal * NSCopyProvider_internal(NSProvider_internal * prov)
     newProv->syncUri = OICStrdup(prov->syncUri);
     newProv->topicUri = OICStrdup(prov->topicUri);
     newProv->accessPolicy = prov->accessPolicy;
+    newProv->state = prov->state;
 
     return newProv;
 }

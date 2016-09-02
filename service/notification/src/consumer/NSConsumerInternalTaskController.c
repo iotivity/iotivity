@@ -347,13 +347,32 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
     NS_VERIFY_NOT_NULL_V(msg);
 
     NS_LOG_V(DEBUG, "confirmed by : %s", msg->providerId);
-    NSProvider_internal * provider = NSProviderCacheFind(msg->providerId);
-    NS_VERIFY_NOT_NULL_V(provider);
 
+    NSCacheList * ProviderCache = *(NSGetProviderCacheList());
+
+    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, msg->providerId);
+    NS_VERIFY_NOT_NULL_V(cacheElement);
+
+    pthread_mutex_t * mutex = NSGetCacheMutex();
+    pthread_mutex_lock(mutex);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(cacheElement, pthread_mutex_unlock(mutex));
+    NSProvider_internal * provider = (NSProvider_internal *) cacheElement->data;
+    if (provider->state == (NSProviderState) msg->messageId)
+    {
+        NS_LOG_V(DEBUG, "Already receive message(ALLOW/DENY) : %d", (int) msg->messageId);
+        pthread_mutex_unlock(mutex);
+        return;
+    }
+
+    NS_LOG_V(DEBUG, "Provider State Changed %d -> %d",
+             (int) provider->state, (int) msg->messageId);
     NS_LOG(DEBUG, "call back to user");
+    provider->state = (NSProviderState) msg->messageId;
+
     NSProvider * prov = NSCopyProvider(provider);
+
+    pthread_mutex_unlock(mutex);
     NSProviderChanged(prov, (NSProviderState) msg->messageId);
-    NSRemoveProvider_internal(provider);
 }
 
 void NSConsumerHandleRecvMessage(NSMessage * msg)

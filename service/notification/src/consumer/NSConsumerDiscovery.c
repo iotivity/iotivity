@@ -249,6 +249,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     newProvider->accessPolicy = (NSSelector)accepter;
     newProvider->connection = connection;
     newProvider->topicLL = NULL;
+    newProvider->state = NS_DISCOVERED;
 
     return newProvider;
 }

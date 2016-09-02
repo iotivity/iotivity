@@ -81,6 +81,7 @@ typedef struct
     char * topicUri;
 
     NSSelector accessPolicy;
+    NSProviderState state;
 
     NSProviderConnectionInfo * connection;
 
