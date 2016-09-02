@@ -131,7 +131,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!initProvider)
+    if(!initProvider || !serverAddress)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
         pthread_mutex_unlock(&nsInitMutex);
@@ -155,7 +155,7 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!initProvider)
+    if(!initProvider || !serverAddress)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
         return NS_FAIL;
@@ -183,7 +183,7 @@ NSResult NSSendMessage(NSMessage * msg)
     {
         NS_LOG(ERROR, "Msg is NULL");
         pthread_mutex_unlock(&nsInitMutex);
-        return NS_ERROR;
+        return NS_FAIL;
     }
 
     NSMessage * newMsg = NSDuplicateMessage(msg);
@@ -214,8 +214,14 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
 NSResult NSAcceptSubscription(const char * consumerId, bool accepted)
 {
     NS_LOG(DEBUG, "NSAccept - IN");
-
     pthread_mutex_lock(&nsInitMutex);
+
+    if(!consumerId)
+    {
+        NS_LOG(ERROR, "consumerId is NULL");
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
 
     char * newConsumerId = OICStrdup(consumerId);
     if(accepted)
@@ -240,6 +246,7 @@ NSMessage * NSCreateMessage()
     pthread_mutex_lock(&nsInitMutex);
 
     NSMessage * msg = NSInitializeMessage();
+
     OICStrcpy(msg->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
 
     pthread_mutex_unlock(&nsInitMutex);
