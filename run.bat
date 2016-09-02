@@ -68,7 +68,13 @@ if "!CURRENT_ARG!"=="server" (
 ) else if "!CURRENT_ARG!"=="client" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% simpleclient.exe
-) else if "!CURRENT_ARG!"=="mediaclient" (
+) else if "!CURRENT_ARG!"=="serverhq" (
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% simpleserverHQ.exe
+) else if "!CURRENT_ARG!"=="clienthq" (
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% simpleclientHQ.exe
+)else if "!CURRENT_ARG!"=="mediaclient" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% mediaclient.exe
 ) else if "!CURRENT_ARG!"=="mediaserver" (

@@ -29,6 +29,7 @@
 #include "JniOnGetListener.h"
 #include "JniOnPostListener.h"
 #include "JniOnDeleteListener.h"
+#include "JniOnObserveListener.h"
 
 using namespace OC;
 
@@ -55,19 +56,42 @@ public:
     OCStackResult searchUser(JNIEnv* env, const std::string& userUuid, jobject jListener);
     OCStackResult searchUser(JNIEnv* env, const QueryParamsMap& queryMap, jobject jListener);
     OCStackResult deleteDevice(JNIEnv* env, const std::string& deviceId, jobject jListener);
+    OCStackResult createGroup(JNIEnv* env, AclGroupType groupType, jobject jListener);
+    OCStackResult getGroupList(JNIEnv* env, jobject jListener);
+    OCStackResult deleteGroup(JNIEnv* env, const std::string& groupId, jobject jListener);
+    OCStackResult joinGroup(JNIEnv* env, const std::string& groupId, jobject jListener);
+    OCStackResult addDeviceToGroup(JNIEnv* env, const std::string& groupId,
+                                   const std::vector<std::string>& deviceId, jobject jListener);
+    OCStackResult getGroupInfo(JNIEnv* env, const std::string& groupId, jobject jListener);
+    OCStackResult leaveGroup(JNIEnv* env, const std::string& groupId, jobject jListener);
+    OCStackResult deleteDeviceFromGroup(JNIEnv* env, const std::string& groupId,
+                                        const std::vector<std::string>& deviceId,
+                                        jobject jListener);
+    OCStackResult observeGroup(JNIEnv* env, const std::string& groupId, jobject jListener);
+    OCStackResult cancelObserveGroup(const std::string& groupId);
+    OCStackResult observeInvitation(JNIEnv* env, jobject jListener);
+    OCStackResult cancelObserveInvitation();
+    OCStackResult sendInvitation(JNIEnv* env, const std::string& groupId,
+                                 const std::string& userUuid, jobject jListener);
+    OCStackResult cancelInvitation(JNIEnv* env, const std::string& groupId,
+                                   const std::string& userUuid, jobject jListener);
+    OCStackResult deleteInvitation(JNIEnv* env, const std::string& groupId, jobject jListener);
 
     JniOnGetListener* addOnGetListener(JNIEnv* env, jobject jListener);
     JniOnPostListener* addOnPostListener(JNIEnv* env, jobject jListener);
     JniOnDeleteListener* addOnDeleteListener(JNIEnv* env, jobject jListener);
+    JniOnObserveListener* addOnObserveListener(JNIEnv* env, jobject jListener);
 
     void removeOnGetListener(JNIEnv* env, jobject jListener);
     void removeOnPostListener(JNIEnv* env, jobject jListener);
     void removeOnDeleteListener(JNIEnv* env, jobject jListener);
+    void removeOnObserveListener(JNIEnv* env, jobject jListener);
 
 private:
     JniListenerManager<JniOnGetListener> m_onGetManager;
     JniListenerManager<JniOnPostListener> m_onPostManager;
     JniListenerManager<JniOnDeleteListener> m_onDeleteManager;
+    JniListenerManager<JniOnObserveListener> m_onObserveManager;
 
     std::shared_ptr<OCAccountManager> m_sharedAccountManager;
 };
@@ -157,6 +181,126 @@ extern "C" {
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deleteDevice0
         (JNIEnv *env, jobject thiz, jstring jDeviceId, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    createGroup0
+    * Signature: (Lorg/iotivity/base/AclGroupType;Lorg/iotivity/base/OcAccountManager/OnPostListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_createGroup0
+        (JNIEnv *env, jobject thiz, jint groupType, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    getGroupList0
+    * Signature: (Lorg/iotivity/base/OcAccountManager/OnGetListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_getGroupList0
+        (JNIEnv *env, jobject thiz, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    deleteGroup0
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/onDeleteListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deleteGroup0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    joinGroup0
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/OnPostListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_joinGroup0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    addDeviceToGroup0
+    * Signature: (Ljava/lang/String;[Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/OnPostListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_addDeviceToGroup0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobjectArray jDeviceIdArray, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    getGroupInfo0
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/OnGetListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_getGroupInfo0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    leaveGroup0
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/onDeleteListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_leaveGroup0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    deleteDeviceFromGroup0
+    * Signature: (Ljava/lang/String;[Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/onDeleteListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deleteDeviceFromGroup0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobjectArray jDeviceIdArray, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    observeGroup0
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcResource/OnObserveListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_observeGroup0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    cancelObserveGroup0
+    * Signature: (Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_cancelObserveGroup0
+        (JNIEnv *env, jobject thiz, jstring jGroupId);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    observeInvitation0
+    * Signature: (Lorg/iotivity/base/OcResource/OnObserveListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_observeInvitation0
+        (JNIEnv *env, jobject thiz, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    cancelObserveInvitation0
+    * Signature: ()V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_cancelObserveInvitation0
+        (JNIEnv *env, jobject thiz);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    sendInvitation0
+    * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/OnPostListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_sendInvitation0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jstring jUserUuid, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    cancelInvitation0
+    * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/onDeleteListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_cancelInvitation0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jstring jUserUuid, jobject jListener);
+
+    /*
+    * Class:     org_iotivity_base_OcAccountManager
+    * Method:    deleteInvitation0
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/onDeleteListener;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_deleteInvitation0
+        (JNIEnv *env, jobject thiz, jstring jGroupId, jobject jListener);
 
 #ifdef __cplusplus
 }

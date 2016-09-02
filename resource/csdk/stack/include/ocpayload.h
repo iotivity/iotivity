@@ -60,34 +60,34 @@ extern "C"
 
 typedef struct OCResource OCResource;
 
-OC_EXPORT void OCPayloadDestroy(OCPayload* payload);
+void OCPayloadDestroy(OCPayload* payload);
 
 // Representation Payload
-OC_EXPORT OCRepPayload* OCRepPayloadCreate();
+OCRepPayload* OCRepPayloadCreate();
 
-OC_EXPORT size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
-OC_EXPORT OCRepPayload* OCRepPayloadClone(const OCRepPayload* payload);
+OCRepPayload* OCRepPayloadClone(const OCRepPayload* payload);
 
-OC_EXPORT void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
+void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
 
-OC_EXPORT bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
+bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
 
-OC_EXPORT bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
-OC_EXPORT bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface);
-OC_EXPORT bool OCRepPayloadAddModelVersion(OCRepPayload* payload, const char* dmv);
+bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
+bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface);
+bool OCRepPayloadAddModelVersion(OCRepPayload* payload, const char* dmv);
 
-OC_EXPORT bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType);
-OC_EXPORT bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface);
+bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType);
+bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* iface);
 
-OC_EXPORT bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name);
-OC_EXPORT bool OCRepPayloadSetNull(OCRepPayload* payload, const char* name);
+bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name);
+bool OCRepPayloadSetNull(OCRepPayload* payload, const char* name);
 
-OC_EXPORT bool OCRepPayloadSetPropInt(OCRepPayload* payload, const char* name, int64_t value);
-OC_EXPORT bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64_t* value);
+bool OCRepPayloadSetPropInt(OCRepPayload* payload, const char* name, int64_t value);
+bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64_t* value);
 
-OC_EXPORT bool OCRepPayloadSetPropDouble(OCRepPayload* payload, const char* name, double value);
-OC_EXPORT bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, double* value);
+bool OCRepPayloadSetPropDouble(OCRepPayload* payload, const char* name, double value);
+bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, double* value);
 
 /**
  * This function allocates memory for the byte string and sets it in the payload.
@@ -98,7 +98,7 @@ OC_EXPORT bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char
  *
  * @return true on success, false upon failure.
  */
-OC_EXPORT bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value);
+bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value);
 
 /**
  * This function sets the byte string in the payload.
@@ -109,7 +109,7 @@ OC_EXPORT bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* 
  *
  * @return true on success, false upon failure.
  */
-OC_EXPORT bool OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const char* name,
         OCByteString* value);
 
 /**
@@ -123,19 +123,19 @@ OC_EXPORT bool OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const
  *
  * @return true on success, false upon failure.
  */
-OC_EXPORT bool OCRepPayloadGetPropByteString(const OCRepPayload* payload, const char* name,
+bool OCRepPayloadGetPropByteString(const OCRepPayload* payload, const char* name,
         OCByteString* value);
 
-OC_EXPORT bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const char* value);
-OC_EXPORT bool OCRepPayloadSetPropStringAsOwner(OCRepPayload* payload, const char* name, char* value);
-OC_EXPORT bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, char** value);
+bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const char* value);
+bool OCRepPayloadSetPropStringAsOwner(OCRepPayload* payload, const char* name, char* value);
+bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, char** value);
 
-OC_EXPORT bool OCRepPayloadSetPropBool(OCRepPayload* payload, const char* name, bool value);
-OC_EXPORT bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool* value);
+bool OCRepPayloadSetPropBool(OCRepPayload* payload, const char* name, bool value);
+bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool* value);
 
-OC_EXPORT bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OCRepPayload* value);
-OC_EXPORT bool OCRepPayloadSetPropObjectAsOwner(OCRepPayload* payload, const char* name, OCRepPayload* value);
-OC_EXPORT bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OCRepPayload** value);
+bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OCRepPayload* value);
+bool OCRepPayloadSetPropObjectAsOwner(OCRepPayload* payload, const char* name, OCRepPayload* value);
+bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OCRepPayload** value);
 
 /**
  * This function allocates memory for the byte string array and sets it in the payload.
@@ -147,7 +147,7 @@ OC_EXPORT bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char
  *
  * @return true on success, false upon failure.
  */
-OC_EXPORT bool OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, const char* name,
         OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 /**
@@ -160,7 +160,7 @@ OC_EXPORT bool OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, cons
  *
  * @return true on success, false upon failure.
  */
-OC_EXPORT bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
         const OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 /**
@@ -176,87 +176,87 @@ OC_EXPORT bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char*
  *
  * @return true on success, false upon failure.
  */
-OC_EXPORT bool OCRepPayloadGetByteStringArray(const OCRepPayload* payload, const char* name,
+bool OCRepPayloadGetByteStringArray(const OCRepPayload* payload, const char* name,
         OCByteString** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
-OC_EXPORT bool OCRepPayloadSetIntArrayAsOwner(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetIntArrayAsOwner(OCRepPayload* payload, const char* name,
         int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadSetIntArray(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetIntArray(OCRepPayload* payload, const char* name,
         const int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadGetIntArray(const OCRepPayload* payload, const char* name,
+bool OCRepPayloadGetIntArray(const OCRepPayload* payload, const char* name,
         int64_t** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
-OC_EXPORT bool OCRepPayloadSetDoubleArrayAsOwner(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetDoubleArrayAsOwner(OCRepPayload* payload, const char* name,
         double* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadSetDoubleArray(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetDoubleArray(OCRepPayload* payload, const char* name,
         const double* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
+bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
         double** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
-OC_EXPORT bool OCRepPayloadSetStringArrayAsOwner(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetStringArrayAsOwner(OCRepPayload* payload, const char* name,
         char** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadSetStringArray(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetStringArray(OCRepPayload* payload, const char* name,
         const char** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadGetStringArray(const OCRepPayload* payload, const char* name,
+bool OCRepPayloadGetStringArray(const OCRepPayload* payload, const char* name,
         char*** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
-OC_EXPORT bool OCRepPayloadSetBoolArrayAsOwner(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetBoolArrayAsOwner(OCRepPayload* payload, const char* name,
         bool* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadSetBoolArray(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetBoolArray(OCRepPayload* payload, const char* name,
         const bool* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadGetBoolArray(const OCRepPayload* payload, const char* name,
+bool OCRepPayloadGetBoolArray(const OCRepPayload* payload, const char* name,
         bool** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
-OC_EXPORT bool OCRepPayloadSetPropObjectArrayAsOwner(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetPropObjectArrayAsOwner(OCRepPayload* payload, const char* name,
         OCRepPayload** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadSetPropObjectArray(OCRepPayload* payload, const char* name,
+bool OCRepPayloadSetPropObjectArray(OCRepPayload* payload, const char* name,
         const OCRepPayload** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
-OC_EXPORT bool OCRepPayloadGetPropObjectArray(const OCRepPayload* payload, const char* name,
+bool OCRepPayloadGetPropObjectArray(const OCRepPayload* payload, const char* name,
         OCRepPayload*** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
-OC_EXPORT void OCRepPayloadDestroy(OCRepPayload* payload);
+void OCRepPayloadDestroy(OCRepPayload* payload);
 
 // Discovery Payload
-OC_EXPORT OCDiscoveryPayload* OCDiscoveryPayloadCreate();
+OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 
-OC_EXPORT OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
-OC_EXPORT void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
+OCSecurityPayload* OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
+void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
 #ifndef TCP_ADAPTER
-OC_EXPORT void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
-                                             uint16_t securePort);
+void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
+                                   uint16_t securePort);
 #else
-OC_EXPORT void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
-                                             uint16_t securePort, uint16_t tcpPort);
+void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
+                                   uint16_t securePort, uint16_t tcpPort);
 #endif
-OC_EXPORT void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
-OC_EXPORT bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
+void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
+bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 
-OC_EXPORT size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload);
-OC_EXPORT OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, size_t index);
+size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload);
+OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, size_t index);
 
-OC_EXPORT void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
-OC_EXPORT void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
+void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
+void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 
 // Device Payload
-OC_EXPORT OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
+OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
         const OCStringLL *types, const char* specVer, const char* dmVer);
-OC_EXPORT void OCDevicePayloadDestroy(OCDevicePayload* payload);
+void OCDevicePayloadDestroy(OCDevicePayload* payload);
 
 // Platform Payload
-OC_EXPORT OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo);
-OC_EXPORT OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo);
-OC_EXPORT void OCPlatformInfoDestroy(OCPlatformInfo *info);
-OC_EXPORT void OCPlatformPayloadDestroy(OCPlatformPayload* payload);
+OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo);
+OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo);
+void OCPlatformInfoDestroy(OCPlatformInfo *info);
+void OCPlatformPayloadDestroy(OCPlatformPayload* payload);
 
 // Presence Payload
-OC_EXPORT OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
+OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
         OCPresenceTrigger trigger, const char* resourceType);
-OC_EXPORT void OCPresencePayloadDestroy(OCPresencePayload* payload);
+void OCPresencePayloadDestroy(OCPresencePayload* payload);
 
 // Helper API
-OC_EXPORT OCStringLL* CloneOCStringLL (OCStringLL* ll);
-OC_EXPORT void OCFreeOCStringLL(OCStringLL* ll);
+OCStringLL* CloneOCStringLL (OCStringLL* ll);
+void OCFreeOCStringLL(OCStringLL* ll);
 
 /**
  * This function creates a list from a string (with separated contents if several)
@@ -264,7 +264,7 @@ OC_EXPORT void OCFreeOCStringLL(OCStringLL* ll);
  * @return newly allocated linked list
  * @note separator is ',' (according to rfc4180, ';' is not valid)
  **/
-OC_EXPORT OCStringLL* OCCreateOCStringLL(const char* text);
+OCStringLL* OCCreateOCStringLL(const char* text);
 
 /**
  * This function creates a string from a list (with separated contents if several)
@@ -272,7 +272,7 @@ OC_EXPORT OCStringLL* OCCreateOCStringLL(const char* text);
  * @return newly allocated string
  * @note separator is ',' (according to rfc4180)
  **/
-OC_EXPORT char* OCCreateString(const OCStringLL* ll);
+char* OCCreateString(const OCStringLL* ll);
 
 #ifdef __cplusplus
 }

@@ -24,16 +24,8 @@ os_arch_map = {
                 'yocto': ['i586', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
-es_role_map = {
-		'enrollee', 'mediator'
-		}
-
 es_target_enrollee_map = {
 		'arduino', 'tizen', 'linux'
-		}
-
-es_softap_mode_map = {
-		'ENROLLEE_SOFTAP', 'MEDIATOR_SOFTAP'
 		}
 
 host = platform.system().lower()
@@ -64,13 +56,6 @@ require_upload = ARGUMENTS.get('UPLOAD', True)
 # Get the device name
 device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
 
-# Get es_role
-es_role = ARGUMENTS.get('ES_ROLE')
-
-if es_role not in es_role_map:
-	print "\nError: Unknown ES_ROLE: %s (Allow values: %s)\n" % (es_role, es_role_map)
-	Exit(1)
-
 # Get es_target_enrollee
 es_target_enrollee = ARGUMENTS.get('ES_TARGET_ENROLLEE')
 
@@ -78,12 +63,6 @@ if es_target_enrollee not in es_target_enrollee_map:
 	print "\nError: Unknown ES_TARGET_ENROLLEE: %s (Allow values: %s)\n" % (es_target_enrollee, es_target_enrollee_map)
 	Exit(1)
 
-# Get es_soft_mode
-es_soft_mode = ARGUMENTS.get('ES_SOFTAP_MODE')
-
-if es_soft_mode not in es_softap_mode_map:
-	print "\nError: Unknown ES_SOFTAP_MODE: %s (Allow values: %s)\n" % (es_soft_mode, es_softap_mode_map)
-	Exit(1)
 
 ######################################################################
 # Common build options (release, target os, target arch)
@@ -103,10 +82,6 @@ help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device', 'OIC-D
 
 #ES_TARGET_ENROLLEE is for specifying what is our target enrollee (Arduino or rest of platforms which support Multicast)
 help_vars.Add(EnumVariable('ES_TARGET_ENROLLEE', 'Target Enrollee', 'arduino', allowed_values=('arduino', 'tizen', 'linux')))
-#ES_ROLE is for specifying the role (Enrollee or Mediator) for which scons is being executed
-help_vars.Add(EnumVariable('ES_ROLE', 'Target build mode', 'mediator', allowed_values=('mediator', 'enrollee')))
-#ES_SOFT_MODE is for specifying MODE (Mode 1 : Enrollee with  Soft AP or Mode 2  : Mediator with Soft AP)
-help_vars.Add(EnumVariable('ES_SOFTAP_MODE', 'Target build mode', 'ENROLLEE_SOFTAP', allowed_values=('ENROLLEE_SOFTAP', 'MEDIATOR_SOFTAP')))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -133,7 +108,7 @@ if target_os in ['android', 'arduino']: # Android/Arduino always uses GNU compil
 			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as']
 			)
 else:
-	env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os, ES_ROLE = es_role, ES_TARGET_ENROLLEE = es_target_enrollee, ES_SOFTAP_MODE = es_soft_mode, ESPREFIX = GetOption('prefix'))
+	env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os, ES_TARGET_ENROLLEE = es_target_enrollee, ESPREFIX = GetOption('prefix'))
 
 Help(help_vars.GenerateHelpText(env))
 

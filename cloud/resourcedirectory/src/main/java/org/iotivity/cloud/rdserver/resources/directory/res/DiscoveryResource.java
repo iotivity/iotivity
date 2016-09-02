@@ -102,14 +102,14 @@ public class DiscoveryResource extends Resource {
             value = listITF.get(0);
         }
 
-        for (String deviceId : deviceList) {            
+        for (String deviceId : deviceList) {
             if(key != null && value != null){
                 foundResList = DBManager.getInstance().findResourceAboutDiAndFilter(deviceId,
                         key, value);
-            } else {            
+            } else {
                 foundResList = DBManager.getInstance().findResourceAboutDi(deviceId);
             }
-            
+
             if (foundResList != null) {
                 resourceList.add(makeDiscoveryPayloadSegment(foundResList));
             }
@@ -150,9 +150,10 @@ public class DiscoveryResource extends Resource {
         ArrayList<HashMap<Object, Object>> responseMapList = new ArrayList<HashMap<Object, Object>>();
 
         for (DiscoveryPayload discoveryPayload : discoveryPayloadList) {
-            HashMap<Object, Object> responseSegment = null;
+
             DiscoveryTags tags = discoveryPayload.getTags();
-            responseSegment = mDiscoveryTagsTypeManager
+
+            HashMap<Object, Object> responseSegment = mDiscoveryTagsTypeManager
                     .convertObjectToMap(tags);
 
             ArrayList<DiscoveryLinks> discoveryLinksList = discoveryPayload

@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -9,15 +31,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
-import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -30,28 +52,27 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class AclGroupTest {
-    private static final String TEST_RESOURCE_GROUP_URI = "/"
-            + OCFConstants.PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF
-            + "/" + OCFConstants.ACL_URI + "/" + OCFConstants.GROUP_URI;
-    private CoapDevice          mockDevice              = mock(
+    private static final String  TEST_RESOURCE_GROUP_URI = Constants.GROUP_FULL_URI;
+
+    private CoapDevice           mMockDevice             = mock(
             CoapDevice.class);
-    IRequest                    req                     = null;
-    ConnectorPool               connectorPool           = null;
-    DeviceServerSystem          deviceServerSystem      = new DeviceServerSystem();
-    final CountDownLatch        latch                   = new CountDownLatch(1);
+    private IRequest             mReq                    = null;
+    private DeviceServerSystem   mDeviceServerSystem     = new DeviceServerSystem();
+    private final CountDownLatch mLatch                  = new CountDownLatch(
+            1);
 
     @Mock
-    IRequestChannel             requestChannel;
+    private IRequestChannel      mRequestChannel;
 
     @InjectMocks
-    AclGroup                    aclGroupHandler         = new AclGroup();
+    private AclGroup             mAclGroupHandler        = new AclGroup();
 
     @Before
     public void setUp() throws Exception {
-        req = null;
-        Mockito.doReturn("mockUserId").when(mockDevice).getUserId();
+        mReq = null;
+        Mockito.doReturn("mockUserId").when(mMockDevice).getUserId();
         MockitoAnnotations.initMocks(this);
-        deviceServerSystem.addResource(aclGroupHandler);
+        mDeviceServerSystem.addResource(mAclGroupHandler);
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -65,11 +86,11 @@ public class AclGroupTest {
                         "\t----------uripath : " + request.getUriPath());
                 System.out.println(
                         "\t---------uriquery : " + request.getUriQuery());
-                req = request;
-                latch.countDown();
+                mReq = request;
+                mLatch.countDown();
                 return null;
             }
-        }).when(requestChannel).sendRequest(Mockito.any(IRequest.class),
+        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
     }
 
@@ -84,14 +105,14 @@ public class AclGroupTest {
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
                 TEST_RESOURCE_GROUP_URI, null, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));
-        aclGroupHandler.onRequestReceived(mockDevice, request);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(cbor.parsePayloadFromCbor(req.getPayload(), HashMap.class)
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .containsKey("gtype"));
-        assertTrue(cbor.parsePayloadFromCbor(req.getPayload(), HashMap.class)
+        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .containsKey("gmid"));
-        assertEquals(req.getUriPath(), TEST_RESOURCE_GROUP_URI);
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_GROUP_URI);
     }
 
     @Test
@@ -105,12 +126,12 @@ public class AclGroupTest {
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", null,
                 ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));
-        aclGroupHandler.onRequestReceived(mockDevice, request);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(cbor.parsePayloadFromCbor(req.getPayload(), HashMap.class)
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .containsKey("midlist"));
-        assertEquals(req.getUriPath(),
+        assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
     }
 
@@ -126,12 +147,12 @@ public class AclGroupTest {
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", null,
                 ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));
-        aclGroupHandler.onRequestReceived(mockDevice, request);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(cbor.parsePayloadFromCbor(req.getPayload(), HashMap.class)
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
                 .containsKey("dilist"));
-        assertEquals(req.getUriPath(),
+        assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
     }
 
@@ -143,11 +164,11 @@ public class AclGroupTest {
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 TEST_RESOURCE_GROUP_URI, null, null, null);
-        aclGroupHandler.onRequestReceived(mockDevice, request);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriQueryMap().containsKey("mid"));
-        assertEquals(req.getUriPath(), TEST_RESOURCE_GROUP_URI);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("mid"));
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_GROUP_URI);
     }
 
     @Test
@@ -157,12 +178,12 @@ public class AclGroupTest {
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 TEST_RESOURCE_GROUP_URI, "gid=samplegid", null, null);
-        aclGroupHandler.onRequestReceived(mockDevice, request);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriQueryMap().containsKey("gid"));
-        assertTrue(req.getUriQueryMap().containsKey("gmid"));
-        assertEquals(req.getUriPath(), TEST_RESOURCE_GROUP_URI);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("gid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("gmid"));
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_GROUP_URI);
     }
 
     @Test
@@ -173,11 +194,11 @@ public class AclGroupTest {
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", null, null,
                 null);
-        aclGroupHandler.onRequestReceived(mockDevice, request);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriQueryMap().containsKey("midlist"));
-        assertEquals(req.getUriPath(),
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("midlist"));
+        assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
     }
 
@@ -189,11 +210,22 @@ public class AclGroupTest {
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup",
                 "dilist=sampledi", null, null);
-        aclGroupHandler.onRequestReceived(mockDevice, request);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(req.getUriQueryMap().containsKey("dilist"));
-        assertEquals(req.getUriPath(),
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(mReq.getUriQueryMap().containsKey("dilist"));
+        assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testExceptionDeviceRequestReceived() throws Exception {
+        System.out.println(
+                "\t--------------OnRequestReceived(AS) Delete Member Test------------");
+
+        IRequest request = MessageBuilder.createRequest(RequestMethod.PUT,
+                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup",
+                "dilist=sampledi", null, null);
+        mAclGroupHandler.onRequestReceived(mMockDevice, request);
     }
 }

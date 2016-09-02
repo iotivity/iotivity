@@ -24,9 +24,11 @@ package org.iotivity.cloud.testrdserver;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
+
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
@@ -81,7 +83,7 @@ public class DiscoveryResourceTest {
     public void testHandleGetRequest_notExistVaule() throws Exception {
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 RDServerTestUtils.DISCOVERY_REQ_URI,
-                "rt=core.light&di=" + RDServerTestUtils.DI);
+                "rt=core.light;di=" + RDServerTestUtils.DI);
         mDiscoveryResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "CONTENT"
         // assertion : if the payload is null
@@ -94,7 +96,7 @@ public class DiscoveryResourceTest {
     public void testHandleGetRequest_existValue() throws Exception {
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 RDServerTestUtils.DISCOVERY_REQ_URI,
-                "rt=core.light&di=" + RDServerTestUtils.DI);
+                "rt=core.light;di=" + RDServerTestUtils.DI);
         mRDResource.onDefaultRequestReceived(mockDevice,
                 RDServerTestUtils.makePublishRequest());
         mDiscoveryResource.onDefaultRequestReceived(mockDevice, request);

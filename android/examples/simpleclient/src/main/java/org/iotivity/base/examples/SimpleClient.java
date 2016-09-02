@@ -70,12 +70,19 @@ public class SimpleClient extends Activity implements
     private OcResource mFoundLightResource = null;
     //local representation of a server's light resource
     private Light mLight = new Light();
+    //variables related observer
+    private int maxSequenceNumber = 0xFFFFFF;
+    private OcConnectivityType adapterFlag = OcConnectivityType.CT_ADAPTER_IP;
+    //flags related TCP transport test
+    private boolean isRequestFlag = false;
+    private boolean isTCPContained = false;
 
     /**
      * A local method to configure and initialize platform, and then search for the light resources.
      */
-    private void startSimpleClient() {
+    private void startSimpleClient(OcConnectivityType type) {
         Context context = this;
+        adapterFlag = type;
 
         PlatformConfig platformConfig = new PlatformConfig(
                 this,
@@ -138,8 +145,19 @@ public class SimpleClient extends Activity implements
         }
 
         if (null != mFoundLightResource) {
+            if (ocResource.getUri().equals("/a/light")) {
+                if (ocResource.getConnectivityTypeSet().contains(OcConnectivityType.CT_ADAPTER_TCP)) {
+                    msg("Found resource which has TCP transport");
+                    if (isTCPContained == false)
+                    {
+                        isTCPContained = true;
+                        return;
+                    }
+                }
+            }
             msg("Found another resource, ignoring");
             return;
+
         }
         // Get the resource URI
         String resourceUri = ocResource.getUri();
@@ -166,10 +184,24 @@ public class SimpleClient extends Activity implements
         if (resourceUri.equals("/a/light")) {
             //Assign resource reference to a global variable to keep it from being
             //destroyed by the GC when it is out of scope.
-            mFoundLightResource = ocResource;
-
-            // Call a local method which will internally invoke "get" API on the foundLightResource
-            getLightResourceRepresentation();
+            if (OcConnectivityType.CT_ADAPTER_TCP == adapterFlag)
+            {
+                if (ocResource.getConnectivityTypeSet().contains(OcConnectivityType.CT_ADAPTER_TCP))
+                {
+                    msg("set mFoundLightResource which has TCP transport");
+                    mFoundLightResource = ocResource;
+                    // Call a local method which will internally invoke "get" API
+                    getLightResourceRepresentation();
+                    return;
+                }
+            }
+            else
+            {
+                msg("set mFoundLightResource which has UDP transport");
+                mFoundLightResource = ocResource;
+                // Call a local method which will internally invoke "get" API on the foundLightResource
+                getLightResourceRepresentation();
+            }
         }
     }
 
@@ -478,37 +510,46 @@ public class SimpleClient extends Activity implements
     public synchronized void onObserveCompleted(List<OcHeaderOption> list,
                                                 OcRepresentation ocRepresentation,
                                                 int sequenceNumber) {
-        if (OcResource.OnObserveListener.REGISTER == sequenceNumber) {
-            msg("Observe registration action is successful:");
-        } else if (OcResource.OnObserveListener.DEREGISTER == sequenceNumber) {
-            msg("Observe De-registration action is successful");
-        } else if (OcResource.OnObserveListener.NO_OPTION == sequenceNumber) {
-            msg("Observe registration or de-registration action is failed");
-        }
 
-        msg("OBSERVE Result:");
-        msg("\tSequenceNumber:" + sequenceNumber);
-        try {
-            mLight.setOcRepresentation(ocRepresentation);
-        } catch (OcException e) {
-            Log.e(TAG, e.toString());
-            msg("Failed to get the attribute values");
-        }
-        msg(mLight.toString());
-
-        if ((++mObserveCount) == 11) {
-            msg("Cancelling Observe...");
+        if (sequenceNumber != maxSequenceNumber + 1)
+        {
+            msg("OBSERVE Result:");
+            msg("\tSequenceNumber:" + sequenceNumber);
             try {
-                mFoundLightResource.cancelObserve();
+                mLight.setOcRepresentation(ocRepresentation);
             } catch (OcException e) {
                 Log.e(TAG, e.toString());
-                msg("Error occurred while invoking \"cancelObserve\" API");
+                msg("Failed to get the attribute values");
             }
-            msg("DONE");
+            msg(mLight.toString());
 
-            //prepare for the next restart of the SimpleClient
-            resetGlobals();
-            enableStartButton();
+            if ((++mObserveCount) == 11) {
+                msg("Cancelling Observe...");
+                try {
+                    mFoundLightResource.cancelObserve(QualityOfService.HIGH);
+                } catch (OcException e) {
+                    Log.e(TAG, e.toString());
+                    msg("Error occurred while invoking \"cancelObserve\" API");
+                }
+
+                sleep(10);
+                resetGlobals();
+                if (true == isTCPContained && false == isRequestFlag)
+                {
+                    msg("Start TCP test...");
+                    startSimpleClient(OcConnectivityType.CT_ADAPTER_TCP);
+                    isRequestFlag = true;
+                    return;
+                } else if (true == isRequestFlag)
+                {
+                    msg("End TCP test...");
+                    isRequestFlag = false;
+                }
+
+                msg("DONE");
+                //prepare for the next restart of the SimpleClient
+                enableStartButton();
+            }
         }
     }
 
@@ -555,7 +596,8 @@ public class SimpleClient extends Activity implements
                     button.setEnabled(false);
                     new Thread(new Runnable() {
                         public void run() {
-                            startSimpleClient();
+                            isTCPContained = false;
+                            startSimpleClient(OcConnectivityType.CT_ADAPTER_IP);
                         }
                     }).start();
                 }

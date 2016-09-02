@@ -125,7 +125,6 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
 static bool IsRequestFromDevOwner(PEContext_t *context)
 {
     bool retVal = false;
-    OicUuid_t ownerid;
 
     if(NULL == context)
     {
@@ -158,18 +157,21 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
 
 OCStackResult GetCrlRownerId(OicUuid_t *rowner)
 {
+    OC_UNUSED(rowner);
     rowner = NULL;
     return OC_STACK_ERROR;
 }
 
 OCStackResult GetSaclRownerId(OicUuid_t *rowner)
 {
+    OC_UNUSED(rowner);
     rowner = NULL;
     return OC_STACK_ERROR;
 }
 
 OCStackResult GetSvcRownerId(OicUuid_t *rowner)
 {
+    OC_UNUSED(rowner);
     rowner = NULL;
     return OC_STACK_ERROR;
 }

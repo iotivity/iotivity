@@ -55,17 +55,18 @@ extern "C"
 #define OC_RSRVD_ES_COUNTRY                "ctry"
 #define OC_RSRVD_ES_MODELNUMBER            "mnmo"
 #define OC_RSRVD_ES_LOCATION               "loc"
+#define OC_RSRVD_ES_HREF                   "href"
 
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.wk.prov"
+#define OC_RSRVD_ES_RES_TYPE_PROV         "oic.wk.prov"
 #define OC_RSRVD_ES_URI_PROV              "/ProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.wk.wifi"
+#define OC_RSRVD_ES_RES_TYPE_WIFI         "oic.wk.wifi"
 #define OC_RSRVD_ES_URI_WIFI              "/WiFiProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.wk.cloudserver"
+#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "oic.wk.cloudserver"
 #define OC_RSRVD_ES_URI_CLOUDSERVER       "/CloudServerProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.wk.devconf"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "oic.wk.devconf"
 #define OC_RSRVD_ES_URI_DEVCONF           "/DevConfProvisioningResURI"
 
 
@@ -118,14 +119,47 @@ typedef enum
     TKIP_AES            /**< TKIP-AES **/
 } WIFI_ENCTYPE;
 
+/**
+ * @brief A result of Easy Setup
+ */
 typedef enum
 {
+    /**
+     * Provisioning succeeds.
+     */
     ES_OK = 0,
+
+    /**
+     * Successfully found Enrollee in a given network. This will be given in Cloud provisioning step.
+     */
     ES_FOUND_ENROLLEE = 1,
+
+    /**
+     * Not found Enrollee in a give network. This will be given in Cloud provisioning step.
+     */
     ES_NOT_FOUND_ENROLLEE = 11,
+
+    /**
+     * Security opertion is not supported because it is built as unsecured mode.
+     */
     ES_SEC_OPERATION_IS_NOT_SUPPORTED = 20,
+
+    /**
+     * A previous request is denied due to its unauthority. It means, Mediator is not unauthroized
+     * to Enrollee for some reaons.
+     */
     ES_UNAUTHORIZED_REQ = 21,
+
+    /**
+     * Security provisioning fails. The reasons would be: a packet loss for unowned/owned device
+     * discovery request or ownership transfer request, or a denial to ownership transfer by Enrollee
+     * for some reason.
+     */
     ES_SEC_PROVISION_FAILS = 22,
+
+    /**
+     * Provisioning fails for some reason.
+     */
     ES_ERROR = 255,
 } ESResult;
 

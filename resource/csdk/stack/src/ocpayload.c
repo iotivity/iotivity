@@ -1332,22 +1332,27 @@ exit:
 
 char* OCCreateString(const OCStringLL* ll)
 {
+    if (!ll)
+    {
+        return NULL;
+    }
+
     char *str = NULL;
     char *pos = NULL;
     size_t len = 0;
     size_t sublen = 0;
     int count = 0;
 
-    if (!ll) return NULL;
-
-    for (const OCStringLL *it = ll; it ; it = it->next )
+    for (const OCStringLL *it = ll; it; it = it->next)
     {
         len += strlen(it->value) + 1;
     }
     len--; // renove trailing separator (just added above)
     str = (char*) malloc(len + 1);
     if (!str)
+    {
         return NULL;
+    }
 
     pos = str;
     const OCStringLL *it = ll;
@@ -1355,13 +1360,13 @@ char* OCCreateString(const OCStringLL* ll)
     {
         sublen = strlen(it->value);
         count = snprintf(pos, len + 1, "%s", it->value);
-        if (count<sublen)
+        if ((size_t)count < sublen)
         {
             free(str);
             return NULL;
         }
-        len-=sublen;
-        pos+=count;
+        len -= sublen;
+        pos += count;
 
         it = it->next;
         if (it)

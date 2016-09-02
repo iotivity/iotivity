@@ -213,7 +213,13 @@ namespace OC
         Observe,
         ObserveAll
     };
-
+#ifdef WITH_CLOUD
+    enum class AclGroupType
+    {
+        PUBLIC,
+        PRIVATE
+    };
+#endif
     // Typedef for list of resource handles.
     typedef std::vector<OCResourceHandle> ResourceHandles;
 

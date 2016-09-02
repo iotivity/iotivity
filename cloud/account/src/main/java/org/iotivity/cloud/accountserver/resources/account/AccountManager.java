@@ -29,6 +29,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,7 +88,8 @@ public class AccountManager {
         // check uuid
         userUuid = findUuid(userInfo.getUserid(), authProvider);
 
-        storeUserTokenInfo(userUuid, userInfo, tokenInfo);
+        storeUserTokenInfo(userUuid, userInfo, tokenInfo, did);
+
         // make response
         HashMap<String, Object> response = makeSignUpResponse(tokenInfo);
 
@@ -95,7 +97,7 @@ public class AccountManager {
     }
 
     private void storeUserTokenInfo(String userUuid, UserTable userInfo,
-            TokenTable tokenInfo) {
+            TokenTable tokenInfo, String did) {
         // store db
         if (userUuid == null) {
             userUuid = generateUuid();
@@ -108,6 +110,9 @@ public class AccountManager {
             GroupResource.getInstance().createGroup(userInfo.getUuid(),
                     Constants.REQ_GTYPE_PRIVATE);
         }
+        // add my device to private group
+        GroupResource.getInstance().getGroup(userUuid)
+                .addDevice(new HashSet<String>(Arrays.asList(did)));
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(
                 Constants.TOKEN_TABLE, castTokenTableToMap(tokenInfo));
@@ -296,24 +301,35 @@ public class AccountManager {
 
     private boolean verifyToken(TokenTable tokenInfo, String accessToken) {
 
-        if (checkTokenInDB(tokenInfo, accessToken)) {
-            if (tokenInfo.getExpiredtime() == Constants.TOKEN_INFINITE) {
-                return true;
-            }
-            if (checkExpiredTime(tokenInfo)) {
-                return true;
-            }
+        if (!checkAccessTokenInDB(tokenInfo, accessToken)) {
+            return false;
         }
-        return false;
+
+        if (tokenInfo.getExpiredtime() != Constants.TOKEN_INFINITE
+                && !checkExpiredTime(tokenInfo)) {
+            return false;
+        }
+
+        return true;
     }
 
-    private boolean checkTokenInDB(TokenTable tokenInfo, String token) {
+    private boolean checkRefreshTokenInDB(TokenTable tokenInfo, String token) {
+        if (tokenInfo.getRefreshtoken() == null) {
+            Log.w("Refreshtoken doesn't exist");
+            return false;
+        } else if (!tokenInfo.getRefreshtoken().equals(token)) {
+            Log.w("Refreshtoken is not correct");
+            return false;
+        }
+        return true;
+    }
 
+    private boolean checkAccessTokenInDB(TokenTable tokenInfo, String token) {
         if (tokenInfo.getAccesstoken() == null) {
-            Log.w("token doesn't exist");
+            Log.w("AccessToken doesn't exist");
             return false;
         } else if (!tokenInfo.getAccesstoken().equals(token)) {
-            Log.w("token is not correct");
+            Log.w("AccessToken is not correct");
             return false;
         }
         return true;
@@ -372,7 +388,7 @@ public class AccountManager {
 
         TokenTable oldTokenInfo = castMapToTokenTable(record);
 
-        if (!checkTokenInDB(oldTokenInfo, refreshToken)) {
+        if (!checkRefreshTokenInDB(oldTokenInfo, refreshToken)) {
             throw new NotFoundException("refresh token is not correct");
         }
         // call 3rd party refresh token method

@@ -44,6 +44,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef TB_LOG
+#include <inttypes.h>
+#endif
 
 #ifndef SINGLE_THREAD
 #ifdef HAVE_UNISTD_H
@@ -147,7 +150,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
 
     if (currentTime >= retData->timeStamp + timeout)
     {
-        OIC_LOG_V(DEBUG, TAG, "%llu microseconds time out!!, tried count(%d)",
+        OIC_LOG_V(DEBUG, TAG, "%" PRIu64 " microseconds time out!!, tried count(%d)",
                   timeout, retData->triedCount);
         return true;
     }
@@ -282,7 +285,7 @@ void CARetransmissionBaseRoutine(void *threadValue)
         else if (!context->isStop)
         {
             // check each RETRANSMISSION_CHECK_PERIOD_SEC time.
-            OIC_LOG_V(DEBUG, TAG, "wait..(%lld)microseconds",
+            OIC_LOG_V(DEBUG, TAG, "wait..(%" PRIu64 ")microseconds",
                       RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC);
 
             // wait

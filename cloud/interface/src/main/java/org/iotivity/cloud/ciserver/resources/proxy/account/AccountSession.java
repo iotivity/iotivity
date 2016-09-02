@@ -40,8 +40,8 @@ public class AccountSession extends Resource {
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public AccountSession() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI, Constants.SESSION_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
+                Constants.SESSION_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
     }
@@ -51,6 +51,9 @@ public class AccountSession extends Resource {
             throws ServerException {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+
+        checkPayloadException(Constants.REQ_LOGIN, payloadData);
+
         if (payloadData.get(Constants.REQ_LOGIN).toString().equals("false")) {
             payloadData.put(Constants.USER_ID, srcDevice.getUserId());
             payloadData.put(Constants.DEVICE_ID, srcDevice.getDeviceId());

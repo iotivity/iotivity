@@ -170,8 +170,8 @@ TEST(CAProtocolMessage, CAParseURILongPath)
 
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 113, "oic"
-	 "123456789012345678901234567890123456789012345678901234567890"
-	 "12345678901234567890123456789012345678901234567890"},
+        "123456789012345678901234567890123456789012345678901234567890"
+        "12345678901234567890123456789012345678901234567890"},
         {COAP_OPTION_URI_PATH, 3, "res"},
         {COAP_OPTION_URI_QUERY, 14, "rt=core.sensor"},
         {COAP_OPTION_URI_QUERY, 13, "if=core.mi.ll"},
@@ -201,7 +201,7 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
 
     CAInfo_t inData;
     memset(&inData, 0, sizeof(CAInfo_t));
-    inData.token = "token";
+    inData.token = (CAToken_t)"token";
     inData.tokenLength = strlen(inData.token);
     inData.type = CA_MSG_NONCONFIRM;
 

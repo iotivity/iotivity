@@ -208,7 +208,7 @@ public class MongoDB {
             resPayload.setRt(rt.toString());
         }
         Object href = doc.get(Constants.HREF);
-        if (rt != null) {
+        if (href != null) {
             Object di = doc.get(Constants.DEVICE_ID);
             if (di != null) {
                 resPayload.setHref(href.toString());

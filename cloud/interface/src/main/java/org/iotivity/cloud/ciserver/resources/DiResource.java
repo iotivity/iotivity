@@ -31,6 +31,7 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
 import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -129,6 +130,9 @@ public class DiResource extends Resource {
             if (response.getStatus() == ResponseStatus.CONTENT) {
                 linkPayload = mCbor.parsePayloadFromCbor(response.getPayload(),
                         ArrayList.class);
+                if (linkPayload == null) {
+                    throw new BadRequestException("payload is null");
+                }
                 convertHref(linkPayload);
             }
 

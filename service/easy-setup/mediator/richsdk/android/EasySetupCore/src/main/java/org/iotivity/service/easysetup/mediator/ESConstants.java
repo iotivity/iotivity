@@ -27,13 +27,13 @@ public class ESConstants {
 /**
 * Easysetup defined resoruce types and uris
 */
-    public static final String OC_RSRVD_ES_RES_TYPE_PROV = "ocf.wk.prov";
+    public static final String OC_RSRVD_ES_RES_TYPE_PROV = "oic.wk.prov";
     public static final String OC_RSRVD_ES_URI_PROV = "/ProvisioningResURI";
-    public static final String OC_RSRVD_ES_RES_TYPE_WIFI = "ocf.wk.wifi";
+    public static final String OC_RSRVD_ES_RES_TYPE_WIFI = "oic.wk.wifi";
     public static final String OC_RSRVD_ES_URI_WIFI = "/WiFiProvisioningResURI";
-    public static final String OC_RSRVD_ES_RES_TYPE_CLOUDSERVER = "ocf.wk.cloudserver";
+    public static final String OC_RSRVD_ES_RES_TYPE_CLOUDSERVER = "oic.wk.cloudserver";
     public static final String OC_RSRVD_ES_URI_CLOUDSERVER = "/CloudServerProvisioningResURI";
-    public static final String OC_RSRVD_ES_RES_TYPE_DEVCONF = "ocf.wk.devconf";
+    public static final String OC_RSRVD_ES_RES_TYPE_DEVCONF = "oic.wk.devconf";
     public static final String OC_RSRVD_ES_URI_DEVCONF = "/DevConfProvisioningResURI";
 
 }

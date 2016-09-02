@@ -95,12 +95,12 @@ example_names = [
 	'simpleserver', 'simpleclient',
 	'simpleclientserver',
 	'directpairingclient',
-	'devicediscoveryserver', 'devicediscoveryclient'
+	'devicediscoveryserver', 'devicediscoveryclient',
+	'simpleserverHQ', 'simpleclientHQ',
 	]
 
 if target_os not in ['windows', 'msys_nt']:
 	example_names += [
-		'simpleserverHQ', 'simpleclientHQ',
 		'fridgeserver', 'fridgeclient',
 		'presenceserver', 'presenceclient',
 		'roomserver', 'roomclient',

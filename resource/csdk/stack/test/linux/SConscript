@@ -29,7 +29,7 @@ csdktest_env.PrependUnique(CPPPATH = [
 ])
 
 csdktest_env.PrependUnique(LIBS = [
-    'octbstack',
+    'octbstack', 'connectivity_abstraction'
 ])
 if env.get('SECURED') == '1':
 	if env.get('WITH_TCP') == True:

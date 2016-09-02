@@ -26,7 +26,7 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-# if target_os in ['linux']:
+if target_os in ['linux']:
     # Build sample cloud client project
-    # if env.get('WITH_CLOUD') == True:
-    #    SConscript('samples/client/SConscript')
+    if env.get('WITH_CLOUD') == True:
+       SConscript('samples/client/SConscript')

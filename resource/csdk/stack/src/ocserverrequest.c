@@ -442,7 +442,9 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
         case OC_EH_SLOW: // 2.05
             caResult = CA_CONTENT;
             break;
-        case OC_EH_OK: // 2.04/2.05
+        case OC_EH_OK:
+        case OC_EH_CHANGED: // 2.04
+        case OC_EH_CONTENT: // 2.05
             if (method == OC_REST_POST || method == OC_REST_PUT)
             {
                 caResult = CA_CHANGED;
@@ -454,9 +456,6 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
             break;
         case OC_EH_VALID: // 2.03
             caResult = CA_VALID;
-            break;
-        case OC_EH_CHANGED: // 2.04
-            caResult = CA_CHANGED;
             break;
         // Unsuccessful Client Request
         case OC_EH_UNAUTHORIZED_REQ: // 4.01

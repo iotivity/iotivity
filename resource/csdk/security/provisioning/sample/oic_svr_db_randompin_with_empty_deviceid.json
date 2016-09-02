@@ -53,36 +53,6 @@
                         }
                     ],
                     "permission": 6
-                },
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/sec/pconf",
-                            "rel": "",
-                            "rt": ["oic.r.pconf"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/sec/dpairing",
-                            "rel": "",
-                            "rt": ["oic.r.dpairing"],
-                            "if": ["oic.if.baseline"]
-                        }
-                    ],
-                    "permission": 6
-                },
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/sec/ver",
-                            "rel": "",
-                            "rt": ["oic.r.ver"],
-                            "if": ["oic.if.baseline"]
-                        }
-                    ],
-                    "permission": 2
                 }
             ]
         },

@@ -57,6 +57,16 @@ OCStackResult DeInitCredResource();
 OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
 /**
+ * This method is used by SRM to retrieve credential for given credId.
+ *
+ * @param credId for which credential is required.
+ *
+ * @return reference to @ref OicSecCred_t, if credential is found, else NULL, if credential
+ * not found.
+ */
+OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId);
+
+/**
  * This function converts credential data into CBOR format.
  * Caller needs to invoke 'free' when done using returned string.
  *
@@ -184,15 +194,7 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
  * @brief subject uuid for credential with CA certificates
  */
 #define CA_SUBJECT_ID ("00000000-0000-0000-0000-000000000000")
-/**
- * Adds the new CA to the chain
- *
- * @param cert is the pointer to DER encoded certificate
- *
- * @return ::OC_STACK_OK, cert not NULL and persistent storage gets updated.
- * ::OC_STACK_ERROR, cert is NULL or fails to update persistent storage.
- */
-OCStackResult AddCA(OicSecCert_t * cert);
+void GetPkixInfo(PkiInfo_t * inf);
 #endif
 #ifdef __cplusplus
 }

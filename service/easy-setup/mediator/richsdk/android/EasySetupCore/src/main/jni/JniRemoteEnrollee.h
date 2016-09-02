@@ -67,7 +67,10 @@ class JniRemoteEnrollee
         void getConfiguration(JNIEnv *env, jobject jListener);
         void provisionSecurity(JNIEnv *env, jobject jListener);
         void provisionDeviceProperties(JNIEnv *env, jobject jRepresentation, jobject jListener);
-        void provisionCloudProperties(JNIEnv *env, jobject jRepresentation, jstring jCloudID, jobject jListener);
+        void provisionCloudProperties(JNIEnv *env, jobject jRepresentation,
+                                                            jstring jCloudID,
+                                                            jint jCredID,
+                                                            jobject jListener);
 
         static JniRemoteEnrollee *getJniRemoteEnrollee(JNIEnv *env, jobject thiz);
 
@@ -125,7 +128,7 @@ Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionDevic
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_easysetup_mediator_RemoteEnrollee_nativeProvisionCloudProperties
-(JNIEnv *env, jobject jClass, jobject jRepresentation, jstring jCloudID, jobject jListener);
+(JNIEnv *env, jobject jClass, jobject jRepresentation, jstring jCloudID, jint jCredID, jobject jListener);
 
 #ifdef __cplusplus
 }

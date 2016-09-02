@@ -423,7 +423,7 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
         [& cntForReceivedCallbackWithSuccess](std::shared_ptr< CloudPropProvisioningStatus > status)
         {
             // Will called twice
-            if(status->getESResult() == ES_OK)
+            if(status->getESResult() == ES_OK || status->getESResult() == ES_FOUND_ENROLLEE)
             {
                cntForReceivedCallbackWithSuccess++;
             }

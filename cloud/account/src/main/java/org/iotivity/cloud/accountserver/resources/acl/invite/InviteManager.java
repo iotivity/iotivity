@@ -30,6 +30,7 @@ import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.InviteTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.Device;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
@@ -119,7 +120,7 @@ public class InviteManager {
 
         List<InviteTable> inviteList = getInviteTableList(
                 Constants.KEYFIELD_INVITE_USER, uid);
-        if (inviteList != null) {
+        if (!inviteList.isEmpty()) {
             invitePayloadData = new ArrayList<>();
             for (InviteTable invite : inviteList) {
                 HashMap<String, String> inviteElement = new HashMap<>();
@@ -132,7 +133,7 @@ public class InviteManager {
 
         List<InviteTable> invitedList = getInviteTableList(
                 Constants.KEYFIELD_INVITED_USER, uid);
-        if (invitedList != null) {
+        if (!invitedList.isEmpty()) {
             invitedPayloadData = new ArrayList<>();
             for (InviteTable invited : invitedList) {
                 HashMap<String, String> invitedElement = new HashMap<>();
@@ -186,16 +187,15 @@ public class InviteManager {
     private List<InviteTable> getInviteTableList(String property, String uid) {
 
         InviteTable getInviteTable = new InviteTable();
-        ArrayList<InviteTable> inviteList = null;
+        ArrayList<InviteTable> inviteList = new ArrayList<>();
 
         HashMap<String, Object> condition = new HashMap<>();
         condition.put(property, uid);
         ArrayList<HashMap<String, Object>> mapInviteList = AccountDBManager
                 .getInstance().selectRecord(Constants.INVITE_TABLE, condition);
-        if (!mapInviteList.isEmpty()) {
-            inviteList = new ArrayList<>();
+        if (mapInviteList == null) {
+            throw new BadRequestException("uid is invalid");
         }
-
         for (HashMap<String, Object> mapInviteTable : mapInviteList) {
 
             getInviteTable = mTypeInvite.convertMaptoObject(mapInviteTable,

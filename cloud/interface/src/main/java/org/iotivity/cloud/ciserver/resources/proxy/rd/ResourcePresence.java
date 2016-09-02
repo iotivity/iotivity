@@ -71,6 +71,12 @@ public class ResourcePresence extends Resource {
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
 
+                    if (payloadData == null) {
+                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                                mRequest, ResponseStatus.BAD_REQUEST));
+                        return;
+                    }
+
                     if (mRequest.getUriQuery() != null
                             && mRequest.getUriQueryMap()
                                     .containsKey(Constants.REQ_DEVICE_ID)) {
@@ -144,8 +150,7 @@ public class ResourcePresence extends Resource {
         uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
 
         StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
-        uriPath.append(Constants.PREFIX_OCF + "/");
+        uriPath.append(Constants.PREFIX_OIC + "/");
         uriPath.append(Constants.ACL_URI + "/");
         uriPath.append(Constants.GROUP_URI + "/");
         uriPath.append(srcDevice.getUserId());
