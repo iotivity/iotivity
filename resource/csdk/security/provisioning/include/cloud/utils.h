@@ -21,6 +21,9 @@
 #define CLOUD_UTILS_H
 
 #include "occloudprovisioning.h"
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 extern char *DEFAULT_QUERY;
 extern char *DEFAULT_PREFIX;
@@ -60,5 +63,7 @@ char *getDeviceId();
  * @param[out] list           array of strings structure to clear
  */
 void clearStringArray(stringArray_t *list);
-
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 #endif // CLOUD_UTILS_H

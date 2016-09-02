@@ -27,6 +27,9 @@
 #include "ocprovisioningmanager.h"
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
+#ifdef __WITH_TLS__
+#include "OCCloudProvisioning.h"
+#endif
 
 namespace OC
 {

@@ -50,6 +50,7 @@ mediator_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/resource/csdk/stack/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
+			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/cloud',
 			env.get('SRC_DIR') + '/resource/csdk/logger/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/include',
 			env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
