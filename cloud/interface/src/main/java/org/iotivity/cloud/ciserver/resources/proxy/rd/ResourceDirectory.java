@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -29,35 +30,73 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ClientException;
-import org.iotivity.cloud.base.exception.ClientException.BadResponseException;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
 public class ResourceDirectory extends Resource {
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
+    IRequestChannel                       mRDServer = null;
     IRequestChannel                       mASServer = null;
 
     public ResourceDirectory() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
-
+        mRDServer = ConnectorPool.getConnection("rd");
         mASServer = ConnectorPool.getConnection("account");
     }
 
-    class AccountReceiveHandler implements IResponseEventHandler {
+    @Override
+    public void onDefaultRequestReceived(Device srcDevice, IRequest request)
+            throws ServerException {
+        switch (request.getMethod()) {
+            case POST:
+                HashMap<String, Object> payloadData = mCbor
+                        .parsePayloadFromCbor(request.getPayload(),
+                                HashMap.class);
 
-        IRequestChannel  mRDServer = null;
+                StringBuffer uriPath = new StringBuffer();
+                uriPath.append(Constants.PREFIX_OIC + "/");
+                uriPath.append(Constants.ACL_URI + "/");
+                uriPath.append(Constants.GROUP_URI + "/");
+                uriPath.append(srcDevice.getUserId());
+
+                String di = payloadData.get(Constants.REQ_DEVICE_ID).toString();
+
+                HashMap<String, Object> requestPayload = new HashMap<>();
+
+                requestPayload
+                        .put(Constants.REQ_DEVICE_LIST, Arrays.asList(di));
+                IRequest requestToAS = MessageBuilder.createRequest(
+                        RequestMethod.POST, uriPath.toString(), null,
+                        ContentFormat.APPLICATION_CBOR,
+                        mCbor.encodingPayloadToCbor(requestPayload));
+
+                mASServer.sendRequest(requestToAS, new AccountReceiveHandler(
+                        request, srcDevice));
+                break;
+
+            case DELETE:
+                mRDServer.sendRequest(request, srcDevice);
+                break;
+            default:
+                throw new BadRequestException(request.getMethod()
+                        + " request type is not support");
+        }
+    }
+
+    class AccountReceiveHandler implements IResponseEventHandler {
         private Device   mSrcDevice;
         private IRequest mRequest;
 
         public AccountReceiveHandler(IRequest request, Device srcDevice) {
-            mRDServer = ConnectorPool.getConnection("rd");
             mSrcDevice = srcDevice;
             mRequest = request;
         }
@@ -69,41 +108,140 @@ public class ResourceDirectory extends Resource {
             switch (response.getStatus()) {
                 case CHANGED:
 
-                    mRDServer.sendRequest(mRequest, mSrcDevice);
+                    byte[] convertedPayload = convertPublishHref(mRequest,
+                            mSrcDevice);
+
+                    if (convertedPayload == null) {
+
+                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                                mRequest, ResponseStatus.PRECONDITION_FAILED));
+                    }
+
+                    mRequest = MessageBuilder.modifyRequest(mRequest, null,
+                            null, ContentFormat.APPLICATION_CBOR,
+                            convertedPayload);
+
+                    mRDServer.sendRequest(mRequest, new PublishResponseHandler(
+                            mSrcDevice));
                     break;
 
                 default:
-                    throw new BadResponseException(
-                            response.getStatus().toString()
-                                    + " response type is not supported");
+                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                            mRequest, ResponseStatus.BAD_REQUEST));
             }
+        }
+
+        @SuppressWarnings("unchecked")
+        private byte[] convertPublishHref(IRequest request, Device device) {
+
+            Cbor<HashMap<String, Object>> cbor = new Cbor<>();
+            HashMap<String, Object> payload = cbor.parsePayloadFromCbor(
+                    request.getPayload(), HashMap.class);
+
+            if (verifyPublishPayload(payload) == false) {
+
+                return null;
+            }
+
+            ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) payload
+                    .get(Constants.REQ_LINKS);
+
+            for (HashMap<String, Object> link : links) {
+
+                String href = (String) link.get(Constants.REQ_HREF);
+                href = "/di/" + device.getDeviceId() + href;
+
+                link.put(Constants.REQ_HREF, href);
+            }
+
+            payload.put(Constants.REQ_LINKS, links);
+
+            return cbor.encodingPayloadToCbor(payload);
+        }
+
+        @SuppressWarnings("unchecked")
+        private boolean verifyPublishPayload(HashMap<String, Object> payload) {
+
+            ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) payload
+                    .get(Constants.REQ_LINKS);
+
+            if (links == null || links.isEmpty()) {
+                return false;
+            }
+
+            for (HashMap<String, Object> link : links) {
+
+                String href = (String) link.get(Constants.REQ_HREF);
+
+                if (href == null || href.isEmpty()) {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 
-    @Override
-    public void onDefaultRequestReceived(Device srcDevice, IRequest request)
-            throws ServerException {
+    // handles response to convert href in response payload into original href
+    // when resource published or updated
+    class PublishResponseHandler implements IResponseEventHandler {
 
-        StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
-        uriPath.append(Constants.PREFIX_OCF + "/");
-        uriPath.append(Constants.ACL_URI + "/");
-        uriPath.append(Constants.GROUP_URI + "/");
-        uriPath.append(srcDevice.getUserId());
+        private Device mSrcDevice;
 
-        HashMap<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+        public PublishResponseHandler(Device srcDevice) {
+            mSrcDevice = srcDevice;
+        }
 
-        String di = payloadData.get(Constants.REQ_DEVICE_ID).toString();
+        @Override
+        public void onResponseReceived(IResponse response)
+                throws ClientException {
 
-        HashMap<String, Object> requestPayload = new HashMap<>();
+            switch (response.getStatus()) {
+                case CHANGED:
 
-        requestPayload.put(Constants.REQ_DEVICE_LIST, Arrays.asList(di));
-        IRequest requestToAS = MessageBuilder.createRequest(RequestMethod.POST,
-                uriPath.toString(), null, ContentFormat.APPLICATION_CBOR,
-                mCbor.encodingPayloadToCbor(requestPayload));
+                    response = MessageBuilder.modifyResponse(response,
+                            ContentFormat.APPLICATION_CBOR,
+                            convertResponseHref(response));
 
-        mASServer.sendRequest(requestToAS,
-                new AccountReceiveHandler(request, srcDevice));
+                default:
+
+                    mSrcDevice.sendResponse(response);
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        private byte[] convertResponseHref(IResponse response) {
+
+            Cbor<HashMap<String, Object>> cbor = new Cbor<>();
+            HashMap<String, Object> payload = cbor.parsePayloadFromCbor(
+                    response.getPayload(), HashMap.class);
+
+            ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) payload
+                    .get(Constants.REQ_LINKS);
+
+            for (HashMap<String, Object> link : links) {
+
+                String href = (String) link.get(Constants.REQ_HREF);
+
+                // remove prefix
+                ArrayList<String> hrefSegments = new ArrayList<>(
+                        Arrays.asList(href.split("/")));
+                for (int i = 0; i < 3; i++) {
+                    hrefSegments.remove(0);
+                }
+
+                StringBuilder newHref = new StringBuilder();
+                for (String path : hrefSegments) {
+                    newHref.append("/" + path);
+                }
+
+                link.put(Constants.REQ_HREF, newHref.toString());
+            }
+
+            payload.put(Constants.REQ_LINKS, links);
+
+            return cbor.encodingPayloadToCbor(payload);
+        }
     }
+
 }

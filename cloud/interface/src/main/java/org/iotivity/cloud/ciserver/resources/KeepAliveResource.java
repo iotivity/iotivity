@@ -49,10 +49,10 @@ import org.iotivity.cloud.util.Cbor;
  *
  */
 public class KeepAliveResource extends Resource {
-    private int[]                          mIntervals      = null;
-    private Timer                          mTimer          = new Timer();
-    private Cbor<HashMap<String, Integer>> mCbor           = new Cbor<>();
-    private HashMap<Device, Long>          mConnectionPool = new HashMap<>();
+    private int[]                         mIntervals      = null;
+    private Timer                         mTimer          = new Timer();
+    private Cbor<HashMap<String, Object>> mCbor           = new Cbor<>();
+    private HashMap<Device, Long>         mConnectionPool = new HashMap<>();
 
     public KeepAliveResource(int[] intervals) {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.KEEP_ALIVE_URI));
@@ -82,8 +82,8 @@ public class KeepAliveResource extends Resource {
         srcDevice.sendResponse(response);
     }
 
-    public void startSessionChecker() {
-        mTimer.schedule(new KeepAliveTask(), 30000, 60000);
+    public void startSessionChecker(int startTime, int intervalTime) {
+        mTimer.schedule(new KeepAliveTask(), startTime, intervalTime);
     }
 
     public void stopSessionChecker() {
@@ -99,7 +99,7 @@ public class KeepAliveResource extends Resource {
     private IResponse handleGetPingConfig(IRequest request) {
 
         HashMap<String, int[]> payloadData = new HashMap<>();
-        payloadData.put("inarray", mIntervals);
+        payloadData.put(Constants.REQ_PING_ARRAY, mIntervals);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
@@ -108,13 +108,15 @@ public class KeepAliveResource extends Resource {
 
     private IResponse handlePutPingConfig(Device srcDevice, IRequest request) {
 
-        HashMap<String, Integer> payloadData = mCbor
+        HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        if (payloadData.containsKey("in")) {
-            mConnectionPool.put(srcDevice, System.currentTimeMillis()
-                    + (payloadData.get("in") * (long) 60000));
-        }
+        checkPayloadException(Constants.REQ_PING, payloadData);
+
+        Long pingTime = Integer.valueOf(
+                payloadData.get(Constants.REQ_PING).toString()) * (long) 60000;
+        Long connectionTime = System.currentTimeMillis() + pingTime;
+        mConnectionPool.put(srcDevice, connectionTime);
 
         return MessageBuilder.createResponse(request, ResponseStatus.VALID);
     }
@@ -135,7 +137,7 @@ public class KeepAliveResource extends Resource {
                 Long currentTime = System.currentTimeMillis();
                 for (Device device : map.keySet()) {
                     Long lifeTime = (Long) map.get(device);
-                    if (lifeTime < currentTime) {
+                    if (lifeTime != null && lifeTime < currentTime) {
                         deleteList.add(device);
                     }
                 }

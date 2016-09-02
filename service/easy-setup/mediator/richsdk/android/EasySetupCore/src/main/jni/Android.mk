@@ -42,7 +42,7 @@ include $(PREBUILT_SHARED_LIBRARY)
 endif
 
 include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../../../../../android/android_api/base/libs/armeabi
+OIC_LIB_PATH := ../../../../../../../../../android/android_api/base/libs/$(TARGET_ARCH_ABI)
 LOCAL_MODULE := android-ocstack
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocstack-jni.so
 include $(PREBUILT_SHARED_LIBRARY)
@@ -66,6 +66,7 @@ $(info CPPFLAGSUPDATED=$(LOCAL_CPPFLAGS))
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 		    			$(LOCAL_PATH)/../../../../../inc \
+		                        $(LOCAL_PATH)/../../../../../src \
 					$(LOCAL_PATH)/../../../../../../../inc \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/logger/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/connectivity/common/inc \

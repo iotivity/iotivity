@@ -359,7 +359,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     return OC_STACK_OK;
 }
 
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
 /**
  * Structure to carry certificate data to callback.
  */
@@ -641,7 +641,138 @@ static OCStackApplicationResult provisionCertCB(void *ctx, OCDoHandle UNUSED,
     OICFree(certData);
     return OC_STACK_DELETE_TRANSACTION;
 }
-#endif // __WITH_X509__
+
+OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+        const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback)
+{
+    OIC_LOG(INFO, TAG, "In SRPProvisionTrustCertChain");
+    VERIFY_NON_NULL(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    if (SIGNED_ASYMMETRIC_KEY != type || NULL == type)
+    {
+        OIC_LOG(INFO, TAG, "Invalid key type");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OicSecCred_t *trustCertChainCred = GetCredResourceDataByCredId(credId);
+    if(NULL == trustCertChainCred)
+    {
+        OIC_LOG(ERROR, TAG, "Can not find matched Trust Cert. Chain.");
+        return OC_STACK_NO_RESOURCE;
+    }
+
+    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+    if(!secPayload)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        return OC_STACK_NO_MEMORY;
+    }
+    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+    int secureFlag = 0;
+    if(OC_STACK_OK != CredToCBORPayload(trustCertChainCred, &secPayload->securityData, &secPayload->payloadSize, secureFlag))
+    {
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+        return OC_STACK_NO_MEMORY;
+    }
+    OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        selectedDeviceInfo->endpoint.addr,
+                        selectedDeviceInfo->securePort,
+                        selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_CRED_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SRPProvisionTrustCertChain : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    cbData.cb = &provisionCertCB;
+    CertData_t *certData = (CertData_t *) OICCalloc(1, sizeof(CertData_t));
+    if (NULL == certData)
+    {
+        OICFree(trustCertChainCred);
+        OIC_LOG(ERROR, TAG, "Memory allocation problem");
+        return OC_STACK_NO_MEMORY;
+    }
+    certData->deviceInfo = selectedDeviceInfo;
+    certData->resultCallback = resultCallback;
+    certData->credInfo = trustCertChainCred;
+    certData->numOfResults=0;
+    certData->ctx = ctx;
+
+    int noOfRiCalls = 1;
+    certData->resArr = (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
+    if (certData->resArr == NULL)
+    {
+        DeleteCredList(trustCertChainCred);
+        OICFree(certData);
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+    cbData.context = (void *)certData;
+    cbData.cd = NULL;
+    OCMethod method = OC_REST_POST;
+    OCDoHandle handle = NULL;
+    OIC_LOG(DEBUG, TAG, "Sending Cred info to resource server");
+    OCStackResult ret = OCDoResource(&handle, method, query,
+            &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (ret != OC_STACK_OK)
+    {
+        OICFree(certData->resArr);
+        OICFree(certData);
+    }
+    DeleteCredList(trustCertChainCred);
+
+    VERIFY_SUCCESS(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    return OC_STACK_OK;
+}
+
+OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                            OicEncodingType_t encodingType, uint16_t *credId)
+{
+    OIC_LOG(DEBUG, TAG, "IN SRPSaveTrustCertChain");
+    VERIFY_NON_NULL(TAG, trustCertChain, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
+
+    OCStackResult res = OC_STACK_ERROR;
+
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
+    VERIFY_NON_NULL(TAG, cred, ERROR, OC_STACK_NO_MEMORY);
+
+    memcpy(cred->subject.id, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
+
+    cred->credUsage= (char *)OICCalloc(1, strlen(TRUST_CA)+1 );
+    VERIFY_NON_NULL(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
+    OICStrcpy(cred->credUsage, strlen(TRUST_CA) + 1, TRUST_CA) ;
+
+    cred->credType = SIGNED_ASYMMETRIC_KEY;
+
+    cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
+    VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+    memcpy(cred->optionalData.data, trustCertChain, chainSize);
+    cred->optionalData.len = chainSize;
+    cred->optionalData.encoding = encodingType;
+
+    res = AddCredential(cred);
+    if(res != OC_STACK_OK)
+    {
+        DeleteCredList(cred);
+        return res;
+    }
+    *credId = cred->credId;
+
+    OIC_LOG(DEBUG, TAG, "OUT SRPSaveTrustCertChain");
+
+    return res;
+}
+#endif // __WITH_X509__ || __WITH_TLS__
 
 OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
                                       const OCProvisionDev_t *pDev1,
@@ -2005,7 +2136,12 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
 {
     OIC_LOG(INFO, TAG, "IN SRPRemoveDeviceWithoutDiscovery");
 
-    if (!pTargetDev  || !pOwnedDevList)
+    if (!pOwnedDevList)
+    {
+        OIC_LOG(WARNING, TAG, "SRPRemoveDeviceWithoutDiscovery : Owned Device List is empty");
+        return OC_STACK_CONTINUE;
+    }
+    if (!pTargetDev)
     {
         OIC_LOG(INFO, TAG, "SRPRemoveDeviceWithoutDiscovery : NULL parameters");
         return OC_STACK_INVALID_PARAM;
@@ -2027,15 +2163,14 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
     res = PDMGetLinkedDevices(&pTargetDev->doxm->deviceID, &pLinkedUuidList, &numOfDevices);
     if (OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to get linked devices information");
-        return res;
+        OIC_LOG(WARNING, TAG, "SRPRemoveDeviceWithoutDiscovery : Failed to get linked devices information");
+        return OC_STACK_CONTINUE;
     }
     // if there is no related device, we can skip further process.
     if (0 == numOfDevices)
     {
-        OIC_LOG(DEBUG, TAG, "SRPRemoveDeviceWithoutDiscovery : No linked device found.");
-        res = OC_STACK_CONTINUE;
-        goto error;
+        OIC_LOG(WARNING, TAG, "SRPRemoveDeviceWithoutDiscovery : No linked device found.");
+        return OC_STACK_CONTINUE;
     }
 
     //2. Make a list of devices to send DELETE credential request
@@ -2051,8 +2186,7 @@ OCStackResult SRPRemoveDeviceWithoutDiscovery(void* ctx, const OCProvisionDev_t*
     if (0 == numOfLinkedDev) // This case means, there is linked device but it's not alive now.
     {                       // So we don't have to send request message.
         OIC_LOG(DEBUG, TAG, "SRPRemoveDeviceWithoutDiscovery : No alived & linked device found.");
-        res = OC_STACK_CONTINUE;
-        goto error;
+        return OC_STACK_CONTINUE;
     }
 
     // 3. Prepare RemoveData Context data.

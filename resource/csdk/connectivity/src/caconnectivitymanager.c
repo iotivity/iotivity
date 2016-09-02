@@ -210,16 +210,6 @@ CAResult_t CAregisterTlsCredentialsHandler(CAGetDTLSPskCredentialsHandler getTls
     return CA_STATUS_OK;
 }
 
-void GetPkixInfo(PkiInfo_t * inf)
-{
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    GetDerOwnCert(&inf->crt);
-    GetDerKey(&inf->key);
-    GetDerCaCert(&inf->ca);
-    GetDerCrl(&inf->crl);
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-}
-
 CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);

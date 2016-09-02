@@ -21,9 +21,9 @@
  */
 package org.iotivity.cloud.ciserver;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 
-public class Constants extends OCFConstants {
+public class Constants extends OICConstants {
 
     public static final int    MIN_TO_LIVE         = 10;
 
@@ -34,13 +34,21 @@ public class Constants extends OCFConstants {
     public static final String REQ_LOGIN           = "login";
 
     public static final String ACCESS_TOKEN        = "accesstoken";
-    public static final Object REFRESH_TOKEN       = "refreshtoken";
-    public static final Object EXPIRES_IN          = "expiresin";
+    public static final String REFRESH_TOKEN       = "refreshtoken";
+    public static final String AUTH_CODE           = "authcode";
+    public static final String AUTH_PROVIDER       = "authprovider";
+    public static final String EXPIRES_IN          = "expiresin";
 
     public static final String REQ_GROUP_MASTER_ID = "gmid";
     public static final String REQ_MEMBER_ID       = "mid";
     public static final String REQ_MEMBER_LIST     = "midlist";
     public static final String REQ_DEVICE_ID       = "di";
     public static final String REQ_DEVICE_LIST     = "dilist";
+    public static final String REQ_INVITE          = "invite";
+    public static final String REQ_PING_ARRAY      = "inarray";
+    public static final String REQ_PING            = "in";
+
+    public static final String REQ_LINKS           = "links";
+    public static final String REQ_HREF            = "href";
 
 }

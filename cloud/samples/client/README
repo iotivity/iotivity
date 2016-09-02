@@ -1,14 +1,14 @@
-To build cloud client sample, add WITH_TCP, TARGET_TRANSPORT=IP and WITH_CLOUD option to build command
+To build cloud client samples, add WITH_TCP, TARGET_TRANSPORT=IP, WITH_CLOUD and WITH_MQ option to build command line
 
-ex) scons WITH_TCP=yes TARGET_TRANSPORT=IP WITH_CLOUD=yes
+ex) scons WITH_TCP=yes TARGET_TRANSPORT=IP WITH_CLOUD=yes WITH_MQ=PUB,SUB
 
-Cloud client runs using CoAP over TCP transport. So you should add WITH_TCP option.
+Cloud clients runs over CoAP over TCP transport. So you should declare WITH_TCP option.
 
-Once you get sample which file name is 'cloud_device', you need 'Auth Code' to register resources on cloud with account scenario.
+Once you get samples which file name is 'aircon_controlee' and 'aircon_controller', you need 'Auth Code' to register resources on cloud with account scenario.
 
 Cloud stack has sample github oauth2 adaptor.
 
-So you can instantly test sample using 'Auth Code'.
+So you can instantly test samples using 'Auth Code'.
 
 Paste below URL to your browser
 
@@ -20,6 +20,4 @@ http://www.example.com/oauth_callback/?code=bf9beb5db17ea476fa46
 
 You can get 'Auth Code', value of '?code' query string.
 
-The 'Auth Code' is one time token. So you need other token to run other device.
-
-Account server has pre-coded admin credential which session is '00000000'. You can use this credential for immediate tests.
+The 'Auth Code' is one time token. So you need other token to run each sample.

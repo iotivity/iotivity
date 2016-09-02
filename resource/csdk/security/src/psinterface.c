@@ -558,6 +558,7 @@ exit:
     OICFree(pstatCbor);
     OICFree(doxmCbor);
     OICFree(resetPfCbor);
+    return ret;
 }
 
 /**

@@ -197,6 +197,10 @@ public class Topic {
     public IResponse handlePublishMessage(IRequest request) {
         byte[] payload = request.getPayload();
 
+        if (payload == null) {
+            throw new PreconditionFailedException("payload is null");
+        }
+
         HashMap<String, Object> message = mCbor.parsePayloadFromCbor(payload,
                 HashMap.class);
 

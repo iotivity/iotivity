@@ -134,7 +134,6 @@ CAResult_t CAregisterTlsCredentialsHandler(CAGetDTLSPskCredentialsHandler getTls
 typedef void (*CAgetPkixInfoHandler)(PkiInfo_t * inf);
 
 //TODO
-void GetPkixInfo(PkiInfo_t * inf);
 CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler);
 #endif //__WITH_TLS__
 

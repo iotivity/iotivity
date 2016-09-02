@@ -132,7 +132,7 @@ namespace OIC
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering cloudPropProvisioningStatusHandler");
 
             OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"CloudProvStatus = %d",
-                                                    status->getESCloudState());
+                                                    status->getESResult());
 
             m_cloudPropProvStatusCb(status);
             return;
@@ -243,7 +243,7 @@ namespace OIC
 
             try
             {
-                m_enrolleeSecurity->performOwnershipTransfer();
+                m_enrolleeSecurity->provisionOwnership();
             }
             catch (const std::exception& e)
             {
@@ -411,25 +411,18 @@ namespace OIC
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }
-
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
             try
             {
-                ESResult res = ES_OK;
                 m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
                 if(cloudProp.getCloudID().empty())
                 {
-                    throw ESBadRequestException("Invalid Cloud Server UUID.");
+                    throw ESInvalidParameterException("Invalid Cloud Server UUID.");
                 }
 
-                res = m_enrolleeSecurity->performACLProvisioningForCloudServer(cloudProp.getCloudID());
-
-                if(res == ESResult::ES_ERROR)
-                {
-                    throw ESBadRequestException("Error in provisioning operation!");
-                }
-
+                m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
+                                                                    cloudProp.getCredID());
             }
 
             catch (const std::exception& e)

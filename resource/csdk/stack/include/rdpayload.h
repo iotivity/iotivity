@@ -75,6 +75,7 @@ OCRDPayload *OCRDPayloadCreate();
 /**
  * Initializes RD Publish payload structure.
  *
+ * @param id An unique identifier of publishing device.
  * @param resourceHandles The handle of registered resource.
  * @param nHandles The number of registered resource handles.
  * @param ttl Time to live of the published resource.
@@ -82,7 +83,8 @@ OCRDPayload *OCRDPayloadCreate();
  * @return Allocated memory for the OCRDPayload and NULL in case if
  * failed to allocate memory.
  */
-OCRDPayload *OCRDPublishPayloadCreate(OCResourceHandle resourceHandles[], uint8_t nHandles,
+OCRDPayload *OCRDPublishPayloadCreate(const unsigned char *id,
+                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
                                       uint64_t ttl);
 #endif
 

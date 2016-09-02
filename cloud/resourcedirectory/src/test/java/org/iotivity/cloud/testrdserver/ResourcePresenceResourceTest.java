@@ -87,7 +87,7 @@ public class ResourcePresenceResourceTest {
 
     @Test
     public void testHandleGetObserveRequest_ExistValue() throws Exception {
-        System.out.println("\t------testHandleGetObserveRequest_notExistValue");
+        System.out.println("\t------testHandleGetObserveRequest_ExistValue");
         CoapDevice observerDevice = mock(CoapDevice.class);
         CountDownLatch observerLatch = new CountDownLatch(2);
         // callback mock for observer Device
@@ -111,7 +111,6 @@ public class ResourcePresenceResourceTest {
                     assertTrue(payload.contains("ttl"));
                     assertTrue(payload.contains("trg"));
                     assertTrue(payload.contains("rt"));
-                    assertTrue(payload.contains("di"));
                     assertTrue(payload.contains("href"));
                 }
                 return null;

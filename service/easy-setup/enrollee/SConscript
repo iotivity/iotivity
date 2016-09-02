@@ -120,5 +120,6 @@ if target_os == 'arduino':
 if target_os in ['linux']:
 	SConscript('../sampleapp/enrollee/linux/SConscript')
 	#Build UnitTestcases for Enrollee
-	SConscript('../enrollee/unittests/SConscript')
+	if enrollee_env.get('SECURED') == '0':
+		SConscript('../enrollee/unittests/SConscript')
 

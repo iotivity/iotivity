@@ -553,6 +553,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeRemoteRssiCallback(JNIEnv *e
                                                                        jint rssi,
                                                                        jint status)
 {
+#ifndef TB_LOG
+    (void)rssi;
+    (void)status;
+#endif
     OIC_LOG_V(DEBUG, TAG, "caManagerLeRemoteRssiCallback - rssi : %d: ", rssi);
     OIC_LOG_V(DEBUG, TAG, "caManagerLeRemoteRssiCallback - status : %d: ", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env");

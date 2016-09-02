@@ -3,6 +3,7 @@
 
     <string name="title_message">Message</string>
     <string name="title_bluetooth">Bluetooth</string>
+    <string name="title_cloud">Cloud</string>
     <string name="title_template">Template</string>
 
     <string name="resource_view">[Resource View]</string>
@@ -16,6 +17,10 @@
     <string name="action_onadapterstatechanged">onAdapterStateChanged : </string>
     <string name="action_onconnectionstatechanged">onConnectionStateChanged : </string>
     <string name="action_onclick">onClick : </string>
+
+    <string name="account_view">[Account View]</string>
+    <string name="rd_view">[Resource Directory View]</string>
+    <string name="mq_view">[Message Queue View]</string>
 
     <string name="button_A">Button A</string>
     <string name="button_B">Button B</string>

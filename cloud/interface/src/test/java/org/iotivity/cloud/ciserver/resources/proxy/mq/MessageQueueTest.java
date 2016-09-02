@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.mq;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -11,11 +33,11 @@ import java.util.concurrent.CountDownLatch;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.protocols.IRequest;
-import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -28,26 +50,23 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class MessageQueueTest {
-    private static final String TEST_MQ_BROKER_URI = "/.well-known/ocf/ps/";
-    String                      userId             = "testuser";
-    private CoapDevice          mockDevice         = null;
-    IResponse                   res                = null;
-    IRequest                    req                = null;
-    DeviceServerSystem          deviceServerSystem;
-    final CountDownLatch        latch              = new CountDownLatch(1);
+    private static final String TEST_MQ_BROKER_URI = Constants.MQ_BROKER_FULL_URI;
+    private CoapDevice           mMockDevice        = null;
+    private IRequest             mReq               = null;
+    private DeviceServerSystem   mDeviceServerSystem;
+    private final CountDownLatch mLatch             = new CountDownLatch(1);
     @Mock
-    IRequestChannel             requestChannel;
+    private IRequestChannel      mRequestChannel;
     @InjectMocks
-    MessageQueue                mqHandler          = new MessageQueue();
+    private MessageQueue         mMqHandler         = new MessageQueue();
 
     @Before
     public void setUp() throws Exception {
-        res = null;
-        req = null;
+        mReq = null;
         MockitoAnnotations.initMocks(this);
-        deviceServerSystem = new DeviceServerSystem();
-        deviceServerSystem.addResource(mqHandler);
-        mockDevice = mock(CoapDevice.class);
+        mDeviceServerSystem = new DeviceServerSystem();
+        mDeviceServerSystem.addResource(mMqHandler);
+        mMockDevice = mock(CoapDevice.class);
         // callback requestmsg mock from (IRequestChannel) server
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -55,11 +74,11 @@ public class MessageQueueTest {
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapRequest request = (CoapRequest) args[0];
-                req = request;
-                latch.countDown();
+                mReq = request;
+                mLatch.countDown();
                 return null;
             }
-        }).when(requestChannel).sendRequest(Mockito.any(IRequest.class),
+        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
     }
 
@@ -74,11 +93,11 @@ public class MessageQueueTest {
         request = MessageBuilder.createRequest(RequestMethod.PUT,
                 TEST_MQ_BROKER_URI, null, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(tags));
-        deviceServerSystem.onRequestReceived(mockDevice, request);
+        mDeviceServerSystem.onRequestReceived(mMockDevice, request);
         // assertion : request msg to the AS is identical to the request msg
         // from the client
-        assertTrue(latch.await(1L, SECONDS));
-        assertEquals(request, req);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertEquals(request, mReq);
     }
 
 }

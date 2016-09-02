@@ -53,7 +53,10 @@ if target_os not in ['darwin', 'ios', 'windows', 'msys_nt']:
 oc_logger_libs = []
 
 if target_os in ['windows', 'msys_nt']:
-	# TODO: Add OC_EXPORT API prefixes to enable oc_logger DLL generation.
+	# If oc_logger APIs have to be exported from a Windows DLL, these functions
+	# should be exported from octbstack.dll. Building a separate oc_logger.dll here
+	# would result in duplicated code and data across these two DLLs. Using just
+	# the static oc_logger.lib is good enough for Windows for now.
 	oc_logger_libs += liboc_logger_env.StaticLibrary('oc_logger',
 		['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
 else:

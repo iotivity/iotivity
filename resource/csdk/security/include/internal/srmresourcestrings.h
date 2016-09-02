@@ -115,6 +115,7 @@ extern const char * OIC_JSON_PRIVATEDATA_NAME;
 extern const char * OIC_JSON_PUBDATA_NAME;
 extern const char * OIC_JSON_PRIVDATA_NAME;
 extern const char * OIC_JSON_OPTDATA_NAME;
+extern const char * OIC_JSON_CREDUSAGE_NAME;
 extern const char * OIC_JSON_CRMS_NAME;
 extern const char * OIC_JSON_VALIDITY_NAME;
 extern const char * OIC_JSON_PERIOD_NAME;
@@ -151,6 +152,8 @@ extern const char * OIC_JSON_SEC_V_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 
+extern const char * TRUST_CA;
+
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern OicUuid_t WILDCARD_SUBJECT_B64_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;
@@ -163,6 +166,8 @@ extern const char * OXM_MANUFACTURER_CERTIFICATE;
 
 extern const char * OIC_SEC_ENCODING_BASE64;
 extern const char * OIC_SEC_ENCODING_RAW;
+extern const char * OIC_SEC_ENCODING_PEM;
+extern const char * OIC_SEC_ENCODING_DER;
 
 extern const char * OIC_SEC_TRUE;
 extern const char * OIC_SEC_FALSE;

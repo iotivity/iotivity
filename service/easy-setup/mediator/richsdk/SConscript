@@ -155,6 +155,7 @@ if target_os in ['android']:
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]
 ################################################ ######################
-if target_os == 'linux':
-    SConscript('unittests/SConscript')
+if env.get('SECURED') == '0':
+   if target_os == 'linux':
+       SConscript('unittests/SConscript')
 

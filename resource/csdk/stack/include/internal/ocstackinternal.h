@@ -298,13 +298,13 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
-OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
-OC_EXPORT_TEST OCStackResult encodeAddressForRFC6874(char * outputAddress,
-                                                     size_t outputSize,
-                                                     const char * inputAddress);
+OCStackResult encodeAddressForRFC6874(char * outputAddress,
+                                      size_t outputSize,
+                                      const char * inputAddress);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 

@@ -1,7 +1,7 @@
 Name: iotivity
 Version: 1.1.1
 Release: 0
-Summary: IoT Connectivity sponsored by the OIC
+Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity/Other
 License: Apache-2.0
 URL: https://www.iotivity.org/
@@ -37,10 +37,9 @@ Requires(post): /sbin/ldconfig
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?SECURED: %define SECURED 1}
 %{!?LOGGING: %define LOGGING True}
-%{!?ROUTING: %define ROUTING GW}
+%{!?ROUTING: %define ROUTING EP}
+%{!?WITH_TCP: %define WITH_TCP true}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
-%{!?ES_ROLE: %define ES_ROLE enrollee}
-%{!?ES_SOFTAP_MODE: %define ES_SOFTAP_MODE MEDIATOR_SOFTAP}
 %{!?VERBOSE: %define VERBOSE 1}
 
 %description
@@ -110,9 +109,9 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 scons -j2 --prefix=%{_prefix} \
 	VERBOSE=%{VERBOSE} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
-	LIB_INSTALL_DIR=%{_libdir}
+	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
+
 
 
 %install
@@ -120,9 +119,9 @@ rm -rf %{buildroot}
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
-	LIB_INSTALL_DIR=%{_libdir}
+	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
+
 
 
 # For Example

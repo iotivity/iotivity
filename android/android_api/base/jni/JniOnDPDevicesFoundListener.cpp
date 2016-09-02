@@ -94,7 +94,7 @@ JniOnDPDevicesFoundListener::~JniOnDPDevicesFoundListener()
 
 void JniOnDPDevicesFoundListener::directPairingDevicesCallback(PairedDevices paringDevicesList, DPFunc func)
 {
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
     if (nullptr == env)
     {

@@ -104,54 +104,50 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo);
     if (FD > caglobals.tcp.maxfd) \
         caglobals.tcp.maxfd = FD;
 
-#define REALLOC(buffer, length) \
-{ \
-    unsigned char *tmpBuf = OICRealloc(buffer, length); \
-    if (!tmpBuf) \
-    { \
-        OIC_LOG(ERROR, TAG, "out of memory"); \
-        goto error; \
-    } \
-    buffer = tmpBuf; \
-}
-
 /**
- * Read length amount of data from socket fd
- * Made a few recv calls if required
+ * Read length amount of data from socket item->fd
+ * Can read less data length then requested
+ * Actual read length added to item->len variable
  *
- * @param[in]  fd     - socket
- * @param[out] item   - used to update received message length
- * @param[out] data   - buffer to store data
- * @param[in]  length - length of data required to read
- * @param[in]  flags  - additional info about socket
+ * @param[in/out] item - used socket, buffer and to update received message length
+ * @param[in]  length  - length of data required to read
+ * @param[in]  flags   - additional info about socket
+ * @return             - CA_STATUS_OK or appropriate error code
  */
-#define RECV(fd, item, data, length, flags) \
-{ \
-    int remain_len = length; \
-    int len = 0; \
-    while (remain_len > 0) \
-    { \
-        len = recv(fd, data + item->len, remain_len, flags); \
-        OIC_LOG_V(DEBUG, TAG, "recv len = %d", len); \
-        OIC_LOG_BUFFER(DEBUG, TAG, data + item->len, len); \
-        if (2 == len && 0 == data[item->len] && 0 == data[item->len + 1]) \
-        { \
-            OIC_LOG(DEBUG, TAG, "received RESET message. Skip it"); \
-            continue; \
-        } \
-        if (len < 0) \
-        { \
-            OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno)); \
-            goto error; \
-        } \
-        else if (0 == len) \
-        { \
-            OIC_LOG(INFO, TAG, "Received disconnect from peer. Close connection"); \
-            goto error; \
-        } \
-        item->len += len; \
-        remain_len -= len; \
-    } \
+static CAResult_t CARecv(CATCPSessionInfo_t *item, size_t length, int flags)
+{
+    if (NULL == item)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    //skip read operation if requested zero length
+    if (0 == length)
+    {
+        return CA_STATUS_OK;
+    }
+
+    unsigned char *buffer = item->data + item->len;
+
+    int len = recv(item->fd, buffer, length, flags);
+
+    if (len < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
+        return CA_RECEIVE_FAILED;
+    }
+    else if (0 == len)
+    {
+        OIC_LOG(INFO, TAG, "Received disconnect from peer. Close connection");
+        return CA_DESTINATION_DISCONNECTED;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "recv len = %d", len);
+    OIC_LOG_BUFFER(DEBUG, TAG, buffer, len);
+
+    item->len += len;
+
+    return CA_STATUS_OK;
 }
 
 static void CATCPDestroyMutex()
@@ -365,15 +361,15 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 }
 
 #ifdef __WITH_TLS__
-static bool CAIsTlsMessage(const CATCPSessionInfo_t * recvinfo)
+static bool CAIsTlsMessage(const unsigned char* data, size_t length)
 {
-    if (recvinfo->data == NULL || recvinfo->len == 0)
+    if (NULL == data || 0 == length)
     {
         OIC_LOG_V(ERROR, TAG, "%s: null input param", __func__);
         return false;
     }
 
-    unsigned char first_byte = recvinfo->data[0];
+    unsigned char first_byte = data[0];
 
     //TLS Plaintext has four types: change_cipher_spec = [14], alert = [15],
     //handshake = [16], application_data = [17] in HEX
@@ -392,9 +388,183 @@ static bool CAIsTlsMessage(const CATCPSessionInfo_t * recvinfo)
 }
 #endif
 
+/**
+ * Clean socket state data
+ *
+ * @param[in/out] item - socket state data
+ */
+static void CACleanData(CATCPSessionInfo_t *svritem)
+{
+    if (svritem)
+    {
+        OICFree(svritem->data);
+        svritem->data = NULL;
+        svritem->len = 0;
+        svritem->totalLen = 0;
+        svritem->protocol = UNKNOWN;
+    }
+}
+
+/**
+ * Read message header from socket item->fd
+ *
+ * @param[in/out] item - used socket, buffer, current received message length and protocol
+ * @return             - CA_STATUS_OK or appropriate error code
+ */
+static CAResult_t CAReadHeader(CATCPSessionInfo_t *svritem)
+{
+    CAResult_t res = CA_STATUS_OK;
+
+    if (NULL == svritem)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    if (NULL == svritem->data)
+    {
+        // allocate memory for message header (CoAP header size because it is bigger)
+        svritem->data = (unsigned char *) OICCalloc(1, COAP_MAX_HEADER_SIZE);
+        if (NULL == svritem->data)
+        {
+            OIC_LOG(ERROR, TAG, "OICCalloc - out of memory");
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+    }
+
+    //read data (assume TLS header) from remote device.
+    //use TLS_HEADER_SIZE - svritem->len because even header can be read partially
+    res = CARecv(svritem, TLS_HEADER_SIZE - svritem->len, 0);
+
+    //return if any error occurs
+    if (CA_STATUS_OK != res)
+    {
+        return res;
+    }
+
+    //if not enough data received - read them on next CAReceiveMessage() call
+    if (svritem->len < TLS_HEADER_SIZE)
+    {
+        OIC_LOG(DEBUG, TAG, "Header received partially. Wait for rest header data");
+        return CA_STATUS_OK;
+    }
+
+    //if enough data received - parse header
+#ifdef __WITH_TLS__
+    if (CAIsTlsMessage(svritem->data, svritem->len))
+    {
+        svritem->protocol = TLS;
+
+        //[3][4] bytes in tls header are tls payload length
+        unsigned int message_length = (unsigned int)((svritem->data[3] << 8) | svritem->data[4]);
+        OIC_LOG_V(DEBUG, TAG, "%s: message_length = %d", __func__, message_length);
+
+        svritem->totalLen = message_length + TLS_HEADER_SIZE;
+    }
+    else
+#endif
+    {
+        svritem->protocol = COAP;
+
+        //seems CoAP data received. read full coap header.
+        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(svritem->data[0] >> 4);
+
+        size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
+
+        if (svritem->len < headerLen)
+        {
+            //read required bytes to have full CoAP header
+            //it should be 1 byte (COAP_MAX_HEADER_SIZE - TLS_HEADER_SIZE)
+            res = CARecv(svritem, headerLen - svritem->len, 0);
+
+            //return if any error occurs
+            if (CA_STATUS_OK != res)
+            {
+                return res;
+            }
+
+            //if not enough data received - read them on next CAReceiveMessage() call
+            if (svritem->len < headerLen)
+            {
+                OIC_LOG(DEBUG, TAG, "CoAP header received partially. Wait for rest header data");
+                return CA_STATUS_OK;
+            }
+        }
+
+        //calculate CoAP message length
+        svritem->totalLen = CAGetTotalLengthFromHeader(svritem->data);
+    }
+
+    unsigned char *buffer = OICRealloc(svritem->data, svritem->totalLen);
+    if (NULL == buffer)
+    {
+        OIC_LOG(ERROR, TAG, "OICRealloc - out of memory");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+    svritem->data = buffer;
+
+    return CA_STATUS_OK;
+}
+
+/**
+ * Read message payload from socket item->fd
+
+ *
+ * @param[in/out] item - used socket, buffer and to update received message length
+ * @return             - CA_STATUS_OK or appropriate error code
+ */
+static CAResult_t CAReadPayload(CATCPSessionInfo_t *svritem)
+{
+    if (NULL == svritem)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    return CARecv(svritem, svritem->totalLen - svritem->len, 0);
+}
+
+/**
+ * Pass received data to app layer depending on protocol
+ *
+ * @param[in/out] item - used buffer, received message length and protocol
+ */
+static void CAExecuteRequest(CATCPSessionInfo_t *svritem)
+{
+    if (NULL == svritem)
+    {
+        return;
+    }
+
+    switch(svritem->protocol)
+    {
+        case COAP:
+        {
+            if (g_packetReceivedCallback)
+            {
+                g_packetReceivedCallback(&svritem->sep, svritem->data, svritem->len);
+            }
+        }
+        break;
+        case TLS:
+#ifdef __WITH_TLS__
+        {
+            int ret = CAdecryptTls(&svritem->sep, (uint8_t *)svritem->data, svritem->len);
+
+            OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptTls returned %d", __func__, ret);
+        }
+        break;
+#endif
+        case UNKNOWN: /* pass through */
+        default:
+            OIC_LOG(ERROR, TAG, "unknown application protocol. Ignore it");
+        break;
+    }
+}
+
 static void CAReceiveMessage(int fd)
 {
-    // #1. get remote device information from file descriptor.
+    CAResult_t res = CA_STATUS_OK;
+
+    //get remote device information from file descriptor.
     size_t index = 0;
     CATCPSessionInfo_t *svritem = CAGetSessionInfoFromFD(fd, &index);
     if (!svritem)
@@ -403,73 +573,29 @@ static void CAReceiveMessage(int fd)
         return;
     }
 
-    // #2. allocate memory for message header (CoAP header size because it is bigger)
-    svritem->data = (unsigned char *) OICCalloc(1, COAP_MAX_HEADER_SIZE);
-    if (!svritem->data)
+    //totalLen filled only when header fully read and parsed
+    if (0 == svritem->totalLen)
     {
-        OIC_LOG(ERROR, TAG, "out of memory");
-        goto error;
-    }
-
-    // #3. read data (assume TLS header) from remote device.
-    RECV(fd, svritem, svritem->data, TLS_HEADER_SIZE, 0);
-
-#ifdef __WITH_TLS__
-    if (CAIsTlsMessage(svritem))
-    {
-        // #4.1 get tls body length from tls header. [3][4] bytes are length of tls body in header
-        unsigned int message_length = (unsigned int)((svritem->data[3] << 8) | svritem->data[4]);
-        OIC_LOG_V(DEBUG, TAG, "%s: message_length = %d", __func__, message_length);
-
-        REALLOC(svritem->data, message_length + TLS_HEADER_SIZE);
-
-        RECV(fd, svritem, svritem->data, message_length, 0);
-
-        int ret = CAdecryptTls(&svritem->sep, (uint8_t *)svritem->data, svritem->len);
-
-        OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptTls returned %d", __func__, ret);
-        goto success;
+        res = CAReadHeader(svritem);
     }
     else
-#endif
     {
-        // #4.2 Seems CoAP data received. read full coap header.
-        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(svritem->data[0] >> 4);
+        res = CAReadPayload(svritem);
 
-        size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
-
-        if (svritem->len < headerLen)
+        //when successfully read all required data - pass them to upper layer.
+        if (CA_STATUS_OK == res && svritem->len == svritem->totalLen)
         {
-            // read required bytes to have full CoAP header
-            // usually it is 1 bytes (COAP_MAX_HEADER_SIZE - TLS_HEADER_SIZE)
-            RECV(fd, svritem, svritem->data, headerLen - svritem->len, 0);
+            CAExecuteRequest(svritem);
+            CACleanData(svritem);
         }
-
-        // #4.3 Calculate CoAP message length and read it
-        size_t total_length = CAGetTotalLengthFromHeader(svritem->data);
-        REALLOC(svritem->data, total_length);
-
-        RECV(fd, svritem, svritem->data, total_length - svritem->len, 0);
-
-        // #4.4. pass the received data information to upper layer.
-        if (g_packetReceivedCallback)
-        {
-            svritem->sep.endpoint.adapter = CA_ADAPTER_TCP;
-            g_packetReceivedCallback(&svritem->sep, svritem->data, svritem->len);
-        }
-        goto success;
     }
 
-    error:
-    CADisconnectTCPSession(svritem, index);
-
-    success:
-    // initialize data info to receive next message.
-    OICFree(svritem->data);
-    svritem->data = NULL;
-    svritem->len = 0;
-
-    return;
+    //disconnect session and clean-up data if any error occurs
+    if (res != CA_STATUS_OK)
+    {
+        CADisconnectTCPSession(svritem, index);
+        CACleanData(svritem);
+    }
 }
 
 static void CAWakeUpForReadFdsUpdate(const char *host)
@@ -818,6 +944,42 @@ void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler
     g_connectionCallback = connHandler;
 }
 
+static size_t CACheckPayloadLength(const void *data, size_t dlen)
+{
+    VERIFY_NON_NULL_RET(data, TAG, "data", -1);
+
+    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+            ((unsigned char *)data)[0] >> 4);
+
+    coap_pdu_t *pdu = coap_new_pdu(transport, dlen);
+    if (!pdu)
+    {
+        OIC_LOG(ERROR, TAG, "outpdu is null");
+        return 0;
+    }
+
+    int ret = coap_pdu_parse((unsigned char *) data, dlen, pdu, transport);
+    if (0 >= ret)
+    {
+        OIC_LOG(ERROR, TAG, "pdu parse failed");
+        coap_delete_pdu(pdu);
+        return 0;
+    }
+
+    size_t payloadLen = 0;
+    size_t headerSize = coap_get_tcp_header_length_for_transport(transport);
+    OIC_LOG_V(DEBUG, TAG, "headerSize : %zu, pdu length : %d",
+              headerSize, pdu->length);
+    if (pdu->length > headerSize)
+    {
+        payloadLen = (unsigned char *) pdu->hdr + pdu->length - pdu->data;
+    }
+
+    OICFree(pdu);
+
+    return payloadLen;
+}
+
 static void sendData(const CAEndpoint_t *endpoint, const void *data,
                      size_t dlen, const char *fam)
 {
@@ -839,7 +1001,22 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         }
     }
 
-    // #2. check connection state
+    // #2. check payload length
+#ifdef __WITH_TLS__
+    if (false == CAIsTlsMessage(data, dlen))
+#endif
+    {
+        size_t payloadLen = CACheckPayloadLength(data, dlen);
+        // if payload length is zero, disconnect from TCP server
+        if (!payloadLen)
+        {
+            OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
+            CADisconnectTCPSession(svritem, index);
+            return;
+        }
+    }
+
+    // #3. check connection state
     if (svritem->fd < 0)
     {
         // if file descriptor value is wrong, remove TCP Server info from list
@@ -874,6 +1051,9 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         remainLen -= len;
     } while (remainLen > 0);
 
+#ifndef TB_LOG
+    (void)fam;
+#endif
     OIC_LOG_V(INFO, TAG, "unicast %stcp sendTo is successful: %zu bytes", fam, dlen);
 }
 

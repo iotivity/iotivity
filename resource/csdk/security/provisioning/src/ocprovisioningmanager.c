@@ -335,14 +335,14 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
     cred = GetCredResourceData(&pTargetDev->doxm->deviceID);
     if (cred == NULL)
     {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to get credential of remove device.");
+        OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to get credential of remove device.");
         goto error;
     }
 
     res = RemoveCredential(&cred->subject);
     if (res != OC_STACK_RESOURCE_DELETED)
     {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to remove credential.");
+        OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to remove credential.");
         goto error;
     }
 
@@ -458,7 +458,11 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
                             OCProvisionResultCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "IN OCRemoveDeviceWithUuid");
+
     OCStackResult res = OC_STACK_ERROR;
+    OCProvisionDev_t* pTargetDev = NULL;
+    bool discoverdFlag = false;
+
     if (!pTargetUuid || 0 == waitTimeForOwnedDeviceDiscovery)
     {
         OIC_LOG(INFO, TAG, "OCRemoveDeviceWithUuid : Invalied parameters");
@@ -470,6 +474,13 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         return OC_STACK_INVALID_CALLBACK;
     }
 
+    char* strUuid = NULL;
+    if(OC_STACK_OK != ConvertUuidToStr(pTargetUuid, &strUuid))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to covert UUID to String.");
+        goto error;
+    }
+
     OCProvisionDev_t* pOwnedDevList = NULL;
     //2. Find owned device from the network
     res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
@@ -479,7 +490,6 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         goto error;
     }
 
-    OCProvisionDev_t* pTargetDev = NULL;
     LL_FOREACH(pOwnedDevList, pTargetDev)
     {
         if(memcmp(&pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id)) == 0)
@@ -488,66 +498,81 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         }
     }
 
-    char* strUuid = NULL;
-    if(OC_STACK_OK != ConvertUuidToStr(pTargetUuid, &strUuid))
+    if(NULL == pTargetDev)
     {
-        OIC_LOG(WARNING, TAG, "Failed to covert UUID to String.");
-        goto error;
-    }
+        OIC_LOG_V(WARNING, TAG, "Can not find [%s] on the network.", strUuid);
+        OIC_LOG(WARNING, TAG, "Device information will be deleted from local and other devices.");
 
-    if(pTargetDev)
-    {
-        OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
-        OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
-
-        // Send DELETE requests to linked devices
-        OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
-        resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
-        if (OC_STACK_OK != resReq)
+        pTargetDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
+        if(NULL == pTargetDev)
         {
-            if (OC_STACK_CONTINUE == resReq)
-            {
-                OIC_LOG(DEBUG, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
-            }
-            else
-            {
-                OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
-                res = resReq;
-                OICFree(strUuid);
-                goto error;
-            }
-        }
-
-        res = RemoveDeviceInfoFromLocal(pTargetDev);
-        if(OC_STACK_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Filed to remove the device information from local.");
-            OICFree(strUuid);
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
             goto error;
         }
 
-        if(OC_STACK_CONTINUE == resReq)
+        pTargetDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+        if(NULL == pTargetDev->doxm)
         {
-            /**
-              * If there is no linked device, PM does not send any request.
-              * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
-              */
-            if(resultCallback)
-            {
-                resultCallback(ctx, 0, NULL, false);
-            }
-            res = OC_STACK_OK;
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
+            goto error;
         }
+
+        //in case of can't find target device, the device id required only.
+        memcpy(pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id));
     }
     else
     {
-        OIC_LOG_V(WARNING, TAG, "OCRemoveDeviceWithUuid : Failed to find the [%s] on the network.", strUuid);
-        res = OC_STACK_ERROR;
+        discoverdFlag = true;
+        OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
+    }
+
+    OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
+
+    // Send DELETE requests to linked devices
+    OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
+    resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
+    if (OC_STACK_OK != resReq)
+    {
+        if (OC_STACK_CONTINUE == resReq)
+        {
+            OIC_LOG(DEBUG, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
+            res = resReq;
+            goto error;
+        }
+    }
+
+    res = RemoveDeviceInfoFromLocal(pTargetDev);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Filed to remove the device information from local.");
+        goto error;
+    }
+
+    if(OC_STACK_CONTINUE == resReq)
+    {
+        /**
+          * If there is no linked device, PM does not send any request.
+          * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
+          */
+        if(resultCallback)
+        {
+            resultCallback(ctx, 0, NULL, false);
+        }
+        res = OC_STACK_OK;
     }
 
 error:
     OICFree(strUuid);
     PMDeleteDeviceList(pOwnedDevList);
+    if(pTargetDev && false == discoverdFlag)
+    {
+        OICFree(pTargetDev->doxm);
+        OICFree(pTargetDev);
+    }
     OIC_LOG(INFO, TAG, "OUT OCRemoveDeviceWithUuid");
     return res;
 }
@@ -908,6 +933,36 @@ OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
         return res;
     }
 
+    // Code to compare devices in unowned list and deviceid from DB
+    // (In case of hard reset of the device)
+    OCProvisionDev_t* pUnownedList = unownedDevice;
+    while (pUnownedList && uuidList)
+    {
+        OCUuidList_t *tmp1 = NULL,*tmp2=NULL;
+        LL_FOREACH_SAFE(uuidList, tmp1, tmp2)
+        {
+            if(0 == memcmp(tmp1->dev.id, pUnownedList->doxm->deviceID.id,
+                            sizeof(pUnownedList->doxm->deviceID.id)))
+            {
+                OIC_LOG_V(INFO, TAG, "OCGetDevInfoFromNetwork : \
+                            Removing device id = %s in PDM and dat.", pUnownedList->doxm->deviceID.id);
+                if (OC_STACK_OK != PDMDeleteDevice(&pUnownedList->doxm->deviceID))
+                {
+                    OIC_LOG(ERROR, TAG, "OCGetDevInfoFromNetwork : \
+                            Failed to remove device in PDM.");
+                }
+                //remove the cred entry from dat file
+                if (OC_STACK_OK != RemoveDeviceInfoFromLocal(pUnownedList))
+                {
+                    OIC_LOG(ERROR, TAG, "OCGetDevInfoFromNetwork : \
+                            Failed to remove cred entry device in dat file.");
+                }
+                LL_DELETE(uuidList, tmp1);
+                OICFree(tmp1);
+            }
+        }
+        pUnownedList = pUnownedList->next;
+    }
     // Code to compare devices in owned list and deviceid from DB.
     OCProvisionDev_t* pCurDev = ownedDevice;
     size_t deleteCnt = 0;
@@ -994,7 +1049,7 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
 }
 
 
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
 /**
  * this function sends CRL information to resource.
  *
@@ -1010,5 +1065,40 @@ OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
 {
     return SRPProvisionCRL(ctx, selectedDeviceInfo, crl, resultCallback);
 }
-#endif // __WITH_X509__
+
+/**
+ * function to provision Trust certificate chain to devices.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] credId CredId of trust certificate chain to be provisioned to the device.
+ * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+                                      const OCProvisionDev_t *selectedDeviceInfo,
+                                      OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionTrustCertChain(ctx, type, credId,
+                                      selectedDeviceInfo, resultCallback);
+}
+
+/**
+ * function to save Trust certificate chain into Cred of SVR.
+ *
+ * @param[in] trustCertChain Trust certificate chain to be saved in Cred of SVR.
+ * @param[in] chainSize Size of trust certificate chain to be saved in Cred of SVR
+ * @param[in] encodingType Encoding type of trust certificate chain to be saved in Cred of SVR
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                    OicEncodingType_t encodingType, uint16_t *credId)
+{
+    return SRPSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
+}
+
+#endif // __WITH_X509__ || __WITH_TLS__
 

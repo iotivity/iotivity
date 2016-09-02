@@ -2274,6 +2274,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     }
     else
     {
+#ifndef TB_LOG
+        (void)status;
+#endif
         OIC_LOG_V(DEBUG, TAG, "LE Connection state is [newState : %d, status %d]", newState,
                 status);
     }
@@ -2288,7 +2291,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerServiceAddedCallback(JNIE
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(gattService, TAG, "gattService");
-
+#ifndef TB_LOG
+    (void)status;
+#endif
     OIC_LOG_V(DEBUG, TAG, "Gatt Service Added Callback(%d)", status);
 }
 

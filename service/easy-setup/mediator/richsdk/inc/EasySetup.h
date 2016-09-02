@@ -54,7 +54,7 @@ namespace OIC
              *        discovered in a network. The OCResource object can be obtained by calling
              *        OCPlatform.findResource() API. What resource you have to discover with
              *        the OCPlatform.findResource() API is a "provisioning" resource with a certain
-             *        resource type, i.e. ocf.wk.prov
+             *        resource type, i.e. oic.wk.prov
              *
              * @throws ESBadRequestException If createEnrolleeDevice is invoked with the same
              *         provisioning information.

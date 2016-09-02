@@ -593,7 +593,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 {
     LOGI("JNI_OnUnload");
-    JNIEnv* env;
+    JNIEnv* env = nullptr;
 
     if (vm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
@@ -601,47 +601,49 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         return;
     }
 
-
-    env->DeleteGlobalRef(g_cls_Integer);
-    env->DeleteGlobalRef(g_cls_int1DArray);
-    env->DeleteGlobalRef(g_cls_int2DArray);
-    env->DeleteGlobalRef(g_cls_Double);
-    env->DeleteGlobalRef(g_cls_double1DArray);
-    env->DeleteGlobalRef(g_cls_double2DArray);
-    env->DeleteGlobalRef(g_cls_Boolean);
-    env->DeleteGlobalRef(g_cls_boolean1DArray);
-    env->DeleteGlobalRef(g_cls_boolean2DArray);
-    env->DeleteGlobalRef(g_cls_String);
-    env->DeleteGlobalRef(g_cls_String1DArray);
-    env->DeleteGlobalRef(g_cls_String2DArray);
-    env->DeleteGlobalRef(g_cls_LinkedList);
-    env->DeleteGlobalRef(g_cls_Map);
-    env->DeleteGlobalRef(g_cls_MapEntry);
-    env->DeleteGlobalRef(g_cls_Set);
-    env->DeleteGlobalRef(g_cls_Iterator);
-    env->DeleteGlobalRef(g_cls_HashMap);
-    env->DeleteGlobalRef(g_cls_OcResource);
-    env->DeleteGlobalRef(g_cls_OcException);
-    env->DeleteGlobalRef(g_cls_OcRepresentation);
-    env->DeleteGlobalRef(g_cls_OcRepresentation1DArray);
-    env->DeleteGlobalRef(g_cls_OcRepresentation2DArray);
-    env->DeleteGlobalRef(g_cls_OcResourceRequest);
-    env->DeleteGlobalRef(g_cls_OcResourceResponse);
-    env->DeleteGlobalRef(g_cls_OcResourceHandle);
-    env->DeleteGlobalRef(g_cls_OcPresenceHandle);
-    env->DeleteGlobalRef(g_cls_OcRequestHandle);
-    env->DeleteGlobalRef(g_cls_OcPresenceStatus);
-    env->DeleteGlobalRef(g_cls_OcHeaderOption);
-    env->DeleteGlobalRef(g_cls_ObservationInfo);
-    env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
-    env->DeleteGlobalRef(g_cls_OcSecureResource);
-    env->DeleteGlobalRef(g_cls_OcProvisionResult);
-    env->DeleteGlobalRef(g_cls_OcDirectPairDevice);
+    if (env)
+    {
+        env->DeleteGlobalRef(g_cls_Integer);
+        env->DeleteGlobalRef(g_cls_int1DArray);
+        env->DeleteGlobalRef(g_cls_int2DArray);
+        env->DeleteGlobalRef(g_cls_Double);
+        env->DeleteGlobalRef(g_cls_double1DArray);
+        env->DeleteGlobalRef(g_cls_double2DArray);
+        env->DeleteGlobalRef(g_cls_Boolean);
+        env->DeleteGlobalRef(g_cls_boolean1DArray);
+        env->DeleteGlobalRef(g_cls_boolean2DArray);
+        env->DeleteGlobalRef(g_cls_String);
+        env->DeleteGlobalRef(g_cls_String1DArray);
+        env->DeleteGlobalRef(g_cls_String2DArray);
+        env->DeleteGlobalRef(g_cls_LinkedList);
+        env->DeleteGlobalRef(g_cls_Map);
+        env->DeleteGlobalRef(g_cls_MapEntry);
+        env->DeleteGlobalRef(g_cls_Set);
+        env->DeleteGlobalRef(g_cls_Iterator);
+        env->DeleteGlobalRef(g_cls_HashMap);
+        env->DeleteGlobalRef(g_cls_OcResource);
+        env->DeleteGlobalRef(g_cls_OcException);
+        env->DeleteGlobalRef(g_cls_OcRepresentation);
+        env->DeleteGlobalRef(g_cls_OcRepresentation1DArray);
+        env->DeleteGlobalRef(g_cls_OcRepresentation2DArray);
+        env->DeleteGlobalRef(g_cls_OcResourceRequest);
+        env->DeleteGlobalRef(g_cls_OcResourceResponse);
+        env->DeleteGlobalRef(g_cls_OcResourceHandle);
+        env->DeleteGlobalRef(g_cls_OcPresenceHandle);
+        env->DeleteGlobalRef(g_cls_OcRequestHandle);
+        env->DeleteGlobalRef(g_cls_OcPresenceStatus);
+        env->DeleteGlobalRef(g_cls_OcHeaderOption);
+        env->DeleteGlobalRef(g_cls_ObservationInfo);
+        env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
+        env->DeleteGlobalRef(g_cls_OcSecureResource);
+        env->DeleteGlobalRef(g_cls_OcProvisionResult);
+        env->DeleteGlobalRef(g_cls_OcDirectPairDevice);
 #ifdef WITH_CLOUD
-    env->DeleteGlobalRef(g_cls_OcAccountManager);
+        env->DeleteGlobalRef(g_cls_OcAccountManager);
 #endif
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl);
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl_ace);
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl_resr);
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl_validity);
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl);
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl_ace);
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl_resr);
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl_validity);
+    }
 }

@@ -44,8 +44,8 @@ public class SessionResource extends Resource {
     private AccountManager                mAsManager = new AccountManager();
 
     public SessionResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI, Constants.SESSION_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
+                Constants.SESSION_URI));
     }
 
     @Override
@@ -71,16 +71,11 @@ public class SessionResource extends Resource {
     private IResponse handlePostSigninout(IRequest request)
             throws ServerException {
 
-        // exception handle before getting payload
-        if (request.getPayload() == null) {
-            throw new BadRequestException("payload is empty");
-        }
-
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
         if (payloadData == null) {
-            throw new BadRequestException("CBOR parsing failed");
+            throw new BadRequestException("payload is null");
         }
 
         HashMap<String, Object> responsePayload = null;

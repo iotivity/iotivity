@@ -169,6 +169,16 @@ namespace OIC
             }
 
             /**
+             * Set CloudServer's credential ID of certificate
+             *
+             * @param credID Cloud Interface server's credential ID of certificate
+             */
+            void setCredID(int credID)
+            {
+                m_credID = credID;
+            }
+
+            /**
              * Get an auth code to be delivered.
              *
              * @return an auth code to be delivered.
@@ -221,6 +231,16 @@ namespace OIC
             }
 
             /**
+             * Get a CI server's credential ID of certificate
+             *
+             * @return a CI server's credential ID of certificated
+             */
+            int getCredID() const
+            {
+                return m_credID;
+            }
+
+            /**
              * Get OCRepresentation object
              *
              * @return OCRepresentation object
@@ -232,6 +252,7 @@ namespace OIC
         protected:
             OCRepresentation m_rep;
             std::string m_cloudID;
+            int m_credID;
         };
 
         /**
@@ -533,11 +554,11 @@ namespace OIC
                     if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
                     {
                         if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
-                {
+                        {
                             for(auto it : child->getValue
                                         <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
-                    {
-                        modes.push_back(static_cast<WIFI_MODE>(it));
+                            {
+                                modes.push_back(static_cast<WIFI_MODE>(it));
                             }
                         }
                     }
@@ -612,16 +633,33 @@ namespace OIC
         class GetEnrolleeStatus
         {
         public:
+            /**
+             * Constructor
+             */
             GetEnrolleeStatus(ESResult result, const EnrolleeStatus& status) :
                 m_result(result), m_enrolleeStatus(status)
             {
             }
 
+            /**
+             * Get a result of getting provisioning status and last error code of Enrollee
+             *
+             * @return a result of getting provisioning status and last error code of Enrollee
+             *
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;
             }
 
+            /**
+             * Get Enrollee's status and last error code properties
+             *
+             * @return Enrollee's status and last error code properties
+             *
+             * @see EnrolleeStatus
+             */
             const EnrolleeStatus& getEnrolleeStatus()
             {
                 return m_enrolleeStatus;
@@ -643,16 +681,33 @@ namespace OIC
         class GetConfigurationStatus
         {
         public:
+            /**
+             * Constructor
+             */
             GetConfigurationStatus(ESResult result, const EnrolleeConf& conf) :
                     m_result(result), m_enrolleeConf(conf)
             {
             }
 
+            /**
+             * Get a result of getting preconfiguration of Enrollee
+             *
+             * @return a result of preconfiguration of Enrollee
+             *
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;
             }
 
+            /**
+             * Get Enrollee's pre-configuration properties
+             *
+             * @return Enrollee's pre-configuration properties
+             *
+             * @see EnrolleeConf
+             */
             EnrolleeConf& getEnrolleeConf()
             {
                 return m_enrolleeConf;
@@ -671,11 +726,21 @@ namespace OIC
         class DevicePropProvisioningStatus
         {
         public:
+            /**
+             * Constructor
+             */
             DevicePropProvisioningStatus(ESResult result) :
                     m_result(result)
             {
             }
 
+            /**
+             * Get a result of Device property provisioning
+             *
+             * @return a result of Device property provisioning
+             *
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;
@@ -695,11 +760,21 @@ namespace OIC
         class CloudPropProvisioningStatus
         {
         public:
+            /**
+             * Constructor
+             */
             CloudPropProvisioningStatus(ESResult result) :
                     m_result(result)
             {
             }
 
+            /**
+             * Get a result of Cloud property provisioning
+             *
+             * @return a result of Cloud property provisioning
+             *
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;

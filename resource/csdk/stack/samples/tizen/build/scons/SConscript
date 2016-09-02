@@ -42,4 +42,9 @@ else:
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_WIFI_ADAPTER'])
 
+	if env.get('WITH_TCP'):
+		env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER', 'WITH_TCP'])
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_TCP_ADAPTER'])
+
 env.SConscript(['../resource/SConscript'])

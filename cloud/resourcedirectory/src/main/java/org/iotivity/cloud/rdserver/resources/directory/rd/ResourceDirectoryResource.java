@@ -73,8 +73,8 @@ public class ResourceDirectoryResource extends Resource {
                 break;
 
             default:
-                throw new BadRequestException(
-                        request.getMethod() + " request type is not supported");
+                throw new BadRequestException(request.getMethod()
+                        + " request type is not supported");
         }
 
         srcDevice.sendResponse(response);
@@ -101,18 +101,20 @@ public class ResourceDirectoryResource extends Resource {
             throw new PreconditionFailedException("rt property is not include");
         } else if (listRT.get(0).equals(Constants.RESOURCE_TYPE_RDPUBLISH)) {
 
-            PublishPayload pubPayload = parsingPublishPayload(
-                    request.getPayload());
+            PublishPayload pubPayload = parsingPublishPayload(request
+                    .getPayload());
 
             mNotiDeviceId = pubPayload.getTags().getDi();
 
-            PublishPayload copyPubPayload = pubPayload.copy();
+            // PublishPayload copyPubPayload = pubPayload.copy();
 
-            ArrayList<HashMap<Object, Object>> storeResList = creatDBStoreResource(
-                    changeResourceUri(copyPubPayload));
+            // ArrayList<HashMap<Object, Object>> storeResList =
+            // creatDBStoreResource(changeResourceUri(copyPubPayload));
 
-            mNotiPayloadList = DBManager.getInstance()
-                    .registerResource(storeResList);
+            ArrayList<HashMap<Object, Object>> storeResList = creatDBStoreResource(pubPayload);
+
+            mNotiPayloadList = DBManager.getInstance().registerResource(
+                    storeResList);
 
             encodedPayload = createPublishResponse(pubPayload);
 
@@ -151,8 +153,8 @@ public class ResourceDirectoryResource extends Resource {
     private PublishPayload parsingPublishPayload(byte[] payload)
             throws ServerException {
 
-        HashMap<Object, Object> payloadData = mCbor
-                .parsePayloadFromCbor(payload, HashMap.class);
+        HashMap<Object, Object> payloadData = mCbor.parsePayloadFromCbor(
+                payload, HashMap.class);
 
         if (payloadData == null) {
             throw new BadRequestException("payload is null");
@@ -175,7 +177,7 @@ public class ResourceDirectoryResource extends Resource {
             pubLinks = mPublishLinksTypeManager.convertMaptoObject(links,
                     pubLinks);
             String href = pubLinks.getHref();
-            href = "/di/" + di + href;
+            // href = "/di/" + di + href;
             int ins = pubLinks.getIns();
             ins = checkResourceIns(di, href, ins);
             if (ins == 0) {
