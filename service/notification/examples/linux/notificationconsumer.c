@@ -43,6 +43,7 @@ char CLOUD_ACCESS_TOKEN[50];
 
 
 NSProvider * g_provider = NULL;
+NSTopicLL * g_topicLL = NULL;
 
 FILE* server_fopen(const char *path, const char *mode)
 {
@@ -50,12 +51,12 @@ FILE* server_fopen(const char *path, const char *mode)
     return fopen("oic_ns_provider_db.dat", mode);
 }
 
-void printProviderTopicList(NSProvider *provider)
+void printProviderTopicList(NSTopicLL * topics)
 {
     printf("printProviderTopicList\n");
-    if (provider->topicLL)
+    if (topics)
     {
-        NSTopicLL * iter = provider->topicLL;
+        NSTopicLL * iter = topics;
         while (iter)
         {
             printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
@@ -74,12 +75,13 @@ void onProviderChanged(NSProvider * provider, NSProviderState response)
         printf("notification resource discovered\n");
         printf("subscribe result %d\n", NSSubscribe(provider));
         printf("startSubscribing\n");
+    }
 
-    } else if (response == NS_TOPIC)
+    else if (response == NS_TOPIC)
     {
         printf ("Provider Topic Updated\n");
-
-        printProviderTopicList(provider);
+        g_topicLL = NSConsumerGetTopicList(provider->providerId);
+        printProviderTopicList(g_topicLL);
         g_provider = provider;
     }
 }
@@ -183,15 +185,15 @@ int main(void)
                 printf("3. Get Topics\n");
                 if(g_provider)
                 {
-                    NSConsumerGetInterestTopics(g_provider);
+                    g_topicLL = NSConsumerGetTopicList(g_provider->providerId);
                 }
                 break;
             case 4:
                 printf("4. Select Topics\n");
 
-                if (g_provider && g_provider->topicLL)
+                if (g_provider && g_topicLL)
                 {
-                    NSTopicLL * iter = g_provider->topicLL;
+                    NSTopicLL * iter = g_topicLL;
                     int i = 0;
                     while (iter)
                     {
@@ -199,7 +201,7 @@ int main(void)
                         printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
                         iter = iter->next;
                     }
-                    NSConsumerSelectInterestTopics(g_provider);
+                    NSConsumerUpdateTopicList(g_provider->providerId, g_topicLL);
                 }
                 break;
             case 5:

@@ -151,6 +151,8 @@ protected:
 TEST_F(NotificationConsumerTest, StartConsumerPositive)
 {
     EXPECT_EQ(NS_OK, NSStartConsumer(cfg));
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
 }
 
 TEST_F(NotificationConsumerTest, StopConsumerPositive)
@@ -231,7 +233,7 @@ TEST_F(NotificationConsumerTest, ExpectSubscribeSuccess)
 //                std::cout << "Income Accepted subscription : " << std::endl;
 //            });
 
-    NSResult ret = NSSubscribe(g_provider);
+    NSResult ret = NSSubscribe(g_provider->providerId);
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
@@ -439,17 +441,20 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
         responseCon.wait_for(lock, g_waitForResponse);
     }
 
-    EXPECT_EQ(NS_SYNC_DELETED, type);
-}
-
-TEST_F(NotificationConsumerTest, ExpectUnsubscribeSuccess)
-{
-    NSResult ret = NSUnsubscribe(g_provider);
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
-
     g_providerSimul.deleteNotificationResource();
     NSStopConsumer();
 
-    EXPECT_EQ(NS_OK, ret);
+    EXPECT_EQ(NS_SYNC_DELETED, type);
 }
+
+//TEST_F(NotificationConsumerTest, ExpectUnsubscribeSuccess)
+//{
+//    NSResult ret = NSUnsubscribe(g_provider->providerId);
+//    std::unique_lock< std::mutex > lock{ mutexForCondition };
+//    responseCon.wait_for(lock, g_waitForResponse);
+//
+//    g_providerSimul.deleteNotificationResource();
+//    NSStopConsumer();
+//
+//    EXPECT_EQ(NS_OK, ret);
+//}

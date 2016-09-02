@@ -118,7 +118,6 @@ typedef struct
 typedef struct
 {
     char providerId[NS_UUID_STRING_SIZE];
-    NSTopicLL * topicLL;
 
 } NSProvider;
 

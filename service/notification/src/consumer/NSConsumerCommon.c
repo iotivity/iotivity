@@ -448,16 +448,6 @@ NSProvider * NSCopyProvider(NSProvider_internal * prov)
     NSProvider * newProv = (NSProvider *) OICMalloc(sizeof(NSProvider));
     NS_VERIFY_NOT_NULL(newProv, NULL);
 
-    newProv->topicLL = NULL;
-
-    if (prov->topicLL)
-    {
-        NSTopicLL * topicList = NSCopyTopicLL(prov->topicLL);
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList, NULL, NSRemoveProvider(newProv));
-
-        newProv->topicLL = topicList;
-    }
-
     OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
 
     return newProv;
@@ -482,12 +472,6 @@ void NSRemoveProvider_internal(NSProvider_internal * prov)
 void NSRemoveProvider(NSProvider * prov)
 {
     NS_VERIFY_NOT_NULL_V(prov);
-
-    if (prov->topicLL)
-    {
-        NSRemoveTopicLL(prov->topicLL);
-    }
-
     NSOICFree(prov);
 }
 

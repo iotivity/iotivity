@@ -66,7 +66,7 @@ typedef struct
 
 /**
  * Initialize notification service for consumer
- * @param[in]  config  NSConsumerconfig structure of callback functions
+ * @param[in] config  NSConsumerconfig structure of callback functions
  * @return ::NS_OK or result code of NSResult
  */
 NSResult NSStartConsumer(NSConsumerConfig config);
@@ -79,10 +79,10 @@ NSResult NSStopConsumer();
 
 /**
  * Request to discover to remote address as parameter.
- * @param[in]  server address combined with IP address and port number using delimiter :
+ * @param[in] server address combined with IP address and port number using delimiter :
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSConsumerEnableRemoteService(char *serverAddress);
+NSResult NSConsumerEnableRemoteService(const char *serverAddress);
 
 /**
  * Request discovery manually
@@ -92,24 +92,17 @@ NSResult NSRescanProvider();
 
 /**
  * Request to subscribe notification message resource of provider
- * @param[in]  provider  Provider who send the notification message
+ * @param[in] providerId the Id of Provider who send the notification message
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSSubscribe(NSProvider *provider);
-
-/**
- * Request to unsubscribe in order not to receive notification message from provider
- * @param[in]  provider  Provider who send the notification message
- * @return ::NS_OK or result code of NSResult
- */
-NSResult NSUnsubscribe(NSProvider *provider);
+NSResult NSSubscribe(const char * providerId);
 
 /**
  * Send sync type to provider in order to synchronize notification status with other consumers
  * when consumer consumes the notification such as READ, DELETE
- * @param[in]  providerId  Provider id of the Notification message
- * @param[in]  messageId  Notification message id to synchronize the status
- * @param[in]  type  changed notification status from NSSyncType
+ * @param[in] providerId Provider id of the Notification message
+ * @param[in] messageId Notification message id to synchronize the status
+ * @param[in] type changed notification status from NSSyncType
  * @return ::NS_OK or result code of NSResult
  */
 NSResult NSConsumerSendSyncInfo(
@@ -117,31 +110,25 @@ NSResult NSConsumerSendSyncInfo(
 
 /**
  * Request NSProvider that is matched by provider id
- * @param[in]  providerId  the id of provider that user wants to get
+ * @param[in] providerId the id of provider that user wants to get
  * @return NSProvider
  */
 NSProvider * NSConsumerGetProvider(const char * providerId);
 
 /**
- * Request NSMessage that is matched by message id
- * @param[in]  messageId  the id of message that user wants to get
- * @return NSMessage
- */
-NSMessage * NSConsumerGetMessage(uint64_t messageId);
-
-/**
  * Request NSTopic list that is subscribed from provider
- * @param[in]  provider  the provider that user wants to get
+ * @param[in] providerId the Id of provider that user wants to get
  * @return NSResult
  */
-NSResult NSConsumerGetInterestTopics(NSProvider * provider);
+NSTopicLL * NSConsumerGetTopicList(const char * providerId);
 
 /**
  * Select Topic list that is wanted to subscribe from provider
- * @param[in]  provider  the provider that user wants to set
+ * @param[in] providerId the Id of provider that user wants to set
+ * @param[in] topics the topic list that user wants to set
  * @return NSResult
  */
-NSResult NSConsumerSelectInterestTopics(NSProvider * provider);
+NSResult NSConsumerUpdateTopicList(const char * providerId, NSTopicLL * topics);
 
 #ifdef __cplusplus
 }

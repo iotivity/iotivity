@@ -67,8 +67,9 @@ NSResult NSStopConsumer()
     return NS_OK;
 }
 
-NSResult NSConsumerEnableRemoteService(char *serverAddress)
+NSResult NSConsumerEnableRemoteService(const char *serverAddress)
 {
+    NS_VERIFY_NOT_NULL(serverAddress, NS_ERROR);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
@@ -93,12 +94,17 @@ NSResult NSConsumerEnableRemoteService(char *serverAddress)
     return NSConsumerPushEvent(discoverTask);
 }
 
-NSResult NSSubscribe(NSProvider * provider)
+NSResult NSSubscribe(const char * providerId)
 {
+    NS_VERIFY_NOT_NULL(providerId, NS_ERROR);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NSProvider_internal * provInternal = NSConsumerFindNSProvider(providerId);
+    NS_VERIFY_NOT_NULL(provInternal, NS_ERROR);
+
+    NSProvider * prov = (NSProvider *)NSCopyProvider(provInternal);
+    NSRemoveProvider_internal(provInternal);
     NS_VERIFY_NOT_NULL(prov, NS_ERROR);
 
     NSTask * subscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) prov);
@@ -107,12 +113,17 @@ NSResult NSSubscribe(NSProvider * provider)
     return NSConsumerPushEvent(subscribeTask);
 }
 
-NSResult NSUnsubscribe(NSProvider * provider)
+NSResult NSUnsubscribe(const char * providerId)
 {
+    NS_VERIFY_NOT_NULL(providerId, NS_ERROR);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
+    NSProvider_internal * provInternal = NSConsumerFindNSProvider(providerId);
+    NS_VERIFY_NOT_NULL(provInternal, NS_ERROR);
+
+    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provInternal);
+    NSRemoveProvider_internal(provInternal);
     NS_VERIFY_NOT_NULL(prov, NS_ERROR);
 
     NSTask * unsubscribeTask = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, (void *) prov);
@@ -123,6 +134,7 @@ NSResult NSUnsubscribe(NSProvider * provider)
 
 NSResult NSConsumerSendSyncInfo(const char * providerId, uint64_t messageId, NSSyncType type)
 {
+    NS_VERIFY_NOT_NULL(providerId, NS_ERROR);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
@@ -152,6 +164,7 @@ NSResult NSRescanProvider()
 
 NSProvider * NSConsumerGetProvider(const char * providerId)
 {
+    NS_VERIFY_NOT_NULL(providerId, NULL);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NULL);
 
@@ -167,74 +180,45 @@ NSProvider * NSConsumerGetProvider(const char * providerId)
     return retProv;
 }
 
-NSMessage * NSConsumerGetMessage(uint64_t messageId)
+NSTopicLL * NSConsumerGetTopicList(const char * providerId)
 {
+    NS_VERIFY_NOT_NULL(providerId, NULL);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NULL);
 
-    char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)messageId);
+    NS_LOG_V(DEBUG, "NSProvider ID: %s", providerId);
+    NSProvider_internal * prov_internal = NSConsumerFindNSProvider(providerId);
+    NS_VERIFY_NOT_NULL(prov_internal, NULL);
 
-    return (NSMessage *) NSConsumerFindNSMessage(msgId);
+    NSTopicLL * retTopics = prov_internal->topicLL;
+    prov_internal->topicLL = NULL;
+    NSRemoveProvider_internal(prov_internal);
+
+    return retTopics;
 }
 
-NSResult NSConsumerGetInterestTopics(NSProvider * provider)
+NSResult NSConsumerUpdateTopicList(const char * providerId, NSTopicLL * topics)
 {
+    NS_VERIFY_NOT_NULL(providerId, NS_ERROR);
+    NS_VERIFY_NOT_NULL(topics, NS_ERROR);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NS_VERIFY_NOT_NULL(provider, NS_ERROR);
-
-    NS_LOG_V(DEBUG, "NSProvider ID: %s", provider->providerId);
-    NSProvider_internal * prov_internal = NSConsumerFindNSProvider(provider->providerId);
+    NSProvider_internal * prov_internal = NSConsumerFindNSProvider(providerId);
     NS_VERIFY_NOT_NULL(prov_internal, NS_ERROR);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(prov_internal->topicLL, NS_ERROR,
+                         NSRemoveProvider_internal(prov_internal));
 
     NSSelector selector = prov_internal->accessPolicy;
-    NSRemoveProvider_internal(prov_internal);
-    NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
+            selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR,
+            NSRemoveProvider_internal(prov_internal));
 
-    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
-    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
+    NSRemoveTopicLL(prov_internal->topicLL);
+    prov_internal->topicLL = NSCopyTopicLL(topics);
 
-    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_GET_TOPIC_LIST, (void *) prov);
+    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) prov_internal);
     NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
-}
-
-NSResult NSConsumerSelectInterestTopics(NSProvider * provider)
-{
-    bool isStartedConsumer = NSIsStartedConsumer();
-    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
-
-    NS_VERIFY_NOT_NULL(provider, NS_ERROR);
-    NS_VERIFY_NOT_NULL(provider->topicLL, NS_ERROR);
-
-    NSProvider_internal * prov_internal = NSConsumerFindNSProvider(provider->providerId);
-    NS_VERIFY_NOT_NULL(prov_internal, NS_ERROR);
-
-    NSSelector selector = prov_internal->accessPolicy;
-    NSRemoveProvider_internal(prov_internal);
-    NS_VERIFY_NOT_NULL(selector == NS_SELECTION_CONSUMER ? (void *) 1 : NULL, NS_ERROR);
-
-    NSProvider * prov = (NSProvider *)NSCopyProvider((NSProvider_internal *) provider);
-    NS_VERIFY_NOT_NULL(prov, NS_ERROR);
-
-    NSTask * topicTask = NSMakeTask(TASK_CONSUMER_SELECT_TOPIC_LIST, (void *) prov);
-    NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
-
-    return NSConsumerPushEvent(topicTask);
-}
-
-NSResult NSDropNSMessage(NSMessage * obj)
-{
-    NS_VERIFY_NOT_NULL(obj, NS_ERROR);
-
-    obj->messageId = 0;
-    NSOICFree(obj->title);
-    NSOICFree(obj->contentText);
-    NSOICFree(obj->sourceName);
-    NSOICFree(obj);
-
-    return NS_OK;
 }
