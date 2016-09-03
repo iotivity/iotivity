@@ -37,6 +37,22 @@ namespace OIC
             }
 
         }
+        NSTopicsList::NSTopicsList(const NSTopicsList &topicsList)
+        {
+            for (auto it : topicsList.getTopicsList())
+            {
+                addTopic(it->getTopicName(), it->getState());
+            }
+        }
+
+        NSTopicsList &NSTopicsList::operator=(const NSTopicsList &topicsList)
+        {
+            for (auto it : topicsList.getTopicsList())
+            {
+                addTopic(it->getTopicName(), it->getState());
+            }
+            return *this;
+        }
 
         NSTopicsList::~NSTopicsList()
         {
@@ -61,7 +77,7 @@ namespace OIC
             }
         }
 
-        std::list<NSTopic *> NSTopicsList::getTopicsList()
+        std::list<NSTopic *> NSTopicsList::getTopicsList() const
         {
             return m_topicsList;
         }

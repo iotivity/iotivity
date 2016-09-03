@@ -64,6 +64,21 @@ namespace OIC
                 NSMessage(::NSMessage *msg);
 
                 /**
+                     * Copy Constructor of NSMessage.
+                     *
+                     * @param msg - NSMessage to initialize.
+                     */
+                NSMessage(const NSMessage &msg);
+
+                /**
+                     * Copy assignment operator of NSMessage.
+                     *
+                     * @param msg -  NSMessage to initialize.
+                     * @return NSMessage object reference
+                     */
+                NSMessage &operator=(const NSMessage &msg);
+
+                /**
                         * Destructor of NSMessage.
                         */
                 ~NSMessage();
@@ -134,7 +149,7 @@ namespace OIC
                 /**
                      * This method is for setting Title from the Notification service Message.
                      *
-                     * @param Title as string.
+                     * @param title as string.
                      */
                 void setTitle(const std::string &title);
 
@@ -148,7 +163,7 @@ namespace OIC
                 /**
                      * This method is for setting contentText from the Notification service Message.
                      *
-                     * @param contentText as string.
+                     * @param contextText as string.
                      */
                 void setContentText(const std::string &contextText);
 

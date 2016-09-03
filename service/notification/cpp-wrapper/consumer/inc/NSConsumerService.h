@@ -53,26 +53,6 @@ namespace OIC
                 typedef void (*ProviderDiscoveredCallback)(NSProvider *);
 
                 /**
-                     * Invoked when the provider state is changed
-                     * @param[in] provider  Provider which has the notification resource
-                     * @param[in] response  Response which has the provider state
-                     */
-                typedef void (* ProviderChangedCallback)(NSProvider *, NSResponse);
-
-                /**
-                     * @struct   ConsumerConfig
-                     * @brief Consumer sets this callback function configuration for registering callbacks
-                     *
-                     */
-                typedef struct
-                {
-                    /** m_discoverCb - ProviderDiscoveredCallback callback listener.*/
-                    ProviderDiscoveredCallback m_discoverCb;
-                    /** m_changedCb - ProviderChangedCallback callback listener.*/
-                    ProviderChangedCallback m_changedCb;
-                } ConsumerConfig;
-
-                /**
                       * API for getting the Instance of NSConsumerService class
                       *
                       * @return Instance of the "NSConsumerService" class
@@ -81,27 +61,32 @@ namespace OIC
 
                 /**
                       * Initialize notification service for consumer
-                      * @param[in]  config   ConsumerConfig Callback function pointers to onDiscoverd,
-                      * OnAccepted, OnMessageReceived and OnSyncInfoReceived functions
+                      * @param providerDiscovered Callback function pointers to ProviderDiscoveredCallback,
                       */
-                void Start(ConsumerConfig config);
+                void start(ProviderDiscoveredCallback providerDiscovered);
 
                 /**
                       * Terminate notification service for consumer
                       */
-                void Stop();
+                void stop();
 
                 /**
                      * Request to discover to remote address as parameter.
-                     * @param[in]  server address combined with IP address and port number using delimiter :
+                     * @param[in]  serverAddress combined with IP address and port number using delimiter :
                      * @return  NSResult code of Consumer Service
                      */
-                NSResult EnableRemoteService(const std::string &serverAddress);
+                NSResult enableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Request discovery manually
                       */
-                void RescanProvider();
+                void rescanProvider();
+
+                /**
+                      *  get the callback for ProviderDiscovered
+                      * @return ProviderDiscoveredCallback callbak set
+                      */
+                ProviderDiscoveredCallback getProviderDiscoveredCb();
 
                 /**
                       *  request to get NSProvider pointer
@@ -111,20 +96,6 @@ namespace OIC
                       */
                 NSProvider *getProvider(const std::string &id);
 
-
-                /**
-                     * Request NSMessage that is matched by message id
-                     * @param[in]  messageId  the id of message that user wants to get
-                     * @return NSMessage
-                     */
-                NSMessage *getMessage(uint64_t messageId);
-
-                /**
-                      *  get consumer config values
-                      * @return ConsumerConfig callbaks set
-                      */
-                ConsumerConfig getConsumerConfig();
-
                 /**
                       *  get list of providers acceted.
                       * @return m_acceptedProviders -list of accepted providers
@@ -132,7 +103,7 @@ namespace OIC
                 std::list<NSProvider *> &getAcceptedProviders();
 
             private :
-                ConsumerConfig m_config;
+                ProviderDiscoveredCallback m_providerDiscoveredCb;
                 std::list<NSProvider *> m_acceptedProviders;
 
             private :
