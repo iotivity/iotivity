@@ -81,6 +81,7 @@ typedef struct
     char * topicUri;
 
     NSSelector accessPolicy;
+    NSProviderState state;
 
     NSProviderConnectionInfo * connection;
 
@@ -106,11 +107,8 @@ typedef struct
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 
-void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb);
-void NSDiscoveredProvider(NSProvider * provider);
-
-void NSSetProviderChangedCb(NSProviderChangedCallback cb);
-void NSProviderChanged(NSProvider * provider, NSResponse response);
+void NSSetProviderChangedCb(NSProviderStateCallback cb);
+void NSProviderChanged(NSProvider * provider, NSProviderState response);
 
 void NSSetMessagePostedCb(NSMessageReceivedCallback  cb);
 void NSMessagePost(NSMessage * obj);

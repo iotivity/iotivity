@@ -62,7 +62,7 @@ typedef struct
      * if policy is true, provider decides to allow or deny for all the subscribing consumers.
      * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
      */
-    bool policy;
+    bool subControllability;
     /* User Information */
     char * userInfo;
 
@@ -86,21 +86,21 @@ NSResult NSStopProvider();
  * @param[in]  server address combined with IP address and port number using delimiter :
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderEnableRemoteService(char *serverAddress);
+NSResult NSProviderEnableRemoteService(char * serverAddress);
 
 /**
  * Request to cancel remote service using cloud server
  * @param[in]  server address combined with IP address and port number using delimiter :
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderDisableRemoteService(char *serverAddress);
+NSResult NSProviderDisableRemoteService(char * serverAddress);
 
 /**
  * Send notification message to all subscribers
  * @param[in]  message  Notification message including id, title, contentText
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSSendMessage(NSMessage *msg);
+NSResult NSSendMessage(NSMessage * msg);
 
 /**
  * Send acceptance to consumer who subscribes the resource of notification message
@@ -108,7 +108,7 @@ NSResult NSSendMessage(NSMessage *msg);
  * @param[in]  accepted  the result of acceptance; Allow or Deny
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSAcceptSubscription(NSConsumer *consumer, bool accepted);
+NSResult NSAcceptSubscription(const char * consumerId, bool accepted);
 
 /**
  * Get consumer list that is stored in the cache of notification service
@@ -137,14 +137,14 @@ NSMessage * NSCreateMessage();
  * @param[in]  topicName Topic name to add
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderAddTopic(char* topicName);
+NSResult NSProviderRegisterTopic(const char * topicName);
 
 /**
  * Delete topic from topic list
  * @param[in]  topicName Topic name to delete
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderDeleteTopic(char* topicName);
+NSResult NSProviderUnregisterTopic(const char * topicName);
 
 /**
  * Select a topic name for a consumer
@@ -152,7 +152,7 @@ NSResult NSProviderDeleteTopic(char* topicName);
  * @param[in]  topicName Topic name to select
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderSelectTopic(char* consumerId, char* topicName);
+NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicName);
 
 /**
  * Unselect a topic from the topic list for consumer
@@ -160,14 +160,14 @@ NSResult NSProviderSelectTopic(char* consumerId, char* topicName);
  * @param[in]  topicName Topic name to unselect
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSProviderUnselectTopic(char* consumerId, char* topicName);
+NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topicName);
 
 /**
  * Request topic list with selection state for the consumer
  * @param[in] consumerid  the id of consumer which topic list is subscribed for
  * @return :: Topic list
  */
-NSTopicLL * NSProviderGetConsumerTopics(char *consumerId);
+NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId);
 
 /**
  * Request topics list already registered by provider user

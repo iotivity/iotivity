@@ -490,8 +490,8 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
     while (iter)
     {
         NSCacheTopicData * curr = (NSCacheTopicData *) iter->data;
-
         newTopic = (NSTopicLL *) OICMalloc(sizeof(NSTopicLL));
+
         newTopic->state = curr->state;
         newTopic->next = NULL;
         newTopic->topicName = OICStrdup(curr->topicName);
@@ -516,7 +516,7 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
 }
 
 NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
-        NSCacheList * conTopicList, char *consumerId)
+        NSCacheList * conTopicList, const char * consumerId)
 {
     NS_LOG(DEBUG, "NSProviderGetConsumerTopicsCacheData - IN");
 
@@ -536,11 +536,11 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
     {
         NSCacheTopicSubData * curr = (NSCacheTopicSubData *)iter->data;
 
-        NS_LOG_V(DEBUG, "curr->id = %s", curr->id);
-        NS_LOG_V(DEBUG, "curr->topicName = %s", curr->topicName);
-
         if(curr && strcmp(curr->id, consumerId) == 0)
         {
+            NS_LOG_V(DEBUG, "curr->id = %s", curr->id);
+            NS_LOG_V(DEBUG, "curr->topicName = %s", curr->topicName);
+
             NSTopicLL * topicIter = topics;
             while(topicIter)
             {
@@ -561,29 +561,6 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - OUT");
 
     return topics;
-}
-
-size_t NSProviderGetListSize(NSCacheElement * firstElement)
-{
-    pthread_mutex_lock(&NSCacheMutex);
-    if(!firstElement)
-    {
-        pthread_mutex_unlock(&NSCacheMutex);
-        return 0;
-    }
-
-    int cnt = 0;
-
-    NSCacheElement * iter = firstElement;
-
-    while(iter)
-    {
-        cnt++;
-        iter = iter->next;
-    }
-
-    pthread_mutex_unlock(&NSCacheMutex);
-    return cnt;
 }
 
 bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char * topicName)
@@ -623,8 +600,8 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
 
     if(!conTopicList || !cId || !topicName)
     {
-        return NS_ERROR;
         pthread_mutex_unlock(&NSCacheMutex);
+        return NS_ERROR;
     }
 
     NSCacheElement * prev = conTopicList->head;
@@ -635,6 +612,7 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
     if(!del)
     {
         NS_LOG(DEBUG, "list head is NULL");
+        pthread_mutex_unlock(&NSCacheMutex);
         return NS_FAIL;
     }
 

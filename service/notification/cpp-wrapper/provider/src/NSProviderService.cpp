@@ -40,7 +40,7 @@ namespace OIC
             NSProviderService::getInstance()->getAcceptedConsumers().push_back(nsConsumer);
             if (NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb != NULL)
             {
-                NS_LOG(DEBUG, "initiating the callback");
+                NS_LOG(DEBUG, "initiating the callback for consumer subscribed");
                 NSProviderService::getInstance()->getProviderConfig().m_subscribeRequestCb(nsConsumer);
             }
             NS_LOG(DEBUG, "onConsumerSubscribedCallback - OUT");
@@ -52,7 +52,7 @@ namespace OIC
             NSSyncInfo *nsSyncInfo = new NSSyncInfo(syncInfo);
             if (NSProviderService::getInstance()->getProviderConfig().m_syncInfoCb != NULL)
             {
-                NS_LOG(DEBUG, "initiating the callback");
+                NS_LOG(DEBUG, "initiating the callback for synchronized");
                 NSProviderService::getInstance()->getProviderConfig().m_syncInfoCb(nsSyncInfo);
             }
             delete nsSyncInfo;
@@ -63,7 +63,7 @@ namespace OIC
         {
             ::NSMessage *nsMsg = new ::NSMessage;
             nsMsg->messageId = msg->getMessageId();
-            OICStrcpy(nsMsg->providerId, msg->getProviderId().length(), msg->getProviderId().c_str());
+            OICStrcpy(nsMsg->providerId, NS_UTILS_UUID_STRING_SIZE, msg->getProviderId().c_str());
             nsMsg->sourceName = OICStrdup(msg->getSourceName().c_str());
             nsMsg->type = (::NSMessageType) msg->getType();
             nsMsg->dateTime = OICStrdup(msg->getTime().c_str());
@@ -95,94 +95,127 @@ namespace OIC
             return &s_instance;
         }
 
-        NSResult NSProviderService::Start(NSProviderService::ProviderConfig config)
+        NSResult NSProviderService::start(NSProviderService::ProviderConfig config)
         {
-            NS_LOG(DEBUG, "Start - IN");
+            NS_LOG(DEBUG, "start - IN");
 
             m_config = config;
             NSProviderConfig nsConfig;
             nsConfig.subRequestCallback = onConsumerSubscribedCallback;
             nsConfig.syncInfoCallback = onMessageSynchronizedCallback;
-            nsConfig.policy = config.policy;
+            nsConfig.subControllability = config.subControllability;
             nsConfig.userInfo = OICStrdup(config.userInfo.c_str());
 
             NSResult result = (NSResult) NSStartProvider(nsConfig);
-            NS_LOG(DEBUG, "Start - OUT");
+            NS_LOG(DEBUG, "start - OUT");
             return result;
         }
 
-        NSResult NSProviderService::Stop()
+        NSResult NSProviderService::stop()
         {
-            NS_LOG(DEBUG, "Stop - IN");
+            NS_LOG(DEBUG, "stop - IN");
             NSResult result = (NSResult) NSStopProvider();
-            NS_LOG(DEBUG, "Stop - OUT");
+            NS_LOG(DEBUG, "stop - OUT");
             return result;
         }
 
-        NSResult NSProviderService::EnableRemoteService(const std::string &serverAddress)
+        NSResult NSProviderService::enableRemoteService(const std::string &serverAddress)
         {
-            NS_LOG(DEBUG, "EnableRemoteService - IN");
+            NS_LOG(DEBUG, "enableRemoteService - IN");
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSProviderEnableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
 #endif
-            NS_LOG(DEBUG, "EnableRemoteService - OUT");
+            NS_LOG(DEBUG, "enableRemoteService - OUT");
             return result;
         }
 
-        NSResult NSProviderService::DisableRemoteService(const std::string &serverAddress)
+        NSResult NSProviderService::disableRemoteService(const std::string &serverAddress)
         {
-            NS_LOG(DEBUG, "DisableRemoteService - IN");
+            NS_LOG(DEBUG, "disableRemoteService - IN");
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSProviderDisableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
 #endif
-            NS_LOG(DEBUG, "DisableRemoteService - OUT");
+            NS_LOG(DEBUG, "disableRemoteService - OUT");
             return result;
         }
 
-        NSResult NSProviderService::SendMessage(NSMessage *msg)
+        NSResult NSProviderService::sendMessage(NSMessage *msg)
         {
-            NS_LOG(DEBUG, "SendMessage - IN");
+            NS_LOG(DEBUG, "sendMessage - IN");
             NSResult result = NSResult::ERROR;
             if (msg != nullptr)
             {
                 ::NSMessage *nsMsg = getNSMessage(msg);
+
+                NS_LOG_V(DEBUG, "nsMsg->providerId : %s", nsMsg->providerId);
                 result = (NSResult) NSSendMessage(nsMsg);
                 delete nsMsg->mediaContents;
                 delete nsMsg;
             }
             else
                 NS_LOG(DEBUG, "Empty Message");
-            NS_LOG(DEBUG, "SendMessage - OUT");
+            NS_LOG(DEBUG, "sendMessage - OUT");
             return result;
         }
 
-        void NSProviderService::SendSyncInfo(uint64_t messageId,
+        void NSProviderService::sendSyncInfo(uint64_t messageId,
                                              NSSyncInfo::NSSyncType type)
         {
-            NS_LOG(DEBUG, "SendSyncInfo - IN");
+            NS_LOG(DEBUG, "sendSyncInfo - IN");
             NSProviderSendSyncInfo(messageId, (NSSyncType)type);
-            NS_LOG(DEBUG, "SendSyncInfo - OUT");
+            NS_LOG(DEBUG, "sendSyncInfo - OUT");
             return;
         }
 
-        NSMessage *NSProviderService::CreateMessage()
+        NSMessage *NSProviderService::createMessage()
         {
-            NS_LOG(DEBUG, "CreateMessage - IN");
+            NS_LOG(DEBUG, "createMessage - IN");
 
             ::NSMessage *message = NSCreateMessage();
             NSMessage *nsMessage = new NSMessage(message);
 
             NS_LOG_V(DEBUG, "Message ID : %lld", nsMessage->getMessageId());
             NS_LOG_V(DEBUG, "Provider ID : %s", nsMessage->getProviderId().c_str());
-            NS_LOG(DEBUG, "CreateMessage - OUT");
+            NS_LOG(DEBUG, "createMessage - OUT");
 
             return nsMessage;
+        }
+
+        NSResult NSProviderService::registerTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "registerTopic - IN");
+            NSResult result = (NSResult) NSProviderRegisterTopic(topicName.c_str());
+            NS_LOG(DEBUG, "registerTopic - OUT");
+            return result;
+        }
+
+        NSResult NSProviderService::unregisterTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "unregisterTopic - IN");
+            NSResult result = (NSResult) NSProviderUnregisterTopic(topicName.c_str());
+            NS_LOG(DEBUG, "unregisterTopic - OUT");
+            return result;
+        }
+
+        NSTopicsList *NSProviderService::getRegisteredTopicList()
+        {
+            NS_LOG(DEBUG, "getRegisteredTopicList - IN");
+            ::NSTopicLL *topics = NSProviderGetTopics();
+
+            NSTopicsList *nsTopics = new NSTopicsList(topics);
+            NS_LOG(DEBUG, "getRegisteredTopicList - OUT");
+            return nsTopics;
+        }
+
+        NSProviderService::ProviderConfig NSProviderService::getProviderConfig()
+        {
+            return m_config;
         }
 
         NSConsumer *NSProviderService::getConsumer(const std::string &id)
@@ -199,38 +232,7 @@ namespace OIC
             return NULL;
         }
 
-        NSResult NSProviderService::AddTopic(const std::string &topicName)
-        {
-            NS_LOG(DEBUG, "AddTopic - IN");
-            NSResult result = (NSResult) NSProviderAddTopic(OICStrdup(topicName.c_str()));
-            NS_LOG(DEBUG, "AddTopic - OUT");
-            return result;
-        }
-
-        NSResult NSProviderService::DeleteTopic(const std::string &topicName)
-        {
-            NS_LOG(DEBUG, "DeleteTopic - IN");
-            NSResult result = (NSResult) NSProviderDeleteTopic(OICStrdup(topicName.c_str()));
-            NS_LOG(DEBUG, "DeleteTopic - OUT");
-            return result;
-        }
-
-        NSTopicsList *NSProviderService::GetTopics()
-        {
-            NS_LOG(DEBUG, "GetTopics - IN");
-            ::NSTopicLL *topics = NSProviderGetTopics();
-
-            NSTopicsList *nsTopics = new NSTopicsList(topics);
-            NS_LOG(DEBUG, "GetTopics - OUT");
-            return nsTopics;
-        }
-
-        NSProviderService::ProviderConfig NSProviderService::getProviderConfig()
-        {
-            return m_config;
-        }
-
-        std::list<NSConsumer *>& NSProviderService::getAcceptedConsumers()
+        std::list<NSConsumer *> &NSProviderService::getAcceptedConsumers()
         {
             return m_acceptedConsumers;
         }

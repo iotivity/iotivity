@@ -29,8 +29,6 @@
 
 #define NS_SYNC_URI "/notification/sync"
 
-static unsigned long NS_MESSAGE_ACCEPTANCE = 1;
-
 NSMessage * NSCreateMessage_internal(uint64_t msgId, const char * providerId);
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);
 
@@ -191,7 +189,7 @@ OCStackApplicationResult NSConsumerMessageListener(
 
     NSTaskType type = TASK_CONSUMER_RECV_MESSAGE;
 
-    if (newNoti->messageId == NS_MESSAGE_ACCEPTANCE || newNoti->messageId == NS_DENY)
+    if (newNoti->messageId == NS_ALLOW || newNoti->messageId == NS_DENY)
     {
         NS_LOG(DEBUG, "Receive subscribe result");
         type = TASK_CONSUMER_RECV_PROVIDER_CHANGED;
@@ -362,11 +360,11 @@ OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
 
 char * NSGetCloudUri(const char * providerId, char * uri)
 {
-    size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1;
+    size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1 + 3;
     char * retUri = (char *)OICMalloc(uriLen);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retUri, NULL, NSOICFree(uri));
 
-    snprintf(retUri, uriLen, "/%s%s", providerId, uri);
+    snprintf(retUri, uriLen, "/di/%s%s", providerId, uri);
     NSOICFree(uri);
     NS_LOG_V(DEBUG, "Cloud uri : %s", retUri);
 
@@ -438,6 +436,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_V(connections);
 
         char * topicUri = OICStrdup(provider->topicUri);
+        NS_VERIFY_NOT_NULL_V(topicUri);
 
         OCConnectivityType type = CT_DEFAULT;
         if (connections->addr->adapter == OC_ADAPTER_TCP)
@@ -526,6 +525,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         }
 
         char * topicUri = OICStrdup(provider->topicUri);
+        NS_VERIFY_NOT_NULL_V(topicUri);
 
         OCConnectivityType type = CT_DEFAULT;
         if (connections->addr->adapter == OC_ADAPTER_TCP)
@@ -630,7 +630,8 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
         }
 
         NSResult ret = NSInsertTopicNode(topicLL, topicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(topicLL));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *)1 : NULL,
+                                                    NULL, NSRemoveTopicLL(topicLL));
     }
 
     return topicLL;

@@ -79,30 +79,29 @@ namespace OIC
                 /**
                       * This method is for setting icon image for the Notification service media contents.
                       *
-                      * @param consumer - NSConsumer.
                       * @param accepted - as bool.
                       */
-                int acceptSubscription(NSConsumer *consumer, bool accepted);
+                int acceptSubscription(bool accepted);
 
                 /**
                      * Select a topic name for a consumer
                      * @param[in]  topicName Topic name to select
                      * @return :: OK or result code of NSResult
                      */
-                NSResult selectTopic(const std::string &topicName);
+                NSResult setTopic(const std::string &topicName);
 
                 /**
                      * Unselect a topic from the topic list for consumer
                      * @param[in]  topicName Topic name to unselect
                      * @return :: OK or result code of NSResult
                      */
-                NSResult unselectTopic(const std::string &topicName);
+                NSResult unsetTopic(const std::string &topicName);
 
                 /**
                      * Request topic list with selection state for the consumer
                      * @return :: Topic list
                      */
-                NSTopicsList *getConsumerTopics();
+                NSTopicsList *getConsumerTopicList();
 
             private:
                 ::NSConsumer *getNSConsumer();

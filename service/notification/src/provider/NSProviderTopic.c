@@ -37,12 +37,32 @@ NSResult NSInitTopicList()
     return NS_OK;
 }
 
+size_t NSProviderGetTopicListSize(NSTopicLL * firstElement)
+{
+    if(!firstElement)
+    {
+        return 0;
+    }
+
+    int cnt = 0;
+
+    NSTopicLL * iter = firstElement;
+
+    while(iter)
+    {
+        cnt++;
+        iter = iter->next;
+    }
+
+    return cnt;
+}
+
 NSResult NSAddTopics(const char * topicName)
 {
     NS_LOG(DEBUG, "NSWriteTopicsToStorage()");
 
     NSCacheTopicData * data = (NSCacheTopicData *)OICMalloc(sizeof(NSCacheTopicData));
-    data->topicName = topicName;
+    data->topicName = (char *)topicName;
     data->state = NS_TOPIC_UNSUBSCRIBED;
 
     NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
@@ -113,13 +133,12 @@ NSResult NSSendTopicUpdation()
                 obArray[obCount++] = subData->messageObId;
             }
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
             if(subData->remote_messageObId != 0)
             {
                 obArray[obCount++] = subData->remote_messageObId;
             }
 #endif
-
         }
         it = it->next;
     }
@@ -198,24 +217,25 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 
     char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
     NSTopicLL * topics = NULL;
-    NSCacheElement * currList = NULL;
 
     if(!id)
     {
         NS_LOG(DEBUG, "Send registered topic list");
         topics = NSProviderGetTopicsCacheData(registeredTopicList);
-        currList = registeredTopicList->head;
     }
     else
     {
         NS_LOG(DEBUG, "Send subscribed topic list to consumer");
         topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList, consumerTopicList, id);
-        currList = consumerTopicList->head;
+        if(!topics)
+        {
+            topics = NSProviderGetTopicsCacheData(registeredTopicList);
+        }
     }
 
-    if(!currList)
+    if(!topics)
     {
-        NS_LOG(DEBUG, "currList is NULL");
+        NS_LOG(DEBUG, "topicList is NULL");
         return NS_ERROR;
     }
 
@@ -233,10 +253,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
 
-    // set topics to the array of resource property
-
-    NSCacheElement * iter = currList;
-    size_t dimensionSize = (size_t)NSProviderGetListSize(iter);
+    size_t dimensionSize = (size_t)NSProviderGetTopicListSize(topics);
 
     NS_LOG_V(DEBUG, "dimensionSize = %d", dimensionSize);
 
@@ -249,19 +266,18 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
             sizeof(OCRepPayload *) * dimensionSize);
 
     size_t dimensions[3] = {dimensionSize, 0, 0};
+
     for (int i = 0; i < (int)dimensionSize; i++)
     {
-        NSTopicLL * topic = (NSTopicLL *) iter->data;
-
-        NS_LOG_V(DEBUG, "topicName = %s", topic->topicName);
-        NS_LOG_V(DEBUG, "topicState = %d",(int) topic->state);
+        NS_LOG_V(DEBUG, "topicName = %s", topics->topicName);
+        NS_LOG_V(DEBUG, "topicState = %d",(int) topics->state);
 
         payloadTopicArray[i] = OCRepPayloadCreate();
-        OCRepPayloadSetPropString(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_NAME, topic->topicName);
+        OCRepPayloadSetPropString(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_NAME, topics->topicName);
         OCRepPayloadSetPropInt(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_SELECTION,
-                (int)topic->state);
+                (int)topics->state);
 
-        iter = iter->next;
+        topics = topics->next;
     }
 
     OCRepPayloadSetUri(payload, NS_COLLECTION_TOPIC_URI);
@@ -269,6 +285,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     {
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
     }
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID,
+        NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
             (const OCRepPayload**)(payloadTopicArray), dimensions);
 
@@ -294,7 +312,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
     NS_LOG(DEBUG, "NSPostConsumerTopics() - IN");
 
     char * consumerId = NULL;
-    OCRepPayload * payload = entityHandlerRequest->payload;
+    OCRepPayload * payload = (OCRepPayload *) entityHandlerRequest->payload;
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, &consumerId);
 
     if(!consumerId)
@@ -323,7 +341,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
 
         OCRepPayloadGetPropString(topicListPayload[i], NS_ATTRIBUTE_TOPIC_NAME, &topicName);
         OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &topicState);
-        NS_LOG_V(DEBUG, "Topic Name(state):  %s(%d)", topicName, topicState);
+        NS_LOG_V(DEBUG, "Topic Name(state):  %s(%d)", topicName, (int)topicState);
 
         if(NS_TOPIC_SUBSCRIBED == (NSTopicState)topicState)
         {

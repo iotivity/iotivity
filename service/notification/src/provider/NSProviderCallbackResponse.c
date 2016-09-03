@@ -44,7 +44,7 @@ void NSRegisterSubscribeRequestCb(NSSubscribeRequestCallback subscribeRequestCb)
     NS_LOG(DEBUG, "NSRegisterSubscribeRequestCb - OUT");
 }
 
-void  NSRegisterSyncCb(NSProviderSyncInfoCallback syncCb)
+void NSRegisterSyncCb(NSProviderSyncInfoCallback syncCb)
 {
     NS_LOG(DEBUG, "NSRegisterSyncCb - IN");
     g_syncCb = syncCb;

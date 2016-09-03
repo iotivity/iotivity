@@ -105,51 +105,19 @@ bool NSIsStartedConsumer()
     return * NSGetBoneIsStartedConsumer();
 }
 
-NSProviderDiscoveredCallback * NSGetBoneDiscoverCb()
+NSProviderStateCallback * NSGetProviderChangedCb()
 {
-    static NSProviderDiscoveredCallback g_discoverCb = NULL;
-
-    return & g_discoverCb;
-}
-
-void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb)
-{
-    * NSGetBoneDiscoverCb() = cb;
-}
-
-NSProviderDiscoveredCallback NSGetDiscoverCb()
-{
-    return * NSGetBoneDiscoverCb();
-}
-
-void * NSDiscoveredProviderFunc(void * provider)
-{
-    NSGetDiscoverCb()((NSProvider *) provider);
-
-    return NULL;
-}
-
-void NSDiscoveredProvider(NSProvider * provider)
-{
-    NS_VERIFY_NOT_NULL_V(provider);
-
-    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
-    NS_VERIFY_NOT_NULL_V(thread);
-}
-
-NSProviderChangedCallback * NSGetProviderChangedCb()
-{
-    static NSProviderChangedCallback g_changedCb = NULL;
+    static NSProviderStateCallback g_changedCb = NULL;
 
     return & g_changedCb;
 }
 
-void NSSetProviderChangedCb(NSProviderChangedCallback cb)
+void NSSetProviderChangedCb(NSProviderStateCallback cb)
 {
     *(NSGetProviderChangedCb()) = cb;
 }
 
-void NSProviderChanged(NSProvider * provider, NSResponse response)
+void NSProviderChanged(NSProvider * provider, NSProviderState response)
 {
     (*(NSGetProviderChangedCb()))(provider, response);
 }
@@ -398,7 +366,7 @@ void NSRemoveTopicLL(NSTopicLL * topicHead)
 
     while (iter)
     {
-        following = (NSTopicLL *) iter->next;
+        following = iter->next;
 
         NSRemoveTopicNode(iter);
 
@@ -425,7 +393,8 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
 
         NSResult ret = NSInsertTopicNode(newTopicHead, newTopicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(newTopicHead));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *)1 : NULL,
+                                                    NULL, NSRemoveTopicLL(newTopicHead));
 
         iter = (NSTopicLL *) iter->next;
     }
@@ -467,6 +436,7 @@ NSProvider_internal * NSCopyProvider_internal(NSProvider_internal * prov)
     newProv->syncUri = OICStrdup(prov->syncUri);
     newProv->topicUri = OICStrdup(prov->topicUri);
     newProv->accessPolicy = prov->accessPolicy;
+    newProv->state = prov->state;
 
     return newProv;
 }
@@ -477,16 +447,6 @@ NSProvider * NSCopyProvider(NSProvider_internal * prov)
 
     NSProvider * newProv = (NSProvider *) OICMalloc(sizeof(NSProvider));
     NS_VERIFY_NOT_NULL(newProv, NULL);
-
-    newProv->topicLL = NULL;
-
-    if (prov->topicLL)
-    {
-        NSTopicLL * topicList = NSCopyTopicLL(prov->topicLL);
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList, NULL, NSRemoveProvider(newProv));
-
-        newProv->topicLL = topicList;
-    }
 
     OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
 
@@ -512,12 +472,6 @@ void NSRemoveProvider_internal(NSProvider_internal * prov)
 void NSRemoveProvider(NSProvider * prov)
 {
     NS_VERIFY_NOT_NULL_V(prov);
-
-    if (prov->topicLL)
-    {
-        NSRemoveTopicLL(prov->topicLL);
-    }
-
     NSOICFree(prov);
 }
 

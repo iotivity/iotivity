@@ -26,7 +26,7 @@ NSMessageResource NotificationMessageResource;
 NSSyncResource NotificationSyncResource;
 NSTopicResource NotificationTopicResource;
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
 #define DEFAULT_CONTEXT_VALUE 0x99
 
 OCStackApplicationResult NSHandlePublishCb(void *ctx, OCDoHandle handle,
@@ -80,10 +80,12 @@ NSResult NSCreateResource(char *uri)
 
     if (strcmp(uri, NS_ROOT_URI) == 0)
     {
-        NotificationResource.accepter = 0;
+        NotificationResource.policy = true;
+        (NotificationResource.providerId)[0] = '\0';
         NotificationResource.message_uri = NS_COLLECTION_MESSAGE_URI;
         NotificationResource.sync_uri = NS_COLLECTION_SYNC_URI;
         NotificationResource.topic_uri = NS_COLLECTION_TOPIC_URI;
+        NotificationResource.version = VERSION;
         NotificationResource.handle = NULL;
 
         if (OCCreateResource(&NotificationResource.handle, NS_ROOT_TYPE, NS_DEFAULT_INTERFACE,
@@ -105,6 +107,7 @@ NSResult NSCreateResource(char *uri)
         NotificationMessageResource.title = NULL;
         NotificationMessageResource.contentText = NULL;
         NotificationMessageResource.sourceName = NULL;
+        NotificationMessageResource.topicName = NULL;
         NotificationMessageResource.mediaContents = NULL;
 
         if (OCCreateResource(&NotificationMessageResource.handle, NS_COLLECTION_MESSAGE_TYPE,
@@ -118,6 +121,7 @@ NSResult NSCreateResource(char *uri)
     else if (strcmp(uri, NS_COLLECTION_SYNC_URI) == 0)
     {
         NotificationSyncResource.id = NULL;
+        (NotificationSyncResource.providerId)[0] = '\0';
         NotificationSyncResource.state = NULL;
         NotificationSyncResource.handle = NULL;
 
@@ -131,6 +135,7 @@ NSResult NSCreateResource(char *uri)
     }
     else if (strcmp(uri, NS_COLLECTION_TOPIC_URI) == 0)
     {
+        (NotificationTopicResource.providerId)[0] = '\0';
         (NotificationTopicResource.consumerId)[0] = '\0';
         NotificationTopicResource.TopicList = NULL;
         NotificationTopicResource.handle = NULL;
@@ -222,14 +227,17 @@ NSResult NSUnRegisterResource()
     return NS_OK;
 }
 
-NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle)
+NSResult NSPutNotificationResource(bool policy, OCResourceHandle * handle)
 {
     NS_LOG(DEBUG, "NSPutNotificationResource - IN");
 
-    NotificationResource.accepter = accepter;
+    NotificationResource.policy = policy;
+    OICStrcpy(NotificationResource.providerId, UUID_STRING_SIZE,
+        NSGetProviderInfo()->providerId);
     NotificationResource.message_uri = NS_COLLECTION_MESSAGE_URI;
     NotificationResource.sync_uri = NS_COLLECTION_SYNC_URI;
     NotificationResource.topic_uri = NS_COLLECTION_TOPIC_URI;
+    NotificationResource.version = VERSION;
 
     *handle = NotificationResource.handle;
 
@@ -253,6 +261,7 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
         NotificationMessageResource.title = msg->title;
         NotificationMessageResource.contentText = msg->contentText;
         NotificationMessageResource.sourceName = msg->sourceName;
+        NotificationMessageResource.topicName = msg->topic;
         NotificationMessageResource.mediaContents = msg->mediaContents;
     }
     else
@@ -261,8 +270,8 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle)
     }
 
     *handle = NotificationMessageResource.handle;
-    NS_LOG(DEBUG, "NSPutMessageResource - OUT");
 
+    NS_LOG(DEBUG, "NSPutMessageResource - OUT");
     return NS_OK;
 }
 

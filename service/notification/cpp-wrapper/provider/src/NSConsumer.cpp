@@ -40,7 +40,7 @@ namespace OIC
         {
             if (consumer != nullptr)
             {
-                m_consumerId = consumer->consumerId;
+                m_consumerId.assign(consumer->consumerId, NS_UTILS_UUID_STRING_SIZE - 1);
             }
         }
 
@@ -49,40 +49,39 @@ namespace OIC
             return m_consumerId;
         }
 
-        int NSConsumer::acceptSubscription(NSConsumer *consumer, bool accepted)
+        int NSConsumer::acceptSubscription(bool accepted)
         {
             NS_LOG(DEBUG, "acceptSubscription - IN");
-            if (consumer != nullptr)
-                return NSAcceptSubscription(consumer->getNSConsumer(), accepted);
+            NSResult result = (NSResult) NSAcceptSubscription(getConsumerId().c_str(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
-            return NS_ERROR;
+            return (int) result;
         }
 
-        NSResult NSConsumer::selectTopic(const std::string &topicName)
+        NSResult NSConsumer::setTopic(const std::string &topicName)
         {
-            NS_LOG(DEBUG, "selectTopic - IN");
-            NSResult result = (NSResult) NSProviderSelectTopic(OICStrdup(getConsumerId().c_str()),
-                              OICStrdup(topicName.c_str()));
-            NS_LOG(DEBUG, "selectTopic - OUT");
+            NS_LOG(DEBUG, "setTopic - IN");
+            NSResult result = (NSResult) NSProviderSetConsumerTopic(getConsumerId().c_str(),
+                              topicName.c_str());
+            NS_LOG(DEBUG, "setTopic - OUT");
             return result;
         }
 
-        NSResult NSConsumer::unselectTopic(const std::string &topicName)
+        NSResult NSConsumer::unsetTopic(const std::string &topicName)
         {
-            NS_LOG(DEBUG, "unselectTopic - IN");
-            NSResult result = (NSResult) NSProviderUnselectTopic(OICStrdup(getConsumerId().c_str()),
-                              OICStrdup(topicName.c_str()));
-            NS_LOG(DEBUG, "unselectTopic - OUT");
+            NS_LOG(DEBUG, "unsetTopic - IN");
+            NSResult result = (NSResult) NSProviderUnsetConsumerTopic(getConsumerId().c_str(),
+                              topicName.c_str());
+            NS_LOG(DEBUG, "unsetTopic - OUT");
             return result;
         }
 
-        NSTopicsList *NSConsumer::getConsumerTopics()
+        NSTopicsList *NSConsumer::getConsumerTopicList()
         {
-            NS_LOG(DEBUG, "getConsumerTopics - IN");
-            ::NSTopicLL *topics = NSProviderGetConsumerTopics(OICStrdup(getConsumerId().c_str()));
+            NS_LOG(DEBUG, "getConsumerTopicList - IN");
+            ::NSTopicLL *topics = NSProviderGetConsumerTopics(getConsumerId().c_str());
 
             NSTopicsList *nsTopics = new NSTopicsList(topics);
-            NS_LOG(DEBUG, "getConsumerTopics - OUT");
+            NS_LOG(DEBUG, "getConsumerTopicList - OUT");
             return nsTopics;
         }
     }

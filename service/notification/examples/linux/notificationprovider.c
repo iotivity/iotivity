@@ -30,6 +30,7 @@
 #include "pthread.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include "ocstack.h"
 
 #define TAG "NSProviderExample"
 
@@ -78,7 +79,7 @@ void subscribeRequestCallback(NSConsumer *consumer)
         OICStrcpy(mainConsumer, 37, consumer->consumerId);
     }
 
-    NSAcceptSubscription(consumer, true);
+    NSAcceptSubscription(consumer->consumerId, true);
 }
 
 void syncCallback(NSSyncInfo *sync)
@@ -192,7 +193,7 @@ int main()
             {
                 printf("NSStartProvider(Accepter: Provider)");
                 NSProviderConfig config;
-                config.policy = true;
+                config.subControllability = true;
                 config.subRequestCallback = subscribeRequestCallback;
                 config.syncInfoCallback = syncCallback;
                 config.userInfo = OICStrdup("OCF_NOTIFICATION");
@@ -204,7 +205,7 @@ int main()
             {
                 printf("NSStartProvider(Accepter: Consumer)");
                 NSProviderConfig config;
-                config.policy = false;
+                config.subControllability = false;
                 config.subRequestCallback = subscribeRequestCallback;
                 config.syncInfoCallback = syncCallback;
                 config.userInfo = OICStrdup("OCF_NOTIFICATION");
@@ -221,7 +222,6 @@ int main()
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
-
                 gets(title);
 
                 printf("body : ");
@@ -255,28 +255,28 @@ int main()
 
             case 5:
                 printf("NSProviderAddTopic\n");
-                NSProviderAddTopic("OCF_TOPIC1");
-                NSProviderAddTopic("OCF_TOPIC2");
-                NSProviderAddTopic("OCF_TOPIC3");
-                NSProviderAddTopic("OCF_TOPIC4");
+                NSProviderRegisterTopic("OCF_TOPIC1");
+                NSProviderRegisterTopic("OCF_TOPIC2");
+                NSProviderRegisterTopic("OCF_TOPIC3");
+                NSProviderRegisterTopic("OCF_TOPIC4");
                 break;
 
             case 6:
                 printf("NSProviderDeleteTopic\n");
-                NSProviderDeleteTopic("OCF_TOPIC2");
+                NSProviderUnregisterTopic("OCF_TOPIC2");
                 break;
 
             case 7:
                 printf("NSProviderSelectTopic\n");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC1");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC2");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC3");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC4");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC2");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC3");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC4");
                 break;
 
             case 8:
                 printf("NSProviderUnSelectTopic\n");
-                NSProviderUnselectTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderUnsetConsumerTopic(mainConsumer, "OCF_TOPIC1");
                 break;
 
             case 9:
