@@ -33,33 +33,34 @@ public class Consumer
     {
         mConsumerId = consumerId;
     }
+
     public String getConsumerId( )
     {
         return mConsumerId;
     }
-    public int AcceptSubscription(Consumer consumer, boolean accepted) throws NSException
+
+    public int acceptSubscription(boolean accepted) throws NSException
     {
-        if (consumer != null)
-            return nativeAcceptSubscription(consumer, accepted);
-        return -1;
+        return nativeAcceptSubscription(mConsumerId, accepted);
     }
 
-    public int SelectTopic(String topicName) throws NSException
+    public int setTopic(String topicName) throws NSException
     {
-        return nativeSelectTopic(mConsumerId, topicName);
-    }
-    public int UnselectTopic(String topicName) throws NSException
-    {
-        return nativeUnselectTopic(mConsumerId, topicName);
+        return nativeSetConsumerTopic(mConsumerId, topicName);
     }
 
-    public TopicsList GetConsumerTopics() throws NSException
+    public int unsetTopic(String topicName) throws NSException
     {
-        return nativeGetConsumerTopics(mConsumerId);
+        return nativeUnsetConsumerTopic(mConsumerId, topicName);
     }
 
-    public native int  nativeAcceptSubscription(Consumer consumer, boolean accepted);
-    public native int  nativeSelectTopic(String consumerId, String topicName);
-    public native int  nativeUnselectTopic(String consumerId, String topicName);
-    public native TopicsList  nativeGetConsumerTopics(String consumerId);
+    public TopicsList getConsumerTopicList() throws NSException
+    {
+        return nativeGetConsumerTopicList(mConsumerId);
+    }
+
+    public native int  nativeAcceptSubscription(String  consumerId, boolean accepted) throws NSException;
+    public native int  nativeSetConsumerTopic(String consumerId, String topicName) throws NSException;
+    public native int  nativeUnsetConsumerTopic(String consumerId, String topicName) throws NSException;
+    public native TopicsList  nativeGetConsumerTopicList(String consumerId) throws NSException;
 }
