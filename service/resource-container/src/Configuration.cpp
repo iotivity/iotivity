@@ -23,6 +23,7 @@
 #include <stdexcept>
 #include <utility>
 #include "InternalTypes.h"
+#include <string.h>
 
 #define CONTAINER_TAG "RESOURCE_CONTAINER"
 #define DISCOVER_TAG "DISCOVER_RESOURCE_UNIT"
