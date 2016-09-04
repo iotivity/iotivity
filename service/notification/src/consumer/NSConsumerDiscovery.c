@@ -190,10 +190,17 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NS_LOG(DEBUG, "create NSProvider");
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
 
+    OCRepPayloadPropType accepterType = OCREP_PROP_BOOL;
+
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
     while (payload)
     {
         NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
+        NS_LOG_V(DEBUG, "Payload Type : %d", (int) payload->values->type);
+        if (!strcmp(payload->values->name, NS_ATTRIBUTE_POLICY))
+        {
+            accepterType = payload->values->type;
+        }
         payload = payload->next;
     }
 
@@ -203,11 +210,20 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     char * messageUri = NULL;
     char * syncUri = NULL;
     char * topicUri = NULL;
-    int64_t accepter = 0;
+    bool bAccepter = 0;
+    int16_t iAccepter = 0;
     NSProviderConnectionInfo * connection = NULL;
 
     NS_LOG(DEBUG, "get information of accepter");
-    bool getResult = OCRepPayloadGetPropBool(payload, NS_ATTRIBUTE_POLICY, & accepter);
+    bool getResult = false;
+    if (accepterType == OCREP_PROP_BOOL)
+    {
+        getResult = OCRepPayloadGetPropBool(payload, NS_ATTRIBUTE_POLICY, & bAccepter);
+    }
+    else if (accepterType == OCREP_PROP_INT)
+    {
+        getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, (int64_t*) & iAccepter);
+    }
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "get provider ID");
@@ -246,7 +262,15 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     {
         newProvider->topicUri = topicUri;
     }
-    newProvider->accessPolicy = (NSSelector)accepter;
+    if (accepterType == OCREP_PROP_BOOL)
+    {
+        newProvider->accessPolicy = (NSSelector)bAccepter;
+    }
+    else if (accepterType == OCREP_PROP_INT)
+    {
+        newProvider->accessPolicy = (NSSelector)iAccepter;
+    }
+
     newProvider->connection = connection;
     newProvider->topicLL = NULL;
     newProvider->state = NS_DISCOVERED;
