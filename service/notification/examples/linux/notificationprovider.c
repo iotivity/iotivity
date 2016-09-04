@@ -135,6 +135,17 @@ void removeTopics(NSTopicLL * topics)
     }
 }
 
+void input(char * buffer)
+{
+    char ch;
+    int i = 0;
+
+    while( (ch = getchar()) != '\n' && i < 100)
+        buffer[i++] = ch;
+
+    buffer[i] = '\0';
+}
+
 int main()
 {
     int num;
@@ -216,19 +227,19 @@ int main()
             case 3:
             {
                 printf("NSSendNotification()");
-                char title[100];
-                char body[100];
-                char topic[100];
+                char title[100] = {'\0',};
+                char body[100] = {'\0',};
+                char topic[100] = {'\0',};
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
-                gets(title);
+                input(title);
 
                 printf("body : ");
-                gets(body);
+                input(body);
 
                 printf("topic : ");
-                gets(topic);
+                input(topic);
 
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
