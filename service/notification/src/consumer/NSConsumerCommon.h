@@ -137,9 +137,6 @@ NSProvider * NSCopyProvider(NSProvider_internal *);
 void NSRemoveProvider_internal(NSProvider_internal *);
 void NSRemoveProvider(NSProvider *);
 
-NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal *);
-void NSRemoveSyncInfo(NSSyncInfo_internal *);
-
 NSTopicLL * NSCopyTopicNode(NSTopicLL *);
 void NSRemoveTopicNode(NSTopicLL *);
 NSResult NSInsertTopicNode(NSTopicLL *, NSTopicLL *);

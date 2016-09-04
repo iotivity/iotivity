@@ -475,33 +475,6 @@ void NSRemoveProvider(NSProvider * prov)
     NSOICFree(prov);
 }
 
-NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal * syncInfo)
-{
-    NS_VERIFY_NOT_NULL(syncInfo, NULL);
-
-    NSProviderConnectionInfo * connections = NSCopyProviderConnections(syncInfo->connection);
-    NS_VERIFY_NOT_NULL(connections, NULL);
-
-    NSSyncInfo_internal * newSyncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newSyncInfo, NULL, NSRemoveConnections(connections));
-
-    OICStrcpy(newSyncInfo->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, syncInfo->providerId);
-    newSyncInfo->messageId = syncInfo->messageId;
-    newSyncInfo->state = syncInfo->state;
-    newSyncInfo->connection = connections;
-
-    return newSyncInfo;
-}
-
-void NSRemoveSyncInfo(NSSyncInfo_internal * syncInfo)
-{
-    NS_VERIFY_NOT_NULL_V(syncInfo);
-
-    NSRemoveConnections(syncInfo->connection);
-
-    NSOICFree(syncInfo);
-}
-
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload,

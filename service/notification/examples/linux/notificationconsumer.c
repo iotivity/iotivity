@@ -73,7 +73,7 @@ void onProviderChanged(NSProvider * provider, NSProviderState response)
     if (response == NS_DISCOVERED)
     {
         printf("notification resource discovered\n");
-        printf("subscribe result %d\n", NSSubscribe(provider));
+        printf("subscribe result %d\n", NSSubscribe(provider->providerId));
         printf("startSubscribing\n");
     }
 
