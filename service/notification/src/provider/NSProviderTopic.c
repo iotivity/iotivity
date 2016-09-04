@@ -21,6 +21,7 @@
 #include "NSProviderTopic.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include <pthread.h>
 
 NSResult NSSendTopicUpdation();
 
@@ -424,6 +425,25 @@ void * NSTopicSchedule(void * ptr)
                     NS_LOG(DEBUG, "TASK_POST_TOPIC : ");
                     NSPostConsumerTopics((OCEntityHandlerRequest*) node->taskData);
                     NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) node->taskData);
+                }
+                    break;
+                case TASK_GET_TOPICS:
+                {
+                    NS_LOG(DEBUG, "TASK_GET_TOPICS : ");
+                    NSTopicSynchronization * topicData = (NSTopicSynchronization *) node->taskData;
+                    NSTopicLL * topics = NSProviderGetTopicsCacheData(registeredTopicList);
+                    topicData->topics = topics;
+                    pthread_cond_signal(&topicData->condition);
+                }
+                    break;
+                case TAST_GET_CONSUMER_TOPICS:
+                {
+                    NS_LOG(DEBUG, "TASK_GET_CONSUMER_TOPICS : ");
+                    NSTopicSynchronization * topicData = (NSTopicSynchronization *) node->taskData;
+                    NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList,
+                                consumerTopicList, topicData->consumerId);
+                    topicData->topics = topics;
+                    pthread_cond_signal(&topicData->condition);
                 }
                     break;
                 default:

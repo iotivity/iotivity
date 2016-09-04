@@ -32,15 +32,42 @@
 #include "cautilinterface.h"
 #include "NSProviderSystem.h"
 #include "oic_time.h"
+#include <pthread.h>
 
 bool initProvider = false;
 
 pthread_mutex_t nsInitMutex;
+pthread_cond_t nstopicCond;
 
 void initializeMutex()
 {
     static pthread_mutex_t initMutex = PTHREAD_MUTEX_INITIALIZER;
     nsInitMutex = initMutex;
+}
+
+void NSInitialize()
+{
+    NS_LOG(DEBUG, "NSSetList - IN");
+
+    pthread_mutexattr_init(&NSCacheMutexAttr);
+    pthread_mutexattr_settype(&NSCacheMutexAttr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&NSCacheMutex, &NSCacheMutexAttr);
+    pthread_cond_init(&nstopicCond, NULL);
+
+    NSInitSubscriptionList();
+    NSInitTopicList();
+    NS_LOG(DEBUG, "NSSetList - OUT");
+}
+
+void NSDeinitailize()
+{
+    NSStorageDestroy(consumerSubList);
+    NSStorageDestroy(consumerTopicList);
+    NSStorageDestroy(registeredTopicList);
+
+    pthread_mutex_destroy(&NSCacheMutex);
+    pthread_mutexattr_destroy(&NSCacheMutexAttr);
+    pthread_cond_destroy(&nstopicCond);
 }
 
 NSResult NSStartProvider(NSProviderConfig config)
@@ -62,7 +89,7 @@ NSResult NSStartProvider(NSProviderConfig config)
         CARegisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
                 (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
 
-        NSSetList();
+        NSInitialize();
         NSInitScheduler();
         NSStartScheduler();
 
@@ -79,29 +106,6 @@ NSResult NSStartProvider(NSProviderConfig config)
     return NS_OK;
 }
 
-void NSSetList()
-{
-    NS_LOG(DEBUG, "NSSetList - IN");
-
-    pthread_mutexattr_init(&NSCacheMutexAttr);
-    pthread_mutexattr_settype(&NSCacheMutexAttr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&NSCacheMutex, &NSCacheMutexAttr);
-
-    NSInitSubscriptionList();
-    NSInitTopicList();
-    NS_LOG(DEBUG, "NSSetList - OUT");
-}
-
-void NSDestroyList()
-{
-    NSStorageDestroy(consumerSubList);
-    NSStorageDestroy(consumerTopicList);
-    NSStorageDestroy(registeredTopicList);
-
-    pthread_mutex_destroy(&NSCacheMutex);
-    pthread_mutexattr_destroy(&NSCacheMutexAttr);
-}
-
 NSResult NSStopProvider()
 {
     NS_LOG(DEBUG, "NSStopProvider - IN");
@@ -115,7 +119,7 @@ NSResult NSStopProvider()
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
         NSStopScheduler();
-        NSDestroyList();
+        NSDeinitailize();
 
         initProvider = false;
     }
@@ -266,11 +270,18 @@ NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
         return NULL;
     }
 
-    NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList,
-            consumerTopicList, consumerId);
+    NSTopicSynchronization topics;
+    topics.consumerId = OICStrdup(consumerId);
+    topics.topics = NULL;
+    topics.condition = nstopicCond;
+
+    NSPushQueue(TOPIC_SCHEDULER, TAST_GET_CONSUMER_TOPICS, &topics);
+    pthread_cond_wait(&topics.condition, &nsInitMutex);
+    OICFree(topics.consumerId);
 
     pthread_mutex_unlock(&nsInitMutex);
-    return topics;
+    NS_LOG(DEBUG, "NSProviderGetConsumerTopics - OUT");
+    return topics.topics;
 }
 
 NSTopicLL * NSProviderGetTopics()
@@ -278,12 +289,17 @@ NSTopicLL * NSProviderGetTopics()
     NS_LOG(DEBUG, "NSProviderGetTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    NSTopicLL * topics = NSProviderGetTopicsCacheData(registeredTopicList);
+    NSTopicSynchronization topics;
+    topics.consumerId = NULL;
+    topics.topics = NULL;
+    topics.condition = nstopicCond;
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_GET_TOPICS, &topics);
+    pthread_cond_wait(&topics.condition, &nsInitMutex);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderGetTopics - OUT");
-
-    return topics;
+    return topics.topics;
 }
 
 NSResult NSProviderRegisterTopic(const char * topicName)

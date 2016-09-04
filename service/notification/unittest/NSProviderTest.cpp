@@ -341,9 +341,6 @@ TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
     NSProviderRegisterTopic(str.c_str());
     NSProviderRegisterTopic(str2.c_str());
 
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
-
     bool isSame = true;
     NSTopicLL * topics = NSProviderGetTopics();
 
@@ -377,9 +374,6 @@ TEST_F(NotificationProviderTest, ExpectEqualUnregisteredTopicsAndRegisteredTopic
     NSProviderRegisterTopic(str.c_str());
     NSProviderRegisterTopic(str2.c_str());
     NSProviderUnregisterTopic(str2.c_str());
-
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
 
     bool isSame = true;
     NSTopicLL * topics = NSProviderGetTopics();
