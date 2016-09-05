@@ -193,10 +193,15 @@ int main()
 
         printf("input : ");
 
-        scanf("%d", &num);
-        fflush(stdin);
-        scanf("%c", &dummy);
-        fflush(stdin);
+        if(scanf("%d", &num) > 0)
+        {
+            fflush(stdin);
+            if(scanf("%c", &dummy) > 0)
+            {
+                fflush(stdin);
+                printf("\n");
+            }
+        }
 
         switch (num)
         {
