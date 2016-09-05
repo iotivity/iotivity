@@ -55,7 +55,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
     Log.i(LOG_TAG, "Configuration done Successfully");
 
     if (!m_REHelper.disocverResources(m_ErrorMsg)) {
-      fail(
+      assertTrue(
           "Precondition Failed, No Resource Found!! " + m_ErrorMsg.toString(),
           false);
     } else {
@@ -182,8 +182,9 @@ public class REResourceCacheTest extends InstrumentationTestCase {
     try {
       m_Resource.startCaching(null);
       CacheState cacheState = m_Resource.getCacheState();
-      if (cacheState != CacheState.READY) {
-        assertEquals("Cache state should READY after CachingStart. But got "
+      
+      if (cacheState != CacheState.UNREADY) {
+        fail("Cache state should READY after CachingStart. But got "
             + cacheState);
       }
       m_REHelper.waitInSecond(CALLBACK_WAIT_MIN);
@@ -191,7 +192,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
       m_Resource.stopCaching();
       cacheState = m_Resource.getCacheState();
       if (cacheState != CacheState.NONE) {
-        assertEquals(
+        fail(
             "Cache state should NONE after CachingStop. But got " + cacheState);
       }
     } catch (Exception e) {

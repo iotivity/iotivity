@@ -274,7 +274,7 @@ public class REResourceCacheTest extends InstrumentationTestCase {
    * @expected returned Attribute is not empty
    **/
   public void testGetCachedAttribute_P() {
-    if (!m_REHelper.startCaching(false, m_ErrorMsg)) {
+    if (!m_REHelper.startCaching(true, m_ErrorMsg)) {
       fail("Precondition failed. " + m_ErrorMsg);
     }
 

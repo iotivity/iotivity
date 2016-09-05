@@ -20,26 +20,23 @@
 
 package org.iotivity.service.re.test.helper;
 
-public class ResourceUtil {
-  public static final String TEMP_SENSOR_URI    = "/a/TempSensor";
-  public static final String TEMP_SENSOR_TYPE   = "oic.r.temperature.sensor";
-  public static final String DEFAULT_INTERFACE  = "oic.if.";
-  public static final String BASELINE_INTERFACE = "oic.if.baseline";
+public interface ResourceUtil {
+  String TEMP_SENSOR_URI = "/a/TempSensor";
+  String TEMP_SENSOR_TYPE = "oic.r.temperature.sensor";
+  String DEFAULT_INTERFACE = "oic.if.";
+  String BASELINE_INTERFACE = "oic.if.baseline";
+  String LIGHT_URI = "/device/tube-light";
+  String LIGHT_TYPE = "core.light";
+  String FAN_URI = "/device/table-fan";
+  String FAN_TYPE = "core.fan";
+  String ATTR_KEY_POWER = "power";
+  String ATTR_VALUE_POWER_ON = "on";
+  String ATTR_VALUE_POWER_OFF = "off";
+  String ATTR_INTENSITY_KEY = "intensity";
+  String ATTR_INTENSITY_VALUE = "10";
+  String DEFAULT_EMPTY_STRING_VALUE = "";
 
-  public static final String LIGHT_URI  = "/device/tube-light";
-  public static final String LIGHT_TYPE = "core.light";
-  public static final String FAN_URI    = "/device/table-fan";
-  public static final String FAN_TYPE   = "core.fan";
-
-  public static final String ATTR_KEY_POWER       = "power";
-  public static final String ATTR_VALUE_POWER_ON  = "on";
-  public static final String ATTR_VALUE_POWER_OFF = "off";
-  public static final String ATTR_INTENSITY_KEY   = "intensity";
-  public static final String ATTR_INTENSITY_VALUE = "10";
-
-  public static final String DEFAULT_EMPTY_STRING_VALUE = "";
-
-  public static final int CALLBACK_WAIT_ONE = 1;
-  public static final int CALLBACK_WAIT_MIN = 2;
-  public static final int CALLBACK_WAIT_MAX = 5;
+  int CALLBACK_WAIT_ONE = 1;
+  int CALLBACK_WAIT_MIN = 2;
+  int CALLBACK_WAIT_MAX = 5;
 }

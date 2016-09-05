@@ -49,15 +49,15 @@ public class REServerBuilderTest extends InstrumentationTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    m_REHelper = new REAPIHelper();
+
+    m_Builder = new RcsResourceObject.Builder(TEMP_SENSOR_URI,
+        TEMP_SENSOR_TYPE, DEFAULT_INTERFACE);
+
     if (getName().equalsIgnoreCase("testSetDiscoverable_SQV_P")
         || getName().equalsIgnoreCase("testSetObservable_SQV_P")) {
       Log.i(LOG_TAG, "Found selected testcase");
     } else {
-      m_REHelper = new REAPIHelper();
-
-      m_Builder = new RcsResourceObject.Builder(TEMP_SENSOR_URI,
-          TEMP_SENSOR_TYPE, DEFAULT_INTERFACE);
-
       RcsResourceAttributes attributes = new RcsResourceAttributes();
       attributes.put(ATTR_KEY_POWER, ATTR_VALUE_POWER_ON);
 
@@ -165,6 +165,8 @@ public class REServerBuilderTest extends InstrumentationTestCase {
     try {
       m_Builder.setDiscoverable(discoverable);
 
+      m_ResourceObject = m_Builder.build();
+
       boolean isDiscoverable = m_ResourceObject.isDiscoverable();
 
       if (discoverable != isDiscoverable) {
@@ -192,6 +194,8 @@ public class REServerBuilderTest extends InstrumentationTestCase {
 
     try {
       m_Builder.setObservable(observable);
+
+      m_ResourceObject = m_Builder.build();
 
       boolean isObservable = m_ResourceObject.isObservable();
 
@@ -361,10 +365,9 @@ public class REServerBuilderTest extends InstrumentationTestCase {
    * @procedure 1. Perform setAttribute() API with empty string value 2. Perform
    *            containsAttribute() API using empty key
    * @post_condition None
-   * @expected The API should throw exception
+   * @expected The API should not throw exception
    **/
   public void testContainsAttribute_ESV_N() {
-    boolean isException = false;
 
     try {
       RcsValue value = new RcsValue(ATTR_VALUE_POWER_ON);
@@ -373,17 +376,12 @@ public class REServerBuilderTest extends InstrumentationTestCase {
       boolean hasAttribute = m_ResourceObject
           .containsAttribute(DEFAULT_EMPTY_STRING_VALUE);
 
-      if (hasAttribute == true) {
+      if (hasAttribute == false) {
         fail("\"" + DEFAULT_EMPTY_STRING_VALUE + "\""
             + " attribute is not available.");
       }
-
     } catch (Exception e) {
-      isException = true;
-
-    } finally {
-      if (!isException)
-        fail("No exception found!");
+        fail("Unexpected exception found..!!");
     }
   }
 

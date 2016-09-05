@@ -40,6 +40,7 @@ import org.iotivity.service.server.RcsSetResponse;
 import org.iotivity.service.server.RcsResourceObject.GetRequestHandler;
 import org.iotivity.service.server.RcsResourceObject.SetRequestHandler;
 
+import static org.iotivity.service.re.test.helper.ResourceUtil.*;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -156,8 +157,8 @@ public class REHelper {
     }
 
     try {
-      mDiscoveryTask = RcsDiscoveryManager.getInstance().discoverResource(
-          RcsAddress.multicast(), mOnResourceDiscoveredListener);
+      mDiscoveryTask = RcsDiscoveryManager.getInstance().discoverResourceByType(
+          RcsAddress.multicast(), LIGHT_TYPE, mOnResourceDiscoveredListener);
 
       if (mResourceObj != null) {
         mResourceObj.destroy();
