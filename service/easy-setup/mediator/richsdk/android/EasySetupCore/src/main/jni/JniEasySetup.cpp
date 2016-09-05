@@ -54,6 +54,12 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
     try
     {
         nativeRemoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(jniOcResource->getOCResource());
+        if (!nativeRemoteEnrollee)
+        {
+            ES_LOGE("Failed to create RemoteEnrollee object.");
+            return NULL;
+        }
+
         //create the java object
         jRemoteEnrollee = env->NewObject(g_cls_RemoteEnrollee, g_mid_RemoteEnrollee_ctor);
         if (!jRemoteEnrollee)
