@@ -233,12 +233,6 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         }
     }
 
-    if(!topics)
-    {
-        NS_LOG(DEBUG, "topicList is NULL");
-        return NS_ERROR;
-    }
-
     // make response for the Get Request
     OCEntityHandlerResponse response;
     response.numSendVendorSpecificHeaderOptions = 0;
@@ -253,33 +247,6 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         return NS_ERROR;
     }
 
-    size_t dimensionSize = (size_t)NSProviderGetTopicListSize(topics);
-
-    NS_LOG_V(DEBUG, "dimensionSize = %d", dimensionSize);
-
-    if(!dimensionSize)
-    {
-        return NS_ERROR;
-    }
-
-    OCRepPayload** payloadTopicArray = (OCRepPayload **) OICMalloc(
-            sizeof(OCRepPayload *) * dimensionSize);
-
-    size_t dimensions[3] = {dimensionSize, 0, 0};
-
-    for (int i = 0; i < (int)dimensionSize; i++)
-    {
-        NS_LOG_V(DEBUG, "topicName = %s", topics->topicName);
-        NS_LOG_V(DEBUG, "topicState = %d",(int) topics->state);
-
-        payloadTopicArray[i] = OCRepPayloadCreate();
-        OCRepPayloadSetPropString(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_NAME, topics->topicName);
-        OCRepPayloadSetPropInt(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_SELECTION,
-                (int)topics->state);
-
-        topics = topics->next;
-    }
-
     OCRepPayloadSetUri(payload, NS_COLLECTION_TOPIC_URI);
     if(id)
     {
@@ -287,8 +254,49 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     }
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID,
         NSGetProviderInfo()->providerId);
-    OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
-            (const OCRepPayload**)(payloadTopicArray), dimensions);
+
+    if(topics)
+    {
+        NS_LOG(DEBUG, "topicList is NULL");
+        size_t dimensionSize = (size_t)NSProviderGetTopicListSize(topics);
+
+        NS_LOG_V(DEBUG, "dimensionSize = %d", (int)dimensionSize);
+
+        if(!dimensionSize)
+        {
+            return NS_ERROR;
+        }
+
+        OCRepPayload** payloadTopicArray = (OCRepPayload **) OICMalloc(
+                sizeof(OCRepPayload *) * dimensionSize);
+
+        size_t dimensions[3] = {dimensionSize, 0, 0};
+
+        for (int i = 0; i < (int)dimensionSize; i++)
+        {
+            NS_LOG_V(DEBUG, "topicName = %s", topics->topicName);
+            NS_LOG_V(DEBUG, "topicState = %d",(int) topics->state);
+
+            payloadTopicArray[i] = OCRepPayloadCreate();
+            OCRepPayloadSetPropString(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_NAME,
+                    topics->topicName);
+            OCRepPayloadSetPropInt(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_SELECTION,
+                    (int)topics->state);
+
+            topics = topics->next;
+        }
+
+
+        OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
+                (const OCRepPayload**)(payloadTopicArray), dimensions);
+    }
+    else
+    {
+        size_t dimensions[3] = {0, 0, 0};
+
+        OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
+                (OCRepPayload **) NULL, dimensions);
+    }
 
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
