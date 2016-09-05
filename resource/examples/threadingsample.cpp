@@ -23,7 +23,6 @@
 /// server in a separate thread, and running 2 clients in each thread.
 ///
 
-#include "iotivity_config.h"
 
 #include <memory>
 #include <iostream>
@@ -38,6 +37,7 @@
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
+#include "platform_features.h"
 
 using namespace OC;
 

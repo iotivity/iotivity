@@ -30,7 +30,6 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#include "iotivity_config.h"
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif

@@ -18,14 +18,13 @@
  *
  *****************************************************************/
 
-#include "iotivity_config.h"
-
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#include "platform_features.h"
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"

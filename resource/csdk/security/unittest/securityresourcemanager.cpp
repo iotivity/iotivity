@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "iotivity_config.h"
 #include "gtest/gtest.h"
 #ifdef HAVE_PWD_H
 #include <pwd.h>

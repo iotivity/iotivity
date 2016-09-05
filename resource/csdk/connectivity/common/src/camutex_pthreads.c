@@ -36,7 +36,6 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#include "iotivity_config.h"
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -59,6 +58,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <oic_malloc.h>
+#include "platform_features.h"
 #include "camutex.h"
 #include "logger.h"
 

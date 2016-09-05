@@ -36,7 +36,6 @@
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif
-#include "iotivity_config.h"
 #include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
@@ -58,6 +57,7 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
+#include "platform_features.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"

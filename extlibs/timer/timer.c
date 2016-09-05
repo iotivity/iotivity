@@ -22,7 +22,6 @@
 
 #define _BSD_SOURCE
 
-#include "iotivity_config.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
@@ -41,6 +40,7 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+#include "platform_features.h"
 
 #include <stdio.h>
 

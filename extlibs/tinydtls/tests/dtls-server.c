@@ -2,7 +2,6 @@
 /* This is needed for apple */
 #define __APPLE_USE_RFC_3542
 
-#include "iotivity_config.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>

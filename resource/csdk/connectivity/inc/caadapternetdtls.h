@@ -20,6 +20,7 @@
 #ifndef CA_ADAPTER_NET_DTLS_H_
 #define CA_ADAPTER_NET_DTLS_H_
 
+#include "platform_features.h"
 #include "dtls.h"
 #include "uarraylist.h"
 #include "camutex.h"

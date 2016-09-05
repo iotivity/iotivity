@@ -21,7 +21,6 @@
 // Required for strok_r
 #define _POSIX_C_SOURCE 200112L
 
-#include "iotivity_config.h"
 #include <stdio.h>
 #include "ocpayload.h"
 #include "octypes.h"

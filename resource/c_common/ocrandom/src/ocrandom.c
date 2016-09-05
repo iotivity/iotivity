@@ -30,8 +30,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#include "iotivity_config.h"
-
+#include "platform_features.h"
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif

@@ -29,7 +29,6 @@
 #define _GNU_SOURCE
 #endif
 
-#include "iotivity_config.h"
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif

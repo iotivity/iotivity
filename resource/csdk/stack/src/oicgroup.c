@@ -20,8 +20,6 @@
 
 #define _POSIX_C_SOURCE 200112L
 
-#include "iotivity_config.h"
-
 #include <string.h>
 
 #include "oicgroup.h"
@@ -33,6 +31,8 @@
 #include "occollection.h"
 #include "logger.h"
 #include "timer.h"
+
+#include "platform_features.h"
 
 #define TAG "OIC_RI_GROUP"
 

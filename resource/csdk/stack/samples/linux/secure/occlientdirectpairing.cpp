@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +37,7 @@
 #undef ERROR
 #endif
 #endif // defined(HAVE_WINDOWS_H)
+#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"

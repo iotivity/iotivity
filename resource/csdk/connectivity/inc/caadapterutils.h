@@ -27,8 +27,6 @@
 #ifndef CA_ADAPTER_UTILS_H_
 #define CA_ADAPTER_UTILS_H_
 
-#include "iotivity_config.h"
-
 #include <stdbool.h>
 #ifdef __ANDROID__
 #include <jni.h>

@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "iotivity_config.h"
 #include "gtest/gtest.h"
 
 #ifdef HAVE_PTHREAD_H

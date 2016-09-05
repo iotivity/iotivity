@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include "iotivity_config.h"
+#include "platform_features.h"
 #include "caadapternetdtls.h"
 #include "cacommon.h"
 #include "caipinterface.h"

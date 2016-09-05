@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
-#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -39,6 +38,7 @@
 #include <getopt.h>
 #include "ocpayload.h"
 #include "common.h"
+#include "platform_features.h"
 
 #define TAG PCF("ocservercontainer")
 
