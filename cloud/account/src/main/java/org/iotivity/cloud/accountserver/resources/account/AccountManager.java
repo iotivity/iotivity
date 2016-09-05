@@ -126,6 +126,10 @@ public class AccountManager {
             authProviderName = Constants.GITHUB;
         } else if (authProvider.equalsIgnoreCase(Constants.SAMSUNG)) {
             authProviderName = Constants.SAMSUNG;
+        } else if (authProvider.equalsIgnoreCase(Constants.GOOGLE))
+            authProviderName = Constants.GOOGLE;
+        else {
+            Log.w("Unsupported oauth provider : " + authProvider);
         }
 
         return authProviderName;
@@ -221,7 +225,7 @@ public class AccountManager {
                 options);
         Log.d("access token : " + tokenInfo.getAccesstoken());
         Log.d("refresh token : " + tokenInfo.getRefreshtoken());
-        Log.d("expired time" + tokenInfo.getExpiredtime());
+        Log.d("expired time : " + tokenInfo.getExpiredtime());
 
         return tokenInfo;
     }
@@ -374,6 +378,7 @@ public class AccountManager {
         // find record about uuid and did
         HashMap<String, Object> condition = new HashMap<>();
         condition.put(Constants.KEYFIELD_UUID, uuid);
+        condition.put(Constants.KEYFIELD_DID, did);
 
         ArrayList<HashMap<String, Object>> recordList = findRecord(
                 AccountDBManager.getInstance()
@@ -387,12 +392,13 @@ public class AccountManager {
         HashMap<String, Object> record = recordList.get(0);
 
         TokenTable oldTokenInfo = castMapToTokenTable(record);
+        String provider = oldTokenInfo.getProvider();
 
         if (!checkRefreshTokenInDB(oldTokenInfo, refreshToken)) {
             throw new NotFoundException("refresh token is not correct");
         }
         // call 3rd party refresh token method
-        TokenTable newTokenInfo = requestRefreshToken(refreshToken);
+        TokenTable newTokenInfo = requestRefreshToken(refreshToken, provider);
 
         // record change
         oldTokenInfo.setAccesstoken(newTokenInfo.getAccesstoken());
@@ -420,7 +426,20 @@ public class AccountManager {
         return response;
     }
 
-    private TokenTable requestRefreshToken(String refreshToken) {
+    private TokenTable requestRefreshToken(String refreshToken,
+            String provider) {
+
+        if (mFactory == null) {
+
+            boolean res = false;
+            String authProvider = checkAuthProviderName(provider);
+            res = loadAuthProviderLibrary(authProvider);
+
+            if (!res) {
+                throw new InternalServerErrorException(
+                        authProvider + " library is not loaded");
+            }
+        }
 
         TokenTable tokenInfo = mFactory.requestRefreshTokenInfo(refreshToken);
 
