@@ -332,9 +332,9 @@ TEST_F(CATest_btc, CASelectNetwork_LOBV_N)
 
     m_caHelper.m_result = CASelectNetwork(CA_INVALID_ADAPTER);
 
-    if (m_caHelper.m_result != CA_STATUS_OK)
+    if (m_caHelper.m_result != CA_NOT_SUPPORTED)
     {
-        SET_FAILURE(m_caHelper.getFailureMessage("CASelectNetwork", m_caHelper.m_result, CA_STATUS_OK));
+        SET_FAILURE(m_caHelper.getFailureMessage("CASelectNetwork", m_caHelper.m_result, CA_NOT_SUPPORTED));
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[CASelectNetwork] OUT ");

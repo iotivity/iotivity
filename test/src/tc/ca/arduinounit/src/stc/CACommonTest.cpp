@@ -358,7 +358,7 @@ test(CAStartListeningServerStopListeningServer_VLCC_P)
         isCATerminated = false;
 
         result = CASelectNetwork(caHelper.m_availableNetwork);
-		assertEqual(result, CA_STATUS_OK, testLog);
+        assertEqual(result, CA_STATUS_OK, testLog);
         testLog += ", CASelectNetwork";
        
         result = CAStartListeningServer();

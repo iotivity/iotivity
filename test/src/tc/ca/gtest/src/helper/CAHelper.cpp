@@ -237,8 +237,7 @@ int CAHelper::readConfigurationFile()
         m_simulatorUri += "/";
         m_simulatorSecureUri += "/";
     }
-
-#ifdef WITH_TCP
+#ifdef TCP_ADAPTER
     else if(m_availableNetwork == CA_ADAPTER_TCP)
     {
         m_simulatorUri = COAP_TCP_PREFIX + s_simulatorIp;
@@ -427,6 +426,11 @@ bool CAHelper::createEndpoint(char* uri, CAResult_t expectedResult)
         return false;
     }
 
+    if(m_availableNetwork == CA_ADAPTER_RFCOMM_BTEDR || m_availableNetwork == CA_ADAPTER_GATT_BTLE)
+    {
+        transportFlags = CA_DEFAULT_FLAGS;
+    }
+
     IOTIVITYTEST_LOG(DEBUG, "transportFlags: %d", transportFlags);
 
     IOTIVITYTEST_LOG(DEBUG, "[createEndpoint function] Address: %s , port: %d  \n",
@@ -545,8 +549,7 @@ bool CAHelper::initNetwork(bool select)
         return false;
     }
 
-    m_result = CAInitialize();
-    if (m_result != CA_STATUS_OK)
+    if (!initialize())
     {
         IOTIVITYTEST_LOG(DEBUG, "CAInitialize failed. return value is %d", m_result);
         return false;
@@ -1284,6 +1287,11 @@ bool CAHelper::sendRequestToAll(char* uri, char* hidden_payload, CAMethod_t meth
     const char* address = "";
     uint16_t port = 0;
 
+    if(m_availableNetwork == CA_ADAPTER_RFCOMM_BTEDR || m_availableNetwork == CA_ADAPTER_GATT_BTLE)
+    {
+        transportFlags = CA_DEFAULT_FLAGS;
+    }
+
     m_result = CACreateEndpoint(transportFlags, m_availableNetwork, (const char*) address, port,
             &m_endpoint);
     if (m_result != CA_STATUS_OK)
@@ -1306,7 +1314,6 @@ bool CAHelper::sendRequestToAll(char* uri, char* hidden_payload, CAMethod_t meth
     requestData.token = m_token;
     requestData.tokenLength = CA_MAX_TOKEN_LEN;
     requestData.resourceUri = (CAURI_t) resourceURI;
-    requestData.dataType = CA_REQUEST_DATA;
 
     if (hidden_payload == NULL)
     {
@@ -1480,9 +1487,9 @@ bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t 
     CAInfo_t responseData =
     { 0 };
     responseData.type = type;
+    responseData.dataType = CA_RESPONSE_DATA;
     responseData.resourceUri = (CAURI_t) resourceURI;
     responseData.payload = NULL;
-    responseData.dataType = CA_RESPONSE_DATA;
 
     char payload[MAX_BUF_LEN] =
     { 0 };
@@ -1973,7 +1980,7 @@ bool CAHelper::parsingCoapUri(const char* uri, addressSet_t* address, CATranspor
         startIndex = COAP_PREFIX_LEN;
         *flags = CA_IPV4;
     }
-#ifdef WITH_TCP
+#ifdef TCP_ADAPTER
     else if (strncmp(COAPS_TCP_PREFIX, uri, COAPS_TCP_PREFIX_LEN) == 0)
     {
         IOTIVITYTEST_LOG(DEBUG, "uri has '%s' prefix\n", COAPS_TCP_PREFIX);

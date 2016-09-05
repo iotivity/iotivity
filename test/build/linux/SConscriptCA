@@ -26,7 +26,7 @@ import os
 
 env_linux['CC'] = 'g++'
 
-PROJECT_HOME = '../../'
+PROJECT_HOME = '../..'
 
 VARIANT_DIR = env_linux['VARIANT_DIR']
 IOTIVITY_ROOT = env_linux['ORG_SRC']
@@ -41,20 +41,20 @@ default_targets = [pre_job]
 install_targets = []
 
 if env_linux.get('RELEASE'):
-	RELEASE_DIR = 'release'
+    RELEASE_DIR = 'release'
 else:
-	RELEASE_DIR = 'debug'
+    RELEASE_DIR = 'debug'
 
 TRANSPORT_LIST = [ 'NONE', 'IP', 'TCP' ]
-BINARY_SUBSTRING_LIST = [ '', '_ip', '_tcp' ]
-BIN_NAME_LIST = [ 'iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_tcp_test' ]
-TRANSPORT_CFLAGS_LIST = [ 
-                            ['', ''], 
-                            ['-D__IP__', '-D__ALL_TRANSPORT__'], 
-                            ['-DWITH_TCP', '-DTCP_ADAPTER', '-D__TCP__', '-D__ALL_TRANSPORT__']
-                        ]	
+TRANSPORT_BIN_NAME = [ 'iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_tcp_test' ]
+TRANSPORT_CPPDEFINES = [ 
+                            [''], 
+                            ['__IP__', '__ALL_TRANSPORT__'], 
+                            ['__TCP__', '__ALL_TRANSPORT__', 'TCP_ADAPTER']
+                        ]    
 
-IOTIVITY_LIB_PATH = IOTIVITY_ROOT + '/out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
+IOTIVITY_LIB_PATH = IOTIVITY_ROOT + 'out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
+
 
 IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/csdk/stack/include',
@@ -86,99 +86,117 @@ LIB_PATH_LIST = [
                     PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux'
                 ]
 
-common_cflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -DLINUX -fpermissive -D__LINUX__ -finstrument-functions -ftest-coverage -fprofile-arcs')
+COMMON_CPPFLAGS = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -finstrument-functions -ftest-coverage -fprofile-arcs')
 
-TC_SRC_LIST = Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/CommonUtil.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/helper/*.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/btc/*.cpp') + Glob(PROJECT_HOME + '/src/tc/ca/gtest/src/stc/*.cpp')
+COMMON_CPPDEFINES = Split('LINUX __LINUX__')
+
+GTEST_UNSPECIFIED_NETWORK_SRC = [ PROJECT_HOME + '/src/tc/ca/gtest/src/btc/CATest.cpp', PROJECT_HOME + '/src/tc/ca/gtest/src/stc/CACommonTest.cpp' ]
+
+GTEST_IP_NETWORK_SRC = [ 
+                            PROJECT_HOME + '/src/tc/ca/gtest/src/btc/CANetworkTest.cpp',
+                            PROJECT_HOME + '/src/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
+                            PROJECT_HOME + '/src/tc/ca/gtest/src/stc/CAClientTest.cpp',
+                            PROJECT_HOME + '/src/tc/ca/gtest/src/stc/CAMulticastTest.cpp'
+                       ]
+
+GTEST_TCP_NETWORK_SRC = [ 
+                            PROJECT_HOME + '/src/tc/ca/gtest/src/btc/CANetworkTest.cpp',
+                            PROJECT_HOME + '/src/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
+                            PROJECT_HOME + '/src/tc/ca/gtest/src/stc/CAClientTest.cpp'
+                       ]
+
+GTEST_SRC = [GTEST_UNSPECIFIED_NETWORK_SRC, GTEST_IP_NETWORK_SRC, GTEST_TCP_NETWORK_SRC]
+
+TC_COMMON_SRC = [ 
+                    PROJECT_HOME + '/src/common/commonutil/c_cpp/trace.c',
+                    PROJECT_HOME + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
+                    PROJECT_HOME + '/src/common/commonutil/c_cpp/CommonUtil.cpp', 
+                    PROJECT_HOME + '/src/tc/ca/gtest/src/helper/CAHelper.cpp' 
+                ]
 
 lib_list = Split('libboost_system libboost_filesystem libboost_thread rt gio-2.0 gobject-2.0 glib-2.0 uuid libdl libexpat pthread gcov coap octbstack connectivity_abstraction timer ocsrm c_common')
 
-if SECURED == '1':
-	common_cflags.append('-D__WITH_DTLS__')	
-	lib_list.append('tinydtls')
+if SECURED:
+    lib_list.append('tinydtls')
 
 if 'ALL' in TARGET_TRANSPORT or 'TCP' in TARGET_TRANSPORT:
     lib_list.append('mbedtls') 
     lib_list.append('mbedx509')
     lib_list.append('mbedcrypto')
 
-
-if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:    
+if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
     i = -1
-	
+    
     for transport in TRANSPORT_LIST:
 
-	    i = i + 1
-	
-	    if TARGET_TRANSPORT != 'ALL':
-		    if TARGET_TRANSPORT != transport:
-			    continue
+        i = i + 1
+    
+        if TARGET_TRANSPORT != 'ALL':
+            if TARGET_TRANSPORT != transport:
+                continue
+    
+        temp_source_list = []
 
-	    network_common_cflags = common_cflags[:]
-	
-	    for transport_cflag in TRANSPORT_CFLAGS_LIST[i]:
-		    if transport_cflag != '':
-			    network_common_cflags.append(transport_cflag)
-	
-	    temp_source_list = []			
+        cpp_defines = COMMON_CPPDEFINES + TRANSPORT_CPPDEFINES[i]
 
-	    trace_object = 'ca' + BINARY_SUBSTRING_LIST[i] + 'trace.o'
-	    env_linux.Object(source = Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/trace.c'), 
-                        target = trace_object, 
-                        CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
-                        LIBS = lib_list, 
-                        LIBPATH = LIB_PATH_LIST, 
-                        CPPFLAGS = network_common_cflags)
-	    temp_source_list.append(trace_object)
-		
-	    main_object = 'ca' + BINARY_SUBSTRING_LIST[i] + 'test_main'
-	    env_linux.Object(source = Glob(PROJECT_HOME + '/src/common/testcase/gtest' + '/IotivitySECTestMain.cpp'), 
-                        target = main_object, 
-                        CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
-                        LIBS = lib_list, 
-                        LIBPATH = LIB_PATH_LIST, 
-                        CPPFLAGS = network_common_cflags)
-	    temp_source_list.append(main_object)
+        if transport == 'IP' and SECURED:
+            cpp_defines.append('__WITH_DTLS__')
 
-	    for single_cpp in TC_SRC_LIST:
-		    temp_single_cpp = str(single_cpp)
-		    if not temp_single_cpp.endswith('.cpp'):
-			    continue
-		    single_object = temp_single_cpp.replace('.cpp', '.o')
-		    single_object = 'ca' + BINARY_SUBSTRING_LIST[i] + single_object
-		    env_linux.Object(source = single_cpp, 
+        for single_cpp in TC_COMMON_SRC + GTEST_SRC[i]:
+            temp_single_cpp = str(single_cpp)
+
+            if not (temp_single_cpp.endswith('.cpp') or temp_single_cpp.endswith('.c') ):
+                continue
+
+            single_object = temp_single_cpp.replace('.cpp', '.o').replace('.c', '.o').replace('/', '_').replace('..', '')
+            single_object = 'ca' + '/' + TRANSPORT_LIST[i] + '/' + single_object
+
+            temp_object = env_linux.Object(source = single_cpp, 
                             target = single_object, 
                             CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
                             LIBS = lib_list, 
                             LIBPATH = LIB_PATH_LIST, 
-                            CPPFLAGS = network_common_cflags)
-		    temp_source_list.append(single_object)
-	
-	    ca_tc = env_linux.Program(source = temp_source_list + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ], 
-                            target = BIN_NAME_LIST[i], 
+                            CPPFLAGS = COMMON_CPPFLAGS,
+                            CPPDEFINES = cpp_defines,
+                            RPATH = IOTIVITY_LIB_PATH
+                            )
+            temp_source_list.append(single_object)
+    
+        ca_tc = env_linux.Program(source = temp_source_list, 
+                            target = TRANSPORT_BIN_NAME[i], 
                             CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH, 
-                            LIBS = lib_list, 
+                            LIBS = lib_list + ['gtest'], 
                             LIBPATH = LIB_PATH_LIST, 
-                            CPPFLAGS = network_common_cflags)
-	    install_targets += ca_tc
+                            CPPFLAGS = COMMON_CPPFLAGS,
+                            CPPDEFINES = cpp_defines,
+                            RPATH = IOTIVITY_LIB_PATH
+                            )
+        install_targets += ca_tc
 
 
 if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
-    simulator_cflags = common_cflags[:]
+    simulator_cpp_defines = COMMON_CPPDEFINES
 
     if 'ALL' in TARGET_TRANSPORT or 'TCP' in TARGET_TRANSPORT:
-	    simulator_cflags.append('-DWITH_TCP')
-	    simulator_cflags.append('-DTCP_ADAPTER')
-	
+        simulator_cpp_defines.append('WITH_TCP')
+        simulator_cpp_defines.append('TCP_ADAPTER')
+
+    if SECURED:
+        simulator_cpp_defines.append('__WITH_DTLS__')
+    
     ca_simulator = env_linux.Program(source = [PROJECT_HOME + '/src/testapp/ca/c_cpp/src/ca_simulator.c'],
                         target = 'iotivity_ca_simulator', 
                         CPPPATH = IOTIVITY_INCLUDE_PATH + SIMULATOR_INCLUDE_PATH, 
                         LIBS = lib_list, 
                         LIBPATH = LIB_PATH_LIST, 
-                        CPPFLAGS = simulator_cflags)
+                        CPPFLAGS = COMMON_CPPFLAGS,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = IOTIVITY_LIB_PATH
+                        )
 
-    install_targets += [ca_simulator]
+    install_targets += ca_simulator
 
-install = env_linux.Install(PROJECT_HOME + VARIANT_DIR, install_targets)
+install = env_linux.Install(PROJECT_HOME + '/' + VARIANT_DIR, install_targets)
 
 delete_bin = []
 i = 0

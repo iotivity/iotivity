@@ -464,8 +464,8 @@ test(GenerateTokenWithNullPointer_N)
     setupTestCase();
     CAResult_t result = CA_STATUS_OK;
     testLog = TESTLOG_START;
-	
-	CAToken_t token = NULL;
+    
+    CAToken_t token = NULL;
     uint8_t tokenLength = CA_MAX_TOKEN_LEN;
     result = CAGenerateToken(NULL, tokenLength);
     assertNotEqual(result, CA_STATUS_OK, testLog);
@@ -513,7 +513,7 @@ test(SendRequest_P)
     assertEqual(result, CA_STATUS_OK, testLog);
     testLog += ", CASelectNetwork";
 
-	int port = UINT16_T_PORT_ZERO;
+    int port = UINT16_T_PORT_ZERO;
     char* address = (char *) IP_ADDRESS;
     CARequestInfo_t requestInfo;
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));  
@@ -743,8 +743,8 @@ test(SendResponse_P)
     result = CASelectNetwork(caHelper.m_availableNetwork);
     assertEqual(result, CA_STATUS_OK, testLog);
     testLog += ", CASelectNetwork";
-	
-	int port = UINT16_T_PORT_ZERO;
+    
+    int port = UINT16_T_PORT_ZERO;
     char* address = (char *) IP_ADDRESS;
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
@@ -969,8 +969,8 @@ test(SendRequestToAll_P)
     result = CASelectNetwork(caHelper.m_availableNetwork);
     assertEqual(result, CA_STATUS_OK, testLog);
     testLog += ", CASelectNetwork";
-	
-	int port = UINT16_T_PORT_ZERO;
+    
+    int port = UINT16_T_PORT_ZERO;
     char* address = (char *) IP_ADDRESS;
     char* resourceUri = (char *) "/a/light";
     CARequestInfo_t requestInfo;
@@ -1287,7 +1287,7 @@ test(CAStopListeningServer_ECRC_N)
  */
 test(CAGenerateToken_LOBV_N)
 {
-	setupTestCase();
+    setupTestCase();
     CAResult_t result = CA_STATUS_OK;
     testLog = TESTLOG_START;
 
@@ -1296,7 +1296,7 @@ test(CAGenerateToken_LOBV_N)
     result = CAGenerateToken(&token, LOBV);
     assertEqual(result, CA_STATUS_INVALID_PARAM, testLog);
     
-	CADestroyToken(token);
+    CADestroyToken(token);
 }
 
 /**

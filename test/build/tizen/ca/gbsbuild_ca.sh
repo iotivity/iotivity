@@ -11,15 +11,15 @@ homeDir='../..'
 tmp_dirName='tmpCA'
 tmp_dir=$homeDir'/'$tmp_dirName
 ext_lib_dir='extlibs'
-target_arch=$1
-rpm_path=$4
 test_dir='test'
 rpm_name="com-oic-ca-sim-0.0.1-1.armv7l.rpm"
 target_dir=$test_dir'/bin/tizen'
 build_script_dir='tizen/ca'
 
+target_arch=$1
 target_tranport=$2
-target_secured=$3
+secured=$3
+rpm_path=$4
 
 mkdir $tmp_dir
 mkdir $tmp_dir/packaging
@@ -52,7 +52,7 @@ fi
 
 echo "Calling core gbs build command"
 
-gbscommand="gbs build -A "$target_arch" -B ~/GBS-ROOT-RI-OIC --include-all --define 'TARGET_TRANSPORT $2' --define 'SECURED $3'"
+gbscommand="gbs build -A "$target_arch" -B ~/GBS-ROOT-RI-OIC --include-all --define 'TARGET_TRANSPORT $target_tranport' --define 'SECURED $secured' "
 echo $gbscommand
 
 if eval $gbscommand; then

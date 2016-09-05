@@ -16,6 +16,9 @@
           <smack request="bt-service::platform" type="rwx"/>
          </request>
     </define>
+    <assign>
+        <filesystem path="/opt/apps/com.oic.ca.sim/bin/sample" exec_label="sample" />
+    </assign>
     <request>
         <domain name="casim" />
     </request>
