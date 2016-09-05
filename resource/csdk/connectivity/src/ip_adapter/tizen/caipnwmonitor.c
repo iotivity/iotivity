@@ -269,6 +269,13 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         {
             goto exit;
         }
+
+        // Add IPv6 interface
+        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET6, addr, flags);
+        if (CA_STATUS_OK != result)
+        {
+            goto exit;
+        }
     }
     return iflist;
 
