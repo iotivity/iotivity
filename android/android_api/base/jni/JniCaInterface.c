@@ -247,12 +247,6 @@ Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
         (*env)->DeleteGlobalRef(env, g_jni_cls_enum);
         g_jni_cls_enum = NULL;
     }
-
-    if (g_jni_mid_enum)
-    {
-        (*env)->DeleteGlobalRef(env, g_jni_mid_enum);
-        g_jni_mid_enum = NULL;
-    }
 }
 
 JNIEXPORT void JNICALL
