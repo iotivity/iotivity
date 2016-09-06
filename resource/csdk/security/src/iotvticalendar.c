@@ -22,6 +22,7 @@
 #if !defined(WITH_ARDUINO)
 
 #define _XOPEN_SOURCE  //Needed by strptime
+#include "iotivity_config.h"
 #include <string.h>
 #include "iotvticalendar.h"
 #include "oic_string.h"

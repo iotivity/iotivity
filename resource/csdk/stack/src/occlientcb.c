@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
+#include "iotivity_config.h"
 #include "occlientcb.h"
 #include "utlist.h"
 #include "logger.h"

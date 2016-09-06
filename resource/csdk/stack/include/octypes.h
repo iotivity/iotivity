@@ -28,7 +28,7 @@
 #ifndef OCTYPES_H_
 #define OCTYPES_H_
 
-#include "platform_features.h"
+#include "iotivity_config.h"
 #include "ocstackconfig.h"
 #include <stdbool.h>
 #include <stdint.h>

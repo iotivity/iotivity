@@ -26,6 +26,8 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#include "iotivity_config.h"
+
 #ifndef WITH_ARDUINO
 #ifdef TCP_ADAPTER
 #define HAVE_SYS_POLL_H

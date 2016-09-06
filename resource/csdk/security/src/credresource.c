@@ -20,6 +20,7 @@
 
 #define __STDC_LIMIT_MACROS
 
+#include "iotivity_config.h"
 #include <stdlib.h>
 #ifdef HAVE_STRING_H
 #include <string.h>

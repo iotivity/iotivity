@@ -433,52 +433,6 @@ conf = Configure(env,
 # POSIX_SUPPORTED, 1 if it is supported, 0 otherwise
 conf.CheckPThreadsSupport()
 
-######################################################################
-# Generate macros for presence of headers
-######################################################################
-cxx_headers = ['arpa/inet.h',
-               'fcntl.h',
-               'grp.h',
-               'in6addr.h',
-               'linux/limits.h',
-               'memory.h',
-               'netdb.h',
-               'netinet/in.h',
-               'pthread.h',
-               'pwd.h',
-               'stdlib.h',
-               'string.h',
-               'strings.h',
-               'sys/socket.h',
-               'sys/stat.h',
-               'sys/time.h',
-               'sys/timeb.h',
-               'sys/types.h',
-               'sys/unistd.h',
-               'syslog.h',
-               'time.h',
-               'unistd.h',
-               'uuid/uuid.h',
-               'windows.h',
-               'winsock2.h',
-               'ws2tcpip.h']
-
-if target_os == 'arduino':
-	# Detection of headers on the Arduino platform is currently broken.
-	cxx_headers = []
-
-if target_os == 'msys_nt':
-	# WinPThread provides a pthread.h, but we want to use native threads.
-	cxx_headers.remove('pthread.h')
-
-def get_define_from_header_file(header_file):
-	header_file_converted = header_file.replace("/","_").replace(".","_").upper()
-	return "HAVE_" + header_file_converted
-
-for header_file_name in cxx_headers:
-	if conf.CheckCXXHeader(header_file_name):
-		conf.env.AppendUnique(CPPDEFINES = [get_define_from_header_file(header_file_name)])
-
 env = conf.Finish()
 ######################################################################
 

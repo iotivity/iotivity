@@ -52,6 +52,7 @@ LOCAL_SRC_FILES := JniCaInterface.c
 LOCAL_STATIC_LIBRARIES := libandroid-ca
 LOCAL_LDLIBS := -llog
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/api
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
