@@ -49,6 +49,7 @@ namespace OIC
                 nsProvider->setTopicList(new NSTopicsList(topicLL));
                 if (state == NS_DISCOVERED)
                 {
+                    nsProvider->setProviderSubscribedState(NSProviderSubscribedState::DISCOVERED);
                     if (discoveredCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the Discovered callback : NS_DISCOVERED, policy false");
@@ -57,6 +58,7 @@ namespace OIC
                 }
                 else if (state == NS_ALLOW)
                 {
+                    nsProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
                     if (discoveredCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the Discovered callback : NS_ALLOW, policy true");
@@ -73,6 +75,7 @@ namespace OIC
                 delete nsProvider;
                 if (state == NS_ALLOW)
                 {
+                    oldProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
                     if (changeCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_ALLOW");
@@ -81,6 +84,7 @@ namespace OIC
                 }
                 else if (state == NS_DENY)
                 {
+                    oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
                     NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
                     if (changeCallback != NULL)
                     {
@@ -101,10 +105,12 @@ namespace OIC
                 }
                 else if (state == NS_STOPPED)
                 {
+                    oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
+                    NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
                     NS_LOG(DEBUG, "initiating the State callback : NS_STOPPED");
                     if (changeCallback != NULL)
                     {
-                        NS_LOG(DEBUG, "initiating the callback for Response : NS_TOPIC");
+                        NS_LOG(DEBUG, "initiating the callback for Response : NS_STOPPED");
                         changeCallback((NSProviderState)state);
                     }
                 }
@@ -199,6 +205,11 @@ namespace OIC
         {
             NS_LOG(DEBUG, "stop - IN");
             NSStopConsumer();
+            for (auto it : getAcceptedProviders())
+            {
+                delete it;
+            }
+            getAcceptedProviders().clear();
             NS_LOG(DEBUG, "stop - OUT");
             return;
         }

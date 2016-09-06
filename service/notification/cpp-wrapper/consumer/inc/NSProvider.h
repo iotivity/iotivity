@@ -70,6 +70,7 @@ namespace OIC
                       * Constructor of NSProvider.
                       */
                 NSProvider(): m_topicList(new NSTopicsList()), m_state(NSProviderState::DENY),
+                    m_subscribedState(NSProviderSubscribedState::DENY),
                     m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL) {}
 
                 /**
@@ -79,6 +80,7 @@ namespace OIC
                       */
                 NSProvider(const std::string &providerId) : m_providerId(providerId),
                     m_topicList(new NSTopicsList()), m_state(NSProviderState::DENY),
+                    m_subscribedState(NSProviderSubscribedState::DENY),
                     m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)  {}
 
                 /**
@@ -89,6 +91,7 @@ namespace OIC
                       */
                 NSProvider(const std::string &providerId, NSTopicsList *topicList) : m_providerId(
                         providerId), m_topicList(topicList), m_state(NSProviderState::DENY),
+                    m_subscribedState(NSProviderSubscribedState::DENY),
                     m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)  {}
 
                 /**
@@ -146,6 +149,13 @@ namespace OIC
                       * @return ProviderState as NSProviderState.
                       */
                 NSProviderState getProviderState() const;
+
+                /**
+                      * This method is for getting SubscribedState from the Notification service provider.
+                      *
+                      * @return subscribedState as NSProviderSubscribedState.
+                      */
+                NSProviderSubscribedState getProviderSubscribedState() const;
 
                 /**
                       * This method is for requesting subscription of Notification service.
@@ -213,6 +223,13 @@ namespace OIC
                      */
                 void setProviderState(const NSProviderState &providerState);
 
+                /**
+                     * This method is for setting subscribedState for the Notification service provider.
+                     *
+                     * @param subscribedState as NSProviderSubscribedState.
+                     */
+                void setProviderSubscribedState(const NSProviderSubscribedState &subscribedState);
+
             private:
                 ::NSProvider *getNSProvider();
 
@@ -220,6 +237,7 @@ namespace OIC
                 std::string m_providerId;
                 NSTopicsList *m_topicList;
                 NSProviderState m_state;
+                NSProviderSubscribedState m_subscribedState;
 
                 ProviderStateCallback m_stateCb;
                 MessageReceivedCallback m_messageCb;

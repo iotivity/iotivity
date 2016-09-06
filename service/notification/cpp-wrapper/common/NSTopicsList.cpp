@@ -49,7 +49,7 @@ namespace OIC
         {
             for (auto it : topicsList.getTopicsList())
             {
-                addTopic(it->getTopicName(), it->getState());
+                this->addTopic(it->getTopicName(), it->getState());
             }
             return *this;
         }

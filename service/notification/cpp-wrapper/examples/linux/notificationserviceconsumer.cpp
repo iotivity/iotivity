@@ -44,8 +44,9 @@ void onNotificationPostedCb(OIC::Service::NSMessage *notification)
     std::cout << "topic : " <<  notification->getTopic() << std::endl;
 
     auto provider = NSConsumerService::getInstance()->getProvider(notification->getProviderId());
-    provider->sendSyncInfo(notification->getMessageId(),
-                           OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+    if (provider != nullptr)
+        provider->sendSyncInfo(notification->getMessageId(),
+                               OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
 }
 
 void onNotificationSyncCb(OIC::Service::NSSyncInfo *sync)
