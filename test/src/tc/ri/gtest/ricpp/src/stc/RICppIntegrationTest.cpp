@@ -1153,7 +1153,7 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPutRequest_SQV_CV_P)
             rep.setValue("hour",m_hour);
 
             ASSERT_EQ(OC_STACK_OK, m_temperatureResource->put(rep,test,std::bind(&RICppIntegrationTest_stc::onPut, this, PH::_1, PH::_2, PH::_3)))
-            << "Get does not return success";
+            << "Put does not return success";
             CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
         }
         else
@@ -1240,7 +1240,7 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPutRequestWithQos_SQV_CV_P
 
             ASSERT_EQ(OC_STACK_OK, m_temperatureResource->put(rep,test,std::bind(&RICppIntegrationTest_stc::onPut, this, PH::_1, PH::_2, PH::_3)
                             ,QualityOfService::HighQos))
-            << "Get does not return success";
+            << "Put does not return success";
             CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
         }
         else
@@ -1325,8 +1325,8 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPostRequest_SQV_CV_P)
             rep.setValue("temperature",m_temp);
             rep.setValue("hour",m_hour);
 
-            ASSERT_EQ(OC_STACK_OK, m_temperatureResource->put(rep,test,std::bind(&RICppIntegrationTest_stc::onPost, this, PH::_1, PH::_2, PH::_3)))
-            << "Get does not return success";
+            ASSERT_EQ(OC_STACK_OK, m_temperatureResource->post(rep,test,std::bind(&RICppIntegrationTest_stc::onPost, this, PH::_1, PH::_2, PH::_3)))
+            << "Post does not return success";
             CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
         }
         else
@@ -1411,9 +1411,9 @@ TEST_F(RICppIntegrationTest_stc, CreateResourceAndSendPostRequestWithQos_SQV_CV_
             rep.setValue("temperature",m_temp);
             rep.setValue("hour",m_hour);
 
-            ASSERT_EQ(OC_STACK_OK, m_temperatureResource->put(rep,test,std::bind(&RICppIntegrationTest_stc::onPost, this, PH::_1, PH::_2, PH::_3)
+            ASSERT_EQ(OC_STACK_OK, m_temperatureResource->post(rep,test,std::bind(&RICppIntegrationTest_stc::onPost, this, PH::_1, PH::_2, PH::_3)
                             ,QualityOfService::HighQos))
-            << "Get does not return success";
+            << "Post does not return success";
             CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
         }
         else

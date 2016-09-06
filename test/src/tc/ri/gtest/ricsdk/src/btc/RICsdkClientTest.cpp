@@ -38,24 +38,24 @@ public:
 
         m_pRICsdkHelper = RICsdkHelper::getInstance();
         m_result = OC_STACK_ERROR;
-        m_cbData.cb = PlatformDiscoveryReqCB;
+        m_cbData.cb = DeviceDiscoveryReqCB;
         m_cbData.context = (void*) 0x99;
         m_cbData.cd = NULL;
         m_doHandle = NULL;
 
         m_result = m_pRICsdkHelper->initClientServer();
-        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client-server. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for client-server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
         m_pRICsdkHelper->startOCProcess();
     }
 
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
-        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
         OCStop();
     }
 
-    static OCStackApplicationResult PlatformDiscoveryReqCB(void* ctx, OCDoHandle /*m_doHandle*/,
+    static OCStackApplicationResult DeviceDiscoveryReqCB(void* ctx, OCDoHandle /*m_doHandle*/,
             OCClientResponse * clientResponse)
     {
 
@@ -79,7 +79,7 @@ public:
 TEST_F(RICsdkClientTest_btc, OCInitClient_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -101,7 +101,7 @@ TEST_F(RICsdkClientTest_btc, OCInitClient_SRC_P)
 TEST_F(RICsdkClientTest_btc, OCInit1Client_SRC_P)
 {
     m_result = OCInit1(m_ClientMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit1 failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit1 failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -138,7 +138,7 @@ TEST_F(RICsdkClientTest_btc, OCInit1Client_SRC_P)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
@@ -178,9 +178,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceNON_SRC_P)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
-    OCDoHandle m_doHandle=NULL;
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 }
@@ -219,10 +218,12 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCON_SRC_P)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformNON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -259,10 +260,12 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformNON_SRC_P)
 TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformCON_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -321,6 +324,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -380,6 +385,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestCON_SRC_P)
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
+
 }
 #endif
 
@@ -438,6 +445,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -497,6 +506,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestCON_SRC_P)
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -555,6 +565,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -613,6 +625,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -671,6 +685,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -729,6 +745,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -787,6 +805,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -845,6 +865,8 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
+
+    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -878,21 +900,21 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestCON_SRC_P)
  * @expected Should return OC_STACK_INVALID_CALLBACK and handle should not be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceOCCallbackData_NV_N)
+TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCallbackData_NV_N)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     OCDoHandle handle;
     m_result = OCDoResource(&handle, OC_REST_DISCOVER, DEVICE_DISCOVERY_QUERY, 0, NULL, CT_DEFAULT, OC_LOW_QOS, NULL, 0, 0);
-    ASSERT_EQ(OC_STACK_INVALID_CALLBACK,m_result) << "OCDoResource failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_CALLBACK,m_result) << "OCDoResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
 /**
  * @since 2016-07-19
  * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @objective Test OCDoResource with positive basic way for device discovery using null request uri
+ * @objective Test OCDoResource with positive basic way for device discovery using empty request uri
  * @target OCStackResult OCDoResource(OCDoHandle *handle,
  *                                    OCMethod method,
  *                                    const char *requestUri,
@@ -905,7 +927,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceOCCallbackData_NV_N)
  *                                    uint8_t numOptions)
  * @test_data         1. OCDoHandle handle to returned
  *                     2. OCMethod OC_REST_DISCOVER
- *                     3. requestUri null
+ *                     3. requestUri ""
  *                     4. OCDevAddr destination address
  *                     5. OCPayload null
  *                     6. OCConnectivityType CT_DEFAULT
@@ -919,14 +941,14 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceOCCallbackData_NV_N)
  * @expected Should return OC_STACK_INVALID_URI and handle should not be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceRequestUri_NV_N)
+TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceRequestUri_ESV_N)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     OCDoHandle handle;
-    m_result = OCDoResource(&handle, OC_REST_DISCOVER, NULL, 0, 0, CT_DEFAULT, OC_LOW_QOS, &m_cbData, 0, 0);
-    ASSERT_EQ(OC_STACK_INVALID_URI,m_result) << "OCDoResource failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    m_result = OCDoResource(&handle, OC_REST_DISCOVER, EMPTY_STRING, 0, 0, CT_DEFAULT, OC_LOW_QOS, &m_cbData, 0, 0);
+    ASSERT_EQ(OC_STACK_INVALID_URI,m_result) << "OCDoResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -962,13 +984,13 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceRequestUri_NV_N)
 TEST_F(RICsdkClientTest_btc, OCCancel_SRC_P)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCCancel(m_doHandle,OC_HIGH_QOS,0,0);
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCCancel failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCCancel failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1004,12 +1026,12 @@ TEST_F(RICsdkClientTest_btc, OCCancel_SRC_P)
 TEST_F(RICsdkClientTest_btc, OCCancelDoHandle_NV_N)
 {
     m_result = m_pRICsdkHelper->initClient();
-    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for client. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,DEVICE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
 
     m_result = OCCancel(NULL,OC_HIGH_QOS,0,0);
-    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCCancel failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCCancel failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif

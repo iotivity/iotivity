@@ -392,6 +392,13 @@ bool RICsdkHelper::payloadLogPlatform(OCPlatformPayload* payload)
 {
     s_failureMsg = s_failureMsg + "Client: Platform Payload: ";
 
+    if (payload->info.dateOfManufacture == NULL)
+    {
+        s_failureMsg = s_failureMsg + "Payload does not have any information. ";
+        IOTIVITYTEST_LOG(INFO,"Payload does not have any information. ");
+        return false;
+    }
+
     IOTIVITYTEST_LOG(INFO, "\t Date of Mfg: %s", payload->info.dateOfManufacture);
     IOTIVITYTEST_LOG(INFO, "\t Firmware Version: %s", payload->info.firmwareVersion);
     IOTIVITYTEST_LOG(INFO, "\t Manufacturer Name: %s", payload->info.manufacturerName);
@@ -464,6 +471,13 @@ bool RICsdkHelper::payloadLogPlatform(OCPlatformPayload* payload)
 bool RICsdkHelper::payloadLogDevice(OCDevicePayload* payload)
 {
     s_failureMsg = s_failureMsg + "Client: Device Payload: ";
+
+    if (payload->deviceName == NULL)
+    {
+        s_failureMsg = s_failureMsg + "Payload does not have any information. ";
+        IOTIVITYTEST_LOG(INFO,"Payload does not have any information. ");
+        return false;
+    }
 
     IOTIVITYTEST_LOG(INFO, "\t Device Name: %s", payload->deviceName);
     IOTIVITYTEST_LOG(INFO, "\t Spec Version: %s", payload->specVersion);
@@ -599,7 +613,7 @@ bool RICsdkHelper::payloadLogRep(OCRepPayload* payload)
                     {
                         if (val->i == s_hour)
                         {
-                            IOTIVITYTEST_LOG(INFO, "Temperature Value is ok");
+                            IOTIVITYTEST_LOG(INFO, "Hour Value is ok");
                             checker++;
                         }
                     }
@@ -800,6 +814,8 @@ OCRepPayload* RICsdkHelper::constructResponse(OCEntityHandlerRequest *ehRequest)
 OCStackApplicationResult RICsdkHelper::PlatformDiscoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO,
@@ -835,6 +851,8 @@ OCStackApplicationResult RICsdkHelper::PlatformDiscoveryReqCB(void* ctx, OCDoHan
 OCStackApplicationResult RICsdkHelper::DeviceDiscoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO, "Callback Context for Device DISCOVER query received successfully");
@@ -869,6 +887,8 @@ OCStackApplicationResult RICsdkHelper::DeviceDiscoveryReqCB(void* ctx, OCDoHandl
 OCStackApplicationResult RICsdkHelper::ResourceDiscoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO,
@@ -913,6 +933,8 @@ OCStackApplicationResult RICsdkHelper::ResourceDiscoveryReqCB(void* ctx, OCDoHan
 OCStackApplicationResult RICsdkHelper::getReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO, "Callback Context for GetRequest received successfully");
@@ -948,6 +970,8 @@ OCStackApplicationResult RICsdkHelper::getReqCB(void* ctx, OCDoHandle /*handle*/
 OCStackApplicationResult RICsdkHelper::putReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO, "Callback Context for PutRequest received successfully");
@@ -960,8 +984,6 @@ OCStackApplicationResult RICsdkHelper::putReqCB(void* ctx, OCDoHandle /*handle*/
         IOTIVITYTEST_LOG(INFO, "Device Address: %s, Device Port: %d", clientResponse->devAddr.addr,
                 clientResponse->devAddr.port);
         IOTIVITYTEST_LOG(INFO, "PAYLOAD RECEIVED: %s", clientResponse->payload);
-//        IOTIVITYTEST_LOG(INFO, "Result is: %s \n",
-//                CommonUtil::s_OCStackResultString.at(clientResponse->result).c_str());
         if (clientResponse->payload)
         {
             getPayloadData(clientResponse);
@@ -982,6 +1004,8 @@ OCStackApplicationResult RICsdkHelper::putReqCB(void* ctx, OCDoHandle /*handle*/
 OCStackApplicationResult RICsdkHelper::postReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO, "Callback Context for PostRequest received successfully");
@@ -1014,6 +1038,8 @@ OCStackApplicationResult RICsdkHelper::postReqCB(void* ctx, OCDoHandle /*handle*
 OCStackApplicationResult RICsdkHelper::deleteReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO, "Callback Context for DeleteRequest received successfully");
@@ -1048,6 +1074,8 @@ OCStackApplicationResult RICsdkHelper::deleteReqCB(void* ctx, OCDoHandle /*handl
 OCStackApplicationResult RICsdkHelper::obsReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
+    s_isPayloadCorrect = false;
+
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         IOTIVITYTEST_LOG(INFO, "Callback Context for ObserveRequest received successfully");

@@ -450,16 +450,17 @@ TEST_F(RIServerTest_btc, BindTypeToResource_SRC_P)
  * @pre_condition registerResource and get handler
  * @procedure Perform bindTypeToResource() API
  * @post_condition Perform unregisterResource()
- * @expected Should throw any exception
+ * @expected Should return OC_STACK_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(RIServerTest_btc, BindTypeToResource_ESV_N)
 {
     OCResourceHandle resourceHandle = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
 
-    EXPECT_ANY_THROW(OCPlatform::bindTypeToResource(resourceHandle, m_EmptyStr));
-
+    OCStackResult result = OCPlatform::bindTypeToResource(resourceHandle, m_EmptyStr);
     OCPlatform::unregisterResource(resourceHandle);
+
+    EXPECT_EQ(OC_STACK_OK, result);
 }
 #endif
 
@@ -528,16 +529,18 @@ TEST_F(RIServerTest_btc, BindInterfaceToResource_SRC_P)
  * @pre_condition registerResource and get handler
  * @procedure Perform bindInterfaceToResource() API
  * @post_condition Perform unregisterResource()
- * @expected Should throw any exception
+ * @expected Should return OC_STACK_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RIServerTest_btc, BindInterfaceToResource_ESV_N)
+TEST_F(RIServerTest_btc, BindInterfaceToResource_ESV_P)
 {
     OCResourceHandle resourceHandle = m_RIHelper->registerResource(m_HomeUri, m_HomeType);
 
-    EXPECT_ANY_THROW(OCPlatform::bindInterfaceToResource(resourceHandle, m_EmptyStr));
+    OCStackResult result = OCPlatform::bindInterfaceToResource(resourceHandle, m_EmptyStr);
 
     OCPlatform::unregisterResource(resourceHandle);
+
+    EXPECT_EQ(OC_STACK_OK, result);
 }
 #endif
 

@@ -124,7 +124,6 @@ private:
     const char* m_ServerIp = nullptr;
     OCResourceHandle m_handle;
     string m_failureMsg;
-    OCStackResult m_result;
     pthread_t m_p_thread;
 
     //client variables
@@ -151,6 +150,8 @@ public:
     static int64_t s_temp;
     static char* s_units;
     static int64_t s_hour;
+
+    OCStackResult m_result;
 
 public:
     RICsdkHelper();
