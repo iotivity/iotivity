@@ -29,14 +29,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.bson.Document;
-import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.resources.presence.resource.ResPresencePayload;
+import org.iotivity.cloud.util.Log;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.IndexOptions;
 
 /**
  *
@@ -56,349 +55,230 @@ public class MongoDB {
      * @throws Exception
      */
     public MongoDB(String dbname) throws Exception {
+
         mongoClient = new MongoClient();
         mongoClient.dropDatabase(dbname);
         db = mongoClient.getDatabase(dbname);
     }
 
     /**
-     * API creating collection
+     * API for creating collection
      *
      * @param tableName
      *            collection name
      */
     public void createTable(String tableName) {
-        deleteTable(tableName);
+
         db.createCollection(tableName);
     }
 
     /**
-     * API deleting collection
+     * API for creating index
+     *
+     * @param tableName
+     *            collection name
+     * @param keys
+     *            key fields of collection
+     */
+    public void createIndex(String tablename, ArrayList<String> keys) {
+
+        Document doc = new Document();
+
+        for (String key : keys) {
+
+            doc.append(key, 1);
+        }
+
+        IndexOptions options = new IndexOptions();
+        options.unique(true);
+
+        db.getCollection(tablename).createIndex(doc, options);
+    }
+
+    /**
+     * API for deleting collection
      *
      * @param tableName
      *            collection name
      */
     public void deleteTable(String tableName) {
+
         db.getCollection(tableName).drop();
     }
 
-    private Document createDocument(HashMap<Object, Object> storeRes) {
+    /**
+     * API for getting database object
+     *
+     */
+    public MongoDatabase getMongoDatabase() {
 
-        Document doc = new Document();
-        Set<Entry<Object, Object>> resEntrySet = storeRes.entrySet();
-        Iterator<Entry<Object, Object>> entryIter = resEntrySet.iterator();
-
-        while (entryIter.hasNext()) {
-            Map.Entry<Object, Object> entry = (Map.Entry<Object, Object>) entryIter
-                    .next();
-            doc.append(entry.getKey().toString(), entry.getValue());
-        }
-
-        return doc;
+        return db;
     }
 
-    private ArrayList<Document> createDocuments(
-            ArrayList<HashMap<Object, Object>> storeResList) {
+    public Boolean insertRecord(String tableName, Document doc) {
 
-        Iterator<HashMap<Object, Object>> resListIter = storeResList.iterator();
+        if (tableName == null || doc == null)
+            return false;
 
-        ArrayList<Document> docList = new ArrayList<>();
+        MongoCollection<Document> collection = db.getCollection(tableName);
 
-        while (resListIter.hasNext()) {
-            Document doc = new Document();
+        try {
 
-            HashMap<Object, Object> storeRes = resListIter.next();
-            Set<Entry<Object, Object>> resEntrySet = storeRes.entrySet();
-            Iterator<Entry<Object, Object>> entryIter = resEntrySet.iterator();
+            if (collection.find(doc).first() == null) {
 
-            while (entryIter.hasNext()) {
-                Map.Entry<Object, Object> entry = (Map.Entry<Object, Object>) entryIter
-                        .next();
-                doc.append(entry.getKey().toString(), entry.getValue());
+                collection.insertOne(doc);
+
+            } else {
+
+                Log.w("DB insert failed due to duplecated one.");
+                return false;
             }
-            docList.add(doc);
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return false;
         }
 
-        return docList;
+        showRecord(tableName);
+
+        return true;
     }
 
-    private HashMap<Object, Object> convertDocumentToHashMap(Document doc) {
-        HashMap<Object, Object> resourceMap = new HashMap<Object, Object>();
+    public Boolean insertAndReplaceRecord(String tableName, Document filter,
+            Document doc) {
+
+        if (tableName == null || filter == null || doc == null)
+            return false;
+
+        MongoCollection<Document> collection = db.getCollection(tableName);
+
+        try {
+
+            if (collection.findOneAndReplace(filter, doc) == null) {
+
+                collection.insertOne(doc);
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return false;
+        }
+
+        showRecord(tableName);
+
+        return true;
+    }
+
+    public Boolean updateRecord(String tableName, Document filter,
+            Document record) {
+
+        if (tableName == null || filter == null || record == null)
+            return false;
+
+        MongoCollection<Document> collection = db.getCollection(tableName);
+
+        if (collection.findOneAndReplace(filter, record) == null) {
+
+            Log.w("DB update failed due to no matched record!");
+            return false;
+        }
+
+        showRecord(tableName);
+
+        return true;
+    }
+
+    public Boolean deleteRecord(String tableName, Document record) {
+
+        if (tableName == null || record == null)
+            return false;
+
+        MongoCollection<Document> collection = db.getCollection(tableName);
+
+        try {
+
+            collection.deleteMany(record);
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return false;
+        }
+
+        showRecord(tableName);
+
+        return true;
+    }
+
+    public ArrayList<HashMap<String, Object>> selectRecord(String tableName,
+            Document doc) {
+
+        if (tableName == null || doc == null)
+            return null;
+
+        MongoCollection<Document> collection = db.getCollection(tableName);
+        MongoCursor<Document> cursor = collection.find(doc).iterator();
+
+        ArrayList<HashMap<String, Object>> recordList = new ArrayList<>();
+
+        try {
+
+            while (cursor.hasNext()) {
+                Document selectedDoc = cursor.next();
+                recordList.add(convertDocumentToHashMap(selectedDoc));
+            }
+
+        } finally {
+
+            cursor.close();
+        }
+
+        return recordList;
+    }
+
+    private HashMap<String, Object> convertDocumentToHashMap(Document doc) {
+        HashMap<String, Object> resourceMap = new HashMap<>();
 
         Set<Entry<String, Object>> entrySet = doc.entrySet();
         Iterator<Entry<String, Object>> entryIter = entrySet.iterator();
+
         while (entryIter.hasNext()) {
+
             Map.Entry<String, Object> entry = (Map.Entry<String, Object>) entryIter
                     .next();
-            if (entry.getValue() != null) {
-                resourceMap.put(entry.getKey().toString(), entry.getValue());
+
+            String entryKey = entry.getKey();
+
+            // remove a mongoDB index
+            if (entry.getValue() != null && !entryKey.equals("_id")) {
+
+                resourceMap.put(entry.getKey(), entry.getValue());
             }
         }
 
         return resourceMap;
     }
 
-    /**
-     * API for storing information of published resources
-     *
-     * @param publishPayloadFormat
-     *            information of published resources to store in collection
-     * @param tableName
-     *            collection name
-     */
-    public ArrayList<ResPresencePayload> createRDResource(
-            ArrayList<HashMap<Object, Object>> storeResList, String tableName) {
-        ArrayList<Document> docList = createDocuments(storeResList);
-        Iterator<Document> docIter = docList.iterator();
+    private void showRecord(String tableName) {
 
         MongoCollection<Document> collection = db.getCollection(tableName);
+        MongoCursor<Document> cursor = collection.find().iterator();
 
-        ArrayList<ResPresencePayload> resPayloadList = new ArrayList<>();
+        Log.i("<" + tableName + ">");
 
-        while (docIter.hasNext()) {
-            Document doc = docIter.next();
-            byte trigger = 0;
+        HashMap<String, Object> records = null;
+        int index = 0;
+        while (cursor.hasNext()) {
 
-            if (collection.findOneAndReplace(
-                    Filters.and(
-                            Filters.eq(Constants.DEVICE_ID,
-                                    doc.get(Constants.DEVICE_ID)),
-                            Filters.eq(Constants.INS, doc.get(Constants.INS))),
-                    doc) == null) {
-                collection.insertOne(doc);
-                trigger = Constants.RES_CREATE;
+            Document doc = cursor.next();
+            records = convertDocumentToHashMap(doc);
 
-            } else {
-                trigger = Constants.RES_CHANGE;
-
-            }
-
-            resPayloadList.add(makeResourcePresencePayload(doc, trigger));
-        }
-        return resPayloadList;
-    }
-
-    public void createDevicePresenceResource(HashMap<Object, Object> storeRes,
-            String tableName) {
-
-        Document doc = createDocument(storeRes);
-        MongoCollection<Document> collection = db.getCollection(tableName);
-
-        if (collection
-                .findOneAndReplace(
-                        Filters.and(Filters.eq(Constants.DEVICE_ID,
-                                doc.get(Constants.DEVICE_ID))),
-                        doc) == null) {
-
-            collection.insertOne(doc);
+            Log.i("[" + index + "] " + records.toString());
+            index++;
         }
 
-        return;
-    }
-
-    private ResPresencePayload makeResourcePresencePayload(Document doc,
-            byte trigger) {
-
-        ResPresencePayload resPayload = new ResPresencePayload();
-
-        resPayload.setTrg(trigger);
-
-        Object rt = doc.get(Constants.RESOURCE_TYPE);
-        if (rt != null) {
-            resPayload.setRt(rt.toString());
-        }
-        Object href = doc.get(Constants.HREF);
-        if (href != null) {
-            Object di = doc.get(Constants.DEVICE_ID);
-            if (di != null) {
-                resPayload.setHref(href.toString());
-            }
-        }
-        Object ttl = doc.get(Constants.RESOURCE_TTL);
-        if (ttl != null) {
-            resPayload.setTtl((int) ttl);
-        }
-        return resPayload;
-    }
-
-    public String readDeviceState(String deviceId, String tableName) {
-
-        String deviceState = null;
-
-        MongoCollection<Document> collection = db.getCollection(tableName);
-
-        MongoCursor<Document> cursor = collection
-                .find(Filters.eq(Constants.DEVICE_ID, deviceId))
-                .iterator();
-
-        try {
-
-            while (cursor.hasNext()) {
-                Document doc = cursor.next();
-                deviceState = doc.getString(Constants.PRESENCE_STATE);
-                break;
-            }
-
-        } finally {
-
-            cursor.close();
-        }
-
-        return deviceState;
-    }
-
-    public ArrayList<HashMap<Object, Object>> readResourceAboutDid(String di, String tableName) {
-        MongoCollection<Document> collection = db.getCollection(tableName);
-        ArrayList<HashMap<Object, Object>> resList = null;
-        MongoCursor<Document> cursor = collection
-                .find(Filters.eq(Constants.DEVICE_ID, di))
-                .iterator();
-
-        if (cursor.hasNext()) {
-            resList = new ArrayList<>();
-            try {
-                while (cursor.hasNext()) {
-                    Document doc = cursor.next();
-                    resList.add(convertDocumentToHashMap(doc));
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-
-        return resList;
-    }
-
-    /**
-     * API for finding resources matched filterValue of filterKey and a
-     * particular device ID in collection
-     *
-     * @param di
-     *            device id
-     * @param filterKey
-     *            field name in collection
-     * @param filterValue
-     *            field value about field name
-     * @param tableName
-     *            collection name
-     * @return ArrayList<PublishPayloadFormat> - array list of resource
-     *         information
-     */
-    public ArrayList<HashMap<Object, Object>> readResourceAboutDidAndFilter(String di,
-            String filterKey, String filterValue, String tableName) {
-        MongoCollection<Document> collection = db.getCollection(tableName);
-        ArrayList<HashMap<Object, Object>> resList = null;
-        MongoCursor<Document> cursor = collection
-                .find(Filters.and(Filters.eq(Constants.DEVICE_ID, di),
-                        Filters.eq(filterKey, filterValue)))
-                .iterator();
-
-        if (cursor.hasNext()) {
-            resList = new ArrayList<>();
-            try {
-                while (cursor.hasNext()) {
-                    Document doc = cursor.next();
-                    resList.add(convertDocumentToHashMap(doc));
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-
-        return resList;
-    }
-
-    public Object readInsAboutDid(String di, String href, String tableName) {
-        MongoCollection<Document> collection = db.getCollection(tableName);
-        MongoCursor<Document> cursor = collection
-                .find(Filters.and(Filters.eq(Constants.DEVICE_ID, di),
-                        Filters.eq(Constants.HREF, href)))
-                .iterator();
-        try {
-            while (cursor.hasNext()) {
-                Document doc = cursor.next();
-                return doc.get(Constants.INS);
-            }
-        } finally {
-            cursor.close();
-        }
-        return null;
-    }
-
-    /**
-     * API for deleting resources about a particular device ID in collection
-     *
-     * @param di
-     *            device id
-     * @param tableName
-     *            collection name
-     */
-    public ArrayList<ResPresencePayload> deleteResourceAboutDi(String di,
-            String tableName) {
-
-        MongoCollection<Document> collection = db.getCollection(tableName);
-
-        MongoCursor<Document> cursor = collection
-                .find(Filters.eq(Constants.DEVICE_ID, di)).iterator();
-
-        ArrayList<ResPresencePayload> resPayloadList = new ArrayList<>();
-
-        try {
-            while (cursor.hasNext()) {
-                Document doc = cursor.next();
-                resPayloadList.add(
-                        makeResourcePresencePayload(doc, Constants.RES_DELETE));
-            }
-
-        } finally {
-
-            cursor.close();
-        }
-
-        collection.deleteMany(Filters.eq(Constants.DEVICE_ID, di));
-
-        return resPayloadList;
-    }
-
-    /**
-     * API for deleting resources about a particular device ID and ins in
-     * collection
-     *
-     * @param di
-     *            device id
-     * @param ins
-     *            ins
-     * @param tableName
-     *            collection name
-     */
-    public ArrayList<ResPresencePayload> deleteResourceAboutDiAndIns(String di,
-            String ins, String tableName) {
-
-        MongoCollection<Document> collection = db.getCollection(tableName);
-
-        MongoCursor<Document> cursor = collection
-                .find(Filters.and(Filters.eq(Constants.DEVICE_ID, di),
-                        Filters.eq(Constants.INS, ins)))
-                .iterator();
-
-        ArrayList<ResPresencePayload> resPayloadList = new ArrayList<>();
-
-        try {
-            while (cursor.hasNext()) {
-                Document doc = cursor.next();
-                resPayloadList.add(
-                        makeResourcePresencePayload(doc, Constants.RES_DELETE));
-            }
-
-        } finally {
-
-            cursor.close();
-        }
-
-        collection.deleteOne(Filters.and(Filters.eq(Constants.DEVICE_ID, di),
-                Filters.eq(Constants.INS, ins)));
-
-        return resPayloadList;
-
+        cursor.close();
     }
 }

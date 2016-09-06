@@ -19,6 +19,7 @@ public class RDServerTestUtils {
     public static final String RES_PRS_URI        = Constants.RESOURCE_PRESENCE_FULL_URI;
 
     public static IRequest makePublishRequest() throws Exception {
+
         HashMap<Object, Object> payload = new HashMap<>();
         payload.put(Constants.DEVICE_ID, DI);
         ArrayList<HashMap<Object, Object>> publishLinks = new ArrayList<>();
@@ -33,6 +34,8 @@ public class RDServerTestUtils {
         link.put(Constants.RESOURCE_TYPE, rt);
         link.put(Constants.INTERFACE, itf);
         link.put(Constants.POLICY, policy);
+        link.put(Constants.INS, 0);
+        link.put(Constants.RESOURCE_TTL, 3000);
         publishLinks.add(link);
         payload.put(Constants.LINKS, publishLinks);
         Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
