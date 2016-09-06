@@ -707,29 +707,28 @@ class DiscoverResourceUnitTest: public TestWithMock
 
 TEST_F(DiscoverResourceUnitTest, startDiscover)
 {
-    std::string type = "Resource.Container";
+    std::string type = "resource.container";
     std::string attributeName = "TestResourceContainer";
 
     m_pDiscoverResourceUnit->startDiscover(
         DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
 
-    std::chrono::milliseconds interval(400);
+    std::chrono::milliseconds interval(ResourceContainerTestSimulator::DEFAULT_WAITTIME);
     std::this_thread::sleep_for(interval);
 }
 
 TEST_F(DiscoverResourceUnitTest, onUpdateCalled)
 {
-    std::string type = "Resource.Container";
+    std::string type = "resource.container";
     std::string attributeName = "TestResourceContainer";
 
     m_pDiscoverResourceUnit->startDiscover(
         DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
 
-    std::chrono::milliseconds interval(400);
+    std::chrono::milliseconds interval(ResourceContainerTestSimulator::DEFAULT_WAITTIME);
     std::this_thread::sleep_for(interval);
 
     testObject->ChangeAttributeValue();
-
 }
 
 namespace
