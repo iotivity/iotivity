@@ -58,6 +58,9 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../security/provisioning/include'
 		])
 
+if env.get('SECURED') == '1' and target_os not in ['tizen']:
+	libocsrm_env.AppendUnique(CPPPATH = ['../../../extlibs/sqlite3'])
+
 if target_os not in ['arduino', 'windows']:
 	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	libocsrm_env.AppendUnique(CFLAGS = ['-std=c99', '-Wall'])
@@ -110,6 +113,12 @@ libocsrm_src = [
 	OCSRM_SRC + 'base64.c',
 	OCSRM_SRC + 'directpairing.c'
 	]
+
+if env.get('SECURED') == '1':
+	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'provisioningdatabasemanager.c']
+
+if env.get('SECURED') == '1' and target_os != 'tizen':
+	libocsrm_src = libocsrm_src + ['../../../extlibs/sqlite3/sqlite3.c']
 
 if env.get('SECURED') == '1':
 	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'oxmpincommon.c', OCSRM_SRC + 'pbkdf2.c']
