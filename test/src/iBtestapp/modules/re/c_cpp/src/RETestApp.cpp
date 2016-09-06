@@ -638,11 +638,11 @@ void stopCaching()
 
             if (m_Resource->isCaching())
             {
-                cout << "Caching stopped successfully." << endl;
+                cout << "Caching is not stopped yet." << endl;
             }
             else
             {
-                cout << "Caching is not stopped yet." << endl;
+                cout << "Caching stopped successfully." << endl;
             }
         }
         else
