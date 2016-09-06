@@ -105,7 +105,7 @@ TEST_APP_SRC_LIST = [
 				Glob(PROJECT_HOME + '/src/iBtestapp/modules/ic/c_cpp/src/*.cpp')
 				]
 
-lib_list = Split('boost_system boost_filesystem boost_thread dl gcov gio-2.0 gobject-2.0 glib-2.0 oc octbstack oc_logger octbstack pthread ')
+lib_list = Split('boost_system boost_filesystem boost_thread connectivity_abstraction coap dl gcov gio-2.0 gobject-2.0 glib-2.0 oc octbstack oc_logger octbstack pthread ')
 
 if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
 	
