@@ -8,6 +8,8 @@ rpmPath=''
 deviceId=''
 stand_alone='false'
 security_mode='justworks'
+target_service='riccsdk'
+target_test='tc'
 
 for i in `seq 1 $#` 
 do
@@ -39,18 +41,22 @@ while [ $i -lt $len ]; do
         stand_alone=${arg_parts[i+1],,}
     elif [[ "${arg_parts[i]}" = "security_mode" ]]; then
         security_mode=${arg_parts[i+1],,}
+    elif [[ "${arg_parts[i]}" = "target_service" ]]; then
+        target_service=${arg_parts[i+1],,}
+    elif [[ "${arg_parts[i]}" = "target_test" ]]; then
+        target_test=${arg_parts[i+1],,}
     fi
     let i=i+2
 done
 
 if [[ "${stand_alone}" = "false" ]] || [[ "${stand_alone}" = "0" ]]; then
     echo 'stand_alone pwd: '`pwd`
-    cd build/tizen/iori
+    cd build/tizen/ri
 fi    
 
-tmpDir='tmp_iori'
+tmpDir='tmp_ri'
 target_arch='armv7l'
-rpmName="com-oic-iori-0.0.1-1.armv7l.rpm"
+rpmName="com-oic-ri-test-0.0.1-1.armv7l.rpm"
 
 current_path=`pwd`
 echo 'current_path: '$current_path
@@ -73,7 +79,7 @@ rm -rf $tmpDir/
 
 mkdir $tmpDir
 mkdir $tmpDir/packaging
-mkdir -p $tmpDir'/bin/tizen/iori'
+mkdir -p $tmpDir'/bin/tizen/ri'
 mkdir -p $tmpDir/iotivity/resource
 mkdir -p $tmpDir/test/src
 mkdir -p $tmpDir/test/include
@@ -82,10 +88,11 @@ cp -R $iotivity_path/resource/* $tmpDir/iotivity/resource/
 
 cp -R $test_project_root/src $tmpDir/test
 cp -R $test_project_root/include $tmpDir/test
+cp -R $test_project_root/extlibs $tmpDir/test
 
-cp com.oic.iori.spec $tmpDir/packaging
-cp com.oic.iori.manifest $tmpDir
-cp com.oic.iori.xml $tmpDir
+cp com.oic.ri.test.spec $tmpDir/packaging
+cp com.oic.ri.test.manifest $tmpDir
+cp com.oic.ri.test.xml $tmpDir
 cp SConstruct $tmpDir
 
 echo "Initializing Git repository"
@@ -107,7 +114,7 @@ rm $rpmPath'/'$rpmName
 
 echo "Calling core gbs build command"
 
-gbscommand="gbs build -A "$target_arch" -B ~/GBS-ROOT-OIC --include-all --define 'TARGET_TRANSPORT ALL' --define 'SECURED 1'"
+gbscommand="gbs build -A "$target_arch" -B ~/GBS-ROOT-OIC --include-all --define 'TARGET_TRANSPORT ALL' --define 'SECURED 0' --define 'TARGET_SERVICE $target_service' --define 'TARGET_TEST $target_test'"
 echo $gbscommand
 
 echo "Starting GBS Build ..."
@@ -125,7 +132,7 @@ if eval $gbscommand; then
    echo $(pwd)
    echo "Copying binary files"
    mkdir -p ../$targetDir
-   cp usr/apps/com.oic.iori/bin/* ../$targetDir
+   cp usr/apps/com.oic.ri.test/bin/* ../$targetDir
 
     echo "Copying RPM"
     cp $rpmPath/$rpmName ../$targetDir
@@ -161,14 +168,14 @@ if [[ "${push}" = "true" ]] || [[ "${push}" = "1" ]]; then
         db_filename='oic_svr_db_server_randompin.dat'
     fi
     
-    sdb $deviceId push $iotivity_path/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat /usr/apps/com.oic.iori/bin/oic_svr_db_server.dat
-    sdb $deviceId push $iotivity_path/resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat /usr/apps/com.oic.iori/bin/oic_svr_db_server_randompin.dat
+    sdb $deviceId push $iotivity_path/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat /usr/apps/com.oic.ri.test/bin/oic_svr_db_server.dat
+    sdb $deviceId push $iotivity_path/resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat /usr/apps/com.oic.ri.test/bin/oic_svr_db_server_randompin.dat
     
 fi
 
-mkdir -p $test_project_root/bin/tizen/iori
-mv $test_project_root/build/tizen/iori/$rpmName $test_project_root/bin/tizen/iori/$rpmName
-mv $test_project_root/build/tizen/iori/InterOpAppRI $test_project_root/bin/tizen/iori/InterOpAppRI
+mkdir -p $test_project_root/bin/tizen/ri
+mv $test_project_root/build/tizen/ri/$rpmName $test_project_root/bin/tizen/ri/$rpmName
+mv $test_project_root/build/tizen/ri/iotivity_ri_* $test_project_root/bin/tizen/ri/
 
 if [[ "${stand_alone}" = "false" ]] || [[ "${stand_alone}" = "0" ]]; then
     cd ../../../

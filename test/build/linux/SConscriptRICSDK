@@ -1,0 +1,275 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+print '\n---------------Started Building RI Module for Linux---------------\n'
+Import('env_linux')
+import os
+
+
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+ENV_HOME = '../../..'
+PROJECT_HOME = '../../'
+EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
+ORG_SRC = ''
+
+target_source = env_linux.get('TARGET_SOURCE')
+
+print "target source is -------------------------------- " + target_source
+
+if env_linux.get('RELEASE'):
+	target_release = 'release'
+else:
+	target_release = 'debug'
+
+print "target build is -------------------------------- " + target_release
+
+ORG_SRC = env_linux['ORG_SRC']
+ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
+
+print "####################################################"
+print ORG_SRC_HOME
+
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/ri/gtest/ricsdk/src'
+STC_DIR = TC_DIR + '/stc'
+BTC_DIR = TC_DIR + '/btc'
+
+COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
+COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
+CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
+TC_COMMON_DIR = COMMON_DIR + '/testcase'
+
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/ri/gtest/ricsdk/include'
+TC_INCLUDE_DIR = PROJECT_HOME + '/include'
+
+COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
+
+
+TARGET = env_linux['VARIANT_DIR'] 
+
+######################################################################
+
+
+######################################################################
+
+# Initializing CA Dir
+######################################################################
+CA_IOT = ENV_HOME + ORG_SRC
+CA_DIR = CA_IOT + '/resource/csdk/connectivity'
+CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
+
+######################################################################
+
+# Initializing RI Dir
+######################################################################
+
+RI_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+RI_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+RI_RESOURCE_INCLUDE = RI_RESOURCE_DIR + '/include'
+RI_RESOURCE_LIB_DIR = RI_LIB
+RI_RESOURCE_STACK = RI_RESOURCE_DIR + '/csdk/stack/include'
+RI_RESOURCE_SOCKET = RI_RESOURCE_DIR + '/csdk/ocsocket/include'
+RI_RESOURCE_RANDOM = RI_RESOURCE_DIR + '/csdk/ocrandom/include'
+RI_RESOURCE_LOGGER = RI_RESOURCE_DIR + '/csdk/logger/include'
+RI_RESOURCE_OC_LOGGER = RI_RESOURCE_DIR + '/oc_logger/include'
+RI_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+RI_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+RI_TINY_DTLS = ORG_SRC_HOME + '/extlibs/tinydtls'
+RI_CJSON = ORG_SRC_HOME + '/extlibs/cjson'
+RI_BASE_64 = ORG_SRC_HOME + '/extlibs/base64'
+RI_CONNECTIVITY_MALLOC = ORG_SRC_HOME + '/resource/c_common/oic_malloc/include'
+RI_CONNECTIVITY_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
+RI_CONNECTIVITY_STRING = ORG_SRC_HOME + '/resource/c_common/oic_string/include'
+LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
+RI_NEW_CBOR = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src'
+RI_NEW_COAP = RI_RESOURCE_DIR + '/connectivity/lib/libcoap-4.1.1'
+RI_NEW_ROUTING = RI_RESOURCE_DIR + '/csdk/routing/include'
+RI_NEW_TIME = RI_RESOURCE_DIR + 'resource/c_common/oic_time/include'
+
+######################################################################
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/linux'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+
+arch_flag = ''
+
+target_arch = env_linux.get('TARGET_ARCH')
+if target_arch in ['x86']:
+	env_linux.AppendUnique(CCFLAGS = ['-m32'])
+	env_linux.AppendUnique(LINKFLAGS = ['-m32'])
+	arch_flag = '-m32'
+elif target_arch in ['x86_64']:
+	env_linux.AppendUnique(CCFLAGS = ['-m64'])
+	env_linux.AppendUnique(LINKFLAGS = ['-m64'])
+	arch_flag = '-m64'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__LINUX__ -D __WITH_DTLS__  -finstrument-functions -ftest-coverage -fprofile-arcs -DWITH_TCP -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT')
+RI_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+
+RI_INCLUDE_DIR = INCLUDE_DIR + '/testcase/RI'
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
+
+
+#RI_CINCLUDE = [COMMON_CINCLUDE, RI_INCLUDE_DIR, RI_RESOURCE_INCLUDE, RI_RESOURCE_STACK,RI_RESOURCE_SOCKET,RI_RESOURCE_RANDOM, RI_RESOURCE_CEREAL,RI_RESOURCE_TIMER, RI_RESOURCE_LOGGER, RI_RESOURCE_OC_LOGGER, RI_TINY_DTLS, RI_CJSON, RI_BASE_64, RI_CONNECTIVITY_C_COMMON, RI_CONNECTIVITY_MALLOC, RI_CONNECTIVITY_STRING, RI_INCLUDE_DIR]
+RI_CINCLUDE = [COMMON_CINCLUDE, RI_INCLUDE_DIR, RI_RESOURCE_INCLUDE, RI_RESOURCE_STACK,RI_RESOURCE_SOCKET,RI_RESOURCE_RANDOM, RI_RESOURCE_CEREAL,RI_RESOURCE_TIMER, RI_RESOURCE_LOGGER, RI_RESOURCE_OC_LOGGER, RI_TINY_DTLS, RI_CJSON, RI_BASE_64, RI_CONNECTIVITY_C_COMMON, RI_CONNECTIVITY_MALLOC, RI_CONNECTIVITY_STRING, RI_INCLUDE_DIR, RI_NEW_CBOR, RI_NEW_COAP, RI_NEW_ROUTING, RI_NEW_TIME]
+
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, '/usr/local/lib/']
+
+RI_LIB_LOCATION = [COMMON_LIB_LOCATION]
+RI_SERVER_LIB_LOCATION = [RESOURCE_LIB_DIR]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+#COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libocsrm libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger pthread libglib-2.0 gcov libroutingmanager libuuid librt libc_common liblogger libgio-2.0 libgobject-2.0 ')
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libocsrm libcoap libboost_system libboost_filesystem libboost_thread libdl pthread libglib-2.0 gcov libroutingmanager libuuid librt libc_common liblogger libgio-2.0 libgobject-2.0 ')
+
+
+RI_SHARED_LIBS = []
+RI_STATIC_LIBS = []
+RI_LIBS = [RI_SHARED_LIBS, COMMON_SHARED_LIBS]
+
+RI_BIN = 'iotivity_ricsdk_test'
+
+TEST_MAIN_BIN = 'test_main_ricsdk.o'
+COMMON_UTIL_BIN = 'common_util_ricsdk.o'
+CALL_GRAPH_BIN = 'call_graph_ricsdk.o'
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp']
+
+
+RI_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
+
+
+RI_STC_CPP = Glob(STC_DIR + '/*.cpp')
+RI_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
+
+
+RI_BTC_SRC = [RI_BTC_CPP, RI_STC_CPP, COMMON_STATIC_LIBS, RI_STATIC_LIBS]
+
+##############Creating object files###############
+obj = []
+index = 0
+
+
+test_main = env_linux.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = RI_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+common_util = env_linux.Object(source = COMMON_UTIL_CPP, target = COMMON_UTIL_BIN, CPPPATH = RI_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+call_graph = env_linux.Object(source = CALL_GRAPH_CPP, target = CALL_GRAPH_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+
+obj.append(test_main )
+obj.append(common_util )
+obj.append(call_graph )
+
+######################################################################
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+
+ricsdk_stc_cpp = env_linux.Program(source =[RI_STC_CPP, RI_BTC_CPP, GTEST_LIB, RI_HELPER_CPP, obj], target = RI_BIN, CPPPATH = RI_CINCLUDE, LIBS = RI_LIBS, LIBPATH = RI_LIB_LOCATION, CPPFLAGS = RI_CFLAGS)
+
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+pre_job = [create_target_dir]
+######################################################################
+
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_transport = env_linux.get('TARGET_TRANSPORT')
+target_test = env_linux.get('TARGET_TEST')
+default_targets = []
+install_targets = []
+
+
+install_targets +=[test_main, common_util, call_graph]
+
+print "target_service = " + target_service
+print "target_test = " + target_test
+print "target_transport = " + target_transport
+
+#SConscript(GTEST + '/SConscript')
+
+if 'ricsdk' in target_service or 'all' in target_service:
+    if 'tc' in target_test or 'all' in target_test:
+        print '---------------RI CSDK STC or all Build Selected---------------'
+        install_targets += [ricsdk_stc_cpp]
+        default_targets += [create_target_dir]
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)

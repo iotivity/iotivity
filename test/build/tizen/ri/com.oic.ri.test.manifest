@@ -1,6 +1,6 @@
 <manifest>
 	<define>
-	  <domain name="InterOpAppRI" />
+	  <domain name="iotivity_ri" />
 	  <permit>
          	<smack permit="system::use_internet" type="rwx"/>
 	  </permit>
@@ -17,10 +17,10 @@
          </request>
 	</define>
 	<assign>
-		<filesystem path="/opt/apps/com.oic.iori/bin/InterOpAppRI" exec_label="InterOpAppRI" />
+		<filesystem path="/opt/apps/com.oic.ri/bin/iotivity_ri" exec_label="iotivity_ri" />
 	</assign>
 	<request>
-		<domain name="InterOpAppRI" />
+		<domain name="iotivity_ri" />
 	</request>
 </manifest>
 

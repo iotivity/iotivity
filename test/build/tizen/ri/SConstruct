@@ -1,0 +1,101 @@
+env = Environment(CC='g++')
+
+ENV_HOME = '.'
+
+TARGET_SERVICE = ARGUMENTS.get('TARGET_SERVICE')
+TARGET_TEST = ARGUMENTS.get('TARGET_TEST')
+
+IOTIVITY_INCLUDES = [ 
+                        ENV_HOME + '/iotivity/resource/include', 
+                        ENV_HOME + '/iotivity/resource/csdk/stack/include',
+                        ENV_HOME + '/iotivity/resource/c_common',
+                        ENV_HOME + '/iotivity/resource/oc_logger/include',
+                        ENV_HOME + '/test/include',
+                        ENV_HOME + '/iotivity/resource/c_common/oic_malloc/include', 
+                        ENV_HOME + '/iotivity/resource/c_common/oic_string/include'
+                    ]
+
+INTEROP_INCLUDES = [ 
+                            ENV_HOME + '/test/include'
+                   ]
+
+CSDK_INCLUDES = [ 
+                    ENV_HOME + '/test/include',
+                    ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/include',
+                    ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
+                ]
+
+CPP_INCLUDES = [ 
+                    ENV_HOME + '/test/include',
+                    ENV_HOME + '/test/src/tc/ri/gtest/ricpp/include',
+                    ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
+               ]
+
+INTEROP_SRC = [ 
+                    Glob(ENV_HOME + '/test/src/iBtestapp/modules/ri/c_cpp/InterOpAppRI.cpp'), 
+                    Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
+                    Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+                    Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp')
+              ]
+
+CSDK_SRC = [
+                Glob(ENV_HOME + '/test/src/common/testcase/gtest/IotivitySECTestMain.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/CommonUtil.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/src/helper/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/src/btc/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricsdk/src/stc/*.cpp')
+           ]
+
+CPP_SRC = [
+                Glob(ENV_HOME + '/test/src/common/testcase/gtest/IotivitySECTestMain.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/CommonUtil.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricpp/src/helper/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricpp/src/btc/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/ricpp/src/stc/*.cpp')
+          ]
+
+LIBS = Split('-lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lconnectivity_abstraction -loc -loc_logger -loc_logger_core -loctbstack -lexpat -lboost_system -lboost_filesystem -lboost_thread -ldl')
+
+LIB_PATH = [ ENV_HOME + '/test/extlibs/gtest-1.7.0/bin/tizen' ]
+
+CPPDEFINES = Split('WITH_POSIX SLP_SDK_LOG _GNU_SOURCE TIZEN_DEBUG_ENABLE TB_LOG __WITH_DTLS__ TIZEN __TIZEN__ WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_ADAPTER ROUTING_EP WITH_BWT')
+
+CPPFLAGS = Split('-s -pthread -Wall -finstrument-functions -finstrument-functions -fpermissive -fPIC -g -std=gnu++0x `pkg-config --cflags --libs dlog capi-network-wifi gobject-2.0 glib-2.0` -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog')	
+
+if TARGET_TEST == 'tc':
+    if TARGET_SERVICE == 'ricsdk':
+        env.Program(
+                    source = CSDK_SRC, 
+                    target = 'iotivity_ri_csdk_test', 
+                    CPPPATH = IOTIVITY_INCLUDES + CSDK_INCLUDES, 
+                    LIBS = LIBS + ['gtest'], 
+                    LIBPATH = LIB_PATH, 
+                    CPPFLAGS = CPPFLAGS, 
+                    CPPDEFINES = CPPDEFINES
+                    )
+    elif TARGET_SERVICE == 'ricpp':
+        env.Program(
+                    source = CPP_SRC, 
+                    target = 'iotivity_ri_cpp_test', 
+                    CPPPATH = IOTIVITY_INCLUDES + CPP_INCLUDES, 
+                    LIBS = LIBS + ['gtest'], 
+                    LIBPATH = LIB_PATH, 
+                    CPPFLAGS = CPPFLAGS, 
+                    CPPDEFINES = CPPDEFINES
+                    )
+
+elif TARGET_TEST == 'app':
+    env.Program(
+                source = INTEROP_SRC, 
+                target = 'iotivity_ri_interop_test', 
+                CPPPATH = IOTIVITY_INCLUDES + CPP_INCLUDES, 
+                LIBS = LIBS, 
+                CPPFLAGS = CPPFLAGS, 
+                CPPDEFINES = CPPDEFINES
+                )

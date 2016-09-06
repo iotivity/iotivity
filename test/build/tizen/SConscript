@@ -34,7 +34,7 @@ Import('env_tizen')
 target_arch = env_tizen.get('TARGET_ARCH')
 target_source = env_tizen.get('TARGET_SOURCE')
 target_service = env_tizen.get('TARGET_SERVICE')
-tc_type = env_tizen.get('TARGET_TC')
+target_test = env_tizen.get('TARGET_TEST')
 variant_dir = env_tizen.get('VARIANT_DIR')
 rpm_path = env_tizen.get('RPMS_DIR')
 is_prevent_enabled = env_tizen.get('PREVENT')
@@ -43,16 +43,8 @@ target_secured = env_tizen.get('SECURED')
 
 print "Value of Prevent : " + is_prevent_enabled
 print 'target_secured: ' + target_secured
-
-warning_msg = """
-########################################################################################
-#   ERROR... GBS RPM Path is not defined of not a valid directory. To Set the Path:    #
-#   RPMS_DIR=<your RPMS path> or provide the path in the configuration.scons           #
-#   [NB: without Path, it can not Install the RPM package in the target dir            #  
-########################################################################################
-
-"""
-
+print 'target_service: ' + target_service
+print 'target_test: ' + target_test
 
 if 'PATH_NOT_DEFINED' in rpm_path or not os.path.isdir(rpm_path):
     print warning_msg
@@ -95,13 +87,13 @@ if 'rc' in target_service or 'all' in target_service:
     gbs_script_rc = "sh build/tizen/rc/gbsbuild_rc.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
     default_targets += [gbs_script_rc]
 
-if 'iori' in target_service or 'all' in target_service:
+if 'ri' in target_service or 'ricsdk' in target_service or 'ricpp' in target_service or 'all' in target_service:
     rpms_dir = env_tizen.get('RPMS_DIR') 
     push = env_tizen.get('PUSH')     
     security_mode = env_tizen.get('SECURITY_MODE')
 
-    gbs_script_iori = "bash build/tizen/iori/gbsbuild.sh stand_alone=false rpms_dir=%s push=%s security_mode=%s" % (rpms_dir, push, security_mode)
-    default_targets += [gbs_script_iori]
+    gbs_script_ri = "bash build/tizen/ri/gbsbuild.sh stand_alone=false rpms_dir=%s push=%s security_mode=%s target_service=%s target_test=%s" % (rpms_dir, push, security_mode, target_service, target_test)
+    default_targets += [gbs_script_ri]
     
 if 'iut' in target_service or 'all' in target_service:
 
