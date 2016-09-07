@@ -20,10 +20,9 @@
 
 extern "C"
 {
-    #include "rdpayload.h"
-    #include "oicresourcedirectory.h"
+    #include "rd_server.h"
+    #include "rd_client.h"
     #include "ocstack.h"
-    #include "ocstackinternal.h"
     #include "logger.h"
     #include "oic_malloc.h"
 }
@@ -63,6 +62,19 @@ std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 //-----------------------------------------------------------------------------
 // Callback functions
 //-----------------------------------------------------------------------------
+#ifdef RD_SERVER
+static OCStackApplicationResult handleDiscoveryCB(__attribute__((unused))void *ctx,
+                                                  __attribute__((unused)) OCDoHandle handle,
+                                                  __attribute__((unused))
+                                                  OCClientResponse *clientResponse)
+{
+    OIC_LOG(DEBUG, TAG, "Successfully found RD.");
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+#endif
+
+#ifdef RD_CLIENT
 static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx,
                                                 __attribute__((unused)) OCDoHandle handle,
                                                 __attribute__((unused))
@@ -82,6 +94,7 @@ static OCStackApplicationResult handleDeleteCB(__attribute__((unused))void *ctx,
 
     return OC_STACK_DELETE_TRANSACTION;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Entity handler
@@ -111,56 +124,74 @@ class RDTests : public testing::Test {
     }
 };
 
-TEST_F(RDTests, CreateRDPayload)
+#ifdef RD_SERVER
+TEST_F(RDTests, CreateRDResource)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCRDStart());
 
-    OCResourceHandle handle;
-    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light",
-                                            "oic.if.baseline", "/a/light", rdEntityHandler,
-                                            NULL, OC_DISCOVERABLE | OC_OBSERVABLE));
+    OCCallbackData cbData;
+    cbData.cb = &handleDiscoveryCB;;
+    cbData.cd = NULL;
+    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
 
-    // Create RD Publish Payload.
-    OCRDPayload *rdPayload = (OCRDPayload *) OCRDPublishPayloadCreate(&handle, 1, 86400);
-    EXPECT_TRUE(rdPayload != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCRDDiscover(CT_ADAPTER_IP, &cbData, OC_LOW_QOS));
 
-    // Cleanup.
-    OCRDPayloadDestroy(rdPayload);
+    EXPECT_EQ(OC_STACK_OK, OCRDStop());
 }
+#endif
 
-TEST_F(RDTests, ConvertParseRDPayload)
-{
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-
-    OCResourceHandle handle;
-    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light",
-                                            "oic.if.baseline", "/a/light", rdEntityHandler,
-                                            NULL, OC_DISCOVERABLE | OC_OBSERVABLE));
-
-    // Create RD Publish Payload.
-    OCRDPayload *rdPayload = (OCRDPayload *) OCRDPublishPayloadCreate(&handle, 1, 86400);
-    EXPECT_TRUE(rdPayload != NULL);
-
-    if (rdPayload)
-    {
-        // Convert RD Publish Payload to CBOR.
-        size_t curSize = 255;
-        uint8_t *outPayload = (uint8_t *)OICCalloc(1, curSize);
-        OCRDPayloadToCbor(rdPayload, outPayload, &curSize);
-
-        // Parse CBOR back to RD Publish Payload.
-        CborParser parser;
-        CborValue rootValue;
-        cbor_parser_init(outPayload, curSize, 0, &parser, &rootValue);
-
-        OCRDPayload *rdPayload = NULL;
-        EXPECT_EQ(OC_STACK_OK, OCRDCborToPayload(&rootValue, (OCPayload**) &rdPayload));
-
-        // Cleanup.
-        OICFree(outPayload);
-    }
-    OCRDPayloadDestroy(rdPayload);
-}
+#ifdef RD_CLIENT
+// TEST_F(RDTests, CreateRDPayload)
+// {
+//     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+//
+//     OCResourceHandle handle;
+//     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light",
+//                                             "oic.if.baseline", "/a/light", rdEntityHandler,
+//                                             NULL, OC_DISCOVERABLE | OC_OBSERVABLE));
+//
+//     // Create RD Publish Payload.
+//     // OCRDPayload *rdPayload = (OCRDPayload *) OCRDPublishPayloadCreate(&handle, 1, 86400);
+//     // EXPECT_TRUE(rdPayload != NULL);
+//
+//     // Cleanup.
+//     // OCPayloadDestroy(rdPayload);
+// }
+//
+// TEST_F(RDTests, ConvertParseRDPayload)
+// {
+//     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+//
+//     OCResourceHandle handle;
+//     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle, "core.light",
+//                                             "oic.if.baseline", "/a/light", rdEntityHandler,
+//                                             NULL, OC_DISCOVERABLE | OC_OBSERVABLE));
+//
+//     // Create RD Publish Payload.
+//     OCRDPayload *rdPayload = (OCRDPayload *) OCRDPublishPayloadCreate(&handle, 1, 86400);
+//     EXPECT_TRUE(rdPayload != NULL);
+//
+//     if (rdPayload)
+//     {
+//         // Convert RD Publish Payload to CBOR.
+//         size_t curSize = 255;
+//         uint8_t *outPayload = (uint8_t *)OICCalloc(1, curSize);
+//         OCRDPayloadToCbor(rdPayload, outPayload, &curSize);
+//
+//         // Parse CBOR back to RD Publish Payload.
+//         CborParser parser;
+//         CborValue rootValue;
+//         cbor_parser_init(outPayload, curSize, 0, &parser, &rootValue);
+//
+//         OCRDPayload *rdPayload = NULL;
+//         EXPECT_EQ(OC_STACK_OK, OCRDCborToPayload(&rootValue, (OCPayload**) &rdPayload));
+//
+//         // Cleanup.
+//         OICFree(outPayload);
+//     }
+//     OCRDPayloadDestroy(rdPayload);
+// }
 
 TEST_F(RDTests, RDPublishResourceNullAddr)
 {
@@ -260,3 +291,4 @@ TEST_F(RDTests, RDDeleteSpecificResource)
     EXPECT_EQ(OC_STACK_OK, OCRDDelete("127.0.0.1", CT_ADAPTER_IP, &handle,
                                       1, &cbData, OC_LOW_QOS));
 }
+#endif

@@ -22,7 +22,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "oicresourcedirectory.h"
+#include "rd_client.h"
 #include "cloud_connector.h"
 
 static bool isCloudLoggedin = false;

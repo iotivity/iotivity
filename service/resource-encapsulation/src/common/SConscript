@@ -75,13 +75,13 @@ TIMER_SRC_DIR = 'expiryTimer/src/'
 RESOURCE_SRC = 'primitiveResource/src/'
 rcs_common_src = [
         TIMER_SRC_DIR + 'ExpiryTimerImpl.cpp',
-		TIMER_SRC_DIR + 'ExpiryTimer.cpp',
-		RESOURCE_SRC + 'PresenceSubscriber.cpp',
-		RESOURCE_SRC + 'PrimitiveResource.cpp',
-		RESOURCE_SRC + 'RCSException.cpp',
-		RESOURCE_SRC + 'RCSAddress.cpp',
-		RESOURCE_SRC + 'RCSResourceAttributes.cpp',
-		RESOURCE_SRC + 'RCSRepresentation.cpp'
+        TIMER_SRC_DIR + 'ExpiryTimer.cpp',
+        RESOURCE_SRC + 'PresenceSubscriber.cpp',
+        RESOURCE_SRC + 'PrimitiveResource.cpp',
+        RESOURCE_SRC + 'RCSException.cpp',
+        RESOURCE_SRC + 'RCSAddress.cpp',
+        RESOURCE_SRC + 'RCSResourceAttributes.cpp',
+        RESOURCE_SRC + 'RCSRepresentation.cpp'
         ]
 
 rcs_common_static = rcs_common_env.StaticLibrary('rcs_common', rcs_common_src)

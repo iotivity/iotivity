@@ -1366,7 +1366,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 #endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_RD_URI) == 0)
                     {
-                        type = PAYLOAD_TYPE_RD;
+                        type = PAYLOAD_TYPE_REPRESENTATION ;
                     }
 #ifdef TCP_ADAPTER
                     else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
@@ -1390,14 +1390,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 {
                     if (cbNode->requestUri)
                     {
-                        char targetUri[MAX_URI_LENGTH];
-                        snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s", OC_RSRVD_RD_URI,
-                                OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
-                        if (strcmp(targetUri, cbNode->requestUri) == 0)
-                        {
-                            type = PAYLOAD_TYPE_RD;
-                        }
-                        else if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
+                        if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
                         {
                             type = PAYLOAD_TYPE_PLATFORM;
                         }

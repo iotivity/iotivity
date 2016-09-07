@@ -47,6 +47,11 @@ if env.get('ROUTING') in ['GW', 'EP']:
 	# Build Routing
 	SConscript('csdk/routing/SConscript')
 
+if target_os in ['linux', 'android']:
+    rd_mode = env.get('RD_MODE')
+    if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+        SConscript('csdk/resource-directory/SConscript')
+
 # Build libocsrm
 SConscript('csdk/security/SConscript')
 

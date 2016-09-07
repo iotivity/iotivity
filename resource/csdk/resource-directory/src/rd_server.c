@@ -19,22 +19,28 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "rd_server.h"
 
-#include "rd_storage.h"
+#include "rd_database.h"
 
-#include "rdpayload.h"
 #include "payload_logging.h"
+#include "ocpayload.h"
+#include "octypes.h"
 
 #define TAG  PCF("RDServer")
 
-// This is temporary hardcoded value for bias factor.
-#define OC_RD_DISC_SEL 100
+#ifdef RD_SERVER
 
-static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRDPayload *rdPayload)
+// This is temporary hardcoded value for bias factor.
+static const int OC_RD_DISC_SEL = 100;
+
+static OCResourceHandle rdHandle;
+
+static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRepPayload *rdPayload,
+    OCEntityHandlerResult ehResult)
 {
     OCEntityHandlerResponse response = { 0 };
     response.requestHandle = ehRequest->requestHandle;
     response.resourceHandle = ehRequest->resource;
-    response.ehResult = OC_EH_OK;
+    response.ehResult = ehResult;
     response.payload = (OCPayload*)(rdPayload);
     return OCDoResponse(&response);
 }
@@ -54,22 +60,27 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OIC_LOG_V(DEBUG, TAG, "Received OC_REST_GET from client with query: %s.", ehRequest->query);
 
-    OCRDPayload *rdPayload = OCRDPayloadCreate();
+    OCRepPayload *rdPayload =  (OCRepPayload *)OCRepPayloadCreate();
     if (!rdPayload)
     {
         return OC_STACK_NO_MEMORY;
     }
 
-    rdPayload->rdDiscovery = OCRDDiscoveryPayloadCreate(NULL, OCGetServerInstanceIDString(), OC_RD_DISC_SEL);
-    if (!rdPayload->rdDiscovery)
+    const char *id = OCGetServerInstanceIDString();
+    if (id)
     {
-        OCRDPayloadDestroy(rdPayload);
-        return OC_STACK_NO_MEMORY;
+        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, id);
     }
+    OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_RD_DISCOVERY_SEL, OC_RD_DISC_SEL);
+
+    OCRepPayloadAddResourceType(rdPayload, OC_RSRVD_RESOURCE_TYPE_RD);
+    OCRepPayloadAddResourceType(rdPayload, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+
+    OCRepPayloadAddInterface(rdPayload, OC_RSRVD_INTERFACE_DEFAULT);
 
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
-    if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
+    if (sendResponse(ehRequest, rdPayload, OC_EH_OK) != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Sending response failed.");
         ehResult = OC_EH_ERROR;
@@ -94,27 +105,43 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
 
     OIC_LOG_V(DEBUG, TAG, "Received OC_REST_PUT from client with query: %s.", ehRequest->query);
 
-    OCRDPayload *payload = (OCRDPayload *)ehRequest->payload;
-    if (payload && payload->rdPublish)
+    OCRepPayload *payload = (OCRepPayload *)ehRequest->payload;
+    OCRepPayload *resPayload = NULL;
+    if (payload)
     {
-        OCRDStorePublishedResources(payload->rdPublish, &ehRequest->devAddr);
+        OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) payload);
+        if (OCRDDatabaseInit(NULL) == OC_STACK_OK)
+        {
+            if (OCRDDatabaseStoreResources(payload, &ehRequest->devAddr) == OC_STACK_OK)
+            {
+                OIC_LOG_V(DEBUG, TAG, "Stored resources.");
+                resPayload = payload;
+                ehResult = OC_EH_OK;
+            }
+            else
+            {
+                resPayload = (OCRepPayload *)OCRepPayloadCreate();
+                ehResult = OC_EH_ERROR;
+            }
+        }
+
+        // Send Response
+        if (sendResponse(ehRequest, resPayload, ehResult) != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "Sending response failed.");
+        }
     }
 
-    OCRDPayload *rdPayload = OCRDPayloadCreate();
-    if (!rdPayload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed allocating memory.");
-        return OC_STACK_NO_MEMORY;
-    }
+    return ehResult;
+}
 
-    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OIC_LOG(DEBUG, TAG, "handleDeleteRequest - IN");
 
-    if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, TAG, "Sending response failed.");
-        ehResult = OC_EH_ERROR;
-    }
+    (void) ehRequest;  // eliminates release warning
 
+    OCEntityHandlerResult ehResult = OC_EH_OK;
     return ehResult;
 }
 
@@ -144,8 +171,10 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
             case OC_REST_POST:
                 handlePublishRequest(ehRequest);
                 break;
-            case OC_REST_PUT:
             case OC_REST_DELETE:
+                ehRet = handleDeleteRequest(ehRequest);
+                break;
+            case OC_REST_PUT:
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
             case OC_REST_PRESENCE:
@@ -162,27 +191,32 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
  */
 OCStackResult OCRDStart()
 {
-    OCResourceHandle rdHandle = NULL;
+    OCStackResult result = OCCreateResource(&rdHandle,
+                                OC_RSRVD_RESOURCE_TYPE_RD,
+                                OC_RSRVD_INTERFACE_DEFAULT,
+                                OC_RSRVD_RD_URI,
+                                rdEntityHandler,
+                                NULL,
+                                (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
 
-    OCStackResult result = OCRDInitializeStorage();
     if (result == OC_STACK_OK)
     {
-        result = OCCreateResource(&rdHandle,
-                                  OC_RSRVD_RESOURCE_TYPE_RD,
-                                  OC_RSRVD_INTERFACE_DEFAULT,
-                                  OC_RSRVD_RD_URI,
-                                  rdEntityHandler,
-                                  NULL,
-                                  (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
-    }
-    if (result == OC_STACK_OK)
-    {
-        OIC_LOG(DEBUG, TAG, "Resource Directory Started.");
+        OIC_LOG(DEBUG, TAG, "Resource Directory resource created.");
     }
     else
     {
-        OCRDTerminateStorage();
-        OIC_LOG(ERROR, TAG, "Failed starting Resource Directory.");
+        OIC_LOG(ERROR, TAG, "Failed creating Resource Directory resource.");
+        return result;
+    }
+    result = OCBindResourceTypeToResource(rdHandle,
+                    OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+    if (result == OC_STACK_OK)
+    {
+        OIC_LOG(DEBUG, TAG, "Resource Directory resource Publish created.");
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Failed creating Resource Directory Publish resource.");
     }
 
     return result;
@@ -193,17 +227,24 @@ OCStackResult OCRDStart()
  */
 OCStackResult OCRDStop()
 {
-    OCRDTerminateStorage();
+    if (!rdHandle)
+    {
+        OIC_LOG(ERROR, TAG, "Resource Directory resource handle is not initialized.");
+        return OC_STACK_NO_RESOURCE;
+    }
 
-    OCStackResult result = OCStop();
+    OCStackResult result = OCDeleteResource(rdHandle);
 
     if (result == OC_STACK_OK)
     {
-        OIC_LOG(DEBUG, TAG, "Resource Directory Stopped.");
+      OIC_LOG(DEBUG, TAG, "Resource Directory resource deleted.");
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "Failed stopping Resource Directory.");
+      OIC_LOG(ERROR, TAG, "Resource Directory resource not deleted.");
     }
+
     return result;
 }
+
+#endif

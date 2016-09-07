@@ -32,13 +32,15 @@
 #include <OCResourceRequest.h>
 #include <OCResourceResponse.h>
 #include <ocstack.h>
+#include <ocpayload.h>
+
 #include <OCApi.h>
 #include <oic_malloc.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
 
 #ifdef RD_CLIENT
-#include <oicresourcedirectory.h>
+#include <rd_client.h>
 #endif
 
 using namespace std;
@@ -327,7 +329,7 @@ namespace OC
         return result;
     }
 
-     OCStackResult InProcServerWrapper::registerPlatformInfo(const OCPlatformInfo platformInfo)
+    OCStackResult InProcServerWrapper::registerPlatformInfo(const OCPlatformInfo platformInfo)
     {
         auto cLock = m_csdkLock.lock();
         OCStackResult result = OC_STACK_ERROR;
@@ -599,11 +601,12 @@ namespace OC
             return result;
         }
     }
+
 #ifdef RD_CLIENT
     OCRepresentation parseRDResponseCallback(OCClientResponse* clientResponse)
     {
         if (nullptr == clientResponse || nullptr == clientResponse->payload ||
-                    PAYLOAD_TYPE_RD != clientResponse->payload->type)
+            PAYLOAD_TYPE_REPRESENTATION != clientResponse->payload->type)
         {
             return OCRepresentation();
         }
@@ -643,16 +646,20 @@ namespace OC
             {
                 if (clientResponse->payload)
                 {
-                    OCRDPayload *rdPayload = (OCRDPayload *) clientResponse->payload;
-                    OCLinksPayload *links = rdPayload->rdPublish->setLinks;
+                    OCRepPayload *rdPayload = (OCRepPayload *) clientResponse->payload;
+                    OCRepPayload **links = NULL;
 
-                    while (links)
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH];
+                    OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS, &links, dimensions);
+                    for(size_t i = 0; i < dimensions[0]; i++)
                     {
-                        OCResourceHandle handle = OCGetResourceHandleAtUri(links->href);
-                        OCBindResourceInsToResource(handle, links->ins);
-                        links = links->next;
+                        char *uri = NULL;
+                        OCRepPayloadGetPropString(links[i], OC_RSRVD_HREF, &uri);
+                        OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
+                        int64_t ins = 0;
+                        OCRepPayloadGetPropInt(links[i], OC_RSRVD_INS, &ins);
+                        OCBindResourceInsToResource(handle, ins);
                     }
-
                 }
                 OCRepresentation rep = parseRDResponseCallback(clientResponse);
                 std::thread exec(context->callback, rep, clientResponse->result);
@@ -741,6 +748,7 @@ namespace OC
         return result;
     }
 #endif
+
     InProcServerWrapper::~InProcServerWrapper()
     {
         if(m_processThread.joinable())
@@ -752,4 +760,3 @@ namespace OC
         OCStop();
     }
 }
-

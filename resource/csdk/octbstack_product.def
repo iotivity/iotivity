@@ -67,10 +67,6 @@ OCPayloadDestroy
 OCPlatformPayloadCreate
 OCPresencePayloadCreate
 OCProcess
-OCRDDelete
-OCRDDeleteWithDeviceId
-OCRDPublish
-OCRDPublishWithDeviceId
 OCRegisterPersistentStorageHandler
 OCRepPayloadAddInterface
 OCRepPayloadAddResourceType

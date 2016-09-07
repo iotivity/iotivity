@@ -99,10 +99,17 @@ if 'PUB' in with_mq:
 if 'BROKER' in with_mq:
 	oclib_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
 
-if 'CLIENT' in oclib_env.get('RD_MODE'):
-	oclib_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-if 'SERVER' in oclib_env.get('RD_MODE'):
-	oclib_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+if target_os in ['linux', 'android'] and oclib_env.get('RD_MODE'):
+	rd_mode = oclib_env.get('RD_MODE')
+	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'csdk','resource-directory')])
+	oclib_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
+	oclib_env.AppendUnique(LIBS=['resource_directory'])
+
+	if 'CLIENT' in rd_mode:
+	 	oclib_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+
+	if 'SERVER' in rd_mode:
+		oclib_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
 ######################################################################
 # Source files and Targets

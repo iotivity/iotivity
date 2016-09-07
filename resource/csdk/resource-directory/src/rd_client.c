@@ -6,7 +6,7 @@
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License a
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -17,28 +17,48 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "iotivity_config.h"
-#include "oicresourcedirectory.h"
+#include "rd_client.h"
 
-#include "rdpayload.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "octypes.h"
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "rdpayload.h"
-#include "ocresource.h"
 #include "payload_logging.h"
 
-#define TAG "OIC_RI_RESOURCE_DIRECTORY"
+#define TAG "RD_CLIENT"
 
 #ifdef RD_CLIENT
+
+OCStackResult OCRDDiscover(OCConnectivityType connectivityType, OCCallbackData *cbBiasFactor,
+                           OCQualityOfService qos)
+{
+    if (!cbBiasFactor || !cbBiasFactor->cb)
+    {
+        OIC_LOG(DEBUG, TAG, "No callback function specified.");
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    /* Start a discovery query*/
+    char queryUri[MAX_URI_LENGTH] = { '\0' };
+    snprintf(queryUri, MAX_URI_LENGTH, "coap://%s%s", OC_MULTICAST_PREFIX, OC_RSRVD_RD_URI);
+    OIC_LOG_V(DEBUG, TAG, "Querying RD: %s\n", queryUri);
+
+    return OCDoResource(NULL, OC_REST_DISCOVER, queryUri, NULL, NULL, connectivityType, qos,
+                        cbBiasFactor, NULL, 0);
+}
+
 OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
                           OCResourceHandle *resourceHandles, uint8_t nHandles,
                           OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters.
-    if (!host || !cbData || !cbData->cb)
+    if (!host)
+    {
+        return OC_STACK_INVALID_IP;
+    }
+
+    if (!cbData || !cbData->cb)
     {
         return OC_STACK_INVALID_CALLBACK;
     }
@@ -93,16 +113,96 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
              OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
     OIC_LOG_V(DEBUG, TAG, "Target URI: %s", targetUri);
 
-    OCPayload *rdPayload = (OCPayload *) OCRDPublishPayloadCreate(id, pubResHandle, nPubResHandles,
-                                                                  OIC_RD_PUBLISH_TTL);
+    OCRepPayload *rdPayload =  (OCRepPayload *)OCRepPayloadCreate();
     if (!rdPayload)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create RD Payload");
         return OC_STACK_NO_MEMORY;
     }
 
-    OIC_LOG(DEBUG, TAG, "Create RD payload successfully");
+    const char *deviceId = OCGetServerInstanceIDString();
+    if (deviceId)
+    {
+        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, deviceId);
+    }
+    OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_DEVICE_TTL, OIC_RD_PUBLISH_TTL);
 
+    const OCRepPayload *linkArr[nPubResHandles];
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {nPubResHandles, 0, 0};
+
+    for (uint8_t j = 0; j < nPubResHandles; j++)
+    {
+        OCResourceHandle handle = pubResHandle[j];
+        if (handle)
+        {
+            OCRepPayload *link = OCRepPayloadCreate();
+
+            const char *uri = OCGetResourceUri(handle);
+            if (uri)
+            {
+                OCRepPayloadSetPropString(link, OC_RSRVD_HREF, uri);
+            }
+
+            uint8_t numElement = 0;
+            if (OC_STACK_OK == OCGetNumberOfResourceTypes(handle, &numElement))
+            {
+                size_t rtDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
+                char **rt = (char **)OICMalloc(sizeof(char *) * numElement);
+                for (uint8_t i = 0; i < numElement; ++i)
+                {
+                    const char *value = OCGetResourceTypeName(handle, i);
+                    OIC_LOG_V(DEBUG, TAG, "value: %s", value);
+                    rt[i] = OICStrdup(value);
+                }
+                OCRepPayloadSetStringArray(link, OC_RSRVD_RESOURCE_TYPE, (const char **)rt, rtDim);
+            }
+
+            numElement = 0;
+            if (OC_STACK_OK == OCGetNumberOfResourceInterfaces(handle, &numElement))
+            {
+                size_t ifDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
+                char **itf = (char **)OICMalloc(sizeof(char *) * numElement);
+                for (uint8_t i = 0; i < numElement; ++i)
+                {
+                    const char *value = OCGetResourceInterfaceName(handle, i);
+                    OIC_LOG_V(DEBUG, TAG, "value: %s", value);
+                    itf[i] = OICStrdup(value);
+                }
+                OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf, ifDim);
+            }
+
+            uint8_t ins = 0;
+            if (OCGetResourceIns(handle, &ins))
+            {
+                OCRepPayloadSetPropInt(link, OC_RSRVD_INS, ins);
+            }
+
+            size_t mtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+            char **mediaType = (char **)OICMalloc(sizeof(char *) * 1);
+            mediaType[0] = OICStrdup(DEFAULT_MESSAGE_TYPE);
+            OCRepPayloadSetStringArray(link, OC_RSRVD_MEDIA_TYPE, (const char **)mediaType,
+            mtDim);
+
+            OCResourceProperty p = OCGetResourceProperties(handle);
+            p = (OCResourceProperty) ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE));
+            OCRepPayload *policy = OCRepPayloadCreate();
+            OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, p);
+            OCRepPayloadSetPropObjectAsOwner(link, OC_RSRVD_POLICY, policy);
+
+            linkArr[j] = link;
+        }
+    }
+
+    OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, linkArr, dimensions);
+    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+
+    if (OC_STACK_OK == OCStopMulticastServer())
+    {
+        OIC_LOG_V(DEBUG, TAG, "Stopped receiving the multicast traffic.");
+    }
+    else
+    {
+        OIC_LOG_V(DEBUG, TAG, "Failed stopping the multicast traffic.");
+    }
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
                         connectivityType, qos, cbData, NULL, 0);
 }
@@ -112,7 +212,12 @@ OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
                          OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters
-    if (!host || !cbData || !cbData->cb)
+    if (!host)
+    {
+        return OC_STACK_INVALID_IP;
+    }
+
+    if (!cbData || !cbData->cb)
     {
         return OC_STACK_INVALID_CALLBACK;
     }
@@ -143,7 +248,9 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
     for (uint8_t j = 0; j < nHandles; j++)
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
-        snprintf(queryParam, MAX_URI_LENGTH, "&ins=%d", handle->ins);
+        uint8_t ins = 0;
+        OCGetResourceIns(handle, &ins);
+        snprintf(queryParam, MAX_URI_LENGTH, "&ins=%u", ins);
     }
 
     OICStrcatPartial(targetUri, sizeof(targetUri), queryParam, strlen(queryParam));
@@ -152,4 +259,5 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
     return OCDoResource(NULL, OC_REST_DELETE, targetUri, NULL, NULL, connectivityType,
                         qos, cbData, NULL, 0);
 }
+
 #endif

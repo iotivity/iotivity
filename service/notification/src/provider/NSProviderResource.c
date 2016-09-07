@@ -20,6 +20,7 @@
 
 #include "NSProviderResource.h"
 #include <string.h>
+#include "rd_client.h"
 
 NSNotificationResource NotificationResource;
 NSMessageResource NotificationMessageResource;

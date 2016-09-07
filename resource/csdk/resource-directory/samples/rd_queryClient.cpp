@@ -21,6 +21,7 @@
 #include "OCPlatform.h"
 
 bool g_foundResource = true;
+using namespace OC;
 
 void foundResource(std::shared_ptr< OC::OCResource > resource)
 {

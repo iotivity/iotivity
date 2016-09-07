@@ -33,7 +33,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "oicresourcedirectory.h"
+#include "rd_client.h"
 
 using namespace std;
 

@@ -24,13 +24,16 @@
 #include "oic_string.h"
 
 #include "rd_client.h"
+#include "payload_logging.h"
+
+#define TAG ("RD_PublishClient")
+#define DEFAULT_CONTEXT_VALUE 0x99
 
 using namespace OC;
 
-OCResourceHandle g_curResource_t = NULL;
-OCResourceHandle g_curResource_l = NULL;
-char rdAddress[MAX_ADDR_STR_SIZE];
-uint16_t rdPort;
+OCResourceHandle handles[2];
+std::ostringstream rdAddress;
+
 
 void registerLocalResources()
 {
@@ -41,7 +44,7 @@ void registerLocalResources()
     std::string resourceInterface = DEFAULT_INTERFACE;
     uint8_t resourceProperty = OC_DISCOVERABLE;
 
-    OCStackResult result = OCPlatform::registerResource(g_curResource_t,
+    OCStackResult result = OCPlatform::registerResource(handles[0],
                            resourceURI_thermostat,
                            resourceTypeName_thermostat,
                            resourceInterface,
@@ -54,7 +57,7 @@ void registerLocalResources()
             std::string("Device Resource failed to start") + std::to_string(result));
     }
 
-    result = OCPlatform::registerResource(g_curResource_l,
+    result = OCPlatform::registerResource(handles[1],
                                           resourceURI_light,
                                           resourceTypeName_light,
                                           resourceInterface,
@@ -81,12 +84,24 @@ void printHelp()
     std::cout << std::endl;
 }
 
-int biasFactorCB(char addr[MAX_ADDR_STR_SIZE], uint16_t port)
+static OCStackApplicationResult handleDiscoveryCB(__attribute__((unused))void *ctx,
+                                                  __attribute__((unused)) OCDoHandle handle,
+                                                  __attribute__((unused))
+                                                  OCClientResponse *clientResponse)
 {
-    OICStrcpy(rdAddress, MAX_ADDR_STR_SIZE, addr);
-    rdPort = port;
-    std::cout << "RD Address is : " <<  addr << ":" << port << std::endl;
-    return 0;
+    OIC_LOG(DEBUG, TAG, "Successfully found RD.");
+    rdAddress << clientResponse->devAddr.addr << ":" << clientResponse->devAddr.port;
+    std::cout << "RD Address is : " <<  rdAddress.str() << std::endl;
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx,
+                                                  __attribute__((unused)) OCDoHandle handle,
+                                                  __attribute__((unused))
+                                                  OCClientResponse *clientResponse)
+{
+    OIC_LOG(DEBUG, TAG, "Successfully published resources.");
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 int main()
@@ -111,7 +126,7 @@ int main()
     {
         sleep(2);
 
-        if (g_curResource_t == NULL || g_curResource_l == NULL)
+        if (handles[0] == NULL || handles[1] == NULL)
         {
             continue;
         }
@@ -133,11 +148,25 @@ int main()
             switch ((int)in)
             {
                 case 1:
-                    OCRDDiscover(biasFactorCB);
+                {
+                    OCCallbackData cbData;
+                    cbData.cb = &handleDiscoveryCB;;
+                    cbData.cd = NULL;
+                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                    OCRDDiscover(CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
                     break;
+                }
                 case 2:
-                    OCRDPublish(rdAddress, rdPort, 2, g_curResource_t, g_curResource_l);
+                {
+                    OCCallbackData cbData;
+                    cbData.cb = &handlePublishCB;
+                    cbData.cd = NULL;
+                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                    std::string address = rdAddress.str();
+                    OCRDPublish(address.c_str(), CT_ADAPTER_IP, handles,
+                                2, &cbData, OC_LOW_QOS);
                     break;
+                }
                 case 3:
                     break;
                 default:

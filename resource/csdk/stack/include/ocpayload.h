@@ -27,9 +27,11 @@
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif
+
 #include <stdbool.h>
 #include <inttypes.h>
 #include "octypes.h"
+#include <cbor.h>
 
 #ifdef __WITH_TLS__
 #include "securevirtualresourcetypes.h"
