@@ -37,9 +37,10 @@ import java.util.List;
 public final class OcPlatform {
 
     static {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc_logger");
         System.loadLibrary("octbstack");
-        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
         if (0 != BuildConfig.SECURED)
         {
