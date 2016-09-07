@@ -56,12 +56,12 @@ static void CASetBits(uint8_t *x, unsigned p, unsigned n, unsigned v)
         OIC_LOG(ERROR, TAG, "set bits - lower err");
         return;
     }
-    else if(~(unsigned)(~0<<n) < v)
+    else if(~(unsigned)(~0u<<n) < v)
     {
         OIC_LOG(ERROR, TAG, "set bits - upper err");
         return;
     }
-    *x = (*x & (~(~0 << (p-n+1)))) | (*x & (~0 << (p+1))) | ((v & ~(~0 << n)) << (p-n+1));
+    *x = (*x & (~(~0u << (p-n+1)))) | (*x & (~0u << (p+1))) | ((v & ~(~0u << n)) << (p-n+1));
 }
 
 /**
@@ -76,7 +76,7 @@ static void CASetBits(uint8_t *x, unsigned p, unsigned n, unsigned v)
  */
 static uint8_t CAGetBits(uint8_t x, unsigned p, unsigned n)
 {
-    return (x >> (p + 1 - n)) & ~(~0 << n);
+    return (x >> (p + 1 - n)) & ~(~0u << n);
 }
 
 CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
