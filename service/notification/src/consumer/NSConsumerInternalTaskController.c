@@ -242,9 +242,29 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
 
     NSProvider_internal * providerCacheDataFromAddr
         = NSFindProviderFromAddr(provider->connection->addr);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
-        (providerCacheDataFromAddr == NULL) ? (void *)1 : NULL,
-        NSRemoveProvider_internal(providerCacheDataFromAddr));
+
+    if (providerCacheDataFromAddr)
+    {
+        if (!strcmp(providerCacheDataFromAddr->providerId, provider->providerId))
+        {
+            NSProviderConnectionInfo * infos = providerCacheDataFromAddr->connection;
+            while (infos)
+            {
+                isSubscribing |= infos->isSubscribing;
+                infos = infos->next;
+            }
+
+            if (isSubscribing == false)
+            {
+                NSProvider * providerForCb = NSCopyProvider(providerCacheDataFromAddr);
+                NSProviderChanged(providerForCb, NS_DISCOVERED);
+                NSRemoveProvider(providerForCb);
+            }
+            NSRemoveProvider_internal(providerCacheDataFromAddr);
+            return ;
+        }
+        NSRemoveProvider_internal(providerCacheDataFromAddr);
+    }
 
     NSProvider_internal * providerCacheData = NSProviderCacheFind(provider->providerId);
 
@@ -289,6 +309,7 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
         NSProvider * providerForCb = NSCopyProvider(provider);
         NSProviderChanged(providerForCb, NS_DISCOVERED);
+        NSRemoveProvider(providerForCb);
     }
     else
     {
