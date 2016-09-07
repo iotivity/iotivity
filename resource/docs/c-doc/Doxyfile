@@ -660,38 +660,37 @@ WARN_LOGFILE           = ./doxygen.log
 # with spaces.
 
 INPUT                  = . \
-			 ../../csdk/security/provisioning/include/ocprovisioningmanager.h \
-			 ../../csdk/security/provisioning/include/pmtypes.h \
-			 ../../csdk/security/provisioning/include/pmutility.h \
-			 ../../csdk/stack/include/ocstack.h \
-			 ../../csdk/stack/include/octypes.h \
-			 ../../csdk/stack/include/ocpayload.h \
-			 ../../csdk/stack/include/ocpresence.h \
-			 ../../csdk/stack/include/rdpayload.h \
-			 ../../csdk/stack/include/payload_logging.h \
-                         ../../csdk/stack/include/ocstackconfig.h \
-                         ../../csdk/stack/include/internal/occlientcb.h \
-                         ../../csdk/stack/include/internal/occollection.h \
-                         ../../csdk/stack/include/internal/ocobserve.h \
-                         ../../csdk/stack/include/internal/ocpayloadcbor.h \
-                         ../../csdk/stack/include/internal/ocresource.h \
-                         ../../csdk/stack/include/internal/ocresourcehandler.h \
-                         ../../csdk/stack/include/internal/ocserverrequest.h \
-                         ../../csdk/stack/include/internal/ocstackinternal.h \
-                         ../../csdk/stack/include/internal/oicgroup.h \
-                         ../../csdk/stack/include/internal/oickeepalive.h \
-                         guides \
-                         ../../csdk/security/include \
-                         ../../csdk/security/include\internal \
-                         ../../csdk/security/provisioning/include \
-                         ../../csdk/security/provisioning/include/internal \
-                         ../../csdk/security/provisioning/include/oxm \
-                         ../../csdk/security/provisioning/include/cloud \
-                         ../../csdk/security/provisioning/sample/cloudAuth.h \
-                         ../../csdk/security/provisioning/sample/cloudWrapper.h \
-                         ../../../service/easy-setup/inc \
-                         ../../../service/easy-setup/enrollee/inc \
-                         ../../../service/resource-directory/include \
+             ../../csdk/security/provisioning/include/ocprovisioningmanager.h
+             ../../csdk/security/provisioning/include/pmtypes.h
+             ../../csdk/security/provisioning/include/pmutility.h
+             ../../csdk/stack/include/ocstack.h
+             ../../csdk/stack/include/octypes.h
+             ../../csdk/stack/include/ocpayload.h
+             ../../csdk/stack/include/ocpresence.h \
+             ../../csdk/stack/include/payload_logging.h \
+             ../../csdk/stack/include/ocstackconfig.h \
+             ../../csdk/stack/include/internal/occlientcb.h \
+             ../../csdk/stack/include/internal/occollection.h \
+             ../../csdk/stack/include/internal/ocobserve.h \
+             ../../csdk/stack/include/internal/ocpayloadcbor.h \
+             ../../csdk/stack/include/internal/ocresource.h \
+             ../../csdk/stack/include/internal/ocresourcehandler.h \
+             ../../csdk/stack/include/internal/ocserverrequest.h \
+             ../../csdk/stack/include/internal/ocstackinternal.h \
+             ../../csdk/stack/include/internal/oicgroup.h \
+             ../../csdk/stack/include/internal/oickeepalive.h \
+             guides \
+             ../../csdk/security/include \
+             ../../csdk/security/include\internal \
+             ../../csdk/security/provisioning/include \
+             ../../csdk/security/provisioning/include/internal \
+             ../../csdk/security/provisioning/include/oxm \
+             ../../csdk/security/provisioning/include/cloud \
+             ../../csdk/security/provisioning/sample/cloudAuth.h \
+             ../../csdk/security/provisioning/sample/cloudWrapper.h \
+             ../../../service/easy-setup/inc \
+             ../../../service/easy-setup/enrollee/inc \
+             ../../../service/resource-directory/include \
 
 
 # This tag can be used to specify the character encoding of the source files

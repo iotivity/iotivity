@@ -44,13 +44,28 @@ rd_sample_app_env.PrependUnique(LIBS = ['resource_directory', 'oc', 'octbstack']
 if env.get('SECURED') == '1':
     rd_sample_app_env.AppendUnique(LIBS = ['tinydtls'])
 
+if env.get('LOGGING'):
+    rd_sample_app_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if rd_sample_app_env.get('RD_MODE'):
+    rd_mode = rd_sample_app_env.get('RD_MODE')
+    if 'CLIENT' in rd_mode:
+        rd_sample_app_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+    if 'SERVER' in rd_mode:
+        rd_sample_app_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+
 ####################################################################
 # Source files and Targets
 ######################################################################
-rd_server = rd_sample_app_env.Program('rd_server', 'rd_main.c')
-rd_publishingClient = rd_sample_app_env.Program('rd_publishingClient', 'rd_publishingClient.cpp')
 rd_queryClient = rd_sample_app_env.Program('rd_queryClient', 'rd_queryClient.cpp')
 
-Alias("resource_directory", [rd_server, rd_publishingClient])
+if 'SERVER' in rd_sample_app_env.get('RD_MODE'):
+    rd_server = rd_sample_app_env.Program('rd_server', 'rd_main.c')
+    Alias("resource_directory", [rd_server, rd_queryClient])
+
+if 'CLIENT' in rd_sample_app_env.get('RD_MODE'):
+    rd_publishingClient = rd_sample_app_env.Program('rd_publishingClient', 'rd_publishingClient.cpp')
+    rd_client = rd_sample_app_env.Program('rd_client', 'rdclient.cpp')
+    Alias("resource_directory", [rd_publishingClient, rd_client, rd_queryClient])
 
 env.AppendTarget('resource_directory')

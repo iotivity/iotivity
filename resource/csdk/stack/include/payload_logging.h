@@ -32,10 +32,11 @@
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif
+
 #include <inttypes.h>
-#include "rdpayload.h"
 #include "oic_malloc.h"
 #include "ocpayload.h"
+#include "ocstack.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -48,173 +49,120 @@ extern "C"
 #ifdef TB_LOG
     #define OIC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
+
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
-#if defined(RD_CLIENT) || defined(RD_SERVER)
-INLINE_API void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
-{
-    if (tags)
-    {
-        if (tags->n.deviceName)
-        {
-            OIC_LOG_V(level, PL_TAG, " Device Name : %s ", tags->n.deviceName);
-        }
-        if (tags->di.id)
-        {
-            OIC_LOG_V(level, PL_TAG, " Device ID : %s ", tags->di.id);
-        }
-        OIC_LOG_V(level, PL_TAG, " lt : %" PRIu64 ,tags->ttl);
-    }
-    else
-    {
-        (void) level;
-    }
-}
-
-INLINE_API void OCLinksLog(const LogLevel level, const OCLinksPayload *links)
-{
-    if (!links)
-    {
-        return;
-    }
-
-    while (links)
-    {
-        if (links->href)
-        {
-            OIC_LOG_V(level, PL_TAG, "   href: %s ",links->href);
-        }
-        OIC_LOG(level, PL_TAG, "   RT: ");
-        OCStringLL *rt = links->rt;
-        while (rt)
-        {
-            if (rt->value)
-            {
-                OIC_LOG_V(level, PL_TAG, "   %s", rt->value);
-            }
-            rt = rt->next;
-        }
-        OIC_LOG(level, PL_TAG, "   IF: ");
-        OCStringLL *itf = links->itf;
-        while (itf)
-        {
-            if (itf->value)
-            {
-                OIC_LOG_V(level, PL_TAG, "   %s", itf->value);
-            }
-            itf = itf->next;
-        }
-        OIC_LOG(level, PL_TAG, "   MT: ");
-        OCStringLL *mt = links->type;
-        while (mt)
-        {
-            if (mt->value)
-            {
-                OIC_LOG_V(level, PL_TAG, "   %s", mt->value);
-            }
-            mt = mt->next;
-        }
-        if (links->type)
-        {
-            OIC_LOG_V(level, PL_TAG, "   %s", links->type->value);
-        }
-        OIC_LOG_V(level, PL_TAG, "   INS: %d", links->ins);
-        OIC_LOG_V(level, PL_TAG, "   TTL: %" PRIu64 , links->ttl);
-        OIC_LOG_V(level, PL_TAG, "   P: %d", links->p);
-        if (links->rel)
-        {
-            OIC_LOG_V(level, PL_TAG, "   REL: %s", links->rel);
-        }
-        if (links->title)
-        {
-            OIC_LOG_V(level, PL_TAG, "   TITLE: %s", links->title);
-        }
-        if (links->anchor)
-        {
-            OIC_LOG_V(level, PL_TAG, "   URI: %s", links->anchor);
-        }
-        links = links->next;
-    }
-}
-#endif
-
-//forward declaration required because function below is recursive
 INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload);
 
 INLINE_API void OCPayloadLogRepValues(LogLevel level, OCRepPayloadValue* val)
 {
-    while(val)
+    while (val)
     {
         switch(val->type)
         {
             case OCREP_PROP_NULL:
-                OIC_LOG_V(level, PL_TAG, "%s: NULL", val->name);
+                OIC_LOG_V(level, PL_TAG, "\t\t%s: NULL", val->name);
                 break;
             case OCREP_PROP_INT:
-                OIC_LOG_V(level, PL_TAG, "%s(int):%zd", val->name, val->i);
+                OIC_LOG_V(level, PL_TAG, "\t\t%s(int):%zd", val->name, val->i);
                 break;
             case OCREP_PROP_DOUBLE:
-                OIC_LOG_V(level, PL_TAG, "%s(double):%f", val->name, val->d);
+                OIC_LOG_V(level, PL_TAG, "\t\t%s(double):%f", val->name, val->d);
                 break;
             case OCREP_PROP_BOOL:
-                OIC_LOG_V(level, PL_TAG, "%s(bool):%s", val->name, val->b ? "true" : "false");
+                OIC_LOG_V(level, PL_TAG, "\t\t%s(bool):%s", val->name, val->b ? "true" : "false");
                 break;
             case OCREP_PROP_STRING:
-                OIC_LOG_V(level, PL_TAG, "%s(string):%s", val->name, val->str);
+                OIC_LOG_V(level, PL_TAG, "\t\t%s(string):%s", val->name, val->str);
                 break;
             case OCREP_PROP_BYTE_STRING:
-                OIC_LOG_V(level, PL_TAG, "%s(binary):", val->name);
+                OIC_LOG_V(level, PL_TAG, "\t\t%s(binary):", val->name);
                 OIC_LOG_BUFFER(level, PL_TAG, val->ocByteStr.bytes, val->ocByteStr.len);
                 break;
             case OCREP_PROP_OBJECT:
-                OIC_LOG_V(level, PL_TAG, "%s(OCRep):%s", val->name, val->obj->uri);
+                // Note: Only prints the URI (if available), to print further, you'll
+                // need to dig into the object better!
+                OIC_LOG_V(level, PL_TAG, "\t\t%s(object):", val->name);
                 OCPayloadLogRep(level, val->obj);
                 break;
             case OCREP_PROP_ARRAY:
-            {
-                size_t len = calcDimTotal(val->arr.dimensions);
-
-                OIC_LOG_V(level, PL_TAG, "%s(array): length = %zu", val->name, len);
-
-                for (size_t i = 0; i < len; i++)
+                switch(val->arr.type)
                 {
-                    OIC_LOG_V(level, PL_TAG, "%s[%zu]:", val->name, i);
-                    char *indent = (char *)"\t\t";
-
-                    switch(val->arr.type)
-                    {
-                        case OCREP_PROP_INT:
-                            OIC_LOG_V(level, PL_TAG, "%s%zd", indent, val->arr.iArray[i]);
-                            break;
-                        case OCREP_PROP_DOUBLE:
-                            OIC_LOG_V(level, PL_TAG, "%s%f", indent, val->arr.dArray[i]);
-                            break;
-                        case OCREP_PROP_BOOL:
-                            OIC_LOG_V(level, PL_TAG, "%s%s", indent, val->arr.bArray[i] ? "true" : "false");
-                            break;
-                        case OCREP_PROP_STRING:
-                            OIC_LOG_V(level, PL_TAG, "%s%s", indent, val->arr.strArray[i]);
-                            break;
-                        case OCREP_PROP_BYTE_STRING:
+                    case OCREP_PROP_INT:
+                        OIC_LOG_V(level, PL_TAG, "\t\t%s(int array):%zu x %zu x %zu: ",
+                                val->name,
+                                val->arr.dimensions[0], val->arr.dimensions[1],
+                                val->arr.dimensions[2]);
+                        OIC_LOG(level, PL_TAG, "\t\t Values:");
+                        for (size_t i = 0; i < val->arr.dimensions[0]; i++)
                         {
-                            OCByteString* data = &val->arr.ocByteStrArray[i];
-                            OIC_LOG_V(level, PL_TAG, "%s binary string, it's len = %zu, bytes:", indent, data->len);
-                            OIC_LOG_BUFFER(level, PL_TAG, data->bytes, data->len);
+                            OIC_LOG_V(level, PL_TAG, "\t\t\t %zd", val->arr.iArray[i]);
                         }
-                            break;
-                        case OCREP_PROP_OBJECT:
+                        break;
+                    case OCREP_PROP_DOUBLE:
+                        OIC_LOG_V(level, PL_TAG, "\t\t%s(double array):%zu x %zu x %zu: ",
+                                val->name,
+                                val->arr.dimensions[0], val->arr.dimensions[1],
+                                val->arr.dimensions[2]);
+                        OIC_LOG(level, PL_TAG, "\t\t Values:");
+                        for (size_t i = 0; i < val->arr.dimensions[0]; i++)
+                        {
+                            OIC_LOG_V(level, PL_TAG, "\t\t\t %lf", val->arr.dArray[i]);
+                        }
+                        break;
+                    case OCREP_PROP_BOOL:
+                        OIC_LOG_V(level, PL_TAG, "\t\t%s(bool array):%zu x %zu x %zu: ",
+                                val->name,
+                                val->arr.dimensions[0], val->arr.dimensions[1],
+                                val->arr.dimensions[2]);
+                        OIC_LOG(level, PL_TAG, "\t\t Values:");
+                        for (size_t i = 0; i < val->arr.dimensions[0]; i++)
+                        {
+                            OIC_LOG_V(level, PL_TAG, "\t\t\t %d", val->arr.bArray[i]);
+                        }
+                        break;
+                    case OCREP_PROP_STRING:
+                        OIC_LOG_V(level, PL_TAG, "\t\t%s(string array):%zu x %zu x %zu: ",
+                                val->name,
+                                val->arr.dimensions[0], val->arr.dimensions[1],
+                                val->arr.dimensions[2]);
+                        OIC_LOG(level, PL_TAG, "\t\t Values:");
+                        for (size_t i = 0; i < val->arr.dimensions[0]; i++)
+                        {
+                            OIC_LOG_V(level, PL_TAG, "\t\t\t %s", val->arr.strArray[i]);
+                        }
+                        break;
+                    case OCREP_PROP_BYTE_STRING:
+                        OIC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%zu x %zu x %zu: ",
+                                val->name,
+                                val->arr.dimensions[0], val->arr.dimensions[1],
+                                val->arr.dimensions[2]);
+                        OIC_LOG(level, PL_TAG, "\t\t Values:");
+                        for (size_t i = 0; i < val->arr.dimensions[0]; i++)
+                        {
+                            OIC_LOG_BUFFER(level, PL_TAG, val->arr.ocByteStrArray[i].bytes, val->arr.ocByteStrArray[i].len);
+                        }
+                        break;
+                    case OCREP_PROP_OBJECT:
+                        OIC_LOG_V(level, PL_TAG, "\t\t%s(object array):%zu x %zu x %zu: ",
+                                val->name,
+                                val->arr.dimensions[0], val->arr.dimensions[1],
+                                val->arr.dimensions[2]);
+                        OIC_LOG(level, PL_TAG, "\t\t Values:");
+
+                        for (size_t i = 0; i < val->arr.dimensions[0]; i++)
+                        {
                             OCPayloadLogRep(level, val->arr.objArray[i]);
-                            break;
-                        case OCREP_PROP_ARRAY: //Seems as nested arrays doesn't not supported in API
-                        default:
-                            OIC_LOG_V(ERROR, PL_TAG, "%s <-- Unknown/unsupported array type!",
-                                    val->name);
-                            break;
-                    }
+                        }
+                        break;
+                    case OCREP_PROP_ARRAY: //Seems as nested arrays doesn't not supported in API
+                    default:
+                        OIC_LOG_V(ERROR, PL_TAG, "%s <-- Unknown/unsupported array type!",
+                                val->name);
+                        break;
                 }
                 break;
-            }
             default:
                 OIC_LOG_V(ERROR, PL_TAG, "%s <-- Unknown type!", val->name);
                 break;
@@ -225,28 +173,33 @@ INLINE_API void OCPayloadLogRepValues(LogLevel level, OCRepPayloadValue* val)
 
 INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 {
-    OCRepPayload* rep = payload;
+    OIC_LOG(level, (PL_TAG), "Payload Type: Representation");
     int i = 1;
-    while(rep)
+    for (OCRepPayload* rep = payload; rep; rep = rep->next, ++i)
     {
-        OCStringLL* strll =  rep->types;
-        while(strll)
+        OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
+        if (rep->uri)
         {
-            strll = strll->next;
+            OIC_LOG_V(level, PL_TAG, "\tURI:%s", rep->uri);
         }
-        strll =  rep->interfaces;
-        while(strll)
+        if (rep->types)
         {
-            strll = strll->next;
+            OIC_LOG(level, PL_TAG, "\tResource Types:");
+            for (OCStringLL* strll = rep->types; strll; strll = strll->next)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+            }
         }
-
-        // TODO Finish Logging: Values
-        OCRepPayloadValue* val = rep->values;
-
-        OCPayloadLogRepValues(level, val);
-
-        ++i;
-        rep = rep->next;
+        if (rep->interfaces)
+        {
+            OIC_LOG(level, PL_TAG, "\tInterfaces:");
+            for (OCStringLL* strll = rep->interfaces; strll; strll = strll->next)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+            }
+        }
+        OIC_LOG(level, PL_TAG, "\tValues:");
+        OCPayloadLogRepValues(level, rep->values);
     }
 }
 
@@ -403,7 +356,7 @@ INLINE_API void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
         if (securityData)
         {
             memcpy(securityData, payload->securityData, payloadSize);
-            assert(securityData[payloadSize - 1] != '\0');
+            // assert(securityData[payloadSize - 1] != '\0');
             securityData[payloadSize] = '\0';
             OIC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", securityData);
             OICFree(securityData);
@@ -411,30 +364,6 @@ INLINE_API void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
     }
 }
 
-#if defined(RD_CLIENT) || defined(RD_SERVER)
-INLINE_API void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
-{
-    if (!payload)
-    {
-        return;
-    }
-
-    if (payload->rdDiscovery)
-    {
-        OIC_LOG(level, PL_TAG, "RD Discovery");
-        OIC_LOG_V(level, PL_TAG, "  Device Name : %s", payload->rdDiscovery->n.deviceName);
-        OIC_LOG_V(level, PL_TAG, "  Device Identity : %s", payload->rdDiscovery->di.id);
-        OIC_LOG_V(level, PL_TAG, "  Bias: %d", payload->rdDiscovery->sel);
-    }
-    if (payload->rdPublish)
-    {
-        OIC_LOG(level, PL_TAG, "RD Publish");
-        OCResourceCollectionPayload *rdPublish = payload->rdPublish;
-        OCTagsLog(level, rdPublish->tags);
-        OCLinksLog(level, rdPublish->setLinks);
-    }
-}
-#endif
 INLINE_API void OCPayloadLog(LogLevel level, OCPayload* payload)
 {
     if(!payload)
@@ -462,11 +391,6 @@ INLINE_API void OCPayloadLog(LogLevel level, OCPayload* payload)
         case PAYLOAD_TYPE_SECURITY:
             OCPayloadLogSecurity(level, (OCSecurityPayload*)payload);
             break;
-#if defined(RD_CLIENT) || defined(RD_SERVER)
-        case PAYLOAD_TYPE_RD:
-            OCRDPayloadLog(level, (OCRDPayload*)payload);
-            break;
-#endif
         default:
             OIC_LOG_V(level, PL_TAG, "Unknown Payload Type: %d", payload->type);
             break;

@@ -133,7 +133,7 @@ def build_linux_unsecured_with_rd(flag, extra_option_str):
     print ("*********** Build for linux With Resource Directory *************")
     build_options = {
                         'RELEASE':flag,
-                        'WITH_RD':1,
+                        'RD_MODE':'all',
                     }
     call_scons(build_options, extra_option_str)
 
@@ -141,7 +141,7 @@ def build_linux_secured_with_rd(flag, extra_option_str):
     print ("*********** Build for linux With Resource Directory & Security ************")
     build_options = {
                         'RELEASE':flag,
-                        'WITH_RD':1,
+                        'RD_MODE':'all',
                         'SECURED':1,
                     }
     call_scons(build_options, extra_option_str)
@@ -348,7 +348,7 @@ def build_windows(flag, extra_option_str):
                         'BUILD_SAMPLE':'ON',
                         'LOGGING':'off',
                         'TEST':1,
-                        'WITH_RD':1,
+                        'RD_MODE':'all',
                     }
     call_scons(build_options, extra_option_str)
 
@@ -367,7 +367,7 @@ def build_msys(flag, extra_option_str):
                         'BUILD_SAMPLE':'ON',
                         'LOGGING':'off',
                         'TEST':1,
-                        'WITH_RD':1,
+                        'RD_MODE':'all',
                     }
     call_scons(build_options, extra_option_str)
 

@@ -21,6 +21,8 @@
 #include "OCPlatform.h"
 
 bool g_foundResource = true;
+static int count = 0;
+using namespace OC;
 
 void foundResource(std::shared_ptr< OC::OCResource > resource)
 {
@@ -29,18 +31,22 @@ void foundResource(std::shared_ptr< OC::OCResource > resource)
         std::cout << "Found resource response." << std::endl;
         if (resource)
         {
-            if (resource->uri() == "/a/light")
+            // if (resource->uri() == "/a/light")
             {
                 std::cout << "Found Resource at @ URI: " << resource->uri() << "\tHost Address: " <<
                           resource->host() << std::endl;
             }
+            count++;
         }
         else
         {
             std::cout << "Resource is invalid " << resource->uri() << std::endl;
         }
-        g_foundResource = false;
-        exit(0);
+        if (count == 3)
+        {
+            g_foundResource = false;
+            exit(0);
+        }
     }
     catch (std::exception &ex)
     {
@@ -66,6 +72,8 @@ int main()
                 sendRequest = false;
                 std::cout << "Finding Resource light" << std::endl;
                 OC::OCPlatform::findResource("",  "/oic/res?rt=core.light", CT_DEFAULT, &foundResource);
+                OC::OCPlatform::findResource("",  "/oic/res?if=oic.if.baseline", CT_DEFAULT, &foundResource);
+                OC::OCPlatform::findResource("",  "/oic/res", CT_DEFAULT, &foundResource);
             }
         }
         catch (OC::OCException &ex)

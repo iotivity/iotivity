@@ -280,9 +280,8 @@ int main(int argc, char* argv[])
     }
     catch (OCException& e)
     {
-        oclog() << "Exception in main: "<< e.what();
+        cerr << "Exception in main: "<< e.what();
     }
 
     return 0;
 }
-

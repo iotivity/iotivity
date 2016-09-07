@@ -48,7 +48,7 @@ int main()
         return 0;
     }
 
-    printf("OCRDStart successfully...\n");
+    printf("RD created successfully...\n");
 
     signal(SIGINT, handleSigInt);
     while (!g_quitFlag)

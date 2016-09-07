@@ -70,9 +70,6 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	examples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
-if examples_env.get('LOGGING'):
-	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
 if examples_env.get('WITH_CLOUD'):
 	examples_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
 
@@ -81,9 +78,6 @@ if target_os in ['msys_nt', 'windows']:
 
 if examples_env.get('LOGGING'):
 	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-if 'CLIENT' in examples_env.get('RD_MODE'):
-	examples_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
 
 def make_single_file_cpp_program(program_name):
 	return examples_env.Program(program_name, program_name + ".cpp")
@@ -110,11 +104,6 @@ if target_os not in ['windows', 'msys_nt']:
 		'groupclient',
 		'lightserver',
 		'threadingsample'
-		]
-
-if 'CLIENT' in examples_env.get('RD_MODE'):
-	example_names += [
-		'rdclient'
 		]
 
 examples = map(make_single_file_cpp_program, example_names)

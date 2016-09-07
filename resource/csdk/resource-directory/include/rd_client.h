@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2016 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -18,17 +18,36 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef OC_RESOURCE_DIRECTORY_H_
-#define OC_RESOURCE_DIRECTORY_H_
+#ifndef _RESOURCE_DIRECTORY_CLIENT_H_
+#define _RESOURCE_DIRECTORY_CLIENT_H_
 
-#include "octypes.h"
-#include "logger.h"
+// Iotivity Base CAPI
+#include "ocstack.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-#ifdef RD_CLIENT
+#define OIC_RD_PUBLISH_TTL 86400
+
+#define OIC_RD_DEFAULT_RESOURCE 2
+
+#define DEFAULT_MESSAGE_TYPE "application/json"
+
+/**
+ * Discover Local RD across the network.
+ *
+ * @param connectivityType Type of connectivity indicating the interface.
+ * @param cbBiasFactor Asynchronous callback function that is invoked by the stack when
+ *                     response is received. The callback is generated for each response
+ *                     received.
+ * @param qos Quality of service.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCRDDiscover(OCConnectivityType connectivityType, OCCallbackData *cbBiasFactor,
+                           OCQualityOfService qos);
+
 /**
  * Publish RD resource to Resource Directory.
  *
@@ -104,9 +123,9 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
                                      OCConnectivityType connectivityType,
                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
                                      OCCallbackData *cbData, OCQualityOfService qos);
-#endif
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif /* OC_RESOURCE_DIRECTORY_H_ */
+#endif //_RESOURCE_DIRECTORY_CLIENT_H_

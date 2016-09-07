@@ -95,7 +95,7 @@ liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 liboctbstack_env.PrependUnique(LIBS = ['ocsrm', 'coap'])
 
 if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
-    liboctbstack_env.Append( RPATH = liboctbstack_env.Literal('\\$$ORIGIN'))
+	liboctbstack_env.Append( RPATH = liboctbstack_env.Literal('\\$$ORIGIN'))
 
 if env.get('SECURED') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
@@ -146,7 +146,7 @@ if target_os in ['darwin', 'ios']:
 if target_os not in ['arduino', 'windows']:
 	liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 if target_os == 'android':
-    liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,liboctbstack.so'])
+	liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,liboctbstack.so'])
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -179,12 +179,14 @@ liboctbstack_src = [
 	]
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	liboctbstack_src.append(OCTBSTACK_SRC + 'rdpayload.c')
-	liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
 	if 'CLIENT' in rd_mode:
 		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
 	if 'SERVER' in rd_mode:
 		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+	if target_os in ['linux', 'android']:
+		liboctbstack_env.Prepend(LIBS = ['resource_directory'])
+		liboctbstack_env.PrependUnique(CPPPATH = [env.get('BUILD_DIR') + 'resource/csdk/resource-directory/include'])
+		liboctbstack_env.PrependUnique(LIBPATH = [env.get('BUILD_DIR') + 'resource/csdk/resource-directory/include'])
 
 if with_tcp == True:
 	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')

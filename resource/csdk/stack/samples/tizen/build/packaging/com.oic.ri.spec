@@ -70,7 +70,6 @@ cp resource/c_common/platform_features.h %{DEST_INC_DIR}
 cp resource/c_common/iotivity_config.h %{DEST_INC_DIR}
 cp resource/c_common/*/include/*.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/payload_logging.h %{DEST_INC_DIR}
-cp resource/csdk/stack/include/rdpayload.h %{DEST_INC_DIR}
 cp extlibs/tinycbor/tinycbor/src/cbor.h %{DEST_INC_DIR}
 cp extlibs/cjson/cJSON.h %{DEST_INC_DIR}
 cp -rf %{ROOTDIR}/com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
@@ -82,4 +81,3 @@ cp -rf %{ROOTDIR}/com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
 %{_libdir}/lib*.a*
 %{_includedir}/OICHeaders/*
 %{_libdir}/pkgconfig/*.pc
-

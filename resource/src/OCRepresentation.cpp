@@ -60,11 +60,6 @@ namespace OC
             case PAYLOAD_TYPE_PLATFORM:
                 setPayload(reinterpret_cast<const OCPlatformPayload*>(rep));
                 break;
-#ifdef RD_CLIENT
-            case PAYLOAD_TYPE_RD:
-                setPayload(reinterpret_cast<const OCRDPayload*>(rep));
-                break;
-#endif
             default:
                 throw OC::OCException("Invalid Payload type in setPayload");
                 break;
@@ -165,29 +160,7 @@ namespace OC
             this->addRepresentation(cur);
         }
     }
-#ifdef RD_CLIENT
-    void MessageContainer::setPayload(const OCRDPayload* payload)
-    {
-        OCRepresentation rep;
-        rep[OC_RSRVD_DEVICE_ID] = (payload->rdPublish->tags->di.id) ?
-            std::string(reinterpret_cast<const char*>(payload->rdPublish->tags->di.id)) :
-            std::string();
-        rep[OC_RSRVD_DEVICE_NAME] = (payload->rdPublish->tags->n.deviceName) ?
-            std::string(payload->rdPublish->tags->n.deviceName) :
-            std::string();
-        this->addRepresentation(rep);
 
-        const OCLinksPayload* pl = payload->rdPublish->setLinks;
-        while (pl)
-        {
-            OCRepresentation cur;
-            cur.setPayload(pl);
-
-            pl = pl->next;
-            this->addRepresentation(cur);
-        }
-    }
-#endif
     OCRepPayload* MessageContainer::getPayload() const
     {
         OCRepPayload* root = nullptr;
@@ -726,43 +699,7 @@ namespace OC
             val = val->next;
         }
     }
-#ifdef RD_CLIENT
-    void OCRepresentation::setPayload(const OCLinksPayload* pl)
-    {
-        if (pl->href)
-        {
-            setValue<std::string>(OC_RSRVD_HREF, pl->href);
-        }
-        if (pl->rel)
-        {
-            setValue<std::string>(OC_RSRVD_REL, pl->rel);
-        }
-        OCStringLL* ll = pl->rt;
-        while (ll)
-        {
-            addResourceType(ll->value);
-            ll = ll->next;
-        }
-        ll = pl->itf;
-        while (ll)
-        {
-            addResourceInterface(ll->value);
-            ll = ll->next;
-        }
 
-        setValue<int>(OC_RSRVD_POLICY, pl->p);
-        setValue<int>(OC_RSRVD_INS, pl->ins);
-        setValue<int>(OC_RSRVD_TTL, pl->ttl);
-        if (pl->title)
-        {
-            setValue<std::string>(OC_RSRVD_TITLE, pl->title);
-        }
-        if (pl->anchor)
-        {
-            setValue<std::string>(OC_RSRVD_URI, pl->anchor);
-        }
-    }
-#endif
     void OCRepresentation::addChild(const OCRepresentation& rep)
     {
         m_children.push_back(rep);
