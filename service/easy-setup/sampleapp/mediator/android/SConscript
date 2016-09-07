@@ -75,4 +75,4 @@ jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildEasysetupApp=jdk_env.Gradle(target="EasySetup/app/apk", 
     source="EasySetup/app/src/main/java/org/iotivity/service/easysetup/EasysetupActivity.java")
 
-Depends(cmdBuildEasysetupApp, env.get('baseAAR'))
+Depends(cmdBuildEasysetupApp, env.get('easysetupAAR'))
