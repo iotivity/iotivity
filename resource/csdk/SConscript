@@ -69,7 +69,7 @@ if 'BROKER' in with_mq:
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
 
 if target_os not in ['arduino', 'windows']:
-	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
+	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX', '_GNU_SOURCE'])
 	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
 if liboctbstack_env.get('ROUTING') == 'GW':
