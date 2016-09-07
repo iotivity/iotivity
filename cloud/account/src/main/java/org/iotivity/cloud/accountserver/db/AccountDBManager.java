@@ -130,6 +130,11 @@ public class AccountDBManager {
         mongoDB.createIndex(Constants.CERTIFICATE_TABLE, keys);
         keyField.put(Constants.CERTIFICATE_TABLE, keys);
 
+        keys = new ArrayList<>();
+        keys.add(Constants.REQ_THIS_UPDATE);
+        mongoDB.createIndex(Constants.CRL_TABLE, keys);
+        keyField.put(Constants.CRL_TABLE, keys);
+
     }
 
     public static AccountDBManager getInstance() {
@@ -214,7 +219,7 @@ public class AccountDBManager {
 
         if (!_updateRecord(tableName, replace))
             throw new InternalServerErrorException(
-                    "Database record update failed");
+                    "Database record updateX509CRL failed");
 
     }
 

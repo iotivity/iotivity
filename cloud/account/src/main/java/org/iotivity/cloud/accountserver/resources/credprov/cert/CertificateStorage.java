@@ -21,84 +21,57 @@
  */
 package org.iotivity.cloud.accountserver.resources.credprov.cert;
 
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.cert.CertIOException;
+import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateBuilder;
-import org.iotivity.cloud.accountserver.x509.cert.CertificatePrivateKeyPair;
-import org.iotivity.cloud.util.Log;
+import org.iotivity.cloud.accountserver.x509.cert.CertificateExtension;
 
-import java.io.*;
-import java.math.BigInteger;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.text.MessageFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Properties;
 
-public class CertificateStorage {
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.*;
 
-    public static final Properties PROPERTIES = new Properties();
-
-    static {
-        try {
-            PROPERTIES.load(new FileInputStream(Constants.PROPERTIES_FILE_NAME));
-        } catch (IOException e) {
-            Log.e(e.getMessage());
-        }
-    }
-
-    public static final String BC = PROPERTIES.getProperty("securityProvider");
-
-    private static final String PASSWORD = PROPERTIES.getProperty("password");
-
-    public static final String DEVICE_OU = PROPERTIES.getProperty("deviceOU");
-
-    public static final String DEVICE_O = PROPERTIES.getProperty("deviceO");
-
-    public static final String DEVICE_C = PROPERTIES.getProperty("deviceC");
-
-    public static final String KEYSTORE_TYPE = PROPERTIES.getProperty("keystoreType");
-
-    public static final String CA_ALIAS = PROPERTIES.getProperty("caAlias");
-
-    public static final String SUBJECT_NAME = PROPERTIES.getProperty("subjectName");
-
-    private static final File KEYSTORE_FILE = new File(MessageFormat.format(PROPERTIES.getProperty("keyStoreLocation"), File.separator));
-
-    private static BigInteger SERIAL_NUMBER = new BigInteger(PROPERTIES.getProperty("serialNumber"));
-
-    private static KeyStore keyStore;
+public final class CertificateStorage {
 
     /**
-     * Insert BouncyCastleProvider into 0 position in security provider list.
-     * Init KeyStore, Generate CA certificate and save it to keyStore.
+     * This attribute is used to get password to kestore, that stores CA certificate info.
+     * Private key and certificate.
      */
-    static {
-        if (!KEYSTORE_FILE.exists()) {
-            try {
-                Files.createDirectories(Paths.get("keystore"));
-            } catch (IOException e) {
-                Log.e(e.getMessage());
-            }
-        }
-        CertificateStorage.init();
-        CertificateStorage.load();
-        CertificatePrivateKeyPair certificatePrivateKeyPair =
-                CertificateStorage.generateCACertificate(DEVICE_C, DEVICE_O, SUBJECT_NAME, DEVICE_OU);
-        CertificateStorage.saveCertificatePrivateKey(certificatePrivateKeyPair);
+    private static final String PASSWORD = PROPERTIES.getProperty("password");
+
+    /**
+     * Keystore object for save, get data from keystore.
+     */
+    private static KeyStore keyStore;
+
+    public static PrivateKey ROOT_PRIVATE_KEY;
+
+    public static X509Certificate ROOT_CERTIFICATE;
+
+    private CertificateStorage() {
+        throw new AssertionError();
     }
 
     /**
      * Init KeyStore. If it does not exists, create it and push to KEYSTORE_FILE.
      */
-    private static void init() {
+    static void init() throws GeneralSecurityException, IOException, OperatorCreationException {
+        Files.createDirectories(Paths.get("keystore"));
         keyStore = load(null, null);
         store();
+        CertificateStorage.generateCACertificate();
+        CertificateStorage.saveCertificatePrivateKey();
     }
 
     /**
@@ -106,12 +79,9 @@ public class CertificateStorage {
      *
      * @return KeyStore instance.
      */
-    public static void load() {
-        try {
-            keyStore = load(new FileInputStream(KEYSTORE_FILE), PASSWORD.toCharArray());
-        } catch (FileNotFoundException e) {
-            Log.e(e.getMessage());
-        }
+    public static void load() throws GeneralSecurityException, IOException {
+        keyStore = load(new FileInputStream(KEYSTORE_FILE), PASSWORD.toCharArray());
+        initRoot();
     }
 
     /**
@@ -121,14 +91,9 @@ public class CertificateStorage {
      * @param password specified password for opening keystore.
      * @return KeyStore instance.
      */
-    private static KeyStore load(InputStream is, char[] password) {
-        KeyStore keyStore = null;
-        try {
-            keyStore = KeyStore.getInstance(KEYSTORE_TYPE, BouncyCastleProvider.PROVIDER_NAME);
-            keyStore.load(is, password);
-        } catch (GeneralSecurityException | IOException e) {
-            Log.e(e.getMessage());
-        }
+    private static KeyStore load(InputStream is, char[] password) throws IOException, GeneralSecurityException {
+        KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE, BouncyCastleProvider.PROVIDER_NAME);
+        keyStore.load(is, password);
         return keyStore;
     }
 
@@ -136,137 +101,51 @@ public class CertificateStorage {
     /**
      * Stores keyStore to default file KEYSTORE_FILE with default password.
      */
-    public static void store() {
-        try {
-            store(keyStore, new FileOutputStream(KEYSTORE_FILE), PASSWORD.toCharArray());
-        } catch (IOException e) {
-            Log.e(e.getMessage());
-        }
+    static void store() throws IOException, GeneralSecurityException {
+        store(keyStore, new FileOutputStream(KEYSTORE_FILE), PASSWORD.toCharArray());
     }
 
     /**
-     * Stores KeyStore to s
+     * Stores KeyStore to file outputstream with specifie password.
      *
      * @param keyStore
      */
-    private static void store(KeyStore keyStore, FileOutputStream out, char[] password) {
-        try {
-            keyStore.store(out, password);
-            out.close();
-        } catch (GeneralSecurityException | IOException e) {
-            Log.e(e.getMessage());
-        }
+    private static void store(KeyStore keyStore, FileOutputStream out, char[] password) throws GeneralSecurityException,
+            IOException {
+        keyStore.store(out, password);
+        out.close();
     }
 
     /**
      * Generates X509Certificate  with PublicKey and PrivateKey
      *
-     * @param country          specified country name
-     * @param organization     specified organization name
-     * @param subjectName      specified subject name.
-     * @param organizationUnit specified organization unit.
-     * @return certificate and private key as fields of CertificatePrivateKeyPair instance.
+     * @return certificate and private key
      */
-    private static CertificatePrivateKeyPair generateCACertificate(String country, String organization,
-                                                                   String subjectName, String organizationUnit) {
-        CertificateBuilder rootBuilder = new CertificateBuilder(subjectName, getNotBeforeDate(),
-                getNotAfterDate(), getNextSerialNumber());
-        rootBuilder.setSubjectC(country);
-        rootBuilder.setSubjectO(organization);
-        rootBuilder.setSubjectOU(organizationUnit);
-        CertificatePrivateKeyPair certificatePrivateKeyPair = null;
-        try {
-            certificatePrivateKeyPair = rootBuilder.build();
-        } catch (GeneralSecurityException | OperatorCreationException | CertIOException e) {
-            Log.e(e.getMessage());
+    private static void generateCACertificate() throws GeneralSecurityException,
+            OperatorCreationException, CertIOException {
+        if (ROOT_PRIVATE_KEY == null) {
+            KeyPairGenerator g = KeyPairGenerator.getInstance(KEY_GENERATOR_ALGORITHM, SECURITY_PROVIDER);
+            g.initialize(ECNamedCurveTable.getParameterSpec(CURVE), new SecureRandom());
+            KeyPair pair = g.generateKeyPair();
+            ROOT_PRIVATE_KEY = pair.getPrivate();
+            ROOT_CERTIFICATE = new CertificateBuilder(CA_ISSUER, pair.getPublic(),
+                    new CertificateExtension(Extension.basicConstraints, false,
+                            new BasicConstraints(true))).build();
         }
-        return certificatePrivateKeyPair;
     }
 
     /**
      * Stores certificate and private key to keystore.
-     *
-     * @param certificatePrivateKeyPair specified certificate private key pair.
      */
-    public static void saveCertificatePrivateKey(CertificatePrivateKeyPair certificatePrivateKeyPair) {
-        try {
-            X509Certificate certificate = certificatePrivateKeyPair.getX509Certificate();
-            keyStore.setCertificateEntry(CA_ALIAS, certificate);
-            keyStore.setKeyEntry(CA_ALIAS, certificatePrivateKeyPair.getPrivateKey(), PASSWORD.toCharArray(),
-                    new java.security.cert.Certificate[]{certificate});
-            store();
-        } catch (GeneralSecurityException e) {
-            Log.e(e.getMessage());
-        }
+    private static void saveCertificatePrivateKey() throws GeneralSecurityException, IOException {
+        keyStore.setCertificateEntry(CA_ALIAS, ROOT_CERTIFICATE);
+        keyStore.setKeyEntry(CA_ALIAS, ROOT_PRIVATE_KEY, PASSWORD.toCharArray(),
+                new Certificate[]{ROOT_CERTIFICATE});
+        store();
     }
 
-    public static void saveCertificate(java.security.cert.Certificate certificate, String subjectName) {
-        try {
-            keyStore.setCertificateEntry(subjectName, certificate);
-            store();
-        } catch (KeyStoreException e) {
-            Log.e(e.getMessage());
-        }
-    }
-
-
-    /**
-     * Returns next serial number.
-     */
-    public static BigInteger getNextSerialNumber() {
-        SERIAL_NUMBER = SERIAL_NUMBER.add(BigInteger.ONE);
-        PROPERTIES.setProperty("serialNumber", SERIAL_NUMBER.toString());
-        try {
-            PROPERTIES.store(new FileOutputStream(Constants.PROPERTIES_FILE_NAME), "New Serial number");
-        } catch (IOException e) {
-            Log.e(e.getMessage());
-        }
-        return SERIAL_NUMBER;
-    }
-
-    /**
-     * Returns date not before.
-     */
-    public static Date getNotBeforeDate() {
-        return new Date(System.currentTimeMillis());
-    }
-
-    /**
-     * Returns date not after.
-     */
-    public static Date getNotAfterDate() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) +
-                Integer.parseInt(PROPERTIES.getProperty("notAfterInterval")));
-        return calendar.getTime();
-    }
-
-    /**
-     * Returns CertificatePrivateKeyPair for signing user personal certificates.
-     */
-    public static CertificatePrivateKeyPair getRootCertificatePrivateKeyPair() {
-
-        X509Certificate certificate = null;
-        PrivateKey privateKey = null;
-        try {
-            certificate = (X509Certificate) keyStore.getCertificate(CA_ALIAS);
-            privateKey = (PrivateKey) keyStore.getKey(CA_ALIAS, PASSWORD.toCharArray());
-        } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
-            Log.e(e.getMessage());
-        }
-        return new CertificatePrivateKeyPair(certificate, privateKey);
-    }
-
-    /**
-     * Returns CertificatePrivateKeyPair for signing user personal certificates.
-     */
-    public static X509Certificate getCertificate(String alias) {
-        X509Certificate certificate = null;
-        try {
-            certificate = (X509Certificate) keyStore.getCertificate(alias);
-        } catch (KeyStoreException e) {
-            Log.e(e.getMessage());
-        }
-        return certificate;
+    private static void initRoot() throws GeneralSecurityException {
+        ROOT_PRIVATE_KEY = (PrivateKey) keyStore.getKey(CA_ALIAS, PASSWORD.toCharArray());
+        ROOT_CERTIFICATE = (X509Certificate) keyStore.getCertificate(CA_ALIAS);
     }
 }

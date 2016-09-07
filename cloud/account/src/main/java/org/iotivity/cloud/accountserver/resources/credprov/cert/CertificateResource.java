@@ -21,15 +21,21 @@
  */
 package org.iotivity.cloud.accountserver.resources.credprov.cert;
 
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.util.encoders.Base64;
 import org.iotivity.cloud.accountserver.Constants;
+import org.iotivity.cloud.accountserver.db.CertificateTable;
+import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlManager;
 import org.iotivity.cloud.accountserver.x509.cert.CSRParser;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateBuilder;
-import org.iotivity.cloud.accountserver.x509.cert.CertificatePrivateKeyPair;
-import org.iotivity.cloud.accountserver.x509.crl.CrlIssuer;
+import org.iotivity.cloud.accountserver.x509.cert.CertificateExtension;
+import org.iotivity.cloud.accountserver.x509.cert.Utility;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -42,31 +48,56 @@ import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
 import java.security.Security;
-import java.security.cert.Certificate;
+import java.security.cert.CRLException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.iotivity.cloud.accountserver.Constants.*;
-import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage.*;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.BASE_64;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.KEYSTORE_FILE;
 
-
+/**
+ * This class provides access for certificate resource.
+ * Devices can send CSR requests in CBOR format to this resource
+ * and get responses in the same format. Response contains device identifier,
+ * personal certificate, issued by CA certificate and certificate chain.
+ */
 public class CertificateResource extends Resource {
 
+    /**
+     * This constant object is used for parsing cbor payload to Map object and to
+     * encoding map object to cbor format.
+     */
     private static final Cbor<Map<String, Object>> MAP_CBOR = new Cbor<>();
 
+    /**
+     * Constructs certificate resourcewith specified prefixes
+     */
     public CertificateResource() {
         super(Arrays.asList(PREFIX_OIC, CREDPROV_URI, CERT_URI));
     }
 
+    /**
+     * Insert BouncyCastleProvider into 0 position in security provider list.
+     * Init KeyStore, Generate CA certificate and save it to keyStore.
+     */
     static {
         Security.insertProviderAt(new BouncyCastleProvider(), 0);
+        try {
+            if (!KEYSTORE_FILE.exists()) {
+                CertificateStorage.init();
+            } else {
+                CertificateStorage.load();
+            }
+        } catch (GeneralSecurityException | IOException | OperatorCreationException e) {
+            Log.e(e.getMessage());
+        }
     }
 
     @Override
@@ -83,49 +114,62 @@ public class CertificateResource extends Resource {
         srcDevice.sendResponse(response);
     }
 
+    /**
+     * Handles post requests to this resource
+     * @param request request with payload information.
+     * @throws ServerException
+     */
     private IResponse handlePostRequest(IRequest request)
             throws ServerException {
         Map<String, Object> payloadData = MAP_CBOR
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
         IResponse response = MessageBuilder.createResponse(request, ResponseStatus.BAD_REQUEST);
-        if (payloadData.containsKey(CSR_ENCODING)) {
-            String encoding = (String) payloadData.get(CSR_ENCODING);
-            byte[] data = (byte[]) payloadData.get(CSR_DATA);
-            if (data != null) {
-                if (encoding.equals(CertificateConstants.BASE_64)) {
-                    data = Base64.decode(data);
+        Object csr = payloadData.get(Constants.REQ_CSR);
+        if (csr != null && csr instanceof Map) {
+            Object encoding =((Map<String, Object>)csr).get(ENCODING);
+            Object data = ((Map<String, Object>)csr).get(DATA);
+            if (encoding != null && encoding instanceof String && data != null && data instanceof byte[]) {
+                byte[] csrData = (byte[]) data;
+                if (encoding.equals(BASE_64)) {
+                    csrData = Base64.decode(csrData);
                 }
                 try {
-                    CSRParser parser = new CSRParser(data);
+                    CSRParser parser = new CSRParser(csrData);
                     String commonName = parser.getCommonName();
-                    String[] split = commonName.split(":");
+                    String pattern = "^uuid:(.*)$";
+                    Pattern r = Pattern.compile(pattern);
+                    Matcher m = r.matcher(commonName);
                     String deviceId = (String) payloadData.get(RESP_DEVICE_ID);
-                    if (split[0].equals(KEYFIELD_UUID) && split[1].equals(deviceId) && parser.verify()) {
-                        CertificatePrivateKeyPair privateKeyPair = getRootCertificatePrivateKeyPair();
-                        X509Certificate x509Certificate = getCertificate(deviceId);
-                        CertificateManager certificateManager = new CertificateManager();
-                        BigInteger serialNumber = getNextSerialNumber();
-                        if (x509Certificate != null) {
-                            PrivateKey privateKey = privateKeyPair.getPrivateKey();
-                            CrlIssuer.revokeCertificate(x509Certificate.getSerialNumber(), privateKey);
-                            certificateManager.updateCertificate(x509Certificate.getSerialNumber().toString(), true);
+                    if (m.find() && m.group(1).equals(deviceId) && parser.isSignatureValid()) {
+                        CertificateManager certificateManager = new CertificateManager(deviceId);
+                        CertificateTable certificateTable = certificateManager.getCertificate();
+                        if (certificateTable != null) {
+                            try {
+                                CrlManager.CRL_MANAGER.revoke(certificateTable.getSerialNumber());
+                            } catch (CRLException | OperatorCreationException e) {
+                                Log.e(e.getMessage() + e.getClass());
+                            }
+                            certificateManager.update(certificateTable, true);
                         }
-                        Date notBefore = getNotBeforeDate();
-                        Date notAfter = getNotAfterDate();
-                        CertificateBuilder certBuilder = new CertificateBuilder(
-                                commonName, parser.getPublicKey(),
-                                notBefore, notAfter,
-                                serialNumber, privateKeyPair);
-                        checkSubjectName(parser, certBuilder);
+                        CertificateExtension extension = new CertificateExtension(Extension.subjectAlternativeName,
+                                false, new DERSequence(new ASN1Encodable[]
+                                {new GeneralName(GeneralName.dNSName, Constants.KEYFIELD_USERID + ":" +
+                                        Utility.getUserID(deviceId))}));
+                        CertificateBuilder certBuilder = new CertificateBuilder(parser.getSubject(),
+                                parser.getPublicKey(), extension );
                         try {
-                            certificateManager.putDeviceId((String) payloadData.get(RESP_DEVICE_ID));
-                            String uid = certificateManager.getUserID(deviceId);
-                            certBuilder.setSubjectAltName(Constants.KEYFIELD_USERID + ":" + uid);
-                            Certificate certificate = certBuilder.build().getX509Certificate();
-                            CertificateStorage.saveCertificate(certificate, deviceId);
-                            certificateManager.putCert(encoding, certificate.getEncoded());
-                            certificateManager.putCACert(encoding, privateKeyPair.getX509Certificate().getEncoded());
-                            certificateManager.createCertificate(serialNumber.toString(), notBefore, notAfter, deviceId, uid);
+                            X509Certificate personal = certBuilder.build();
+                            byte[] encodedCert = personal.getEncoded();
+                            byte[] encodedCa = CertificateStorage.ROOT_CERTIFICATE.getEncoded();
+                            if (encoding.equals(CertificateConstants.BASE_64)) {
+                                encodedCert = Base64.encode(encodedCert);
+                                encodedCa =  Base64.encode(encodedCa);
+                            }
+                            certificateManager.put(Constants.RESP_DEVICE_ID, deviceId);
+                            certificateManager.put(Constants.CERT, new CSR(encoding.toString(), encodedCert));
+                            certificateManager.put(Constants.CERT_CHAIN,  new CSR(encoding.toString(), encodedCa));
+                            certificateManager.save(personal.getSerialNumber(), personal.getNotBefore(),
+                                    personal.getNotAfter());
                             response = MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                                     ContentFormat.APPLICATION_CBOR,
                                     MAP_CBOR.encodingPayloadToCbor(certificateManager.getPayLoad()));
@@ -137,23 +181,30 @@ public class CertificateResource extends Resource {
                     Log.e(e.getMessage());
                 }
             }
-
         }
         return response;
     }
 
-    private void checkSubjectName(CSRParser parser, CertificateBuilder certBuilder) {
-        String country = parser.getCountry();
-        if (country != null) {
-            certBuilder.setSubjectC(country);
+    /**
+     * This class is used for response
+     */
+    private static final class CSR {
+
+        private final String encoding;
+
+        private final byte[] data;
+
+        CSR(String encoding, byte[] data) {
+            this.encoding = encoding;
+            this.data = data;
         }
-        String organization = parser.getOrganizational();
-        if (organization != null) {
-            certBuilder.setSubjectO(organization);
+
+        public String getEncoding() {
+            return encoding;
         }
-        String organizationUnit = parser.getOrganizationalUnit();
-        if (organizationUnit != null) {
-            certBuilder.setSubjectOU(organizationUnit);
+
+        public byte[] getData() {
+            return data;
         }
     }
 }

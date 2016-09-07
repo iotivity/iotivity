@@ -23,10 +23,15 @@ package org.iotivity.cloud.accountserver.resources.account.credprov.cert;
 
 import org.bouncycastle.util.encoders.Base64;
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.resources.account.AccountResource;
+import org.iotivity.cloud.accountserver.db.AccountDBManager;
+import org.iotivity.cloud.accountserver.db.TokenTable;
+import org.iotivity.cloud.accountserver.resources.account.credprov.crl.CrlResourceTest;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateResource;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
+import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlResource;
+import org.iotivity.cloud.accountserver.util.TypeCastingManager;
+import org.iotivity.cloud.accountserver.x509.cert.Utility;
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -37,7 +42,9 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -46,28 +53,82 @@ import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.security.cert.*;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.*;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 public class CertificateResourceTest {
 
-    private static final String COMMON_NAME = "OU=OCF Root CA, O=Samsung, C=US, CN=uuid:B371C481-38E6-4D47-8320-7688D8A5B58C";
+    private static final String COMMON_NAME = "OU=OCF Device CA, O=Samsung, C=KR, CN=uuid:B371C481-38E6-4D47-8320-7688D8A5B58C";
+
     private static final String CERTIFICATE_URI = OICConstants.CREDPROV_CERT_FULL_URI;
+
     private static final String DEVICE_ID = "B371C481-38E6-4D47-8320-7688D8A5B58C";
+
     private CoapDevice mMockDevice = mock(CoapDevice.class);
+
     private Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
+
     private IResponse mResponse = null;
+
     private CountDownLatch mLatch = new CountDownLatch(
             1);
-    private CertificateResource certificateResource = new CertificateResource();
+
+    private static CertificateResource certificateResource = new CertificateResource();
+
     private byte[] csr;
+
+    private static TypeCastingManager<TokenTable> castingManager = new TypeCastingManager<>();
+
+    static void createToken() {
+        TokenTable certificateTable = new TokenTable();
+        certificateTable.setDid(DEVICE_ID);
+        certificateTable.setUuid("uuid:" + DEVICE_ID);
+        AccountDBManager.getInstance().insertRecord(Constants.TOKEN_TABLE,
+                castingManager.convertObjectToMap(certificateTable));
+    }
+
+    @AfterClass
+    public static void after() {
+        KEYSTORE_FILE.delete();
+    }
+
+    @BeforeClass
+    public static void setUpBefore() {
+        createToken();
+    }
+
+    /**
+     * DERSequence othernameSequence = new DERSequence(new ASN1Encodable[]{
+     * new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERTaggedObject(true, 0, new DERUTF8String(subjectAltName))});
+     * GeneralName othernameGN = new GeneralName(GeneralName.otherName, othernameSequence);
+     * ASN1Encodable[] subjectAlternativeNames = new ASN1Encodable[]
+     * {
+     * othernameGN
+     * <p>
+     * <p>
+     * };
+     * DERSequence subjectAlternativeNamesExtension = new DERSequence(othernameGN);
+     * return buildOne(Extension.subjectAlternativeName, true, subjectAlternativeNamesExtension, issuerNameBld.build());
+     */
+    @Test
+    public void testLoad() {
+        try {
+            Method m = CertificateStorage.class.getDeclaredMethod("load");
+            m.setAccessible(true);
+            m.invoke(null);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -80,11 +141,6 @@ public class CertificateResourceTest {
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapResponse resp = (CoapResponse) args[0];
-                System.out
-                        .println("\t----payload : " + resp.getPayloadString());
-
-                System.out
-                        .println("\t----responsestatus : " + resp.getStatus());
                 mResponse = resp;
 
 
@@ -94,6 +150,59 @@ public class CertificateResourceTest {
         }).when(mMockDevice).sendResponse(Mockito.anyObject());
     }
 
+    @Test(expected = AssertionError.class)
+    public void testErrorConstruction() {
+        Constructor<CertificateStorage> constructor;
+        try {
+            constructor = CertificateStorage.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            constructor.newInstance();
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            throw new AssertionError();
+        }
+
+    }
+
+    @Test(expected = AssertionError.class)
+    public void testErrorConstructionUtility() {
+        Constructor<Utility> constructor;
+        try {
+            constructor = Utility.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            constructor.newInstance();
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            throw new AssertionError();
+        }
+    }
+
+    @Test(expected = AssertionError.class)
+    public void testErrorConstructionCertificateConstants() {
+        Constructor<CertificateConstants> constructor;
+        try {
+            constructor = CertificateConstants.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            constructor.newInstance();
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            throw new AssertionError();
+        }
+
+    }
+
+    /**
+     * DERUTF8String derDomainName = new DERUTF8String("hello.world");
+     * DERTaggedObject derTaggedDomainName = new DERTaggedObject(0, derDomainName);
+     * DLSequence otherName = new DLSequence(new ASN1Encodable[]{new ASN1ObjectIdentifier("1.3.6.1.5.5.7.9.3"), derTaggedDomainName});
+     * GeneralNames generalNames = new GeneralNames(new GeneralName(GeneralName.otherName, otherName));
+     *
+     * @throws Exception
+     */
+
     @Test
     public void testCSRIssueDER() throws Exception {
         getTestMethodName();
@@ -102,22 +211,31 @@ public class CertificateResourceTest {
         Map<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
         assertTrue(hashmapCheck(mResponse, Constants.REQ_DEVICE_ID));
-        assertTrue(hashmapCheck(mResponse, Constants.CERT_ENCODING));
-        assertTrue(hashmapCheck(mResponse, Constants.CERT_DATA));
-        assertTrue(hashmapCheck(mResponse, Constants.CERTCHAIN_ENCODING));
-        assertTrue(hashmapCheck(mResponse, Constants.CERTCHAIN_DATA));
-
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        InputStream in = new ByteArrayInputStream((byte[]) payloadData.get(Constants.CERT_DATA));
-        X509Certificate cert = (X509Certificate) certFactory.generateCertificate(in);
-
-
-        assertEquals(COMMON_NAME, cert.getSubjectDN().getName());
-        assertEquals(cert.getPublicKey(), GenerateCSR.getPublicKey());
-        assertEquals("CN="+CertificateStorage.SUBJECT_NAME, cert.getIssuerDN().getName());
-        System.out.println(cert);
+        assertTrue(hashmapCheck(mResponse, Constants.CERT));
+        assertTrue(hashmapCheck(mResponse, Constants.CERT_CHAIN));
+        Map<String, Object> certMap = (Map<String, Object>) payloadData.get(Constants.CERT);
+        InputStream in = new ByteArrayInputStream((byte[]) certMap.get(Constants.DATA));
+        X509Certificate personaleCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
+        personaleCert.verify(CertificateStorage.ROOT_CERTIFICATE.getPublicKey());
+        assertEquals(COMMON_NAME, personaleCert.getSubjectDN().getName());
+        String encoding = certMap.get(Constants.ENCODING).toString();
+        assertEquals(CertificateConstants.DER, encoding);
+        assertEquals(personaleCert.getPublicKey(), GenerateCSR.getPublicKey());
+        certMap = (Map<String, Object>) payloadData.get(Constants.CERT_CHAIN);
+        encoding = certMap.get(Constants.ENCODING).toString();
+        assertEquals(CertificateConstants.DER, encoding);
+        in = new ByteArrayInputStream((byte[]) certMap.get(Constants.DATA));
+        X509Certificate caCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
+        assertEquals(caCert, CertificateStorage.ROOT_CERTIFICATE);
         assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+    }
 
+    @Test
+    public void testCSRIssueDERFailed() throws Exception {
+        getTestMethodName();
+        IRequest request = csrRequestFailed(DEVICE_ID, RequestMethod.POST);
+        certificateResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.BAD_REQUEST));
     }
 
     @Test
@@ -127,18 +245,68 @@ public class CertificateResourceTest {
         IRequest request = csrRequest(DEVICE_ID, CertificateConstants.DER, csr, RequestMethod.POST, true);
         certificateResource.onDefaultRequestReceived(mMockDevice, request);
         assertTrue(methodCheck(mResponse, ResponseStatus.BAD_REQUEST));
-
     }
 
+    Map<String, Object> payloadData;
+
+    Map<String, Object> crlMap;
+
+    byte[] data;
+
+    X509CRL crlX509;
+
     @Test
-    public void testReIssueBase64() {
+    public void testReIssueBase64() throws CRLException, CertificateException {
         IRequest request = csrRequest(DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
         certificateResource.onDefaultRequestReceived(mMockDevice, request);
         assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
 
+        Map<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+        List<BigInteger> serialNumbers = new ArrayList<>();
+        Map<String, Object> certMap = (Map<String, Object>) payloadData.get(Constants.CERT);
+        InputStream in = new ByteArrayInputStream(Base64.decode((byte[]) certMap.get(Constants.DATA)));
+        X509Certificate personaleCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
+        serialNumbers.add(personaleCert.getSerialNumber());
+        serialNumbers.add(personaleCert.getSerialNumber().subtract(BigInteger.ONE));
+
+        request = csrRequest(DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
+        certificateResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        payloadData = mCbor
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+        certMap = (Map<String, Object>) payloadData.get(Constants.CERT);
+        in = new ByteArrayInputStream(Base64.decode((byte[]) certMap.get(Constants.DATA)));
+        personaleCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
+        serialNumbers.add(personaleCert.getSerialNumber());
+
+
+        request = csrRequest(DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
+        certificateResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        getTestMethodName();
+        request = CrlResourceTest.crlRequest(RequestMethod.GET, CrlResourceTest.CRL_URI, CrlResourceTest.CRL_URI_QUERY);
+        CrlResource crlResource = new CrlResource();
+        crlResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        hashmapCheck(mResponse, Constants.ENCODING);
+        hashmapCheck(mResponse, Constants.DATA);
+        if (mResponse.getPayload() != null) {
+            payloadData = mCbor
+                    .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+            crlMap = (Map<String, Object>) payloadData.get(Constants.REQ_CRL);
+            data = (byte[]) crlMap.get(Constants.DATA);
+            crlX509 = (X509CRL) CERTIFICATE_FACTORY.generateCRL(new ByteArrayInputStream(data));
+        }
+
+        assertEquals(DER, crlMap.get(Constants.ENCODING));
+        assertNotNull(data);
+        Set<? extends X509CRLEntry> entries = crlX509.getRevokedCertificates();
+        Iterator<? extends X509CRLEntry> iterator = entries.iterator();
+        while (iterator.hasNext()) {
+            assertTrue(serialNumbers.contains(iterator.next().getSerialNumber()));
+        }
     }
-
-
 
     @Test
     public void testMethodNotAllowed() {
@@ -146,8 +314,6 @@ public class CertificateResourceTest {
         certificateResource.onDefaultRequestReceived(mMockDevice, request);
         assertTrue(methodCheck(mResponse, ResponseStatus.METHOD_NOT_ALLOWED));
     }
-
-
 
     @Test
     public void testBadRequest() {
@@ -171,18 +337,61 @@ public class CertificateResourceTest {
         System.out.println("\t---Test Name : " + currentStack.getMethodName());
     }
 
-    private IRequest csrRequest(String deviceId, String encoding, byte[] data, RequestMethod method, boolean isEncoded) {
+    private IRequest csrRequestFailed(String deviceId, RequestMethod method) {
         IRequest request;
         HashMap<String, Object> payloadData = new HashMap<>();
         payloadData.put(Constants.REQ_DEVICE_ID, deviceId);
-        if (isEncoded) {
-            payloadData.put(Constants.CSR_ENCODING, encoding);
-        }
-        payloadData.put(Constants.CSR_DATA, data);
+        payloadData.put("csr", "csr");
         request = MessageBuilder.createRequest(method, CERTIFICATE_URI,
                 null, ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));
         return request;
+    }
+
+    private IRequest csrRequest(String deviceId, String encoding, byte[] data, RequestMethod method, boolean isEncoded) {
+        IRequest request;
+        HashMap<String, Object> payloadData = new HashMap<>();
+        payloadData.put(Constants.REQ_DEVICE_ID, deviceId);
+        CSR csr = new CSR();
+        if (isEncoded) {
+            csr.setEncoding(encoding);
+            csr.setData(data);
+            payloadData.put("csr", csr);
+        }
+        request = MessageBuilder.createRequest(method, CERTIFICATE_URI,
+                null, ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
+        return request;
+    }
+
+    private static class CSR {
+        String encoding;
+
+        byte[] data;
+
+        public String getEncoding() {
+            return encoding;
+        }
+
+        public void setEncoding(String encoding) {
+            this.encoding = encoding;
+        }
+
+        public byte[] getData() {
+            return data;
+        }
+
+        public void setData(byte[] data) {
+            this.data = data;
+        }
+
+        @Override
+        public String toString() {
+            return "CSR{" +
+                    "encoding='" + encoding + '\'' +
+                    ", data=" + Arrays.toString(data) +
+                    '}';
+        }
     }
 
     private boolean methodCheck(IResponse response,
@@ -192,7 +401,6 @@ public class CertificateResourceTest {
         else
             return false;
     }
-
 
     private boolean hashmapCheck(IResponse response, String propertyName) {
         HashMap<String, Object> payloadData = mCbor

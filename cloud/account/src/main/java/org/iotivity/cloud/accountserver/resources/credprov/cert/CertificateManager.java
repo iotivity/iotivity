@@ -21,88 +21,115 @@
  */
 package org.iotivity.cloud.accountserver.resources.credprov.cert;
 
-import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.CertificateTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
+import org.iotivity.cloud.accountserver.x509.cert.Utility;
 
-import java.util.*;
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public final class CertificateManager {
+import static org.iotivity.cloud.accountserver.Constants.CERTIFICATE_TABLE;
+import static org.iotivity.cloud.accountserver.Constants.KEYFIELD_DID;
+import static org.iotivity.cloud.accountserver.Constants.KEYFIELD_REVOKED;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.ACCOUNT_DB_MANAGER;
+
+
+/**
+ * This class is used as DB manager for CertificateTable.
+ * With help of this class we can save certificate info to DB,
+ * retrieve it from DB by specified in constructor device id,
+ * updateX509CRL certificate, also it helps us get user Id from Token
+ * Table by specified device id.
+ */
+final class CertificateManager {
+
+    /**
+     * Type casting manager for converting CertificateTable object tot map
+     */
+    private static final TypeCastingManager<CertificateTable> CERTIFICATE_TABLE_TYPE_CASTING_MANAGER =
+            new TypeCastingManager<>();
+
+    /**
+     * Class attribute as payload for response.
+     */
     private final Map<String, Object> payLoad;
 
-    private TypeCastingManager<CertificateTable> castingManager = new TypeCastingManager<>();
+    /**
+     * Class attribute to store device id.
+     */
+    private final String deviceId;
 
-    public Map<String, Object> getPayLoad() {
+    /**
+     * Constructs certificateMananger with specified device id.
+     * @param deviceId specified device identifier for this CertificateManager.
+     */
+    CertificateManager(String deviceId) {
+        payLoad = new HashMap<>();
+        this.deviceId = deviceId;
+    }
+
+    /**
+     * Returns payload for response.
+     */
+    Map<String, Object> getPayLoad() {
         return payLoad;
     }
 
-    public void putCert(String encoding, byte[] cert) {
-        if (encoding.equals(CertificateConstants.BASE_64)){
-            cert = org.bouncycastle.util.encoders.Base64.encode(cert);
-        }
-        payLoad.put(Constants.CERT_ENCODING, encoding);
-        payLoad.put(Constants.CERT_DATA, cert);
-
+    /**
+     * Puts for specified key, specified value to
+     * object payload;
+     * @param key specified key value
+     * @param value specified value
+     */
+    public void put(String key, Object value) {
+        payLoad.put(key, value);
     }
 
-    public void putCACert(String encoding, byte[] cacert) {
-        if (encoding.equals(CertificateConstants.BASE_64)){
-            cacert = org.bouncycastle.util.encoders.Base64.encode(cacert);
-        }
-        payLoad.put(Constants.CERTCHAIN_ENCODING, encoding);
-        payLoad.put(Constants.CERTCHAIN_DATA, cacert);
+    /**
+     * Saves new certificate to DB with specified columns.
+     *
+     * @param serialNumber specified certificate serial number
+     * @param notAfter validation date not after
+     * @param notBefore validation date not before
+     */
+    void save(BigInteger serialNumber, Date notAfter, Date notBefore) {
+        ACCOUNT_DB_MANAGER.insertRecord(CERTIFICATE_TABLE,
+                CERTIFICATE_TABLE_TYPE_CASTING_MANAGER.convertObjectToMap(
+                        new CertificateTable(serialNumber.toString(), notAfter,
+                        notBefore, deviceId, Utility.getUserID(deviceId), false)));
     }
 
-    public void putDeviceId(String di) {
-        payLoad.put(Constants.RESP_DEVICE_ID, di);
-    }
-
-    public CertificateManager() {
-        payLoad = new HashMap<>();
-    }
-
-    public void createCertificate(String serialNumber, Date notAfter, Date notBefore,
-                                  String deviceId, String uid) {
-        CertificateTable certificateTable = new CertificateTable(serialNumber,
-                notAfter, notBefore, deviceId, uid, false);
-        AccountDBManager.getInstance().insertRecord(Constants.CERTIFICATE_TABLE,
-                castingManager.convertObjectToMap(certificateTable));
-
-    }
-
-    public void updateCertificate(String serialNumber, boolean revoked) {
-        CertificateTable certificateTable = getCertificateTable(serialNumber);
+    /**
+     * Updates certificate table with specified revoked column.
+     * @param certificateTable certificate to be updated.
+     * @param revoked specified value for revoke
+     */
+    void update(CertificateTable certificateTable, boolean revoked) {
         certificateTable.setRevoked(revoked);
-        AccountDBManager.getInstance().updateRecord(Constants.CERTIFICATE_TABLE,
-                castingManager.convertObjectToMap(certificateTable));
-
+        ACCOUNT_DB_MANAGER.updateRecord(CERTIFICATE_TABLE,
+                CERTIFICATE_TABLE_TYPE_CASTING_MANAGER.convertObjectToMap(certificateTable));
     }
 
-
-    private CertificateTable getCertificateTable(String serialNumber) {
-        CertificateTable certificateTable = new CertificateTable();
+    /**
+     * Returns certificate from database, according to specified
+     * device id
+     */
+    public CertificateTable getCertificate() {
         HashMap<String, Object> condition = new HashMap<>();
-        condition.put(Constants.KEYFIELD_SN, serialNumber);
-        certificateTable = castingManager
-                .convertMaptoObject(
-                        AccountDBManager.getInstance().selectRecord(
-                                Constants.CERTIFICATE_TABLE, condition).get(0),
-                        certificateTable);
-        return certificateTable;
-    }
-
-
-    public String getUserID(String deviceId) {
-        HashMap<String, Object> condition = new HashMap<>();
-        condition.put(Constants.KEYFIELD_DID, deviceId);
-        ArrayList<HashMap<String, Object>> recordList = AccountDBManager
-                .getInstance().selectRecord(Constants.TOKEN_TABLE, condition);
-        Iterator<HashMap<String, Object>> iterator = recordList.iterator();
-        String result = null;
-        if (iterator.hasNext()) {
-            result = iterator.next().get(Constants.KEYFIELD_UUID).toString();
+        condition.put(KEYFIELD_DID, deviceId);
+        condition.put(KEYFIELD_REVOKED, false);
+        List<HashMap<String, Object>> listMap = ACCOUNT_DB_MANAGER.selectRecord(
+                CERTIFICATE_TABLE, condition);
+        if (!listMap.isEmpty()) {
+            return CERTIFICATE_TABLE_TYPE_CASTING_MANAGER
+                    .convertMaptoObject(
+                            listMap.get(0),
+                            new CertificateTable());
+        } else {
+            return null;
         }
-        return result;
     }
 }

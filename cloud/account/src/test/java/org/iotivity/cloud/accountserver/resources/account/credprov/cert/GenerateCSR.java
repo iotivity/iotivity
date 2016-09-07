@@ -1,6 +1,5 @@
 package org.iotivity.cloud.accountserver.resources.account.credprov.cert;
 
-import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.operator.ContentSigner;
@@ -8,28 +7,19 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
-import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
+import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants;
 
 import javax.security.auth.x500.X500Principal;
 import java.security.*;
 
-import static org.bouncycastle.asn1.x500.style.BCStyle.INSTANCE;
-
-/**
- * This class generates PKCS10 certificate signing request
- *
- * @author Pankaj@JournalDev.com
- * @version 1.0
- */
 public class GenerateCSR {
 
-    public static final String SIGNATURE_ALGORITHM = CertificateStorage.PROPERTIES.getProperty("signatureAlgorithm");
+    public static final String SIGNATURE_ALGORITHM = CertificateConstants.PROPERTIES.getProperty("signatureAlgorithm");
 
-    private static final String CURVE = CertificateStorage.PROPERTIES.getProperty("ellipticCurve");
+    private static final String CURVE = CertificateConstants.PROPERTIES.getProperty("ellipticCurve");
 
-    private static final String KEY_GENERATOR_ALGORITHM = CertificateStorage.PROPERTIES.getProperty("keyGeneratorAlgorithm");
+    private static final String KEY_GENERATOR_ALGORITHM = CertificateConstants.PROPERTIES.getProperty("keyGeneratorAlgorithm");
 
-    private final X500NameBuilder subjectNameBld = new X500NameBuilder(INSTANCE);
     private static PublicKey publicKey = null;
     private static PrivateKey privateKey = null;
     private static PublicKey publicKey1 = null;
@@ -43,13 +33,11 @@ public class GenerateCSR {
      */
     public static byte[] generatePKCS10(String commonName, boolean falseKey) throws Exception {
         ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec(CURVE);
-        KeyPairGenerator g = KeyPairGenerator.getInstance(KEY_GENERATOR_ALGORITHM, CertificateStorage.BC);
+        KeyPairGenerator g = KeyPairGenerator.getInstance(KEY_GENERATOR_ALGORITHM, CertificateConstants.SECURITY_PROVIDER);
         g.initialize(ecSpec, new SecureRandom());
         KeyPair pair = g.generateKeyPair();
         privateKey = pair.getPrivate();
         publicKey = pair.getPublic();
-
-
         pair = g.generateKeyPair();
         privateKey1 = pair.getPrivate();
         publicKey1 = pair.getPublic();
@@ -71,8 +59,5 @@ public class GenerateCSR {
         return publicKey;
     }
  
-    public static PrivateKey getPrivateKey() {
-        return privateKey;
-    }
- 
+
 }

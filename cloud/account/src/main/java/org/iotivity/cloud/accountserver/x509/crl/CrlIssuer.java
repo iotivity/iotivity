@@ -21,97 +21,54 @@
  */
 package org.iotivity.cloud.accountserver.x509.crl;
 
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.cert.X509CRLEntryHolder;
+
 import org.bouncycastle.cert.X509v2CRLBuilder;
-import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateBuilder;
-import org.iotivity.cloud.util.Log;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.PrivateKey;
-import java.text.ParseException;
+import java.security.cert.X509CRLEntry;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 
-import static org.iotivity.cloud.accountserver.x509.crl.CrlParser.DATE_FORMAT;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.CA_ISSUER;
 
+/**
+ * Class is used for generating CRL with specified parameters.
+ */
 public final class CrlIssuer {
+    /**
+     * Creates static final reference for CRL issuer.
+     */
+    public static final CrlIssuer CRL_ISSUER = new CrlIssuer();
 
+    /**
+     * Creates new instance of CRL issuer.
+     */
     private CrlIssuer() {
-        throw new AssertionError();
     }
 
-    public static byte[] generate(Date thisUpdate, Date nextUpdate,
-                                  PrivateKey key, BigInteger[] serialNumbers, Collection<X509CRLEntryHolder> certs, String issuer) {
-        X500Name issuerDN = new X500Name(issuer);
-        X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(issuerDN,
+    /**
+     * Generates new CRL with specified this update, next update, certs and serial numbers list.
+     */
+    public byte[] generate(Date thisUpdate, Date nextUpdate, Collection<? extends X509CRLEntry> certs,
+                           String... serialNumbers) throws IOException, OperatorCreationException {
+        byte[] crl;
+        X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(CA_ISSUER,
                 thisUpdate);
-        if (nextUpdate != null) {
-            crlBuilder.setNextUpdate(nextUpdate);
+        crlBuilder.setNextUpdate(nextUpdate);
+        if (certs != null) {
+            for (X509CRLEntry entryHolder : certs) {
+                crlBuilder.addCRLEntry(entryHolder.getSerialNumber(), entryHolder.getRevocationDate(), 0);
+            }
         }
-        for (X509CRLEntryHolder crlItem : certs) {
-            crlBuilder.addCRLEntry(crlItem.getSerialNumber(), crlItem.getRevocationDate(), 0);
+        for (String serialNumber : serialNumbers) {
+            crlBuilder.addCRLEntry(new BigInteger(serialNumber), new Date(), 0);
         }
-        for (BigInteger serialNumber : serialNumbers) {
-            crlBuilder.addCRLEntry(serialNumber, new Date(), 0);
-        }
-        byte[] data = null;
-        try {
-            ContentSigner signer = new JcaContentSignerBuilder(CertificateBuilder.SIGNATURE_ALGORITHM)
-                    .setProvider(CertificateStorage.BC).build(key);
-            data = crlBuilder.build(signer).getEncoded();
-            CrlStore.save(data);
-        } catch (OperatorCreationException | IOException e) {
-            Log.e(e.getMessage());
-        }
-        return data;
-    }
-
-    public static byte[] generate(String issuerName, Date thisUpdate, Date nextUpdate,
-                                  PrivateKey key) {
-        return generate(thisUpdate, nextUpdate, key, new BigInteger[]{}, Collections.EMPTY_LIST, issuerName);
-
-    }
-
-    public static void update(byte[] crl) {
-        CrlStore.save(crl);
-    }
-
-    public static void revokeCertificate(BigInteger serialNumber, PrivateKey key) {
-        byte[] data = CrlStore.load();
-        CrlParser parser = new CrlParser(data);
-        Collection<X509CRLEntryHolder> certificates = parser.getCerts();
-        X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(new X500Name(parser.getIssuer()),
-                parser.getThisUpdate());
-        crlBuilder.setNextUpdate(parser.getNextUpdate());
-        for (X509CRLEntryHolder entryHolder : certificates) {
-            crlBuilder.addCRLEntry(entryHolder.getSerialNumber(), entryHolder.getRevocationDate(), 0);
-        }
-        crlBuilder.addCRLEntry(serialNumber, new Date(), 0);
-        try {
-            ContentSigner signer = new JcaContentSignerBuilder(CertificateBuilder.SIGNATURE_ALGORITHM)
-                    .setProvider(CertificateStorage.BC).build(key);
-            CrlStore.save(crlBuilder.build(signer).getEncoded());
-        } catch (OperatorCreationException | IOException e) {
-            Log.e(e.getMessage());
-        }
-    }
-
-    public static void update(Date thisUpdate, Date nextUpdate,
-                              String serialNumber, PrivateKey key) {
-        String[] serials = serialNumber.split(",");
-        BigInteger[] serialNumbers = new BigInteger[serials.length];
-        for (int i = 0; i < serials.length; i++) {
-            serialNumbers[i] = new BigInteger(serials[i]);
-        }
-        CrlParser crlParser = new CrlParser(CrlStore.load());
-        generate(thisUpdate, nextUpdate, key, serialNumbers, crlParser.getCerts(), crlParser.getIssuer());
+        crl = crlBuilder.build(CertificateBuilder.SIGNER_BUILDER.
+                build(CertificateStorage.ROOT_PRIVATE_KEY)).getEncoded();
+        return crl;
     }
 }
-

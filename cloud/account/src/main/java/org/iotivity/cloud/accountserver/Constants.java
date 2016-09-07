@@ -21,9 +21,9 @@
  */
 package org.iotivity.cloud.accountserver;
 
-import java.io.File;
-
 import org.iotivity.cloud.base.OICConstants;
+
+import java.io.File;
 
 public class Constants extends OICConstants {
 
@@ -180,21 +180,13 @@ public class Constants extends OICConstants {
 
     public static final String RESP_INVITED          = "invited";
 
-    public static final String CSR_ENCODING          = "csr.encoding";
+    public static final String ENCODING = "encoding";
 
-    public static final String CSR_DATA              = "csr.data";
+    public static final String DATA = "data";
 
-    public static final String CERT_ENCODING         = "cert.encoding";
+    public static final String CERT = "cert";
 
-    public static final String CERT_DATA             = "cert.data";
-
-    public static final String CERTCHAIN_ENCODING    = "certchain.encoding";
-
-    public static final String CERTCHAIN_DATA        = "certchain.data";
-
-    public static final String CRL_ENCODING          = "crl.encoding";
-
-    public static final String CRL_DATA              = "crl.data";
+    public static final String CERT_CHAIN = "certchain";
 
     // static token type
 

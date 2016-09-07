@@ -22,10 +22,10 @@
 package org.iotivity.cloud.accountserver.resources.credprov.crl;
 
 
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.DecoderException;
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants;
-import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
-import org.iotivity.cloud.accountserver.x509.crl.CrlIssuer;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -37,28 +37,28 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
 
+import java.io.IOException;
+import java.security.cert.CRLException;
 import java.text.ParseException;
 import java.util.*;
 
-import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage.PROPERTIES;
-import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage.getRootCertificatePrivateKeyPair;
-import static org.iotivity.cloud.accountserver.x509.crl.CrlParser.DATE_FORMAT;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.BASE_64;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.DATE_FORMAT;
+import static org.iotivity.cloud.accountserver.resources.credprov.crl.CrlManager.CRL_MANAGER;
 
+/**
+ * Class is responsible for handling requests GET and POST for CRL data.
+ */
 public class CrlResource extends Resource {
 
-    private static final Cbor<HashMap<String, Object>> MAP_CBOR = new Cbor<>();
+    /**
+     * CBOR container with help of map presentation.
+     */
+    private static final Cbor<Map<String, Object>> MAP_CBOR = new Cbor<>();
 
-    static {
-        Calendar calendar = Calendar.getInstance();
-        Date thisUpdate = calendar.getTime();
-        calendar.add(Calendar.DAY_OF_MONTH,
-                Integer.parseInt(PROPERTIES.getProperty("nextUpdateInterval")));
-        Date nextUpdate = calendar.getTime();
-        CrlIssuer.generate(PROPERTIES.getProperty("crlCN"), thisUpdate,
-                nextUpdate, getRootCertificatePrivateKeyPair().getPrivateKey());
-        CrlManager.createCRL(thisUpdate);
-    }
-
+    /**
+     * Creates resource for handling CRL requests(GET and POST)
+     */
     public CrlResource() {
         super(Arrays.asList(Constants.PREFIX_OIC,
                 Constants.CREDPROV_URI, Constants.REQ_CRL));
@@ -82,55 +82,65 @@ public class CrlResource extends Resource {
         srcDevice.sendResponse(response);
     }
 
+    /**
+     * Handles GET request and sends response back to the client.
+     */
     private IResponse handleGetRequest(IRequest request)
             throws ServerException {
         HashMap<String, List<String>> queryData = request.getUriQueryMap();
         IResponse iResponse = MessageBuilder.createResponse(request, ResponseStatus.NOT_FOUND);
         if (queryData != null) {
             List<String> lastUpdateList = queryData.get(Constants.REQ_LAST_UPDATE);
-
-            if (lastUpdateList != null && !lastUpdateList.isEmpty() && CrlManager.checkLastUpdate(lastUpdateList.get(0))) {
-                System.out.println("LAST DATE = " + lastUpdateList.get(0));
-                iResponse = MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
-                        ContentFormat.APPLICATION_CBOR, MAP_CBOR.encodingPayloadToCbor(CrlManager.getCrlInfo()));
+            if (lastUpdateList != null && !lastUpdateList.isEmpty() &&
+                    CRL_MANAGER.checkLastUpdate(lastUpdateList.get(0))) {
+                try {
+                    iResponse = MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
+                            ContentFormat.APPLICATION_CBOR, MAP_CBOR.encodingPayloadToCbor(CRL_MANAGER.getPayload()));
+                } catch (CRLException e) {
+                    Log.e(e.getMessage());
+                }
             }
         }
         return iResponse;
     }
 
+    /**
+     * Handles POST requests and sends back CRL data in response.
+     */
     private IResponse handlePostRequest(IRequest request)
             throws ServerException {
-        HashMap<String, Object> payloadData = MAP_CBOR
+        Map<String, Object> payloadData = MAP_CBOR
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
         Object thisUpdate = payloadData.get(Constants.REQ_THIS_UPDATE);
         Object nextUpdate = payloadData.get(Constants.REQ_NEXT_UPDATE);
         IResponse response = MessageBuilder.createResponse(request, ResponseStatus.PRECONDITION_FAILED);
-        if (thisUpdate != null || nextUpdate != null) {
-            String encoding = (String) payloadData.get(Constants.CRL_ENCODING);
-            byte[] crl = (byte[]) payloadData.get(Constants.CRL_DATA);
-            if(encoding != null && crl != null && encoding.equals(CertificateConstants.BASE_64)) {
-                if (encoding.equals(CertificateConstants.BASE_64)) {
-                    crl = org.bouncycastle.util.encoders.Base64.decode(crl);
-                }
-                CrlIssuer.update(crl);
-                response = MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
-            }
-            Object reqSerialNumber = payloadData.get(Constants.REQ_SERIAL_NUMBER);
-            if (reqSerialNumber != null) {
-                Date thisUpdateDate = null;
-                Date nextUpdateDate = null;
-                boolean parseable = true;
-                try {
-                    thisUpdateDate = DATE_FORMAT.parse(thisUpdate.toString());
-                    nextUpdateDate = DATE_FORMAT.parse(nextUpdate.toString());
-                } catch (ParseException e) {
-                    Log.e(e.getMessage());
-                    parseable = false;
-                }
-                if(parseable) {
-                    CrlIssuer.update(thisUpdateDate, nextUpdateDate, reqSerialNumber.toString(), CertificateStorage.getRootCertificatePrivateKeyPair().getPrivateKey());
+        if (thisUpdate != null && thisUpdate instanceof String && nextUpdate != null && nextUpdate instanceof String) {
+            Date thisUpdateDate;
+            try {
+                thisUpdateDate = DATE_FORMAT.parse(thisUpdate.toString());
+                DATE_FORMAT.parse(nextUpdate.toString());
+                Object reqSerialNumber = payloadData.get(Constants.REQ_SERIAL_NUMBER);
+                Object crl = payloadData.get(Constants.REQ_CRL);
+                if (reqSerialNumber != null && reqSerialNumber instanceof List) {
+                    CRL_MANAGER.revoke(((List<String>) reqSerialNumber).toArray(new String[]{}));
                     response = MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
+                } else if (crl != null && crl instanceof Map) {
+                    Object encoding = ((Map<String, Object>) crl).get(Constants.ENCODING);
+                    Object crlData = ((Map<String, Object>) crl).get(Constants.DATA);
+                    if (encoding != null && encoding instanceof String && crlData != null && crlData instanceof byte[]) {
+                        try {
+                            if (encoding.equals(BASE_64)) {
+                                crlData = Base64.decode((byte[]) crlData);
+                            }
+                            CRL_MANAGER.update(thisUpdateDate, (byte[]) crlData);
+                            response = MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
+                        } catch (DecoderException e) {
+                            Log.e(e.getMessage() + e.getClass());
+                        }
+                    }
                 }
+            } catch (CRLException | IOException | OperatorCreationException | ParseException e) {
+                Log.e(e.getMessage() + e.getClass());
             }
         }
         return response;

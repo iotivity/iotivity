@@ -21,14 +21,22 @@
  */
 package org.iotivity.cloud.accountserver.db;
 
+import org.bson.types.Binary;
+
 import java.util.Date;
 
 public class CRLTable {
 
     private Date thisUpdate;
 
-    public CRLTable(Date thisUpdate) {
+    private Binary binaryData;
+
+    public CRLTable() {
+    }
+
+    public CRLTable(Date thisUpdate, Binary binaryData) {
         this.thisUpdate = thisUpdate;
+        this.binaryData = binaryData;
     }
 
     public Date getThisUpdate() {
@@ -37,5 +45,21 @@ public class CRLTable {
 
     public void setThisUpdate(Date thisUpdate) {
         this.thisUpdate = thisUpdate;
+    }
+
+    public Binary getBinaryData() {
+        return binaryData;
+    }
+
+    public void setBinaryData(Binary binaryData) {
+        this.binaryData = binaryData;
+    }
+
+    @Override
+    public String toString() {
+        return "CRLTable{" +
+                "thisUpdate=" + thisUpdate +
+                ", binaryData=" + binaryData +
+                '}';
     }
 }

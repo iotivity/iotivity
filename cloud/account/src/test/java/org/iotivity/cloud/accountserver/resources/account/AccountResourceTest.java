@@ -60,7 +60,7 @@ public class AccountResourceTest {
     private static final String            GROUP_URI                 = Constants.GROUP_FULL_URI;
     private static final String            DEVICE_ID                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     private String                         mAuthProvider             = "Github";
-    private String                         mAuthCode                 = "c2820e39232088dca7d4";
+    private String                         mAuthCode                 = "00a93f698b47980b2d77";
     private CoapDevice                     mMockDevice               = mock(
             CoapDevice.class);
     private Cbor<HashMap<String, Object>>  mCbor                     = new Cbor<>();

@@ -21,34 +21,35 @@
  */
 package org.iotivity.cloud.accountserver.x509.cert;
 
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCSException;
-import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
 import org.iotivity.cloud.util.Log;
 
 import java.io.IOException;
 import java.security.PublicKey;
 
+import static org.bouncycastle.asn1.x500.style.BCStyle.CN;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.SECURITY_PROVIDER;
 
+/**
+ * Class is used for parsing CSR requests.
+ */
 public class CSRParser {
 
-    private static final String COUNTRY = "2.5.4.6";
-
-    private static final String ORGANIZATION = "2.5.4.10";
-
-    private static final String ORGANIZATION_UNIT = "2.5.4.11";
-
-    private static final String COMMON_NAME = "2.5.4.3";
-
+    /**
+     * PKCS10CertificationRequest attribute.
+     */
     private final PKCS10CertificationRequest mCsr;
+
+    /**
+     * Certificate subject.
+     */
+    private final X500Name subject;
 
     /**
      * Creates CSRParser instance with specified csrDer byte array.
@@ -57,13 +58,21 @@ public class CSRParser {
      */
     public CSRParser(byte[] csrDer) throws IOException {
         mCsr = new PKCS10CertificationRequest(csrDer);
+        subject = mCsr.getSubject();
     }
 
     /**
      * Returns public key
      */
-    public PublicKey getPublicKey() throws PEMException {
-        return new JcaPEMKeyConverter().setProvider(CertificateStorage.BC).getPublicKey(getPublicKeyInfo());
+    public PublicKey getPublicKey() {
+        PublicKey publicKey = null;
+        try {
+            publicKey = new JcaPEMKeyConverter().setProvider(SECURITY_PROVIDER).
+                    getPublicKey(mCsr.getSubjectPublicKeyInfo());
+        } catch (PEMException e) {
+            Log.e(e.getMessage());
+        }
+        return publicKey;
     }
 
     /**
@@ -71,11 +80,11 @@ public class CSRParser {
      *
      * @return true if signature is correct and false otherwise.
      */
-    public boolean verify() {
+    public boolean isSignatureValid() {
         boolean condition = false;
         try {
             condition = mCsr.isSignatureValid(new JcaContentVerifierProviderBuilder()
-                    .setProvider(CertificateStorage.BC).build(getPublicKeyInfo()));
+                    .setProvider(SECURITY_PROVIDER).build(mCsr.getSubjectPublicKeyInfo()));
         } catch (OperatorCreationException | PKCSException e) {
             Log.e(e.getMessage());
         }
@@ -83,53 +92,17 @@ public class CSRParser {
     }
 
     /**
-     * Returns Organization Unit from csr subject.
-     */
-    public String getOrganizationalUnit() {
-        return getX500Field(ORGANIZATION_UNIT, mCsr.getSubject());
-    }
-
-    /**
-     * Returns organization from csr subject.
-     */
-    public String getOrganizational() {
-        return getX500Field(ORGANIZATION, mCsr.getSubject());
-    }
-
-    /**
-     * Returns country from csr subject.
-     */
-    public String getCountry() {
-        return getX500Field(COUNTRY, mCsr.getSubject());
-    }
-
-    /**
      * Returns common name from csr subject.
      */
     public String getCommonName() {
-        return getX500Field(COMMON_NAME, mCsr.getSubject());
+        return subject.getRDNs(CN)[0].getFirst().getValue().toString();
+
     }
 
     /**
-     * Returns public key information for this csr.
+     * Returns subject as X500Name.
      */
-    public SubjectPublicKeyInfo getPublicKeyInfo() {
-        return mCsr.getSubjectPublicKeyInfo();
-    }
-
-    /**
-     * Converts asn1.0 identifier ti string DATE_FORMAT.
-     *
-     * @param asn1ObjectIdentifier
-     * @param x500Name
-     * @return
-     */
-    private String getX500Field(String asn1ObjectIdentifier, X500Name x500Name) {
-        String result = null;
-        RDN[] arRdns = x500Name.getRDNs(new ASN1ObjectIdentifier(asn1ObjectIdentifier));
-        if (arRdns.length != 0) {
-            result = arRdns[0].getFirst().getValue().toString();
-        }
-        return result;
+    public X500Name getSubject() {
+        return subject;
     }
 }
