@@ -117,9 +117,36 @@ void NSSetProviderChangedCb(NSProviderStateCallback cb)
     *(NSGetProviderChangedCb()) = cb;
 }
 
+typedef struct
+{
+    NSProvider * provider;
+    NSProviderState state;
+} NSProviderChangedData;
+
+void * NSProviderChangedFunc(void * obj)
+{
+    NSProviderChangedData * data = (NSProviderChangedData *) obj;
+    (*(NSGetProviderChangedCb()))(data->provider, data->state);
+    NSOICFree(data);
+    return NULL;
+}
+
 void NSProviderChanged(NSProvider * provider, NSProviderState response)
 {
-    (*(NSGetProviderChangedCb()))(provider, response);
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSProvider * retProvider = NSCopyProvider((NSProvider_internal *) provider);
+    NS_VERIFY_NOT_NULL_V(retProvider);
+
+    NSProviderChangedData * data =
+            (NSProviderChangedData *)OICMalloc(sizeof(NSProviderChangedData));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(data, NSRemoveProvider(retProvider));
+
+    data->provider = retProvider;
+    data->state = response;
+
+    NSConsumerThread * thread = NSThreadInit(NSProviderChangedFunc, (void *) data);
+    NS_VERIFY_NOT_NULL_V(thread);
 }
 
 NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
