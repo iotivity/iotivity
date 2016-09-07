@@ -196,7 +196,7 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
 
-    uint8_t *cur_pos = data +
+    const uint8_t *cur_pos = data +
         (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE +
          (index * (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE)));
     if (cur_pos == NULL)
