@@ -596,7 +596,7 @@ static int provisionCred(void)
 
     // display the CRED-provisioned result
     printf("   > Provisioned Selected Pairwise Crendentials\n");
-    printf("   > Please Check Device's Status for the Linked Result, with [33] Menu\n");
+    printf("   > Please Check Device's Status for the Linked Result, with [34] Menu\n");
 
     return 0;
 }
