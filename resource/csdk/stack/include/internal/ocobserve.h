@@ -37,6 +37,14 @@
 #define MAX_OBSERVER_NON_COUNT           (3)
 
 /**
+ *  MAX_OBSERVER_TTL_SECONDS sets the maximum time to live (TTL) for notification.
+ *  60 sec/min * 60 min/hr * 24 hr/day
+ */
+#define MAX_OBSERVER_TTL_SECONDS     (60 * 60 * 24)
+
+#define MILLISECONDS_PER_SECOND   (1000)
+
+/**
  * Data structure to hold informations for each registered observer.
  */
 typedef struct ResourceObserver
@@ -73,6 +81,12 @@ typedef struct ResourceObserver
 
     /** force the qos value to CON.*/
     uint8_t forceHighQos;
+
+    /** The TTL for this callback. TTL is set to 24 hours.
+     * A server send a notification in a confirmable message every 24 hours.
+     * This prevents a client that went away or is no logger interested
+     * from remaining in the list of observers indefinitely.*/
+    uint32_t TTL;
 
     /** next node in this list.*/
     struct ResourceObserver *next;

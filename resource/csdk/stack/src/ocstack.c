@@ -297,23 +297,6 @@ static void incrementSequenceNumber(OCResource * resPtr);
 static CAResult_t OCSelectNetwork();
 
 /**
- * Get the CoAP ticks after the specified number of milli-seconds.
- *
- * @param afterMilliSeconds Milli-seconds.
- * @return
- *     CoAP ticks
- */
-static uint32_t GetTicks(uint32_t afterMilliSeconds);
-
-/**
- * Convert CAResult_t to OCStackResult.
- *
- * @param caResult CAResult_t code.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-static OCStackResult CAResultToOCStackResult(CAResult_t caResult);
-
-/**
  * Convert CAResponseResult_t to OCStackResult.
  *
  * @param caCode CAResponseResult_t code.
@@ -466,16 +449,16 @@ bool checkProxyUri(OCHeaderOption *options, uint8_t numOptions)
     return false;
 }
 
-uint32_t GetTicks(uint32_t afterMilliSeconds)
+uint32_t GetTicks(uint32_t milliSeconds)
 {
     coap_tick_t now;
     coap_ticks(&now);
 
     // Guard against overflow of uint32_t
-    if (afterMilliSeconds <= ((UINT32_MAX - (uint32_t)now) * MILLISECONDS_PER_SECOND) /
+    if (milliSeconds <= ((UINT32_MAX - (uint32_t)now) * MILLISECONDS_PER_SECOND) /
                              COAP_TICKS_PER_SECOND)
     {
-        return now + (afterMilliSeconds * COAP_TICKS_PER_SECOND)/MILLISECONDS_PER_SECOND;
+        return now + (milliSeconds * COAP_TICKS_PER_SECOND)/MILLISECONDS_PER_SECOND;
     }
     else
     {
@@ -656,10 +639,11 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
             else
             {
                 observer->failedCommCount++;
+                observer->forceHighQos = 1;
+                OIC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",
+                          observer->failedCommCount);
                 result = OC_STACK_CONTINUE;
             }
-            observer->forceHighQos = 1;
-            OIC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",observer->failedCommCount);
         }
         break;
     default:
@@ -668,28 +652,6 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         break;
         }
     return result;
-}
-
-static OCStackResult CAResultToOCStackResult(CAResult_t caResult)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-
-    switch(caResult)
-    {
-        case CA_ADAPTER_NOT_ENABLED:
-        case CA_SERVER_NOT_STARTED:
-            ret = OC_STACK_ADAPTER_NOT_ENABLED;
-            break;
-        case CA_MEMORY_ALLOC_FAILED:
-            ret = OC_STACK_NO_MEMORY;
-            break;
-        case CA_STATUS_INVALID_PARAM:
-            ret = OC_STACK_INVALID_PARAM;
-            break;
-        default:
-            break;
-    }
-    return ret;
 }
 
 OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
@@ -1631,19 +1593,10 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
  */
 void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
+    VERIFY_NON_NULL_NR(endPoint, FATAL);
+    VERIFY_NON_NULL_NR(errorInfo, FATAL);
+
     OIC_LOG(INFO, TAG, "Enter HandleCAErrorResponse");
-
-    if (NULL == endPoint)
-    {
-        OIC_LOG(ERROR, TAG, "endPoint is NULL");
-        return;
-    }
-
-    if (NULL == errorInfo)
-    {
-        OIC_LOG(ERROR, TAG, "errorInfo is NULL");
-        return;
-    }
 
     ClientCB *cbNode = GetClientCB(errorInfo->info.token,
                                    errorInfo->info.tokenLength, NULL, NULL);
@@ -1656,9 +1609,22 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         memcpy(response.identity.id, errorInfo->info.identity.id,
                sizeof (response.identity.id));
         response.identity.id_length = errorInfo->info.identity.id_length;
-        response.result = CAResultToOCStackResult(errorInfo->result);
+        response.result = CAResultToOCResult(errorInfo->result);
 
         cbNode->callBack(cbNode->context, cbNode->handle, &response);
+    }
+
+    ResourceObserver *observer = GetObserverUsingToken(errorInfo->info.token,
+                                                       errorInfo->info.tokenLength);
+    if (observer)
+    {
+        OIC_LOG(INFO, TAG, "Receiving communication error for an observer");
+        OCStackResult result = CAResultToOCResult(errorInfo->result);
+        if (OC_STACK_COMM_ERROR == result)
+        {
+            OCStackFeedBack(errorInfo->info.token, errorInfo->info.tokenLength,
+                            OC_OBSERVER_FAILED_COMM);
+        }
     }
 
     OIC_LOG(INFO, TAG, "Exit HandleCAErrorResponse");

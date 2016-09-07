@@ -998,7 +998,7 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
             OIC_LOG(ERROR, TAG, "Failed to create TCP server object");
             if (g_tcpErrorHandler)
             {
-                g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+                g_tcpErrorHandler(endpoint, data, dlen, CA_SOCKET_OPERATION_FAILED);
             }
             return;
         }
@@ -1027,7 +1027,7 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         CADisconnectTCPSession(svritem, index);
         if (g_tcpErrorHandler)
         {
-            g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
+            g_tcpErrorHandler(endpoint, data, dlen, CA_SOCKET_OPERATION_FAILED);
         }
         return;
     }
