@@ -124,7 +124,6 @@ void NSConsumerMessageHandlerExit()
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
     NSSetMsgHandleQueue(NULL);
 
-    NSDestroyMessageCacheList();
     NSDestroyProviderCacheList();
 }
 
@@ -339,13 +338,6 @@ void NSConsumerTaskProcessing(NSTask * task)
             break;
         }
     }
-}
-
-NSMessage * NSConsumerFindNSMessage(const char* messageId)
-{
-    NS_VERIFY_NOT_NULL(messageId, NULL);
-
-    return NSMessageCacheFind(messageId);
 }
 
 NSProvider_internal * NSConsumerFindNSProvider(const char * providerId)

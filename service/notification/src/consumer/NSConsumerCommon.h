@@ -97,13 +97,6 @@ typedef struct
 
 } NSSyncInfo_internal;
 
-typedef struct
-{
-    NSSyncType status;
-    NSMessage * msg;
-
-} NSStoreMessage;
-
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 

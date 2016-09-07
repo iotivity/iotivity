@@ -123,11 +123,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
     NSCacheType type = list->cacheType;
     NS_LOG_V(DEBUG, "cache type : %d", type);
 
-    if (type == NS_CONSUMER_CACHE_MESSAGE)
-    {
-        return NSConsumerCacheWriteMessage(list, newObj);
-    }
-    else if (type == NS_CONSUMER_CACHE_PROVIDER)
+    if (type == NS_CONSUMER_CACHE_PROVIDER)
     {
         return NSConsumerCacheWriteProvider(list, newObj);
     }
@@ -162,11 +158,7 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
 
             list->head = del->next;
 
-            if (type == NS_CONSUMER_CACHE_MESSAGE)
-            {
-                NSRemoveMessage((NSMessage *) del->data);
-            }
-            else if (type == NS_CONSUMER_CACHE_PROVIDER)
+            if (type == NS_CONSUMER_CACHE_PROVIDER)
             {
                 NSRemoveProvider_internal((NSProvider_internal *) del->data);
             }
@@ -188,11 +180,8 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
             }
 
             prev->next = del->next;
-            if (type == NS_CONSUMER_CACHE_MESSAGE)
-            {
-                NSRemoveMessage((NSMessage *) del->data);
-            }
-            else if (type == NS_CONSUMER_CACHE_PROVIDER)
+
+            if (type == NS_CONSUMER_CACHE_PROVIDER)
             {
                 NSRemoveProvider_internal((NSProvider_internal *) del->data);
             }
@@ -206,73 +195,6 @@ NSResult NSStorageDelete(NSCacheList * list, const char * delId)
         del = del->next;
     }
     pthread_mutex_unlock(mutex);
-    return NS_OK;
-}
-
-void NSConsumerRemoveMessageStore(NSCacheElement * ele, NSStoreMessage * msg)
-{
-    NSOICFree(ele);
-    NSOICFree(msg);
-}
-
-NSResult NSConsumerCacheWriteMessage(NSCacheList * list, NSCacheElement * newObj)
-{
-    NS_VERIFY_NOT_NULL(list, NS_ERROR);
-    NS_VERIFY_NOT_NULL(newObj, NS_ERROR);
-
-    pthread_mutex_t * mutex = NSGetCacheMutex();
-
-    NSMessage * newMsgObj = ((NSStoreMessage *)newObj->data)->msg;
-
-    char msgId[NS_DEVICE_ID_LENGTH] = {0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)newMsgObj->messageId);
-    NSCacheElement * it = NSStorageRead(list, msgId);
-
-    if (it)
-    {
-        NS_LOG(DEBUG, "Update message status.");
-        pthread_mutex_lock(mutex);
-        NSStoreMessage * sMsgObj = (NSStoreMessage *) it->data;
-        if(sMsgObj->status == ((NSStoreMessage *)newObj->data)->status)
-        {
-            NS_LOG (DEBUG, "Already receive message");
-            pthread_mutex_unlock(mutex);
-            return NS_ERROR;
-        }
-
-        sMsgObj->status = ((NSStoreMessage *)newObj->data)->status;
-        pthread_mutex_unlock(mutex);
-        return NS_OK;
-    }
-
-    NS_LOG(DEBUG, "Add message at storage.");
-    NSStoreMessage * sMsgObj = (NSStoreMessage *) OICMalloc(sizeof(NSStoreMessage));
-    NS_VERIFY_NOT_NULL(sMsgObj, NS_ERROR);
-
-    NSCacheElement * obj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NS_ERROR, NSOICFree(sMsgObj));
-
-    sMsgObj->status = NS_SYNC_UNREAD;
-    sMsgObj->msg = (void *) NSCopyMessage(newMsgObj);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(sMsgObj->msg, NS_ERROR,
-          NSConsumerRemoveMessageStore(obj, sMsgObj));
-
-    obj->next = NULL;
-    obj->data = (NSCacheData *) sMsgObj;
-
-    pthread_mutex_lock(mutex);
-    if (!list->head)
-    {
-        list->head = obj;
-        list->tail = obj;
-        pthread_mutex_unlock(mutex);
-        return NS_OK;
-    }
-
-    (list->tail)->next = obj;
-    list->tail = obj;
-    pthread_mutex_unlock(mutex);
-
     return NS_OK;
 }
 
@@ -406,22 +328,7 @@ NSResult NSStorageDestroy(NSCacheList * list)
 
     NSCacheType type = list->cacheType;
 
-    if (type == NS_CONSUMER_CACHE_MESSAGE)
-    {
-        while (iter)
-        {
-            next = (NSCacheElement *) iter->next;
-
-            NSRemoveMessage(((NSStoreMessage *) iter->data)->msg);
-            NSOICFree(iter->data);
-            NSOICFree(iter);
-
-            iter = next;
-        }
-
-        NSOICFree(list);
-    }
-    else if (type == NS_CONSUMER_CACHE_PROVIDER)
+    if (type == NS_CONSUMER_CACHE_PROVIDER)
     {
         while (iter)
         {
@@ -446,20 +353,7 @@ bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id
     NS_VERIFY_NOT_NULL(data, false);
     NS_VERIFY_NOT_NULL(id, false);
 
-    if (type == NS_CONSUMER_CACHE_MESSAGE)
-    {
-        NSMessage * msg = ((NSStoreMessage *) data)->msg;
-
-        char msgId[NS_DEVICE_ID_LENGTH] = {0, };
-        snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)msg->messageId);
-        if (!strcmp(msgId, id))
-        {
-            return true;
-        }
-
-        return false;
-    }
-    else if (type == NS_CONSUMER_CACHE_PROVIDER)
+    if (type == NS_CONSUMER_CACHE_PROVIDER)
     {
         NSProvider_internal * prov = (NSProvider_internal *) data;
         if (!strcmp(prov->providerId, id))
