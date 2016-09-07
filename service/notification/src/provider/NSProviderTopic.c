@@ -73,6 +73,7 @@ NSResult NSAddTopics(const char * topicName)
     if(NSStorageWrite(registeredTopicList, element) != NS_OK)
     {
         NS_LOG(DEBUG, "fail to write cache");
+        return NS_ERROR;
     }
     NSSendTopicUpdation();
 
