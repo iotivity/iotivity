@@ -58,6 +58,7 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
+#include "cautilinterface.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -138,6 +139,9 @@ void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP_SCHEME[] = "coap+tcp:";
 static const char COAPS_TCP_SCHEME[] = "coaps+tcp:";
 static const char CORESPEC[] = "core";
+
+CAAdapterStateChangedCB g_adapterHandler = NULL;
+CAConnectionStateChangedCB g_connectionHandler = NULL;
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -412,6 +416,31 @@ static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo);
+
+/**
+ * default adapter state change callback method
+ *
+ * @param adapter   CA network adapter type.
+ * @param enabled   current adapter state.
+ */
+static void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled);
+
+/**
+ * default connection state change callback method
+ *
+ * @param info          CAEndpoint which has address, port and etc.
+ * @param isConnected   current connection state.
+ */
+static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected);
+
+/**
+ * Register network monitoring callback.
+ * Network status changes are delivered these callback.
+ * @param adapterHandler        Adapter state monitoring callback.
+ * @param connectionHandler     Connection state monitoring callback.
+ */
+static void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
+                                       CAConnectionStateChangedCB connectionHandler);
 
 //-----------------------------------------------------------------------------
 // Internal functions
@@ -2218,6 +2247,10 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     result = CAResultToOCResult(OCSelectNetwork());
+    VERIFY_SUCCESS(result, OC_STACK_OK);
+
+    result = CAResultToOCResult(CARegisterNetworkMonitorHandler(
+      OCDefaultAdapterStateChangedHandler, OCDefaultConnectionStateChangedHandler));
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     switch (myStackMode)
@@ -4962,3 +4995,30 @@ OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOptions, uin
     return OC_STACK_OK;
 }
 #endif
+
+void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled)
+{
+    OIC_LOG(DEBUG, TAG, "OCDefaultAdapterStateChangedHandler");
+    if (g_adapterHandler)
+    {
+        g_adapterHandler(adapter, enabled);
+    }
+}
+
+void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected)
+{
+    OIC_LOG(DEBUG, TAG, "OCDefaultConnectionStateChangedHandler");
+    if (g_connectionHandler)
+    {
+       g_connectionHandler(info, isConnected);
+    }
+}
+
+void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
+                                CAConnectionStateChangedCB connectionHandler)
+{
+    OIC_LOG(DEBUG, TAG, "OCSetNetworkMonitorHandler");
+    g_adapterHandler = adapterHandler;
+    g_connectionHandler = connectionHandler;
+}
+
