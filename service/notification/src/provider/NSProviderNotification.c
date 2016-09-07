@@ -114,7 +114,7 @@ NSResult NSSendNotification(NSMessage *msg)
         {
             if(subData->messageObId != 0)
             {
-                if(msg->topic)
+                if(msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
 
@@ -132,7 +132,7 @@ NSResult NSSendNotification(NSMessage *msg)
 #if(defined WITH_CLOUD && defined RD_CLIENT)
             if(subData->remote_messageObId != 0)
             {
-                if(msg->topic)
+                if(msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message via remote server: %s", msg->topic);
                     if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
