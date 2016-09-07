@@ -154,7 +154,7 @@ namespace OIC
                 while (iter)
                 {
                     NS_LOG_V(DEBUG, "Topic Name : %s", iter->topicName);
-                    NS_LOG_V(DEBUG, "Topic State : %d", iter->state);
+                    NS_LOG_V(DEBUG, "Topic State : %d", (int) iter->state);
                     iter = iter->next;
                 }
             }

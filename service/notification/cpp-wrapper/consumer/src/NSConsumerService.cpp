@@ -125,7 +125,7 @@ namespace OIC
 
             NSMessage *nsMessage = new NSMessage(message);
 
-            NS_LOG_V(DEBUG, "getAcceptedProviders Size : %d",
+            NS_LOG_V(DEBUG, "getAcceptedProviders Size : %d", (int)
                      NSConsumerService::getInstance()->getAcceptedProviders().size());
             for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
             {
@@ -217,6 +217,7 @@ namespace OIC
         NSResult NSConsumerService::enableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "enableRemoteService - IN");
+            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
