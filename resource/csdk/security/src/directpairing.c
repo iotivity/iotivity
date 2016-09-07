@@ -255,10 +255,12 @@ bool DPGenerateQuery(bool isSecure,
     {
 // @todo: Remove this ifdef. On Arduino, CT_ADAPTER_TCP resolves to the same value
 // as CT_ADAPTER_IP, resulting in a compiler error.
-#if (!defined(WITH_ARDUINO)) || defined(WITH_TCP)
+#ifdef WITH_TCP
+#ifndef WITH_ARDUINO
         case CT_ADAPTER_TCP:
             prefix = (isSecure == true) ? QPREFIX_COAPS_TCP : QPREFIX_COAP_TCP;
-#endif // (!defined(WITH_ARDUINO)) || defined(WITH_TCP)
+#endif
+#endif
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
