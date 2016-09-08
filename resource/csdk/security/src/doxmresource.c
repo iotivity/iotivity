@@ -50,8 +50,6 @@
 #include "credresource.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"
-#include "pmtypes.h"
-#include "provisioningdatabasemanager.h"
 
 #define TAG  "SRM-DOXM"
 
@@ -1224,36 +1222,9 @@ OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 
     //Check the device's OTM state
 
-#ifdef __WITH_DTLS__
-    //for PT.
-    if(true == gDoxm->owned &&
-       memcmp(gDoxm->deviceID.id, gDoxm->owner.id, sizeof(gDoxm->owner.id)) == 0)
-    {
-        OCUuidList_t* ownedDevices = NULL;
-        size_t* ownedDevNum = 0;
-
-        if(OC_STACK_OK == PDMGetOwnedDevices(&ownedDevices, &ownedDevNum))
-        {
-            OCUuidList_t* temp1 = NULL;
-            OCUuidList_t* temp2 = NULL;
-            LL_FOREACH_SAFE(ownedDevices, temp1, temp2)
-            {
-                LL_DELETE(ownedDevices, temp1);
-                OICFree(temp1);
-            }
-
-            if(0 != ownedDevNum)
-            {
-                OIC_LOG(ERROR, TAG, "This device has ownership for other device.");
-                OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");
-                return OC_STACK_ERROR;
-            }
-        }
-
-        isPT = true;
-    }
+#ifdef __WITH_DTLS__}
     //for normal device.
-    else if(true == gDoxm->owned)
+    if(true == gDoxm->owned)
     {
         OIC_LOG(ERROR, TAG, "This device owned by owner's device.");
         OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");

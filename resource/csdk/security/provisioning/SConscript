@@ -101,7 +101,8 @@ provisioning_src = [
 	'src/secureresourceprovider.c',
 	'src/ocprovisioningmanager.c',
 	'src/oxmjustworks.c',
-	'src/oxmrandompin.c' ]
+	'src/oxmrandompin.c',
+	'src/provisioningdatabasemanager.c' ]
 
 if target_os not in ['tizen', 'windows', 'msys_nt']:
 	provisioning_src = provisioning_src + [root_dir+'/extlibs/sqlite3/sqlite3.c' ]
