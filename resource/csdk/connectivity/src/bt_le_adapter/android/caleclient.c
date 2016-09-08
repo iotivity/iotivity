@@ -2236,6 +2236,8 @@ CAResult_t CALESetValueAndWriteCharacteristic(JNIEnv* env, jobject gatt)
     g_isSignalSetFlag = false;
     ca_mutex_unlock(g_threadWriteCharacteristicMutex);
 
+    CALEClientUpdateSendCnt(env);
+
     OIC_LOG(INFO, TAG, "writeCharacteristic success!!");
     return CA_STATUS_OK;
 }
@@ -4477,8 +4479,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
         g_isSignalSetFlag = true;
         ca_cond_signal(g_threadWriteCharacteristicCond);
         ca_mutex_unlock(g_threadWriteCharacteristicMutex);
-
-        CALEClientUpdateSendCnt(env);
     }
 
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
