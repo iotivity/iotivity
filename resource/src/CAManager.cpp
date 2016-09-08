@@ -28,6 +28,7 @@
 #include "OCApi.h"
 #include "CAManager.h"
 #include "cautilinterface.h"
+#include "casecurityinterface.h"
 
 using namespace OC;
 
@@ -115,3 +116,10 @@ uint16_t CAManager::getAssignedPortNumber(OCTransportAdapter adapter, OCTranspor
 {
     return CAGetAssignedPortNumber((CATransportAdapter_t) adapter, (CATransportFlags_t) flag);
 }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+OCStackResult CAManager::setCipherSuite(const uint16_t cipher, OCTransportAdapter adapter)
+{
+    CAResult_t ret = CASelectCipherSuite(cipher, (CATransportAdapter_t) adapter);
+    return convertCAResultToOCResult(ret);
+}
+#endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
