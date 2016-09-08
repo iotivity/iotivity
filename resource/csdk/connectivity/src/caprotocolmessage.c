@@ -50,17 +50,6 @@
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
 
-#ifdef WITH_CHPROXY
-static char g_chproxyUri[CA_MAX_URI_LENGTH];
-
-CAResult_t CASetProxyUri(const char *uri)
-{
-    VERIFY_NON_NULL(uri, TAG, "uri");
-    OICStrcpy(g_chproxyUri, sizeof (g_chproxyUri), uri);
-    return CA_STATUS_OK;
-}
-#endif
-
 CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                    CARequestInfo_t *outReqInfo)
 {
@@ -683,7 +672,7 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
             && COAP_OPTION_ACCEPT != opt_iter.type
             && COAP_OPTION_URI_HOST != opt_iter.type && COAP_OPTION_URI_PORT != opt_iter.type
             && COAP_OPTION_ETAG != opt_iter.type && COAP_OPTION_MAXAGE != opt_iter.type
-            && COAP_OPTION_PROXY_SCHEME != opt_iter.type)
+            && COAP_OPTION_PROXY_URI != opt_iter.type && COAP_OPTION_PROXY_SCHEME != opt_iter.type)
         {
             count++;
         }
@@ -763,9 +752,6 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     uint32_t optionLength = 0;
     bool isfirstsetflag = false;
     bool isQueryBeingProcessed = false;
-#ifdef WITH_CHPROXY
-    bool isProxyRequest = false;
-#endif
 
     while ((option = coap_option_next(&opt_iter)))
     {
@@ -886,6 +872,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                     COAP_OPTION_URI_HOST == opt_iter.type ||
                     COAP_OPTION_ETAG == opt_iter.type ||
                     COAP_OPTION_MAXAGE == opt_iter.type ||
+                    COAP_OPTION_PROXY_URI == opt_iter.type ||
                     COAP_OPTION_PROXY_SCHEME== opt_iter.type)
             {
                 OIC_LOG_V(INFO, TAG, "option[%d] has an unsupported format [%d]",
@@ -893,12 +880,6 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             }
             else
             {
-#ifdef WITH_CHPROXY
-                if (COAP_OPTION_PROXY_URI == opt_iter.type)
-                {
-                    isProxyRequest = true;
-                }
-#endif
                 if (idx < count)
                 {
                     if (bufLength <= sizeof(outInfo->options[0].optionData))
@@ -964,24 +945,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
-#ifdef WITH_CHPROXY
-    else if(isProxyRequest && g_chproxyUri[0] != '\0')
-    {
-       /*
-        *   A request for CoAP-HTTP Proxy will not have any uri element as per CoAP specs
-        *   and only COAP_OPTION_PROXY_URI will be present. Use preset proxy uri
-        *   for such requests.
-        */
-        outInfo->resourceUri = OICStrdup(g_chproxyUri);
-        if (!outInfo->resourceUri)
-        {
-            OIC_LOG(ERROR, TAG, "Out of memory");
-            OICFree(outInfo->options);
-            OICFree(outInfo->token);
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-    }
-#endif
+
     return CA_STATUS_OK;
 
 exit:

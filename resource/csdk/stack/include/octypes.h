@@ -329,12 +329,6 @@ extern "C" {
 /** RD Discovery bias factor type. */
 #define OC_RSRVD_RD_DISCOVERY_SEL        "sel"
 
-/** Resource URI used to discover Proxy */
-#define OC_RSRVD_PROXY_URI "/oic/chp"
-
-/** Resource URI used to discover Proxy */
-#define OC_RSRVD_PROXY_OPTION_ID 35
-
 /** Base URI. */
 #define OC_RSRVD_BASE_URI                "baseURI"
 
@@ -706,7 +700,6 @@ typedef enum
 typedef enum
 {
     OC_FORMAT_CBOR,
-    OC_FORMAT_JSON,
     OC_FORMAT_UNDEFINED,
     OC_FORMAT_UNSUPPORTED,
 } OCPayloadFormat;
@@ -967,25 +960,21 @@ typedef enum
 {
     OC_EH_OK = 0,
     OC_EH_ERROR,
-    OC_EH_SLOW,
-    OC_EH_RESOURCE_CREATED = 201,
-    OC_EH_RESOURCE_DELETED = 202,
-    OC_EH_VALID = 203,
-    OC_EH_CHANGED = 204,
-    OC_EH_CONTENT = 205,
-    OC_EH_BAD_REQ = 400,
-    OC_EH_UNAUTHORIZED_REQ = 401,
-    OC_EH_BAD_OPT = 402,
-    OC_EH_FORBIDDEN = 403,
-    OC_EH_RESOURCE_NOT_FOUND = 404,
-    OC_EH_METHOD_NOT_ALLOWED = 405,
-    OC_EH_NOT_ACCEPTABLE = 406,
-    OC_EH_TOO_LARGE = 413,
-    OC_EH_UNSUPPORTED_MEDIA_TYPE = 415,
-    OC_EH_INTERNAL_SERVER_ERROR = 500,
-    OC_EH_BAD_GATEWAY = 502,
-    OC_EH_SERVICE_UNAVAILABLE = 503,
-    OC_EH_RETRANSMIT_TIMEOUT = 504
+    OC_EH_RESOURCE_CREATED, // 2.01
+    OC_EH_RESOURCE_DELETED, // 2.02
+    OC_EH_SLOW, // 2.05
+    OC_EH_FORBIDDEN, // 4.03
+    OC_EH_RESOURCE_NOT_FOUND, // 4.04
+    OC_EH_VALID,   // 2.03
+    OC_EH_CHANGED, // 2.04
+    OC_EH_CONTENT, // 2.05
+    OC_EH_BAD_REQ, // 4.00
+    OC_EH_UNAUTHORIZED_REQ, // 4.01
+    OC_EH_BAD_OPT, // 4.02
+    OC_EH_METHOD_NOT_ALLOWED, // 4.05
+    OC_EH_NOT_ACCEPTABLE, // 4.06
+    OC_EH_INTERNAL_SERVER_ERROR, // 5.00
+    OC_EH_RETRANSMIT_TIMEOUT // 5.04
 } OCEntityHandlerResult;
 
 /**
@@ -1127,7 +1116,7 @@ typedef enum
     /** The payload is an OCPresencePayload */
     PAYLOAD_TYPE_PRESENCE,
     /** The payload is an OCRDPayload */
-    PAYLOAD_TYPE_RD,
+    PAYLOAD_TYPE_RD
 } OCPayloadType;
 
 /**

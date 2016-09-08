@@ -231,16 +231,7 @@ CAResult_t CAHandleRequestResponse();
 CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
 #endif
 
-#ifdef WITH_CHPROXY
-/**
- * This function sets uri being used for proxy.
- *
- * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
- *
- * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
- */
-CAResult_t CASetProxyUri(const char *uri);
-#endif
+
 
 #ifdef __cplusplus
 } /* extern "C" */

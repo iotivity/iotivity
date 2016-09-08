@@ -55,10 +55,6 @@ if target_os not in ['arduino','darwin', 'ios', 'windows']:
     #if env.get('WITH_RD') == '1':
         #SConscript('resource-directory/SConscript')
 
-    # Build coap-http-proxy project
-    if target_os in ['linux'] and env.get('WITH_PROXY', False):
-        SConscript('coap-http-proxy/SConscript')
-
 # Build EasySetup module
 if target_os in ['arduino', 'android', 'linux','tizen']:
     SConscript('easy-setup/SConscript')
