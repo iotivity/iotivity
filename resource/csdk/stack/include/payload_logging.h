@@ -145,27 +145,36 @@ INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
     while(rep)
     {
         OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
-        OIC_LOG_V(level, PL_TAG, "\tURI:%s", rep->uri);
-        OIC_LOG(level, PL_TAG, "\tResource Types:");
-        OCStringLL* strll =  rep->types;
-        while(strll)
+        if(rep->uri)
         {
-            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
-            strll = strll->next;
+            OIC_LOG_V(level, PL_TAG, "\tURI:%s", rep->uri);
         }
-        OIC_LOG(level, PL_TAG, "\tInterfaces:");
-        strll =  rep->interfaces;
-        while(strll)
+
+        OCStringLL* strll =  rep->types;
+        if(strll)
         {
-            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
-            strll = strll->next;
+            OIC_LOG(level, PL_TAG, "\tResource Types:");
+            while(strll)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+                strll = strll->next;
+            }
+        }
+
+        strll =  rep->interfaces;
+        if(strll)
+        {
+            OIC_LOG(level, PL_TAG, "\tInterfaces:");
+            while(strll)
+            {
+                OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+                strll = strll->next;
+            }
         }
 
         // TODO Finish Logging: Values
         OCRepPayloadValue* val = rep->values;
-
         OIC_LOG(level, PL_TAG, "\tValues:");
-
         while(val)
         {
             switch(val->type)
@@ -190,9 +199,8 @@ INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                     OIC_LOG_BUFFER(level, PL_TAG, val->ocByteStr.bytes, val->ocByteStr.len);
                     break;
                 case OCREP_PROP_OBJECT:
-                    // Note: Only prints the URI (if available), to print further, you'll
-                    // need to dig into the object better!
                     OIC_LOG_V(level, PL_TAG, "\t\t%s(OCRep):%s", val->name, val->obj->uri);
+                    OCPayloadLogRep(level, val->obj);
                     break;
                 case OCREP_PROP_ARRAY:
                     switch(val->arr.type)
@@ -228,11 +236,22 @@ INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_OBJECT:
+                        {
                             OIC_LOG_V(level, PL_TAG, "\t\t%s(OCRep array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
+
+                            size_t i = 0;
+                            if (val->arr.dimensions[0] > 0)
+                            {
+                                for (i = 0 ; i < val->arr.dimensions[0] ; i++)
+                                {
+                                    OCPayloadLogRep(level, val->arr.objArray[i]);
+                                }
+                            }
                             break;
+                        }
                         default:
                             OIC_LOG_V(ERROR, PL_TAG, "\t\t%s <-- Unknown/unsupported array type!",
                                     val->name);
@@ -401,7 +420,7 @@ INLINE_API void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
     {
         // Add a zero-character string terminator.
         char *securityData = (char *)OICMalloc(payloadSize + 1);
-        
+
         if (securityData)
         {
             memcpy(securityData, payload->securityData, payloadSize);

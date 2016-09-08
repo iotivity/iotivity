@@ -37,6 +37,9 @@ if routing == 'GW':
 elif routing == 'EP':
 	env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
 
+if env.get('WITH_PROXY'):
+	env.AppendUnique(CPPDEFINES = ['WITH_CHPROXY'])
+	
 env.Append(LIBS=[
   'm', 'pthread', 'rt', 'dl', 'stdc++', 'gobject-2.0', 'gio-2.0', 'glib-2.0', 'capi-network-wifi', 'dlog', 'capi-network-bluetooth', 'connectivity_abstraction', 'coap', 'octbstack', 'ocsrm', 'c_common'
 ])

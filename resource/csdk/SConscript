@@ -77,6 +77,9 @@ if liboctbstack_env.get('ROUTING') == 'GW':
 elif liboctbstack_env.get('ROUTING') == 'EP':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
 
+if liboctbstack_env.get('WITH_PROXY'):
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['WITH_CHPROXY'])
+
 if target_os not in ['windows']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 

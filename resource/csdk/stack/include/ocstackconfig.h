@@ -63,12 +63,20 @@
  *  Maximum number of vendor specific header options an application can set or receive
  *  in PDU
  */
-#define MAX_HEADER_OPTIONS (100)
+#ifdef ARDUINO
+#define MAX_HEADER_OPTIONS (2)
+#else
+#define MAX_HEADER_OPTIONS (50)
+#endif
 
 /**
  *  Maximum Length of the vendor specific header option
  */
+#ifdef ARDUINO
 #define MAX_HEADER_OPTION_DATA_LENGTH (20)
+#else
+#define MAX_HEADER_OPTION_DATA_LENGTH (1024)
+#endif
 
 /**
  * Sets the time to live (TTL) for response callback(s).
