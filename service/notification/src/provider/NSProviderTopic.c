@@ -367,6 +367,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             NSStorageWrite(consumerTopicList, newObj);
         }
     }
+    NSSendTopicUpdationToConsumer(consumerId);
 
     NS_LOG(DEBUG, "NSPostConsumerTopics() - OUT");
     return NS_OK;
