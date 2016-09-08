@@ -255,6 +255,11 @@ Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo(JNIEnv *en
                                                                       jstring jaddress)
 {
     LOGI("CaManager_setAutoConnectionDeviceInfo");
+    if (!jaddress)
+    {
+        LOGE("jaddress is null");
+        return;
+    }
 
     const char* address = (*env)->GetStringUTFChars(env, jaddress, NULL);
     if (!address)
@@ -274,6 +279,11 @@ Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *
                                                                         jstring jaddress)
 {
     LOGI("CaManager_unsetAutoConnectionDeviceInfo");
+    if (!jaddress)
+    {
+        LOGE("jaddress is null");
+        return;
+    }
 
     const char* address = (*env)->GetStringUTFChars(env, jaddress, NULL);
     if (!address)
