@@ -280,7 +280,7 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
 
 static void inputPinCB(char* pin, size_t len)
 {
-    if(!pin || OXM_RANDOM_PIN_SIZE>=len)
+    if(!pin || OXM_RANDOM_PIN_MIN_SIZE > len)
     {
         OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
         return;
@@ -289,7 +289,7 @@ static void inputPinCB(char* pin, size_t len)
     printf("   > INPUT PIN: ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", pin);
+        ret = scanf("%32s", pin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }

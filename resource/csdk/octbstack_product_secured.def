@@ -35,3 +35,4 @@ OCUnlinkDevices
 
 SetGeneratePinCB
 SetInputPinCB
+SetRandomPinPolicy

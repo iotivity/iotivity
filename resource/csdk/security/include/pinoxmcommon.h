@@ -28,9 +28,25 @@
  extern "C" {
 #endif // __cplusplus
 
-#define OXM_RANDOM_PIN_SIZE (8)
-#define OXM_PRECONFIG_PIN_SIZE (OXM_RANDOM_PIN_SIZE)
+#define OXM_RANDOM_PIN_DEFAULT_SIZE (8)
+#define OXM_RANDOM_PIN_DEFAULT_PIN_TYPE (NUM_PIN | LOWERCASE_CHAR_PIN | UPPERCASE_CHAR_PIN)
+#define OXM_RANDOM_PIN_MIN_SIZE (4)
+#define OXM_RANDOM_PIN_MAX_SIZE (32)
+#define OXM_PRECONFIG_PIN_MAX_SIZE (OXM_RANDOM_PIN_MAX_SIZE)
 
+/** Number of PIN type */
+#define OXM_PIN_TYPE_COUNT 3
+
+/**
+ * PIN type definition.
+ * This type supports multiple bit set.
+ * e.g.) NUM_PIN | UPPERCASE_CHAR_PIN
+ */
+typedef enum OicSecPinType{
+    NUM_PIN            = (0x1 << 0),    //Numeric PIN
+    UPPERCASE_CHAR_PIN = (0x1 << 1),    //uppercase character PIN
+    LOWERCASE_CHAR_PIN = (0x1 << 2)     //lowercase character PIN
+}OicSecPinType_t;
 
 /**
  * Function pointer to print pin code.
@@ -84,7 +100,7 @@ void UnsetGeneratePinCB();
  * @param pinBuffer is the reference to the buffer to store the generated PIN data.
  * @param bufferSize is the size of buffer.
  *
- * @return ::OC_STACK_SUCCESS in case of success or other value in case of error.
+ * @return ::OC_STACK_OK in case of success or other value in case of error.
  */
 OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
 
@@ -94,10 +110,9 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
  * @param[in,out] pinBuffer is the reference to the buffer to store the inputed PIN data.
  * @param[in] bufferSize is the size of buffer.
  *
- * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
+ * @return ::OC_STACK_OK in case of success or other value in ccase of error.
  */
 OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
-
 
 #ifdef _ENABLE_MULTIPLE_OWNER_
 /**
@@ -120,6 +135,16 @@ OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength);
  */
 OCStackResult GetPreconfigPin(char* pinBuffer, size_t bufferSize);
 #endif
+
+/**
+ * Function to setting the policy for random PIN generation
+ *
+ * @param[in] pinSize Byte length of random PIN
+ * @param[in] pinType Type of random PIN (ref OicSecPinType)
+ *
+ * @return ::OC_STACK_OK in case of success or other value in case of error.
+ */
+OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
 
 #ifdef __WITH_DTLS__
 
