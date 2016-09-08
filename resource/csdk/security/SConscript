@@ -59,7 +59,7 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		])
 
 if target_os not in ['arduino', 'windows']:
-	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
+	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX', '_GNU_SOURCE'])
 	libocsrm_env.AppendUnique(CFLAGS = ['-std=c99', '-Wall'])
 
 libocsrm_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
