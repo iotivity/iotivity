@@ -33,7 +33,7 @@
 #include <logger.h>
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "oicresourcedirectory.h"
+#include "rd_client.h"
 
 #include "OCApi.h"
 #include "OCPlatform.h"

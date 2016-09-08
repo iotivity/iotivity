@@ -34,7 +34,7 @@
 #include <logger.h>
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "oicresourcedirectory.h"
+#include "rd_client.h"
 #include "OCApi.h"
 #include "OCPlatform.h"
 #include "OCPlatform_impl.h"
@@ -81,7 +81,7 @@ void foundDevice(shared_ptr< OC::OCResource > resource);
 void onObserveDevPresence(const HeaderOptions headerOptions, const OCRepresentation &rep,
         const int &eCode, const int &sequenceNumber);
 
-void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
+void onObserveGroup(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber);
 void onObserveInvitation(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber);
@@ -89,7 +89,7 @@ void onSendInvitation(const HeaderOptions &, const OCRepresentation &rep, const 
 void onCancelInvitation(const HeaderOptions &headerOptions, const int eCode);
 void onDeleteInvitation(const HeaderOptions &headerOptions, const int eCode);
 
-
+std::shared_ptr<OC::OCResource>  getFoundResource();
 
 FILE *controleeOpen(const char * /*path*/, const char *mode);
 FILE *controllerOpen(const char * /*path*/, const char *mode);
@@ -145,6 +145,12 @@ bool cancelInvitation(OCAccountManager::Ptr accountMgr, const std::string& group
         DeleteCallback cloudConnectHandler);
 bool deleteInvitation(OCAccountManager::Ptr accountMgr, const std::string& groupId,
         DeleteCallback cloudConnectHandler);
+void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
+        const int &sequenceNumber);
+void onDelete(const HeaderOptions &headerOptions, const int eCode);
+void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode);
+void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode);
+void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode);
 
 
 #endif

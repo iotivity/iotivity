@@ -27,6 +27,7 @@ string g_authCode = "";
 string g_groupId = "";
 int g_userInput = -1;
 int g_apptype = NONE;
+bool g_value = false;
 string g_devIDcontrolee = "";
 string g_authTokenControlee = "";
 string g_refreshAuthTokenControlee = "";
@@ -36,8 +37,9 @@ string g_refreshAuthTokenController = "";
 OCAccountManager::Ptr g_accountMgrControlee = nullptr;
 OCAccountManager::Ptr g_accountMgrController = nullptr;
 OCPlatform::OCPresenceHandle g_presenceHandle = nullptr;
-std::vector< std::string > deviceIdAddded;
-std::vector< std::string > deviceIdRemoving;
+QualityOfService g_qos = QualityOfService::HighQos;
+std::vector< std::string > g_deviceIdAddded;
+std::vector< std::string > g_deviceIdRemoving;
 
 /*
  * UI Related
@@ -61,6 +63,14 @@ typedef enum
     ADD_DEVICE_TO_GROUP,
     DELETE_DEVICE_FROM_GROUP,
 
+    OBSERVE_GROUP,
+    CANCEL_OBSERVE_GROUP,
+    OBSERVE_INVITATION,
+    CANCEL_OBSERVE_INVITATION,
+    SEND_INVITATION,
+    CANCEL_INVITATION,
+    DELETE_INVITATION,
+
     PUBLISH_RESOURCE_TO_RD,
     DELETE_RESOURCE_FROM_RD,
     TOGGLE_RESOURCE_ATTRIBUTE,
@@ -70,14 +80,12 @@ typedef enum
     SIGN_IN_CONTROLLER,
     SIGN_OUT_CONTROLLER,
     FIND_RESOURCE,
-
-    OBSERVE_GROUP,
-    CANCEL_OBSERVE_GROUP,
-    OBSERVE_INVITATION,
-    CANCEL_OBSERVE_INVITATION,
-    SEND_INVITATION,
-    CANCEL_INVITAION,
-    DELETE_INVITATION,
+    RETRIEVE_RESOURCE,
+    PARTIAL_UPDATE_RESOURCE,
+    COMPLETE_UPDATE_RESOURCE,
+    DELETE_RESOURCE,
+    OBSERVE_RESOURCE,
+    CANCEL_OBSERVE_RESOURCE,
 
     SUBCRIBE_DEVICE_PRESENCE = 301,
     UNSUBCRIBE_DEVICE_PRESENCE
@@ -105,6 +113,14 @@ static void printMenu(void)
     cout << ADD_DEVICE_TO_GROUP << ". Add Device to Group" << endl;
     cout << DELETE_DEVICE_FROM_GROUP << ". Delete Device From Group" << endl;
 
+    cout << OBSERVE_GROUP << ". Observe Group" << endl;
+    cout << CANCEL_OBSERVE_GROUP << ". Cancel Observe Group" << endl;
+    cout << OBSERVE_INVITATION << ". Observe Invitation" << endl;
+    cout << CANCEL_OBSERVE_INVITATION << ". Cancel Observe Invitation" << endl;
+    cout << SEND_INVITATION << ". Send Invitation" << endl;
+    cout << CANCEL_INVITATION << ". Cancel Invitation" << endl;
+    cout << DELETE_INVITATION << ". Delete Invitation" << endl;
+
     cout << PUBLISH_RESOURCE_TO_RD << ". Publish Resource" << endl;
     cout << DELETE_RESOURCE_FROM_RD << ". Delete Resource" << endl;
     cout << TOGGLE_RESOURCE_ATTRIBUTE << ". Toggle Resource Attribute" << endl;
@@ -115,14 +131,12 @@ static void printMenu(void)
     cout << SIGN_IN_CONTROLLER << ". Sign In With Controller" << endl;
     cout << SIGN_OUT_CONTROLLER << ". Sign Out from Cloud" << endl;
     cout << FIND_RESOURCE << ". Find  Resource" << endl;
-
-    cout << OBSERVE_GROUP << ". Observe Group" << endl;
-    cout << CANCEL_OBSERVE_GROUP << ". Cancel Observe Group" << endl;
-    cout << OBSERVE_INVITATION << ". Observe Invitation" << endl;
-    cout << CANCEL_OBSERVE_INVITATION << ". Cancel Observe Invitation" << endl;
-    cout << SEND_INVITATION << ". Send Invitation" << endl;
-    cout << CANCEL_INVITAION << ". Cancel Invitation" << endl;
-    cout << DELETE_INVITATION << ". Delete Invitation" << endl;
+    cout << RETRIEVE_RESOURCE << ". Send GET Request to resource" << endl;
+    cout << PARTIAL_UPDATE_RESOURCE << ". Send Partial Update Request to resource" << endl;
+    cout << COMPLETE_UPDATE_RESOURCE << ". Send Complete Update Request to resource" << endl;
+    cout << DELETE_RESOURCE << ". Send DELETE Request to resource" << endl;
+    cout << OBSERVE_RESOURCE << ". Send OBSERVE Request to resource" << endl;
+    cout << CANCEL_OBSERVE_RESOURCE << ". OBSERVE Cancel Request to resource" << endl;
 
     cout << "====================Subscribe Features===========================" << endl;
     cout << SUBCRIBE_DEVICE_PRESENCE << ". Subscribe Device Presence" << endl;
@@ -149,6 +163,7 @@ int checkAppStatus(int expectedType)
 
 void doAction(int userInput)
 {
+    OCRepresentation rep;
     switch (userInput)
     {
         case START_CONTROLEE:
@@ -230,17 +245,60 @@ void doAction(int userInput)
             cin >> g_devIDcontrolee;
             cout << "Enter Group ID : ";
             cin >> g_groupId;
-            deviceIdAddded.push_back(g_devIDcontrolee);
-            addDeviceToGroup(g_accountMgrControlee, g_groupId, deviceIdAddded, onAddDeviceToGroup);
+            g_deviceIdAddded.push_back(g_devIDcontrolee);
+            addDeviceToGroup(g_accountMgrControlee, g_groupId, g_deviceIdAddded, onAddDeviceToGroup);
             break;
+
         case DELETE_DEVICE_FROM_GROUP:
             cout << "Enter Device ID : ";
             cin >> g_devIDcontrolee;
             cout << "Enter Group ID : ";
             cin >> g_groupId;
-            deviceIdRemoving.push_back(g_devIDcontrolee);
-            deleteDeviceFromGroup(g_accountMgrControlee, g_groupId, deviceIdRemoving,
+            g_deviceIdRemoving.push_back(g_devIDcontrolee);
+            deleteDeviceFromGroup(g_accountMgrControlee, g_groupId, g_deviceIdRemoving,
                     onDeleteDeviceFromGroup);
+            break;
+
+        case OBSERVE_GROUP:
+            cout << "Enter Group ID : ";
+            cin >> g_groupId;
+            observeGroup(g_accountMgrControlee, g_groupId, onObserveGroup);
+            break;
+        case CANCEL_OBSERVE_GROUP:
+            cout << "Enter Group ID : ";
+            cin >> g_groupId;
+            cancelObserveGroup(g_accountMgrControlee, g_groupId);
+            break;
+        case OBSERVE_INVITATION:
+            observeInvitation(g_accountMgrControlee, onObserveInvitation);
+            break;
+        case CANCEL_OBSERVE_INVITATION:
+            cancelObserveInvitation(g_accountMgrControlee);
+            break;
+        case SEND_INVITATION:
+            cout << "Enter Group ID : ";
+            cin >> g_groupId;
+            cout << "Enter Device ID : ";
+            cin >> g_devIDcontrolee;
+            sendInvitation(g_accountMgrControlee, g_groupId, g_devIDcontrolee, onSendInvitation);
+            break;
+        case CANCEL_INVITATION:
+            cout << "Enter Group ID : ";
+            cin >> g_groupId;
+            cout << "Enter Device ID : ";
+            cin >> g_devIDcontrolee;
+            cancelInvitation(g_accountMgrControlee, g_groupId, g_devIDcontrolee, onCancelInvitation);
+            break;
+        case DELETE_INVITATION:
+            cout << "Enter Group ID : ";
+            cin >> g_groupId;
+            deleteInvitation(g_accountMgrControlee, g_groupId, onDeleteInvitation);
+            break;
+        case SUBCRIBE_DEVICE_PRESENCE:
+            cout << "Feature Not Implemented" << endl;
+            break;
+        case UNSUBCRIBE_DEVICE_PRESENCE:
+            cout << "Feature Not Implemented" << endl;
             break;
 
         case PUBLISH_RESOURCE_TO_RD:
@@ -325,33 +383,79 @@ void doAction(int userInput)
             findResource(HOST_ADDRESS, QUERY_FOR_SWITCH,
                     static_cast< OCConnectivityType >(CT_ADAPTER_TCP | CT_IP_USE_V4), foundDevice);
             break;
-        case OBSERVE_GROUP:
-            cout << "Feature Not Implemented" << endl;
+
+        case RETRIEVE_RESOURCE:
+            if (getFoundResource() )
+            {
+                QueryParamsMap query;
+                getFoundResource()->get(query, onGet, g_qos);
+            }
+            else
+            {
+                cout << "No Resource found yet" << endl;
+            }
             break;
-        case CANCEL_OBSERVE_GROUP:
-            cout << "Feature Not Implemented" << endl;
+        case PARTIAL_UPDATE_RESOURCE:
+            if (getFoundResource() )
+            {
+                rep.setValue("value", !g_value);
+
+                cout << "Sending Partial Update Message(POST)..." << endl;
+                QueryParamsMap query;
+                getFoundResource()->post(rep, query, &onPost, g_qos);
+            }
+            else
+            {
+                cout << "No Resource found yet" << endl;
+            }
             break;
-        case OBSERVE_INVITATION:
-            cout << "Feature Not Implemented" << endl;
+        case COMPLETE_UPDATE_RESOURCE:
+            if (getFoundResource() )
+            {
+                rep.setValue("value", !g_value);
+                rep.setValue("if", DEFAULT_INTERFACE);
+                rep.setValue("rt", SWITCH_RES_TYPE);
+
+                cout << "Sending Partial Update Message(POST)..." << endl;
+                QueryParamsMap query;
+                getFoundResource()->put(rep, query, &onPut, g_qos);
+            }
+            else
+            {
+                cout << "No Resource found yet" << endl;
+            }
             break;
-        case CANCEL_OBSERVE_INVITATION:
-            cout << "Feature Not Implemented" << endl;
+        case DELETE_RESOURCE:
+            if (getFoundResource() )
+            {
+                getFoundResource()->deleteResource(onDelete, g_qos);
+            }
+            else
+            {
+                cout << "No Resource found yet" << endl;
+            }
             break;
-        case SEND_INVITATION:
-            cout << "Feature Not Implemented" << endl;
+        case OBSERVE_RESOURCE:
+            if (getFoundResource() )
+            {
+                getFoundResource()->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, g_qos);
+            }
+            else
+            {
+                cout << "No Resource found yet" << endl;
+            }
             break;
-        case CANCEL_INVITAION:
-            cout << "Feature Not Implemented" << endl;
+        case CANCEL_OBSERVE_RESOURCE:
+            if (getFoundResource() )
+            {
+                getFoundResource()->cancelObserve(g_qos);
+            }
+            else
+            {
+                cout << "No Resource found yet" << endl;
+            }
             break;
-        case DELETE_INVITATION:
-            cout << "Feature Not Implemented" << endl;
-            break;
-        case SUBCRIBE_DEVICE_PRESENCE:
-            cout << "Feature Not Implemented" << endl;
-            break;
-        case UNSUBCRIBE_DEVICE_PRESENCE:
-            cout << "Feature Not Implemented" << endl;
-            break;
+
         default:
             cout << "Wrong Input, Please provide Input Again" << endl;
             return;

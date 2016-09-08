@@ -75,7 +75,8 @@ IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/extlibs/cjson',
                             IOTIVITY_ROOT + '/extlibs/base64',
                             IOTIVITY_ROOT + '/extlibs/tinycbor/tinycbor/src',
-                            IOTIVITY_ROOT + '/resource/oc_logger/include'
+                            IOTIVITY_ROOT + '/resource/oc_logger/include',
+                            IOTIVITY_ROOT + '/resource/csdk/resource-directory/include'
                             ]
    
 SECTEST_INCLUDE_PATH = [PROJECT_HOME + '/include',

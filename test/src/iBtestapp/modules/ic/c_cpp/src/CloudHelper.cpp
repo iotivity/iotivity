@@ -26,6 +26,7 @@ std::string g_uid = "";
 std::string g_accesstoken = "";
 std::string g_refreshToken = "";
 std::string g_groupID = "";
+std::shared_ptr<OC::OCResource> g_foundFoundResource;
 
 int waitCallbackRet()
 {
@@ -51,55 +52,26 @@ int waitCallbackRet()
     return CALLBACK_NOT_INVOKED;
 }
 
-void printRepresentation(OCRepPayloadValue *value)
+void printRepresentation(OCRepresentation rep)
 {
-    while (value)
+    for (auto itr = rep.begin(); itr != rep.end(); ++itr)
     {
-        std::cout << "Key: " << value->name;
-        switch (value->type)
+        cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
+
+        if (itr->attrname().compare("accesstoken") == 0)
         {
-            case OCREP_PROP_NULL:
-                std::cout << " Value: None" << std::endl;
-                break;
-            case OCREP_PROP_INT:
-                std::cout << " Value: " << value->i << std::endl;
-                break;
-            case OCREP_PROP_DOUBLE:
-                std::cout << " Value: " << value->d << std::endl;
-                break;
-            case OCREP_PROP_BOOL:
-                std::cout << " Value: " << value->b << std::endl;
-                break;
-            case OCREP_PROP_STRING:
-                std::cout << " Value: " << value->str << std::endl;
-                break;
-            case OCREP_PROP_BYTE_STRING:
-                std::cout << " Value: Byte String" << std::endl;
-                break;
-            case OCREP_PROP_OBJECT:
-                std::cout << " Value: Object" << std::endl;
-                break;
-            case OCREP_PROP_ARRAY:
-                std::cout << " Value: Array" << std::endl;
-                break;
+            g_accesstoken = itr->getValueToString();
         }
 
-        if (strcmp(value->name, "accesstoken") == 0)
+        if (itr->attrname().compare("uid") == 0)
         {
-            g_accesstoken = value->str;
+            g_uid = itr->getValueToString();
         }
 
-        if (strcmp(value->name, "uid") == 0)
+        if (itr->attrname().compare("gid") == 0)
         {
-            g_uid = value->str;
+            g_groupID = itr->getValueToString();
         }
-
-        if (strcmp(value->name, "gid") == 0)
-        {
-            g_groupID = value->str;
-        }
-
-        value = value->next;
     }
 }
 
@@ -108,7 +80,7 @@ void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const 
     IOTIVITYTEST_LOG(DEBUG, "Auth response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -119,7 +91,7 @@ void onRefreshTokenCB(const HeaderOptions &, const OCRepresentation &rep, const 
     IOTIVITYTEST_LOG(DEBUG, "Refresh Token response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -130,7 +102,7 @@ void onSearchUser(const HeaderOptions &, const OCRepresentation &rep, const int 
     IOTIVITYTEST_LOG(DEBUG, "Search User CB response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -141,7 +113,7 @@ void onCreateGroup(const HeaderOptions &, const OCRepresentation &rep, const int
     IOTIVITYTEST_LOG(DEBUG, "Create Group CB response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -152,7 +124,7 @@ void onJoinGroup(const HeaderOptions &, const OCRepresentation &rep, const int e
     IOTIVITYTEST_LOG(DEBUG, "Join Group CB response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -163,7 +135,7 @@ void onGetGroupList(const HeaderOptions &, const OCRepresentation &rep, const in
     IOTIVITYTEST_LOG(DEBUG, "Get Group List CB response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -174,7 +146,7 @@ void onGetGroupInfo(const HeaderOptions &, const OCRepresentation &rep, const in
     IOTIVITYTEST_LOG(DEBUG, "Get Group Info CB response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -185,7 +157,7 @@ void onAddDeviceToGroup(const HeaderOptions &, const OCRepresentation &rep, cons
     IOTIVITYTEST_LOG(DEBUG, "Add Device to Group CB response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -226,13 +198,20 @@ void foundDevice(shared_ptr< OC::OCResource > resource)
     IOTIVITYTEST_LOG(DEBUG, "foundDevice CB Invoked");
     vector< string > rt = resource->getResourceTypes();
 
-    cout << "Device found: " << resource->uri() << endl;
-    cout << "DI: " << resource->sid() << endl;
+    cout << "Resource found with URI: " << resource->uri() << endl;
+    cout << "Resource DI: " << resource->sid() << endl;
+    cout << "Resource Host: " << resource->host() << endl;
 
-    for (auto it = rt.begin(); it != rt.end(); it++)
-    {
-        cout << "RT: " << *it << endl;
+    if (resource->uri().compare(SWITCH_RES_URI) == 0){
+        IOTIVITYTEST_LOG(DEBUG, "Found desired resource");
+        g_foundFoundResource = resource;
+
+        for (auto resourceType : rt)
+        {
+            cout << "RT of desired resource: " << resourceType << endl;
+        }
     }
+
     g_isCbInvoked = CALLBACK_INVOKED;
 }
 
@@ -244,14 +223,14 @@ void onObserveDevPresence(const HeaderOptions headerOptions, const OCRepresentat
 
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
 
 }
 
-void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
+void onObserveGroup(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber)
 {
     IOTIVITYTEST_LOG(DEBUG, "onObserve CB response received code: %d", eCode);
@@ -259,7 +238,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, c
 
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -272,7 +251,7 @@ void onObserveInvitation(const HeaderOptions headerOptions, const OCRepresentati
 
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -282,7 +261,7 @@ void onSendInvitation(const HeaderOptions &, const OCRepresentation &rep, const 
     IOTIVITYTEST_LOG(DEBUG, "onSendInvitation CB response received code: %d", ecode);
     if (rep.getPayload() != NULL)
     {
-        printRepresentation(rep.getPayload()->values);
+        printRepresentation(rep);
     }
 
     g_isCbInvoked = CALLBACK_INVOKED;
@@ -778,4 +757,106 @@ FILE *controllerOpen(const char * /*path*/, const char *mode)
 FILE *controleeOpen(const char * /*path*/, const char *mode)
 {
     return fopen(CONTROLEE_DAT, mode);
+}
+
+void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
+{
+    if (eCode == 0)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Response: GET request was successful");
+
+        vector < string > interfacelist = rep.getResourceInterfaces();
+
+        bool isCollection = false;
+        for (auto interface = interfacelist.begin(); interface != interfacelist.end(); interface++)
+        {
+            if (((*interface).compare(GROUP_INTERFACE) == 0)
+                    || ((*interface).compare(BATCH_INTERFACE) == 0))
+            {
+                isCollection = true;
+                break;
+            }
+        }
+
+        IOTIVITYTEST_LOG(DEBUG, "The GET Response has the following representation:" );
+        printRepresentation(rep);
+
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "onGET Response error: %d",  eCode);
+    }
+}
+
+// callback handler on PUT request
+void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
+{
+    if (eCode == 0 || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Response: PUT request was successful");
+        IOTIVITYTEST_LOG(DEBUG, "The PUT response has the following representation:");
+        printRepresentation(rep);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "onPUT Response error: %d", eCode);
+    }
+}
+
+// callback handler on POST request
+void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
+{
+    if (eCode == 0 || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Response: POST request was successful");
+        IOTIVITYTEST_LOG(DEBUG, "The POST Response has the following representation:" );
+        printRepresentation(rep);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "onPOST Response error: %d", eCode);
+    }
+
+}
+
+// callback handler on DELETE request
+void onDelete(const HeaderOptions &headerOptions, const int eCode)
+{
+    if (eCode == 0)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Response: DELETE request was successful" );
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "onDELETE Response error: ", eCode);
+    }
+}
+
+void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
+        const int &sequenceNumber)
+{
+    try
+    {
+        if (eCode == 0 || eCode == OC_STACK_OK)
+        {
+            IOTIVITYTEST_LOG(DEBUG, "OBSERVE RESULT:");
+            IOTIVITYTEST_LOG(DEBUG, "\tSequenceNumber: %d", sequenceNumber );
+            printRepresentation(rep);
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "Observe Response/Notification Error: ", eCode);
+        }
+    }
+    catch (exception &e)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Exception: %s in onObserve", e.what() );
+    }
+
+}
+
+std::shared_ptr<OC::OCResource>  getFoundResource()
+{
+    return g_foundFoundResource;
+
 }
