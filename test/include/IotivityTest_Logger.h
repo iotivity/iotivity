@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+
+#include <logger.h>
 #include "CommonUtil.h"
 
 //if ISLOG is 0, log will be not printed
@@ -37,16 +39,7 @@
 #endif
 
 // Max buffer size used in variable argument log function
-#define MAX_LOG_V_BUFFER_SIZE (2048)
-
-// Log levels
-typedef enum {
-    DEBUG = 0,
-    INFO,
-    WARNING,
-    ERROR,
-    FATAL
-} LogLevel;
+#define MAX_LOG_BUFFER_SIZE (2048)
 static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 static const char * envLogWriteFile = "NOLOGFILE";
 
@@ -59,22 +52,23 @@ static const char * envLogWriteFile = "NOLOGFILE";
 #undef __DEFAULT_LOG__
 
 #define IOTIVITYTEST_LOG(strLog) do{ \
-		__android_log_print(LEVEL[level], "", "%s:%d %s", __PRETTY_FUNCTION__, __LINE__, strLog); \
-	}while(0)
+        __android_log_print(LEVEL[level], "", "%s:%d %s", __PRETTY_FUNCTION__, __LINE__, strLog); \
+    }while(0)
 #endif
 #endif
-
 
 #ifdef __DEFAULT_LOG__
 
 static FILE* g_logfile_out = NULL;
 #define IOTIVITYTEST_LOG(level,format,...) do{ \
-		if(level!=DEBUG||ISLOG){ \
-			if(level >= LOG_LEVEL && LOG_LEVEL>-1) { \
-				char buffer[MAX_LOG_V_BUFFER_SIZE]; \
-				sprintf(buffer,"[%s][%s][%s:%d]:",CommonUtil::GetTimeStampString(), LEVEL[level], __FILE__,__LINE__); \
-				vPrintf(buffer,format,##__VA_ARGS__); \
-			}} \
+        if(level!=DEBUG||ISLOG){ \
+            if(level >= LOG_LEVEL && LOG_LEVEL>-1) { \
+                char buffer[MAX_LOG_BUFFER_SIZE]; \
+                char start_color[5][20] = {"", "", "", "\033[1;31m", ""}; \
+                char end_color[] = "\033[0m"; \
+                sprintf(buffer,"%s[%s][%s][%s:%d]%s:", start_color[level], CommonUtil::GetTimeStampString(), LEVEL[level], __FILE__,__LINE__, end_color); \
+                vPrintf(buffer,format,##__VA_ARGS__); \
+            }} \
 }while(0)
 
 static std::string splitFilename (const std::string path, std::string &appName)
@@ -87,45 +81,45 @@ static std::string splitFilename (const std::string path, std::string &appName)
 
 static FILE* _initLogFile()
 {
-	if (g_logfile_out == NULL) {
-			const char* timestamp = CommonUtil::GetTimeStampString();
-			std::string dirName = "log";
-			std::string filename = "";
+    if (g_logfile_out == NULL) {
+        const char* timestamp = CommonUtil::GetTimeStampString();
+        std::string dirName = "log";
+        std::string filename = "";
 
 #ifdef __LINUX__
-			std::string appName;
-			std::string fullpath = splitFilename(std::string(getenv("_")), appName);
-			CommonUtil::mkDir(fullpath + "/" + dirName);
+        std::string appName;
+        std::string fullpath = splitFilename(std::string(getenv("_")), appName);
+        CommonUtil::mkDir(fullpath + "/" + dirName);
 
-			filename = (fullpath + "/" + dirName + "/" + appName + "_" + timestamp + ".log");
+        filename = (fullpath + "/" + dirName + "/" + appName + "_" + timestamp + ".log");
 #endif
 
 #ifdef __TIZEN__
-			CommonUtil::mkDir(dirName);
-			extern char *__progname;
-			filename = (dirName + "/" + std::string(__progname) + "_" + timestamp + ".log");
+        CommonUtil::mkDir(dirName);
+        extern char *__progname;
+        filename = (dirName + "/" + std::string(__progname) + "_" + timestamp + ".log");
 #endif
-			FILE* fp = fopen(filename.c_str(), "w");
-			if (fp == NULL) {
-				fprintf(stderr, "cannot open %s file...\n", filename.c_str());
-			} else {
-				g_logfile_out = fp;
-				setbuf(g_logfile_out,NULL);
-				fp = NULL;
-			}
-		}
-	return g_logfile_out;
+        FILE* fp = fopen(filename.c_str(), "w");
+        if (fp == NULL) {
+            fprintf(stderr, "cannot open %s file...\n", filename.c_str());
+        } else {
+            g_logfile_out = fp;
+            setbuf(g_logfile_out,NULL);
+            fp = NULL;
+        }
+    }
+    return g_logfile_out;
 }
 static void vPrintf(const char* timebuffer,const char*const format, ...)
 {
-	char buffer[MAX_LOG_V_BUFFER_SIZE];
-	va_list args;
-	va_start(args,format);
-	vsprintf(buffer,format,args);
-	printf("%s %s\n",timebuffer,buffer);
-	if(getenv(envLogWriteFile)==NULL&&_initLogFile()!=NULL)
-		fprintf(g_logfile_out,"%s %s\n",timebuffer,buffer);
-	va_end(args);
+    char buffer[MAX_LOG_BUFFER_SIZE];
+    va_list args;
+    va_start(args,format);
+    vsprintf(buffer,format,args);
+    printf("%s %s\n",timebuffer,buffer);
+    if(getenv(envLogWriteFile)==NULL&&_initLogFile()!=NULL)
+        fprintf(g_logfile_out,"%s %s\n",timebuffer,buffer);
+    va_end(args);
 }
 #endif
 #endif
