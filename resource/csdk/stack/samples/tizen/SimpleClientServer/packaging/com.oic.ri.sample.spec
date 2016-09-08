@@ -3,7 +3,7 @@
 %{!?VERBOSE: %define VERBOSE 1}
 
 Name: com-oic-ri-sample
-Version:    1.1.1
+Version:    1.2.0
 Release:    0
 Summary: Tizen adapter interfacesample application
 URL: http://slp-source.sec.samsung.net

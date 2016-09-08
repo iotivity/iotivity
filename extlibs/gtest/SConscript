@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 ##
 # 'googletest' script to check if Google Unit Test library is installed.
 # If not, get it and install it
@@ -17,7 +18,7 @@ gtest_dir      = os.path.join(src_dir, 'extlibs', 'gtest', 'gtest-1.7.0')
 gtest_lib_dir = os.path.join(gtest_dir,'lib')
 gtest_dotlib_dir =  os.path.join(gtest_lib_dir, '.libs')
 gtest_zip_file = os.path.join(src_dir, 'extlibs', 'gtest', 'gtest-1.7.0.zip')
-gtest_url      = 'https://googletest.googlecode.com/files/gtest-1.7.0.zip'
+gtest_url = 'http://pkgs.fedoraproject.org/repo/pkgs/gtest/gtest-1.7.0.zip/2d6ec8ccdf5c46b05ba54a9fd1d130d7/gtest-1.7.0.zip'
 
 if target_os in targets_need_gtest:
 	print '*** Checking for installation of google unit test 1.7.0 ***'

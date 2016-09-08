@@ -6,6 +6,8 @@
 import os
 import platform
 
+project_version = '1.2.0'
+
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
 		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
@@ -71,7 +73,6 @@ else:
 	if ARGUMENTS.get('RELEASE', True) in ['y', 'yes', 'true', 't', '1', 'on', 'all', True]:
 		release_mode = True
 	logging_default = (release_mode == False)
-
 
 
 ######################################################################
@@ -307,30 +308,31 @@ Export('env')
 ######################################################################
 pc_file = env.get('SRC_DIR') + '/iotivity.pc.in'
 
-if env.get('ROUTING') == 'GW':
-	routing_define = 'ROUTING_GATEWAY'
-elif env.get('ROUTING') == 'EP':
-	routing_define = 'ROUTING_EP'
-
 user_prefix = env.get('PREFIX')
 user_lib = env.get('LIB_INSTALL_DIR')
-if not user_lib:
-	user_lib = '$${prefix}/lib'
 
-if user_prefix:
-	pc_vars = {'\@PREFIX\@': user_prefix,
-				'\@EXEC_PREFIX\@':user_prefix,
-				'\@VERSION\@': '1.1.1',
-				'\@LIB_INSTALL_DIR\@': user_lib,
-				'\@ROUTING_DEFINE\@': routing_define
-				}
-else:
-	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@EXEC_PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@VERSION\@': '1.1.1',
-				'\@LIB_INSTALL_DIR\@': user_lib,
-				'\@ROUTING_DEFINE\@': routing_define
-				}
+if not user_prefix:
+    user_prefix = env.get('BUILD_DIR').encode('string_escape')
+
+if not user_lib:
+    user_lib = '$${prefix}/lib'
+
+defines = []
+if env.get('LOGGING'):
+    defines.append('-DTB_LOG=1')
+
+if env.get('ROUTING') == 'GW':
+    defines.append('-DROUTING_GATEWAY=1')
+elif env.get('ROUTING') == 'EP':
+    defines.append('-DROUTING_EP=1')
+
+pc_vars = {
+    '\@VERSION\@': project_version,
+    '\@PREFIX\@': user_prefix,
+    '\@EXEC_PREFIX\@': user_prefix,
+    '\@LIB_INSTALL_DIR\@': user_lib,
+    '\@DEFINES\@': " ".join(defines)
+}
 
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 

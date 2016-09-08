@@ -81,7 +81,8 @@ if ((secured == '1') and (with_tcp == True)):
 		env.SConscript(os.path.join(root_dir, tls_path + '/SConscript'))
 		env.AppendUnique(CPPPATH = [os.path.join(root_dir, tls_path + '/' + tls_headers_path)])
 	else:
-		env.SConscript('#' + tls_path + '/SConscript')
+		if ca_os != 'android':
+			env.SConscript('#' + tls_path + '/SConscript')
 		env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
 		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_tls.c')])
 

@@ -87,6 +87,14 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t * doxm, uint8_t **cborPayload
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
 /**
+ * This method changes the SRM device ID for this device.
+ * This api will update device Id iff device is in unowned state.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID);
+
+
+/**
  * Gets the OicUuid_t value for the owner of this device.
  *
  * @param devownerid a pointer to be assigned to the devownerid property

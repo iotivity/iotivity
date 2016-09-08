@@ -345,11 +345,6 @@ namespace OIC
         {
             ESResult result = ES_ERROR;
 
-            if (m_cloudResource != nullptr)
-            {
-                throw ESBadRequestException ("Already created");
-            }
-
             result = discoverResource();
 
             if (result == ES_ERROR)
@@ -437,7 +432,7 @@ namespace OIC
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }
-#endif
+#endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
 
             if (m_cloudResource == nullptr)
             {

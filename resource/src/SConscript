@@ -67,6 +67,7 @@ if target_os == 'android':
 
 if target_os == 'tizen':
 	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+	oclib_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os in ['linux'] and oclib_env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = oclib_env.Literal('\\$$ORIGIN'))

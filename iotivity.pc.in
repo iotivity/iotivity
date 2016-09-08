@@ -18,4 +18,4 @@ Cflags: -I${includedir}/resource \
 			-I${svcincludedir}/resource-hosting \
 			-I${svcincludedir}/resource-directory \
 			-I${svcincludedir}/things-manager \
-			-D@ROUTING_DEFINE@
+			@DEFINES@
