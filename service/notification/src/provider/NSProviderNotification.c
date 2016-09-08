@@ -43,6 +43,11 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TOPIC_NAME, msg->topic);
+    if(msg->mediaContents)
+    {
+        NSDuplicateSetPropertyString(msgPayload,
+                NS_ATTRIBUTE_ICON_IMAGE, msg->mediaContents->iconImage);
+    }
 
     NS_LOG(DEBUG, "NSSetMessagePayload - OUT");
     return NS_OK;

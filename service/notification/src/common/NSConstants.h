@@ -194,6 +194,7 @@
 #define NS_ATTRIBUTE_TYPE "TYPE"
 #define NS_ATTRIBUTE_DATETIME "DATE_TIME"
 #define NS_ATTRIBUTE_TTL "TTL"
+#define NS_ATTRIBUTE_ICON_IMAGE "ICON_IMAGE"
 
 typedef enum eConnectionState
 {
