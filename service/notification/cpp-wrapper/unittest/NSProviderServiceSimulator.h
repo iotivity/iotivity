@@ -98,7 +98,7 @@ private:
                     std::string msgUri = m_notificationUri + m_messageUri;
                     std::string syncUri = m_notificationUri + m_syncUri;
                     std::string providerId = "123456789012345678901234567890123456";
-                    rep.setValue("ACCEPTER", m_accepter);
+                    rep.setValue("ACCEPTER", (bool) m_accepter);
                     rep.setValue("MESSAGE_URI", msgUri);
                     rep.setValue("SYNC_URI", syncUri);
                     rep.setValue("PROVIDER_ID", providerId);
