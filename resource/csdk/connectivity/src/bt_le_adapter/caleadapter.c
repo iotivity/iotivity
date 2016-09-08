@@ -3371,7 +3371,7 @@ static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList, const char* 
     if (CA_STATUS_OK == CALEGetPortsFromSenderInfo(address, dataInfoList, portList))
     {
         uint32_t arrayLength = u_arraylist_length(portList);
-        for (int i = 0; i < arrayLength; i++)
+        for (uint32_t i = 0; i < arrayLength; i++)
         {
             uint16_t port = u_arraylist_get(portList, i);
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "port : %X", port);
@@ -3418,7 +3418,7 @@ static CAResult_t CALEGetPortsFromSenderInfo(const char *leAddress,
 
         if (!strncmp(info->remoteEndpoint->addr, leAddress, addrLength))
         {
-            u_arraylist_add(portList, (void *) info->remoteEndpoint->port);
+            u_arraylist_add(portList, (void *)info->remoteEndpoint->port);
         }
     }
 

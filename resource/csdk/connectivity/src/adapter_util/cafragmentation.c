@@ -127,8 +127,7 @@ CAResult_t CAGenerateHeader(uint8_t *header,
 
     if (sourcePort > CA_SUPPORTED_BLE_MAX_PORT ||
         sourcePort < CA_SUPPORTED_BLE_MIN_PORT ||
-        destPort > CA_SUPPORTED_BLE_MAX_PORT ||
-        destPort < CA_BLE_MULTICAST_PORT)
+        destPort > CA_SUPPORTED_BLE_MAX_PORT)
     {
         OIC_LOG_V(ERROR, TAG, "source port(%d) or destination port(%d) is invalid number!!",
                 sourcePort, destPort);
@@ -199,7 +198,7 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
     const uint8_t *cur_pos = data +
         (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE +
          (index * (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE)));
-    if (cur_pos == NULL)
+    if (NULL == cur_pos)
     {
         OIC_LOG(ERROR, TAG, "data is NULL");
         return CA_STATUS_FAILED;
