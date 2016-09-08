@@ -42,7 +42,7 @@ protected:
         m_pREHelper = REHelper::getInstance();
 
         bool isResourceAvailable = m_pREHelper->findPrimitiveResources(
-        RESOURCE_TYPE_LIGHT);
+                RESOURCE_TYPE_LIGHT);
         if (isResourceAvailable)
         {
             m_resource = m_pREHelper->getFoundResourceList().at(0);
@@ -1433,5 +1433,100 @@ TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQ_ETC_N)
             SET_FAILURE("Callback is not Empty!");
         }
     }
+}
+#endif
+
+/**
+ * @since 2016-09-08
+ * @see   RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
+ * @objective Test set function with positive basic way
+ * @target void set(const RCSQueryParams& queryParams, const RCSRepresentation &rep,
+                    SetCallback cb);
+ * @test_data Query parameters, Representation and SetCallback
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure Perform set() API
+ * @post_condition None
+ * @expected The API should be called successfully without any exception
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQRCSREP_SRC_P)
+{
+    try
+    {
+        RCSQueryParams queryParams;
+        RCSRepresentation rcsRep;
+
+        m_resource->set(queryParams, rcsRep, REResourceCacheTest_btc::onRROSetCallback);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectSetRCSQRCSREP_SRC_P: " + string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-09-08
+ * @see   RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
+ * @objective Test set function with NULL Callback
+ * @target void set(const RCSQueryParams& queryParams, const RCSRepresentation &rep,
+                    SetCallback cb);
+ * @test_data Query parameters, Representation and NULL Callback
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure Perform set() API with NULL Callback
+ * @post_condition None
+ * @expected The API should not crash
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheTest_btc, RemoteResourceObjectSetRCSQRCSREP_NV_N)
+{
+    RCSQueryParams queryParams;
+    RCSRepresentation rcsRep;
+
+    EXPECT_THROW(m_resource->set(queryParams, rcsRep, NULL), RCSInvalidParameterException);
+}
+#endif
+
+/**
+ * @since 2016-09-08
+ * @see   None
+ * @objective Test toOCResource function with positive basic way
+ * @target static std::shared_ptr< OC::OCResource > toOCResource(
+                    RCSRemoteResourceObject::Ptr rcsResource);
+ * @test_data uri = "/device/tube-light"
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure Perform toOCResource() API
+ * @post_condition None
+ * @expected Should return valid resource uri
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheTest_btc, ToOCResource_SRC_P)
+{
+    std::shared_ptr<OC::OCResource> ocRes;
+    ocRes= RCSRemoteResourceObject::toOCResource(m_resource);
+    EXPECT_EQ(LIGHT_URI, ocRes->uri());
+}
+#endif
+
+/**
+ * @since 2016-09-08
+ * @see   None
+ * @objective Test toOCResource function with n
+ * @target static std::shared_ptr< OC::OCResource > toOCResource(
+                    RCSRemoteResourceObject::Ptr rcsResource);
+ * @test_data ocRes = Nullptr
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure Perform toOCResource() API
+ * @post_condition None
+ * @expected Should not crash
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheTest_btc, ToOCResource_NV_N)
+{
+    std::shared_ptr<OC::OCResource> ocRes;
+    ocRes= RCSRemoteResourceObject::toOCResource(m_resource);
+    EXPECT_NE(nullptr, ocRes);
 }
 #endif

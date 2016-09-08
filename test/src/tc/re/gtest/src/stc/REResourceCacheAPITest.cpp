@@ -173,7 +173,7 @@ TEST_F(REResourceCacheAPITest_stc, StartCachingWithIsCachedAvailable_SQV_P)
     {
         SET_FAILURE(
                 "Exception occurred inside StartCachingWithIsCachedAvailable_SQV_P"
-                        + string(e.what()));
+                + string(e.what()));
     }
 }
 #endif
@@ -540,7 +540,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_SCV_P)
         {
             SET_FAILURE(
                     "Expected CacheState: NONE, actual: "
-                            + string(m_pREHelper->getCacheState(cacheState)));
+                    + string(m_pREHelper->getCacheState(cacheState)));
         }
     }
     catch (exception& e)
@@ -574,14 +574,14 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCaching_SQV_P)
         {
             SET_FAILURE(
                     "Expected CacheState: UNREADY, actual: "
-                            + string(m_pREHelper->getCacheState(cacheState)));
+                    + string(m_pREHelper->getCacheState(cacheState)));
         }
     }
     catch (exception& e)
     {
         SET_FAILURE(
                 "Exception occurred inside GetCacheStateAfterStartCaching_SQV_P"
-                        + string(e.what()));
+                + string(e.what()));
     }
 }
 #endif
@@ -612,14 +612,14 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheStateAfterStartCachingAndWait_SCV_P)
         {
             SET_FAILURE(
                     "Expected CacheState: READY, actual: "
-                            + string(m_pREHelper->getCacheState(cacheState)));
+                    + string(m_pREHelper->getCacheState(cacheState)));
         }
     }
     catch (exception& e)
     {
         SET_FAILURE(
                 "Exception occurred inside GetCacheStateAfterStartCachingAndWait_SCV_P"
-                        + string(e.what()));
+                + string(e.what()));
     }
 }
 #endif
@@ -650,7 +650,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_STCC_P)
         {
             SET_FAILURE(
                     "Expected CacheState: UNREADY, actual: "
-                            + string(m_pREHelper->getCacheState(cacheState)));
+                    + string(m_pREHelper->getCacheState(cacheState)));
         }
 
         CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
@@ -660,7 +660,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_STCC_P)
         {
             SET_FAILURE(
                     "Expected CacheState: READY, actual: "
-                            + string(m_pREHelper->getCacheState(cacheState)));
+                    + string(m_pREHelper->getCacheState(cacheState)));
         }
 
         m_resource->stopCaching();
@@ -703,7 +703,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_SLCC_P)
             {
                 SET_FAILURE(
                         "Expected CacheState: UNREADY, actual: "
-                                + string(m_pREHelper->getCacheState(cacheState)));
+                        + string(m_pREHelper->getCacheState(cacheState)));
             }
 
             CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
@@ -713,7 +713,7 @@ TEST_F(REResourceCacheAPITest_stc, GetCacheState_SLCC_P)
             {
                 SET_FAILURE(
                         "Expected CacheState: READY, actual: "
-                                + string(m_pREHelper->getCacheState(cacheState)));
+                        + string(m_pREHelper->getCacheState(cacheState)));
             }
 
             m_resource->stopCaching();
@@ -787,7 +787,7 @@ TEST_F(REResourceCacheAPITest_stc, GetRemoteAttributes_ETC_N)
         {
             SET_FAILURE(
                     "Exception occurred inside GetRemoteAttribute_N, exception is : "
-                            + exceptionMsg);
+                    + exceptionMsg);
         }
     }
 }
@@ -882,7 +882,7 @@ TEST_F(REResourceCacheAPITest_stc, SetAndGetRemoteAttributes_GSRV_P)
     {
         SET_FAILURE(
                 "Exception occurred inside SetRemoteAttributesWithCheckingGetValue_P. "
-                        + string(e.what()));
+                + string(e.what()));
     }
 }
 #endif
@@ -935,7 +935,7 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesAndGetCashedAttribute_SQV_
     {
         SET_FAILURE(
                 "Exception occurred inside SetRemoteAttributesWithCheckingGetValue_P. "
-                        + string(e.what()));
+                + string(e.what()));
     }
 }
 #endif
@@ -1004,7 +1004,7 @@ TEST_F(REResourceCacheAPITest_stc, SetRemoteAttributesWithNullCallback_N)
         {
             SET_FAILURE(
                     "Expected exception is \"setRemoteAttributes : Callback is empty\" But actual: "
-                            + string(e.what()));
+                    + string(e.what()));
         }
     }
 }
@@ -1760,7 +1760,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectGetWithQueryParams_CV_P)
     {
         SET_FAILURE(
                 "Exception occurred inside RemoteResourceObjectGetWithQueryParams_CV_P"
-                        + std::string(e.what()));
+                + std::string(e.what()));
     }
 }
 #endif
@@ -1885,7 +1885,7 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_CV_P)
     {
         SET_FAILURE(
                 "Exception occurred inside RemoteResourceObjectSetWithQueryParams_CV_P"
-                        + std::string(e.what()));
+                + std::string(e.what()));
     }
 }
 #endif
@@ -1934,7 +1934,56 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_SQV_P)
     {
         SET_FAILURE(
                 "Exception occurred inside RemoteResourceObjectSetWithQueryParams_SQV_P"
-                        + std::string(e.what()));
+                + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-09-08
+ * @see   RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
+ * @see   RCSRepresentation(const std::string& uri, const std::vector< std::string >& interfaces,const std::vector< std::string >& resourceTypes,
+            const RCSResourceAttributes& attrs);
+ * @objective Test set function with sequential validation 
+ * @target void set(const RCSQueryParams& queryParams, const RCSRepresentation &rep,
+                    SetCallback cb);
+ * @test_data Query parameters, Representation and SetCallback
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure 1. Perform RCSRepresentation() API
+ *            2. Perform set() API  
+ * @post_condition None
+ * @expected 1. set request should be sucessful with resource representation 2. should not generate any exception
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetRCSQRCSREP_SQV_P)
+{
+    try
+    {
+        RCSQueryParams queryParams;
+        RCSRepresentation rcsRep;
+
+        std::string uri = "uri";
+        std::vector < std::string > interfaces;
+        std::vector < std::string > resourceTypes;
+        RCSResourceAttributes resattributes;
+        string key = DEFAULT_POWER_KEY;
+        string value = DEFAULT_POWER_VALUE_ON;
+        resattributes[key] = value;
+
+
+        rcsRep = RCSRepresentation(uri, interfaces, resourceTypes, resattributes);
+
+        m_resource->set(queryParams, rcsRep, REResourceCacheAPITest_stc::onRROSetCallback);
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
+        if (m_SetCallbackCheck == false)
+        {
+            SET_FAILURE("Set Callback is not Invoked!");
+        }
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE(
+                "Exception occurred inside RemoteResourceObjectSetRCSQRCSREP_SQV_P: " + string(e.what()));
     }
 }
 #endif
