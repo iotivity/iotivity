@@ -164,6 +164,8 @@ bool unlinkDevices(DeviceList_t& deviceList, const OCSecureResource &device2,
         ResultCallBack resultCallback, OCStackResult expectedResult);
 bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDeviceDiscovery,
         ResultCallBack resultCallback, OCStackResult expectedResult);
+bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
+        ResultCallBack resultCallback, OCStackResult expectedResult);
 
 void ownershipTransferCB(PMResultList_t *result, int hasError);
 void provisionCB(PMResultList_t *result, int hasError);

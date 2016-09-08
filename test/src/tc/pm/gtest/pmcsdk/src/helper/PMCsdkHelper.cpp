@@ -875,50 +875,50 @@ OTMCallbackData_t otmCbRegister(int otmType)
 
 OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list)
 {
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl IN");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl In");
 
     printDevList(*m_own_list);
 
     OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
-
     OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
-
     LL_APPEND(acl->aces, ace);
 
     int num = (dev_num == DEVICE_INDEX_TWO) ? DEVICE_INDEX_ONE : DEVICE_INDEX_TWO;
 
     OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) *m_own_list, num);
+
+    printDevList(dev);
+
     if (!dev || !dev->doxm)
     {
-        IOTIVITYTEST_LOG(ERROR, "createAcl: device instance empty");
+        IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl: device instance empty");
         return NULL;
     }
 
-    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
-
     num = 1;
-    char rsrc_in[129]; // '1' for null termination
-    for (int i = 0; num > i; ++i)
+    char rsrc_in[ACL_RESRC_MAX_LEN+1] = {0};  // '1' for null termination
+    for(int i = 0; num > i; ++i)
     {
-        OicSecRsrc_t* rsrc = (OicSecRsrc_t*) OICCalloc(1, sizeof(OicSecRsrc_t));
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
 
-        //Resource URI
-        OICStrcpy(rsrc->href, ACL_RESOURCE_LENGTH, ACL_RESOURCE_URI);
+        // Resource URI
+        size_t len = strlen(LIGHT_RESOURCE_URI_01)+1;  // '1' for null termination
+        rsrc->href = (char*) OICCalloc(len, sizeof(char));
+        OICStrcpy(rsrc->href, len, LIGHT_RESOURCE_URI_01);
 
+        // Resource Type
         rsrc->typeLen = 1;
-        rsrc->types = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
-
-        for (int i = 0; i < rsrc->typeLen; i++)
+        rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+        for(int i = 0; i < rsrc->typeLen; i++)
         {
-            rsrc->types[i] = OICStrdup(ACL_RES_TYPE_NAME);
+            rsrc->types[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
 
         rsrc->interfaceLen = 1;
-        rsrc->interfaces = (char**) OICCalloc(rsrc->interfaceLen, sizeof(char*));
-
-        for (int i = 0; i < rsrc->interfaceLen; i++)
+        rsrc->interfaces = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+        for(int i = 0; i < rsrc->interfaceLen; i++)
         {
-            rsrc->interfaces[i] = OICStrdup(ACL_RES_IF_TYPE_NAME);
+            rsrc->interfaces[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
 
         LL_APPEND(ace->resources, rsrc);
@@ -926,8 +926,9 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
 
     ace->permission = permission;
 
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl OUT");
 
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl Out");
     return acl;
 }
 

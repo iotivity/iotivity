@@ -97,39 +97,42 @@ OicSecAcl_t* createAcl(const int dev_num, int nPermission, DeviceList_t &m_Owned
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl IN");
 
-    printDevices(m_OwnedDevList);
-
     OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
     OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
+
     LL_APPEND(acl->aces, ace);
+    int num = 0;
 
-    int num = (dev_num == 2) ? 1 : 2;
-
-    memcpy(&ace->subjectuuid, ACL_ROWNER_UUID_01, UUID_LENGTH);
+    if(dev_num == 1) {
+        memcpy(&ace->subjectuuid, ACL_ROWNER_UUID_02, UUID_LENGTH);
+    } else {
+        memcpy(&ace->subjectuuid, ACL_ROWNER_UUID_01, UUID_LENGTH);
+    }
 
     num = 1;
-    char rsrc_in[129]; // '1' for null termination
-    for (int i = 0; num > i; ++i)
+    char rsrc_in[ACL_RESRC_MAX_LEN+1] = {0};  // '1' for null termination
+    for(int i = 0; num > i; ++i)
     {
-        OicSecRsrc_t* rsrc = (OicSecRsrc_t*) OICCalloc(1, sizeof(OicSecRsrc_t));
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
 
-        //Resource URI
-        OICStrcpy(rsrc->href, ACL_RESOURCE_LENGTH, ACL_RESOURCE_URI);
+        // Resource URI
+        size_t len = strlen(LIGHT_RESOURCE_URI_01)+1;  // '1' for null termination
+        rsrc->href = (char*) OICCalloc(len, sizeof(char));
+        OICStrcpy(rsrc->href, len, LIGHT_RESOURCE_URI_01);
 
+        // Resource Type
         rsrc->typeLen = 1;
-        rsrc->types = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
-
-        for (int i = 0; i < rsrc->typeLen; i++)
+        rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+        for(int i = 0; i < rsrc->typeLen; i++)
         {
-            rsrc->types[i] = OICStrdup(ACL_RES_TYPE_NAME);
+            rsrc->types[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
 
         rsrc->interfaceLen = 1;
-        rsrc->interfaces = (char**) OICCalloc(rsrc->interfaceLen, sizeof(char*));
-
-        for (int i = 0; i < rsrc->interfaceLen; i++)
+        rsrc->interfaces = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+        for(int i = 0; i < rsrc->interfaceLen; i++)
         {
-            rsrc->interfaces[i] = OICStrdup(ACL_RES_IF_TYPE_NAME);
+            rsrc->interfaces[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
 
         LL_APPEND(ace->resources, rsrc);
@@ -138,7 +141,6 @@ OicSecAcl_t* createAcl(const int dev_num, int nPermission, DeviceList_t &m_Owned
     ace->permission = nPermission;
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl OUT");
-
     return acl;
 }
 
@@ -478,6 +480,35 @@ bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDevic
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDevice OUT");
+    return true;
+}
+
+bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
+        ResultCallBack resultCallback, OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDeviceWithUuid IN");
+    OCStackResult res = OC_STACK_OK;
+    g_cbInvoked = CALLBACK_NOT_INVOKED;
+
+    res = OCSecure::removeDeviceWithUuid(waitTimeForOwnedDeviceDiscovery, uuid, resultCallback);
+    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] removeDeviceWithUuid returns : %s\n", getOCStackResultCPP(res).c_str());
+
+    if (res != expectedResult)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        return false;
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+        {
+            IOTIVITYTEST_LOG(ERROR, "Callback Not Invoked");
+            return false;
+        }
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDeviceWithUuid OUT");
     return true;
 }
 

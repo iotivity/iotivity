@@ -95,7 +95,7 @@ using namespace OC;
 #define MAX_PERMISSION_RANGE 65535
 #define DEFAULT_DP_PROVSIONING_PIN "00000000"
 #define DEVICE_INDEX_ONE 1
-#define DEVICE_INDEX_TWO 1
+#define DEVICE_INDEX_TWO 2
 
 #define ACL_RESOURCE_URI "sensor/light"
 #define ACL_RESOURCE_LENGTH 6 // Check ACL_RESOURCE_NAME for the length. ACL_RESOURCE_LENGTH = len(ACL_RESOURCE_URI) + 1
@@ -187,7 +187,10 @@ public:
             OCStackResult expectedResult);
     bool unlinkDevices(DeviceList_t& deviceList, const OCSecureResource &device2,
             ResultCallBack resultCallback, OCStackResult expectedResult);
-    bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDeviceDiscovery,
+    bool removeDevice(DeviceList_t& deviceList,
+            unsigned short waitTimeForOwnedDeviceDiscovery, ResultCallBack resultCallback,
+            OCStackResult expectedResult);
+    bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
             ResultCallBack resultCallback, OCStackResult expectedResult);
 
     static void ownershipTransferCB(PMResultList_t *result, int hasError);

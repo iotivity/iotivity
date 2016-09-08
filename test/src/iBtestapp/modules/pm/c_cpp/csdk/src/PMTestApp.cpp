@@ -120,12 +120,14 @@ void doAction(int userInput)
             break;
 
         case PROVISION_ACL:
+            g_OwnList= NULL;
             discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
             g_Acl = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &g_OwnList);
             provisionACL((void*) g_ctx, g_OwnList, g_Acl, provisionAclCB, OC_STACK_OK);
             break;
 
         case PROVISION_CREDENTIAL:
+            g_OwnList= NULL;
             discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
             {
                 OCProvisionDev_t *device1 = g_OwnList;
@@ -139,6 +141,7 @@ void doAction(int userInput)
             break;
 
         case PROVISIONING_PAIRWISE_DEVICES:
+            g_OwnList= NULL;
             discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
             {
                 OCProvisionDev_t *device1 = g_OwnList;
@@ -154,6 +157,7 @@ void doAction(int userInput)
             break;
 
         case PROVISION_DIRECT_PAIRING:
+            g_OwnList= NULL;
             discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
             {
                 OCProvisionDev_t *device1 = g_OwnList;
@@ -184,6 +188,7 @@ void doAction(int userInput)
             break;
 
         case GET_LINKED_DEVICES:
+            g_OwnList= NULL;
             discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
             {
                 OCProvisionDev_t *device1 = g_OwnList;
@@ -195,6 +200,7 @@ void doAction(int userInput)
             break;
 
         case UNLINK_DEVICE:
+            g_OwnList= NULL;
             discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
             {
                 OCProvisionDev_t *device1 = g_OwnList;
@@ -205,11 +211,12 @@ void doAction(int userInput)
             break;
 
         case REMOVE_DEVICES:
+            g_OwnList= NULL;
             discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
             {
                 OCProvisionDev_t *device1 = g_OwnList;
-                removeDevice((void*) ctxRemoveDevice, DISCOVERY_TIMEOUT, device1, NULL,
-                        OC_STACK_INVALID_CALLBACK);
+                removeDevice((void*) ctxRemoveDevice, DISCOVERY_TIMEOUT, device1, removeDeviceCB,
+                        OC_STACK_OK);
 
             }
             break;
