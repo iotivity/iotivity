@@ -46,6 +46,11 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.iotivity.ca.OicCipher;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.ca.CaInterface;
+
+
 public class ProvisioningClient extends Activity implements
 OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwiseDevicesListener {
 
@@ -182,6 +187,9 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
             }
             initOICStack();
             saveCertChain();
+            int ret = CaInterface.setCipherSuite(OicCipher.TLS_ECDH_anon_WITH_AES_128_CBC_SHA,
+                                                    OcConnectivityType.CT_ADAPTER_IP);
+            Log.e(TAG,"CaInterface.setCipherSuite returned = "+ret);
         }
 
     /**

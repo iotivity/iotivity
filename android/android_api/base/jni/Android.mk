@@ -47,6 +47,9 @@ include $(PREBUILT_SHARED_LIBRARY)
 endif
 
 include $(CLEAR_VARS)
+ifeq ($(SECURE), 1)
+    LOCAL_CFLAGS += -D__WITH_DTLS__
+endif
 OIC_SRC_PATH := ../../../resource
 LOCAL_MODULE := libca-interface
 LOCAL_SRC_FILES := JniCaInterface.c
@@ -68,6 +71,10 @@ endif
 ifeq ($(WITH_TCP), 1)
     LOCAL_CPPFLAGS += -DWITH_TCP
     LOCAL_CPPFLAGS += -D__WITH_TLS__
+endif
+
+ifeq ($(SECURED), 1)
+    LOCAL_CPPFLAGS += -D__WITH_DTLS__
 endif
 
 MQ_FLAG = 0
