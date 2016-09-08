@@ -245,9 +245,18 @@ NSMessage * NSCopyMessage(NSMessage * msg)
     {
         newMsg->topic = OICStrdup(msg->topic);
     }
-
-    // TODO change to copy function.
-    newMsg->mediaContents = msg->mediaContents;
+    if (msg->mediaContents)
+    {
+        newMsg->mediaContents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
+                newMsg->mediaContents, NULL, NSRemoveMessage(newMsg));
+        newMsg->mediaContents->iconImage =
+                (char *)OICMalloc(sizeof(char)*strlen(msg->mediaContents->iconImage));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
+                newMsg->mediaContents->iconImage, NULL, NSRemoveMessage(newMsg));
+        memcpy(newMsg->mediaContents->iconImage, msg->mediaContents->iconImage,
+               strlen(msg->mediaContents->iconImage));
+    }
 
     return newMsg;
 }
@@ -262,7 +271,10 @@ void NSRemoveMessage(NSMessage * msg)
     NSOICFree(msg->dateTime);
     NSOICFree(msg->topic);
 
-    // TODO change to remove function.
+    if (msg->mediaContents)
+    {
+        NSOICFree(msg->mediaContents->iconImage);
+    }
     NSOICFree(msg->mediaContents);
 
     NSOICFree(msg);
