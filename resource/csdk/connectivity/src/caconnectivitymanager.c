@@ -534,11 +534,13 @@ CAResult_t CAHandleRequestResponse()
 #if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
 CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite");
+    OIC_LOG_V(DEBUG, TAG, "IN CASelectCipherSuite");
+    OIC_LOG_V(DEBUG, TAG, "cipher : %d , CATransportAdapter : %d",cipher, adapter);
     if(CA_ADAPTER_IP == adapter)
     {
         if (CA_STATUS_OK != CADtlsSelectCipherSuite(cipher))
         {
+            OIC_LOG_V(DEBUG, TAG, "CADtlsSelectCipherSuite failed");
             return CA_STATUS_FAILED;
         }
     }
@@ -547,10 +549,12 @@ CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapt
     {
         if (CA_STATUS_OK != CAsetTlsCipherSuite(cipher))
         {
+            OIC_LOG_V(DEBUG, TAG, "CAsetTlsCipherSuite failed");
             return CA_STATUS_FAILED;
         }
     }
 #endif
+    OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite OK");
     return CA_STATUS_OK;
 }
 

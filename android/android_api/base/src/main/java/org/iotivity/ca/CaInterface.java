@@ -192,4 +192,11 @@ public class CaInterface {
     }
 
     private static native void setLeScanIntervalTimeImpl(int intervalTime, int workingCount);
+
+
+    public synchronized static int setCipherSuite(OicCipher cipher, OcConnectivityType connType){
+        return CaInterface.setCipherSuiteImpl(cipher.getValue(), connType.getValue());
+    }
+    private static native int setCipherSuiteImpl(int cipher, int adapter);
+
 }

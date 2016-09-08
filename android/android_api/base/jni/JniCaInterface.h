@@ -128,6 +128,14 @@ extern "C" {
     JNIEXPORT void JNICALL Java_org_iotivity_ca_CaInterface_setLeScanIntervalTimeImpl
         (JNIEnv *, jclass, jint, jint);
 
+    /*
+     * Class:     org_iotivity_ca_CaInterface
+     * Method:    setCipherSuiteImpl
+     * Signature: (Lorg/iotivity/ca/OicCipher;Lorg/iotivity/ca/CATransportAdapter;)I
+     */
+    JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
+     (JNIEnv *, jclass, jint, jint);
+
 #ifdef __cplusplus
 }
 #endif
