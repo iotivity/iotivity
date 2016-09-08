@@ -52,6 +52,8 @@ namespace
     };
 
     NSConsumerConfig cfg;
+
+    NSProviderSimulator::NS_TopicStateList g_topicStateList;
 }
 
 class TestWithMock: public testing::Test
@@ -302,10 +304,14 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotification)
     std::string title = "title";
     std::string msg = "msg";
 
-    mocks.ExpectCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [this](NSMessage * message)
+    uint64_t revId = 0;
+
+    mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
+            [this, & revId](NSMessage * message)
             {
                 std::cout << "Income Notification : " << message->messageId << std::endl;
+                revId = message->messageId;
+                responseCon.notify_all();
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -313,16 +319,31 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotification)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
+    EXPECT_EQ(id, revId);
     NSStopConsumer();
+    g_providerSimul.deleteNotificationResource();
 }
 
 TEST_F(NotificationConsumerTest, ExpectReceiveSubAllowWithAccepterisProvider)
 {
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_PROVIDER);
     NSProviderState revState = NS_DENY;
+    g_providerSimul.createNotificationResource();
+    {
+        std::unique_lock< std::mutex > lock{ mutexForCondition };
+        responseCon.wait_for(lock, g_waitForResponse);
+    }
 
     mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [this, & revState](NSProvider * , NSProviderState state)
+            [this, & revState](NSProvider * provider, NSProviderState state)
+            {
+                std::cout << "Income Changed Callback : " << state << std::endl;
+                revState = state;
+                g_provider = provider;
+                responseCon.notify_all();
+            });
+    mocks.OnCallFunc(NSProviderChangedCallback).Do(
+            [this, & revState](NSProvider *, NSProviderState state)
             {
                 std::cout << "Income Changed Callback : " << state << std::endl;
                 revState = state;
@@ -348,6 +369,7 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider
             {
                 std::cout << "Income Notification : " << message->messageId << std::endl;
                 revId = message->messageId;
+                responseCon.notify_all();
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -369,6 +391,7 @@ TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenProviderNotifySync)
             [this](NSMessage * message)
             {
                 std::cout << "Income Notification : " << message->messageId << std::endl;
+                responseCon.notify_all();
             });
 
     mocks.OnCallFunc(NSSyncCallbackEmpty).Do(
@@ -377,6 +400,7 @@ TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenProviderNotifySync)
                 std::cout << "Income SyncInfo : " << sync->messageId
                         << ", State : " << sync->state << std::endl;
                 type = sync->state;
+                responseCon.notify_all();
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -405,6 +429,7 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenProviderNotifySyn
             [this](NSMessage * message)
             {
                 std::cout << "Income Notification : " << message->messageId << std::endl;
+                responseCon.notify_all();
             });
 
     mocks.OnCallFunc(NSSyncCallbackEmpty).Do(
@@ -413,6 +438,7 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenProviderNotifySyn
                 std::cout << "Income Notification : " << sync->messageId
                         << ", State : " << sync->state << std::endl;
                 type = sync->state;
+                responseCon.notify_all();
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -452,6 +478,7 @@ TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenConsumerPostSync)
                 std::cout << "Income Notification : " << sync->messageId
                         << ", State : " << sync->state << std::endl;
                 type = sync->state;
+                responseCon.notify_all();
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -485,6 +512,7 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
                 std::cout << "Income Notification : " << sync->messageId
                         << ", State : " << sync->state << std::endl;
                 state = sync->state;
+                responseCon.notify_all();
             });
 
     g_providerSimul.notifyMessage(id, title, msg);
@@ -494,8 +522,68 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
     }
 
     EXPECT_EQ(NS_SYNC_DELETED, state);
-//    g_providerSimul.deleteNotificationResource();
-//    NSStopConsumer();
+}
+
+TEST_F(NotificationConsumerTest, ExpectGetTopicListIsNULL)
+{
+    NSTopicLL * currentTopics = NSConsumerGetTopicList(g_provider->providerId);
+    EXPECT_EQ(NULL, currentTopics);
+}
+
+TEST_F(NotificationConsumerTest, ExpectCallbackTopicUpdated)
+{
+    NSProviderState revState = NS_STOPPED;
+    mocks.OnCallFunc(NSProviderChangedCallback).Do(
+        [this, & revState](NSProvider * , NSProviderState state)
+        {
+            std::cout << "Income Changed Callback : " << state << std::endl;
+            revState = state;
+            responseCon.notify_all();
+        });
+
+    NSProviderSimulator::NS_TopicList topics;
+    topics.push_back("1");
+    topics.push_back("2");
+    topics.push_back("3");
+
+    g_providerSimul.setTopics(topics);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(NS_TOPIC, revState);
+}
+
+TEST_F(NotificationConsumerTest, ExpectEQTopicList)
+{
+    bool isSame = false;
+
+    NSProviderSimulator::NS_TopicList topics;
+    topics.push_back("1");
+    topics.push_back("2");
+    topics.push_back("3");
+
+    NSTopicLL * retTopic = NSConsumerGetTopicList(g_provider->providerId);
+    std::for_each (topics.begin(), topics.end(),
+            [this, & retTopic, & isSame](const std::string & str)
+            {
+                isSame = (str == std::string(retTopic->topicName));
+                retTopic = retTopic->next;
+            });
+
+    EXPECT_EQ(true, isSame);
+}
+
+TEST_F(NotificationConsumerTest, ExpectFailUpdateTopicOnConsumer)
+{
+    NSTopicLL * retTopic = NSConsumerGetTopicList(g_provider->providerId);
+    for (; retTopic; retTopic = retTopic->next)
+    {
+        retTopic->state = NS_TOPIC_SUBSCRIBED;
+    }
+    NSResult ret = NSConsumerUpdateTopicList(g_provider->providerId, retTopic);
+
+    EXPECT_EQ(NS_ERROR, ret);
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackDeletedProvider)
@@ -505,7 +593,6 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDeletedProvider)
             [& type, this](NSProvider * , NSProviderState state)
             {
                 std::cout << "Income Changed Callback : " << state << std::endl;
-                //EXPECT_EQ(state, NS_STOPPED);
                 type = state;
                 responseCon.notify_all();
             });
@@ -513,20 +600,8 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDeletedProvider)
     g_providerSimul.deleteNotificationResource();
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    responseCon.wait_for(lock, std::chrono::milliseconds(2000));
 
     EXPECT_EQ(type, NS_STOPPED);
     NSStopConsumer();
 }
-
-//TEST_F(NotificationConsumerTest, ExpectUnsubscribeSuccess)
-//{
-//    NSResult ret = NSUnsubscribe(g_provider->providerId);
-//    std::unique_lock< std::mutex > lock{ mutexForCondition };
-//    responseCon.wait_for(lock, g_waitForResponse);
-//
-//    g_providerSimul.deleteNotificationResource();
-//    NSStopConsumer();
-//
-//    EXPECT_EQ(NS_OK, ret);
-//}

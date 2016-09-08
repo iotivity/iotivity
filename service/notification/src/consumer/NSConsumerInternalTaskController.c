@@ -174,6 +174,8 @@ void NSCancelAllSubscription()
 
         NSConsumerPushEvent(task);
     }
+
+    NSDestroyMessageStateList();
 }
 
 void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
@@ -544,6 +546,12 @@ NSMessageStateLL * NSFindMessageState(uint64_t msgId)
     NSMessageStateLL * iter = NULL;
 
     NSLockMessageListMutex();
+    if (NSGetMessageStateList()->head == NULL)
+    {
+        NSUnlockMessageListMutex();
+        return false;
+    }
+
     for (iter = NSGetMessageStateList()->head; iter; iter = iter->next)
     {
         if (iter->messageId == msgId)
@@ -658,6 +666,9 @@ void NSDestroyMessageStateList()
         iter = iter->next;
         NSOICFree(del);
     }
+
+    NSGetMessageStateList()->head = NULL;
+    NSGetMessageStateList()->tail = NULL;
 
     NSUnlockMessageListMutex();
 }
