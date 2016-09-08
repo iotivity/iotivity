@@ -1146,11 +1146,11 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                                     ehRequest->devAddr.adapter);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 
-                        char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
+                        char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
                          //TODO ehRequest->messageID for copa over TCP always is null. Find reason why.
                         if(ehRequest->devAddr.adapter == OC_ADAPTER_IP && previousMsgId != ehRequest->messageID)
                         {
-                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                            if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
                             {
                                 //Set the device id to derive temporal PSK
                                 SetUuidForPinBasedOxm(&gDoxm->deviceID);
@@ -1172,7 +1172,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                         }
                         else if(previousMsgId != ehRequest->messageID)
                         {
-                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                            if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
                             {
                                 //Set the device id to derive temporal PSK
                                 SetUuidForPinBasedOxm(&gDoxm->deviceID);

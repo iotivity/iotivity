@@ -397,7 +397,7 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
     VERIFY_NON_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
-    VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_SIZE >= preconfPINLen), ERROR);
+    VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
 
     postCredRes = OC_STACK_NO_MEMORY;
     //Generate PIN based credential
@@ -585,7 +585,7 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
     VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
     VERIFY_NON_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
-    VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_SIZE >= preconfPINLen), ERROR);
+    VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
 
     OicSecCred_t* prevCred = GetCredResourceData(&targetDeviceInfo->doxm->deviceID);
     if(NULL != prevCred)

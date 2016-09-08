@@ -480,6 +480,17 @@ int main()
      */
     SetGeneratePinCB(GeneratePinCB);
 
+    /**
+     * Random PIN generation policy can be changed through SetRandomPinPolicy() API.
+     * first param : byte length of random PIN ( 4 <= first param <= 32)
+     * second param : PIN type (This is bitmask)
+     */
+    if(OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to setting PIN policy");
+        return 0;
+    }
+
     /*
      * Declare and create the example resource: LED
      */
@@ -499,8 +510,8 @@ int main()
         char in = getchar();
         if('G' == in || 'g' == in)
         {
-            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0};
-            GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1);
+            char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
+            GeneratePin(ranPin, sizeof(ranPin));
         }
         if('E' == in || 'e' == in)
         {
