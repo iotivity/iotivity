@@ -329,6 +329,13 @@ namespace OIC
             return false;
         }
 
+
+        std::string EnrolleeSecurity::getUUID() const
+        {
+            return m_ocResource->sid();
+        };
+
+#if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         void EnrolleeSecurity::provisionSecurityForCloudServer(
             std::string cloudUuid, int credId)
         {
@@ -461,11 +468,6 @@ namespace OIC
             return res;
         }
 
-        std::string EnrolleeSecurity::getUUID() const
-        {
-            return m_ocResource->sid();
-        };
-
         OicSecAcl_t* EnrolleeSecurity::createAcl(const OicUuid_t cloudUuid)
         {
             // allocate memory for |acl| struct
@@ -565,5 +567,6 @@ namespace OIC
             }
             m_cond.notify_all();
         }
+#endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
     }
 }

@@ -93,7 +93,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
             }
             else
             {
-                result = OC_STACK_ERROR;
+                result = OC_STACK_INVALID_CALLBACK;
             }
         }
 

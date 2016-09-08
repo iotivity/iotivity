@@ -414,8 +414,8 @@ elif arg_num == 2:
         unit_tests()
 
     elif str(sys.argv[1]) == "linux":
-        build_all("true", "")
-        build_all("false", "")
+        build_linux("true", "")
+        build_linux("false", "")
 
     elif str(sys.argv[1]) == "linux_unsecured":
         build_linux_unsecured("true", "")

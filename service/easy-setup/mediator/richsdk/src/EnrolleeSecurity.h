@@ -57,8 +57,6 @@ namespace OIC
                 const SecurityPinCb securityPinCb,
                 const SecProvisioningDbPathCb secProvisioningDbPathCb);
             void provisionOwnership();
-            void provisionSecurityForCloudServer(
-                std::string cloudUuid, int credId);
             std::string getUUID() const;
 
         private:
@@ -73,13 +71,6 @@ namespace OIC
             std::atomic<bool>  aclResult;
             std::atomic<bool>  certResult;
 
-            ESResult performCertProvisioningForCloudServer(
-                std::shared_ptr< OC::OCSecureResource > ownedDevice,
-                int credId);
-            ESResult performACLProvisioningForCloudServer(
-                std::shared_ptr< OC::OCSecureResource > ownedDevice,
-                std::string& cloudUuid);
-
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
             std::shared_ptr< OC::OCSecureResource > findEnrolleeSecurityResource(
                 OC::DeviceList_t &list);
@@ -90,10 +81,22 @@ namespace OIC
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
             void convertStringToUUID(OicUuid_t& uuid, const std::string uuidString);
-            OicSecAcl_t* createAcl(const OicUuid_t cloudUuid);
 
+#if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
+        public:
+            void provisionSecurityForCloudServer(
+                std::string cloudUuid, int credId);
+        private:
+            ESResult performCertProvisioningForCloudServer(
+                std::shared_ptr< OC::OCSecureResource > ownedDevice,
+                int credId);
+            ESResult performACLProvisioningForCloudServer(
+                std::shared_ptr< OC::OCSecureResource > ownedDevice,
+                std::string& cloudUuid);
+            OicSecAcl_t* createAcl(const OicUuid_t cloudUuid);
             void ACLProvisioningCb(PMResultList_t *result, int hasError);
             void CertProvisioningCb(PMResultList_t *result, int hasError);
+#endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         };
     }
 }

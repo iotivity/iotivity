@@ -339,11 +339,31 @@ static int recvTls(void * tep, unsigned char * data, size_t dataLen)
     return (int)retLen;
 }
 
-//TODO add description
+/**
+ * Parse chain of X.509 certificates.
+ *
+ * @param[out] crt     container for X.509 certificates
+ * @param[in]  data    buffer with X.509 certificates. Certificates may be in either in PEM
+                       or DER format in a jumble. Each PEM certificate must be NULL-terminated.
+ * @param[in]  buflen  buffer length
+ *
+ * @return  0 on success, -1 on error
+ */
 static int parseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buflen)
 {
     VERIFY_NON_NULL_RET(crt, NET_TLS_TAG, "Param crt is NULL" , -1);
     VERIFY_NON_NULL_RET(buf, NET_TLS_TAG, "Param buf is NULL" , -1);
+
+    char pemCertHeader[] = {
+        0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x42, 0x45, 0x47, 0x49, 0x4e, 0x20, 0x43, 0x45, 0x52,
+        0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
+    };
+    char pemCertFooter[] = {
+        0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x45, 0x4e, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49,
+        0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x0a, 0x00
+    };
+    size_t pemCertHeaderLen = sizeof(pemCertHeader);
+    size_t pemCertFooterLen = sizeof(pemCertFooter);
 
     int pos = 0;
     int len = 0;
@@ -355,7 +375,7 @@ static int parseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
             len = (((int) buf[pos+2]) << 8) | buf[pos+3];
             if (pos + len < buflen)
             {
-                ret = mbedtls_x509_crt_parse_der(crt, buf+pos, len+4);
+                ret = mbedtls_x509_crt_parse_der(crt, buf+pos, len + 4); 
                 if( 0 != ret)
                 {
                     OIC_LOG_V(ERROR, NET_TLS_TAG, "mbedtls_x509_crt_parse returned -0x%x", -ret);
@@ -363,6 +383,19 @@ static int parseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
                 }
             }
             pos += len + 4;
+        }
+        else if (0 == memcmp(buf + pos, pemCertHeader, pemCertHeaderLen))
+        {
+            void * endPos = NULL;
+            endPos = memmem(&(buf[pos]), buflen - pos, pemCertFooter, pemCertFooterLen);
+            if (NULL == endPos)
+            {
+                OIC_LOG(ERROR, NET_TLS_TAG, "Error: end of PEM certificate not found.");
+                return -1;
+            }
+            len = (char*)endPos - ((char*)(buf + pos)) + pemCertFooterLen;
+            ret = mbedtls_x509_crt_parse(crt, buf, len);
+            pos += len;
         }
         else
         {

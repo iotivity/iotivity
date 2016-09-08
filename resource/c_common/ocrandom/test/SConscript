@@ -37,7 +37,8 @@ randomtest_env.PrependUnique(CPPPATH = [
 
 randomtest_env.AppendUnique(LIBPATH = [randomtest_env.get('BUILD_DIR')])
 randomtest_env.PrependUnique(LIBS = ['octbstack',
-                                    'uuid'])
+                                     'connectivity_abstraction',
+                                     'uuid'])
 
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])

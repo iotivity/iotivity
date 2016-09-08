@@ -5,7 +5,7 @@
 %{!?VERBOSE: %define VERBOSE 1}
 
 Name: com-oic-ri
-Version:    1.1.1
+Version:    1.2.0
 Release:    0
 Summary: Tizen oicri application
 URL: http://slp-source.sec.samsung.net

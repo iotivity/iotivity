@@ -49,6 +49,8 @@
 #include "credresource.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"
+#include "pmtypes.h"
+#include "provisioningdatabasemanager.h"
 
 #define TAG  "SRM-DOXM"
 
@@ -1203,6 +1205,88 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
         return OC_STACK_OK;
     }
     return OC_STACK_ERROR;
+}
+
+OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
+{
+    bool isPT = false;
+
+    if(NULL == deviceID)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(NULL == gDoxm)
+    {
+        OIC_LOG(ERROR, TAG, "Doxm resource is not initialized.");
+        return OC_STACK_NO_RESOURCE;
+    }
+
+    //Check the device's OTM state
+
+#ifdef __WITH_DTLS__
+    //for PT.
+    if(true == gDoxm->owned &&
+       memcmp(gDoxm->deviceID.id, gDoxm->owner.id, sizeof(gDoxm->owner.id)) == 0)
+    {
+        OCUuidList_t* ownedDevices = NULL;
+        size_t* ownedDevNum = 0;
+
+        if(OC_STACK_OK == PDMGetOwnedDevices(&ownedDevices, &ownedDevNum))
+        {
+            OCUuidList_t* temp1 = NULL;
+            OCUuidList_t* temp2 = NULL;
+            LL_FOREACH_SAFE(ownedDevices, temp1, temp2)
+            {
+                LL_DELETE(ownedDevices, temp1);
+                OICFree(temp1);
+            }
+
+            if(0 != ownedDevNum)
+            {
+                OIC_LOG(ERROR, TAG, "This device has ownership for other device.");
+                OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");
+                return OC_STACK_ERROR;
+            }
+        }
+
+        isPT = true;
+    }
+    //for normal device.
+    else if(true == gDoxm->owned)
+    {
+        OIC_LOG(ERROR, TAG, "This device owned by owner's device.");
+        OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");
+        return OC_STACK_ERROR;
+    }
+#endif //__WITH_DTLS
+
+    //Save the previous UUID
+    OicUuid_t tempUuid;
+    memcpy(tempUuid.id, gDoxm->deviceID.id, sizeof(tempUuid.id));
+
+    //Change the UUID
+    memcpy(gDoxm->deviceID.id, deviceID->id, sizeof(deviceID->id));
+    if(isPT)
+    {
+        memcpy(gDoxm->owner.id, deviceID->id, sizeof(deviceID->id));
+        memcpy(gDoxm->rownerID.id, deviceID->id, sizeof(deviceID->id));
+    }
+
+    //Update PS
+    if(!UpdatePersistentStorage(gDoxm))
+    {
+        //revert UUID in case of update error
+        memcpy(gDoxm->deviceID.id, tempUuid.id, sizeof(tempUuid.id));
+        if(isPT)
+        {
+            memcpy(gDoxm->owner.id, tempUuid.id, sizeof(tempUuid.id));
+            memcpy(gDoxm->rownerID.id, tempUuid.id, sizeof(tempUuid.id));
+        }
+
+        OIC_LOG(ERROR, TAG, "Failed to update persistent storage");
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
 }
 
 OCStackResult GetDoxmDevOwnerId(OicUuid_t *devownerid)

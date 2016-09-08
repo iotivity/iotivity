@@ -339,6 +339,7 @@ namespace OC
             return OC_STACK_DELETE_TRANSACTION;
         }
 
+        std::string resourceURI = clientResponse->resourceUri;
         if (clientResponse->result != OC_STACK_OK)
         {
             oclog() << "listenMQCallback(): failed to create resource. clientResponse: "
@@ -346,7 +347,7 @@ namespace OC
                     << std::flush;
 
             std::thread exec(context->callback, clientResponse->result,
-                             std::string(clientResponse->resourceUri), nullptr);
+                             resourceURI, nullptr);
             exec.detach();
 
             return OC_STACK_DELETE_TRANSACTION;
@@ -369,7 +370,7 @@ namespace OC
             for (auto resource : container.Resources())
             {
                 std::thread exec(context->callback, clientResponse->result,
-                                 std::string(clientResponse->resourceUri), resource);
+                                 resourceURI, resource);
                 exec.detach();
             }
         }
