@@ -1,0 +1,36 @@
+; Windows octbstack.dll exports that are required for both products and tests,
+; but only when building with SECURED=1.
+
+CreateJustWorksOwnerTransferPayload
+CreateJustWorksSelectOxmPayload
+CreatePinBasedSelectOxmPayload
+CreatePinBasedOwnerTransferPayload
+CreateSecureSessionJustWorksCallback
+CreateSecureSessionRandomPinCallback
+InputPinCodeCallback
+LoadSecretJustWorksCallback
+
+OCDeleteACLList
+OCDeleteDiscoveredDevices
+OCDeletePdAclList
+OCDeleteUuidList
+OCDiscoverOwnedDevices
+OCDiscoverUnownedDevices
+OCDoOwnershipTransfer
+OCGetACLResource
+OCGetCredResource
+OCGetDevInfoFromNetwork
+OCGetLinkedStatus
+OCInitPM
+OCProvisionACL
+OCProvisionCredentials
+OCProvisionDirectPairing
+OCProvisionPairwiseDevices
+OCRemoveDevice
+OCRemoveDeviceWithUuid
+OCResetDevice
+OCSetOwnerTransferCallbackData
+OCUnlinkDevices
+
+SetGeneratePinCB
+SetInputPinCB
