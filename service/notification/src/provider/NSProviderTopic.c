@@ -364,6 +364,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
             newObj->data = (NSCacheData *) topicSubData;
             newObj->next = NULL;
+
             NSStorageWrite(consumerTopicList, newObj);
         }
     }
@@ -403,6 +404,8 @@ void * NSTopicSchedule(void * ptr)
                     newObj->data = node->taskData;
                     newObj->next = NULL;
                     NSStorageWrite(consumerTopicList, newObj);
+                    NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
+                    NSSendTopicUpdationToConsumer(topicSubData->id);
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");

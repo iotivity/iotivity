@@ -263,7 +263,7 @@ NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId)
+    if(!consumerId || consumerId[0] == '\0')
     {
         NS_LOG(DEBUG, "consumer id should be set");
         pthread_mutex_unlock(&nsInitMutex);
@@ -307,7 +307,7 @@ NSResult NSProviderRegisterTopic(const char * topicName)
     NS_LOG(DEBUG, "NSProviderAddTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!topicName)
+    if(!topicName || topicName == '\0')
     {
         pthread_mutex_unlock(&nsInitMutex);
         NS_LOG(DEBUG, "topic Name should be set");
@@ -326,7 +326,7 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
     NS_LOG(DEBUG, "NSProviderDeleteTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!topicName)
+    if(!topicName || topicName[0] == '\0')
     {
         pthread_mutex_unlock(&nsInitMutex);
         NS_LOG(DEBUG, "topic Name should be set");
@@ -345,7 +345,7 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
     NS_LOG(DEBUG, "NSProviderSelectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId || !topicName || !NSGetPolicy())
+    if(!consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0' || !NSGetPolicy())
     {
         NS_LOG(DEBUG, "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
@@ -371,7 +371,7 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
     NS_LOG(DEBUG, "NSProviderUnselectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId || !topicName || !NSGetPolicy())
+    if(!consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0' || !NSGetPolicy())
     {
         NS_LOG(DEBUG, "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
