@@ -176,7 +176,7 @@ private:
                 return response;
             }
 
-            else if (request == "POST" && type == requestType::NS_SYNC)
+            else if (request == "POST")
             {
                 if (type == requestType::NS_SYNC)
                 {
