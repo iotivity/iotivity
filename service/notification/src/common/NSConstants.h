@@ -21,6 +21,7 @@
 #ifndef _NS_CONSTANTS_H_
 #define _NS_CONSTANTS_H_
 
+#define __PRINTLOG 0
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
 #ifdef TB_LOG
@@ -28,6 +29,7 @@
 #define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
 #else
+#if (__PRINTLOG == 1)
 #include "logger.h"
 #define NS_CONVERT_LEVEL(level) ( \
         ((level) == 0) ? "DEBUG" : \
@@ -46,6 +48,11 @@
         printf((msg)); \
         printf("\n"); \
     }
+#else
+#define NS_CONVERT_LEVEL(level)
+#define NS_LOG(level, msg)
+#define NS_LOG_V(level, format, ...) NS_LOG((level), ((format), __VA_ARGS__))
+#endif
 #endif
 
 #define NS_TAG                     "IOT_NOTI"

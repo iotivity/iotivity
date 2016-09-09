@@ -127,6 +127,7 @@ namespace OIC
 #ifdef WITH_CLOUD
             result = (NSResult) NSProviderEnableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
+            (void) serverAddress;
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
 #endif
             NS_LOG(DEBUG, "enableRemoteService - OUT");
@@ -141,6 +142,7 @@ namespace OIC
 #ifdef WITH_CLOUD
             result = (NSResult) NSProviderDisableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
+            (void) serverAddress;
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
 #endif
             NS_LOG(DEBUG, "disableRemoteService - OUT");
@@ -161,7 +163,9 @@ namespace OIC
                 delete nsMsg;
             }
             else
+            {
                 NS_LOG(DEBUG, "Empty Message");
+            }
             NS_LOG(DEBUG, "sendMessage - OUT");
             return result;
         }

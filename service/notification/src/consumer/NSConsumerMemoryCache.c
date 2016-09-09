@@ -205,11 +205,6 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
 
     pthread_mutex_t * mutex = NSGetCacheMutex();
 
-    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
-    NSProvider_internal * prov = (NSProvider_internal *)newObj->data;
-    NS_LOG_V (DEBUG, "%s", prov->providerId);
-    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
-
     NSProvider_internal * newProvObj = (NSProvider_internal *) newObj->data;
 
     NSCacheElement * it = NSStorageRead(list, newProvObj->providerId);
@@ -250,11 +245,6 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
     NS_LOG_V(DEBUG, "New Object address : %s:%d", newProvObj->connection->addr->addr, newProvObj->connection->addr->port);
     obj->data = (void *) NSCopyProvider_internal(newProvObj);
 
-    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!2");
-    prov = (NSProvider_internal *)obj->data;
-    NS_LOG_V (DEBUG, "%s", prov->providerId);
-    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!2");
-
     if (!obj->data)
     {
         NS_LOG (ERROR, "Failed to CopyProvider");
@@ -269,11 +259,6 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
         list->head = obj;
         list->tail = obj;
 
-        NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3");
-        prov = (NSProvider_internal *)list->tail->data;
-        NS_LOG_V (DEBUG, "%s", prov->providerId);
-        NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3");
-
         pthread_mutex_unlock(mutex);
 
         return NS_OK;
@@ -281,11 +266,6 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
 
     (list->tail)->next = obj;
     list->tail = obj;
-
-    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!4");
-    prov = (NSProvider_internal *)list->tail->data;
-    NS_LOG_V (DEBUG, "%s", prov->providerId);
-    NS_LOG (DEBUG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!4");
 
     pthread_mutex_unlock(mutex);
 

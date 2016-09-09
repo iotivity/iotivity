@@ -112,11 +112,11 @@ namespace OIC
             NS_LOG(DEBUG, "updateTopicList - IN");
             if (topicList == nullptr)
                 return NSResult::ERROR;
-            for (auto it : topicList->getTopicsList())
-            {
-                NS_LOG_V(DEBUG, "Topic Name : %s", it->getTopicName().c_str());
-                NS_LOG_V(DEBUG, "Topic State : %d", (int) it->getState());
-            }
+//            for (auto it : topicList->getTopicsList())
+//            {
+//                NS_LOG_V(DEBUG, "Topic Name : %s", it->getTopicName().c_str());
+//                NS_LOG_V(DEBUG, "Topic State : %d", (int) it->getState());
+//            }
             NS_LOG(DEBUG, "Creating TopicLL from TopicList");
             NSTopicLL *topicLL = NULL;
             for (auto it : topicList->getTopicsList())

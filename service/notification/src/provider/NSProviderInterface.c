@@ -148,6 +148,8 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - OUT");
     return NS_OK;
+#else
+    (void) serverAddress;
 #endif
     NS_LOG_V(DEBUG, "Not logged in remote server: %s", serverAddress);
     return NS_FAIL;
@@ -172,6 +174,8 @@ NSResult NSProviderDisableRemoteService(char *serverAddress)
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - OUT");
     return NS_OK;
+#else
+    (void) serverAddress;
 #endif
     NS_LOG_V(DEBUG, "Not logged in remote server : %s", serverAddress);
     return NS_FAIL;

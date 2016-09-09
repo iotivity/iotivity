@@ -223,6 +223,7 @@ namespace OIC
             result = (NSResult) NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
+            (void) serverAddress;
 #endif
             NS_LOG(DEBUG, "enableRemoteService - OUT");
             return result;
