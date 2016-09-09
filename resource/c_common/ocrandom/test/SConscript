@@ -53,7 +53,7 @@ if randomtest_env.get('LOGGING'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-randomtests = randomtest_env.Program('randomtests', ['linux/randomtest.cpp'])
+randomtests = randomtest_env.Program('randomtests', ['randomtest.cpp'])
 
 Alias("test", [randomtests])
 

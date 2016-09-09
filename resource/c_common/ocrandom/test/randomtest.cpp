@@ -1,4 +1,3 @@
-
 //******************************************************************
 //
 // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
@@ -19,45 +18,34 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+
+
 extern "C" {
     #include "ocrandom.h"
 }
 
 #include "gtest/gtest.h"
-#include "math.h"
 
-
-int main(int argc, char* argv[]) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+#define ARR_SIZE (20)
 
 TEST(RandomGeneration,OCSeedRandom) {
-    EXPECT_EQ((uint32_t )0, OCSeedRandom());
+    EXPECT_EQ(0, OCSeedRandom());
 }
 
 TEST(RandomGeneration,OCGetRandomByte) {
-    uint8_t value = OCGetRandomByte();
-    EXPECT_LE((uint8_t )0, value);
-    EXPECT_GT(pow(2, 8), value);
+    EXPECT_NO_THROW(OCGetRandomByte());
 }
 
 TEST(RandomGeneration,OCGetRandom) {
-    uint32_t value = OCGetRandom();
-    EXPECT_LE((uint8_t )0, value);
-    EXPECT_GT(pow(2, 32), value);
+    EXPECT_NO_THROW(OCGetRandom());
 }
 
-TEST(RandomGeneration,OCFillRandomMem) {
-    uint16_t ARR_SIZE = 20;
-    uint8_t array[ARR_SIZE]={};
+TEST(RandomGeneration,OCFillRandomMem_BoundsCheck) {
+    uint8_t array[ARR_SIZE] = {};
+
+    // Ignore the first and last bytes of the array
     OCFillRandomMem(array + 1, ARR_SIZE - 2);
 
-    for (int i = 1; i < ARR_SIZE - 2; i++) {
-        uint8_t value = array[i];
-        EXPECT_LE((uint8_t )0, value);
-        EXPECT_GT(pow(2, 8), value);
-    }
     EXPECT_EQ((uint8_t )0, array[0]);
     EXPECT_EQ((uint8_t )0, array[ARR_SIZE - 1]);
 }
@@ -84,10 +72,10 @@ TEST(RandomGeneration, OCGenerateUuidString)
 {
     EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuidString(NULL));
 
-    char uuidString[37] ={};
+    char uuidString[37] = {};
 
     EXPECT_EQ(RAND_UUID_OK, OCGenerateUuidString(uuidString));
-    EXPECT_EQ(0, uuidString[36]);
+    EXPECT_EQ('\0', uuidString[36]);
     EXPECT_EQ('-', uuidString[8]);
     EXPECT_EQ('-', uuidString[13]);
     EXPECT_EQ('-', uuidString[18]);
