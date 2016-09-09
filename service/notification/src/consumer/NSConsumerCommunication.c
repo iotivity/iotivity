@@ -444,8 +444,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
             connections = connections->next;
         }
     }
-    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST
-                || task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
+    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
     {
         NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
 
