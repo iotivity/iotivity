@@ -524,6 +524,26 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
     EXPECT_EQ(NS_SYNC_DELETED, state);
 }
 
+TEST_F(NotificationConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
+{
+    NSProvider * provider = NSConsumerGetProvider(g_provider->providerId);
+    int ret = strcmp(provider->providerId, g_provider->providerId);
+    EXPECT_EQ(0, ret);
+    free(provider);
+}
+
+TEST_F(NotificationConsumerTest, ExpectGetProviderSuccessWithInvalidProviderId)
+{
+    NSProvider * provider = NSConsumerGetProvider("123456789012345678901234567890123457");
+    EXPECT_EQ(provider, (void*)NULL);
+}
+
+TEST_F(NotificationConsumerTest, ExpectGetProviderSuccessWithNULL)
+{
+    NSProvider * provider = NSConsumerGetProvider(NULL);
+    EXPECT_EQ(provider, (void*)NULL);
+}
+
 TEST_F(NotificationConsumerTest, ExpectGetTopicListIsNULL)
 {
     NSTopicLL * currentTopics = NSConsumerGetTopicList(g_provider->providerId);

@@ -42,7 +42,7 @@ void NSSetProviderCacheList(NSCacheList *);
 
 void NSDestroyMessageCacheList();
 
-void NSDestroyProviderCacheList();
+void NSDestroyInternalCachedList();
 
 NSMessage * NSMessageCacheFind(const char *);
 

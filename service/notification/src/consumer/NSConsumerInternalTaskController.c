@@ -45,7 +45,7 @@ typedef struct
 } NSMessageStateList;
 
 // Mutex of MessageState storage
-pthread_mutex_t * NSGetMessageListMutex();
+pthread_mutex_t ** NSGetMessageListMutex();
 void NSLockMessageListMutex();
 void NSUnlockMessageListMutex();
 
@@ -68,7 +68,7 @@ void NSSetProviderCacheList(NSCacheList * cache)
     *(NSGetProviderCacheList()) = cache;
 }
 
-void NSDestroyProviderCacheList()
+void NSDestroyInternalCachedList()
 {
     NSCacheList * cache = *(NSGetProviderCacheList());
     if (cache)
@@ -77,6 +77,10 @@ void NSDestroyProviderCacheList()
     }
 
     NSSetProviderCacheList(NULL);
+
+    NSDestroyMessageStateList();
+    pthread_mutex_destroy(*NSGetMessageListMutex());
+    *NSGetMessageListMutex() = NULL;
 }
 
 NSProvider_internal * NSProviderCacheFind(const char * providerId)
@@ -174,8 +178,6 @@ void NSCancelAllSubscription()
 
         NSConsumerPushEvent(task);
     }
-
-    NSDestroyMessageStateList();
 }
 
 void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
@@ -499,7 +501,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
 }
 
 // implements of MessageState function
-pthread_mutex_t * NSGetMessageListMutex()
+pthread_mutex_t ** NSGetMessageListMutex()
 {
     static pthread_mutex_t * g_mutex = NULL;
     if (g_mutex == NULL)
@@ -509,19 +511,19 @@ pthread_mutex_t * NSGetMessageListMutex()
 
         pthread_mutex_init(g_mutex, NULL);
     }
-    return g_mutex;
+    return & g_mutex;
 }
 
 void NSLockMessageListMutex()
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    pthread_mutex_lock(NSGetMessageListMutex());
+    pthread_mutex_lock(*NSGetMessageListMutex());
 }
 
 void NSUnlockMessageListMutex()
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    pthread_mutex_unlock(NSGetMessageListMutex());
+    pthread_mutex_unlock(*NSGetMessageListMutex());
 }
 
 NSMessageStateList * NSGetMessageStateList()

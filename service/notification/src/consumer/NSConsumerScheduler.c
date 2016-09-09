@@ -120,11 +120,14 @@ void NSConsumerMessageHandlerExit()
 
     NSConsumerListenerTermiate();
     NSCancelAllSubscription();
+
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
+    NSSetMsgHandleThreadHandle(NULL);
+
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
     NSSetMsgHandleQueue(NULL);
 
-    NSDestroyProviderCacheList();
+    NSDestroyInternalCachedList();
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)

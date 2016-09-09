@@ -381,6 +381,8 @@ public:
         OC::OCPlatform::unregisterResource(m_messageHandle);
         OC::OCPlatform::unregisterResource(m_syncHandle);
         OC::OCPlatform::unregisterResource(m_topicHandle);
+        m_allowedTopicList.clear();
+        m_topicList.clear();
     }
 
     void createNotificationResource()

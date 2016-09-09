@@ -98,6 +98,15 @@ bool * NSGetBoneIsStartedConsumer()
 void NSSetIsStartedConsumer(bool setValue)
 {
     * NSGetBoneIsStartedConsumer() = setValue;
+
+    if (setValue == false)
+    {
+        pthread_mutex_destroy(*NSGetStackMutex());
+        *NSGetStackMutex() = NULL;
+
+        NSOICFree(*NSGetConsumerId());
+        *NSGetConsumerId() = NULL;
+    }
 }
 
 bool NSIsStartedConsumer()
@@ -147,6 +156,8 @@ void NSProviderChanged(NSProvider * provider, NSProviderState response)
 
     NSConsumerThread * thread = NSThreadInit(NSProviderChangedFunc, (void *) data);
     NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
@@ -177,6 +188,8 @@ void NSNotificationSync(NSSyncInfo * sync)
 
     NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) retSync);
     NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSMessageReceivedCallback  * NSGetBoneMessagePostedCb()
@@ -211,6 +224,8 @@ void NSMessagePost(NSMessage * msg)
 
     NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) retMsg);
     NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSTask * NSMakeTask(NSTaskType type, void * data)
