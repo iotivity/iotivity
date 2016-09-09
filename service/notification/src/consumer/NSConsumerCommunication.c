@@ -466,15 +466,8 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         }
 
         NS_LOG(DEBUG, "get topic query");
-        char * query = NULL;
-        if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
-        {
-            query = OICStrdup(topicUri);
-        }
-        else if (task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
-        {
-            query = NSMakeRequestUriWithConsumerId(topicUri);
-        }
+        char * query = NSMakeRequestUriWithConsumerId(topicUri);
+
         NS_VERIFY_NOT_NULL_V(query);
         NS_LOG_V(DEBUG, "topic query : %s", query);
 
