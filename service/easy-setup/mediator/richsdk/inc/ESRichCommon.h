@@ -417,9 +417,9 @@ namespace OIC
              */
             std::string getLocation() const
             {
-                if(m_rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                if(m_rep.hasAttribute(OC_RSRVD_ES_LOCATION))
                 {
-                    return m_rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_LOCATION);
                 }
                 return std::string("");
             }
