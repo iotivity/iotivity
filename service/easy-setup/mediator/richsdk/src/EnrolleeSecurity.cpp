@@ -373,13 +373,15 @@ namespace OIC
                 throw ESException("Not found owned devices.");
             }
 
-            if(performACLProvisioningForCloudServer(ownedDevice, cloudUuid) != ESResult::ES_OK)
+            if(!cloudUuid.empty()
+                && performACLProvisioningForCloudServer(ownedDevice, cloudUuid) != ESResult::ES_OK)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performACLProvisioningForCloudServer");
                 throw ESException("error performACLProvisioningForCloudServer");
             }
 
-            if(performCertProvisioningForCloudServer(ownedDevice, credId) != ESResult::ES_OK)
+            if(credId != -1
+                && performCertProvisioningForCloudServer(ownedDevice, credId) != ESResult::ES_OK)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performCertProvisioningForCloudServer");
                 throw ESException("error performCertProvisioningForCloudServer");
@@ -524,12 +526,12 @@ namespace OIC
         {
             if (hasError)
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in provisioning operation!");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in ACL provisioning operation!");
                aclResult = false;
             }
             else
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received provisioning results: ");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received ACL provisioning results: ");
 
                std::string devUuid;
                for (unsigned int i = 0; i < result->size(); i++)
@@ -548,12 +550,12 @@ namespace OIC
         {
             if (hasError)
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in provisioning operation!");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in Cert. provisioning operation!");
                aclResult = false;
             }
             else
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received provisioning results: ");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received Cert. provisioning results: ");
 
                std::string devUuid;
                for (unsigned int i = 0; i < result->size(); i++)

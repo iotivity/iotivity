@@ -123,15 +123,21 @@ namespace OIC
              */
             CloudProp()
             {
+                m_cloudID = "";
+                m_credID = -1;
             }
 
             CloudProp(const CloudProp& cloudProp) :
-                m_rep(cloudProp.toOCRepresentation()), m_cloudID(cloudProp.getCloudID())
+                                            m_rep(cloudProp.toOCRepresentation()),
+                                            m_cloudID(cloudProp.getCloudID()),
+                                            m_credID(cloudProp.getCredID())
             {
             }
 
             CloudProp(const CloudProp&& cloudProp) :
-                m_rep(std::move(cloudProp.toOCRepresentation())), m_cloudID(cloudProp.getCloudID())
+                                            m_rep(std::move(cloudProp.toOCRepresentation())),
+                                            m_cloudID(cloudProp.getCloudID()),
+                                            m_credID(cloudProp.getCredID())
             {
             }
 

@@ -32,7 +32,7 @@ namespace OIC
 {
     namespace Service
     {
-        #define ENROLEE_SECURITY_TAG "ENROLEE_SECURITY"
+        #define ENROLEE_SECURITY_TAG "ENROLLEE_SECURITY"
         #define UUID_SIZE (16)
         #define UUID_STRING_SIZE (37)
 
