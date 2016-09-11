@@ -46,7 +46,6 @@ public class MessageBuilder {
             CoapResponse coapResponse = new CoapResponse(responseStatus);
             coapResponse.setUriPath(coapRequest.getUriPath());
             coapResponse.setToken(coapRequest.getToken());
-            coapResponse.setObserve(coapRequest.getObserve());
             if (payload != null) {
                 coapResponse.setContentFormat(format);
                 coapResponse.setPayload(payload);
