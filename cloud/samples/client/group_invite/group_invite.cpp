@@ -37,8 +37,6 @@
 using namespace std;
 using namespace OC;
 
-#define maxSequenceNumber 0xFFFFFF
-
 void printRepresentation(OCRepresentation rep)
 {
     for (auto itr = rep.begin(); itr != rep.end(); ++itr)
@@ -102,7 +100,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
 {
     try
     {
-        if (eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
+        if (eCode == OC_STACK_OK && sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
             if (sequenceNumber == OC_OBSERVE_REGISTER)
             {

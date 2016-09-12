@@ -13,8 +13,6 @@
 #include <OCApi.h>
 #include <OCPlatform.h>
 
-#define maxSequenceNumber 0xFFFFFF
-
 using namespace OC;
 using namespace std;
 
@@ -118,7 +116,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation &re
 {
     try
     {
-        if (eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
+        if (eCode == OC_STACK_OK && sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
             if (sequenceNumber == OC_OBSERVE_REGISTER)
             {

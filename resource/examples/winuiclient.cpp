@@ -189,7 +189,7 @@ void WinUIClientApp::onGet(const HeaderOptions& /*headerOptions*/, const OCRepre
 {
     try
     {
-        if (eCode == OC_STACK_OK)
+        if (OC_STACK_OK == eCode)
         {
             std::cout << "GET request was successful" << std::endl;
             std::cout << "Resource URI: " << rep.getUri() << std::endl;
@@ -241,7 +241,7 @@ void WinUIClientApp::onPut(const HeaderOptions& /*headerOptions*/, const OCRepre
 {
     try
     {
-        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
+        if (OC_STACK_OK == eCode || OC_STACK_RESOURCE_CHANGED == eCode)
         {
             std::cout << "PUT request was successful" << std::endl;
 
@@ -288,8 +288,8 @@ void WinUIClientApp::onPost(const HeaderOptions& /*headerOptions*/,
 {
     try
     {
-        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED
-                || OC_STACK_RESOURCE_CHANGED)
+        if (OC_STACK_OK == eCode || (OC_STACK_RESOURCE_CREATED == eCode
+                || OC_STACK_RESOURCE_CHANGED == eCode))
         {
             std::cout << "POST request was successful" << std::endl;
 
@@ -327,7 +327,7 @@ void WinUIClientApp::onPost2(const HeaderOptions& /*headerOptions*/,
 {
     try
     {
-        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+        if (OC_STACK_OK == eCode || OC_STACK_RESOURCE_CREATED == eCode)
         {
             std::cout << "POST request was successful" << std::endl;
 
@@ -366,15 +366,11 @@ void WinUIClientApp::onObserve(const HeaderOptions /*headerOptions*/, const OCRe
 {
     try
     {
-        if (eCode == OC_STACK_OK && sequenceNumber != OC_OBSERVE_NO_OPTION)
+        if (OC_STACK_OK == eCode && sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
             if (sequenceNumber == OC_OBSERVE_REGISTER)
             {
                 std::cout << "Observe registration action is successful" << std::endl;
-            }
-            else if (sequenceNumber == OC_OBSERVE_DEREGISTER)
-            {
-                std::cout << "Observe De-registration action is successful" << std::endl;
             }
 
             std::cout << "OBSERVE RESULT:"<<std::endl;
@@ -393,9 +389,11 @@ void WinUIClientApp::onObserve(const HeaderOptions /*headerOptions*/, const OCRe
         }
         else
         {
-            if (sequenceNumber == OC_OBSERVE_NO_OPTION)
+            if (OC_STACK_OK == eCode)
             {
-                std::cout << "Observe registration or de-registration action is failed" << std::endl;
+                std::cout << "No observe option header is returned in the response." << std::endl;
+                std::cout << "For a registration request, it means the registration failed"
+                        << std::endl;
             }
             else
             {

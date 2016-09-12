@@ -38,8 +38,6 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
-#define maxSequenceNumber 0xFFFFFF
-
 using namespace OC;
 
 static const char* SVR_DB_FILE_NAME = "./oic_svr_db_client.dat";
@@ -77,7 +75,7 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
 {
     try
     {
-        if(eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
+        if(eCode == OC_STACK_OK && sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
             if(sequenceNumber == OC_OBSERVE_REGISTER)
             {
@@ -109,7 +107,9 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
         {
             if(eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration failed or de-registration action failed/succeeded" << std::endl;
+                std::cout << "No observe option header is returned in the response." << std::endl;
+                std::cout << "For a registration request, it means the registration failed"
+                        << std::endl;
             }
             else
             {

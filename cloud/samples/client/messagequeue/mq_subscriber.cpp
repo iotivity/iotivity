@@ -41,7 +41,6 @@ using namespace OC;
 using namespace std;
 
 #define DEFAULT_MQ_BROKER_URI "/oic/ps"
-#define maxSequenceNumber 0xFFFFFF
 
 OC::OCResource::Ptr g_mqBrokerResource = nullptr;
 OC::OCResource::Ptr g_mqSelectedTopicResource = nullptr;
@@ -96,7 +95,7 @@ void subscribeCB(const HeaderOptions &,
 {
     try
     {
-        if (eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
+        if (eCode == OC_STACK_OK && sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
             if (sequenceNumber == OC_OBSERVE_REGISTER)
             {
