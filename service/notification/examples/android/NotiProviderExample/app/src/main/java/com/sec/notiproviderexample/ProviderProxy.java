@@ -23,7 +23,7 @@
 package com.sec.notiproviderexample;
 
 import android.content.Context;
-import android.os.Handler;
+import android.os.*;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -33,6 +33,7 @@ import org.iotivity.base.OcResourceHandle;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+import org.iotivity.service.ns.common.Message;
 import org.iotivity.service.ns.provider.*;
 import org.iotivity.service.ns.common.*;
 
@@ -40,7 +41,7 @@ import org.iotivity.service.ns.common.*;
 import java.util.HashMap;
 
 public class ProviderProxy
-        implements ProviderService.OnSubscriptionListener, ProviderService.OnSyncInfoListener{
+        implements ProviderService.OnConsumerSubscribedListener, ProviderService.OnMessageSynchronizedListener{
 
     private static final String TAG = "NS_PROVIDER_PROXY";
 
@@ -51,7 +52,7 @@ public class ProviderProxy
 
     private Handler mHandler = null;
 
-    private static final int MESSAGE_SUBSCRIPTION = 1;
+    private static final int CONSUMER_SUBSCRIBED = 1;
     private static final int MESSAGE_SYNC = 2;
 
     private static final int SYNC_READ = 0;
@@ -97,7 +98,7 @@ public class ProviderProxy
         Log.i(TAG, "Start ProviderService -IN");
         configurePlatform();
         try{
-            int result =  ioTNotification.Start(policy, this, this);
+            int result =  ioTNotification.start(this, this, policy, "Info");
             Log.i(TAG, "Notification Start: " + result);
         }
         catch(Exception e){
@@ -115,7 +116,7 @@ public class ProviderProxy
             Log.e(TAG, "Exception: stopping presence when terminating NS server: " + e);
         }
         try{
-            int result =  ioTNotification.Stop();
+            int result =  ioTNotification.stop();
             Log.i(TAG, "Notification Stop: " + result);
         }
         catch(Exception e){
@@ -129,7 +130,7 @@ public class ProviderProxy
         Log.i(TAG, "SendMessage ProviderService - IN");
 
         try{
-            int result =  ioTNotification.SendMessage(notiMessage);
+            int result =  ioTNotification.sendMessage(notiMessage);
             Log.i(TAG, "Notification Send Message: " + result);
         }
         catch(Exception e){
@@ -151,7 +152,7 @@ public class ProviderProxy
             if(msgMap.get(messageId) == SYNC_UNREAD)
             {
                 try{
-                    ioTNotification.SendSyncInfo(messageId,syncType );
+                    ioTNotification.sendSyncInfo(messageId, syncType);
                     Log.i(TAG, "Notification Sync " );
                 }
                 catch(Exception e) {
@@ -166,7 +167,7 @@ public class ProviderProxy
     public void EnableRemoteService(String servAdd) {
         Log.i(TAG, "EnableRemoteService ProviderService - IN");
         try{
-            int result = ioTNotification.EnableRemoteService(servAdd);
+            int result = ioTNotification.enableRemoteService(servAdd);
             Log.i(TAG, "Notification EnableRemoteService: "+ result );
         }
         catch(Exception e) {
@@ -178,7 +179,7 @@ public class ProviderProxy
     public void DisableRemoteService(String servAdd) {
         Log.i(TAG, "DisableRemoteService ProviderService - IN");
         try{
-            int result = ioTNotification.DisableRemoteService(servAdd);
+            int result = ioTNotification.disableRemoteService(servAdd);
             Log.i(TAG, "Notification DisableRemoteService: "+ result );
         }
         catch(Exception e) {
@@ -191,7 +192,7 @@ public class ProviderProxy
     {
         Log.i(TAG,"AcceptSubscription ProviderService - IN");
         try{
-            int result = consumer.AcceptSubscription(consumer, accepted);
+            int result = consumer.acceptSubscription(accepted);
             Log.i(TAG, "Notification AcceptSubscription: "+result );
         }
         catch(Exception e) {
@@ -204,12 +205,18 @@ public class ProviderProxy
     public void onConsumerSubscribed(Consumer consumer) {
         Log.i(TAG, "onConsumerSubscribed - IN");
         AcceptSubscription(consumer, true);
+        android.os.Message msg = mHandler.obtainMessage(CONSUMER_SUBSCRIBED,
+                "Consumer Id: " + consumer.getConsumerId()  );
+        mHandler.sendMessage(msg);
         Log.i(TAG, "onConsumerSubscribed - OUT");
     }
 
     @Override
     public void onMessageSynchronized(SyncInfo syncInfo) {
         Log.i(TAG, "Received SyncInfo with messageID: "+syncInfo.getMessageId());
+        android.os.Message msg = mHandler.obtainMessage(MESSAGE_SYNC,
+                "Message Id: " + syncInfo.getMessageId()  );
+        mHandler.sendMessage(msg);
     }
 
     public HashMap<String, Integer> getMsgMap() {
