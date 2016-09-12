@@ -427,11 +427,8 @@ extern "C" {
 /** Defines private. */
 #define OC_RSRVD_PRIVATE                   "Private"
 
-/** Defines options. */
+/** Defines invite. */
 #define OC_RSRVD_INVITE                    "invite"
-
-/** Defines options. */
-#define OC_RSRVD_OPTIONS                   "options"
 
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
