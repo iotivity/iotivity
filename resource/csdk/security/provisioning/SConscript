@@ -55,9 +55,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'ck_manager/include'
 		])
 
-if target_os not in ['tizen', 'windows', 'msys_nt']:
-	provisioning_env.AppendUnique(CPPPATH = ['../../../../extlibs/sqlite3'])
-
 provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_DTLS__'])
 
 if 'g++' in provisioning_env.get('CXX'):
@@ -81,9 +78,6 @@ if target_os not in ['msys_nt', 'windows', 'android']:
 
 if target_os in ['windows', 'msys_nt']:
 	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'timer'])
-
-if target_os in ['tizen']:
-	provisioning_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os in ['android']:
 	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -117,7 +111,10 @@ if provisioning_env.get('WITH_TCP') == True:
 	'src/cloud/aclid.c',
 	'src/cloud/csr.c']
 
-if target_os not in ['tizen', 'windows', 'msys_nt']:
+if target_os in ['tizen']:
+	provisioning_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+else:
+	provisioning_env.AppendUnique(CPPPATH = ['../../../../extlibs/sqlite3'])
 	provisioning_src = provisioning_src + [root_dir+'/extlibs/sqlite3/sqlite3.c' ]
 
 if target_os in ['windows', 'msys_nt']:
