@@ -21,6 +21,7 @@ EXT_PATH = EXT_BASE + '/' + SRC_NAME
 SRC_PATH = base_dir + '/' + EXT_PATH
 INC_PATH = SRC_PATH
 LIB_PATH = SRC_PATH + '/' + '.libs'
+LIBSTROPHY_LIBS = ['strophe', 'ssl', 'crypto', 'resolv']
 
 if with_ra_ibb:
 	# check 'libstrophe' library, if it doesn't exits, ask user to download it
@@ -68,8 +69,8 @@ if with_ra_ibb:
 		Exit(2)
 
 	print 'Building with ' + SRC_NAME + ' Completely.'
-	env.AppendUnique(CPPPATH = [INC_PATH], RALIBS = ['strophe', 'ssl', 'crypto', 'resolv'], RALIBPATH = [LIB_PATH], RARPATH = [LIB_PATH])
-
+	env.AppendUnique(CPPPATH = [INC_PATH], RALIBS = LIBSTROPHY_LIBS, RALIBPATH = [LIB_PATH], RARPATH = [LIB_PATH])
+	env.AppendUnique(LIBS= LIBSTROPHY_LIBS, LIBPATH = [LIB_PATH])
 if env.GetOption('clean') :
 	act = env.Action(['cd ' + SRC_PATH, 'make clean'])
 	env.Execute(act)

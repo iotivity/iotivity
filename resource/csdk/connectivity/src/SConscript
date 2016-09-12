@@ -10,6 +10,7 @@ ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 with_ra = env.get ('WITH_RA')
+with_ra_ibb = env.get('WITH_RA_IBB')
 with_tcp = env.get('WITH_TCP')
 src_dir = env.get('SRC_DIR')
 root_dir = os.pardir
@@ -88,6 +89,9 @@ if ((secured == '1') and (with_tcp == True)):
 		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_tls.c')])
 
 ca_common_src = None
+
+if with_ra_ibb:
+	env.SConscript('#extlibs/wksxmppxep/SConscript')
 
 if env.get('ROUTING') == 'GW':
 	env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
@@ -209,6 +213,7 @@ if ca_os in ['android', 'tizen', 'linux', 'yocto']:
 		lib_env.AppendUnique(LIBS = ['rt'])
 		if ((lib_env.get('SECURED') == '1') and ((lib_env.get('WITH_TCP')) or (lib_env.get('WITH_CLOUD')))):
 			lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+
 	calib = lib_env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 elif ca_os in ['msys_nt', 'windows']:
 	lib_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
@@ -218,5 +223,6 @@ elif ca_os in ['msys_nt', 'windows']:
 	calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = lib_env.StaticLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
+
 lib_env.InstallTarget(calib, 'connectivity_abstraction')
 lib_env.UserInstallTargetLib(calib, 'connectivity_abstraction')
