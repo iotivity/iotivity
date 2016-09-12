@@ -26,16 +26,36 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-NSCacheList ** NSGetMessageCacheList()
-{
-    static NSCacheList * messageCache = NULL;
-    return & messageCache;
-}
+#define NS_RESERVED_MESSAGEID 10
 
-void NSSetMessageCacheList(NSCacheList * cache)
+// MessageState storage structure
+typedef struct _NSMessageStateLL
 {
-    *(NSGetMessageCacheList()) = cache;
-}
+    uint64_t messageId;
+    NSSyncType state;
+    struct _NSMessageStateLL * next;
+
+} NSMessageStateLL;
+
+typedef struct
+{
+    NSMessageStateLL * head;
+    NSMessageStateLL * tail;
+
+} NSMessageStateList;
+
+// Mutex of MessageState storage
+pthread_mutex_t ** NSGetMessageListMutex();
+void NSLockMessageListMutex();
+void NSUnlockMessageListMutex();
+
+// Function for MessageState
+NSMessageStateList * NSGetMessageStateList();
+NSMessageStateLL * NSFindMessageState(uint64_t msgId);
+bool NSUpdateMessageState(uint64_t msgId, NSSyncType state);
+bool NSDeleteMessageState(uint64_t msgId);
+bool NSInsertMessageState(uint64_t msgId, NSSyncType state);
+void NSDestroyMessageStateList();
 
 NSCacheList ** NSGetProviderCacheList()
 {
@@ -48,18 +68,7 @@ void NSSetProviderCacheList(NSCacheList * cache)
     *(NSGetProviderCacheList()) = cache;
 }
 
-void NSDestroyMessageCacheList()
-{
-    NSCacheList * cache = *(NSGetMessageCacheList());
-    if (cache)
-    {
-        NSStorageDestroy(cache);
-    }
-
-    NSSetMessageCacheList(NULL);
-}
-
-void NSDestroyProviderCacheList()
+void NSDestroyInternalCachedList()
 {
     NSCacheList * cache = *(NSGetProviderCacheList());
     if (cache)
@@ -68,27 +77,10 @@ void NSDestroyProviderCacheList()
     }
 
     NSSetProviderCacheList(NULL);
-}
 
-NSMessage * NSMessageCacheFind(const char * messageId)
-{
-    NS_VERIFY_NOT_NULL(messageId, NULL);
-
-    NSCacheList * MessageCache = *(NSGetMessageCacheList());
-    if (!MessageCache)
-    {
-        NS_LOG(DEBUG, "Message Cache Init");
-        MessageCache = NSStorageCreate();
-        NS_VERIFY_NOT_NULL(MessageCache, NULL);
-
-        MessageCache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
-        NSSetMessageCacheList(MessageCache);
-    }
-
-    NSCacheElement * cacheElement = NSStorageRead(MessageCache, messageId);
-    NS_VERIFY_NOT_NULL(cacheElement, NULL);
-
-    return NSCopyMessage(((NSStoreMessage *) cacheElement->data)->msg);
+    NSDestroyMessageStateList();
+    pthread_mutex_destroy(*NSGetMessageListMutex());
+    *NSGetMessageListMutex() = NULL;
 }
 
 NSProvider_internal * NSProviderCacheFind(const char * providerId)
@@ -129,51 +121,6 @@ NSProvider_internal * NSFindProviderFromAddr(OCDevAddr * addr)
     NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
     return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
-}
-
-void NSRemoveCacheElementMessage(NSCacheElement * obj)
-{
-    NSRemoveMessage(((NSStoreMessage *)obj->data)->msg);
-    NSOICFree(obj->data);
-    NSOICFree(obj);
-}
-
-NSResult NSMessageCacheUpdate(NSMessage * msg, NSSyncType type)
-{
-    NS_VERIFY_NOT_NULL(msg, NS_ERROR);
-
-    NSCacheList * MessageCache = *(NSGetMessageCacheList());
-    if (!MessageCache)
-    {
-        NS_LOG(DEBUG, "Message Cache Init");
-        MessageCache = NSStorageCreate();
-        NS_VERIFY_NOT_NULL(MessageCache, NS_ERROR);
-
-        MessageCache->cacheType = NS_CONSUMER_CACHE_MESSAGE;
-        NSSetMessageCacheList(MessageCache);
-    }
-
-    NSStoreMessage * sMsg = (NSStoreMessage *)OICMalloc(sizeof(NSStoreMessage));
-    NS_VERIFY_NOT_NULL(sMsg, NS_ERROR);
-
-    NSCacheElement * obj = (NSCacheElement *)OICMalloc(sizeof(NSCacheElement));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NS_ERROR, NSOICFree(sMsg));
-
-    sMsg->status = type;
-    sMsg->msg = NSCopyMessage(msg);
-
-    obj->data = (NSCacheData *) sMsg;
-    obj->next = NULL;
-
-    NS_LOG(DEBUG, "try to write to storage");
-    NSResult ret = NSStorageWrite(MessageCache, obj);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
-            NS_ERROR, NSRemoveCacheElementMessage(obj));
-
-    NSRemoveCacheElementMessage(obj);
-
-    NS_LOG(DEBUG, "Update message done");
-    return NS_OK;
 }
 
 NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
@@ -242,9 +189,29 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
 
     NSProvider_internal * providerCacheDataFromAddr
         = NSFindProviderFromAddr(provider->connection->addr);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(
-        (providerCacheDataFromAddr == NULL) ? (void *)1 : NULL,
-        NSRemoveProvider_internal(providerCacheDataFromAddr));
+
+    if (providerCacheDataFromAddr)
+    {
+        if (!strcmp(providerCacheDataFromAddr->providerId, provider->providerId))
+        {
+            NSProviderConnectionInfo * infos = providerCacheDataFromAddr->connection;
+            while (infos)
+            {
+                isSubscribing |= infos->isSubscribing;
+                infos = infos->next;
+            }
+
+            if (isSubscribing == false)
+            {
+                NSProvider * providerForCb = NSCopyProvider(providerCacheDataFromAddr);
+                NSProviderChanged(providerForCb, NS_DISCOVERED);
+                NSRemoveProvider(providerForCb);
+            }
+            NSRemoveProvider_internal(providerCacheDataFromAddr);
+            return ;
+        }
+        NSRemoveProvider_internal(providerCacheDataFromAddr);
+    }
 
     NSProvider_internal * providerCacheData = NSProviderCacheFind(provider->providerId);
 
@@ -289,6 +256,7 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
         NSProvider * providerForCb = NSCopyProvider(provider);
         NSProviderChanged(providerForCb, NS_DISCOVERED);
+        NSRemoveProvider(providerForCb);
     }
     else
     {
@@ -379,27 +347,25 @@ void NSConsumerHandleRecvMessage(NSMessage * msg)
 {
     NS_VERIFY_NOT_NULL_V(msg);
 
-    NSResult ret = NSMessageCacheUpdate(msg, NS_SYNC_UNREAD);
-    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
-
-    NSMessagePost((NSMessage *) msg);
+    if (NSInsertMessageState(msg->messageId, NS_SYNC_UNREAD))
+    {
+        NSMessagePost(msg);
+    }
 }
 
 void NSConsumerHandleRecvSyncInfo(NSSyncInfo * sync)
 {
     NS_VERIFY_NOT_NULL_V(sync);
 
-    char msgId[NS_DEVICE_ID_LENGTH] = { 0, };
-    snprintf(msgId, NS_DEVICE_ID_LENGTH, "%lld", (long long int)sync->messageId);
+    if (NSUpdateMessageState(sync->messageId, sync->state))
+    {
+        NSNotificationSync(sync);
+    }
 
-    NSMessage * msg = NSMessageCacheFind(msgId);
-    NS_VERIFY_NOT_NULL_V(msg);
-
-    NSResult ret = NSMessageCacheUpdate(msg, sync->state);
-    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
-    NSRemoveMessage(msg);
-
-    NSNotificationSync(sync);
+    if (sync->state == NS_SYNC_DELETED)
+    {
+        NSDeleteMessageState(sync->messageId);
+    }
 }
 
 void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
@@ -410,6 +376,7 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
     NS_VERIFY_NOT_NULL_V (provider);
 
     NSProviderConnectionInfo * connections = NSCopyProviderConnections(provider->connection);
+    NSRemoveProvider_internal(provider);
     NS_VERIFY_NOT_NULL_V (connections);
 
     NSSyncInfo_internal * syncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));
@@ -531,4 +498,179 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         }
     }
     NSOICFree(task);
+}
+
+// implements of MessageState function
+pthread_mutex_t ** NSGetMessageListMutex()
+{
+    static pthread_mutex_t * g_mutex = NULL;
+    if (g_mutex == NULL)
+    {
+        g_mutex = (pthread_mutex_t *) OICMalloc(sizeof(pthread_mutex_t));
+        NS_VERIFY_NOT_NULL(g_mutex, NULL);
+
+        pthread_mutex_init(g_mutex, NULL);
+    }
+    return & g_mutex;
+}
+
+void NSLockMessageListMutex()
+{
+    NS_LOG_V(DEBUG, "%s", __func__);
+    pthread_mutex_lock(*NSGetMessageListMutex());
+}
+
+void NSUnlockMessageListMutex()
+{
+    NS_LOG_V(DEBUG, "%s", __func__);
+    pthread_mutex_unlock(*NSGetMessageListMutex());
+}
+
+NSMessageStateList * NSGetMessageStateList()
+{
+    static NSMessageStateList * g_messageStateList = NULL;
+    if (g_messageStateList == NULL)
+    {
+        g_messageStateList = (NSMessageStateList *)OICMalloc(sizeof(NSMessageStateList));
+        NS_VERIFY_NOT_NULL(g_messageStateList, NULL);
+
+        g_messageStateList->head = NULL;
+        g_messageStateList->tail = NULL;
+    }
+
+    return g_messageStateList;
+}
+
+NSMessageStateLL * NSFindMessageState(uint64_t msgId)
+{
+    NS_LOG_V(DEBUG, "%s", __func__);
+    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    NSMessageStateLL * iter = NULL;
+
+    NSLockMessageListMutex();
+    if (NSGetMessageStateList()->head == NULL)
+    {
+        NSUnlockMessageListMutex();
+        return false;
+    }
+
+    for (iter = NSGetMessageStateList()->head; iter; iter = iter->next)
+    {
+        if (iter->messageId == msgId)
+        {
+            NSUnlockMessageListMutex();
+            return iter;
+        }
+    }
+
+    NSUnlockMessageListMutex();
+    return NULL;
+}
+
+bool NSUpdateMessageState(uint64_t msgId, NSSyncType state)
+{
+    NS_LOG_V(DEBUG, "%s", __func__);
+    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    NSMessageStateLL * iter = NULL;
+
+    NSLockMessageListMutex();
+    for (iter = NSGetMessageStateList()->head; iter; iter = iter->next)
+    {
+        if (iter->messageId == msgId && state != iter->state)
+        {
+            iter->state = state;
+            NSUnlockMessageListMutex();
+            return true;
+        }
+    }
+
+    NSUnlockMessageListMutex();
+    return false;
+}
+
+bool NSDeleteMessageState(uint64_t msgId)
+{
+    NS_LOG_V(DEBUG, "%s", __func__);
+    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    NSMessageStateLL * iter = NULL;
+    NSMessageStateLL * prev = NULL;
+
+    NSLockMessageListMutex();
+    for (iter = NSGetMessageStateList()->head; iter; iter = iter->next)
+    {
+        if (iter->messageId == msgId)
+        {
+            if (iter == NSGetMessageStateList()->head)
+            {
+                NSGetMessageStateList()->head = NULL;
+                NSGetMessageStateList()->tail = NULL;
+            }
+            else if (iter == NSGetMessageStateList()->tail)
+            {
+                prev->next = NULL;
+                NSGetMessageStateList()->tail = prev;
+            }
+            else
+            {
+                prev->next = iter->next;
+            }
+            NSUnlockMessageListMutex();
+
+            NSOICFree(iter);
+            return true;
+        }
+        prev = iter;
+    }
+
+    NSUnlockMessageListMutex();
+    return false;
+}
+
+bool NSInsertMessageState(uint64_t msgId, NSSyncType state)
+{
+    NS_LOG_V(DEBUG, "%s", __func__);
+    if (NSFindMessageState(msgId))
+    {
+        return false;
+    }
+
+    NSMessageStateLL * insertMsg = (NSMessageStateLL * )OICMalloc(sizeof(NSMessageStateLL));
+    NS_VERIFY_NOT_NULL(insertMsg, false);
+
+    insertMsg->messageId = msgId;
+    insertMsg->state = state;
+    insertMsg->next = NULL;
+
+    NSLockMessageListMutex();
+    if (NSGetMessageStateList()->head == NULL)
+    {
+        NSGetMessageStateList()->head = insertMsg;
+    }
+    else
+    {
+        NSGetMessageStateList()->tail->next = insertMsg;
+    }
+    NSGetMessageStateList()->tail = insertMsg;
+    NSUnlockMessageListMutex();
+
+    return true;
+}
+
+void NSDestroyMessageStateList()
+{
+    NS_LOG_V(DEBUG, "%s", __func__);
+    NSLockMessageListMutex();
+
+    NSMessageStateLL * iter = NSGetMessageStateList()->head;
+    while (iter)
+    {
+        NSMessageStateLL * del = iter;
+        iter = iter->next;
+        NSOICFree(del);
+    }
+
+    NSGetMessageStateList()->head = NULL;
+    NSGetMessageStateList()->tail = NULL;
+
+    NSUnlockMessageListMutex();
 }

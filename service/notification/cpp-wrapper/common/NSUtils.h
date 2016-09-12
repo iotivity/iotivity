@@ -51,8 +51,17 @@ namespace OIC
             ALLOW = 1,
             DENY = 2,
             TOPIC = 3,
-            DISCOVERED = 11,
             STOPPED = 12
+        };
+        
+        /**
+             * NSProviderSubscribedState of notification service
+             */
+        enum class NSProviderSubscribedState
+        {
+            DENY = 0,
+            DISCOVERED = 1,
+            SUBSCRIBED = 2
         };
     }
 }

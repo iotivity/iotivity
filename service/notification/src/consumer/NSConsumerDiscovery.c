@@ -211,7 +211,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     char * syncUri = NULL;
     char * topicUri = NULL;
     bool bAccepter = 0;
-    int16_t iAccepter = 0;
+    int64_t iAccepter = 0;
     NSProviderConnectionInfo * connection = NULL;
 
     NS_LOG(DEBUG, "get information of accepter");
@@ -222,7 +222,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     }
     else if (accepterType == OCREP_PROP_INT)
     {
-        getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, (int64_t*) & iAccepter);
+        getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, & iAccepter);
     }
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 

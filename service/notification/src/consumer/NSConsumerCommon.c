@@ -98,6 +98,15 @@ bool * NSGetBoneIsStartedConsumer()
 void NSSetIsStartedConsumer(bool setValue)
 {
     * NSGetBoneIsStartedConsumer() = setValue;
+
+    if (setValue == false)
+    {
+        pthread_mutex_destroy(*NSGetStackMutex());
+        *NSGetStackMutex() = NULL;
+
+        NSOICFree(*NSGetConsumerId());
+        *NSGetConsumerId() = NULL;
+    }
 }
 
 bool NSIsStartedConsumer()
@@ -117,9 +126,38 @@ void NSSetProviderChangedCb(NSProviderStateCallback cb)
     *(NSGetProviderChangedCb()) = cb;
 }
 
+typedef struct
+{
+    NSProvider * provider;
+    NSProviderState state;
+} NSProviderChangedData;
+
+void * NSProviderChangedFunc(void * obj)
+{
+    NSProviderChangedData * data = (NSProviderChangedData *) obj;
+    (*(NSGetProviderChangedCb()))(data->provider, data->state);
+    NSOICFree(data);
+    return NULL;
+}
+
 void NSProviderChanged(NSProvider * provider, NSProviderState response)
 {
-    (*(NSGetProviderChangedCb()))(provider, response);
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSProvider * retProvider = NSCopyProvider((NSProvider_internal *) provider);
+    NS_VERIFY_NOT_NULL_V(retProvider);
+
+    NSProviderChangedData * data =
+            (NSProviderChangedData *)OICMalloc(sizeof(NSProviderChangedData));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(data, NSRemoveProvider(retProvider));
+
+    data->provider = retProvider;
+    data->state = response;
+
+    NSConsumerThread * thread = NSThreadInit(NSProviderChangedFunc, (void *) data);
+    NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
@@ -150,6 +188,8 @@ void NSNotificationSync(NSSyncInfo * sync)
 
     NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) retSync);
     NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSMessageReceivedCallback  * NSGetBoneMessagePostedCb()
@@ -184,6 +224,8 @@ void NSMessagePost(NSMessage * msg)
 
     NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) retMsg);
     NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSTask * NSMakeTask(NSTaskType type, void * data)
@@ -218,9 +260,18 @@ NSMessage * NSCopyMessage(NSMessage * msg)
     {
         newMsg->topic = OICStrdup(msg->topic);
     }
-
-    // TODO change to copy function.
-    newMsg->mediaContents = msg->mediaContents;
+    if (msg->mediaContents)
+    {
+        newMsg->mediaContents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
+                newMsg->mediaContents, NULL, NSRemoveMessage(newMsg));
+        newMsg->mediaContents->iconImage =
+                (char *)OICMalloc(sizeof(char)*strlen(msg->mediaContents->iconImage));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
+                newMsg->mediaContents->iconImage, NULL, NSRemoveMessage(newMsg));
+        memcpy(newMsg->mediaContents->iconImage, msg->mediaContents->iconImage,
+               strlen(msg->mediaContents->iconImage));
+    }
 
     return newMsg;
 }
@@ -235,7 +286,10 @@ void NSRemoveMessage(NSMessage * msg)
     NSOICFree(msg->dateTime);
     NSOICFree(msg->topic);
 
-    // TODO change to remove function.
+    if (msg->mediaContents)
+    {
+        NSOICFree(msg->mediaContents->iconImage);
+    }
     NSOICFree(msg->mediaContents);
 
     NSOICFree(msg);
@@ -473,33 +527,6 @@ void NSRemoveProvider(NSProvider * prov)
 {
     NS_VERIFY_NOT_NULL_V(prov);
     NSOICFree(prov);
-}
-
-NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal * syncInfo)
-{
-    NS_VERIFY_NOT_NULL(syncInfo, NULL);
-
-    NSProviderConnectionInfo * connections = NSCopyProviderConnections(syncInfo->connection);
-    NS_VERIFY_NOT_NULL(connections, NULL);
-
-    NSSyncInfo_internal * newSyncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newSyncInfo, NULL, NSRemoveConnections(connections));
-
-    OICStrcpy(newSyncInfo->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, syncInfo->providerId);
-    newSyncInfo->messageId = syncInfo->messageId;
-    newSyncInfo->state = syncInfo->state;
-    newSyncInfo->connection = connections;
-
-    return newSyncInfo;
-}
-
-void NSRemoveSyncInfo(NSSyncInfo_internal * syncInfo)
-{
-    NS_VERIFY_NOT_NULL_V(syncInfo);
-
-    NSRemoveConnections(syncInfo->connection);
-
-    NSOICFree(syncInfo);
 }
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,

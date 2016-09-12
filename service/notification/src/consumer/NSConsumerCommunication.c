@@ -250,6 +250,23 @@ NSMessage * NSGetMessage(OCClientResponse * clientResponse)
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_DATETIME, &retMsg->dateTime);
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retMsg->ttl);
 
+    char * icon = NULL;
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ICON_IMAGE, &icon);
+
+    if (icon)
+    {
+        NSMediaContents * contents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
+        if (contents)
+        {
+            contents->iconImage = icon;
+            retMsg->mediaContents = contents;
+        }
+        else
+        {
+            NSOICFree(icon);
+        }
+    }
+
     NS_LOG_V(DEBUG, "Msg ID      : %lld", (long long int)retMsg->messageId);
     NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
     NS_LOG_V(DEBUG, "Msg Content : %s", retMsg->contentText);
@@ -427,8 +444,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
             connections = connections->next;
         }
     }
-    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST
-                || task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
+    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
     {
         NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
 
@@ -449,15 +465,8 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         }
 
         NS_LOG(DEBUG, "get topic query");
-        char * query = NULL;
-        if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
-        {
-            query = OICStrdup(topicUri);
-        }
-        else if (task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
-        {
-            query = NSMakeRequestUriWithConsumerId(topicUri);
-        }
+        char * query = NSMakeRequestUriWithConsumerId(topicUri);
+
         NS_VERIFY_NOT_NULL_V(query);
         NS_LOG_V(DEBUG, "topic query : %s", query);
 
