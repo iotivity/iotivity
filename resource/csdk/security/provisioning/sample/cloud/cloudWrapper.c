@@ -2,6 +2,8 @@
 #include "occloudprovisioning.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "srmutility.h"
+#include "utlist.h"
 
 #include "utils.h"
 
@@ -227,6 +229,43 @@ exit:
     return 0;
 }
 
+/**
+ * Frees particular cloudAce object
+ *
+ * @param[in] ace   ace object to free
+ * */
+static void freeCloudAce(cloudAce_t *ace)
+{
+    OICFree(ace->aceId);
+
+    //Clean Resources
+    OicSecRsrc_t* rsrc = NULL;
+    OicSecRsrc_t* tmpRsrc = NULL;
+    LL_FOREACH_SAFE(ace->resources, rsrc, tmpRsrc)
+    {
+        LL_DELETE(ace->resources, rsrc);
+        FreeRsrc(rsrc);
+    }
+
+    OICFree(ace);
+}
+
+/**
+ * Deletes cloudAce list
+ *
+ * @param[in] ace   aces list to delete
+ * */
+static void deleteCloudAceList(cloudAce_t *aces)
+{
+    cloudAce_t *ace = NULL;
+    cloudAce_t *tmpAce = NULL;
+    LL_FOREACH_SAFE(aces, ace, tmpAce)
+    {
+        LL_DELETE(aces, ace);
+        freeCloudAce(ace);
+    }
+}
+
 OCStackResult OCWrapperCertificateIssueRequest(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     return OCCloudCertificateIssueRequest(NULL, endPoint, callback);
@@ -314,25 +353,24 @@ OCStackResult OCWrapperAclIndividualGetInfo(const OCDevAddr *endPoint, OCCloudRe
 OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     OCStackResult result = OC_STACK_NO_MEMORY;
-    int i = 0, j = 0;
 
     char aclid[MAX_ID_LENGTH] = { 0 };
-    readString(aclid, sizeof(aclid), "ace id", ACL_ID_EXAMPLE);
+    readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
     int acllist_count = 0;
     readInteger(&acllist_count, "acl list count", "1");
 
-    cloudAce_t *aces = OICCalloc(acllist_count, sizeof(cloudAce_t));
-    if (!aces)
-    {
-        OIC_LOG(ERROR, TAG, "Can't allocate memory for aces");
-        goto exit;
-    }
+    cloudAce_t *aces = NULL;
 
-    for (i = 0; i < acllist_count; i++)
+    for (int i = 0; i < acllist_count; i++)
     {
-        cloudAce_t *ace = &aces[i];
-        if (i != acllist_count - 1) ace->next = &aces[i + 1];
+        cloudAce_t *ace = OICCalloc(1, sizeof(cloudAce_t));
+        if (!ace)
+        {
+            OIC_LOG(ERROR, TAG, "Can't allocate memory for ace");
+            goto exit;
+        }
+        LL_APPEND(aces, ace);
 
         char aceid[MAX_ID_LENGTH] = { 0 };
         char subjectuuid[MAX_ID_LENGTH] = { 0 };
@@ -340,29 +378,30 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         int permission = 0;
 
         readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
-        readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
+        do
+        {
+            readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
+        } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
+
         readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
         readInteger(&permission, "permission", "6");
 
         ace->aceId = OICStrdup(aceid);
         ace->stype = stype;
         ace->permission = permission;
-        memcpy(&ace->subjectuuid, subjectuuid, sizeof(OicUuid_t));
 
         int reslist_count = 0;
         readInteger(&reslist_count, "resources list count", "1");
 
-        ace->resources = OICCalloc(reslist_count, sizeof(OicSecRsrc_t));
-        if (!ace->resources)
+        for (int i = 0; i < reslist_count; i++)
         {
-            OIC_LOG(ERROR, TAG, "Can't allocate memory for resources");
-            goto exit;
-        }
-
-        for (j = 0; j < reslist_count; j++)
-        {
-            OicSecRsrc_t *res = &ace->resources[j];
-            if (j != reslist_count - 1) res->next = &ace->resources[j + 1];
+            OicSecRsrc_t *res = OICCalloc(1, sizeof(OicSecRsrc_t));
+            if (!res)
+            {
+                OIC_LOG(ERROR, TAG, "Can't allocate memory for res");
+                goto exit;
+            }
+            LL_APPEND(ace->resources, res);
 
             char href[32] = { 0 };
             readString(href, sizeof(href), "href", RESOURCE_URI_EXAMPLE);
@@ -383,30 +422,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 
     result = OCCloudAclIndividualUpdateAce(NULL, aclid, aces, endPoint, callback);
 exit:
-    if (aces)
-    {
-        for (int k = 0; k < i; k++)
-        {
-            cloudAce_t *ace = &aces[k];
-            OICFree(ace->aceId);
-
-            if (ace->resources)
-            {
-                for (int l = 0; l < j; l++)
-                {
-                    OicSecRsrc_t *res = &ace->resources[l];
-                    OICFree(res->href);
-
-                    stringArray_t rt = {.array = res->types, .length = res->typeLen};
-                    clearStringArray(&rt);
-
-                    stringArray_t _if = {.array = res->interfaces, .length = res->interfaceLen};
-                    clearStringArray(&_if);
-                }
-            }
-
-        }
-    }
+    deleteCloudAceList(aces);
     return result;
 }
 

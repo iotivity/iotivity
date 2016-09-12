@@ -63,10 +63,7 @@ static const uint16_t CBOR_SIZE = 2048;
 static OicSecAcl_t *gAcl = NULL;
 static OCResourceHandle gAclHandle = NULL;
 
-/**
- * This function frees OicSecRsrc_t object's fields and object itself.
- */
-static void FreeRsrc(OicSecRsrc_t *rsrc)
+void FreeRsrc(OicSecRsrc_t *rsrc)
 {
     //Clean each member of resource
     OICFree(rsrc->href);
@@ -2187,6 +2184,80 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
     return NULL;
 }
 
+void printACL(const OicSecAcl_t* acl)
+{
+    OIC_LOG(INFO, TAG, "Print ACL:");
+
+    char *rowner = NULL;
+    if (OC_STACK_OK == ConvertUuidToStr(&acl->rownerID, &rowner))
+    {
+        OIC_LOG_V(INFO, TAG, "rowner id = %s", rowner);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Can't convert rowner uuid to string");
+    }
+    OICFree(rowner);
+
+    const OicSecAce_t *ace = acl->aces;
+    int ace_count = 0;
+    while (ace)
+    {
+        ace_count++;
+        OIC_LOG_V(INFO, TAG, "Print ace[%d]:", ace_count);
+
+        OIC_LOG_V(INFO, TAG, "ace permission = %d", ace->permission);
+
+        char *subjectuuid = NULL;
+        if (OC_STACK_OK == ConvertUuidToStr(&ace->subjectuuid, &subjectuuid))
+        {
+            OIC_LOG_V(INFO, TAG, "ace subject uuid = %s", subjectuuid);
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
+        }
+        OICFree(subjectuuid);
+
+        OicSecRsrc_t *res = ace->resources;
+        int res_count = 0;
+        while (res)
+        {
+            res_count++;
+            OIC_LOG_V(INFO, TAG, "Print resources[%d]:", res_count);
+
+            OIC_LOG_V(INFO, TAG, "href = %s", res->href);
+
+            for (size_t i = 0; i < res->typeLen; i++)
+            {
+                OIC_LOG_V(INFO, TAG, "if[%zu] = %s", i, res->types[i]);
+            }
+            for (size_t i = 0; i < res->interfaceLen; i++)
+            {
+                OIC_LOG_V(INFO, TAG, "if[%zu] = %s", i, res->interfaces[i]);
+            }
+
+            res= res->next;
+        }
+
+        OicSecValidity_t *vals = ace->validities;
+        int vals_count = 0;
+        while (vals)
+        {
+            vals_count++;
+            OIC_LOG_V(INFO, TAG, "Print validities[%d]:", vals_count);
+
+            OIC_LOG_V(INFO, TAG, "period = %s", vals->period);
+            for (size_t i = 0; i < vals->recurrenceLen; i++)
+            {
+                OIC_LOG_V(INFO, TAG, "recurrences[%zu] = %s", i, vals->recurrences[i]);
+            }
+        }
+
+        ace = ace->next;
+    }
+}
+
 OCStackResult InstallNewACL2(const OicSecAcl_t* acl)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -2196,12 +2267,23 @@ OCStackResult InstallNewACL2(const OicSecAcl_t* acl)
         return OC_STACK_INVALID_PARAM;
     }
 
-    // Append the new ACL to existing ACL
-    OicSecAce_t* newAce = NULL;
-    LL_FOREACH(acl->aces, newAce)
+    // Append the new ACE to existing ACE list
+    // Can't use LL_APPEND because it sets ace->next to NULL
+    OicSecAce_t* ace = gAcl->aces;
+    if (ace)
     {
-        LL_APPEND(gAcl->aces, newAce);
+        while (ace->next)
+        {
+            ace = ace->next;
+        }
+        ace->next = acl->aces;
     }
+    else
+    {
+        gAcl->aces = acl->aces;
+    }
+
+    printACL(gAcl);
 
     size_t size = 0;
     uint8_t *payload = NULL;

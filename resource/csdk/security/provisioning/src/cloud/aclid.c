@@ -5,10 +5,12 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "pmutility.h"
+#include "srmutility.h"
 #include "cacommonutil.h"
 #include "aclresource.h"
 #include "ocpayloadcbor.h"
 #include "payload_logging.h"
+#include "utlist.h"
 
 #define TAG "CLOUD-ACL-ID"
 
@@ -170,6 +172,8 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         goto exit;
     }
 
+    printACL(acl);
+
     result = InstallNewACL2(acl);
     if (result != OC_STACK_OK)
     {
@@ -231,10 +235,10 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
     }
 
     int acllist_count = 0;
-    if (aces)
+    //code below duplicates LL_COUNT, implemented in newer version of utlist.h
     {
-        cloudAce_t *ace = (cloudAce_t *)&aces[acllist_count++];
-        while (ace->next)
+        cloudAce_t *ace = (cloudAce_t*)aces;
+        while (ace)
         {
             ace = ace->next;
             acllist_count++;
@@ -248,7 +252,10 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
         goto no_memory;
     }
 
-    for (int i = 0; i < acllist_count; i++)
+    i = 0;
+    cloudAce_t *ace = NULL;
+
+    LL_FOREACH((cloudAce_t*)aces, ace)
     {
         OCRepPayload *payload = OCRepPayloadCreate();
         if (!payload)
@@ -256,20 +263,26 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
             OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload[i]");
             goto no_memory;
         }
-        helperPayload[i] = payload;
+        helperPayload[i++] = payload;
 
-        const cloudAce_t *ace = &aces[i];
+        char *uuid = NULL;
+        if (OC_STACK_OK != ConvertUuidToStr(&ace->subjectuuid, &uuid))
+        {
+            OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
+        }
 
         OCRepPayloadSetPropString(payload, OC_RSRVD_ACE_ID, ace->aceId);
-        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)ace->subjectuuid.id);
+        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
 
+        OICFree(uuid);
+
         int reslist_count = 0;
-        if (ace->resources)
+        //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {
-            OicSecRsrc_t *res = &ace->resources[reslist_count++];
-            while (res->next)
+            OicSecRsrc_t *res = ace->resources;
+            while (res)
             {
                 res = res->next;
                 reslist_count++;
@@ -282,17 +295,18 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
             goto no_memory;
         }
 
-        for (int j = 0; j < reslist_count; j++)
+        j = 0;
+        OicSecRsrc_t *res = NULL;
+
+        LL_FOREACH(ace->resources, res)
         {
             OCRepPayload *payload = OCRepPayloadCreate();
             if (!payload)
             {
-                OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for payload");
+                OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload2[j]");
                 goto no_memory;
             }
-            helperPayload2[j] = payload;
-
-            const OicSecRsrc_t *res = &ace->resources[j];
+            helperPayload2[j++] = payload;
 
             OCRepPayloadSetPropString(payload, OC_RSRVD_HREF, res->href);
 
