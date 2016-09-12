@@ -145,6 +145,7 @@ int main()
                 {
                     std::cout << "SendMessage" << std::endl;
 
+                    std::string dummy;
                     std::string title;
                     std::string body;
                     std::string topic;
@@ -152,13 +153,14 @@ int main()
                     std::cout << "id : " << ++id << std::endl;
                     std::cout << "title : ";
 
-                    std::cin >> title;
+                    std::getline(std::cin, dummy);
+                    std::getline(std::cin, title);
 
                     std::cout << "body : ";
-                    std::cin >> body;
+                    std::getline(std::cin, body);
 
                     std::cout << "topic : ";
-                    std::cin >> topic;
+                    std::getline(std::cin, topic);
 
                     std::cout << "app - mTitle : " << title << std::endl;
                     std::cout << "app - mContentText : " << body << std::endl;

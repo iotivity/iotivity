@@ -43,6 +43,8 @@ namespace OIC
             m_messageCb = NULL;
             m_syncInfoCb = NULL;
             m_state = NSProviderState::DENY;
+            m_subscribedState = NSProviderSubscribedState::DENY;
+
             m_topicList = new NSTopicsList();
 
             if (provider != nullptr)
@@ -54,6 +56,7 @@ namespace OIC
         NSProvider::NSProvider(const NSProvider &provider)
         {
             m_providerId = provider.getProviderId();
+            m_topicList = new NSTopicsList();
             auto topicsList = provider.getTopicList();
             if (topicsList != nullptr)
             {
@@ -65,22 +68,25 @@ namespace OIC
             setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
                         provider.getSyncInfoReceivedCb());
             setProviderState(provider.getProviderState());
+            setProviderSubscribedState(provider.getProviderSubscribedState());
         }
 
         NSProvider &NSProvider::operator=(const NSProvider &provider)
         {
-            m_providerId = provider.getProviderId();
+            this->m_providerId = provider.getProviderId();
+            this->m_topicList = new NSTopicsList();
             auto topicsList = provider.getTopicList();
             if (topicsList != nullptr)
             {
                 for (auto it : topicsList->getTopicsList())
                 {
-                    getTopicList()->addTopic(it->getTopicName(), it->getState());
+                    this->getTopicList()->addTopic(it->getTopicName(), it->getState());
                 }
             }
-            setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
-                        provider.getSyncInfoReceivedCb());
-            setProviderState(provider.getProviderState());
+            this->setListener(provider.getProviderStateReceivedCb(), provider.getMessageReceivedCb(),
+                              provider.getSyncInfoReceivedCb());
+            this->setProviderState(provider.getProviderState());
+            this->setProviderSubscribedState(provider.getProviderSubscribedState());
             return *this;
         }
 
@@ -106,11 +112,11 @@ namespace OIC
             NS_LOG(DEBUG, "updateTopicList - IN");
             if (topicList == nullptr)
                 return NSResult::ERROR;
-            for (auto it : topicList->getTopicsList())
-            {
-                NS_LOG_V(DEBUG, "Topic Name : %s", it->getTopicName().c_str());
-                NS_LOG_V(DEBUG, "Topic State : %d", (int) it->getState());
-            }
+//            for (auto it : topicList->getTopicsList())
+//            {
+//                NS_LOG_V(DEBUG, "Topic Name : %s", it->getTopicName().c_str());
+//                NS_LOG_V(DEBUG, "Topic State : %d", (int) it->getState());
+//            }
             NS_LOG(DEBUG, "Creating TopicLL from TopicList");
             NSTopicLL *topicLL = NULL;
             for (auto it : topicList->getTopicsList())
@@ -148,7 +154,7 @@ namespace OIC
                 while (iter)
                 {
                     NS_LOG_V(DEBUG, "Topic Name : %s", iter->topicName);
-                    NS_LOG_V(DEBUG, "Topic State : %d", iter->state);
+                    NS_LOG_V(DEBUG, "Topic State : %d", (int) iter->state);
                     iter = iter->next;
                 }
             }
@@ -165,6 +171,12 @@ namespace OIC
             return m_state;
         }
 
+        NSProviderSubscribedState NSProvider::getProviderSubscribedState() const
+        {
+            NS_LOG_V(DEBUG, "getProviderSubscribedState  state : %d", (int)m_subscribedState);
+            return m_subscribedState;
+        }
+
         void NSProvider::subscribe()
         {
             NS_LOG(DEBUG, "Subscribe - IN");
@@ -175,9 +187,8 @@ namespace OIC
         bool NSProvider::isSubscribed()
         {
             NS_LOG(DEBUG, "isSubscribed - IN");
-            auto state = getProviderState();
-            NS_LOG_V(DEBUG, "state : %d", (int)state);
-            if ((state == NSProviderState::ALLOW) || (state == NSProviderState::TOPIC) )
+            NS_LOG_V(DEBUG, "Subscribed state : %d", (int)getProviderSubscribedState());
+            if (getProviderSubscribedState() == NSProviderSubscribedState::SUBSCRIBED)
                 return true;
             return false;
         }
@@ -226,6 +237,11 @@ namespace OIC
         void NSProvider::setProviderState(const NSProviderState &providerState)
         {
             m_state = providerState;
+        }
+
+        void NSProvider::setProviderSubscribedState(const NSProviderSubscribedState &subscribedState)
+        {
+            m_subscribedState = subscribedState;
         }
     }
 }

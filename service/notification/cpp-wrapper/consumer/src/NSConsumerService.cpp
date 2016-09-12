@@ -49,6 +49,7 @@ namespace OIC
                 nsProvider->setTopicList(new NSTopicsList(topicLL));
                 if (state == NS_DISCOVERED)
                 {
+                    nsProvider->setProviderSubscribedState(NSProviderSubscribedState::DISCOVERED);
                     if (discoveredCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the Discovered callback : NS_DISCOVERED, policy false");
@@ -57,6 +58,7 @@ namespace OIC
                 }
                 else if (state == NS_ALLOW)
                 {
+                    nsProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
                     if (discoveredCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the Discovered callback : NS_ALLOW, policy true");
@@ -73,6 +75,7 @@ namespace OIC
                 delete nsProvider;
                 if (state == NS_ALLOW)
                 {
+                    oldProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
                     if (changeCallback != NULL)
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_ALLOW");
@@ -81,6 +84,7 @@ namespace OIC
                 }
                 else if (state == NS_DENY)
                 {
+                    oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
                     NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
                     if (changeCallback != NULL)
                     {
@@ -101,10 +105,12 @@ namespace OIC
                 }
                 else if (state == NS_STOPPED)
                 {
+                    oldProvider->setProviderSubscribedState(NSProviderSubscribedState::DENY);
+                    NSConsumerService::getInstance()->getAcceptedProviders().remove(oldProvider);
                     NS_LOG(DEBUG, "initiating the State callback : NS_STOPPED");
                     if (changeCallback != NULL)
                     {
-                        NS_LOG(DEBUG, "initiating the callback for Response : NS_TOPIC");
+                        NS_LOG(DEBUG, "initiating the callback for Response : NS_STOPPED");
                         changeCallback((NSProviderState)state);
                     }
                 }
@@ -119,7 +125,7 @@ namespace OIC
 
             NSMessage *nsMessage = new NSMessage(message);
 
-            NS_LOG_V(DEBUG, "getAcceptedProviders Size : %d",
+            NS_LOG_V(DEBUG, "getAcceptedProviders Size : %d", (int)
                      NSConsumerService::getInstance()->getAcceptedProviders().size());
             for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
             {
@@ -199,6 +205,11 @@ namespace OIC
         {
             NS_LOG(DEBUG, "stop - IN");
             NSStopConsumer();
+            for (auto it : getAcceptedProviders())
+            {
+                delete it;
+            }
+            getAcceptedProviders().clear();
             NS_LOG(DEBUG, "stop - OUT");
             return;
         }
@@ -206,11 +217,13 @@ namespace OIC
         NSResult NSConsumerService::enableRemoteService(const std::string &serverAddress)
         {
             NS_LOG(DEBUG, "enableRemoteService - IN");
+            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
             NSResult result = NSResult::ERROR;
 #ifdef WITH_CLOUD
             result = (NSResult) NSConsumerEnableRemoteService(OICStrdup(serverAddress.c_str()));
 #else
             NS_LOG(ERROR, "Remote Services feature is not enabled in the Build");
+            (void) serverAddress;
 #endif
             NS_LOG(DEBUG, "enableRemoteService - OUT");
             return result;

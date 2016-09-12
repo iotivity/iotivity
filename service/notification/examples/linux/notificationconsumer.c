@@ -73,7 +73,7 @@ void onProviderChanged(NSProvider * provider, NSProviderState response)
     if (response == NS_DISCOVERED)
     {
         printf("notification resource discovered\n");
-        printf("subscribe result %d\n", NSSubscribe(provider));
+        printf("subscribe result %d\n", NSSubscribe(provider->providerId));
         printf("startSubscribing\n");
     }
 
@@ -186,6 +186,7 @@ int main(void)
                 if(g_provider)
                 {
                     g_topicLL = NSConsumerGetTopicList(g_provider->providerId);
+                    printProviderTopicList(g_topicLL);
                 }
                 break;
             case 4:
@@ -198,10 +199,17 @@ int main(void)
                     while (iter)
                     {
                         iter->state = (i++)%2;
-                        printf("Topic Name: %s\t Topic State: %d\n", iter->topicName, iter->state);
                         iter = iter->next;
                     }
-                    NSConsumerUpdateTopicList(g_provider->providerId, g_topicLL);
+                    NSResult ret = NSConsumerUpdateTopicList(g_provider->providerId, g_topicLL);
+                    if (ret == NS_OK)
+                    {
+                        printProviderTopicList(g_topicLL);
+                    }
+                    else
+                    {
+                        printf("Update fail\n");
+                    }
                 }
                 break;
             case 5:

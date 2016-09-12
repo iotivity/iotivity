@@ -78,14 +78,33 @@ if env.get('WITH_CLOUD') == True:
 ######################################################################
 # Source files and Targets
 ######################################################################
+notificationCommonStaticObjs = [
+	notification_env.Object('../common/NSMediaContents.cpp'),
+	notification_env.Object('../common/NSMessage.cpp'),
+	notification_env.Object('../common/NSSyncInfo.cpp'),
+	notification_env.Object('../common/NSTopic.cpp'),
+	notification_env.Object('../common/NSTopicsList.cpp')]
+
+notificationCommonSharedObjs = [
+	notification_env.SharedObject('../common/NSMediaContents.cpp'),
+	notification_env.SharedObject('../common/NSMessage.cpp'),
+	notification_env.SharedObject('../common/NSSyncInfo.cpp'),
+	notification_env.SharedObject('../common/NSTopic.cpp'),
+	notification_env.SharedObject('../common/NSTopicsList.cpp')]
 
 notification_provider_src = [
-	env.Glob('src/*.cpp'),env.Glob('../common/*.cpp')]
+	env.Glob('src/*.cpp'),notificationCommonSharedObjs]
 
 providersdk = notification_env.SharedLibrary('notification_provider_wrapper', notification_provider_src)
 notification_env.InstallTarget(providersdk, 'libnotification_provider_wrapper')
 notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider_wrapper')
 
+notification_provider_src = [
+	env.Glob('src/*.cpp'),notificationCommonStaticObjs]
+
 providersdk = notification_env.StaticLibrary('notification_provider_wrapper', notification_provider_src)
 notification_env.InstallTarget(providersdk, 'libnotification_provider_wrapper')
 notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider_wrapper')
+
+Export('notificationCommonStaticObjs')
+Export('notificationCommonSharedObjs')

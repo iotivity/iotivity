@@ -31,5 +31,5 @@ SConscript('consumer/SConscript')
 SConscript('examples/linux/SConscript')
 
 # Go to build Unit test
-#if target_os == 'linux':
-#    SConscript('unittest/SConscript')
+if target_os == 'linux':
+    SConscript('unittest/SConscript')

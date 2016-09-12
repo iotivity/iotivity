@@ -120,12 +120,14 @@ void NSConsumerMessageHandlerExit()
 
     NSConsumerListenerTermiate();
     NSCancelAllSubscription();
+
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
+    NSSetMsgHandleThreadHandle(NULL);
+
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
     NSSetMsgHandleQueue(NULL);
 
-    NSDestroyMessageCacheList();
-    NSDestroyProviderCacheList();
+    NSDestroyInternalCachedList();
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
@@ -264,11 +266,6 @@ void NSConsumerTaskProcessing(NSTask * task)
         }
         case TASK_SEND_SYNCINFO:
         case TASK_CONSUMER_REQ_TOPIC_LIST:
-        {
-            NSConsumerCommunicationTaskProcessing(task);
-            break;
-        }
-        case TASK_CONSUMER_GET_TOPIC_LIST:
         case TASK_CONSUMER_SELECT_TOPIC_LIST:
         {
             NSConsumerCommunicationTaskProcessing(task);
@@ -339,13 +336,6 @@ void NSConsumerTaskProcessing(NSTask * task)
             break;
         }
     }
-}
-
-NSMessage * NSConsumerFindNSMessage(const char* messageId)
-{
-    NS_VERIFY_NOT_NULL(messageId, NULL);
-
-    return NSMessageCacheFind(messageId);
 }
 
 NSProvider_internal * NSConsumerFindNSProvider(const char * providerId)
