@@ -31,29 +31,33 @@ import org.iotivity.base.OcResourceHandle;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+import org.iotivity.service.ns.common.NSException;
 import org.iotivity.service.ns.common.SyncInfo;
+import org.iotivity.service.ns.common.TopicsList;
 import org.iotivity.service.ns.consumer.ConsumerService;
 import org.iotivity.service.ns.consumer.Provider;
 
 import java.util.HashMap;
 
 public class ConsumerProxy
-    implements ConsumerService.OnProviderDiscoveredListner,
-    ConsumerService.OnProviderChangedListener,
+    implements ConsumerService.OnProviderDiscoveredListener,
+    Provider.OnProviderStateListener,
     Provider.OnMessageReceivedListner, Provider.OnSyncInfoReceivedListner
 {
-
     private static final String TAG = "NS_CONSUMER_PROXY";
 
     private Context mContext = null;
     private ConsumerService consumerService = null;
+    private boolean mAcceptor = false;
+    private Provider mProvider = null;
 
     private Handler mHandler = null;
 
     private static final int PROVIDER_DISCOVERED = 1;
-    private static final int SUBSCRIPTION_ACCEPTED = 2;
+    private static final int STATE_CHANGED = 2;
     private static final int MESSAGE_RECEIVED = 3;
     private static final int SYNCINFO_RECEIVED = 4;
+    private static final int TOPICS_RECEIVED = 5;
 
     public ConsumerProxy(Context context)
     {
@@ -66,6 +70,11 @@ public class ConsumerProxy
     public void setHandler(Handler handler)
     {
         this.mHandler = handler;
+    }
+
+    public boolean getAcceptor()
+    {
+        return mAcceptor;
     }
 
     private void configurePlatform()
@@ -98,7 +107,7 @@ public class ConsumerProxy
         configurePlatform();
         try
         {
-            consumerService.Start(this, this);
+            consumerService.start(this);
         }
         catch (Exception e)
         {
@@ -110,7 +119,8 @@ public class ConsumerProxy
     {
         try
         {
-            consumerService.Stop();
+            consumerService.stop();
+            mProvider = null;
         }
         catch (Exception e)
         {
@@ -122,7 +132,7 @@ public class ConsumerProxy
     {
         try
         {
-            consumerService.EnableRemoteService(serverAddress);
+            consumerService.enableRemoteService(serverAddress);
         }
         catch (Exception e)
         {
@@ -134,112 +144,94 @@ public class ConsumerProxy
     {
         try
         {
-            consumerService.RescanProvider();
+            consumerService.rescanProvider();
         }
         catch (Exception e)
         {
             Log.e(TAG, "Exception: rescanProvider : " + e);
         }
     }
-
-    public Provider getProvider(String providerId)
+    public void getTopicsList()
     {
-        Provider provider = null;
-        try
+        if (mProvider != null)
         {
-            provider = consumerService.GetProvider(providerId);
+            try
+            {
+                TopicsList topicsList = mProvider.getTopicList();
+            }
+            catch (Exception e)
+            {
+                Log.e(TAG, "Exception: getTopicsList : " + e);
+            }
         }
-        catch (Exception e)
+        else
         {
-            Log.e(TAG, "Exception: getProvider : " + e);
-        }
-        return provider;
-    }
-
-    public void subscribe(String providerId)
-    {
-        try
-        {
-            Provider provider = getProvider(providerId);
-            if (provider != null)
-                provider.Subscribe();
-            else
-                Log.e(TAG, "providerID is Null : ");
-        }
-        catch (Exception e)
-        {
-            Log.e(TAG, "Exception: Subscribe : " + e);
+            Log.e(TAG, "getTopicsList Provider NULL");
         }
     }
-
-    public void unsubscribe(String providerId)
+    public void updateTopicList(TopicsList topicsList)
     {
-        try
+        if (mProvider != null)
         {
-            Provider provider = getProvider(providerId);
-            if (provider != null)
-                provider.Unsubscribe();
-            else
-                Log.e(TAG, "providerID is Null : ");
+            try
+            {
+                mProvider.updateTopicList(topicsList);
+            }
+            catch (Exception e)
+            {
+                Log.e(TAG, "Exception: updateTopicList : " + e);
+            }
         }
-        catch (Exception e)
+        else
         {
-            Log.e(TAG, "Exception: Unsubscribe : " + e);
+            Log.e(TAG, "updateTopicList Provider NULL");
         }
     }
-
-    public void sendSyncInfo(String providerId, long messageId, SyncInfo.SyncType syncType)
-    {
-        try
-        {
-            Provider provider = getProvider(providerId);
-            if (provider != null)
-                provider.SendSyncInfo(messageId, syncType);
-            else
-                Log.e(TAG, "providerID is Null : ");
-        }
-        catch (Exception e)
-        {
-            Log.e(TAG, "Exception: SendSyncInfo : " + e);
-        }
-    }
-
-    public void setListener(String providerId)
-    {
-        try
-        {
-            Provider provider = getProvider(providerId);
-            if (provider != null)
-                provider.SetListener(this, this);
-            else
-                Log.e(TAG, "providerID is Null : ");
-        }
-        catch (Exception e)
-        {
-            Log.e(TAG, "Exception: SetListener : " + e);
-        }
-    }
-
     @Override
     public void onProviderDiscovered(Provider provider)
     {
         Log.i(TAG, "onProviderDiscovered");
-
+        if (provider == null)
+        {
+            Log.e(TAG, "providerID is Null  ");
+            return;
+        }
+        mProvider = provider;
         Log.i(TAG, "Provider ID: " + provider.getProviderId() );
-        Message msg = mHandler.obtainMessage(PROVIDER_DISCOVERED, provider.getProviderId());
+        Message msg = mHandler.obtainMessage(PROVIDER_DISCOVERED,
+                                             "Provider Discovered Id: " + provider.getProviderId());
         mHandler.sendMessage(msg);
-        subscribe(provider.getProviderId());
+        try
+        {
+            Log.i(TAG, "setListeners to Discovered Provider");
+            provider.setListener(this, this, this);
+            Log.i(TAG, "setListeners done");
+            if (! provider.isSubscribed())
+            {
+                Log.i(TAG, "Provider not subscribed. Acceptor is Consumer");
+                mAcceptor = false;
+                provider.subscribe();
+            }
+            else
+            {
+                Log.i(TAG, "Provider is already subscribed. Acceptor is Provider");
+                mAcceptor = true;
+            }
+        }
+        catch (Exception e)
+        {
+            Log.e(TAG, "Exception : " + e);
+        }
     }
 
     @Override
-    public void onProviderChanged(Provider provider , ConsumerService.Response response)
+    public void onProviderStateReceived(Provider.ProviderState state)
     {
-        Log.i(TAG, "onSubscriptionAccepted");
+        Log.i(TAG, "onProviderStateReceived");
 
-        Log.i(TAG, "Provider ID: " + provider.getProviderId() );
-        Message msg = mHandler.obtainMessage(SUBSCRIPTION_ACCEPTED, provider.getProviderId());
+        Log.i(TAG, "Provider state: " + state );
+        Message msg = mHandler.obtainMessage(STATE_CHANGED, "Provider state: " + state);
         mHandler.sendMessage(msg);
-        setListener(provider.getProviderId());
     }
 
     @Override
@@ -250,14 +242,25 @@ public class ConsumerProxy
         Log.i(TAG, "Message Id: " + message.getMessageId());
         Log.i(TAG, "Message title: " + message.getTitle());
         Log.i(TAG, "Message Content: " + message.getContentText());
+        Log.i(TAG, "Message Topic: " + message.getTopic());
         Log.i(TAG, "Message Source: " + message.getSourceName());
 
         Message msg = mHandler.obtainMessage(MESSAGE_RECEIVED,
-                                             "Message Id: " + message.getMessageId() +
-                                             " / Message title: " + message.getTitle() +
-                                             " / Message Content: " + message.getContentText() +
-                                             " / Message Source: " + message.getSourceName() );
+                                             "Message Id: " + message.getMessageId() + "\n" +
+                                             "Message title: " + message.getTitle() + "\n" +
+                                             "Message Content: " + message.getContentText() + "\n" +
+                                             "Message Topic: " + message.getTopic() + "\n" +
+                                             "Message Source: " + message.getSourceName() );
         mHandler.sendMessage(msg);
+        try
+        {
+            Log.i(TAG, "send READ syncInfo");
+            mProvider.sendSyncInfo(message.getMessageId(), SyncInfo.SyncType.READ);
+        }
+        catch (Exception e)
+        {
+            Log.e(TAG, "Exception : " + e);
+        }
     }
 
     @Override
@@ -268,8 +271,8 @@ public class ConsumerProxy
         Log.i(TAG, "Sync Id: " + sync.getMessageId());
         Log.i(TAG, "Sync STATE: " + sync.getState());
         Message msg = mHandler.obtainMessage(SYNCINFO_RECEIVED,
-                                             "Sync Id: " + sync.getMessageId() +
-                                             " / Sync STATE: " + sync.getState());
+                                             "Sync Id: " + sync.getMessageId() + "\n" +
+                                             "Sync STATE: " + sync.getState());
         mHandler.sendMessage(msg);
     }
 }
