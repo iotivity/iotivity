@@ -48,6 +48,52 @@ TEST(RandomGeneration,OCGetRandomBytes) {
     EXPECT_EQ((uint8_t )0, array[ARR_SIZE - 1]);
 }
 
+// This test attempts to prevent developers from plugging in a memset as a
+// random number generator.
+TEST(RandomGeneration,OCFillRandomMem_GeneratedDataIsDifferent) {
+    uint8_t array[ARR_SIZE] = {};
+    uint8_t matchingByte = OCGetRandomByte();
+    bool foundNonMatchingByte = false;
+
+    OCFillRandomMem(array, ARR_SIZE);
+
+    // Note: this test can flag a false-failure, but this is
+    // statistically very unlikely to fail.  In a uniformly distributed
+    // random function, we can expect that:
+    //
+    //   P(array is all matchingByte) = 1 in 2^(ARR_SIZE_IN_BITS)
+    //
+    // Let us assume that this test will only be run by CI or
+    // a developer once per second. In our case, our quantities are:
+    //
+    //   Array size in bits = 160 bits
+    //   Number of combinations = 2 ^ 160 ~= 1.46 * 10^48
+    //   Test frequency        = 1 minute
+    //   Seconds in 1000 years = 3.154 * 10 ^ 10
+    //
+    // If we ran this every second, our expected number of failures
+    // is very insignificant.
+    //
+    //   Number of combinations >>> Seconds in 1000 years
+    //
+    // After crunching the numbers, after 1000 years we can expect to see:
+    //
+    //   (Seconds in 1000 years) / (Number of combinations) = False-fail count
+    //
+    //   Expect count of false-failures = 2.158 * 10 ^ -38 ~= 0
+    //
+    for (int i = 0; i < ARR_SIZE; i++)
+    {
+        if (matchingByte != array[i])
+        {
+            foundNonMatchingByte = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(foundNonMatchingByte);
+}
+
 TEST(RandomGeneration, OCGenerateUuid)
 {
     EXPECT_FALSE(OCGenerateUuid(NULL));
