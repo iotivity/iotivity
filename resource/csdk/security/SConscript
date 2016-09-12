@@ -112,8 +112,6 @@ libocsrm_src = [
 	]
 
 if libocsrm_env.get('SECURED') == '1':
-	if target_os in ['tizen']:
-		libocsrm_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'oxmpincommon.c', OCSRM_SRC + 'pbkdf2.c']
 
 if target_os in ['windows', 'msys_nt']:
