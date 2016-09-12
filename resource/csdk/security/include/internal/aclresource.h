@@ -83,6 +83,13 @@ OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource);
 void DeleteACLList(OicSecAcl_t* acl);
 
 /**
+ * This function frees OicSecRsrc_t object's fields and object itself.
+ *
+ * @param rsrc instance of @ref OicSecRsrc_t structure to be deleted.
+ */
+void FreeRsrc(OicSecRsrc_t *rsrc);
+
+/**
  * Internal function to duplicate the ACE instance.
  *
  * @param ace instance of @ref OicSecAce_t structure to be duplicated.
@@ -143,6 +150,14 @@ OCStackResult GetAclRownerId(OicUuid_t *rowneruuid);
  * @return ::acl instance of @ref OicSecAcl_t structure or NULL if error occurs
  */
 OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size);
+
+/**
+ * This function prints ACL to stdin
+ * For debug purposes only
+ *
+ * @param acl  acl to print
+ */
+void printACL(const OicSecAcl_t* acl);
 
 #ifdef __cplusplus
 }
