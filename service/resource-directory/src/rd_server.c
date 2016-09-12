@@ -148,7 +148,6 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
             case OC_REST_DELETE:
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
-            case OC_REST_CANCEL_OBSERVE:
             case OC_REST_PRESENCE:
             case OC_REST_NOMETHOD:
                 break;

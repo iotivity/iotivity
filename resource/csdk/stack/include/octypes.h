@@ -797,9 +797,6 @@ typedef enum
     /** Register observe request for all notifications, including stale notifications.*/
     OC_REST_OBSERVE_ALL    = (1 << 5),
 
-    /** De-register observation, intended for internal use.*/
-    OC_REST_CANCEL_OBSERVE = (1 << 6),
-
 #ifdef WITH_PRESENCE
     /** Subscribe for all presence notifications of a particular resource.*/
     OC_REST_PRESENCE       = (1 << 7),

@@ -2727,7 +2727,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     case OC_REST_GET:
     case OC_REST_OBSERVE:
     case OC_REST_OBSERVE_ALL:
-    case OC_REST_CANCEL_OBSERVE:
         requestInfo.method = CA_GET;
         break;
     case OC_REST_PUT:
