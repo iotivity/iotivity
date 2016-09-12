@@ -267,7 +267,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "displayPinListener can't be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "displayPinListener can't be null");
         return;
     }
     delete jniDisplayPinListener;
